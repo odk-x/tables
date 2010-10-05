@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout 
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/widget50" 
+android:layout_width="fill_parent" 
+android:layout_height="fill_parent" 
+> 
+	<LinearLayout
+		android:id="@+id/command"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+		<EditText
+		android:id="@+id/edit_box"
+		android:layout_width="262px"
+		android:layout_height="wrap_content" ></EditText>
+		<Button 
+		android:id="@+id/enter"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/edit_box"
+		android:text="@string/button_enter" />
+	</LinearLayout>
+	
+	<TextView
+	android:id="@+id/led"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/command" ></TextView>
+			
+	<ScrollView 
+	android:layout_width="fill_parent" 
+	android:layout_height="fill_parent"
+	android:layout_below="@+id/led" >
+		<TableLayout
+		android:id="@+id/temp"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" >
+			<TableRow
+			android:id="@+id/mainLayout"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent">
+			</TableRow>
+		</TableLayout>
+	</ScrollView>
+	
+</RelativeLayout>

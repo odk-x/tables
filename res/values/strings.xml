@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, SpreadSheetSMS!</string>
+    <string name="app_name">Spread Sheet SMS</string>
+<string name="button_enter">Enter</string>
+</resources>
