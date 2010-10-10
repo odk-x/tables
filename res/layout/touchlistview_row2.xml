@@ -13,7 +13,7 @@
 		/>
 	<TextView android:id="@+id/label"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:paddingLeft="9dip"
         android:layout_height="wrap_content"
         android:layout_alignWithParentIfMissing="true"
