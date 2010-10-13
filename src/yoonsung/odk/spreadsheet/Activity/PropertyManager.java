@@ -10,12 +10,22 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.util.Log;
- 
+
+/*
+ * Activity that allows users to change column property.
+ * Column properties includes abreviations for the column
+ * names, SMS-IN, SMS-OUT. Please see ColumnProperty.java 
+ * for more information about the column property.
+ * 
+ *  @Author : YoonSung Hong (hys235@cs.washington.edu)
+ */
 public class PropertyManager extends PreferenceActivity {
         
+		// Private Fields
 		private ColumnProperty cp;
 		private String colName;
 		
+		// Initialize private fields
 		private void init() {
 			this.cp = new ColumnProperty();
 		}
@@ -30,6 +40,7 @@ public class PropertyManager extends PreferenceActivity {
                 loadPreferenceScreen();
         }
         
+		// View that allows users to chane column properties on a specific column.
         private void loadPreferenceScreen() {
         	// Preference Screen
             PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
@@ -62,7 +73,8 @@ public class PropertyManager extends PreferenceActivity {
             // Set 
             setPreferenceScreen(root);
         }
-                
+        
+        // Get the abreviation on this column.
         private String getAbrev(String colName) {
         	String result = cp.getAbrev(colName);
         	if (result == null) {
@@ -71,6 +83,7 @@ public class PropertyManager extends PreferenceActivity {
         	return result;
         }
         
+        // Get the type for this column.
         private String getType(String colName) {
         	String result = cp.getType(colName);
         	if (result == null) {
@@ -79,14 +92,17 @@ public class PropertyManager extends PreferenceActivity {
         	return result;
         }
         
+        // Check if this is SMS-IN column.
         private boolean getSMSIn(String colName) {
         	return cp.getSMSIN(colName);
         }
         
+        // Check if this is SMS-OUT column.
         private boolean getSMSOut(String colName) {
         	return cp.getSMSOUT(colName);
         }
         
+        // Get the footer mode for this column.
         private String getFooterMode(String colName) {
         	String result = cp.getFooterMode(colName);
         	if (result == null) {
@@ -94,11 +110,13 @@ public class PropertyManager extends PreferenceActivity {
         	}
         	return result;
         }
-               
+         
+        // If any of fields change, direct the request to appropriate actions.
         public void onFieldChangeRouter(String key, String newVal) {
             // Get corresponding preference
         	Preference pref = findPreference(key);
         
+        	// Routing
             if (key.equals("ABR")) {
             	cp.setAbrev(colName, getEditBoxContent(pref));
             } else if (key.equals("TYPE")) {
@@ -110,16 +128,19 @@ public class PropertyManager extends PreferenceActivity {
             } else if (key.equals("FOOTER")) {
             	cp.setFooterMode(colName, newVal);
             } 
+            
             // Refresh
             getPreferenceScreen().removeAll();
             loadPreferenceScreen();
         }
         
+        // What value is in this edit box?
         private String getEditBoxContent(Preference pref) { 
         	EditTextPreference etp = (EditTextPreference) pref;
         	return etp.getEditText().getText().toString();
         }
         
+        // What value is in this check box?
         private boolean getCheckBoxContent(Preference pref) {
         	CheckBoxPreference cbp = (CheckBoxPreference) pref;
         	// Reverse original when checked/unchecked.
@@ -131,49 +152,59 @@ public class PropertyManager extends PreferenceActivity {
         		return true;
         	}
         }
-                     
+                  
+        // Create a check box with the specified specifications.
         private CheckBoxPreference createCheckBoxPreference(String key, String title, boolean val) {
+        	// Create a check box & configure
         	CheckBoxPreference cbp = new CheckBoxPreference(this);
             cbp.setKey(key);
             cbp.setTitle(title);
             cbp.setPersistent(false);
             cbp.setSummaryOn("True");
             cbp.setSummaryOff("False");
-            //cbp.setDefaultValue(defaultVal);
             cbp.setChecked(val);
+            
+            // Reaction if the check box gets changes
             cbp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 				
 				@Override
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					// TODO Auto-generated method stub
+					// Ask the router what to do
 					onFieldChangeRouter(preference.getKey(), null);
 					return false;
 				}
 			});
+            
             return cbp;
         }
         
+        // Create edit box with the specified specifications.
         private EditTextPreference createEditTextPreference(String key, String title, String dTitle, String sum, String val) {
+        	// Create a edit box & configure
         	EditTextPreference etp = new EditTextPreference(this);
         	etp.setKey(key);
         	etp.setTitle(title);
         	etp.setPersistent(false);
         	etp.setDialogTitle(dTitle);
         	etp.setSummary(sum);
+        	etp.setText(val);
+        	
+        	// Reaction if the edit box changes
         	etp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 				
 				@Override
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					// TODO Auto-generated method stub
+					// Ask the router what to do
 					onFieldChangeRouter(preference.getKey(), null);
 					return false;
 				}
 			});
-        	etp.setText(val);
+        	
         	return etp;
         }
         
         private ListPreference createListPreference(String key, String title, String sum, String val, String[] ent, String[] entV) {
+        	// Create a list preference & configure
         	ListPreference lp = new ListPreference(this);
         	lp.setEntries(ent);
         	lp.setEntryValues(entV);
@@ -182,16 +213,18 @@ public class PropertyManager extends PreferenceActivity {
         	lp.setPersistent(false);
         	lp.setSummary(sum);
         	lp.setValue(val);
+        	
+        	// When an option chosen by the user
         	lp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 				
 				@Override
 				public boolean onPreferenceChange(Preference preference, Object newValue) {
-					// TODO Auto-generated method stub
-					Log.e("NEWVAL", "" + newValue);
+					// Ask the router what to do
 					onFieldChangeRouter(preference.getKey(), (String) newValue);
 					return false;
 				}
 			});
+        	
         	return lp;	
         }
 }

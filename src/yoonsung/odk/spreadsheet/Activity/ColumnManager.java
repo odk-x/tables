@@ -24,6 +24,13 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+/*
+ * Activity that allows users to change table properties 
+ * such as colum orders, prime, and sort by. Also, users
+ * can create new columns and remove columns.
+ * 
+ * @Author : YoonSung Hong (hys235@cs.washington.edu)
+ */
 public class ColumnManager extends ListActivity {
 	
 	// Menu IDs
@@ -38,6 +45,7 @@ public class ColumnManager extends ListActivity {
 	private ArrayList<String> colOrder;
 	private String currentCol;
 	
+	// Initialize fields.
 	private void init() {
 		this.tp = new TableProperty();
 		this.data = new Data();
@@ -64,6 +72,7 @@ public class ColumnManager extends ListActivity {
 	public void onPause() {
 		super.onPause();
 		
+		// Refresh column order (for saftety)
 		tp.setColOrder(getNewColOrderFromList());
 		colOrder = tp.getColOrderArrayList();
 	}
@@ -72,14 +81,14 @@ public class ColumnManager extends ListActivity {
 	public void onResume() {
 		super.onResume();
 	
-		// Get new column order
+		// Refresh column order
 		colOrder = tp.getColOrderArrayList();
 		
 		// Create new Drag & Drop List
 		createDragAndDropList();
 	}
 	
-	// Retrieve current order of Drag & Drop List
+	// Retrieve current order of Drag & Drop List.
 	private ArrayList<String> getNewColOrderFromList() {
 		ArrayList<String> newOrder = new ArrayList<String>();
 		for (int i = 0; i < adapter.getCount(); i++) {
@@ -88,6 +97,7 @@ public class ColumnManager extends ListActivity {
 		return newOrder;
 	}
 	
+	// Button that allows user to add a new column.
 	private void createAddNewColumnButton() {
 		// Add column button
 		RelativeLayout addCol = (RelativeLayout)findViewById(R.id.add_column_button);
@@ -103,6 +113,7 @@ public class ColumnManager extends ListActivity {
 		});
 	}
 	
+	// Create a Drag & Drop List view.
 	private void createDragAndDropList() {
 		// Registration
 		adapter = new IconicAdapter();
@@ -130,12 +141,12 @@ public class ColumnManager extends ListActivity {
 			}
 		});
 		
-		// Context menu for items in Drag & Drop list
+		// Context menu for items in Drag & Drop list.
 		tlv.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {	
 			@Override
 			public void onCreateContextMenu(ContextMenu menu, View v,
 					ContextMenuInfo menuInfo) {
-									
+				// Options for each item on the list					
 				menu.add(0, SET_AS_PRIME, 0, "Set As Prime");
 				menu.add(0, SET_AS_ORDER_BY, 0, "Set AS Order By");
 				menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
@@ -144,6 +155,7 @@ public class ColumnManager extends ListActivity {
 		
 	}
 	
+	// Context menu reponses and actions.
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		Log.e("currentCol", currentCol);
@@ -172,14 +184,14 @@ public class ColumnManager extends ListActivity {
 	    return super.onContextItemSelected(item);
 	}
 	
-	// Load Column Property Manager Activity
+	// Load Column Property Manager Activity.
 	private void loadColumnPropertyManager(String name) {
 		Intent cpm = new Intent(this, PropertyManager.class);
 		cpm.putExtra("colName", name);
 		startActivity(cpm);
 	}
 	
-	// Ask for a new column name
+	// Ask for a new column name.
 	private void alertForNewColumnName() {
 		
 		// Prompt an alert box

@@ -8,23 +8,34 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+/*
+ * Database object that allows to set and get the 
+ * information from the database. To this work, there 
+ * must be a table that saves data. 
+ * 
+ * @Author : YoonSung Hong (hys235@cs.washingon.edu)
+ */
 public class Data {
 
 	// Table name
 	public static final String DATA = "data";
-	// Default essential columns
+	
+	// Column Names
 	public static final String DATA_ROWID = "RowID";
 	public static final String DATA_PHONE_NUMBER_IN = "_phoneNumberIn";
 	public static final String DATA_TIMESTAMP = "_timestamp";
 	
-	private DBIO db;
+	private DBIO db; // Database connection
 	private TableProperty tp;
 	
+	// Constructor
 	public Data() {
 		this.db = new DBIO();
 		this.tp = new TableProperty();
 	}
 	
+	// Create a new column with this name. If there is a column
+	// with this name, do-nothing.
 	public void addNewColumn(String colName) {
 		if (!isColumnExist(colName)) {
 			// Add new column 'data' table
@@ -42,6 +53,8 @@ public class Data {
 		}
 	}	
 	
+	// Drop a column with this name. If no such a column exsit,
+	// do-nothing.
 	public void dropColumn(String colName) {
 		if (isColumnExist(colName)) {
 			// Drop from 'data' table
@@ -85,7 +98,7 @@ public class Data {
 		return db.listColumns(tempColOrder, false);
 	}
 	
-	
+	// Check if such a column exist?
 	public boolean isColumnExist(String colName) {
 		// Get database
 		SQLiteDatabase con = db.getConn();
@@ -107,6 +120,7 @@ public class Data {
 		return false;
 	}
 	
+	// Add new row with the specified information.
 	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
 		SQLiteDatabase con = db.getConn();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);

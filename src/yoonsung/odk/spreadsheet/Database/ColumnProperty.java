@@ -5,11 +5,21 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+/*
+ * Database object that allows users to set and 
+ * get column properties from the database.
+ * To this to work, you must have a table for the
+ * column property.
+ * 
+ * @Author : YoonSung Hong (hys235@cs.washington.edu)
+ */
 public class ColumnProperty {
 
-	// Column names in the database
+	// Table Name
 	public static final String COLUMN_PROPERTY = "colProperty";
-	public static final String COLUMN_PROPERTY_NAME = "colName";
+	
+	// Column Names
+	public static final String COLUMN_PROPERTY_NAME = "colName"; 
 	public static final String COLUMN_PROPERTY_ABRV = "abreviation";
 	public static final String COLUMN_PROPERTY_TYPE = "type";
 	public static final String COLUMN_PROPERTY_SMSIN = "SMSIN";
@@ -119,6 +129,7 @@ public class ColumnProperty {
     	return null;
     }
 	
+    // Set a new value on this column property.
     private void setProperty(String colName, String propertyType, String propertyValue) {
         SQLiteDatabase con = db.getConn();
     	
@@ -148,6 +159,7 @@ public class ColumnProperty {
     	con.close();
     }
     
+    // Check with database if 'insert' is need for this column property.
     private boolean isInsert(String colName, String propertyType) {
         SQLiteDatabase con = db.getConn();
     	

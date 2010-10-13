@@ -31,8 +31,15 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/*
+ * Main acitivity that displays the spread sheet.
+ * 
+ * 
+ * @Author : YoonSung Hong (hys235@cs.washington.edu)
+ */
 public class SpreadSheet extends Activity {
 	
+	// Menu Ids
 	private static final int LOAD_NEW_FILE = 0;
 	private static final int COLUMN_MANAGER_ID = Menu.FIRST;
 	private static final int SAVE_NEW_ID = COLUMN_MANAGER_ID + 1;
@@ -40,14 +47,16 @@ public class SpreadSheet extends Activity {
 	private static final int SEND_SMS_ROW = SELECT_COLUMN + 1;
 	private static final int HISTORY_IN = SEND_SMS_ROW + 1;
 	
+	// Data structure for table/spread sheet
 	private Data data;
 	
+	// Last-touch by the user
 	private Table currentTable;
 	private int currentCellLoc;
 		
-	// INITIALIZE PRIVATE FIELDS AND FILL THE TABLE.
+	// Refresh data and draw a table on screen.
 	public void init() {
-		// Database object
+		// Data strucutre will represent the table/spread sheet
 		this.data = new Data();
 		
 		// Get table data
@@ -57,7 +66,7 @@ public class SpreadSheet extends Activity {
     	noIndexFill(currentTable);
 	}
 	
-    /** Called when the activity is first created. */
+    /* Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,35 +97,33 @@ public class SpreadSheet extends Activity {
      
     }
     
-    
+    /* Get back to the main activity */
     @Override
     public void onResume() {
     	super.onResume();
+    	
+    	// Refresh data table & re-draw
     	init();
     }
     
-    /*
-     * ACCEPT STR AND CREATE NEW CELL WITH STR.
-     * RETURNS THE NEWLY CREATED CELL(TEXTVIEW).
-     */
+   
+    // Create a cell with this value.
     private TextView createCell(String str) {
-    	// CREATE A CELL.
+    	// Create a cell
     	TextView cell = new TextView(this);
-    	//cell.setBackgroundResource(android.R.drawable.editbox_dropdown_dark_frame);
+    	
+    	// Cell configurations
     	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
     	cell.setText(str);
     	cell.setTextColor(getResources().getColor(R.color.black));
     	cell.setPadding(5, 5, 5, 5);
     	cell.setClickable(true);
     	
-    	// ONCLICK LISTENER.
+    	// Reaction when the cell is clicked by users
         cell.setOnClickListener(new View.OnClickListener() {
-			
-        	// BRING SELECTED CELL CONTENT TO EDITTEXT SO THAT 
-        	// IT CAN BE EDITED. 
 			@Override
 			public void onClick(View v) {
-				// GET THE CONTENT OF THIS CELL. 
+				// Get the content of the cell
 				TextView tv = (TextView) v;
 				CharSequence selected_text = tv.getText();
 				
@@ -124,25 +131,26 @@ public class SpreadSheet extends Activity {
 				TextView led = (TextView)findViewById(R.id.led);
 				led.setText(Integer.toString(tv.getId()));
 			
-				// REGISTER THIS CELL AS THE CURRENT.
+				// Register current cell location
 				currentCellLoc = tv.getId();
 				
-				// BRING THE CONTENT OF THE CELL TO EDITTEXT.
+				// Allow users to edit on this cell
 				EditText box = (EditText)findViewById(R.id.edit_box);
 				box.setText(selected_text);
 				
 			}
 		});
  
-        // CONTEXT MENU
+        // Menu options that ecah cell will have.
         cell.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
-			
 			@Override
 			public void onCreateContextMenu(ContextMenu menu, View v,
 					ContextMenuInfo menuInfo) {
-				// CONTEXT MENU
+				// Update current cell location
 				TextView tv = (TextView) v;
 				currentCellLoc = tv.getId();
+				
+				// Options on this cell
 				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
 				menu.add(0, SEND_SMS_ROW, 0, "Send SMS On This Row");
 				menu.add(0, HISTORY_IN, 0, "History in");
@@ -152,20 +160,23 @@ public class SpreadSheet extends Activity {
         return cell;
     }
    
+    // Create an index cell that will be placed on left-most column.
     private TextView createIndexCell(String str) {
-    	// CREATE A CELL.
+    	// Create a cell
     	TextView cell = new TextView(this);
-    	cell.setBackgroundColor(getResources().getColor(R.color.Beige));
     	cell.setText(str);
+    	
+    	// Configurations
+    	cell.setBackgroundColor(getResources().getColor(R.color.Beige));
     	cell.setTextColor(getResources().getColor(R.color.black));
     	cell.setPadding(5, 5, 5, 5);
     	cell.setClickable(true);
     	
-    	// SET LONG CLICK LISTENER - REMOVE INDEX COLUMN
+    	// When any index cell is long clicked, remove the index column.
     	cell.setOnLongClickListener(new View.OnLongClickListener() {
-			
 			@Override
 			public boolean onLongClick(View v) {
+				// U
 				currentTable = data.getTable();
 				noIndexFill(currentTable);
 				return true;
@@ -177,13 +188,9 @@ public class SpreadSheet extends Activity {
     
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
-    	//Vector sheet = excelObj.read();
+    	
     	switch(item.getItemId()) {
-	    case SELECT_COLUMN:
-	    	// TEMP
-			TextView led = (TextView)findViewById(R.id.led);
-			led.setText("column selected");
-			
+	    case SELECT_COLUMN:	// Set this column as an index column
 			// Get index column content
 			currentTable = data.getTable();
 			ArrayList<String> indexCol = currentTable.getCol(currentTable.getColNum(currentCellLoc));
@@ -197,10 +204,11 @@ public class SpreadSheet extends Activity {
 			// Fill index table and data table
 			withIndexFill(currentTable, indexTable);
 			return true;
-	    case SEND_SMS_ROW:
-	    	// Get row
+	    case SEND_SMS_ROW: // Send SMS on this row
+	    	// Get the current row
 	    	ArrayList row = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
 	    	
+	    	// Encode the row information into a string
 	    	String content = "";
 	    	for (int i = 0; i < row.size(); i++) {
 	    		content += row.get(i) + " ";
@@ -210,7 +218,7 @@ public class SpreadSheet extends Activity {
 	    	//sender.sendSMS("2062614018", content);
 	    	sendSMS("2062614018", content);
 	    	return true;
-	    case HISTORY_IN:
+	    case HISTORY_IN: // Draw new table on this history
 	    	String selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
 	    	String selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
