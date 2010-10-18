@@ -40,7 +40,7 @@ public class Data {
 		if (!isColumnExist(colName)) {
 			// Add new column 'data' table
 			SQLiteDatabase con = db.getConn();
-			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(DATA, false) 
+			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(DATA, false, null) 
 						+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
 			con.close();
 			
@@ -95,14 +95,14 @@ public class Data {
 		ArrayList<String> tempColOrder = tp.getColOrderArrayList();
 		tempColOrder.remove(colName);
 		
-		return db.listColumns(tempColOrder, false);
+		return db.listColumns(tempColOrder, false, null, null);
 	}
 	
 	// Check if such a column exist?
 	public boolean isColumnExist(String colName) {
 		// Get database
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(DATA, false), null);
+		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(DATA, false, null), null);
 		
 		// Check if such a column exist?
 		for (int i = 0; i < cs.getColumnCount(); i++) {
@@ -135,7 +135,7 @@ public class Data {
 	
 	public void removeRow(String rowID) {
 		SQLiteDatabase con = db.getConn();
-		con.delete(DATA, db.toSafeSqlColumn(DATA_ROWID, false) + " = " + rowID, null);
+		con.delete(DATA, db.toSafeSqlColumn(DATA_ROWID, false, null) + " = " + rowID, null);
 		con.close();
 	}
 	 
@@ -146,7 +146,7 @@ public class Data {
 	
 	public Table getTable(String whereCol, String whereArg) {
 		// Into-History
-		String whereClause = db.toSafeSqlColumn(whereCol, false) + " = " + db.toSafeSqlString(whereArg);
+		String whereClause = db.toSafeSqlColumn(whereCol, false, null) + " = " + db.toSafeSqlString(whereArg);
 		return loadTable(false, tp.getColOrderArrayList(), null, tp.getSortBy(), whereClause);
 	}
 	
@@ -204,27 +204,26 @@ public class Data {
 	{
 		// No columns to visualize
 		if (colOrder.size() == 0) {
-			return "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true)
-					+ " FROM " + db.toSafeSqlColumn(DATA, false) + " ";
+			return "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true, null)
+					+ " FROM " + db.toSafeSqlColumn(DATA, false, null) + " ";
 		}
 		
-		// Select statement
-		String result = "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true) + ", ";
-		
-		// Columns & table names
-		result += db.listColumns(colOrder, true);
-		result += " FROM " + db.toSafeSqlColumn(DATA, false) + " ";
-		
-		// Type of Table (Main vs Into-History)
+		// Select statement with ROWID
+		String result = "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true, null) + ", ";
+	
 		if (isMainTable) {
 			// Main Table
 			if (prime != null && prime.trim().length() != 0) 
-				result += " GROUP BY " + db.toSafeSqlColumn(prime, false) 
-					    + " ORDER BY " + db.toSafeSqlColumn(prime, false) + " ASC";
+				result += db.listColumns(colOrder, true, "MAX", sortBy)
+						+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
+				        + " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
+						+ " ORDER BY " + db.toSafeSqlColumn(prime, false, null) + " ASC";
 		} else {
 			// Into-History
-			result += " WHERE " + whereClause;
-			result += " ORDER BY " + db.toSafeSqlColumn(sortBy, false) + " DESC";
+			result += db.listColumns(colOrder, true, null, null)
+					+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
+					+ " WHERE " + whereClause
+					+ " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";
 		}
 		
 		Log.e("Table Query", result);

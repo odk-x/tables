@@ -6,15 +6,10 @@ import java.util.Arrays;
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.Data;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
+import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -29,7 +24,6 @@ import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /*
  * Main acitivity that displays the spread sheet.
@@ -42,8 +36,9 @@ public class SpreadSheet extends Activity {
 	// Menu Ids
 	private static final int LOAD_NEW_FILE = 0;
 	private static final int COLUMN_MANAGER_ID = Menu.FIRST;
-	private static final int SAVE_NEW_ID = COLUMN_MANAGER_ID + 1;
-	private static final int SELECT_COLUMN = SAVE_NEW_ID + 1;
+	private static final int GRAPH_ID = COLUMN_MANAGER_ID + 1;
+	private static final int YOONSLIST_PLUGIN_ID = GRAPH_ID + 1;
+	private static final int SELECT_COLUMN = YOONSLIST_PLUGIN_ID + 1;
 	private static final int SEND_SMS_ROW = SELECT_COLUMN + 1;
 	private static final int HISTORY_IN = SEND_SMS_ROW + 1;
 	
@@ -53,15 +48,21 @@ public class SpreadSheet extends Activity {
 	// Last-touch by the user
 	private Table currentTable;
 	private int currentCellLoc;
-		
+	
+	// SMS Sender Object
+	private SMSSender SMSSender;
+	
 	// Refresh data and draw a table on screen.
 	public void init() {
+		// SMS Sender object
+		this.SMSSender = new SMSSender();
+		
 		// Data strucutre will represent the table/spread sheet
 		this.data = new Data();
 		
 		// Get table data
 		this.currentTable = data.getTable();
-		    	
+	
     	// Draw the table
     	noIndexFill(currentTable);
 	}
@@ -214,14 +215,16 @@ public class SpreadSheet extends Activity {
 	    		content += row.get(i) + " ";
 	    	}
 	    	
-	    	//SmsSender sender = new SmsSender();
-	    	//sender.sendSMS("2062614018", content);
-	    	sendSMS("2062614018", content);
+	    	SMSSender.sendSMS("2062614018", content);
 	    	return true;
 	    case HISTORY_IN: // Draw new table on this history
 	    	String selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
 	    	String selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
+	    	
+	    	TextView led = (TextView) findViewById(R.id.led);
+	    	led.setText("Where " + selectedColName + " = " + selectedValue);
+	    	
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
 	    	return true;
@@ -234,7 +237,8 @@ public class SpreadSheet extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         menu.add(0, COLUMN_MANAGER_ID, 0, "Column Manager");
-        menu.add(0, SAVE_NEW_ID, 1, "Save");
+        menu.add(0, GRAPH_ID, 1, "Graph");
+        menu.add(0, YOONSLIST_PLUGIN_ID, 2, "Yoonslist");
         return true;
     }
     
@@ -251,8 +255,10 @@ public class SpreadSheet extends Activity {
         	startActivityForResult(i, LOAD_NEW_FILE);
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
-        case SAVE_NEW_ID:
+        case GRAPH_ID:
             return true;
+        case YOONSLIST_PLUGIN_ID:
+        	return true;
         }
         
         return super.onMenuItemSelected(featureId, item);
@@ -262,26 +268,6 @@ public class SpreadSheet extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        /*
-        // MESSAGES FROM FILE MANAGER
-        Bundle extras = intent.getExtras();
-
-        // HANLDLES LOAIDING A NEW FILE.
-        switch(requestCode) {
-        // CALL BACK FOR LOAD_NEW_FILE.
-        case LOAD_NEW_FILE:
-        	// Load table from DB
-        	DBIO dbio = new DBIO();
-        	Table table = dbio.DBToTable(1);
-        	
-        	// Debug
-        	Log.d("TABLE", table.getTableData().toString());
-        	
-        	// Draw the table
-        	noIndexFill(table);  	
-        	break;
-        }
-        */
     }
 
     
@@ -386,7 +372,10 @@ public class SpreadSheet extends Activity {
         return tableLayout;
     }
     
-  //---sends an SMS message to another device---
+    /*
+     * Leave it here for now.
+     * 
+    //---sends an SMS message to another device---
     private void sendSMS(String phoneNumber, String message)
     {        
         String SENT = "SMS_SENT";
@@ -449,5 +438,5 @@ public class SpreadSheet extends Activity {
         SmsManager sms = SmsManager.getDefault();
         sms.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);        
     }
-    
+    */
 }

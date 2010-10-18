@@ -111,8 +111,8 @@ public class ColumnProperty {
     	SQLiteDatabase con = db.getConn();
     	
     	//String[] spec = {colName};
-    	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false) 
-    							 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false) 
+    	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
+    							 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
     							 +  " = " + db.toSafeSqlString(colName), null);
     	if (cs != null) {
     		int colIndex = cs.getColumnIndex(propertyType);
@@ -146,10 +146,10 @@ public class ColumnProperty {
         } else {
         	// UPDATE
         	try {
-        		con.execSQL("UPDATE " + db.toSafeSqlColumn(COLUMN_PROPERTY,false) 
-        					+ " SET " +  db.toSafeSqlColumn(propertyType,false) 
+        		con.execSQL("UPDATE " + db.toSafeSqlColumn(COLUMN_PROPERTY,false, null) 
+        					+ " SET " +  db.toSafeSqlColumn(propertyType,false, null) 
         					+ " = " + db.toSafeSqlString(propertyValue) 
-        					+ " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME,false) 
+        					+ " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
         					+ " = " + db.toSafeSqlString(colName));
         	} catch (Exception e) {
         		Log.d("ColumnProperty", "Update Failed: " + e.getMessage());
@@ -165,8 +165,8 @@ public class ColumnProperty {
     	
         int count = 0;
         try {
-        	String query = "SELECT * FROM " + db.toSafeSqlColumn(COLUMN_PROPERTY, false) 
-        				 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false) 
+        	String query = "SELECT * FROM " + db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
+        				 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
         				 + " = " + db.toSafeSqlString(colName);
         	Cursor cs = con.rawQuery(query, null);
         	count = cs.getCount();

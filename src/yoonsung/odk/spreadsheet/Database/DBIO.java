@@ -46,35 +46,33 @@ public class DBIO {
 		return true;
 	}
 	
-	public String toSafeSqlColumn(String input, boolean as) {
-		if (as)
+	public String toSafeSqlColumn(String input, boolean as, String func) {
+		if (as && func != null)
+			return func + "(" + input + ")" + " AS `" + input + "`"; 
+		else if (as)
 			return "`" + input + "` AS `" + input + "`";
 		else 
 			return "`" + input + "`";
 	}
 	
-	public String listColumns(ArrayList<String> columns, boolean as) {
+	public String listColumns(ArrayList<String> columns, boolean as, String func, String funcCol) {
 		String result = "";
 		for (int i = 0; i < columns.size(); i++) {
-			if (i == 0)
-				result += " " + toSafeSqlColumn(columns.get(i), as) + " ";
+			String col = columns.get(i);
+			// First & End
+			if (i == 0) 
+				result += " " + listColumnWithFunc(col, as, func, funcCol) + " ";
 			else 
-				result += "," + toSafeSqlColumn(columns.get(i), as) + " ";
+				result += ", " + listColumnWithFunc(col, as, func, funcCol) + " ";
 		}
 		return result;
 	}
 	
-	// changeColName(original, new)
-	// changeColType(colName, type)
-	// changeColPrime(colName, prime)
-	// changeColSortBy(colName, sortBy)
-	// changeColFooterMode(colName, footerMode)
-	
-	// updateRow(rowID, array of stuffs)
-	// createRow(rowID, array of stuffs)
-	// deleteRow(rowID)
-	// updateCol(colName, properties)
-	// createCol(colName, properties)
-	// deleteCol(colName)
-	
+	// Add Function
+	private String listColumnWithFunc(String col, boolean as, String func, String funCol) {
+		if (col.equals(funCol)) 
+			return toSafeSqlColumn(col, as, func);
+		else
+			return toSafeSqlColumn(col, as, null);
+	}
 }

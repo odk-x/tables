@@ -53,7 +53,7 @@ public class TableProperty {
 	
 	protected String getProperty(String colName) {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false), null);
+		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null), null);
 		String result = null;
 		if (cs != null) {
 			if (cs.moveToFirst()){
@@ -106,7 +106,7 @@ public class TableProperty {
 		
 	private boolean isInsert() {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false) 
+		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null) 
 								 + " WHERE rowid = 1", null);
 		int count = cs.getCount();
 		cs.close();
