@@ -71,29 +71,38 @@ containing a value of this type.
         public static final int cell9patch=0x7f020003;
         public static final int grabber=0x7f020004;
         public static final int icon=0x7f020005;
-        public static final int updownarrow=0x7f020006;
+        public static final int icon_past=0x7f020006;
+        public static final int previousicon=0x7f020007;
+        public static final int refreshicon=0x7f020008;
+        public static final int updownarrow=0x7f020009;
     }
     public static final class id {
-        public static final int LinearLayout01=0x7f070009;
-        public static final int add_column_button=0x7f070006;
+        public static final int LinearLayout01=0x7f07000c;
+        public static final int add_column_button=0x7f070009;
+        public static final int back=0x7f070011;
         public static final int column_manager_view=0x7f070005;
-        public static final int command=0x7f07000d;
-        public static final int edit_box=0x7f07000e;
-        public static final int enter=0x7f07000f;
-        public static final int file_manager_list=0x7f07000b;
-        public static final int file_manager_path=0x7f07000a;
+        public static final int command=0x7f070010;
+        public static final int edit_box=0x7f070013;
+        public static final int edit_button=0x7f070018;
+        public static final int enter=0x7f070014;
+        public static final int file_manager_list=0x7f07000e;
+        public static final int file_manager_path=0x7f07000d;
         public static final int fling=0x7f070001;
-        public static final int icon=0x7f070007;
-        public static final int label=0x7f070008;
-        public static final int led=0x7f070010;
-        public static final int mainLayout=0x7f070012;
+        public static final int icon=0x7f07000a;
+        public static final int label=0x7f07000b;
+        public static final int led=0x7f070015;
+        public static final int mainLayout=0x7f070017;
         public static final int none=0x7f070000;
-        public static final int precat=0x7f070013;
+        public static final int precat=0x7f070019;
+        public static final int prime_sort_table=0x7f070006;
+        public static final int prime_tv=0x7f070007;
+        public static final int refresh=0x7f070012;
         public static final int slide=0x7f070002;
         public static final int slideLeft=0x7f070004;
         public static final int slideRight=0x7f070003;
-        public static final int temp=0x7f070011;
-        public static final int widget50=0x7f07000c;
+        public static final int sortby_tv=0x7f070008;
+        public static final int temp=0x7f070016;
+        public static final int widget50=0x7f07000f;
     }
     public static final class layout {
         public static final int col_manager=0x7f030000;

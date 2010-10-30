@@ -4,5 +4,6 @@
 	<classpathentry kind="lib" path="lib/opencsv-2.2.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="/Users/yoonsung/Downloads/achartengine-0.5.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

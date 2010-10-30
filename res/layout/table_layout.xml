@@ -5,22 +5,33 @@ android:id="@+id/widget50"
 android:layout_width="fill_parent" 
 android:layout_height="fill_parent" 
 > 
-	<LinearLayout
+	<RelativeLayout
 		android:id="@+id/command"
-		android:orientation="horizontal"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" >
+		<ImageButton
+		android:id="@+id/back"
+		android:layout_width="35px"
+		android:layout_height="wrap_content"
+		android:src="@drawable/previousicon" />
+		<ImageButton
+		android:id="@+id/refresh"
+		android:layout_width="35px"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@+id/back"
+		android:src="@drawable/refreshicon" />
 		<EditText
 		android:id="@+id/edit_box"
-		android:layout_width="262px"
-		android:layout_height="wrap_content" ></EditText>
+		android:layout_width="190px"
+		android:layout_height="wrap_content" 
+		android:layout_toRightOf="@+id/refresh" />
 		<Button 
 		android:id="@+id/enter"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/edit_box"
+		android:layout_toRightOf="@+id/edit_box"
 		android:text="@string/button_enter" />
-	</LinearLayout>
+	</RelativeLayout>
 	
 	<TextView
 	android:id="@+id/led"

@@ -20,6 +20,8 @@
         </receiver>
 	<activity android:name=".Activity.ColumnManager"></activity>
 <activity android:name=".Activity.PropertyManager"></activity>
+<activity android:name=".Activity.LineActivity"></activity>
+<activity android:name=".Activity.BoxStemActivity"></activity>
 </application>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.SEND_SMS"></uses-permission>

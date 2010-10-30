@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
@@ -20,6 +21,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -34,13 +36,11 @@ import android.widget.TextView;
 public class SpreadSheet extends Activity {
 	
 	// Menu Ids
-	private static final int LOAD_NEW_FILE = 0;
-	private static final int COLUMN_MANAGER_ID = Menu.FIRST;
-	private static final int GRAPH_ID = COLUMN_MANAGER_ID + 1;
-	private static final int YOONSLIST_PLUGIN_ID = GRAPH_ID + 1;
-	private static final int SELECT_COLUMN = YOONSLIST_PLUGIN_ID + 1;
-	private static final int SEND_SMS_ROW = SELECT_COLUMN + 1;
-	private static final int HISTORY_IN = SEND_SMS_ROW + 1;
+	private static final int COLUMN_MANAGER_ID = 0;
+	private static final int GRAPH_ID = 1;
+	private static final int SELECT_COLUMN = 2;
+	private static final int SEND_SMS_ROW = 3;
+	private static final int HISTORY_IN = 4;
 	
 	// Data structure for table/spread sheet
 	private Data data;
@@ -49,11 +49,18 @@ public class SpreadSheet extends Activity {
 	private Table currentTable;
 	private int currentCellLoc;
 	
+	// View main or history-in
+	private boolean isMain;
+	private String selectedColName;
+	private String selectedValue;
+	
 	// SMS Sender Object
 	private SMSSender SMSSender;
 	
 	// Refresh data and draw a table on screen.
 	public void init() {
+		this.isMain = true;
+		
 		// SMS Sender object
 		this.SMSSender = new SMSSender();
 		
@@ -96,6 +103,38 @@ public class SpreadSheet extends Activity {
 			}
 		});
      
+        // Refresh button
+        ImageButton refresh = (ImageButton)findViewById(R.id.refresh);
+        refresh.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (isMain) {
+					currentTable = data.getTable();
+					noIndexFill(currentTable);
+				} else {
+					currentTable = data.getTable(selectedColName, selectedValue);
+			    	noIndexFill(currentTable);
+				}
+			}
+		});
+        
+        // Back button
+        ImageButton back = (ImageButton)findViewById(R.id.back);
+        back.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				isMain = true;
+				
+				// Get table data
+				currentTable = data.getTable();
+			
+		    	// Back to new table
+		    	noIndexFill(currentTable);
+			}
+		});
+        
     }
     
     /* Get back to the main activity */
@@ -218,8 +257,8 @@ public class SpreadSheet extends Activity {
 	    	SMSSender.sendSMS("2062614018", content);
 	    	return true;
 	    case HISTORY_IN: // Draw new table on this history
-	    	String selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
-	    	String selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
+	    	selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
+	    	selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
 	    	
 	    	TextView led = (TextView) findViewById(R.id.led);
@@ -227,6 +266,7 @@ public class SpreadSheet extends Activity {
 	    	
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
+	    	isMain = false;
 	    	return true;
 	    }
 	    return super.onContextItemSelected(item);
@@ -238,7 +278,6 @@ public class SpreadSheet extends Activity {
         super.onCreateOptionsMenu(menu);
         menu.add(0, COLUMN_MANAGER_ID, 0, "Column Manager");
         menu.add(0, GRAPH_ID, 1, "Graph");
-        menu.add(0, YOONSLIST_PLUGIN_ID, 2, "Yoonslist");
         return true;
     }
     
@@ -250,27 +289,103 @@ public class SpreadSheet extends Activity {
     	switch(item.getItemId()) {
         // OPEN NEW FILE THROUGH A FILE MANGER
         case COLUMN_MANAGER_ID:
-        	Intent i = new Intent(this, ColumnManager.class); 	
-        	//i.putStringArrayListExtra("colOrder", currentTableProperty.getColOrder());
-        	startActivityForResult(i, LOAD_NEW_FILE);
+        	Intent cm = new Intent(this, ColumnManager.class); 
+        	startActivity(cm);
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
         case GRAPH_ID:
+        	Intent g; 
+        	
+        	// +24 to 24
+        	ArrayList<String> temp = currentTable.getCol(currentTable.getColNum("temp"));
+        	ArrayList<Double> y = new ArrayList<Double>();
+        	ArrayList<String> yStr = new ArrayList<String>();
+        	for (int t = 0; t < temp.size(); t++) {
+        		String clean = temp.get(t).substring(1);
+        		y.add(Double.parseDouble(clean));
+        		yStr.add(clean);
+        	}
+        	
+        	if (isMain) {
+        		g = new Intent(this, BoxStemActivity.class);
+        		
+        		// Sample drawing for Fone Astra
+        		int arraySize = currentTable.getHeight();
+        		double[] minArr = new double[arraySize];
+        		double[] lowBoxArr = new double[arraySize];;
+        		double[] midArr = new double[arraySize];;
+        		double[] highBoxArr = new double[arraySize];;
+        		double[] maxArr = new double[arraySize];;
+        	
+        		// for each row / prime. Ex) for each refrig
+        		for (int i = 0; i < currentTable.getHeight(); i++) {
+        			// x - axis
+        			g.putExtra("x", currentTable.getCol(0));
+        				
+        			// Min
+        			double min = 0;
+        			for (int minc = 0; minc < y.size(); minc++) {
+        				if (minc == 0) {
+        					min = y.get(minc);
+        				} else {
+        					double current = y.get(minc);
+        					if (current < min)
+        						min = current;
+        				}	
+        			}
+        			
+        			// Mid / Average
+        			double sum = 0;
+        			for (int c = 0; c < y.size(); c++) {
+        				sum += y.get(i);
+        			}
+        			double mid = sum / y.size();
+        			
+        			// Max
+        			double max = 0;
+        			for (int minc = 0; minc < y.size(); minc++) {
+        				if (minc == 0) {
+        					max = y.get(minc);
+        				} else {
+        					double current = y.get(minc);
+        					if (current > max)
+        						max = current;
+        				}	
+        			}
+        			
+        			double lowBox = (min + mid) / 2;
+        			double highBox = (max + mid) / 2;
+        			
+        			// Add to arrays
+        			minArr[i] = min;
+        			lowBoxArr[i] = lowBox;
+        			midArr[i] = mid;
+        			highBoxArr[i] = highBox;
+        			maxArr[i] = max;
+        		}
+        		
+        		g.putExtra("min", minArr);
+        		g.putExtra("low", lowBoxArr);
+    			g.putExtra("mid", midArr);
+    			g.putExtra("high", highBoxArr);
+    			g.putExtra("max", maxArr);
+        	} else { 
+        		g = new Intent(this, LineActivity.class); 
+        		// Sample drawing for Fone Astra
+        		ArrayList<String> x = currentTable.getCol(currentTable.getColNum("_timestamp"));
+        		Collections.reverse(x);
+        		Collections.reverse(yStr);
+        		g.putExtra("x", x);
+        		g.putExtra("y", yStr);
+        	}
+        	
+        	startActivity(g);
             return true;
-        case YOONSLIST_PLUGIN_ID:
-        	return true;
         }
         
         return super.onMenuItemSelected(featureId, item);
     }
-    
-    
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-    }
-
-    
+       
     private void noIndexFill(Table table) {
     	// EMPTY THE TABLES
     	TableRow mainLayout = (TableRow)findViewById(R.id.mainLayout);
@@ -343,7 +458,7 @@ public class SpreadSheet extends Activity {
     	// Table Data   	
     	for (int r = 0; r < table.getHeight(); r++) {
     		TableRow row = new TableRow(this);
-    		Log.d("Row", table.getRow(r).toString());
+    		//Log.d("Row", table.getRow(r).toString());
     		for (int c = 0; c < table.getWidth(); c++) {
     			TextView tv;
 	        	if (isIndex) {

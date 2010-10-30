@@ -2,6 +2,8 @@ package yoonsung.odk.spreadsheet.SMS;
 
 import java.util.HashMap;
 
+import android.util.Log;
+
 public class SMSConverter {
 		
 	public HashMap<String, String> parseSMS(String sms) {
@@ -14,16 +16,22 @@ public class SMSConverter {
 		// Parse into column names and values
 		int index = 0;
 		while(index < tokens.length && tokens[index].startsWith("+")) { 
-			String key = tokens[index];
+			int keyIndex = index;
+			String key = tokens[keyIndex];
 			String val = "";
 			int next = index + 1;
-			while (next < tokens.length && !tokens[next].startsWith("+")) {
+			while (next < tokens.length 
+					&& ( tokens[keyIndex+1].startsWith("+") 
+							|| !tokens[next].startsWith("+"))
+			) {
 				val += tokens[next].trim() + " ";
 				next++;
 			}
 			result.put(key.substring(1, key.length()), val);
 			index = next;
 		}
+		
+		Log.e("hash", result.toString());
 		
 		return result;
 	}

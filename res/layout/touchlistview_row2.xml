@@ -11,15 +11,30 @@
         android:layout_height="wrap_content"
 		android:src="@drawable/arrowsign"
 		/>
-	<TextView android:id="@+id/label"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:paddingLeft="9dip"
-        android:layout_height="wrap_content"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_toRightOf="@id/icon"
+	<TableLayout
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" 
+		android:layout_toRightOf="@+id/icon"
+		android:stretchColumns="1" >
+		<TableRow>
+			<TextView 
+				android:id="@+id/label"
+        		android:textAppearance="?android:attr/textAppearanceMedium"
+       			android:layout_width="wrap_content"
+        		android:paddingLeft="9dip"
+        		android:layout_height="wrap_content"
+        		android:layout_alignWithParentIfMissing="true"
 				android:layout_centerVertical="true"
-        android:ellipsize="marquee"
-        android:singleLine="true"
-		/>
+        		android:ellipsize="marquee"
+        		android:singleLine="true" 
+        		android:layout_column="1" />
+			<TextView 
+				android:id="@+id/edit_button"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:padding="3dip"
+				android:gravity="right"
+				android:text="Edit" />
+		</TableRow>
+	</TableLayout>
 </RelativeLayout>

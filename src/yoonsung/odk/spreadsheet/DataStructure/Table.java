@@ -94,4 +94,13 @@ public class Table {
 		return header.get(colNum);
 	}
 	
+	public int getColNum(String colName) {
+		int result = -1;
+		for (int i = 0; i < header.size(); i++){
+			if (header.get(i).equals(colName)) {
+				result = i;
+			}
+		}
+		return result;
+	}
 }

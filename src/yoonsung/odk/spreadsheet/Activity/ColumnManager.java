@@ -22,7 +22,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 /*
  * Activity that allows users to change table properties 
@@ -50,6 +53,16 @@ public class ColumnManager extends ListActivity {
 		this.tp = new TableProperty();
 		this.data = new Data();
 		this.colOrder = tp.getColOrderArrayList(); 
+		
+		updatePrimeOrderbyInfo();
+	}
+	
+	private void updatePrimeOrderbyInfo() {
+		// Set prime and sort by information
+		TextView primeTV = (TextView)findViewById(R.id.prime_tv);
+		primeTV.setText(tp.getPrime());
+		TextView sortbyTV = (TextView)findViewById(R.id.sortby_tv);
+		sortbyTV.setText(tp.getSortBy());
 	}
 	
 	@Override
@@ -65,7 +78,6 @@ public class ColumnManager extends ListActivity {
 				
 		// Drag & Drop List
 		createDragAndDropList();
-		
 	}
 	
 	@Override
@@ -141,18 +153,6 @@ public class ColumnManager extends ListActivity {
 			}
 		});
 		
-		// Context menu for items in Drag & Drop list.
-		tlv.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {	
-			@Override
-			public void onCreateContextMenu(ContextMenu menu, View v,
-					ContextMenuInfo menuInfo) {
-				// Options for each item on the list					
-				menu.add(0, SET_AS_PRIME, 0, "Set As Prime");
-				menu.add(0, SET_AS_ORDER_BY, 0, "Set AS Order By");
-				menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
-			}
-		});
-		
 	}
 	
 	// Context menu reponses and actions.
@@ -162,9 +162,11 @@ public class ColumnManager extends ListActivity {
 		switch(item.getItemId()) {
 	    case SET_AS_PRIME:
 	    	tp.setPrime(currentCol); 
+	    	updatePrimeOrderbyInfo();
 	    	return true;
 	    case SET_AS_ORDER_BY:
 	    	tp.setSortBy(currentCol); 
+	    	updatePrimeOrderbyInfo();
 	    	return true;	
 	    case REMOVE_THIS_COLUMN:
 	    	// Drop the column from 'data' table
@@ -273,23 +275,30 @@ public class ColumnManager extends ListActivity {
 			
 			// Current Position in the List
 			final int currentPosition = position;
-				
-			// TextView in the Row selected
-			TextView label = (TextView)row.findViewById(R.id.label);
-			label.setOnLongClickListener(new View.OnLongClickListener() {
-				
-				@Override
-				public boolean onLongClick(View v) {
-					// TODO Auto-generated method stub
-					currentCol = colOrder.get(currentPosition);
-					return false;
-				}
-			});
 			
+			// Register name of colun at each row in the list view
+			TextView label = (TextView)row.findViewById(R.id.label);		
 			label.setText(colOrder.get(position));
 			
+			// Edit column properties
+			TextView edit = (TextView)row.findViewById(R.id.edit_button);
+			edit.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {	
+				@Override
+				public void onCreateContextMenu(ContextMenu menu, View v,
+						ContextMenuInfo menuInfo) {
+					
+					// Current column selected
+					currentCol = colOrder.get(currentPosition);
+					
+					// Options for each item on the list					
+					menu.add(0, SET_AS_PRIME, 0, "Set As Prime");
+					menu.add(0, SET_AS_ORDER_BY, 0, "Set AS Order By");
+					menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
+				}
+			});
+				
 			return(row);
 		}
 	}
-	
+
 }

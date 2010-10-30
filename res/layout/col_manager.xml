@@ -5,13 +5,44 @@
 	android:layout_width="fill_parent" 
 	android:layout_height="wrap_content" >
 
+	<TableLayout
+		android:id="@+id/prime_sort_table"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" 
+		android:stretchColumns="1" >
+		<TableRow>
+			<TextView
+				android:layout_column="1"
+				android:padding="3dip"
+				android:text = "Prime Column :" />
+			<TextView 
+				android:id = "@+id/prime_tv"
+				android:padding="3dip"
+				android:gravity = "right"
+				android:text = "None" />
+		</TableRow>
+		<TableRow>
+			<TextView
+				android:layout_column="1"
+				android:padding="3dip"
+				android:text = "Order by :" />
+			<TextView 
+				android:id = "@+id/sortby_tv"
+				android:padding="3dip"
+				android:gravity = "right"
+				android:text = "None" />
+		</TableRow>
+	</TableLayout>
+	
 	<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/add_column_button"
     	android:layout_width="fill_parent"
     	android:layout_height="64dip"
     	android:background="#C0C0C0"
     	android:gravity="center_vertical"
-    	android:ignoreGravity="@+id/icon">
+    	android:ignoreGravity="@+id/icon"
+    	android:layout_below="@+id/prime_sort_table"
+    	>
     	<ImageView android:id="@+id/icon"
 	        android:paddingLeft="9dip"
 	        android:layout_centerVertical="true"

@@ -4,6 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
@@ -41,9 +43,6 @@ public class SmsReceiver extends BroadcastReceiver {
         if (data.size() > 0) {
         	// Add to DB
         	addNewData(data, getSMSFrom(bundle), getSMSTimestamp(bundle));
-        	
-        	// Refresh screen if needed
-	        refreshSpreadSheetScreen(context);
         }
     }
     
@@ -51,7 +50,11 @@ public class SmsReceiver extends BroadcastReceiver {
 		// Prepare content values
 		ContentValues cv = new ContentValues();
 		for (String key : data.keySet()) {
-			cv.put(key, data.get(key).trim());
+			String val = data.get(key).trim();
+			if (isNumeric(val)) 
+				cv.put(key, Integer.parseInt(val));
+			else
+				cv.put(key, val);
 		}
 		
 		// Add a new row
@@ -63,6 +66,14 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 	}
 	
+	private boolean isNumeric(String aStringValue) {
+		Pattern pattern = Pattern.compile( "\\d+" );
+
+		Matcher matcher = pattern.matcher(aStringValue);
+		return matcher.matches();
+	}
+	
+	/* deprecated */
 	private void refreshSpreadSheetScreen(Context context) {
 		// Check if the application is on the top level task
         ActivityManager  am = (ActivityManager) context.getSystemService(context.ACTIVITY_SERVICE);
