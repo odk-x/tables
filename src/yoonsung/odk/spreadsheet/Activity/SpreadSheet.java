@@ -9,6 +9,7 @@ import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.Data;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -65,7 +66,7 @@ public class SpreadSheet extends Activity {
 		this.SMSSender = new SMSSender();
 		
 		// Data strucutre will represent the table/spread sheet
-		this.data = new Data();
+		this.data = new Data(this);
 		
 		// Get table data
 		this.currentTable = data.getTable();
@@ -94,12 +95,18 @@ public class SpreadSheet extends Activity {
 				// Get the input on EditText
 				EditText edit = (EditText)findViewById(R.id.edit_box);
 				String currentStr = edit.getText().toString();
-			
+				String currentCol = currentTable.getColName(currentTable.getColNum(currentCellLoc));
+				
 				// Update the original cell's content
 				TextView currentCell = (TextView)findViewById(currentCellLoc);
 				currentCell.setText(currentStr);
 				
 				// Update changes in DB
+				int rowNum = currentTable.getRowNum(currentCellLoc)-1;
+				int rowID = currentTable.getTableRowID(rowNum);
+				ContentValues values = new ContentValues();
+				values.put(currentCol, currentStr);
+				data.updateRow(values, rowID);
 			}
 		});
      
@@ -289,6 +296,7 @@ public class SpreadSheet extends Activity {
     	switch(item.getItemId()) {
         // OPEN NEW FILE THROUGH A FILE MANGER
         case COLUMN_MANAGER_ID:
+        	
         	Intent cm = new Intent(this, ColumnManager.class); 
         	startActivity(cm);
         	return true;

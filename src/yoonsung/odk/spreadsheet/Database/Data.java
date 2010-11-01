@@ -3,7 +3,9 @@ package yoonsung.odk.spreadsheet.Database;
 import java.util.ArrayList;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.Database.DBIO.DatabaseHelper;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -28,10 +30,13 @@ public class Data {
 	private DBIO db; // Database connection
 	private TableProperty tp;
 	
+	private final Context myContext;
+	
 	// Constructor
-	public Data() {
-		this.db = new DBIO();
-		this.tp = new TableProperty();
+	public Data(Context context) {
+		this.db = new DBIO(context);
+		this.tp = new TableProperty(context);
+		this.myContext = context;
 	}
 	
 	// Create a new column with this name. If there is a column
@@ -39,7 +44,8 @@ public class Data {
 	public void addNewColumn(String colName) {
 		if (!isColumnExist(colName)) {
 			// Add new column 'data' table
-			SQLiteDatabase con = db.getConn();
+			DatabaseHelper dh = db.getConn();
+			SQLiteDatabase con = dh.getWritableDatabase();
 			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(DATA, false, null) 
 						+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
 			con.close();
@@ -63,7 +69,8 @@ public class Data {
 			String SelColumns = "rowID, " + dropAColumnHelper(colName);
 			String InsColumns = "rowID INTEGER PRIMARY KEY ASC, " + dropAColumnHelper(colName);
 			
-			SQLiteDatabase con = db.getConn();
+			DatabaseHelper dh = db.getConn();
+			SQLiteDatabase con = dh.getWritableDatabase();
 			try {
 				con.beginTransaction();
 				con.execSQL("CREATE TEMPORARY TABLE " + backupTable + "(" + InsColumns + ")");
@@ -101,7 +108,8 @@ public class Data {
 	// Check if such a column exist?
 	public boolean isColumnExist(String colName) {
 		// Get database
-		SQLiteDatabase con = db.getConn();
+		DatabaseHelper dh = db.getConn();
+		SQLiteDatabase con = dh.getReadableDatabase();
 		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(DATA, false, null), null);
 		
 		// Check if such a column exist?
@@ -122,7 +130,8 @@ public class Data {
 	
 	// Add new row with the specified information.
 	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
-		SQLiteDatabase con = db.getConn();
+		DatabaseHelper dh = db.getConn();
+		SQLiteDatabase con = dh.getWritableDatabase();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
 		values.put(DATA_TIMESTAMP, timeStamp);
 		try {
@@ -133,8 +142,16 @@ public class Data {
 		con.close();
 	}
 	
+	public void updateRow(ContentValues values, int rowID) {
+		DatabaseHelper dh = db.getConn();
+		SQLiteDatabase con = dh.getWritableDatabase();
+		con.update(DATA, values, DATA_ROWID + "=" + rowID, null);
+		con.close();
+	}
+	
 	public void removeRow(String rowID) {
-		SQLiteDatabase con = db.getConn();
+		DatabaseHelper dh = db.getConn();
+		SQLiteDatabase con = dh.getWritableDatabase();
 		con.delete(DATA, db.toSafeSqlColumn(DATA_ROWID, false, null) + " = " + rowID, null);
 		con.close();
 	}
@@ -157,7 +174,8 @@ public class Data {
 							String whereClause) 
 	{
 		// Connect to database
-		SQLiteDatabase db = new DBIO().getConn();
+		DatabaseHelper dh = db.getConn();
+		SQLiteDatabase db = dh.getReadableDatabase();
 		
 		// Select Data Table
 		Cursor cs = db.rawQuery(prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause), null);
@@ -201,10 +219,10 @@ public class Data {
 										String prime, 
 										String sortBy,
 										String whereClause) 
-	{
+	{	
 		// No columns to visualize
 		if (colOrder.size() == 0) {
-			return "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true, null)
+			return "SELECT `" + DATA_ROWID + "` AS '" + DATA_ROWID + "'"
 					+ " FROM " + db.toSafeSqlColumn(DATA, false, null) + " ";
 		}
 		
@@ -218,12 +236,16 @@ public class Data {
 						+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
 				        + " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
 						+ " ORDER BY " + db.toSafeSqlColumn(prime, false, null) + " ASC";
+			else 
+				result += db.listColumns(colOrder, true, null, null) 
+						+ " FROM " + db.toSafeSqlColumn(DATA, false, null);
 		} else {
 			// Into-History
 			result += db.listColumns(colOrder, true, null, null)
 					+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
-					+ " WHERE " + whereClause
-					+ " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";
+					+ " WHERE " + whereClause;
+			if (sortBy != null && sortBy.trim().length() != 0)
+					result += " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";
 		}
 		
 		Log.e("Table Query", result);

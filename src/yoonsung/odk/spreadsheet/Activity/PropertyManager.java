@@ -27,7 +27,7 @@ public class PropertyManager extends PreferenceActivity {
 		
 		// Initialize private fields
 		private void init() {
-			this.cp = new ColumnProperty();
+			this.cp = new ColumnProperty(this);
 		}
 		
 		@Override

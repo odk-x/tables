@@ -1,6 +1,8 @@
 package yoonsung.odk.spreadsheet.Database;
 
+import yoonsung.odk.spreadsheet.Database.DBIO.DatabaseHelper;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -30,12 +32,35 @@ public class ColumnProperty {
 	private DBIO db;
 	
 	// Constructor
-	public ColumnProperty() {
-		this.db = new DBIO();
+	public ColumnProperty(Context context) {
+		this.db = new DBIO(context);
 	}
 
 	public String getName(String colName) {
 		return getProperty(colName, COLUMN_PROPERTY_NAME);
+	}
+	
+	public String getNameByAbrv(String abrv) {
+		DatabaseHelper dh = db.getConn();
+    	SQLiteDatabase con = dh.getReadableDatabase();
+    	
+    	//String[] spec = {colName};
+    	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
+    							 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_ABRV, false, null) 
+    							 +  " = " + db.toSafeSqlString(abrv), null);
+    	if (cs != null) {
+    		int colIndex = cs.getColumnIndex(COLUMN_PROPERTY_NAME);
+    		if (cs.moveToFirst() && !cs.isNull(colIndex)) {
+    			String result = cs.getString(colIndex); 
+    			cs.close();
+    			con.close();
+            	return result;
+    		}
+    	}
+    	
+    	cs.close();
+    	con.close();
+    	return null;
 	}
 	
 	public void setName(String colName, String newVal) {
@@ -51,7 +76,7 @@ public class ColumnProperty {
 	}
     
     public String getType(String colName) {
-    	return getProperty( colName, COLUMN_PROPERTY_TYPE);    	
+    	return getProperty(colName, COLUMN_PROPERTY_TYPE);    	
     }
     
     public void setType(String colName, String newVal) {
@@ -108,7 +133,8 @@ public class ColumnProperty {
     
     // Returns null if nothing defined.
     private String getProperty(String colName, String propertyType) {
-    	SQLiteDatabase con = db.getConn();
+    	DatabaseHelper dh = db.getConn();
+    	SQLiteDatabase con = dh.getReadableDatabase();
     	
     	//String[] spec = {colName};
     	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
@@ -131,7 +157,8 @@ public class ColumnProperty {
 	
     // Set a new value on this column property.
     private void setProperty(String colName, String propertyType, String propertyValue) {
-        SQLiteDatabase con = db.getConn();
+        DatabaseHelper dh = db.getConn();
+    	SQLiteDatabase con = dh.getWritableDatabase();
     	
         if (isInsert(colName, propertyType)) {
         	// INSERT
@@ -161,7 +188,8 @@ public class ColumnProperty {
     
     // Check with database if 'insert' is need for this column property.
     private boolean isInsert(String colName, String propertyType) {
-        SQLiteDatabase con = db.getConn();
+        DatabaseHelper dh = db.getConn();
+    	SQLiteDatabase con = dh.getReadableDatabase();
     	
         int count = 0;
         try {

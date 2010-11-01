@@ -50,8 +50,8 @@ public class ColumnManager extends ListActivity {
 	
 	// Initialize fields.
 	private void init() {
-		this.tp = new TableProperty();
-		this.data = new Data();
+		this.tp = new TableProperty(this);
+		this.data = new Data(this);
 		this.colOrder = tp.getColOrderArrayList(); 
 		
 		updatePrimeOrderbyInfo();

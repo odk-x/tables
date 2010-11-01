@@ -8,9 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.Data;
-import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -23,9 +22,13 @@ import android.widget.Toast;
  
 public class SmsReceiver extends BroadcastReceiver {
     
+	private Context context;
+	
 	@Override
     public void onReceive(Context context, Intent intent) {
-    	// Service
+    	this.context = context;
+		
+		// Service
         NotificationManager nm =(NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
         nm.cancel(R.string.app_name);
     	
@@ -39,6 +42,24 @@ public class SmsReceiver extends BroadcastReceiver {
         SMSConverter ps = new SMSConverter();
         HashMap<String, String> data = ps.parseSMS(getSMSBody(bundle));
        
+        // Filter SMS-IN columns
+        ColumnProperty cp = new ColumnProperty(context);
+        for (String key : data.keySet()) {
+        	if (!cp.getSMSIN(key)) {
+        		data.remove(key);
+        	}
+        }
+           
+        // Convert abbreviations to normal names
+        for (String abrv : data.keySet()) {
+        	String fullName = cp.getNameByAbrv(abrv);
+        	if (fullName != null) {
+        		String value = data.get(abrv);
+        		data.remove(abrv);
+        		data.put(fullName, value);
+        	}
+        }
+        
         // Something to update
         if (data.size() > 0) {
         	// Add to DB
@@ -58,7 +79,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		
 		// Add a new row
-		Data dataManager = new Data();
+		Data dataManager = new Data(context);
 		try {
 			dataManager.addRow(cv, phoneNumberIn, timeStamp);
 		} catch (Exception e) {
@@ -72,26 +93,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		Matcher matcher = pattern.matcher(aStringValue);
 		return matcher.matches();
 	}
-	
-	/* deprecated */
-	private void refreshSpreadSheetScreen(Context context) {
-		// Check if the application is on the top level task
-        ActivityManager  am = (ActivityManager) context.getSystemService(context.ACTIVITY_SERVICE);
-        String topActClass = am.getRunningTasks(1).get(0).topActivity.getClassName();
-        
-        // Refresh the screen with new data if on the top level
-        if (topActClass.equals("yoonsung.odk.spreadsheet.Activity.SpreadSheet")) {   
-	        Intent startActivity = new Intent();
-	        startActivity.setClass(context, SpreadSheet.class);
-	        startActivity.setAction(SpreadSheet.class.getName());
-	        startActivity.setFlags(
-	        Intent.FLAG_ACTIVITY_NEW_TASK
-	        | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-	        );
-	        context.startActivity(startActivity);
-        }
-	}
-	
+		
     private void makeToastNotice(Context context, Bundle bundle) {
     	SmsMessage[] msgs = null;
         String str = "";            
