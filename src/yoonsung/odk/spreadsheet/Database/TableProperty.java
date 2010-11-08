@@ -2,9 +2,7 @@ package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
 
-import yoonsung.odk.spreadsheet.Database.DBIO.DatabaseHelper;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -19,12 +17,10 @@ public class TableProperty {
 	
 	// Database connection
 	private DBIO db;
-	//private DatabaseHelper dh;
 	
 	// Constructor
-	public TableProperty(Context context) {
-		db = new DBIO(context);
-		//dh = db.getConn();
+	public TableProperty() {
+		db = new DBIO();
 	}
 		
 	public String getPrime() {
@@ -56,8 +52,7 @@ public class TableProperty {
 	}	
 	
 	protected String getProperty(String colName) {
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getReadableDatabase();
+		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null), null);
 		String result = null;
 		if (cs != null) {
@@ -91,8 +86,7 @@ public class TableProperty {
 	
 	private void setProperty(String propertyType, String newVal) {
 		// Connect to the database
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getWritableDatabase();
+		SQLiteDatabase con = db.getConn();
 		
 		// Pack the new entry
 		ContentValues values = new ContentValues();
@@ -111,8 +105,7 @@ public class TableProperty {
 	}
 		
 	private boolean isInsert() {
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getReadableDatabase();
+		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null) 
 								 + " WHERE rowid = 1", null);
 		int count = cs.getCount();

@@ -2,11 +2,17 @@ package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
+import yoonsung.odk.spreadsheet.Activity.graphs.GraphSetting;
+import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
+import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
+import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
 import android.content.ContentValues;
@@ -66,7 +72,7 @@ public class SpreadSheet extends Activity {
 		this.SMSSender = new SMSSender();
 		
 		// Data strucutre will represent the table/spread sheet
-		this.data = new Data(this);
+		this.data = new Data();
 		
 		// Get table data
 		this.currentTable = data.getTable();
@@ -296,96 +302,73 @@ public class SpreadSheet extends Activity {
     	switch(item.getItemId()) {
         // OPEN NEW FILE THROUGH A FILE MANGER
         case COLUMN_MANAGER_ID:
-        	
         	Intent cm = new Intent(this, ColumnManager.class); 
         	startActivity(cm);
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
         case GRAPH_ID:
-        	Intent g; 
+        	Intent g = null;
         	
-        	// +24 to 24
-        	ArrayList<String> temp = currentTable.getCol(currentTable.getColNum("temp"));
-        	ArrayList<Double> y = new ArrayList<Double>();
-        	ArrayList<String> yStr = new ArrayList<String>();
-        	for (int t = 0; t < temp.size(); t++) {
-        		String clean = temp.get(t).substring(1);
-        		y.add(Double.parseDouble(clean));
-        		yStr.add(clean);
-        	}
+        	/*
+        	// Mock data
+        	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putString("main:type", "stem");
+            editor.putString("main:col1", "id");
+            editor.putString("main:col2", "temp");
+
+            // Commit the edits!
+            editor.commit();
+        	*/
         	
-        	if (isMain) {
-        		g = new Intent(this, BoxStemActivity.class);
-        		
-        		// Sample drawing for Fone Astra
-        		int arraySize = currentTable.getHeight();
-        		double[] minArr = new double[arraySize];
-        		double[] lowBoxArr = new double[arraySize];;
-        		double[] midArr = new double[arraySize];;
-        		double[] highBoxArr = new double[arraySize];;
-        		double[] maxArr = new double[arraySize];;
+        	// Classifier
+        	GraphClassifier gcf = new GraphClassifier(this, isMain);
+        	String graphType = gcf.getGraphType();
+        	String colOne = gcf.getColOne(); // i.e. X
+        	String colTwo = gcf.getColTwo(); // i.e. Y
         	
-        		// for each row / prime. Ex) for each refrig
-        		for (int i = 0; i < currentTable.getHeight(); i++) {
-        			// x - axis
-        			g.putExtra("x", currentTable.getCol(0));
-        				
-        			// Min
-        			double min = 0;
-        			for (int minc = 0; minc < y.size(); minc++) {
-        				if (minc == 0) {
-        					min = y.get(minc);
-        				} else {
-        					double current = y.get(minc);
-        					if (current < min)
-        						min = current;
-        				}	
-        			}
-        			
-        			// Mid / Average
-        			double sum = 0;
-        			for (int c = 0; c < y.size(); c++) {
-        				sum += y.get(i);
-        			}
-        			double mid = sum / y.size();
-        			
-        			// Max
-        			double max = 0;
-        			for (int minc = 0; minc < y.size(); minc++) {
-        				if (minc == 0) {
-        					max = y.get(minc);
-        				} else {
-        					double current = y.get(minc);
-        					if (current > max)
-        						max = current;
-        				}	
-        			}
-        			
-        			double lowBox = (min + mid) / 2;
-        			double highBox = (max + mid) / 2;
-        			
-        			// Add to arrays
-        			minArr[i] = min;
-        			lowBoxArr[i] = lowBox;
-        			midArr[i] = mid;
-        			highBoxArr[i] = highBox;
-        			maxArr[i] = max;
-        		}
-        		
-        		g.putExtra("min", minArr);
-        		g.putExtra("low", lowBoxArr);
-    			g.putExtra("mid", midArr);
-    			g.putExtra("high", highBoxArr);
-    			g.putExtra("max", maxArr);
-        	} else { 
+        	// Process Helper
+        	GraphDataHelper gdh = new GraphDataHelper(data);
+        	
+        	Log.e("report", "graph type: " + graphType + " " + colOne + " " + colTwo);
+        	
+    	  	if (graphType == null) {
+    	  		Log.e("GRAPTH", "Such a graph type does not exists");
+    	  		g = new Intent(this, GraphSetting.class);
+    		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
         		g = new Intent(this, LineActivity.class); 
-        		// Sample drawing for Fone Astra
-        		ArrayList<String> x = currentTable.getCol(currentTable.getColNum("_timestamp"));
-        		Collections.reverse(x);
-        		Collections.reverse(yStr);
+        		ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
+        		ArrayList<String> y = currentTable.getCol(currentTable.getColNum(colTwo));
+        		//Collections.reverse(x);
+        		//Collections.reverse(y);
         		g.putExtra("x", x);
-        		g.putExtra("y", yStr);
-        	}
+        		g.putExtra("y", y);
+    	    } else if (graphType.equals(GraphClassifier.STEM_GRAPH)) {
+    	    	g = new Intent(this, BoxStemActivity.class);
+    	    	ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
+    	    	HashMap<String, ArrayList<Double>> stemResult = 
+    	    			gdh.prepareYForStemGraph(currentTable, colOne, colTwo);
+    	    	
+    	    	// Check if the data is valid to draw a stem graph
+    	    	if (stemResult == null) {
+    	    		Log.e("GRAPH", "Cannot draw");
+    	    		g = new Intent(this, GraphSetting.class);
+    	    	} else {
+	    	    	g.putExtra("x", x);
+	    	    	g.putExtra("min", gdh.arraylistToArray(stemResult.get("Q0s")));
+	        		g.putExtra("low", gdh.arraylistToArray(stemResult.get("Q1s")));
+	    			g.putExtra("mid", gdh.arraylistToArray(stemResult.get("Q2s")));
+	    			g.putExtra("high",gdh.arraylistToArray(stemResult.get("Q3s")));
+	    			g.putExtra("max", gdh.arraylistToArray(stemResult.get("Q4s")));
+    	    	}
+    	    } else if (graphType.equals(GraphClassifier.MAP)) {
+    	    	g = new Intent(this, MapViewActivity.class);
+    	    	ArrayList<String> location = currentTable.getCol(currentTable.getColNum(colOne));
+    	    	g.putExtra("location", location);
+    	    } else {
+    	    	Log.e("GRAPTH", "Such a graph type does not exists");
+    	    	g = new Intent(this, GraphSetting.class);
+    	    }
         	
         	startActivity(g);
             return true;

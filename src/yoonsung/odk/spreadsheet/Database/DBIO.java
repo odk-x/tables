@@ -9,23 +9,23 @@ import android.util.Log;
 
 public class DBIO {
 	//public static final String DB_PATH = "/data/data/com.yoonsung.spreadsheetsms/databases/";
-	//public static final String DB_PATH = "/sdcard/";
+	public static final String DB_PATH = "/sdcard/";
+	
 	public static final String DB_NAME = "my_tables";
 	public static final int DB_VERSION = 1;
+	
 	public static final String DB_DATA_TABLE_NAME = "data";
 	public static final String DB_TABLE_PROPERTY_TABLE_NAME = "tableProperty";
 	public static final String DB_COL_PROPERTY_TABLE_NAME = "colProperty";
 	
-	private final Context myContext;
 	
-	public DBIO(Context context) {
-		this.myContext = context;
+	public DBIO() {
 	}
 	
-	public DatabaseHelper getConn() {
-		//SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DB_PATH + DB_NAME, null);
-		
-		return new DatabaseHelper(myContext);
+	public SQLiteDatabase getConn() {
+		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DB_PATH + DB_NAME, null);
+		return db;
+		//return new DatabaseHelper(myContext);
 	}
 	
 	public String toSafeSqlString(String input) {
@@ -121,7 +121,7 @@ public class DBIO {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             Log.w("TAG", "Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS notes");
+            //db.execSQL("DROP TABLE IF EXISTS notes");
             onCreate(db);
         }
     }

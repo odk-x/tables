@@ -3,9 +3,7 @@ package yoonsung.odk.spreadsheet.Database;
 import java.util.ArrayList;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.DBIO.DatabaseHelper;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -30,13 +28,11 @@ public class Data {
 	private DBIO db; // Database connection
 	private TableProperty tp;
 	
-	private final Context myContext;
 	
 	// Constructor
-	public Data(Context context) {
-		this.db = new DBIO(context);
-		this.tp = new TableProperty(context);
-		this.myContext = context;
+	public Data() {
+		this.db = new DBIO();
+		this.tp = new TableProperty();
 	}
 	
 	// Create a new column with this name. If there is a column
@@ -44,8 +40,7 @@ public class Data {
 	public void addNewColumn(String colName) {
 		if (!isColumnExist(colName)) {
 			// Add new column 'data' table
-			DatabaseHelper dh = db.getConn();
-			SQLiteDatabase con = dh.getWritableDatabase();
+			SQLiteDatabase con = db.getConn();
 			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(DATA, false, null) 
 						+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
 			con.close();
@@ -69,8 +64,7 @@ public class Data {
 			String SelColumns = "rowID, " + dropAColumnHelper(colName);
 			String InsColumns = "rowID INTEGER PRIMARY KEY ASC, " + dropAColumnHelper(colName);
 			
-			DatabaseHelper dh = db.getConn();
-			SQLiteDatabase con = dh.getWritableDatabase();
+			SQLiteDatabase con = db.getConn();
 			try {
 				con.beginTransaction();
 				con.execSQL("CREATE TEMPORARY TABLE " + backupTable + "(" + InsColumns + ")");
@@ -108,8 +102,7 @@ public class Data {
 	// Check if such a column exist?
 	public boolean isColumnExist(String colName) {
 		// Get database
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getReadableDatabase();
+		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(DATA, false, null), null);
 		
 		// Check if such a column exist?
@@ -130,8 +123,7 @@ public class Data {
 	
 	// Add new row with the specified information.
 	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getWritableDatabase();
+		SQLiteDatabase con = db.getConn();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
 		values.put(DATA_TIMESTAMP, timeStamp);
 		try {
@@ -143,15 +135,13 @@ public class Data {
 	}
 	
 	public void updateRow(ContentValues values, int rowID) {
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getWritableDatabase();
+		SQLiteDatabase con = db.getConn();
 		con.update(DATA, values, DATA_ROWID + "=" + rowID, null);
 		con.close();
 	}
 	
 	public void removeRow(String rowID) {
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase con = dh.getWritableDatabase();
+		SQLiteDatabase con = db.getConn();
 		con.delete(DATA, db.toSafeSqlColumn(DATA_ROWID, false, null) + " = " + rowID, null);
 		con.close();
 	}
@@ -174,11 +164,10 @@ public class Data {
 							String whereClause) 
 	{
 		// Connect to database
-		DatabaseHelper dh = db.getConn();
-		SQLiteDatabase db = dh.getReadableDatabase();
+		SQLiteDatabase con = db.getConn();
 		
 		// Select Data Table
-		Cursor cs = db.rawQuery(prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause), null);
+		Cursor cs = con.rawQuery(prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause), null);
 		
 		// Table's fields
 		ArrayList<Integer> rowID = new ArrayList<Integer>();
@@ -206,10 +195,10 @@ public class Data {
 				} while (cs.moveToNext());
 			}
 			cs.close();
-			db.close();
+			con.close();
 			return new Table(width, height, rowID, header, data, null);
 		} else {
-			db.close();
+			con.close();
 			return new Table();
 		}
 	}

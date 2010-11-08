@@ -22,10 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.AdapterView.OnItemSelectedListener;
 
 /*
  * Activity that allows users to change table properties 
@@ -50,8 +47,8 @@ public class ColumnManager extends ListActivity {
 	
 	// Initialize fields.
 	private void init() {
-		this.tp = new TableProperty(this);
-		this.data = new Data(this);
+		this.tp = new TableProperty();
+		this.data = new Data();
 		this.colOrder = tp.getColOrderArrayList(); 
 		
 		updatePrimeOrderbyInfo();

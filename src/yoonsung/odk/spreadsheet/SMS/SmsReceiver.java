@@ -21,12 +21,9 @@ import android.util.Log;
 import android.widget.Toast;
  
 public class SmsReceiver extends BroadcastReceiver {
-    
-	private Context context;
-	
+    	
 	@Override
     public void onReceive(Context context, Intent intent) {
-    	this.context = context;
 		
 		// Service
         NotificationManager nm =(NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -43,7 +40,7 @@ public class SmsReceiver extends BroadcastReceiver {
         HashMap<String, String> data = ps.parseSMS(getSMSBody(bundle));
        
         // Filter SMS-IN columns
-        ColumnProperty cp = new ColumnProperty(context);
+        ColumnProperty cp = new ColumnProperty();
         for (String key : data.keySet()) {
         	if (!cp.getSMSIN(key)) {
         		data.remove(key);
@@ -79,7 +76,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		
 		// Add a new row
-		Data dataManager = new Data(context);
+		Data dataManager = new Data();
 		try {
 			dataManager.addRow(cv, phoneNumberIn, timeStamp);
 		} catch (Exception e) {

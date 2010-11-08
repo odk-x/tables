@@ -1,8 +1,6 @@
 package yoonsung.odk.spreadsheet.Database;
 
-import yoonsung.odk.spreadsheet.Database.DBIO.DatabaseHelper;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -32,8 +30,8 @@ public class ColumnProperty {
 	private DBIO db;
 	
 	// Constructor
-	public ColumnProperty(Context context) {
-		this.db = new DBIO(context);
+	public ColumnProperty() {
+		this.db = new DBIO();
 	}
 
 	public String getName(String colName) {
@@ -41,8 +39,7 @@ public class ColumnProperty {
 	}
 	
 	public String getNameByAbrv(String abrv) {
-		DatabaseHelper dh = db.getConn();
-    	SQLiteDatabase con = dh.getReadableDatabase();
+    	SQLiteDatabase con = db.getConn();
     	
     	//String[] spec = {colName};
     	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
@@ -133,8 +130,7 @@ public class ColumnProperty {
     
     // Returns null if nothing defined.
     private String getProperty(String colName, String propertyType) {
-    	DatabaseHelper dh = db.getConn();
-    	SQLiteDatabase con = dh.getReadableDatabase();
+    	SQLiteDatabase con = db.getConn();;
     	
     	//String[] spec = {colName};
     	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
@@ -157,8 +153,7 @@ public class ColumnProperty {
 	
     // Set a new value on this column property.
     private void setProperty(String colName, String propertyType, String propertyValue) {
-        DatabaseHelper dh = db.getConn();
-    	SQLiteDatabase con = dh.getWritableDatabase();
+    	SQLiteDatabase con = db.getConn();
     	
         if (isInsert(colName, propertyType)) {
         	// INSERT
@@ -188,8 +183,7 @@ public class ColumnProperty {
     
     // Check with database if 'insert' is need for this column property.
     private boolean isInsert(String colName, String propertyType) {
-        DatabaseHelper dh = db.getConn();
-    	SQLiteDatabase con = dh.getReadableDatabase();
+    	SQLiteDatabase con = db.getConn();
     	
         int count = 0;
         try {
