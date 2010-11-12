@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewGroup.LayoutParams;
@@ -30,6 +31,8 @@ import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -63,6 +66,9 @@ public class SpreadSheet extends Activity {
 	
 	// SMS Sender Object
 	private SMSSender SMSSender;
+	
+	private ScrollView indexScroll;
+	private ScrollView mainScroll;
 	
 	// Refresh data and draw a table on screen.
 	public void init() {
@@ -156,7 +162,7 @@ public class SpreadSheet extends Activity {
     	super.onResume();
     	
     	// Refresh data table & re-draw
-    	init();
+    	//init();
     }
     
    
@@ -229,8 +235,6 @@ public class SpreadSheet extends Activity {
     	cell.setOnLongClickListener(new View.OnLongClickListener() {
 			@Override
 			public boolean onLongClick(View v) {
-				// U
-				currentTable = data.getTable();
 				noIndexFill(currentTable);
 				return true;
 			}
@@ -245,7 +249,6 @@ public class SpreadSheet extends Activity {
     	switch(item.getItemId()) {
 	    case SELECT_COLUMN:	// Set this column as an index column
 			// Get index column content
-			currentTable = data.getTable();
 			ArrayList<String> indexCol = currentTable.getCol(currentTable.getColNum(currentCellLoc));
 			
 			// Header
@@ -308,19 +311,7 @@ public class SpreadSheet extends Activity {
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
         case GRAPH_ID:
         	Intent g = null;
-        	
-        	/*
-        	// Mock data
-        	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString("main:type", "stem");
-            editor.putString("main:col1", "id");
-            editor.putString("main:col2", "temp");
-
-            // Commit the edits!
-            editor.commit();
-        	*/
-        	
+        		
         	// Classifier
         	GraphClassifier gcf = new GraphClassifier(this, isMain);
         	String graphType = gcf.getGraphType();
@@ -376,46 +367,86 @@ public class SpreadSheet extends Activity {
         
         return super.onMenuItemSelected(featureId, item);
     }
-       
+     
     private void noIndexFill(Table table) {
-    	// EMPTY THE TABLES
-    	TableRow mainLayout = (TableRow)findViewById(R.id.mainLayout);
-    	mainLayout.removeAllViews();
+    	// Refresh spreadsheet
+    	TableRow tr = (TableRow)findViewById(R.id.spreadsheetRowWrapper);
+    	tr.removeAllViews();
     	
-    	HorizontalScrollView scrollView = new HorizontalScrollView(this);
-    	
-    	TableLayout tableLayout = fill(false, table);
-    	
-    	scrollView.addView(tableLayout);
-    	//mainLayout.addView(scrollView, mainLayout.getWidth(), LayoutParams.FILL_PARENT);
-    	mainLayout.addView(scrollView, LayoutParams.WRAP_CONTENT, LayoutParams.FILL_PARENT);
+    	// Row[0] = data column
+    	HorizontalScrollView hsv = new HorizontalScrollView(this);
+    	hsv.addView(fillLayout(false, table));
+    	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
- 
-    private void withIndexFill(Table data, Table index) {
-    	// SET INDEX TABLE EMPTY / INVISIBLE 
-    	TableRow mainLayout = (TableRow)findViewById(R.id.mainLayout);
-    	mainLayout.removeAllViews();
-        
-    	// INDEX COLUMN
-    	HorizontalScrollView indexScrollView = new HorizontalScrollView(this);
-    	TableLayout indexTable = fill(true, index);
-    	indexScrollView.addView(indexTable);
-    	mainLayout.addView(indexScrollView, 80, LayoutParams.FILL_PARENT); 
-    	Log.e("index width", "" + indexTable.getWidth());
+    
+    private void withIndexFill(Table table, Table index) {
+    	// Refresh spreadsheet
+    	TableRow tr = (TableRow)findViewById(R.id.spreadsheetRowWrapper);
+    	tr.removeAllViews();
     	
-    	// DATA COLUMN
-    	HorizontalScrollView dataScrollView = new HorizontalScrollView(this);
-    	TableLayout dataTable = fill(false, data);
-    	dataScrollView.addView(dataTable);
-    	mainLayout.addView(dataScrollView, 
-    						mainLayout.getWidth() - 80, 
-    						LayoutParams.FILL_PARENT);
-    	mainLayout.setWeightSum(1.0f);
+    	// Row[0] = index column
+    	RelativeLayout indexLayout = fillLayout(true, index);
+    	tr.addView(indexLayout);
+    	
+    	// Row[1] = data coumn
+    	HorizontalScrollView hsv = new HorizontalScrollView(this);
+    	hsv.addView(fillLayout(false, table));
+    	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);	
+    	
+    	
+    	// Vertical scroll sync
+    	indexScroll.setOnTouchListener(new View.OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				mainScroll.scrollTo(0, v.getScrollY());
+				return false;
+			}
+		});
+    	
+    	// Vertical scroll sync
+    	mainScroll.setOnTouchListener(new View.OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				indexScroll.scrollTo(0, v.getScrollY());
+				return false;
+			}
+		});
     }
-
-    private TableLayout fill(boolean isIndex, Table table) {		
+    
+    private RelativeLayout fillLayout(boolean isIndex, Table table) {
+    	// Header
+    	RelativeLayout header = new RelativeLayout(this);
+    	TableLayout headerInside = fillTable(isIndex, true, table);
+    	header.addView(headerInside, LayoutParams.FILL_PARENT, 30);
+    	
+    	// Content
+    	RelativeLayout content = new RelativeLayout(this);
+    	if (isIndex) {
+    		indexScroll = new ScrollView(this);
+    		TableLayout contentInside = fillTable(isIndex, false, table);
+    		indexScroll.addView(contentInside);
+    		content.addView(indexScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	} else {
+    		mainScroll = new ScrollView(this);
+    		TableLayout contentInside = fillTable(isIndex, false, table);
+    		mainScroll.addView(contentInside);
+    		content.addView(mainScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	}
+    	 	
+    	// Wrap them up
+    	RelativeLayout wrapper = new RelativeLayout(this);
+    	wrapper.addView(content);
+    	wrapper.addView(header);
+    		
+    	return wrapper;
+    }
+    
+    private TableLayout fillTable(boolean isIndex, boolean isHeader, Table table) {		
     	TableLayout tableLayout = new TableLayout(this);
     	tableLayout.setBackgroundColor(getResources().getColor(R.color.black)); // added
+    	
     	
     	// Header
     	TableRow header = new TableRow(this);
@@ -440,7 +471,9 @@ public class SpreadSheet extends Activity {
         	headerLl.addView(tv, layoutParams);
     		
 	        header.addView(headerLl);
+	        
     	}
+    	if (!isHeader) header.setVisibility(View.INVISIBLE);  
     	// ADD THE ROW TO THE TABLELAYOUT
         tableLayout.addView(header, new TableLayout.LayoutParams(
         					LayoutParams.FILL_PARENT,
@@ -466,6 +499,9 @@ public class SpreadSheet extends Activity {
 	        	layoutParams.setMargins(1, 1, 1, 1);
 	        	dataLl.addView(tv, layoutParams);
 	        	
+	        	// Invisible except header
+	        	if(isHeader) row.setVisibility(View.INVISIBLE);
+	        	
 		        row.addView(dataLl);
     		}
     		
@@ -477,7 +513,7 @@ public class SpreadSheet extends Activity {
     	
         return tableLayout;
     }
-    
+            
     /*
      * Leave it here for now.
      * 

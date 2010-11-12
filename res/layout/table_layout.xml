@@ -38,21 +38,16 @@ android:layout_height="fill_parent"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:layout_below="@+id/command" ></TextView>
-			
-	<ScrollView 
-	android:layout_width="fill_parent" 
-	android:layout_height="fill_parent"
-	android:layout_below="@+id/led" >
-		<TableLayout
-		android:id="@+id/temp"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent" >
-			<TableRow
-			android:id="@+id/mainLayout"
-			android:layout_width="fill_parent"
-			android:layout_height="fill_parent">
-			</TableRow>
-		</TableLayout>
-	</ScrollView>
 	
+	<TableLayout
+		android:id="@+id/spreadsheetWrapper"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/led" >
+		<TableRow
+			android:id="@+id/spreadsheetRowWrapper"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content">
+		</TableRow>
+	</TableLayout>
 </RelativeLayout>

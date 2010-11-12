@@ -20,12 +20,37 @@ public class DBIO {
 	
 	
 	public DBIO() {
+		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DB_PATH + DB_NAME, null);
+		db.beginTransaction();
+		// Create data table
+    	db.execSQL("CREATE TABLE IF NOT EXISTS " + DB_DATA_TABLE_NAME + " ("
+                + Data.DATA_ROWID + " INTEGER PRIMARY KEY,"
+                + Data.DATA_PHONE_NUMBER_IN + " TEXT,"
+                + Data.DATA_TIMESTAMP + " TIMESTAMP"
+                + ");");
+    	
+    	// Create tableProperty table
+    	db.execSQL("CREATE TABLE IF NOT EXISTS " + DB_TABLE_PROPERTY_TABLE_NAME + " ("
+                + TableProperty.TABLE_PROPERTY_PRIME + " TEXT,"
+                + TableProperty.TABLE_PROPERTY_COLUMN_ORDER + " TEXT,"
+                + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP"
+                + ");");
+    	
+    	// Create columnProperty table
+    	db.execSQL("CREATE TABLE IF NOT EXISTS " + DB_COL_PROPERTY_TABLE_NAME + " ("
+    			+ ColumnProperty.COLUMN_PROPERTY_NAME + " TEXT PRIMARY KEY,"
+                + ColumnProperty.COLUMN_PROPERTY_ABRV + " TEXT,"
+                + ColumnProperty.COLUMN_PROPERTY_TYPE + " TEXT,"
+                + ColumnProperty.COLUMN_PROPERTY_SMSIN + " TEXT,"
+                + ColumnProperty.COLUMN_PROPERTY_SMSOUT + " TEXT,"
+                + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT"
+                + ");");
+    	db.endTransaction();
 	}
 	
 	public SQLiteDatabase getConn() {
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DB_PATH + DB_NAME, null);
 		return db;
-		//return new DatabaseHelper(myContext);
 	}
 	
 	public String toSafeSqlString(String input) {
