@@ -1,5 +1,7 @@
 package yoonsung.odk.spreadsheet.Library.graphs;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import org.achartengine.chart.PointStyle;
@@ -149,6 +151,40 @@ public class GraphFactory {
     	d.addSeries(series);
     	EXYChart chart = new BoxStemChart(d, r);
     	return new EGraphicalView(a, chart);
+	}
+	
+	/**
+	 * @param data a list of events
+	 * @param title the calendar title
+	 * @param year the date's year
+	 * @param month the date's month
+	 * @param day the date's day
+	 * @return a day's calendar view
+	 */
+	public CalendarView getDayCalendar(List<GEventPoint> data, String title,
+			int year, int month, int day) {
+		Calendar cal = Calendar.getInstance();
+		cal.set(year, month, day);
+		Date date = cal.getTime();
+		String subtitle = year + "-" + month + "-" + day;
+		return new CalendarDayView(a, data, date, title, subtitle);
+	}
+	
+	/**
+	 * @param data a list of events
+	 * @param title the calendar title
+	 * @param year the date's year
+	 * @param month the date's month
+	 * @param day the date's day
+	 * @return a week's calendar view
+	 */
+	public CalendarView getWeekCalendar(List<GEventPoint> data, String title,
+			int year, int month, int day) {
+		Calendar cal = Calendar.getInstance();
+		cal.set(year, month, day);
+		Date date = cal.getTime();
+		String subtitle = year + "-" + month + "-" + day;
+		return new CalendarWeekView(a, data, date, title, subtitle);
 	}
 	
 	/**
