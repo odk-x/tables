@@ -1,6 +1,10 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import android.content.ContentValues;
@@ -240,6 +244,43 @@ public class Data {
 		Log.e("Table Query", result);
 		
 		return result;
-	}	
+	}
+	
+	/**
+	 * Gets data from a spreadsheet
+	 * @param cons a list of the constraints (field/value pairs) that must
+	 *        match
+	 * @param cols an array of the columns to get information for
+	 * @param maxRows the maximum number of rows to return
+	 * @return a set of mappings (column->value)
+	 */
+	public Set<Map<String, String>> querySheet(Map<String, String> cons,
+			String[] cols, int maxRows) {
+		DBIO db = new DBIO();
+		String reqList = "";
+		for(String key : cons.keySet()) {
+			reqList += " and " + key + "=" + cons.get(key);
+		}
+		reqList = reqList.substring(5);
+		SQLiteDatabase con = db.getConn();
+		String limit = new Integer(maxRows).toString();
+		Cursor c = con.query(DATA, cols, reqList, null, null, null,
+				DATA_TIMESTAMP, limit);
+		Log.d("count", "count:" + c.getCount());
+		Set<Map<String, String>> result = new HashSet<Map<String, String>>();
+		boolean empty = !c.moveToFirst();
+		while(!empty) {
+			Map<String, String> nextMap = new HashMap<String, String>();
+			for(String req : cols) {
+				String val = c.getString(c.getColumnIndexOrThrow(req));
+				nextMap.put(req, val);
+			}
+			result.add(nextMap);
+			empty = !c.moveToNext();
+		}
+		c.close();
+		con.close();
+		return result;
+	}
 	
 }
