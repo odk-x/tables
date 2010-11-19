@@ -12,6 +12,7 @@ public class GraphClassifier {
 	public static final String LINE_GRAPH = "line";
 	public static final String STEM_GRAPH = "stem";
 	public static final String MAP = "map";
+	public static final String CALENDAR = "calendar";
 	
 	private boolean isMain;
 

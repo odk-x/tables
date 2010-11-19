@@ -23,7 +23,7 @@ import android.widget.TabHost.TabSpec;
 
 public class GraphSetting extends Activity {
 
-	public static final String[] TYPES = {"Line Graph", "Box-Stem Graph", "Map"};
+	public static final String[] TYPES = {"Line Graph", "Box-Stem Graph", "Map", "Calendar"};
 	public static final String TAB_1 = "main";
 	public static final String TAB_2 = "history";
 	
@@ -156,6 +156,18 @@ public class GraphSetting extends Activity {
 					 Spinner axis = createSpinner(prefix+"col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+"col1", axis);
 					 axisLL.addView(axis);
+				 } else if (selectedItem.equals("Calendar")) {
+					//change graph type
+					 editor.putString(prefix+"type", GraphClassifier.CALENDAR);
+					 editor.commit();
+					 
+					 // Set spinners for x and y
+					 Spinner x = createSpinner(prefix+"col1", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
+					 axisLL.addView(x);
+					 Spinner y = createSpinner(prefix+"col2", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+"col2", y);
+					 axisLL.addView(y);
 				 }
 				 
 				 
@@ -202,6 +214,8 @@ public class GraphSetting extends Activity {
 				item = "Box-Stem Graph";
 			} else if (value.equals(GraphClassifier.MAP) ){
 				item = "Map";
+			} else if (value.equals(GraphClassifier.CALENDAR) ){
+				item = "Calendar";
 			}
 			Log.e("Item", item);
 			position = adapter.getPosition(item);

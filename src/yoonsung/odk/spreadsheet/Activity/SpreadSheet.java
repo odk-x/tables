@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
+import yoonsung.odk.spreadsheet.Activity.graphs.CalActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.GraphSetting;
 import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
@@ -356,6 +357,14 @@ public class SpreadSheet extends Activity {
     	    	g = new Intent(this, MapViewActivity.class);
     	    	ArrayList<String> location = currentTable.getCol(currentTable.getColNum(colOne));
     	    	g.putExtra("location", location);
+    	    } else if (graphType.equals(GraphClassifier.CALENDAR)) {
+        		g = new Intent(this, CalActivity.class); 
+        		ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
+        		ArrayList<String> y = currentTable.getCol(currentTable.getColNum(colTwo));
+        		//Collections.reverse(x);
+        		//Collections.reverse(y);
+        		g.putExtra("x", x);
+        		g.putExtra("y", y);
     	    } else {
     	    	Log.e("GRAPTH", "Such a graph type does not exists");
     	    	g = new Intent(this, GraphSetting.class);
