@@ -1,8 +1,10 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -248,28 +250,51 @@ public class Data {
 	
 	/**
 	 * Gets data from a spreadsheet
-	 * @param cons a list of the constraints (field/value pairs) that must
-	 *        match
-	 * @param cols an array of the columns to get information for
+	 * @param consKeys the constraint keys ([key] [comp] [val])
+	 * @param consComp the contraint comparators
+	 * @param consVals the contrains values
+	 * @param cols the columns to return values from
+	 * @param orderby the column to order by (or null)
+	 * @param asc whether to order from the top (1), bottom (2), or not at all (0)
 	 * @param maxRows the maximum number of rows to return
 	 * @return a set of mappings (column->value)
 	 */
-	public Set<Map<String, String>> querySheet(Map<String, String> cons,
-			String[] cols, int maxRows) {
+	public Set<Map<String, String>> querySheet(List<String> consKeys, List<String> consComp,
+			List<String> consVals, String[] cols, String orderby, int asc, int maxRows) {
 		DBIO db = new DBIO();
 		String reqList = "";
-		for(String key : cons.keySet()) {
-			reqList += " and " + key + "=" + cons.get(key);
+		int i = 0;
+		while(i < consKeys.size()) {
+			reqList += " and " + db.toSafeSqlColumn(consKeys.get(i), false, null) +
+					consComp.get(i) + db.toSafeSqlString(consVals.get(i));
+			i++;
 		}
-		reqList = reqList.substring(5);
+		if(i != 0) {
+			reqList = reqList.substring(5);
+		}
+		String limit;
+		if(maxRows == -1) {
+			limit = "5";
+		} else {
+			limit = new Integer(maxRows).toString();
+		}
+		if(orderby == null) {
+			orderby = DATA_TIMESTAMP;
+		} else {
+			orderby = db.toSafeSqlColumn(orderby, false, null);
+			if(asc == 1) {
+				orderby += " DESC";
+			} else if(asc == 2) {
+				orderby += " ASC";
+			}
+		}
 		SQLiteDatabase con = db.getConn();
-		String limit = new Integer(maxRows).toString();
 		Cursor c = con.query(DATA, cols, reqList, null, null, null,
-				DATA_TIMESTAMP, limit);
-		Log.d("count", "count:" + c.getCount());
+				orderby, limit);
 		Set<Map<String, String>> result = new HashSet<Map<String, String>>();
 		boolean empty = !c.moveToFirst();
-		while(!empty) {
+		i = 0;
+		while(!empty && (i < maxRows)) {
 			Map<String, String> nextMap = new HashMap<String, String>();
 			for(String req : cols) {
 				String val = c.getString(c.getColumnIndexOrThrow(req));
@@ -277,6 +302,7 @@ public class Data {
 			}
 			result.add(nextMap);
 			empty = !c.moveToNext();
+			i++;
 		}
 		c.close();
 		con.close();

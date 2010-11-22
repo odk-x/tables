@@ -35,6 +35,16 @@ public class SmsReceiver extends BroadcastReceiver {
         // Make a notice
         makeToastNotice(context, bundle);
         
+        String msg = getSMSBody(bundle);
+        String[] splt = msg.split(" ");
+        if(splt[1].startsWith("+")) {
+            handleAddition(bundle);
+        } else if(splt[1].startsWith("?")) {
+        	handleQuery(bundle);
+        }
+    }
+	
+	private void handleAddition(Bundle bundle) {
         // Parse
         SMSConverter ps = new SMSConverter();
         HashMap<String, String> data = ps.parseSMS(getSMSBody(bundle));
@@ -62,7 +72,19 @@ public class SmsReceiver extends BroadcastReceiver {
         	// Add to DB
         	addNewData(data, getSMSFrom(bundle), getSMSTimestamp(bundle));
         }
-    }
+	}
+	
+	private void handleQuery(Bundle bundle) {
+		SMSConverter ps = new SMSConverter();
+		String resp;
+		try {
+			resp = ps.getQueryResponse(getSMSBody(bundle));
+		} catch (InvalidQueryException e) {
+			resp = "invalid query: " + e.getMessage();
+		}
+		SMSSender sender = new SMSSender();
+		sender.sendSMS(getSMSFrom(bundle), resp);
+	}
     
 	private void addNewData(HashMap<String, String> data, String phoneNumberIn, String timeStamp) {
 		// Prepare content values
