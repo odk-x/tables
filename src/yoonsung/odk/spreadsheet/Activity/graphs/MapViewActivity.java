@@ -88,16 +88,30 @@ public class MapViewActivity extends MapActivity {
     	MapOverlay itemizedoverlay = new MapOverlay(drawable, this);
     	
       
-        GeoPoint p = getGeoPoint("Seattle");
-  
+        //GeoPoint p = getGeoPoint("Seattle");
     	// First point
+        /*
     	GeoPoint point = new GeoPoint(19240000,-99120000);
     	OverlayItem overlayitem = new OverlayItem(point, "Hola, Mundo!", "I'm in Mexico City!");
     	
     	// Second point 
     	GeoPoint point2 = new GeoPoint(35410000, 139460000);
     	OverlayItem overlayitem2 = new OverlayItem(point2, "Koniziwa", "I'm in Japan!");
-    	
+    	*/
+        
+        ArrayList<String> address = new ArrayList<String>();
+        address.add("4733 21st Ave NE Seattle, WA 98105");
+        //address.add("20st Ave NE Seattle, WA 98105");
+        //address.add("Odegardd Library University of Washington");
+        
+        for (int i = 0; i < address.size(); i++) {
+        	GeoPoint p = getGeoPoint(address.get(i));
+        	if (p != null) {
+        		OverlayItem overlayitem = new OverlayItem(p, "Hello", "Smell the coffee");
+        		itemizedoverlay.addOverlay(overlayitem);
+        	}
+        }
+        /*
     	// Add points on the map
     	itemizedoverlay.addOverlay(overlayitem);
     	itemizedoverlay.addOverlay(overlayitem2);
@@ -105,11 +119,12 @@ public class MapViewActivity extends MapActivity {
     		OverlayItem overlayitem3 = new OverlayItem(p, "Hello", "Smell the coffee");
     		itemizedoverlay.addOverlay(overlayitem3);
     	}
+    	*/
     	mapOverlays.add(itemizedoverlay);
     	
     	// Define the focus of the map
     	mc = mapView.getController();
-    	mc.animateTo(point);
+    	//mc.animateTo(point);
     }
     
     public GeoPoint getGeoPoint(String location) {

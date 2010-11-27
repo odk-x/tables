@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -46,6 +47,7 @@ public class DBIO {
                 + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT"
                 + ");");
     	db.endTransaction();
+    	db.close();
 	}
 	
 	public SQLiteDatabase getConn() {
@@ -79,7 +81,7 @@ public class DBIO {
 	}
 	
 	public String toSafeSqlColumn(String input, boolean as, String func) {
-		if (as && func != null)
+		if (as && func != null && func.trim().length() != 0)
 			return func + "(" + input + ")" + " AS `" + input + "`"; 
 		else if (as)
 			return "`" + input + "` AS `" + input + "`";
@@ -100,6 +102,22 @@ public class DBIO {
 		return result;
 	}
 	
+	public String listColumns(HashMap<String, String> colMapFunc, boolean as) {
+		String result = "";
+		boolean start = true;
+		for (String col : colMapFunc.keySet()) {
+			String func = colMapFunc.get(col);
+			// First & Other
+			if (start) {
+				result += " " + listColumnWithFunc(col, as, func, col) + " ";
+				start = false;
+			} else { 
+				result += ", " + listColumnWithFunc(col, as, func, col) + " ";
+			}
+		}
+		return result;
+	}
+	
 	// Add Function
 	private String listColumnWithFunc(String col, boolean as, String func, String funCol) {
 		if (col.equals(funCol)) 
@@ -108,6 +126,7 @@ public class DBIO {
 			return toSafeSqlColumn(col, as, null);
 	}
 	
+	/*
 	public static class DatabaseHelper extends SQLiteOpenHelper {
 
         DatabaseHelper(Context context) {
@@ -150,4 +169,5 @@ public class DBIO {
             onCreate(db);
         }
     }
+    */
 }

@@ -121,7 +121,7 @@ public class ColumnProperty {
 	}
     
     public String getFooterMode(String colName) {
-    	return getProperty(COLUMN_PROPERTY_FOOTER_MODE, colName);
+    	return getProperty(colName, COLUMN_PROPERTY_FOOTER_MODE);
     }
     
     public void setFooterMode(String colName, String newVal) {

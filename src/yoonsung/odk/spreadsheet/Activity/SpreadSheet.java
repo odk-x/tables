@@ -17,14 +17,17 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -163,7 +166,7 @@ public class SpreadSheet extends Activity {
     	super.onResume();
     	
     	// Refresh data table & re-draw
-    	//init();
+    	init();
     }
     
    
@@ -255,8 +258,12 @@ public class SpreadSheet extends Activity {
 			// Header
 			ArrayList<String> header = new ArrayList<String>(Arrays.asList(currentTable.getColName(currentTable.getColNum(currentCellLoc))));
 			
+			// Footer
+			ArrayList<String> footer = new ArrayList<String>();
+			footer.add(currentTable.getFooter().get(currentTable.getColNum(currentCellLoc)));
+			
 			// Create an index table
-			Table indexTable = new Table(1, indexCol.size(),  null, header, indexCol, null);
+			Table indexTable = new Table(1, indexCol.size(),  null, header, indexCol, footer);
 
 			// Fill index table and data table
 			withIndexFill(currentTable, indexTable);
@@ -422,37 +429,55 @@ public class SpreadSheet extends Activity {
 				return false;
 			}
 		});
+    	
+    	
     }
     
     private RelativeLayout fillLayout(boolean isIndex, Table table) {
+    	Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+    	int width = display.getWidth();
+    	int height = display.getHeight();
+    	
     	// Header
     	RelativeLayout header = new RelativeLayout(this);
-    	TableLayout headerInside = fillTable(isIndex, true, table);
+    	TableLayout headerInside = fillTable(isIndex, true, false, table);
     	header.addView(headerInside, LayoutParams.FILL_PARENT, 30);
     	
     	// Content
     	RelativeLayout content = new RelativeLayout(this);
     	if (isIndex) {
     		indexScroll = new ScrollView(this);
-    		TableLayout contentInside = fillTable(isIndex, false, table);
+    		TableLayout contentInside = fillTable(isIndex, false, false, table);
     		indexScroll.addView(contentInside);
     		content.addView(indexScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
     	} else {
     		mainScroll = new ScrollView(this);
-    		TableLayout contentInside = fillTable(isIndex, false, table);
+    		TableLayout contentInside = fillTable(isIndex, false, false, table);
     		mainScroll.addView(contentInside);
     		content.addView(mainScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
     	}
-    	 	
+    	
+    	// Footer
+    	RelativeLayout footer = new RelativeLayout(this);
+    	TableLayout footerInside = fillTable(isIndex, true, true, table);
+    	footer.addView(footerInside, LayoutParams.FILL_PARENT, 30);
+    	
     	// Wrap them up
     	RelativeLayout wrapper = new RelativeLayout(this);
-    	wrapper.addView(content);
+    	wrapper.addView(content, LayoutParams.FILL_PARENT, height - 150);
     	wrapper.addView(header);
-    		
+    	RelativeLayout.LayoutParams relativeParams = new
+    	RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,
+    	LayoutParams.WRAP_CONTENT);
+    	relativeParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+    	wrapper.addView(footer, relativeParams);
+
+    	Log.e("content height", "" + content.getHeight());
+    	
     	return wrapper;
     }
     
-    private TableLayout fillTable(boolean isIndex, boolean isHeader, Table table) {		
+    private TableLayout fillTable(boolean isIndex, boolean isHeader, boolean isFooter, Table table) {		
     	TableLayout tableLayout = new TableLayout(this);
     	tableLayout.setBackgroundColor(getResources().getColor(R.color.black)); // added
     	
@@ -508,8 +533,8 @@ public class SpreadSheet extends Activity {
 	        	layoutParams.setMargins(1, 1, 1, 1);
 	        	dataLl.addView(tv, layoutParams);
 	        	
-	        	// Invisible except header
-	        	if(isHeader) row.setVisibility(View.INVISIBLE);
+	        	// Invisible for header and footer
+	        	if(isHeader || isFooter) row.setVisibility(View.INVISIBLE);
 	        	
 		        row.addView(dataLl);
     		}
@@ -518,6 +543,33 @@ public class SpreadSheet extends Activity {
 	        tableLayout.addView(row, new TableLayout.LayoutParams(
 	        					LayoutParams.FILL_PARENT,
 	        					LayoutParams.WRAP_CONTENT));
+    	}
+  
+    	// Footer
+    	TableRow footer = new TableRow(this);
+    	for (String colFooterVal : table.getFooter()) {
+    		TextView tv;
+    		if (isIndex) {
+    			tv = createIndexCell(colFooterVal);
+    			tv.setBackgroundColor(getResources().getColor(R.color.footer_index));
+    		} else {
+    			tv = createCell(colFooterVal);
+    			tv.setBackgroundColor(getResources().getColor(R.color.footer_data));
+    		}
+    		
+    		LinearLayout footerLl = new LinearLayout(this);
+        	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+        		     LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
+        	layoutParams.setMargins(1, 1, 1, 1);
+        	footerLl.addView(tv, layoutParams);
+    		footer.addView(footerLl);
+    	}
+    	if (isFooter) {
+    		tableLayout.addView(footer, 0, new LayoutParams(TableRow.LayoutParams.FILL_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
+    	} else { 
+    		footer.setVisibility(View.INVISIBLE);
+    		tableLayout.addView(footer, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
     	}
     	
         return tableLayout;

@@ -56,7 +56,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Type<List>
             String type = getType(colName);
-            String[] typeChoices = {"Text", "Numeric Value", "Date", "Phone Number", "Date Range"};
+            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range"};
             category.addPreference(createListPreference("TYPE", "TYPE", type, type, typeChoices, typeChoices));                
             
             // SMS-IN<CheckBox>
@@ -67,7 +67,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Footer Mode<Lis>
             String footerMode = getFooterMode(colName); 
-            String[] footerModesChoices = {"Average", "Count", "Mode", "Median"};
+            String[] footerModesChoices = {"None", "Average", "Count", "Max", "Min"};
             category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, footerModesChoices, footerModesChoices));
             
             // Set 

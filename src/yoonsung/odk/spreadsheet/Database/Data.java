@@ -1,7 +1,6 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -173,12 +172,14 @@ public class Data {
 		SQLiteDatabase con = db.getConn();
 		
 		// Select Data Table
-		Cursor cs = con.rawQuery(prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause), null);
+		String tableSQL = prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause);
+		Cursor cs = con.rawQuery(tableSQL, null);
 		
 		// Table's fields
 		ArrayList<Integer> rowID = new ArrayList<Integer>();
 		ArrayList<String> data = new ArrayList<String>();
 		ArrayList<String> header = colOrder;
+		ArrayList<String> footer = new ArrayList<String>();
 		
 		// Retrieve data from the database
 		if (cs != null) {
@@ -201,8 +202,52 @@ public class Data {
 				} while (cs.moveToNext());
 			}
 			cs.close();
+			//con.close();
+			
+			// Retrieve footer
+			// Create a HashMap maps column name to function name
+			ColumnProperty cp = new ColumnProperty();
+			HashMap<String, String> colMapFunc = new HashMap<String, String>();
+			for (int i = 0; i < colOrder.size(); i++) {
+				String colName = colOrder.get(i);
+				String func = cp.getFooterMode(colName);
+				String sqlFunc = null;
+				if (func == null) {
+					sqlFunc = "";
+				} else if (func.equals("None")) {
+					sqlFunc = "";
+				} else if (func.equals("Average")) {
+					sqlFunc = "AVG";
+				} else if (func.equals("Count")) {
+					sqlFunc = "COUNT";
+				} else if (func.equals("Max")) {
+					sqlFunc = "MAX";
+				} else if (func.equals("Min")) {
+					sqlFunc = "MIN";
+				}
+				colMapFunc.put(colName, sqlFunc);
+			}
+			
+			String footerSQL = prepareQueryForFooter(colMapFunc, tableSQL);
+			cs = con.rawQuery(footerSQL, null);
+			if (cs != null) {
+				if (cs.moveToFirst()) {
+					for (int i = 0; i < colOrder.size(); i++) {
+						String colName = colOrder.get(i);
+						String colFuncVal = colMapFunc.get(colName);
+						String footerVal = cs.getString(cs.getColumnIndex(colName));
+						if (colFuncVal == null || colFuncVal.equals("")) {
+							footer.add("X");
+						} else {
+							footer.add(footerVal);
+						}
+					}
+				}
+			}
+			cs.close();
 			con.close();
-			return new Table(width, height, rowID, header, data, null);
+			
+			return new Table(width, height, rowID, header, data, footer);
 		} else {
 			con.close();
 			return new Table();
@@ -226,19 +271,21 @@ public class Data {
 	
 		if (isMainTable) {
 			// Main Table
-			if (prime != null && prime.trim().length() != 0) 
+			if (prime != null && prime.trim().length() != 0) {
 				result += db.listColumns(colOrder, true, "MAX", sortBy)
 						+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
-				        + " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
+						+ " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
 						+ " ORDER BY " + db.toSafeSqlColumn(prime, false, null) + " ASC";
-			else 
+			} else {
 				result += db.listColumns(colOrder, true, null, null) 
 						+ " FROM " + db.toSafeSqlColumn(DATA, false, null);
+			}
 		} else {
 			// Into-History
 			result += db.listColumns(colOrder, true, null, null)
 					+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
 					+ " WHERE " + whereClause;
+			
 			if (sortBy != null && sortBy.trim().length() != 0)
 					result += " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";
 		}
@@ -306,6 +353,12 @@ public class Data {
 		}
 		c.close();
 		con.close();
+		return result;
+	}
+	
+	private String prepareQueryForFooter(HashMap<String, String> colMapFunc, String tableSQL) {
+		String result = "SELECT " + db.listColumns(colMapFunc, true)
+					  + " FROM (" + tableSQL + ")"; 
 		return result;
 	}
 	
