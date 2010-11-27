@@ -321,6 +321,7 @@ public class Data {
 		}
 		String limit;
 		if(maxRows == -1) {
+			maxRows = 5;
 			limit = "5";
 		} else {
 			limit = new Integer(maxRows).toString();
@@ -354,6 +355,17 @@ public class Data {
 		c.close();
 		con.close();
 		return result;
+	}
+	
+	/**
+	 * Gets default constraints
+	 * @param sheetname the name of the sheet
+	 * @return a map of constraint strings ([key] [comp] [value]) to a boolean
+	 *         indicating whether or not the constraints is enforced
+	 */
+	public Map<String, Boolean> getDefaultCons(String sheetname) {
+		Map<String, Boolean> map = new HashMap<String, Boolean>();
+		return map;
 	}
 	
 	private String prepareQueryForFooter(HashMap<String, String> colMapFunc, String tableSQL) {

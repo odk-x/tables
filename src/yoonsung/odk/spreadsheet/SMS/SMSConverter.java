@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.Data;
 import android.util.Log;
 
@@ -60,7 +61,7 @@ public class SMSConverter {
 		if(!spl[0].startsWith("@")) {
 			throw new InvalidQueryException("no sheet specified");
 		}
-		String sheetName = spl[0].substring(1); // the name of the sheet
+		String sheetname = spl[0].substring(1); // the name of the sheet
 		Set<String> colReqs = new HashSet<String>(); // the columns requested
 		List<String> consKeys = new ArrayList<String>(); // the constraint keys
 		List<String> consComp = new ArrayList<String>(); // the constraint comparators
@@ -68,6 +69,7 @@ public class SMSConverter {
 		String orderby = null; // the column to order by
 		int asc = 0;
 		int limit = -1; // the maximum number of rows to return
+		ColumnProperty cp = new ColumnProperty();
 		int i = 1;
 		while(i < spl.length) {
 			String next = spl[i];
@@ -75,19 +77,27 @@ public class SMSConverter {
 				colReqs.add(next.substring(1));
 				i += 1;
 			} else if(next.startsWith("=")) {
-				consKeys.add(next.substring(1));
+				String key = next.substring(1);
+				consKeys.add(key);
 				i += 1;
 				if(i == spl.length) {throw new InvalidQueryException("invalid argument");}
 				next = spl[i];
+				String comp;
 				if(ineqList.contains(next)) {
-					consComp.add(next);
+					comp = next;
 					i += 1;
 					if(i == spl.length) {throw new InvalidQueryException("invalid argument");}
 					next = spl[i];
 				} else {
-					consComp.add("=");
+					comp = "=";
 				}
-				consVals.add(next);
+				consComp.add(comp);
+				String val = next.trim();
+				if(("Date Range").equals(cp.getType(key))) {
+					return interpretDRVal(val, comp);
+				} else {
+					consVals.add(val);
+				}
 				i += 1;
 			} else if(next.startsWith("~")) {
 				orderby = next.substring(1);
@@ -102,7 +112,7 @@ public class SMSConverter {
 					next = next.substring(1);
 				}
 				try {
-					limit = new Integer(next);
+					limit = new Integer(next.trim());
 				} catch(NumberFormatException e) {
 					throw new InvalidQueryException("invalid limit");
 				}
@@ -112,6 +122,16 @@ public class SMSConverter {
 			}
 		}
 		Data data = new Data();
+		// adding default constraints
+		Map<String, Boolean> defCons = data.getDefaultCons(sheetname);
+		for(String con : defCons.keySet()) {
+			String[] conSpl = con.split(" ");
+			if(defCons.get(con) || !consKeys.contains(conSpl[0])) {
+				consKeys.add(conSpl[0]);
+				consComp.add(conSpl[1]);
+				consVals.add(conSpl[2]);
+			}
+		}
 		Set<Map<String, String>> res = data.querySheet(consKeys, consComp,
 				consVals, colReqs.toArray(new String[0]), orderby, asc, limit);
 		String r = "";
@@ -122,7 +142,15 @@ public class SMSConverter {
 			}
 			r += "/" + next.substring(1);
 		}
-		return r.substring(1);
+		if(r.length() > 0) {
+			return r.substring(1);
+		} else {
+			return "no data found";
+		}
+	}
+	
+	private String interpretDRVal(String val, String comp) {
+		return val;
 	}
 	
 }

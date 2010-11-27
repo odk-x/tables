@@ -83,6 +83,7 @@ public class SmsReceiver extends BroadcastReceiver {
 			resp = "invalid query: " + e.getMessage();
 		}
 		SMSSender sender = new SMSSender();
+		Log.d("sending", resp);
 		sender.sendSMS(getSMSFrom(bundle), resp);
 	}
     
