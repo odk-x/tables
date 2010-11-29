@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.SMS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +16,10 @@ import android.util.Log;
 public class SMSConverter {
 	
 	private static String[] ineqOperators = {"<", "<=", ">", ">="};
+	private static String[] dow1 = {"sun", "mon", "tue", "wed", "thu", "fri",
+									"sat"};
+	private static String[] dow2 = {"sunday", "monday", "tuesday", "wednesday",
+									"thursday", "friday", "saturday"};
 		
 	public HashMap<String, String> parseSMS(String sms) {
 		// <Column Name, Value>
@@ -91,11 +96,27 @@ public class SMSConverter {
 				} else {
 					comp = "=";
 				}
-				consComp.add(comp);
 				String val = next.trim();
 				if(("Date Range").equals(cp.getType(key))) {
-					return interpretDRVal(val, comp);
+					String drval = interpretDRVal(val, comp);
+					if(drval == null) {
+						consComp.add(comp);
+						consVals.add(val);
+					} else if(comp.equals("<")) {
+						consComp.add(comp);
+						consVals.add(val + ":00:00:00");
+					} else if(comp.equals(">")) {
+						consComp.add(comp);
+						consVals.add(val + ":23:59:59");
+					} else {
+						consComp.add(">");
+						consVals.add(val + ":00:00:00");
+						consKeys.add(key);
+						consComp.add("<");
+						consVals.add(val + ":23:59:59");
+					}
 				} else {
+					consComp.add(comp);
 					consVals.add(val);
 				}
 				i += 1;
@@ -150,7 +171,32 @@ public class SMSConverter {
 	}
 	
 	private String interpretDRVal(String val, String comp) {
-		return val;
+		boolean foundDay = false;
+		Calendar cal = Calendar.getInstance();
+		int dow = -1;
+		int i = 0;
+		while(!foundDay && (i<7)) {
+			if(dow1[i].equalsIgnoreCase(val) ||
+					dow2[i].equalsIgnoreCase(val)) {
+				dow = i;
+				foundDay = true;
+			}
+			i++;
+		}
+		if(foundDay) {
+			int curDow = cal.get(Calendar.DAY_OF_WEEK);
+			if(dow <= curDow) {
+				dow += 7;
+			}
+			cal.add(Calendar.DATE, dow - curDow);
+		}
+		if(val.equals("now") || val.equals("today")) {foundDay = true;}
+		if(foundDay) {
+			return cal.get(Calendar.YEAR) + ":" + (cal.get(Calendar.MONTH) + 1)
+					+ ":" + cal.get(Calendar.DAY_OF_MONTH);
+		} else {
+			return null;
+		}
 	}
 	
 }
