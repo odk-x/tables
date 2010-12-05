@@ -47,12 +47,19 @@ public class SmsReceiver extends BroadcastReceiver {
 	private void handleAddition(Bundle bundle) {
         // Parse
         SMSConverter ps = new SMSConverter();
-        HashMap<String, String> data = ps.parseSMS(getSMSBody(bundle));
+        HashMap<String, String> data;
+        try {
+			data = ps.parseSMS(getSMSBody(bundle));
+		} catch (InvalidQueryException e) {
+			Log.d("sra", "err:" + e.getMessage());
+			return;
+		}
        
         // Filter SMS-IN columns
         ColumnProperty cp = new ColumnProperty();
         for (String key : data.keySet()) {
         	if (!cp.getSMSIN(key)) {
+        		Log.d("smr", "key:" + key);
         		data.remove(key);
         	}
         }
@@ -67,6 +74,7 @@ public class SmsReceiver extends BroadcastReceiver {
         	}
         }
         
+        Log.d("sra", "data:" + data.toString());
         // Something to update
         if (data.size() > 0) {
         	// Add to DB

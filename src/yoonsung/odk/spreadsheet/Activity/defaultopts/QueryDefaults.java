@@ -77,7 +77,6 @@ public class QueryDefaults extends Activity {
 		lp.span = 2;
 		// forming the spinner
 		List<String> drCols = new ArrayList<String>();
-		drCols.add(0, "None");
 		List<String> cols = tp.getColOrderArrayList();
 		for(String colname : cols) {
 			if(("Date Range").equals(cp.getType(colname))) {
@@ -85,6 +84,7 @@ public class QueryDefaults extends Activity {
 			}
 		}
 		if(drCols.isEmpty()) {return;}
+		drCols.add(0, "None");
 		Spinner drSpin = new Spinner(this);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item,

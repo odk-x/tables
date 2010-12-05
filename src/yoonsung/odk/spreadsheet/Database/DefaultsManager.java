@@ -20,9 +20,9 @@ public class DefaultsManager {
 	/** the name of the type column */
 	private static final String DB_TYPE = "type";
 	/** the name of the key column */
-	private static final String DB_KEY = "key";
+	private static final String DB_KEY = "itemkey";
 	/** the name of the value column */
-	private static final String DB_VAL = "value";
+	private static final String DB_VAL = "itemval";
 	/** the value for the operation column that indicates addition */
 	private static final int ADDITION = 1;
 	/** the value for the operation column that indicates querying */

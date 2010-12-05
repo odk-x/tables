@@ -40,7 +40,8 @@ public class SMSConverter {
 		dm = new DefaultsManager();
 	}
 		
-	public HashMap<String, String> parseSMS(String sms) {
+	public HashMap<String, String> parseSMS(String sms)
+			throws InvalidQueryException {
 		// <Column Name, Value>
 		HashMap<String, String> result = new HashMap<String, String>();
 		
@@ -48,26 +49,92 @@ public class SMSConverter {
 		String[] tokens = sms.split(" ");
 		
 		// Parse into column names and values
-		int index = 0;
-		while(index < tokens.length && tokens[index].startsWith("+")) { 
-			int keyIndex = index;
-			String key = tokens[keyIndex];
-			String val = "";
-			int next = index + 1;
-			while (next < tokens.length 
-					&& ( tokens[keyIndex+1].startsWith("+") 
-							|| !tokens[next].startsWith("+"))
-			) {
-				val += tokens[next].trim() + " ";
-				next++;
+		Map<String, String> durMap = new HashMap<String, String>();
+		int index = 1;
+		while(index < tokens.length) {
+			char type = tokens[index].charAt(0);
+			String key = tokens[index].substring(1);
+			index++;
+			if(type == '+') {
+				String val = "";
+				boolean done = false;
+				while((index < tokens.length) && !done) {
+					if(tokens[index].startsWith("+") ||
+							tokens[index].startsWith("/")) {
+						done = true;
+					} else {
+						val += " " + tokens[index];
+						index++;
+					}
+				}
+				result.put(key, val.substring(1).trim());
+			} else if(type == '/') {
+				if(!("Date Range").equals(cp.getType(key)) ||
+						(index >= tokens.length)) {
+					throw new InvalidQueryException(
+							"invalid duration specification");
+				}
+				durMap.put(key, tokens[index].trim());
+				index++;
+			} else {
+				throw new InvalidQueryException("invalid query");
 			}
-			result.put(key.substring(1, key.length()), val);
-			index = next;
 		}
-		
+		for(String key : result.keySet()) {
+			if(("Date Range").equals(cp.getType(key))) {
+				if(!durMap.containsKey(key)) {
+					throw new InvalidQueryException("no duration specified");
+				}
+				Calendar start = getTimeAddCal(result.get(key));
+				start.set(Calendar.SECOND, 0);
+				Calendar end = Calendar.getInstance();
+				end.setTime(start.getTime());
+				end.add(Calendar.SECOND, intvlStrToSec(durMap.get(key)));
+				String val = dbDateTime.format(start.getTime()) + "/" +
+						dbDateTime.format(end.getTime());
+				result.put(key, val);
+			}
+		}
+		String avail = dm.getAddAvailCol();
+		if((avail != null) && checkOverlap(avail, result.get(avail))) {
+			throw new InvalidQueryException("time overlap");
+		}
 		Log.e("hash", result.toString());
 		
 		return result;
+	}
+	
+	private boolean checkOverlap(String col, String time) {
+		String[] timeSpl = time.split("/");
+		Calendar start = strToCal(timeSpl[0]);
+		Calendar end = strToCal(timeSpl[1]);
+		end.add(Calendar.DAY_OF_MONTH, 1);
+		List<String> keys = new ArrayList<String>();
+		List<String> comp = new ArrayList<String>();
+		List<String> vals = new ArrayList<String>();
+		keys.add(col);
+		keys.add(col);
+		comp.add(">=");
+		comp.add("<=");
+		vals.add(dbDate.format(start.getTime()));
+		vals.add(dbDate.format(end.getTime()));
+		String[] colReq = {col};
+		Set<Map<String, String>> res = data.querySheet(keys, comp, vals,
+				colReq, null, 0, -2);
+		for(Map<String, String> item : res) {
+			String[] next = item.get(col).split("/");
+			Calendar nextStart = strToCal(next[0]);
+			Calendar nextEnd = strToCal(next[1]);
+			if(((start.compareTo(nextStart) > 0) &&
+					(start.compareTo(nextEnd) < 0)) ||
+					((end.compareTo(nextStart) > 0) &&
+					(end.compareTo(nextEnd) < 0)) ||
+					((start.compareTo(nextStart) == 0) &&
+					(end.compareTo(nextEnd) == 0))) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**
@@ -241,7 +308,7 @@ public class SMSConverter {
 			List<String> consVals)
 			throws InvalidQueryException {
 		String[] split = input.split(" ");
-		Calendar cal = getTimeCal(split);
+		Calendar cal = getTimeQueryCal(split);
 		consKeys.add(key);
 		if(cal == null) {
 			consComp.add(comp);
@@ -274,7 +341,7 @@ public class SMSConverter {
 			List<String> consVals)
 			throws InvalidQueryException {
 		String[] split = input.split(" ");
-		Calendar cal = getTimeCal(split);
+		Calendar cal = getTimeQueryCal(split);
 		consKeys.add(key);
 		if(cal == null) {
 			consComp.add(comp);
@@ -302,7 +369,81 @@ public class SMSConverter {
 		}
 	}
 	
-	private Calendar getTimeCal(String[] split) throws InvalidQueryException {
+	private Calendar getTimeAddCal(String input) throws InvalidQueryException {
+		String[] spl = input.split(" ");
+		Calendar cal = Calendar.getInstance();
+		boolean foundDay = false;
+		if(spl[0].equals("today")) {
+			foundDay = true;
+		} else if(spl[0].equals("tomorrow")) {
+			foundDay = true;
+			cal.add(Calendar.DATE, 1);
+		} else if(spl[0].contains("/")) {
+			foundDay = true;
+			String[] md = spl[0].split("/");
+			Integer month;
+			Integer day;
+			if(md.length > 2) {
+				try {
+					cal.set(Calendar.YEAR, new Integer(spl[0]));
+					month = new Integer(md[1]);
+					day = new Integer(md[2]);
+				} catch(NumberFormatException e) {
+					throw new InvalidQueryException("invalid day");
+				}
+			} else {
+				try {
+					month = new Integer(md[0]);
+					day = new Integer(md[1]);
+				} catch(NumberFormatException e) {
+					throw new InvalidQueryException("invalid day");
+				}
+			}
+			if((month > 12) || (month < 1) || (day > 31) || (day < 1)) {
+				throw new InvalidQueryException("invalid day");
+			}
+			cal.set(Calendar.MONTH, (month - 1));
+			cal.set(Calendar.DAY_OF_MONTH, day);
+		} else {
+			int dow = -1;
+			int i = 0;
+			while(!foundDay && (i<7)) {
+				if(dow1[i].equalsIgnoreCase(spl[0]) ||
+						dow2[i].equalsIgnoreCase(spl[0])) {
+					dow = i + 1;
+					foundDay = true;
+				}
+				i++;
+			}
+			if(foundDay) {
+				int curDow = cal.get(Calendar.DAY_OF_WEEK);
+				if(dow <= curDow) {
+					dow += 7;
+				}
+				cal.add(Calendar.DATE, dow - curDow);
+			}
+		}
+		if(!foundDay) {
+			throw new InvalidQueryException("invalid day specification");
+		}
+		String[] hm = spl[1].split(":");
+		Integer hour;
+		Integer min;
+		try {
+			hour = new Integer(hm[0]);
+			min = new Integer(hm[1]);
+		} catch(NumberFormatException e) {
+			throw new InvalidQueryException("invalid time specification");
+		}
+		if((hour > 23) || (min > 59)) {
+			throw new InvalidQueryException("invalid time specification");
+		}
+		cal.set(Calendar.HOUR_OF_DAY, hour);
+		cal.set(Calendar.MINUTE, min);
+		return cal;
+	}
+	
+	private Calendar getTimeQueryCal(String[] split) throws InvalidQueryException {
 		Calendar cal = Calendar.getInstance();
 		String val = split[0];
 		boolean found = false;
@@ -497,8 +638,11 @@ public class SMSConverter {
 	 * @throws InvalidQueryException if the interval is not properly formatted
 	 */
 	private int intvlStrToSec(String intvl) throws InvalidQueryException {
+		Log.d("ists", "intvl:/" + intvl + "/");
 		char unit = intvl.charAt(intvl.length() - 1);
+		Log.d("ists", "unit:/" + unit + "/");
 		String quant = intvl.substring(0, intvl.length() - 1);
+		Log.d("ists", "quant:/" + quant + "/");
 		try {
 			if((unit == 'm') || (unit == 'M')) {
 				return (60 * new Integer(quant));
@@ -508,6 +652,7 @@ public class SMSConverter {
 				throw new InvalidQueryException("invalid duration");
 			}
 		} catch(NumberFormatException e) {
+			Log.d("ists", "err:" + e.getMessage());
 			throw new InvalidQueryException("invalid duration");
 		}
 	}
