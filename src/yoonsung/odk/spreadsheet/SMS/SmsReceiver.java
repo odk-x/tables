@@ -39,7 +39,7 @@ public class SmsReceiver extends BroadcastReceiver {
         String[] splt = msg.split(" ");
         if(splt[1].startsWith("+")) {
             handleAddition(bundle);
-        } else if(splt[1].startsWith("?")) {
+        } else {
         	handleQuery(bundle);
         }
     }
@@ -81,6 +81,9 @@ public class SmsReceiver extends BroadcastReceiver {
 			resp = ps.getQueryResponse(getSMSBody(bundle));
 		} catch (InvalidQueryException e) {
 			resp = "invalid query: " + e.getMessage();
+		}
+		if(resp.length() > 160) {
+			resp = resp.substring(0, 160);
 		}
 		SMSSender sender = new SMSSender();
 		Log.d("sending", resp);

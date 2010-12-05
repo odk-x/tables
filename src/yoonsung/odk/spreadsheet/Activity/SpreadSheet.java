@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.CalActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.GraphSetting;
@@ -55,6 +56,7 @@ public class SpreadSheet extends Activity {
 	private static final int SELECT_COLUMN = 2;
 	private static final int SEND_SMS_ROW = 3;
 	private static final int HISTORY_IN = 4;
+	private static final int DEFAULTS_MANAGER_ID = 5;
 	
 	// Data structure for table/spread sheet
 	private Data data;
@@ -132,6 +134,7 @@ public class SpreadSheet extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+				long start = System.currentTimeMillis();
 				if (isMain) {
 					currentTable = data.getTable();
 					noIndexFill(currentTable);
@@ -139,6 +142,9 @@ public class SpreadSheet extends Activity {
 					currentTable = data.getTable(selectedColName, selectedValue);
 			    	noIndexFill(currentTable);
 				}
+				// for performance testing
+				long end = System.currentTimeMillis();
+				Log.d("perf tests", "refresh click : " + (end - start) + "ms");
 			}
 		});
         
@@ -291,6 +297,7 @@ public class SpreadSheet extends Activity {
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
 	    	isMain = false;
+	    	Log.d("timing", "hicase:" + System.currentTimeMillis());
 	    	return true;
 	    }
 	    return super.onContextItemSelected(item);
@@ -302,6 +309,7 @@ public class SpreadSheet extends Activity {
         super.onCreateOptionsMenu(menu);
         menu.add(0, COLUMN_MANAGER_ID, 0, "Column Manager");
         menu.add(0, GRAPH_ID, 1, "Graph");
+        menu.add(0, DEFAULTS_MANAGER_ID, 2, "Defaults");
         return true;
     }
     
@@ -318,6 +326,7 @@ public class SpreadSheet extends Activity {
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
         case GRAPH_ID:
+        	long start = System.currentTimeMillis();
         	Intent g = null;
         		
         	// Classifier
@@ -378,7 +387,12 @@ public class SpreadSheet extends Activity {
     	    }
         	
         	startActivity(g);
+        	long end = System.currentTimeMillis();
+        	Log.d("pt", "graph:" + (end - start) + "ms");
             return true;
+        case DEFAULTS_MANAGER_ID:
+        	startActivity(new Intent(this, DefaultsActivity.class));
+        	return true;
         }
         
         return super.onMenuItemSelected(featureId, item);
@@ -393,6 +407,7 @@ public class SpreadSheet extends Activity {
     	HorizontalScrollView hsv = new HorizontalScrollView(this);
     	hsv.addView(fillLayout(false, table));
     	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    	Log.d("timing", "noIndexFill:" + System.currentTimeMillis());
     }
     
     private void withIndexFill(Table table, Table index) {
@@ -473,7 +488,6 @@ public class SpreadSheet extends Activity {
     	wrapper.addView(footer, relativeParams);
 
     	Log.e("content height", "" + content.getHeight());
-    	
     	return wrapper;
     }
     
