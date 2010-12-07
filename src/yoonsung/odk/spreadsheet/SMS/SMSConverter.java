@@ -538,9 +538,14 @@ public class SMSConverter {
 		for(Map<String, String> map : res) {
 			String next = "";
 			for(String key : map.keySet()) {
-				next += "," + key + ":" + map.get(key);
+				if(cp.getSMSOUT(key)) {
+					next += "," + key + ":" + map.get(key);
+				}
 			}
-			r += "/" + next.substring(1);
+			if(next.length() > 0) {
+				next = next.substring(1);
+			}
+			r += "/" + next;
 		}
 		if(r.length() > 0) {
 			return r.substring(1);
