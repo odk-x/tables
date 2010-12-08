@@ -237,7 +237,7 @@ public class Data {
 						String colFuncVal = colMapFunc.get(colName);
 						String footerVal = cs.getString(cs.getColumnIndex(colName));
 						if (colFuncVal == null || colFuncVal.equals("")) {
-							footer.add("X");
+							footer.add("");
 						} else {
 							footer.add(footerVal);
 						}
