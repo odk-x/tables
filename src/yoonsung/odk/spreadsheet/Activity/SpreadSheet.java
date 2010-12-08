@@ -20,8 +20,11 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.TimingLogger;
 import android.view.ContextMenu;
 import android.view.Display;
 import android.view.Menu;
@@ -74,6 +77,7 @@ public class SpreadSheet extends Activity {
 	private SMSSender SMSSender;
 	
 	private ScrollView indexScroll;
+	
 	private ScrollView mainScroll;
 	
 	// Refresh data and draw a table on screen.
@@ -297,7 +301,6 @@ public class SpreadSheet extends Activity {
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
 	    	isMain = false;
-	    	Log.d("timing", "hicase:" + System.currentTimeMillis());
 	    	return true;
 	    }
 	    return super.onContextItemSelected(item);
@@ -387,8 +390,6 @@ public class SpreadSheet extends Activity {
     	    }
         	
         	startActivity(g);
-        	long end = System.currentTimeMillis();
-        	Log.d("pt", "graph:" + (end - start) + "ms");
             return true;
         case DEFAULTS_MANAGER_ID:
         	startActivity(new Intent(this, DefaultsActivity.class));
@@ -407,7 +408,6 @@ public class SpreadSheet extends Activity {
     	HorizontalScrollView hsv = new HorizontalScrollView(this);
     	hsv.addView(fillLayout(false, table));
     	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-    	Log.d("timing", "noIndexFill:" + System.currentTimeMillis());
     }
     
     private void withIndexFill(Table table, Table index) {
@@ -495,6 +495,7 @@ public class SpreadSheet extends Activity {
     	TableLayout tableLayout = new TableLayout(this);
     	tableLayout.setBackgroundColor(getResources().getColor(R.color.black)); // added
     	
+    	int[] colWidths = getColWidths();
     	
     	// Header
     	TableRow header = new TableRow(this);
@@ -510,6 +511,8 @@ public class SpreadSheet extends Activity {
         		tv.setId(i);
         		i++;
         	}
+    		tv.setWidth(colWidths[currentTable.getColNum(colName)]);
+    		tv.setMaxLines(1);
     		
     		LinearLayout headerLl = new LinearLayout(this);
         	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -527,7 +530,8 @@ public class SpreadSheet extends Activity {
         					LayoutParams.FILL_PARENT,
         					LayoutParams.WRAP_CONTENT));
     	
-    	// Table Data   	
+    	// Table Data   
+        if(!isHeader && !isFooter) {
     	for (int r = 0; r < table.getHeight(); r++) {
     		TableRow row = new TableRow(this);
     		//Log.d("Row", table.getRow(r).toString());
@@ -539,6 +543,8 @@ public class SpreadSheet extends Activity {
 	        		tv = createCell((String)table.getRow(r).get(c));
 	        		tv.setId((r+1)*table.getWidth() + c);
 	        	}
+	    		tv.setWidth(colWidths[c]);
+	    		tv.setMaxLines(1);
 
 	        	LinearLayout dataLl = new LinearLayout(this);
 	        	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -558,8 +564,10 @@ public class SpreadSheet extends Activity {
 	        					LayoutParams.FILL_PARENT,
 	        					LayoutParams.WRAP_CONTENT));
     	}
+        }
   
     	// Footer
+        int footerCount = 0;
     	TableRow footer = new TableRow(this);
     	for (String colFooterVal : table.getFooter()) {
     		TextView tv;
@@ -570,6 +578,9 @@ public class SpreadSheet extends Activity {
     			tv = createCell(colFooterVal);
     			tv.setBackgroundColor(getResources().getColor(R.color.footer_data));
     		}
+    		tv.setWidth(colWidths[footerCount]);
+    		tv.setMaxLines(1);
+    		footerCount++;
     		
     		LinearLayout footerLl = new LinearLayout(this);
         	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -587,6 +598,20 @@ public class SpreadSheet extends Activity {
     	}
     	
         return tableLayout;
+    }
+    
+    /**
+     * @return an array of the column widths for the current table
+     */
+    private int[] getColWidths() {
+    	int[] widths = new int[currentTable.getWidth()];
+    	SharedPreferences settings =
+    		PreferenceManager.getDefaultSharedPreferences(this);
+        for(int i=0; i<widths.length; i++) {
+        	widths[i] = new Integer(settings.getString("tablewidths-" +
+        			currentTable.getColName(i), "125"));
+        }
+        return widths;
     }
             
     /*
