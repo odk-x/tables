@@ -14,7 +14,7 @@
 			<TextView
 				android:layout_column="1"
 				android:padding="3dip"
-				android:text = "Prime Column :" />
+				android:text = "Index Column :" />
 			<TextView 
 				android:id = "@+id/prime_tv"
 				android:padding="3dip"
@@ -25,7 +25,7 @@
 			<TextView
 				android:layout_column="1"
 				android:padding="3dip"
-				android:text = "Order by :" />
+				android:text = "Order-by Column :" />
 			<TextView 
 				android:id = "@+id/sortby_tv"
 				android:padding="3dip"
