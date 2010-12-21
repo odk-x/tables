@@ -74,9 +74,7 @@ public abstract class CalendarView extends LinearLayout {
 			this.showDetails = showDetails;
 			TreeSet<ItemView> tree = new TreeSet<ItemView>();
 			for(GEventPoint pt : data) {
-				Log.d("hi", "hello1");
 				if(bounds.overlap(pt)) {
-					Log.d("hi", "hello2");
 					ItemView next = new ItemView(c, pt);
 					Set<Integer> takenPos = new HashSet<Integer>();
 					for(ItemView other : tree) {

@@ -164,7 +164,7 @@ public class GraphFactory {
 	public CalendarView getDayCalendar(List<GEventPoint> data, String title,
 			int year, int month, int day) {
 		Calendar cal = Calendar.getInstance();
-		cal.set(year, month, day);
+		cal.set(year, month - 1, day);
 		Date date = cal.getTime();
 		String subtitle = year + "-" + month + "-" + day;
 		return new CalendarDayView(a, data, date, title, subtitle);
@@ -181,7 +181,7 @@ public class GraphFactory {
 	public CalendarView getWeekCalendar(List<GEventPoint> data, String title,
 			int year, int month, int day) {
 		Calendar cal = Calendar.getInstance();
-		cal.set(year, month, day);
+		cal.set(year, month - 1, day);
 		Date date = cal.getTime();
 		String subtitle = year + "-" + month + "-" + day;
 		return new CalendarWeekView(a, data, date, title, subtitle);

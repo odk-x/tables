@@ -1,5 +1,11 @@
 package yoonsung.odk.spreadsheet.DataStructure;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 
 public class Table {
 	
@@ -25,6 +31,34 @@ public class Table {
 		this.header = header;
 		this.data = data;
 		this.footer = footer;
+		ColumnProperty cp = new ColumnProperty();
+		// user-friendlifying the date range strings
+		List<Integer> drList = new ArrayList<Integer>();
+		for(int i=0; i<header.size(); i++) {
+			if(("Date Range").equals(cp.getType(header.get(i)))) {
+				drList.add(i);
+			}
+		}
+		DateFormat dispForm = new SimpleDateFormat("MMM d yyyy, HH:mm");
+		for(int i : drList) {
+			for (int c = i; c < (height * width + i); c+=width) {
+				String[] spl = data.get(c).split("/");
+				if(spl.length > 1) {
+					String start = dispForm.format(getTime(spl[0]));
+					String end = dispForm.format(getTime(spl[1]));
+					data.set(c, start + " - " + end);
+				}
+			}
+		}
+	}
+	
+	private Date getTime(String timeStr) {
+		Calendar cal = Calendar.getInstance();
+		String[] timeSpl = timeStr.split(":");
+		cal.set(new Integer(timeSpl[0]), (new Integer(timeSpl[1]) - 1),
+				new Integer(timeSpl[2]), new Integer(timeSpl[3]),
+				new Integer(timeSpl[4]), new Integer(timeSpl[5]));
+		return cal.getTime();
 	}
 	
 	

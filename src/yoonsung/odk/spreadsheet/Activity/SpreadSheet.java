@@ -24,7 +24,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.util.TimingLogger;
 import android.view.ContextMenu;
 import android.view.Display;
 import android.view.Menu;
@@ -167,7 +166,6 @@ public class SpreadSheet extends Activity {
 		    	noIndexFill(currentTable);
 			}
 		});
-        
     }
     
     /* Get back to the main activity */
@@ -276,7 +274,7 @@ public class SpreadSheet extends Activity {
 			Table indexTable = new Table(1, indexCol.size(),  null, header, indexCol, footer);
 
 			// Fill index table and data table
-			withIndexFill(currentTable, indexTable);
+			withIndexFill(currentTable, indexTable, currentTable.getColNum(currentCellLoc));
 			return true;
 	    case SEND_SMS_ROW: // Send SMS on this row
 	    	// Get the current row
@@ -319,6 +317,8 @@ public class SpreadSheet extends Activity {
     // HANDLE OPTION MENU
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    	
+    	Log.d("timing", "menu item selected");
         
     	// HANDLES DIFFERENT MENU OPTIONS
     	switch(item.getItemId()) {
@@ -329,7 +329,6 @@ public class SpreadSheet extends Activity {
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
         case GRAPH_ID:
-        	long start = System.currentTimeMillis();
         	Intent g = null;
         		
         	// Classifier
@@ -388,7 +387,6 @@ public class SpreadSheet extends Activity {
     	    	Log.e("GRAPTH", "Such a graph type does not exists");
     	    	g = new Intent(this, GraphSetting.class);
     	    }
-        	
         	startActivity(g);
             return true;
         case DEFAULTS_MANAGER_ID:
@@ -406,22 +404,32 @@ public class SpreadSheet extends Activity {
     	
     	// Row[0] = data column
     	HorizontalScrollView hsv = new HorizontalScrollView(this);
-    	hsv.addView(fillLayout(false, table));
+    	hsv.addView(fillLayout(false, table, getColWidths()));
     	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
     
-    private void withIndexFill(Table table, Table index) {
+    private void withIndexFill(Table table, Table index, int ind) {
     	// Refresh spreadsheet
     	TableRow tr = (TableRow)findViewById(R.id.spreadsheetRowWrapper);
     	tr.removeAllViews();
     	
+    	int[] colWidths = getColWidths(); // the main table's widths array
+    	int mainWidth = 0;
+    	for(int i=0; i<colWidths.length; i++) {
+    		mainWidth += colWidths[i] + 2;
+    	}
+    	int[] iWidths = {colWidths[ind]}; // the index table's widths array
+    	colWidths[ind] = 0; //setting the index's column in the main table to 0
+    	
     	// Row[0] = index column
-    	RelativeLayout indexLayout = fillLayout(true, index);
+    	RelativeLayout indexLayout = fillLayout(true, index, iWidths);
     	tr.addView(indexLayout);
     	
     	// Row[1] = data coumn
     	HorizontalScrollView hsv = new HorizontalScrollView(this);
-    	hsv.addView(fillLayout(false, table));
+    	RelativeLayout mainTable = fillLayout(false, table, colWidths);
+    	hsv.addView(mainTable);
+    	mainTable.setMinimumWidth(mainWidth);
     	tr.addView(hsv, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);	
     	
     	
@@ -448,41 +456,41 @@ public class SpreadSheet extends Activity {
     	
     }
     
-    private RelativeLayout fillLayout(boolean isIndex, Table table) {
+    private RelativeLayout fillLayout(boolean isIndex, Table table, int[] colWidths) {
     	Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
     	int width = display.getWidth();
     	int height = display.getHeight();
     	
     	// Header
     	RelativeLayout header = new RelativeLayout(this);
-    	TableLayout headerInside = fillTable(isIndex, true, false, table);
-    	header.addView(headerInside, LayoutParams.FILL_PARENT, 30);
+    	TableLayout headerInside = fillTable(isIndex, true, false, table, colWidths);
+    	header.addView(headerInside, LayoutParams.WRAP_CONTENT, 30);
     	
     	// Content
     	RelativeLayout content = new RelativeLayout(this);
     	if (isIndex) {
     		indexScroll = new ScrollView(this);
-    		TableLayout contentInside = fillTable(isIndex, false, false, table);
+    		TableLayout contentInside = fillTable(isIndex, false, false, table, colWidths);
     		indexScroll.addView(contentInside);
-    		content.addView(indexScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    		content.addView(indexScroll, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	} else {
     		mainScroll = new ScrollView(this);
-    		TableLayout contentInside = fillTable(isIndex, false, false, table);
+    		TableLayout contentInside = fillTable(isIndex, false, false, table, colWidths);
     		mainScroll.addView(contentInside);
-    		content.addView(mainScroll, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    		content.addView(mainScroll, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	}
     	
     	// Footer
     	RelativeLayout footer = new RelativeLayout(this);
-    	TableLayout footerInside = fillTable(isIndex, true, true, table);
-    	footer.addView(footerInside, LayoutParams.FILL_PARENT, 30);
+    	TableLayout footerInside = fillTable(isIndex, true, true, table, colWidths);
+    	footer.addView(footerInside, LayoutParams.WRAP_CONTENT, 30);
     	
     	// Wrap them up
     	RelativeLayout wrapper = new RelativeLayout(this);
-    	wrapper.addView(content, LayoutParams.FILL_PARENT, height - 150);
+    	wrapper.addView(content, LayoutParams.WRAP_CONTENT, height - 150);
     	wrapper.addView(header);
     	RelativeLayout.LayoutParams relativeParams = new
-    	RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,
+    	RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
     	LayoutParams.WRAP_CONTENT);
     	relativeParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
     	wrapper.addView(footer, relativeParams);
@@ -491,11 +499,11 @@ public class SpreadSheet extends Activity {
     	return wrapper;
     }
     
-    private TableLayout fillTable(boolean isIndex, boolean isHeader, boolean isFooter, Table table) {		
+    private TableLayout fillTable(boolean isIndex, boolean isHeader,
+    		boolean isFooter, Table table, int[] colWidths) {
+    	Log.d("tal", "colWidths in fillTable:" + Arrays.toString(colWidths));
     	TableLayout tableLayout = new TableLayout(this);
     	tableLayout.setBackgroundColor(getResources().getColor(R.color.black)); // added
-    	
-    	int[] colWidths = getColWidths();
     	
     	// Header
     	TableRow header = new TableRow(this);
@@ -516,7 +524,7 @@ public class SpreadSheet extends Activity {
     		
     		LinearLayout headerLl = new LinearLayout(this);
         	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-        		     LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        		     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         	layoutParams.setMargins(1, 1, 1, 1);
         	headerLl.addView(tv, layoutParams);
@@ -527,7 +535,7 @@ public class SpreadSheet extends Activity {
     	if (!isHeader) header.setVisibility(View.INVISIBLE);  
     	// ADD THE ROW TO THE TABLELAYOUT
         tableLayout.addView(header, new TableLayout.LayoutParams(
-        					LayoutParams.FILL_PARENT,
+        					LayoutParams.WRAP_CONTENT,
         					LayoutParams.WRAP_CONTENT));
     	
     	// Table Data   
@@ -548,7 +556,7 @@ public class SpreadSheet extends Activity {
 
 	        	LinearLayout dataLl = new LinearLayout(this);
 	        	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-	        		     LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+	        		     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
 	        	layoutParams.setMargins(1, 1, 1, 1);
 	        	dataLl.addView(tv, layoutParams);
@@ -561,7 +569,7 @@ public class SpreadSheet extends Activity {
     		
     		// ADD THE ROW TO THE TABLELAYOUT
 	        tableLayout.addView(row, new TableLayout.LayoutParams(
-	        					LayoutParams.FILL_PARENT,
+	        					LayoutParams.WRAP_CONTENT,
 	        					LayoutParams.WRAP_CONTENT));
     	}
         }
@@ -584,17 +592,17 @@ public class SpreadSheet extends Activity {
     		
     		LinearLayout footerLl = new LinearLayout(this);
         	LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-        		     LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        		     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         	layoutParams.setMargins(1, 1, 1, 1);
         	footerLl.addView(tv, layoutParams);
     		footer.addView(footerLl);
     	}
     	if (isFooter) {
-    		tableLayout.addView(footer, 0, new LayoutParams(TableRow.LayoutParams.FILL_PARENT, TableRow.LayoutParams.WRAP_CONTENT));
+    		tableLayout.addView(footer, 0, new LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT));
     	} else { 
     		footer.setVisibility(View.INVISIBLE);
-    		tableLayout.addView(footer, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    		tableLayout.addView(footer, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	}
     	
         return tableLayout;
