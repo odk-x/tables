@@ -200,7 +200,7 @@ public class SpreadSheet extends Activity {
 				
 				// TEMP
 				TextView led = (TextView)findViewById(R.id.led);
-				led.setText(Integer.toString(tv.getId()));
+				//led.setText(Integer.toString(tv.getId()));
 			
 				// Register current cell location
 				currentCellLoc = tv.getId();
@@ -294,7 +294,7 @@ public class SpreadSheet extends Activity {
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
 	    	
 	    	TextView led = (TextView) findViewById(R.id.led);
-	    	led.setText("Where " + selectedColName + " = " + selectedValue);
+	    	//led.setText("Where " + selectedColName + " = " + selectedValue);
 	    	
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
