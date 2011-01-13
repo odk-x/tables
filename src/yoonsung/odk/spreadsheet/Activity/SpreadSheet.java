@@ -11,6 +11,7 @@ import yoonsung.odk.spreadsheet.Activity.graphs.CalActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.GraphSetting;
 import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
+import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.Data;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
@@ -59,6 +60,7 @@ public class SpreadSheet extends Activity {
 	private static final int SEND_SMS_ROW = 3;
 	private static final int HISTORY_IN = 4;
 	private static final int DEFAULTS_MANAGER_ID = 5;
+	private static final int IMPORTEXPORT_ID = 6;
 	
 	// Data structure for table/spread sheet
 	private Data data;
@@ -311,6 +313,7 @@ public class SpreadSheet extends Activity {
         menu.add(0, COLUMN_MANAGER_ID, 0, "Column Manager");
         menu.add(0, GRAPH_ID, 1, "Graph");
         menu.add(0, DEFAULTS_MANAGER_ID, 2, "Defaults");
+        menu.add(0, IMPORTEXPORT_ID, 3, "Import/Export");
         return true;
     }
     
@@ -391,6 +394,9 @@ public class SpreadSheet extends Activity {
             return true;
         case DEFAULTS_MANAGER_ID:
         	startActivity(new Intent(this, DefaultsActivity.class));
+        	return true;
+        case IMPORTEXPORT_ID:
+        	startActivity(new Intent(this, ImportExportActivity.class));
         	return true;
         }
         

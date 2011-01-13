@@ -364,4 +364,14 @@ public class Data {
 		return result;
 	}
 	
+	/**
+	 * @return a list of the names of the tables in the database
+	 * TODO: make this actually work
+	 */
+	public List<String> getTables() {
+		List<String> list = new ArrayList<String>();
+		list.add("table");
+		return list;
+	}
+	
 }
