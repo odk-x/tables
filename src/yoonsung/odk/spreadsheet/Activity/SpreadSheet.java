@@ -61,6 +61,7 @@ public class SpreadSheet extends Activity {
 	private static final int HISTORY_IN = 4;
 	private static final int DEFAULTS_MANAGER_ID = 5;
 	private static final int IMPORTEXPORT_ID = 6;
+	private static final int DISPLAYPREFS_ID = 7;
 	
 	// Data structure for table/spread sheet
 	private Data data;
@@ -314,6 +315,7 @@ public class SpreadSheet extends Activity {
         menu.add(0, GRAPH_ID, 1, "Graph");
         menu.add(0, DEFAULTS_MANAGER_ID, 2, "Defaults");
         menu.add(0, IMPORTEXPORT_ID, 3, "Import/Export");
+        menu.add(0, DISPLAYPREFS_ID, 4, "Display Preferences");
         return true;
     }
     
@@ -397,6 +399,9 @@ public class SpreadSheet extends Activity {
         	return true;
         case IMPORTEXPORT_ID:
         	startActivity(new Intent(this, ImportExportActivity.class));
+        	return true;
+        case DISPLAYPREFS_ID:
+        	startActivity(new Intent(this, DisplayPrefsActivity.class));
         	return true;
         }
         
@@ -618,12 +623,13 @@ public class SpreadSheet extends Activity {
      * @return an array of the column widths for the current table
      */
     private int[] getColWidths() {
+    	// TODO: use appropriate table name
     	int[] widths = new int[currentTable.getWidth()];
     	SharedPreferences settings =
     		PreferenceManager.getDefaultSharedPreferences(this);
         for(int i=0; i<widths.length; i++) {
-        	widths[i] = new Integer(settings.getString("tablewidths-" +
-        			currentTable.getColName(i), "125"));
+        	widths[i] = new Integer(settings.getInt("tablewidths-table-" +
+        			currentTable.getColName(i), 125));
         }
         return widths;
     }

@@ -5,10 +5,8 @@ import java.util.List;
 import yoonsung.odk.spreadsheet.Database.Data;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
-import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -22,7 +20,13 @@ import android.widget.TextView;
 /**
  * An activity for importing CSV files to a table.
  */
-public class ImportCSVActivity extends Activity {
+public class ImportCSVActivity extends IETabActivity {
+	
+	/** view IDs (for use in testing) */
+	public static int NTNVAL_ID = 1;
+	public static int TABLESPIN_ID = 2;
+	public static int FILENAMEVAL_ID = 3;
+	public static int IMPORTBUTTON_ID = 4;
 	
 	/* the list of table names */
 	private List<String> tableNames;
@@ -48,6 +52,7 @@ public class ImportCSVActivity extends Activity {
 		v.setOrientation(LinearLayout.VERTICAL);
 		// adding the table spinner
 		tableSpin = new Spinner(this);
+		tableSpin.setId(TABLESPIN_ID);
 		tableNames = (new Data()).getTables();
 		tableNames.add(0, "New Table");
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -66,6 +71,7 @@ public class ImportCSVActivity extends Activity {
 		ntnLabel.setText("New Table Name:");
 		ntn.addView(ntnLabel);
 		ntnValField = new EditText(this);
+		ntnValField.setId(NTNVAL_ID);
 		ntnValField.setText("New Table");
 		ntn.addView(ntnValField);
 		newTableViews = ntn;
@@ -77,10 +83,12 @@ public class ImportCSVActivity extends Activity {
 		fnLabel.setText("Filename:");
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
+		filenameValField.setId(FILENAMEVAL_ID);
 		fn.addView(filenameValField);
 		v.addView(fn);
 		// adding the import button
 		Button button = new Button(this);
+		button.setId(IMPORTBUTTON_ID);
 		button.setText("Import");
 		button.setOnClickListener(new ButtonListener());
 		v.addView(button);
@@ -106,21 +114,13 @@ public class ImportCSVActivity extends Activity {
 		}
 		try {
 			(new CSVImporter()).importTable(tableName, file);
+			showDialog(CSVIMPORT_SUCCESS_DIALOG);
 		} catch (CSVException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			notifyOfError(e.getMessage());
 			return;
 		}
-	}
-	
-	/**
-	 * To be called in case of errors.
-	 * @param errMsg the message to display to the user
-	 * TODO: make this useful
-	 */
-	private void notifyOfError(String errMsg) {
-		Log.d("OH NOES", errMsg);
 	}
 	
 	/**
