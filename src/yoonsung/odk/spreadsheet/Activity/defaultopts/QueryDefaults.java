@@ -1,10 +1,10 @@
 package yoonsung.odk.spreadsheet.Activity.defaultopts;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
@@ -26,13 +26,14 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 /**
- * An activity for setting defaults for queries.
+ * An activity for setting query defaults.
  */
 public class QueryDefaults extends Activity {
 	
 	private ColumnProperty cp;
 	private DefaultsManager dm;
 	private TableProperty tp;
+	private Map<String, EditText> changedFields;
 	
     /**
      * Called when the activity is first created.
@@ -43,9 +44,30 @@ public class QueryDefaults extends Activity {
 		cp = new ColumnProperty();
 		dm = new DefaultsManager();
 		tp = new TableProperty();
+		changedFields = new HashMap<String, EditText>();
 		ScrollView sv = new ScrollView(this);
 		sv.addView(getView());
 		setContentView(sv);
+	}
+	
+	@Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        saveState();
+    }
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		saveState();
+	}
+	
+	private void saveState() {
+        for(String colName : changedFields.keySet()) {
+			dm.setQueryColDefault(colName,
+					changedFields.get(colName).getText().toString());
+			changedFields.remove(colName);
+        }
 	}
 	
 	/**
@@ -150,7 +172,7 @@ public class QueryDefaults extends Activity {
 		EditText valField = new EditText(this);
 		valField.setLayoutParams(fieldParams);
 		valField.setText(val);
-		valField.setOnKeyListener(new TextListener(col, valField, dm));
+		valField.setOnKeyListener(new TextListener(col, valField));
 		TableRow valRow = new TableRow(this);
 		valRow.addView(valLabel);
 		valRow.addView(valField);
@@ -172,19 +194,15 @@ public class QueryDefaults extends Activity {
 	private class TextListener implements OnKeyListener {
 		private String colname;
 		private EditText field;
-		private DefaultsManager dm;
-		public TextListener(String colname, EditText field,
-				DefaultsManager dm) {
+		public TextListener(String colname, EditText field) {
 			this.colname = colname;
 			this.field = field;
-			this.dm = dm;
 		}
 		@Override
 		public boolean onKey(View v, int keyCode, KeyEvent event) {
 			if((event.getAction() == KeyEvent.ACTION_DOWN) &&
-					(keyCode == KeyEvent.KEYCODE_ENTER)) {
-				dm.setQueryColDefault(colname, field.getText().toString());
-				return true;
+					!changedFields.containsKey(colname)) {
+				changedFields.put(colname, field);
 			}
 			return false;
 		}
