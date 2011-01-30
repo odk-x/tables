@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -140,7 +141,6 @@ public class SpreadSheet extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				long start = System.currentTimeMillis();
 				if (isMain) {
 					currentTable = data.getTable();
 					noIndexFill(currentTable);
@@ -148,9 +148,6 @@ public class SpreadSheet extends Activity {
 					currentTable = data.getTable(selectedColName, selectedValue);
 			    	noIndexFill(currentTable);
 				}
-				// for performance testing
-				long end = System.currentTimeMillis();
-				Log.d("perf tests", "refresh click : " + (end - start) + "ms");
 			}
 		});
         

@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -62,6 +63,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the include source phone numbers checkbox
 		LinearLayout incPN = new LinearLayout(this);
 		incPNCheck = new CheckBox(this);
+		incPNCheck.setChecked(true);
 		incPN.addView(incPNCheck);
 		TextView incPNLabel = new TextView(this);
 		incPNLabel.setText("Include Phone Numbers");
@@ -70,6 +72,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the include timestamps checkbox
 		LinearLayout incTS = new LinearLayout(this);
 		incTSCheck = new CheckBox(this);
+		incTSCheck.setChecked(true);
 		incTS.addView(incTSCheck);
 		TextView incTSLabel = new TextView(this);
 		incTSLabel.setText("Include Timestamps");
@@ -91,7 +94,10 @@ public class ExportCSVActivity extends IETabActivity {
 		button.setText("Export");
 		button.setOnClickListener(new ButtonListener());
 		v.addView(button);
-		return v;
+		// wrapping in a scroll view
+		ScrollView scroll = new ScrollView(this);
+		scroll.addView(v);
+		return scroll;
 	}
 	
 	/**
@@ -100,9 +106,12 @@ public class ExportCSVActivity extends IETabActivity {
 	private void exportSubmission() {
 		String filename = filenameValField.getText().toString();
 		// TODO: deal with API version issues and find a better way to do this
-		File root = Environment.getExternalStorageDirectory();
-		File file = new File(root.getPath() +
-				"/data/data/yoonsung.odk.spreadsheet/files/" + filename);
+		File file = new File(
+				Environment.getExternalStorageDirectory().getPath() +
+				"/data/data/yoonsung.odk.spreadsheet/files/");
+		file.mkdirs();
+		file = new File(file.getPath() + "/" + filename);
+		Log.d("testtest", file.getAbsolutePath());
 		// TODO: make it care what table it is
 		String tableName = tableNames.get(tableSpin.getSelectedItemPosition());
 		try {

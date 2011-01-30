@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -92,7 +93,10 @@ public class ImportCSVActivity extends IETabActivity {
 		button.setText("Import");
 		button.setOnClickListener(new ButtonListener());
 		v.addView(button);
-		return v;
+		// wrapping in a scroll view
+		ScrollView scroll = new ScrollView(this);
+		scroll.addView(v);
+		return scroll;
 	}
 	
 	/**
@@ -103,6 +107,7 @@ public class ImportCSVActivity extends IETabActivity {
 		File root = Environment.getExternalStorageDirectory();
 		File file = new File(root.getPath() +
 				"/data/data/yoonsung.odk.spreadsheet/files/" + filename);
+		file.mkdirs();
 		String tableName;
 		int pos = tableSpin.getSelectedItemPosition();
 		if(pos == 0) {

@@ -20,6 +20,8 @@ public abstract class IETabActivity extends Activity {
 		switch(id) {
 		case CSVEXPORT_SUCCESS_DIALOG:
 			return getDialog("File exported.");
+		case CSVIMPORT_SUCCESS_DIALOG:
+			return getDialog("File imported.");
 		default:
 			throw new IllegalArgumentException();
 		}

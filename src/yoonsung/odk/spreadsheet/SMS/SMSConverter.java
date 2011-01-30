@@ -101,6 +101,15 @@ public class SMSConverter {
 		}
 		Log.e("hash", result.toString());
 		
+		// adding defaults if no other value is provided
+		Map<String, String> defVals = dm.getAddColVals();
+		for(String defCol : defVals.keySet()) {
+			String defVal = defVals.get(defCol);
+			if(!defVal.equals("") && !result.containsKey(defCol)) {
+				result.put(defCol, defVal);
+			}
+		}
+		
 		return result;
 	}
 	
