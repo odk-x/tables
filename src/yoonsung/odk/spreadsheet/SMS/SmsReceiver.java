@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.TableList;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -22,6 +23,9 @@ import android.widget.Toast;
  
 public class SmsReceiver extends BroadcastReceiver {
     	
+	private String tableName;
+	private String tableID;
+	
 	@Override
     public void onReceive(Context context, Intent intent) {
 		
@@ -32,11 +36,35 @@ public class SmsReceiver extends BroadcastReceiver {
         // Data-in
         Bundle bundle = intent.getExtras();        
         
+        // Split Message Received
+        String msg = getSMSBody(bundle);
+        String[] splt = msg.split(" ");
+        
+        Log.e("Here", "SMS REceived");
+        
+        // Is this message for ODK Tables?
+        if (splt.length < 1 || !splt[0].startsWith("@")) {
+        	Log.e("start error", "does not start with @");
+        	// Handle Error
+        } 
+        // Is table exist?
+        TableList tl = new TableList();
+        if (!tl.isTableExist(splt[0].substring(1))) {
+        	Log.e("table not esit", "not exisint");
+        	// Handle Error
+        }
+
+        Log.e("passed", "SMS passed");
+        
         // Make a notice
         makeToastNotice(context, bundle);
         
-        String msg = getSMSBody(bundle);
-        String[] splt = msg.split(" ");
+        // Table Name
+        this.tableName = splt[0].substring(1);
+        this.tableID = Integer.toString(tl.getTableID(tableName));
+        
+        Log.e("tableID", tableID);
+        
         if(splt[1].startsWith("+")) {
             handleAddition(bundle);
         } else {
@@ -46,7 +74,7 @@ public class SmsReceiver extends BroadcastReceiver {
 	
 	private void handleAddition(Bundle bundle) {
         // Parse
-        SMSConverter ps = new SMSConverter();
+        SMSConverter ps = new SMSConverter(tableID);
         HashMap<String, String> data;
         try {
 			data = ps.parseSMS(getSMSBody(bundle));
@@ -56,7 +84,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
        
         // Filter SMS-IN columns
-        ColumnProperty cp = new ColumnProperty();
+        ColumnProperty cp = new ColumnProperty(tableID);
         for (String key : data.keySet()) {
         	if (!cp.getSMSIN(key)) {
         		Log.d("smr", "key:" + key);
@@ -83,7 +111,7 @@ public class SmsReceiver extends BroadcastReceiver {
 	}
 	
 	private void handleQuery(Bundle bundle) {
-		SMSConverter ps = new SMSConverter();
+		SMSConverter ps = new SMSConverter(tableID);
 		String resp;
 		try {
 			resp = ps.getQueryResponse(getSMSBody(bundle));
@@ -110,7 +138,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		
 		// Add a new row
-		Data dataManager = new Data();
+		DataTable dataManager = new DataTable(tableID);
 		try {
 			dataManager.addRow(cv, phoneNumberIn, timeStamp);
 		} catch (Exception e) {

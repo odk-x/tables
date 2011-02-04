@@ -19,6 +19,7 @@ public class ColumnProperty {
 	public static final String COLUMN_PROPERTY = "colProperty";
 	
 	// Column Names
+	public static final String COLUMN_PROPERTY_TABLE_ID = "tableID";
 	public static final String COLUMN_PROPERTY_NAME = "colName"; 
 	public static final String COLUMN_PROPERTY_ABRV = "abreviation";
 	public static final String COLUMN_PROPERTY_TYPE = "type";
@@ -28,10 +29,12 @@ public class ColumnProperty {
 	
 	// Database connection
 	private DBIO db;
+	private String tableID;
 	
 	// Constructor
-	public ColumnProperty() {
+	public ColumnProperty(String tableID) {
 		this.db = new DBIO();
+		this.tableID = tableID;
 	}
 
 	public String getName(String colName) {
@@ -44,7 +47,9 @@ public class ColumnProperty {
     	//String[] spec = {colName};
     	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
     							 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_ABRV, false, null) 
-    							 +  " = " + db.toSafeSqlString(abrv), null);
+    							 +  " = " + db.toSafeSqlString(abrv)
+    							 + " AND " + db.toSafeSqlColumn(COLUMN_PROPERTY_TABLE_ID, false, null)
+    							 + " = " + tableID, null);
     	if (cs != null) {
     		int colIndex = cs.getColumnIndex(COLUMN_PROPERTY_NAME);
     		if (cs.moveToFirst() && !cs.isNull(colIndex)) {
@@ -135,7 +140,9 @@ public class ColumnProperty {
     	//String[] spec = {colName};
     	Cursor cs = con.rawQuery("SELECT * FROM " +  db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
     							 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
-    							 +  " = " + db.toSafeSqlString(colName), null);
+    							 + " = " + db.toSafeSqlString(colName) 
+    							 + " AND " + db.toSafeSqlColumn(COLUMN_PROPERTY_TABLE_ID, false, null)
+    							 + " = " + tableID, null);
     	if (cs != null) {
     		int colIndex = cs.getColumnIndex(propertyType);
     		if (cs.moveToFirst() && !cs.isNull(colIndex)) {
@@ -159,6 +166,7 @@ public class ColumnProperty {
         	// INSERT
         	try {
         		ContentValues values = new ContentValues();
+        		values.put(COLUMN_PROPERTY_TABLE_ID, tableID);
         		values.put(COLUMN_PROPERTY_NAME, colName);
         		values.put(propertyType, propertyValue);
         		con.insertOrThrow(COLUMN_PROPERTY, null, values);
@@ -172,7 +180,9 @@ public class ColumnProperty {
         					+ " SET " +  db.toSafeSqlColumn(propertyType,false, null) 
         					+ " = " + db.toSafeSqlString(propertyValue) 
         					+ " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
-        					+ " = " + db.toSafeSqlString(colName));
+        					+ " = " + db.toSafeSqlString(colName)
+        					+ " AND " + db.toSafeSqlColumn(COLUMN_PROPERTY_TABLE_ID, false, null)
+        					+ " = " + tableID);
         	} catch (Exception e) {
         		Log.d("ColumnProperty", "Update Failed: " + e.getMessage());
         	}
@@ -189,7 +199,9 @@ public class ColumnProperty {
         try {
         	String query = "SELECT * FROM " + db.toSafeSqlColumn(COLUMN_PROPERTY, false, null) 
         				 + " WHERE " + db.toSafeSqlColumn(COLUMN_PROPERTY_NAME, false, null) 
-        				 + " = " + db.toSafeSqlString(colName);
+        				 + " = " + db.toSafeSqlString(colName)
+        				 + " AND " + db.toSafeSqlColumn(COLUMN_PROPERTY_TABLE_ID, false, null)
+        				 + " = " + tableID;
         	Cursor cs = con.rawQuery(query, null);
         	count = cs.getCount();
         	cs.close();

@@ -20,33 +20,57 @@ import android.util.Log;
  * 
  * @Author : YoonSung Hong (hys235@cs.washingon.edu)
  */
-public class Data {
+public class DataTable {
 
 	// Table name
-	public static final String DATA = "data";
+	public static final String BASE_TABLE_NAME = "table";
 	
 	// Column Names
 	public static final String DATA_ROWID = "RowID";
 	public static final String DATA_PHONE_NUMBER_IN = "_phoneNumberIn";
 	public static final String DATA_TIMESTAMP = "_timestamp";
 	
-	private DBIO db; // Database connection
+	private String currentTableID;
+	private String currentTableName;
+	
+	private DBIO db;
+	private TableList tl;
 	private TableProperty tp;
 	
-	
 	// Constructor
-	public Data() {
+	public DataTable(String tableID) {
+		
 		this.db = new DBIO();
-		this.tp = new TableProperty();
+		this.tl = new TableList();
+		this.tp = new TableProperty(tableID);
+		
+		this.currentTableID = tableID;
+		if (tableID == null) {
+			this.currentTableName = null;
+		} else {
+			this.currentTableName = tl.getTableName(tableID);
+		}
+		
+	}
+	
+	// Set to a specific table 
+	public void setTable(String tableID) {
+		
+		if (tableID != null) {
+			this.currentTableID = tableID;
+			this.currentTableName = BASE_TABLE_NAME + "_" + tableID;
+		}
+		
 	}
 	
 	// Create a new column with this name. If there is a column
 	// with this name, do-nothing.
 	public void addNewColumn(String colName) {
+		
 		if (!isColumnExist(colName)) {
 			// Add new column 'data' table
 			SQLiteDatabase con = db.getConn();
-			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(DATA, false, null) 
+			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(currentTableName, false, null) 
 						+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
 			con.close();
 			
@@ -57,14 +81,16 @@ public class Data {
 		} else {
 			// column already exist;
 		}
+		
 	}	
 	
 	// Drop a column with this name. If no such a column exsit,
 	// do-nothing.
 	public void dropColumn(String colName) {
+		
 		if (isColumnExist(colName)) {
 			// Drop from 'data' table
-			String originalTable = DATA;
+			String originalTable = currentTableName;
 			String backupTable = "baktable";
 			String SelColumns = "rowID, " + dropAColumnHelper(colName);
 			String InsColumns = "rowID INTEGER PRIMARY KEY ASC, " + dropAColumnHelper(colName);
@@ -94,21 +120,25 @@ public class Data {
 		} else {
 			// Column does not exist.
 		}
+		
 	}
 	
 	// format to "x, y, z ..."
-	private String dropAColumnHelper(String colName) {
+	private String dropAColumnHelper(String colName) {	
+		
 		ArrayList<String> tempColOrder = tp.getColOrderArrayList();
 		tempColOrder.remove(colName);
 		
 		return db.listColumns(tempColOrder, false, null, null);
+		
 	}
 	
 	// Check if such a column exist?
 	public boolean isColumnExist(String colName) {
+		
 		// Get database
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(DATA, false, null), null);
+		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(currentTableName, false, null), null);
 		
 		// Check if such a column exist?
 		for (int i = 0; i < cs.getColumnCount(); i++) {
@@ -123,43 +153,55 @@ public class Data {
 		// Not Existing
 		cs.close();
 		con.close();
+		
 		return false;
+		
 	}
 	
 	// Add new row with the specified information.
 	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
+		
 		SQLiteDatabase con = db.getConn();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
 		values.put(DATA_TIMESTAMP, timeStamp);
 		try {
-			con.insertOrThrow(DATA, null, values);
+			con.insertOrThrow(currentTableName, null, values);
 		} catch (Exception e) {
 			Log.d("Data", "Add Row failed.");
 		}
 		con.close();
+		
 	}
 	
 	public void updateRow(ContentValues values, int rowID) {
+		
 		SQLiteDatabase con = db.getConn();
-		con.update(DATA, values, DATA_ROWID + "=" + rowID, null);
+		con.update(currentTableName, values, DATA_ROWID + "=" + rowID, null);
 		con.close();
+		
 	}
 	
 	public void removeRow(String rowID) {
+		
 		SQLiteDatabase con = db.getConn();
-		con.delete(DATA, db.toSafeSqlColumn(DATA_ROWID, false, null) + " = " + rowID, null);
+		con.delete(currentTableName, db.toSafeSqlColumn(DATA_ROWID, false, null) + " = " + rowID, null);
 		con.close();
+		
 	}
 	 
 	public Table getTable() {
+		
 		// Main Frame
 		return loadTable(true, tp.getColOrderArrayList(), tp.getPrime(), tp.getSortBy(), null);
+		
 	}
 	
 	public Table getTable(String whereCol, String whereArg) {
+		
 		// Into-History
 		String whereClause = db.toSafeSqlColumn(whereCol, false, null) + " = " + db.toSafeSqlString(whereArg);
 		return loadTable(false, tp.getColOrderArrayList(), null, tp.getSortBy(), whereClause);
+		
 	}
 	
 	private Table loadTable(boolean isMainTable, 
@@ -168,6 +210,7 @@ public class Data {
 							String sortBy, 
 							String whereClause) 
 	{
+		
 		// Connect to database
 		SQLiteDatabase con = db.getConn();
 		
@@ -202,11 +245,10 @@ public class Data {
 				} while (cs.moveToNext());
 			}
 			cs.close();
-			//con.close();
 			
 			// Retrieve footer
 			// Create a HashMap maps column name to function name
-			ColumnProperty cp = new ColumnProperty();
+			ColumnProperty cp = new ColumnProperty(currentTableID);
 			HashMap<String, String> colMapFunc = new HashMap<String, String>();
 			for (int i = 0; i < colOrder.size(); i++) {
 				String colName = colOrder.get(i);
@@ -228,30 +270,34 @@ public class Data {
 				colMapFunc.put(colName, sqlFunc);
 			}
 			
+			// Load footer
 			String footerSQL = prepareQueryForFooter(colMapFunc, tableSQL);
-			cs = con.rawQuery(footerSQL, null);
-			if (cs != null) {
-				if (cs.moveToFirst()) {
-					for (int i = 0; i < colOrder.size(); i++) {
-						String colName = colOrder.get(i);
-						String colFuncVal = colMapFunc.get(colName);
-						String footerVal = cs.getString(cs.getColumnIndex(colName));
-						if (colFuncVal == null || colFuncVal.equals("")) {
-							footer.add("");
-						} else {
-							footer.add(footerVal);
+			if (footerSQL != null) {
+				cs = con.rawQuery(footerSQL, null);
+				if (cs != null) {
+					if (cs.moveToFirst()) {
+						for (int i = 0; i < colOrder.size(); i++) {
+							String colName = colOrder.get(i);
+							String colFuncVal = colMapFunc.get(colName);
+							String footerVal = cs.getString(cs.getColumnIndex(colName));
+							if (colFuncVal == null || colFuncVal.equals("")) {
+								footer.add("");
+							} else {
+								footer.add(footerVal);
+							}
 						}
 					}
 				}
+				cs.close();
 			}
-			cs.close();
 			con.close();
 			
-			return new Table(width, height, rowID, header, data, footer);
+			return new Table(currentTableID, width, height, rowID, header, data, footer);
 		} else {
 			con.close();
 			return new Table();
 		}
+		
 	}
 	
 	private String prepareQueryForTable(boolean isMainTable, 
@@ -260,10 +306,11 @@ public class Data {
 										String sortBy,
 										String whereClause) 
 	{	
+		
 		// No columns to visualize
 		if (colOrder.size() == 0) {
 			return "SELECT `" + DATA_ROWID + "` AS '" + DATA_ROWID + "'"
-					+ " FROM " + db.toSafeSqlColumn(DATA, false, null) + " ";
+					+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null) + " ";
 		}
 		
 		// Select statement with ROWID
@@ -273,17 +320,17 @@ public class Data {
 			// Main Table
 			if (prime != null && prime.trim().length() != 0) {
 				result += db.listColumns(colOrder, true, "MAX", sortBy)
-						+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
+						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
 						+ " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
 						+ " ORDER BY " + db.toSafeSqlColumn(prime, false, null) + " ASC";
 			} else {
 				result += db.listColumns(colOrder, true, null, null) 
-						+ " FROM " + db.toSafeSqlColumn(DATA, false, null);
+						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null);
 			}
 		} else {
 			// Into-History
 			result += db.listColumns(colOrder, true, null, null)
-					+ " FROM " + db.toSafeSqlColumn(DATA, false, null)
+					+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
 					+ " WHERE " + whereClause;
 			
 			if (sortBy != null && sortBy.trim().length() != 0)
@@ -293,6 +340,7 @@ public class Data {
 		Log.e("Table Query", result);
 		
 		return result;
+		
 	}
 	
 	/**
@@ -306,6 +354,7 @@ public class Data {
 	 * @param maxRows the maximum number of rows to return
 	 * @return a set of mappings (column->value)
 	 */
+	
 	public Set<Map<String, String>> querySheet(List<String> consKeys, List<String> consComp,
 			List<String> consVals, String[] cols, String orderby, int asc, int maxRows) {
 		DBIO db = new DBIO();
@@ -338,7 +387,7 @@ public class Data {
 			}
 		}
 		SQLiteDatabase con = db.getConn();
-		Cursor c = con.query(DATA, cols, reqList, null, null, null,
+		Cursor c = con.query(currentTableName, cols, reqList, null, null, null,
 				orderby, limit);
 		Set<Map<String, String>> result = new HashSet<Map<String, String>>();
 		boolean empty = !c.moveToFirst();
@@ -359,19 +408,14 @@ public class Data {
 	}
 	
 	private String prepareQueryForFooter(HashMap<String, String> colMapFunc, String tableSQL) {
+		
+		if (colMapFunc.size() == 0)
+			return null;
+		
 		String result = "SELECT " + db.listColumns(colMapFunc, true)
 					  + " FROM (" + tableSQL + ")"; 
 		return result;
-	}
-	
-	/**
-	 * @return a list of the names of the tables in the database
-	 * TODO: make this actually work
-	 */
-	public List<String> getTables() {
-		List<String> list = new ArrayList<String>();
-		list.add("table");
-		return list;
+		
 	}
 	
 }

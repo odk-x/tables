@@ -11,16 +11,19 @@ public class TableProperty {
 
 	// Columns in 'tableProperty' table in the database.
 	public static final String TABLE_PROPERTY = "tableProperty";
+	public static final String TABLE_PROPERTY_TABLE_ID = "tableID";
 	public static final String TABLE_PROPERTY_PRIME = "prime";
 	public static final String TABLE_PROPERTY_SORT_BY = "sortBy";
 	public static final String TABLE_PROPERTY_COLUMN_ORDER = "colOrder";
 	
 	// Database connection
 	private DBIO db;
+	private String tableID;
 	
 	// Constructor
-	public TableProperty() {
-		db = new DBIO();
+	public TableProperty(String tableID) {
+		this.db = new DBIO();
+		this.tableID = tableID;
 	}
 		
 	public String getPrime() {
@@ -53,7 +56,8 @@ public class TableProperty {
 	
 	protected String getProperty(String colName) {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null), null);
+		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_PROPERTY 
+					+ "` WHERE `" + TABLE_PROPERTY_TABLE_ID + "` = " + tableID, null);
 		String result = null;
 		if (cs != null) {
 			if (cs.moveToFirst()){
@@ -90,6 +94,7 @@ public class TableProperty {
 		
 		// Pack the new entry
 		ContentValues values = new ContentValues();
+		values.put(TABLE_PROPERTY_TABLE_ID, tableID);
 		values.put(propertyType, newVal);
 
 		// Update or Insert
@@ -97,7 +102,7 @@ public class TableProperty {
 			con.insert(TABLE_PROPERTY, null, values);
 			Log.d("TableProperyt", "Insert Sucess.");
 		} else {
-			con.update(TABLE_PROPERTY, values, "rowid = 1", null);
+			con.update(TABLE_PROPERTY, values, TABLE_PROPERTY_TABLE_ID+" = "+tableID, null);
 			Log.d("TableProperty", "Update Sucess.");
 		}
 		
@@ -106,8 +111,8 @@ public class TableProperty {
 		
 	private boolean isInsert() {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM " + db.toSafeSqlColumn(TABLE_PROPERTY, false, null) 
-								 + " WHERE rowid = 1", null);
+		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_PROPERTY
+								 + "` WHERE `" + TABLE_PROPERTY_TABLE_ID + "` = " + tableID, null);
 		int count = cs.getCount();
 		cs.close();
 		con.close();

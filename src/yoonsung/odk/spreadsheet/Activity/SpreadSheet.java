@@ -13,7 +13,7 @@ import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
@@ -27,14 +27,14 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -45,6 +45,7 @@ import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /*
  * Main acitivity that displays the spread sheet.
@@ -61,14 +62,21 @@ public class SpreadSheet extends Activity {
 	private static final int SEND_SMS_ROW = 3;
 	private static final int HISTORY_IN = 4;
 	private static final int DEFAULTS_MANAGER_ID = 5;
-	private static final int IMPORTEXPORT_ID = 6;
-	private static final int DISPLAYPREFS_ID = 7;
+	private static final int TABLE_MANAGER_ID = 6;
+	private static final int IMPORTEXPORT_ID = 7;
+	private static final int DISPLAYPREFS_ID = 8;
+
 	
-	// Data structure for table/spread sheet
-	private Data data;
+	// Database object for tables
+	private DataTable data;
+	
+	// Current Table ID
+	private String currentTableID;
+	
+	// Data Structure for the displayed table
+	private Table currentTable;
 	
 	// Last-touch by the user
-	private Table currentTable;
 	private int currentCellLoc;
 	
 	// View main or history-in
@@ -79,9 +87,11 @@ public class SpreadSheet extends Activity {
 	// SMS Sender Object
 	private SMSSender SMSSender;
 	
+	// Scroll Views
 	private ScrollView indexScroll;
-	
 	private ScrollView mainScroll;
+	
+	
 	
 	// Refresh data and draw a table on screen.
 	public void init() {
@@ -90,14 +100,42 @@ public class SpreadSheet extends Activity {
 		// SMS Sender object
 		this.SMSSender = new SMSSender();
 		
+		// Default Table ID / What table to display?
+		this.currentTableID = getDefaultTableID();
+		if (currentTableID == null) {
+			this.currentTableID = "1";
+		}
+		
 		// Data strucutre will represent the table/spread sheet
-		this.data = new Data();
+		this.data = new DataTable(currentTableID);
 		
 		// Get table data
-		this.currentTable = data.getTable();
+		boolean loadError = false;
+		try {
+			this.currentTable = data.getTable();
+		} catch (Exception e) {
+			loadError = true;
+		}
+		
+		// Handling
+		if (loadError) {
+			// Error Loading Table
+			Log.e("Loading Table", "Error While Loading Default Table");
+			Intent i = new Intent(this, TableManager.class);
+			i.putExtra("loadError", true);
+			startActivity(i);
+		} else {
+			// Draw the table
+			noIndexFill(currentTable);
+		}
+	}
 	
-    	// Draw the table
-    	noIndexFill(currentTable);
+	// Get the default table ID
+	private String getDefaultTableID() {
+		
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this); 
+		return settings.getString("ODKTables:tableID", null);
+		
 	}
 	
     /* Called when the activity is first created. */
@@ -271,7 +309,7 @@ public class SpreadSheet extends Activity {
 			footer.add(currentTable.getFooter().get(currentTable.getColNum(currentCellLoc)));
 			
 			// Create an index table
-			Table indexTable = new Table(1, indexCol.size(),  null, header, indexCol, footer);
+			Table indexTable = new Table(currentTableID, 1, indexCol.size(),  null, header, indexCol, footer);
 
 			// Fill index table and data table
 			withIndexFill(currentTable, indexTable, currentTable.getColNum(currentCellLoc));
@@ -308,6 +346,7 @@ public class SpreadSheet extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
+        menu.add(0, TABLE_MANAGER_ID, 0, "Table Manager");
         menu.add(0, COLUMN_MANAGER_ID, 0, "Column Manager");
         menu.add(0, GRAPH_ID, 1, "Graph");
         menu.add(0, DEFAULTS_MANAGER_ID, 2, "Defaults");
@@ -324,9 +363,13 @@ public class SpreadSheet extends Activity {
         
     	// HANDLES DIFFERENT MENU OPTIONS
     	switch(item.getItemId()) {
-        // OPEN NEW FILE THROUGH A FILE MANGER
+    	case TABLE_MANAGER_ID:
+    		Intent tm = new Intent(this, TableManager.class);
+    		startActivity(tm);
+    		return true;
         case COLUMN_MANAGER_ID:
         	Intent cm = new Intent(this, ColumnManager.class); 
+        	cm.putExtra("tableID", currentTableID);
         	startActivity(cm);
         	return true;
         // SAVE CURRENTLY LOEADED FILE TO THE ORIGINAL PATH.
@@ -334,7 +377,7 @@ public class SpreadSheet extends Activity {
         	Intent g = null;
         		
         	// Classifier
-        	GraphClassifier gcf = new GraphClassifier(this, isMain);
+        	GraphClassifier gcf = new GraphClassifier(this, currentTableID, isMain);
         	String graphType = gcf.getGraphType();
         	String colOne = gcf.getColOne(); // i.e. X
         	String colTwo = gcf.getColTwo(); // i.e. Y
@@ -347,6 +390,7 @@ public class SpreadSheet extends Activity {
     	  	if (graphType == null) {
     	  		Log.e("GRAPTH", "Such a graph type does not exists");
     	  		g = new Intent(this, GraphSetting.class);
+    	  		g.putExtra("tableID", currentTableID);
     		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
         		g = new Intent(this, LineActivity.class); 
         		ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
@@ -389,8 +433,9 @@ public class SpreadSheet extends Activity {
     	    	Log.e("GRAPTH", "Such a graph type does not exists");
     	    	g = new Intent(this, GraphSetting.class);
     	    }
+    	  	
         	startActivity(g);
-            return true;
+        	return true;
         case DEFAULTS_MANAGER_ID:
         	startActivity(new Intent(this, DefaultsActivity.class));
         	return true;
@@ -465,6 +510,7 @@ public class SpreadSheet extends Activity {
     }
     
     private RelativeLayout fillLayout(boolean isIndex, Table table, int[] colWidths) {
+    	// Window Dimension
     	Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
     	int width = display.getWidth();
     	int height = display.getHeight();

@@ -25,7 +25,7 @@ public class LineActivity extends GraphActivity {
 	        // Convert
 	        List<GValueYPoint> list = createPlotData(x, y);
 	    	
-	        // Dras
+	        // Draw Line Graph
 	        GraphFactory f = new GraphFactory(this);
 	    	setContentView(f.getValueYLineGraph(list, "Fridge Temperatures", "Day", "Temperature (C)"));
         } 

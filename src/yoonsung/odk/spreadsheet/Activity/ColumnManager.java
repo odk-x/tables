@@ -3,7 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.TouchListView;
 import android.app.AlertDialog;
@@ -38,17 +38,20 @@ public class ColumnManager extends ListActivity {
 	public static final int SET_AS_ORDER_BY = 1;
 	public static final int REMOVE_THIS_COLUMN = 2;
 	
-	// Private fields
+	// For Drop & Drop Menu
 	private IconicAdapter adapter;
+	
+	// Private Fields
+	private String tableID;
 	private TableProperty tp;
-	private Data data;
+	private DataTable data;
 	private ArrayList<String> colOrder;
 	private String currentCol;
 	
 	// Initialize fields.
 	private void init() {
-		this.tp = new TableProperty();
-		this.data = new Data();
+		this.tp = new TableProperty(tableID);
+		this.data = new DataTable(tableID);
 		this.colOrder = tp.getColOrderArrayList(); 
 		
 		updatePrimeOrderbyInfo();
@@ -66,6 +69,9 @@ public class ColumnManager extends ListActivity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		setContentView(R.layout.col_manager);
+		
+		// Retrieve Intent
+		this.tableID = getIntent().getStringExtra("tableID");
 		
 		// Initialize
 		init();

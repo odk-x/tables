@@ -9,6 +9,7 @@ import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 
 public class Table {
 	
+	private String tableID;
 	private int width;
 	private int height;
 	private ArrayList<Integer> rowID;
@@ -17,21 +18,26 @@ public class Table {
 	private ArrayList<String> footer;
 		
 	public Table() {
-		new Table(0, 0, null, null, null, null);
+		new Table(null, 0, 0, null, null, null, null);
 	}
 	
-	public Table(int width, int height, 
+	public Table(String tableID,
+				 int width, int height, 
 				 ArrayList<Integer> rowID,
 				 ArrayList<String> header,
 				 ArrayList<String> data, 
 				 ArrayList<String> footer) {
+		
+		this.tableID = tableID;
 		this.width = width;
 		this.height = height;
 		this.rowID = rowID;
 		this.header = header;
 		this.data = data;
 		this.footer = footer;
-		ColumnProperty cp = new ColumnProperty();
+		
+		ColumnProperty cp = new ColumnProperty(tableID);
+		
 		// user-friendlifying the date range strings
 		List<Integer> drList = new ArrayList<Integer>();
 		for(int i=0; i<header.size(); i++) {
@@ -50,6 +56,7 @@ public class Table {
 				}
 			}
 		}
+		
 	}
 	
 	private Date getTime(String timeStr) {

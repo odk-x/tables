@@ -23,11 +23,12 @@ public class PropertyManager extends PreferenceActivity {
         
 		// Private Fields
 		private ColumnProperty cp;
+		private String tableID;
 		private String colName;
 		
 		// Initialize private fields
 		private void init() {
-			this.cp = new ColumnProperty();
+			this.cp = new ColumnProperty(tableID);
 		}
 		
 		@Override
@@ -36,6 +37,7 @@ public class PropertyManager extends PreferenceActivity {
               
                 // Column Name
                 this.colName = getIntent().getStringExtra("colName");
+                this.tableID = getIntent().getStringExtra("tableID");
                 init();
                 loadPreferenceScreen();
         }

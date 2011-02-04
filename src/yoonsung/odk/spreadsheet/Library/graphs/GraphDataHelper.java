@@ -6,13 +6,13 @@ import java.util.HashMap;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 
 public class GraphDataHelper {
 
-	private Data data;
+	private DataTable data;
 	
-	public GraphDataHelper(Data data) {
+	public GraphDataHelper(DataTable data) {
 		this.data = data;
 	}
 	

@@ -30,12 +30,17 @@ public class GraphSetting extends Activity {
 	private TabHost myTabHost;
 	//private String currentTab;
 	
+	private String tableID;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         
         setContentView(R.layout.graph_setting);
 
+        // Intent
+        this.tableID = getIntent().getStringExtra("tableID");
+        
         //currentTab = "main";
         
         myTabHost = (TabHost)this.findViewById(R.id.graph_setting_tabhost);
@@ -85,11 +90,11 @@ public class GraphSetting extends Activity {
 		// Spinner
 		Spinner typeSpinner;
 		if (myTabHost.getCurrentTabTag().equals(TAB_1)) {
-			typeSpinner = createSpinner(GraphClassifier.MAIN_VIEW_PREFIX+"type", TYPES);
-			Log.e("type key", GraphClassifier.MAIN_VIEW_PREFIX+"type");
+			typeSpinner = createSpinner("ODKTables" + ":" + tableID + GraphClassifier.MAIN_VIEW + ":type", TYPES);
+			Log.e("type key", "ODKTables" + ":" + tableID + GraphClassifier.MAIN_VIEW + ":type");
 		} else {
-			typeSpinner = createSpinner(GraphClassifier.HISTORY_IN_VIEW_PREFIX+"type", TYPES);
-			Log.e("type key", GraphClassifier.HISTORY_IN_VIEW_PREFIX+"type");
+			typeSpinner = createSpinner("ODKTables" + ":" + tableID + GraphClassifier.HISTORY_IN_VIEW + ":type", TYPES);
+			Log.e("type key", "ODKTables" + ":" + tableID + GraphClassifier.HISTORY_IN_VIEW + ":type");
 		}
 		
 		// Item chosen from the spinner
@@ -102,16 +107,16 @@ public class GraphSetting extends Activity {
 				 // Main or History-in & prefix
 				 String prefix = "";
 				 if (myTabHost.getCurrentTabTag().equals(TAB_1)) {
-					 prefix = GraphClassifier.MAIN_VIEW_PREFIX;
+					 prefix = "ODKTables" + ":" + tableID + GraphClassifier.MAIN_VIEW;
 				 } else {
-					 prefix = GraphClassifier.HISTORY_IN_VIEW_PREFIX;
+					 prefix = "ODKTables" + ":" + tableID + GraphClassifier.HISTORY_IN_VIEW;
 				 }
 				  
 				 // Type of graph
 				 String selectedItem = arg0.getSelectedItem().toString();
 				 
 				 //  Get available columns & conversion
-				 TableProperty tp = new TableProperty();
+				 TableProperty tp = new TableProperty(tableID);
 				 ArrayList<String> colOrder = tp.getColOrderArrayList();
 				 String[] cols = new String[colOrder.size()];
 				 for (int i = 0; i < colOrder.size(); i++) {
@@ -125,31 +130,31 @@ public class GraphSetting extends Activity {
 				
 				 if (selectedItem.equals("Line Graph")) {
 					 //change graph type
-					 editor.putString(prefix+"type", GraphClassifier.LINE_GRAPH);
+					 editor.putString(prefix+":type", GraphClassifier.LINE_GRAPH);
 					 editor.commit();
 					 
 					 // Set spinners for x and y
-					 Spinner x = createSpinner(prefix+"col1", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
+					 Spinner x = createSpinner(prefix+":col1", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
 					 axisLL.addView(x);
-					 Spinner y = createSpinner(prefix+"col2", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col2", y);
+					 Spinner y = createSpinner(prefix+":col2", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
 					 axisLL.addView(y);
 				 } else if (selectedItem.equals("Box-Stem Graph")) {
 					//change graph type
-					 editor.putString(prefix+"type", GraphClassifier.STEM_GRAPH);
+					 editor.putString(prefix+":type", GraphClassifier.STEM_GRAPH);
 					 editor.commit();
 					 
 					 // Set spinners for x and y
-					 Spinner x = createSpinner(prefix+"col1", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
+					 Spinner x = createSpinner(prefix+":col1", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
 					 axisLL.addView(x);
-					 Spinner y = createSpinner(prefix+"col2", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col2", y);
+					 Spinner y = createSpinner(prefix+":col2", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
 					 axisLL.addView(y);
 				 } else if (selectedItem.equals("Map")) {
 					 //change graph type
-					 editor.putString(prefix+"type", GraphClassifier.MAP);
+					 editor.putString(prefix+":type", GraphClassifier.MAP);
 					 editor.commit();
 					 
 					 // Set spinner for location
@@ -158,15 +163,15 @@ public class GraphSetting extends Activity {
 					 axisLL.addView(axis);
 				 } else if (selectedItem.equals("Calendar")) {
 					//change graph type
-					 editor.putString(prefix+"type", GraphClassifier.CALENDAR);
+					 editor.putString(prefix+":type", GraphClassifier.CALENDAR);
 					 editor.commit();
 					 
 					 // Set spinners for x and y
-					 Spinner x = createSpinner(prefix+"col1", cols);
+					 Spinner x = createSpinner(prefix+":col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
 					 axisLL.addView(x);
-					 Spinner y = createSpinner(prefix+"col2", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col2", y);
+					 Spinner y = createSpinner(prefix+":col2", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
 					 axisLL.addView(y);
 				 }
 				 

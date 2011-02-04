@@ -6,30 +6,32 @@ import android.preference.PreferenceManager;
 
 public class GraphClassifier {
 	
-	public static final String MAIN_VIEW_PREFIX = "main:";
-	public static final String HISTORY_IN_VIEW_PREFIX = "history:";
+	public static final String MAIN_VIEW  = ":main";
+	public static final String HISTORY_IN_VIEW = ":history";
 		
 	public static final String LINE_GRAPH = "line";
 	public static final String STEM_GRAPH = "stem";
 	public static final String MAP = "map";
 	public static final String CALENDAR = "calendar";
 	
+	private String tableID;
 	private boolean isMain;
-
+	
 	private String graphType;
 	private String colOne;
 	private String colTwo;
 	
-	public GraphClassifier(Context context, boolean isMain) {
+	public GraphClassifier(Context context, String tableID, boolean isMain) {
 		this.isMain = isMain;
+		this.tableID = tableID;
 		
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context); 
 		
 		// Get preference on the graph type and columns
-		String prefix = getPrefix();
-	    this.graphType = settings.getString(prefix + "type", null);
-	    this.colOne = settings.getString(prefix + "col1", null);
-	    this.colTwo = settings.getString(prefix + "col2", null);
+		String prefix = getPrefix(tableID);
+	    this.graphType = settings.getString(prefix + ":type", null);
+	    this.colOne = settings.getString(prefix + ":col1", null);
+	    this.colTwo = settings.getString(prefix + ":col2", null);
 	}
 	
 	public String getGraphType() {
@@ -44,13 +46,13 @@ public class GraphClassifier {
 		return this.colTwo;
 	}
 	
-	private String getPrefix() {
+	private String getPrefix(String tableID) {
 		// Prefix for share preference key
 		String prefix = "";
 		if (isMain) {
-			prefix = MAIN_VIEW_PREFIX;
+			prefix = "ODKTables" + ":" + tableID + MAIN_VIEW;
 		} else {
-			prefix = HISTORY_IN_VIEW_PREFIX;
+			prefix = "ODKTables" + ":" + tableID + HISTORY_IN_VIEW;
 		}
 		return prefix;
 	}

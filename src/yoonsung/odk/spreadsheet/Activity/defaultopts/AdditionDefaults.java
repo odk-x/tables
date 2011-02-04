@@ -34,9 +34,9 @@ public class AdditionDefaults extends Activity {
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		cp = new ColumnProperty();
+		cp = new ColumnProperty("0");
 		dm = new DefaultsManager();
-		tp = new TableProperty();
+		tp = new TableProperty("0");
 		changedFields = new HashMap<String, EditText>();
 		ScrollView sv = new ScrollView(this);
 		sv.addView(getView());

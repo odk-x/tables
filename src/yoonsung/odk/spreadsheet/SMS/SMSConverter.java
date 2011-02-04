@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
 import android.util.Log;
 
@@ -25,7 +25,7 @@ public class SMSConverter {
 									"thursday", "friday", "saturday"};
 	
 	private List<String> ineqList;
-	private Data data;
+	private DataTable data;
 	private ColumnProperty cp;
 	private DefaultsManager dm;
 	private DateFormat dbDate = new SimpleDateFormat("yyyy:MM:dd");
@@ -33,9 +33,9 @@ public class SMSConverter {
 			new SimpleDateFormat("yyyy:MM:dd:HH:mm:ss");
 	private DateFormat rCompact = new SimpleDateFormat("MM/dd HH:mm");
 	
-	public SMSConverter() {
-		cp = new ColumnProperty();
-		data = new Data();
+	public SMSConverter(String tableID) {
+		cp = new ColumnProperty(tableID);
+		data = new DataTable(tableID);
 		ineqList = Arrays.asList(ineqOperators);
 		dm = new DefaultsManager();
 	}
