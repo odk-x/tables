@@ -3,7 +3,6 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
@@ -23,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -45,7 +43,6 @@ import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /*
  * Main acitivity that displays the spread sheet.
@@ -114,6 +111,7 @@ public class SpreadSheet extends Activity {
 		try {
 			this.currentTable = data.getTable();
 		} catch (Exception e) {
+			Log.e("loaderror", "error: " + e.getMessage());
 			loadError = true;
 		}
 		
@@ -358,8 +356,6 @@ public class SpreadSheet extends Activity {
     // HANDLE OPTION MENU
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-    	
-    	Log.d("timing", "menu item selected");
         
     	// HANDLES DIFFERENT MENU OPTIONS
     	switch(item.getItemId()) {
@@ -510,6 +506,7 @@ public class SpreadSheet extends Activity {
     }
     
     private RelativeLayout fillLayout(boolean isIndex, Table table, int[] colWidths) {
+    	Log.d("hi", "fillLayout called");
     	// Window Dimension
     	Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
     	int width = display.getWidth();
@@ -519,7 +516,6 @@ public class SpreadSheet extends Activity {
     	RelativeLayout header = new RelativeLayout(this);
     	TableLayout headerInside = fillTable(isIndex, true, false, table, colWidths);
     	header.addView(headerInside, LayoutParams.WRAP_CONTENT, 30);
-    	
     	// Content
     	RelativeLayout content = new RelativeLayout(this);
     	if (isIndex) {
@@ -545,7 +541,7 @@ public class SpreadSheet extends Activity {
     	wrapper.addView(header);
     	RelativeLayout.LayoutParams relativeParams = new
     	RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
-    	LayoutParams.WRAP_CONTENT);
+    			LayoutParams.WRAP_CONTENT);
     	relativeParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
     	wrapper.addView(footer, relativeParams);
 
@@ -555,7 +551,6 @@ public class SpreadSheet extends Activity {
     
     private TableLayout fillTable(boolean isIndex, boolean isHeader,
     		boolean isFooter, Table table, int[] colWidths) {
-    	Log.d("tal", "colWidths in fillTable:" + Arrays.toString(colWidths));
     	TableLayout tableLayout = new TableLayout(this);
     	tableLayout.setBackgroundColor(getResources().getColor(R.color.black)); // added
     	
@@ -574,6 +569,7 @@ public class SpreadSheet extends Activity {
         		i++;
         	}
     		tv.setWidth(colWidths[currentTable.getColNum(colName)]);
+    		Log.d("col", colName + ":" + colWidths[currentTable.getColNum(colName)]);
     		tv.setMaxLines(1);
     		
     		LinearLayout headerLl = new LinearLayout(this);
@@ -655,8 +651,8 @@ public class SpreadSheet extends Activity {
     	if (isFooter) {
     		tableLayout.addView(footer, 0, new LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT));
     	} else { 
-    		footer.setVisibility(View.INVISIBLE);
-    		tableLayout.addView(footer, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    		//footer.setVisibility(View.INVISIBLE);
+    		//tableLayout.addView(footer, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     	}
     	
         return tableLayout;
