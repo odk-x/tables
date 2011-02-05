@@ -1,9 +1,12 @@
 package yoonsung.odk.spreadsheet.Activity;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.Data;
+import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.TableList;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -28,7 +31,7 @@ import android.widget.TextView;
 public class DisplayPrefsActivity extends Activity {
 	
 	/** the data */
-	private Data data;
+	private DataTable data;
 	/** the shared preferences manager */
 	private SharedPreferences settings;
 	/** the table name spinner */
@@ -42,10 +45,15 @@ public class DisplayPrefsActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        data = new Data();
+    	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        data = new DataTable(settings.getString("ODKTables:tableID", null));
         settings = PreferenceManager.getDefaultSharedPreferences(this);
         tnSpinner = new Spinner(this);
-        List<String> tableNames = data.getTables();
+        Map<String, String> tableNameMap = (new TableList()).getTableList();
+        List<String> tableNames = new ArrayList<String>();
+        for(String key : tableNameMap.keySet()) {
+        	tableNames.add(tableNameMap.get(key));
+        }
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item,
 				tableNames.toArray(new String[0]));

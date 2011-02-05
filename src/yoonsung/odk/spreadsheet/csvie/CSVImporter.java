@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 import android.content.ContentValues;
 import au.com.bytecode.opencsv.CSVReader;
-import yoonsung.odk.spreadsheet.Database.Data;
 
 /**
  * A class for importing tables from CSV files.
@@ -20,7 +20,7 @@ public class CSVImporter {
 	 * @throws Exception
 	 */
 	public void importTable(String tablename, File file) throws CSVException {
-		Data data = new Data();
+		DataTable data = new DataTable(tablename);
 		CSVReader reader;
 		try {
 			reader = new CSVReader(new FileReader(file));

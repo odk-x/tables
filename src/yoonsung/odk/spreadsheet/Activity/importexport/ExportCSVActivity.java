@@ -2,7 +2,9 @@ package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
 import java.util.List;
-import yoonsung.odk.spreadsheet.Database.Data;
+
+import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVExporter;
 import android.os.Bundle;
@@ -27,7 +29,7 @@ public class ExportCSVActivity extends IETabActivity {
 	public static final int EXPORTBUTTON_ID = 3;
 	
 	/* the list of table names */
-	private List<String> tableNames;
+	private String[] tableNames;
 	/* the table name spinner */
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
@@ -51,10 +53,9 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tableNames = (new Data()).getTables();
+		tableNames = (new TableList()).getTableNames();
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item,
-				tableNames.toArray(new String[0]));
+				android.R.layout.simple_spinner_item, tableNames);
 		adapter.setDropDownViewResource(
 				android.R.layout.simple_spinner_dropdown_item);
 		tableSpin.setAdapter(adapter);
@@ -113,9 +114,10 @@ public class ExportCSVActivity extends IETabActivity {
 		file = new File(file.getPath() + "/" + filename);
 		Log.d("testtest", file.getAbsolutePath());
 		// TODO: make it care what table it is
-		String tableName = tableNames.get(tableSpin.getSelectedItemPosition());
+		String tableName = tableNames[tableSpin.getSelectedItemPosition()];
 		try {
-			(new CSVExporter()).exportTable((new Data()).getTable(), file,
+			(new CSVExporter()).exportTable(
+					(new DataTable(tableName)).getTable(), file,
 					incPNCheck.isChecked(), incTSCheck.isChecked());
 			Log.d("eca", "exported some stuff");
 			showDialog(CSVEXPORT_SUCCESS_DIALOG);

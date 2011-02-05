@@ -2,7 +2,8 @@ package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
 import java.util.List;
-import yoonsung.odk.spreadsheet.Database.Data;
+
+import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
 import android.os.Bundle;
@@ -30,7 +31,7 @@ public class ImportCSVActivity extends IETabActivity {
 	public static int IMPORTBUTTON_ID = 4;
 	
 	/* the list of table names */
-	private List<String> tableNames;
+	private String[] tableNames;
 	/* the view for inputting the new table name (label and text field) */
 	private View newTableViews;
 	/* the text field for getting the new table name */
@@ -54,11 +55,14 @@ public class ImportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tableNames = (new Data()).getTables();
-		tableNames.add(0, "New Table");
+		String[] justTableNames = (new TableList()).getTableNames();
+		String[] tableNames = new String[justTableNames.length + 1];
+		tableNames[0] = "New Table";
+		for(int i=0; i<justTableNames.length; i++) {
+			tableNames[i+1] = justTableNames[i];
+		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item,
-				tableNames.toArray(new String[0]));
+				android.R.layout.simple_spinner_item, tableNames);
 		adapter.setDropDownViewResource(
 				android.R.layout.simple_spinner_dropdown_item);
 		tableSpin.setAdapter(adapter);
@@ -114,7 +118,7 @@ public class ImportCSVActivity extends IETabActivity {
 			tableName = ntnValField.getText().toString();
 			// TODO: make it possible to create new tables
 		} else {
-			tableName = tableNames.get(pos);
+			tableName = tableNames[pos];
 			// TODO: verify it is an actual table
 		}
 		try {
