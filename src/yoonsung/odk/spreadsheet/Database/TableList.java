@@ -1,9 +1,6 @@
 package yoonsung.odk.spreadsheet.Database;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;

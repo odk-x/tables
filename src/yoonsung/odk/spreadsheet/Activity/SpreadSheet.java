@@ -662,13 +662,12 @@ public class SpreadSheet extends Activity {
      * @return an array of the column widths for the current table
      */
     private int[] getColWidths() {
-    	// TODO: use appropriate table name
     	int[] widths = new int[currentTable.getWidth()];
     	SharedPreferences settings =
     		PreferenceManager.getDefaultSharedPreferences(this);
         for(int i=0; i<widths.length; i++) {
-        	widths[i] = new Integer(settings.getInt("tablewidths-table-" +
-        			currentTable.getColName(i), 125));
+        	widths[i] = new Integer(settings.getInt("tablewidths-" +
+        			currentTableID + "-" + currentTable.getColName(i), 125));
         }
         return widths;
     }

@@ -1,8 +1,6 @@
 package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
-import java.util.List;
-
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
@@ -114,20 +112,30 @@ public class ImportCSVActivity extends IETabActivity {
 		file.mkdirs();
 		String tableName;
 		int pos = tableSpin.getSelectedItemPosition();
+		TableList tList = new TableList();
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
-			// TODO: make it possible to create new tables
+			String res = tList.registerNewTable(tableName);
+			if(res != null) {
+				notifyOfError(res);
+				return;
+			}
 		} else {
+			if(pos == 0) {
+				notifyOfError("No table selected.");
+				return;
+			}
 			tableName = tableNames[pos];
-			// TODO: verify it is an actual table
+			if(!tList.isTableExist(tableName)) {
+				notifyOfError("Table does not exist.");
+				return;
+			}
 		}
 		try {
 			(new CSVImporter()).importTable(tableName, file);
 			showDialog(CSVIMPORT_SUCCESS_DIALOG);
 		} catch (CSVException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			notifyOfError(e.getMessage());
+			notifyOfError("Error importing: " + e.getMessage());
 			return;
 		}
 	}

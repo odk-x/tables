@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +39,8 @@ public class DisplayPrefsActivity extends Activity {
 	private Spinner tnSpinner;
 	/** the table of options */
 	private TableLayout opts;
+	/** the map from positions to table IDs */
+	private Map<Integer, String> posToId;
 	
     /**
      * Called when the activity is first created.
@@ -45,14 +48,22 @@ public class DisplayPrefsActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-    	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        data = new DataTable(settings.getString("ODKTables:tableID", null));
-        settings = PreferenceManager.getDefaultSharedPreferences(this);
+		settings = PreferenceManager.getDefaultSharedPreferences(this);
         tnSpinner = new Spinner(this);
+		String curDefTable = settings.getString("ODKTables:tableID", "1");
         Map<String, String> tableNameMap = (new TableList()).getTableList();
         List<String> tableNames = new ArrayList<String>();
+        int counter = 0;
+        posToId = new HashMap<Integer, String>();
+        int defPos = 0;
         for(String key : tableNameMap.keySet()) {
-        	tableNames.add(tableNameMap.get(key));
+        	if(key.equals(curDefTable)) {
+        		defPos = counter;
+        	}
+        	String name = tableNameMap.get(key);
+        	tableNames.add(name);
+        	posToId.put(counter, key);
+        	counter++;
         }
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item,
@@ -60,7 +71,7 @@ public class DisplayPrefsActivity extends Activity {
 		adapter.setDropDownViewResource(
 				android.R.layout.simple_spinner_dropdown_item);
 		tnSpinner.setAdapter(adapter);
-		tnSpinner.setSelection(0);
+		tnSpinner.setSelection(defPos);
 		tnSpinner.setOnItemSelectedListener(new TableSpinListener());
     	LinearLayout v = new LinearLayout(this);
 		v.setOrientation(LinearLayout.VERTICAL);
@@ -75,7 +86,8 @@ public class DisplayPrefsActivity extends Activity {
      * Prepares the table of options for the selected table.
      */
     private void prepTableOpts() {
-    	String tableName = tnSpinner.getSelectedItem().toString();
+    	String tableId = posToId.get(tnSpinner.getSelectedItemPosition());
+        data = new DataTable(tableId);
     	Table table = data.getTable();
     	opts.removeAllViews();
     	for(int i=0; i<table.getWidth(); i++) {
@@ -85,7 +97,7 @@ public class DisplayPrefsActivity extends Activity {
     		label.setText(colName);
     		row.addView(label);
     		EditText et = new EditText(this);
-    		int width = settings.getInt("tablewidths-" + tableName + "-" +
+    		int width = settings.getInt("tablewidths-" + tableId + "-" +
     				colName, 125);
     		et.setText(new Integer(width).toString());
     		et.addTextChangedListener(new ETListener(colName));
@@ -124,9 +136,10 @@ public class DisplayPrefsActivity extends Activity {
 		@Override
 		public void afterTextChanged(Editable s) {
 			try {
-		    	String tableName = tnSpinner.getSelectedItem().toString();
+		    	String tableId =
+		    		posToId.get(tnSpinner.getSelectedItemPosition());
 				SharedPreferences.Editor editor = settings.edit();
-				editor.putInt("tablewidths-" + tableName + "-" + colName,
+				editor.putInt("tablewidths-" + tableId + "-" + colName,
 						new Integer(s.toString()));
 				editor.commit();
 			} catch(NumberFormatException e) {
