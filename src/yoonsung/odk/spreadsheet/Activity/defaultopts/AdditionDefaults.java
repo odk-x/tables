@@ -8,8 +8,10 @@ import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
@@ -34,9 +36,12 @@ public class AdditionDefaults extends Activity {
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		cp = new ColumnProperty("0");
-		dm = new DefaultsManager();
-		tp = new TableProperty("0");
+		SharedPreferences settings =
+			PreferenceManager.getDefaultSharedPreferences(this);
+		String tableID = settings.getString("ODKTables:tableID", "1");
+		cp = new ColumnProperty(tableID);
+		dm = new DefaultsManager(tableID);
+		tp = new TableProperty(tableID);
 		changedFields = new HashMap<String, EditText>();
 		ScrollView sv = new ScrollView(this);
 		sv.addView(getView());
@@ -59,8 +64,8 @@ public class AdditionDefaults extends Activity {
         for(String colName : changedFields.keySet()) {
 			dm.setAddColDefault(colName,
 					changedFields.get(colName).getText().toString());
-			changedFields.remove(colName);
         }
+        changedFields.clear();
 	}
 	
 	private View getView() {

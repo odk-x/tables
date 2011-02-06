@@ -15,6 +15,8 @@ public class DefaultsManager {
 	
 	/** the table name in the database */
 	private static final String DEFOPTS_TABLE = "defaultopts";
+	/** the name of the table ID column */
+	private static final String DB_TABL = "tableID";
 	/** the name of the operation column */
 	private static final String DB_OPER = "operation";
 	/** the name of the type column */
@@ -38,12 +40,16 @@ public class DefaultsManager {
 	
 	/** the database */
 	private DBIO db;
+	/** the table ID */
+	private String tableID;
 	
 	/**
 	 * Constructs a new DefaultsManager
+	 * @param tableID the table ID
 	 */
-	public DefaultsManager() {
+	public DefaultsManager(String tableID) {
 		db = new DBIO();
+		this.tableID = tableID;
 	}
 	
 	/**
@@ -69,8 +75,8 @@ public class DefaultsManager {
 		Map<String, String> map = new HashMap<String, String>();
 		SQLiteDatabase con = db.getConn();
 		String[] cols = {DB_KEY, DB_VAL};
-		String sel = DB_OPER + "=" + oper + " and " + DB_TYPE + "=" +
-				COL_VALUE;
+		String sel = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" + oper +
+				" and " + DB_TYPE + "=" + COL_VALUE;
 		Cursor c = con.query(DEFOPTS_TABLE, cols, sel, null, null, null, null);
 		int keyIndex = c.getColumnIndexOrThrow(DB_KEY);
 		int valIndex = c.getColumnIndexOrThrow(DB_VAL);
@@ -92,8 +98,9 @@ public class DefaultsManager {
 		Set<String> set = new HashSet<String>();
 		SQLiteDatabase con = db.getConn();
 		String[] cols = {DB_KEY};
-		String sel = DB_OPER + "=" + QUERYING + " and " + DB_TYPE + "=" +
-				COL_RETURN + " and " + DB_VAL + "=1";
+		String sel = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" +
+				QUERYING + " and " + DB_TYPE + "=" + COL_RETURN + " and " +
+				DB_VAL + "=1";
 		Cursor c = con.query(DEFOPTS_TABLE, cols, sel, null, null, null, null);
 		int keyIndex = c.getColumnIndexOrThrow(DB_KEY);
 		boolean empty = !c.moveToFirst();
@@ -128,10 +135,11 @@ public class DefaultsManager {
 	private String getAvailCol(int oper) {
 		SQLiteDatabase con = db.getConn();
 		String[] cols = {DB_VAL};
-		String sel = db.toSafeSqlColumn(DB_OPER, false, null) + "=" + oper +
-				" and " + db.toSafeSqlColumn(DB_TYPE, false, null) + "=" +
-				OTHER + " and " + db.toSafeSqlColumn(DB_KEY, false, null) +
-				"='" + OAVAIL + "'";
+		String sel = db.toSafeSqlColumn(DB_OPER, false, null) + "=" + tableID +
+				" and " + db.toSafeSqlColumn(DB_OPER, false, null) + "=" +
+				oper + " and " + db.toSafeSqlColumn(DB_TYPE, false, null) +
+				"=" + OTHER + " and " +
+				db.toSafeSqlColumn(DB_KEY, false, null) + "='" + OAVAIL + "'";
 		Cursor c = con.query(DEFOPTS_TABLE, cols, sel, null, null, null, null,
 				"1");
 		String r = null;
@@ -140,7 +148,7 @@ public class DefaultsManager {
 		}
 		c.close();
 		con.close();
-		if(r.length() == 0) {return null;}
+		if((r == null) || (r.length() == 0)) {return null;}
 		return r;
 	}
 	
@@ -175,8 +183,9 @@ public class DefaultsManager {
 		SQLiteDatabase con = db.getConn();
 		ContentValues vals = new ContentValues();
 		vals.put(DB_VAL, val);
-		String where = DB_OPER + "=" + oper + " and " + DB_TYPE + "=" +
-				COL_VALUE + " and " + DB_KEY + "=" + db.toSafeSqlString(col);
+		String where = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" +
+				oper + " and " + DB_TYPE + "=" + COL_VALUE + " and " + DB_KEY +
+				"=" + db.toSafeSqlString(col);
 		con.update(DEFOPTS_TABLE, vals, where, null);
 		con.close();
 		return true;
@@ -192,8 +201,9 @@ public class DefaultsManager {
 		SQLiteDatabase con = db.getConn();
 		ContentValues vals = new ContentValues();
 		vals.put(DB_VAL, inc);
-		String where = DB_OPER + "=" + QUERYING + " and " + DB_TYPE + "=" +
-				COL_RETURN + " and " + DB_KEY + "=" + db.toSafeSqlString(col);
+		String where = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" +
+				QUERYING + " and " + DB_TYPE + "=" + COL_RETURN + " and " +
+				DB_KEY + "=" + db.toSafeSqlString(col);
 		con.update(DEFOPTS_TABLE, vals, where, null);
 		con.close();
 		return true;
@@ -207,11 +217,42 @@ public class DefaultsManager {
 		SQLiteDatabase con = db.getConn();
 		ContentValues vals = new ContentValues();
 		vals.put(DB_VAL, val);
-		String where = DB_OPER + "=" + oper + " and " + DB_TYPE + "=" + OTHER +
-				" and " + DB_KEY + "=" + db.toSafeSqlString(OAVAIL);
+		String where = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" +
+				oper + " and " + DB_TYPE + "=" + OTHER + " and " + DB_KEY +
+				"=" + db.toSafeSqlString(OAVAIL);
 		con.update(DEFOPTS_TABLE, vals, where, null);
 		con.close();
 		return true;
+	}
+	
+	/**
+	 * Adds fields to the default options table for a new column.
+	 * @param colName the new column's name
+	 */
+	public void prepForNewCol(String colName) {
+		ContentValues vals1 = new ContentValues();
+		vals1.put(DB_TABL, tableID);
+		vals1.put(DB_OPER, ADDITION);
+		vals1.put(DB_TYPE, COL_VALUE);
+		vals1.put(DB_KEY, colName);
+		vals1.put(DB_VAL, "");
+		ContentValues vals2 = new ContentValues();
+		vals2.put(DB_TABL, tableID);
+		vals2.put(DB_OPER, QUERYING);
+		vals2.put(DB_TYPE, COL_VALUE);
+		vals2.put(DB_KEY, colName);
+		vals2.put(DB_VAL, "");
+		ContentValues vals3 = new ContentValues();
+		vals3.put(DB_TABL, tableID);
+		vals3.put(DB_OPER, QUERYING);
+		vals3.put(DB_TYPE, COL_RETURN);
+		vals3.put(DB_KEY, colName);
+		vals3.put(DB_VAL, "0");
+		SQLiteDatabase con = db.getConn();
+		con.insertOrThrow(DEFOPTS_TABLE, null, vals1);
+		con.insertOrThrow(DEFOPTS_TABLE, null, vals2);
+		con.insertOrThrow(DEFOPTS_TABLE, null, vals3);
+		con.close();
 	}
 	
 }

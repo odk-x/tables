@@ -66,22 +66,21 @@ public class DataTable {
 	// Create a new column with this name. If there is a column
 	// with this name, do-nothing.
 	public void addNewColumn(String colName) {
-		
-		if (!isColumnExist(colName)) {
-			// Add new column 'data' table
-			SQLiteDatabase con = db.getConn();
-			con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(currentTableName, false, null) 
-						+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
-			con.close();
-			
-			// Update colOrder in TableProperty
-			ArrayList<String> colOrder = tp.getColOrderArrayList();
-			colOrder.add(colName);
-			tp.setColOrder(colOrder);
-		} else {
-			// column already exist;
+		if(isColumnExist(colName)) {
+			return;
 		}
+		// Add new column 'data' table
+		SQLiteDatabase con = db.getConn();
+		con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(currentTableName, false, null) 
+					+ " ADD " + db.toSafeSqlString(colName) + " TEXT");
+		con.close();
+		// adding rows to the default options table
+		(new DefaultsManager(currentTableID)).prepForNewCol(colName);
 		
+		// Update colOrder in TableProperty
+		ArrayList<String> colOrder = tp.getColOrderArrayList();
+		colOrder.add(colName);
+		tp.setColOrder(colOrder);
 	}	
 	
 	// Drop a column with this name. If no such a column exsit,

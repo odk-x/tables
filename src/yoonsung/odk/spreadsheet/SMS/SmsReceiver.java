@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
@@ -76,7 +75,7 @@ public class SmsReceiver extends BroadcastReceiver {
 	private void handleAddition(Bundle bundle) {
         // Parse
         SMSConverter ps = new SMSConverter(tableID);
-        HashMap<String, String> alldata;
+        Map<String, String> alldata;
         try {
 			alldata = ps.parseSMS(getSMSBody(bundle));
 		} catch (InvalidQueryException e) {
@@ -85,11 +84,10 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
        
         // Filter SMS-IN columns
-		HashMap<String, String> data = new HashMap<String, String>();
+		Map<String, String> data = new HashMap<String, String>();
         ColumnProperty cp = new ColumnProperty(tableID);
         for (String key : alldata.keySet()) {
         	if (cp.getSMSIN(key)) {
-        		Log.d("smr", "key:" + key);
         		data.put(key, alldata.get(key));
         	}
         }
@@ -128,7 +126,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		sender.sendSMS(getSMSFrom(bundle), resp);
 	}
     
-	private void addNewData(HashMap<String, String> data, String phoneNumberIn, String timeStamp) {
+	private void addNewData(Map<String, String> data, String phoneNumberIn, String timeStamp) {
 		// Prepare content values
 		ContentValues cv = new ContentValues();
 		for (String key : data.keySet()) {

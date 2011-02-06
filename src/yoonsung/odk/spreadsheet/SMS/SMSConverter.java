@@ -37,7 +37,7 @@ public class SMSConverter {
 		cp = new ColumnProperty(tableID);
 		data = new DataTable(tableID);
 		ineqList = Arrays.asList(ineqOperators);
-		dm = new DefaultsManager();
+		dm = new DefaultsManager(tableID);
 	}
 		
 	public HashMap<String, String> parseSMS(String sms)
