@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
+import java.util.Map;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
@@ -53,11 +54,13 @@ public class ImportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		String[] justTableNames = (new TableList()).getTableNames();
-		String[] tableNames = new String[justTableNames.length + 1];
+		Map<String, String> tableMap = (new TableList()).getTableList();
+		tableNames = new String[tableMap.size() + 1];
 		tableNames[0] = "New Table";
-		for(int i=0; i<justTableNames.length; i++) {
-			tableNames[i+1] = justTableNames[i];
+		int counter = 1;
+		for(String tableId : tableMap.keySet()) {
+			tableNames[counter] = tableMap.get(tableId);
+			counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
@@ -121,10 +124,6 @@ public class ImportCSVActivity extends IETabActivity {
 				return;
 			}
 		} else {
-			if(pos == 0) {
-				notifyOfError("No table selected.");
-				return;
-			}
 			tableName = tableNames[pos];
 			if(!tList.isTableExist(tableName)) {
 				notifyOfError("Table does not exist.");
@@ -132,7 +131,8 @@ public class ImportCSVActivity extends IETabActivity {
 			}
 		}
 		try {
-			(new CSVImporter()).importTable(tableName, file);
+			String tId = (new Integer(tList.getTableID(tableName))).toString();
+			(new CSVImporter()).importTable(tId, file);
 			showDialog(CSVIMPORT_SUCCESS_DIALOG);
 		} catch (CSVException e) {
 			notifyOfError("Error importing: " + e.getMessage());

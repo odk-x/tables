@@ -45,25 +45,6 @@ public class TableList {
 		return result;
 	}
 	
-	/**
-	 * @return an array of table names, in alphabetical order
-	 */
-	public String[] getTableNames() {
-		SQLiteDatabase con = db.getConn();
-		String[] qCols = {TABLE_NAME};
-		Cursor cs = con.query(TABLE_LIST, qCols, null, null, null, null,
-				TABLE_NAME);
-		String[] res = new String[cs.getCount()];
-		int index = 0;
-		while(cs.moveToNext()) {
-			res[index] = cs.getString(1);
-			index++;
-		}
-		cs.close();
-		con.close();
-		return res;
-	}
-	
 	public String registerNewTable(String tableName) {
 		SQLiteDatabase con = db.getConn();
 		

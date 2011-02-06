@@ -1,6 +1,8 @@
 package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
+import java.util.Map;
+
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
@@ -51,7 +53,13 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tableNames = (new TableList()).getTableNames();
+		Map<String, String> tableMap = (new TableList()).getTableList();
+		tableNames = new String[tableMap.size()];
+		int counter = 0;
+		for(String id : tableMap.keySet()) {
+			tableNames[counter] = tableMap.get(id);
+			counter++;
+		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
 		adapter.setDropDownViewResource(
@@ -113,9 +121,11 @@ public class ExportCSVActivity extends IETabActivity {
 		Log.d("testtest", file.getAbsolutePath());
 		// TODO: make it care what table it is
 		String tableName = tableNames[tableSpin.getSelectedItemPosition()];
+		String tableID =
+			(new Integer(new TableList().getTableID(tableName))).toString();
 		try {
 			(new CSVExporter()).exportTable(
-					(new DataTable(tableName)).getTable(), file,
+					(new DataTable(tableID)).getTable(), file,
 					incPNCheck.isChecked(), incTSCheck.isChecked());
 			Log.d("eca", "exported some stuff");
 			showDialog(CSVEXPORT_SUCCESS_DIALOG);

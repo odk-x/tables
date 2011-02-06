@@ -15,12 +15,12 @@ public class CSVImporter {
 	
 	/**
 	 * Imports to an existing table from a CSV file.
-	 * @param tablename the name of the table to import to
+	 * @param tableid the ID of the table to import to
 	 * @param file the file to import from
 	 * @throws Exception
 	 */
-	public void importTable(String tablename, File file) throws CSVException {
-		DataTable data = new DataTable(tablename);
+	public void importTable(String tableID, File file) throws CSVException {
+		DataTable data = new DataTable(tableID);
 		CSVReader reader;
 		try {
 			reader = new CSVReader(new FileReader(file));
