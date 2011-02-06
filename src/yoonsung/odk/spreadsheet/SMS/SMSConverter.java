@@ -168,20 +168,12 @@ public class SMSConverter {
 		String avail = dm.getQueryAvailCol();
 		// getting split points
 		List<Integer> splits = new ArrayList<Integer>();
-		int index = q.indexOf('?');
-		while(index > -1) {
-			splits.add(index);
-			index = q.indexOf('?', index + 1);
+		for(int i=0; i<q.length(); i++) {
+			char c = q.charAt(i);
+			if((c == '?') || (c == '=') || (c == '~') || (c == '/')) {
+				splits.add(i);
+			}
 		}
-		index = q.indexOf('=');
-		while(index > -1) {
-			splits.add(index);
-			index = q.indexOf('=', index + 1);
-		}
-		index = q.indexOf('~');
-		if(index > -1) {splits.add(index);}
-		index = q.indexOf('/');
-		if(index > -1) {splits.add(index);}
 		splits.add(q.length());
 		// parsing
 		sheetname = interpretSheetname(q.substring(0, splits.get(0)));
