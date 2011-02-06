@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,20 +76,21 @@ public class SmsReceiver extends BroadcastReceiver {
 	private void handleAddition(Bundle bundle) {
         // Parse
         SMSConverter ps = new SMSConverter(tableID);
-        HashMap<String, String> data;
+        HashMap<String, String> alldata;
         try {
-			data = ps.parseSMS(getSMSBody(bundle));
+			alldata = ps.parseSMS(getSMSBody(bundle));
 		} catch (InvalidQueryException e) {
 			Log.d("sra", "err:" + e.getMessage());
 			return;
 		}
        
         // Filter SMS-IN columns
+		HashMap<String, String> data = new HashMap<String, String>();
         ColumnProperty cp = new ColumnProperty(tableID);
-        for (String key : data.keySet()) {
-        	if (!cp.getSMSIN(key)) {
+        for (String key : alldata.keySet()) {
+        	if (cp.getSMSIN(key)) {
         		Log.d("smr", "key:" + key);
-        		data.remove(key);
+        		data.put(key, alldata.get(key));
         	}
         }
            

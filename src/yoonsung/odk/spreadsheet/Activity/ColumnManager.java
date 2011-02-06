@@ -193,6 +193,7 @@ public class ColumnManager extends ListActivity {
 	private void loadColumnPropertyManager(String name) {
 		Intent cpm = new Intent(this, PropertyManager.class);
 		cpm.putExtra("colName", name);
+		cpm.putExtra("tableID", tableID);
 		startActivity(cpm);
 	}
 	
