@@ -52,6 +52,14 @@ public class DBIO {
                 + ColumnProperty.COLUMN_PROPERTY_SMSOUT + " TEXT,"
                 + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT"
                 + ");");
+    	// Create defaultopts table
+    	db.execSQL("CREATE TABLE IF NOT EXISTS " + DefaultsManager.DEFOPTS_TABLE + " ("
+    			+ DefaultsManager.DB_TABL + " INTEGER,"
+    			+ DefaultsManager.DB_OPER + " INTEGER,"
+    			+ DefaultsManager.DB_TYPE + " INTEGER,"
+    			+ DefaultsManager.DB_KEY + " TEXT,"
+    			+ DefaultsManager.DB_VAL + " TEXT"
+    			+");");
     	//db.endTransaction();
     	db.close();
 	}

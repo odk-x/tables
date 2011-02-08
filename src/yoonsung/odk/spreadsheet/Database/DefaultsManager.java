@@ -14,17 +14,17 @@ import android.database.sqlite.SQLiteDatabase;
 public class DefaultsManager {
 	
 	/** the table name in the database */
-	private static final String DEFOPTS_TABLE = "defaultopts";
+	public static final String DEFOPTS_TABLE = "defaultopts";
 	/** the name of the table ID column */
-	private static final String DB_TABL = "tableID";
+	public static final String DB_TABL = "tableID";
 	/** the name of the operation column */
-	private static final String DB_OPER = "operation";
+	public static final String DB_OPER = "operation";
 	/** the name of the type column */
-	private static final String DB_TYPE = "type";
+	public static final String DB_TYPE = "type";
 	/** the name of the key column */
-	private static final String DB_KEY = "itemkey";
+	public static final String DB_KEY = "itemkey";
 	/** the name of the value column */
-	private static final String DB_VAL = "itemval";
+	public static final String DB_VAL = "itemval";
 	/** the value for the operation column that indicates addition */
 	private static final int ADDITION = 1;
 	/** the value for the operation column that indicates querying */
@@ -209,18 +209,32 @@ public class DefaultsManager {
 		return true;
 	}
 	
+	public boolean setAddAvailCol(String val) {
+		return setAvailCol(ADDITION, val);
+	}
+	
 	public boolean setQueryAvailCol(String val) {
 		return setAvailCol(QUERYING, val);
 	}
 	
 	private boolean setAvailCol(int oper, String val) {
 		SQLiteDatabase con = db.getConn();
-		ContentValues vals = new ContentValues();
-		vals.put(DB_VAL, val);
 		String where = DB_TABL + "=" + tableID + " and " + DB_OPER + "=" +
 				oper + " and " + DB_TYPE + "=" + OTHER + " and " + DB_KEY +
 				"=" + db.toSafeSqlString(OAVAIL);
-		con.update(DEFOPTS_TABLE, vals, where, null);
+		Cursor cs = con.query(DEFOPTS_TABLE, null, where, null, null, null,
+				null);
+		ContentValues vals = new ContentValues();
+		vals.put(DB_VAL, val);
+		if(cs.getCount() > 0) {
+			con.update(DEFOPTS_TABLE, vals, where, null);
+		} else {
+			vals.put(DB_TABL, tableID);
+			vals.put(DB_OPER, oper);
+			vals.put(DB_TYPE, OTHER);
+			vals.put(DB_KEY, OAVAIL);
+			con.insertOrThrow(DEFOPTS_TABLE, null, vals);
+		}
 		con.close();
 		return true;
 	}

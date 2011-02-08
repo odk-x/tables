@@ -108,7 +108,6 @@ public class TableList {
 		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_LIST 
 				+ "` WHERE `" + TABLE_ID + "` = " + tableID, null);
-		
 		if (cs != null) {
 			if(cs.moveToFirst()) {
 				int index = cs.getColumnIndex(TABLE_NAME);
