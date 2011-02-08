@@ -46,7 +46,7 @@ public class TableProperty {
 		return getProperty(TABLE_PROPERTY_COLUMN_ORDER);
 	}
 	
-	public ArrayList<String> getColOrderArrayList() {
+	public ArrayList<String> getColOrderArrayList() {	
 		return csvToArrayList(getProperty(TABLE_PROPERTY_COLUMN_ORDER));
 	}
 	
@@ -54,7 +54,7 @@ public class TableProperty {
 		setProperty(TABLE_PROPERTY_COLUMN_ORDER, arrayListToCSV(order));
 	}	
 	
-	protected String getProperty(String colName) {
+	private String getProperty(String colName) {
 		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_PROPERTY 
 					+ "` WHERE `" + TABLE_PROPERTY_TABLE_ID + "` = " + tableID, null);
@@ -71,7 +71,7 @@ public class TableProperty {
 	
 	public ArrayList<String> csvToArrayList(String stringOrder) {
 		ArrayList<String> colOrder = new ArrayList<String>();
-		if (stringOrder != null) {
+		if (stringOrder != null && stringOrder.length() != 0) {
 			String[] tokens = stringOrder.split(";");
 			for(String token : tokens) {
 				colOrder.add(token);

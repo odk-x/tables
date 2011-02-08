@@ -293,6 +293,7 @@ public class DataTable {
 			
 			return new Table(currentTableID, width, height, rowID, header, data, footer);
 		} else {
+			cs.close();
 			con.close();
 			return new Table();
 		}
@@ -305,6 +306,7 @@ public class DataTable {
 										String sortBy,
 										String whereClause) 
 	{	
+		Log.e("colOrder", colOrder.toString() + " " + colOrder.size());
 		
 		// No columns to visualize
 		if (colOrder.size() == 0) {

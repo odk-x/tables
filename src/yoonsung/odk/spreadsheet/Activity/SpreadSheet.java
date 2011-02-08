@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
@@ -13,12 +14,15 @@ import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -91,16 +95,20 @@ public class SpreadSheet extends Activity {
 	
 	
 	// Refresh data and draw a table on screen.
-	public void init() {
+	public void init(String selTableID) {
 		this.isMain = true;
 		
 		// SMS Sender object
 		this.SMSSender = new SMSSender();
 		
 		// Default Table ID / What table to display?
-		this.currentTableID = getDefaultTableID();
-		if (currentTableID == null) {
-			this.currentTableID = "1";
+		if (selTableID == null) {
+			this.currentTableID = getDefaultTableID();
+			if (currentTableID == null) {
+				this.currentTableID = "1";
+			}
+		} else {
+			this.currentTableID = selTableID;
 		}
 		
 		// Data strucutre will represent the table/spread sheet
@@ -142,8 +150,16 @@ public class SpreadSheet extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.table_layout);
        
+        Intent i = getIntent();
+        String selTableID = i.getStringExtra("tableID");
+        
         // Initialize
-        init();
+        init(selTableID);
+        
+        // Current Table Name LED
+        TextView led = (TextView)findViewById(R.id.tableNameLed);
+        TableList tl = new TableList();
+        led.setText(tl.getTableName(currentTableID));
         
         // Enter button
         Button enter = (Button)findViewById(R.id.enter);
@@ -202,6 +218,57 @@ public class SpreadSheet extends Activity {
 		    	noIndexFill(currentTable);
 			}
 		});
+        
+        // Add a row button
+        Button ar = (Button)findViewById(R.id.add_row);
+        
+		ar.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				AlertDialog.Builder alt_bld = buildAlertDialogForAddRow();
+				AlertDialog alert = alt_bld.create();
+				// Title for AlertDialog
+				alert.setTitle("Title");
+				// Icon for AlertDialog
+				alert.setIcon(R.drawable.icon);
+				alert.show();
+		    
+			}
+		});
+		
+    }
+    
+    private AlertDialog.Builder buildAlertDialogForAddRow() {
+    	AlertDialog.Builder alt_bld = new AlertDialog.Builder(this);
+		alt_bld.setMessage("Add New Row:");
+		alt_bld.setCancelable(false);
+		alt_bld.setPositiveButton("<<Pre", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				AlertDialog.Builder alt_bld = buildAlertDialogForAddRow();
+				AlertDialog alert = alt_bld.create();
+				// Title for AlertDialog
+				alert.setTitle("Add New Row");
+				// Icon for AlertDialog
+				alert.setIcon(R.drawable.icon);
+				alert.show();
+			}
+		});
+		alt_bld.setNeutralButton("Save", new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		alt_bld.setNegativeButton("Next>>", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				//  Action for 'NO' Button
+				dialog.cancel();
+			}
+		});
+		return alt_bld;
     }
     
     /* Get back to the main activity */
@@ -210,7 +277,7 @@ public class SpreadSheet extends Activity {
     	super.onResume();
     	
     	// Refresh data table & re-draw
-    	init();
+    	init(currentTableID);
     }
     
    
@@ -234,10 +301,6 @@ public class SpreadSheet extends Activity {
 				TextView tv = (TextView) v;
 				CharSequence selected_text = tv.getText();
 				
-				// TEMP
-				TextView led = (TextView)findViewById(R.id.led);
-				//led.setText(Integer.toString(tv.getId()));
-			
 				// Register current cell location
 				currentCellLoc = tv.getId();
 				
@@ -328,9 +391,6 @@ public class SpreadSheet extends Activity {
 	    	selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
 	    	selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
-	    	
-	    	TextView led = (TextView) findViewById(R.id.led);
-	    	//led.setText("Where " + selectedColName + " = " + selectedValue);
 	    	
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
