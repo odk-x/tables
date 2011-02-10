@@ -30,28 +30,36 @@ android:layout_height="fill_parent"
 		android:id="@+id/edit_box"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:layout_weight="0.25"  />
+		android:layout_weight="0.35"  />
 		<Button 
 		android:id="@+id/enter"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:layout_weight="0.75"
+		android:layout_weight="0.70"
 		android:layout_toRightOf="@+id/edit_box"
 		android:text="@string/button_enter" />
+		<ImageButton
+		android:id="@+id/add_row"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="0.75"
+		android:layout_toRightOf="@+id/enter"
+		android:src="@drawable/addnewrow" />
 		</LinearLayout>
 	</RelativeLayout>
 	
 	<TextView
-	android:id="@+id/led"
+	android:id="@+id/tableNameLed"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
+	android:gravity="center"
 	android:layout_below="@+id/command" ></TextView>
 	
 	<TableLayout
 		android:id="@+id/spreadsheetWrapper"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/led" >
+		android:layout_below="@+id/tableNameLed" >
 		<TableRow
 			android:id="@+id/spreadsheetRowWrapper"
 			android:layout_width="fill_parent"

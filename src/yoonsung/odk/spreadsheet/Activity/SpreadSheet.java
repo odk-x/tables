@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
@@ -13,16 +14,20 @@ import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Editable;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -76,6 +81,14 @@ public class SpreadSheet extends Activity {
 	// Last-touch by the user
 	private int currentCellLoc;
 	
+	// List of columns in this table
+	private ArrayList<String> currentColList;
+	
+	// Add new row col position
+	private int currentAddRowColPos;
+	// Add new row buffer 
+	private HashMap<String, String> currentAddRowBuffer;
+	
 	// View main or history-in
 	private boolean isMain;
 	private String selectedColName;
@@ -91,16 +104,20 @@ public class SpreadSheet extends Activity {
 	
 	
 	// Refresh data and draw a table on screen.
-	public void init() {
+	public void init(String selTableID) {
 		this.isMain = true;
 		
 		// SMS Sender object
 		this.SMSSender = new SMSSender();
 		
 		// Default Table ID / What table to display?
-		this.currentTableID = getDefaultTableID();
-		if (currentTableID == null) {
-			this.currentTableID = "1";
+		if (selTableID == null) {
+			this.currentTableID = getDefaultTableID();
+			if (currentTableID == null) {
+				this.currentTableID = "1";
+			}
+		} else {
+			this.currentTableID = selTableID;
 		}
 		
 		// Data strucutre will represent the table/spread sheet
@@ -142,8 +159,16 @@ public class SpreadSheet extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.table_layout);
        
+        Intent i = getIntent();
+        String selTableID = i.getStringExtra("tableID");
+        
         // Initialize
-        init();
+        init(selTableID);
+        
+        // Current Table Name LED
+        TextView led = (TextView)findViewById(R.id.tableNameLed);
+        TableList tl = new TableList();
+        led.setText(tl.getTableName(currentTableID));
         
         // Enter button
         Button enter = (Button)findViewById(R.id.enter);
@@ -202,15 +227,144 @@ public class SpreadSheet extends Activity {
 		    	noIndexFill(currentTable);
 			}
 		});
+        
+        // Add a row button
+        ImageButton ar = (ImageButton)findViewById(R.id.add_row);
+		ar.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// Get Col List
+				TableProperty tableProp = new TableProperty(currentTableID);
+				currentColList = tableProp.getColOrderArrayList();
+				
+				// No column exists
+				if (currentColList.size() == 0) {
+					return;
+				}
+				
+				// Create a buffer
+				currentAddRowBuffer = new HashMap<String, String>();
+				
+				final Dialog dia = new Dialog(SpreadSheet.this);
+				dia.setContentView(R.layout.add_row_dialog);
+				dia.setTitle("Add New Row");
+				
+				TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+				colName.setText(currentColList.get(currentAddRowColPos));
+				
+				TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+				prog.setText("1 / " + currentColList.size());
+				
+				Button prev = (Button)dia.findViewById(R.id.add_row_prev);
+				prev.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						if (currentAddRowColPos > 0) {
+							// Save what's in edit box
+							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+							String txt = edit.getText().toString();
+							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+							
+							// Update column name with prev
+							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+							colName.setText(currentColList.get(currentAddRowColPos-1));
+							currentAddRowColPos--;
+							
+							// Update progress 
+							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+							
+							// Refresh Editbox
+							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+							if (nextTxt == null) {
+								edit.setText("");
+							} else {
+								edit.setText(nextTxt);
+							}
+						}
+					}
+				});
+				
+				
+				Button save = (Button)dia.findViewById(R.id.add_row_save);
+				save.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						// Save what's in edit box
+						EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+						String txt = edit.getText().toString();
+						currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+						
+						// Update to database
+						ContentValues cv = new ContentValues();
+						for (String key : currentAddRowBuffer.keySet()) {
+							cv.put(key, currentAddRowBuffer.get(key));
+						}
+						data.addRow(cv, "", "");
+						
+						Log.e("Buffer Hash", currentAddRowBuffer.toString());
+						
+						init(currentTableID);
+						dia.cancel();
+					}
+				});
+				
+				Button next = (Button)dia.findViewById(R.id.add_row_next);
+				next.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						if (currentAddRowColPos < currentColList.size()-1) {
+							// Save what's in edit box
+							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+							String txt = edit.getText().toString();
+							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+							
+							// Update column name with next
+							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+							colName.setText(currentColList.get(currentAddRowColPos+1));
+							currentAddRowColPos++;
+							
+							// Update progress 
+							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+							
+							// Refresh Editbox
+							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+							if (nextTxt == null) {
+								edit.setText("");
+							} else {
+								edit.setText(nextTxt);
+							}
+						}
+					}
+				});
+				
+				Button cancle = (Button)dia.findViewById(R.id.add_row_cancle);
+				cancle.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						dia.cancel();
+					}
+				});
+				
+				dia.show();
+			}
+		});
+		
     }
-    
+     
     /* Get back to the main activity */
     @Override
     public void onResume() {
     	super.onResume();
     	
     	// Refresh data table & re-draw
-    	init();
+    	init(currentTableID);
     }
     
    
@@ -234,10 +388,6 @@ public class SpreadSheet extends Activity {
 				TextView tv = (TextView) v;
 				CharSequence selected_text = tv.getText();
 				
-				// TEMP
-				TextView led = (TextView)findViewById(R.id.led);
-				//led.setText(Integer.toString(tv.getId()));
-			
 				// Register current cell location
 				currentCellLoc = tv.getId();
 				
@@ -328,9 +478,6 @@ public class SpreadSheet extends Activity {
 	    	selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
 	    	selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
 	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
-	    	
-	    	TextView led = (TextView) findViewById(R.id.led);
-	    	//led.setText("Where " + selectedColName + " = " + selectedValue);
 	    	
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);

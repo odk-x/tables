@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 
 public class TableManager extends ListActivity {
@@ -70,9 +72,30 @@ public class TableManager extends ListActivity {
 		 }
 		 
 		 arrayAdapter = new ArrayAdapter<String>(this,
-					android.R.layout.simple_list_item_1, tableNames);
-		 
+					android.R.layout.simple_list_item_1, tableNames);		 
 		 setListAdapter(arrayAdapter);
+		 
+		 ListView lv = getListView();
+		 lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				
+			 	@Override
+				public void onItemClick(AdapterView adView, View view,
+											int position, long id) {
+					String tableName = arrayAdapter.getItem(position);
+					
+					// Load Selected Table
+					TableList tl = new TableList();
+					int tableID = tl.getTableID(tableName);
+					Log.e("Selected Table", tableName + " " + tableID);
+					loadSelectedTable(Integer.toString(tableID));
+				}
+		 });
+	 } 
+	 
+	 private void loadSelectedTable(String tableID) {
+		 Intent i = new Intent(this, SpreadSheet.class);
+		 i.putExtra("tableID", tableID);
+		 startActivity(i);
 	 }
 	 
 	 @Override

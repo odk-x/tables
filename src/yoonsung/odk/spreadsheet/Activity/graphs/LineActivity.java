@@ -6,6 +6,7 @@ import java.util.List;
 import yoonsung.odk.spreadsheet.Library.graphs.GValueYPoint;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphFactory;
 import android.os.Bundle;
+import android.util.Log;
 
 
 public class LineActivity extends GraphActivity {
@@ -37,7 +38,11 @@ public class LineActivity extends GraphActivity {
     	
     	// Map x and y and make a plot list
 		for (int i = 0; i < x.size(); i++) {
+			try {
 			list.add(new GValueYPoint(x.get(i), Double.parseDouble(y.get(i))));
+			} catch (Exception e) {
+				Log.e("LineGraph", "Number Parse Error. Skiping 1 entry.");
+			}
 		}
 		    	
 		return list;

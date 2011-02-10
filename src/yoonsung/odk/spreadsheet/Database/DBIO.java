@@ -52,6 +52,7 @@ public class DBIO {
                 + ColumnProperty.COLUMN_PROPERTY_SMSOUT + " TEXT,"
                 + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT"
                 + ");");
+
     	// Create defaultopts table
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + DefaultsManager.DEFOPTS_TABLE + " ("
     			+ DefaultsManager.DB_TABL + " INTEGER,"
@@ -60,7 +61,8 @@ public class DBIO {
     			+ DefaultsManager.DB_KEY + " TEXT,"
     			+ DefaultsManager.DB_VAL + " TEXT"
     			+");");
-    	//db.endTransaction();
+    
+		//db.endTransaction();
     	db.close();
 	}
 	
