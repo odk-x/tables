@@ -46,6 +46,7 @@ public class SmsReceiver extends BroadcastReceiver {
         if (splt.length < 1 || !splt[0].startsWith("@")) {
         	Log.e("start error", "does not start with @");
         	// Handle Error
+        	return;
         } 
         // Is table exist?
         TableList tl = new TableList();

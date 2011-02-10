@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +53,10 @@ public class SMSConverter {
 		while(index < tokens.length) {
 			char type = tokens[index].charAt(0);
 			String key = tokens[index].substring(1);
+			key = getNameForLabel(key);
+			if(key == null) {
+				throw new InvalidQueryException("No such column exists");
+			}
 			index++;
 			if(type == '+') {
 				String val = "";
@@ -80,6 +83,7 @@ public class SMSConverter {
 				throw new InvalidQueryException("invalid query");
 			}
 		}
+		
 		for(String key : result.keySet()) {
 			if(("Date Range").equals(cp.getType(key))) {
 				if(!durMap.containsKey(key)) {
@@ -117,15 +121,11 @@ public class SMSConverter {
 		String[] timeSpl = time.split("/");
 		Calendar start = strToCal(timeSpl[0]);
 		Calendar end = strToCal(timeSpl[1]);
-		end.add(Calendar.DAY_OF_MONTH, 1);
 		List<String> keys = new ArrayList<String>();
 		List<String> comp = new ArrayList<String>();
 		List<String> vals = new ArrayList<String>();
 		keys.add(col);
-		keys.add(col);
-		comp.add(">=");
 		comp.add("<=");
-		vals.add(dbDate.format(start.getTime()));
 		vals.add(dbDate.format(end.getTime()));
 		String[] colReq = {col};
 		Set<Map<String, String>> res = data.querySheet(keys, comp, vals,
@@ -158,7 +158,7 @@ public class SMSConverter {
 	public String getQueryResponse(String q) throws InvalidQueryException {
 		// preparing variables for query information
 		String sheetname; // the name of the sheet
-		Set<String> colReqs = new HashSet<String>(); // the columns requested
+		List<String> colReqs = new ArrayList<String>(); // the columns requested
 		List<String> consKeys = new ArrayList<String>(); // the constraint keys
 		List<String> consComp = new ArrayList<String>(); // the constraint comparators
 		List<String> consVals = new ArrayList<String>(); // the constraint values
@@ -213,6 +213,25 @@ public class SMSConverter {
 				duration = intvlStrToSec(sSpl[1]);
 			}
 		}
+		// replacing abbreviations with column names where necessary
+		List<String> tempColReqs = new ArrayList<String>();
+		for(String colName : colReqs) {
+			String cName = getNameForLabel(colName);
+			if(cName == null) {
+				throw new InvalidQueryException("No such column exists.");
+			} else {
+				tempColReqs.add(cName);
+			}
+		}
+		colReqs = tempColReqs;
+		List<String> tempConsKeys = new ArrayList<String>();
+		for(String colName : consKeys) {
+			String cName = getNameForLabel(colName);
+			if(cName != null) {
+				tempConsKeys.add(cName);
+			}
+		}
+		consKeys = tempConsKeys;
 		// adding the default columns to include
 		for(String col : dm.getQueryIncCols()) {
 			colReqs.add(col);
@@ -234,7 +253,7 @@ public class SMSConverter {
 			Set<Map<String, String>> res = data.querySheet(consKeys, consComp,
 					consVals, colReqs.toArray(new String[0]), orderby, asc,
 					limit);
-			return getResponse(res);
+			return getResponse(res, colReqs);
 		} else {
 			colReqs.add(avail);
 			Calendar start = Calendar.getInstance();
@@ -405,6 +424,27 @@ public class SMSConverter {
 			}
 			cal.set(Calendar.MONTH, (month - 1));
 			cal.set(Calendar.DAY_OF_MONTH, day);
+		} else if(spl[0].contains(":")) {
+			String[] dtSpl = spl[0].split(":");
+			try {
+				cal.set(Calendar.YEAR, new Integer(dtSpl[0]));
+				cal.set(Calendar.MONTH, new Integer(dtSpl[1]) - 1);
+				if(dtSpl.length > 2) {
+					cal.set(Calendar.DAY_OF_MONTH, new Integer(dtSpl[2]));
+				}
+				if(dtSpl.length > 3) {
+					cal.set(Calendar.HOUR, new Integer(dtSpl[3]));
+				}
+				if(dtSpl.length > 4) {
+					cal.set(Calendar.MINUTE, new Integer(dtSpl[4]));
+				}
+				if(dtSpl.length > 5) {
+					cal.set(Calendar.SECOND, new Integer(dtSpl[5]));
+				}
+				foundDay = true;
+			} catch(NumberFormatException e) {
+				throw new InvalidQueryException("invalid day");
+			}
 		} else {
 			int dow = -1;
 			int i = 0;
@@ -426,6 +466,9 @@ public class SMSConverter {
 		}
 		if(!foundDay) {
 			throw new InvalidQueryException("invalid day specification");
+		}
+		if(spl.length == 1) {
+			return cal;
 		}
 		String[] hm = spl[1].split(":");
 		Integer hour;
@@ -534,11 +577,12 @@ public class SMSConverter {
 	 * @param res a set of mappings from keys to values
 	 * @return the response
 	 */
-	private String getResponse(Set<Map<String, String>> res) {
+	private String getResponse(Set<Map<String, String>> res,
+			List<String> colReqs) {
 		String r = "";
 		for(Map<String, String> map : res) {
 			String next = "";
-			for(String key : map.keySet()) {
+			for(String key : colReqs) {
 				if(cp.getSMSOUT(key)) {
 					next += "," + key + ":" + map.get(key);
 				}
@@ -644,15 +688,27 @@ public class SMSConverter {
 	 * @throws InvalidQueryException if the interval is not properly formatted
 	 */
 	private int intvlStrToSec(String intvl) throws InvalidQueryException {
-		Log.d("ists", "intvl:/" + intvl + "/");
-		char unit = intvl.charAt(intvl.length() - 1);
-		Log.d("ists", "unit:/" + unit + "/");
-		String quant = intvl.substring(0, intvl.length() - 1);
-		Log.d("ists", "quant:/" + quant + "/");
+		Log.d("smsc", "intvl:" + intvl);
+		//Log.d("ists", "intvl:/" + intvl + "/");
+		//char unit = Character.toLowerCase(intvl.charAt(intvl.length() - 1));
+		//Log.d("ists", "unit:/" + unit + "/");
+		//String quant = intvl.substring(0, intvl.length() - 1);
+		//Log.d("ists", "quant:/" + quant + "/");
+		int splPt = -1;
+		for(int i=intvl.length() - 1; i>=0; i--) {
+			if(Character.isDigit(intvl.charAt(i))) {
+				splPt = i + 1;
+			}
+		}
+		if(splPt < 0) {
+			throw new InvalidQueryException("invalid duration");
+		}
+		String quant = intvl.substring(0, splPt);
+		String unit = intvl.substring(splPt).toLowerCase();
 		try {
-			if((unit == 'm') || (unit == 'M')) {
+			if(unit.equals("m") || unit.equals("min")) {
 				return (60 * new Integer(quant));
-			} else if((unit == 'h') || (unit == 'H')) {
+			} else if(unit.equals("h") || unit.equals("hr")) {
 				return (3600 * new Integer(quant));
 			} else {
 				throw new InvalidQueryException("invalid duration");
@@ -660,6 +716,18 @@ public class SMSConverter {
 		} catch(NumberFormatException e) {
 			Log.d("ists", "err:" + e.getMessage());
 			throw new InvalidQueryException("invalid duration");
+		}
+	}
+	
+	/**
+	 * Gets a column name, or null if none exists.
+	 * @param label a column label (either a name or abbreviation)
+	 */
+	private String getNameForLabel(String label) {
+		if(data.isColumnExist(label)) {
+			return label;
+		} else {
+			return cp.getNameByAbrv(label);
 		}
 	}
 	
