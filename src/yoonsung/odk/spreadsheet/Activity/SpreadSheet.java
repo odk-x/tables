@@ -20,6 +20,7 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
@@ -27,7 +28,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.Editable;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -66,7 +66,9 @@ public class SpreadSheet extends Activity {
 	private static final int DEFAULTS_MANAGER_ID = 5;
 	private static final int TABLE_MANAGER_ID = 6;
 	private static final int IMPORTEXPORT_ID = 7;
-	private static final int DISPLAYPREFS_ID = 8;
+	
+	private static final int MAX_FIXED_DIALOG = 20;
+	private static final int COLWIDTH_DIALOG_ID = 1;
 
 	
 	// Database object for tables
@@ -388,6 +390,13 @@ public class SpreadSheet extends Activity {
 				TextView tv = (TextView) v;
 				CharSequence selected_text = tv.getText();
 				
+				if(currentCellLoc != 0) {
+					View last = findViewById(currentCellLoc);
+					last.setBackgroundColor(getResources().getColor(R.color.Avanda));
+				}
+				
+				tv.setBackgroundColor(getResources().getColor(R.color.cell_selected));
+				
 				// Register current cell location
 				currentCellLoc = tv.getId();
 				
@@ -439,6 +448,40 @@ public class SpreadSheet extends Activity {
 		});
     		
     	return cell;
+    }
+    
+    /**
+     * Creates a header cell.
+     * @param colName the column name
+     * @return the cell
+     */
+    private TextView createHeaderCell(String colName) {
+    	TextView cell = new TextView(this);
+    	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
+    	cell.setText(colName);
+    	cell.setTextColor(getResources().getColor(R.color.black));
+    	cell.setPadding(5, 5, 5, 5);
+    	cell.setClickable(true);
+        cell.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				currentCellLoc = v.getId();
+				showDialog(COLWIDTH_DIALOG_ID + currentCellLoc);
+			}
+		});
+        cell.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+			@Override
+			public void onCreateContextMenu(ContextMenu menu, View v,
+					ContextMenuInfo menuInfo) {
+				TextView tv = (TextView) v;
+				currentCellLoc = tv.getId();
+				
+				// Options on this cell
+				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
+			}
+		});      
+       
+        return cell;
     }
     
     @Override
@@ -496,7 +539,6 @@ public class SpreadSheet extends Activity {
         menu.add(0, GRAPH_ID, 1, "Graph");
         menu.add(0, DEFAULTS_MANAGER_ID, 2, "Defaults");
         menu.add(0, IMPORTEXPORT_ID, 3, "Import/Export");
-        menu.add(0, DISPLAYPREFS_ID, 4, "Display Preferences");
         return true;
     }
     
@@ -584,9 +626,6 @@ public class SpreadSheet extends Activity {
         	return true;
         case IMPORTEXPORT_ID:
         	startActivity(new Intent(this, ImportExportActivity.class));
-        	return true;
-        case DISPLAYPREFS_ID:
-        	startActivity(new Intent(this, DisplayPrefsActivity.class));
         	return true;
         }
         
@@ -710,7 +749,7 @@ public class SpreadSheet extends Activity {
         		tv = createIndexCell(colName);
         		tv.setBackgroundColor(getResources().getColor(R.color.header_index));
         	} else {
-        		tv = createCell(colName);
+        		tv = createHeaderCell(colName);
         		tv.setBackgroundColor(getResources().getColor(R.color.header_data));
         		tv.setId(i);
         		i++;
@@ -818,6 +857,17 @@ public class SpreadSheet extends Activity {
         }
         return widths;
     }
+    
+    @Override
+    public Dialog onCreateDialog(int id) {
+    	if(id >= COLWIDTH_DIALOG_ID) {
+			TableProperty tableProp = new TableProperty(currentTableID);
+			currentColList = tableProp.getColOrderArrayList();
+			return new ColWidthDialog(this,
+					currentColList.get(id - COLWIDTH_DIALOG_ID));
+    	}
+    	return super.onCreateDialog(id);
+    }
             
     /*
      * Leave it here for now.
@@ -886,4 +936,76 @@ public class SpreadSheet extends Activity {
         sms.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);        
     }
     */
+    
+    private class ColWidthDialog extends AlertDialog {
+    	
+    	private Context c;
+    	private String colName;
+    	private SharedPreferences settings;
+    	private EditText et;
+    	
+    	ColWidthDialog(Context c, String colName) {
+    		super(c);
+    		this.c = c;
+    		this.colName = colName;
+        	settings = PreferenceManager.getDefaultSharedPreferences(c);
+        	Log.d("ssj", "colname:" + colName);
+    	}
+    	
+    	@Override
+    	public void onCreate(Bundle savedInstanceState) {
+    		super.onCreate(savedInstanceState);
+    		setContentView(prepView());
+    	}
+    	
+    	private View prepView() {
+    		LinearLayout v = new LinearLayout(c);
+    		v.setOrientation(LinearLayout.VERTICAL);
+    		int colWidth = settings.getInt("tablewidths-" + currentTableID +
+    				"-" + colName, 125);
+    		// preparing the text field
+    		et = new EditText(c);
+    		et.setText((new Integer(colWidth)).toString());
+    		v.addView(et);
+    		// preparing the button
+    		ColWidthListener cwl = new ColWidthListener(this, colName, et,
+    				settings.edit());
+    		Button b = new Button(c);
+    		b.setText("Set Width");
+    		b.setOnClickListener(cwl);
+    		v.addView(b);
+    		return v;
+    	}
+    	
+    }
+    
+    private class ColWidthListener implements View.OnClickListener {
+    	private Dialog d;
+    	private String colName;
+    	private EditText et;
+    	private SharedPreferences.Editor prefEditor;
+    	ColWidthListener(Dialog d, String colName, EditText et,
+    			SharedPreferences.Editor prefEditor) {
+    		this.d = d;
+    		this.colName = colName;
+    		this.et = et;
+    		this.prefEditor = prefEditor;
+    	}
+		@Override
+		public void onClick(View v) {
+			Integer newVal;
+			try {
+				newVal = new Integer(et.getText().toString());
+			} catch(NumberFormatException e) {
+				// TODO: something here
+				return;
+			}
+			prefEditor.putInt("tablewidths-" + currentTableID + "-" + colName,
+					newVal);
+			prefEditor.commit();
+			d.dismiss();
+			init(currentTableID);
+		}
+    }
+    
 }

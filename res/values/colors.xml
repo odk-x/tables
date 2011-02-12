@@ -7,4 +7,5 @@
 <color name="header_index">#F4A460</color>
 <color name="footer_index">#CDC0B0</color>
 <color name="footer_data">#FAF0E6</color>
+<color name="cell_selected">#A0A0A0</color>
 </resources>
