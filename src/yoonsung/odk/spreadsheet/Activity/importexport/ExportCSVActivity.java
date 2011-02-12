@@ -125,7 +125,7 @@ public class ExportCSVActivity extends IETabActivity {
 			(new Integer(new TableList().getTableID(tableName))).toString();
 		try {
 			(new CSVExporter()).exportTable(
-					(new DataTable(tableID)).getTable(), file,
+					(new DataTable(tableID)).getCompleteTable(), file,
 					incPNCheck.isChecked(), incTSCheck.isChecked());
 			Log.d("eca", "exported some stuff");
 			showDialog(CSVEXPORT_SUCCESS_DIALOG);

@@ -195,6 +195,16 @@ public class DataTable {
 		
 	}
 	
+	/**
+	 * @return a table that includes timestamps and source phone numbers at the end.
+	 */
+	public Table getCompleteTable() {
+		ArrayList<String> colOrder = tp.getColOrderArrayList();
+		colOrder.add("_timestamp");
+		colOrder.add("_phoneNumberIn");
+		return loadTable(true, colOrder, tp.getPrime(), tp.getSortBy(), null);
+	}
+	
 	public Table getTable(String whereCol, String whereArg) {
 		
 		// Into-History
@@ -293,7 +303,6 @@ public class DataTable {
 			
 			return new Table(currentTableID, width, height, rowID, header, data, footer);
 		} else {
-			cs.close();
 			con.close();
 			return new Table();
 		}
