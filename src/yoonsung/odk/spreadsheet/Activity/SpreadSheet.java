@@ -24,6 +24,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
@@ -68,8 +69,13 @@ public class SpreadSheet extends Activity {
 	private static final int DEFAULTS_MANAGER_ID = 5;
 	private static final int TABLE_MANAGER_ID = 6;
 	private static final int IMPORTEXPORT_ID = 7;
+	private static final int SET_COL_TO_PRIME = 8;
+	private static final int SET_COL_TO_ORDERBY = 9;
+	private static final int OPEN_COL_OPTS = 10;
 	
-	private static final int COLWIDTH_DIALOG_ID = 1;
+	private static final int PRIME_WARNING = 1;
+	private static final int ORDERBY_WARNING = 2;
+	private static final int COLWIDTH_DIALOG_ID = 3;
 
 	
 	// Database object for tables
@@ -83,6 +89,9 @@ public class SpreadSheet extends Activity {
 	
 	// Last-touch by the user
 	private int currentCellLoc;
+	// the text of the last-touched cell
+	// warning: updates for this have not been added to everything
+	private String currentCellText;
 	
 	// List of columns in this table
 	private ArrayList<String> currentColList;
@@ -370,18 +379,28 @@ public class SpreadSheet extends Activity {
     	init(currentTableID);
     }
     
-   
-    // Create a cell with this value.
-    private TextView createCell(String str) {
-    	// Create a cell
+    /**
+     * Creates a new cell.
+     * @param text the cell text
+     * @param textColor the text color
+     * @param bgColor the background color
+     * @return the cell
+     */
+    private TextView createCell(String text, int textColor, int bgColor) {
     	TextView cell = new TextView(this);
-    	
-    	// Cell configurations
-    	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
-    	cell.setText(str);
-    	cell.setTextColor(getResources().getColor(R.color.black));
+    	cell.setText(text);
+    	cell.setTextColor(textColor);
+    	cell.setBackgroundColor(bgColor);
     	cell.setPadding(5, 5, 5, 5);
     	cell.setClickable(true);
+    	return cell;
+    }
+    
+   
+    // Create a cell with this value.
+    private TextView createRegularCell(String str) {
+    	TextView cell = createCell(str, getResources().getColor(R.color.black),
+    			getResources().getColor(R.color.Avanda));
     	
     	// Reaction when the cell is clicked by users
         cell.setOnClickListener(new View.OnClickListener() {
@@ -414,6 +433,7 @@ public class SpreadSheet extends Activity {
 				// Update current cell location
 				TextView tv = (TextView) v;
 				currentCellLoc = tv.getId();
+				currentCellText = tv.getText().toString();
 				
 				// Options on this cell
 				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
@@ -428,15 +448,11 @@ public class SpreadSheet extends Activity {
     // Create an index cell that will be placed on left-most column.
     private TextView createIndexCell(String str) {
     	// Create a cell
-    	TextView cell = new TextView(this);
-    	cell.setText(str);
+    	TextView cell = createCell(str, getResources().getColor(R.color.black),
+    			getResources().getColor(R.color.Beige));
     	
-    	// Configurations
-    	cell.setBackgroundColor(getResources().getColor(R.color.Beige));
-    	cell.setTextColor(getResources().getColor(R.color.black));
-    	cell.setPadding(5, 5, 5, 5);
-    	cell.setClickable(true);
-    	
+    	// when any index cell is clicked, remove cell highlighting from
+    	// whatever was selected before
         cell.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -462,12 +478,9 @@ public class SpreadSheet extends Activity {
      * @return the cell
      */
     private TextView createHeaderCell(String colName) {
-    	TextView cell = new TextView(this);
-    	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
-    	cell.setText(colName);
-    	cell.setTextColor(getResources().getColor(R.color.black));
-    	cell.setPadding(5, 5, 5, 5);
-    	cell.setClickable(true);
+    	TextView cell = createCell(colName,
+    			getResources().getColor(R.color.black),
+    			getResources().getColor(R.color.Avanda));
         cell.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -482,9 +495,14 @@ public class SpreadSheet extends Activity {
 					ContextMenuInfo menuInfo) {
 				TextView tv = (TextView) v;
 				currentCellLoc = tv.getId();
+				currentCellText = tv.getText().toString();
 				
 				// Options on this cell
-				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
+				menu.add(Menu.NONE, SELECT_COLUMN, 0, "Select This Column");
+				menu.add(Menu.NONE, SET_COL_TO_PRIME, 1, "Make Index Column");
+				menu.add(Menu.NONE, SET_COL_TO_ORDERBY, 2,
+						"Make Order-By Column");
+				menu.add(Menu.NONE, OPEN_COL_OPTS, 3, "Column Options");
 			}
 		});      
        
@@ -497,12 +515,8 @@ public class SpreadSheet extends Activity {
      * @return the cell
      */
     private TextView createFooterCell(String val) {
-    	TextView cell = new TextView(this);
-    	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
-    	cell.setText(val);
-    	cell.setTextColor(getResources().getColor(R.color.black));
-    	cell.setPadding(5, 5, 5, 5);
-    	cell.setClickable(true);
+    	TextView cell = createCell(val, getResources().getColor(R.color.black),
+    			getResources().getColor(R.color.Avanda));
         cell.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -514,6 +528,8 @@ public class SpreadSheet extends Activity {
     
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
+
+    	TableProperty tp;
     	
     	switch(item.getItemId()) {
 	    case SELECT_COLUMN:	// Set this column as an index column
@@ -554,6 +570,32 @@ public class SpreadSheet extends Activity {
 	    	noIndexFill(currentTable);
 	    	isMain = false;
 	    	return true;
+	    case SET_COL_TO_PRIME:
+	    	tp = new TableProperty(currentTableID);
+	    	selectedColName = currentCellText;
+	    	if(selectedColName.equals(tp.getSortBy())) {
+	    		showDialog(ORDERBY_WARNING);
+	    	} else {
+	    		tp.setPrime(selectedColName);
+	    		init(currentTableID);
+	    	}
+	    	return true;
+	    case SET_COL_TO_ORDERBY:
+	    	tp = new TableProperty(currentTableID);
+	    	selectedColName = currentCellText;
+	    	if(selectedColName.equals(tp.getPrime())) {
+	    		showDialog(PRIME_WARNING);
+	    	} else {
+	    		tp.setSortBy(selectedColName);
+	    		init(currentTableID);
+	    	}
+	    	return true;
+	    case OPEN_COL_OPTS:
+			Intent cpm = new Intent(this, PropertyManager.class);
+			cpm.putExtra("colName", currentCellText);
+			cpm.putExtra("tableID", currentTableID);
+			startActivity(cpm);
+			return true;
 	    }
 	    return super.onContextItemSelected(item);
 	}
@@ -812,7 +854,7 @@ public class SpreadSheet extends Activity {
 	        	if (isIndex) {
 	        		tv = createIndexCell((String)table.getRow(r).get(c));
 	        	} else {
-	        		tv = createCell((String)table.getRow(r).get(c));
+	        		tv = createRegularCell((String)table.getRow(r).get(c));
 	        		tv.setId((r+1)*table.getWidth() + c);
 	        	}
 	    		tv.setWidth(colWidths[c]);
@@ -893,6 +935,10 @@ public class SpreadSheet extends Activity {
 			currentColList = tableProp.getColOrderArrayList();
 			return new ColWidthDialog(this,
 					currentColList.get(id - COLWIDTH_DIALOG_ID));
+    	} else if(id == PRIME_WARNING) {
+    		return getSimpleDialog("That column is already the index column.");
+    	} else if(id == ORDERBY_WARNING) {
+    		return getSimpleDialog("That column is already the sort-by column.");
     	}
     	return super.onCreateDialog(id);
     }
@@ -1047,5 +1093,24 @@ public class SpreadSheet extends Activity {
 			last.setPadding(5, 5, 5, 5);
 		}
     }
+	
+	/**
+	 * Creates a simple alert dialog.
+	 * @param message the dialog's message
+	 * @return the dialog
+	 */
+	private AlertDialog getSimpleDialog(String message) {
+		AlertDialog.Builder adBuilder = new AlertDialog.Builder(this);
+		adBuilder = adBuilder.setMessage(message);
+		adBuilder = adBuilder.setNeutralButton("OK",
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+		});
+		AlertDialog d = adBuilder.create();
+		return d;
+	}
     
 }
