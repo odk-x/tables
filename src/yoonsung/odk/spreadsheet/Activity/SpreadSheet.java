@@ -26,6 +26,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -67,7 +69,6 @@ public class SpreadSheet extends Activity {
 	private static final int TABLE_MANAGER_ID = 6;
 	private static final int IMPORTEXPORT_ID = 7;
 	
-	private static final int MAX_FIXED_DIALOG = 20;
 	private static final int COLWIDTH_DIALOG_ID = 1;
 
 	
@@ -390,12 +391,10 @@ public class SpreadSheet extends Activity {
 				TextView tv = (TextView) v;
 				CharSequence selected_text = tv.getText();
 				
-				if(currentCellLoc != 0) {
-					View last = findViewById(currentCellLoc);
-					last.setBackgroundColor(getResources().getColor(R.color.Avanda));
-				}
+				unselectCell(currentCellLoc);
 				
-				tv.setBackgroundColor(getResources().getColor(R.color.cell_selected));
+				tv.setBackgroundResource(R.drawable.cell_selected);
+				tv.setPadding(5, 5, 5, 5);
 				
 				// Register current cell location
 				currentCellLoc = tv.getId();
@@ -438,6 +437,13 @@ public class SpreadSheet extends Activity {
     	cell.setPadding(5, 5, 5, 5);
     	cell.setClickable(true);
     	
+        cell.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				unselectCell(currentCellLoc);
+			}
+		});
+    	
     	// When any index cell is long clicked, remove the index column.
     	cell.setOnLongClickListener(new View.OnLongClickListener() {
 			@Override
@@ -465,6 +471,7 @@ public class SpreadSheet extends Activity {
         cell.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				unselectCell(currentCellLoc);
 				currentCellLoc = v.getId();
 				showDialog(COLWIDTH_DIALOG_ID + currentCellLoc);
 			}
@@ -481,6 +488,27 @@ public class SpreadSheet extends Activity {
 			}
 		});      
        
+        return cell;
+    }
+    
+    /**
+     * Creates a footer cell.
+     * @param val the footer value
+     * @return the cell
+     */
+    private TextView createFooterCell(String val) {
+    	TextView cell = new TextView(this);
+    	cell.setBackgroundColor(getResources().getColor(R.color.Avanda));
+    	cell.setText(val);
+    	cell.setTextColor(getResources().getColor(R.color.black));
+    	cell.setPadding(5, 5, 5, 5);
+    	cell.setClickable(true);
+        cell.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				unselectCell(currentCellLoc);
+			}
+		});
         return cell;
     }
     
@@ -819,7 +847,7 @@ public class SpreadSheet extends Activity {
     			tv = createIndexCell(colFooterVal);
     			tv.setBackgroundColor(getResources().getColor(R.color.footer_index));
     		} else {
-    			tv = createCell(colFooterVal);
+    			tv = createFooterCell(colFooterVal);
     			tv.setBackgroundColor(getResources().getColor(R.color.footer_data));
     		}
     		tv.setWidth(colWidths[footerCount]);
@@ -1005,6 +1033,18 @@ public class SpreadSheet extends Activity {
 			prefEditor.commit();
 			d.dismiss();
 			init(currentTableID);
+		}
+    }
+    
+    /**
+     * Returns a cell to the default display.
+     * @param cellID
+     */
+    private void unselectCell(int cellID) {
+		View last = findViewById(cellID);
+		if(last != null) {
+			last.setBackgroundColor(getResources().getColor(R.color.Avanda));
+			last.setPadding(5, 5, 5, 5);
 		}
     }
     
