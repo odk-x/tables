@@ -133,6 +133,11 @@ public class ColumnProperty {
 		setProperty(colName, COLUMN_PROPERTY_FOOTER_MODE, newVal);
 	}
     
+    public void removeAll() {
+    	SQLiteDatabase con = db.getConn();
+    	con.delete(COLUMN_PROPERTY, COLUMN_PROPERTY_TABLE_ID+"="+tableID, null);
+    }
+    
     // Returns null if nothing defined.
     private String getProperty(String colName, String propertyType) {
     	SQLiteDatabase con = db.getConn();;

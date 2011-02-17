@@ -2,9 +2,11 @@ package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.HashMap;
 
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
@@ -262,6 +264,14 @@ public class TableManager extends ListActivity {
 		 
 		 // Unregister Table from TableList
 		 tl.unregisterTable(tableID);
+		 
+		 // Clean up Table Property
+		 TableProperty tp = new TableProperty(tableID);
+		 tp.removeAll();
+		 
+		 // Clean up Column Property
+		 ColumnProperty cp = new ColumnProperty(tableID);
+		 cp.removeAll();
 	 }
 	 
 	 private void changeTableName(String tableID, String newTableName) {

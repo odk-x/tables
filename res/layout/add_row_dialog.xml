@@ -45,17 +45,17 @@
     	android:layout_height="wrap_content"
       	android:text="Prev" />
     <Button 
-   		android:id="@+id/add_row_save" 
-   		android:layout_toRightOf="@+id/add_row_prev"
-    	android:layout_width="wrap_content" 
-    	android:layout_height="wrap_content" 
-      	android:text="Save" />
-    <Button 
    		android:id="@+id/add_row_next" 
-   		android:layout_toRightOf="@+id/add_row_save"
+   		android:layout_toRightOf="@+id/add_row_prev"
     	android:layout_width="wrap_content" 
     	android:layout_height="wrap_content"
       	android:text="Next" />
+    <Button 
+   		android:id="@+id/add_row_save" 
+   		android:layout_toLeftOf="@+id/add_row_cancle"
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+      	android:text="Save All" />
      <Button
      	android:id="@+id/add_row_cancle"
      	android:layout_alignParentRight="true"
