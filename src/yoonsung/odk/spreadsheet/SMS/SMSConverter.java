@@ -13,7 +13,6 @@ import java.util.TreeSet;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
-import android.util.Log;
 
 public class SMSConverter {
 	
@@ -103,7 +102,6 @@ public class SMSConverter {
 		if((avail != null) && checkOverlap(avail, result.get(avail))) {
 			throw new InvalidQueryException("time overlap");
 		}
-		Log.e("hash", result.toString());
 		
 		// adding defaults if no other value is provided
 		Map<String, String> defVals = dm.getAddColVals();
@@ -126,7 +124,9 @@ public class SMSConverter {
 		List<String> vals = new ArrayList<String>();
 		keys.add(col);
 		comp.add("<=");
+		end.add(Calendar.DAY_OF_MONTH, 1);
 		vals.add(dbDate.format(end.getTime()));
+		end.add(Calendar.DAY_OF_MONTH, -1);
 		String[] colReq = {col};
 		Set<Map<String, String>> res = data.querySheet(keys, comp, vals,
 				colReq, null, 0, -2);
@@ -206,7 +206,7 @@ public class SMSConverter {
 				}
 			} else if(type == '/') {
 				String[] sSpl = str.split(" ");
-				if(!sSpl[0].equals(avail)) {
+				if(!getNameForLabel(sSpl[0]).equals(avail)) {
 					throw new InvalidQueryException(
 							"invalid duration specification");
 				}
@@ -256,11 +256,13 @@ public class SMSConverter {
 			return getResponse(res, colReqs);
 		} else {
 			colReqs.add(avail);
+			// getting the user-specified start and end times (if any)
 			Calendar start = Calendar.getInstance();
 			start.set(start.getMinimum(Calendar.YEAR), 1, 1);
 			Calendar end = Calendar.getInstance();
 			end.set(end.getMaximum(Calendar.YEAR), 1, 1);
-			for(int i=0; i<consKeys.size(); i++) {
+			int i=0;
+			while(i<consKeys.size()) {
 				if(consKeys.get(i).equals(avail)) {
 					Calendar next = strToCal(consVals.get(i));
 					if(consComp.get(i).startsWith(">") &&
@@ -270,6 +272,12 @@ public class SMSConverter {
 							(end.compareTo(next) > 0)) {
 						end = next;
 					}
+					// removing constraints so that all possibly relevant rows are returned
+					consKeys.remove(i);
+					consComp.remove(i);
+					consVals.remove(i);
+				} else {
+					i++;
 				}
 			}
 			Set<Map<String, String>> res = data.querySheet(consKeys, consComp,
@@ -688,12 +696,6 @@ public class SMSConverter {
 	 * @throws InvalidQueryException if the interval is not properly formatted
 	 */
 	private int intvlStrToSec(String intvl) throws InvalidQueryException {
-		Log.d("smsc", "intvl:" + intvl);
-		//Log.d("ists", "intvl:/" + intvl + "/");
-		//char unit = Character.toLowerCase(intvl.charAt(intvl.length() - 1));
-		//Log.d("ists", "unit:/" + unit + "/");
-		//String quant = intvl.substring(0, intvl.length() - 1);
-		//Log.d("ists", "quant:/" + quant + "/");
 		int splPt = -1;
 		for(int i=intvl.length() - 1; i>=0; i--) {
 			if(Character.isDigit(intvl.charAt(i))) {
@@ -714,7 +716,6 @@ public class SMSConverter {
 				throw new InvalidQueryException("invalid duration");
 			}
 		} catch(NumberFormatException e) {
-			Log.d("ists", "err:" + e.getMessage());
 			throw new InvalidQueryException("invalid duration");
 		}
 	}
