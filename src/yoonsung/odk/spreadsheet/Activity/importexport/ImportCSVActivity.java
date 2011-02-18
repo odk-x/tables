@@ -7,6 +7,8 @@ import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -118,11 +120,6 @@ public class ImportCSVActivity extends IETabActivity {
 		TableList tList = new TableList();
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
-			String res = tList.registerNewTable(tableName);
-			if(res != null) {
-				notifyOfError(res);
-				return;
-			}
 		} else {
 			tableName = tableNames[pos];
 			if(!tList.isTableExist(tableName)) {
@@ -130,14 +127,11 @@ public class ImportCSVActivity extends IETabActivity {
 				return;
 			}
 		}
-		try {
-			String tId = (new Integer(tList.getTableID(tableName))).toString();
-			(new CSVImporter()).importTable(tId, file);
-			showDialog(CSVIMPORT_SUCCESS_DIALOG);
-		} catch (CSVException e) {
-			notifyOfError("Error importing: " + e.getMessage());
-			return;
-		}
+		Handler iHandler = new ImporterHandler();
+		ImporterThread iThread = new ImporterThread(iHandler, tableName, file,
+				(pos == 0));
+		showDialog(IMPORT_IN_PROGRESS_DIALOG);
+		iThread.start();
 	}
 	
 	/**
@@ -168,6 +162,61 @@ public class ImportCSVActivity extends IETabActivity {
 		public void onClick(View v) {
 			importSubmission();
 		}
+	}
+	
+	private class ImporterThread extends Thread {
+		
+		private Handler mHandler;
+		private String tableName;
+		private File file;
+		private boolean createTable;
+		
+		ImporterThread(Handler h, String tableName, File file,
+				boolean createTable) {
+			mHandler = h;
+			this.tableName = tableName;
+			this.file = file;
+			this.createTable = createTable;
+		}
+		
+		public void run() {
+			CSVImporter importer = new CSVImporter();
+			boolean success = true;
+			String errorMsg = null;
+			try {
+				if(createTable) {
+					importer.buildTable(tableName, file);
+				} else {
+					importer.importTable(tableName, file);
+				}
+			} catch(CSVException e) {
+				success = false;
+				errorMsg = e.getMessage();
+			}
+			Bundle b = new Bundle();
+			b.putBoolean("success", success);
+			if(!success) {
+				b.putString("errmsg", errorMsg);
+			}
+			Message msg = mHandler.obtainMessage();
+			msg.setData(b);
+			mHandler.sendMessage(msg);
+		}
+		
+	}
+	
+	private class ImporterHandler extends Handler {
+		
+		public void handleMessage(Message msg) {
+			dismissDialog(IMPORT_IN_PROGRESS_DIALOG);
+			Bundle b = msg.getData();
+			if(b.getBoolean("success")) {
+				showDialog(CSVIMPORT_SUCCESS_DIALOG);
+			} else {
+				notifyOfError("Error importing: " + b.getString("errorMsg"));
+			}
+		}
+		
 	}
 	
 }

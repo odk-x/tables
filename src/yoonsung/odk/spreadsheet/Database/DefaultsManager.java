@@ -135,7 +135,7 @@ public class DefaultsManager {
 	private String getAvailCol(int oper) {
 		SQLiteDatabase con = db.getConn();
 		String[] cols = {DB_VAL};
-		String sel = db.toSafeSqlColumn(DB_OPER, false, null) + "=" + tableID +
+		String sel = db.toSafeSqlColumn(DB_TABL, false, null) + "=" + tableID +
 				" and " + db.toSafeSqlColumn(DB_OPER, false, null) + "=" +
 				oper + " and " + db.toSafeSqlColumn(DB_TYPE, false, null) +
 				"=" + OTHER + " and " +
@@ -266,6 +266,21 @@ public class DefaultsManager {
 		con.insertOrThrow(DEFOPTS_TABLE, null, vals1);
 		con.insertOrThrow(DEFOPTS_TABLE, null, vals2);
 		con.insertOrThrow(DEFOPTS_TABLE, null, vals3);
+		con.close();
+	}
+	
+	/**
+	 * Adds row to the default options table for a new table.
+	 * @param tableID the new table's ID
+	 */
+	public void prepForNewTable(String tableID) {
+		ContentValues vals1 = new ContentValues();
+		vals1.put(DB_TABL, tableID);
+		vals1.put(DB_OPER, ADDITION);
+		vals1.put(DB_TYPE, OTHER);
+		vals1.put(DB_KEY, OAVAIL);
+		SQLiteDatabase con = db.getConn();
+		con.insertOrThrow(DEFOPTS_TABLE, null, vals1);
 		con.close();
 	}
 	
