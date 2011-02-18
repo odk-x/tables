@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
@@ -13,6 +14,7 @@ import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
@@ -27,8 +29,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -41,6 +41,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -48,6 +49,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -72,10 +74,14 @@ public class SpreadSheet extends Activity {
 	private static final int SET_COL_TO_PRIME = 8;
 	private static final int SET_COL_TO_ORDERBY = 9;
 	private static final int OPEN_COL_OPTS = 10;
+	private static final int SET_COL_WIDTH = 11;
 	
 	private static final int PRIME_WARNING = 1;
 	private static final int ORDERBY_WARNING = 2;
-	private static final int COLWIDTH_DIALOG_ID = 3;
+	private static final int WIDTH_NF_WARNING = 3;
+	private static final int FOOTER_OPT = 6;
+	private static final int COLWIDTH_DIALOG_ID = 4;
+	private static final int FOOTER_OPT_DIALOG_ID = -1;
 
 	
 	// Database object for tables
@@ -92,6 +98,8 @@ public class SpreadSheet extends Activity {
 	// the text of the last-touched cell
 	// warning: updates for this have not been added to everything
 	private String currentCellText;
+	// a map from footer cells to column indices
+	private Map<View, Integer> footerCellsToColNums;
 	
 	// List of columns in this table
 	private ArrayList<String> currentColList;
@@ -173,6 +181,7 @@ public class SpreadSheet extends Activity {
        
         Intent i = getIntent();
         String selTableID = i.getStringExtra("tableID");
+        footerCellsToColNums = new HashMap<View, Integer>();
         
         // Initialize
         init(selTableID);
@@ -486,7 +495,6 @@ public class SpreadSheet extends Activity {
 			public void onClick(View v) {
 				unselectCell(currentCellLoc);
 				currentCellLoc = v.getId();
-				showDialog(COLWIDTH_DIALOG_ID + currentCellLoc);
 			}
 		});
         cell.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
@@ -503,6 +511,7 @@ public class SpreadSheet extends Activity {
 				menu.add(Menu.NONE, SET_COL_TO_ORDERBY, 2,
 						"Make Order-By Column");
 				menu.add(Menu.NONE, OPEN_COL_OPTS, 3, "Column Options");
+				menu.add(Menu.NONE, SET_COL_WIDTH, 4, "Set Column Width");
 			}
 		});      
        
@@ -512,15 +521,19 @@ public class SpreadSheet extends Activity {
     /**
      * Creates a footer cell.
      * @param val the footer value
+     * @param colIndex the index of the column
      * @return the cell
      */
-    private TextView createFooterCell(String val) {
+    private TextView createFooterCell(String val, int colIndex) {
+    	final int colNum = colIndex;
     	TextView cell = createCell(val, getResources().getColor(R.color.black),
     			getResources().getColor(R.color.Avanda));
+    	footerCellsToColNums.put(cell, colIndex);
         cell.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				unselectCell(currentCellLoc);
+				showDialog(FOOTER_OPT_DIALOG_ID - colNum);
 			}
 		});
         return cell;
@@ -551,7 +564,7 @@ public class SpreadSheet extends Activity {
 			return true;
 	    case SEND_SMS_ROW: // Send SMS on this row
 	    	// Get the current row
-	    	ArrayList row = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
+	    	ArrayList<String> row = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
 	    	
 	    	// Encode the row information into a string
 	    	String content = "";
@@ -596,6 +609,11 @@ public class SpreadSheet extends Activity {
 			cpm.putExtra("tableID", currentTableID);
 			startActivity(cpm);
 			return true;
+	    case SET_COL_WIDTH:
+			showDialog(COLWIDTH_DIALOG_ID + currentCellLoc);
+	    	return true;
+	    case FOOTER_OPT:
+	    	return true;
 	    }
 	    return super.onContextItemSelected(item);
 	}
@@ -762,10 +780,9 @@ public class SpreadSheet extends Activity {
     }
     
     private RelativeLayout fillLayout(boolean isIndex, Table table, int[] colWidths) {
-    	Log.d("hi", "fillLayout called");
     	// Window Dimension
     	Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-    	int width = display.getWidth();
+    	//int width = display.getWidth();
     	int height = display.getHeight();
     	
     	// Header
@@ -889,7 +906,7 @@ public class SpreadSheet extends Activity {
     			tv = createIndexCell(colFooterVal);
     			tv.setBackgroundColor(getResources().getColor(R.color.footer_index));
     		} else {
-    			tv = createFooterCell(colFooterVal);
+    			tv = createFooterCell(colFooterVal, footerCount);
     			tv.setBackgroundColor(getResources().getColor(R.color.footer_data));
     		}
     		tv.setWidth(colWidths[footerCount]);
@@ -930,7 +947,11 @@ public class SpreadSheet extends Activity {
     
     @Override
     public Dialog onCreateDialog(int id) {
-    	if(id >= COLWIDTH_DIALOG_ID) {
+    	if(id <= FOOTER_OPT_DIALOG_ID) {
+			TableProperty tableProp = new TableProperty(currentTableID);
+			currentColList = tableProp.getColOrderArrayList();
+    		return new FooterModeDialog(this, currentColList.get(-(id + 1)));
+    	} else if(id >= COLWIDTH_DIALOG_ID) {
 			TableProperty tableProp = new TableProperty(currentTableID);
 			currentColList = tableProp.getColOrderArrayList();
 			return new ColWidthDialog(this,
@@ -939,6 +960,8 @@ public class SpreadSheet extends Activity {
     		return getSimpleDialog("That column is already the index column.");
     	} else if(id == ORDERBY_WARNING) {
     		return getSimpleDialog("That column is already the sort-by column.");
+    	} else if(id == WIDTH_NF_WARNING) {
+    		return getSimpleDialog("Please enter a number.");
     	}
     	return super.onCreateDialog(id);
     }
@@ -1023,7 +1046,6 @@ public class SpreadSheet extends Activity {
     		this.c = c;
     		this.colName = colName;
         	settings = PreferenceManager.getDefaultSharedPreferences(c);
-        	Log.d("ssj", "colname:" + colName);
     	}
     	
     	@Override
@@ -1071,7 +1093,7 @@ public class SpreadSheet extends Activity {
 			try {
 				newVal = new Integer(et.getText().toString());
 			} catch(NumberFormatException e) {
-				// TODO: something here
+				showDialog(WIDTH_NF_WARNING);
 				return;
 			}
 			prefEditor.putInt("tablewidths-" + currentTableID + "-" + colName,
@@ -1080,6 +1102,78 @@ public class SpreadSheet extends Activity {
 			d.dismiss();
 			init(currentTableID);
 		}
+    }
+    
+    private class FooterModeDialog extends AlertDialog {
+    	
+    	private Context c;
+    	private String colName;
+    	private ColumnProperty cp;
+    	private Spinner optSpinner;
+    	
+    	FooterModeDialog(Context c, String colName) {
+    		super(c);
+    		this.c = c;
+    		this.colName = colName;
+    		cp = new ColumnProperty(currentTableID);
+    	}
+    	
+    	@Override
+    	public void onCreate(Bundle savedInstanceState) {
+    		super.onCreate(savedInstanceState);
+    		setContentView(prepView());
+    	}
+    	
+    	private View prepView() {
+    		LinearLayout v = new LinearLayout(c);
+    		v.setOrientation(LinearLayout.VERTICAL);
+    		// preparing the text field
+    		optSpinner = new Spinner(c);
+            String[] footerModeChoices = {"None", "Average", "Count", "Max",
+            		"Min"};
+    		ArrayAdapter<String> adapter = new ArrayAdapter<String>(c,
+    				android.R.layout.simple_spinner_item, footerModeChoices);
+    		adapter.setDropDownViewResource(
+    				android.R.layout.simple_spinner_dropdown_item);
+    		optSpinner.setAdapter(adapter);
+    		String selMode = cp.getFooterMode(colName);
+    		if(selMode != null) {
+    			for(int i=0; i<footerModeChoices.length; i++) {
+    				if(footerModeChoices[i].equals(selMode)) {
+    					optSpinner.setSelection(i);
+    				}
+    			}
+    		}
+    		v.addView(optSpinner);
+    		// preparing the button
+    		FooterModeListener fml = new FooterModeListener(this, colName, optSpinner, cp);
+    		Button b = new Button(c);
+    		b.setText("Set Footer Mode");
+    		b.setOnClickListener(fml);
+    		v.addView(b);
+    		return v;
+    	}
+        
+        private class FooterModeListener implements View.OnClickListener {
+        	private Dialog d;
+        	private String colName;
+        	private Spinner opts;
+        	private ColumnProperty cp;
+        	FooterModeListener(Dialog d, String colName, Spinner opts,
+        			ColumnProperty cp) {
+        		this.d = d;
+        		this.colName = colName;
+        		this.opts = opts;
+        		this.cp = cp;
+        	}
+    		@Override
+    		public void onClick(View v) {
+    			cp.setFooterMode(colName, opts.getSelectedItem().toString());
+    			d.dismiss();
+    			init(currentTableID);
+    		}
+        }
+    	
     }
     
     /**
