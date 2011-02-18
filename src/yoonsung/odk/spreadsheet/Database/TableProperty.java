@@ -54,6 +54,11 @@ public class TableProperty {
 		setProperty(TABLE_PROPERTY_COLUMN_ORDER, arrayListToCSV(order));
 	}	
 	
+	public void removeAll() {
+		SQLiteDatabase con = db.getConn();
+		con.delete(TABLE_PROPERTY, TABLE_PROPERTY_TABLE_ID+"="+tableID, null);
+	}
+	
 	private String getProperty(String colName) {
 		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_PROPERTY 

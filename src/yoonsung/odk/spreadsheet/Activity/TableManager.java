@@ -2,11 +2,11 @@ package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.HashMap;
 
-import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
-import yoonsung.odk.spreadsheet.Activity.importexport.ImportCSVActivity;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
@@ -34,7 +34,6 @@ public class TableManager extends ListActivity {
 	public static final int CHANGE_TABLE_NAME = 1;
 	public static final int ADD_NEW_TABLE     = 2;
 	public static final int REMOVE_TABLE      = 3;
-	public static final int IMPORT_TABLE      = 4;
 	
 	private DBIO db;
 	private TableList tl;
@@ -140,9 +139,6 @@ public class TableManager extends ListActivity {
 	 public boolean onCreateOptionsMenu(Menu menu) {
 		 super.onCreateOptionsMenu(menu);
 		 menu.add(0, ADD_NEW_TABLE, 0, "Add New Table");
-		 // commented this out because I'm not sure how to get the table list
-		 // to update after the user imports something
-		 //menu.add(0, IMPORT_TABLE, 1, "Import New Table");
 		 return true;
 	 }
     
@@ -156,9 +152,6 @@ public class TableManager extends ListActivity {
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
 			 alertForNewTableName();
-			 return true;
-		 case IMPORT_TABLE:
-			 startActivity(new Intent(this, ImportCSVActivity.class));
 			 return true;
 		 }
     	
@@ -271,6 +264,14 @@ public class TableManager extends ListActivity {
 		 
 		 // Unregister Table from TableList
 		 tl.unregisterTable(tableID);
+		 
+		 // Clean up Table Property
+		 TableProperty tp = new TableProperty(tableID);
+		 tp.removeAll();
+		 
+		 // Clean up Column Property
+		 ColumnProperty cp = new ColumnProperty(tableID);
+		 cp.removeAll();
 	 }
 	 
 	 private void changeTableName(String tableID, String newTableName) {
