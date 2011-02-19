@@ -18,6 +18,8 @@ public class LineActivity extends GraphActivity {
         // Get x and y values
         ArrayList<String> x = getIntent().getExtras().getStringArrayList("x");
         ArrayList<String> y = getIntent().getExtras().getStringArrayList("y");
+        String xname = getIntent().getExtras().getString("xname");
+        String yname = getIntent().getExtras().getString("yname");
         
         // Check if data is valid to graph
         if ( (x != null && y != null) 
@@ -28,7 +30,7 @@ public class LineActivity extends GraphActivity {
 	    	
 	        // Draw Line Graph
 	        GraphFactory f = new GraphFactory(this);
-	    	setContentView(f.getValueYLineGraph(list, "Fridge Temperatures", "Day", "Temperature (C)"));
+	    	setContentView(f.getValueYLineGraph(list, "", xname, yname));
         } 
     }
     

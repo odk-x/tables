@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity.graphs;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -34,10 +35,12 @@ public class GraphActivity extends Activity {
         	case GRAPH_SETTING:
         		Intent i = new Intent(this, GraphSetting.class);
         		i.putExtra("tableID", tableID);
+        		Log.d("hi", "starting gs activity:"+tableID);
         		startActivity(i);
         		return true;
     	}
     	
     	return super.onMenuItemSelected(featureId, item);
     }
+    
 }

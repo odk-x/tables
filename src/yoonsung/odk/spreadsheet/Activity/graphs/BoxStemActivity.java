@@ -25,14 +25,15 @@ public class BoxStemActivity extends GraphActivity {
         double[] mid = getIntent().getExtras().getDoubleArray("mid");
         double[] high = getIntent().getExtras().getDoubleArray("high");
         double[] max = getIntent().getExtras().getDoubleArray("max");
+        String xname = getIntent().getExtras().getString("xname");
+        String yname = getIntent().getExtras().getString("yname");
                     
         for (int i = 0; i < x.size(); i++) {
         	list.add(new GValuePercentilePoint(x.get(i), min[i], low[i], mid[i], high[i], max[i]));
         }
     	
         GraphFactory f = new GraphFactory(this);
-    	EGraphicalView v = f.getBoxStemGraph(list, "Fridge Temperatures",
-    			"Refrigerator", "Temperature (C)");
+    	EGraphicalView v = f.getBoxStemGraph(list, "", xname, yname);
     	//v.addListener(new ClickListener(this));
     	setContentView(v);
     }

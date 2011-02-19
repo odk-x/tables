@@ -666,10 +666,11 @@ public class SpreadSheet extends Activity {
         	
         	Log.e("report", "graph type: " + graphType + " " + colOne + " " + colTwo);
         	
-    	  	if (graphType == null) {
+    	  	if ((graphType == null) ||(colOne == null) || (colTwo == null) ||
+    	  			!data.isColumnExist(colOne) || !data.isColumnExist(colTwo)) {
     	  		Log.e("GRAPTH", "Such a graph type does not exists");
-    	  		g = new Intent(this, GraphSetting.class);
-    	  		g.putExtra("tableID", currentTableID);
+    	  		bounceToGraphSettings();
+    	  		return true;
     		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
         		g = new Intent(this, LineActivity.class); 
         		ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
@@ -678,6 +679,8 @@ public class SpreadSheet extends Activity {
         		//Collections.reverse(y);
         		g.putExtra("x", x);
         		g.putExtra("y", y);
+	    		g.putExtra("xname", colOne);
+	    		g.putExtra("yname", colTwo);
     	    } else if (graphType.equals(GraphClassifier.STEM_GRAPH)) {
     	    	g = new Intent(this, BoxStemActivity.class);
     	    	ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
@@ -689,6 +692,8 @@ public class SpreadSheet extends Activity {
     	    		Log.e("GRAPH", "Cannot draw");
     	    		g = new Intent(this, GraphSetting.class);
     	    	} else {
+    	    		g.putExtra("xname", colOne);
+    	    		g.putExtra("yname", colTwo);
 	    	    	g.putExtra("x", x);
 	    	    	g.putExtra("min", gdh.arraylistToArray(stemResult.get("Q0s")));
 	        		g.putExtra("low", gdh.arraylistToArray(stemResult.get("Q1s")));
@@ -712,8 +717,8 @@ public class SpreadSheet extends Activity {
     	    	Log.e("GRAPTH", "Such a graph type does not exists");
     	    	g = new Intent(this, GraphSetting.class);
     	    }
-    	  	
-        	startActivity(g);
+    	  	g.putExtra("tableID", currentTableID);
+    	  	startActivity(g);
         	return true;
         case DEFAULTS_MANAGER_ID:
         	startActivity(new Intent(this, DefaultsActivity.class));
@@ -1211,6 +1216,12 @@ public class SpreadSheet extends Activity {
 		});
 		AlertDialog d = adBuilder.create();
 		return d;
+	}
+	
+	private void bounceToGraphSettings() {
+  		Intent g = new Intent(this, GraphSetting.class);
+  		g.putExtra("tableID", currentTableID);
+  		startActivity(g);
 	}
     
 }
