@@ -34,6 +34,9 @@ public class PropertyManager extends PreferenceActivity {
         protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
               
+                // Set title of activity
+        		setTitle("ODK Tables > Column Property");
+                
                 // Column Name
                 this.colName = getIntent().getStringExtra("colName");
                 this.tableID = getIntent().getStringExtra("tableID");

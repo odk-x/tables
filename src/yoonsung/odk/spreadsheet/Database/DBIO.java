@@ -90,7 +90,7 @@ public class DBIO {
 	private boolean isDouble(String str) {
 		try {
 			Double.parseDouble(str);
-		} catch(NumberFormatException e) {
+		} catch(Exception e) {
 			return false;
 		} 
 		return true;

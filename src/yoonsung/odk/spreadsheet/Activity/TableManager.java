@@ -46,6 +46,9 @@ public class TableManager extends ListActivity {
 		 this.db = new DBIO();
 		 this.tl = new TableList();
 		 
+		 // Set title of activity
+		 setTitle("ODK Tables > Table Manager");
+		 
 		 HashMap<String, String> tableListTmp = tl.getTableList();
 		 boolean loadError = getIntent().getBooleanExtra("loadError", false);
 		 if (loadError && tableListTmp.size() < 1) {

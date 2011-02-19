@@ -70,6 +70,9 @@ public class ColumnManager extends ListActivity {
 		super.onCreate(icicle);
 		setContentView(R.layout.col_manager);
 		
+		// Set title of activity
+		setTitle("ODK Tables > Column Manager");
+		
 		// Retrieve Intent
 		this.tableID = getIntent().getStringExtra("tableID");
 		
@@ -296,8 +299,8 @@ public class ColumnManager extends ListActivity {
 					currentCol = colOrder.get(currentPosition);
 					
 					// Options for each item on the list					
-					menu.add(0, SET_AS_PRIME, 0, "Set As Prime");
-					menu.add(0, SET_AS_ORDER_BY, 0, "Set AS Order By");
+					menu.add(0, SET_AS_PRIME, 0, "Set Index Column");
+					menu.add(0, SET_AS_ORDER_BY, 0, "Set Order-By Column");
 					menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
 				}
 			});

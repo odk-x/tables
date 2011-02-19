@@ -203,7 +203,7 @@ public class SpreadSheet extends Activity {
 				
 				// Get the input on EditText
 				EditText edit = (EditText)findViewById(R.id.edit_box);
-				String currentStr = edit.getText().toString();
+				String currentStr = edit.getText().toString().trim();
 				String currentCol = currentTable.getColName(currentTable.getColNum(currentCellLoc));
 				
 				// Update the original cell's content
@@ -453,7 +453,7 @@ public class SpreadSheet extends Activity {
 				// Options on this cell
 				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
 				menu.add(0, SEND_SMS_ROW, 0, "Send SMS On This Row");
-				menu.add(0, HISTORY_IN, 0, "History in");
+				menu.add(0, HISTORY_IN, 0, "View All Like This");
 			}
 		});      
        
