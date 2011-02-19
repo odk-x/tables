@@ -97,6 +97,7 @@ public class DBIO {
 	}
 	
 	public String toSafeSqlColumn(String input, boolean as, String func) {
+		input = input.trim();
 		if (as && func != null && func.trim().length() != 0)
 			return func + "(" + input + ")" + " AS `" + input + "`"; 
 		else if (as)

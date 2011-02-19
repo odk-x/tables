@@ -66,9 +66,11 @@ public class DataTable {
 	// Create a new column with this name. If there is a column
 	// with this name, do-nothing.
 	public void addNewColumn(String colName) {
+		colName = colName.trim();
 		if(isColumnExist(colName)) {
 			return;
 		}
+		
 		// Add new column 'data' table
 		SQLiteDatabase con = db.getConn();
 		con.execSQL("ALTER TABLE " + db.toSafeSqlColumn(currentTableName, false, null) 
@@ -163,10 +165,11 @@ public class DataTable {
 		SQLiteDatabase con = db.getConn();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
 		values.put(DATA_TIMESTAMP, timeStamp);
+		Log.e("DataCheck", values.toString());
 		try {
 			con.insertOrThrow(currentTableName, null, values);
 		} catch (Exception e) {
-			Log.d("Data", "Add Row failed.");
+			Log.d("Data", "Add Row failed." + e.getMessage());
 		}
 		con.close();
 		

@@ -212,7 +212,8 @@ public class ColumnManager extends ListActivity {
 		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				String colName = input.getText().toString();
-					
+				colName = colName.trim();
+				
 				// if not, add a new column
 				if (!data.isColumnExist(colName)) {
 					

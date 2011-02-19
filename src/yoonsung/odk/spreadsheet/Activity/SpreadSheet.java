@@ -3,7 +3,9 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
@@ -264,6 +266,9 @@ public class SpreadSheet extends Activity {
 					return;
 				}
 				
+				// Reset
+				currentAddRowColPos = 0;
+				
 				// Create a buffer
 				currentAddRowBuffer = new HashMap<String, String>();
 				
@@ -286,6 +291,7 @@ public class SpreadSheet extends Activity {
 							// Save what's in edit box
 							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
 							String txt = edit.getText().toString();
+							txt = txt.trim();
 							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
 							
 							// Update column name with prev
