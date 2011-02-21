@@ -95,11 +95,16 @@ public class ImportCSVActivity extends IETabActivity {
 		fn.addView(filenameValField);
 		v.addView(fn);
 		// adding the import button
-		Button button = new Button(this);
-		button.setId(IMPORTBUTTON_ID);
-		button.setText("Import");
-		button.setOnClickListener(new ButtonListener());
-		v.addView(button);
+		Button importB = new Button(this);
+		importB.setId(IMPORTBUTTON_ID);
+		importB.setText("Import");
+		importB.setOnClickListener(new ImportButtonListener());
+		v.addView(importB);
+		// adding the mkdirs button
+		Button mkdirsB = new Button(this);
+		mkdirsB.setText("Prepare Directory");
+		mkdirsB.setOnClickListener(new MkdirsButtonListener());
+		v.addView(mkdirsB);
 		// wrapping in a scroll view
 		ScrollView scroll = new ScrollView(this);
 		scroll.addView(v);
@@ -122,7 +127,7 @@ public class ImportCSVActivity extends IETabActivity {
 		} else {
 			tableName = tableNames[pos];
 			if(!tList.isTableExist(tableName)) {
-				notifyOfError("Table does not exist.");
+				showDialog(CSVIMPORT_FAIL_DIALOG);
 				return;
 			}
 		}
@@ -156,10 +161,20 @@ public class ImportCSVActivity extends IETabActivity {
 	/**
 	 * A listener for the import button. Calls importSubmission() on click.
 	 */
-	private class ButtonListener implements OnClickListener {
+	private class ImportButtonListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
 			importSubmission();
+		}
+	}
+	
+	private class MkdirsButtonListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			File root = Environment.getExternalStorageDirectory();
+			File file = new File(root.getPath() +
+					"/data/data/yoonsung.odk.spreadsheet/files/");
+			file.mkdirs();
 		}
 	}
 	
@@ -212,7 +227,7 @@ public class ImportCSVActivity extends IETabActivity {
 			if(b.getBoolean("success")) {
 				showDialog(CSVIMPORT_SUCCESS_DIALOG);
 			} else {
-				notifyOfError("Error importing: " + b.getString("errorMsg"));
+				showDialog(CSVIMPORT_FAIL_DIALOG);
 			}
 		}
 		

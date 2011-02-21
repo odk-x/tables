@@ -2,14 +2,12 @@ package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
 import java.util.Map;
-
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVExporter;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -118,8 +116,6 @@ public class ExportCSVActivity extends IETabActivity {
 				"/data/data/yoonsung.odk.spreadsheet/files/");
 		file.mkdirs();
 		file = new File(file.getPath() + "/" + filename);
-		Log.d("testtest", file.getAbsolutePath());
-		// TODO: make it care what table it is
 		String tableName = tableNames[tableSpin.getSelectedItemPosition()];
 		String tableID =
 			(new Integer(new TableList().getTableID(tableName))).toString();
@@ -127,12 +123,9 @@ public class ExportCSVActivity extends IETabActivity {
 			(new CSVExporter()).exportTable(
 					(new DataTable(tableID)).getCompleteTable(), file,
 					incPNCheck.isChecked(), incTSCheck.isChecked());
-			Log.d("eca", "exported some stuff");
 			showDialog(CSVEXPORT_SUCCESS_DIALOG);
 		} catch (CSVException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			notifyOfError(e.getMessage());
+			showDialog(CSVEXPORT_FAIL_DIALOG);
 			return;
 		}
 	}

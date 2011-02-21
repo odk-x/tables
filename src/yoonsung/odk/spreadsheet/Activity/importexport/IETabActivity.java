@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.util.Log;
 
 /**
  * An abstract parent class for import/export activities.
@@ -17,6 +16,8 @@ public abstract class IETabActivity extends Activity {
 	protected static final int CSVIMPORT_SUCCESS_DIALOG = 2;
 	protected static final int EXPORT_IN_PROGRESS_DIALOG = 3;
 	protected static final int IMPORT_IN_PROGRESS_DIALOG = 4;
+	protected static final int CSVIMPORT_FAIL_DIALOG = 5;
+	protected static final int CSVEXPORT_FAIL_DIALOG = 6;
 	
 	@Override
 	protected Dialog onCreateDialog(int id) {
@@ -33,6 +34,10 @@ public abstract class IETabActivity extends Activity {
 			ProgressDialog ipd = new ProgressDialog(this);
 			ipd.setMessage("importing...");
 			return ipd;
+		case CSVIMPORT_FAIL_DIALOG:
+			return getDialog("Failed to import.");
+		case CSVEXPORT_FAIL_DIALOG:
+			return getDialog("Failed to export.");
 		default:
 			throw new IllegalArgumentException();
 		}
@@ -55,15 +60,6 @@ public abstract class IETabActivity extends Activity {
 		});
 		AlertDialog d = adBuilder.create();
 		return d;
-	}
-	
-	/**
-	 * To be called in case of errors.
-	 * @param errMsg the message to display to the user
-	 * TODO: make this useful
-	 */
-	protected void notifyOfError(String errMsg) {
-		Log.d("OH NOES", errMsg);
 	}
 	
 }
