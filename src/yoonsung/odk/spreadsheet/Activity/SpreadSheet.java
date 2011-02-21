@@ -862,8 +862,11 @@ public class SpreadSheet extends Activity {
         		tv.setId(i);
         		i++;
         	}
-    		tv.setWidth(colWidths[currentTable.getColNum(colName)]);
-    		Log.d("col", colName + ":" + colWidths[currentTable.getColNum(colName)]);
+    		if(isIndex) {
+    			tv.setWidth(colWidths[0]);
+    		} else {
+    			tv.setWidth(colWidths[currentTable.getColNum(colName)]);
+    		}
     		tv.setMaxLines(1);
     		
     		LinearLayout headerLl = new LinearLayout(this);
