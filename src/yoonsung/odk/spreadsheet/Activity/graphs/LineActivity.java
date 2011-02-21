@@ -17,13 +17,13 @@ public class LineActivity extends GraphActivity {
         super.onCreate(savedInstanceState);
         // Get x and y values
         ArrayList<String> x = getIntent().getExtras().getStringArrayList("x");
-        ArrayList<String> y = getIntent().getExtras().getStringArrayList("y");
+        double[] y = getIntent().getExtras().getDoubleArray("y");
         String xname = getIntent().getExtras().getString("xname");
         String yname = getIntent().getExtras().getString("yname");
         
         // Check if data is valid to graph
         if ( (x != null && y != null) 
-        		&& (x.size() == y.size()) ) {
+        		&& (x.size() == y.length) ) {
                 
 	        // Convert
 	        List<GValueYPoint> list = createPlotData(x, y);
@@ -34,17 +34,13 @@ public class LineActivity extends GraphActivity {
         } 
     }
     
-    private List<GValueYPoint> createPlotData(ArrayList<String> x, ArrayList<String> y) {
+    private List<GValueYPoint> createPlotData(ArrayList<String> x, double[] y) {
 		// Result
     	List<GValueYPoint> list = new ArrayList<GValueYPoint>();
     	
     	// Map x and y and make a plot list
 		for (int i = 0; i < x.size(); i++) {
-			try {
-			list.add(new GValueYPoint(x.get(i), Double.parseDouble(y.get(i))));
-			} catch (Exception e) {
-				Log.e("LineGraph", "Number Parse Error. Skiping 1 entry.");
-			}
+			list.add(new GValueYPoint(x.get(i), y[i]));
 		}
 		    	
 		return list;

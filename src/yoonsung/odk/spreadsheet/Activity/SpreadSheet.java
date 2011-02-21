@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -674,7 +675,16 @@ public class SpreadSheet extends Activity {
     		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
         		g = new Intent(this, LineActivity.class); 
         		ArrayList<String> x = currentTable.getCol(currentTable.getColNum(colOne));
-        		ArrayList<String> y = currentTable.getCol(currentTable.getColNum(colTwo));
+        		ArrayList<String> yStrList = currentTable.getCol(currentTable.getColNum(colTwo));
+        		double[] y = new double[yStrList.size()];
+        		for(int i=0; i<yStrList.size(); i++) {
+        			try {
+        				y[i] = Double.parseDouble(yStrList.get(i));
+        			} catch(NumberFormatException e) {
+            	  		bounceToGraphSettings();
+            	  		return true;
+        			}
+        		}
         		//Collections.reverse(x);
         		//Collections.reverse(y);
         		g.putExtra("x", x);
