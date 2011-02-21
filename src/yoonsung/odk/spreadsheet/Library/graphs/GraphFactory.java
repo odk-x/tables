@@ -4,15 +4,22 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.achartengine.GraphicalView;
+import org.achartengine.chart.PieChart;
 import org.achartengine.chart.PointStyle;
+import org.achartengine.model.CategorySeries;
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
+import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 import android.app.Activity;
 import android.graphics.Color;
 
 public class GraphFactory {
+	
+	private static final int[] pieColors = {Color.BLUE, Color.RED,
+		Color.GREEN};
 	
 	private Activity a;
 	
@@ -151,6 +158,18 @@ public class GraphFactory {
     	d.addSeries(series);
     	EXYChart chart = new BoxStemChart(d, r);
     	return new EGraphicalView(a, chart);
+	}
+	
+	public GraphicalView getPieChart(CategorySeries data, String title,
+			String xTitle, String yTitle) {
+		XYMultipleSeriesRenderer r = getRenderer(title, xTitle, yTitle);
+		for(int i=0; i<data.getItemCount(); i++) {
+			SimpleSeriesRenderer rend = new SimpleSeriesRenderer();
+			rend.setColor(pieColors[i % pieColors.length]);
+			r.addSeriesRenderer(rend);
+		}
+		PieChart chart = new PieChart(data, r);
+		return new GraphicalView(a, chart);
 	}
 	
 	/**

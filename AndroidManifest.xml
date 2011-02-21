@@ -25,6 +25,7 @@
 <activity android:name=".Activity.PropertyManager"></activity>
 <activity android:name=".Activity.graphs.LineActivity"></activity>
 <activity android:name=".Activity.graphs.BoxStemActivity"></activity>
+<activity android:name=".Activity.graphs.PieActivity"></activity>
 
 <activity android:name=".Activity.graphs.MapViewActivity"></activity>
 <activity android:name=".Activity.graphs.GraphSetting"></activity>

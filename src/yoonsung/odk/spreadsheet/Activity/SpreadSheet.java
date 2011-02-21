@@ -15,6 +15,7 @@ import yoonsung.odk.spreadsheet.Activity.graphs.CalActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.GraphSetting;
 import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
+import yoonsung.odk.spreadsheet.Activity.graphs.PieActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
@@ -711,6 +712,36 @@ public class SpreadSheet extends Activity {
 	    			g.putExtra("high",gdh.arraylistToArray(stemResult.get("Q3s")));
 	    			g.putExtra("max", gdh.arraylistToArray(stemResult.get("Q4s")));
     	    	}
+    	    } else if(graphType.equals(GraphClassifier.PIE_CHART)) {
+    	    	Map<String, Integer> vals;
+    	    	if(isMain) {
+    	    		vals = data.getCounts(colOne);
+    	    	} else {
+    	    		vals = new HashMap<String, Integer>();
+    	    		int colIndex = currentTable.getColNum(colOne);
+    	    		List<String> columnVals = currentTable.getCol(colIndex);
+    	    		for(String val : columnVals) {
+    	    			Integer count = vals.get(val);
+    	    			if(count == null) {
+    	    				count = 1;
+    	    			} else {
+    	    				count += 1;
+    	    			}
+    	    			vals.put(val, count);
+    	    		}
+    	    	}
+    	    	String[] xVals = new String[vals.size()];
+    	    	int[] yVals = new int[vals.size()];
+    	    	int i = 0;
+    	    	for(String val : vals.keySet()) {
+    	    		xVals[i] = val;
+    	    		yVals[i] = vals.get(val);
+    	    		i++;
+    	    	}
+    	    	g = new Intent(this, PieActivity.class);
+    	    	g.putExtra("xName", colOne);
+    	    	g.putExtra("xVals", xVals);
+    	    	g.putExtra("yVals", yVals);
     	    } else if (graphType.equals(GraphClassifier.MAP)) {
     	    	g = new Intent(this, MapViewActivity.class);
     	    	ArrayList<String> location = currentTable.getCol(currentTable.getColNum(colOne));

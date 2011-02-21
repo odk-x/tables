@@ -431,4 +431,26 @@ public class DataTable {
 		
 	}
 	
+	/**
+	 * Gets counts of rows grouped by column value.
+	 * @param col the column to group by
+	 * @return a map from values to counts
+	 */
+	public Map<String, Integer> getCounts(String col) {
+		Map<String, Integer> res = new HashMap<String, Integer>();
+		SQLiteDatabase con = db.getConn();
+		String[] columns = {col, "COUNT(*)"};
+		Cursor cs = con.query(currentTableName, columns, null, null, col, null,
+				null);
+		int valIndex = cs.getColumnIndexOrThrow(col);
+		int countIndex = cs.getColumnIndexOrThrow("COUNT(*)");
+		while(cs.moveToNext()) {
+			String val = cs.getString(valIndex);
+			int count = cs.getInt(countIndex);
+			res.put(val, count);
+		}
+		con.close();
+		return res;
+	}
+	
 }

@@ -23,7 +23,7 @@ import android.widget.TabHost.TabSpec;
 
 public class GraphSetting extends Activity {
 
-	public static final String[] TYPES = {"Line Graph", "Box-Stem Graph", "Map", "Calendar"};
+	public static final String[] TYPES = {"Line Graph", "Box-Stem Graph", "Pie Chart", "Map", "Calendar"};
 	public static final String TAB_1 = "main";
 	public static final String TAB_2 = "history";
 	
@@ -152,6 +152,12 @@ public class GraphSetting extends Activity {
 					 Spinner y = createSpinner(prefix+":col2", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
 					 axisLL.addView(y);
+				 } else if(selectedItem.equals("Pie Chart")) {
+					 editor.putString(prefix+":type", GraphClassifier.PIE_CHART);
+					 editor.commit();
+					 Spinner x = createSpinner(prefix+":col1", cols);
+					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
+					 axisLL.addView(x);
 				 } else if (selectedItem.equals("Map")) {
 					 //change graph type
 					 editor.putString(prefix+":type", GraphClassifier.MAP);
@@ -217,6 +223,8 @@ public class GraphSetting extends Activity {
 				item = "Line Graph";
 			} else if (value.equals(GraphClassifier.STEM_GRAPH)) {
 				item = "Box-Stem Graph";
+			} else if(value.equals(GraphClassifier.PIE_CHART)) {
+				item = "Pie Chart";
 			} else if (value.equals(GraphClassifier.MAP) ){
 				item = "Map";
 			} else if (value.equals(GraphClassifier.CALENDAR) ){
