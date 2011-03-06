@@ -79,6 +79,7 @@ public class SpreadSheet extends Activity {
 	private static final int SET_COL_TO_ORDERBY = 9;
 	private static final int OPEN_COL_OPTS = 10;
 	private static final int SET_COL_WIDTH = 11;
+	private static final int DELETE_ROW = 12;
 	
 	private static final int PRIME_WARNING = 1;
 	private static final int ORDERBY_WARNING = 2;
@@ -456,6 +457,7 @@ public class SpreadSheet extends Activity {
 				menu.add(0, SELECT_COLUMN, 0, "Select This Column");
 				menu.add(0, SEND_SMS_ROW, 0, "Send SMS On This Row");
 				menu.add(0, HISTORY_IN, 0, "View All Like This");
+				menu.add(0, DELETE_ROW, 0, "Delete Row");
 			}
 		});      
        
@@ -590,6 +592,18 @@ public class SpreadSheet extends Activity {
 	    	currentTable = data.getTable(selectedColName, selectedValue);
 	    	noIndexFill(currentTable);
 	    	isMain = false;
+	    	return true;
+	    case DELETE_ROW:
+	    	int rowNum = (currentCellLoc / currentTable.getWidth()) - 1;
+	    	int rowId = currentTable.getTableRowID(rowNum);
+	    	data.deleteRow(rowId);
+			if (isMain) {
+				currentTable = data.getTable();
+				noIndexFill(currentTable);
+			} else {
+				currentTable = data.getTable(selectedColName, selectedValue);
+		    	noIndexFill(currentTable);
+			}
 	    	return true;
 	    case SET_COL_TO_PRIME:
 	    	tp = new TableProperty(currentTableID);

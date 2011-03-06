@@ -453,4 +453,16 @@ public class DataTable {
 		return res;
 	}
 	
+	/**
+	 * Deletes a row.
+	 * @param rowId the ID of the row to delete
+	 */
+	public void deleteRow(int rowId) {
+		SQLiteDatabase con = db.getConn();
+		String whereClause = DATA_ROWID + " = ?";
+		String[] whereArgs = {(new Integer(rowId)).toString()};
+		con.delete(currentTableName, whereClause, whereArgs);
+		con.close();
+	}
+	
 }
