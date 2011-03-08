@@ -12,14 +12,15 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TabHost;
-import android.widget.TextView;
 import android.widget.TabHost.TabSpec;
+import android.widget.TextView;
 
 public class GraphSetting extends Activity {
 
@@ -55,8 +56,8 @@ public class GraphSetting extends Activity {
 		});
         */
         
-        TabSpec ts1 = createTab(this, "Prime/Main", TAB_1);
-        TabSpec ts2 = createTab(this, "Secondary/History-in", TAB_2);
+        TabSpec ts1 = createTab(this, "Main Table", TAB_1);
+        TabSpec ts2 = createTab(this, "Secondary Table", TAB_2);
         
         myTabHost.addTab(ts1);
         myTabHost.addTab(ts2);
@@ -69,7 +70,7 @@ public class GraphSetting extends Activity {
         ts.setIndicator(tabName);                               
         ts.setContent(new TabHost.TabContentFactory(){
         	public View createTabContent(String tag) {                        
-        		return createControlView("Graph Type:");
+        		return createControlView(" Graph Type:");
         	}              
         });    
         return ts;
@@ -80,12 +81,14 @@ public class GraphSetting extends Activity {
 		wrapper.setOrientation(LinearLayout.VERTICAL);
 		
 		LinearLayout typeLL = new LinearLayout(this);
+		typeLL.setOrientation(LinearLayout.VERTICAL);
 		
 		final Context finContext = this;
 		
 		// Title for the spinner
 		TextView typeTV = new TextView(this);
 		typeTV.setText(title);
+		typeTV.setTextColor(R.color.black);
 		
 		// Spinner
 		Spinner typeSpinner;
@@ -103,6 +106,9 @@ public class GraphSetting extends Activity {
 			 public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id) {
 				 LinearLayout axisLL = new LinearLayout(finContext);
 				 axisLL.setOrientation(LinearLayout.VERTICAL);
+				 
+				 View ruler = new View(finContext); ruler.setBackgroundColor(R.color.black);
+				 axisLL.addView(ruler,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 				 
 				 // Main or History-in & prefix
 				 String prefix = "";
@@ -127,7 +133,16 @@ public class GraphSetting extends Activity {
 				 SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(finContext);
 			     SharedPreferences.Editor editor = settings.edit();
 			     				 
-				
+				 // TextView X
+			     TextView xTV = new TextView(finContext);
+			     xTV.setText(" X-axis:");
+			     xTV.setTextColor(R.color.black);
+			     // TextView Y
+			     TextView yTV = new TextView(finContext);
+			     yTV.setText(" Y-axis:");
+			     yTV.setTextColor(R.color.black);
+			    
+			
 				 if (selectedItem.equals("Line Graph")) {
 					 //change graph type
 					 editor.putString(prefix+":type", GraphClassifier.LINE_GRAPH);
@@ -136,27 +151,32 @@ public class GraphSetting extends Activity {
 					 // Set spinners for x and y
 					 Spinner x = createSpinner(prefix+":col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
+					 axisLL.addView(xTV);
 					 axisLL.addView(x);
 					 Spinner y = createSpinner(prefix+":col2", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
+					 axisLL.addView(yTV);
 					 axisLL.addView(y);
 				 } else if (selectedItem.equals("Box-Stem Graph")) {
-					//change graph type
+					 //change graph type
 					 editor.putString(prefix+":type", GraphClassifier.STEM_GRAPH);
 					 editor.commit();
 					 
 					 // Set spinners for x and y
 					 Spinner x = createSpinner(prefix+":col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
+					 axisLL.addView(xTV);
 					 axisLL.addView(x);
 					 Spinner y = createSpinner(prefix+":col2", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
+					 axisLL.addView(yTV);
 					 axisLL.addView(y);
 				 } else if(selectedItem.equals("Pie Chart")) {
 					 editor.putString(prefix+":type", GraphClassifier.PIE_CHART);
 					 editor.commit();
 					 Spinner x = createSpinner(prefix+":col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
+					 axisLL.addView(xTV);
 					 axisLL.addView(x);
 				 } else if (selectedItem.equals("Map")) {
 					 //change graph type
@@ -166,6 +186,10 @@ public class GraphSetting extends Activity {
 					 // Set spinner for location
 					 Spinner axis = createSpinner(prefix+"col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+"col1", axis);
+					 TextView mapTV = new TextView(finContext);
+					 mapTV.setText(" Location:");
+					 mapTV.setTextColor(R.color.black);
+					 axisLL.addView(mapTV);
 					 axisLL.addView(axis);
 				 } else if (selectedItem.equals("Calendar")) {
 					//change graph type
@@ -175,9 +199,11 @@ public class GraphSetting extends Activity {
 					 // Set spinners for x and y
 					 Spinner x = createSpinner(prefix+":col1", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
+					 axisLL.addView(xTV);
 					 axisLL.addView(x);
 					 Spinner y = createSpinner(prefix+":col2", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
+					 axisLL.addView(yTV);
 					 axisLL.addView(y);
 				 }
 				 
@@ -194,9 +220,8 @@ public class GraphSetting extends Activity {
 			 }
 		});
 		
-		typeLL.addView(typeTV);
-		typeLL.addView(typeSpinner);
-		
+		typeLL.addView(typeTV, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+		typeLL.addView(typeSpinner, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
 		wrapper.addView(typeLL, LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
 		
 		return wrapper;

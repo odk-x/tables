@@ -518,7 +518,7 @@ public class SpreadSheet extends Activity {
 				menu.add(Menu.NONE, SET_COL_TO_PRIME, 1, "Make Index Column");
 				menu.add(Menu.NONE, SET_COL_TO_ORDERBY, 2,
 						"Make Order-By Column");
-				menu.add(Menu.NONE, OPEN_COL_OPTS, 3, "Column Options");
+				menu.add(Menu.NONE, OPEN_COL_OPTS, 3, "Column Property");
 				menu.add(Menu.NONE, SET_COL_WIDTH, 4, "Set Column Width");
 			}
 		});      

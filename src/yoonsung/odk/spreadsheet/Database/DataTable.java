@@ -98,18 +98,18 @@ public class DataTable {
 			
 			SQLiteDatabase con = db.getConn();
 			try {
-				con.beginTransaction();
-				con.execSQL("CREATE TEMPORARY TABLE " + backupTable + "(" + InsColumns + ")");
-				con.execSQL("INSERT INTO " + backupTable + " SELECT " + SelColumns + " FROM " + originalTable);
-				con.execSQL("DROP TABLE " + originalTable);
-				con.execSQL("CREATE TABLE " + originalTable + "(" + InsColumns + ")");
-				con.execSQL("INSERT INTO " + originalTable + " SELECT " + SelColumns + " FROM " + backupTable);
-				con.execSQL("DROP TABLE " + backupTable);
-				con.setTransactionSuccessful();
+				//con.beginTransaction();
+				con.execSQL("CREATE TEMPORARY TABLE `" + backupTable + "`(" + InsColumns + ")");
+				con.execSQL("INSERT INTO `" + backupTable + "` SELECT " + SelColumns + " FROM `" + originalTable + "`");
+				con.execSQL("DROP TABLE `" + originalTable + "`");
+				con.execSQL("CREATE TABLE `" + originalTable + "`(" + InsColumns + ")");
+				con.execSQL("INSERT INTO `" + originalTable + "` SELECT " + SelColumns + " FROM `" + backupTable + "`");
+				con.execSQL("DROP TABLE `" + backupTable + "`");
+				//con.setTransactionSuccessful();
 			} catch (Exception e) {
 				Log.d("Data", "Drop Column Failed");
 			} finally {
-				con.endTransaction();
+				//con.endTransaction();
 				con.close();
 			}
 			

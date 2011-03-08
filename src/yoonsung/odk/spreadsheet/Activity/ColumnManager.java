@@ -13,15 +13,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 /*
@@ -34,9 +35,11 @@ import android.widget.TextView;
 public class ColumnManager extends ListActivity {
 	
 	// Menu IDs
-	public static final int SET_AS_PRIME = 0;
-	public static final int SET_AS_ORDER_BY = 1;
-	public static final int REMOVE_THIS_COLUMN = 2;
+	public static final int SET_AS_PRIME = 1;
+	public static final int SET_AS_ORDER_BY = 2;
+	public static final int REMOVE_THIS_COLUMN = 3;
+	
+	public static final int ADD_NEW_COL = 0;
 	
 	// For Drop & Drop Menu
 	private IconicAdapter adapter;
@@ -54,16 +57,18 @@ public class ColumnManager extends ListActivity {
 		this.data = new DataTable(tableID);
 		this.colOrder = tp.getColOrderArrayList(); 
 		
-		updatePrimeOrderbyInfo();
+		//updatePrimeOrderbyInfo();
 	}
 	
+	/*
 	private void updatePrimeOrderbyInfo() {
 		// Set prime and sort by information
-		TextView primeTV = (TextView)findViewById(R.id.prime_tv);
-		primeTV.setText(tp.getPrime());
-		TextView sortbyTV = (TextView)findViewById(R.id.sortby_tv);
-		sortbyTV.setText(tp.getSortBy());
+		//TextView primeTV = (TextView)findViewById(R.id.prime_tv);
+		//primeTV.setText(tp.getPrime());
+		//TextView sortbyTV = (TextView)findViewById(R.id.sortby_tv);
+		//sortbyTV.setText(tp.getSortBy());
 	}
+	*/
 	
 	@Override
 	public void onCreate(Bundle icicle) {
@@ -80,7 +85,7 @@ public class ColumnManager extends ListActivity {
 		init();
 		
 		// Add new column button
-		createAddNewColumnButton();
+		//createAddNewColumnButton();
 				
 		// Drag & Drop List
 		createDragAndDropList();
@@ -115,6 +120,7 @@ public class ColumnManager extends ListActivity {
 		return newOrder;
 	}
 	
+	/*
 	// Button that allows user to add a new column.
 	private void createAddNewColumnButton() {
 		// Add column button
@@ -130,6 +136,7 @@ public class ColumnManager extends ListActivity {
 			}
 		});
 	}
+	*/
 	
 	// Create a Drag & Drop List view.
 	private void createDragAndDropList() {
@@ -149,7 +156,7 @@ public class ColumnManager extends ListActivity {
 										int position, long id) {
 				// Selected item in the list
 				View v = adapter.getView(position, null, null);
-				TextView tv = (TextView) v.findViewById(R.id.label);
+				TextView tv = (TextView) v.findViewById(R.id.row_label);
 				
 				// Name of column from the selected item
 				String name = tv.getText().toString();
@@ -161,18 +168,28 @@ public class ColumnManager extends ListActivity {
 		
 	}
 	
-	// Context menu reponses and actions.
 	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		Log.e("currentCol", currentCol);
-		switch(item.getItemId()) {
-	    case SET_AS_PRIME:
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        menu.add(0, ADD_NEW_COL, 0, "Add New Column");
+        return true;
+    }
+	
+	@Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        
+    	// HANDLES DIFFERENT MENU OPTIONS
+    	switch(item.getItemId()) {
+    	case ADD_NEW_COL:
+    		alertForNewColumnName();
+    		return true;
+    	case SET_AS_PRIME:
 	    	tp.setPrime(currentCol); 
-	    	updatePrimeOrderbyInfo();
+	    	onResume();
 	    	return true;
 	    case SET_AS_ORDER_BY:
 	    	tp.setSortBy(currentCol); 
-	    	updatePrimeOrderbyInfo();
+	    	onResume();
 	    	return true;	
 	    case REMOVE_THIS_COLUMN:
 	    	// Drop the column from 'data' table
@@ -188,10 +205,10 @@ public class ColumnManager extends ListActivity {
 	    	// Resume UI
 	    	onResume();
  	    	return true;
-	    }
-	    return super.onContextItemSelected(item);
+    	}
+    	return true;
 	}
-	
+		
 	// Load Column Property Manager Activity.
 	private void loadColumnPropertyManager(String name) {
 		Intent cpm = new Intent(this, PropertyManager.class);
@@ -283,13 +300,24 @@ public class ColumnManager extends ListActivity {
 			
 			// Current Position in the List
 			final int currentPosition = position;
+			String currentColName = colOrder.get(position);
 			
-			// Register name of colun at each row in the list view
-			TextView label = (TextView)row.findViewById(R.id.label);		
-			label.setText(colOrder.get(position));
+			// Register name of colunm at each row in the list view
+			TextView label = (TextView)row.findViewById(R.id.row_label);		
+			label.setText(currentColName);
+			
+			// Register ext info for columns
+			TextView ext = (TextView)row.findViewById(R.id.row_ext);
+			String extStr = "";
+			if (currentColName.equals(tp.getPrime())) {
+				extStr += "Index Column";
+			} else if (currentColName.equals(tp.getSortBy())) {
+				extStr += "Order-By Column";
+			}
+			ext.setText(extStr);
 			
 			// Edit column properties
-			TextView edit = (TextView)row.findViewById(R.id.edit_button);
+			ImageView edit = (ImageView)row.findViewById(R.id.row_options);
 			edit.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {	
 				@Override
 				public void onCreateContextMenu(ContextMenu menu, View v,
@@ -304,7 +332,6 @@ public class ColumnManager extends ListActivity {
 					menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
 				}
 			});
-				
 			return(row);
 		}
 	}
