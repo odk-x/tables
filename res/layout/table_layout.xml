@@ -5,27 +5,21 @@ android:id="@+id/widget50"
 android:layout_width="fill_parent" 
 android:layout_height="fill_parent" 
 > 
-	<RelativeLayout
+	<LinearLayout
 		android:id="@+id/command"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" >
 		<ImageButton
 		android:id="@+id/back"
-		android:layout_width="35px"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:src="@drawable/previousicon" />
+		android:src="@drawable/icon_home" />
 		<ImageButton
 		android:id="@+id/refresh"
-		android:layout_width="35px"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_toRightOf="@+id/back"
 		android:src="@drawable/refreshicon" />
-		<LinearLayout
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:orientation="horizontal"
-		android:layout_toRightOf="@+id/refresh"
-		>
 		<EditText
 		android:id="@+id/edit_box"
 		android:layout_width="fill_parent"
@@ -33,20 +27,15 @@ android:layout_height="fill_parent"
 		android:layout_weight="0.35"  />
 		<Button 
 		android:id="@+id/enter"
-		android:layout_width="fill_parent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_weight="0.70"
-		android:layout_toRightOf="@+id/edit_box"
 		android:text="@string/button_enter" />
 		<ImageButton
 		android:id="@+id/add_row"
-		android:layout_width="fill_parent"
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_weight="0.75"
-		android:layout_toRightOf="@+id/enter"
 		android:src="@drawable/addnewrow" />
-		</LinearLayout>
-	</RelativeLayout>
+	</LinearLayout>
 	
 	<TextView
 	android:id="@+id/tableNameLed"
