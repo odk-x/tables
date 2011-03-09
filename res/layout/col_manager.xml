@@ -3,39 +3,12 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/column_manager_view" 
 	android:layout_width="fill_parent" 
-	android:layout_height="wrap_content" >
-
-	<TableLayout
-		android:id="@+id/prime_sort_table"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" 
-		android:stretchColumns="1" >
-		<TableRow>
-			<TextView
-				android:layout_column="1"
-				android:padding="3dip"
-				android:text = "Index Column :" />
-			<TextView 
-				android:id = "@+id/prime_tv"
-				android:padding="3dip"
-				android:gravity = "right"
-				android:text = "None" />
-		</TableRow>
-		<TableRow>
-			<TextView
-				android:layout_column="1"
-				android:padding="3dip"
-				android:text = "Order-by Column :" />
-			<TextView 
-				android:id = "@+id/sortby_tv"
-				android:padding="3dip"
-				android:gravity = "right"
-				android:text = "None" />
-		</TableRow>
-	</TableLayout>
+	android:layout_height="wrap_content" 
+	android:background="#FFFFFF">	
 	
+	 
 	<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:id="@+id/add_column_button"
+		android:id="@android:id/empty"
     	android:layout_width="fill_parent"
     	android:layout_height="64dip"
     	android:background="#C0C0C0"
@@ -64,7 +37,7 @@
 	        android:text="Add a Column"
 			/>
 	</RelativeLayout>
-
+		
 	<yoonsung.odk.spreadsheet.Library.TouchListView
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		xmlns:tlv="http://schemas.android.com/apk/res/yoonsung.odk.spreadsheet"
@@ -74,6 +47,8 @@
 		android:layout_height="fill_parent"
 		android:layout_below="@+id/add_column_button"
 		android:drawSelectorOnTop="false"
+		android:divider="#C0C0C0"
+        android:dividerHeight="1px"
 		tlv:normal_height="64dip"
 		tlv:grabber="@+id/icon"
 		tlv:remove_mode="slideRight"

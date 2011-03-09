@@ -2,6 +2,8 @@ package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
 import java.util.Map;
+
+import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
@@ -9,7 +11,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -53,7 +57,24 @@ public class ImportCSVActivity extends IETabActivity {
 	private View getView() {
 		LinearLayout v = new LinearLayout(this);
 		v.setOrientation(LinearLayout.VERTICAL);
+		// adding the filename field
+		LinearLayout fn = new LinearLayout(this);
+		fn.setOrientation(LinearLayout.VERTICAL);
+		TextView fnLabel = new TextView(this);
+		fnLabel.setText("Filename:");
+		fnLabel.setTextColor(R.color.black);
+		fn.addView(fnLabel);
+		filenameValField = new EditText(this);
+		filenameValField.setId(FILENAMEVAL_ID);
+		fn.addView(filenameValField);
+		v.addView(fn);
+		// Horizontal divider
+		View ruler1 = new View(this); ruler1.setBackgroundColor(R.color.black);
+		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the table spinner
+		TextView etn = new TextView(this);
+		etn.setText("Importing Table:");
+		etn.setTextColor(R.color.black);
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		Map<String, String> tableMap = (new TableList()).getTableList();
@@ -71,12 +92,14 @@ public class ImportCSVActivity extends IETabActivity {
 		tableSpin.setAdapter(adapter);
 		tableSpin.setSelection(0);
 		tableSpin.setOnItemSelectedListener(new tableSpinListener());
+		v.addView(etn);
 		v.addView(tableSpin);
 		// adding the new table name field
 		LinearLayout ntn = new LinearLayout(this);
 		ntn.setOrientation(LinearLayout.VERTICAL);
 		TextView ntnLabel = new TextView(this);
 		ntnLabel.setText("New Table Name:");
+		ntnLabel.setTextColor(R.color.black);
 		ntn.addView(ntnLabel);
 		ntnValField = new EditText(this);
 		ntnValField.setId(NTNVAL_ID);
@@ -84,16 +107,9 @@ public class ImportCSVActivity extends IETabActivity {
 		ntn.addView(ntnValField);
 		newTableViews = ntn;
 		v.addView(newTableViews);
-		// adding the filename field
-		LinearLayout fn = new LinearLayout(this);
-		fn.setOrientation(LinearLayout.VERTICAL);
-		TextView fnLabel = new TextView(this);
-		fnLabel.setText("Filename:");
-		fn.addView(fnLabel);
-		filenameValField = new EditText(this);
-		filenameValField.setId(FILENAMEVAL_ID);
-		fn.addView(filenameValField);
-		v.addView(fn);
+		// Horizontal divider
+		View ruler2 = new View(this); ruler2.setBackgroundColor(R.color.black);
+		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the import button
 		Button importB = new Button(this);
 		importB.setId(IMPORTBUTTON_ID);
@@ -115,10 +131,13 @@ public class ImportCSVActivity extends IETabActivity {
 	 * Attempts to import a CSV file.
 	 */
 	private void importSubmission() {
-		String filename = filenameValField.getText().toString();
+		String filename = filenameValField.getText().toString().trim();
 		File root = Environment.getExternalStorageDirectory();
 		File file = new File(root.getPath() +
-				"/data/data/yoonsung.odk.spreadsheet/files/" + filename);
+				//"/data/data/yoonsung.odk.spreadsheet/" + filename);
+				"/" + filename);
+		Log.e("PathCheck", root.getPath() + "/" + filename);
+		file.mkdirs();
 		String tableName;
 		int pos = tableSpin.getSelectedItemPosition();
 		TableList tList = new TableList();
