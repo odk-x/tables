@@ -26,6 +26,7 @@ public class ColumnProperty {
 	public static final String COLUMN_PROPERTY_SMSIN = "SMSIN";
 	public static final String COLUMN_PROPERTY_SMSOUT = "SMSOUT";
 	public static final String COLUMN_PROPERTY_FOOTER_MODE = "footerMode";
+	public static final String COLUMN_PROPERTY_ISINDEX = "isIndex";
 	
 	// Database connection
 	private DBIO db;
@@ -78,7 +79,7 @@ public class ColumnProperty {
 	}
     
     public String getType(String colName) {
-    	return getProperty(colName, COLUMN_PROPERTY_TYPE);    	
+    	return getProperty(colName, COLUMN_PROPERTY_TYPE);
     }
     
     public void setType(String colName, String newVal) {
@@ -131,6 +132,26 @@ public class ColumnProperty {
     
     public void setFooterMode(String colName, String newVal) {
 		setProperty(colName, COLUMN_PROPERTY_FOOTER_MODE, newVal);
+	}
+    
+    public boolean getIsIndex(String colName) {
+    	String result = getProperty( colName, COLUMN_PROPERTY_ISINDEX);
+    	if (result == null) {
+    		return false;
+    	} else if (result.equals("0")) {
+    		return false;
+    	} else {
+    		return true;
+    	}
+    }
+    
+    public void setIsIndex(String colName, boolean newVal) {
+    	String stringVal;
+    	if (newVal)
+    		stringVal = "1";
+    	else
+    		stringVal = "0";
+		setProperty(colName, COLUMN_PROPERTY_ISINDEX, stringVal);
 	}
     
     public void removeAll() {

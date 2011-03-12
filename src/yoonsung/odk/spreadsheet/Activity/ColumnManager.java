@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.TouchListView;
@@ -38,6 +39,7 @@ public class ColumnManager extends ListActivity {
 	public static final int SET_AS_PRIME = 1;
 	public static final int SET_AS_ORDER_BY = 2;
 	public static final int REMOVE_THIS_COLUMN = 3;
+	public static final int SET_AS_NONPRIME = 4;
 	
 	public static final int ADD_NEW_COL = 0;
 	
@@ -50,11 +52,13 @@ public class ColumnManager extends ListActivity {
 	private DataTable data;
 	private ArrayList<String> colOrder;
 	private String currentCol;
+	private ColumnProperty cp;
 	
 	// Initialize fields.
 	private void init() {
 		this.tp = new TableProperty(tableID);
 		this.data = new DataTable(tableID);
+		this.cp = new ColumnProperty(tableID);
 		this.colOrder = tp.getColOrderArrayList(); 
 		
 		//updatePrimeOrderbyInfo();
@@ -184,9 +188,13 @@ public class ColumnManager extends ListActivity {
     		alertForNewColumnName();
     		return true;
     	case SET_AS_PRIME:
-	    	tp.setPrime(currentCol); 
+	    	cp.setIsIndex(currentCol, true); 
 	    	onResume();
 	    	return true;
+    	case SET_AS_NONPRIME:
+	    	cp.setIsIndex(currentCol, false); 
+	    	onResume();
+    		return true;
 	    case SET_AS_ORDER_BY:
 	    	tp.setSortBy(currentCol); 
 	    	onResume();
@@ -309,7 +317,7 @@ public class ColumnManager extends ListActivity {
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);
 			String extStr = "";
-			if (currentColName.equals(tp.getPrime())) {
+			if (cp.getIsIndex(currentColName)) {
 				extStr += "Index Column";
 			} else if (currentColName.equals(tp.getSortBy())) {
 				extStr += "Order-By Column";
@@ -326,8 +334,13 @@ public class ColumnManager extends ListActivity {
 					// Current column selected
 					currentCol = colOrder.get(currentPosition);
 					
-					// Options for each item on the list					
-					menu.add(0, SET_AS_PRIME, 0, "Set Index Column");
+					// Options for each item on the list
+					if(cp.getIsIndex(currentCol)) {
+						menu.add(0, SET_AS_NONPRIME, 0,
+								"Set as Non-Index Column");
+					} else {
+						menu.add(0, SET_AS_PRIME, 0, "Set as Index Column");
+					}
 					menu.add(0, SET_AS_ORDER_BY, 0, "Set Order-By Column");
 					menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
 				}

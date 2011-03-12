@@ -50,7 +50,8 @@ public class DBIO {
                 + ColumnProperty.COLUMN_PROPERTY_TYPE + " TEXT,"
                 + ColumnProperty.COLUMN_PROPERTY_SMSIN + " TEXT,"
                 + ColumnProperty.COLUMN_PROPERTY_SMSOUT + " TEXT,"
-                + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT"
+                + ColumnProperty.COLUMN_PROPERTY_FOOTER_MODE+ " TEXT,"
+                + ColumnProperty.COLUMN_PROPERTY_ISINDEX + " TEXT"
                 + ");");
 
     	// Create defaultopts table

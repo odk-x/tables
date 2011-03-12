@@ -36,6 +36,7 @@ public class DataTable {
 	private DBIO db;
 	private TableList tl;
 	private TableProperty tp;
+	private ColumnProperty cp;
 	
 	// Constructor
 	public DataTable(String tableID) {
@@ -43,6 +44,7 @@ public class DataTable {
 		this.db = new DBIO();
 		this.tl = new TableList();
 		this.tp = new TableProperty(tableID);
+		this.cp = new ColumnProperty(tableID);
 		
 		this.currentTableID = tableID;
 		if (tableID == null) {
@@ -194,7 +196,7 @@ public class DataTable {
 	public Table getTable() {
 		
 		// Main Frame
-		return loadTable(true, tp.getColOrderArrayList(), tp.getPrime(), tp.getSortBy(), null);
+		return loadTable(true, tp.getColOrderArrayList(), tp.getSortBy(), null);
 		
 	}
 	
@@ -205,20 +207,48 @@ public class DataTable {
 		ArrayList<String> colOrder = tp.getColOrderArrayList();
 		colOrder.add("_timestamp");
 		colOrder.add("_phoneNumberIn");
-		return loadTable(true, colOrder, tp.getPrime(), tp.getSortBy(), null);
+		return loadTable(true, colOrder, tp.getSortBy(), null);
 	}
 	
-	public Table getTable(String whereCol, String whereArg) {
-		
+	public Table getTable(int matchRowId) {
+		ArrayList<String> colOrder = tp.getColOrderArrayList();
+		String selection = DATA_ROWID + " = ?";
+		String[] selectionArgs = {(new Integer(matchRowId)).toString()};
+		SQLiteDatabase con = db.getConn();
+		Cursor cs = con.query(currentTableName, null, selection, selectionArgs,
+				null, null, null, null);
+		cs.moveToFirst();
+		String whereClause = "";
+		for(String colName : colOrder) {
+			if(cp.getIsIndex(colName)) {
+				int colIndex = cs.getColumnIndexOrThrow(colName);
+				whereClause += " and " + db.toSafeSqlColumn(colName, false,
+						null) + " = " + db.toSafeSqlString(cs.getString(
+						colIndex));
+			}
+		}
+		cs.close();
+		con.close();
+		if(whereClause.length() == 0) {
+			whereClause = null;
+		} else {
+			whereClause = whereClause.substring(5);
+		}
 		// Into-History
-		String whereClause = db.toSafeSqlColumn(whereCol, false, null) + " = " + db.toSafeSqlString(whereArg);
-		return loadTable(false, tp.getColOrderArrayList(), null, tp.getSortBy(), whereClause);
+		return loadTable(false, colOrder, tp.getSortBy(), whereClause);
 		
 	}
+	
+	public Table getTableByVal(String whereCol, String whereArg) {
+        
+        // Into-History
+        String whereClause = db.toSafeSqlColumn(whereCol, false, null) + " = " + db.toSafeSqlString(whereArg);
+        return loadTable(false, tp.getColOrderArrayList(), tp.getSortBy(), whereClause);
+    }
+
 	
 	private Table loadTable(boolean isMainTable, 
-							ArrayList<String> colOrder, 
-							String prime, 
+							ArrayList<String> colOrder,
 							String sortBy, 
 							String whereClause) 
 	{
@@ -227,7 +257,8 @@ public class DataTable {
 		SQLiteDatabase con = db.getConn();
 		
 		// Select Data Table
-		String tableSQL = prepareQueryForTable(isMainTable, colOrder, prime, sortBy, whereClause);
+		String tableSQL = prepareQueryForTable(isMainTable, colOrder, sortBy, whereClause);
+		Log.d("dt", "tableSQL:" + tableSQL);
 		Cursor cs = con.rawQuery(tableSQL, null);
 		
 		// Table's fields
@@ -313,8 +344,7 @@ public class DataTable {
 	}
 	
 	private String prepareQueryForTable(boolean isMainTable, 
-										ArrayList<String> colOrder, 
-										String prime, 
+										ArrayList<String> colOrder,
 										String sortBy,
 										String whereClause) 
 	{	
@@ -331,11 +361,18 @@ public class DataTable {
 	
 		if (isMainTable) {
 			// Main Table
-			if (prime != null && prime.trim().length() != 0) {
+			String indexList = "";
+			for(String colName : colOrder) {
+				if(cp.getIsIndex(colName)) {
+					indexList += ", " + db.toSafeSqlColumn(colName, false, null);
+				}
+			}
+			if (indexList.length() != 0) {
+				indexList = indexList.substring(2);
 				result += db.listColumns(colOrder, true, "MAX", sortBy)
 						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
-						+ " GROUP BY " + db.toSafeSqlColumn(prime, false, null)
-						+ " ORDER BY " + db.toSafeSqlColumn(prime, false, null) + " ASC";
+						+ " GROUP BY " + indexList
+						+ " ORDER BY " + indexList + " ASC";
 			} else {
 				result += db.listColumns(colOrder, true, null, null) 
 						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null);

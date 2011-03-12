@@ -80,6 +80,7 @@ public class SpreadSheet extends Activity {
 	private static final int OPEN_COL_OPTS = 10;
 	private static final int SET_COL_WIDTH = 11;
 	private static final int DELETE_ROW = 12;
+	private static final int UNSET_COL_TO_PRIME = 13;
 	
 	private static final int PRIME_WARNING = 1;
 	private static final int ORDERBY_WARNING = 2;
@@ -91,6 +92,8 @@ public class SpreadSheet extends Activity {
 	
 	// Database object for tables
 	private DataTable data;
+	// ColumnProperty object
+	private ColumnProperty cp;
 	
 	// Current Table ID
 	private String currentTableID;
@@ -116,8 +119,9 @@ public class SpreadSheet extends Activity {
 	
 	// View main or history-in
 	private boolean isMain;
-	private String selectedColName;
-	private String selectedValue;
+    private String selectedColName;
+    private String selectedValue;
+	private int selRowId; // for use when viewing history-in
 	
 	// SMS Sender Object
 	private SMSSender SMSSender;
@@ -147,6 +151,7 @@ public class SpreadSheet extends Activity {
 		
 		// Data strucutre will represent the table/spread sheet
 		this.data = new DataTable(currentTableID);
+		this.cp = new ColumnProperty(currentTableID);
 		
 		// Get table data
 		boolean loadError = false;
@@ -154,6 +159,7 @@ public class SpreadSheet extends Activity {
 			this.currentTable = data.getTable();
 		} catch (Exception e) {
 			Log.e("loaderror", "error: " + e.getMessage());
+			e.printStackTrace();
 			loadError = true;
 		}
 		
@@ -232,7 +238,7 @@ public class SpreadSheet extends Activity {
 					currentTable = data.getTable();
 					noIndexFill(currentTable);
 				} else {
-					currentTable = data.getTable(selectedColName, selectedValue);
+					currentTable = data.getTable(selRowId);
 			    	noIndexFill(currentTable);
 				}
 			}
@@ -514,12 +520,19 @@ public class SpreadSheet extends Activity {
 				TextView tv = (TextView) v;
 				currentCellLoc = tv.getId();
 				currentCellText = tv.getText().toString();
+				boolean isIndex = cp.getIsIndex(currentCellText);
 				
 				// Options on this cell
 				menu.add(Menu.NONE, SELECT_COLUMN, 0, "Select This Column");
-				menu.add(Menu.NONE, SET_COL_TO_PRIME, 1, "Make Index Column");
+				if(isIndex) {
+					menu.add(Menu.NONE, UNSET_COL_TO_PRIME, 1,
+							"Make Non-Index Column");
+				} else {
+					menu.add(Menu.NONE, SET_COL_TO_PRIME, 1,
+							"Make Index Column");
+				}
 				menu.add(Menu.NONE, SET_COL_TO_ORDERBY, 2,
-						"Make Order-By Column");
+							"Set as Order-By Column");
 				menu.add(Menu.NONE, OPEN_COL_OPTS, 3, "Column Property");
 				menu.add(Menu.NONE, SET_COL_WIDTH, 4, "Set Column Width");
 			}
@@ -585,11 +598,11 @@ public class SpreadSheet extends Activity {
 	    	SMSSender.sendSMS("2062614018", content);
 	    	return true;
 	    case HISTORY_IN: // Draw new table on this history
-	    	selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
-	    	selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
-	    	Log.e("checkpoint", selectedColName + " " + selectedValue);
-	    	
-	    	currentTable = data.getTable(selectedColName, selectedValue);
+            selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
+            selectedValue = currentTable.getCellValue(currentCellLoc - currentTable.getWidth());
+	    	int selRowNum = (currentCellLoc / currentTable.getWidth()) - 1;
+	    	selRowId = currentTable.getTableRowID(selRowNum);
+	    	currentTable = data.getTable(selRowId);
 	    	noIndexFill(currentTable);
 	    	isMain = false;
 	    	return true;
@@ -601,7 +614,7 @@ public class SpreadSheet extends Activity {
 				currentTable = data.getTable();
 				noIndexFill(currentTable);
 			} else {
-				currentTable = data.getTable(selectedColName, selectedValue);
+				currentTable = data.getTable(selRowId);
 		    	noIndexFill(currentTable);
 			}
 	    	return true;
@@ -611,14 +624,19 @@ public class SpreadSheet extends Activity {
 	    	if(selectedColName.equals(tp.getSortBy())) {
 	    		showDialog(ORDERBY_WARNING);
 	    	} else {
-	    		tp.setPrime(selectedColName);
+	    		cp.setIsIndex(selectedColName, true);
 	    		init(currentTableID);
 	    	}
+	    	return true;
+	    case UNSET_COL_TO_PRIME:
+	    	selectedColName = currentCellText;
+	    	cp.setIsIndex(selectedColName, false);
+	    	init(currentTableID);
 	    	return true;
 	    case SET_COL_TO_ORDERBY:
 	    	tp = new TableProperty(currentTableID);
 	    	selectedColName = currentCellText;
-	    	if(selectedColName.equals(tp.getPrime())) {
+	    	if(cp.getIsIndex(selectedColName)) {
 	    		showDialog(PRIME_WARNING);
 	    	} else {
 	    		tp.setSortBy(selectedColName);

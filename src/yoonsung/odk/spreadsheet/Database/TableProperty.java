@@ -25,7 +25,8 @@ public class TableProperty {
 		this.db = new DBIO();
 		this.tableID = tableID;
 	}
-		
+	
+	/**
 	public String getPrime() {
 		return getProperty(TABLE_PROPERTY_PRIME);
 	}
@@ -33,6 +34,7 @@ public class TableProperty {
 	public void setPrime(String newVal) {
 		setProperty(TABLE_PROPERTY_PRIME, newVal);
 	}
+	**/
 	
 	public String getSortBy() {
 		return getProperty(TABLE_PROPERTY_SORT_BY);

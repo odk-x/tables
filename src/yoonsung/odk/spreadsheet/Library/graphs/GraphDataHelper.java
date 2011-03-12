@@ -37,7 +37,7 @@ public class GraphDataHelper {
     	for (int i = 0; i < x.size(); i++) {
     		
     		// Get corresponding y values 
-    		Table table = data.getTable(colOne, x.get(i));
+    		Table table = data.getTableByVal(colOne, x.get(i));
     		ArrayList<String> y = table.getCol(table.getColNum(colTwo));
     		
     		// Take statistics
