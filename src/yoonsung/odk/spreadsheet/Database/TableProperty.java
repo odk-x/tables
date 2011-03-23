@@ -15,6 +15,7 @@ public class TableProperty {
 	public static final String TABLE_PROPERTY_PRIME = "prime";
 	public static final String TABLE_PROPERTY_SORT_BY = "sortBy";
 	public static final String TABLE_PROPERTY_COLUMN_ORDER = "colOrder";
+	public static final String TABLE_PROPERTY_DEFOUTMSG = "defoutmsg";
 	
 	// Database connection
 	private DBIO db;
@@ -54,7 +55,15 @@ public class TableProperty {
 	
 	public void setColOrder(ArrayList<String> order) {
 		setProperty(TABLE_PROPERTY_COLUMN_ORDER, arrayListToCSV(order));
-	}	
+	}
+	
+	public String getDefOutMsg() {
+		return getProperty(TABLE_PROPERTY_DEFOUTMSG);
+	}
+	
+	public void setDefOutMsg(String newVal) {
+		setProperty(TABLE_PROPERTY_DEFOUTMSG, newVal);
+	}
 	
 	public void removeAll() {
 		SQLiteDatabase con = db.getConn();

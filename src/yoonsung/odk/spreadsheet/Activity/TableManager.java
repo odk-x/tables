@@ -38,6 +38,7 @@ public class TableManager extends ListActivity {
 	public static final int CHANGE_TABLE_NAME = 1;
 	public static final int ADD_NEW_TABLE     = 2;
 	public static final int REMOVE_TABLE      = 3;
+	public static final int SET_DEFOUTMSG     = 4;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -134,6 +135,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
 		 menu.add(0, REMOVE_TABLE, 2, "Remove the Table");
+		 menu.add(0, SET_DEFOUTMSG, 3, "Set Outgoing Default");
 	 }
 	 
 	 @Override
@@ -158,6 +160,9 @@ public class TableManager extends ListActivity {
 			 // To be Done
 			 removeTable(Integer.toString(tableID));
 			 refreshList();
+			 return true;
+		 case SET_DEFOUTMSG:
+			 alertForDefOutFrmt(Integer.toString(tableID));
 			 return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
@@ -244,6 +249,22 @@ public class TableManager extends ListActivity {
 			 }
 		 });
 
+		 alert.show();
+	 }
+	 
+	 private void alertForDefOutFrmt(final String tableID) {
+		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		 alert.setTitle("Outgoing Message Format");
+		 final EditText input = new EditText(this);
+		 final TableProperty tp = new TableProperty(tableID);
+		 input.setText(tp.getDefOutMsg());
+		 alert.setView(input);
+		 alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+			 public void onClick(DialogInterface dialog, int whichButton) {
+				 String newFormat = input.getText().toString();
+				 tp.setDefOutMsg(newFormat);
+			 }
+		 });
 		 alert.show();
 	 }
 

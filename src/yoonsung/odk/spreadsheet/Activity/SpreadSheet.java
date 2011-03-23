@@ -586,16 +586,63 @@ public class SpreadSheet extends Activity {
 			withIndexFill(currentTable, indexTable, currentTable.getColNum(currentCellLoc));
 			return true;
 	    case SEND_SMS_ROW: // Send SMS on this row
-	    	// Get the current row
-	    	ArrayList<String> row = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
-	    	
-	    	// Encode the row information into a string
-	    	String content = "";
-	    	for (int i = 0; i < row.size(); i++) {
-	    		content += row.get(i) + " ";
+	    	List<String> curHeader = currentTable.getHeader();
+	    	List<String> curRow = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
+	    	tp = new TableProperty(currentTableID);
+	    	String content = tp.getDefOutMsg();
+	    	int lastPCSign = -1;
+	    	for(int i=0; i<content.length(); i++) {
+	    		if(content.charAt(i) == '%') {
+	    			if(lastPCSign < 0) {
+	    				lastPCSign = i;
+	    			} else {
+	    				String origColName = content.substring(lastPCSign + 1, i);
+	    				String colName;
+	    				if(data.isColumnExist(origColName)) {
+	    					colName = origColName;
+	    				} else {
+	    					colName = cp.getNameByAbrv(origColName);
+	    				}
+	    				Log.d("ssr", "origColName:" + origColName + "/colName:" + colName);
+	    				int index = curHeader.indexOf(colName);
+	    				if(index >= 0) {
+	    					String colVal = curRow.get(index);
+	    					if(colVal == null) {
+	    						colVal = "";
+	    					}
+	    					content = content.substring(0, lastPCSign) +
+	    						colVal + content.substring(i + 1);
+	    					i -= (origColName.length() - colVal.length());
+	    				}
+	    				lastPCSign = -1;
+	    			}
+	    		}
 	    	}
-	    	
-	    	SMSSender.sendSMS("2062614018", content);
+	    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+	    	alert.setTitle("Send Row");
+	    	LinearLayout v = new LinearLayout(this);
+	    	v.setOrientation(LinearLayout.VERTICAL);
+	    	TextView pnLabel = new TextView(this);
+	    	pnLabel.setText("send to:");
+	    	final EditText pnET = new EditText(this);
+	    	TextView msgLabel = new TextView(this);
+	    	msgLabel.setText("message:");
+	    	final EditText msgET = new EditText(this);
+	    	msgET.setText(content);
+	    	v.addView(pnLabel);
+	    	v.addView(pnET);
+	    	v.addView(msgLabel);
+	    	v.addView(msgET);
+	    	alert.setView(v);
+			 alert.setPositiveButton("Send", new DialogInterface.OnClickListener() {
+				 public void onClick(DialogInterface dialog, int whichButton) {
+					 String pn = msgET.getText().toString();
+					 String msg = msgET.getText().toString();
+					 Log.d("ssr", "sending row (" + msg + ") to " + pn);
+					 SMSSender.sendSMS(pn, msg);
+				 }
+			 });
+	    	alert.show();
 	    	return true;
 	    case HISTORY_IN: // Draw new table on this history
             selectedColName = currentTable.getColName(currentTable.getColNum(currentCellLoc - currentTable.getWidth()));
