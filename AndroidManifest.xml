@@ -33,6 +33,7 @@
 <activity android:name=".Activity.defaultopts.DefaultsActivity"></activity>
 <activity android:name=".Activity.defaultopts.QueryDefaults"></activity>
 <activity android:name=".Activity.defaultopts.AdditionDefaults"></activity>
+<activity android:name=".Activity.defaultopts.SmsOutFormatSetActivity"></activity>
 <activity android:name=".Activity.TableManager"></activity>
 <activity android:name=".Activity.importexport.ImportExportActivity"></activity>
 <activity android:name=".Activity.importexport.ImportCSVActivity"></activity>

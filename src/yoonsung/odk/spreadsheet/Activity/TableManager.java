@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Activity.defaultopts.SmsOutFormatSetActivity;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
@@ -135,7 +136,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
 		 menu.add(0, REMOVE_TABLE, 2, "Remove the Table");
-		 menu.add(0, SET_DEFOUTMSG, 3, "Set Outgoing Default");
+		 menu.add(0, SET_DEFOUTMSG, 3, "Manage Outgoing Formats");
 	 }
 	 
 	 @Override
@@ -162,7 +163,9 @@ public class TableManager extends ListActivity {
 			 refreshList();
 			 return true;
 		 case SET_DEFOUTMSG:
-			 alertForDefOutFrmt(Integer.toString(tableID));
+			 Intent domIntent = new Intent(this, SmsOutFormatSetActivity.class);
+			 domIntent.putExtra("tableID", tableID);
+			 startActivity(domIntent);
 			 return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
@@ -249,22 +252,6 @@ public class TableManager extends ListActivity {
 			 }
 		 });
 
-		 alert.show();
-	 }
-	 
-	 private void alertForDefOutFrmt(final String tableID) {
-		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		 alert.setTitle("Outgoing Message Format");
-		 final EditText input = new EditText(this);
-		 final TableProperty tp = new TableProperty(tableID);
-		 input.setText(tp.getDefOutMsg());
-		 alert.setView(input);
-		 alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-			 public void onClick(DialogInterface dialog, int whichButton) {
-				 String newFormat = input.getText().toString();
-				 tp.setDefOutMsg(newFormat);
-			 }
-		 });
 		 alert.show();
 	 }
 

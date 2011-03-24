@@ -39,9 +39,14 @@ public class DBIO {
     			+ TableProperty.TABLE_PROPERTY_TABLE_ID + " INTEGER PRIMARY KEY,"
                 + TableProperty.TABLE_PROPERTY_PRIME + " TEXT,"
                 + TableProperty.TABLE_PROPERTY_COLUMN_ORDER + " TEXT,"
-                + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP,"
-                + TableProperty.TABLE_PROPERTY_DEFOUTMSG + " TEXT"
+                + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP"
                 + ");");
+    	
+    	db.execSQL("CREATE TABLE IF NOT EXISTS " + TableProperty.TABLE_PROPERTY_DEFOUTMSG + " ("
+    			+ TableProperty.TPDOM_ID + " INTEGER PRIMARY KEY,"
+    			+ TableProperty.TPDOM_TABLEID + " INTEGER,"
+    			+ TableProperty.TPDOM_FRMT + " TEXT"
+    			+ ");");
     	
     	// Create columnProperty table
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + ColumnProperty.COLUMN_PROPERTY + " ("

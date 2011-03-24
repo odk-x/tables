@@ -1,6 +1,8 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -16,6 +18,9 @@ public class TableProperty {
 	public static final String TABLE_PROPERTY_SORT_BY = "sortBy";
 	public static final String TABLE_PROPERTY_COLUMN_ORDER = "colOrder";
 	public static final String TABLE_PROPERTY_DEFOUTMSG = "defoutmsg";
+	public static final String TPDOM_ID = "id";
+	public static final String TPDOM_TABLEID = "tableID";
+	public static final String TPDOM_FRMT = "format";
 	
 	// Database connection
 	private DBIO db;
@@ -57,12 +62,53 @@ public class TableProperty {
 		setProperty(TABLE_PROPERTY_COLUMN_ORDER, arrayListToCSV(order));
 	}
 	
-	public String getDefOutMsg() {
-		return getProperty(TABLE_PROPERTY_DEFOUTMSG);
+	public Map<Integer, String> getDefOutMsg() {
+		Map<Integer, String> res = new HashMap<Integer, String>();
+		SQLiteDatabase con = db.getConn();
+		String[] cols = new String[] {TPDOM_ID, TPDOM_FRMT};
+		String selection = TPDOM_TABLEID + " = ?";
+		String[] selectionArgs = new String[] {tableID};
+		Cursor cs = con.query(TABLE_PROPERTY_DEFOUTMSG, cols, selection,
+				selectionArgs, null, null, TPDOM_ID);
+		boolean going = cs.moveToFirst();
+		int idIndex = cs.getColumnIndexOrThrow(TPDOM_ID);
+		int frmtIndex = cs.getColumnIndexOrThrow(TPDOM_FRMT);
+		while(going) {
+			int id = cs.getInt(idIndex);
+			String frmt = cs.getString(frmtIndex);
+			res.put(id, frmt);
+			going = cs.moveToNext();
+		}
+		cs.close();
+		con.close();
+		return res;
 	}
 	
-	public void setDefOutMsg(String newVal) {
-		setProperty(TABLE_PROPERTY_DEFOUTMSG, newVal);
+	public void addDefOutMsg(String newVal) {
+		ContentValues vals = new ContentValues();
+		vals.put(TPDOM_TABLEID, tableID);
+		vals.put(TPDOM_FRMT, newVal);
+		SQLiteDatabase con = db.getConn();
+		con.insertOrThrow(TABLE_PROPERTY_DEFOUTMSG, null, vals);
+		con.close();
+	}
+	
+	public void changeDefOutMsg(int id, String newVal) {
+		ContentValues vals = new ContentValues();
+		vals.put(TPDOM_FRMT, newVal);
+		String whereClause = TPDOM_ID + " = ?";
+		String[] whereArgs = new String[] {Integer.toString(id)};
+		SQLiteDatabase con = db.getConn();
+		con.update(TABLE_PROPERTY_DEFOUTMSG, vals, whereClause, whereArgs);
+		con.close();
+	}
+	
+	public void removeDefOutMsg(int id) {
+		String whereClause = TPDOM_ID + " = ?";
+		String[] whereArgs = new String[] {(new Integer(id)).toString()};
+		SQLiteDatabase con = db.getConn();
+		con.delete(TABLE_PROPERTY_DEFOUTMSG, whereClause, whereArgs);
+		con.close();
 	}
 	
 	public void removeAll() {

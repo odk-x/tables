@@ -595,36 +595,19 @@ public class SpreadSheet extends Activity {
 			withIndexFill(currentTable, indexTable, currentTable.getColNum(currentCellLoc));
 			return true;
 	    case SEND_SMS_ROW: // Send SMS on this row
-	    	List<String> curHeader = currentTable.getHeader();
-	    	List<String> curRow = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
+	    	final List<String> curHeader = currentTable.getHeader();
+	    	final List<String> curRow = currentTable.getRow(currentTable.getRowNum(currentCellLoc)-1);
 	    	tp = new TableProperty(currentTableID);
-	    	String content = tp.getDefOutMsg();
-	    	int lastPCSign = -1;
-	    	for(int i=0; i<content.length(); i++) {
-	    		if(content.charAt(i) == '%') {
-	    			if(lastPCSign < 0) {
-	    				lastPCSign = i;
-	    			} else {
-	    				String origColName = content.substring(lastPCSign + 1, i);
-	    				String colName;
-	    				if(data.isColumnExist(origColName)) {
-	    					colName = origColName;
-	    				} else {
-	    					colName = cp.getNameByAbrv(origColName);
-	    				}
-	    				int index = curHeader.indexOf(colName);
-	    				if(index >= 0) {
-	    					String colVal = curRow.get(index);
-	    					if(colVal == null) {
-	    						colVal = "";
-	    					}
-	    					content = content.substring(0, lastPCSign) +
-	    						colVal + content.substring(i + 1);
-	    					i -= (origColName.length() - colVal.length());
-	    				}
-	    				lastPCSign = -1;
-	    			}
-	    		}
+	    	final List<String> formats = new ArrayList<String>();
+	    	Map<Integer, String> formatMap = tp.getDefOutMsg();
+	    	for(int i : formatMap.keySet()) {
+	    		formats.add(formatMap.get(i));
+	    	}
+	    	final int[] formatIndex = new int[1];
+	    	formatIndex[0] = 0;
+	    	String content = "";
+	    	if(formats.size() > 0) {
+	    		content = formRowMsg(formats.get(0), curHeader, curRow);
 	    	}
 	    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
 	    	alert.setTitle("Send Row");
@@ -638,10 +621,44 @@ public class SpreadSheet extends Activity {
 	    	msgLabel.setText("message:");
 	    	final EditText msgET = new EditText(this);
 	    	msgET.setText(content);
+	    	Button prevFormat = new Button(this);
+	    	prevFormat.setLayoutParams(new LinearLayout.LayoutParams(
+	    			LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 0));
+	    	prevFormat.setText("<");
+	    	prevFormat.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					formats.set(formatIndex[0], msgET.getText().toString());
+					formatIndex[0] = (formatIndex[0] + formats.size() - 1) % formats.size();
+					msgET.setText(formRowMsg(formats.get(formatIndex[0]), curHeader, curRow));
+				}
+	    	});
+	    	Button nextFormat = new Button(this);
+	    	nextFormat.setLayoutParams(new LinearLayout.LayoutParams(
+	    			LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 0));
+	    	nextFormat.setText(">");
+	    	nextFormat.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					formats.set(formatIndex[0], msgET.getText().toString());
+					formatIndex[0] = (formatIndex[0] + 1) % formats.size();
+					msgET.setText(formRowMsg(formats.get(formatIndex[0]), curHeader, curRow));
+				}
+	    	});
+	    	LinearLayout msgOpts = new LinearLayout(this);
+	    	if(formats.size() > 1) {
+	    		msgOpts.addView(prevFormat);
+	    	}
+	    	msgET.setLayoutParams(new LinearLayout.LayoutParams(
+	    			LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, 1));
+	    	msgOpts.addView(msgET);
+	    	if(formats.size() > 1) {
+	    		msgOpts.addView(nextFormat);
+	    	}
 	    	v.addView(pnLabel);
 	    	v.addView(pnET);
 	    	v.addView(msgLabel);
-	    	v.addView(msgET);
+	    	v.addView(msgOpts);
 	    	alert.setView(v);
 	    	alert.setPositiveButton("Send", new DialogInterface.OnClickListener() {
 	    		public void onClick(DialogInterface dialog, int whichButton) {
@@ -712,6 +729,41 @@ public class SpreadSheet extends Activity {
 	    }
 	    return super.onContextItemSelected(item);
 	}
+    
+    private String formRowMsg(String format, List<String> curHeader,
+    		List<String> curRow) {
+    	Log.d("ss.j frmts", "curHeader:" + curHeader.toString());
+    	Log.d("ss.j frmts", "curRow:" + curRow.toString());
+    	int lastPCSign = -1;
+    	for(int i=0; i<format.length(); i++) {
+    		if(format.charAt(i) == '%') {
+    			if(lastPCSign < 0) {
+    				lastPCSign = i;
+    			} else {
+    				String origColName = format.substring(lastPCSign + 1, i);
+    				String colName;
+    				if(data.isColumnExist(origColName)) {
+    					colName = origColName;
+    				} else {
+    					colName = cp.getNameByAbrv(origColName);
+    				}
+    				Log.d("ss.j formats", "colName:" + colName);
+    				int index = curHeader.indexOf(colName);
+    				if(index >= 0) {
+    					String colVal = curRow.get(index);
+    					if(colVal == null) {
+    						colVal = "";
+    					}
+    					format = format.substring(0, lastPCSign) +
+    						colVal + format.substring(i + 1);
+    					i -= (origColName.length() - colVal.length()) + 1;
+    				}
+    				lastPCSign = -1;
+    			}
+    		}
+    	}
+    	return format;
+    }
     
     // CREATE OPTION MENU
     @Override
