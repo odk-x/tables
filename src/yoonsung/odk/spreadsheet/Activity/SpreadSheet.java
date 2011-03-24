@@ -33,8 +33,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -43,9 +47,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import android.widget.Adapter;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -53,6 +60,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -88,6 +96,7 @@ public class SpreadSheet extends Activity {
 	private static final int FOOTER_OPT = 6;
 	private static final int COLWIDTH_DIALOG_ID = 4;
 	private static final int FOOTER_OPT_DIALOG_ID = -1;
+	private static final String ContactContract = null;
 
 	
 	// Database object for tables
@@ -603,7 +612,6 @@ public class SpreadSheet extends Activity {
 	    				} else {
 	    					colName = cp.getNameByAbrv(origColName);
 	    				}
-	    				Log.d("ssr", "origColName:" + origColName + "/colName:" + colName);
 	    				int index = curHeader.indexOf(colName);
 	    				if(index >= 0) {
 	    					String colVal = curRow.get(index);
@@ -624,7 +632,8 @@ public class SpreadSheet extends Activity {
 	    	v.setOrientation(LinearLayout.VERTICAL);
 	    	TextView pnLabel = new TextView(this);
 	    	pnLabel.setText("send to:");
-	    	final EditText pnET = new EditText(this);
+	    	final AutoCompleteTextView pnET = new AutoCompleteTextView(this);
+	    	pnET.setAdapter(getContactsAdapter());
 	    	TextView msgLabel = new TextView(this);
 	    	msgLabel.setText("message:");
 	    	final EditText msgET = new EditText(this);
@@ -634,14 +643,13 @@ public class SpreadSheet extends Activity {
 	    	v.addView(msgLabel);
 	    	v.addView(msgET);
 	    	alert.setView(v);
-			 alert.setPositiveButton("Send", new DialogInterface.OnClickListener() {
-				 public void onClick(DialogInterface dialog, int whichButton) {
-					 String pn = msgET.getText().toString();
-					 String msg = msgET.getText().toString();
-					 Log.d("ssr", "sending row (" + msg + ") to " + pn);
-					 SMSSender.sendSMS(pn, msg);
-				 }
-			 });
+	    	alert.setPositiveButton("Send", new DialogInterface.OnClickListener() {
+	    		public void onClick(DialogInterface dialog, int whichButton) {
+	    			String pn = pnET.getText().toString();
+	    			String msg = msgET.getText().toString();
+	    			sendSmsRow(pn, msg);
+	    		}
+	    	});
 	    	alert.show();
 	    	return true;
 	    case HISTORY_IN: // Draw new table on this history
@@ -850,7 +858,51 @@ public class SpreadSheet extends Activity {
         
         return super.onMenuItemSelected(featureId, item);
     }
-     
+    
+    private class ContactsAdapter extends SimpleCursorAdapter {
+    	private ContactsAdapter(Context c, Cursor cs) {
+	    	super(c, android.R.layout.simple_dropdown_item_1line, cs,
+	    			new String[] {ContactsContract.Contacts.DISPLAY_NAME},
+	    			new int[] {android.R.id.text1});
+    	}
+    	@Override
+    	public CharSequence convertToString(Cursor c) {
+    		int index = c.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME);
+    		return c.getString(index);
+    	}
+    }
+    
+	private ContactsAdapter getContactsAdapter() {
+    	Uri uri = ContactsContract.Contacts.CONTENT_URI;
+    	String[] projection = new String[] {
+    			ContactsContract.Contacts._ID,
+    			ContactsContract.Contacts.DISPLAY_NAME
+    	};
+    	String selection = ContactsContract.Contacts.HAS_PHONE_NUMBER + " = 1";
+    	String sort = ContactsContract.Contacts.DISPLAY_NAME;
+    	Cursor cs = managedQuery(uri, projection, selection, null, sort);
+    	startManagingCursor(cs);
+		return new ContactsAdapter(this, cs);
+	}
+	
+	private void sendSmsRow(String pn, String msg) {
+		 Cursor c = getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+		          new String[] {Phone.NUMBER},  ContactsContract.Data.DISPLAY_NAME +
+		          "=?" + " AND " + ContactsContract.Data.MIMETYPE + "='" +
+		          Phone.CONTENT_ITEM_TYPE + "'", new String[] {pn}, null);
+		String phone;
+		if(c.getCount() > 0) {
+			c.moveToFirst();
+			int index = c.getColumnIndexOrThrow(Phone.NUMBER);
+			phone = c.getString(index);
+		} else {
+			phone = pn;
+		}
+		c.close();
+		Log.d("ss.j", "sending (" + msg + ") to:" + phone);
+		SMSSender.sendSMS(phone, msg);
+	}
+    
     private void noIndexFill(Table table) {
     	// Refresh spreadsheet
     	TableRow tr = (TableRow)findViewById(R.id.spreadsheetRowWrapper);
