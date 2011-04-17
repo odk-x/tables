@@ -50,10 +50,5 @@ android:layout_height="fill_parent"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_below="@+id/tableNameLed" >
-		<TableRow
-			android:id="@+id/spreadsheetRowWrapper"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content">
-		</TableRow>
 	</TableLayout>
 </RelativeLayout>

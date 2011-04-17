@@ -329,6 +329,10 @@ public class DataTable {
 								footer.add(footerVal);
 							}
 						}
+					} else {
+						for(int i=0; i<colOrder.size(); i++) {
+							footer.add("");
+						}
 					}
 				}
 				cs.close();
