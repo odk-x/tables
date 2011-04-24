@@ -1,6 +1,8 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
+import android.R;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -56,7 +58,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Abreviation<EditText>
             String abr = getAbrev(colName);
-            category.addPreference(createEditTextPreference("ABR", "Abreviation", "Change Column Abreviation", abr, abr));
+            category.addPreference(createEditTextPreference("ABR", "Abbreviation", "Change Column Abreviation", abr, abr));
             
             // Type<List>
             String type = getType(colName);
@@ -75,7 +77,11 @@ public class PropertyManager extends PreferenceActivity {
             category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, footerModesChoices, footerModesChoices));
             
             // Set 
+            //getListView().setBackgroundColor(Color.TRANSPARENT);
+            //getListView().setCacheColorHint(Color.TRANSPARENT);
+            //getListView().setBackgroundColor(Color.rgb(255, 255, 255));
             setPreferenceScreen(root);
+            
         }
         
         // Get the abreviation on this column.

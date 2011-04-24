@@ -1,5 +1,7 @@
 package yoonsung.odk.spreadsheet.Activity;
 
+import yoonsung.odk.spreadsheet.Database.TableList;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -14,20 +16,21 @@ public class SpreadSheet extends TableActivity {
 	// options menu IDs
 	private static final int OPEN_TABLE_MANAGER = 0;
 	private static final int OPEN_COLUMN_MANAGER = 1;
-	private static final int GRAPH = 2;
-	private static final int OPEN_DEFOPTS_MANAGER = 3;
-	private static final int IMPORTEXPORT = 4;
+	private static final int OPEN_SECURITY_MANAGER = 2;
+	private static final int GRAPH = 3;
+	private static final int OPEN_DEFOPTS_MANAGER = 4;
+	private static final int IMPORTEXPORT = 5;
 	// context menu IDs
-	private static final int SELECT_COLUMN = 5;
-	private static final int SEND_SMS_ROW = 6;
-	private static final int HISTORY_IN = 7;
-	private static final int DELETE_ROW = 8;
-	private static final int SET_COL_AS_PRIME = 9;
-	private static final int UNSET_COL_AS_PRIME = 10;
-	private static final int SET_COL_AS_ORDERBY = 11;
-	private static final int OPEN_COL_OPTS = 12;
-	private static final int SET_COL_WIDTH = 13;
-	private static final int SET_FOOTER_OPT = 14;
+	private static final int SELECT_COLUMN = 6;
+	private static final int SEND_SMS_ROW = 7;
+	private static final int HISTORY_IN = 8;
+	private static final int DELETE_ROW = 9;
+	private static final int SET_COL_AS_PRIME = 10;
+	private static final int UNSET_COL_AS_PRIME = 11;
+	private static final int SET_COL_AS_ORDERBY = 12;
+	private static final int OPEN_COL_OPTS = 13;
+	private static final int SET_COL_WIDTH = 14;
+	private static final int SET_FOOTER_OPT = 15;
 	
 	// context menu creation listeners
 	private View.OnCreateContextMenuListener regularOccmListener;
@@ -61,6 +64,7 @@ public class SpreadSheet extends TableActivity {
 		int none = Menu.NONE;
 		menu.add(none, OPEN_TABLE_MANAGER, none, "Table Manager");
 		menu.add(none, OPEN_COLUMN_MANAGER, none, "Column Manager");
+		menu.add(none, OPEN_SECURITY_MANAGER, none, "Security Manager");
 		menu.add(none, GRAPH, none, "Graph");
 		menu.add(none, OPEN_DEFOPTS_MANAGER, none, "Defaults Manager");
 		menu.add(none, IMPORTEXPORT, none, "Import/Export");
@@ -82,6 +86,9 @@ public class SpreadSheet extends TableActivity {
 			return true;
 		case OPEN_COLUMN_MANAGER:
 			openColumnManager();
+			return true;
+		case OPEN_SECURITY_MANAGER:
+			openSecurityManager();
 			return true;
 		case GRAPH:
 			openGraph();
@@ -144,6 +151,15 @@ public class SpreadSheet extends TableActivity {
 	}
 	
 	/**
+	 * Opens up Security Manager. Available to this activity only.
+	 */
+	private void openSecurityManager() {
+		Intent i = new Intent(this, SecurityManager.class);
+		i.putExtra("tableName", (new TableList()).getTableName(this.tableID));
+		startActivity(i);
+	}
+	
+	/**
 	 * Prepares the context menu creation listeners.
 	 */
 	private void prepOccmListeners() {
@@ -190,6 +206,7 @@ public class SpreadSheet extends TableActivity {
 				menu.add(none, OPEN_COL_OPTS, none, "Column Properties");
 				menu.add(none, SET_COL_WIDTH, none, "Set Column Width");
 			}
+
 		};
 	}
 	

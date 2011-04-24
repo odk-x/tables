@@ -60,7 +60,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		Map<String, String> tableMap = (new TableList()).getTableList();
+		Map<String, String> tableMap = (new TableList()).getAllTableList();
 		tableNames = new String[tableMap.size()];
 		int counter = 0;
 		for(String id : tableMap.keySet()) {

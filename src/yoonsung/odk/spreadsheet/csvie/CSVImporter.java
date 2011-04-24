@@ -105,7 +105,7 @@ public class CSVImporter {
 	private ContentValues getValues(String[] header, String[] row) {
 		ContentValues vals = new ContentValues();
 		for(int i=0; i<header.length; i++) {
-			String head = header[i];
+			String head = "`" + header[i] + "`";
 			if(!head.equals("_phoneNumberIn") && !head.equals("_timestamp")) {
 				vals.put(head, row[i]);
 			}
@@ -131,7 +131,7 @@ public class CSVImporter {
 				+ DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
 				+ DataTable.DATA_TIMESTAMP + " TEXT";
 		for(String col : header) {
-			stat += "," + col + " TEXT";
+			stat += ", `" + col + "` TEXT";
 		}
 		stat += ");";
 		DBIO db = new DBIO();

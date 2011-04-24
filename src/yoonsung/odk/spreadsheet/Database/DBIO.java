@@ -31,7 +31,8 @@ public class DBIO {
 		// Create tableList table
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + TableList.TABLE_LIST + " ("
                 + TableList.TABLE_ID + " INTEGER PRIMARY KEY,"
-                + TableList.TABLE_NAME + " TEXT"
+                + TableList.TABLE_NAME + " TEXT,"
+                + TableList.TABLE_IS_SECURITY_TABLE + " TEXT"
                 + ");");
     	
     	// Create tableProperty table
@@ -39,7 +40,9 @@ public class DBIO {
     			+ TableProperty.TABLE_PROPERTY_TABLE_ID + " INTEGER PRIMARY KEY,"
                 + TableProperty.TABLE_PROPERTY_PRIME + " TEXT,"
                 + TableProperty.TABLE_PROPERTY_COLUMN_ORDER + " TEXT,"
-                + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP"
+                + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP,"
+                + TableProperty.TABLE_PROPERTY_READ_TABLE_ID + " TEXT,"
+                + TableProperty.TABLE_PROPERTY_WRITE_TABLE_ID + " TEXT"
                 + ");");
     	
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + TableProperty.TABLE_PROPERTY_DEFOUTMSG + " ("

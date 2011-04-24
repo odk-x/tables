@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.HashMap;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,6 +15,7 @@ public class TableList {
 	// Column Names
 	public static String TABLE_ID   = "tableID";
 	public static String TABLE_NAME = "tableName";
+	public static String TABLE_IS_SECURITY_TABLE = "isSecTable";
 	
 	private DBIO db;
 	
@@ -21,12 +23,33 @@ public class TableList {
 		this.db = new DBIO();
 	}
 	
-	public HashMap<String, String> getTableList() {
+	public HashMap<String, String> getDataTableList() {
+		SQLiteDatabase con = db.getConn();
+		Cursor cs = con.query(TABLE_LIST, null, TABLE_IS_SECURITY_TABLE+"=0", null, null, null, null);
+		HashMap<String, String> result = getTableList(cs);
+		con.close();
+		return result;
+	}
+	
+	public HashMap<String, String> getSecurityTableList() {
+		SQLiteDatabase con = db.getConn();
+		Cursor cs = con.query(TABLE_LIST, null, TABLE_IS_SECURITY_TABLE+"=1", null, null, null, null);
+		HashMap<String, String> result = getTableList(cs);
+		con.close();
+		return result;
+	}
+	
+	public HashMap<String, String> getAllTableList() {
+		SQLiteDatabase con = db.getConn();
+		Cursor cs = con.query(TABLE_LIST, null, null, null, null, null, null);
+		HashMap<String, String> result = getTableList(cs);
+		con.close();
+		return result;
+	}
+	
+	private HashMap<String, String> getTableList(Cursor cs) {
 		HashMap<String, String> result = new HashMap<String, String>();
 		
-		SQLiteDatabase con = db.getConn();
-		
-		Cursor cs = con.query(TABLE_LIST, null, null, null, null, null, null);
 		if (cs != null) {
 			if (cs.moveToFirst()) {
 				do {
@@ -37,11 +60,34 @@ public class TableList {
 					result.put(tableID, tableName);
 				} while (cs.moveToNext());
 			}
+		}		
+		cs.close();
+
+		return result;
+	}
+	
+	public void setAsSecurityTable(String tableID) {
+		SQLiteDatabase con = db.getConn();
+		String sql = "UPDATE `"+TABLE_LIST+"` SET `"+TABLE_IS_SECURITY_TABLE+"` = 1 WHERE `"+TABLE_ID+"` = " + tableID;
+		con.execSQL(sql);
+		con.close();
+	}
+	
+	public boolean isSecurityTable(String tableID) {
+		boolean result = false;
+		SQLiteDatabase con = db.getConn();
+		Cursor cs = con.query(TABLE_LIST, null, TABLE_ID+"="+tableID, null, null, null, null);
+		if (cs != null) {
+			if (cs.moveToFirst()) {
+				int index = cs.getColumnIndex(TABLE_IS_SECURITY_TABLE);
+				String tmp = cs.getString(index);
+				if (tmp!= null && tmp.equals("1")) {
+					result = true;
+				}
+			}
 		}
-		
 		cs.close();
 		con.close();
-		
 		return result;
 	}
 	
@@ -128,6 +174,10 @@ public class TableList {
 		int tableID = getTableID(tableName);
 		Log.e("check dup -table id", "" + tableID);
 		return (tableID != -1);
+	}
+	
+	public boolean isTableExistByTableID(String tableID) {
+		return getTableName(tableID) != null;
 	}
 	
 }
