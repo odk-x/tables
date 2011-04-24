@@ -55,16 +55,6 @@ public class DataTable {
 		
 	}
 	
-	// Set to a specific table 
-	public void setTable(String tableID) {
-		
-		if (tableID != null) {
-			this.currentTableID = tableID;
-			this.currentTableName = BASE_TABLE_NAME + "_" + tableID;
-		}
-		
-	}
-	
 	// Create a new column with this name. If there is a column
 	// with this name, do-nothing.
 	public void addNewColumn(String colName) {
