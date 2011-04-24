@@ -17,6 +17,9 @@ public class TableProperty {
 	public static final String TABLE_PROPERTY_PRIME = "prime";
 	public static final String TABLE_PROPERTY_SORT_BY = "sortBy";
 	public static final String TABLE_PROPERTY_COLUMN_ORDER = "colOrder";
+	public static final String TABLE_PROPERTY_READ_TABLE_ID = "readTableID";
+	public static final String TABLE_PROPERTY_WRITE_TABLE_ID = "writeTableID";
+	
 	public static final String TABLE_PROPERTY_DEFOUTMSG = "defoutmsg";
 	public static final String TPDOM_ID = "id";
 	public static final String TPDOM_TABLEID = "tableID";
@@ -60,6 +63,22 @@ public class TableProperty {
 	
 	public void setColOrder(ArrayList<String> order) {
 		setProperty(TABLE_PROPERTY_COLUMN_ORDER, arrayListToCSV(order));
+	}
+	
+	public String getReadSecurityTableID() {
+		return getProperty(TABLE_PROPERTY_READ_TABLE_ID);
+	}
+	
+	public void setReadSecurityTableID(String readTableID) {
+		setProperty(TABLE_PROPERTY_READ_TABLE_ID, readTableID);
+	}
+	
+	public String getWriteSecurityTableID() {
+		return getProperty(TABLE_PROPERTY_WRITE_TABLE_ID);
+	}
+	
+	public void setWriteSecurityTableID(String writeTableID) {
+		setProperty(TABLE_PROPERTY_WRITE_TABLE_ID, writeTableID);
 	}
 	
 	public Map<Integer, String> getDefOutMsg() {

@@ -6,6 +6,7 @@ import java.util.List;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.SmsOutFormatSetActivity;
+import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
@@ -27,7 +28,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -35,11 +35,14 @@ import android.widget.Toast;
 
 public class TableManager extends ListActivity {
 
-	public static final int SET_DEFAULT_TABLE = 0;
-	public static final int CHANGE_TABLE_NAME = 1;
-	public static final int ADD_NEW_TABLE     = 2;
-	public static final int REMOVE_TABLE      = 3;
-	public static final int SET_DEFOUTMSG     = 4;
+	public static final int ADD_NEW_TABLE     		= 0;
+	public static final int ADD_NEW_SECURITY_TABLE 	= 1;
+	public static final int IMPORT_EXPORT			= 2;
+	public static final int SET_DEFAULT_TABLE 		= 3;
+	public static final int SET_SECURITY_TABLE      = 4;
+	public static final int CHANGE_TABLE_NAME 		= 5;
+	public static final int REMOVE_TABLE      		= 6;
+	public static final int SET_DEFOUTMSG     		= 7;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -61,24 +64,39 @@ public class TableManager extends ListActivity {
 		 // Set Content View
 		 setContentView(R.layout.white_list);
 		 
-		 HashMap<String, String> tableListTmp = tl.getTableList();
+		 HashMap<String, String> tableListTmp = tl.getAllTableList();
 		 boolean loadError = getIntent().getBooleanExtra("loadError", false);
 		 if (loadError && tableListTmp.size() < 1) {
-			List<HashMap<String, String>> fillMaps = new ArrayList<HashMap<String, String>>();
-			HashMap<String, String> temp = new HashMap<String, String>();
-			temp.put("label", "Click menu to add new table");
-			fillMaps.add(temp);
-			arrayAdapter = new SimpleAdapter(this, fillMaps, R.layout.white_list_row, from, to);
-			setListAdapter(arrayAdapter);
+			makeNoTableNotice();
 		 } else {
 			 refreshList();
 		 }
 	 }
 	 
+	 @Override
+	 public void onResume() {
+		 super.onResume();
+		 HashMap<String, String> tableListTmp = tl.getAllTableList();
+		 if (tableListTmp.size() < 1) {
+			 makeNoTableNotice();
+		 } else {
+			 refreshList();
+		 }
+	 }
+	 
+	 private void makeNoTableNotice() {
+		 List<HashMap<String, String>> fillMaps = new ArrayList<HashMap<String, String>>();
+		 HashMap<String, String> temp = new HashMap<String, String>();
+		 temp.put("label", "Click menu to add new table");
+		 fillMaps.add(temp);
+		 arrayAdapter = new SimpleAdapter(this, fillMaps, R.layout.white_list_row, from, to);
+		 setListAdapter(arrayAdapter);
+	 }
+	 
 	 public void refreshList() {
 		 registerForContextMenu(getListView());
 		 
-		 HashMap<String, String> tableList = tl.getTableList();
+		 HashMap<String, String> tableList = tl.getAllTableList();
 		 Log.e("TableList", tableList.toString());
 		 
 		 List<HashMap<String, String>> fillMaps = new ArrayList<HashMap<String, String>>();
@@ -97,6 +115,17 @@ public class TableManager extends ListActivity {
 			 } else {
 				 map.put("ext", "");
 			 }
+			 // Security Group?
+			 if (tl.isSecurityTable(tableID)) {
+				 String ext = map.get("ext");
+				 if (ext.trim().equals("")) {
+					 map.put("ext", "Security Group");
+				 } else {
+					 map.put("ext", map.get("ext")+", Security Group");
+				 }
+			 }
+			 
+			 
 			 fillMaps.add(map);
 		 }
 		 	 
@@ -134,6 +163,7 @@ public class TableManager extends ListActivity {
 		 super.onCreateContextMenu(menu, v, menuInfo);
         
 		 menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
+		 menu.add(0, SET_SECURITY_TABLE, 0, "Set as Security Group");
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
 		 menu.add(0, REMOVE_TABLE, 2, "Remove the Table");
 		 menu.add(0, SET_DEFOUTMSG, 3, "Manage Outgoing Formats");
@@ -152,6 +182,9 @@ public class TableManager extends ListActivity {
 		 case SET_DEFAULT_TABLE:
 			 setDefaultTable(Integer.toString(tableID));
 			 refreshList();
+			 return true;
+		 case SET_SECURITY_TABLE:
+			 tl.setAsSecurityTable(Integer.toString(tableID));
 			 return true;
 		 case CHANGE_TABLE_NAME:
 			 // TO be Done
@@ -176,6 +209,8 @@ public class TableManager extends ListActivity {
 	 public boolean onCreateOptionsMenu(Menu menu) {
 		 super.onCreateOptionsMenu(menu);
 		 menu.add(0, ADD_NEW_TABLE, 0, "Add New Table");
+		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Security Group");
+		 menu.add(0, IMPORT_EXPORT, 0, "Import/Export");
 		 return true;
 	 }
     
@@ -189,6 +224,13 @@ public class TableManager extends ListActivity {
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
 			 alertForNewTableName();
+			 return true;
+		 case ADD_NEW_SECURITY_TABLE:
+			 
+			 return true;
+		 case IMPORT_EXPORT:
+			 Intent i = new Intent(this, ImportExportActivity.class);
+			 startActivity(i);
 			 return true;
 		 }
     	

@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -82,11 +83,16 @@ public class MapViewActivity extends MapActivity {
         // Zoom Controller
         mapView.setBuiltInZoomControls(true);
         
+        List<Overlay> mapOverlays = null;
+        MapOverlay itemizedoverlay = null;
+        try {
         // Push-pin configuration 
-    	List<Overlay> mapOverlays = mapView.getOverlays();
+    	mapOverlays = mapView.getOverlays();
     	Drawable drawable = this.getResources().getDrawable(R.drawable.pushpin);
-    	MapOverlay itemizedoverlay = new MapOverlay(drawable, this);
-    	
+    	itemizedoverlay = new MapOverlay(drawable, this);
+        } catch (Exception e) {
+        	Log.e("point1", e.toString());
+        }
       
         //GeoPoint p = getGeoPoint("Seattle");
     	// First point
@@ -101,15 +107,21 @@ public class MapViewActivity extends MapActivity {
         
         ArrayList<String> address = new ArrayList<String>();
         address.add("4733 21st Ave NE Seattle, WA 98105");
-        //address.add("20st Ave NE Seattle, WA 98105");
-        //address.add("Odegardd Library University of Washington");
+        address.add("Bellevue, WA");
+        address.add("Kent, WA");
+        address.add("Bremerton, WA");
+        address.add("Tacoma, WA");
         
+        try {
         for (int i = 0; i < address.size(); i++) {
         	GeoPoint p = getGeoPoint(address.get(i));
         	if (p != null) {
         		OverlayItem overlayitem = new OverlayItem(p, "Hello", "Smell the coffee");
         		itemizedoverlay.addOverlay(overlayitem);
         	}
+        }
+        } catch (Exception e) {
+        	Log.e("hel", e.toString());
         }
         /*
     	// Add points on the map

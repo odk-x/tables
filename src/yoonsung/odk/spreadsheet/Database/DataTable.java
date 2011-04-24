@@ -468,6 +468,7 @@ public class DataTable {
 		
 		String result = "SELECT " + db.listColumns(colMapFunc, true)
 					  + " FROM (" + tableSQL + ")"; 
+		Log.e("FooterMode", result);
 		return result;
 		
 	}

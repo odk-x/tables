@@ -77,7 +77,7 @@ public class ImportCSVActivity extends IETabActivity {
 		etn.setTextColor(R.color.black);
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		Map<String, String> tableMap = (new TableList()).getTableList();
+		Map<String, String> tableMap = (new TableList()).getAllTableList();
 		tableNames = new String[tableMap.size() + 1];
 		tableNames[0] = "New Table";
 		int counter = 1;

@@ -80,6 +80,7 @@ public abstract class TableActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.table_layout);
 		if(!setTableID()) {
+			// No table exist
 			bounceToTableManager();
 			return;
 		}
@@ -102,6 +103,11 @@ public abstract class TableActivity extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
+		if(!setTableID()) {
+			// No table exist
+			bounceToTableManager();
+			return;
+		}
 		refreshView();
 	}
 	
@@ -964,6 +970,13 @@ public abstract class TableActivity extends Activity {
 				PreferenceManager.getDefaultSharedPreferences(this);
 			tableID = settings.getString("ODKTables:tableID", null);
 		}
+		
+		// Check if table really exists
+		TableList tl = new TableList();
+		if (!tl.isTableExistByTableID(tableID)) {
+			tableID = null;
+		}
+		
 		return (tableID != null);
 	}
 	
