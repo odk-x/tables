@@ -198,12 +198,16 @@ public class GraphSetting extends Activity {
 					 
 					 // Set spinners for x and y
 					 Spinner x = createSpinner(prefix+":col1", cols);
-					 setOnItemSelectedListenerForSpinner(prefix+"col1", x);
-					 axisLL.addView(xTV);
+					 setOnItemSelectedListenerForSpinner(prefix+":col1", x);
+                     TextView timeTV = new TextView(finContext);
+                     timeTV.setText(" Time:");
+					 axisLL.addView(timeTV);
 					 axisLL.addView(x);
 					 Spinner y = createSpinner(prefix+":col2", cols);
 					 setOnItemSelectedListenerForSpinner(prefix+":col2", y);
-					 axisLL.addView(yTV);
+                     TextView descTV = new TextView(finContext);
+                     descTV.setText(" Description:");
+                     axisLL.addView(descTV);
 					 axisLL.addView(y);
 				 }
 				 
