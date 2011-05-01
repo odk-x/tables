@@ -1,11 +1,13 @@
 package yoonsung.odk.spreadsheet.DataStructure;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
+import yoonsung.odk.spreadsheet.Database.DataUtils;
 
 public class Table {
 	
@@ -38,11 +40,14 @@ public class Table {
 		
 		ColumnProperty cp = new ColumnProperty(tableID);
 		
-		// user-friendlifying the date range strings
+		// user-friendlifying the date strings
 		List<Integer> drList = new ArrayList<Integer>();
+		List<Integer> dtList = new ArrayList<Integer>();
 		for(int i=0; i<header.size(); i++) {
 			if(("Date Range").equals(cp.getType(header.get(i)))) {
 				drList.add(i);
+			} else if(("Date").equals(cp.getType(header.get(i)))) {
+			    dtList.add(i);
 			}
 		}
 		DateFormat dispForm = new SimpleDateFormat("MMM d yyyy, HH:mm");
@@ -55,6 +60,19 @@ public class Table {
 					data.set(c, start + " - " + end);
 				}
 			}
+		}
+		DataUtils du = DataUtils.getInstance();
+		for(int i : dtList) {
+		    for(int c=i; c < (height * width + 1); c+=width) {
+                try {
+                    Date d = du.parseDateTimeFromDB(data.get(c));
+                    String s = du.formatDateTimeForDisplay(d);
+                    data.set(c, s);
+                } catch(ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+		    }
 		}
 		
 	}

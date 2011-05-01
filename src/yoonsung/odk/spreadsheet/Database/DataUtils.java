@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -19,6 +20,7 @@ public class DataUtils {
     
     // date-formatting objects
     private DateFormat dbFormatter;
+    private DateFormat displayFormatter;
     // date-parsing objects
     private DateFormat dowParserAbbr;
     private DateFormat dowParserFull;
@@ -28,6 +30,7 @@ public class DataUtils {
     private DataUtils() {
         // preparing the formatters
         dbFormatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        displayFormatter = new SimpleDateFormat("dd MMM yyyy, hh:mma");
         // preparing the day parsers
         dowParserAbbr = new SimpleDateFormat("E");
         dowParserFull = new SimpleDateFormat("EEEE");
@@ -67,6 +70,25 @@ public class DataUtils {
      */
     public String formatDateTimeForDB(Date date) {
         return dbFormatter.format(date);
+    }
+    
+    /**
+     * Formats a Date for display.
+     * @param date the Date
+     * @return the String
+     */
+    public String formatDateTimeForDisplay(Date date) {
+        return displayFormatter.format(date);
+    }
+    
+    /**
+     * Parses a datetime String from the database.
+     * @param str the String
+     * @return the Date
+     * @throws ParseException if str could not be parsed
+     */
+    public Date parseDateTimeFromDB(String str) throws ParseException {
+        return dbFormatter.parse(str);
     }
     
     /**
