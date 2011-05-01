@@ -188,7 +188,10 @@ public class SMSConverter {
 				interpretConstraint(str, consKeys, consComp, consVals);
 			} else if(type == '~') {
 				String[] oSpl = str.split(" ");
-				orderby = oSpl[0];
+				orderby = getNameForLabel(oSpl[0]);
+				if(orderby == null) {
+				    throw new InvalidQueryException("no such column exists");
+				}
 				String lim = oSpl[1];
 				if(lim.startsWith("T") || lim.startsWith("t")) {
 					asc = 1;
