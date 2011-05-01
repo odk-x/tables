@@ -39,6 +39,7 @@
 <activity android:name=".Activity.importexport.ImportCSVActivity"></activity>
 <activity android:name=".Activity.importexport.ExportCSVActivity"></activity>
 <activity android:name=".Activity.SecurityManager"></activity>
+<activity android:name=".Activity.ShortcutsManager"></activity>
 </application>
         <uses-permission android:name="android.permission.INTERNET" />
         <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
