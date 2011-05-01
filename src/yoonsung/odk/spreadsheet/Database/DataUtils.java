@@ -17,13 +17,17 @@ public class DataUtils {
     
     private static DataUtils du; // the DataUtils object
     
-    // date-related objects
+    // date-formatting objects
+    private DateFormat dbFormatter;
+    // date-parsing objects
     private DateFormat dowParserAbbr;
     private DateFormat dowParserFull;
     private Map<Integer, Set<DateFormat>> dmParsers;
     private Map<Integer, Set<DateFormat>> timeParsers;
     
     private DataUtils() {
+        // preparing the formatters
+        dbFormatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
         // preparing the day parsers
         dowParserAbbr = new SimpleDateFormat("E");
         dowParserFull = new SimpleDateFormat("EEEE");
@@ -54,6 +58,15 @@ public class DataUtils {
             du = new DataUtils();
         }
         return du;
+    }
+    
+    /**
+     * Formats a Date for storage in the database.
+     * @param date the Date
+     * @return the String
+     */
+    public String formatDateTimeForDB(Date date) {
+        return dbFormatter.format(date);
     }
     
     /**
