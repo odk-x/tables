@@ -274,7 +274,8 @@ public abstract class TableActivity extends Activity {
 	 * Opens the default message options screen.
 	 */
 	protected void openDefOptsManager() {
-		startActivity(new Intent(this, DefaultsActivity.class));
+	    // TODO: change this back to launching DefaultsActivity
+		startActivity(new Intent(this, ShortcutsManager.class));
 	}
 	
 	/**
@@ -834,7 +835,12 @@ public abstract class TableActivity extends Activity {
 						for (String key : currentAddRowBuffer.keySet()) {
 							cv.put(key, currentAddRowBuffer.get(key));
 						}
-						dt.addRow(cv, "", "");
+						try {
+						    dt.addRow(cv, "", "");
+						} catch(IllegalArgumentException e) {
+						    // TODO: something when the input is invalid for the columns
+						    dia.cancel();
+						}
 						
 						Log.e("Buffer Hash", currentAddRowBuffer.toString());
 						

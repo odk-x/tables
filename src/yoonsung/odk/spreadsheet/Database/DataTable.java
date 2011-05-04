@@ -1,10 +1,12 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
@@ -153,6 +155,30 @@ public class DataTable {
 	// Add new row with the specified information.
 	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
 		
+	    for(Entry<String, Object> entry : values.valueSet()) {
+	        DataUtils du = DataUtils.getInstance();
+	        String key = entry.getKey();
+            String val = entry.getValue().toString();
+	        String colType = cp.getType(key);
+	        if("Numeric Value".equals(colType)) {
+	            if(!val.matches("\\d+")) {
+	                throw new IllegalArgumentException();
+	            }
+	        } else if("Date".equals(colType)) {
+	            Date d = du.parseDateTime(val);
+	            if(d == null) {
+	                throw new IllegalArgumentException();
+	            }
+	            values.put(key, du.formatDateTimeForDB(d));
+	        } else if("Date Range".equals(colType)) {
+	            Date[] dr = du.parseDateRange(val);
+	            if(dr == null) {
+	                throw new IllegalArgumentException();
+	            }
+	            values.put(key, du.formatDateRangeForDB(dr));
+	        }
+	    }
+	    
 		SQLiteDatabase con = db.getConn();
 		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
 		values.put(DATA_TIMESTAMP, timeStamp);
@@ -503,6 +529,7 @@ public class DataTable {
 	 * @return true if it is a valid value; false otherwise
 	 */
 	public boolean isValidValue(String colName, String value) {
+	    Log.d("dt", "isValidValue called:" + colName + "/" + value);
 	    String colType = cp.getType(colName);
 	    if("None".equals(colType)) {
 	        return true;
@@ -512,8 +539,13 @@ public class DataTable {
 	        return value.matches("\\d+");
 	    } else if("Date".equals(colType)) {
 	        return (DataUtils.getInstance().parseDateTime(value) != null);
+	    } else if("Date Range".equals(colType)) {
+	        return (DataUtils.getInstance().parseDateRange(value) != null);
+	    } else if("Phone Number".equals(colType)) {
+	        return true;
+	    } else {
+	        return true;
 	    }
-	    return false;
 	}
 	
 }

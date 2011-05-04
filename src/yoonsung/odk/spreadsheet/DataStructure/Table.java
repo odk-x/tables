@@ -50,20 +50,21 @@ public class Table {
 			    dtList.add(i);
 			}
 		}
-		DateFormat dispForm = new SimpleDateFormat("MMM d yyyy, HH:mm");
+        DataUtils du = DataUtils.getInstance();
 		for(int i : drList) {
-			for (int c = i; c < (height * width + i); c+=width) {
-				String[] spl = data.get(c).split("/");
-				if(spl.length > 1) {
-					String start = dispForm.format(getTime(spl[0]));
-					String end = dispForm.format(getTime(spl[1]));
-					data.set(c, start + " - " + end);
-				}
+			for (int c = i; c < (height * width); c+=width) {
+			    try {
+			        Date[] dr = du.parseDateRangeFromDB(data.get(c));
+			        String s = du.formatDateRangeForDisplay(dr);
+			        data.set(c, s);
+			    } catch(ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+			    }
 			}
 		}
-		DataUtils du = DataUtils.getInstance();
 		for(int i : dtList) {
-		    for(int c=i; c < (height * width + 1); c+=width) {
+		    for(int c=i; c < (height * width); c+=width) {
                 try {
                     Date d = du.parseDateTimeFromDB(data.get(c));
                     String s = du.formatDateTimeForDisplay(d);

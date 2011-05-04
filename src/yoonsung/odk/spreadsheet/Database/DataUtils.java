@@ -73,6 +73,16 @@ public class DataUtils {
     }
     
     /**
+     * Formats a date range for storage in the database.
+     * @param dr an array of two Dates (the first the start datetime, the
+     * second the end datetime)
+     * @return the string
+     */
+    public String formatDateRangeForDB(Date[] dr) {
+        return formatDateTimeForDB(dr[0]) + "/" + formatDateTimeForDB(dr[0]);
+    }
+    
+    /**
      * Formats a Date for display.
      * @param date the Date
      * @return the String
@@ -82,13 +92,45 @@ public class DataUtils {
     }
     
     /**
+     * Formats a date range for display.
+     * @param dr an array of two Dates (the first the start datetime, the
+     * second the end datetime)
+     * @return the string
+     */
+    public String formatDateRangeForDisplay(Date[] dr) {
+        return formatDateTimeForDisplay(dr[0]) + " - " +
+                formatDateTimeForDisplay(dr[0]);
+    }
+    
+    /**
      * Parses a datetime String from the database.
      * @param str the String
      * @return the Date
      * @throws ParseException if str could not be parsed
      */
     public Date parseDateTimeFromDB(String str) throws ParseException {
+        if(str == null) {
+            throw new ParseException(null, 0);
+        }
         return dbFormatter.parse(str);
+    }
+    
+    /**
+     * Parses a date range String from the database.
+     * @param str the String
+     * @return an array of two Dates (the first the start datetime, the second
+     * the end datetime)
+     * @throws ParseException if str could not be parsed
+     */
+    public Date[] parseDateRangeFromDB(String str) throws ParseException {
+        if(str == null) {
+            throw new ParseException(null, 0);
+        }
+        String[] spl = str.split("/");
+        Date[] res = new Date[2];
+        res[0] = parseDateTimeFromDB(spl[0]);
+        res[1] = parseDateTimeFromDB(spl[1]);
+        return res;
     }
     
     /**
@@ -143,6 +185,25 @@ public class DataUtils {
         dayCal.set(Calendar.SECOND, timeCal.get(Calendar.SECOND));
         dayCal.set(Calendar.MILLISECOND, 0);
         return dayCal.getTime();
+    }
+    
+    /**
+     * Parses a String into a Date.
+     * If given only a time, assumes the current day. If given only a day,
+     * assumes midnight.
+     * @param str a string
+     * @return an array of two dates (the first the start datetime, the second
+     * the end datetime), or null if the string could not be parsed
+     */
+    public Date[] parseDateRange(String str) {
+        String[] spl = str.split(" - ");
+        Date[] res = new Date[2];
+        res[0] = parseDateTime(spl[0]);
+        res[1] = parseDateTime(spl[1]);
+        if((res[0] == null) || (res[1] == null)) {
+            return null;
+        }
+        return res;
     }
     
     /**

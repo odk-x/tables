@@ -88,7 +88,11 @@ public class CSVImporter {
 				if(timestamp >= 0) {
 					ts = next[timestamp];
 				}
-				data.addRow(cv, pn, ts);
+				try {
+				    data.addRow(cv, pn, ts);
+				} catch(IllegalArgumentException e) {
+				    // TODO: something to handle invalid values
+				}
 				next = reader.readNext();
 			}
 		} catch (IOException e) {
