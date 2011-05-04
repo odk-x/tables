@@ -1,5 +1,7 @@
 package yoonsung.odk.spreadsheet.Library.graphs;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -22,9 +24,11 @@ public class GraphFactory {
 		Color.GREEN};
 	
 	private Activity a;
+	private DateFormat dayCalFrmter;
 	
 	public GraphFactory(Activity a) {
 		this.a = a;
+		dayCalFrmter = new SimpleDateFormat("yyyy-MM-dd");
 	}
 	
 	/**
@@ -180,13 +184,10 @@ public class GraphFactory {
 	 * @param day the date's day
 	 * @return a day's calendar view
 	 */
-	public CalendarView getDayCalendar(List<GEventPoint> data, String title,
-			int year, int month, int day) {
-		Calendar cal = Calendar.getInstance();
-		cal.set(year, month - 1, day);
-		Date date = cal.getTime();
-		String subtitle = year + "-" + month + "-" + day;
-		return new CalendarDayView(a, data, date, title, subtitle);
+	public CalendarView getDayCalendar(List<GEventPoint> data, Calendar cal,
+	        String title) {
+		String subtitle = dayCalFrmter.format(cal.getTime());
+		return new CalendarDayView(a, data, cal.getTime(), title, subtitle);
 	}
 	
 	/**

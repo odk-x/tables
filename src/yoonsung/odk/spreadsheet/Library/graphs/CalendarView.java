@@ -15,14 +15,16 @@ import android.graphics.Paint.Align;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public abstract class CalendarView extends LinearLayout {
 	
+    public static final int PREV_BUTTON_ID = 10;
+    public static final int NEXT_BUTTON_ID = 11;
 	private static final int PIXELS_PER_MINUTE = 1;
 	
 	protected CalendarView(Context c, String title, String subtitle) {
@@ -32,15 +34,36 @@ public abstract class CalendarView extends LinearLayout {
 	}
 	
 	private View getNavView(Context c, String title, String subtitle) {
-		LinearLayout v = new LinearLayout(c);
-		v.setOrientation(LinearLayout.VERTICAL);
-		v.setBackgroundColor(Color.BLACK);
+	    // building the buttons
+	    Button prev = new Button(c);
+	    prev.setId(PREV_BUTTON_ID);
+	    prev.setText("<");
+	    Button next = new Button(c);
+	    next.setId(NEXT_BUTTON_ID);
+	    next.setText(">");
+	    // building the center
+		LinearLayout center = new LinearLayout(c);
+		center.setOrientation(LinearLayout.VERTICAL);
+		center.setBackgroundColor(Color.BLACK);
 		TextView titleView = new TextView(c);
 		titleView.setText(title);
 		titleView.setBackgroundColor(Color.LTGRAY);
 		titleView.setTextColor(Color.BLACK);
 		titleView.setGravity(Gravity.CENTER_HORIZONTAL);
-		v.addView(titleView);
+		center.addView(titleView);
+        TextView subtitleView = new TextView(c);
+        subtitleView.setText(subtitle);
+        subtitleView.setBackgroundColor(Color.LTGRAY);
+        subtitleView.setTextColor(Color.BLACK);
+        subtitleView.setGravity(Gravity.CENTER_HORIZONTAL);
+        center.addView(subtitleView);
+        // building the whole
+        LinearLayout v = new LinearLayout(c);
+        v.setBackgroundColor(Color.LTGRAY);
+        v.setGravity(Gravity.CENTER_HORIZONTAL);
+        v.addView(prev);
+        v.addView(center);
+        v.addView(next);
 		return v;
 	}
 	

@@ -28,9 +28,10 @@ public class SpreadSheet extends TableActivity {
 	private static final int SET_COL_AS_PRIME = 10;
 	private static final int UNSET_COL_AS_PRIME = 11;
 	private static final int SET_COL_AS_ORDERBY = 12;
-	private static final int OPEN_COL_OPTS = 13;
-	private static final int SET_COL_WIDTH = 14;
-	private static final int SET_FOOTER_OPT = 15;
+	private static final int UNSET_COL_AS_ORDERBY = 13;
+	private static final int OPEN_COL_OPTS = 14;
+	private static final int SET_COL_WIDTH = 15;
+	private static final int SET_FOOTER_OPT = 16;
 	
 	// context menu creation listeners
 	private View.OnCreateContextMenuListener regularOccmListener;
@@ -136,6 +137,9 @@ public class SpreadSheet extends TableActivity {
 		case SET_COL_AS_ORDERBY: // set a column to be the sort column
 			setAsSortCol(table.getColName(lastHeaderMenued));
 			return true;
+		case UNSET_COL_AS_ORDERBY:
+            setAsSortCol(null);
+		    return true;
 		case OPEN_COL_OPTS:
 			openColPropsManager(table.getColName(lastHeaderMenued));
 			return true;
@@ -199,7 +203,9 @@ public class SpreadSheet extends TableActivity {
 				String colName = table.getHeader().get(v.getId());
 				if(cp.getIsIndex(colName)) {
 					menu.add(none, UNSET_COL_AS_PRIME, none, "Unset as Index");
-				} else if(!colName.equals(tp.getSortBy())) {
+				} else if(colName.equals(tp.getSortBy())) {
+				    menu.add(none, UNSET_COL_AS_ORDERBY, none, "Unset as Sort");
+				} else {
 					menu.add(none, SET_COL_AS_PRIME, none, "Set as Index");
 					menu.add(none, SET_COL_AS_ORDERBY, none, "Set as Sort");
 				}

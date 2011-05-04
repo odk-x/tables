@@ -1,6 +1,11 @@
 package yoonsung.odk.spreadsheet.Database;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,17 +57,6 @@ public class DataTable {
 		} else {
 			this.currentTableName = tl.getTableName(tableID);
 		}
-		
-	}
-	
-	// Set to a specific table 
-	public void setTable(String tableID) {
-		
-		if (tableID != null) {
-			this.currentTableID = tableID;
-			this.currentTableName = BASE_TABLE_NAME + "_" + tableID;
-		}
-		
 	}
 	
 	// Create a new column with this name. If there is a column
@@ -505,6 +499,26 @@ public class DataTable {
 		String[] whereArgs = {(new Integer(rowId)).toString()};
 		con.delete(currentTableName, whereClause, whereArgs);
 		con.close();
+	}
+	
+	/**
+	 * Checks whether the value is valid for the column's type.
+	 * @param colName the name of the column
+	 * @param value the value
+	 * @return true if it is a valid value; false otherwise
+	 */
+	public boolean isValidValue(String colName, String value) {
+	    String colType = cp.getType(colName);
+	    if("None".equals(colType)) {
+	        return true;
+	    } else if("Text".equals(colType)) {
+	        return true;
+	    } else if("Numeric Value".equals(colType)) {
+	        return value.matches("\\d+");
+	    } else if("Date".equals(colType)) {
+	        return (DataUtils.getInstance().parseDateTime(value) != null);
+	    }
+	    return false;
 	}
 	
 }

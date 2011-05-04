@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.DataUtils;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
 
 public class SMSConverter {
@@ -96,6 +98,10 @@ public class SMSConverter {
 				String val = dbDateTime.format(start.getTime()) + "/" +
 						dbDateTime.format(end.getTime());
 				result.put(key, val);
+			} else if(("Date").equals(cp.getType(key))) {
+			    DataUtils du = DataUtils.getInstance();
+			    Date d = du.parseDateTime(result.get(key));
+			    result.put(key, du.formatDateTimeForDB(d));
 			}
 		}
 		String avail = dm.getAddAvailCol();
@@ -188,7 +194,10 @@ public class SMSConverter {
 				interpretConstraint(str, consKeys, consComp, consVals);
 			} else if(type == '~') {
 				String[] oSpl = str.split(" ");
-				orderby = oSpl[0];
+				orderby = getNameForLabel(oSpl[0]);
+				if(orderby == null) {
+				    throw new InvalidQueryException("no such column exists");
+				}
 				String lim = oSpl[1];
 				if(lim.startsWith("T") || lim.startsWith("t")) {
 					asc = 1;
