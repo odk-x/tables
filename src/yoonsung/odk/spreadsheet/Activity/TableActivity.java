@@ -274,8 +274,7 @@ public abstract class TableActivity extends Activity {
 	 * Opens the default message options screen.
 	 */
 	protected void openDefOptsManager() {
-	    // TODO: change this back to launching DefaultsActivity
-		startActivity(new Intent(this, ShortcutsManager.class));
+		startActivity(new Intent(this, DefaultsActivity.class));
 	}
 	
 	/**
