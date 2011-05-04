@@ -31,6 +31,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class TableManager extends ListActivity {
@@ -161,7 +162,6 @@ public class TableManager extends ListActivity {
 	 @Override
 	 public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		 super.onCreateContextMenu(menu, v, menuInfo);
-        
 		 menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
 		 menu.add(0, SET_SECURITY_TABLE, 0, "Set as Security Group");
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
@@ -223,10 +223,10 @@ public class TableManager extends ListActivity {
 		 // HANDLES DIFFERENT MENU OPTIONS
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
-			 alertForNewTableName();
+			 alertForNewTableName(false);
 			 return true;
 		 case ADD_NEW_SECURITY_TABLE:
-			 
+			 alertForNewTableName(true);
 			 return true;
 		 case IMPORT_EXPORT:
 			 Intent i = new Intent(this, ImportExportActivity.class);
@@ -238,7 +238,7 @@ public class TableManager extends ListActivity {
 	 }
 	 
 	 // Ask for a new column name.
-	 private void alertForNewTableName() {
+	 private void alertForNewTableName(final boolean isSecTable) {
 		
 		 // Prompt an alert box
 		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -252,7 +252,7 @@ public class TableManager extends ListActivity {
 		 alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			 public void onClick(DialogInterface dialog, int whichButton) {
 				 String newTableName = input.getText().toString().trim();
-				 addTable(newTableName);
+				 addTable(newTableName, isSecTable);
 				 refreshList();
 			 }
 		 });
@@ -303,15 +303,21 @@ public class TableManager extends ListActivity {
 	    SharedPreferences.Editor editor = settings.edit();
 	    editor.putString("ODKTables:tableID", tableID);
 	    editor.commit();
+	    refreshList();
 	 }
 	 
-	 private void addTable(String tableName) { 
+	 private void addTable(String tableName, boolean isSecTable) { 
 		// Register new table in TableList
 		 String msg = tl.registerNewTable(tableName);
 		 // No duplicate table exist?
 		 if (msg == null) {
 			 // Create a new table in the database
 			 createNewDataTable(tableName);
+			 if (isSecTable) {
+				 // Set it as Security Table
+				 int tableID = tl.getTableID(tableName);
+				 tl.setAsSecurityTable(Integer.toString(tableID));
+			 }
 		 } else {
 			 // Name already exist
 			 Toast.makeText(this, msg, Toast.LENGTH_LONG);

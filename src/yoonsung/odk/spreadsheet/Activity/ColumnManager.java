@@ -248,9 +248,13 @@ public class ColumnManager extends ListActivity {
 					// Create new column
 					data.addNewColumn(colName);
 					
-					// Update Column Property
+					// Update Table Property
 					colOrder.add(colName);
 					tp.setColOrder(colOrder);
+					
+					// Set Default Column Property
+					cp.setSMSIN(colName, true);
+					cp.setSMSOUT(colName, true);
 					
 					// Load Column Property Manger
 					loadColumnPropertyManager(colName);

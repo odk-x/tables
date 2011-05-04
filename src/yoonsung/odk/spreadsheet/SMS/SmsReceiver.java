@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.SecurityTables;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
@@ -23,6 +25,8 @@ import android.widget.Toast;
  
 public class SmsReceiver extends BroadcastReceiver {
     	
+	private SecurityTables st;
+	
 	private String tableName;
 	private String tableID;
 	
@@ -35,6 +39,9 @@ public class SmsReceiver extends BroadcastReceiver {
     	
         // Data-in
         Bundle bundle = intent.getExtras();        
+        
+        // Header Data
+        String phoneNum = getSMSFrom(bundle);
         
         // Split Message Received
         String msg = getSMSBody(bundle);
@@ -66,10 +73,39 @@ public class SmsReceiver extends BroadcastReceiver {
         
         Log.e("tableID", tableID);
         
-        if(splt[1].startsWith("+")) {
-            handleAddition(bundle);
-        } else {
-        	handleQuery(bundle);
+        // Security
+        this.st = new SecurityTables(tableID);
+        
+        if(!tl.isSecurityTable(tableID)) {
+	        // Security table cannot be accessed remotely 
+        	if(splt[1].startsWith("+")) {
+	        	// Additions
+	        	if (st.isWriteSecurityTableExist()) {
+	        		// Write security table exists
+	        		// Additionally validate password
+	        		if (st.isPhoneNumInWriteTable(phoneNum)) {
+	        			handleAddition(bundle);
+	        		}
+	        	} else {
+	        		// Write security table does not exist
+	        		Log.e("SMSReceiver", "Handling Addition");
+	        		handleAddition(bundle);
+	        	}
+	        } else {
+	        	// Querying
+	        	if (st.isReadSecurityTableExist()) {
+	        		// Read security table exists
+	        		// Additionally validate password
+	        		if (st.isPhoneNumInReadTable(phoneNum)) {
+	        			Log.e("SMSReceiver", "Handling Query");
+	        			handleQuery(bundle);
+	        		}
+	        	} else {
+	        		// Read security table does not exist
+	        		Log.e("SMSReceiver", "Handling Query");
+	        		handleQuery(bundle);
+	        	}
+	        }
         }
     }
 	
