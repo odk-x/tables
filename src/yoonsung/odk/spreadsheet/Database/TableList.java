@@ -1,6 +1,11 @@
 package yoonsung.odk.spreadsheet.Database;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -16,6 +21,11 @@ public class TableList {
 	public static String TABLE_ID   = "tableID";
 	public static String TABLE_NAME = "tableName";
 	public static String TABLE_IS_SECURITY_TABLE = "isSecTable";
+	public static final String DB_TABLE_TYPE = "tableType";
+	
+	public static final int TABLETYPE_DATA = 1;
+	public static final int TABLETYPE_SECURITY = 2;
+	public static final int TABLETYPE_SHORTCUT = 3;
 	
 	private DBIO db;
 	
@@ -25,7 +35,9 @@ public class TableList {
 	
 	public HashMap<String, String> getDataTableList() {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.query(TABLE_LIST, null, TABLE_IS_SECURITY_TABLE+"=0", null, null, null, null);
+		Cursor cs = con.query(TABLE_LIST, null,
+		        TABLE_IS_SECURITY_TABLE+"=0 and " + DB_TABLE_TYPE +
+		        "=1", null, null, null, null);
 		HashMap<String, String> result = getTableList(cs);
 		con.close();
 		return result;
@@ -37,6 +49,15 @@ public class TableList {
 		HashMap<String, String> result = getTableList(cs);
 		con.close();
 		return result;
+	}
+	
+	public Map<String, String> getShortcutTableList() {
+	    SQLiteDatabase con = db.getConn();
+	    Cursor cs = con.query(TABLE_LIST, null, DB_TABLE_TYPE + "=3", null, null,
+	            null, null);
+	    Map<String, String> result = getTableList(cs);
+	    con.close();
+	    return result;
 	}
 	
 	public HashMap<String, String> getAllTableList() {
@@ -102,6 +123,7 @@ public class TableList {
 			// Register/Insert
 			ContentValues cv = new ContentValues();
 			cv.put(TABLE_NAME, tableName);
+			cv.put(DB_TABLE_TYPE, 1);
 			try {
 				con.insertOrThrow(TABLE_LIST, null, cv);
 			} catch (Exception e) {
@@ -178,6 +200,63 @@ public class TableList {
 	
 	public boolean isTableExistByTableID(String tableID) {
 		return getTableName(tableID) != null;
+	}
+	
+	public List<TableInfo> getTableList() {
+	    List<TableInfo> res = new ArrayList<TableInfo>();
+	    String[] cols = {TABLE_ID, TABLE_NAME, DB_TABLE_TYPE};
+	    SQLiteDatabase con = db.getConn();
+	    Cursor cs = con.query(TABLE_LIST, cols, null, null, null, null, null);
+	    int idIndex = cs.getColumnIndexOrThrow(TABLE_ID);
+	    int nameIndex = cs.getColumnIndexOrThrow(TABLE_NAME);
+        int typeIndex = cs.getColumnIndexOrThrow(DB_TABLE_TYPE);
+        if(!cs.moveToFirst()) {
+            cs.close();
+            con.close();
+            return res;
+        }
+        do {
+            String tID = cs.getString(idIndex);
+            String tName = cs.getString(nameIndex);
+            int tType = cs.getInt(typeIndex);
+            res.add(new TableInfo(tID, tName, tType));
+        } while(cs.moveToNext());
+	    cs.close();
+	    con.close();
+	    return res;
+	}
+	
+	public void registerNewTable(String tableName, int tableType)
+	        throws Exception {
+	    if(isTableExist(tableName)) {
+	        throw new IllegalArgumentException();
+	    }
+	    ContentValues vals = new ContentValues();
+	    vals.put(TABLE_NAME, tableName);
+	    vals.put(DB_TABLE_TYPE, tableType);
+	    SQLiteDatabase con = db.getConn();
+	    con.insertOrThrow(TABLE_LIST, null, vals);
+	    con.close();
+	}
+	
+	public class TableInfo {
+	    
+	    private String tableID;
+	    private String tableName;
+	    private int tableType;
+	    
+	    TableInfo(String tableID, String tableName, int tableType) {
+	        this.tableID = tableID;
+	        this.tableName = tableName;
+	        this.tableType = tableType;
+	    }
+	    
+	    public String getTableID() { return tableID; }
+	    
+	    public String getTableName() { return tableName; }
+	    
+	    public int getTableType() { return tableType; }
+	    
 	}
 	
 }
