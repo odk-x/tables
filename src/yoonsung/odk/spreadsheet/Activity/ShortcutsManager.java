@@ -56,9 +56,9 @@ public class ShortcutsManager extends ListActivity {
     
     private List<MessageShortcut> getShortcutInfo() {
         List<MessageShortcut> l = new ArrayList<MessageShortcut>();
-        l.add(new MessageShortcut(1, "fish", "price of %type% at %loc%",
+        l.add(new MessageShortcut("fish", "price of %type% at %loc%",
                 "@fish ?price =type %type% =location %loc%"));
-        l.add(new MessageShortcut(1, "forecast", "weather at %loc%",
+        l.add(new MessageShortcut("forecast", "weather at %loc%",
                 "@weather ?forecast =location %loc%"));
         return l;
     }

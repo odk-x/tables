@@ -56,7 +56,9 @@ public class SMSConverter {
 			String key = tokens[index].substring(1);
 			key = getNameForLabel(key);
 			if(key == null) {
-				throw new InvalidQueryException("No such column exists");
+				throw new InvalidQueryException(
+				        InvalidQueryException.NONEXISTENT_COLUMN,
+				        tokens[0].substring(1), key, null);
 			}
 			index++;
 			if(type == '+') {
@@ -76,19 +78,24 @@ public class SMSConverter {
 				if(!("Date Range").equals(cp.getType(key)) ||
 						(index >= tokens.length)) {
 					throw new InvalidQueryException(
-							"invalid duration specification");
+	                        InvalidQueryException.INVALID_FORMAT,
+	                        tokens[0].substring(1), key, null);
 				}
 				durMap.put(key, tokens[index].trim());
 				index++;
 			} else {
-				throw new InvalidQueryException("invalid query");
+				throw new InvalidQueryException(
+                        InvalidQueryException.INVALID_FORMAT,
+                        tokens[0].substring(1), key, null);
 			}
 		}
 		
 		for(String key : result.keySet()) {
 			if(("Date Range").equals(cp.getType(key))) {
 				if(!durMap.containsKey(key)) {
-					throw new InvalidQueryException("no duration specified");
+					throw new InvalidQueryException(
+	                        InvalidQueryException.INVALID_FORMAT,
+	                        tokens[0].substring(1), key, null);
 				}
 				Calendar start = getTimeAddCal(result.get(key));
 				start.set(Calendar.SECOND, 0);
@@ -106,7 +113,9 @@ public class SMSConverter {
 		}
 		String avail = dm.getAddAvailCol();
 		if((avail != null) && checkOverlap(avail, result.get(avail))) {
-			throw new InvalidQueryException("time overlap");
+			throw new InvalidQueryException(
+                    InvalidQueryException.OTHER,
+                    tokens[0].substring(1), null, null);
 		}
 		
 		// adding defaults if no other value is provided
@@ -196,7 +205,9 @@ public class SMSConverter {
 				String[] oSpl = str.split(" ");
 				orderby = getNameForLabel(oSpl[0]);
 				if(orderby == null) {
-				    throw new InvalidQueryException("no such column exists");
+				    throw new InvalidQueryException(
+		                    InvalidQueryException.NONEXISTENT_COLUMN,
+		                    sheetname, orderby, null);
 				}
 				String lim = oSpl[1];
 				if(lim.startsWith("T") || lim.startsWith("t")) {
@@ -205,19 +216,22 @@ public class SMSConverter {
 					asc = 2;
 				} else {
 					throw new InvalidQueryException(
-							"invalid limit specification");
+                            InvalidQueryException.INVALID_VALUE,
+                            sheetname, null, lim);
 				}
 				try {
 					limit = new Integer(lim.substring(1));
 				} catch(NumberFormatException e) {
 					throw new InvalidQueryException(
-							"invalid limit specification");
+                            InvalidQueryException.INVALID_VALUE,
+                            sheetname, null, lim);
 				}
 			} else if(type == '/') {
 				String[] sSpl = str.split(" ");
 				if(!getNameForLabel(sSpl[0]).equals(avail)) {
 					throw new InvalidQueryException(
-							"invalid duration specification");
+                            InvalidQueryException.INVALID_VALUE,
+                            sheetname, sSpl[0], null);
 				}
 				duration = intvlStrToSec(sSpl[1]);
 			}
@@ -227,7 +241,9 @@ public class SMSConverter {
 		for(String colName : colReqs) {
 			String cName = getNameForLabel(colName);
 			if(cName == null) {
-				throw new InvalidQueryException("No such column exists.");
+				throw new InvalidQueryException(
+                        InvalidQueryException.NONEXISTENT_COLUMN,
+                        sheetname, colName, null);
 			} else {
 				tempColReqs.add(cName);
 			}
@@ -298,7 +314,9 @@ public class SMSConverter {
 	
 	private String interpretSheetname(String input) throws InvalidQueryException {
 		if(!input.startsWith("@")) {
-			throw new InvalidQueryException("no sheet name specified");
+			throw new InvalidQueryException(
+                    InvalidQueryException.OTHER,
+                    null, null, null);
 		}
 		return input.substring(1);
 	}
@@ -311,7 +329,9 @@ public class SMSConverter {
 		if(!data.isColumnExist(key)) {
 			key = cp.getNameByAbrv(key);
 			if(key == null) {
-				throw new InvalidQueryException("no such column");
+				throw new InvalidQueryException(
+                        InvalidQueryException.NONEXISTENT_COLUMN,
+                        null, key, null);
 			}
 		}
 		String comp;
@@ -369,7 +389,9 @@ public class SMSConverter {
 			consComp.add(comp);
 			consVals.add(val + ":23:59:59");
 		} else {
-			throw new InvalidQueryException("invalid comparison");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, comp);
 		}
 	}
 	
@@ -402,7 +424,9 @@ public class SMSConverter {
 			consComp.add(comp);
 			consVals.add(val + ":23:59:59");
 		} else {
-			throw new InvalidQueryException("invalid comparison");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, comp);
 		}
 	}
 	
@@ -426,18 +450,24 @@ public class SMSConverter {
 					month = new Integer(md[1]);
 					day = new Integer(md[2]);
 				} catch(NumberFormatException e) {
-					throw new InvalidQueryException("invalid day");
+					throw new InvalidQueryException(
+                            InvalidQueryException.INVALID_VALUE,
+                            null, null, spl[0]);
 				}
 			} else {
 				try {
 					month = new Integer(md[0]);
 					day = new Integer(md[1]);
 				} catch(NumberFormatException e) {
-					throw new InvalidQueryException("invalid day");
+					throw new InvalidQueryException(
+                            InvalidQueryException.INVALID_VALUE,
+                            null, null, md[0]);
 				}
 			}
 			if((month > 12) || (month < 1) || (day > 31) || (day < 1)) {
-				throw new InvalidQueryException("invalid day");
+				throw new InvalidQueryException(
+                        InvalidQueryException.INVALID_VALUE,
+                        null, null, input);
 			}
 			cal.set(Calendar.MONTH, (month - 1));
 			cal.set(Calendar.DAY_OF_MONTH, day);
@@ -460,7 +490,9 @@ public class SMSConverter {
 				}
 				foundDay = true;
 			} catch(NumberFormatException e) {
-				throw new InvalidQueryException("invalid day");
+				throw new InvalidQueryException(
+                        InvalidQueryException.INVALID_VALUE,
+                        null, null, spl[0]);
 			}
 		} else {
 			int dow = -1;
@@ -482,7 +514,9 @@ public class SMSConverter {
 			}
 		}
 		if(!foundDay) {
-			throw new InvalidQueryException("invalid day specification");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, input);
 		}
 		if(spl.length == 1) {
 			return cal;
@@ -494,10 +528,14 @@ public class SMSConverter {
 			hour = new Integer(hm[0]);
 			min = new Integer(hm[1]);
 		} catch(NumberFormatException e) {
-			throw new InvalidQueryException("invalid time specification");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, input);
 		}
 		if((hour > 23) || (min > 59)) {
-			throw new InvalidQueryException("invalid time specification");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, input);
 		}
 		cal.set(Calendar.HOUR_OF_DAY, hour);
 		cal.set(Calendar.MINUTE, min);
@@ -549,7 +587,9 @@ public class SMSConverter {
 		try {
 			quant = new Integer(val.substring(0, val.length() - 1));
 		} catch(NumberFormatException e) {
-			throw new InvalidQueryException("invalid number format");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, val);
 		}
 		if((unit == 'd') || (unit == 'D')) {
 			secs = 24 * 60 * 60 * quant;
@@ -712,7 +752,9 @@ public class SMSConverter {
 			}
 		}
 		if(splPt < 0) {
-			throw new InvalidQueryException("invalid duration");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, intvl);
 		}
 		String quant = intvl.substring(0, splPt);
 		String unit = intvl.substring(splPt).toLowerCase();
@@ -722,10 +764,14 @@ public class SMSConverter {
 			} else if(unit.equals("h") || unit.equals("hr")) {
 				return (3600 * new Integer(quant));
 			} else {
-				throw new InvalidQueryException("invalid duration");
+				throw new InvalidQueryException(
+	                    InvalidQueryException.INVALID_VALUE,
+	                    null, null, unit);
 			}
 		} catch(NumberFormatException e) {
-			throw new InvalidQueryException("invalid duration");
+			throw new InvalidQueryException(
+                    InvalidQueryException.INVALID_VALUE,
+                    null, null, quant);
 		}
 	}
 	

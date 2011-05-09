@@ -51,15 +51,6 @@ public class TableList {
 		return result;
 	}
 	
-	public Map<String, String> getShortcutTableList() {
-	    SQLiteDatabase con = db.getConn();
-	    Cursor cs = con.query(TABLE_LIST, null, DB_TABLE_TYPE + "=3", null, null,
-	            null, null);
-	    Map<String, String> result = getTableList(cs);
-	    con.close();
-	    return result;
-	}
-	
 	public HashMap<String, String> getAllTableList() {
 		SQLiteDatabase con = db.getConn();
 		Cursor cs = con.query(TABLE_LIST, null, null, null, null, null, null);
@@ -225,6 +216,33 @@ public class TableList {
 	    con.close();
 	    return res;
 	}
+    
+    public List<TableInfo> getShortcutTableList() {
+        List<TableInfo> res = new ArrayList<TableInfo>();
+        String[] cols = {TABLE_ID, TABLE_NAME, DB_TABLE_TYPE};
+        SQLiteDatabase con = db.getConn();
+        String selection = DB_TABLE_TYPE + " = ?";
+        String[] selArgs = {Integer.toString(TABLETYPE_SHORTCUT)};
+        Cursor cs = con.query(TABLE_LIST, cols, selection, selArgs, null, null,
+                null);
+        int idIndex = cs.getColumnIndexOrThrow(TABLE_ID);
+        int nameIndex = cs.getColumnIndexOrThrow(TABLE_NAME);
+        int typeIndex = cs.getColumnIndexOrThrow(DB_TABLE_TYPE);
+        if(!cs.moveToFirst()) {
+            cs.close();
+            con.close();
+            return res;
+        }
+        do {
+            String tID = cs.getString(idIndex);
+            String tName = cs.getString(nameIndex);
+            int tType = cs.getInt(typeIndex);
+            res.add(new TableInfo(tID, tName, tType));
+        } while(cs.moveToNext());
+        cs.close();
+        con.close();
+        return res;
+    }
 	
 	public void registerNewTable(String tableName, int tableType)
 	        throws Exception {
