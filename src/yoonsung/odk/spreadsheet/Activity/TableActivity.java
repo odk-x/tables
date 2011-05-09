@@ -58,6 +58,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
@@ -765,9 +766,10 @@ public abstract class TableActivity extends Activity {
 		});
 	}
 	
+	
+	
 	/**
 	 * Prepares the add row button listener.
-	 * TODO: change this to use the Collect launcher
 	 */
 	protected void prepAddRowButtonListener() {
         ImageButton ar = (ImageButton)findViewById(R.id.add_row);
@@ -781,6 +783,7 @@ public abstract class TableActivity extends Activity {
 				
 				// No column exists
 				if (currentColList.size() == 0) {
+					makeToast("No existing column");
 					return;
 				}
 
@@ -793,7 +796,8 @@ public abstract class TableActivity extends Activity {
 			        startActivityForResult(i, 123);			        
 			    }catch (ActivityNotFoundException e){
 			    	// TODO: create alert box: install ODK Collect 1.1.5
-			    	Log.e("ActivityNotFound", "2");
+			    	makeToast("Error: Require ODK Collect Application");
+			    	
 			    }								
 			}
 			
@@ -853,6 +857,11 @@ public abstract class TableActivity extends Activity {
 		});
 	}
 	
+	protected void makeToast(String message) {
+		Toast.makeText((Context) this, message, 
+				Toast.LENGTH_LONG).show();		
+	}
+
 	/**
 	 * To be called when a regular cell is clicked.
 	 * Sets the selected cell ID and the cell edit box text.
