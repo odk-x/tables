@@ -83,7 +83,6 @@ public abstract class TableActivity extends Activity {
 	private boolean isCollectForm;
 	private static final String formPath = "/sdcard/ODK_Tables_add_row.xml";
 	private static final String instancePath = "/sdcard/ODK_Table_Form_Results.xml";
-
 	
 	/**
 	 * Called when the activity is first created.
