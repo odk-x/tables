@@ -7,17 +7,43 @@ public class InvalidQueryException extends Exception {
 	
 	private static final long serialVersionUID = 1L;
 	
-	/** the code for an invalid or missing sheet specification */
-	protected static final int INVALID_SHEET = 1;
-	/** the code for an invalid limit specification */
-	protected static final int INVALID_LIMIT = 2;
+	public static final int NONEXISTENT_TARGET = 0;
+	public static final int NONEXISTENT_COLUMN = 1;
+	public static final int INVALID_VALUE = 2; // e.g. "apple" in a date column
+	public static final int INVALID_FORMAT = 3;
+	public static final int OTHER = 4;
+	
+	private int type;
+	private String target;
+	private String column;
+	private String value;
 	
 	/**
-	 * Constructs a new InvalidQueryException
-	 * @param message the detail message
+	 * Constructs a new InvalidQueryException.
 	 */
-	protected InvalidQueryException(String message) {
-		super(message);
+	protected InvalidQueryException(int type, String target, String column,
+	        String value) {
+	    super();
+	    this.type = type;
+	    this.target = target;
+	    this.column = column;
+	    this.value = value;
+	}
+	
+	public int getType() {
+	    return type;
+	}
+	
+	public String getTarget() {
+	    return target;
+	}
+	
+	public String getColumn() {
+	    return column;
+	}
+	
+	public String getValue() {
+	    return value;
 	}
 	
 }

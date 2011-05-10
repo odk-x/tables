@@ -2,19 +2,15 @@ package yoonsung.odk.spreadsheet.DataStructure;
 
 public class MessageShortcut {
     
-    private int id;
     private String name;
     private String input;
     private String output;
     
-    public MessageShortcut(int id, String name, String input, String output) {
-        this.id = id;
+    public MessageShortcut(String name, String input, String output) {
         this.name = name;
         this.input = input;
         this.output = output;
     }
-    
-    public int getId() { return id; }
     
     public String getName() { return name; }
     

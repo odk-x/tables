@@ -32,7 +32,8 @@ public class DBIO {
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + TableList.TABLE_LIST + " ("
                 + TableList.TABLE_ID + " INTEGER PRIMARY KEY,"
                 + TableList.TABLE_NAME + " TEXT,"
-                + TableList.TABLE_IS_SECURITY_TABLE + " TEXT"
+                + TableList.TABLE_IS_SECURITY_TABLE + " TEXT,"
+                + TableList.DB_TABLE_TYPE + " INT"
                 + ");");
     	
     	// Create tableProperty table
