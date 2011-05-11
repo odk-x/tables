@@ -774,11 +774,14 @@ public abstract class TableActivity extends Activity {
         ImageButton ar = (ImageButton)findViewById(R.id.add_row);
 		ar.setOnClickListener(new View.OnClickListener() {
 			// Get Col List
-			TableProperty tableProp = new TableProperty(tableID);
-			final List<String> currentColList = tableProp.getColOrderArrayList();
+			List<String> currentColList;
 			
 			@Override
 			public void onClick(View v) {
+				// Get Col List
+				TableProperty tableProp = new TableProperty(tableID);
+				currentColList = tableProp.getColOrderArrayList();
+
 				
 				// No column exists
 				if (currentColList.size() == 0) {
