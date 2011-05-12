@@ -403,7 +403,7 @@ public class TableDisplayView extends TableRow {
 		TableRow row = new TableRow(ta);
 		View cell;
 		if(isHeader) {
-			cell = createHeaderCell(tableHF.get(indexedCol), indexedCol,
+			cell = createIndexedHeaderCell(tableHF.get(indexedCol), indexedCol,
 					width);
 		} else {
 			cell = createFooterCell(tableHF.get(indexedCol), indexedCol,
@@ -485,6 +485,21 @@ public class TableDisplayView extends TableRow {
 		ta.prepHeaderCellOccmListener(cell);
 		return cell;
 	}
+    
+    /**
+     * Creates an indexed header cell.
+     * @param text the text to display in the cell
+     * @param id the ID to assign to the cell
+     * @param width the width of the cell
+     */
+    private TextView createIndexedHeaderCell(String text, int id, int width) {
+        TextView cell = createCell(text, id,
+                getResources().getColor(R.color.black),
+                getResources().getColor(R.color.header_index), width);
+        cell.setOnClickListener(headerCellClickListener);
+        ta.prepHeaderCellOccmListener(cell);
+        return cell;
+    }
 	
 	/**
 	 * Creates an indexed column cell.

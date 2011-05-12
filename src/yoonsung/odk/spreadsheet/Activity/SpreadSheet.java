@@ -32,11 +32,13 @@ public class SpreadSheet extends TableActivity {
 	private static final int OPEN_COL_OPTS = 14;
 	private static final int SET_COL_WIDTH = 15;
 	private static final int SET_FOOTER_OPT = 16;
+	private static final int UNSELECT_COLUMN = 17;
 	
 	// context menu creation listeners
 	private View.OnCreateContextMenuListener regularOccmListener;
 	private View.OnCreateContextMenuListener headerOccmListener;
 	private View.OnCreateContextMenuListener footerOccmListener;
+	private View.OnCreateContextMenuListener indexedColOccmListener;
 	
 	private int lastHeaderMenued; // the ID of the last header cell that a
 	                              // context menu was created for
@@ -118,6 +120,9 @@ public class SpreadSheet extends TableActivity {
 		case SELECT_COLUMN: // index on this column
 			indexTableView(selectedCellID % table.getWidth());
 			return true;
+		case UNSELECT_COLUMN:
+		    indexTableView(-1);
+		    return true;
 		case SEND_SMS_ROW: // sends an SMS on the selected row
 			sendSMSRow();
 			return true;
@@ -170,6 +175,7 @@ public class SpreadSheet extends TableActivity {
 		prepRegularOccmListener();
 		prepHeaderOccmListener();
 		prepFooterOccmListener();
+		prepIndexedColOccmListener();
 	}
 	
 	/**
@@ -189,6 +195,24 @@ public class SpreadSheet extends TableActivity {
 			}
 		};
 	}
+    
+    /**
+     * Prepares the context menu creation listener for indexed column cells.
+     */
+    private void prepIndexedColOccmListener() {
+        indexedColOccmListener = new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v,
+                    ContextMenuInfo menuInfo) {
+                selectContentCell(v.getId());
+                int none = ContextMenu.NONE;
+                menu.add(none, UNSELECT_COLUMN, none, "Unselect Column");
+                menu.add(none, SEND_SMS_ROW, none, "Send SMS Row");
+                menu.add(none, HISTORY_IN, none, "View Collection");
+                menu.add(none, DELETE_ROW, none, "Delete Row");
+            }
+        };
+    }
 	
 	/**
 	 * Prepares the context menu creation listener for header cells.
@@ -242,7 +266,9 @@ public class SpreadSheet extends TableActivity {
 	}
 	
 	@Override
-	public void prepIndexedColCellOccmListener(TextView cell) {}
+	public void prepIndexedColCellOccmListener(TextView cell) {
+	    cell.setOnCreateContextMenuListener(indexedColOccmListener);
+	}
 	
 	@Override
 	public void prepFooterCellOccmListener(TextView cell) {
