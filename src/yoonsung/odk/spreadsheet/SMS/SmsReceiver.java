@@ -64,7 +64,8 @@ public class SmsReceiver extends BroadcastReceiver {
         TableList tl = new TableList();
         if (!tl.isTableExist(splt[0].substring(1))) {
         	Log.e("table not esit", "not exisint");
-        	// Handle Error
+        	return;
+        	// TODO: Handle Error
         }
 
         Log.e("passed", "SMS passed");
