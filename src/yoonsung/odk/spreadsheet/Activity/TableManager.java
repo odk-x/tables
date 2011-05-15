@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.SmsOutFormatSetActivity;
@@ -12,6 +11,7 @@ import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.SecurityTables;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Database.TableList.TableInfo;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
@@ -34,7 +34,6 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class TableManager extends ListActivity {
@@ -336,17 +335,29 @@ public class TableManager extends ListActivity {
 	 
 	 private void addTable(String tableName, int tableType) { 
 		// Register new table in TableList
-	     try {
+	    try {
 	         tl.registerNewTable(tableName, tableType);
-	     } catch(Exception e) {
+	    } catch(Exception e) {
              Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
              return;
 	     }
-		// Create a new table in the database
+		 // Create a new table in the database
 		 createNewDataTable(tableName);
 		 if (tableType == TableList.TABLETYPE_SECURITY) {
-			 // Set it as Security Table
 			 int tableID = tl.getTableID(tableName);
+			 // Add required columns for a security table
+			 DataTable dt = new DataTable(Integer.toString(tableID));
+			 dt.addNewColumn(SecurityTables.COL_1_PHONE_NUM);
+			 dt.addNewColumn(SecurityTables.COL_2_PASSWORD);
+			 dt.addNewColumn(SecurityTables.COL_3_ID);
+			 // Register column order in table property
+			 TableProperty tp = new TableProperty(Integer.toString(tableID));
+			 ArrayList<String> colOrder = new ArrayList<String>();
+			 colOrder.add("phone_number");
+			 colOrder.add("id");
+			 colOrder.add("password");
+			 tp.setColOrder(colOrder);
+			 // Set it as Security Table
 			 tl.setAsSecurityTable(Integer.toString(tableID));
 		 } else if(tableType == TableList.TABLETYPE_SHORTCUT){
 		     DataTable dt = new DataTable(tl.getTableID(tableName) + "");
@@ -365,6 +376,25 @@ public class TableManager extends ListActivity {
 	                + DataTable.DATA_TIMESTAMP + " TEXT"
 	                + ");");
 		 con.close();
+	 }
+	 
+	 private void createNewSecurityTable(String tableName) {
+		 int tableID = tl.getTableID(tableName);
+		 SQLiteDatabase con = db.getConn();
+		 con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
+	                + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
+	                + "`" + SecurityTables.COL_1_PHONE_NUM + "` TEXT,"
+	                + "`" + SecurityTables.COL_2_PASSWORD + "` TEXT,"
+	                + "`" + SecurityTables.COL_3_ID + "` TEXT"
+	                + ");");
+		 con.close();
+		 // Register column order in table property
+		 TableProperty tp = new TableProperty(Integer.toString(tableID));
+		 ArrayList<String> colOrder = new ArrayList<String>();
+		 colOrder.add("phone_number");
+		 colOrder.add("id");
+		 colOrder.add("password");
+		 tp.setColOrder(colOrder);
 	 }
 	 
 	 private void removeTable(String tableID) {

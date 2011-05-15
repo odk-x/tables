@@ -62,7 +62,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Type<List>
             String type = getType(colName);
-            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range"};
+            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range", "File"};
             category.addPreference(createListPreference("TYPE", "TYPE", type, type, typeChoices, typeChoices));                
             
             // SMS-IN<CheckBox>

@@ -1,8 +1,15 @@
 package yoonsung.odk.spreadsheet.Activity;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.nio.channels.FileChannel;
+
 import yoonsung.odk.spreadsheet.Database.TableList;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -33,6 +40,7 @@ public class SpreadSheet extends TableActivity {
 	private static final int SET_COL_WIDTH = 15;
 	private static final int SET_FOOTER_OPT = 16;
 	private static final int UNSELECT_COLUMN = 17;
+	private static final int OPEN_FILE = 18;
 	
 	// context menu creation listeners
 	private View.OnCreateContextMenuListener regularOccmListener;
@@ -117,6 +125,10 @@ public class SpreadSheet extends TableActivity {
 	public boolean onContextItemSelected(MenuItem item) {
 		Log.d("REFACTOR SSJ", "onContextItemSelected called:" + item.getItemId());
 		switch(item.getItemId()) {
+		case OPEN_FILE: // open a file for file type cell
+			String path = table.getCellValue(selectedCellID);
+			handleOpenFile(path);
+			return true;
 		case SELECT_COLUMN: // index on this column
 			indexTableView(selectedCellID % table.getWidth());
 			return true;
@@ -169,6 +181,46 @@ public class SpreadSheet extends TableActivity {
 	}
 	
 	/**
+	 * Handle the open file request. Availabe to this activity only.
+	 */
+	private void handleOpenFile(String path) {
+		// Open up program
+		Intent i = new Intent("org.odk.collect.android.action.FormEntry");
+
+		// formPath is the path of the xform
+		i.putExtra("formpath", path);
+
+		// instancepath is the path of result
+		String instancePath = path.replace(".xml", "_Instance.xml");
+		try {
+			File formF = new File(path);
+			File instanceF = new File(instancePath);
+			if (!instanceF.exists()) {
+				FileChannel src = new FileInputStream(formF).getChannel();
+				FileChannel dst = new FileOutputStream(instanceF).getChannel();
+				dst.transferFrom(src, 0, src.size());
+				src.close();
+				dst.close();
+			}
+		} catch (Exception e) {}
+		
+		i.putExtra("instancepath", "/sdcard/TestForm_Instance.xml");
+
+		//startActivityForResult(i, 1);
+		startActivity(i);
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	    if (requestCode == 1) {
+	        if (resultCode == RESULT_OK) {
+	            // todo
+	        	Log.e("result back", data.toString());
+	        }
+	    }
+	}
+	
+	/**
 	 * Prepares the context menu creation listeners.
 	 */
 	private void prepOccmListeners() {
@@ -188,6 +240,11 @@ public class SpreadSheet extends TableActivity {
 					ContextMenuInfo menuInfo) {
 				selectContentCell(v.getId());
 				int none = ContextMenu.NONE;
+				String selectedColName = table.getColName(table.getColNum(selectedCellID));
+				String selectedColType = cp.getType(selectedColName);
+				if (selectedColType != null && selectedColType.equals("File")) {
+					menu.add(none, OPEN_FILE, none, "Open File");
+				}
 				menu.add(none, SELECT_COLUMN, none, "Select Column");
 				menu.add(none, SEND_SMS_ROW, none, "Send SMS Row");
 				menu.add(none, HISTORY_IN, none, "View Collection");

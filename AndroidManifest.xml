@@ -39,6 +39,8 @@
 <activity android:name=".Activity.importexport.ImportCSVActivity"></activity>
 <activity android:name=".Activity.importexport.ExportCSVActivity"></activity>
 <activity android:name=".Activity.SecurityManager"></activity>
+<activity android:name=".Activity.SecurityTableActivity"></activity>
+<activity android:name=".Activity.ShortcutsManager"></activity>
 <activity android:name=".Activity.ShortcutTableActivity"></activity>
 </application>
         <uses-permission android:name="android.permission.INTERNET" />

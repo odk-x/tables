@@ -45,14 +45,9 @@ public class SmsReceiver extends BroadcastReceiver {
         
         // Split Message Received
         String msg = getSMSBody(bundle);
-        try {
-            msg = (new MsgHandler()).translateMessage(msg);
-        } catch(InvalidQueryException e) {
-            e.printStackTrace();
-        }
         String[] splt = msg.split(" ");
         
-        Log.e("Here", "SMS REceived:" + msg);
+        Log.e("Here", "SMS REceived");
         
         // Is this message for ODK Tables?
         if (splt.length < 1 || !splt[0].startsWith("@")) {
@@ -60,12 +55,21 @@ public class SmsReceiver extends BroadcastReceiver {
         	// Handle Error
         	return;
         } 
+        
+        // Is there password field in the table
+        boolean hasPassword = false;
+        String password = null;
+        if (splt.length >2 && splt[1].startsWith("#")) {
+        	hasPassword = true;
+        	password = splt[1].substring(1);
+        	Log.e("password", password);
+        }
+        
         // Is table exist?
         TableList tl = new TableList();
         if (!tl.isTableExist(splt[0].substring(1))) {
         	Log.e("table not esit", "not exisint");
-        	return;
-        	// TODO: Handle Error
+        	// Handle Error
         }
 
         Log.e("passed", "SMS passed");
@@ -82,47 +86,51 @@ public class SmsReceiver extends BroadcastReceiver {
         // Security
         this.st = new SecurityTables(tableID);
         
-        String srcPN = getSMSFrom(bundle);
-        String timestamp = getSMSTimestamp(bundle);
         if(!tl.isSecurityTable(tableID)) {
 	        // Security table cannot be accessed remotely 
-        	if(splt[1].startsWith("+")) {
+        	if(splt[1].startsWith("+") || (hasPassword && splt[2].startsWith("+"))) {
 	        	// Additions
 	        	if (st.isWriteSecurityTableExist()) {
 	        		// Write security table exists
 	        		// Additionally validate password
-	        		if (st.isPhoneNumInWriteTable(phoneNum)) {
-	        			handleAddition(msg, srcPN, timestamp);
+	        		String writeSecTableID = st.getWriteTableID();
+	        		Log.e("Validation",  "" + st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password));
+	        		if (st.isPhoneNumInWriteTable(phoneNum)
+	        				&& st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password)) {
+	        			handleAddition(bundle, hasPassword);
+	        			Log.e("SMSReceiver", "Handling Addtion:" + phoneNum + ":" + password);
 	        		}
 	        	} else {
 	        		// Write security table does not exist
 	        		Log.e("SMSReceiver", "Handling Addition");
-	        		handleAddition(msg, srcPN, timestamp);
+	        		handleAddition(bundle, hasPassword);
 	        	}
 	        } else {
 	        	// Querying
 	        	if (st.isReadSecurityTableExist()) {
 	        		// Read security table exists
 	        		// Additionally validate password
-	        		if (st.isPhoneNumInReadTable(phoneNum)) {
+	        		String readSecTableID = st.getReadTableID();
+	        		if (st.isPhoneNumInReadTable(phoneNum)
+	        				&& st.validatePasswordForPhoneNum(readSecTableID, phoneNum, password)) {
 	        			Log.e("SMSReceiver", "Handling Query");
-	        			handleQuery(msg, srcPN, timestamp);
+	        			handleQuery(bundle);
 	        		}
 	        	} else {
 	        		// Read security table does not exist
 	        		Log.e("SMSReceiver", "Handling Query");
-	        		handleQuery(msg, srcPN, timestamp);
+	        		handleQuery(bundle);
 	        	}
 	        }
         }
     }
 	
-	private void handleAddition(String msg, String srcPN, String timestamp) {
+	private void handleAddition(Bundle bundle, boolean hasPassword) {
         // Parse
         SMSConverter ps = new SMSConverter(tableID);
         Map<String, String> alldata;
         try {
-			alldata = ps.parseSMS(msg);
+			alldata = ps.parseSMS(getSMSBody(bundle), hasPassword);
 		} catch (InvalidQueryException e) {
 			Log.d("sra", "err:" + e.getMessage());
 			return;
@@ -151,15 +159,15 @@ public class SmsReceiver extends BroadcastReceiver {
         // Something to update
         if (data.size() > 0) {
         	// Add to DB
-        	addNewData(data, srcPN, timestamp);
+        	addNewData(data, getSMSFrom(bundle), getSMSTimestamp(bundle));
         }
 	}
 	
-	private void handleQuery(String msg, String srcPN, String timestamp) {
+	private void handleQuery(Bundle bundle) {
 		SMSConverter ps = new SMSConverter(tableID);
 		String resp;
 		try {
-			resp = ps.getQueryResponse(msg);
+			resp = ps.getQueryResponse(getSMSBody(bundle));
 		} catch (InvalidQueryException e) {
 			resp = "invalid query: " + e.getMessage();
 		}
@@ -168,7 +176,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		SMSSender sender = new SMSSender();
 		Log.d("sending", resp);
-		sender.sendSMS(srcPN, resp);
+		sender.sendSMS(getSMSFrom(bundle), resp);
 	}
     
 	private void addNewData(Map<String, String> data, String phoneNumberIn, String timeStamp) {
@@ -229,7 +237,7 @@ public class SmsReceiver extends BroadcastReceiver {
                 msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);                
                 str += msgs[i].getOriginatingAddress();
             }
-        }
+        }             	
         return str;
     }
 

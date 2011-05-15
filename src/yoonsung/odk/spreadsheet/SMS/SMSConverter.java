@@ -40,7 +40,7 @@ public class SMSConverter {
 		dm = new DefaultsManager(tableID);
 	}
 		
-	public HashMap<String, String> parseSMS(String sms)
+	public HashMap<String, String> parseSMS(String sms, boolean hasPassword)
 			throws InvalidQueryException {
 		// <Column Name, Value>
 		HashMap<String, String> result = new HashMap<String, String>();
@@ -50,7 +50,12 @@ public class SMSConverter {
 		
 		// Parse into column names and values
 		Map<String, String> durMap = new HashMap<String, String>();
-		int index = 1;
+		int index;
+		if (!hasPassword) {
+			index = 1;
+		} else {
+			index = 2;
+		}
 		while(index < tokens.length) {
 			char type = tokens[index].charAt(0);
 			String key = tokens[index].substring(1);

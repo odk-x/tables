@@ -1,16 +1,9 @@
 package yoonsung.odk.spreadsheet.Activity;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.BoxStemActivity;
@@ -32,7 +25,6 @@ import yoonsung.odk.spreadsheet.view.TableDisplayView;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -45,11 +37,6 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -58,7 +45,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
@@ -80,9 +66,9 @@ public abstract class TableActivity extends Activity {
 	protected int indexedCol; // the column to index on; -1 if not indexed
 	
 	// fields for row addition
-	private boolean isCollectForm;
-	private static final String formPath = "/sdcard/ODK_Tables_add_row.xml";
-	private static final String instancePath = "/sdcard/ODK_Table_Form_Results.xml";
+	// TODO: remove these once row addition uses Collect
+	private int currentAddRowColPos;
+	private Map<String, String> currentAddRowBuffer;
 	
 	/**
 	 * Called when the activity is first created.
@@ -112,7 +98,6 @@ public abstract class TableActivity extends Activity {
 		prepButtonListeners();
 		TableLayout tl = (TableLayout) findViewById(R.id.spreadsheetWrapper);
 		tl.addView(tdv);
-		isCollectForm = false;
 	}
 	
 	@Override
@@ -765,105 +750,150 @@ public abstract class TableActivity extends Activity {
 		});
 	}
 	
-	
-	
 	/**
 	 * Prepares the add row button listener.
+	 * TODO: change this to use the Collect launcher
 	 */
 	protected void prepAddRowButtonListener() {
         ImageButton ar = (ImageButton)findViewById(R.id.add_row);
 		ar.setOnClickListener(new View.OnClickListener() {
-			// Get Col List
-			List<String> currentColList;
 			
 			@Override
 			public void onClick(View v) {
+				Log.d("REFACTOR SSJ", "addRow clicked");
 				// Get Col List
 				TableProperty tableProp = new TableProperty(tableID);
-				currentColList = tableProp.getColOrderArrayList();
-
+				final List<String> currentColList = tableProp.getColOrderArrayList();
 				
 				// No column exists
 				if (currentColList.size() == 0) {
-					makeToast("No existing column");
 					return;
 				}
-
-				try{
-					Intent i = new Intent("org.odk.collect.android.action.FormEntry");
-					generateXForms(formPath, instancePath);
-			        i.putExtra("formpath", formPath);
-			        i.putExtra("instancepath", instancePath);
-	                isCollectForm = true;			        
-			        startActivityForResult(i, 123);			        
-			    }catch (ActivityNotFoundException e){
-			    	// TODO: create alert box: install ODK Collect 1.1.5
-			    	makeToast("Error: Require ODK Collect Application");
-			    	
-			    }								
-			}
-			
-			private void generateXForms(String formPath, String instancePath) {
 				
-				File exist_file = new File(instancePath);
-		    	exist_file.delete();
-		    	File exist_instance_file = new File(formPath);
-		    	exist_instance_file.delete();
-		    	
-		        FileWriter rewritefile = null;
-				try {
-					rewritefile = new FileWriter(instancePath);
-					rewritefile.write("<?xml version='1.0' ?><data id=\"build_ODK-Tables-add-row_1303084542\">");
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-						rewritefile.write("<col" + i + "/>");
-					}
-					rewritefile.write("</data>");
+				// Reset
+				currentAddRowColPos = 0;
+				
+				// Create a buffer
+				currentAddRowBuffer = new HashMap<String, String>();
+				
+				final Dialog dia = new Dialog(TableActivity.this);
+				dia.setContentView(R.layout.add_row_dialog);
+				dia.setTitle("Add New Row");
+				
+				TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+				colName.setText(currentColList.get(currentAddRowColPos));
+				
+				TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+				prog.setText("1 / " + currentColList.size());
+				
+				Button prev = (Button)dia.findViewById(R.id.add_row_prev);
+				prev.setOnClickListener(new View.OnClickListener() {
 					
-					rewritefile.close();							
-				} catch (IOException e) {			
-					e.printStackTrace();
-				}    	    	
-		    	
-		        FileWriter file = null;
-				try {
-					file = new FileWriter(formPath);
-					file.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:ev=\"http://www.w3.org/2001/xml-events\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n");
-					file.write("  <h:head>\n    <h:title>ODK Tables add row</h:title>\n    <model>\n");
-					file.write("      <instance>\n        <data id=\"build_ODK-Tables-add-row_1303084542\">\n");					
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-						file.write("          <col" + i + "/>\n");
-					}					
-					file.write("        </data>\n      </instance>\n");
-		            file.write("      <itext>\n        <translation lang=\"eng\">\n");
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-			            file.write("          <text id=\"/data/col" + i + ":label\">\n            <value>" + currentColList.get(i) + "</value>\n          </text>\n");
-			            file.write("          <text id=\"/data/col" + i + ":hint\">\n            <value/>\n          </text>\n");
-					}					
-		            file.write("        </translation>\n      </itext>\n");
-		            for (int i = 0 ; i < currentColList.size(); i ++ ) {
-		            	file.write("      <bind nodeset=\"/data/col" + i + "\" type=\"string\"/>\n");
-		            }		           
-		            file.write("    </model>\n  </h:head>\n  <h:body>\n");
-		            for (int i = 0 ; i < currentColList.size(); i ++ ) {
-		            	file.write("    <input ref=\"/data/col" + i + "\">\n      <label ref=\"jr:itext('/data/col" + i + ":label')\"/>\n      <hint ref=\"jr:itext('/data/col" + i + ":hint')\"/>\n    </input>\n");
-		            }
-		            file.write("  </h:body>\n</h:html>\n");
-		            file.close();
-				} catch (IOException e) {			
-					e.printStackTrace();
-				}
-		    	
-		    }
+					@Override
+					public void onClick(View v) {
+						if (currentAddRowColPos > 0) {
+							// Save what's in edit box
+							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+							String txt = edit.getText().toString();
+							txt = txt.trim();
+							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+							
+							// Update column name with prev
+							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+							colName.setText(currentColList.get(currentAddRowColPos-1));
+							currentAddRowColPos--;
+							
+							// Update progress 
+							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+							
+							// Refresh Editbox
+							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+							if (nextTxt == null) {
+								edit.setText("");
+							} else {
+								edit.setText(nextTxt);
+							}
+						}
+					}
+				});
+				
+				
+				Button save = (Button)dia.findViewById(R.id.add_row_save);
+				save.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						// Save what's in edit box
+						EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+						String txt = edit.getText().toString();
+						currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+						
+						// Update to database
+						ContentValues cv = new ContentValues();
+						for (String key : currentAddRowBuffer.keySet()) {
+							cv.put(key, currentAddRowBuffer.get(key));
+						}
 
-			
+						try {
+						    dt.addRow(cv, "", "");
+						} catch(IllegalArgumentException e) {
+						    // TODO: something when the input is invalid for the columns
+						    dia.cancel();
+						}
+						
+						Log.e("Buffer Hash", currentAddRowBuffer.toString());
+						
+						refreshView();
+						dia.cancel();
+					}
+				});
+				
+				Button next = (Button)dia.findViewById(R.id.add_row_next);
+				next.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						if (currentAddRowColPos < currentColList.size()-1) {
+							// Save what's in edit box
+							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+							String txt = edit.getText().toString();
+							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+							
+							// Update column name with next
+							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+							colName.setText(currentColList.get(currentAddRowColPos+1));
+							currentAddRowColPos++;
+							
+							// Update progress 
+							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+							
+							// Refresh Editbox
+							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+							if (nextTxt == null) {
+								edit.setText("");
+							} else {
+								edit.setText(nextTxt);
+							}
+						}
+					}
+				});
+				
+				Button cancle = (Button)dia.findViewById(R.id.add_row_cancle);
+				cancle.setOnClickListener(new View.OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						dia.cancel();
+					}
+				});
+				
+				dia.show();
+			}
 		});
 	}
 	
-	protected void makeToast(String message) {
-		Toast.makeText((Context) this, message, 
-				Toast.LENGTH_LONG).show();		
-	}
-
 	/**
 	 * To be called when a regular cell is clicked.
 	 * Sets the selected cell ID and the cell edit box text.
@@ -926,10 +956,6 @@ public abstract class TableActivity extends Activity {
 	
 	private void refreshView() {
 		selectContentCell(-1);
-		if(isCollectForm) {
-			parseXML();
-			isCollectForm = false;
-		}		
 		if(collectionRowNum == -1) {
 			table = dt.getTable();
 			tdv.setTable(TableActivity.this, table, indexedCol);
@@ -939,55 +965,6 @@ public abstract class TableActivity extends Activity {
 		}
 	}
 	
-	private void parseXML(){
-		
-		String path = instancePath;
-		
-		// Get Col List
-		TableProperty tableProp = new TableProperty(tableID);
-		final List<String> currentColList = tableProp.getColOrderArrayList();
-		
-		
-		try {
-			File file = new File(path);
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(file);
-			doc.getDocumentElement().normalize();				
-
-			ContentValues cv = new ContentValues();					
-			// Browse content in xml file
-	    	int addedvalue = 0;
-	    	
-			for( int s = 0; s < currentColList.size() ; s++ ) {						
-				NodeList nodeLst = doc.getElementsByTagName("col" + s);
-		    	Node fstNode = nodeLst.item(0);
-			    if (fstNode.getNodeType() == Node.ELEMENT_NODE) {				    	
-			    	Element fstElmnt =  (Element) fstNode;				    					    	
-			    	NodeList lstNm = fstElmnt.getChildNodes();					    	
-			    	if(lstNm.item(0) != null) {
-			    		addedvalue++;
-			    		cv.put(currentColList.get(s), ((Node) lstNm.item(0)).getNodeValue());	
-			    	} else {
-			    		cv.put(currentColList.get(s), "");					    		
-			    	}
-			    }
-			    
-			}	
-							
-			// Update to database
-			if(addedvalue > 0){
-				dt.addRow(cv, "", "");							
-			}
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
-
-
 	/**
 	 * Sets the tableID field.
 	 * @return true if a table ID was found; false otherwise

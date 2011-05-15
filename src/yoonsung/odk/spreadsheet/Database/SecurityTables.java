@@ -10,6 +10,7 @@ public class SecurityTables {
 
 	public static final String COL_1_PHONE_NUM = "phone_number";
 	public static final String COL_2_PASSWORD  = "password";
+	public static final String COL_3_ID        = "id";
 	
 	private DBIO db;
 	private TableProperty tp;
@@ -79,7 +80,7 @@ public class SecurityTables {
 	public boolean validatePasswordForPhoneNum(String secTableID, String phoneNum, String pass) {
 		HashMap<String, String> map = searchByPhoneNumber(secTableID, phoneNum);
 		String dbPhoneNum = map.get(COL_1_PHONE_NUM);
-		if (dbPhoneNum != null & dbPhoneNum.equals(phoneNum))  {
+		if (dbPhoneNum != null && dbPhoneNum.equals(phoneNum))  {
 			// Phone number validated
 			if (map.containsKey(COL_2_PASSWORD)) {
 				// There is password column in the security table

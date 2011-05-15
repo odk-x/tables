@@ -180,17 +180,23 @@ public class DataTable {
 	    }
 	    
 		SQLiteDatabase con = db.getConn();
-		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
-		values.put(DATA_TIMESTAMP, timeStamp);
-		Log.e("DataCheck", values.toString());
 		try {
 			con.insertOrThrow(currentTableName, null, values);
 		} catch (Exception e) {
 			Log.d("Data", "Add Row failed." + e.getMessage());
 		}
 		con.close();
-		
 	}
+	
+	/*
+	// Add new row with the specified information.
+	public void addRow(ContentValues values, String phoneNumberIn, String timeStamp) {
+		values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
+		values.put(DATA_TIMESTAMP, timeStamp);
+		Log.e("DataCheck", values.toString());
+		addRow(values);
+	}
+	*/
 	
 	public void updateRow(ContentValues values, int rowID) {
 		
