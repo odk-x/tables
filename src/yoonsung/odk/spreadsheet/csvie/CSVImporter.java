@@ -135,7 +135,9 @@ public class CSVImporter {
 				+ DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
 				+ DataTable.DATA_TIMESTAMP + " TEXT";
 		for(String col : header) {
-			stat += ", `" + col + "` TEXT";
+		    if(!col.equals("_phoneNumberIn") && !col.equals("_timestamp")) {
+	            stat += ", `" + col + "` TEXT";
+		    }
 		}
 		stat += ");";
 		DBIO db = new DBIO();

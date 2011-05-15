@@ -134,9 +134,9 @@ public class ImportCSVActivity extends IETabActivity {
 		String filename = filenameValField.getText().toString().trim();
 		File root = Environment.getExternalStorageDirectory();
 		File file = new File(root.getPath() +
-				//"/data/data/yoonsung.odk.spreadsheet/" + filename);
-				"/" + filename);
-		Log.e("PathCheck", root.getPath() + "/" + filename);
+				"/data/data/yoonsung.odk.spreadsheet/files/" + filename);
+				//"/" + filename);
+		Log.e("PathCheck", file.getPath());
 		file.mkdirs();
 		String tableName;
 		int pos = tableSpin.getSelectedItemPosition();
