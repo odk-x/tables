@@ -150,10 +150,12 @@ public class CSVImporter {
 		TableProperty tp = new TableProperty(tableID);
 		ArrayList<String> colOrder = tp.getColOrderArrayList();
 		for(String col : header) {
-			Log.d("csvi", "starting col add:" + col);
-			dm.prepForNewCol(col);
-			Log.d("csvi", "just called dm.prepForNewCol");
-			colOrder.add(col);
+            if(!col.equals("_phoneNumberIn") && !col.equals("_timestamp")) {
+                Log.d("csvi", "starting col add:" + col);
+                dm.prepForNewCol(col);
+                Log.d("csvi", "just called dm.prepForNewCol");
+                colOrder.add(col);
+            }
 		}
 		tp.setColOrder(colOrder);
 		return tableID;
