@@ -49,6 +49,7 @@ public class TableManager extends ListActivity {
 	public static final int ADD_NEW_SHORTCUT_TABLE  = 8;
 	public static final int UNSET_DEFAULT_TABLE     = 9;
 	public static final int UNSET_SECURITY_TABLE    = 10;
+	public static final int AGGREGATE = 11;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -235,6 +236,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Security Group");
 		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
 		 menu.add(0, IMPORT_EXPORT, 0, "Import/Export");
+		 menu.add(0, AGGREGATE, 0, "Aggregate");
 		 return true;
 	 }
     
@@ -258,6 +260,10 @@ public class TableManager extends ListActivity {
 		 case IMPORT_EXPORT:
 			 Intent i = new Intent(this, ImportExportActivity.class);
 			 startActivity(i);
+			 return true;
+		 case AGGREGATE:
+			 Intent j = new Intent(this, Aggregation.class);
+			 startActivity(j);
 			 return true;
 		 }
     	

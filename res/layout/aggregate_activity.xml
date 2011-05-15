@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/aggregate_activity_layout"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent" 
+	android:orientation="vertical" 
+	android:background="#FFFFFF">
+			
+	<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" 
+		android:orientation="vertical" 
+		android:background="#FFFFFF">
+		
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent" 
+			android:orientation="vertical" 
+			android:background="#FFFFFF">
+	
+			<TextView
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="Aggregate URL:" />
+	
+			<EditText 
+       			android:id="@+id/aggregate_activity_url"
+        		android:layout_width="fill_parent"
+       			android:layout_height="wrap_content" />
+			
+    		<TextView
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="User Name:" />
+		
+			<EditText 
+        		android:id="@+id/aggregate_activity_userName"
+        		android:layout_width="fill_parent"
+        		android:layout_height="wrap_content" />
+        	
+			<TextView
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="Password:" />
+	
+			<EditText 
+        		android:id="@+id/aggregate_activity_pwd"
+        		android:layout_width="fill_parent"
+        		android:layout_height="wrap_content" />
+			
+			<Button
+    			android:id="@+id/aggregate_activity_connect"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Connect" />
+    		
+    		<Button
+    			android:id="@+id/aggregate_activity_createUser"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Create User" />
+			
+			<TextView
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="Current Table:" />
+	
+			<Spinner 
+        		android:id="@+id/aggregate_activity_tables"
+        		android:layout_width="fill_parent"
+       		 	android:layout_height="wrap_content" />
+        
+    		<TextView
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="Tables on Server(must enter credentials and press connect):" />
+	
+			<Spinner 
+        		android:id="@+id/aggregate_activity_aggregateTables"
+        		android:layout_width="fill_parent"
+        		android:layout_height="wrap_content" />    
+    
+    		<Button
+    			android:id="@+id/aggregate_activity_download"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Download" />
+    
+    		<Button
+    			android:id="@+id/aggregate_activity_upload"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Upload" />
+    		
+    		<Button
+    			android:id="@+id/aggregate_activity_delete"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Delete" />
+        
+		</LinearLayout>
+	</ScrollView>
+</FrameLayout>

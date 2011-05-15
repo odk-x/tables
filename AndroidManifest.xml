@@ -42,6 +42,7 @@
 <activity android:name=".Activity.SecurityTableActivity"></activity>
 <activity android:name=".Activity.ShortcutsManager"></activity>
 <activity android:name=".Activity.ShortcutTableActivity"></activity>
+<activity android:name=".Activity.Aggregation"></activity>
 </application>
         <uses-permission android:name="android.permission.INTERNET" />
         <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
