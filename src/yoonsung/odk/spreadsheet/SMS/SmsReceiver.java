@@ -45,9 +45,14 @@ public class SmsReceiver extends BroadcastReceiver {
         
         // Split Message Received
         String msg = getSMSBody(bundle);
+        try {
+            msg = (new MsgHandler()).translateMessage(msg);
+        } catch(InvalidQueryException e) {
+            e.printStackTrace();
+        }
         String[] splt = msg.split(" ");
         
-        Log.e("Here", "SMS REceived");
+        Log.e("Here", "SMS REceived:" + msg);
         
         // Is this message for ODK Tables?
         if (splt.length < 1 || !splt[0].startsWith("@")) {
@@ -70,6 +75,7 @@ public class SmsReceiver extends BroadcastReceiver {
         if (!tl.isTableExist(splt[0].substring(1))) {
         	Log.e("table not esit", "not exisint");
         	// Handle Error
+        	return;
         }
 
         Log.e("passed", "SMS passed");
@@ -86,6 +92,8 @@ public class SmsReceiver extends BroadcastReceiver {
         // Security
         this.st = new SecurityTables(tableID);
         
+        String srcPN = getSMSFrom(bundle);
+        String timestamp = getSMSTimestamp(bundle);
         if(!tl.isSecurityTable(tableID)) {
 	        // Security table cannot be accessed remotely 
         	if(splt[1].startsWith("+") || (hasPassword && splt[2].startsWith("+"))) {
@@ -97,13 +105,13 @@ public class SmsReceiver extends BroadcastReceiver {
 	        		Log.e("Validation",  "" + st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password));
 	        		if (st.isPhoneNumInWriteTable(phoneNum)
 	        				&& st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password)) {
-	        			handleAddition(bundle, hasPassword);
+	        			handleAddition(msg, srcPN, timestamp, hasPassword);
 	        			Log.e("SMSReceiver", "Handling Addtion:" + phoneNum + ":" + password);
 	        		}
 	        	} else {
 	        		// Write security table does not exist
 	        		Log.e("SMSReceiver", "Handling Addition");
-	        		handleAddition(bundle, hasPassword);
+	        		handleAddition(msg, srcPN, timestamp, hasPassword);
 	        	}
 	        } else {
 	        	// Querying
@@ -114,23 +122,24 @@ public class SmsReceiver extends BroadcastReceiver {
 	        		if (st.isPhoneNumInReadTable(phoneNum)
 	        				&& st.validatePasswordForPhoneNum(readSecTableID, phoneNum, password)) {
 	        			Log.e("SMSReceiver", "Handling Query");
-	        			handleQuery(bundle);
+	        			handleQuery(msg, srcPN, timestamp);
 	        		}
 	        	} else {
 	        		// Read security table does not exist
 	        		Log.e("SMSReceiver", "Handling Query");
-	        		handleQuery(bundle);
+	        		handleQuery(msg, srcPN, timestamp);
 	        	}
 	        }
         }
     }
 	
-	private void handleAddition(Bundle bundle, boolean hasPassword) {
+	private void handleAddition(String msg, String srcPN, String timestamp,
+	        boolean hasPassword) {
         // Parse
         SMSConverter ps = new SMSConverter(tableID);
         Map<String, String> alldata;
         try {
-			alldata = ps.parseSMS(getSMSBody(bundle), hasPassword);
+			alldata = ps.parseSMS(msg, hasPassword);
 		} catch (InvalidQueryException e) {
 			Log.d("sra", "err:" + e.getMessage());
 			return;
@@ -159,15 +168,15 @@ public class SmsReceiver extends BroadcastReceiver {
         // Something to update
         if (data.size() > 0) {
         	// Add to DB
-        	addNewData(data, getSMSFrom(bundle), getSMSTimestamp(bundle));
+        	addNewData(data, srcPN, timestamp);
         }
 	}
 	
-	private void handleQuery(Bundle bundle) {
+	private void handleQuery(String msg, String srcPN, String timestamp) {
 		SMSConverter ps = new SMSConverter(tableID);
 		String resp;
 		try {
-			resp = ps.getQueryResponse(getSMSBody(bundle));
+			resp = ps.getQueryResponse(msg);
 		} catch (InvalidQueryException e) {
 			resp = "invalid query: " + e.getMessage();
 		}
@@ -176,7 +185,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		SMSSender sender = new SMSSender();
 		Log.d("sending", resp);
-		sender.sendSMS(getSMSFrom(bundle), resp);
+		sender.sendSMS(srcPN, resp);
 	}
     
 	private void addNewData(Map<String, String> data, String phoneNumberIn, String timeStamp) {
