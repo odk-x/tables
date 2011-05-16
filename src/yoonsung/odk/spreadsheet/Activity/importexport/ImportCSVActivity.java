@@ -7,6 +7,8 @@ import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -45,6 +47,8 @@ public class ImportCSVActivity extends IETabActivity {
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
 	private EditText filenameValField;
+	/* the button for selecting a file */
+	private Button pickFileButton;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -68,6 +72,10 @@ public class ImportCSVActivity extends IETabActivity {
 		filenameValField.setId(FILENAMEVAL_ID);
 		fn.addView(filenameValField);
 		v.addView(fn);
+		pickFileButton = new Button(this);
+		pickFileButton.setText("Pick File");
+		pickFileButton.setOnClickListener(new PickFileButtonListener());
+		v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(R.color.black);
 		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
@@ -116,11 +124,6 @@ public class ImportCSVActivity extends IETabActivity {
 		importB.setText("Import");
 		importB.setOnClickListener(new ImportButtonListener());
 		v.addView(importB);
-		// adding the mkdirs button
-		Button mkdirsB = new Button(this);
-		mkdirsB.setText("Prepare Directory");
-		mkdirsB.setOnClickListener(new MkdirsButtonListener());
-		v.addView(mkdirsB);
 		// wrapping in a scroll view
 		ScrollView scroll = new ScrollView(this);
 		scroll.addView(v);
@@ -131,13 +134,7 @@ public class ImportCSVActivity extends IETabActivity {
 	 * Attempts to import a CSV file.
 	 */
 	private void importSubmission() {
-		String filename = filenameValField.getText().toString().trim();
-		File root = Environment.getExternalStorageDirectory();
-		File file = new File(root.getPath() +
-				"/data/data/yoonsung.odk.spreadsheet/files/" + filename);
-				//"/" + filename);
-		Log.e("PathCheck", file.getPath());
-		file.mkdirs();
+		File file = new File(filenameValField.getText().toString().trim());
 		String tableName;
 		int pos = tableSpin.getSelectedItemPosition();
 		TableList tList = new TableList();
@@ -155,6 +152,15 @@ public class ImportCSVActivity extends IETabActivity {
 				(pos == 0));
 		showDialog(IMPORT_IN_PROGRESS_DIALOG);
 		iThread.start();
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode,
+	        Intent data) {
+	    if(resultCode == RESULT_CANCELED) {return;}
+	    Uri fileUri = data.getData();
+	    String filepath = fileUri.getPath();
+	    filenameValField.setText(filepath);
 	}
 	
 	/**
@@ -184,16 +190,6 @@ public class ImportCSVActivity extends IETabActivity {
 		@Override
 		public void onClick(View v) {
 			importSubmission();
-		}
-	}
-	
-	private class MkdirsButtonListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			File root = Environment.getExternalStorageDirectory();
-			File file = new File(root.getPath() +
-					"/data/data/yoonsung.odk.spreadsheet/files/");
-			file.mkdirs();
 		}
 	}
 	
