@@ -3,7 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,10 +67,10 @@ public class Aggregation extends Activity {
 	
 	private String[] phoneTableNames;
 	private String[] aggregateTableNames;
+	private Map<String, TableEntry> tableIDsToURIs;
 	private Spinner phoneTables;
 	private Spinner aggregateTables;
 	private String userId;
-	private String userURI;
 	private AggregateConnection conn;
 	
 	@Override
@@ -79,6 +79,8 @@ public class Aggregation extends Activity {
 		setContentView(R.layout.aggregate_activity);
 		
 		setTitle("ODK Tables > Aggregate");
+		
+		tableIDsToURIs = new HashMap<String, TableEntry>();
 		
 		TelephonyManager teleMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
 		this.userId = teleMgr.getDeviceId();
@@ -505,13 +507,13 @@ public class Aggregation extends Activity {
 	
 	private void fillAggTableListSpinner(org.opendatakit.aggregate.odktables.client.TableList aggTblLst) {
 		this.aggregateTableNames = new String[aggTblLst.size()];
+		tableIDsToURIs = new HashMap<String, TableEntry>();
 		int counter = 0;
-		Iterator<TableEntry> iter = aggTblLst.iterator();
-		while (iter.hasNext()) {
-			TableEntry entry = iter.next();
+		for (TableEntry entry: aggTblLst) {
 			this.aggregateTableNames[counter] = entry.getTableId()
 				;
 //				+ " (URI: " + entry.getUserUri() + ", Username: " + entry.getUserName() + ")";
+			this.tableIDsToURIs.put(entry.getTableId(), entry);
 			counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -564,11 +566,21 @@ public class Aggregation extends Activity {
 
 	public void downloadTable() {
 		String tableName = this.getCurrentAggregateTableName();
+		System.out.println("got table name: " + tableName);
+		for (String s: this.tableIDsToURIs.keySet()) {
+				System.out.println("map has key: " + s + ", value:" + this.tableIDsToURIs.get(s));
+			}
+		if (!this.tableIDsToURIs.containsKey(tableName)) {
+			showDialog(DOWNLOADTABLE_FAILED);
+			System.out.println("table does not exist");
+			return;
+		}
+		String userUri = this.tableIDsToURIs.get(tableName).getUserUri();
 		List<Row> rows;
 		showDialog(IN_PROGRESS_DIALOG);
-		System.out.println("table to be retrieved: " + tableName);
+//		System.out.println("table to be retrieved: " + tableName);
 		try {
-			rows = conn.getRows(userURI, tableName);
+			rows = conn.getRows(userUri, tableName);
 		} catch (TableDoesNotExistException e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DOWNLOADTABLE_FAILED);
@@ -600,22 +612,36 @@ public class Aggregation extends Activity {
 		
 		TableList lst = new TableList();
 		//might already exist, fix this
-		lst.registerNewTable(tableName);
-		int tableId = lst.getTableID(tableName);
+		
+		String temp = lst.registerNewTable(tableName);
+		String copy = tableName;
+		int counter = 1;
+		while (temp != null && temp.equals("Table already exists.")) {
+			copy = tableName+ "(" + counter + ")";
+			temp = lst.registerNewTable(copy); 
+			counter++;
+		}
+		
+		int tableId = lst.getTableID(copy);
+		System.out.println("got table id");
 		DataTable table = new DataTable("" + tableId);
+		System.out.println("initialized data table");
 		for (Row row: rows) {
 			Map<String, String> temp3 = row.getColumnValuePairs();
 			int size = temp3.keySet().size();
 			String[] headers = new String[size];
 			String[] values = new String[size];
-			int counter = 0;
+			counter = 0;
 			for (String s: temp3.keySet()) {
 				headers[counter] = s;
 				values[counter] = temp3.get(s);
+				System.out.println("string arrays: " + headers[counter] + " | " + values[counter]);
 				counter++;
 			}
 			ContentValues vals = getValues(headers, values);
+			
 			table.addRow(vals, null, null);
+			System.out.println("added row with: " + vals);
 		}
 		Table tbl = table.getTable();
 		System.out.println(tbl.getData());
@@ -637,7 +663,8 @@ public class Aggregation extends Activity {
 	private ContentValues getValues(String[] header, String[] row) {
 		ContentValues vals = new ContentValues();
 		for(int i=0; i<header.length; i++) {
-			String head = "`" + header[i] + "`";
+			String head = header[i];
+//			String head = "`" + header[i] + "`";
 			if(!head.equals("_phoneNumberIn") && !head.equals("_timestamp")) {
 				vals.put(head, row[i]);
 			}
