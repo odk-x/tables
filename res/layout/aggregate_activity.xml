@@ -28,8 +28,15 @@
        			android:id="@+id/aggregate_activity_url"
         		android:layout_width="fill_parent"
        			android:layout_height="wrap_content" />
+       			
+       		<Button
+    			android:id="@+id/aggregate_activity_connect"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Connect" />
 			
     		<TextView
+    			android:id="@+id/aggregate_activity_userName_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
@@ -39,69 +46,72 @@
         		android:id="@+id/aggregate_activity_userName"
         		android:layout_width="fill_parent"
         		android:layout_height="wrap_content" />
-        	
-			<TextView
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="Password:" />
-	
-			<EditText 
-        		android:id="@+id/aggregate_activity_pwd"
-        		android:layout_width="fill_parent"
-        		android:layout_height="wrap_content" />
-			
-			<Button
-    			android:id="@+id/aggregate_activity_connect"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Connect" />
     		
     		<Button
     			android:id="@+id/aggregate_activity_createUser"
     			android:layout_width="fill_parent"
     			android:layout_height="wrap_content"
     			android:text="Create User" />
+    			
+    		<Button
+    			android:id="@+id/aggregate_activity_deleteUser"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Remove this user and data on aggregate" />
 			
 			<TextView
+				android:id="@+id/aggregate_activity_user_uri_text"
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000" />
+			
+			<TextView
+				android:id="@+id/aggregate_activity_getPhoneTables_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="Current Table:" />
+				android:text="Tables On Phone:" />
 	
 			<Spinner 
-        		android:id="@+id/aggregate_activity_tables"
+        		android:id="@+id/aggregate_activity_getPhoneTables"
         		android:layout_width="fill_parent"
        		 	android:layout_height="wrap_content" />
+       		 	
+       		<Button
+    			android:id="@+id/aggregate_activity_uploadTable"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Upload Table" />
         
     		<TextView
+    			android:id="@+id/aggregate_activity_getAggregateTables_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
 				android:text="Tables on Server(must enter credentials and press connect):" />
 	
 			<Spinner 
-        		android:id="@+id/aggregate_activity_aggregateTables"
+        		android:id="@+id/aggregate_activity_getAggregateTables"
         		android:layout_width="fill_parent"
         		android:layout_height="wrap_content" />    
     
     		<Button
-    			android:id="@+id/aggregate_activity_download"
+    			android:id="@+id/aggregate_activity_getAggregateTables_button"
     			android:layout_width="fill_parent"
     			android:layout_height="wrap_content"
-    			android:text="Download" />
-    
-    		<Button
-    			android:id="@+id/aggregate_activity_upload"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Upload" />
+    			android:text="Get Table List" />
     		
     		<Button
-    			android:id="@+id/aggregate_activity_delete"
+    			android:id="@+id/aggregate_activity_downloadTable"
     			android:layout_width="fill_parent"
     			android:layout_height="wrap_content"
-    			android:text="Delete" />
+    			android:text="Download Table" />
+    		
+    		<Button
+    			android:id="@+id/aggregate_activity_deleteTable"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Delete Table" />
         
 		</LinearLayout>
 	</ScrollView>

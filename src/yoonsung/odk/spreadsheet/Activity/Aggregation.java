@@ -11,6 +11,11 @@ import org.opendatakit.aggregate.odktables.client.AggregateConnection;
 import org.opendatakit.aggregate.odktables.client.Column;
 import org.opendatakit.aggregate.odktables.client.Row;
 import org.opendatakit.aggregate.odktables.client.TableEntry;
+import org.opendatakit.aggregate.odktables.client.exception.RowAlreadyExistsException;
+import org.opendatakit.aggregate.odktables.client.exception.TableAlreadyExistsException;
+import org.opendatakit.aggregate.odktables.client.exception.TableDoesNotExistException;
+import org.opendatakit.aggregate.odktables.client.exception.UserAlreadyExistsException;
+import org.opendatakit.aggregate.odktables.client.exception.UserDoesNotExistException;
 import org.opendatakit.common.persistence.DataField.DataType;
 
 import yoonsung.odk.spreadsheet.R;
@@ -20,6 +25,7 @@ import yoonsung.odk.spreadsheet.Database.TableList;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -30,27 +36,41 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 public class Aggregation extends Activity {
 
 	private static int TABLESPIN_ID = 0;
-	private static final int DELETETABLE_FAILED_DIALOG = 1;
-	private static final int TABLE_EXISTS_DIALOG = 2;
-	private static final int CONNECTION_FAILED_DIALOG = 3;
-	private static final int CREATETABLE_FAILED_DIALOG = 4;
-	private static final int INSERTROWS_FAILED_DIALOG = 5;
-//	private static final int UPLOAD_PROGRESS_DIALOG = 6;
-//	private static final int DELETE_PROGRESS_DIALOG = 7;
-	private static final int IN_PROGRESS_DIALOG = 6;
-	private static final int LISTTABLE_FAILED_DIALOG = 7;
-	private static final int AGGREGATETABLESPIN_ID = 8;
-	private static final int CREATEUSER_FAILED_DIALOG = 9;
+	private static int AGGREGATETABLESPIN_ID = 8;
+	private static final int IN_PROGRESS_DIALOG = -1;
+//	private static final int MESSAGE_DIALOG = -2;
+	private static final int UPLOADTABLE_FAILED = 1;
+	private static final int UPLOADTABLE_SUCCESS = 2;
+	private static final int DOWNLOADTABLE_FAILED = 3;
+	private static final int DOWNLOADTABLE_SUCCESS = 4;
+	private static final int CREATEUSER_FAILED = 5;
+	private static final int CREATEUSER_SUCCESS = 6;
+	private static final int DELETEUSER_FAILED = 7;
+	private static final int DELETEUSER_SUCCESS = 8;
+	private static final int GETTABLELIST_FAILED = 9;
+	private static final int GETTABLELIST_SUCCESS = 10;
+	private static final int GETUSERURI_FAILED = 11;
+	private static final int GETUSERURI_SUCCESS = 12;
+	private static final int CONNECTION_FAILED = 13;
+	private static final int CONNECTION_SUCCESS = 14;
+	private static final int DELETETABLE_FAILED = 15;
+	private static final int DELETETABLE_SUCCESS = 16;
+	private static final int TABLE_NOEXIST = 17;
+	
+//	private static String message;
+	private static final boolean debug = true;
 	
 	private String[] phoneTableNames;
 	private String[] aggregateTableNames;
 	private Spinner phoneTables;
 	private Spinner aggregateTables;
 	private String userId;
+	private String userURI;
 	private AggregateConnection conn;
 	
 	@Override
@@ -63,38 +83,80 @@ public class Aggregation extends Activity {
 		TelephonyManager teleMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
 		this.userId = teleMgr.getDeviceId();
 		
+		this.aggregateTables = (Spinner)findViewById(R.id.aggregate_activity_getAggregateTables);
+		this.aggregateTables.setId(AGGREGATETABLESPIN_ID);
+		
+		this.phoneTables = (Spinner)findViewById(R.id.aggregate_activity_getPhoneTables);
+		this.phoneTables.setId(TABLESPIN_ID);
+		
 		fillPhoneTableSpinnerList();
+		makeButtonListeners();
+		hideViews();
+	}
+	
+	private void makeButtonListeners() {
+		Button connect = (Button)findViewById(R.id.aggregate_activity_connect);
+		connect.setOnClickListener(new connectListener());
 		
 		Button createUser = (Button)findViewById(R.id.aggregate_activity_createUser);
 		createUser.setOnClickListener(new createUserListener());
 		
-		Button connect = (Button)findViewById(R.id.aggregate_activity_connect);
-		connect.setOnClickListener(new connectListener());
+		Button deleteUser = (Button)findViewById(R.id.aggregate_activity_deleteUser);
+		deleteUser.setOnClickListener(new deleteUserListener());
 		
-		Button upload = (Button)findViewById(R.id.aggregate_activity_upload);
-		upload.setOnClickListener(new uploadListener());
+		Button uploadTable = (Button)findViewById(R.id.aggregate_activity_uploadTable);
+		uploadTable.setOnClickListener(new uploadListener());
 		
-		Button download = (Button)findViewById(R.id.aggregate_activity_download);
-		download.setOnClickListener(new downloadListener());
+		Button downloadTable = (Button)findViewById(R.id.aggregate_activity_downloadTable);
+		downloadTable.setOnClickListener(new downloadListener());
 		
-		Button delete = (Button)findViewById(R.id.aggregate_activity_delete);
-		delete.setOnClickListener(new deleteListener());
+		Button deleteTable = (Button)findViewById(R.id.aggregate_activity_deleteTable);
+		deleteTable.setOnClickListener(new deleteListener());
 		
-//		String pwd = ((EditText)findViewById(R.id.aggregate_activity_pwd)).getText().toString();
-//		String url = ((EditText)findViewById(R.id.aggregate_activity_url)).getText().toString();
-//		String def = "http://the-dylan-price.appspot.com/";
-		
+		Button getList = (Button)findViewById(R.id.aggregate_activity_getAggregateTables_button);
+		getList.setOnClickListener(new getTableList());
+	}
+	
+	private void hideViews() {
+		findViewById(R.id.aggregate_activity_createUser).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_deleteUser).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_user_uri_text).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_uploadTable).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_downloadTable).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_deleteTable).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_getAggregateTables_text).setVisibility(View.GONE);
+		this.aggregateTables.setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_getAggregateTables_button).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_userName_text).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_userName).setVisibility(View.GONE);
+		findViewById(R.id.aggregate_activity_getPhoneTables_text).setVisibility(View.GONE);
+		this.phoneTables.setVisibility(View.GONE);
+	}
+	
+	private void makeVisible() {
+		System.out.println("made it to makeVisible");
+		findViewById(R.id.aggregate_activity_createUser).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_deleteUser).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_user_uri_text).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_uploadTable).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_downloadTable).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_deleteTable).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_getAggregateTables_text).setVisibility(View.VISIBLE);
+		this.aggregateTables.setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_getAggregateTables_button).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_userName_text).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_userName).setVisibility(View.VISIBLE);
+		findViewById(R.id.aggregate_activity_getPhoneTables_text).setVisibility(View.VISIBLE);
+		this.phoneTables.setVisibility(View.VISIBLE);
 	}
 	
 	private void fillPhoneTableSpinnerList() {
-		this.phoneTables = (Spinner)findViewById(R.id.aggregate_activity_tables);
-		this.phoneTables.setId(TABLESPIN_ID);
 		Map<String, String> tableMap = (new TableList()).getAllTableList();
 		phoneTableNames = new String[tableMap.size()];
 		int counter = 0;
-		for(String tableName : tableMap.keySet()) {
-			System.out.println(tableName);
-			phoneTableNames[counter] = tableMap.get(tableName);
+		for(String tableId : tableMap.keySet()) {
+			System.out.println("tableId"+tableId);
+			phoneTableNames[counter] = tableMap.get(tableId);
 			counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -105,21 +167,24 @@ public class Aggregation extends Activity {
 		this.phoneTables.setSelection(0);
 	}
 
-	private String getCurrentTableName() {
+	private String getCurrentPhoneTableName() {
 		int pos = this.phoneTables.getSelectedItemPosition();
-//		String tableName = "";
 		if (this.phoneTableNames.length != 0) {
 			return phoneTableNames[pos];
 		} else {
-			showDialog(TABLE_EXISTS_DIALOG);
+			showDialog(TABLE_NOEXIST);
 			return null;
 		}
-//		TableList tList = new TableList();
-//		if(!tList.isTableExist(tableName)) {
-//			showDialog(TABLE_EXISTS_DIALOG);
-//			return null;
-//		}
-//		return tableName;
+	}
+	
+	private String getCurrentAggregateTableName() {
+		int pos = this.aggregateTables.getSelectedItemPosition();
+		if (this.aggregateTableNames.length != 0) {
+			return aggregateTableNames[pos];
+		} else {
+			showDialog(TABLE_NOEXIST);
+			return null;
+		}
 	}
 	
 	/**
@@ -144,75 +209,154 @@ public class Aggregation extends Activity {
 	@Override
 	protected Dialog onCreateDialog(int id) {
 		switch(id) {
-		case DELETETABLE_FAILED_DIALOG:
-			return getDialog("Failed to delete table.");
-		case CREATETABLE_FAILED_DIALOG:
-			return getDialog("Failed to create table.");
-		case TABLE_EXISTS_DIALOG:
-			return getDialog("Table does not exist.");
-		case CONNECTION_FAILED_DIALOG:
-			return getDialog("Failed to connect to given url.");
-		case INSERTROWS_FAILED_DIALOG:
-			return getDialog("Failed to insert rows to table.");
-//		case UPLOAD_PROGRESS_DIALOG:
-//			return getDialog("Uploading in progress...");
-//		case DELETE_PROGRESS_DIALOG:
-//			return getDialog("Deletion in progress...");
+//		case MESSAGE_DIALOG:
+//			return getDialog("");
 		case IN_PROGRESS_DIALOG:
 			return getDialog("In progress...");
-		case LISTTABLE_FAILED_DIALOG:
-			return getDialog("Failed to load list of tables on aggregate.");
-		case CREATEUSER_FAILED_DIALOG:
-			return getDialog("Failed to create new user.");
+		case UPLOADTABLE_FAILED:
+			return getDialog("Failed to upload table.");
+		case UPLOADTABLE_SUCCESS:
+			return getDialog("Table uploaded.");
+		case DOWNLOADTABLE_FAILED:
+			return getDialog("Failed to download table.");
+		case DOWNLOADTABLE_SUCCESS:
+			return getDialog("Table downloaded.");
+		case CREATEUSER_FAILED:
+			return getDialog("Failed to create user.");
+		case CREATEUSER_SUCCESS:
+			return getDialog("User created.");
+		case DELETEUSER_FAILED:
+			return getDialog("Failed to delete user and assosciated tables.");
+		case DELETEUSER_SUCCESS:
+			return getDialog("User and assosciated tables deleted.");
+		case GETTABLELIST_FAILED:
+			return getDialog("Failed to get table list.");
+		case GETTABLELIST_SUCCESS:
+			return getDialog("Table lists retrieved.");
+		case GETUSERURI_FAILED:
+			return getDialog("Failed to acquire user uri.");
+		case GETUSERURI_SUCCESS:
+			return getDialog("User uri acquired.");
+		case CONNECTION_FAILED:
+			return getDialog("Failed to connect.");
+		case CONNECTION_SUCCESS:
+			return getDialog("Connected.");
+		case DELETETABLE_FAILED:
+			return getDialog("Failed to delete table.");
+		case DELETETABLE_SUCCESS:
+			return getDialog("Table deleted.");
 		default:
 			throw new IllegalArgumentException();
 		}
 	}
+
+	private class connectListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			connectUser();
+		}
+	}
 	
-	private void uploadSubmission() {
-		String tableName = this.getCurrentTableName();
+	private class downloadListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			downloadTable();
+		}
+	}
+
+	private class deleteListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			deleteTable();
+		}
+	}
+	
+	private class createUserListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			createUser();
+		}
+	}
+	
+	private class deleteUserListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			deleteUser();
+		}
+	}
+
+	private class uploadListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			uploadTable();
+		}
+	}
+	
+	private class getTableList implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			getTablesOnAggregate();
+		}
+	}
+	
+	private void uploadTable() {
+		String tableName = this.getCurrentPhoneTableName();
 		String tableID = (new Integer(new TableList().getTableID(tableName))).toString();
 		Table current = (new DataTable(tableID)).getCompleteTable();
-//		System.out.println("tableName: " + tableName);
-//		System.out.println("tableId: " + tableID);
-//		System.out.println("height: " + current.getHeight() + " Width: " + current.getWidth() + "data: " + current.getData() + "footer: " +current.getFooter() + "header: " +current.getHeader());
 		
 		showDialog(IN_PROGRESS_DIALOG);
 		this.createTable(conn, tableName, tableID, current);
 		this.insertRows(conn, tableID, current);
 		dismissDialog(IN_PROGRESS_DIALOG);
 	}
-	
+
 	private void insertRows(AggregateConnection conn, String tableID, Table table) { 
 		List<Row> rows = new ArrayList<Row>();
-		ArrayList<Integer> rowIds = table.getRowID();
-        for (int i = 0; i < table.getHeight(); i++) {
-        	System.out.println("Creating row:");
-        	System.out.print("rowid: "+rowIds.get(i).toString() + " ");
-        	Row row = new Row(rowIds.get(i).toString());
-        	ArrayList<String> rowValues = table.getRow(i);
-        	for (int j = 0; j < table.getWidth(); j++) {
-        		String name = table.getColName(i);
-        		if (!name.matches("[0-9a-zA-Z_].*")) {
-    				name = name.replaceAll("[^a-zA-Z0-9]", "");
-    			}
-    			name = "COL_" + name;
-    			System.out.print("columnName: " + name + " dataz:" + rowValues.get(i)+ " ");
-        		row.setColumn(name, rowValues.get(j));
-        	}
-        	System.out.println();
-//        	System.out.println(row.toString());
-        	rows.add(row);
-        }
+		ArrayList<String> data = table.getData();
+		ArrayList<String> header = table.getHeader();
+		ArrayList<Integer> rowIDs = table.getRowID();
+		
+		int width = table.getWidth();
+		for (int i = 0; i < table.getHeight(); i++) {
+			Row row = new Row("" + rowIDs.get(i));
+			for (int j = 0; j < width; j++) {
+				row.setColumn(header.get(j), data.get(i * width + j));
+			}
+			rows.add(row);
+		}
         
-        //check exceptions and work accordingly to those
+//		for (Row row: rows) {
+//			System.out.println("rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+//		}
+		
+//        check exceptions and work accordingly to those
         try {
 			conn.insertRows(userId, tableID, rows);
+		} catch (RowAlreadyExistsException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(UPLOADTABLE_FAILED);
+			System.out.println("row already exists");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (TableDoesNotExistException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(UPLOADTABLE_FAILED);
+			System.out.println("table does not exist");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
 		} catch (Exception e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
-			showDialog(INSERTROWS_FAILED_DIALOG);
+			showDialog(UPLOADTABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 			return;
 		}
+		showDialog(UPLOADTABLE_SUCCESS);
 	}
 	
 	private void createTable(AggregateConnection conn, String tableName, String tableID, Table table) {
@@ -225,34 +369,34 @@ public class Aggregation extends Activity {
 				name = name.replaceAll("[^a-zA-Z0-9]", "");
 			}
 			name = "COL_" + name;
-			Column col = new Column(name, DataType.STRING, false);
+			Column col = new Column(name, DataType.STRING, true);
 			columns.add(col);
-//			System.out.println(current.getColName(i));
-//			System.out.println("column: " + col.toString());
 		}
-		System.out.println("columns: " + columns.toString());
+//		System.out.println("columns: " + columns.toString());
 		
 		//check exceptions and work accordingly to those
 		try {
 			conn.createTable(userId, tableID, tableName, columns);
+		} catch (TableAlreadyExistsException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(UPLOADTABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
 		} catch (Exception e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
-			showDialog(CREATETABLE_FAILED_DIALOG);
-			e.printStackTrace();
+			showDialog(UPLOADTABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 			return;
 		}
+		showDialog(UPLOADTABLE_SUCCESS);
 	}
 	
-	private class uploadListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			uploadSubmission();
-		}
-	}
-	
-	private void deleteSubmission() {
-		
-		String tableName = this.getCurrentTableName();
+	private void deleteTable() {
+		String tableName = this.getCurrentPhoneTableName();
 		String tableId = (new Integer(new TableList().getTableID(tableName))).toString();
 		
 		showDialog(IN_PROGRESS_DIALOG);
@@ -260,81 +404,86 @@ public class Aggregation extends Activity {
 			conn.deleteTable(userId, tableId);
 		} catch (Exception e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
-			showDialog(DELETETABLE_FAILED_DIALOG);
+			showDialog(DELETETABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 			return;
 		}
 		dismissDialog(IN_PROGRESS_DIALOG);
-	}
-	
-	private class deleteListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			deleteSubmission();
-		}
-	}
-	
-	private class createUserListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			createUser();
-		}
+		showDialog(DELETETABLE_SUCCESS);
 	}
 
 	public void createUser() {
-		String userName = ((EditText)findViewById(R.id.aggregate_activity_userName)).toString();
+		String userName = ((EditText)findViewById(R.id.aggregate_activity_userName)).getText().toString();
 		
 		showDialog(IN_PROGRESS_DIALOG);
+		
 		try {
 			conn.createUser(userId, userName);
+		} catch (UserAlreadyExistsException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(CREATEUSER_FAILED);
+			System.out.println("user already exists.");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
 		} catch (Exception e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
-			showDialog(CREATEUSER_FAILED_DIALOG);
+			showDialog(CREATEUSER_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 			return;
 		}
 		dismissDialog(IN_PROGRESS_DIALOG);
-	}
-	
-	private class connectListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			connectUser();
-		}
-	}
-	
-	private class downloadListener implements OnClickListener {
-		@Override
-		public void onClick(View v) {
-			downloadSubmission();
-		}
+		showDialog(CREATEUSER_SUCCESS);
+		getUserURI();
 	}
 
 	public void connectUser() {
 		String url = "http://" + 
-		((EditText)findViewById(R.id.aggregate_activity_url)).getText().toString()
+//		((EditText)findViewById(R.id.aggregate_activity_url)).getText().toString()
+		"the-dylan-price"
 		+ ".appspot.com/";
 		setConnection(url);
-		
+		if (conn == null) {
+			return;
+		}
+		makeVisible();
+	}
+	
+
+	public void getTablesOnAggregate() {
+		//get list of tables on aggregate
 		org.opendatakit.aggregate.odktables.client.TableList aggTblLst;
 		showDialog(IN_PROGRESS_DIALOG);
 		try {
 			aggTblLst = conn.listTables();
 		} catch (Exception e) {
 			dismissDialog(IN_PROGRESS_DIALOG);
-			showDialog(LISTTABLE_FAILED_DIALOG);
+			showDialog(GETTABLELIST_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 			return;
 		}
 		dismissDialog(IN_PROGRESS_DIALOG);
-		
-		this.aggregateTables = (Spinner)findViewById(R.id.aggregate_activity_aggregateTables);
-		this.aggregateTables.setId(AGGREGATETABLESPIN_ID);
+		showDialog(GETTABLELIST_SUCCESS);
+		fillAggTableListSpinner(aggTblLst);
+	}
+
+	
+	private void fillAggTableListSpinner(org.opendatakit.aggregate.odktables.client.TableList aggTblLst) {
 		this.aggregateTableNames = new String[aggTblLst.size()];
 		int counter = 0;
 		Iterator<TableEntry> iter = aggTblLst.iterator();
 		while (iter.hasNext()) {
 			TableEntry entry = iter.next();
-//			System.out.println(tableName);
-			this.aggregateTableNames[counter] = entry.getTableId() 
-				+ " (URI: " + entry.getUserUri() + ")";
+			this.aggregateTableNames[counter] = entry.getTableId()
+				;
+//				+ " (URI: " + entry.getUserUri() + ", Username: " + entry.getUserName() + ")";
 			counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -350,12 +499,129 @@ public class Aggregation extends Activity {
 		try {
 			conn = new AggregateConnection(
 					new URI(url));
+			showDialog(CONNECTION_SUCCESS);
 		} catch (URISyntaxException e) {
-			showDialog(CONNECTION_FAILED_DIALOG);
+			showDialog(CONNECTION_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
 		}
 		this.conn = conn;
+		getUserURI();
 	}
 
-	public void downloadSubmission() {
+	private void getUserURI() {
+		TextView text = (TextView) findViewById(R.id.aggregate_activity_user_uri_text);
+		String uri = "Phone ID on aggregate: ";
+		showDialog(IN_PROGRESS_DIALOG);
+		try {
+			uri += conn.getUserUri(userId);
+		} catch (UserDoesNotExistException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			System.out.println("User does not exist.");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (Exception e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		dismissDialog(IN_PROGRESS_DIALOG);
+		text.setText(uri);
+	}
+
+	public void downloadTable() {
+		String tableName = this.getCurrentAggregateTableName();
+		List<Row> rows;
+		showDialog(IN_PROGRESS_DIALOG);
+		try {
+			rows = conn.getRows(userURI, tableName);
+		} catch (TableDoesNotExistException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(DOWNLOADTABLE_FAILED);
+			System.out.println("table does not exist");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (UserDoesNotExistException e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(DOWNLOADTABLE_FAILED);
+			System.out.println("user does not exist");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (Exception e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(DOWNLOADTABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		
+		TableList lst = new TableList();
+		//might already exist, fix this
+		lst.registerNewTable(tableName);
+		int tableId = lst.getTableID(tableName);
+		DataTable table = new DataTable("" + tableId);
+		for (Row row: rows) {
+			Map<String, String> temp3 = row.getColumnValuePairs();
+			int size = temp3.keySet().size();
+			String[] headers = new String[size];
+			String[] values = new String[size];
+			int counter = 0;
+			for (String s: temp3.keySet()) {
+				headers[counter] = s;
+				values[counter] = temp3.get(s);
+				counter++;
+			}
+			ContentValues vals = getValues(headers, values);
+			table.addRow(vals, null, null);
+		}
+		Table tbl = table.getTable();
+		System.out.println(tbl.getData());
+		
+		System.out.println("table retrieved: ");
+		for (Row r: rows) {
+			System.out.print("row: " + r.getRowId()+", ");
+			Map<String, String> columns = r.getColumnValuePairs();
+			System.out.print("ColumnName/Value:");
+			for (String s: columns.keySet()) {
+				System.out.print(" "+ s + "/" + columns.get(s));
+			}
+			System.out.println();
+		}
+		dismissDialog(IN_PROGRESS_DIALOG);
+		showDialog(DOWNLOADTABLE_SUCCESS);
+	}
+	
+	private ContentValues getValues(String[] header, String[] row) {
+		ContentValues vals = new ContentValues();
+		for(int i=0; i<header.length; i++) {
+			String head = "`" + header[i] + "`";
+			if(!head.equals("_phoneNumberIn") && !head.equals("_timestamp")) {
+				vals.put(head, row[i]);
+			}
+		}
+		return vals;
+	}
+	
+	public void deleteUser() {
+		showDialog(IN_PROGRESS_DIALOG);
+		try {
+			conn.deleteUser(userId);
+		} catch (Exception e) {
+			dismissDialog(IN_PROGRESS_DIALOG);
+			showDialog(DELETEUSER_FAILED);
+			return;
+		}
+		showDialog(DELETEUSER_SUCCESS);
+		getUserURI();
 	}
 }
