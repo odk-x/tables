@@ -4,10 +4,13 @@ import java.io.File;
 import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Activity.importexport.IETabActivity.PickFileButtonListener;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVExporter;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
@@ -40,6 +43,8 @@ public class ExportCSVActivity extends IETabActivity {
 	private CheckBox incPNCheck;
 	/* the checkbox for including timestamps */
 	private CheckBox incTSCheck;
+	/* the pick file button */
+	private Button pickFileButton;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -116,6 +121,10 @@ public class ExportCSVActivity extends IETabActivity {
 		filenameValField.setId(FILENAMEVAL_ID);
 		fn.addView(filenameValField);
 		v.addView(fn);
+        pickFileButton = new Button(this);
+        pickFileButton.setText("Pick File");
+        pickFileButton.setOnClickListener(new PickFileButtonListener());
+        v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(R.color.black);
 		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
@@ -135,13 +144,7 @@ public class ExportCSVActivity extends IETabActivity {
 	 * Attempts to export a table.
 	 */
 	private void exportSubmission() {
-		String filename = filenameValField.getText().toString();
-		// TODO: deal with API version issues and find a better way to do this
-		File file = new File(
-				Environment.getExternalStorageDirectory().getPath() +
-				"/data/data/yoonsung.odk.spreadsheet/files/");
-		file.mkdirs();
-		file = new File(file.getPath() + "/" + filename);
+		File file = new File(filenameValField.getText().toString());
 		String tableName = tableNames[tableSpin.getSelectedItemPosition()];
 		String tableID =
 			(new Integer(new TableList().getTableID(tableName))).toString();
@@ -155,6 +158,15 @@ public class ExportCSVActivity extends IETabActivity {
 			return;
 		}
 	}
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent data) {
+        if(resultCode == RESULT_CANCELED) {return;}
+        Uri fileUri = data.getData();
+        String filepath = fileUri.getPath();
+        filenameValField.setText(filepath);
+    }
 	
 	private class ButtonListener implements OnClickListener {
 		@Override

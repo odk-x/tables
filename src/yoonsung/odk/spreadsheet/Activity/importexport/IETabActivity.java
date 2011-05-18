@@ -5,6 +5,9 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 /**
  * An abstract parent class for import/export activities.
@@ -42,6 +45,15 @@ public abstract class IETabActivity extends Activity {
 			throw new IllegalArgumentException();
 		}
 	}
+    
+    protected class PickFileButtonListener implements OnClickListener {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent("org.openintents.action.PICK_FILE");
+            intent.putExtra("org.openintents.extra.TITLE", "Please select a file");
+            startActivityForResult(intent, 1);
+        }
+    }
 	
 	/**
 	 * Creates a simple alert dialog.
