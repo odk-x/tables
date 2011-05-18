@@ -3,10 +3,24 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Database.TableProperty;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,6 +55,8 @@ public class SpreadSheet extends TableActivity {
 	private static final int SET_FOOTER_OPT = 16;
 	private static final int UNSELECT_COLUMN = 17;
 	private static final int OPEN_FILE = 18;
+	// Activity IDs
+	private static final int ODK_COLLECT_FORM_HANDLE = 100;
 	
 	// context menu creation listeners
 	private View.OnCreateContextMenuListener regularOccmListener;
@@ -52,6 +68,8 @@ public class SpreadSheet extends TableActivity {
 	                              // context menu was created for
 	private int lastFooterMenued; // the ID of the last footer cell that a
 	                              // context menu was created for
+	
+	private String ODKCollectFormInstancePath; // Instance path for ODK Collect Form
 	
 	/**
 	 * Called when the activity is first created.
@@ -127,7 +145,7 @@ public class SpreadSheet extends TableActivity {
 		switch(item.getItemId()) {
 		case OPEN_FILE: // open a file for file type cell
 			String path = table.getCellValue(selectedCellID);
-			handleOpenFile(path);
+			handleOpenForm(path);
 			return true;
 		case SELECT_COLUMN: // index on this column
 			indexTableView(selectedCellID % table.getWidth());
@@ -184,16 +202,43 @@ public class SpreadSheet extends TableActivity {
 	 * Handle the open file request. Availabe to this activity only.
 	 */
 	private void handleOpenFile(String path) {
-		// Open up program
+
+	}
+	
+	private void handleOpenForm(String formPath) {
+		// Open up Collect
 		Intent i = new Intent("org.odk.collect.android.action.FormEntry");
-
-		// formPath is the path of the xform
-		i.putExtra("formpath", path);
-
-		// instancepath is the path of result
-		String instancePath = path.replace(".xml", "_Instance.xml");
+		
+		// Form Path
+		i.putExtra("formpath", formPath);
+		
+		// Extract Form Name
+		String formName = null;
+		Pattern pattern = Pattern.compile("[a-z0-9A-Z-_ ]*[.]xml");
+		Matcher matcher = pattern.matcher(formPath);
+		if (matcher.find()) {
+			formName = matcher.group().replace(".xml", "");
+		} else {
+			// Wrong file name or type
+			return;
+		}
+		
+		// Instance Path
+		File externalStorage = Environment.getExternalStorageDirectory();
+		String sdcardPath = externalStorage.getAbsolutePath();
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+		String instanceName = sdf.format(cal.getTime());
+		String instanceDirPath = sdcardPath + "/odk/instances/" + formName + "_" + instanceName;
+		Log.e("dirpath", instanceDirPath);
+		// Create instance Dir
+		File dir = new File(instanceDirPath);
+		dir.mkdirs();
+		// Create instance File
+		String instancePath = instanceDirPath + "/" + formName + "_" + instanceName + ".xml";
+		Log.e("instpath", instancePath);
 		try {
-			File formF = new File(path);
+			File formF = new File(formPath);
 			File instanceF = new File(instancePath);
 			if (!instanceF.exists()) {
 				FileChannel src = new FileInputStream(formF).getChannel();
@@ -203,22 +248,69 @@ public class SpreadSheet extends TableActivity {
 				dst.close();
 			}
 		} catch (Exception e) {}
+		i.putExtra("instancepath", instancePath);
 		
-		i.putExtra("instancepath", "/sdcard/TestForm_Instance.xml");
-
-		//startActivityForResult(i, 1);
-		startActivity(i);
+		// Start the intent for call back
+		ODKCollectFormInstancePath = instancePath;
+		startActivityForResult(i, ODK_COLLECT_FORM_HANDLE);
 	}
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	    if (requestCode == 1) {
-	        if (resultCode == RESULT_OK) {
-	            // todo
-	        	Log.e("result back", data.toString());
-	        }
+	    if (requestCode == ODK_COLLECT_FORM_HANDLE) {
+	    	parseXMLAndUpdateForODKCollect(ODKCollectFormInstancePath);
 	    }
 	}
+	
+    private void parseXMLAndUpdateForODKCollect(String path){
+    	Log.e("CheckingThePath", path);
+    	
+        // Get Col List
+        TableProperty tableProp = new TableProperty(tableID);
+        final List<String> currentColList = tableProp.getColOrderArrayList();
+        
+        try {
+        	File file = new File(path);
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(file);
+            doc.getDocumentElement().normalize();                           
+
+            ContentValues cv = new ContentValues();                                 
+            
+            // Browse content in xml file
+            int addedvalue = 0;
+         
+            for(int s = 0; s < currentColList.size(); s++) {                   
+            	Log.e("colprint", currentColList.get(s));
+            	NodeList nodeLst = doc.getElementsByTagName(currentColList.get(s));
+            	Node fstNode = nodeLst.item(0);
+                if (fstNode != null && fstNode.getNodeType() == Node.ELEMENT_NODE) {                                   
+                    Element fstElmnt =  (Element) fstNode;                                                                          
+                    NodeList lstNm = fstElmnt.getChildNodes();                                              
+                    if(lstNm.item(0) != null) {
+                            addedvalue++;
+                            cv.put(currentColList.get(s), ((Node) lstNm.item(0)).getNodeValue());   
+                    } else {
+                            cv.put(currentColList.get(s), "");                                                      
+                    }
+                }    
+            }       
+                                            
+            // Update to database
+            if(addedvalue > 0){
+                //dt.addRow(cv, "", "");
+            	int rowNum = table.getRowNum(selectedCellID);
+				int rowID = table.getTableRowID(rowNum);
+				dt.updateRow(cv, rowID);
+            	Log.e("parseXML", cv.toString());
+            }
+                                
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        
+    }
 	
 	/**
 	 * Prepares the context menu creation listeners.
