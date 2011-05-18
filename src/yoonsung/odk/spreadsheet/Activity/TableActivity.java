@@ -766,15 +766,16 @@ public abstract class TableActivity extends Activity {
 		});
 	}
 	
+	/*
+	 * Create simple pops up messages
+	 */
 	protected void makeToast(String message) {
 		Toast.makeText((Context) this, message, 
 				Toast.LENGTH_LONG).show();		
 	}
 
-	
 	/**
-	 * Prepares the add row button listener.
-	 * TODO: change this to use the Collect launcher
+	 * Prepares the add row button listener calling ODK Collect form.
 	 */
 	protected void prepAddRowButtonListener() {
 		
@@ -804,9 +805,8 @@ public abstract class TableActivity extends Activity {
 	                isCollectForm = true;			        
 			        startActivityForResult(i, 123);			        
 			    }catch (ActivityNotFoundException e){
-			    	// TODO: create alert box: install ODK Collect 1.1.5
-			    	makeToast("Error: Require ODK Collect Application");
-			    	
+			    	backUpAddRowDialog();
+			    	prepBackUpAddRowButtonListener();
 			    }								
 			}
 			
@@ -859,152 +859,162 @@ public abstract class TableActivity extends Activity {
 				} catch (IOException e) {			
 					e.printStackTrace();
 				}
-		    	
 		    }
-
-			
 		});
+	}
 
+	
+	/* 
+	 * Prepares add row button only when ODK Collect is not installed
+	 */
+	protected void prepBackUpAddRowButtonListener() {
 		
-		
-        /*ImageButton ar = (ImageButton)findViewById(R.id.add_row);
+		ImageButton ar = (ImageButton)findViewById(R.id.add_row);
 		ar.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				Log.d("REFACTOR SSJ", "addRow clicked");
-				// Get Col List
-				TableProperty tableProp = new TableProperty(tableID);
-				final List<String> currentColList = tableProp.getColOrderArrayList();
+				backUpAddRowDialog();
+			}
+		});		
+	}
+
+	/* 
+	 * Construct dialog box for back up add row 
+	 */
+	protected void backUpAddRowDialog() {
+		// Get Col List
+		TableProperty tableProp = new TableProperty(tableID);
+		final List<String> currentColList = tableProp.getColOrderArrayList();
+		
+		// No column exists
+		if (currentColList.size() == 0) {
+			return;
+		}
+		
+		// Reset
+		currentAddRowColPos = 0;
+		
+		// Create a buffer
+		currentAddRowBuffer = new HashMap<String, String>();
+		
+		final Dialog dia = new Dialog(TableActivity.this);
+		dia.setContentView(R.layout.add_row_dialog);
+		dia.setTitle("Add New Row");
+		
+		TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+		colName.setText(currentColList.get(currentAddRowColPos));
+		
+		TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+		prog.setText("1 / " + currentColList.size());
+		
+		Button prev = (Button)dia.findViewById(R.id.add_row_prev);
+		prev.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (currentAddRowColPos > 0) {
+					// Save what's in edit box
+					EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+					String txt = edit.getText().toString();
+					txt = txt.trim();
+					currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+					
+					// Update column name with prev
+					TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+					colName.setText(currentColList.get(currentAddRowColPos-1));
+					currentAddRowColPos--;
+					
+					// Update progress 
+					TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+					
+					// Refresh Editbox
+					String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+					if (nextTxt == null) {
+						edit.setText("");
+					} else {
+						edit.setText(nextTxt);
+					}
+				}
+			}
+		});
+		
+		
+		Button save = (Button)dia.findViewById(R.id.add_row_save);
+		save.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// Save what's in edit box
+				EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+				String txt = edit.getText().toString();
+				currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
 				
-				// No column exists
-				if (currentColList.size() == 0) {
-					return;
+				// Update to database
+				ContentValues cv = new ContentValues();
+				for (String key : currentAddRowBuffer.keySet()) {
+					cv.put(key, currentAddRowBuffer.get(key));
+				}
+
+				try {
+				    dt.addRow(cv, "", "");
+				} catch(IllegalArgumentException e) {
+				    // TODO: something when the input is invalid for the columns
+				    dia.cancel();
 				}
 				
-				// Reset
-				currentAddRowColPos = 0;
+				Log.e("Buffer Hash", currentAddRowBuffer.toString());
 				
-				// Create a buffer
-				currentAddRowBuffer = new HashMap<String, String>();
-				
-				final Dialog dia = new Dialog(TableActivity.this);
-				dia.setContentView(R.layout.add_row_dialog);
-				dia.setTitle("Add New Row");
-				
-				TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-				colName.setText(currentColList.get(currentAddRowColPos));
-				
-				TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-				prog.setText("1 / " + currentColList.size());
-				
-				Button prev = (Button)dia.findViewById(R.id.add_row_prev);
-				prev.setOnClickListener(new View.OnClickListener() {
-					
-					@Override
-					public void onClick(View v) {
-						if (currentAddRowColPos > 0) {
-							// Save what's in edit box
-							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
-							String txt = edit.getText().toString();
-							txt = txt.trim();
-							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
-							
-							// Update column name with prev
-							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-							colName.setText(currentColList.get(currentAddRowColPos-1));
-							currentAddRowColPos--;
-							
-							// Update progress 
-							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
-							
-							// Refresh Editbox
-							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
-							if (nextTxt == null) {
-								edit.setText("");
-							} else {
-								edit.setText(nextTxt);
-							}
-						}
-					}
-				});
-				
-				
-				Button save = (Button)dia.findViewById(R.id.add_row_save);
-				save.setOnClickListener(new View.OnClickListener() {
-					
-					@Override
-					public void onClick(View v) {
-						// Save what's in edit box
-						EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
-						String txt = edit.getText().toString();
-						currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
-						
-						// Update to database
-						ContentValues cv = new ContentValues();
-						for (String key : currentAddRowBuffer.keySet()) {
-							cv.put(key, currentAddRowBuffer.get(key));
-						}
-
-						try {
-						    dt.addRow(cv, "", "");
-						} catch(IllegalArgumentException e) {
-						    // TODO: something when the input is invalid for the columns
-						    dia.cancel();
-						}
-						
-						Log.e("Buffer Hash", currentAddRowBuffer.toString());
-						
-						refreshView();
-						dia.cancel();
-					}
-				});
-				
-				Button next = (Button)dia.findViewById(R.id.add_row_next);
-				next.setOnClickListener(new View.OnClickListener() {
-					
-					@Override
-					public void onClick(View v) {
-						if (currentAddRowColPos < currentColList.size()-1) {
-							// Save what's in edit box
-							EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
-							String txt = edit.getText().toString();
-							currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
-							
-							// Update column name with next
-							TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-							colName.setText(currentColList.get(currentAddRowColPos+1));
-							currentAddRowColPos++;
-							
-							// Update progress 
-							TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-							prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
-							
-							// Refresh Editbox
-							String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
-							if (nextTxt == null) {
-								edit.setText("");
-							} else {
-								edit.setText(nextTxt);
-							}
-						}
-					}
-				});
-				
-				Button cancle = (Button)dia.findViewById(R.id.add_row_cancle);
-				cancle.setOnClickListener(new View.OnClickListener() {
-					
-					@Override
-					public void onClick(View v) {
-						dia.cancel();
-					}
-				});
-				
-				dia.show();
+				refreshView();
+				dia.cancel();
 			}
-		});*/
+		});
+		
+		Button next = (Button)dia.findViewById(R.id.add_row_next);
+		next.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (currentAddRowColPos < currentColList.size()-1) {
+					// Save what's in edit box
+					EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
+					String txt = edit.getText().toString();
+					currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+					
+					// Update column name with next
+					TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
+					colName.setText(currentColList.get(currentAddRowColPos+1));
+					currentAddRowColPos++;
+					
+					// Update progress 
+					TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
+					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+					
+					// Refresh Editbox
+					String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+					if (nextTxt == null) {
+						edit.setText("");
+					} else {
+						edit.setText(nextTxt);
+					}
+				}
+			}
+		});
+		
+		Button cancle = (Button)dia.findViewById(R.id.add_row_cancle);
+		cancle.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				dia.cancel();
+			}
+		});
+		
+		dia.show();
 	}
+	
+	
 	
 	/**
 	 * To be called when a regular cell is clicked.
