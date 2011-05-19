@@ -141,6 +141,7 @@ public class SmsReceiver extends BroadcastReceiver {
         try {
 			alldata = ps.parseSMS(msg, hasPassword);
 		} catch (InvalidQueryException e) {
+		    e.printStackTrace();
 			Log.d("sra", "err:" + e.getMessage());
 			return;
 		}

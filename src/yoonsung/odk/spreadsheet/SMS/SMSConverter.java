@@ -97,19 +97,9 @@ public class SMSConverter {
 		
 		for(String key : result.keySet()) {
 			if(("Date Range").equals(cp.getType(key))) {
-				if(!durMap.containsKey(key)) {
-					throw new InvalidQueryException(
-	                        InvalidQueryException.INVALID_FORMAT,
-	                        tokens[0].substring(1), key, null);
-				}
-				Calendar start = getTimeAddCal(result.get(key));
-				start.set(Calendar.SECOND, 0);
-				Calendar end = Calendar.getInstance();
-				end.setTime(start.getTime());
-				end.add(Calendar.SECOND, intvlStrToSec(durMap.get(key)));
-				String val = dbDateTime.format(start.getTime()) + "/" +
-						dbDateTime.format(end.getTime());
-				result.put(key, val);
+                DataUtils du = DataUtils.getInstance();
+                Date[] d = du.parseDateRange(result.get(key));
+                result.put(key, du.formatDateRangeForDB(d));
 			} else if(("Date").equals(cp.getType(key))) {
 			    DataUtils du = DataUtils.getInstance();
 			    Date d = du.parseDateTime(result.get(key));

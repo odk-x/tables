@@ -161,21 +161,11 @@ public class DataTable {
             String val = entry.getValue().toString();
 	        String colType = cp.getType(key);
 	        if("Numeric Value".equals(colType)) {
-	            if(!val.matches("\\d+")) {
-	                throw new IllegalArgumentException();
+	            try {
+	                new Double(val);
+	            } catch(NumberFormatException e) {
+                    throw new IllegalArgumentException();
 	            }
-	        } else if("Date".equals(colType)) {
-	            Date d = du.parseDateTime(val);
-	            if(d == null) {
-	                throw new IllegalArgumentException();
-	            }
-	            values.put(key, du.formatDateTimeForDB(d));
-	        } else if("Date Range".equals(colType)) {
-	            Date[] dr = du.parseDateRange(val);
-	            if(dr == null) {
-	                throw new IllegalArgumentException();
-	            }
-	            values.put(key, du.formatDateRangeForDB(dr));
 	        }
 	    }
 	    
