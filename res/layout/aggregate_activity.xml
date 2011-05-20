@@ -19,6 +19,7 @@
 			android:background="#FFFFFF">
 	
 			<TextView
+				android:id="@+id/aggregate_activity_url_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
