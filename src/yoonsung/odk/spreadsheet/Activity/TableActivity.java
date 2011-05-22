@@ -360,6 +360,15 @@ public abstract class TableActivity extends Activity {
 	}
 	
 	/**
+	 * Opens the display preferences dialog.
+	 * @param colName the column name
+	 */
+	protected void openDisplayPrefsDialog(String colName) {
+	    DisplayPrefs dp = new DisplayPrefs(this, tableID);
+	    (new DisplayPrefsDialog(this, dp, colName)).show();
+	}
+	
+	/**
 	 * Opens the footer mode option dialog.
 	 * @param colName the column name
 	 */

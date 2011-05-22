@@ -1,16 +1,12 @@
 package yoonsung.odk.spreadsheet.DataStructure;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.preference.PreferenceManager;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty.ColumnType;
 
@@ -27,15 +23,65 @@ public class DisplayPrefs {
         dbm = new DisplayPrefsDBManager(context);
     }
     
-    public void addRule(String colName, int compType, String val, int color) {
+    public List<ColColorRule> getColorRulesForCol(String colName) {
+        List<ColColorRule> ruleList = new ArrayList<ColColorRule>();
+        // querying the database
+        String[] cols = {"id", "comp", "val", "color"};
+        String selection = "tableid = ? AND colname = ?";
+        String[] selectionArgs = {tableId, colName};
+        SQLiteDatabase db = dbm.getReadableDatabase();
+        Cursor cs = db.query("colors", cols, selection, selectionArgs, null,
+                null, null, null);
+        int idIndex = cs.getColumnIndexOrThrow("id");
+        int compIndex = cs.getColumnIndexOrThrow("comp");
+        int valIndex = cs.getColumnIndex("val");
+        int colorIndex = cs.getColumnIndex("color");
+        // adding rules
+        boolean done = !cs.moveToFirst();
+        while(!done) {
+            int id = cs.getInt(idIndex);
+            char compType = cs.getString(compIndex).charAt(0);
+            String val = cs.getString(valIndex);
+            int color = cs.getInt(colorIndex);
+            ruleList.add(new ColColorRule(id, compType, val, color));
+            done = !cs.moveToNext();
+        }
+        // closing cursor and database and returning
+        cs.close();
+        db.close();
+        return ruleList;
+        
+    }
+    
+    public void addRule(String colName, char compType, String val, int color) {
         SQLiteDatabase db = dbm.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("tableid", tableId);
         values.put("colname", colName);
-        values.put("comp", compType);
+        values.put("comp", compType + "");
         values.put("val", val);
         values.put("color", color);
         db.insertOrThrow("colors", null, values);
+        db.close();
+    }
+    
+    public void updateRule(ColColorRule rule) {
+        SQLiteDatabase db = dbm.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("comp", rule.compType + "");
+        values.put("val", rule.val);
+        values.put("color", rule.color);
+        String whereClause = "id = ?";
+        String[] whereArgs = {rule.id + ""};
+        db.update("colors", values, whereClause, whereArgs);
+        db.close();
+    }
+    
+    public void deleteRule(ColColorRule rule) {
+        SQLiteDatabase db = dbm.getWritableDatabase();
+        String whereClause = "id = ?";
+        String[] whereArgs = {rule.id + ""};
+        db.delete("colors", whereClause, whereArgs);
         db.close();
     }
     
@@ -56,7 +102,7 @@ public class DisplayPrefs {
         // adding rules
         boolean done = !cs.moveToFirst();
         while(!done) {
-            int compType = cs.getInt(compIndex);
+            char compType = cs.getString(compIndex).charAt(0);
             String val = cs.getString(valIndex);
             int color = cs.getInt(colorIndex);
             ccr.addRule(compType, val, color);
@@ -71,18 +117,18 @@ public class DisplayPrefs {
     public class ColumnColorRuler {
         
         private ColumnType colType;
-        private final List<Integer> ruleComps;
+        private final List<Character> ruleComps;
         private final List<String> ruleVals;
         private final List<Integer> ruleColors;
         
         private ColumnColorRuler(ColumnType colType) {
             this.colType = colType;
-            ruleComps = new ArrayList<Integer>();
+            ruleComps = new ArrayList<Character>();
             ruleVals = new ArrayList<String>();
             ruleColors = new ArrayList<Integer>();
         }
         
-        private void addRule(int compType, String val, int color) {
+        private void addRule(char compType, String val, int color) {
             ruleComps.add(compType);
             ruleVals.add(val);
             ruleColors.add(color);
@@ -106,21 +152,30 @@ public class DisplayPrefs {
                 compVal = val.compareTo(ruleVal);
             }
             switch(ruleComps.get(index)) {
-            case 0:
+            case '=':
                 return (compVal == 0);
-            case 1:
+            case '<':
                 return (compVal < 0);
-            case 2:
+            case '>':
                 return (compVal > 0);
-            case 3:
-                return (compVal <= 0);
-            case 4:
-                return (compVal >= 0);
             default:
                 return false;
             }
         }
         
+    }
+    
+    public class ColColorRule {
+        public int id;
+        public char compType;
+        public String val;
+        public int color;
+        public ColColorRule(int id, char compType, String val, int color) {
+            this.id = id;
+            this.compType = compType;
+            this.val = val;
+            this.color = color;
+        }
     }
     
     private class DisplayPrefsDBManager extends SQLiteOpenHelper {
@@ -135,7 +190,8 @@ public class DisplayPrefs {
         public void onCreate(SQLiteDatabase db) {
             String colorSql;
             colorSql = "CREATE TABLE colors (" +
-                    "  tableid TEXT" +
+                    "  id INTEGER PRIMARY KEY" +
+                    ", tableid TEXT" +
                     ", colname TEXT" +
                     ", comp TEXT" +
                     ", val TEXT" +

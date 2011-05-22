@@ -33,7 +33,7 @@ public class TableDisplayView extends TableRow {
 	private TableActivity ta; // the table activity to call back to
 	private Table table; // the table to display
 	private int indexedCol; // the indexed column number; -1 if not indexed
-	private DisplayPrefs dp;
+	private DisplayPrefs dp; // the display preferences for the table
 	
 	// scroll views
 	private ScrollView indexScroll;

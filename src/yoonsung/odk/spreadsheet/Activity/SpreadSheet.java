@@ -55,6 +55,7 @@ public class SpreadSheet extends TableActivity {
 	private static final int SET_FOOTER_OPT = 16;
 	private static final int UNSELECT_COLUMN = 17;
 	private static final int OPEN_FILE = 18;
+	private static final int OPEN_DISPLAYPREFS_DIALOG = 19;
 	// Activity IDs
 	private static final int ODK_COLLECT_FORM_HANDLE = 100;
 	
@@ -184,6 +185,9 @@ public class SpreadSheet extends TableActivity {
 		case SET_FOOTER_OPT:
 			openFooterOptDialog(table.getColName(lastFooterMenued));
 			return true;
+		case OPEN_DISPLAYPREFS_DIALOG:
+		    openDisplayPrefsDialog(table.getColName(lastHeaderMenued));
+		    return true;
 		default:
 			return super.onContextItemSelected(item);
 		}
@@ -383,6 +387,8 @@ public class SpreadSheet extends TableActivity {
 					menu.add(none, SET_COL_AS_ORDERBY, none, "Set as Sort");
 				}
 				menu.add(none, OPEN_COL_OPTS, none, "Column Properties");
+				menu.add(none, OPEN_DISPLAYPREFS_DIALOG, none,
+				        "Display Preferences");
 				menu.add(none, SET_COL_WIDTH, none, "Set Column Width");
 			}
 
