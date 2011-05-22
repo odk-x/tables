@@ -28,6 +28,16 @@ public class ColumnProperty {
 	public static final String COLUMN_PROPERTY_FOOTER_MODE = "footerMode";
 	public static final String COLUMN_PROPERTY_ISINDEX = "isIndex";
 	
+	public static enum ColumnType {
+	    NONE,
+	    TEXT,
+	    NUMERIC_VALUE,
+	    DATE,
+	    PHONE_NUMBER,
+	    DATE_RANGE,
+	    FILE
+    };
+	
 	// Database connection
 	private DBIO db;
 	private String tableID;
@@ -80,6 +90,27 @@ public class ColumnProperty {
     
     public String getType(String colName) {
     	return getProperty(colName, COLUMN_PROPERTY_TYPE);
+    }
+    
+    public ColumnType getColumnType(String colName) {
+        String type = getType(colName);
+        if(type.equals("None")) {
+            return ColumnType.NONE;
+        } else if(type.equals("Text")) {
+            return ColumnType.TEXT;
+        } else if(type.equals("Numeric Value")) {
+            return ColumnType.NUMERIC_VALUE;
+        } else if(type.equals("Date")) {
+            return ColumnType.DATE;
+        } else if(type.equals("Phone Number")) {
+            return ColumnType.PHONE_NUMBER;
+        } else if(type.equals("Date Range")) {
+            return ColumnType.DATE_RANGE;
+        } else if(type.equals("File")) {
+            return ColumnType.FILE;
+        } else {
+            return ColumnType.NONE;
+        }
     }
     
     public void setType(String colName, String newVal) {

@@ -1,10 +1,14 @@
 package yoonsung.odk.spreadsheet.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.TableActivity;
+import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
+import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs.ColumnColorRuler;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -29,6 +33,7 @@ public class TableDisplayView extends TableRow {
 	private TableActivity ta; // the table activity to call back to
 	private Table table; // the table to display
 	private int indexedCol; // the indexed column number; -1 if not indexed
+	private DisplayPrefs dp;
 	
 	// scroll views
 	private ScrollView indexScroll;
@@ -40,8 +45,9 @@ public class TableDisplayView extends TableRow {
 	private View.OnClickListener indexedColCellClickListener;
 	private View.OnClickListener footerCellClickListener;
 	
-	public TableDisplayView(Context context) {
+	public TableDisplayView(Context context, DisplayPrefs dp) {
 		super(context);
+		this.dp = dp;
 	}
 	
 	/**
@@ -60,8 +66,7 @@ public class TableDisplayView extends TableRow {
 	 * @param indexedCol the number of the indexed column (or -1 for no indexed
 	 * column)
 	 */
-	public void setTable(TableActivity ta, Table table,
-			int indexedCol) {
+	public void setTable(TableActivity ta, Table table, int indexedCol) {
 		Log.d("REFACTOR SSJ", "table data size:" + table.getData().size());
 		this.indexedCol = indexedCol;
 		removeAllViews();
@@ -73,6 +78,29 @@ public class TableDisplayView extends TableRow {
 		} else {
 			buildIndexedTable(indexedCol);
 		}
+		addConditionalColors();
+	}
+	
+	/**
+	 * Adds the conditional colors to the table.
+	 */
+	private void addConditionalColors() {
+	    List<String> headerCols = table.getHeader();
+	    List<ColumnColorRuler> colorRulers = new ArrayList<ColumnColorRuler>();
+	    for(String colName : headerCols) {
+	        colorRulers.add(dp.getColColorRuler(colName));
+	    }
+	    int tableHeight = table.getHeight();
+	    int tableWidth = table.getWidth();
+	    for(int i=0; i<tableHeight; i++) {
+	        for(int j=0; j<tableWidth; j++) {
+	            int cellId = (i * tableWidth) + j;
+	            TextView cell = getCellById(cellId);
+	            String val = cell.getText().toString();
+	            cell.setTextColor(colorRulers.get(j).getColor(val,
+	                    Color.BLACK));
+	        }
+	    }
 	}
 	
 	/**

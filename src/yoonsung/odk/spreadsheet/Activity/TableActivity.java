@@ -25,6 +25,7 @@ import yoonsung.odk.spreadsheet.Activity.graphs.LineActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.PieActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
+import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
@@ -109,7 +110,7 @@ public abstract class TableActivity extends Activity {
 		tp = new TableProperty(tableID);
 		cp = new ColumnProperty(tableID);
 		table = dt.getTable();
-		tdv = new TableDisplayView(this);
+		tdv = new TableDisplayView(this, new DisplayPrefs(this, tableID));
 		tdv.setTable(this, table);
 		prepButtonListeners();
 		TableLayout tl = (TableLayout) findViewById(R.id.spreadsheetWrapper);
