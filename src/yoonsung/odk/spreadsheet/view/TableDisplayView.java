@@ -84,7 +84,7 @@ public class TableDisplayView extends TableRow {
 	/**
 	 * Adds the conditional colors to the table.
 	 */
-	private void addConditionalColors() {
+	public void addConditionalColors() {
 	    List<String> headerCols = table.getHeader();
 	    List<ColumnColorRuler> colorRulers = new ArrayList<ColumnColorRuler>();
 	    for(String colName : headerCols) {

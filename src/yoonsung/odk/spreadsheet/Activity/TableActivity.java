@@ -1215,4 +1215,11 @@ public abstract class TableActivity extends Activity {
 		selectedCellID = cellID;
 	}
 	
+	/**
+	 * Refreshes the display (but not the content).
+	 */
+	public void refreshDisplay() {
+	    tdv.addConditionalColors();
+	}
+	
 }
