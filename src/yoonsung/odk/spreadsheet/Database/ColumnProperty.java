@@ -94,7 +94,7 @@ public class ColumnProperty {
     
     public ColumnType getColumnType(String colName) {
         String type = getType(colName);
-        if(type.equals("None")) {
+        if((type == null) || type.equals("None")) {
             return ColumnType.NONE;
         } else if(type.equals("Text")) {
             return ColumnType.TEXT;
