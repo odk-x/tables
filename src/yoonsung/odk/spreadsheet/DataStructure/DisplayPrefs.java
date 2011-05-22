@@ -102,8 +102,13 @@ public class DisplayPrefs {
         // adding rules
         boolean done = !cs.moveToFirst();
         while(!done) {
-            char compType = cs.getString(compIndex).charAt(0);
-            String val = cs.getString(valIndex);
+            String compStr = cs.getString(compIndex).trim();
+            if(compStr.equals("")) {
+                done = !cs.moveToNext();
+                continue;
+            }
+            char compType = compStr.charAt(0);
+            String val = cs.getString(valIndex).trim();
             int color = cs.getInt(colorIndex);
             ccr.addRule(compType, val, color);
             done = !cs.moveToNext();

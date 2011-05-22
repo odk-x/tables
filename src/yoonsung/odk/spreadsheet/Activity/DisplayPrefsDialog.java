@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
@@ -44,12 +45,36 @@ public class DisplayPrefsDialog extends Dialog {
         lastFocusedRow = -1;
         colRules = dp.getColorRulesForCol(colName);
         ruleInputFields = new ArrayList<EditText>();
+        LinearLayout ll = new LinearLayout(context);
+        ll.setOrientation(LinearLayout.VERTICAL);
         TableLayout tl = new TableLayout(context);
         for(int i=0; i<colRules.size(); i++) {
             TableRow row = getEditRow(i);
             tl.addView(row);
         }
-        setContentView(tl);
+        ll.addView(tl);
+        Button addRuleButton = new Button(context);
+        addRuleButton.setText("Add Rule");
+        addRuleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateLastRowVal();
+                dp.addRule(colName, ' ', "", 0);
+                refreshView();
+            }
+        });
+        ll.addView(addRuleButton);
+        Button closeButton = new Button(context);
+        closeButton.setText("OK");
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateLastRowVal();
+                dismiss();
+            }
+        });
+        ll.addView(closeButton);
+        setContentView(ll);
     }
     
     private TableRow getEditRow(final int index) {
@@ -69,7 +94,7 @@ public class DisplayPrefsDialog extends Dialog {
         row.addView(deleteButton);
         // preparing the text field
         EditText input = new EditText(context);
-        input.setText(rule.compType + rule.val);
+        input.setText((rule.compType + rule.val).trim());
         input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -111,7 +136,9 @@ public class DisplayPrefsDialog extends Dialog {
     
     private void updateLastRowVal() {
         if(lastFocusedRow < 0) { return; }
-        String input = ruleInputFields.get(lastFocusedRow).getText().toString();
+        EditText inputEt = ruleInputFields.get(lastFocusedRow);
+        String input = inputEt.getText().toString().trim();
+        if(input.equals("")) { return; }
         ColColorRule rule = colRules.get(lastFocusedRow);
         rule.compType = input.charAt(0);
         rule.val = input.substring(1).trim();
