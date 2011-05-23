@@ -139,6 +139,10 @@ public class DisplayPrefs {
             ruleColors.add(color);
         }
         
+        public int getRuleCount() {
+            return ruleComps.size();
+        }
+        
         public int getColor(String val, int defVal) {
             for(int i=0; i<ruleComps.size(); i++) {
                 if(checkMatch(val, i)) {

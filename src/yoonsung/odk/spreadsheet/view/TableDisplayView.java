@@ -39,6 +39,9 @@ public class TableDisplayView extends TableRow {
 	private ScrollView indexScroll;
 	private ScrollView mainScroll;
 	
+	// display preference information
+	private List<ColumnColorRuler> colorRulers;
+	
 	// cell click listeners
 	private View.OnClickListener regularCellClickListener;
 	private View.OnClickListener headerCellClickListener;
@@ -72,13 +75,16 @@ public class TableDisplayView extends TableRow {
 		removeAllViews();
 		this.ta = ta;
 		this.table = table;
+        colorRulers = new ArrayList<ColumnColorRuler>();
+        for(String colName : table.getHeader()) {
+            colorRulers.add(dp.getColColorRuler(colName));
+        }
 		prepCellClickListeners();
 		if(indexedCol < 0) {
 			buildNonIndexedTable();
 		} else {
 			buildIndexedTable(indexedCol);
 		}
-		addConditionalColors();
 	}
 	
 	/**
@@ -86,19 +92,20 @@ public class TableDisplayView extends TableRow {
 	 */
 	public void addConditionalColors() {
 	    List<String> headerCols = table.getHeader();
-	    List<ColumnColorRuler> colorRulers = new ArrayList<ColumnColorRuler>();
+	    colorRulers = new ArrayList<ColumnColorRuler>();
 	    for(String colName : headerCols) {
 	        colorRulers.add(dp.getColColorRuler(colName));
 	    }
 	    int tableHeight = table.getHeight();
 	    int tableWidth = table.getWidth();
-	    for(int i=0; i<tableHeight; i++) {
-	        for(int j=0; j<tableWidth; j++) {
-	            int cellId = (i * tableWidth) + j;
+	    for(int i=0; i<tableWidth; i++) {
+	        ColumnColorRuler ccr = colorRulers.get(i);
+	        if(ccr.getRuleCount() == 0) { continue; }
+	        for(int j=0; j<tableHeight; j++) {
+	            int cellId = (j * tableWidth) + i;
 	            TextView cell = getCellById(cellId);
 	            String val = cell.getText().toString();
-	            cell.setTextColor(colorRulers.get(j).getColor(val,
-	                    Color.BLACK));
+	            cell.setTextColor(ccr.getColor(val, Color.BLACK));
 	        }
 	    }
 	}
@@ -491,8 +498,12 @@ public class TableDisplayView extends TableRow {
 	 * @param width the width of the cell
 	 */
 	private TextView createRegularCell(String text, int id, int width) {
-		TextView cell = createCell(text, id,
-				getResources().getColor(R.color.black),
+	    if(id < 0) {
+	        return createCell(text, id, Color.BLACK,
+	                getResources().getColor(R.color.Avanda), width);
+	    }
+	    ColumnColorRuler ccr = colorRulers.get(id % table.getWidth());
+		TextView cell = createCell(text, id, ccr.getColor(text, Color.BLACK),
 				getResources().getColor(R.color.Avanda), width);
 		cell.setOnClickListener(regularCellClickListener);
 		ta.prepRegularCellOccmListener(cell);
