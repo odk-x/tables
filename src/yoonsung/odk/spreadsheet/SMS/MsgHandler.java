@@ -52,25 +52,23 @@ public class MsgHandler {
      * @throws InvalidQueryException if the target does not exist
      */
     public String translateMessage(String msg) throws InvalidQueryException {
+        msg = msg.trim();
+        String[] spl = msg.split(" ", 2);
+        String nameToken = spl[0].substring(1);
+        String request = spl[1];
+        boolean matchFound = false;
         int iters = 0;
-        String temp = msg.trim();
-        String nameToken;
-        String request;
-        do {
-            iters++;
-            msg = temp;
-            temp = null;
-            String[] spl = msg.split(" ", 2);
-            nameToken = spl[0].substring(1);
-            request = spl[1];
-            int i = 0;
-            while((i<msNames.size()) && (temp == null)) {
-                if(msNames.get(i).equals(nameToken)) {
-                    temp = tryShortcut(i, request);
+        while(!matchFound && (iters < msNames.size())) {
+            if(msNames.get(iters).equals(nameToken)) {
+                String temp = tryShortcut(iters, request);
+                if(temp != null) {
+                    msg = temp;
+                    nameToken = ((msg.split(" ", 2))[0]).substring(1);
+                    matchFound = true;
                 }
-                i++;
             }
-        } while((temp != null) && (iters < msNames.size()));
+            iters++;
+        }
         int dtIndex = dtNames.indexOf(nameToken);
         if(dtIndex < 0) {
             throw new InvalidQueryException(
