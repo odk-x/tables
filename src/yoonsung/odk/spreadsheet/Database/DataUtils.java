@@ -141,8 +141,9 @@ public class DataUtils {
      * @return the date, or null if the string could not be parsed
      */
     public Date parseDateTime(String str) {
-        if("now".equals(str)) {
-            return new Date();
+        if(str.startsWith("now")) {
+            Date s = getDateTimeFromNow(str);
+            return s;
         }
         Date dayRes = null;
         Date timeRes = null;
@@ -270,6 +271,47 @@ public class DataUtils {
             }
         }
         return null;
+    }
+    
+    /**
+     * Interprets a date string based on the current time (e.g., "now - 5d").
+     * @param str the string
+     * @return the date
+     */
+    private Date getDateTimeFromNow(String str) {
+        String[] spl = str.split(" ");
+        if(spl.length == 1) {
+            return new Date();
+        } else if(spl.length != 3) {
+            return null;
+        }
+        int diff;
+        try {
+            diff = new Integer(spl[2].substring(0, spl[2].length() - 1));
+        } catch(NumberFormatException e) {
+            return null;
+        }
+        char unit = spl[2].charAt(spl[2].length() - 1);
+        int calUnit;
+        if((unit == 'h') || (unit == 'H')) {
+            calUnit = Calendar.HOUR_OF_DAY;
+        } else if((unit == 'd') || (unit == 'D')) {
+            calUnit = Calendar.DAY_OF_MONTH;
+        } else {
+            return null;
+        }
+        if(spl[1].length() != 1) {
+            return null;
+        }
+        char oper = spl[1].charAt(0);
+        Calendar cal = Calendar.getInstance();
+        if(oper == '-') {
+            diff *= -1;
+        } else if(oper != '+') {
+            return null;
+        }
+        cal.add(calUnit, diff);
+        return cal.getTime();
     }
     
 }

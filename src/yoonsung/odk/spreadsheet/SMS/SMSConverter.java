@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import android.util.Log;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.DataUtils;
@@ -319,6 +320,7 @@ public class SMSConverter {
 	private void interpretConstraint(String input, List<String> consKeys,
 			List<String> consComp, List<String> consVals)
 			throws InvalidQueryException {
+	    Log.d("SMSC", "interpretConstraint called");
 		String[] split = input.split(" ");
 		String key = split[0];
 		if(!data.isColumnExist(key)) {
@@ -346,7 +348,13 @@ public class SMSConverter {
 		}
 		if(("Date Range").equals(cp.getType(key))) {
 			interpretDRVal(key, comp, val, consKeys, consComp, consVals);
-		} else if(key.equals("_timestamp")) {
+		} else if(("Date").equals(cp.getType(key))) {
+		    consKeys.add(key);
+		    consComp.add(comp);
+		    Date d = (DataUtils.getInstance()).parseDateTime(val);
+		    String dbD = (DataUtils.getInstance()).formatDateTimeForDB(d);
+		    consVals.add(dbD);
+		}else if(key.equals("_timestamp")) {
 			interpretTimeVal(key, comp, val, consKeys, consComp, consVals);
 		} else {
 			consKeys.add(key);
