@@ -1,13 +1,26 @@
 package yoonsung.odk.spreadsheet.Activity;
 
-import java.lang.reflect.Field;
+/*
+ * UI: connect first, 
+ * then check if userui exists 
+ * (get dylan to have it be able to return user name), 
+ * make them create user if not, else display username and general ui
+ * (maybe split up the ui into different sections if possible)
+ * 
+ * Downloading: Dylan made it possible to have table names returned,
+ * please check code for occurrences of table id,
+ * then get downloading column information stored into column properties
+ * 
+ * also somewhere in here do that thing about verifications (deleteing user and/or tables)
+ * as well as new name for table downloaded or uploaded
+ */
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.client.AggregateConnection;
 import org.opendatakit.aggregate.odktables.client.Column;
@@ -22,6 +35,7 @@ import org.opendatakit.common.persistence.DataField.DataType;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
@@ -47,9 +61,9 @@ import android.widget.TextView;
 
 public class Aggregation extends Activity {
 
-	private static int TABLESPIN_ID = 0;
-	private static int AGGREGATETABLESPIN_ID = 8;
-	private static final int IN_PROGRESS_DIALOG = -1;
+	private static int TABLESPIN_ID = 2000;
+	private static int AGGREGATETABLESPIN_ID = 1000;
+//	private static final int IN_PROGRESS_DIALOG = -1;
 //	private static final int MESSAGE_DIALOG = -2;
 	private static final int UPLOADTABLE_FAILED = 1;
 	private static final int UPLOADTABLE_SUCCESS = 2;
@@ -74,7 +88,8 @@ public class Aggregation extends Activity {
 	
 	private String[] phoneTableNames;
 	private String[] aggregateTableNames;
-	private Map<String, TableEntry> tableIDsToURIs;
+	private TableEntry[] aggregateTableEntries;
+	private Map<String, TableEntry> tableIDsToTableEntry;
 	private Spinner phoneTables;
 	private Spinner aggregateTables;
 	private String userId;
@@ -87,7 +102,7 @@ public class Aggregation extends Activity {
 		
 		setTitle("ODK Tables > Aggregate");
 		
-		tableIDsToURIs = new HashMap<String, TableEntry>();
+		tableIDsToTableEntry = new HashMap<String, TableEntry>();
 		
 		TelephonyManager teleMgr = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
 		this.userId = teleMgr.getDeviceId();
@@ -122,8 +137,8 @@ public class Aggregation extends Activity {
 		Button deleteTable = (Button)findViewById(R.id.aggregate_activity_deleteTable);
 		deleteTable.setOnClickListener(new deleteListener());
 		
-//		Button getList = (Button)findViewById(R.id.aggregate_activity_getAggregateTables_button);
-//		getList.setOnClickListener(new getTableList());
+		Button getTableList = (Button)findViewById(R.id.aggregate_activity_getAggregateTables_button);
+		getTableList.setOnClickListener(new getTableListener());
 	}
 	
 	private void hideViews() {
@@ -143,7 +158,7 @@ public class Aggregation extends Activity {
 	}
 	
 	private void makeVisible() {
-		System.out.println("made it to makeVisible");
+		Log.d("aggregate","made it to makeVisible");
 		findViewById(R.id.aggregate_activity_createUser).setVisibility(View.VISIBLE);
 		findViewById(R.id.aggregate_activity_deleteUser).setVisibility(View.VISIBLE);
 		findViewById(R.id.aggregate_activity_user_uri_text).setVisibility(View.VISIBLE);
@@ -164,7 +179,7 @@ public class Aggregation extends Activity {
 		phoneTableNames = new String[tableMap.size()];
 		int counter = 0;
 		for(String tableId : tableMap.keySet()) {
-			System.out.println("tableId"+tableId);
+			Log.d("aggregate","tableId"+tableId);
 			phoneTableNames[counter] = tableMap.get(tableId);
 			counter++;
 		}
@@ -174,6 +189,37 @@ public class Aggregation extends Activity {
 				android.R.layout.simple_spinner_dropdown_item);
 		this.phoneTables.setAdapter(adapter);
 		this.phoneTables.setSelection(0);
+	}
+	
+	private void fillAggTableListSpinner(org.opendatakit.aggregate.odktables.client.TableList aggTblLst) {
+		tableIDsToTableEntry = new HashMap<String, TableEntry>();
+		int counter = 0;
+		for (TableEntry entry: aggTblLst) {
+			if (!entry.getTableId().startsWith("COLPROP_")) {
+				counter++;
+			}
+			this.tableIDsToTableEntry.put(entry.getTableId(), entry);
+		}
+		
+		this.aggregateTableNames = new String[counter];
+		this.aggregateTableEntries = new TableEntry[counter];
+		
+		counter = 0;
+		for (TableEntry entry: aggTblLst) {
+			if (!entry.getTableId().startsWith("COLPROP_")) {
+				this.aggregateTableNames[counter] = entry.getTableName();
+				this.aggregateTableEntries[counter] = entry;
+				counter++;
+			}
+			this.tableIDsToTableEntry.put(entry.getTableId(), entry);
+		}
+		
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+				android.R.layout.simple_spinner_item, this.aggregateTableNames);
+		adapter.setDropDownViewResource(
+				android.R.layout.simple_spinner_dropdown_item);
+		this.aggregateTables.setAdapter(adapter);
+		this.aggregateTables.setSelection(0);
 	}
 
 	private String getCurrentPhoneTableName() {
@@ -186,10 +232,17 @@ public class Aggregation extends Activity {
 		}
 	}
 	
-	private String getCurrentAggregateTableName() {
+	private TableEntry getCurrentAggregateTableEntry() {
 		int pos = this.aggregateTables.getSelectedItemPosition();
 		if (this.aggregateTableNames.length != 0) {
-			return aggregateTableNames[pos];
+//			String name = aggregateTableNames[pos];
+//			for (String s:this.tableIDsToTableEntry.keySet()) {
+//				if (name.equals(this.tableIDsToTableEntry.get(s).getTableName())) {
+//					return this.tableIDsToTableEntry.get(s);
+//				}
+//			}
+//			return null;
+			return this.aggregateTableEntries[pos];
 		} else {
 			showDialog(TABLE_NOEXIST);
 			return null;
@@ -220,8 +273,8 @@ public class Aggregation extends Activity {
 		switch(id) {
 //		case MESSAGE_DIALOG:
 //			return getDialog("");
-		case IN_PROGRESS_DIALOG:
-			return getDialog("In progress...");
+//		case IN_PROGRESS_DIALOG:
+//			return getDialog("In progress...");
 		case UPLOADTABLE_FAILED:
 			return getDialog("Failed to upload table.");
 		case UPLOADTABLE_SUCCESS:
@@ -262,7 +315,6 @@ public class Aggregation extends Activity {
 	private class connectListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			connectUser();
 		}
 	}
@@ -270,7 +322,6 @@ public class Aggregation extends Activity {
 	private class downloadListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			downloadTable();
 		}
 	}
@@ -278,7 +329,6 @@ public class Aggregation extends Activity {
 	private class deleteListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			deleteTable();
 		}
 	}
@@ -286,7 +336,6 @@ public class Aggregation extends Activity {
 	private class createUserListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			createUser();
 		}
 	}
@@ -294,7 +343,6 @@ public class Aggregation extends Activity {
 	private class deleteUserListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			deleteUser();
 		}
 	}
@@ -302,51 +350,43 @@ public class Aggregation extends Activity {
 	private class uploadListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
-			showDialog(IN_PROGRESS_DIALOG);
 			uploadTable();
 		}
 	}
 	
-//	private class getTableList implements OnClickListener {
-//		@Override
-//		public void onClick(View v) {
-//			showDialog(IN_PROGRESS_DIALOG);
-//			getTablesOnAggregate();
-//		}
-//	}
+	private class getTableListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			getTablesOnAggregate();
+		}
+	}
 	
 	private void uploadTable() {
 		String tableName = this.getCurrentPhoneTableName();
 		String tableID = (new Integer(new TableList().getTableID(tableName))).toString();
 		Table current = (new DataTable(tableID)).getCompleteTable();
 		
-		List<String> header = current.getHeader();
+//		List<String> header = current.getHeader();
 		List<String> updated = new ArrayList<String>();
 		
-		for (String name: header) {
+		for (String name: current.getHeader()) {
 			if (!name.matches("[^0-9a-zA-Z].*|[^_].*")) {
 				name = name.replaceAll("[^0-9a-zA-Z]|[^_]", "");
 			}
 			name = "COL_" + name;
-			System.out.println("newColName: " + name);
+			Log.d("aggregate","newColName: " + name);
 			updated.add(name);
 		}
 		
-		this.createTable(conn, tableName, tableID, current, updated);
-		this.insertRows(conn, tableID, current, updated);
-		dismissDialog(IN_PROGRESS_DIALOG);
-	}
-
-	private void insertRows(AggregateConnection conn, String tableID, Table table, List<String> header) { 
 		List<Row> rows = new ArrayList<Row>();
-		ArrayList<String> data = table.getData();
-		ArrayList<Integer> rowIDs = table.getRowID();
+		ArrayList<String> data = current.getData();
+		ArrayList<Integer> rowIDs = current.getRowID();
 		
-		int width = header.size();
-		for (int i = 0; i < table.getHeight(); i++) {
+		int width = updated.size();
+		for (int i = 0; i < current.getHeight(); i++) {
 			Row row = new Row("" + rowIDs.get(i));
 			for (int j = 0; j < width; j++) {
-				String name = header.get(j);
+				String name = updated.get(j);
 				String value = data.get(i * width + j);
 				if (value == null || value.equals("")) {
 					value = "VAL_";
@@ -357,32 +397,73 @@ public class Aggregation extends Activity {
 			}
 			rows.add(row);
 		}
-        
-		for (Row row: rows) {
-			System.out.println("rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+		
+		this.createTable(tableName, tableID, updated);
+		this.insertRows(tableID, rows);
+		this.storeColProps(updated, tableID, tableName);
+	}
+
+	private void storeColProps(List<String> header, String tableId, String tableName) {
+		ColumnProperty cp = new ColumnProperty(tableId);
+		
+		List<String> colpro = new ArrayList<String>();
+		colpro.add("name");
+		colpro.add("abrev");
+		colpro.add("type");
+		colpro.add("smsin");
+		colpro.add("smsout");
+		colpro.add("footer");
+		
+		this.createTable("COLPROP_"+tableName, "COLPROP_"+tableId, colpro);
+		
+		List<Row> rows = new ArrayList<Row>();
+		int counter = 0;
+		for (String col: header) {
+			String name = col.substring(4);
+			if (!col.equals("COL__timestamp") && !col.equals("COL__phoneNumberIn")) {
+				String abrev = cp.getAbrev(name) == null? "": cp.getAbrev(name);
+				String type = cp.getAbrev(name) == null? "": cp.getType(name);
+				String footer = cp.getAbrev(name) == null? "": cp.getFooterMode(name);
+				
+				Log.d("aggregate","column? "+ col + " abrev " + abrev + " type " + type + " footer " + footer);
+				
+				Row row = new Row("" + counter);
+				row.setColumn("name", name);
+				row.setColumn("abrev", abrev);
+				row.setColumn("type", type);
+				row.setColumn("smsin", String.valueOf(cp.getSMSIN(col)));
+				row.setColumn("smsout", String.valueOf(cp.getSMSOUT(col)));
+				row.setColumn("footer", footer);
+				rows.add(row);
+				counter++;
+			}
 		}
 		
-//        check exceptions and work accordingly to those
+		this.insertRows("COLPROP_"+tableId, rows);
+	}
+
+	private void insertRows(String tableID, List<Row> rows) {  
+		for (Row row: rows) {
+			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+		}
+		
         try {
 			conn.insertRows(userId, tableID, rows);
 		} catch (RowAlreadyExistsException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(UPLOADTABLE_FAILED);
-			System.out.println("row already exists");
+			Log.d("aggregate","row already exists");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (TableDoesNotExistException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(UPLOADTABLE_FAILED);
-			System.out.println("table does not exist");
+			Log.d("aggregate","table does not exist");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(UPLOADTABLE_FAILED);
 			if (debug) {
 				e.printStackTrace();
@@ -392,7 +473,7 @@ public class Aggregation extends Activity {
 		showDialog(UPLOADTABLE_SUCCESS);
 	}
 	
-	private void createTable(AggregateConnection conn, String tableName, String tableID, Table table, List<String> header) {
+	private void createTable(String tableName, String tableID, List<String> header) {
 		//if table doesnt exist already
 		List<Column> columns = new ArrayList<Column>();
 		
@@ -400,36 +481,22 @@ public class Aggregation extends Activity {
 			String name = header.get(i);
 			Column col = new Column(name, DataType.STRING, true);
 			columns.add(col);
-			System.out.println("column name: "+col.getName());
+			Log.d("aggregate","column name: "+col.getName());
 		}
 		
 		for (Column col: columns) {
-			System.out.println("column name: "+col.getName());
+			Log.d("aggregate","column name: "+col.getName());
 		}
 		
 		try {
 			conn.createTable(userId, tableID, tableName, columns);
 		} catch (TableAlreadyExistsException e) {
-			//DELETE TABLE
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(UPLOADTABLE_FAILED);
-//			try {
-//				conn.deleteTable(userId, tableID);
-//				conn.createTable(userId, tableID, tableName, columns);
-//			} catch (Exception e1) {
-//				dismissDialog(IN_PROGRESS_DIALOG);
-//				showDialog(UPLOADTABLE_FAILED);
-//				if (debug) {
-//					e1.printStackTrace();
-//				}
-//				return;
-//			}
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(UPLOADTABLE_FAILED);
 			if (debug) {
 				e.printStackTrace();
@@ -440,22 +507,19 @@ public class Aggregation extends Activity {
 	}
 	
 	private void deleteTable() {
-		String tableName = this.getCurrentAggregateTableName();
-//		String tableId = (new Integer(new TableList().getTableID(tableName))).toString();
+		TableEntry tableName = this.getCurrentAggregateTableEntry();
 		
-		System.out.println("deletion.name: " + tableName + ", userId: " + userId);
+		Log.d("aggregate","deletion.name: " + tableName.getTableName() + ", userId: " + userId);
 		
 		try {
-			conn.deleteTable(userId, tableName);
+			conn.deleteTable(userId, tableName.getTableId());
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DELETETABLE_FAILED);
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		}
-		dismissDialog(IN_PROGRESS_DIALOG);
 		showDialog(DELETETABLE_SUCCESS);
 	}
 
@@ -465,22 +529,20 @@ public class Aggregation extends Activity {
 		try {
 			conn.createUser(userId, userName);
 		} catch (UserAlreadyExistsException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(CREATEUSER_FAILED);
-			System.out.println("user already exists.");
+			Log.d("aggregate","user already exists.");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(CREATEUSER_FAILED);
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		}
-		dismissDialog(IN_PROGRESS_DIALOG);
+		 
 		showDialog(CREATEUSER_SUCCESS);
 		getUserURI();
 	}
@@ -507,36 +569,15 @@ public class Aggregation extends Activity {
 		org.opendatakit.aggregate.odktables.client.TableList aggTblLst = new org.opendatakit.aggregate.odktables.client.TableList();
 		try {
 			aggTblLst = conn.listTables();
-			dismissDialog(IN_PROGRESS_DIALOG);
+			 
 			showDialog(GETTABLELIST_SUCCESS);
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(GETTABLELIST_FAILED);
 			if (debug) {
 				e.printStackTrace();
 			}
 		}
 		fillAggTableListSpinner(aggTblLst);
-	}
-
-	
-	private void fillAggTableListSpinner(org.opendatakit.aggregate.odktables.client.TableList aggTblLst) {
-		this.aggregateTableNames = new String[aggTblLst.size()];
-		tableIDsToURIs = new HashMap<String, TableEntry>();
-		int counter = 0;
-		for (TableEntry entry: aggTblLst) {
-			this.aggregateTableNames[counter] = entry.getTableId()
-				;
-//				+ " (URI: " + entry.getUserUri() + ", Username: " + entry.getUserName() + ")";
-			this.tableIDsToURIs.put(entry.getTableId(), entry);
-			counter++;
-		}
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, this.aggregateTableNames);
-		adapter.setDropDownViewResource(
-				android.R.layout.simple_spinner_dropdown_item);
-		this.aggregateTables.setAdapter(adapter);
-		this.aggregateTables.setSelection(0);
 	}
 
 	public void setConnection(String url) {
@@ -551,7 +592,7 @@ public class Aggregation extends Activity {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("conn is not set? "+conn == null );
+		Log.d("aggregate","conn is not set? "+ (conn == null ));
 		this.conn = conn;
 		getUserURI();
 	}
@@ -562,14 +603,12 @@ public class Aggregation extends Activity {
 		try {
 			uri += conn.getUserUri(userId);
 		} catch (UserDoesNotExistException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
-			System.out.println("User does not exist.");
+			Log.d("aggregate","User does not exist.");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			if (debug) {
 				e.printStackTrace();
 			}
@@ -579,39 +618,38 @@ public class Aggregation extends Activity {
 	}
 
 	public void downloadTable() {
-		String tableName = this.getCurrentAggregateTableName();
-		System.out.println("got table name: " + tableName);
-		for (String s: this.tableIDsToURIs.keySet()) {
-				System.out.println("map has key: " + s + ", value:" + this.tableIDsToURIs.get(s));
-			}
-		if (!this.tableIDsToURIs.containsKey(tableName)) {
+		TableEntry tableEntryToDownload = this.getCurrentAggregateTableEntry();
+		
+		Log.d("aggregate","got table entry: " + tableEntryToDownload);
+		for (String s: this.tableIDsToTableEntry.keySet()) {
+				Log.d("aggregate","map has key: " + s + ", value:" + this.tableIDsToTableEntry.get(s));
+		}
+		
+		if (tableEntryToDownload == null) {
 			showDialog(DOWNLOADTABLE_FAILED);
-			System.out.println("table does not exist");
+			Log.d("aggregate","table does not exist");
 			return;
 		}
-		String userUri = this.tableIDsToURIs.get(tableName).getUserUri();
+		String userUri = tableEntryToDownload.getUserUri();
 		List<Row> rows;
-//		System.out.println("table to be retrieved: " + tableName);
+
 		try {
-			rows = conn.getRows(userUri, tableName);
+			rows = conn.getRows(userUri, tableEntryToDownload.getTableId());
 		} catch (TableDoesNotExistException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DOWNLOADTABLE_FAILED);
-			System.out.println("table does not exist");
+			Log.d("aggregate","table does not exist");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (UserDoesNotExistException e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DOWNLOADTABLE_FAILED);
-			System.out.println("user does not exist");
+			Log.d("aggregate","user does not exist");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DOWNLOADTABLE_FAILED);
 			if (debug) {
 				e.printStackTrace();
@@ -619,10 +657,11 @@ public class Aggregation extends Activity {
 			return;
 		}
 		
-		tableName = ((EditText)findViewById(R.id.aggregate_activity_userName)).getText().toString();
+		String tableName2 = ((EditText)findViewById(R.id.aggregate_activity_userName)).getText().toString();
+		System.out.println("tablename2: " + tableName2);
 		
 		for (Row row: rows) {
-			System.out.println("rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
 		}
 		
 		//======================================================
@@ -638,11 +677,11 @@ public class Aggregation extends Activity {
 		}
 		
 		TableList tl = new TableList();
-		String res = tl.registerNewTable(tableName);
+		String res = tl.registerNewTable(tableName2);
 		if(res != null) {
 			throw new IllegalArgumentException(res);
 		}
-		String stat = "CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
+		String stat = "CREATE TABLE IF NOT EXISTS `" + tableName2 + "` ("
 				+ DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
 				+ DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
 				+ DataTable.DATA_TIMESTAMP + " TEXT";
@@ -656,23 +695,22 @@ public class Aggregation extends Activity {
 		SQLiteDatabase con = db.getConn();
 		con.execSQL(stat);
 		con.close();
-		Integer tID = tl.getTableID(tableName);
+		Integer tID = tl.getTableID(tableName2);
 		String tableID = tID.toString();
 		DefaultsManager dm = new DefaultsManager(tableID);
 		TableProperty tp = new TableProperty(tableID);
 		ArrayList<String> colOrder = tp.getColOrderArrayList();
 		for(String col : heads) {
             if(!col.equals("_phonenumberin") && !col.equals("_timestamp")) {
-                Log.d("csvi", "starting col add:" + col);
+                Log.d("aggregate", "starting col add:" + col);
                 dm.prepForNewCol(col);
-                Log.d("csvi", "just called dm.prepForNewCol");
+                Log.d("aggregate", "just called dm.prepForNewCol");
                 colOrder.add(col);
             }
 		}
 		tp.setColOrder(colOrder);
 		
-		System.out.println("so i set up the columns now");
-		
+//		Log.d("aggregate","so i set up the columns now");
 		DataTable data = new DataTable(tableID);
 		
 		for (Row row : rows) {
@@ -694,97 +732,78 @@ public class Aggregation extends Activity {
 				}
 			}
 			ContentValues cv = getValues(columns, values);
-			System.out.println("addin row: " + cv);
+			Log.d("aggregate","addin row: " + cv);
 			try {
 			    data.addRow(cv, pn, ts);
 			} catch(IllegalArgumentException e) {
-			    // TODO: something to handle invalid values
+				showDialog(DOWNLOADTABLE_FAILED);
 			}
 		}
 		
-//		TableList lst = new TableList();
-//		//might already exist, fix this
-//		
-//		String temp = lst.registerNewTable("farmerJohn");
-//		String copy = tableName;
-//		int counter = 1;
-////		&& temp.equals("Table already exists.")
-//		while (temp != null ) {
-//			copy = tableName+ "(" + counter + ")";
-//			System.out.println("error here registering table?");
-//			temp = lst.registerNewTable(copy); 
-//			counter++;
-//		}
-//		
-//		System.out.println("registered table successfully.");
-//		
-//		int tableId = lst.getTableID(copy);
-//		System.out.println("got table id");
-//		DataTable table = new DataTable("" + tableId);
-//		System.out.println("initialized data table");
-//		
-//		if (!rows.isEmpty() && rows.size() > 0) {
-//			Row r = rows.get(0);
-//			Map<String, String> temp3 = r.getColumnValuePairs();
-//			for (String s: temp3.keySet()) {
-//				if (s.startsWith("COL_", 0)) {
-//					s = s.substring(4).toLowerCase();;
-//				}
-//				if (!s.equals("_phonenumberin") && !s.equals("_timestamp")) {
-//					table.addNewColumn(s);
-//					System.out.println("added column: " + s);
-//				}
-//			}
-//		}
-//		
-//		System.out.println("added columns to table");
-//		
-//		for (Row row: rows) {
-//			Map<String, String> temp3 = row.getColumnValuePairs();
-//			int size = temp3.keySet().size();
-//			String[] headers = new String[size];
-//			String[] values = new String[size];
-//			String time = "";
-//			String phone = "";
-//			counter = 0;
-//			for (String s: temp3.keySet()) {
-//				headers[counter] = s;
-//				if (s.equals("COL__TIMESTAMP")) {
-//					time = temp3.get(s);
-//				} else if (s.equals("COL__PHONENUMBERIN")) {
-//					phone = temp3.get(s);
-//				}
-//				values[counter] = temp3.get(s);
-//				System.out.println("string arrays: " + headers[counter] + " | " + values[counter]);
-//				counter++;
-//			}
-//			ContentValues vals = getValues(headers, values);
-//			table.addRow(vals, phone, time);
-//			System.out.println("added row with: " + vals);
-//		}
-//		
-//		Table tbl = table.getTable();
-//		System.out.println(tbl.getData());
 		
-//		System.out.println("table retrieved: ");
-//		for (Row r: rows) {
-//			System.out.print("row: " + r.getRowId()+", ");
-//			Map<String, String> columns = r.getColumnValuePairs();
-//			System.out.print("ColumnName/Value:");
-//			for (String s: columns.keySet()) {
-//				System.out.print(" "+ s + "/" + columns.get(s));
-//			}
-//			System.out.println();
-//		}
+		//============================
+		//column properties
 		
-		dismissDialog(IN_PROGRESS_DIALOG);
+		String tableId = "COLPROP_"+tableEntryToDownload.getTableId();
+		String otherUserUri = tableEntryToDownload.getUserUri();
+		List<Row> rows2;
+		
+		try {
+			rows2 = conn.getRows(otherUserUri, tableId);
+		} catch (TableDoesNotExistException e) {
+			showDialog(DOWNLOADTABLE_FAILED);
+			Log.d("aggregate","table does not exist");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (UserDoesNotExistException e) {
+			showDialog(DOWNLOADTABLE_FAILED);
+			Log.d("aggregate","user does not exist");
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		} catch (Exception e) {
+			showDialog(DOWNLOADTABLE_FAILED);
+			if (debug) {
+				e.printStackTrace();
+			}
+			return;
+		}
+		
+		for (Row row: rows2) {
+			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+		}
+		
+		for (Row row: rows2) {
+			ColumnProperty cp = new ColumnProperty(tableID);
+			String colName = row.getColumnValuePairs().get("NAME");
+			cp.setName("colName", colName);
+			
+			Map<String,String> propToValue = row.getColumnValuePairs();
+			for (String property: propToValue.keySet()) {
+				String value = propToValue.get(property);
+				Log.d("aggregate", "setting property " + property + " to " + value);
+				if (property.equals("SMSOUT")) {
+					cp.setSMSOUT(colName, Boolean.getBoolean(value));
+				} else if (property.equals("NAME")) {
+//					cp.setName(colName, newVal)
+				} else if (property.equals("SMSIN")) {
+					cp.setSMSIN(colName, Boolean.getBoolean(value));
+				} else if (property.equals("TYPE")) {
+					cp.setType(colName, value);
+				} else if (property.equals("FOOTER")) {
+					cp.setFooterMode(colName, value);
+				} else if (property.equals("ABREV")) {
+					cp.setAbrev(colName, value);
+				}
+			}
+		}
+		
+		
+		//=================
 		showDialog(DOWNLOADTABLE_SUCCESS);
-		
-//		rowID: 1, data: {COL_QUALITY=VAL_goood, COL__TIMESTAMP=VAL_, COL_COST=VAL_5, COL__PHONENUMBERIN=VAL_, COL_HEINZ=VAL_catsup}
-//		rowID: 2, data: {COL_QUALITY=VAL_pooor, COL__TIMESTAMP=VAL_, COL_COST=VAL_3, COL__PHONENUMBERIN=VAL_, COL_HEINZ=VAL_ketchup}
-//		rowID: 3, data: {COL_QUALITY=VAL_duh best, COL__TIMESTAMP=VAL_, COL_COST=VAL_1, COL__PHONENUMBERIN=VAL_, COL_HEINZ=VAL_tomatoe sauce}
-//		rowID: 4, data: {COL_QUALITY=VAL_meh, COL__TIMESTAMP=VAL_, COL_COST=VAL_0, COL__PHONENUMBERIN=VAL_, COL_HEINZ=VAL_idk}
-
 	}
 	
 	private ContentValues getValues(ArrayList<String> columns, ArrayList<String> values) {
@@ -798,30 +817,10 @@ public class Aggregation extends Activity {
 		return vals;
 	}
 	
-//	private ContentValues getValues(String[] header, String[] rows) {
-//		ContentValues vals = new ContentValues();
-//		for(int i=0; i<header.length; i++) {
-//			String head = header[i];
-//			String row = rows[i].substring(4).toLowerCase();
-//			if (head.startsWith("COL_", 0)) {
-//				head = head.substring(4).toLowerCase();;
-//			}
-//			if (row.startsWith("VAL_", 0)) {
-//				row = row.substring(4).toLowerCase();;
-//			}
-////			String head = "`" + header[i] + "`";
-//			if (!head.equals("_phonenumberin") && !head.equals("_timestamp")) {
-//				vals.put(head, row);
-//			}
-//		}
-//		return vals;
-//	}
-	
 	public void deleteUser() {
 		try {
 			conn.deleteUser(userId);
 		} catch (Exception e) {
-			dismissDialog(IN_PROGRESS_DIALOG);
 			showDialog(DELETEUSER_FAILED);
 			return;
 		}
