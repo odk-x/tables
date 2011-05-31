@@ -1,9 +1,19 @@
 package yoonsung.odk.spreadsheet.Activity.graphs;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import yoonsung.odk.spreadsheet.R;
 import android.app.AlertDialog;
@@ -93,37 +103,17 @@ public class MapViewActivity extends MapActivity {
         } catch (Exception e) {
         	Log.e("point1", e.toString());
         }
-      
-        //GeoPoint p = getGeoPoint("Seattle");
-    	// First point
-        /*
+        /**
+        GeoPoint p = getGeoPoint("Seattle");
+        Log.d("MVA", "p:" + p.toString());
+    	//First point
     	GeoPoint point = new GeoPoint(19240000,-99120000);
     	OverlayItem overlayitem = new OverlayItem(point, "Hola, Mundo!", "I'm in Mexico City!");
     	
     	// Second point 
     	GeoPoint point2 = new GeoPoint(35410000, 139460000);
     	OverlayItem overlayitem2 = new OverlayItem(point2, "Koniziwa", "I'm in Japan!");
-    	*/
         
-        ArrayList<String> address = new ArrayList<String>();
-        address.add("4733 21st Ave NE Seattle, WA 98105");
-        address.add("Bellevue, WA");
-        address.add("Kent, WA");
-        address.add("Bremerton, WA");
-        address.add("Tacoma, WA");
-        
-        try {
-        for (int i = 0; i < address.size(); i++) {
-        	GeoPoint p = getGeoPoint(address.get(i));
-        	if (p != null) {
-        		OverlayItem overlayitem = new OverlayItem(p, "Hello", "Smell the coffee");
-        		itemizedoverlay.addOverlay(overlayitem);
-        	}
-        }
-        } catch (Exception e) {
-        	Log.e("hel", e.toString());
-        }
-        /*
     	// Add points on the map
     	itemizedoverlay.addOverlay(overlayitem);
     	itemizedoverlay.addOverlay(overlayitem2);
@@ -131,7 +121,16 @@ public class MapViewActivity extends MapActivity {
     		OverlayItem overlayitem3 = new OverlayItem(p, "Hello", "Smell the coffee");
     		itemizedoverlay.addOverlay(overlayitem3);
     	}
-    	*/
+    	**/
+    	ArrayList<String> locs = getIntent().getStringArrayListExtra("location");
+    	for(String loc : locs) {
+    	    Log.d("MVA", "MapViewActivity:loc:" + loc);
+    	    GeoPoint locPoint = getGeoPoint(loc);
+    	    Log.d("MVA", "MapViewActivity:locPoint:" + locPoint.toString());
+    	    OverlayItem oItem = new OverlayItem(locPoint, "", "");
+    	    itemizedoverlay.addOverlay(oItem);
+    	}
+    	
     	mapOverlays.add(itemizedoverlay);
     	
     	// Define the focus of the map
@@ -140,7 +139,7 @@ public class MapViewActivity extends MapActivity {
     }
     
     public GeoPoint getGeoPoint(String location) {
-    	Geocoder geoCoder = new Geocoder(this, Locale.getDefault());    
+    	/*Geocoder geoCoder = new Geocoder(this, Locale.getDefault());    
         GeoPoint point = null;
         try {
             List<Address> addresses = geoCoder.getFromLocationName(location, 1);
@@ -150,7 +149,11 @@ public class MapViewActivity extends MapActivity {
                         (int) (addresses.get(0).getLongitude() * 1E6));
             }    
         } catch (IOException e) {}
-        return point;
+        return point;*/
+        // using solution from comment #21 at
+        // https://code.google.com/p/android/issues/detail?id=8816
+        JSONObject jo = getLocationInfo(location);
+        return getGeoPoint(jo);
     }
     
     @Override
@@ -177,6 +180,62 @@ public class MapViewActivity extends MapActivity {
     	}
     	
     	return super.onMenuItemSelected(featureId, item);
+    }
+    
+    public JSONObject getLocationInfo(String address) {
+        address = address.replaceAll(" ", "%20");
+        HttpGet httpGet = new HttpGet("http://maps.google."
+                + "com/maps/api/geocode/json?address=" + address
+                + "&sensor=false");
+        HttpClient client = new DefaultHttpClient();
+        HttpResponse response;
+        StringBuilder stringBuilder = new StringBuilder();
+
+        try {
+            response = client.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+            InputStream stream = entity.getContent();
+            int b;
+            while ((b = stream.read()) != -1) {
+                stringBuilder.append((char) b);
+            }
+        } catch (ClientProtocolException e) {
+        } catch (IOException e) {
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject = new JSONObject(stringBuilder.toString());
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Log.d("MVA", "MapViewActivity:jsonObject:" + jsonObject.toString());
+        return jsonObject;
+    }
+    
+    public GeoPoint getGeoPoint(JSONObject jsonObject) {
+
+        Double lon = new Double(0);
+        Double lat = new Double(0);
+
+        try {
+
+            lon = ((JSONArray)jsonObject.get("results")).getJSONObject(0)
+                .getJSONObject("geometry").getJSONObject("location")
+                .getDouble("lng");
+
+            lat = ((JSONArray)jsonObject.get("results")).getJSONObject(0)
+                .getJSONObject("geometry").getJSONObject("location")
+                .getDouble("lat");
+
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return new GeoPoint((int) (lat * 1E6), (int) (lon * 1E6));
+
     }
 	
 }
