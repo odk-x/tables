@@ -41,7 +41,7 @@
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="User Name:" />
+				android:text="User Name (must create user to upload/delete tables):" />
 		
 			<EditText 
         		android:id="@+id/aggregate_activity_userName"
@@ -89,7 +89,7 @@
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="Tables on Server(must enter credentials and press connect):" />
+				android:text="Tables on Aggregate:" />
 	
 			<Spinner 
         		android:id="@+id/aggregate_activity_getAggregateTables"
