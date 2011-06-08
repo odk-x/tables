@@ -84,6 +84,8 @@ public class Aggregation extends Activity {
 		hideViews();
 		noUserAccount = true;
 		connected = false;
+		TextView connection = (TextView)findViewById(R.id.aggregate_activity_url);
+		connection.setText("http://<url>.appspot.com/");
 	}
 
 	private void makeButtonListeners() {
@@ -511,10 +513,7 @@ public class Aggregation extends Activity {
 	}
 
 	public void connect() {
-		String url = "http://" + 
-		//		((EditText)findViewById(R.id.aggregate_activity_url)).getText().toString()
-		"the-dylan-price"
-		+ ".appspot.com/";
+		String url = ((EditText)findViewById(R.id.aggregate_activity_url)).getText().toString();
 
 		try {
 			this.conn = new AggregateConnection(
