@@ -48,7 +48,7 @@ public class Aggregation extends Activity {
 
 	private static int TABLESPIN_ID = 2000;
 	private static int AGGREGATETABLESPIN_ID = 1000;
-	private static final boolean debug = true;
+	private static final boolean debug = false;
 
 	private String[] phoneTableNames;
 	private String[] aggregateTableNames;
@@ -173,7 +173,7 @@ public class Aggregation extends Activity {
 		counter = 0;
 		for (TableEntry entry: aggTblLst) {
 			if (!entry.getTableId().startsWith("COLPROP_")) {
-				this.aggregateTableNames[counter] = entry.getTableName()+ " (owner:" + entry.getUserName()+")";
+				this.aggregateTableNames[counter] = entry.getTableName()+ " (owner: " + entry.getUserName()+")";
 				this.aggregateTableEntries[counter] = entry;
 				counter++;
 			}
@@ -503,6 +503,7 @@ public class Aggregation extends Activity {
 			setStatus("Failed to create user: this user already exists.");
 		} catch (Exception e) {
 			//retry
+			noUserAccount = true;
 			//failed to create a user account, try again
 			setStatus("Failed to create user.");
 			if (debug) {
@@ -557,9 +558,7 @@ public class Aggregation extends Activity {
 			findViewById(R.id.aggregate_activity_url).setVisibility(View.VISIBLE);
 			EditText connect = (EditText)findViewById(R.id.aggregate_activity_url);
 			//change when deploy, removing Dylan price thing
-			connect.setText("http://"
-					+"the-dylan-price"+ 
-			".appspot.com/");
+			connect.setText("http://<url>.appspot.com/");
 			findViewById(R.id.aggregate_activity_url_text).setVisibility(View.VISIBLE);
 			return;
 		}
