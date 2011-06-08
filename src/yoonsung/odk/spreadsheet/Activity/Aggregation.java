@@ -1,20 +1,5 @@
 package yoonsung.odk.spreadsheet.Activity;
 
-/*
- * UI: connect first, 
- * then check if userui exists 
- * (get dylan to have it be able to return user name), 
- * make them create user if not, else display username and general ui
- * (maybe split up the ui into different sections if possible)
- * 
- * Downloading: Dylan made it possible to have table names returned,
- * please check code for occurrences of table id,
- * then get downloading column information stored into column properties
- * 
- * also somewhere in here do that thing about verifications (deleteing user and/or tables)
- * as well as new name for table downloaded or uploaded
- */
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -26,6 +11,7 @@ import org.opendatakit.aggregate.odktables.client.AggregateConnection;
 import org.opendatakit.aggregate.odktables.client.Column;
 import org.opendatakit.aggregate.odktables.client.Row;
 import org.opendatakit.aggregate.odktables.client.TableEntry;
+import org.opendatakit.aggregate.odktables.client.User;
 import org.opendatakit.aggregate.odktables.client.exception.RowAlreadyExistsException;
 import org.opendatakit.aggregate.odktables.client.exception.TableAlreadyExistsException;
 import org.opendatakit.aggregate.odktables.client.exception.TableDoesNotExistException;
@@ -43,8 +29,6 @@ import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -64,37 +48,7 @@ public class Aggregation extends Activity {
 
 	private static int TABLESPIN_ID = 2000;
 	private static int AGGREGATETABLESPIN_ID = 1000;
-	//	private static final int IN_PROGRESS_DIALOG = -1;
-	//	private static final int MESSAGE_DIALOG = -2;
-	private static final int UPLOADTABLE_FAILURE = 0;
-	//	private static final int UPLOADTABLE_SUCCESS = 2;
-	//	private static final int DOWNLOADTABLE_FAILED = 3;
-	//	private static final int DOWNLOADTABLE_SUCCESS = 4;
-	//	private static final int CREATEUSER_FAILED = 5;
-	//	private static final int CREATEUSER_SUCCESS = 6;
-	//	private static final int DELETEUSER_FAILED = 7;
-	//	private static final int DELETEUSER_SUCCESS = 8;
-	//	private static final int GETTABLELIST_FAILED = 9;
-	//	private static final int GETTABLELIST_SUCCESS = 10;
-	//	private static final int GETUSERURI_FAILED = 11;
-	//	private static final int GETUSERURI_SUCCESS = 12;
-	//	private static final int CONNECTION_FAILED = 13;
-	//	private static final int CONNECTION_SUCCESS = 14;
-	//	private static final int DELETETABLE_FAILED = 15;
-	//	private static final int DELETETABLE_SUCCESS = 16;
-	//	private static final int TABLE_NOEXIST = 17;
-	//	private static String message;
 	private static final boolean debug = true;
-	private static final int GET_LIST_FAILURE = 1;	
-	private static final int NO_AGGTABLES_EXIST_FAILURE = 2;
-	private static final int NO_PHONETABLES_EXIST_FAILURE = 3;
-	private static final int UPLOAD_ROWS_FAILURE = 4;
-	private static final int UPLOAD_NOTABLE_FAILURE = 0;
-	private static final int UPLOAD_TABLEEXISTS_FAILURE = 0;
-	private static final int UPLOAD_USERNOTEXIST_FAILURE = 0;
-	private static final int DELETETABLE_FAILURE = 0;
-	private static final int CREATEUSER_FAILURE = 0;
-	private static final int CONNECTION_FAILURE = 0;
 
 	private String[] phoneTableNames;
 	private String[] aggregateTableNames;
@@ -104,7 +58,6 @@ public class Aggregation extends Activity {
 	private Spinner aggregateTables;
 	private String userId;
 	private AggregateConnection conn;
-	private String message;
 	private boolean noUserAccount;
 	private boolean connected;
 
@@ -172,23 +125,6 @@ public class Aggregation extends Activity {
 		this.phoneTables.setVisibility(View.GONE);
 	}
 
-	//	private void makeVisible() {
-	//		Log.d("aggregate","made it to makeVisible");
-	////		findViewById(R.id.aggregate_activity_createUser).setVisibility(View.VISIBLE);
-	////		findViewById(R.id.aggregate_activity_userName_text).setVisibility(View.VISIBLE);
-	////		findViewById(R.id.aggregate_activity_userName).setVisibility(View.VISIBLE);
-	////		findViewById(R.id.aggregate_activity_downloadTable).setVisibility(View.VISIBLE);
-	////		findViewById(R.id.aggregate_activity_getAggregateTables_text).setVisibility(View.VISIBLE);
-	////		this.aggregateTables.setVisibility(View.VISIBLE);
-	////		findViewById(R.id.aggregate_activity_getAggregateTables_button).setVisibility(View.VISIBLE);
-	//		findViewById(R.id.aggregate_activity_deleteUser).setVisibility(View.VISIBLE);
-	//		findViewById(R.id.aggregate_activity_user_uri_text).setVisibility(View.VISIBLE);
-	//		findViewById(R.id.aggregate_activity_uploadTable).setVisibility(View.VISIBLE);
-	//		findViewById(R.id.aggregate_activity_deleteTable).setVisibility(View.VISIBLE);
-	//		findViewById(R.id.aggregate_activity_getPhoneTables_text).setVisibility(View.VISIBLE);
-	//		this.phoneTables.setVisibility(View.VISIBLE);
-	//	}
-
 	private void fillPhoneTableSpinnerList() {
 		Map<String, String> tableMap = (new TableList()).getAllTableList();
 		phoneTableNames = new String[tableMap.size()];
@@ -213,7 +149,7 @@ public class Aggregation extends Activity {
 			aggTblLst = conn.listTables();
 		} catch (Exception e) {
 			//could not retrieve table list
-			showDialog(GET_LIST_FAILURE);
+			setStatus("Failed to retrieve aggregate table list.");
 			if (debug) {
 				e.printStackTrace();
 			}
@@ -235,7 +171,7 @@ public class Aggregation extends Activity {
 		counter = 0;
 		for (TableEntry entry: aggTblLst) {
 			if (!entry.getTableId().startsWith("COLPROP_")) {
-				this.aggregateTableNames[counter] = entry.getTableName();
+				this.aggregateTableNames[counter] = entry.getTableName()+ " (owner:" + entry.getUserName()+")";
 				this.aggregateTableEntries[counter] = entry;
 				counter++;
 			}
@@ -255,7 +191,7 @@ public class Aggregation extends Activity {
 		if (this.phoneTableNames.length != 0) {
 			return phoneTableNames[pos];
 		} else {
-			showDialog(NO_AGGTABLES_EXIST_FAILURE);
+			setStatus("No tables exist on aggregate.");
 			return null;
 		}
 	}
@@ -263,74 +199,10 @@ public class Aggregation extends Activity {
 	private TableEntry getCurrentAggregateTableEntry() {
 		int pos = this.aggregateTables.getSelectedItemPosition();
 		if (this.aggregateTableNames.length != 0) {
-
 			return this.aggregateTableEntries[pos];
 		} else {
-			showDialog(NO_PHONETABLES_EXIST_FAILURE);
+			setStatus("No tables exist on phone.");
 			return null;
-		}
-	}
-
-	/**
-	 * Creates a simple alert dialog.
-	 * @param message the dialog's message
-	 * @return the dialog
-	 */
-	private AlertDialog getDialog(String message) {
-		AlertDialog.Builder adBuilder = new AlertDialog.Builder(this);
-		adBuilder = adBuilder.setMessage(this.message);
-		adBuilder = adBuilder.setNeutralButton("OK",
-				new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.cancel();
-			}
-		});
-		AlertDialog d = adBuilder.create();
-		return d;
-	}
-
-	@Override
-	protected Dialog onCreateDialog(int id) {
-		switch(id) {
-		case GET_LIST_FAILURE:
-			return getDialog("Failed to update aggregate list.");
-		case NO_PHONETABLES_EXIST_FAILURE:
-			return getDialog("No tables exist on phone.");
-			//		case UPLOADTABLE_FAILED:
-			//			return getDialog("Failed to upload table.");
-			//		case UPLOADTABLE_SUCCESS:
-			//			return getDialog("Table uploaded.");
-			//		case DOWNLOADTABLE_FAILED:
-			//			return getDialog("Failed to download table.");
-			//		case DOWNLOADTABLE_SUCCESS:
-			//			return getDialog("Table downloaded.");
-			//		case CREATEUSER_FAILED:
-			//			return getDialog("Failed to create user.");
-			//		case CREATEUSER_SUCCESS:
-			//			return getDialog("User created.");
-			//		case DELETEUSER_FAILED:
-			//			return getDialog("Failed to delete user and assosciated tables.");
-			//		case DELETEUSER_SUCCESS:
-			//			return getDialog("User and assosciated tables deleted.");
-			//		case GETTABLELIST_FAILED:
-			//			return getDialog("Failed to get table list.");
-			//		case GETTABLELIST_SUCCESS:
-			//			return getDialog("Table lists retrieved.");
-			//		case GETUSERURI_FAILED:
-			//			return getDialog("Failed to acquire user uri.");
-			//		case GETUSERURI_SUCCESS:
-			//			return getDialog("User uri acquired.");
-			//		case CONNECTION_FAILED:
-			//			return getDialog("Failed to connect.");
-			//		case CONNECTION_SUCCESS:
-			//			return getDialog("Connected.");
-			//		case DELETETABLE_FAILED:
-			//			return getDialog("Failed to delete table.");
-			//		case DELETETABLE_SUCCESS:
-			//			return getDialog("Table deleted.");
-		default:
-			throw new IllegalArgumentException();
 		}
 	}
 
@@ -423,7 +295,7 @@ public class Aggregation extends Activity {
 				this.insertRows(tableID, rows) && 
 				this.storeColProps(updated, tableID, tableName)) {
 			fillAggTableListSpinner();
-			//			showDialog(UPLOAD_SUCCESS);
+			setStatus("Successfully uploaded table.");
 		} else {
 			//failed
 		}
@@ -479,7 +351,7 @@ public class Aggregation extends Activity {
 			conn.insertRows(userId, tableID, rows);
 		} catch (RowAlreadyExistsException e) {
 			//should not get this exception, if so then query person to remove current table
-			showDialog(UPLOAD_ROWS_FAILURE);
+			setStatus("Failed to insert rows to table: row already exists");
 			Log.d("aggregate","row already exists");
 			if (debug) {
 				e.printStackTrace();
@@ -487,7 +359,7 @@ public class Aggregation extends Activity {
 			return false;
 		} catch (TableDoesNotExistException e) {
 			//table does not exist on aggregate, refresh list and try again
-			showDialog(UPLOAD_NOTABLE_FAILURE);
+			setStatus("Failed to insert rows to table: table does not exist");
 			Log.d("aggregate","table does not exist");
 			if (debug) {
 				e.printStackTrace();
@@ -495,7 +367,7 @@ public class Aggregation extends Activity {
 			return false;
 		} catch (Exception e) {
 			//row insertion failed
-			showDialog(UPLOADTABLE_FAILURE);
+			setStatus("Failed to insert rows to table.");
 			if (debug) {
 				e.printStackTrace();
 			}
@@ -504,7 +376,7 @@ public class Aggregation extends Activity {
 		return true;
 	}
 
-	private boolean createTable(String tableName, String tableID, List<String> header) {
+	private boolean createTable(final String tableName, final String tableID, final List<String> header) {
 		//if table doesnt exist already
 		List<Column> columns = new ArrayList<Column>();
 
@@ -523,21 +395,43 @@ public class Aggregation extends Activity {
 			conn.createTable(userId, tableID, tableName, columns);
 		} catch (TableAlreadyExistsException e) {
 			//ask if user wants to remove previous table or change this tables name
-			showDialog(UPLOAD_TABLEEXISTS_FAILURE);
+			// Prompt an alert box
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			alert.setMessage("This table already exists, replace it?");
+			
+			final String tempTableId = tableID;
+			
+			// OK Action => Create new Column
+			alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton) {
+					deleteTableHelper(tempTableId);
+					uploadTable();
+				}
+			});
+
+			// Cancel Action
+			alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton) {
+					//Canceled.
+				}
+			});
+			alert.show();
+
+//			setStatus("Failed to create new table: table already exists");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return false;
 		} catch (UserDoesNotExistException e) {
 			//user does not exist, failed to add user to aggregate
-			showDialog(UPLOAD_USERNOTEXIST_FAILURE);
+			setStatus("Failed to create new table: user does not exist.");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return false;
 		} catch (Exception e) {
 			//creating table failed, try again
-			showDialog(UPLOADTABLE_FAILURE);
+			setStatus("Failed to upload table.");
 			if (debug) {
 				e.printStackTrace();
 			}
@@ -547,23 +441,46 @@ public class Aggregation extends Activity {
 	}
 
 	private void deleteTable() {
-		TableEntry tableName = this.getCurrentAggregateTableEntry();
+		final TableEntry entry = this.getCurrentAggregateTableEntry();
 
-		Log.d("aggregate","deletion.name: " + tableName.getTableName() + ", userId: " + userId);
+		Log.d("aggregate","deletion.name: " + entry.getTableName() + ", userId: " + userId);
 
+		//ask if they're cool with this first
+		// Prompt an alert box
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setMessage("Are you sure you want to delete table " + entry.getTableName() + " (owner:" + entry.getUserName()+")?");
+
+		// OK Action => Create new Column
+		alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				deleteTableHelper(entry.getTableId());
+			}
+		});
+
+		// Cancel Action
+		alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				//Canceled.
+			}
+		});
+
+		alert.show();
+	}
+
+	private void deleteTableHelper(String tableId) {
 		try {
-			conn.deleteTable(userId, tableName.getTableId());
-			conn.deleteTable(userId, "COLPROP_" + tableName.getTableId());
+			Log.d("aggregate",conn.deleteTable(userId, tableId));
+			Log.d("aggregate",conn.deleteTable(userId, "COLPROP_" + tableId));
+			fillAggTableListSpinner();
+			setStatus("Successfully deleted table.");
 		} catch (Exception e) {
 			//failed to delete table, try again
-			showDialog(DELETETABLE_FAILURE);
+			setStatus("Failed to delete table.");
 			if (debug) {
 				e.printStackTrace();
 			}
 			return;
 		}
-		fillAggTableListSpinner();
-		//		showDialog(DELETETABLE_SUCCESS);
 	}
 
 	public void createUser() {
@@ -572,6 +489,7 @@ public class Aggregation extends Activity {
 		try {
 			conn.createUser(userId, userName);
 			noUserAccount = false;
+			setStatus("Successfully created user.");
 		} catch (UserAlreadyExistsException e) {
 			//user already exists, should not be here (checked getUserUri first, then this)
 			//just show the UI then
@@ -580,16 +498,16 @@ public class Aggregation extends Activity {
 			if (debug) {
 				e.printStackTrace();
 			}
+			setStatus("Failed to create user: this user already exists.");
 		} catch (Exception e) {
 			//retry
 			//failed to create a user account, try again
-			showDialog(CREATEUSER_FAILURE);
+			setStatus("Failed to create user.");
 			if (debug) {
 				e.printStackTrace();
 			}
 		}
 		checkViews();
-		//		showDialog(CREATEUSER_SUCCESS);
 	}
 
 	public void connect() {
@@ -608,14 +526,14 @@ public class Aggregation extends Activity {
 			}
 			this.connected = false;
 			checkViews();
-			showDialog(CONNECTION_FAILURE);
+			setStatus("Failed to connect, check wifi connection and/or provided url and retry.");
 			return;
 		}
 
 		this.connected = true;
 		//check if user is set, if so then show options, else make them create user first		
-		String uri = this.getUserURI();
-		if (uri == null) {
+		User user = this.getUserURI();
+		if (user == null) {
 			//user does not exist, create user
 			noUserAccount = true;
 		} else {
@@ -624,7 +542,7 @@ public class Aggregation extends Activity {
 		}
 		checkViews();
 		fillAggTableListSpinner();
-//		showDialog(CONNECTION_SUCCESS);
+		setStatus("Connection established.");
 	}
 
 	public void checkViews(){
@@ -675,14 +593,15 @@ public class Aggregation extends Activity {
 			findViewById(R.id.aggregate_activity_userName).setVisibility(View.GONE);
 			findViewById(R.id.aggregate_activity_getPhoneTables_text).setVisibility(View.VISIBLE);
 			this.phoneTables.setVisibility(View.VISIBLE);
+			getUserURI();
 		}
 	}
 
-	private String getUserURI() {
+	private User getUserURI() {
 		TextView text = (TextView) findViewById(R.id.aggregate_activity_user_uri_text);
-		String uri = "";
+		User uri;
 		try {
-			uri += conn.getUserUri(userId);
+			uri = conn.getUser(userId);
 		} catch (UserDoesNotExistException e) {
 			//user does not exist, return null so that connect() method knows it needs to create a user
 			Log.d("aggregate","User does not exist.");
@@ -697,67 +616,98 @@ public class Aggregation extends Activity {
 			}
 			return null;
 		}
-		text.setText("Phone ID on aggregate: " + uri);
+		text.setText("\nUser Name: " + uri.getUserName());
 		return uri;
 	}
 
-	//***********************************************************
-	
-	public void downloadTable() {
-		TableEntry tableEntryToDownload = this.getCurrentAggregateTableEntry();
-
-		Log.d("aggregate","got table entry: " + tableEntryToDownload);
-		for (String s: this.tableIDsToTableEntry.keySet()) {
-			Log.d("aggregate","map has key: " + s + ", value:" + this.tableIDsToTableEntry.get(s));
-		}
-
-		if (tableEntryToDownload == null) {
-			Log.d("aggregate","table does not exist");
-			//showDialog(DOWNLOADTABLE_TABLEDOESNOTEXIST_FAILURE);
-			return;
-		}
-		String userUri = tableEntryToDownload.getUserUri();
-		List<Row> rows;
-
-		//MAKE NEW METHOD TO DO THIS, REDUNDANT
+	private List<Row> downloadHelper(String userUri, String tableId) {
+		List<Row> rows = null;
 		try {
-			rows = conn.getRows(userUri, tableEntryToDownload.getTableId());
+			rows = conn.getRows(userUri, tableId);
 		} catch (TableDoesNotExistException e) {
-			//showDialog(DOWNLOADTABLE_TABLEDOESNOTEXIST_FAILURE);
+			setStatus("Failed to download table: table does not exist, refresh list.");
 			Log.d("aggregate","table does not exist");
 			if (debug) {
 				e.printStackTrace();
 			}
-			return;
 		} catch (UserDoesNotExistException e) {
-			//showDialog(DOWNLOADTABLE_FAILED);
+			setStatus("Failed to download table: user does not exist, refresh list.");
 			Log.d("aggregate","user does not exist");
 			if (debug) {
 				e.printStackTrace();
 			}
-			return;
 		} catch (Exception e) {
-			//showDialog(DOWNLOADTABLE_FAILED);
+			setStatus("Failed to download table.");
 			if (debug) {
 				e.printStackTrace();
 			}
+		}
+		return rows;
+	}
+
+	public void downloadTable() {
+		final TableEntry entry = this.getCurrentAggregateTableEntry();
+
+		Log.d("aggregate","got table entry: " + entry);
+		for (String s: this.tableIDsToTableEntry.keySet()) {
+			Log.d("aggregate","map has key: " + s + ", value:" + this.tableIDsToTableEntry.get(s));
+		}
+
+		if (entry == null) {
+			Log.d("aggregate","table does not exist");
+			setStatus("Failed to download table: table does not exist, refresh list.");
 			return;
 		}
 
 		//give user option to change table name, here and on upload (if table already exists)
-		String tableName2 = 
-			tableEntryToDownload.getTableName();
-		//			((EditText)findViewById(R.id.aggregate_activity_userName)).getText().toString();
-		System.out.println("tablename2: " + tableName2);
+		// Prompt an alert box
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("Name of Table Downloaded");
 
-		for (Row row: rows) {
-			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
+		// Set an EditText view to get user input 
+		final EditText input = new EditText(this);
+		alert.setView(input);
+		input.setText(entry.getTableName());
+
+		// OK Action => Create new Column
+		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				String newTableName = input.getText().toString();
+				finishDownload(entry, newTableName);
+			}
+		});
+
+		// Cancel Action
+		alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				// Canceled.
+			}
+		});
+
+		alert.show();
+	}
+
+	private void finishDownload(TableEntry entry, String tableName) { 
+		Log.d("aggregate","tablename: " + tableName);
+		TableList tl = new TableList();
+		if (tl.isTableExist(tableName)) {
+			setStatus("Table "+tableName+" already exists. Specify different table name.");
+			return;
+		} 
+
+		String res = tl.registerNewTable(tableName);
+		if (res != null) {
+			setStatus("Failed to download table: bad table name provided.");
+			throw new IllegalArgumentException(res);
 		}
 
-		//======================================================
+		Integer tID = tl.getTableID(tableName);
+		String tableID = tID.toString();
+		String userUri = entry.getUserUri();
+		List<Row> rows = downloadHelper(userUri,entry.getTableId());
 
 		if (rows.size() == 0) {
-			//cannot have empty table
+			setStatus("Failed to download table: table empty.");
 			return;
 		}
 		ArrayList<String> heads = new ArrayList<String>();
@@ -765,12 +715,11 @@ public class Aggregation extends Activity {
 			heads.add(s.substring(4).toLowerCase());
 		}
 
-		TableList tl = new TableList();
-		String res = tl.registerNewTable(tableName2);
-		if(res != null) {
-			throw new IllegalArgumentException(res);
+		for (Row row: rows) {
+			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
 		}
-		String stat = "CREATE TABLE IF NOT EXISTS `" + tableName2 + "` ("
+
+		String stat = "CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
 		+ DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
 		+ DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
 		+ DataTable.DATA_TIMESTAMP + " TEXT";
@@ -784,8 +733,6 @@ public class Aggregation extends Activity {
 		SQLiteDatabase con = db.getConn();
 		con.execSQL(stat);
 		con.close();
-		Integer tID = tl.getTableID(tableName2);
-		String tableID = tID.toString();
 		DefaultsManager dm = new DefaultsManager(tableID);
 		TableProperty tp = new TableProperty(tableID);
 		ArrayList<String> colOrder = tp.getColOrderArrayList();
@@ -799,7 +746,7 @@ public class Aggregation extends Activity {
 		}
 		tp.setColOrder(colOrder);
 
-		//		Log.d("aggregate","so i set up the columns now");
+		//Log.d("aggregate","so i set up the columns now");
 		DataTable data = new DataTable(tableID);
 
 		for (Row row : rows) {
@@ -822,44 +769,13 @@ public class Aggregation extends Activity {
 			}
 			ContentValues cv = getValues(columns, values);
 			Log.d("aggregate","addin row: " + cv);
-			try {
-				data.addRow(cv, pn, ts);
-			} catch(IllegalArgumentException e) {
-				//				showDialog(DOWNLOADTABLE_FAILED);
-			}
+			data.addRow(cv, pn, ts);
 		}
 
+		//set column properties
 
-		//============================
-		//column properties
-
-		String tableId = "COLPROP_"+tableEntryToDownload.getTableId();
-		String otherUserUri = tableEntryToDownload.getUserUri();
-		List<Row> rows2;
-
-		try {
-			rows2 = conn.getRows(otherUserUri, tableId);
-		} catch (TableDoesNotExistException e) {
-			//			showDialog(DOWNLOADTABLE_FAILED);
-			Log.d("aggregate","table does not exist");
-			if (debug) {
-				e.printStackTrace();
-			}
-			return;
-		} catch (UserDoesNotExistException e) {
-			//			showDialog(DOWNLOADTABLE_FAILED);
-			Log.d("aggregate","user does not exist");
-			if (debug) {
-				e.printStackTrace();
-			}
-			return;
-		} catch (Exception e) {
-			//			showDialog(DOWNLOADTABLE_FAILED);
-			if (debug) {
-				e.printStackTrace();
-			}
-			return;
-		}
+		String tableId = "COLPROP_"+entry.getTableId();
+		List<Row> rows2 = downloadHelper(userUri,tableId);
 
 		for (Row row: rows2) {
 			Log.d("aggregate","rowID: "+row.getRowId() +", data: "+ row.getColumnValuePairs());
@@ -875,14 +791,14 @@ public class Aggregation extends Activity {
 				String value = propToValue.get(property);
 				Log.d("aggregate", "setting property " + property + " to " + value);
 				if (property.equals("SMSOUT")) {
-					boolean bool = Boolean.parseBoolean(value);
-					Log.d("aggregate","smsout value: " + bool);
+					//boolean bool = Boolean.parseBoolean(value);
+					//Log.d("aggregate","smsout value: " + bool);
 					cp.setSMSOUT(colName, Boolean.parseBoolean(value));
 				} else if (property.equals("NAME")) {
-					//					cp.setName(colName, newVal)
+					//cp.setName(colName, newVal)
 				} else if (property.equals("SMSIN")) {
-					boolean bool = Boolean.parseBoolean(value);
-					Log.d("aggregate","smsin value: " + bool);
+					//boolean bool = Boolean.parseBoolean(value);
+					//Log.d("aggregate","smsin value: " + bool);
 					cp.setSMSIN(colName, Boolean.parseBoolean(value));
 				} else if (property.equals("TYPE")) {
 					cp.setType(colName, value);
@@ -895,10 +811,8 @@ public class Aggregation extends Activity {
 				}
 			}
 		}
-
 		fillPhoneTableSpinnerList();
-		//=================
-		//		showDialog(DOWNLOADTABLE_SUCCESS);
+		setStatus("Successfully downloaded table.");
 	}
 
 	private ContentValues getValues(ArrayList<String> columns, ArrayList<String> values) {
@@ -913,17 +827,44 @@ public class Aggregation extends Activity {
 	}
 
 	public void deleteUser() {
-		//ask if they're kewl with this first
+		//ask if they're cool with this first
+		// Prompt an alert box
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setMessage("Are you sure? This deletes the user and all tables owned.");
+
+		// OK Action => Create new Column
+		alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				deleteUserHelper();
+			}
+		});
+
+		// Cancel Action
+		alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				//Canceled.
+			}
+		});
+
+		alert.show();
+	}
+
+	private void deleteUserHelper() {
 		try {
 			conn.deleteUser(userId);
 		} catch (Exception e) {
-			//			showDialog(DELETEUSER_FAILED);
+			setStatus("Failed to delete user.");
 			return;
 		}
-		//		showDialog(DELETEUSER_SUCCESS);
-		//		getUserURI();
+
+		setStatus("Successfully deleted user.");
 		this.noUserAccount = true;
 		checkViews();
 		fillAggTableListSpinner();
+	}
+
+	private void setStatus(String Message) {
+		TextView status = (TextView)findViewById(R.id.aggregate_activity_status);
+		status.setText("Recent Status: " + Message);
 	}
 }

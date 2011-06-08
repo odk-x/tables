@@ -19,11 +19,30 @@
 			android:background="#FFFFFF">
 	
 			<TextView
+				android:id="@+id/aggregate_activity_status"
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:text="Recent Status:" />
+				
+			<TextView
+				android:id="@+id/aggregate_activity_user_uri_text"
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content"
+				android:textColor="#000000" />
+				
+			<Button
+    			android:id="@+id/aggregate_activity_deleteUser"
+    			android:layout_width="fill_parent"
+    			android:layout_height="wrap_content"
+    			android:text="Remove this user and data on aggregate" />
+				
+			<TextView
 				android:id="@+id/aggregate_activity_url_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="Aggregate URL:" />
+				android:text="\nAggregate URL:" />
 	
 			<EditText 
        			android:id="@+id/aggregate_activity_url"
@@ -41,7 +60,7 @@
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="User Name (must create user to upload/delete tables):" />
+				android:text="\nUser Name (must create user to upload/delete tables):" />
 		
 			<EditText 
         		android:id="@+id/aggregate_activity_userName"
@@ -53,25 +72,13 @@
     			android:layout_width="fill_parent"
     			android:layout_height="wrap_content"
     			android:text="Create User" />
-    			
-    		<Button
-    			android:id="@+id/aggregate_activity_deleteUser"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Remove this user and data on aggregate" />
-			
-			<TextView
-				android:id="@+id/aggregate_activity_user_uri_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000" />
 			
 			<TextView
 				android:id="@+id/aggregate_activity_getPhoneTables_text"
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="Tables On Phone:" />
+				android:text="\nTables On Phone:" />
 	
 			<Spinner 
         		android:id="@+id/aggregate_activity_getPhoneTables"
@@ -89,7 +96,7 @@
 				android:layout_width="fill_parent" 
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
-				android:text="Tables on Aggregate:" />
+				android:text="\nTables on Aggregate:" />
 	
 			<Spinner 
         		android:id="@+id/aggregate_activity_getAggregateTables"
