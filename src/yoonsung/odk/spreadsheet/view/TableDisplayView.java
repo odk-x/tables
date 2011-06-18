@@ -214,10 +214,10 @@ public class TableDisplayView extends TableRow {
 		RelativeLayout header = new RelativeLayout(ta);
 		if(isIndex) {
 			header.addView(buildIndexColHeaderTable(indexedCol),
-					LinearLayout.LayoutParams.WRAP_CONTENT, 30);
+					LinearLayout.LayoutParams.WRAP_CONTENT, 40);
 		} else {
 			header.addView(buildMainHeaderTable(indexedCol),
-					LinearLayout.LayoutParams.WRAP_CONTENT, 30);
+					LinearLayout.LayoutParams.WRAP_CONTENT, 40);
 		}
 		// content
 		RelativeLayout content = new RelativeLayout(ta);
@@ -238,10 +238,10 @@ public class TableDisplayView extends TableRow {
 		RelativeLayout footer = new RelativeLayout(ta);
 		if(isIndex) {
 			footer.addView(buildIndexColFooterTable(indexedCol),
-					LinearLayout.LayoutParams.WRAP_CONTENT, 30);
+					LinearLayout.LayoutParams.WRAP_CONTENT, 40);
 		} else {
 			footer.addView(buildMainFooterTable(indexedCol),
-					LinearLayout.LayoutParams.WRAP_CONTENT, 30);
+					LinearLayout.LayoutParams.WRAP_CONTENT, 40);
 		}
 		// wrapping them up
 		RelativeLayout wrapper = new RelativeLayout(ta);

@@ -174,7 +174,7 @@ public abstract class TableActivity extends Activity {
     	Intent g = null;
 		
     	// Classifier
-    	GraphClassifier gcf = new GraphClassifier(this, tableID, (indexedCol == -1));
+    	GraphClassifier gcf = new GraphClassifier(this, tableID, (collectionRowNum == -1));
     	String graphType = gcf.getGraphType();
     	String colOne = gcf.getColOne(); // i.e. X
     	String colTwo = gcf.getColTwo(); // i.e. Y

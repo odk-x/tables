@@ -391,6 +391,8 @@ public class DataTable {
 			} else {
 				result += db.listColumns(colOrder, true, null, null) 
 						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null);
+				if (sortBy != null)
+					result += " ORDER BY Cast(" + db.toSafeSqlColumn(sortBy, false, null) + " as integer)";
 			}
 		} else {
 			// Into-History

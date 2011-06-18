@@ -48,6 +48,13 @@
 <activity android:name=".Activity.ShortcutTableActivity"></activity>
 <activity android:name=".Activity.Aggregation"></activity>
     
-        <uses-library android:name="com.google.android.maps" />
+<uses-library android:name="com.google.android.maps" />
 </application>
+<supports-screens
+	android:resizeable="true"
+	android:smallScreens="true"
+	android:normalScreens="true"
+	android:largeScreens="true"
+	
+	android:anyDensity="true" />
 </manifest> 
