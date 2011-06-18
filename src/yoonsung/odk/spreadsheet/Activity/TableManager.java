@@ -18,6 +18,7 @@ import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -212,7 +213,7 @@ public class TableManager extends ListActivity {
 			 return true;
 		 case CHANGE_TABLE_NAME:
 			 // TO be Done
-			 alertForNewTableName(Integer.toString(tableID));
+			 alertForNewTableName(false, -1, Integer.toString(tableID), null);
 			 return true; 
 		 case REMOVE_TABLE:
 			 // To be Done
@@ -249,13 +250,13 @@ public class TableManager extends ListActivity {
 		 // HANDLES DIFFERENT MENU OPTIONS
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
-			 alertForNewTableName(TableList.TABLETYPE_DATA);
+			 alertForNewTableName(true, TableList.TABLETYPE_DATA, null, null);
 			 return true;
 		 case ADD_NEW_SECURITY_TABLE:
-			 alertForNewTableName(TableList.TABLETYPE_SECURITY);
+			 alertForNewTableName(true, TableList.TABLETYPE_SECURITY, null, null);
 			 return true;
 		 case ADD_NEW_SHORTCUT_TABLE:
-             alertForNewTableName(TableList.TABLETYPE_SHORTCUT);
+             alertForNewTableName(true, TableList.TABLETYPE_SHORTCUT, null, null);
              return true;
 		 case IMPORT_EXPORT:
 			 Intent i = new Intent(this, ImportExportActivity.class);
@@ -271,7 +272,8 @@ public class TableManager extends ListActivity {
 	 }
 	 
 	 // Ask for a new column name.
-	 private void alertForNewTableName(final int tableType) {
+	 private void alertForNewTableName(final boolean isNewTable, 
+			 final int tableType, final String tableID, String givenTableName) {
 		
 		 // Prompt an alert box
 		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -280,13 +282,29 @@ public class TableManager extends ListActivity {
 		 // Set an EditText view to get user input 
 		 final EditText input = new EditText(this);
 		 alert.setView(input);
-
+		 if (givenTableName != null) 
+			 input.setText(givenTableName);
+		 
 		 // OK Action => Create new Column
 		 alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			 public void onClick(DialogInterface dialog, int whichButton) {
 				 String newTableName = input.getText().toString().trim();
-				 addTable(newTableName, tableType);
-				 refreshList();
+				
+				 if (newTableName == null || newTableName.equals("")) {
+					// Table name is empty string
+					toastTableNameError("Table name cannot be empty!");
+					alertForNewTableName(isNewTable, tableType, tableID, null);
+			 	 } else if (newTableName.contains(" ")) {
+					// Check for space in-between
+					toastTableNameError("Table name cannot contain spaces!");
+					alertForNewTableName(isNewTable, tableType, tableID, newTableName.replace(' ', '_'));
+			 	 } else {
+			 		 if (isNewTable) 
+			 			 addTable(newTableName, tableType);
+			 		 else 
+			 			 changeTableName(tableID, newTableName);
+			 		 refreshList();
+				 }
 			 }
 		 });
 
@@ -300,36 +318,12 @@ public class TableManager extends ListActivity {
 		 alert.show();
 	 }
 	 
-	 // Ask for a new column name.
-	 private void alertForNewTableName(final String tableID) {
-		
-		 // Prompt an alert box
-		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		 alert.setTitle("Name of New Table");
-	
-		 // Set an EditText view to get user input 
-		 final EditText input = new EditText(this);
-		 alert.setView(input);
-
-		 // OK Action => Create new Column
-		 alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-			 public void onClick(DialogInterface dialog, int whichButton) {
-				 String newTableName = input.getText().toString();
-				 changeTableName(tableID, newTableName);
-				 refreshList();
-			 }
-		 });
-
-		 // Cancel Action
-		 alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-			 public void onClick(DialogInterface dialog, int whichButton) {
-				 // Canceled.
-			 }
-		 });
-
-		 alert.show();
+	 private void toastTableNameError(String msg) {
+		 Context context = getApplicationContext();
+		 Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
+		 toast.show();
 	 }
-
+	 
 	 private void setDefaultTable(String tableID) {
 		// Share preference editor
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);

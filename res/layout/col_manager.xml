@@ -11,18 +11,9 @@
 		android:id="@android:id/empty"
     	android:layout_width="fill_parent"
     	android:layout_height="64dip"
-    	android:background="#C0C0C0"
-    	android:gravity="center_vertical"
-    	android:ignoreGravity="@+id/icon"
+    	android:background="#FFFFFF"
     	android:layout_below="@+id/prime_sort_table"
     	>
-    	<ImageView android:id="@+id/icon"
-	        android:paddingLeft="9dip"
-	        android:layout_centerVertical="true"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-			android:src="@drawable/addsign"
-		/>
 		<TextView android:id="@+id/label"
 	        android:textAppearance="?android:attr/textAppearanceMedium"
 	        android:textColor="#000000"
@@ -30,11 +21,10 @@
 	        android:paddingLeft="9dip"
 	        android:layout_height="wrap_content"
 	        android:layout_alignWithParentIfMissing="true"
-	        android:layout_toRightOf="@id/icon"
 			android:layout_centerVertical="true"
 	        android:ellipsize="marquee"
 	        android:singleLine="true"
-	        android:text="Add a Column"
+	        android:text="Click Menu to Add a New Column"
 			/>
 	</RelativeLayout>
 		

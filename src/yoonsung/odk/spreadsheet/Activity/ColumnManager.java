@@ -9,6 +9,7 @@ import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.TouchListView;
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /*
  * Activity that allows users to change table properties 
@@ -185,7 +187,7 @@ public class ColumnManager extends ListActivity {
     	// HANDLES DIFFERENT MENU OPTIONS
     	switch(item.getItemId()) {
     	case ADD_NEW_COL:
-    		alertForNewColumnName();
+    		alertForNewColumnName(null);
     		return true;
     	case SET_AS_PRIME:
 	    	cp.setIsIndex(currentCol, true); 
@@ -226,7 +228,7 @@ public class ColumnManager extends ListActivity {
 	}
 	
 	// Ask for a new column name.
-	private void alertForNewColumnName() {
+	private void alertForNewColumnName(String givenColName) {
 		
 		// Prompt an alert box
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -235,6 +237,8 @@ public class ColumnManager extends ListActivity {
 		// Set an EditText view to get user input 
 		final EditText input = new EditText(this);
 		alert.setView(input);
+		if (givenColName != null) 
+			input.setText(givenColName);
 
 		// OK Action => Create new Column
 		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -244,20 +248,30 @@ public class ColumnManager extends ListActivity {
 				
 				// if not, add a new column
 				if (!data.isColumnExist(colName)) {
-					
-					// Create new column
-					data.addNewColumn(colName);
-					
-					// Update Table Property
-					colOrder.add(colName);
-					tp.setColOrder(colOrder);
-					
-					// Set Default Column Property
-					cp.setSMSIN(colName, true);
-					cp.setSMSOUT(colName, true);
-					
-					// Load Column Property Manger
-					loadColumnPropertyManager(colName);
+					Log.e("colexist", colName);
+					if (colName == null || colName.equals("")) {
+						toastColumnNameError("Column name cannot be empty!");
+						alertForNewColumnName(null);
+					} else if (colName.contains(" ")) {
+						toastColumnNameError("Column name cannot contain spaces!");
+						alertForNewColumnName(colName.replace(' ', '_'));
+					} else {
+						// Create new column
+						data.addNewColumn(colName);
+						
+						// Update Table Property
+						colOrder.add(colName);
+						tp.setColOrder(colOrder);
+						
+						// Set Default Column Property
+						cp.setSMSIN(colName, true);
+						cp.setSMSOUT(colName, true);
+						
+						// Load Column Property Manger
+						loadColumnPropertyManager(colName);
+					}
+				} else {
+					toastColumnNameError(colName + " is already exisiting column!");
 				}
 			}
 		});
@@ -271,6 +285,13 @@ public class ColumnManager extends ListActivity {
 
 		alert.show();
 	}
+	
+	private void toastColumnNameError(String msg) {
+		 Context context = getApplicationContext();
+		 Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
+		 toast.show();
+	}
+	
 		
 	//								DO	NOT TOUCH BELOW								 //
 	// ------------------------------------------------------------------------------//
