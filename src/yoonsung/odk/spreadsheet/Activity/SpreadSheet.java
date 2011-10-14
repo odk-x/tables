@@ -149,8 +149,7 @@ public class SpreadSheet extends TableActivity {
 			sendSMSRow();
 			return true;
 		case HISTORY_IN: // view a collection
-			viewCollection(table.getTableRowID(
-					selectedCellID / table.getWidth()));
+		    viewCollection(selectedCellID / table.getWidth());
 			return true;
 		case DELETE_ROW: // delete a row
 			deleteRow(table.getRowNum(selectedCellID));

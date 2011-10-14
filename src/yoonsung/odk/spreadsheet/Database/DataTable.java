@@ -221,6 +221,25 @@ public class DataTable {
 		return loadTable(true, colOrder, tp.getSortBy(), null);
 	}
 	
+	public Table getTable(boolean isMain, Map<String, String> constraints) {
+	    ArrayList<String> colOrder = tp.getColOrderArrayList();
+	    String whereClause = "";
+	    for (String key : constraints.keySet()) {
+	        if (!colOrder.contains(key)) {
+	            continue;
+	        }
+	        whereClause += " and " + db.toSafeSqlColumn(key, false, null) +
+	                " = " + db.toSafeSqlString(constraints.get(key));
+	    }
+	    if (whereClause.length() == 0) {
+	        whereClause = null;
+	    } else {
+	        whereClause = whereClause.substring(5);
+	    }
+	    Log.d("DT", "whereClause:" + whereClause);
+        return loadTable(isMain, colOrder, tp.getSortBy(), whereClause);
+	}
+	
 	public Table getTable(int matchRowId) {
 		ArrayList<String> colOrder = tp.getColOrderArrayList();
 		String selection = DATA_ROWID + " = ?";
@@ -386,11 +405,14 @@ public class DataTable {
 				indexList = indexList.substring(2);
 				result += db.listColumns(colOrder, true, "MAX", sortBy)
 						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
+						+ (whereClause == null ? "" : " WHERE " + whereClause)
 						+ " GROUP BY " + indexList
 						+ " ORDER BY " + indexList + " ASC";
 			} else {
 				result += db.listColumns(colOrder, true, null, null) 
 						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null);
+                if (whereClause != null)
+                    result += " WHERE " + whereClause;
 				if (sortBy != null)
 					result += " ORDER BY Cast(" + db.toSafeSqlColumn(sortBy, false, null) + " as integer)";
 			}
@@ -398,7 +420,7 @@ public class DataTable {
 			// Into-History
 			result += db.listColumns(colOrder, true, null, null)
 					+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
-					+ " WHERE " + whereClause;
+					+ (whereClause == null ? "" : (" WHERE " + whereClause));
 			
 			if (sortBy != null && sortBy.trim().length() != 0)
 					result += " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";

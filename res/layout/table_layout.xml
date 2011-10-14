@@ -30,7 +30,7 @@ android:orientation="vertical"
 		android:id="@+id/enter"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:text="@string/button_enter" />
+		android:text="@string/button_search" />
 		<ImageButton
 		android:id="@+id/add_row"
 		android:layout_width="wrap_content"

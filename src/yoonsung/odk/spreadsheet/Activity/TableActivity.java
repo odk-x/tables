@@ -79,6 +79,7 @@ public abstract class TableActivity extends Activity {
 	protected int collectionRowNum; // the row number of the collection being
 	                                // viewed; -1 if on main table
 	protected int indexedCol; // the column to index on; -1 if not indexed
+	protected Map<String, String> searchConstraints;
 	
 	// fields for row addition
 	private int currentAddRowColPos;
@@ -104,6 +105,7 @@ public abstract class TableActivity extends Activity {
 		TextView led = (TextView) findViewById(R.id.tableNameLed);
 		led.setText((new TableList()).getTableName(tableID));
 		indexedCol = -1;
+		searchConstraints = new HashMap<String, String>();
 		collectionRowNum = -1;
 		selectedCellID = -1;
 		dt = new DataTable(tableID);
@@ -148,10 +150,22 @@ public abstract class TableActivity extends Activity {
 	 * @param rowNum the row to match against
 	 */
 	protected void viewCollection(int rowNum) {
-		collectionRowNum = rowNum;
-		selectContentCell(-1);
-		table = dt.getTable(collectionRowNum);
-		tdv.setTable(TableActivity.this, table, indexedCol);
+	    String searchTerms = "";
+	    collectionRowNum = rowNum;
+	    List<String> colOrder = tp.getColOrderArrayList();
+	    for (int i = 0; i < colOrder.size(); i++) {
+	        String col = colOrder.get(i);
+	        if (!cp.getIsIndex(col)) {
+	            continue;
+	        }
+	        String val = table.getCellValue((rowNum * table.getWidth()) + i);
+	        if (!searchConstraints.containsKey(col)) {
+	            searchConstraints.put(col, val);
+	            searchTerms += " " + col + ":" + val;
+	        }
+	    }
+	    setSearchBoxText((getSearchBoxText() + searchTerms).trim());
+	    search();
 	}
 	
 	/**
@@ -716,7 +730,7 @@ public abstract class TableActivity extends Activity {
 	protected void prepButtonListeners() {
 		prepHomeTableButton();
 		prepRefreshTableButtonListener();
-		prepCellEditEnterButtonListener();
+		prepSearchButtonListener();
 		prepAddRowButtonListener();
 	}
 	
@@ -728,13 +742,12 @@ public abstract class TableActivity extends Activity {
 		homeButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if((indexedCol == -1) && (collectionRowNum == -1)) {
-					return;
-				}
 				indexedCol = -1;
 				collectionRowNum = -1;
 				selectContentCell(-1);
 				table = dt.getTable();
+				setSearchBoxText("");
+				searchConstraints.clear();
 				tdv.setTable(TableActivity.this, table);
 			}
 		});
@@ -756,30 +769,41 @@ public abstract class TableActivity extends Activity {
 	/**
 	 * Prepares the cell edit enter button listener.
 	 */
-	protected void prepCellEditEnterButtonListener() {
+	protected void prepSearchButtonListener() {
 		Button ecEnterButton = (Button) findViewById(R.id.enter);
 		ecEnterButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(selectedCellID < 0) {
-					return;
-				}
-				// getting the new value
-				EditText ecEditText = (EditText) findViewById(R.id.edit_box);
-				String val = ecEditText.getText().toString();
-				// updating the database
-				int colNum = table.getColNum(selectedCellID);
-				int rowNum = table.getRowNum(selectedCellID);
-				int rowID = table.getTableRowID(rowNum);
-				String colName = table.getColName(colNum);
-				ContentValues vals = new ContentValues();
-				vals.put(colName, val);
-				dt.updateRow(vals, rowID);
-				// updating the cell's content
-				table.setCellValue(selectedCellID, val);
-				tdv.invalidate();
+			    searchConstraints.clear();
+                String val = getSearchBoxText();
+                for (String con : val.split(" ")) {
+                    String[] spl = con.split(":");
+                    if (spl.length != 2) {
+                        continue;
+                    }
+                    searchConstraints.put(spl[0], spl[1]);
+                }
+                search();
 			}
 		});
+	}
+	
+	private void search() {
+        selectContentCell(-1);
+        Log.d("TDV", "searchConstraints:" + searchConstraints);
+        Log.d("TDV", "collectionRowNum:" + collectionRowNum);
+        table = dt.getTable(collectionRowNum == -1, searchConstraints);
+        tdv.setTable(TableActivity.this, table, indexedCol);
+	}
+	
+	private String getSearchBoxText() {
+        EditText et = (EditText) findViewById(R.id.edit_box);
+        return et.getText().toString();
+	}
+	
+	private void setSearchBoxText(String text) {
+        EditText et = (EditText) findViewById(R.id.edit_box);
+	    et.setText(text);
 	}
 	
 	/*
@@ -982,7 +1006,9 @@ public abstract class TableActivity extends Activity {
 				
 				Log.e("Buffer Hash", currentAddRowBuffer.toString());
 				
-				refreshView();
+				
+
+				;
 				dia.cancel();
 			}
 		});
@@ -1082,13 +1108,8 @@ public abstract class TableActivity extends Activity {
 			parseXML();
 			isCollectForm = false;
 		}		
-		if(collectionRowNum == -1) {
-			table = dt.getTable();
-			tdv.setTable(TableActivity.this, table, indexedCol);
-		} else {
-			table = dt.getTable(collectionRowNum);
-			tdv.setTable(TableActivity.this, table, indexedCol);
-		}
+		table = dt.getTable(collectionRowNum == -1, searchConstraints);
+        tdv.setTable(TableActivity.this, table, indexedCol);
 	}
 	
 	private void parseXML(){
@@ -1200,8 +1221,8 @@ public abstract class TableActivity extends Activity {
 		    ebVal = table.getCellValue(cellID);
 			//tdv.highlightCell(cellID);
 		}
-		EditText box = (EditText) findViewById(R.id.edit_box);
-		box.setText(ebVal);
+		//EditText box = (EditText) findViewById(R.id.edit_box);
+		//box.setText(ebVal);
 		selectedCellID = cellID;
 	}
 	
