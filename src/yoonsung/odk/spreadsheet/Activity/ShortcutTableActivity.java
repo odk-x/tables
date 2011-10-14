@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.Activity;
 
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -45,25 +46,25 @@ public class ShortcutTableActivity extends TableActivity {
     }
     
     @Override
-    public void prepRegularCellOccmListener(TextView cell) {
+    public void prepRegularCellOccm(ContextMenu menu, int cellId) {
         // TODO Auto-generated method stub
         
     }
     
     @Override
-    public void prepHeaderCellOccmListener(TextView cell) {
+    public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
         // TODO Auto-generated method stub
         
     }
     
     @Override
-    public void prepIndexedColCellOccmListener(TextView cell) {
+    public void prepIndexedColCellOccm(ContextMenu menu, int cellId) {
         // TODO Auto-generated method stub
         
     }
     
     @Override
-    public void prepFooterCellOccmListener(TextView cell) {
+    public void prepFooterCellOccm(ContextMenu menu, int cellId) {
         // TODO Auto-generated method stub
         
     }

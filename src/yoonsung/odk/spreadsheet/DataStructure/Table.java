@@ -116,6 +116,10 @@ public class Table {
 		return data.get(cellLoc);
 	}
 	
+	public void setCellValue(int cellLoc, String value) {
+	    data.set(cellLoc, value);
+	}
+	
 	public ArrayList<String> getRow(int rowNum) {
 		if (height > rowNum) {
 			ArrayList<String> row = new ArrayList<String>();
@@ -152,6 +156,10 @@ public class Table {
 	
 	public String getColName(int colNum) {
 		return header.get(colNum);
+	}
+	
+	public String getFooterValue(int colNum) {
+	    return footer.get(colNum);
 	}
 	
 	public int getColNum(String colName) {

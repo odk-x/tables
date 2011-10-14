@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout 
+<LinearLayout 
 xmlns:android="http://schemas.android.com/apk/res/android"
 android:id="@+id/widget50" 
 android:layout_width="fill_parent" 
 android:layout_height="fill_parent" 
+android:orientation="vertical"
 > 
 	<LinearLayout
 		android:id="@+id/command"
@@ -42,13 +43,12 @@ android:layout_height="fill_parent"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
 	android:textStyle="bold"
-	android:gravity="center"
-	android:layout_below="@+id/command" ></TextView>
+	android:gravity="center" ></TextView>
 	
-	<TableLayout
-		android:id="@+id/spreadsheetWrapper"
+	<LinearLayout
+		android:id="@+id/tableWrapper"
 		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_below="@+id/tableNameLed" >
-	</TableLayout>
-</RelativeLayout>
+		android:layout_height="fill_parent"
+		android:layout_weight = "1" >
+	</LinearLayout>
+</LinearLayout>

@@ -47,11 +47,11 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Debug;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -64,7 +64,6 @@ import android.widget.Toast;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
 public abstract class TableActivity extends Activity {
@@ -113,9 +112,14 @@ public abstract class TableActivity extends Activity {
 		table = dt.getTable();
 		tdv = new TableDisplayView(this, new DisplayPrefs(this, tableID));
 		tdv.setTable(this, table);
+        LinearLayout tableWrapper =
+            (LinearLayout) findViewById(R.id.tableWrapper);
+        LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        tableLp.weight = 1;
+        tableWrapper.addView(tdv, tableLp);
 		prepButtonListeners();
-		TableLayout tl = (TableLayout) findViewById(R.id.spreadsheetWrapper);
-		tl.addView(tdv);
 	}
 	
 	@Override
@@ -772,7 +776,8 @@ public abstract class TableActivity extends Activity {
 				vals.put(colName, val);
 				dt.updateRow(vals, rowID);
 				// updating the cell's content
-				tdv.setCellContent(selectedCellID, val);
+				table.setCellValue(selectedCellID, val);
+				tdv.invalidate();
 			}
 		});
 	}
@@ -1063,29 +1068,13 @@ public abstract class TableActivity extends Activity {
 		selectContentCell(-1);
 	}
 	
-	/**
-	 * Sets the OnCreateContextMenu listener for a regular cell.
-	 * @param cell the cell
-	 */
-	public abstract void prepRegularCellOccmListener(TextView cell);
+	public abstract void prepRegularCellOccm(ContextMenu menu, int cellId);
 	
-	/**
-	 * Sets the OnCreateContextMenu listener for a header cell.
-	 * @param cell the cell
-	 */
-	public abstract void prepHeaderCellOccmListener(TextView cell);
+	public abstract void prepHeaderCellOccm(ContextMenu menu, int cellId);
 	
-	/**
-	 * Sets the OnCreateContextMenu listener for an indexed column cell.
-	 * @param cell the cell
-	 */
-	public abstract void prepIndexedColCellOccmListener(TextView cell);
+	public abstract void prepIndexedColCellOccm(ContextMenu menu, int cellId);
 	
-	/**
-	 * Sets the OnCreateContextMenu listener for a footer cell.
-	 * @param cell the cell
-	 */
-	public abstract void prepFooterCellOccmListener(TextView cell);
+	public abstract void prepFooterCellOccm(ContextMenu menu, int cellId);
 	
 	private void refreshView() {
 		selectContentCell(-1);
@@ -1203,13 +1192,13 @@ public abstract class TableActivity extends Activity {
 	protected void selectContentCell(int cellID) {
 		String ebVal;
 		if(selectedCellID >= 0) {
-			tdv.unhighlightCell(selectedCellID);
+			//tdv.unhighlightCell(selectedCellID);
 		}
 		if(cellID < 0) {
 			ebVal = "";
 		} else {
-			ebVal = tdv.getCellContent(cellID);
-			tdv.highlightCell(cellID);
+		    ebVal = table.getCellValue(cellID);
+			//tdv.highlightCell(cellID);
 		}
 		EditText box = (EditText) findViewById(R.id.edit_box);
 		box.setText(ebVal);
@@ -1220,7 +1209,7 @@ public abstract class TableActivity extends Activity {
 	 * Refreshes the display (but not the content).
 	 */
 	public void refreshDisplay() {
-	    tdv.addConditionalColors();
+	    //tdv.addConditionalColors();
 	}
 	
 }
