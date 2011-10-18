@@ -452,8 +452,12 @@ public class TableDisplayView extends LinearLayout {
 	                int columnWidth = columnWidths[j];
 	                int foregroundColor = (colorRulers == null) ?
 	                        this.foregroundColor :
-                            colorRulers[j].getColor(datum,
+                            colorRulers[j].getForegroundColor(datum,
                                     this.foregroundColor);
+                    int backgroundColor = (colorRulers == null) ?
+                            this.backgroundColor :
+                            colorRulers[j].getBackgroundColor(datum,
+                                    this.backgroundColor);
 	                drawCell(canvas, paint, x, y, datum, backgroundColor,
 	                        foregroundColor, columnWidth);
 	                x += columnWidth + BORDER_WIDTH;
@@ -466,6 +470,10 @@ public class TableDisplayView extends LinearLayout {
 	    private void drawCell(Canvas canvas, Paint paint, int x, int y,
 	            String datum, int backgroundColor, int foregroundColor,
 	            int columnWidth) {
+            if (backgroundColor != this.backgroundColor) {
+                paint.setColor(backgroundColor);
+                canvas.drawRect(x, y, x + columnWidth, y + ROW_HEIGHT, paint);
+            }
 	        canvas.save(Canvas.ALL_SAVE_FLAG);
 	        canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
 	                x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),

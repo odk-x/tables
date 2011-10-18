@@ -64,7 +64,7 @@ public class DisplayPrefsDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateLastRowVal();
-                dp.addRule(colName, ' ', "", Color.BLACK);
+                dp.addRule(colName, ' ', "", Color.BLACK, Color.WHITE);
                 refreshView();
             }
         });
@@ -115,11 +115,11 @@ public class DisplayPrefsDialog extends Dialog {
         });
         ruleInputFields.add(input);
         row.addView(input);
-        // preparing the color picker button
-        Button colorPickButton = new Button(ta);
-        colorPickButton.setText("  ");
-        colorPickButton.setBackgroundColor(rule.color);
-        colorPickButton.setOnClickListener(new View.OnClickListener() {
+        // preparing the foreground color picker button
+        Button foregroundPickButton = new Button(ta);
+        foregroundPickButton.setText("T");
+        foregroundPickButton.setBackgroundColor(rule.foreground);
+        foregroundPickButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 updateLastRowVal();
@@ -127,17 +127,40 @@ public class DisplayPrefsDialog extends Dialog {
                         new ColorPickerDialog.OnColorChangedListener() {
                     @Override
                     public void colorChanged(int color) {
-                        rule.color = color;
+                        rule.foreground = color;
                         dp.updateRule(rule);
                         refreshView();
                     }
                 };
                 ColorPickerDialog cpd = new ColorPickerDialog(ta, ccl,
-                        rule.color);
+                        rule.foreground);
                 cpd.show();
             }
         });
-        row.addView(colorPickButton);
+        row.addView(foregroundPickButton);
+        // preparing the background color picker button
+        Button backgroundPickButton = new Button(ta);
+        backgroundPickButton.setText("  ");
+        backgroundPickButton.setBackgroundColor(rule.background);
+        backgroundPickButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateLastRowVal();
+                ColorPickerDialog.OnColorChangedListener ccl =
+                        new ColorPickerDialog.OnColorChangedListener() {
+                    @Override
+                    public void colorChanged(int color) {
+                        rule.background = color;
+                        dp.updateRule(rule);
+                        refreshView();
+                    }
+                };
+                ColorPickerDialog cpd = new ColorPickerDialog(ta, ccl,
+                        rule.background);
+                cpd.show();
+            }
+        });
+        row.addView(backgroundPickButton);
         return row;
     }
     
