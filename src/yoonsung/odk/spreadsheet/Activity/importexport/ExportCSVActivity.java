@@ -93,7 +93,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incPNCheck.setChecked(true);
 		incPN.addView(incPNCheck);
 		TextView incPNLabel = new TextView(this);
-		incPNLabel.setText("Include Phone Numbers");
+		incPNLabel.setText("Include Phone Number for Incoming Rows");
 		incPNLabel.setTextColor(R.color.black);
 		incPN.addView(incPNLabel);
 		v.addView(incPN);
@@ -103,7 +103,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incTSCheck.setChecked(true);
 		incTS.addView(incTSCheck);
 		TextView incTSLabel = new TextView(this);
-		incTSLabel.setText("Include Timestamps");
+		incTSLabel.setText("Include Last Modification Timestamp");
 		incTSLabel.setTextColor(R.color.black);
 		incTS.addView(incTSLabel);
 		v.addView(incTS);

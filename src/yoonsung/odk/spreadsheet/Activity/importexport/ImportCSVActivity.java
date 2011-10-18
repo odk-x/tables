@@ -81,7 +81,7 @@ public class ImportCSVActivity extends IETabActivity {
 		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the table spinner
 		TextView etn = new TextView(this);
-		etn.setText("Importing Table:");
+		etn.setText("Import to new table or add to existing table:");
 		etn.setTextColor(R.color.black);
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
@@ -121,7 +121,7 @@ public class ImportCSVActivity extends IETabActivity {
 		// adding the import button
 		Button importB = new Button(this);
 		importB.setId(IMPORTBUTTON_ID);
-		importB.setText("Import");
+		importB.setText("Add to Table");
 		importB.setOnClickListener(new ImportButtonListener());
 		v.addView(importB);
 		// wrapping in a scroll view
