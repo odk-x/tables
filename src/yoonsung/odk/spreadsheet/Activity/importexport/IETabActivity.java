@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.View;
 import android.view.View.OnClickListener;
 
@@ -50,6 +51,7 @@ public abstract class IETabActivity extends Activity {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
+            intent.setData(Uri.parse("file:///sdcard/odk/tables/"));
             intent.putExtra("org.openintents.extra.TITLE", "Please select a file");
             startActivityForResult(intent, 1);
         }

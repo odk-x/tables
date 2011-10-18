@@ -63,13 +63,13 @@ public class PropertyManager extends PreferenceActivity {
             // Type<List>
             String type = getType(colName);
             String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range", "File"};
-            category.addPreference(createListPreference("TYPE", "TYPE", type, type, typeChoices, typeChoices));                
+            category.addPreference(createListPreference("TYPE", "Type", type, type, typeChoices, typeChoices));                
             
             // SMS-IN<CheckBox>
-            category.addPreference(createCheckBoxPreference("SMSIN", "SMS-IN", getSMSIn(colName)));
+            category.addPreference(createCheckBoxPreference("SMSIN", "Get from Incoming", getSMSIn(colName)));
             
             // SMS-OUT<CheckBox>
-            category.addPreference(createCheckBoxPreference("SMSOUT", "SMS-OUT", getSMSOut(colName)));
+            category.addPreference(createCheckBoxPreference("SMSOUT", "Put in Outgoing", getSMSOut(colName)));
             
             // Footer Mode<Lis>
             String footerMode = getFooterMode(colName); 

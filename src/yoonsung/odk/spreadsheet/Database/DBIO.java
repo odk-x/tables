@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.Database;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -10,13 +11,15 @@ import android.util.Log;
 
 public class DBIO {
 	//public static final String DB_PATH = "/data/data/com.yoonsung.spreadsheetsms/databases/";
-	public static final String DB_PATH = "/sdcard/";
+	public static final String DB_PATH = "/sdcard/odk/tables/";
 	
-	public static final String DB_NAME = "my_tables";
+	public static final String DB_NAME = "db.sql";
 	//public static final int DB_VERSION = 1;
 		
 	// Constructor
 	public DBIO() {
+	    File f = new File("/sdcard/odk/tables");
+	    f.mkdirs();
 		SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(DB_PATH + DB_NAME, null);
 		//db.beginTransaction();
 		// Create data table
