@@ -18,6 +18,11 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+/**
+ * A class for displaying a table.
+ * 
+ * @author hkworden
+ */
 public class TableDisplayView extends LinearLayout {
     
     enum TableType { MAIN_DATA, MAIN_HEADER, MAIN_FOOTER,
@@ -67,7 +72,7 @@ public class TableDisplayView extends LinearLayout {
 	}
 	
 	/**
-	 * Sets the data for a table.
+	 * Sets the data for an indexed table.
 	 * @param ta the table activity to call back to
 	 * @param table the table to display
 	 * @param indexedCol the number of the indexed column (or -1 for no indexed
@@ -92,16 +97,17 @@ public class TableDisplayView extends LinearLayout {
         mainFooter.setOnTouchListener(mainFooterCellClickListener);
 	}
 	
+	/**
+	 * Initializes the click listeners.
+	 */
 	private void initListeners() {
 	    mainDataCellClickListener = new CellClickListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainData.getCellNumber(x, y);
                 if (indexedCol < 0) {
-                    Log.d("TDV", "oh hai cellNum:" + cellNum);
                     return cellNum;
                 } else {
-                    Log.d("TDV", "here cellNum:" + cellNum);
                     int colNum = cellNum % (table.getWidth() - 1);
                     int rowNum = cellNum / (table.getWidth() - 1);
                     return cellNum + rowNum + ((colNum < indexedCol) ? 0 : 1);
@@ -202,7 +208,6 @@ public class TableDisplayView extends LinearLayout {
 	}
 	
 	private void buildNonIndexedTable() {
-        // building wrapper
         View wrapper = buildTable(-1, false);
         HorizontalScrollView wrapScroll = new HorizontalScrollView(ta);
         wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -240,6 +245,14 @@ public class TableDisplayView extends LinearLayout {
         });
 	}
 	
+	/**
+	 * Builds a (piece of a) table. The table may either be the indexed column
+	 * of an indexed table, the non-indexed columns of an indexed table, or the
+	 * entirety of an unindexed table.
+	 * @param indexedCol the column that is indexed (or -1)
+	 * @param isIndexed whether this table is for the indexed column
+	 * @return a view including the header, body, and footer of the table
+	 */
 	private View buildTable(int indexedCol, boolean isIndexed) {
 	    String[][] header;
 	    String[][] data;
