@@ -362,8 +362,8 @@ public class TableManager extends ListActivity {
 		 } else if(tableType == TableList.TABLETYPE_SHORTCUT){
 		     DataTable dt = new DataTable(tl.getTableID(tableName) + "");
 		     dt.addNewColumn("name");
-		     dt.addNewColumn("input");
-		     dt.addNewColumn("output");
+		     dt.addNewColumn("input format");
+		     dt.addNewColumn("output format");
 		 }
 		  
 	 }

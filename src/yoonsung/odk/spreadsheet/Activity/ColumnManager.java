@@ -271,7 +271,7 @@ public class ColumnManager extends ListActivity {
 						loadColumnPropertyManager(colName);
 					}
 				} else {
-					toastColumnNameError(colName + " is already exisiting column!");
+					toastColumnNameError(colName + " is already existing column!");
 				}
 			}
 		});
@@ -343,9 +343,9 @@ public class ColumnManager extends ListActivity {
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);
 			String extStr = "";
 			if (cp.getIsIndex(currentColName)) {
-				extStr += "Index Column";
+				extStr += "Collection Column";
 			} else if (currentColName.equals(tp.getSortBy())) {
-				extStr += "Order-By Column";
+				extStr += "Sort Column";
 			}
 			ext.setText(extStr);
 			
@@ -362,12 +362,12 @@ public class ColumnManager extends ListActivity {
 					// Options for each item on the list
 					if(cp.getIsIndex(currentCol)) {
 						menu.add(0, SET_AS_NONPRIME, 0,
-								"Set as Non-Index Column");
+								"Unset as Collection View Based on This");
 					} else {
-						menu.add(0, SET_AS_PRIME, 0, "Set as Index Column");
+						menu.add(0, SET_AS_PRIME, 0, "Set as Collection View Based on This");
 					}
-					menu.add(0, SET_AS_ORDER_BY, 0, "Set Order-By Column");
-					menu.add(0, REMOVE_THIS_COLUMN, 0, "Remove This Column");
+					menu.add(0, SET_AS_ORDER_BY, 0, "Set as Sort Column");
+					menu.add(0, REMOVE_THIS_COLUMN, 0, "Delete this Column");
 				}
 			});
 			return(row);
