@@ -3,6 +3,7 @@ package yoonsung.odk.spreadsheet.Activity;
 import java.util.ArrayList;
 import java.util.List;
 import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -21,16 +22,16 @@ import yoonsung.odk.spreadsheet.lib.ColorPickerDialog;
  */
 public class DisplayPrefsDialog extends Dialog {
     
-    private TableActivity ta;
+    private Context c;
     private DisplayPrefs dp;
     private String colName;
     private List<ColColorRule> colRules;
     private List<EditText> ruleInputFields;
     int lastFocusedRow;
     
-    DisplayPrefsDialog(TableActivity ta, DisplayPrefs dp, String colName) {
-        super(ta);
-        this.ta = ta;
+    DisplayPrefsDialog(Context c, DisplayPrefs dp, String colName) {
+        super(c);
+        this.c = c;
         this.dp = dp;
         this.colName = colName;
         setTitle("Conditional Colors: " + colName);
@@ -46,9 +47,9 @@ public class DisplayPrefsDialog extends Dialog {
         lastFocusedRow = -1;
         colRules = dp.getColorRulesForCol(colName);
         ruleInputFields = new ArrayList<EditText>();
-        LinearLayout ll = new LinearLayout(ta);
+        LinearLayout ll = new LinearLayout(c);
         ll.setOrientation(LinearLayout.VERTICAL);
-        TableLayout tl = new TableLayout(ta);
+        TableLayout tl = new TableLayout(c);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.FILL_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -58,7 +59,7 @@ public class DisplayPrefsDialog extends Dialog {
             tl.addView(row);
         }
         ll.addView(tl);
-        Button addRuleButton = new Button(ta);
+        Button addRuleButton = new Button(c);
         addRuleButton.setText("Add Rule");
         addRuleButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,13 +70,12 @@ public class DisplayPrefsDialog extends Dialog {
             }
         });
         ll.addView(addRuleButton);
-        Button closeButton = new Button(ta);
+        Button closeButton = new Button(c);
         closeButton.setText("OK");
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 updateLastRowVal();
-                ta.refreshDisplay();
                 dismiss();
             }
         });
@@ -86,9 +86,9 @@ public class DisplayPrefsDialog extends Dialog {
     
     private TableRow getEditRow(final int index) {
         final ColColorRule rule = colRules.get(index);
-        TableRow row = new TableRow(ta);
+        TableRow row = new TableRow(c);
         // preparing delete button
-        TextView deleteButton = new TextView(ta);
+        TextView deleteButton = new TextView(c);
         deleteButton.setText("X");
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,7 +100,7 @@ public class DisplayPrefsDialog extends Dialog {
         });
         row.addView(deleteButton);
         // preparing the text field
-        EditText input = new EditText(ta);
+        EditText input = new EditText(c);
         input.setText((rule.compType + rule.val).trim());
         input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -116,7 +116,7 @@ public class DisplayPrefsDialog extends Dialog {
         ruleInputFields.add(input);
         row.addView(input);
         // preparing the foreground color picker button
-        Button foregroundPickButton = new Button(ta);
+        Button foregroundPickButton = new Button(c);
         foregroundPickButton.setText("T");
         foregroundPickButton.setBackgroundColor(rule.foreground);
         foregroundPickButton.setOnClickListener(new View.OnClickListener() {
@@ -132,14 +132,14 @@ public class DisplayPrefsDialog extends Dialog {
                         refreshView();
                     }
                 };
-                ColorPickerDialog cpd = new ColorPickerDialog(ta, ccl,
+                ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
                         rule.foreground);
                 cpd.show();
             }
         });
         row.addView(foregroundPickButton);
         // preparing the background color picker button
-        Button backgroundPickButton = new Button(ta);
+        Button backgroundPickButton = new Button(c);
         backgroundPickButton.setText("  ");
         backgroundPickButton.setBackgroundColor(rule.background);
         backgroundPickButton.setOnClickListener(new View.OnClickListener() {
@@ -155,7 +155,7 @@ public class DisplayPrefsDialog extends Dialog {
                         refreshView();
                     }
                 };
-                ColorPickerDialog cpd = new ColorPickerDialog(ta, ccl,
+                ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
                         rule.background);
                 cpd.show();
             }
