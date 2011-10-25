@@ -54,6 +54,7 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -413,9 +414,56 @@ public abstract class TableActivity extends Activity {
 		AlertDialog d = adBuilder.create();
 		d.show();
 	}
+	
+	private class CellEditDialog extends Dialog {
+	    
+	    private Context c;
+	    private int cellId;
+	    private EditText et;
+	    
+        protected CellEditDialog(Context context, int cellId) {
+            super(context);
+            c = context;
+            this.cellId = cellId;
+        }
+        
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
+            setContentView(buildView());
+        }
+        
+        private View buildView() {
+            LinearLayout v = new LinearLayout(c);
+            v.setOrientation(LinearLayout.VERTICAL);
+            // preparing the text field
+            et = new EditText(c);
+            et.setText(table.getCellValue(cellId));
+            v.addView(et);
+            // preparing the button
+            Button b = new Button(c);
+            b.setText("Set Value");
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String value = et.getText().toString();
+                    ContentValues values = new ContentValues();
+                    values.put(table.getColName(cellId % table.getWidth()), value);
+                    dt.updateRow(values,
+                            table.getRowID().get(cellId / table.getWidth()));
+                    table.setCellValue(cellId, value);
+                    refreshView();
+                    CellEditDialog.this.dismiss();
+                }
+            });
+            v.addView(b);
+            return v;
+        }
+	}
     
 	// TODO: clean this up
-    private class ColWidthDialog extends AlertDialog {
+    private class ColWidthDialog extends Dialog {
     	
     	private Context c;
     	private String colName;
@@ -432,6 +480,7 @@ public abstract class TableActivity extends Activity {
     	@Override
     	public void onCreate(Bundle savedInstanceState) {
     		super.onCreate(savedInstanceState);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
     		setContentView(prepView());
     	}
     	
@@ -487,7 +536,7 @@ public abstract class TableActivity extends Activity {
     }
     
     // TODO: clean this up
-    private class FooterModeDialog extends AlertDialog {
+    private class FooterModeDialog extends Dialog {
     	
     	private Context c;
     	private String colName;
@@ -504,6 +553,7 @@ public abstract class TableActivity extends Activity {
     	@Override
     	public void onCreate(Bundle savedInstanceState) {
     		super.onCreate(savedInstanceState);
+            requestWindowFeature(Window.FEATURE_NO_TITLE);
     		setContentView(prepView());
     	}
     	
@@ -1064,7 +1114,7 @@ public abstract class TableActivity extends Activity {
 	 * @param cellID the cell's ID
 	 */
 	public void regularCellClicked(int cellID) {
-		selectContentCell(cellID);
+	    (new CellEditDialog(this, cellID)).show();
 	}
 	
 	/**
