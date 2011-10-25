@@ -44,13 +44,14 @@ public class TableManager extends ListActivity {
 	public static final int IMPORT_EXPORT			= 2;
 	public static final int SET_DEFAULT_TABLE 		= 3;
 	public static final int SET_SECURITY_TABLE      = 4;
-	public static final int CHANGE_TABLE_NAME 		= 5;
-	public static final int REMOVE_TABLE      		= 6;
-	public static final int SET_DEFOUTMSG     		= 7;
+	public static final int SET_SHORTCUT_TABLE      = 5;
+	public static final int CHANGE_TABLE_NAME 		= 6;
+	public static final int REMOVE_TABLE      		= 7;
 	public static final int ADD_NEW_SHORTCUT_TABLE  = 8;
 	public static final int UNSET_DEFAULT_TABLE     = 9;
 	public static final int UNSET_SECURITY_TABLE    = 10;
-	public static final int AGGREGATE = 11;
+	public static final int UNSET_SHORTCUT_TABLE    = 11;
+	public static final int AGGREGATE               = 12;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -113,7 +114,7 @@ public class TableManager extends ListActivity {
 		     Map<String, String> map = new HashMap<String, String>();
 		     map.put("label", ti.getTableName());
 		     if(ti.getTableType() == 2) {
-		         map.put("ext", "Security Group");
+		         map.put("ext", "Access Control Table");
 		     } else if(ti.getTableType() == 3) {
 		         map.put("ext", "Shortcut Table");
 		     }
@@ -185,13 +186,43 @@ public class TableManager extends ListActivity {
 		 }
 		 int tableType = ti.getTableType();
 		 if(tableType == TableList.TABLETYPE_DATA) {
-             menu.add(0, SET_SECURITY_TABLE, 0, "Set as Security Group");
+		     if (couldBeSecurityTable(ti.getTableID())) {
+	             menu.add(0, SET_SECURITY_TABLE, 0, "Set as Access Control Table");
+		     }
+		     if (couldBeShortcutTable(ti.getTableID())) {
+		         menu.add(0, SET_SHORTCUT_TABLE, 0, "Set as Shortcut Table");
+		     }
 		 } else if(tableType == TableList.TABLETYPE_SECURITY) {
-	         menu.add(0, UNSET_SECURITY_TABLE, 0, "Unset as Security Group");
+	         menu.add(0, UNSET_SECURITY_TABLE, 0, "Unset as Access Control Table");
+		 } else if(tableType == TableList.TABLETYPE_SHORTCUT) {
+		     menu.add(0, UNSET_SHORTCUT_TABLE, 0, "Unset as Shortcut Table");
 		 }
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
-		 menu.add(0, REMOVE_TABLE, 2, "Remove the Table");
-		 menu.add(0, SET_DEFOUTMSG, 3, "Manage Outgoing Formats");
+		 menu.add(0, REMOVE_TABLE, 2, "Delete the Table");
+	 }
+	 
+	 private boolean couldBeSecurityTable(String tableId) {
+	     String[] expected = { "phone_number", "id", "password" };
+	     return checkTable(expected, tableId);
+	 }
+	 
+	 private boolean couldBeShortcutTable(String tableId) {
+         String[] expected = { "name", "input_format", "output_format" };
+         return checkTable(expected, tableId);
+	 }
+	 
+	 private boolean checkTable(String[] expectedCols, String tableId) {
+         TableProperty tp = new TableProperty(tableId);
+         List<String> cols = tp.getColOrderArrayList();
+         if (cols.size() < expectedCols.length) {
+             return false;
+         }
+         for (int i = 0; i < 3; i++) {
+             if (!expectedCols[i].equals(cols.get(i))) {
+                 return false;
+             }
+         }
+         return true;
 	 }
 	 
 	 @Override
@@ -210,7 +241,20 @@ public class TableManager extends ListActivity {
 			 return true;
 		 case SET_SECURITY_TABLE:
 			 tl.setAsSecurityTable(Integer.toString(tableID));
+             refreshList();
 			 return true;
+		 case UNSET_SECURITY_TABLE:
+		     tl.unsetAsSecurityTable(Integer.toString(tableID));
+		     refreshList();
+		     return true;
+		 case SET_SHORTCUT_TABLE:
+		     tl.setAsShortcutTable(Integer.toString(tableID));
+             refreshList();
+		     return true;
+         case UNSET_SHORTCUT_TABLE:
+             tl.setAsDataTable(Integer.toString(tableID));
+             refreshList();
+             return true;
 		 case CHANGE_TABLE_NAME:
 			 // TO be Done
 			 alertForNewTableName(false, -1, Integer.toString(tableID), null);
@@ -219,11 +263,6 @@ public class TableManager extends ListActivity {
 			 // To be Done
 			 removeTable(Integer.toString(tableID));
 			 refreshList();
-			 return true;
-		 case SET_DEFOUTMSG:
-			 Intent domIntent = new Intent(this, SmsOutFormatSetActivity.class);
-			 domIntent.putExtra("tableID", tableID);
-			 startActivity(domIntent);
 			 return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
@@ -234,10 +273,10 @@ public class TableManager extends ListActivity {
 	 public boolean onCreateOptionsMenu(Menu menu) {
 		 super.onCreateOptionsMenu(menu);
 		 menu.add(0, ADD_NEW_TABLE, 0, "Add New Data Table");
-		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Security Group");
+		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Access Control Table");
 		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
-		 menu.add(0, IMPORT_EXPORT, 0, "Import/Export");
-		 menu.add(0, AGGREGATE, 0, "Aggregate");
+		 menu.add(0, IMPORT_EXPORT, 0, "File Import/Export");
+		 menu.add(0, AGGREGATE, 0, "ODK Aggregate Import/Export");
 		 return true;
 	 }
     
@@ -362,8 +401,8 @@ public class TableManager extends ListActivity {
 		 } else if(tableType == TableList.TABLETYPE_SHORTCUT){
 		     DataTable dt = new DataTable(tl.getTableID(tableName) + "");
 		     dt.addNewColumn("name");
-		     dt.addNewColumn("input format");
-		     dt.addNewColumn("output format");
+		     dt.addNewColumn("input_format");
+		     dt.addNewColumn("output_format");
 		 }
 		  
 	 }

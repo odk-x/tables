@@ -83,6 +83,31 @@ public class TableList {
 		String sql = "UPDATE `"+TABLE_LIST+"` SET `"+TABLE_IS_SECURITY_TABLE+"` = 1 WHERE `"+TABLE_ID+"` = " + tableID;
 		con.execSQL(sql);
 		con.close();
+		setTableType(tableID, TABLETYPE_SECURITY);
+	}
+	
+	public void unsetAsSecurityTable(String tableId) {
+        SQLiteDatabase con = db.getConn();
+        String sql = "UPDATE `"+TABLE_LIST+"` SET `"+TABLE_IS_SECURITY_TABLE+"` = 0 WHERE `"+TABLE_ID+"` = " + tableId;
+        con.execSQL(sql);
+        con.close();
+        setAsDataTable(tableId);
+	}
+	
+	public void setAsShortcutTable(String tableId) {
+	    setTableType(tableId, TABLETYPE_SHORTCUT);
+	}
+	
+	public void setAsDataTable(String tableId) {
+	    setTableType(tableId, TABLETYPE_DATA);
+	}
+	
+	private void setTableType(String tableId, int type) {
+	    SQLiteDatabase con = db.getConn();
+	    String sql = "UPDATE `" + TABLE_LIST + "` SET `" + DB_TABLE_TYPE +
+	            "` = " + type + " WHERE `" + TABLE_ID + "` = " + tableId;
+	    con.execSQL(sql);
+	    con.close();
 	}
 	
 	public boolean isSecurityTable(String tableID) {
