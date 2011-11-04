@@ -25,8 +25,11 @@ import android.util.AttributeSet;
  *  @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
 public class PropertyManager extends PreferenceActivity {
-        
-        // Private Fields
+    
+    public static final String INTENT_KEY_TABLE_ID = "tableID";
+    public static final String INTENT_KEY_COLUMN_NAME = "colName";
+    
+    // Private Fields
         private ColumnProperty cp;
         private String tableID;
         private String colName;
@@ -44,8 +47,8 @@ public class PropertyManager extends PreferenceActivity {
                 setTitle("ODK Tables > Column Property");
                 
                 // Column Name
-                this.colName = getIntent().getStringExtra("colName");
-                this.tableID = getIntent().getStringExtra("tableID");
+                this.tableID = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+                this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
                 init();
                 loadPreferenceScreen();
         }
@@ -66,7 +69,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Type<List>
             String type = getType(colName);
-            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range", "File"};
+            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range", "File", "ODK Collect Form"};
             category.addPreference(createListPreference("TYPE", "Type", type, type, typeChoices, typeChoices));                
             
             // SMS-IN<CheckBox>

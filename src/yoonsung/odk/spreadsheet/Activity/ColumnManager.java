@@ -37,6 +37,8 @@ import android.widget.Toast;
  */
 public class ColumnManager extends ListActivity {
 	
+    public static final String INTENT_KEY_TABLE_ID = "tableID";
+    
 	// Menu IDs
 	public static final int SET_AS_PRIME = 1;
 	public static final int SET_AS_ORDER_BY = 2;
@@ -85,7 +87,7 @@ public class ColumnManager extends ListActivity {
 		setTitle("ODK Tables > Column Manager");
 		
 		// Retrieve Intent
-		this.tableID = getIntent().getStringExtra("tableID");
+		this.tableID = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
 		
 		// Initialize
 		init();

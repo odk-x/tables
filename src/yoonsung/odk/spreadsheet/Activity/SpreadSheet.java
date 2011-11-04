@@ -53,6 +53,8 @@ public class SpreadSheet extends TableActivity {
 	private static final int UNSELECT_COLUMN = 17;
 	private static final int OPEN_FILE = 18;
 	private static final int OPEN_DISPLAYPREFS_DIALOG = 19;
+	private static final int EDIT_CELL = 20;
+	private static final int OPEN_COLLECT_FORM = 21;
 	// Activity IDs
 	private static final int ODK_COLLECT_FORM_HANDLE = 100;
 	
@@ -133,12 +135,7 @@ public class SpreadSheet extends TableActivity {
 	 */
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		Log.d("REFACTOR SSJ", "onContextItemSelected called:" + item.getItemId());
 		switch(item.getItemId()) {
-		case OPEN_FILE: // open a file for file type cell
-			String path = table.getCellValue(selectedCellID);
-			handleOpenForm(path);
-			return true;
 		case SELECT_COLUMN: // index on this column
 			indexTableView(selectedCellID % table.getWidth());
 			return true;
@@ -148,9 +145,16 @@ public class SpreadSheet extends TableActivity {
 		case SEND_SMS_ROW: // sends an SMS on the selected row
 			sendSMSRow();
 			return true;
+		case EDIT_CELL:
+		    editCell(selectedCellID);
+		    return true;
 		case HISTORY_IN: // view a collection
 		    viewCollection(selectedCellID / table.getWidth());
 			return true;
+		case OPEN_COLLECT_FORM:
+		    collect(selectedCellID / table.getWidth(),
+		            table.getCellValue(selectedCellID));
+		    return true;
 		case DELETE_ROW: // delete a row
 			deleteRow(table.getRowNum(selectedCellID));
 			return true;
@@ -190,13 +194,6 @@ public class SpreadSheet extends TableActivity {
 		Intent i = new Intent(this, SecurityManager.class);
 		i.putExtra("tableName", (new TableList()).getTableName(this.tableID));
 		startActivity(i);
-	}
-	
-	/**
-	 * Handle the open file request. Availabe to this activity only.
-	 */
-	private void handleOpenFile(String path) {
-
 	}
 	
 	private void handleOpenForm(String formPath) {
@@ -247,13 +244,6 @@ public class SpreadSheet extends TableActivity {
 		// Start the intent for call back
 		ODKCollectFormInstancePath = instancePath;
 		startActivityForResult(i, ODK_COLLECT_FORM_HANDLE);
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	    if (requestCode == ODK_COLLECT_FORM_HANDLE) {
-	    	parseXMLAndUpdateForODKCollect(ODKCollectFormInstancePath);
-	    }
 	}
 	
     private void parseXMLAndUpdateForODKCollect(String path){
@@ -321,12 +311,13 @@ public class SpreadSheet extends TableActivity {
 		int none = ContextMenu.NONE;
 		String selectedColName = table.getColName(table.getColNum(selectedCellID));
 		String selectedColType = cp.getType(selectedColName);
-		if (selectedColType != null && selectedColType.equals("File")) {
-			menu.add(none, OPEN_FILE, none, "Open File");
+		if ("ODK Collect Form".equals(selectedColType)) {
+		    menu.add(none, OPEN_COLLECT_FORM, none, "Open Form in Collect");
 		}
 		menu.add(none, SELECT_COLUMN, none, "Select Column");
 		menu.add(none, SEND_SMS_ROW, none, "Send SMS Row");
 		menu.add(none, HISTORY_IN, none, "View Collection");
+		menu.add(none, EDIT_CELL, none, "Edit Cell");
 		menu.add(none, DELETE_ROW, none, "Delete Row");
 	}
     
@@ -337,9 +328,15 @@ public class SpreadSheet extends TableActivity {
     public void prepIndexedColCellOccm(ContextMenu menu, int cellId) {
         selectContentCell(cellId);
         int none = ContextMenu.NONE;
+        String selectedColName = table.getColName(table.getColNum(selectedCellID));
+        String selectedColType = cp.getType(selectedColName);
+        if (selectedColType.equals("ODK Collect Form")) {
+            menu.add(none, OPEN_COLLECT_FORM, none, "Open Form in Collect");
+        }
         menu.add(none, UNSELECT_COLUMN, none, "Unselect Column");
         menu.add(none, SEND_SMS_ROW, none, "Send SMS Row");
         menu.add(none, HISTORY_IN, none, "View Collection");
+        menu.add(none, EDIT_CELL, none, "Edit Cell");
         menu.add(none, DELETE_ROW, none, "Delete Row");
     }
 	

@@ -1,9 +1,15 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,10 +17,13 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.kxml2.io.KXmlParser;
+import org.kxml2.io.KXmlSerializer;
+import org.kxml2.kdom.Document;
+import org.kxml2.kdom.Element;
+import org.kxml2.kdom.Node;
 import org.w3c.dom.NodeList;
+import org.xmlpull.v1.XmlPullParserException;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.defaultopts.DefaultsActivity;
@@ -34,11 +43,14 @@ import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
+import yoonsung.odk.spreadsheet.data.CollectUtil;
 import yoonsung.odk.spreadsheet.view.TableDisplayView;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -68,12 +80,25 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 public abstract class TableActivity extends Activity {
+    
+    private static final int ODK_COLLECT_FORM_RETURN = 0;
+    
+    private static final String COLLECT_FORMS_URI_STRING =
+        "content://org.odk.collect.android.provider.odk.forms/forms";
+    private static final Uri COLLECT_FORMS_CONTENT_URI =
+        Uri.parse(COLLECT_FORMS_URI_STRING);
+    private static final String COLLECT_INSTANCES_URI_STRING =
+        "content://org.odk.collect.android.provider.odk.instances/instances";
+    private static final Uri COLLECT_INSTANCES_CONTENT_URI =
+        Uri.parse(COLLECT_INSTANCES_URI_STRING);
+    private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT =
+        new SimpleDateFormat("yyyy-MM-dd_kk-mm-ss");
 	
 	protected String tableID; // the ID of the table to display
 	protected DataTable dt; // the data table
 	protected TableProperty tp; // the table property manager
 	protected ColumnProperty cp; // the column property manager
-	protected Table table; // the table
+	protected Table table; // the current table
 	protected TableDisplayView tdv; // the table display view
 	protected int selectedCellID; // the ID of the content cell currently
 	                              // selected; -1 if none is selected
@@ -81,6 +106,8 @@ public abstract class TableActivity extends Activity {
 	                                // viewed; -1 if on main table
 	protected int indexedCol; // the column to index on; -1 if not indexed
 	protected Map<String, String> searchConstraints;
+	
+	private Map<String, Integer> collectInstances;
 	
 	// fields for row addition
 	private int currentAddRowColPos;
@@ -122,6 +149,7 @@ public abstract class TableActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT);
         tableLp.weight = 1;
         tableWrapper.addView(tdv, tableLp);
+        collectInstances = new HashMap<String, Integer>();
 		prepButtonListeners();
 	}
 	
@@ -141,7 +169,6 @@ public abstract class TableActivity extends Activity {
 	 * @param indexedCol the column to index on
 	 */
 	protected void indexTableView(int indexedCol) {
-		Log.d("REFACTOR SSJ", "indexTableView called:" + indexedCol);
 		this.indexedCol = indexedCol;
 		refreshView();
 	}
@@ -157,12 +184,14 @@ public abstract class TableActivity extends Activity {
 	    for (int i = 0; i < colOrder.size(); i++) {
 	        String col = colOrder.get(i);
 	        if (!cp.getIsIndex(col)) {
+	            // this isn't an index column, so it's value doesn't need to be
+	            // matched
 	            continue;
 	        }
-	        String val = table.getCellValue((rowNum * table.getWidth()) + i);
+	        String value = table.getCellValue((rowNum * table.getWidth()) + i);
 	        if (!searchConstraints.containsKey(col)) {
-	            searchConstraints.put(col, val);
-	            searchTerms += " " + col + ":" + val;
+	            searchConstraints.put(col, value);
+	            searchTerms += " " + col + ":" + value;
 	        }
 	    }
 	    setSearchBoxText((getSearchBoxText() + searchTerms).trim());
@@ -181,7 +210,7 @@ public abstract class TableActivity extends Activity {
 	 */
 	protected void openColumnManager() {
 		Intent i = new Intent(this, ColumnManager.class);
-		i.putExtra("tableID", tableID);
+		i.putExtra(ColumnManager.INTENT_KEY_TABLE_ID, tableID);
 		startActivity(i);
 	}
 	
@@ -323,10 +352,10 @@ public abstract class TableActivity extends Activity {
 	
 	/**
 	 * Deletes a row.
-	 * @param rowNum the row in the table view to delete
+	 * @param rowNum the row index in the current table to delete (not the row
+	 * ID)
 	 */
 	protected void deleteRow(int rowNum) {
-		selectContentCell(-1);
 		int rowId = table.getTableRowID(rowNum);
 		dt.deleteRow(rowId);
 		refreshView();
@@ -364,10 +393,9 @@ public abstract class TableActivity extends Activity {
 	 * @param colName the column name
 	 */
 	protected void openColPropsManager(String colName) {
-		Log.d("REFACTOR SSJ", "openColPropsManager called:" + colName);
 		Intent i = new Intent(this, PropertyManager.class);
-		i.putExtra("colName", colName);
-		i.putExtra("tableID", tableID);
+        i.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableID);
+		i.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME, colName);
 		startActivity(i);
 	}
 	
@@ -414,6 +442,126 @@ public abstract class TableActivity extends Activity {
 		AlertDialog d = adBuilder.create();
 		d.show();
 	}
+	
+	/**
+	 * Opens ODK Collect with the given form and pre-filled values, and fills
+	 * in matching values on return.
+	 * @param rowNum the row number in the displayed table
+	 * @param filepath the form's filepath
+	 */
+	protected void collect(int rowNum, String filepath) {
+	    String jrFormId = verifyFormInCollect(filepath);
+	    // reading the form
+	    Document formDoc = new Document();
+	    KXmlParser formParser = new KXmlParser();
+	    try {
+            formParser.setInput(new FileReader(filepath));
+            formDoc.parse(formParser);
+        } catch(FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch(XmlPullParserException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        String namespace = formDoc.getRootElement().getNamespace();
+        Element hhtmlEl = formDoc.getElement(namespace, "h:html");
+        Element hheadEl = hhtmlEl.getElement(namespace, "h:head");
+        Element modelEl = hheadEl.getElement(namespace, "model");
+        Element instanceEl = modelEl.getElement(namespace, "instance");
+        Element dataEl = instanceEl.getElement(namespace, "data");
+        // filling in values
+        Element instance = new Element();
+        instance.setName("data");
+        instance.setAttribute("", "id", jrFormId);
+        int childIndex = 0;
+        List<String> colNames = tp.getColOrderArrayList();
+        for (int i = 0; i < dataEl.getChildCount(); i++) {
+            Element blankChild = dataEl.getElement(i);
+            if (blankChild == null) { continue; }
+            String key = blankChild.getName();
+            Element child = instance.createElement("", key);
+            int colIndex = colNames.indexOf(key);
+            if (colIndex >= 0) {
+                String value =
+                    table.getCellValue((table.getWidth() * rowNum) + colIndex);
+                if (value != null) {
+                    child.addChild(0, Node.TEXT, value);
+                }
+            }
+            instance.addChild(childIndex, Node.ELEMENT, child);
+            childIndex++;
+        }
+	    // writing the instance file
+        File formFile = new File(filepath);
+        String formFileName = formFile.getName();
+	    String instanceName = ((formFileName.endsWith(".xml") ?
+	            formFileName.substring(0, formFileName.length() - 4) :
+                formFileName)) +
+                COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
+	    String instancePath = "/sdcard/odk/instances/" + instanceName;
+	    (new File(instancePath)).mkdirs();
+	    String instanceFilePath = instancePath + "/" + instanceName + ".xml";
+	    File instanceFile = new File(instanceFilePath);
+	    KXmlSerializer instanceSerializer = new KXmlSerializer();
+	    try {
+	        instanceFile.createNewFile();
+	        FileWriter instanceWriter = new FileWriter(instanceFile);
+            instanceSerializer.setOutput(instanceWriter);
+            instance.write(instanceSerializer);
+            instanceSerializer.endDocument();
+            instanceSerializer.flush();
+            instanceWriter.close();
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        // registering the instance with Collect
+        int instanceId = registerInstance(instanceName, instanceFilePath);
+	    
+	    Intent intent = new Intent();
+	    intent.setComponent(new ComponentName("org.odk.collect.android",
+	            "org.odk.collect.android.activities.FormEntryActivity"));
+	    intent.setAction(Intent.ACTION_EDIT);
+	    intent.setData(Uri.parse(COLLECT_INSTANCES_URI_STRING + "/" +
+	            instanceId));
+	    collectInstances.put(instanceFilePath, rowNum);
+	    startActivityForResult(intent, ODK_COLLECT_FORM_RETURN);
+	}
+	
+    public String verifyFormInCollect(String filepath) {
+        String[] projection = { "jrFormId" };
+        String selection = "formFilePath = ?";
+        String[] selectionArgs = { filepath };
+        Cursor c = managedQuery(COLLECT_FORMS_CONTENT_URI, projection,
+                selection, selectionArgs, null);
+        if (c.getCount() != 0) {
+            c.moveToFirst();
+            String value = c.getString(c.getColumnIndexOrThrow("jrFormId"));
+            c.close();
+            return value;
+        }
+        ContentValues insertValues = new ContentValues();
+        insertValues.put("displayName", filepath);
+        insertValues.put("jrFormId", "build_Add-Row-Form_1320008693");
+        insertValues.put("formFilePath", filepath);
+        Uri insertResult = getContentResolver().insert(
+                COLLECT_FORMS_CONTENT_URI, insertValues);
+        return "build_Add-Row-Form_1320008693";
+    }
+    
+    public int registerInstance(String name, String filepath) {
+        ContentValues insertValues = new ContentValues();
+        insertValues.put("displayName", name);
+        insertValues.put("instanceFilePath", filepath);
+        insertValues.put("jrFormId", "build_Add-Row-Form_1320008693");
+        Uri insertResult = getContentResolver().insert(
+                COLLECT_INSTANCES_CONTENT_URI, insertValues);
+        return Integer.valueOf(insertResult.getLastPathSegment());
+    }
 	
 	private class CellEditDialog extends Dialog {
 	    
@@ -693,8 +841,6 @@ public abstract class TableActivity extends Activity {
 	// TODO: clean this up
     private String formRowMsg(String format, List<String> curHeader,
     		List<String> curRow) {
-    	Log.d("ss.j frmts", "curHeader:" + curHeader.toString());
-    	Log.d("ss.j frmts", "curRow:" + curRow.toString());
     	int lastPCSign = -1;
     	for(int i=0; i<format.length(); i++) {
     		if(format.charAt(i) == '%') {
@@ -820,7 +966,7 @@ public abstract class TableActivity extends Activity {
 	 * Prepares the cell edit enter button listener.
 	 */
 	protected void prepSearchButtonListener() {
-		Button ecEnterButton = (Button) findViewById(R.id.enter);
+		View ecEnterButton = findViewById(R.id.enter);
 		ecEnterButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -838,10 +984,31 @@ public abstract class TableActivity extends Activity {
 		});
 	}
 	
+    /**
+     * Prepares the add row button listener.
+     */
+    protected void prepAddRowButtonListener() {
+        View arButton = findViewById(R.id.add_row);
+        arButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /**
+                Intent intent = new Intent();
+                intent.setComponent(new ComponentName(
+                        "org.odk.collect.android",
+                        "org.odk.collect.android.provider.FormsProvider"));
+                intent.setAction("android.intent.action.EDIT");
+                intent.putExtra("formpath", "/sdcard/odk/tables/addrow.xml");
+                Uri uri = ContentUris.withAppendedId(Uri.parse(
+                        "content://org.odk.collect.android.provider.odk.instances/instances"), 0);
+                startActivityForResult(new Intent(Intent.ACTION_EDIT, uri), ODK_COLLECT_FORM_RETURN);
+                **/
+                backUpAddRowDialog();
+            }
+        });
+    }
+	
 	private void search() {
-        selectContentCell(-1);
-        Log.d("TDV", "searchConstraints:" + searchConstraints);
-        Log.d("TDV", "collectionRowNum:" + collectionRowNum);
         table = dt.getTable(collectionRowNum == -1, searchConstraints);
         tdv.setTable(TableActivity.this, table, indexedCol);
 	}
@@ -863,96 +1030,6 @@ public abstract class TableActivity extends Activity {
 		Toast.makeText((Context) this, message, 
 				Toast.LENGTH_LONG).show();		
 	}
-
-	/**
-	 * Prepares the add row button listener calling ODK Collect form.
-	 */
-	protected void prepAddRowButtonListener() {
-		
-        ImageButton ar = (ImageButton)findViewById(R.id.add_row);
-		ar.setOnClickListener(new View.OnClickListener() {
-			// Get Col List
-			List<String> currentColList;
-			
-			@Override
-			public void onClick(View v) {
-				// Get Col List
-				TableProperty tableProp = new TableProperty(tableID);
-				currentColList = tableProp.getColOrderArrayList();
-
-				
-				// No column exists
-				if (currentColList.size() == 0) {
-					makeToast("No existing column");
-					return;
-				}
-
-				try{
-					Intent i = new Intent("org.odk.collect.android.action.FormEntry");
-					generateXForms(formPath, instancePath);
-			        i.putExtra("formpath", formPath);
-			        i.putExtra("instancepath", instancePath);
-	                isCollectForm = true;			        
-			        startActivityForResult(i, 123);			        
-			    }catch (ActivityNotFoundException e){
-			    	backUpAddRowDialog();
-			    	prepBackUpAddRowButtonListener();
-			    }								
-			}
-			
-			private void generateXForms(String formPath, String instancePath) {
-				
-				File exist_file = new File(instancePath);
-		    	exist_file.delete();
-		    	File exist_instance_file = new File(formPath);
-		    	exist_instance_file.delete();
-		    	
-		        FileWriter rewritefile = null;
-				try {
-					rewritefile = new FileWriter(instancePath);
-					rewritefile.write("<?xml version='1.0' ?><data id=\"build_ODK-Tables-add-row_1303084542\">");
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-						rewritefile.write("<col" + i + "/>");
-					}
-					rewritefile.write("</data>");
-					
-					rewritefile.close();							
-				} catch (IOException e) {			
-					e.printStackTrace();
-				}    	    	
-		    	
-		        FileWriter file = null;
-				try {
-					file = new FileWriter(formPath);
-					file.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" xmlns:h=\"http://www.w3.org/1999/xhtml\" xmlns:ev=\"http://www.w3.org/2001/xml-events\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:jr=\"http://openrosa.org/javarosa\">\n");
-					file.write("  <h:head>\n    <h:title>ODK Tables add row</h:title>\n    <model>\n");
-					file.write("      <instance>\n        <data id=\"build_ODK-Tables-add-row_1303084542\">\n");					
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-						file.write("          <col" + i + "/>\n");
-					}					
-					file.write("        </data>\n      </instance>\n");
-		            file.write("      <itext>\n        <translation lang=\"eng\">\n");
-					for (int i = 0 ; i < currentColList.size(); i ++ ) {
-			            file.write("          <text id=\"/data/col" + i + ":label\">\n            <value>" + currentColList.get(i) + "</value>\n          </text>\n");
-			            file.write("          <text id=\"/data/col" + i + ":hint\">\n            <value/>\n          </text>\n");
-					}					
-		            file.write("        </translation>\n      </itext>\n");
-		            for (int i = 0 ; i < currentColList.size(); i ++ ) {
-		            	file.write("      <bind nodeset=\"/data/col" + i + "\" type=\"string\"/>\n");
-		            }		           
-		            file.write("    </model>\n  </h:head>\n  <h:body>\n");
-		            for (int i = 0 ; i < currentColList.size(); i ++ ) {
-		            	file.write("    <input ref=\"/data/col" + i + "\">\n      <label ref=\"jr:itext('/data/col" + i + ":label')\"/>\n      <hint ref=\"jr:itext('/data/col" + i + ":hint')\"/>\n    </input>\n");
-		            }
-		            file.write("  </h:body>\n</h:html>\n");
-		            file.close();
-				} catch (IOException e) {			
-					e.printStackTrace();
-				}
-		    }
-		});
-	}
-
 	
 	/* 
 	 * Prepares add row button only when ODK Collect is not installed
@@ -1110,38 +1187,32 @@ public abstract class TableActivity extends Activity {
 	
 	/**
 	 * To be called when a regular cell is clicked.
-	 * Sets the selected cell ID and the cell edit box text.
-	 * @param cellID the cell's ID
+	 * Opens the cell edit dialog.
+	 * @param cellId the cell's ID
 	 */
-	public void regularCellClicked(int cellID) {
-	    (new CellEditDialog(this, cellID)).show();
+	public void regularCellClicked(int cellId) {
+	    //(new CellEditDialog(this, cellId)).show();
 	}
 	
 	/**
 	 * To be called when a header cell is clicked.
-	 * Sets the selected cell ID to -1 and empties the cell edit box.
-	 * @param cellID the cell's ID
+	 * @param cellId the cell's ID
 	 */
-	public void headerCellClicked(int cellID) {
-		selectContentCell(-1);
+	public void headerCellClicked(int cellId) {
 	}
 	
 	/**
 	 * To be called when a cell in an indexed column is clicked.
-	 * Sets the selected cell ID and the cell edit box text.
-	 * @param cellID the cell's ID
+	 * @param cellId the cell's ID
 	 */
-	public void indexedColCellClicked(int cellID) {
-		selectContentCell(cellID);
+	public void indexedColCellClicked(int cellId) {
 	}
 	
 	/**
 	 * To be called when a footer cell is clicked.
-	 * Sets the selected cell ID to -1 and empties the cell edit box.
-	 * @param cellID the cell's ID
+	 * @param cellId the cell's ID
 	 */
-	public void footerCellClicked(int cellID) {
-		selectContentCell(-1);
+	public void footerCellClicked(int cellId) {
 	}
 	
 	public abstract void prepRegularCellOccm(ContextMenu menu, int cellId);
@@ -1163,6 +1234,7 @@ public abstract class TableActivity extends Activity {
 	}
 	
 	private void parseXML(){
+	    /**
 		
 		String path = instancePath;
 		
@@ -1207,7 +1279,7 @@ public abstract class TableActivity extends Activity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+		**/
 	}
 
 	
@@ -1276,6 +1348,10 @@ public abstract class TableActivity extends Activity {
 		selectedCellID = cellID;
 	}
 	
+	protected void editCell(int cellId) {
+        (new CellEditDialog(this, cellId)).show();
+	}
+	
 	/**
 	 * Refreshes the display (but not the content).
 	 */
@@ -1283,4 +1359,67 @@ public abstract class TableActivity extends Activity {
 	    //tdv.addConditionalColors();
 	}
 	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode,
+	        Intent data) {
+	    switch(requestCode) {
+	    case ODK_COLLECT_FORM_RETURN:
+	        int id = Integer.valueOf(data.getData().getLastPathSegment());
+	        fillInCollectFormValues(id);
+	        return;
+        default:
+            // TODO: something
+            return;
+	    }
+	}
+	
+	private void fillInCollectFormValues(int instanceId) {
+        String[] projection = { "instanceFilePath" };
+        String selection = "_id = ?";
+        String[] selectionArgs = { (instanceId + "") };
+        Cursor c = managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection,
+                selection, selectionArgs, null);
+        if (c.getCount() != 1) {
+            return;
+        }
+	    c.moveToFirst();
+	    String instancepath =
+	        c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
+        Document xmlDoc = new Document();
+        KXmlParser xmlParser = new KXmlParser();
+        try {
+            xmlParser.setInput(new FileReader(instancepath));
+            xmlDoc.parse(xmlParser);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch(XmlPullParserException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Element rootEl = xmlDoc.getRootElement();
+        Node rootNode = rootEl.getRoot();
+        int dataIdx = rootNode.indexOf(rootEl.getNamespace(), "data", 0);
+        Element dataEl = rootNode.getElement(dataIdx);
+        Integer rowNum = collectInstances.get(instancepath);
+        if (rowNum == null) {
+            return;
+        }
+        List<String> colNames = tp.getColOrderArrayList();
+        int rowId = table.getTableRowID(rowNum);
+        ContentValues updates = new ContentValues();
+        for (int i = 0; i < dataEl.getChildCount(); i++) {
+            Element child = dataEl.getElement(i);
+            String key = child.getName();
+            int colIndex = colNames.indexOf(key);
+            if (colIndex >= 0) {
+                String value = child.getText(0);
+                table.setCellValue((table.getWidth() * rowNum) + colIndex,
+                        value);
+                updates.put(key, value);
+            }
+        }
+        dt.updateRow(updates, rowId);
+        refreshView();
+	}
 }
