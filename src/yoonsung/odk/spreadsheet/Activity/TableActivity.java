@@ -59,6 +59,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -449,7 +450,9 @@ public abstract class TableActivity extends Activity {
 	 * @param rowNum the row number in the displayed table
 	 * @param filepath the form's filepath
 	 */
-	protected void collect(int rowNum, String filepath) {
+	protected void collect(int rowNum, String filename) {
+	    String filepath = Environment.getExternalStorageDirectory() +
+	            "/odk/forms/" + filename;
 	    String jrFormId = verifyFormInCollect(filepath);
 	    // reading the form
 	    Document formDoc = new Document();
@@ -472,10 +475,11 @@ public abstract class TableActivity extends Activity {
         Element hheadEl = hhtmlEl.getElement(namespace, "h:head");
         Element modelEl = hheadEl.getElement(namespace, "model");
         Element instanceEl = modelEl.getElement(namespace, "instance");
-        Element dataEl = instanceEl.getElement(namespace, "data");
+        Element dataEl = instanceEl.getElement(1);
         // filling in values
         Element instance = new Element();
-        instance.setName("data");
+        instance.setName(dataEl.getName());
+        Log.d("CSTF", "jrFormId in collect():" + jrFormId);
         instance.setAttribute("", "id", jrFormId);
         int childIndex = 0;
         List<String> colNames = tp.getColOrderArrayList();
@@ -520,7 +524,8 @@ public abstract class TableActivity extends Activity {
             e.printStackTrace();
         }
         // registering the instance with Collect
-        int instanceId = registerInstance(instanceName, instanceFilePath);
+        int instanceId = registerInstance(instanceName, instanceFilePath,
+                jrFormId);
 	    
 	    Intent intent = new Intent();
 	    intent.setComponent(new ComponentName("org.odk.collect.android",
@@ -533,6 +538,8 @@ public abstract class TableActivity extends Activity {
 	}
 	
     public String verifyFormInCollect(String filepath) {
+        Log.d("CSTF", "filepath<" + filepath + ">");
+        for (int i = 0; i < 4; i++) {}
         String[] projection = { "jrFormId" };
         String selection = "formFilePath = ?";
         String[] selectionArgs = { filepath };
@@ -544,20 +551,20 @@ public abstract class TableActivity extends Activity {
             c.close();
             return value;
         }
+        String jrFormId = CollectUtil.getJrFormId(filepath);
         ContentValues insertValues = new ContentValues();
         insertValues.put("displayName", filepath);
-        insertValues.put("jrFormId", "build_Add-Row-Form_1320008693");
+        insertValues.put("jrFormId", jrFormId);
         insertValues.put("formFilePath", filepath);
-        Uri insertResult = getContentResolver().insert(
-                COLLECT_FORMS_CONTENT_URI, insertValues);
-        return "build_Add-Row-Form_1320008693";
+        getContentResolver().insert(COLLECT_FORMS_CONTENT_URI, insertValues);
+        return jrFormId;
     }
     
-    public int registerInstance(String name, String filepath) {
+    public int registerInstance(String name, String filepath, String jrFormId) {
         ContentValues insertValues = new ContentValues();
         insertValues.put("displayName", name);
         insertValues.put("instanceFilePath", filepath);
-        insertValues.put("jrFormId", "build_Add-Row-Form_1320008693");
+        insertValues.put("jrFormId", jrFormId);
         Uri insertResult = getContentResolver().insert(
                 COLLECT_INSTANCES_CONTENT_URI, insertValues);
         return Integer.valueOf(insertResult.getLastPathSegment());
@@ -1399,8 +1406,7 @@ public abstract class TableActivity extends Activity {
         }
         Element rootEl = xmlDoc.getRootElement();
         Node rootNode = rootEl.getRoot();
-        int dataIdx = rootNode.indexOf(rootEl.getNamespace(), "data", 0);
-        Element dataEl = rootNode.getElement(dataIdx);
+        Element dataEl = rootNode.getElement(0);
         Integer rowNum = collectInstances.get(instancepath);
         if (rowNum == null) {
             return;
@@ -1419,7 +1425,10 @@ public abstract class TableActivity extends Activity {
                 updates.put(key, value);
             }
         }
-        dt.updateRow(updates, rowId);
+        if (updates.size() > 0) {
+            dt.updateRow(updates, rowId);
+        }
+        collectInstances.remove(rowNum);
         refreshView();
 	}
 }
