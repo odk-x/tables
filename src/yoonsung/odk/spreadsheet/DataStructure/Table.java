@@ -16,6 +16,7 @@ public class Table {
 	private int height;
 	private ArrayList<Integer> rowID;
 	private ArrayList<String> header;
+	private ArrayList<String> rawData;
 	private ArrayList<String> data;
 	private ArrayList<String> footer;
 		
@@ -35,12 +36,11 @@ public class Table {
 		this.height = height;
 		this.rowID = rowID;
 		this.header = header;
-		this.data = data;
+		this.rawData = data;
 		this.footer = footer;
 		
 		ColumnProperty cp = new ColumnProperty(tableID);
 		
-		// user-friendlifying the date strings
 		List<Integer> drList = new ArrayList<Integer>();
 		List<Integer> dtList = new ArrayList<Integer>();
 		for(int i=0; i<header.size(); i++) {
@@ -50,43 +50,35 @@ public class Table {
 			    dtList.add(i);
 			}
 		}
+
+		this.data = new ArrayList<String>(height * width);
         DataUtils du = DataUtils.getInstance();
-		for(int i : drList) {
-			for (int c = i; c < (height * width); c+=width) {
-			    try {
-			        Date[] dr = du.parseDateRangeFromDB(data.get(c));
-			        String s = du.formatDateRangeForDisplay(dr);
-			        data.set(c, s);
-			    } catch(ParseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-			    }
-			}
-		}
-		for(int i : dtList) {
-		    for(int c=i; c < (height * width); c+=width) {
-                try {
-                    Date d = du.parseDateTimeFromDB(data.get(c));
-                    String s = du.formatDateTimeForDisplay(d);
-                    data.set(c, s);
-                } catch(ParseException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+		for (int i = 0; i < height; i++) {
+		    for (int j = 0; j < width; j++) {
+	            boolean isDr = drList.contains(j);
+	            boolean isDt = dtList.contains(j);
+		        int index = (i * width) + j;
+		        if (isDr) {
+		            try {
+		                Date[] dr = du.parseDateRangeFromDB(
+		                        rawData.get(index));
+		                this.data.add(du.formatDateRangeForDisplay(dr));
+		            } catch(ParseException e) {
+		                e.printStackTrace();
+		            }
+		        } else if (isDt) {
+		            try {
+		                Date d = du.parseDateTimeFromDB(rawData.get(index));
+		                this.data.add(du.formatDateTimeForDisplay(d));
+		            } catch(ParseException e) {
+		                e.printStackTrace();
+		            }
+		        } else {
+		            this.data.add(rawData.get(index));
+		        }
 		    }
 		}
-		
 	}
-	
-	private Date getTime(String timeStr) {
-		Calendar cal = Calendar.getInstance();
-		String[] timeSpl = timeStr.split(":");
-		cal.set(new Integer(timeSpl[0]), (new Integer(timeSpl[1]) - 1),
-				new Integer(timeSpl[2]), new Integer(timeSpl[3]),
-				new Integer(timeSpl[4]), new Integer(timeSpl[5]));
-		return cal.getTime();
-	}
-	
 	
 	public int getWidth() {
 		return this.width;
@@ -140,6 +132,14 @@ public class Table {
 		} else {
 			return null;
 		}
+	}
+	
+	public ArrayList<String> getRawColumn(int colNum) {
+	    ArrayList<String> col = new ArrayList<String>();
+	    for (int i = colNum; i < ((height * width) + colNum); i += width) {
+	        col.add(rawData.get(i));
+	    }
+	    return col;
 	}
 	
 	public int getRowNum(int position) {

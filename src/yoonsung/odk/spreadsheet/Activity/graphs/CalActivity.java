@@ -1,10 +1,12 @@
 package yoonsung.odk.spreadsheet.Activity.graphs;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import yoonsung.odk.spreadsheet.Database.DataUtils;
 import yoonsung.odk.spreadsheet.Library.graphs.CalendarView;
 import yoonsung.odk.spreadsheet.Library.graphs.GEventPoint;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphFactory;
@@ -53,14 +55,20 @@ public class CalActivity extends GraphActivity {
     }
     
     private List<GEventPoint> createPlotData(List<String> x, List<String> y) {
+        DataUtils du = DataUtils.getInstance();
     	List<GEventPoint> list = new ArrayList<GEventPoint>();
     	for(int i=0; i<x.size(); i++) {
     		String str = x.get(i);
     		if(str != null) {
-    			String[] splt = str.split(" - ");
-    			Date start = getDateFromStr(splt[0]);
-    			Date end = getDateFromStr(splt[1]);
-    			list.add(new GEventPoint(start, end, y.get(i), ""));
+    			Date[] dates;
+                try {
+                    dates = du.parseDateRangeFromDB(str);
+                } catch(ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return null;
+                }
+    			list.add(new GEventPoint(dates[0], dates[1], y.get(i), ""));
     		}
     	}
 		return list;

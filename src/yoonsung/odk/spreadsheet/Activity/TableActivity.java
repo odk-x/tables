@@ -235,7 +235,7 @@ public abstract class TableActivity extends Activity {
     	
 	  	if ((graphType == null) ||(colOne == null) || (colTwo == null) ||
 	  			!dt.isColumnExist(colOne) || !dt.isColumnExist(colTwo)) {
-	  		Log.e("GRAPTH", "Such a graph type does not exists");
+	  		Log.e("GRAPH", "Such a graph type does not exists");
 	  		bounceToGraphSettings();
 	  		return;
 		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
@@ -313,8 +313,8 @@ public abstract class TableActivity extends Activity {
 	    	g.putExtra("location", location);
 	    } else if (graphType.equals(GraphClassifier.CALENDAR)) {
     		g = new Intent(this, CalActivity.class); 
-    		ArrayList<String> x = table.getCol(table.getColNum(colOne));
-    		ArrayList<String> y = table.getCol(table.getColNum(colTwo));
+    		ArrayList<String> x = table.getRawColumn(table.getColNum(colOne));
+    		ArrayList<String> y = table.getRawColumn(table.getColNum(colTwo));
     		//Collections.reverse(x);
     		//Collections.reverse(y);
     		g.putExtra("x", x);

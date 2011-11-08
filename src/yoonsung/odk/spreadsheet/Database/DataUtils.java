@@ -79,7 +79,7 @@ public class DataUtils {
      * @return the string
      */
     public String formatDateRangeForDB(Date[] dr) {
-        return formatDateTimeForDB(dr[0]) + "/" + formatDateTimeForDB(dr[0]);
+        return formatDateTimeForDB(dr[0]) + "/" + formatDateTimeForDB(dr[1]);
     }
     
     /**
@@ -99,7 +99,7 @@ public class DataUtils {
      */
     public String formatDateRangeForDisplay(Date[] dr) {
         return formatDateTimeForDisplay(dr[0]) + " - " +
-                formatDateTimeForDisplay(dr[0]);
+                formatDateTimeForDisplay(dr[1]);
     }
     
     /**
