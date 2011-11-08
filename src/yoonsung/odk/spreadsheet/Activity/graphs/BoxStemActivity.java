@@ -1,7 +1,9 @@
 package yoonsung.odk.spreadsheet.Activity.graphs;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import yoonsung.odk.spreadsheet.Library.graphs.EGraphicalView;
 import yoonsung.odk.spreadsheet.Library.graphs.GValuePercentilePoint;
@@ -10,6 +12,7 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphFactory;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 public class BoxStemActivity extends GraphActivity {
 	
@@ -28,8 +31,16 @@ public class BoxStemActivity extends GraphActivity {
         String xname = getIntent().getExtras().getString("xname");
         String yname = getIntent().getExtras().getString("yname");
                     
+        Set<String> seenX = new HashSet<String>();
+        int index = 0;
         for (int i = 0; i < x.size(); i++) {
-        	list.add(new GValuePercentilePoint(x.get(i), min[i], low[i], mid[i], high[i], max[i]));
+            String xVal = x.get(i);
+            if (seenX.contains(xVal)) {
+                continue;
+            }
+            seenX.add(xVal);
+        	list.add(new GValuePercentilePoint(xVal, min[index], low[index], mid[index], high[index], max[index]));
+        	index++;
         }
     	
         GraphFactory f = new GraphFactory(this);

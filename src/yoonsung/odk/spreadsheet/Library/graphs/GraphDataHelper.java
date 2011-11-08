@@ -2,6 +2,8 @@ package yoonsung.odk.spreadsheet.Library.graphs;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
@@ -33,11 +35,19 @@ public class GraphDataHelper {
 		ArrayList<Double> Q3s = new ArrayList<Double>();
 		ArrayList<Double> Q4s = new ArrayList<Double>();
     	
+		Set<String> seenX = new HashSet<String>();
+		
     	// For each x entry
     	for (int i = 0; i < x.size(); i++) {
     		
+    	    String xVal = x.get(i);
+    	    if (seenX.contains(xVal)) {
+    	        continue;
+    	    }
+    	    seenX.add(xVal);
+    	    
     		// Get corresponding y values 
-    		Table table = data.getTableByVal(colOne, x.get(i));
+    		Table table = data.getTableByVal(colOne, xVal);
     		ArrayList<String> y = table.getCol(table.getColNum(colTwo));
     		
     		// Take statistics
