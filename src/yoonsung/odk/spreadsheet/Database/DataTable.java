@@ -31,6 +31,8 @@ public class DataTable {
 	public static final String DATA_ROWID = "RowID";
 	public static final String DATA_PHONE_NUMBER_IN = "_phoneNumberIn";
 	public static final String DATA_TIMESTAMP = "_timestamp";
+	public static final String DATA_SYNC_ID = "_syncId";
+	public static final String DATA_SYNC_TAG = "_syncTag";
 	
 	private String currentTableID;
 	private String currentTableName;

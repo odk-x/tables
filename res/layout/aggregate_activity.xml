@@ -1,126 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/aggregate_activity_layout"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent" 
 	android:orientation="vertical" 
 	android:background="#FFFFFF">
-			
-	<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	
+	<TextView
+		android:id="@+id/aggregate_activity_uri_label"
 		android:layout_width="fill_parent"
-		android:layout_height="fill_parent" 
-		android:orientation="vertical" 
-		android:background="#FFFFFF">
-		
-		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			android:layout_width="fill_parent"
-			android:layout_height="fill_parent" 
-			android:orientation="vertical" 
-			android:background="#FFFFFF">
+		android:layout_height="wrap_content"
+		android:text="Aggregate URI:" />
 	
-			<TextView
-				android:id="@+id/aggregate_activity_status"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="Recent Status:" />
-				
-			<TextView
-				android:id="@+id/aggregate_activity_user_uri_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000" />
-				
-			<Button
-    			android:id="@+id/aggregate_activity_deleteUser"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Remove this user and data on aggregate" />
-				
-			<TextView
-				android:id="@+id/aggregate_activity_url_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="\nAggregate URL:" />
+	<EditText
+		android:id="@+id/aggregate_activity_uri_field"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="http://" />
 	
-			<EditText 
-       			android:id="@+id/aggregate_activity_url"
-        		android:layout_width="fill_parent"
-       			android:layout_height="wrap_content" />
-       			
-       		<Button
-    			android:id="@+id/aggregate_activity_connect"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Connect" />
-			
-    		<TextView
-    			android:id="@+id/aggregate_activity_userName_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="\nUser Name (must create user to upload/delete tables):" />
-		
-			<EditText 
-        		android:id="@+id/aggregate_activity_userName"
-        		android:layout_width="fill_parent"
-        		android:layout_height="wrap_content" />
-    		
-    		<Button
-    			android:id="@+id/aggregate_activity_createUser"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Create User" />
-			
-			<TextView
-				android:id="@+id/aggregate_activity_getPhoneTables_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="\nTables On Phone:" />
+	<TextView
+		android:id="@+id/aggregate_activity_username_label"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Username:" />
 	
-			<Spinner 
-        		android:id="@+id/aggregate_activity_getPhoneTables"
-        		android:layout_width="fill_parent"
-       		 	android:layout_height="wrap_content" />
-       		 	
-       		<Button
-    			android:id="@+id/aggregate_activity_uploadTable"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Upload Table" />
-        
-    		<TextView
-    			android:id="@+id/aggregate_activity_getAggregateTables_text"
-				android:layout_width="fill_parent" 
-				android:layout_height="wrap_content"
-				android:textColor="#000000"
-				android:text="\nTables on Aggregate:" />
+	<EditText
+		android:id="@+id/aggregate_activity_username_field"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
 	
-			<Spinner 
-        		android:id="@+id/aggregate_activity_getAggregateTables"
-        		android:layout_width="fill_parent"
-        		android:layout_height="wrap_content" />    
-    
-    		<Button
-    			android:id="@+id/aggregate_activity_getAggregateTables_button"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Get Table List" />
-    		
-    		<Button
-    			android:id="@+id/aggregate_activity_downloadTable"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Download Table" />
-    		
-    		<Button
-    			android:id="@+id/aggregate_activity_deleteTable"
-    			android:layout_width="fill_parent"
-    			android:layout_height="wrap_content"
-    			android:text="Delete Table" />
-        
-		</LinearLayout>
-	</ScrollView>
-</FrameLayout>
+	<Button
+		android:id="@+id/aggregate_activity_list_tables_button"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="List Available Tables" />
+	
+	<Spinner
+		android:id="@+id/aggregate_activity_table_list_spinner"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+	
+	<Button
+		android:id="@+id/aggregate_activity_download_table_button"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Download Table" />
+	
+	<Button
+		android:id="@+id/aggregate_activity_pull_table_button"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Pull Table" />
+	
+	<Button
+		android:id="@+id/aggregate_activity_push_table_button"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Push Table" />
+	
+</LinearLayout>

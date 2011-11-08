@@ -22,6 +22,7 @@ public class TableList {
 	public static String TABLE_NAME = "tableName";
 	public static String TABLE_IS_SECURITY_TABLE = "isSecTable";
 	public static final String DB_TABLE_TYPE = "tableType";
+	public static final String DB_SYNC_MOD_NUMBER = "syncModNum";
 	
 	public static final int TABLETYPE_DATA = 1;
 	public static final int TABLETYPE_SECURITY = 2;
@@ -140,6 +141,7 @@ public class TableList {
 			ContentValues cv = new ContentValues();
 			cv.put(TABLE_NAME, tableName);
 			cv.put(DB_TABLE_TYPE, 1);
+			cv.put(DB_SYNC_MOD_NUMBER, 0);
 			try {
 				con.insertOrThrow(TABLE_LIST, null, cv);
 			} catch (Exception e) {
@@ -280,6 +282,14 @@ public class TableList {
 	    SQLiteDatabase con = db.getConn();
 	    con.insertOrThrow(TABLE_LIST, null, vals);
 	    con.close();
+	}
+	
+	public void updateSyncModNumber(String tableId, int num) {
+	    ContentValues values = new ContentValues();
+	    values.put(DB_SYNC_MOD_NUMBER, num);
+	    SQLiteDatabase con = db.getConn();
+	    con.update(TABLE_LIST, values, TABLE_ID + " = ?",
+	            new String[] {tableId});
 	}
 	
 	public class TableInfo {

@@ -302,7 +302,7 @@ public class TableManager extends ListActivity {
 			 startActivity(i);
 			 return true;
 		 case AGGREGATE:
-			 Intent j = new Intent(this, Aggregation.class);
+			 Intent j = new Intent(this, Aggregate.class);
 			 startActivity(j);
 			 return true;
 		 }
@@ -412,7 +412,9 @@ public class TableManager extends ListActivity {
 		 con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
 	                + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
 	                + DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
-	                + DataTable.DATA_TIMESTAMP + " TEXT"
+	                + DataTable.DATA_TIMESTAMP + " TEXT,"
+	                + DataTable.DATA_SYNC_ID + " TEXT,"
+	                + DataTable.DATA_SYNC_TAG + " TEXT"
 	                + ");");
 		 con.close();
 	 }

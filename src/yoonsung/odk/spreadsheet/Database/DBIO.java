@@ -36,7 +36,8 @@ public class DBIO {
                 + TableList.TABLE_ID + " INTEGER PRIMARY KEY,"
                 + TableList.TABLE_NAME + " TEXT,"
                 + TableList.TABLE_IS_SECURITY_TABLE + " TEXT,"
-                + TableList.DB_TABLE_TYPE + " INT"
+                + TableList.DB_TABLE_TYPE + " INT,"
+                + TableList.DB_SYNC_MOD_NUMBER + " INT"
                 + ");");
     	
     	// Create tableProperty table
@@ -157,4 +158,13 @@ public class DBIO {
 			return toSafeSqlColumn(col, as, null);
 	}
 	
+	public void addNewTable(String tableName) {
+        SQLiteDatabase con = getConn();
+        con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
+                   + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
+                   + DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
+                   + DataTable.DATA_TIMESTAMP + " TEXT"
+                   + ");");
+        con.close();
+	}
 }
