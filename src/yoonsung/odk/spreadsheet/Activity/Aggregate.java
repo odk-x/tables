@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.Activity;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,6 +24,7 @@ import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -472,7 +474,13 @@ public class Aggregate extends Activity {
             int width = table.getWidth();
             for (int i = 0; i < height; i++) {
                 String lastUpdateString = data.get((i * width) + timestampCol);
-                Date lastUpdate = du.parseDateTime(lastUpdateString);
+                Date lastUpdate;
+                try {
+                    lastUpdate = du.parseDateTimeFromDB(lastUpdateString);
+                } catch(ParseException e) {
+                    // TODO Auto-generated catch block
+                    lastUpdate = new Date();
+                }
                 if (lastUpdate.before(lastSyncTime)) {
                     continue;
                 }
@@ -510,6 +518,8 @@ public class Aggregate extends Activity {
                 values.put(DataTable.DATA_SYNC_ID, row.getAggregateRowIdentifier());
                 dt.updateRow(values, Integer.valueOf(row.getRowID()));
             }
+            
+            tl.updateLastSyncTime(tableId, new Date());
             tl.updateSyncModNumber(tableId, mod.getModificationNumber());
             
             return true;

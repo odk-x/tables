@@ -171,6 +171,9 @@ public class DataTable {
 	        }
 	    }
 	    
+	    values.put(DATA_PHONE_NUMBER_IN, phoneNumberIn);
+	    values.put(DATA_TIMESTAMP, timeStamp);
+	    
 		SQLiteDatabase con = db.getConn();
 		try {
 			con.insertOrThrow(currentTableName, null, values);

@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.Database;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -318,10 +319,16 @@ public class TableList {
         }
         String dateString = c.getString(colIndex);
         c.close();
-        if (dateString.length() == 0) {
+        if ((dateString == null) || (dateString.length() == 0)) {
             return null;
         } else {
-            return DataUtils.getInstance().parseDateTime(dateString);
+            try {
+                return DataUtils.getInstance().parseDateTimeFromDB(dateString);
+            } catch(ParseException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return null;
+            }
         }
 	}
     

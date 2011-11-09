@@ -1443,6 +1443,8 @@ public abstract class TableActivity extends Activity {
             dt.updateRow(updates, rowId);
         }
         collectInstances.remove(rowNum);
+        dt.updateTimestamp(rowId, DataUtils.getInstance()
+                .formatDateTimeForDB(new Date()));
         refreshView();
 	}
 }
