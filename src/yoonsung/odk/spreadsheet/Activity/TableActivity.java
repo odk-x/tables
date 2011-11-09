@@ -605,9 +605,13 @@ public abstract class TableActivity extends Activity {
                 public void onClick(View v) {
                     String value = et.getText().toString();
                     ContentValues values = new ContentValues();
-                    values.put(table.getColName(cellId % table.getWidth()), value);
-                    dt.updateRow(values,
-                            table.getRowID().get(cellId / table.getWidth()));
+                    values.put(table.getColName(cellId % table.getWidth()),
+                            value);
+                    int rowId = table.getRowID().get(
+                            cellId / table.getWidth());
+                    dt.updateRow(values, rowId);
+                    dt.updateTimestamp(rowId,DataUtils.getInstance()
+                            .formatDateTimeForDB(new Date()));
                     table.setCellValue(cellId, value);
                     refreshView();
                     CellEditDialog.this.dismiss();
