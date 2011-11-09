@@ -205,6 +205,15 @@ public class DataTable {
 		con.close();
 		
 	}
+	
+	public void updateTimestamp(int rowId, String timestamp) {
+	    ContentValues values = new ContentValues();
+	    values.put(DATA_TIMESTAMP, timestamp);
+	    SQLiteDatabase con = db.getConn();
+	    con.update(currentTableName, values, DATA_ROWID + " = ?",
+	            new String[] { rowId + "" });
+	    con.close();
+	}
 	 
 	public Table getTable() {
 		

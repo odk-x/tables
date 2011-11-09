@@ -5,8 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.DataUtils;
 import yoonsung.odk.spreadsheet.Database.DefaultsManager;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
@@ -77,6 +79,8 @@ public class CSVImporter {
 					timestamp = i;
 				}
 			}
+			String nowTimestamp =
+			    DataUtils.getInstance().formatDateTimeForDB(new Date());
 			String[] next = reader.readNext();
 			while(next != null) {
 				ContentValues cv = getValues(header, next);
@@ -84,10 +88,7 @@ public class CSVImporter {
 				if(phoneIn >= 0) {
 					pn = next[phoneIn];
 				}
-				String ts = "";
-				if(timestamp >= 0) {
-					ts = next[timestamp];
-				}
+				String ts = (timestamp < 0) ? nowTimestamp : next[timestamp];
 				try {
 				    data.addRow(cv, pn, ts);
 				} catch(IllegalArgumentException e) {

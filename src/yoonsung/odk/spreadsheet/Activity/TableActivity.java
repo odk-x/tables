@@ -38,6 +38,7 @@ import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
 import yoonsung.odk.spreadsheet.Database.ColumnProperty;
 import yoonsung.odk.spreadsheet.Database.DataTable;
+import yoonsung.odk.spreadsheet.Database.DataUtils;
 import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
@@ -1137,8 +1138,11 @@ public abstract class TableActivity extends Activity {
 					cv.put(key, currentAddRowBuffer.get(key));
 				}
 
+				String timestamp = DataUtils.getInstance()
+				        .formatDateTimeForDB(new Date());
 				try {
-				    dt.addRow(cv, "", "");
+				    dt.addRow(cv, "", timestamp);
+				    refreshView();
 				} catch(IllegalArgumentException e) {
 				    // TODO: something when the input is invalid for the columns
 				    dia.cancel();
