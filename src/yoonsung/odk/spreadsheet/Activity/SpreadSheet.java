@@ -36,7 +36,6 @@ public class SpreadSheet extends TableActivity {
 	private static final int OPEN_COLUMN_MANAGER = 1;
 	private static final int OPEN_SECURITY_MANAGER = 2;
 	private static final int GRAPH = 3;
-	private static final int OPEN_DEFOPTS_MANAGER = 4;
 	private static final int IMPORTEXPORT = 5;
 	// context menu IDs
 	private static final int SELECT_COLUMN = 6;
@@ -89,7 +88,6 @@ public class SpreadSheet extends TableActivity {
 		menu.add(none, OPEN_COLUMN_MANAGER, none, "Column Manager");
 		menu.add(none, OPEN_SECURITY_MANAGER, none, "Security Manager");
 		menu.add(none, GRAPH, none, "Graph");
-		menu.add(none, OPEN_DEFOPTS_MANAGER, none, "Defaults Manager");
 		menu.add(none, IMPORTEXPORT, none, "Import/Export");
 		return true;
 	}
@@ -115,9 +113,6 @@ public class SpreadSheet extends TableActivity {
 			return true;
 		case GRAPH:
 			openGraph();
-			return true;
-		case OPEN_DEFOPTS_MANAGER:
-			openDefOptsManager();
 			return true;
 		case IMPORTEXPORT:
 			openImportExportScreen();
