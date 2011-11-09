@@ -780,9 +780,15 @@ public abstract class TableActivity extends Activity {
     	}
     	final int[] formatIndex = new int[1];
     	formatIndex[0] = 0;
-    	String content = "";
+    	String content;
     	if(formats.size() > 0) {
     		content = formRowMsg(formats.get(0), curHeader, curRow);
+    	} else {
+    	    content = "";
+    	    for (int i = 0; i < curHeader.size(); i++) {
+    	        content += curHeader.get(i) + ":" + curRow.get(i) + "/";
+    	    }
+    	    content = content.substring(0, content.length() - 1);
     	}
     	AlertDialog.Builder alert = new AlertDialog.Builder(this);
     	alert.setTitle("Send Row");
