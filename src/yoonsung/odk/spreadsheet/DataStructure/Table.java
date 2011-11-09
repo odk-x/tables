@@ -100,6 +100,10 @@ public class Table {
 		return this.data;
 	}
 	
+	public ArrayList<String> getRawData() {
+	    return this.rawData;
+	}
+	
 	public ArrayList<String> getFooter() {
 		return this.footer;
 	}

@@ -570,4 +570,8 @@ public class DataTable {
 	    }
 	}
 	
+	public boolean isHiddenColumn(String colName) {
+	    return (colName.equals(DATA_PHONE_NUMBER_IN) ||
+	            colName.equals(DATA_TIMESTAMP));
+	}
 }

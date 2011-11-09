@@ -284,6 +284,19 @@ public class TableList {
 	    con.close();
 	}
 	
+	public int getSyncModNumber(String tableId) {
+	    SQLiteDatabase con = db.getConn();
+	    Cursor c = con.query(TABLE_LIST, new String[] {DB_SYNC_MOD_NUMBER},
+	            TABLE_ID + " = ?", new String[] {tableId}, null, null, null);
+	    int colIndex = c.getColumnIndexOrThrow(DB_SYNC_MOD_NUMBER);
+	    if (!c.moveToFirst()) {
+	        return -1;
+	    }
+	    int num = c.getInt(colIndex);
+	    c.close();
+	    return num;
+	}
+	
 	public void updateSyncModNumber(String tableId, int num) {
 	    ContentValues values = new ContentValues();
 	    values.put(DB_SYNC_MOD_NUMBER, num);

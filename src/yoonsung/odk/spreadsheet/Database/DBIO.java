@@ -163,7 +163,9 @@ public class DBIO {
         con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
                    + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
                    + DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
-                   + DataTable.DATA_TIMESTAMP + " TEXT"
+                   + DataTable.DATA_TIMESTAMP + " TEXT,"
+                   + DataTable.DATA_SYNC_ID + " TEXT,"
+                   + DataTable.DATA_SYNC_TAG + " TEXT"
                    + ");");
         con.close();
 	}
