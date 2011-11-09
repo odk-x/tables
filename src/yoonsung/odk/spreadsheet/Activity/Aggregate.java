@@ -325,7 +325,8 @@ public class Aggregate extends Activity {
                 dt.addRow(values, null, timestamp);
             }
             
-            // updating the modification number
+            // updating the last sync time and modification number
+            tl.updateLastSyncTime(tableId, new Date());
             tl.updateSyncModNumber(tableId, mod.getModificationNumber());
             
             return true;
@@ -408,7 +409,8 @@ public class Aggregate extends Activity {
                 }
             }
             
-            // updating the modification number
+            // updating the last sync time and modification number
+            tl.updateLastSyncTime(tableId, new Date());
             tl.updateSyncModNumber(tableId, mod.getModificationNumber());
             
             return true;
@@ -458,14 +460,22 @@ public class Aggregate extends Activity {
             DataTable dt = new DataTable(tableId);
             
             // getting the client data
+            DataUtils du = DataUtils.getInstance();
+            Date lastSyncTime = tl.getLastSyncTime(tableId);
             List<SynchronizedRow> rows = new ArrayList<SynchronizedRow>();
             Table table = dt.getCompleteTable();
             List<String> data = table.getRawData();
             List<String> colNames = table.getHeader();
             List<Integer> rowIds = table.getRowID();
+            int timestampCol = colNames.indexOf(DataTable.DATA_TIMESTAMP);
             int height = table.getHeight();
             int width = table.getWidth();
             for (int i = 0; i < height; i++) {
+                String lastUpdateString = data.get((i * width) + timestampCol);
+                Date lastUpdate = du.parseDateTime(lastUpdateString);
+                if (lastUpdate.before(lastSyncTime)) {
+                    continue;
+                }
                 SynchronizedRow row = new SynchronizedRow();
                 row.setRowID(rowIds.get(i).toString());
                 for (int j = 0; j < width; j++) {

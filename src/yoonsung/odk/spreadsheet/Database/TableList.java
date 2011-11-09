@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Database;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ public class TableList {
 	public static String TABLE_IS_SECURITY_TABLE = "isSecTable";
 	public static final String DB_TABLE_TYPE = "tableType";
 	public static final String DB_SYNC_MOD_NUMBER = "syncModNum";
+	public static final String DB_LAST_SYNC_TIME = "lastSyncTime";
 	
 	public static final int TABLETYPE_DATA = 1;
 	public static final int TABLETYPE_SECURITY = 2;
@@ -303,7 +305,40 @@ public class TableList {
 	    SQLiteDatabase con = db.getConn();
 	    con.update(TABLE_LIST, values, TABLE_ID + " = ?",
 	            new String[] {tableId});
+	    con.close();
 	}
+	
+	public Date getLastSyncTime(String tableId) {
+        SQLiteDatabase con = db.getConn();
+        Cursor c = con.query(TABLE_LIST, new String[] {DB_LAST_SYNC_TIME},
+                TABLE_ID + " = ?", new String[] {tableId}, null, null, null);
+        int colIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
+        if (!c.moveToFirst()) {
+            return null;
+        }
+        String dateString = c.getString(colIndex);
+        c.close();
+        if (dateString.length() == 0) {
+            return null;
+        } else {
+            return DataUtils.getInstance().parseDateTime(dateString);
+        }
+	}
+    
+    public void updateLastSyncTime(String tableId, Date time) {
+        ContentValues values = new ContentValues();
+        String dateString;
+        if (time == null) {
+            dateString = "";
+        } else {
+            dateString = DataUtils.getInstance().formatDateTimeForDB(time);
+        }
+        values.put(DB_LAST_SYNC_TIME, dateString);
+        SQLiteDatabase con = db.getConn();
+        con.update(TABLE_LIST, values, TABLE_ID + " = ?",
+                new String[] {tableId});
+        con.close();
+    }
 	
 	public class TableInfo {
 	    

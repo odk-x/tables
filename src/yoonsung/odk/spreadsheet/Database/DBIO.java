@@ -37,7 +37,8 @@ public class DBIO {
                 + TableList.TABLE_NAME + " TEXT,"
                 + TableList.TABLE_IS_SECURITY_TABLE + " TEXT,"
                 + TableList.DB_TABLE_TYPE + " INT,"
-                + TableList.DB_SYNC_MOD_NUMBER + " INT"
+                + TableList.DB_SYNC_MOD_NUMBER + " INT,"
+                + TableList.DB_LAST_SYNC_TIME + " TEXT"
                 + ");");
     	
     	// Create tableProperty table
