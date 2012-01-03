@@ -27,6 +27,9 @@ public abstract class CalendarView extends LinearLayout {
     public static final int NEXT_BUTTON_ID = 11;
 	private static final int PIXELS_PER_MINUTE = 1;
 	
+	private static final int FOREGROUND_COLOR = Color.BLACK;
+	private static final int BACKGROUND_COLOR = Color.rgb(80, 80, 255);
+	
 	protected CalendarView(Context c, String title, String subtitle) {
 		super(c);
 		setOrientation(LinearLayout.VERTICAL);
@@ -137,7 +140,7 @@ public abstract class CalendarView extends LinearLayout {
 			int itemWidth = w / colCount;
 			paint.setTextAlign(Align.LEFT);
 			for(ItemView v : itemTree) {
-				paint.setColor(Color.BLACK);
+				paint.setColor(FOREGROUND_COLOR);
 				GEventPoint pt = v.getData();
 				int startX = l + ((v.getPosition() - 1) * itemWidth);
 				int endX = startX + itemWidth - 8;
@@ -147,11 +150,11 @@ public abstract class CalendarView extends LinearLayout {
 						pt.getEndMinute() - earlyMinute);
 				RectF outerRect = new RectF(startX, startY, endX, endY);
 				canvas.drawRoundRect(outerRect, 3, 3, paint);
-				paint.setColor(Color.LTGRAY);
+				paint.setColor(BACKGROUND_COLOR);
 				RectF innerRect = new RectF(startX + 1, startY + 1, endX - 1,
 						endY - 1);
 				canvas.drawRoundRect(innerRect, 3, 3, paint);
-				paint.setColor(Color.BLACK);
+				paint.setColor(FOREGROUND_COLOR);
 				if(showDetails) {
 					drawText(canvas, paint, startX, startY, itemWidth,
 							(endY - startY), pt);

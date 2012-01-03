@@ -8,21 +8,16 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.kxml2.io.KXmlParser;
 import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
-import org.w3c.dom.NodeList;
 import org.xmlpull.v1.XmlPullParserException;
 
 import yoonsung.odk.spreadsheet.R;
@@ -44,14 +39,12 @@ import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
-import yoonsung.odk.spreadsheet.data.CollectUtil;
+import yoonsung.odk.spreadsheet.Activity.util.CollectUtil;
 import yoonsung.odk.spreadsheet.view.TableDisplayView;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -84,6 +77,7 @@ import android.widget.TextView;
 public abstract class TableActivity extends Activity {
     
     private static final int ODK_COLLECT_FORM_RETURN = 0;
+    private static final int ODK_COLLECT_ADDROW_RETURN = 1;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -536,6 +530,31 @@ public abstract class TableActivity extends Activity {
 	            instanceId));
 	    collectInstances.put(instanceFilePath, rowNum);
 	    startActivityForResult(intent, ODK_COLLECT_FORM_RETURN);
+	}
+	
+	private void addRowWithCollect() {
+	    // building and registering form
+	    List<String> cols = tp.getColOrderArrayList();
+	    String[] keys = new String[cols.size()];
+	    for (int i = 0; i < keys.length; i++) {
+	        keys[i] = cols.get(i);
+	    }
+	    CollectUtil.buildForm("/sdcard/odk/tables/addrowform.xml", keys,
+	            "tablesaddrowform", "tablesaddrowformid");
+        ContentValues insertValues = new ContentValues();
+        insertValues.put("formFilePath", "/sdcard/odk/tables/addrowform.xml");
+        insertValues.put("displayName", "tablesaddrowform");
+        insertValues.put("jrFormId", "tablesaddrowformid");
+        Uri insertResult = getContentResolver().insert(
+                COLLECT_FORMS_CONTENT_URI, insertValues);
+        int formId = Integer.valueOf(insertResult.getLastPathSegment());
+        // launching Collect
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("org.odk.collect.android",
+                "org.odk.collect.android.activities.FormEntryActivity"));
+        intent.setAction(Intent.ACTION_EDIT);
+        intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
+        startActivityForResult(intent, ODK_COLLECT_ADDROW_RETURN);
 	}
 	
     public String verifyFormInCollect(String filepath) {
@@ -1021,7 +1040,8 @@ public abstract class TableActivity extends Activity {
                         "content://org.odk.collect.android.provider.odk.instances/instances"), 0);
                 startActivityForResult(new Intent(Intent.ACTION_EDIT, uri), ODK_COLLECT_FORM_RETURN);
                 **/
-                backUpAddRowDialog();
+                //backUpAddRowDialog();
+                addRowWithCollect();
             }
         });
     }
@@ -1247,62 +1267,11 @@ public abstract class TableActivity extends Activity {
 	private void refreshView() {
 		selectContentCell(-1);
 		if(isCollectForm) {
-			parseXML();
 			isCollectForm = false;
 		}		
 		table = dt.getTable(collectionRowNum == -1, searchConstraints);
         tdv.setTable(TableActivity.this, table, indexedCol);
 	}
-	
-	private void parseXML(){
-	    /**
-		
-		String path = instancePath;
-		
-		// Get Col List
-		TableProperty tableProp = new TableProperty(tableID);
-		final List<String> currentColList = tableProp.getColOrderArrayList();
-		
-		
-		try {
-			File file = new File(path);
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(file);
-			doc.getDocumentElement().normalize();				
-
-			ContentValues cv = new ContentValues();					
-			// Browse content in xml file
-	    	int addedvalue = 0;
-	    	
-			for( int s = 0; s < currentColList.size() ; s++ ) {						
-				NodeList nodeLst = doc.getElementsByTagName("col" + s);
-		    	Node fstNode = nodeLst.item(0);
-			    if (fstNode.getNodeType() == Node.ELEMENT_NODE) {				    	
-			    	Element fstElmnt =  (Element) fstNode;				    					    	
-			    	NodeList lstNm = fstElmnt.getChildNodes();					    	
-			    	if(lstNm.item(0) != null) {
-			    		addedvalue++;
-			    		cv.put(currentColList.get(s), ((Node) lstNm.item(0)).getNodeValue());	
-			    	} else {
-			    		cv.put(currentColList.get(s), "");					    		
-			    	}
-			    }
-			    
-			}	
-							
-			// Update to database
-			if(addedvalue > 0){
-				dt.addRow(cv, "", "");							
-			}
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		**/
-	}
-
 	
 	/**
 	 * Sets the tableID field.
@@ -1383,15 +1352,63 @@ public abstract class TableActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 	        Intent data) {
+	    int id;
 	    switch(requestCode) {
 	    case ODK_COLLECT_FORM_RETURN:
-	        int id = Integer.valueOf(data.getData().getLastPathSegment());
+	        id = Integer.valueOf(data.getData().getLastPathSegment());
 	        fillInCollectFormValues(id);
+	        return;
+	    case ODK_COLLECT_ADDROW_RETURN:
+            id = Integer.valueOf(data.getData().getLastPathSegment());
+            addCollectFormValues(id);
 	        return;
         default:
             // TODO: something
             return;
 	    }
+	}
+	
+	private void addCollectFormValues(int instanceId) {
+        String[] projection = { "instanceFilePath" };
+        String selection = "_id = ?";
+        String[] selectionArgs = { (instanceId + "") };
+        Cursor c = managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection,
+                selection, selectionArgs, null);
+        if (c.getCount() != 1) {
+            return;
+        }
+        c.moveToFirst();
+        String instancepath =
+            c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
+        Document xmlDoc = new Document();
+        KXmlParser xmlParser = new KXmlParser();
+        try {
+            xmlParser.setInput(new FileReader(instancepath));
+            xmlDoc.parse(xmlParser);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch(XmlPullParserException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Element rootEl = xmlDoc.getRootElement();
+        Node rootNode = rootEl.getRoot();
+        Element dataEl = rootNode.getElement(0);
+        List<String> colNames = tp.getColOrderArrayList();
+        ContentValues values = new ContentValues();
+        for (int i = 0; i < dataEl.getChildCount(); i++) {
+            Element child = dataEl.getElement(i);
+            String key = child.getName();
+            int colIndex = colNames.indexOf(key);
+            if (colIndex >= 0) {
+                String value = child.getText(0);
+                values.put(key, value);
+            }
+        }
+        dt.addRow(values, "",
+                DataUtils.getInstance().formatDateTimeForDB(new Date()));
+        refreshView();
 	}
 	
 	private void fillInCollectFormValues(int instanceId) {
