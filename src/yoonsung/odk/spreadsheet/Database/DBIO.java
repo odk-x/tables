@@ -49,6 +49,7 @@ public class DBIO {
                 + TableProperty.TABLE_PROPERTY_SORT_BY + " TIMESTAMP,"
                 + TableProperty.TABLE_PROPERTY_READ_TABLE_ID + " TEXT,"
                 + TableProperty.TABLE_PROPERTY_WRITE_TABLE_ID + " TEXT"
+                + TableProperty.TABLE_PROPERTY_LIST_FORMAT + " TEXT"
                 + ");");
     	
     	db.execSQL("CREATE TABLE IF NOT EXISTS " + TableProperty.TABLE_PROPERTY_DEFOUTMSG + " ("

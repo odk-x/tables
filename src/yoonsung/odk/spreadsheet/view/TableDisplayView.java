@@ -9,7 +9,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -55,45 +54,32 @@ public class TableDisplayView extends LinearLayout {
 	private View.OnTouchListener indexFooterCellClickListener;
 	
 	private int lastLongClickedCellId;
+    
+    public static TableDisplayView buildView(Context context, DisplayPrefs dp,
+            TableActivity ta, Table table, int indexedCol) {
+        return new TableDisplayView(context, dp, ta, table, indexedCol);
+    }
 	
-	public TableDisplayView(Context context, DisplayPrefs dp) {
+	private TableDisplayView(Context context, DisplayPrefs dp,
+	        TableActivity ta, Table table, int indexedCol) {
 		super(context);
 		this.dp = dp;
 		setOrientation(LinearLayout.VERTICAL);
-	}
-	
-	/**
-	 * Sets the data for an unindexed table.
-	 * @param ta the table activity to call back to
-	 * @param table the table to display
-	 */
-	public void setTable(TableActivity ta, Table table) {
-		setTable(ta, table, -1);
-	}
-	
-	/**
-	 * Sets the data for an indexed table.
-	 * @param ta the table activity to call back to
-	 * @param table the table to display
-	 * @param indexedCol the number of the indexed column (or -1 for no indexed
-	 * column)
-	 */
-	public void setTable(TableActivity ta, Table table, int indexedCol) {
-	    this.ta = ta;
-	    this.table = table;
-	    this.indexedCol = indexedCol;
-	    initListeners();
-	    removeAllViews();
-	    if (indexedCol < 0) {
-	        buildNonIndexedTable();
-	    } else {
-	        buildIndexedTable(indexedCol);
-	        indexData.setOnTouchListener(indexDataCellClickListener);
-	        indexHeader.setOnTouchListener(indexHeaderCellClickListener);
+        this.ta = ta;
+        this.table = table;
+        this.indexedCol = indexedCol;
+        initListeners();
+        removeAllViews();
+        if (indexedCol < 0) {
+            buildNonIndexedTable();
+        } else {
+            buildIndexedTable(indexedCol);
+            indexData.setOnTouchListener(indexDataCellClickListener);
+            indexHeader.setOnTouchListener(indexHeaderCellClickListener);
             indexFooter.setOnTouchListener(indexFooterCellClickListener);
-	    }
-	    mainData.setOnTouchListener(mainDataCellClickListener);
-	    mainHeader.setOnTouchListener(mainHeaderCellClickListener);
+        }
+        mainData.setOnTouchListener(mainDataCellClickListener);
+        mainHeader.setOnTouchListener(mainHeaderCellClickListener);
         mainFooter.setOnTouchListener(mainFooterCellClickListener);
 	}
 	

@@ -40,6 +40,7 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import yoonsung.odk.spreadsheet.Activity.util.CollectUtil;
+import yoonsung.odk.spreadsheet.view.ListDisplayView;
 import yoonsung.odk.spreadsheet.view.TableDisplayView;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -76,6 +77,8 @@ import android.widget.TextView;
 
 public abstract class TableActivity extends Activity {
     
+    private enum DisplayType { TABLE, LIST }
+    
     private static final int ODK_COLLECT_FORM_RETURN = 0;
     private static final int ODK_COLLECT_ADDROW_RETURN = 1;
     
@@ -92,10 +95,13 @@ public abstract class TableActivity extends Activity {
 	
 	protected String tableID; // the ID of the table to display
 	protected DataTable dt; // the data table
+	private DisplayType dType; // the display type
 	protected TableProperty tp; // the table property manager
 	protected ColumnProperty cp; // the column property manager
+	protected DisplayPrefs dp; // the display preferences manager
 	protected Table table; // the current table
-	protected TableDisplayView tdv; // the table display view
+	private LinearLayout tableWrapper; // the table display wrapper view
+	protected View tdv; // the table display view
 	protected int selectedCellID; // the ID of the content cell currently
 	                              // selected; -1 if none is selected
 	protected int collectionRowNum; // the row number of the collection being
@@ -132,19 +138,14 @@ public abstract class TableActivity extends Activity {
 		searchConstraints = new HashMap<String, String>();
 		collectionRowNum = -1;
 		selectedCellID = -1;
+		dType = DisplayType.LIST;
 		dt = new DataTable(tableID);
 		tp = new TableProperty(tableID);
 		cp = new ColumnProperty(tableID);
+		dp = new DisplayPrefs(this, tableID);
+        tableWrapper = (LinearLayout) findViewById(R.id.tableWrapper);
 		table = dt.getTable();
-		tdv = new TableDisplayView(this, new DisplayPrefs(this, tableID));
-		tdv.setTable(this, table);
-        LinearLayout tableWrapper =
-            (LinearLayout) findViewById(R.id.tableWrapper);
-        LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        tableLp.weight = 1;
-        tableWrapper.addView(tdv, tableLp);
+        setTableView();
         collectInstances = new HashMap<String, Integer>();
 		prepButtonListeners();
 	}
@@ -981,7 +982,7 @@ public abstract class TableActivity extends Activity {
 				table = dt.getTable();
 				setSearchBoxText("");
 				searchConstraints.clear();
-				tdv.setTable(TableActivity.this, table);
+				setTableView();
 			}
 		});
 	}
@@ -1048,7 +1049,7 @@ public abstract class TableActivity extends Activity {
 	
 	private void search() {
         table = dt.getTable(collectionRowNum == -1, searchConstraints);
-        tdv.setTable(TableActivity.this, table, indexedCol);
+        setTableView();
 	}
 	
 	private String getSearchBoxText() {
@@ -1270,7 +1271,24 @@ public abstract class TableActivity extends Activity {
 			isCollectForm = false;
 		}		
 		table = dt.getTable(collectionRowNum == -1, searchConstraints);
-        tdv.setTable(TableActivity.this, table, indexedCol);
+		setTableView();
+	}
+	
+	private void setTableView() {
+	    switch (dType) {
+	    case TABLE:
+	        tdv = TableDisplayView.buildView(this, dp, this, table, indexedCol);
+	        break;
+	    case LIST:
+	        tdv = ListDisplayView.buildView(this, dp, this, table);
+	        break;
+	    }
+        LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        tableLp.weight = 1;
+        tableWrapper.removeAllViews();
+        tableWrapper.addView(tdv, tableLp);
 	}
 	
 	/**

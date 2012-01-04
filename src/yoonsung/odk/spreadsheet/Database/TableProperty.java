@@ -19,6 +19,7 @@ public class TableProperty {
 	public static final String TABLE_PROPERTY_COLUMN_ORDER = "colOrder";
 	public static final String TABLE_PROPERTY_READ_TABLE_ID = "readTableID";
 	public static final String TABLE_PROPERTY_WRITE_TABLE_ID = "writeTableID";
+	public static final String TABLE_PROPERTY_LIST_FORMAT = "listFormat";
 	
 	public static final String TABLE_PROPERTY_DEFOUTMSG = "defoutmsg";
 	public static final String TPDOM_ID = "id";
@@ -79,6 +80,14 @@ public class TableProperty {
 	
 	public void setWriteSecurityTableID(String writeTableID) {
 		setProperty(TABLE_PROPERTY_WRITE_TABLE_ID, writeTableID);
+	}
+	
+	public String getListFormat() {
+	    return getProperty(TABLE_PROPERTY_LIST_FORMAT);
+	}
+	
+	public void setListFormat(String listFormat) {
+	    setProperty(TABLE_PROPERTY_LIST_FORMAT, listFormat);
 	}
 	
 	public Map<Integer, String> getDefOutMsg() {
