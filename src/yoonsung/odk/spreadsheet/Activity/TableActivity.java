@@ -39,6 +39,7 @@ import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
+import yoonsung.odk.spreadsheet.Activity.settings.ListDisplaySettings;
 import yoonsung.odk.spreadsheet.Activity.util.CollectUtil;
 import yoonsung.odk.spreadsheet.view.ListDisplayView;
 import yoonsung.odk.spreadsheet.view.TableDisplayView;
@@ -346,6 +347,13 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void openImportExportScreen() {
 		startActivity(new Intent(this, ImportExportActivity.class));
+	}
+	
+	/**
+	 * Opens the view settings screen.
+	 */
+	protected void openViewSettingsScreen() {
+	    startActivity(new Intent(this, ListDisplaySettings.class));
 	}
 	
 	/**
