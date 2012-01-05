@@ -47,6 +47,7 @@
 <activity android:name=".Activity.ShortcutsManager"></activity>
 <activity android:name=".Activity.ShortcutTableActivity"></activity>
 <activity android:name=".Activity.Aggregate"></activity>
+<activity android:name=".Activity.settings.ListDisplaySettings"></activity>
     
 <uses-library android:name="com.google.android.maps" />
 </application>

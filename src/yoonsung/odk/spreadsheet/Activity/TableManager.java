@@ -52,6 +52,7 @@ public class TableManager extends ListActivity {
 	public static final int UNSET_SECURITY_TABLE    = 10;
 	public static final int UNSET_SHORTCUT_TABLE    = 11;
 	public static final int AGGREGATE               = 12;
+	public static final int LIST_FORMAT             = 13;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -199,6 +200,7 @@ public class TableManager extends ListActivity {
 		 }
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
 		 menu.add(0, REMOVE_TABLE, 2, "Delete the Table");
+		 menu.add(0, LIST_FORMAT, 3, "Change List Format");
 	 }
 	 
 	 private boolean couldBeSecurityTable(String tableId) {
@@ -264,6 +266,9 @@ public class TableManager extends ListActivity {
 			 removeTable(Integer.toString(tableID));
 			 refreshList();
 			 return true;
+		 case LIST_FORMAT:
+		     alertForListFormatChange(Integer.toString(tableID));
+		     return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
 	 }
@@ -308,6 +313,26 @@ public class TableManager extends ListActivity {
 		 }
     	
 		 return super.onMenuItemSelected(featureId, item);
+	 }
+	 
+	 private void alertForListFormatChange(String tableId) {
+	     final TableProperty tp = new TableProperty(tableId);
+	     AlertDialog.Builder alert = new AlertDialog.Builder(this);
+	     alert.setTitle("Change List Format");
+	     final EditText input = new EditText(this);
+	     input.setText(tp.getListFormat());
+	     alert.setView(input);
+	     alert.setPositiveButton("Change", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                tp.setListFormat(input.getText().toString());
+            }
+	     });
+	     alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {}
+	     });
+	     alert.show();
 	 }
 	 
 	 // Ask for a new column name.

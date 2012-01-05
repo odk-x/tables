@@ -1,8 +1,8 @@
 package yoonsung.odk.spreadsheet.view;
 
-import yoonsung.odk.spreadsheet.Activity.TableActivity;
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.Database.TableProperty;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,26 +19,29 @@ import android.widget.ScrollView;
 public class ListDisplayView extends LinearLayout {
     
     private int BACKGROUND_COLOR = Color.WHITE;
+    private int BORDER_COLOR = Color.BLACK;
     private int TEXT_COLOR = Color.BLACK;
     
-    private TableActivity ta; // the table activity to call back to
+    private Controller controller; // the table activity to call back to
     private Table table; // the table to display
+    private TableProperty tp;
     private int[] lineHeights;
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
     private Paint[] colPaints;
     
-    public static ListDisplayView buildView(Context context, DisplayPrefs dp,
-            TableActivity ta, Table table) {
-        return new ListDisplayView(context, dp, ta, table);
+    public static ListDisplayView buildView(Context context, TableProperty tp,
+            Controller controller, Table table) {
+        return new ListDisplayView(context, tp, controller, table);
     }
     
-    private ListDisplayView(Context context, DisplayPrefs dp,
-            TableActivity ta, Table table) {
+    private ListDisplayView(Context context, TableProperty tp,
+            Controller controller, Table table) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
-        this.ta = ta;
+        this.controller = controller;
         this.table = table;
+        this.tp = tp;
         setFormatInfo();
         removeAllViews();
         setBackgroundColor(BACKGROUND_COLOR);
@@ -46,7 +49,10 @@ public class ListDisplayView extends LinearLayout {
     }
     
     private void setFormatInfo() {
-        String format = getDefaultFormat();
+        String format = tp.getListFormat();
+        if (format == null || format.length() == 0) {
+            format = getDefaultFormat();
+        }
         String[] lines = format.split("\n");
         lineHeights = new int[lines.length];
         lineTextSpecs = new String[lines.length][];
@@ -70,7 +76,8 @@ public class ListDisplayView extends LinearLayout {
                 }
             }
             colPaints[i] = paint;
-            String[] lineSplit = lineData[1].split("%");
+            String[] lineSplit = (lineData.length < 2) ? new String[] {} :
+                    lineData[1].split("%");
             lineTextSpecs[i] = new String[(lineSplit.length / 2) +
                     (lineSplit.length % 2 == 0 ? 0 : 1)];
             lineColSpecs[i] = new int[lineSplit.length / 2];
@@ -84,6 +91,12 @@ public class ListDisplayView extends LinearLayout {
     }
     
     private void buildList(Context context) {
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.onListItemClick(v.getId());
+            }
+        };
         ScrollView scroll = new ScrollView(context);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
@@ -92,8 +105,10 @@ public class ListDisplayView extends LinearLayout {
             LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            itemLp.weight = 1;
-            wrapper.addView(new ItemView(context, i), itemLp);
+            View v = new ItemView(context, i);
+            v.setId(i);
+            v.setOnClickListener(clickListener);
+            wrapper.addView(v, itemLp);
         }
         scroll.addView(wrapper);
         addView(scroll);
@@ -147,5 +162,10 @@ public class ListDisplayView extends LinearLayout {
             }
             return builder.toString();
         }
+    }
+    
+    public interface Controller {
+        
+        public void onListItemClick(int rowNum);
     }
 }

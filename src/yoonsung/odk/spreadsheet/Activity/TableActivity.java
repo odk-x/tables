@@ -75,7 +75,8 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-public abstract class TableActivity extends Activity {
+public abstract class TableActivity extends Activity
+        implements ListDisplayView.Controller {
     
     private enum DisplayType { TABLE, LIST }
     
@@ -101,7 +102,7 @@ public abstract class TableActivity extends Activity {
 	protected DisplayPrefs dp; // the display preferences manager
 	protected Table table; // the current table
 	private LinearLayout tableWrapper; // the table display wrapper view
-	protected View tdv; // the table display view
+	protected View dv; // the table display view
 	protected int selectedCellID; // the ID of the content cell currently
 	                              // selected; -1 if none is selected
 	protected int collectionRowNum; // the row number of the collection being
@@ -1277,10 +1278,10 @@ public abstract class TableActivity extends Activity {
 	private void setTableView() {
 	    switch (dType) {
 	    case TABLE:
-	        tdv = TableDisplayView.buildView(this, dp, this, table, indexedCol);
+	        dv = TableDisplayView.buildView(this, dp, this, table, indexedCol);
 	        break;
 	    case LIST:
-	        tdv = ListDisplayView.buildView(this, dp, this, table);
+	        dv = ListDisplayView.buildView(this, tp, this, table);
 	        break;
 	    }
         LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
@@ -1288,7 +1289,7 @@ public abstract class TableActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT);
         tableLp.weight = 1;
         tableWrapper.removeAllViews();
-        tableWrapper.addView(tdv, tableLp);
+        tableWrapper.addView(dv, tableLp);
 	}
 	
 	/**
@@ -1481,5 +1482,9 @@ public abstract class TableActivity extends Activity {
         dt.updateTimestamp(rowId, DataUtils.getInstance()
                 .formatDateTimeForDB(new Date()));
         refreshView();
+	}
+	
+	public void onListItemClick(int rowNum) {
+	    Log.d("TA", "onListItemClick called, rowNum=" + rowNum);
 	}
 }

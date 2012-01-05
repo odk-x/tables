@@ -146,10 +146,10 @@ public class TableProperty {
 	
 	private String getProperty(String colName) {
 		SQLiteDatabase con = db.getConn();
-		Cursor cs = con.rawQuery("SELECT * FROM `" + TABLE_PROPERTY 
+		Cursor cs = con.rawQuery("SELECT " + colName + " FROM `" + TABLE_PROPERTY 
 					+ "` WHERE `" + TABLE_PROPERTY_TABLE_ID + "` = " + tableID, null);
 		String result = null;
-		if (cs != null) {
+		if (cs != null && cs.getCount() != 0) {
 			if (cs.moveToFirst()){
 				result = cs.getString(cs.getColumnIndex(colName));
 			}
