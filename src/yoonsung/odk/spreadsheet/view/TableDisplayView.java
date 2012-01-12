@@ -423,6 +423,7 @@ public class TableDisplayView extends LinearLayout {
 	            return;
 	        }
 	        Paint paint = new Paint();
+            paint.setAntiAlias(true);
 	        // drawing the background
 	        paint.setColor(backgroundColor);
 	        canvas.drawRect(0, 0, totalWidth, totalHeight, paint);

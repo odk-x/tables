@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -62,6 +63,7 @@ public class ListDisplayView extends LinearLayout {
             String[] lineData = lines[i].split(":", 2);
             lineHeights[i] = 20;
             Paint paint = new Paint();
+            paint.setAntiAlias(true);
             paint.setTextSize(16);
             paint.setColor(TEXT_COLOR);
             for (int j = 0; j < lineData[0].length(); j++) {
