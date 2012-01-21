@@ -24,7 +24,7 @@ public class CustomDetailView extends WebView {
     }
     
     public void display(Map<String, String> data) {
-        jsData.setData(data);
+        jsData.setRow(data);
         loadUrl("file:///sdcard/odk/tables/detailview.html");
     }
     
@@ -36,13 +36,23 @@ public class CustomDetailView extends WebView {
             data = Collections.emptyMap();
         }
         
-        public void setData(Map<String, String> data) {
+        public void setRow(Map<String, String> data) {
             this.data = data;
         }
         
         @SuppressWarnings("unused")
         public String get(String key) {
             return data.get(key);
+        }
+        
+        @SuppressWarnings("unused")
+        public void set(String key, String value) {
+            
+        }
+        
+        @SuppressWarnings("unused")
+        public void dialog(String key) {
+            
         }
     }
 }
