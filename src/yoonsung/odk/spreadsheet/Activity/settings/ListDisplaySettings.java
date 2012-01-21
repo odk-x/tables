@@ -14,11 +14,15 @@ import android.widget.EditText;
  */
 public class ListDisplaySettings extends Activity {
     
+    public static final String TABLE_ID_INTENT_KEY = "tableId";
+    
+    private long tableId;
     private EditText listFormatEt;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        tableId = getIntent().getLongExtra(TABLE_ID_INTENT_KEY, -1);
         setContentView(R.layout.settings_listdisplay);
         listFormatEt = (EditText) findViewById(
                 R.id.settings_listdisplay_listformat);
@@ -42,6 +46,5 @@ public class ListDisplaySettings extends Activity {
     }
     
     private void saveSettings() {
-        String listFormat = listFormatEt.getText().toString();
     }
 }

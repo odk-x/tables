@@ -33,7 +33,7 @@
 		android:id="@+id/aggregate_activity_list_tables_button"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:text="List Available Tables" />
+		android:text="List Tables" />
 	
 	<Spinner
 		android:id="@+id/aggregate_activity_table_list_spinner"

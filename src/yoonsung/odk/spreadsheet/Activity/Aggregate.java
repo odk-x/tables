@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import org.opendatakit.aggregate.odktables.client.api.SynchronizeAPI;
 import org.opendatakit.aggregate.odktables.client.entity.Column;
 import org.opendatakit.aggregate.odktables.client.entity.Modification;
 import org.opendatakit.aggregate.odktables.client.entity.SynchronizedRow;
 import org.opendatakit.aggregate.odktables.client.entity.TableEntry;
-import org.opendatakit.tasks.TasksSync;
+import org.opendatakit.common.ermodel.simple.AttributeType;
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.util.DialogsUtil;
 import yoonsung.odk.spreadsheet.DataStructure.Table;
@@ -19,13 +20,14 @@ import yoonsung.odk.spreadsheet.Database.DBIO;
 import yoonsung.odk.spreadsheet.Database.DataTable;
 import yoonsung.odk.spreadsheet.Database.DataUtils;
 import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Database.TableList.TableInfo;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -39,9 +41,7 @@ import android.widget.TextView;
  */
 public class Aggregate extends Activity {
     
-    /* the states the screen can be in at different points in the process */
-    private static enum ScreenState { REQUESTING_USER_INFO,
-                                      REQUESTING_ACTION_SELECTION }
+    public enum SyncType { LOCAL, REMOTE, SYNC }
     
     private TextView uriLabel;
     private EditText uriField;
@@ -53,13 +53,11 @@ public class Aggregate extends Activity {
     private Button pullTableButton;
     private Button pushTableButton;
     
-    private ScreenState screenState;
-    
-    private TasksSync ts;
+    private SynchronizeAPI sync;
     private DBIO db;
     private TableList tl;
     
-    private List<TableEntry> tableEntryList;
+    private List<SyncTableInfo> tables;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,10 +65,9 @@ public class Aggregate extends Activity {
         setTitle("ODK Tables > Aggregate");
         db = new DBIO();
         tl = new TableList();
-        screenState = ScreenState.REQUESTING_USER_INFO;
         setContentView(R.layout.aggregate_activity);
         findViewComponents();
-        setViewForScreenState();
+        setViewForGettingUserInfo();
         initClickHandlers();
     }
     
@@ -100,6 +97,18 @@ public class Aggregate extends Activity {
                 handleListTables();
             }
         });
+        tableListSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                    int position, long id) {
+                handleTableSelected(position);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // do nothing
+            }
+        });
         downloadTableButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -120,29 +129,28 @@ public class Aggregate extends Activity {
         });
     }
     
-    private void setViewForScreenState() {
-        if (screenState == ScreenState.REQUESTING_USER_INFO) {
-            uriLabel.setVisibility(View.VISIBLE);
-            uriField.setVisibility(View.VISIBLE);
-            usernameLabel.setVisibility(View.VISIBLE);
-            usernameField.setVisibility(View.VISIBLE);
-            listTablesButton.setVisibility(View.VISIBLE);
-            tableListSpinner.setVisibility(View.GONE);
-            downloadTableButton.setVisibility(View.GONE);
-            pullTableButton.setVisibility(View.GONE);
-            pushTableButton.setVisibility(View.GONE);
-        }
-        if (screenState == ScreenState.REQUESTING_ACTION_SELECTION) {
-            uriLabel.setVisibility(View.GONE);
-            uriField.setVisibility(View.GONE);
-            usernameLabel.setVisibility(View.GONE);
-            usernameField.setVisibility(View.GONE);
-            listTablesButton.setVisibility(View.GONE);
-            tableListSpinner.setVisibility(View.VISIBLE);
-            downloadTableButton.setVisibility(View.VISIBLE);
-            pullTableButton.setVisibility(View.VISIBLE);
-            pushTableButton.setVisibility(View.VISIBLE);
-        }
+    private void setViewForGettingUserInfo() {
+        uriLabel.setVisibility(View.VISIBLE);
+        uriField.setVisibility(View.VISIBLE);
+        usernameLabel.setVisibility(View.VISIBLE);
+        usernameField.setVisibility(View.VISIBLE);
+        listTablesButton.setVisibility(View.VISIBLE);
+        tableListSpinner.setVisibility(View.GONE);
+        downloadTableButton.setVisibility(View.GONE);
+        pullTableButton.setVisibility(View.GONE);
+        pushTableButton.setVisibility(View.GONE);
+    }
+    
+    private void setViewForSelectingTable() {
+        uriLabel.setVisibility(View.GONE);
+        uriField.setVisibility(View.GONE);
+        usernameLabel.setVisibility(View.GONE);
+        usernameField.setVisibility(View.GONE);
+        listTablesButton.setVisibility(View.GONE);
+        tableListSpinner.setVisibility(View.VISIBLE);
+        downloadTableButton.setVisibility(View.GONE);
+        pullTableButton.setVisibility(View.GONE);
+        pushTableButton.setVisibility(View.GONE);
     }
     
     private void handleListTables() {
@@ -150,6 +158,30 @@ public class Aggregate extends Activity {
         String username = usernameField.getText().toString();
         String[] loginInfo = { uri, username };
         (new ListTablesTask()).execute(loginInfo);
+    }
+    
+    private void handleTableSelected(int index) {
+        SyncTableInfo sti = tables.get(index);
+        switch (sti.getSyncType()) {
+        case LOCAL:
+            downloadTableButton.setVisibility(View.GONE);
+            pullTableButton.setVisibility(View.GONE);
+            pushTableButton.setVisibility(View.VISIBLE);
+            break;
+        case REMOTE:
+            downloadTableButton.setVisibility(View.VISIBLE);
+            pullTableButton.setVisibility(View.GONE);
+            pushTableButton.setVisibility(View.GONE);
+            break;
+        case SYNC:
+            downloadTableButton.setVisibility(View.GONE);
+            pullTableButton.setVisibility(View.VISIBLE);
+            pushTableButton.setVisibility(View.VISIBLE);
+            break;
+        default:
+            throw new RuntimeException("unexpected sync type: " +
+                    sti.getSyncType());
+        }
     }
     
     private void handleDownload() {
@@ -188,7 +220,29 @@ public class Aggregate extends Activity {
             
             publishProgress(STATUS_DOWNLOADING);
             try {
-                tableEntryList = ts.listTables();
+                tables = new ArrayList<SyncTableInfo>();
+                List<TableEntry> remoteTableList = sync.listAllTables();
+                List<TableInfo> localTableList = tl.getTableList();
+                for (TableEntry remote : remoteTableList) {
+                    if (remote.getTableID() == null) {
+                        tables.add(new SyncTableInfo(null, remote));
+                    } else {
+                        TableInfo local = null;
+                        for (TableInfo ti : localTableList) {
+                            if (remote.getTableID().equals(ti.getTableID())) {
+                                local = ti;
+                                break;
+                            }
+                        }
+                        tables.add(new SyncTableInfo(local, remote));
+                        if (local != null) {
+                            localTableList.remove(local);
+                        }
+                    }
+                }
+                for (TableInfo local : localTableList) {
+                    tables.add(new SyncTableInfo(local, null));
+                }
             } catch(Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -214,7 +268,7 @@ public class Aggregate extends Activity {
                 return false;
             }
             try {
-                ts = new TasksSync(uri, username);
+                sync = new SynchronizeAPI(uri, username);
             } catch(Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -240,18 +294,17 @@ public class Aggregate extends Activity {
             dialog.dismiss();
             if (result) {
                 initTableSpinnerList();
-                screenState = ScreenState.REQUESTING_ACTION_SELECTION;
-                setViewForScreenState();
+                setViewForSelectingTable();
             } else {
                 DialogsUtil.getInfoDialog(Aggregate.this, "Failure").show();
             }
         }
         
         private void initTableSpinnerList() {
-            String[] tableNames = new String[tableEntryList.size()];
-            for (int i = 0; i < tableEntryList.size(); i++) {
-                TableEntry entry = tableEntryList.get(i);
-                tableNames[i] = entry.getTableName();
+            String[] tableNames = new String[tables.size()];
+            for (int i = 0; i < tables.size(); i++) {
+                SyncTableInfo sti = tables.get(i);
+                tableNames[i] = sti.getDisplayInfo();
             }
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(
                     Aggregate.this, android.R.layout.simple_spinner_item,
@@ -278,7 +331,7 @@ public class Aggregate extends Activity {
         protected Boolean doInBackground(Integer... tableIndices) {
             publishProgress(STATUS_INITIALIZING_TABLE);
             
-            TableEntry entry = tableEntryList.get(tableIndices[0]);
+            TableEntry entry = tables.get(tableIndices[0]).getRemoteInfo();
 
             // setting up the table on the client
             String tableName = entry.getTableName().replace(" ", "_");
@@ -301,8 +354,8 @@ public class Aggregate extends Activity {
             publishProgress(STATUS_DOWNLOADING_DATA);
             Modification mod;
             try {
-                mod = ts.downloadTaskTable(entry.getAggregateTableIdentifier(),
-                        tableId);
+                mod = sync.cloneSynchronizedTable(
+                        entry.getAggregateTableIdentifier(), tableId);
             } catch(Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -375,14 +428,14 @@ public class Aggregate extends Activity {
             publishProgress(STATUS_DOWNLOADING_DATA);
             
             // getting the data table for the client table
-            TableEntry entry = tableEntryList.get(tableIndices[0]);
+            TableEntry entry = tables.get(tableIndices[0]).getRemoteInfo();
             String tableId = entry.getTableID();
             DataTable dt = new DataTable(tableId);
             
             // getting the server data
             Modification mod;
             try {
-                mod = ts.pullTasks(tableId, tl.getSyncModNumber(tableId));
+                mod = sync.synchronize(tableId, tl.getSyncModNumber(tableId));
             } catch(Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -457,8 +510,8 @@ public class Aggregate extends Activity {
             publishProgress(STATUS_PREPARING_DATA);
             
             // getting the data table for the client table
-            TableEntry entry = tableEntryList.get(tableIndices[0]);
-            String tableId = entry.getTableID();
+            SyncTableInfo tableInfo = tables.get(tableIndices[0]);
+            String tableId = tableInfo.getTableId();
             DataTable dt = new DataTable(tableId);
             
             // getting the client data
@@ -481,7 +534,8 @@ public class Aggregate extends Activity {
                     // TODO Auto-generated catch block
                     lastUpdate = new Date();
                 }
-                if (lastUpdate.before(lastSyncTime)) {
+                if ((lastSyncTime != null) &&
+                        lastUpdate.before(lastSyncTime)) {
                     continue;
                 }
                 SynchronizedRow row = new SynchronizedRow();
@@ -497,10 +551,24 @@ public class Aggregate extends Activity {
             
             // sending data
             publishProgress(STATUS_SENDING_DATA);
+            if (tableInfo.getSyncType() == SyncType.LOCAL) {
+                List<Column> columns = new ArrayList<Column>();
+                for (String colName : colNames) {
+                    columns.add(new Column(colName, AttributeType.STRING, true));
+                }
+                try {
+                    sync.createSynchronizedTable(tableId,
+                            tableInfo.getLocalInfo().getTableName(), columns);
+                } catch(Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                    return false;
+                }
+            }
             Modification mod;
             try {
-                mod = ts.pushTasks(tableId, tl.getSyncModNumber(tableId),
-                        rows);
+                mod = sync.insertSynchronizedRows(tableId,
+                        tl.getSyncModNumber(tableId), rows);
             } catch(Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -537,6 +605,7 @@ public class Aggregate extends Activity {
                 break;
             case UPDATING_LOCAL_RECORDS:
                 dialog.setMessage("updating local records...");
+                break;
             }
         }
         
@@ -546,6 +615,68 @@ public class Aggregate extends Activity {
                 DialogsUtil.getInfoDialog(Aggregate.this, "Success").show();
             } else {
                 DialogsUtil.getInfoDialog(Aggregate.this, "Failure").show();
+            }
+        }
+    }
+    
+    private class SyncTableInfo {
+        
+        private SyncType syncType;
+        private TableInfo localInfo;
+        private TableEntry remoteInfo;
+        
+        public SyncTableInfo(TableInfo localInfo, TableEntry remoteInfo) {
+            if ((localInfo != null) && (remoteInfo != null)) {
+                syncType = SyncType.SYNC;
+            } else if (localInfo != null) {
+                syncType = SyncType.LOCAL;
+            } else if (remoteInfo != null) {
+                syncType = SyncType.REMOTE;
+            } else {
+                throw new RuntimeException("attempted to construct " +
+                        "SyncTableInfo with null local and remote data");
+            }
+            this.localInfo = localInfo;
+            this.remoteInfo = remoteInfo;
+        }
+        
+        public SyncType getSyncType() {
+            return syncType;
+        }
+        
+        public TableInfo getLocalInfo() {
+            return localInfo;
+        }
+        
+        public TableEntry getRemoteInfo() {
+            return remoteInfo;
+        }
+        
+        public String getTableId() {
+            switch (syncType) {
+            case LOCAL:
+                return localInfo.getTableID();
+            case REMOTE:
+                return remoteInfo.getTableID();
+            case SYNC:
+                return localInfo.getTableID();
+            default:
+                throw new RuntimeException("unexpected sync type: " +
+                        syncType);
+            }
+        }
+        
+        public String getDisplayInfo() {
+            switch (syncType) {
+            case LOCAL:
+                return localInfo.getTableName() + " (local)";
+            case REMOTE:
+                return remoteInfo.getTableName() + " (remote)";
+            case SYNC:
+                return localInfo.getTableName() + " (sync)";
+            default:
+                throw new RuntimeException("unexpected sync type: " +
+                        syncType);
             }
         }
     }
