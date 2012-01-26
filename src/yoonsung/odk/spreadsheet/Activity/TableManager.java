@@ -6,25 +6,17 @@ import java.util.List;
 import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Activity.defaultopts.SmsOutFormatSetActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.DBIO;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.SecurityTables;
-import yoonsung.odk.spreadsheet.Database.TableList;
-import yoonsung.odk.spreadsheet.Database.TableList.TableInfo;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.Preferences;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -56,18 +48,18 @@ public class TableManager extends ListActivity {
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
-	 	
-	private DBIO db;
-	private TableList tl;
-	private List<TableInfo> tiList;
+	
+	private DbHelper dbh;
+	private Preferences prefs;
+	private TableProperties[] tableProps;
 	
 	private SimpleAdapter arrayAdapter;
 	
 	 @Override
 	 public void onCreate(Bundle savedInstanceState) {
 		 super.onCreate(savedInstanceState);
-		 this.db = new DBIO();
-		 this.tl = new TableList();
+		 dbh = new DbHelper(this);
+		 prefs = new Preferences(this);
 		 
 		 // Set title of activity
 		 setTitle("ODK Tables > Table Manager");
@@ -75,24 +67,13 @@ public class TableManager extends ListActivity {
 		 // Set Content View
 		 setContentView(R.layout.white_list);
 		 
-		 HashMap<String, String> tableListTmp = tl.getAllTableList();
-		 boolean loadError = getIntent().getBooleanExtra("loadError", false);
-		 if (loadError && tableListTmp.size() < 1) {
-			makeNoTableNotice();
-		 } else {
-			 refreshList();
-		 }
+		 refreshList();
 	 }
 	 
 	 @Override
 	 public void onResume() {
 		 super.onResume();
-		 HashMap<String, String> tableListTmp = tl.getAllTableList();
-		 if (tableListTmp.size() < 1) {
-			 makeNoTableNotice();
-		 } else {
-			 refreshList();
-		 }
+		 refreshList();
 	 }
 	 
 	 private void makeNoTableNotice() {
@@ -106,20 +87,25 @@ public class TableManager extends ListActivity {
 	 
 	 public void refreshList() {
 		 registerForContextMenu(getListView());
-		 
-		 tiList = tl.getTableList();
-		 String defTableID = getDefaultTableID();
+		 tableProps = TableProperties.getTablePropertiesForAll(dbh);
+		 Log.d("TM", "refreshing list, tableProps.length=" + tableProps.length);
+		 if (tableProps.length == 0) {
+		     makeNoTableNotice();
+		     return;
+		 }
+		 long defTableId = prefs.getDefaultTableId();
 		 List<Map<String, String>> fMaps =
 		     new ArrayList<Map<String, String>>();
-		 for(TableInfo ti : tiList) {
+		 for(TableProperties tp : tableProps) {
 		     Map<String, String> map = new HashMap<String, String>();
-		     map.put("label", ti.getTableName());
-		     if(ti.getTableType() == 2) {
+		     map.put("label", tp.getDisplayName());
+		     if (tp.getTableType() == TableProperties.TableType.SECURITY) {
 		         map.put("ext", "Access Control Table");
-		     } else if(ti.getTableType() == 3) {
+		     } else if (tp.getTableType() ==
+		         TableProperties.TableType.SHORTCUT) {
 		         map.put("ext", "Shortcut Table");
 		     }
-		     if(ti.getTableID().equals(defTableID)) {
+		     if(tp.getTableId() == defTableId) {
 		         if(map.get("ext") == null) {
 		             map.put("ext", "Default Table");
 		         } else {
@@ -139,38 +125,29 @@ public class TableManager extends ListActivity {
 			 	@Override
 				public void onItemClick(AdapterView adView, View view,
 											int position, long id) {
-					
-			 		HashMap<String, String> current = (HashMap)arrayAdapter.getItem(position);
-			 		String tableName = current.get("label");
-			 		
 					// Load Selected Table
-					TableList tl = new TableList();
-					int tableID = tl.getTableID(tableName);
-					Log.e("Selected Table", tableName + " " + tableID);
 					loadSelectedTable(position);
 				}
 		 });
 	 } 
 	 
 	 private void loadSelectedTable(int index) {
-	     TableInfo ti = tiList.get(index);
+	     TableProperties tp = tableProps[index];
 	     Intent i;
-	     Log.d("TM", "TableManager:" + ti.getTableType());
-	     switch(ti.getTableType()) {
-	     case TableList.TABLETYPE_DATA:
+	     switch (tp.getTableType()) {
+	     case TableProperties.TableType.DATA:
 	         i = new Intent(this, SpreadSheet.class);
 	         break;
-	     case TableList.TABLETYPE_SECURITY:
+	     case TableProperties.TableType.SECURITY:
 	         i = new Intent(this, SpreadSheet.class);
 	         break;
-	     case TableList.TABLETYPE_SHORTCUT:
+	     case TableProperties.TableType.SHORTCUT:
 	         i = new Intent(this, ShortcutTableActivity.class);
 	         break;
          default:
-             i = new Intent(this, SpreadSheet.class);
-             break;
+             return;
 	     }
-	     i.putExtra("tableID", ti.getTableID());
+	     i.putExtra("tableID", tp.getTableId());
 		 startActivity(i);
 	 }
 	 
@@ -179,23 +156,23 @@ public class TableManager extends ListActivity {
 		 super.onCreateContextMenu(menu, v, menuInfo);
 		 AdapterView.AdapterContextMenuInfo acmi =
 		     (AdapterView.AdapterContextMenuInfo) menuInfo;
-		 TableInfo ti = tiList.get(acmi.position);
-		 if(ti.getTableID().equals(getDefaultTableID())) {
+		 TableProperties tp = tableProps[acmi.position];
+		 if(tp.getTableId() == prefs.getDefaultTableId()) {
 	         menu.add(0, UNSET_DEFAULT_TABLE, 0, "Unset as Default Table");
 		 } else {
 	         menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
 		 }
-		 int tableType = ti.getTableType();
-		 if(tableType == TableList.TABLETYPE_DATA) {
-		     if (couldBeSecurityTable(ti.getTableID())) {
-	             menu.add(0, SET_SECURITY_TABLE, 0, "Set as Access Control Table");
+		 int tableType = tp.getTableType();
+		 if (tableType == TableProperties.TableType.DATA) {
+		     if (couldBeSecurityTable(tp)) {
+                 menu.add(0, SET_SECURITY_TABLE, 0, "Set as Access Control Table");
 		     }
-		     if (couldBeShortcutTable(ti.getTableID())) {
-		         menu.add(0, SET_SHORTCUT_TABLE, 0, "Set as Shortcut Table");
+		     if (couldBeShortcutTable(tp)) {
+                 menu.add(0, SET_SHORTCUT_TABLE, 0, "Set as Shortcut Table");
 		     }
-		 } else if(tableType == TableList.TABLETYPE_SECURITY) {
-	         menu.add(0, UNSET_SECURITY_TABLE, 0, "Unset as Access Control Table");
-		 } else if(tableType == TableList.TABLETYPE_SHORTCUT) {
+		 } else if (tableType == TableProperties.TableType.SECURITY) {
+		     menu.add(0, UNSET_SECURITY_TABLE, 0, "Unset as Access Control Table");
+		 } else if (tableType == TableProperties.TableType.SHORTCUT) {
 		     menu.add(0, UNSET_SHORTCUT_TABLE, 0, "Unset as Shortcut Table");
 		 }
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
@@ -203,24 +180,23 @@ public class TableManager extends ListActivity {
 		 menu.add(0, LIST_FORMAT, 3, "Change List Format");
 	 }
 	 
-	 private boolean couldBeSecurityTable(String tableId) {
+	 private boolean couldBeSecurityTable(TableProperties tp) {
 	     String[] expected = { "phone_number", "id", "password" };
-	     return checkTable(expected, tableId);
+	     return checkTable(expected, tp);
 	 }
 	 
-	 private boolean couldBeShortcutTable(String tableId) {
+	 private boolean couldBeShortcutTable(TableProperties tp) {
          String[] expected = { "name", "input_format", "output_format" };
-         return checkTable(expected, tableId);
+         return checkTable(expected, tp);
 	 }
 	 
-	 private boolean checkTable(String[] expectedCols, String tableId) {
-         TableProperty tp = new TableProperty(tableId);
-         List<String> cols = tp.getColOrderArrayList();
-         if (cols.size() < expectedCols.length) {
+	 private boolean checkTable(String[] expectedCols, TableProperties tp) {
+	     ColumnProperties[] columns = tp.getColumns();
+         if (columns.length < expectedCols.length) {
              return false;
          }
-         for (int i = 0; i < 3; i++) {
-             if (!expectedCols[i].equals(cols.get(i))) {
+         for (int i = 0; i < expectedCols.length; i++) {
+             if (!expectedCols[i].equals(columns[i].getColumnDbName())) {
                  return false;
              }
          }
@@ -231,43 +207,40 @@ public class TableManager extends ListActivity {
 	 public boolean onContextItemSelected(MenuItem item) {
 	 
 		 AdapterView.AdapterContextMenuInfo info= (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-		 HashMap<String, String> sel = (HashMap)arrayAdapter.getItem(info.position);
 		 
-		 String tableName =  sel.get("label");
-		 int tableID   = tl.getTableID(tableName);
+		 TableProperties tp = tableProps[info.position];
 		 
 		 switch (item.getItemId()) {
 		 case SET_DEFAULT_TABLE:
-			 setDefaultTable(Integer.toString(tableID));
+		     prefs.setDefaultTableId(tp.getTableId());
 			 refreshList();
 			 return true;
 		 case SET_SECURITY_TABLE:
-			 tl.setAsSecurityTable(Integer.toString(tableID));
+		     tp.setTableType(TableProperties.TableType.SECURITY);
              refreshList();
 			 return true;
 		 case UNSET_SECURITY_TABLE:
-		     tl.unsetAsSecurityTable(Integer.toString(tableID));
+             tp.setTableType(TableProperties.TableType.DATA);
 		     refreshList();
 		     return true;
 		 case SET_SHORTCUT_TABLE:
-		     tl.setAsShortcutTable(Integer.toString(tableID));
+             tp.setTableType(TableProperties.TableType.SHORTCUT);
              refreshList();
 		     return true;
          case UNSET_SHORTCUT_TABLE:
-             tl.setAsDataTable(Integer.toString(tableID));
+             tp.setTableType(TableProperties.TableType.DATA);
              refreshList();
              return true;
 		 case CHANGE_TABLE_NAME:
 			 // TO be Done
-			 alertForNewTableName(false, -1, Integer.toString(tableID), null);
+			 alertForNewTableName(false, -1, tp, null);
 			 return true; 
 		 case REMOVE_TABLE:
-			 // To be Done
-			 removeTable(Integer.toString(tableID));
+		     tp.deleteTable();
 			 refreshList();
 			 return true;
 		 case LIST_FORMAT:
-		     alertForListFormatChange(Integer.toString(tableID));
+		     alertForListFormatChange(tp);
 		     return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
@@ -294,13 +267,13 @@ public class TableManager extends ListActivity {
 		 // HANDLES DIFFERENT MENU OPTIONS
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
-			 alertForNewTableName(true, TableList.TABLETYPE_DATA, null, null);
+			 alertForNewTableName(true, TableProperties.TableType.DATA, null, null);
 			 return true;
 		 case ADD_NEW_SECURITY_TABLE:
-			 alertForNewTableName(true, TableList.TABLETYPE_SECURITY, null, null);
+			 alertForNewTableName(true, TableProperties.TableType.SECURITY, null, null);
 			 return true;
 		 case ADD_NEW_SHORTCUT_TABLE:
-             alertForNewTableName(true, TableList.TABLETYPE_SHORTCUT, null, null);
+             alertForNewTableName(true, TableProperties.TableType.SHORTCUT, null, null);
              return true;
 		 case IMPORT_EXPORT:
 			 Intent i = new Intent(this, ImportExportActivity.class);
@@ -315,17 +288,16 @@ public class TableManager extends ListActivity {
 		 return super.onMenuItemSelected(featureId, item);
 	 }
 	 
-	 private void alertForListFormatChange(String tableId) {
-	     final TableProperty tp = new TableProperty(tableId);
+	 private void alertForListFormatChange(final TableProperties tp) {
 	     AlertDialog.Builder alert = new AlertDialog.Builder(this);
 	     alert.setTitle("Change List Format");
 	     final EditText input = new EditText(this);
-	     input.setText(tp.getListFormat());
+	     input.setText(tp.getListDisplayFormat());
 	     alert.setView(input);
 	     alert.setPositiveButton("Change", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                tp.setListFormat(input.getText().toString());
+                tp.setListDisplayFormat(input.getText().toString());
             }
 	     });
 	     alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -335,9 +307,9 @@ public class TableManager extends ListActivity {
 	     alert.show();
 	 }
 	 
-	 // Ask for a new column name.
+	 // Ask for a new table name.
 	 private void alertForNewTableName(final boolean isNewTable, 
-			 final int tableType, final String tableID, String givenTableName) {
+			 final int tableType, final TableProperties tp, String givenTableName) {
 		
 		 // Prompt an alert box
 		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -357,16 +329,13 @@ public class TableManager extends ListActivity {
 				 if (newTableName == null || newTableName.equals("")) {
 					// Table name is empty string
 					toastTableNameError("Table name cannot be empty!");
-					alertForNewTableName(isNewTable, tableType, tableID, null);
-			 	 } else if (newTableName.contains(" ")) {
-					// Check for space in-between
-					toastTableNameError("Table name cannot contain spaces!");
-					alertForNewTableName(isNewTable, tableType, tableID, newTableName.replace(' ', '_'));
+					alertForNewTableName(isNewTable, tableType, tp, null);
 			 	 } else {
 			 		 if (isNewTable) 
 			 			 addTable(newTableName, tableType);
-			 		 else 
-			 			 changeTableName(tableID, newTableName);
+			 		 else
+			 		     tp.setDisplayName(newTableName);
+			 		 Log.d("TM", "got here");
 			 		 refreshList();
 				 }
 			 }
@@ -388,127 +357,11 @@ public class TableManager extends ListActivity {
 		 toast.show();
 	 }
 	 
-	 private void setDefaultTable(String tableID) {
-		// Share preference editor
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-	    SharedPreferences.Editor editor = settings.edit();
-	    editor.putString("ODKTables:tableID", tableID);
-	    editor.commit();
-	    refreshList();
-	 }
-	 
-	 private void addTable(String tableName, int tableType) { 
-		// Register new table in TableList
-	    try {
-	         tl.registerNewTable(tableName, tableType);
-	    } catch(Exception e) {
-             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
-             return;
-	     }
-		 // Create a new table in the database
-		 createNewDataTable(tableName);
-		 if (tableType == TableList.TABLETYPE_SECURITY) {
-			 int tableID = tl.getTableID(tableName);
-			 // Add required columns for a security table
-			 DataTable dt = new DataTable(Integer.toString(tableID));
-			 dt.addNewColumn(SecurityTables.COL_1_PHONE_NUM);
-			 dt.addNewColumn(SecurityTables.COL_2_PASSWORD);
-			 dt.addNewColumn(SecurityTables.COL_3_ID);
-			 // Register column order in table property
-			 TableProperty tp = new TableProperty(Integer.toString(tableID));
-			 ArrayList<String> colOrder = new ArrayList<String>();
-			 colOrder.add("phone_number");
-			 colOrder.add("id");
-			 colOrder.add("password");
-			 tp.setColOrder(colOrder);
-			 // Set it as Security Table
-			 tl.setAsSecurityTable(Integer.toString(tableID));
-		 } else if(tableType == TableList.TABLETYPE_SHORTCUT){
-		     DataTable dt = new DataTable(tl.getTableID(tableName) + "");
-		     dt.addNewColumn("name");
-		     dt.addNewColumn("input_format");
-		     dt.addNewColumn("output_format");
-		 }
-		  
-	 }
-	 
-	 private void createNewDataTable(String tableName) {
-		 SQLiteDatabase con = db.getConn();
-		 con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
-	                + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
-	                + DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
-	                + DataTable.DATA_TIMESTAMP + " TEXT,"
-	                + DataTable.DATA_SYNC_ID + " TEXT,"
-	                + DataTable.DATA_SYNC_TAG + " TEXT"
-	                + ");");
-		 con.close();
-	 }
-	 
-	 private void createNewSecurityTable(String tableName) {
-		 int tableID = tl.getTableID(tableName);
-		 SQLiteDatabase con = db.getConn();
-		 con.execSQL("CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
-	                + DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
-	                + "`" + SecurityTables.COL_1_PHONE_NUM + "` TEXT,"
-	                + "`" + SecurityTables.COL_2_PASSWORD + "` TEXT,"
-	                + "`" + SecurityTables.COL_3_ID + "` TEXT"
-	                + ");");
-		 con.close();
-		 // Register column order in table property
-		 TableProperty tp = new TableProperty(Integer.toString(tableID));
-		 ArrayList<String> colOrder = new ArrayList<String>();
-		 colOrder.add("phone_number");
-		 colOrder.add("id");
-		 colOrder.add("password");
-		 tp.setColOrder(colOrder);
-	 }
-	 
-	 private void removeTable(String tableID) {
-		 String tableName = tl.getTableName(tableID);
-		 
-		 // Remove Actual Table
-		 SQLiteDatabase con = db.getConn();
-		 try {
-			 con.execSQL("DROP TABLE `" + tableName + "`;");
-			 con.close();
-		 } catch (Exception e) {
-			 Log.e("TableManager", "Error While Drop a Table");
-		 }
-		 
-		 // Unregister Table from TableList
-		 tl.unregisterTable(tableID);
-		 
-		 // Clean up Table Property
-		 TableProperty tp = new TableProperty(tableID);
-		 tp.removeAll();
-		 
-		 // Clean up Column Property
-		 ColumnProperty cp = new ColumnProperty(tableID);
-		 cp.removeAll();
-	 }
-	 
-	 private void changeTableName(String tableID, String newTableName) {
-		 String tableName = tl.getTableName(tableID);
-		 
-		 // Change actual table
-		 SQLiteDatabase con = db.getConn();
-		 con.execSQL("ALTER TABLE `"
-				  	+ tableName
-				  	+ "` RENAME TO `"
-				  	+ newTableName
-				  	+ "`;");
-		 
-		 // Change on TableList
-		 ContentValues cv = new ContentValues();
-		 cv.put(TableList.TABLE_NAME, newTableName);
-		 con.update(TableList.TABLE_LIST, cv, TableList.TABLE_ID+" = "+tableID, null);
-		
-		 con.close();
-	 }
-	 
-	 private String getDefaultTableID() {SharedPreferences settings =
-         PreferenceManager.getDefaultSharedPreferences(this);
-         return settings.getString("ODKTables:tableID", null);
+	 private void addTable(String tableName, int tableType) {
+	     String dbTableName =
+	             TableProperties.createDbTableName(dbh, tableName);
+	     TableProperties tp = TableProperties.addTable(dbh, dbTableName,
+	             tableName, tableType);
 	 }
 	 
  }
