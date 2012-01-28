@@ -14,11 +14,11 @@ import android.util.Log;
  */
 public class DbTable {
     
-    private static final String DB_ROW_ID = "id";
-    private static final String DB_SRC_PHONE_NUMBER = "srcPhoneNum";
-    private static final String DB_LAST_MODIFIED_TIME = "lastModTime";
-    private static final String DB_SYNC_ID = "syncId";
-    private static final String DB_SYNC_TAG = "syncTag";
+    public static final String DB_ROW_ID = "id";
+    public static final String DB_SRC_PHONE_NUMBER = "srcPhoneNum";
+    public static final String DB_LAST_MODIFIED_TIME = "lastModTime";
+    public static final String DB_SYNC_ID = "syncId";
+    public static final String DB_SYNC_TAG = "syncTag";
     
     private final DbHelper dbh;
     private final TableProperties tp;
@@ -43,19 +43,29 @@ public class DbTable {
     }
     
     /**
-     * Gets a table of raw data, including metadata for rows.
+     * Gets a table of raw data.
+     * @param columns the columns to select (if null, all columns will be
+     * selected)
+     * @param selectionKeys the column names for the WHERE clause (can be null)
+     * @param selectionArgs the selection arguments (can be null)
+     * @param orderBy the column to order by (can be null)
+     * @return a Table of the requested data
      */
-    public Table getRawComplete() {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] cols = new String[cps.length + 4];
-        cols[0] = DB_SRC_PHONE_NUMBER;
-        cols[1] = DB_LAST_MODIFIED_TIME;
-        cols[2] = DB_SYNC_ID;
-        cols[3] = DB_SYNC_TAG;
-        for (int i = 0; i < cps.length; i++) {
-            cols[i + 4] = cps[i].getColumnDbName();
+    public Table getRaw(String[] columns, String[] selectionKeys,
+            String[] selectionArgs, String orderBy) {
+        if (columns == null) {
+            ColumnProperties[] cps = tp.getColumns();
+            columns = new String[cps.length + 4];
+            columns[0] = DB_SRC_PHONE_NUMBER;
+            columns[1] = DB_LAST_MODIFIED_TIME;
+            columns[2] = DB_SYNC_ID;
+            columns[3] = DB_SYNC_TAG;
+            for (int i = 0; i < cps.length; i++) {
+                columns[i + 4] = cps[i].getColumnDbName();
+            }
         }
-        return dataQuery(cols, null, null, null);
+        return dataQuery(columns, buildSelectionSql(selectionKeys),
+                selectionArgs, orderBy);
     }
     
     public UserTable getUserTable(String[] selectionKeys,
@@ -114,7 +124,7 @@ public class DbTable {
             }
             c.moveToNext();
         }
-        return new Table(rowIds, data);
+        return new Table(rowIds, columns, data);
     }
     
     private String[] footerQuery(String[] columns, String selection,

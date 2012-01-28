@@ -8,10 +8,12 @@ package yoonsung.odk.spreadsheet.data;
 public class Table {
     
     private final int[] rowIds;
+    private String[] header;
     private final String[][] data;
     
-    Table(int[] rowIds, String[][] data) {
+    Table(int[] rowIds, String[] header, String[][] data) {
         this.rowIds = rowIds;
+        this.header = header;
         this.data = data;
     }
     
@@ -27,7 +29,19 @@ public class Table {
         return rowIds[rowNum];
     }
     
+    public String getHeader(int colNum) {
+        return header[colNum];
+    }
+    
     public String getData(int rowNum, int colNum) {
         return data[rowNum][colNum];
+    }
+    
+    public int getWidth() {
+        return header.length;
+    }
+    
+    public int getHeight() {
+        return data.length;
     }
 }

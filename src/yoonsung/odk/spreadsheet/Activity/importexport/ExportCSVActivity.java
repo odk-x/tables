@@ -5,10 +5,12 @@ import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.importexport.IETabActivity.PickFileButtonListener;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVExporter;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
+import yoonsung.odk.spreadsheet.data.Table;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,8 +35,12 @@ public class ExportCSVActivity extends IETabActivity {
 	public static final int FILENAMEVAL_ID = 2;
 	public static final int EXPORTBUTTON_ID = 3;
 	
+	private DbHelper dbh;
+	
 	/* the list of table names */
 	private String[] tableNames;
+	/* the list of TableProperties */
+	private TableProperties[] tps;
 	/* the table name spinner */
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
@@ -48,6 +54,7 @@ public class ExportCSVActivity extends IETabActivity {
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		dbh = new DbHelper(this);
 		setContentView(getView());
 	}
 	
@@ -65,12 +72,10 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		Map<String, String> tableMap = (new TableList()).getAllTableList();
-		tableNames = new String[tableMap.size()];
-		int counter = 0;
-		for(String id : tableMap.keySet()) {
-			tableNames[counter] = tableMap.get(id);
-			counter++;
+		tps = TableProperties.getTablePropertiesForAll(dbh);
+		tableNames = new String[tps.length];
+		for (int i = 0; i < tps.length; i++) {
+		    tableNames[i] = tps[i].getDisplayName();
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
@@ -145,13 +150,19 @@ public class ExportCSVActivity extends IETabActivity {
 	 */
 	private void exportSubmission() {
 		File file = new File(filenameValField.getText().toString());
-		String tableName = tableNames[tableSpin.getSelectedItemPosition()];
-		String tableID =
-			(new Integer(new TableList().getTableID(tableName))).toString();
+		TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
+		DbTable dbt = DbTable.getDbTable(dbh, tp.getTableId());
+		String[] userCols = tp.getColumnOrder();
+		String[] cols = new String[userCols.length + 2];
+		cols[0] = DbTable.DB_LAST_MODIFIED_TIME;
+		cols[1] = DbTable.DB_SRC_PHONE_NUMBER;
+		for (int i = 0; i < userCols.length; i++) {
+		    cols[i + 2] = userCols[i];
+		}
+		Table table = dbt.getRaw(cols, null, null, null);
 		try {
-			(new CSVExporter()).exportTable(
-					(new DataTable(tableID)).getCompleteTable(), file,
-					incPNCheck.isChecked(), incTSCheck.isChecked());
+			(new CSVExporter()).exportTable(table, file,
+			        incTSCheck.isChecked(), incPNCheck.isChecked());
 			showDialog(CSVEXPORT_SUCCESS_DIALOG);
 		} catch (CSVException e) {
 			showDialog(CSVEXPORT_FAIL_DIALOG);
