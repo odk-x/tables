@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.Arrays;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -147,11 +148,15 @@ public class TableProperties {
         int i = 0;
         c.moveToFirst();
         while (i < tps.length) {
+            String columnOrderValue = c.getString(columnOrderIndex);
+            String[] columnOrder = (columnOrderValue.length() == 0) ?
+                    new String[] {} : columnOrderValue.split("/");
+            String primeOrderValue = c.getString(primeColumnsIndex);
+            String[] primeList = (primeOrderValue.length() == 0) ?
+                    new String[] {} : primeOrderValue.split("/");
             tps[i] = new TableProperties(dbh, c.getLong(tableIdIndex),
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
-                    c.getInt(tableTypeIndex),
-                    c.getString(columnOrderIndex).split("/"),
-                    c.getString(primeColumnsIndex).split("/"),
+                    c.getInt(tableTypeIndex), columnOrder, primeList,
                     c.getString(sortColumnIndex), c.getLong(rsTableId),
                     c.getLong(wsTableId), c.getInt(syncModNumIndex),
                     c.getLong(lastSyncTimeIndex),
@@ -228,11 +233,8 @@ public class TableProperties {
         }
         db.delete(DB_TABLENAME, ID_WHERE_SQL, whereArgs);
         db.setTransactionSuccessful();
+        db.endTransaction();
         db.close();
-    }
-    
-    public DbTable getDbTable() {
-        return new DbTable(dbh, this);
     }
     
     public long getTableId() {
@@ -283,10 +285,59 @@ public class TableProperties {
      */
     public ColumnProperties[] getColumns() {
         if (columns == null) {
-            columns = ColumnProperties.getColumnPropertiesForTable(dbh,
-                    tableId);
+            ColumnProperties[] cps = ColumnProperties
+                    .getColumnPropertiesForTable(dbh, tableId);
+            columns = new ColumnProperties[cps.length];
+            for (int i = 0; i < columnOrder.length; i++) {
+                for (int j = 0; j < cps.length; j++) {
+                    if (cps[j].getColumnDbName().equals(columnOrder[i])) {
+                        columns[i] = cps[j];
+                        break;
+                    }
+                }
+            }
         }
         return columns;
+    }
+    
+    public ColumnProperties getColumnByDbName(String colDbName) {
+        int colIndex = getColumnIndex(colDbName);
+        if (colIndex < 0) {
+            return null;
+        }
+        return getColumns()[colIndex];
+    }
+    
+    public int getColumnIndex(String colDbName) {
+        String[] colOrder = getColumnOrder();
+        for (int i = 0; i < colOrder.length; i++) {
+            if (colOrder[i].equals(colDbName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    public String getColumnByDisplayName(String displayName) {
+        ColumnProperties[] cps = getColumns();
+        for (ColumnProperties cp : cps) {
+            String cdn = cp.getDisplayName();
+            if ((cdn != null) && (cdn.equals(displayName))) {
+                return cp.getColumnDbName();
+            }
+        }
+        return null;
+    }
+    
+    public String getColumnByAbbreviation(String abbreviation) {
+        ColumnProperties[] cps = getColumns();
+        for (ColumnProperties cp : cps) {
+            String ca = cp.getAbbreviation();
+            if ((ca != null) && (ca.equals(abbreviation))) {
+                return cp.getColumnDbName();
+            }
+        }
+        return null;
     }
     
     /**
@@ -330,15 +381,7 @@ public class TableProperties {
     public ColumnProperties addColumn(String displayName, String dbName) {
         // ensuring columns is initialized
         getColumns();
-        // adding column
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.beginTransaction();
-        ColumnProperties cp = ColumnProperties.addColumn(dbh, db, tableId,
-                dbName, displayName);
-        db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
-        db.setTransactionSuccessful();
-        db.close();
-        // updating TableProperties
+        // preparing column order
         ColumnProperties[] newColumns =
             new ColumnProperties[columns.length + 1];
         String[] newColumnOrder = new String[columns.length + 1];
@@ -346,10 +389,21 @@ public class TableProperties {
             newColumns[i] = columns[i];
             newColumnOrder[i] = columnOrder[i];
         }
-        newColumns[columns.length] = cp;
         newColumnOrder[columns.length] = dbName;
+        // adding column
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        ColumnProperties cp = ColumnProperties.addColumn(dbh, db, tableId,
+                dbName, displayName);
+        db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
+        setColumnOrder(newColumnOrder, db);
+        Log.d("TP", "here we are");
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        db.close();
+        // updating TableProperties
+        newColumns[columns.length] = cp;
         columns = newColumns;
-        columnOrder = newColumnOrder;
         // returning new ColumnProperties
         return cp;
     }
@@ -397,6 +451,7 @@ public class TableProperties {
                 " FROM backup_");
         db.execSQL("DROP TABLE backup_");
         db.setTransactionSuccessful();
+        db.endTransaction();
         db.close();
         // updating TableProperties
         ColumnProperties[] newColumns =
@@ -419,6 +474,7 @@ public class TableProperties {
             newColumnOrder[index] = col;
             index++;
         }
+        setColumnOrder(newColumnOrder);
     }
     
     /**
@@ -434,11 +490,21 @@ public class TableProperties {
      * columns
      */
     public void setColumnOrder(String[] columnOrder) {
-        String str = "";
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        setColumnOrder(columnOrder, db);
+        db.close();
+    }
+    
+    private void setColumnOrder(String[] columnOrder, SQLiteDatabase db) {
+        Log.d("TP", "setColumnOrder() w/ arr:" + Arrays.toString(columnOrder));
+        StringBuilder orderBuilder = new StringBuilder();
         for (String cdn : columnOrder) {
-            str += cdn + "/";
+            orderBuilder.append("/" + cdn);
         }
-        setStringProperty(DB_COLUMN_ORDER, str.substring(0, str.length() - 1));
+        if (orderBuilder.length() > 0) {
+            orderBuilder.delete(0, 1);
+        }
+        setStringProperty(DB_COLUMN_ORDER, orderBuilder.toString(), db);
         this.columnOrder = columnOrder;
     }
     
@@ -449,12 +515,22 @@ public class TableProperties {
         return primeColumns;
     }
     
+    public boolean isColumnPrime(String colDbName) {
+        for (String prime : primeColumns) {
+            if (prime.equals(colDbName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     /**
      * Sets the table's prime columns.
      * @param primeColumns an array of the database names of the table's prime
      * columns
      */
     public void setPrimeColumns(String[] primeColumns) {
+        Log.d("TP", "setPrimeColumns with:" + Arrays.toString(primeColumns));
         String str = "";
         for (String cdb : primeColumns) {
             str += cdb + "/";
@@ -583,11 +659,18 @@ public class TableProperties {
     }
     
     private void setStringProperty(String property, String value) {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        setStringProperty(property, value, db);
+        db.close();
+    }
+    
+    private void setStringProperty(String property, String value,
+            SQLiteDatabase db) {
         ContentValues values = new ContentValues();
         values.put(property, value);
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
-        db.close();
+        int ra = db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
+        Log.d("TP", "rows updated:" + ra);
+        Log.d("TP", "values:" + values.toString());
     }
     
     static String getTableCreateSql() {

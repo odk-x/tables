@@ -1,15 +1,21 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.Arrays;
+import android.util.Log;
+
 
 public class UserTable {
     
     private final int[] rowIds;
+    private final String[] header;
     private final String[][] data;
     private final String[][] userData;
     private final String[] footer;
     
-    public UserTable(int[] rowIds, String[][] data, String[] footer) {
+    public UserTable(int[] rowIds, String[] header, String[][] data,
+            String[] footer) {
         this.rowIds = rowIds;
+        this.header = header;
         this.data = data;
         int columnCount = data.length > 0 ? data[0].length : 0;
         userData = new String[data.length][columnCount];
@@ -25,8 +31,18 @@ public class UserTable {
         return rowIds[rowNum];
     }
     
+    public String getHeader(int colNum) {
+        return header[colNum];
+    }
+    
     public String getData(int rowNum, int colNum) {
         return data[rowNum][colNum];
+    }
+    
+    public String getData(int cellNum) {
+        int rowNum = cellNum / getWidth();
+        int colNum = cellNum % getWidth();
+        return getData(rowNum, colNum);
     }
     
     public String getUserData(int rowNum, int colNum) {
@@ -35,5 +51,23 @@ public class UserTable {
     
     public String getFooter(int colNum) {
         return footer[colNum];
+    }
+    
+    public int getWidth() {
+        return header.length;
+    }
+    
+    public int getHeight() {
+        return data.length;
+    }
+    
+    public void setData(int rowNum, int colNum, String value) {
+        data[rowNum][colNum] = value;
+    }
+    
+    public void setData(int cellNum, String value) {
+        int rowNum = cellNum / getWidth();
+        int colNum = cellNum % getWidth();
+        setData(rowNum, colNum, value);
     }
 }

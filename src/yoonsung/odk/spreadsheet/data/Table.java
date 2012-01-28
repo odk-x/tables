@@ -15,6 +15,14 @@ public class Table {
         this.data = data;
     }
     
+    int[] getRowIds() {
+        return rowIds;
+    }
+    
+    String[][] getData() {
+        return data;
+    }
+    
     public int getRowId(int rowNum) {
         return rowIds[rowNum];
     }

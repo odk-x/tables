@@ -1,13 +1,14 @@
 package yoonsung.odk.spreadsheet.view;
 
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
-import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -24,20 +25,20 @@ public class ListDisplayView extends LinearLayout {
     private int TEXT_COLOR = Color.BLACK;
     
     private Controller controller; // the table activity to call back to
-    private Table table; // the table to display
-    private TableProperty tp;
+    private UserTable table; // the table to display
+    private TableProperties tp;
     private int[] lineHeights;
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
     private Paint[] colPaints;
     
-    public static ListDisplayView buildView(Context context, TableProperty tp,
-            Controller controller, Table table) {
+    public static ListDisplayView buildView(Context context,
+            TableProperties tp, Controller controller, UserTable table) {
         return new ListDisplayView(context, tp, controller, table);
     }
     
-    private ListDisplayView(Context context, TableProperty tp,
-            Controller controller, Table table) {
+    private ListDisplayView(Context context, TableProperties tp,
+            Controller controller, UserTable table) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
         this.controller = controller;
@@ -50,11 +51,13 @@ public class ListDisplayView extends LinearLayout {
     }
     
     private void setFormatInfo() {
-        String format = tp.getListFormat();
+        String format = tp.getListDisplayFormat();
         if (format == null || format.length() == 0) {
             format = getDefaultFormat();
         }
-        String[] lines = format.split("\n");
+        Log.d("LDV", "format:" + format);
+        String[] lines = (format.length() == 0) ?
+                new String[] {} : format.split("\n");
         lineHeights = new int[lines.length];
         lineTextSpecs = new String[lines.length][];
         lineColSpecs = new int[lines.length][];
@@ -87,7 +90,15 @@ public class ListDisplayView extends LinearLayout {
                 lineTextSpecs[i][j / 2] = lineSplit[j];
             }
             for (int j = 1; j < lineSplit.length; j += 2) {
-                lineColSpecs[i][j / 2] = table.getColNum(lineSplit[j]);
+                int colIndex = tp.getColumnIndex(lineSplit[j]);
+                if (colIndex < 0) {
+                    String colDbName = tp.getColumnByDisplayName(lineSplit[j]);
+                    if (colDbName == null) {
+                        colDbName = tp.getColumnByAbbreviation(lineSplit[j]);
+                    }
+                    colIndex = tp.getColumnIndex(colDbName);
+                }
+                lineColSpecs[i][j / 2] = colIndex;
             }
         }
     }
@@ -119,10 +130,10 @@ public class ListDisplayView extends LinearLayout {
     private String getDefaultFormat() {
         StringBuilder builder = new StringBuilder();
         if (table.getWidth() > 0) {
-            builder.append("bl:%" + table.getColName(0) + "%\n");
+            builder.append("bl:%" + table.getHeader(0) + "%\n");
         }
         for (int i = 1; i < 4 && i < table.getWidth(); i++) {
-            builder.append(":%" + table.getColName(i) + "%\n");
+            builder.append(":%" + table.getHeader(i) + "%\n");
         }
         return builder.toString();
     }
@@ -155,9 +166,8 @@ public class ListDisplayView extends LinearLayout {
             int i;
             for (i = 0; i < lineColSpecs[lineNum].length; i++) {
                 builder.append(lineTextSpecs[lineNum][i]);
-                int cellLoc = (rowNum * table.getWidth()) +
-                        lineColSpecs[lineNum][i];
-                builder.append(table.getCellValue(cellLoc));
+                String value = table.getData(rowNum, lineColSpecs[lineNum][i]);
+                builder.append((value == null) ? "" : value);
             }
             if (lineTextSpecs[lineNum].length > i) {
                 builder.append(lineTextSpecs[lineNum][i]);

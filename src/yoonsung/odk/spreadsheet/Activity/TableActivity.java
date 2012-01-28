@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,16 +31,16 @@ import yoonsung.odk.spreadsheet.Activity.graphs.MapViewActivity;
 import yoonsung.odk.spreadsheet.Activity.graphs.PieActivity;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
-import yoonsung.odk.spreadsheet.DataStructure.Table;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.DataUtils;
-import yoonsung.odk.spreadsheet.Database.TableList;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DataUtil;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Preferences;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.data.UserTable;
 import yoonsung.odk.spreadsheet.Activity.settings.ListDisplaySettings;
 import yoonsung.odk.spreadsheet.Activity.settings.MainDisplaySettings;
 import yoonsung.odk.spreadsheet.Activity.util.CollectUtil;
@@ -82,6 +83,8 @@ import android.widget.TextView;
 public abstract class TableActivity extends Activity
         implements ListDisplayView.Controller {
     
+    public static final String INTENT_KEY_TABLE_ID = "tableId";
+    
     private static final int ODK_COLLECT_FORM_RETURN = 0;
     private static final int ODK_COLLECT_ADDROW_RETURN = 1;
     
@@ -96,13 +99,16 @@ public abstract class TableActivity extends Activity
     private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_kk-mm-ss");
 	
-	protected String tableID; // the ID of the table to display
-	protected DataTable dt; // the data table
-	protected TableProperty tp; // the table property manager
-	protected ColumnProperty cp; // the column property manager
+    protected long tableId;
+    private DbHelper dbh;
+    protected DbTable dbt;
+    protected Preferences prefs;
+    protected TableProperties tp;
+    protected ColumnProperties[] cps;
+    protected String[] colOrder;
+    protected UserTable table;
+    
 	protected DisplayPrefs dp; // the display preferences manager
-	protected Preferences prefs; // the preferences manager
-	protected Table table; // the current table
 	private LinearLayout tableWrapper; // the table display wrapper view
 	protected View dv; // the table display view
 	protected int selectedCellID; // the ID of the content cell currently
@@ -132,34 +138,42 @@ public abstract class TableActivity extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.table_layout);
-		if(!setTableID()) {
-			// No table exist
-			bounceToTableManager();
-			return;
+        prefs = new Preferences(this);
+		if (!setTableId()) {
+		    Log.d("TA", "bouncing to table manager, tableId=" + tableId);
+		    bounceToTableManager();
+		    return;
 		}
+        dbh = new DbHelper(this);
+        dp = new DisplayPrefs(this, String.valueOf(tableId));
+        init();
+		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
+		table = dbt.getUserOverview(tp.getPrimeColumns(), null, null,
+		        tp.getSortColumn());
 		TextView led = (TextView) findViewById(R.id.tableNameLed);
-		led.setText((new TableList()).getTableName(tableID));
+		led.setText(tp.getDisplayName());
 		indexedCol = -1;
 		searchConstraints = new HashMap<String, String>();
 		collectionRowNum = -1;
 		selectedCellID = -1;
 		cdv = new CustomDetailView(this);
-		dt = new DataTable(tableID);
-		tp = new TableProperty(tableID);
-		cp = new ColumnProperty(tableID);
-		dp = new DisplayPrefs(this, tableID);
-		prefs = new Preferences(this);
         tableWrapper = (LinearLayout) findViewById(R.id.tableWrapper);
-		table = dt.getTable();
         setTableView();
         collectInstances = new HashMap<String, Integer>();
 		prepButtonListeners();
 	}
 	
+	private void init() {
+        dbt = DbTable.getDbTable(dbh, tableId);
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+        cps = tp.getColumns();
+        colOrder = tp.getColumnOrder();
+	}
+	
 	@Override
 	public void onResume() {
 		super.onResume();
-		if(!setTableID()) {
+		if(!setTableId()) {
 			// No table exist
 			bounceToTableManager();
 			return;
@@ -181,23 +195,19 @@ public abstract class TableActivity extends Activity
 	 * @param rowNum the row to match against
 	 */
 	protected void viewCollection(int rowNum) {
-	    String searchTerms = "";
 	    collectionRowNum = rowNum;
-	    List<String> colOrder = tp.getColOrderArrayList();
-	    for (int i = 0; i < colOrder.size(); i++) {
-	        String col = colOrder.get(i);
-	        if (!cp.getIsIndex(col)) {
-	            // this isn't an index column, so it's value doesn't need to be
-	            // matched
-	            continue;
-	        }
-	        String value = table.getCellValue((rowNum * table.getWidth()) + i);
-	        if (!searchConstraints.containsKey(col)) {
-	            searchConstraints.put(col, value);
-	            searchTerms += " " + col + ":" + value;
-	        }
+	    String[] primes = tp.getPrimeColumns();
+        StringBuilder searchTermBuilder = new StringBuilder();
+	    for (String prime : primes) {
+	        int colNum = tp.getColumnIndex(prime);
+	        String value = table.getData(rowNum, colNum);
+            searchConstraints.put(prime, value);
+            searchTermBuilder.append(" " + prime + ":" + value);
 	    }
-	    setSearchBoxText((getSearchBoxText() + searchTerms).trim());
+        if (searchTermBuilder.length() > 0) {
+            searchTermBuilder.delete(0, 1);
+        }
+        setSearchBoxText(searchTermBuilder.toString());
 	    search();
 	}
 	
@@ -213,7 +223,7 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void openColumnManager() {
 		Intent i = new Intent(this, ColumnManager.class);
-		i.putExtra(ColumnManager.INTENT_KEY_TABLE_ID, tableID);
+		i.putExtra(ColumnManager.INTENT_KEY_TABLE_ID, tableId);
 		startActivity(i);
 	}
 	
@@ -225,25 +235,24 @@ public abstract class TableActivity extends Activity
     	Intent g = null;
 		
     	// Classifier
-    	GraphClassifier gcf = new GraphClassifier(this, tableID, (collectionRowNum == -1));
+    	GraphClassifier gcf = new GraphClassifier(this, "", (collectionRowNum == -1));
     	String graphType = gcf.getGraphType();
     	String colOne = gcf.getColOne(); // i.e. X
     	String colTwo = gcf.getColTwo(); // i.e. Y
     	
     	// Process Helper
-    	GraphDataHelper gdh = new GraphDataHelper(dt);
+    	GraphDataHelper gdh = new GraphDataHelper(null);
     	
     	Log.e("report", "graph type: " + graphType + " " + colOne + " " + colTwo);
     	
-	  	if ((graphType == null) ||(colOne == null) || (colTwo == null) ||
-	  			!dt.isColumnExist(colOne) || !dt.isColumnExist(colTwo)) {
+	  	if ((graphType == null) ||(colOne == null) || (colTwo == null)) {
 	  		Log.e("GRAPH", "Such a graph type does not exists");
 	  		bounceToGraphSettings();
 	  		return;
 		} else if (graphType.equals(GraphClassifier.LINE_GRAPH)) {
-    		g = new Intent(this, LineActivity.class); 
-    		ArrayList<String> x = table.getCol(table.getColNum(colOne));
-    		ArrayList<String> yStrList = table.getCol(table.getColNum(colTwo));
+    		g = new Intent(this, LineActivity.class);
+    		ArrayList<String> x = new ArrayList<String>();
+    		ArrayList<String> yStrList = new ArrayList<String>();
     		double[] y = new double[yStrList.size()];
     		for(int i=0; i<yStrList.size(); i++) {
     			try {
@@ -261,7 +270,8 @@ public abstract class TableActivity extends Activity
     		g.putExtra("yname", colTwo);
 	    } else if (graphType.equals(GraphClassifier.STEM_GRAPH)) {
 	    	g = new Intent(this, BoxStemActivity.class);
-	    	ArrayList<String> x = table.getCol(table.getColNum(colOne));
+	    	/**
+	    	ArrayList<String> x = table.getCol(tp.getColumnIndex(colOne));
 	    	HashMap<String, ArrayList<Double>> stemResult = 
 	    			gdh.prepareYForStemGraph(table, colOne, colTwo);
 	    	
@@ -279,8 +289,10 @@ public abstract class TableActivity extends Activity
     			g.putExtra("high",gdh.arraylistToArray(stemResult.get("Q3s")));
     			g.putExtra("max", gdh.arraylistToArray(stemResult.get("Q4s")));
 	    	}
+	    	**/
 	    } else if(graphType.equals(GraphClassifier.PIE_CHART)) {
 	    	Map<String, Integer> vals;
+	    	/**
 	    	if(indexedCol == -1) {
 	    		vals = dt.getCounts(colOne);
 	    	} else {
@@ -309,11 +321,15 @@ public abstract class TableActivity extends Activity
 	    	g.putExtra("xName", colOne);
 	    	g.putExtra("xVals", xVals);
 	    	g.putExtra("yVals", yVals);
+	    	**/
 	    } else if (graphType.equals(GraphClassifier.MAP)) {
+	        /**
 	    	g = new Intent(this, MapViewActivity.class);
 	    	ArrayList<String> location = table.getCol(table.getColNum(colOne));
 	    	g.putExtra("location", location);
+	    	**/
 	    } else if (graphType.equals(GraphClassifier.CALENDAR)) {
+	        /**
     		g = new Intent(this, CalActivity.class); 
     		ArrayList<String> x = table.getRawColumn(table.getColNum(colOne));
     		ArrayList<String> y = table.getRawColumn(table.getColNum(colTwo));
@@ -321,11 +337,12 @@ public abstract class TableActivity extends Activity
     		//Collections.reverse(y);
     		g.putExtra("x", x);
     		g.putExtra("y", y);
+    		**/
 	    } else {
 	    	Log.e("GRAPTH", "Such a graph type does not exists");
 	    	g = new Intent(this, GraphSetting.class);
 	    }
-	  	g.putExtra("tableID", tableID);
+	  	g.putExtra("tableID", tableId);
 	  	startActivity(g);
 	}
 	
@@ -335,7 +352,7 @@ public abstract class TableActivity extends Activity
 	 */
 	private void bounceToGraphSettings() {
   		Intent g = new Intent(this, GraphSetting.class);
-  		g.putExtra("tableID", tableID);
+  		g.putExtra("tableID", tableId);
   		startActivity(g);
 	}
 	
@@ -358,7 +375,7 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void openViewSettingsScreen() {
 	    Intent i = new Intent(this, MainDisplaySettings.class);
-	    i.putExtra(MainDisplaySettings.TABLE_ID_INTENT_KEY, Long.valueOf(tableID));
+	    i.putExtra(MainDisplaySettings.TABLE_ID_INTENT_KEY, tableId);
 	    startActivity(i);
 	}
 	
@@ -368,8 +385,7 @@ public abstract class TableActivity extends Activity
 	 * ID)
 	 */
 	protected void deleteRow(int rowNum) {
-		int rowId = table.getTableRowID(rowNum);
-		dt.deleteRow(rowId);
+	    dbt.deleteRow(table.getRowId(rowNum));
 		refreshView();
 	}
 	
@@ -378,7 +394,13 @@ public abstract class TableActivity extends Activity
 	 * @param colName the name of the column
 	 */
 	protected void setAsPrimeCol(String colName) {
-		cp.setIsIndex(colName, true);
+	    String[] oldPrimes = tp.getPrimeColumns();
+	    String[] newPrimes = new String[oldPrimes.length + 1];
+	    for (int i = 0; i < oldPrimes.length; i++) {
+	        newPrimes[i] = oldPrimes[i];
+	    }
+	    newPrimes[oldPrimes.length] = colName;
+	    tp.setPrimeColumns(newPrimes);
 		refreshView();
 	}
 	
@@ -387,7 +409,17 @@ public abstract class TableActivity extends Activity
 	 * @param colName the name of the column
 	 */
 	protected void unsetAsPrimeCol(String colName) {
-		cp.setIsIndex(colName, false);
+        String[] oldPrimes = tp.getPrimeColumns();
+        String[] newPrimes = new String[oldPrimes.length - 1];
+        int index = 0;
+        for (String oldPrime : oldPrimes) {
+            if (oldPrime.equals(colName)) {
+                continue;
+            }
+            newPrimes[index] = oldPrime;
+            index++;
+        }
+        tp.setPrimeColumns(newPrimes);
 		refreshView();
 	}
 	
@@ -396,7 +428,7 @@ public abstract class TableActivity extends Activity
 	 * @param colName the name of the column
 	 */
 	protected void setAsSortCol(String colName) {
-		tp.setSortBy(colName);
+	    tp.setSortColumn(colName);
 		refreshView();
 	}
 	
@@ -406,7 +438,7 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void openColPropsManager(String colName) {
 		Intent i = new Intent(this, PropertyManager.class);
-        i.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableID);
+        i.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
 		i.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME, colName);
 		startActivity(i);
 	}
@@ -424,7 +456,7 @@ public abstract class TableActivity extends Activity
 	 * @param colName the column name
 	 */
 	protected void openDisplayPrefsDialog(String colName) {
-	    DisplayPrefs dp = new DisplayPrefs(this, tableID);
+	    DisplayPrefs dp = new DisplayPrefs(this, String.valueOf(tableId));
 	    (new DisplayPrefsDialog(this, dp, colName)).show();
 	}
 	
@@ -493,16 +525,15 @@ public abstract class TableActivity extends Activity
         Log.d("CSTF", "jrFormId in collect():" + jrFormId);
         instance.setAttribute("", "id", jrFormId);
         int childIndex = 0;
-        List<String> colNames = tp.getColOrderArrayList();
+        String[] colNames = tp.getColumnOrder();
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element blankChild = dataEl.getElement(i);
             if (blankChild == null) { continue; }
             String key = blankChild.getName();
             Element child = instance.createElement("", key);
-            int colIndex = colNames.indexOf(key);
+            int colIndex = tp.getColumnIndex(key);
             if (colIndex >= 0) {
-                String value =
-                    table.getCellValue((table.getWidth() * rowNum) + colIndex);
+                String value = table.getData(rowNum, colIndex);
                 if (value != null) {
                     child.addChild(0, Node.TEXT, value);
                 }
@@ -550,10 +581,10 @@ public abstract class TableActivity extends Activity
 	
 	private void addRowWithCollect() {
 	    // building and registering form
-	    List<String> cols = tp.getColOrderArrayList();
-	    String[] keys = new String[cols.size()];
+	    String[] cols = tp.getColumnOrder();
+	    String[] keys = new String[cols.length];
 	    for (int i = 0; i < keys.length; i++) {
-	        keys[i] = cols.get(i);
+	        keys[i] = cols[i];
 	    }
 	    CollectUtil.buildForm("/sdcard/odk/tables/addrowform.xml", keys,
 	            "tablesaddrowform", "tablesaddrowformid");
@@ -630,7 +661,7 @@ public abstract class TableActivity extends Activity
             v.setOrientation(LinearLayout.VERTICAL);
             // preparing the text field
             et = new EditText(c);
-            et.setText(table.getCellValue(cellId));
+            et.setText(table.getData(cellId));
             v.addView(et);
             // preparing the button
             Button b = new Button(c);
@@ -639,15 +670,11 @@ public abstract class TableActivity extends Activity
                 @Override
                 public void onClick(View v) {
                     String value = et.getText().toString();
-                    ContentValues values = new ContentValues();
-                    values.put(table.getColName(cellId % table.getWidth()),
-                            value);
-                    int rowId = table.getRowID().get(
-                            cellId / table.getWidth());
-                    dt.updateRow(values, rowId);
-                    dt.updateTimestamp(rowId,DataUtils.getInstance()
-                            .formatDateTimeForDB(new Date()));
-                    table.setCellValue(cellId, value);
+                    Map<String, String> values = new HashMap<String, String>();
+                    values.put(colOrder[cellId % table.getWidth()], value);
+                    int rowId = table.getRowId(cellId / table.getWidth());
+                    dbt.updateRow(rowId, values);
+                    table.setData(cellId, value);
                     refreshView();
                     CellEditDialog.this.dismiss();
                 }
@@ -682,7 +709,7 @@ public abstract class TableActivity extends Activity
     	private View prepView() {
     		LinearLayout v = new LinearLayout(c);
     		v.setOrientation(LinearLayout.VERTICAL);
-    		int colWidth = settings.getInt("tablewidths-" + tableID +
+    		int colWidth = settings.getInt("tablewidths-" + tableId +
     				"-" + colName, 125);
     		// preparing the text field
     		et = new EditText(c);
@@ -722,7 +749,7 @@ public abstract class TableActivity extends Activity
 				showSimpleDialog("Please enter a number.");
 				return;
 			}
-			prefEditor.putInt("tablewidths-" + tableID + "-" + colName,
+			prefEditor.putInt("tablewidths-" + tableId + "-" + colName,
 					newVal);
 			prefEditor.commit();
 			d.dismiss();
@@ -734,15 +761,15 @@ public abstract class TableActivity extends Activity
     private class FooterModeDialog extends Dialog {
     	
     	private Context c;
-    	private String colName;
-    	private ColumnProperty cp;
     	private Spinner optSpinner;
+    	private String colName;
+        private ColumnProperties cp;
     	
     	FooterModeDialog(Context c, String colName) {
     		super(c);
     		this.c = c;
     		this.colName = colName;
-    		cp = new ColumnProperty(tableID);
+    		this.cp = tp.getColumnByDbName(colName);
     	}
     	
     	@Override
@@ -764,7 +791,7 @@ public abstract class TableActivity extends Activity
     		adapter.setDropDownViewResource(
     				android.R.layout.simple_spinner_dropdown_item);
     		optSpinner.setAdapter(adapter);
-    		String selMode = cp.getFooterMode(colName);
+    		String selMode = footerModeChoices[cp.getFooterMode()];
     		if(selMode != null) {
     			for(int i=0; i<footerModeChoices.length; i++) {
     				if(footerModeChoices[i].equals(selMode)) {
@@ -774,7 +801,7 @@ public abstract class TableActivity extends Activity
     		}
     		v.addView(optSpinner);
     		// preparing the button
-    		FooterModeListener fml = new FooterModeListener(this, colName, optSpinner, cp);
+    		FooterModeListener fml = new FooterModeListener(this, colName, optSpinner);
     		Button b = new Button(c);
     		b.setText("Set Footer Mode");
     		b.setOnClickListener(fml);
@@ -785,19 +812,16 @@ public abstract class TableActivity extends Activity
     	// TODO: clean this up
         private class FooterModeListener implements View.OnClickListener {
         	private Dialog d;
-        	private String colName;
         	private Spinner opts;
-        	private ColumnProperty cp;
-        	FooterModeListener(Dialog d, String colName, Spinner opts,
-        			ColumnProperty cp) {
+        	private ColumnProperties cp;
+        	FooterModeListener(Dialog d, String colName, Spinner opts) {
         		this.d = d;
-        		this.colName = colName;
         		this.opts = opts;
-        		this.cp = cp;
+        		cp = tp.getColumnByDbName(colName);
         	}
     		@Override
     		public void onClick(View v) {
-    			cp.setFooterMode(colName, opts.getSelectedItem().toString());
+    		    cp.setFooterMode(opts.getSelectedItemPosition());
     			d.dismiss();
     			refreshView();
     		}
@@ -810,10 +834,15 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void sendSMSRow() {
 		// TODO: clean this up
-    	final List<String> curHeader = table.getHeader();
-    	final List<String> curRow = table.getRow(table.getRowNum(selectedCellID));
-    	tp = new TableProperty(tableID);
+	    final String[] colOrder = tp.getColumnOrder();
+	    int rowNum = selectedCellID % table.getWidth();
+	    String[] curRow = new String[table.getWidth()];
+	    for (int i = 0; i < table.getWidth(); i++) {
+	        curRow[i] = table.getData(rowNum, i);
+	    }
     	final List<String> formats = new ArrayList<String>();
+    	throw new RuntimeException("sendSMSRow() called; oh noes!");
+    	/**
     	Map<Integer, String> formatMap = tp.getDefOutMsg();
     	for(int i : formatMap.keySet()) {
     		formats.add(formatMap.get(i));
@@ -889,6 +918,7 @@ public abstract class TableActivity extends Activity
     		}
     	});
     	alert.show();
+    	**/
 	}
 	
 	// TODO: clean this up
@@ -902,10 +932,9 @@ public abstract class TableActivity extends Activity
     			} else {
     				String origColName = format.substring(lastPCSign + 1, i);
     				String colName;
-    				if(dt.isColumnExist(origColName)) {
-    					colName = origColName;
-    				} else {
-    					colName = cp.getNameByAbrv(origColName);
+    				colName = tp.getColumnByDisplayName(origColName);
+    				if (colName == null) {
+    				    colName = tp.getColumnByAbbreviation(origColName);
     				}
     				Log.d("ss.j formats", "colName:" + colName);
     				int index = curHeader.indexOf(colName);
@@ -994,7 +1023,8 @@ public abstract class TableActivity extends Activity
 				indexedCol = -1;
 				collectionRowNum = -1;
 				selectContentCell(-1);
-				table = dt.getTable();
+				table = dbt.getUserOverview(tp.getPrimeColumns(), null, null,
+				        tp.getSortColumn());
 				setSearchBoxText("");
 				searchConstraints.clear();
 				setTableView();
@@ -1063,7 +1093,21 @@ public abstract class TableActivity extends Activity
     }
 	
 	private void search() {
-        table = dt.getTable(collectionRowNum == -1, searchConstraints);
+	    String[] selectionKeys = new String[searchConstraints.size()];
+        String[] selectionArgs = new String[searchConstraints.size()];
+        int index = 0;
+        for (String key : searchConstraints.keySet()) {
+            selectionKeys[index] = key;
+            selectionArgs[index] = searchConstraints.get(key);
+            index++;
+        }
+	    if (collectionRowNum < 0) {
+	        table = dbt.getUserOverview(tp.getPrimeColumns(), selectionKeys,
+	                selectionArgs, tp.getSortColumn());
+	    } else {
+	        table = dbt.getUserTable(selectionKeys, selectionArgs,
+	                tp.getSortColumn());
+	    }
         setTableView();
 	}
 	
@@ -1105,11 +1149,10 @@ public abstract class TableActivity extends Activity
 	 */
 	protected void backUpAddRowDialog() {
 		// Get Col List
-		TableProperty tableProp = new TableProperty(tableID);
-		final List<String> currentColList = tableProp.getColOrderArrayList();
+	    final String[] colOrder = tp.getColumnOrder();
 		
 		// No column exists
-		if (currentColList.size() == 0) {
+		if (colOrder.length == 0) {
 			return;
 		}
 		
@@ -1124,10 +1167,10 @@ public abstract class TableActivity extends Activity
 		dia.setTitle("Add New Row");
 		
 		TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-		colName.setText(currentColList.get(currentAddRowColPos));
+		colName.setText(colOrder[currentAddRowColPos]);
 		
 		TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-		prog.setText("1 / " + currentColList.size());
+		prog.setText("1 / " + colOrder.length);
 		
 		Button prev = (Button)dia.findViewById(R.id.add_row_prev);
 		prev.setOnClickListener(new View.OnClickListener() {
@@ -1139,19 +1182,19 @@ public abstract class TableActivity extends Activity
 					EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
 					String txt = edit.getText().toString();
 					txt = txt.trim();
-					currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+					currentAddRowBuffer.put(colOrder[currentAddRowColPos], txt);
 					
 					// Update column name with prev
 					TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-					colName.setText(currentColList.get(currentAddRowColPos-1));
+					colName.setText(colOrder[currentAddRowColPos-1]);
 					currentAddRowColPos--;
 					
 					// Update progress 
 					TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + colOrder.length);
 					
 					// Refresh Editbox
-					String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+					String nextTxt = currentAddRowBuffer.get(colOrder[currentAddRowColPos]);
 					if (nextTxt == null) {
 						edit.setText("");
 					} else {
@@ -1170,18 +1213,11 @@ public abstract class TableActivity extends Activity
 				// Save what's in edit box
 				EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
 				String txt = edit.getText().toString();
-				currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+				currentAddRowBuffer.put(colOrder[currentAddRowColPos], txt);
 				
 				// Update to database
-				ContentValues cv = new ContentValues();
-				for (String key : currentAddRowBuffer.keySet()) {
-					cv.put(key, currentAddRowBuffer.get(key));
-				}
-
-				String timestamp = DataUtils.getInstance()
-				        .formatDateTimeForDB(new Date());
 				try {
-				    dt.addRow(cv, "", timestamp);
+				    dbt.addRow(currentAddRowBuffer);
 				    refreshView();
 				} catch(IllegalArgumentException e) {
 				    // TODO: something when the input is invalid for the columns
@@ -1202,23 +1238,23 @@ public abstract class TableActivity extends Activity
 			
 			@Override
 			public void onClick(View v) {
-				if (currentAddRowColPos < currentColList.size()-1) {
+				if (currentAddRowColPos < colOrder.length-1) {
 					// Save what's in edit box
 					EditText edit = (EditText)dia.findViewById(R.id.add_row_edit);
 					String txt = edit.getText().toString();
-					currentAddRowBuffer.put(currentColList.get(currentAddRowColPos), txt);
+					currentAddRowBuffer.put(colOrder[currentAddRowColPos], txt);
 					
 					// Update column name with next
 					TextView colName = (TextView)dia.findViewById(R.id.add_row_col);
-					colName.setText(currentColList.get(currentAddRowColPos+1));
+					colName.setText(colOrder[currentAddRowColPos+1]);
 					currentAddRowColPos++;
 					
 					// Update progress 
 					TextView prog = (TextView)dia.findViewById(R.id.add_row_progress);
-					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + currentColList.size());
+					prog.setText(Integer.toString(currentAddRowColPos+1) + " / " + colOrder.length);
 					
 					// Refresh Editbox
-					String nextTxt = currentAddRowBuffer.get(currentColList.get(currentAddRowColPos));
+					String nextTxt = currentAddRowBuffer.get(colOrder[currentAddRowColPos]);
 					if (nextTxt == null) {
 						edit.setText("");
 					} else {
@@ -1284,15 +1320,32 @@ public abstract class TableActivity extends Activity
 		selectContentCell(-1);
 		if(isCollectForm) {
 			isCollectForm = false;
-		}		
-		table = dt.getTable(collectionRowNum == -1, searchConstraints);
+		}
+		String[] selectionKeys = new String[searchConstraints.size()];
+        String[] selectionArgs = new String[searchConstraints.size()];
+        int index = 0;
+        for (String key : searchConstraints.keySet()) {
+            selectionKeys[index] = key;
+            selectionArgs[index] = searchConstraints.get(key);
+            index++;
+        }
+        init();
+        if (collectionRowNum < 0) {
+            table = dbt.getUserOverview(tp.getPrimeColumns(), selectionKeys,
+                    selectionArgs, tp.getSortColumn());
+        } else {
+            table = dbt.getUserTable(selectionKeys, selectionArgs,
+                    tp.getSortColumn());
+        }
 		setTableView();
 	}
 	
 	private void setTableView() {
-	    switch (prefs.getPreferredViewType(Long.valueOf(tableID))) {
+	    switch (prefs.getPreferredViewType(tableId)) {
 	    case Preferences.ViewType.TABLE:
-	        dv = TableDisplayView.buildView(this, dp, this, table, indexedCol);
+	        Log.d("TDV", "here you are");
+	        dv = TableDisplayView.buildView(this, tp, dp, this, table,
+	                indexedCol);
 	        break;
 	    case Preferences.ViewType.LIST:
 	        dv = ListDisplayView.buildView(this, tp, this, table);
@@ -1310,21 +1363,13 @@ public abstract class TableActivity extends Activity
 	 * Sets the tableID field.
 	 * @return true if a table ID was found; false otherwise
 	 */
-	private boolean setTableID() {
-		tableID = getIntent().getStringExtra("tableID");
-		if(tableID == null) {
-			SharedPreferences settings =
-				PreferenceManager.getDefaultSharedPreferences(this);
-			tableID = settings.getString("ODKTables:tableID", null);
-		}
-		
-		// Check if table really exists
-		TableList tl = new TableList();
-		if (!tl.isTableExistByTableID(tableID)) {
-			tableID = null;
-		}
-		
-		return (tableID != null);
+	private boolean setTableId() {
+	    tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
+	    if (tableId >= 0) {
+	        return true;
+	    }
+	    tableId = prefs.getDefaultTableId();
+	    return (tableId >= 0);
 	}
 	
 	/**
@@ -1345,7 +1390,7 @@ public abstract class TableActivity extends Activity
 		SharedPreferences settings =
 			PreferenceManager.getDefaultSharedPreferences(this);
 		for(int i=0; i<colWidths.length; i++) {
-			String key = "tablewidths-" + tableID + "-" + table.getColName(i);
+			String key = "tablewidths-" + tableId + "-" + colOrder[i];
 			colWidths[i] = new Integer(settings.getInt(key, 125));
 		}
 		return colWidths;
@@ -1355,20 +1400,20 @@ public abstract class TableActivity extends Activity
 	 * Handles cell selection.
 	 * @param cellID the cell to select, or -1 for no cell
 	 */
-	protected void selectContentCell(int cellID) {
+	protected void selectContentCell(int cellId) {
 		String ebVal;
 		if(selectedCellID >= 0) {
 			//tdv.unhighlightCell(selectedCellID);
 		}
-		if(cellID < 0) {
+		if(cellId < 0) {
 			ebVal = "";
 		} else {
-		    ebVal = table.getCellValue(cellID);
+		    ebVal = table.getData(cellId);
 			//tdv.highlightCell(cellID);
 		}
 		//EditText box = (EditText) findViewById(R.id.edit_box);
 		//box.setText(ebVal);
-		selectedCellID = cellID;
+		selectedCellID = cellId;
 	}
 	
 	protected void editCell(int cellId) {
@@ -1428,19 +1473,17 @@ public abstract class TableActivity extends Activity
         Element rootEl = xmlDoc.getRootElement();
         Node rootNode = rootEl.getRoot();
         Element dataEl = rootNode.getElement(0);
-        List<String> colNames = tp.getColOrderArrayList();
-        ContentValues values = new ContentValues();
+        Map<String, String> values = new HashMap<String, String>();
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element child = dataEl.getElement(i);
             String key = child.getName();
-            int colIndex = colNames.indexOf(key);
+            int colIndex = tp.getColumnIndex(key);
             if (colIndex >= 0) {
                 String value = child.getText(0);
                 values.put(key, value);
             }
         }
-        dt.addRow(values, "",
-                DataUtils.getInstance().formatDateTimeForDB(new Date()));
+        dbt.addRow(values);
         refreshView();
 	}
 	
@@ -1475,34 +1518,30 @@ public abstract class TableActivity extends Activity
         if (rowNum == null) {
             return;
         }
-        List<String> colNames = tp.getColOrderArrayList();
-        int rowId = table.getTableRowID(rowNum);
-        ContentValues updates = new ContentValues();
+        int rowId = table.getRowId(rowNum);
+        Map<String, String> updates = new HashMap<String, String>();
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element child = dataEl.getElement(i);
             String key = child.getName();
-            int colIndex = colNames.indexOf(key);
+            int colIndex = tp.getColumnIndex(key);
             if (colIndex >= 0) {
                 String value = child.getText(0);
-                table.setCellValue((table.getWidth() * rowNum) + colIndex,
-                        value);
+                table.setData(rowNum, colIndex, value);
                 updates.put(key, value);
             }
         }
         if (updates.size() > 0) {
-            dt.updateRow(updates, rowId);
+            dbt.updateRow(rowId, updates);
         }
         collectInstances.remove(rowNum);
-        dt.updateTimestamp(rowId, DataUtils.getInstance()
-                .formatDateTimeForDB(new Date()));
         refreshView();
 	}
 	
 	public void onListItemClick(int rowNum) {
 	    Map<String, String> data = new HashMap<String, String>();
 	    for (int i = 0; i < table.getWidth(); i++) {
-	        String key = table.getColName(i);
-	        String value = table.getCellValue((rowNum * table.getWidth()) + i);
+	        String key = colOrder[i];
+	        String value = table.getData(rowNum, i);
 	        data.put(key, value);
 	    }
         LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(

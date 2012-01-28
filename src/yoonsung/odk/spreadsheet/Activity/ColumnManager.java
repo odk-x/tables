@@ -1,12 +1,11 @@
 package yoonsung.odk.spreadsheet.Activity;
 
-import java.util.ArrayList;
-
+import java.util.Arrays;
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
 import yoonsung.odk.spreadsheet.Library.TouchListView;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
@@ -37,7 +36,7 @@ import android.widget.Toast;
  */
 public class ColumnManager extends ListActivity {
 	
-    public static final String INTENT_KEY_TABLE_ID = "tableID";
+    public static final String INTENT_KEY_TABLE_ID = "tableId";
     
 	// Menu IDs
 	public static final int SET_AS_PRIME = 1;
@@ -51,21 +50,19 @@ public class ColumnManager extends ListActivity {
 	private IconicAdapter adapter;
 	
 	// Private Fields
-	private String tableID;
-	private TableProperty tp;
-	private DataTable data;
-	private ArrayList<String> colOrder;
+	private long tableId;
+	private TableProperties tp;
+	private ColumnProperties[] cps;
+	private String[] columnOrder;
 	private String currentCol;
-	private ColumnProperty cp;
 	
 	// Initialize fields.
 	private void init() {
-		this.tp = new TableProperty(tableID);
-		this.data = new DataTable(tableID);
-		this.cp = new ColumnProperty(tableID);
-		this.colOrder = tp.getColOrderArrayList(); 
-		
-		//updatePrimeOrderbyInfo();
+	    tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
+	    DbHelper dbh = new DbHelper(this);
+	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+	    cps = tp.getColumns();
+	    columnOrder = tp.getColumnOrder();
 	}
 	
 	/*
@@ -86,9 +83,6 @@ public class ColumnManager extends ListActivity {
 		// Set title of activity
 		setTitle("ODK Tables > Column Manager");
 		
-		// Retrieve Intent
-		this.tableID = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		
 		// Initialize
 		init();
 		
@@ -99,33 +93,24 @@ public class ColumnManager extends ListActivity {
 		createDragAndDropList();
 	}
 	
-	@Override
-	public void onPause() {
-		super.onPause();
-		
-		// Refresh column order (for saftety)
-		tp.setColOrder(getNewColOrderFromList());
-		colOrder = tp.getColOrderArrayList();
-	}
-	
 	@Override 
 	public void onResume() {
 		super.onResume();
 	
 		// Refresh column order
-		colOrder = tp.getColOrderArrayList();
+		columnOrder = tp.getColumnOrder();
 		
 		// Create new Drag & Drop List
 		createDragAndDropList();
 	}
 	
 	// Retrieve current order of Drag & Drop List.
-	private ArrayList<String> getNewColOrderFromList() {
-		ArrayList<String> newOrder = new ArrayList<String>();
+	private String[] getNewColOrderFromList() {
+	    String[] order = new String[adapter.getCount()];
 		for (int i = 0; i < adapter.getCount(); i++) {
-			newOrder.add(adapter.getItem(i));
+		    order[i] = adapter.getItem(i);
 		}
-		return newOrder;
+		return order;
 	}
 	
 	/*
@@ -192,24 +177,36 @@ public class ColumnManager extends ListActivity {
     		alertForNewColumnName(null);
     		return true;
     	case SET_AS_PRIME:
-	    	cp.setIsIndex(currentCol, true); 
+    	    String[] aoldPrimes = tp.getPrimeColumns();
+    	    String[] anewPrimes = new String[aoldPrimes.length + 1];
+    	    for (int i = 0; i < aoldPrimes.length; i++) {
+    	        anewPrimes[i] = aoldPrimes[i];
+    	    }
+    	    anewPrimes[aoldPrimes.length] = currentCol;
+    	    tp.setPrimeColumns(anewPrimes); 
 	    	onResume();
 	    	return true;
     	case SET_AS_NONPRIME:
-	    	cp.setIsIndex(currentCol, false); 
+            String[] roldPrimes = tp.getPrimeColumns();
+            String[] rnewPrimes = new String[roldPrimes.length - 1];
+            int index = 0;
+            for (int i = 0; i < roldPrimes.length; i++) {
+                if (roldPrimes[i].equals(currentCol)) {
+                    continue;
+                }
+                rnewPrimes[index] = roldPrimes[i];
+                index++;
+            }
+            tp.setPrimeColumns(rnewPrimes); 
 	    	onResume();
     		return true;
 	    case SET_AS_ORDER_BY:
-	    	tp.setSortBy(currentCol); 
+	    	tp.setSortColumn(currentCol); 
 	    	onResume();
 	    	return true;	
 	    case REMOVE_THIS_COLUMN:
 	    	// Drop the column from 'data' table
-	    	data.dropColumn(currentCol);
-	    	
-	    	// New column order after the drop
-	    	colOrder.remove(currentCol);
-	    	tp.setColOrder(colOrder);
+	        tp.deleteColumn(currentCol);
 	    	
 	    	// Update changes in other tables
 	    	// To be done
@@ -225,7 +222,7 @@ public class ColumnManager extends ListActivity {
 	private void loadColumnPropertyManager(String name) {
 		Intent cpm = new Intent(this, PropertyManager.class);
 		cpm.putExtra("colName", name);
-		cpm.putExtra("tableID", tableID);
+		cpm.putExtra("tableID", tableId);
 		startActivity(cpm);
 	}
 	
@@ -249,8 +246,7 @@ public class ColumnManager extends ListActivity {
 				colName = colName.trim();
 				
 				// if not, add a new column
-				if (!data.isColumnExist(colName)) {
-					Log.e("colexist", colName);
+				if (tp.getColumnIndex(colName) < 0) {
 					if (colName == null || colName.equals("")) {
 						toastColumnNameError("Column name cannot be empty!");
 						alertForNewColumnName(null);
@@ -259,18 +255,12 @@ public class ColumnManager extends ListActivity {
 						alertForNewColumnName(colName.replace(' ', '_'));
 					} else {
 						// Create new column
-						data.addNewColumn(colName);
-						
-						// Update Table Property
-						colOrder.add(colName);
-						tp.setColOrder(colOrder);
-						
-						// Set Default Column Property
-						cp.setSMSIN(colName, true);
-						cp.setSMSOUT(colName, true);
+					    tp.addColumn(colName);
+					    cps = tp.getColumns();
+					    columnOrder = tp.getColumnOrder();
 						
 						// Load Column Property Manger
-						loadColumnPropertyManager(colName);
+					    loadColumnPropertyManager(colName);
 					}
 				} else {
 					toastColumnNameError(colName + " is already existing column!");
@@ -320,7 +310,7 @@ public class ColumnManager extends ListActivity {
 	// Drag & Drop List Adapter
 	class IconicAdapter extends ArrayAdapter<String> {
 		IconicAdapter() {
-			super(ColumnManager.this, R.layout.touchlistview_row2, colOrder);
+			super(ColumnManager.this, R.layout.touchlistview_row2, columnOrder);
 		}
 
 		public View getView(int position, View convertView,
@@ -335,7 +325,7 @@ public class ColumnManager extends ListActivity {
 			
 			// Current Position in the List
 			final int currentPosition = position;
-			String currentColName = colOrder.get(position);
+			String currentColName = columnOrder[position];
 			
 			// Register name of colunm at each row in the list view
 			TextView label = (TextView)row.findViewById(R.id.row_label);		
@@ -344,9 +334,9 @@ public class ColumnManager extends ListActivity {
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);
 			String extStr = "";
-			if (cp.getIsIndex(currentColName)) {
+			if (tp.isColumnPrime(currentColName)) {
 				extStr += "Collection Column";
-			} else if (currentColName.equals(tp.getSortBy())) {
+			} else if (currentColName.equals(tp.getSortColumn())) {
 				extStr += "Sort Column";
 			}
 			ext.setText(extStr);
@@ -359,10 +349,10 @@ public class ColumnManager extends ListActivity {
 						ContextMenuInfo menuInfo) {
 					
 					// Current column selected
-					currentCol = colOrder.get(currentPosition);
+					currentCol = columnOrder[currentPosition];
 					
 					// Options for each item on the list
-					if(cp.getIsIndex(currentCol)) {
+					if(tp.isColumnPrime(currentCol)) {
 						menu.add(0, SET_AS_NONPRIME, 0,
 								"Unset as Collection View Based on This");
 					} else {

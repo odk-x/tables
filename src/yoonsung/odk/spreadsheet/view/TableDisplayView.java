@@ -4,11 +4,13 @@ import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.TableActivity;
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs.ColumnColorRuler;
-import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,7 +33,8 @@ public class TableDisplayView extends LinearLayout {
     private static final int MIN_LONG_CLICK_DURATION = 1000;
     
 	private TableActivity ta; // the table activity to call back to
-	private Table table; // the table to display
+	private UserTable table; // the table to display
+	private TableProperties tp; // the table properties
 	private int indexedCol; // the indexed column number; -1 if not indexed
 	private DisplayPrefs dp; // the display preferences for the table
 	
@@ -55,18 +58,21 @@ public class TableDisplayView extends LinearLayout {
 	
 	private int lastLongClickedCellId;
     
-    public static TableDisplayView buildView(Context context, DisplayPrefs dp,
-            TableActivity ta, Table table, int indexedCol) {
-        return new TableDisplayView(context, dp, ta, table, indexedCol);
+    public static TableDisplayView buildView(Context context,
+            TableProperties tp, DisplayPrefs dp, TableActivity ta,
+            UserTable table, int indexedCol) {
+        return new TableDisplayView(context, tp, dp, ta, table, indexedCol);
     }
 	
-	private TableDisplayView(Context context, DisplayPrefs dp,
-	        TableActivity ta, Table table, int indexedCol) {
+	private TableDisplayView(Context context, TableProperties tp, DisplayPrefs dp,
+	        TableActivity ta, UserTable table, int indexedCol) {
 		super(context);
+		Log.d("TDV", "constructed with indexedCol=" + indexedCol);
 		this.dp = dp;
 		setOrientation(LinearLayout.VERTICAL);
         this.ta = ta;
         this.table = table;
+        this.tp = tp;
         this.indexedCol = indexedCol;
         initListeners();
         removeAllViews();
@@ -248,16 +254,15 @@ public class TableDisplayView extends LinearLayout {
         int[] completeColWidths = ta.getColWidths();
 	    if (isIndexed) {
 	        header = new String[1][1];
-	        header[0][0] = table.getColName(indexedCol);
+	        header[0][0] = tp.getColumns()[indexedCol].getDisplayName();
 	        data = new String[table.getHeight()][1];
 	        for (int i = 0; i < table.getHeight(); i++) {
-	            data[i][0] =
-	                table.getCellValue((i * table.getWidth()) + indexedCol);
+	            data[i][0] = table.getData(i, indexedCol);
 	        }
             footer = new String[1][1];
-            footer[0][0] = table.getFooterValue(indexedCol);
+            footer[0][0] = table.getFooter(indexedCol);
             colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = dp.getColColorRuler(table.getColName(indexedCol));
+            colorRulers[0] = dp.getColColorRuler(table.getHeader(indexedCol));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
 	    } else {
@@ -273,14 +278,13 @@ public class TableDisplayView extends LinearLayout {
                 if (i == indexedCol) {
                     continue;
                 }
-                header[0][addIndex] = table.getColName(i);
+                header[0][addIndex] = tp.getColumns()[i].getDisplayName();
                 for (int j = 0; j < table.getHeight(); j++) {
-                    data[j][addIndex] =
-                        table.getCellValue((j * table.getWidth()) + i);
+                    data[j][addIndex] = table.getData(j, i);
                 }
-                footer[0][addIndex] = table.getFooterValue(i);
+                footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                    dp.getColColorRuler(table.getColName(i));
+                    dp.getColColorRuler(table.getHeader(i));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }

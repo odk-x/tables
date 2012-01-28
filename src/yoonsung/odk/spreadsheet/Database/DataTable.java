@@ -56,6 +56,7 @@ public class DataTable {
 		} else {
 			this.currentTableName = tl.getTableName(tableID);
 		}
+		this.currentTableName = "tableName";
 	}
 	
 	// Create a new column with this name. If there is a column
@@ -219,9 +220,14 @@ public class DataTable {
 	}
 	 
 	public Table getTable() {
+        ArrayList<String> colOrder = new ArrayList<String>();
+        colOrder.add("column1");
+        colOrder.add("column2");
+        colOrder.add("column3");
+        colOrder.add("column4");
 		
 		// Main Frame
-		return loadTable(true, tp.getColOrderArrayList(), tp.getSortBy(), null);
+		return loadTable(true, colOrder, "column3", null);
 		
 	}
 	
@@ -255,7 +261,10 @@ public class DataTable {
 	}
 	
 	public Table getTable(int matchRowId) {
-		ArrayList<String> colOrder = tp.getColOrderArrayList();
+		//ArrayList<String> colOrder = tp.getColOrderArrayList();
+	    ArrayList<String> colOrder = new ArrayList<String>();
+	    colOrder.add("column1");
+	    colOrder.add("column2");
 		String selection = DATA_ROWID + " = ?";
 		String[] selectionArgs = {(new Integer(matchRowId)).toString()};
 		SQLiteDatabase con = db.getConn();
@@ -279,7 +288,7 @@ public class DataTable {
 			whereClause = whereClause.substring(5);
 		}
 		// Into-History
-		return loadTable(false, colOrder, tp.getSortBy(), whereClause);
+		return loadTable(false, colOrder, "column2", whereClause);
 		
 	}
 	
@@ -411,7 +420,7 @@ public class DataTable {
 			// Main Table
 			String indexList = "";
 			for(String colName : colOrder) {
-				if(cp.getIsIndex(colName)) {
+				if(colName.equals("column1") || colName.equals("column2")) {
 					indexList += ", " + db.toSafeSqlColumn(colName, false, null);
 				}
 			}

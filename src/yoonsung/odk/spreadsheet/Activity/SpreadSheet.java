@@ -6,7 +6,8 @@ import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,10 +18,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
 
-import yoonsung.odk.spreadsheet.Database.TableList;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
-import android.content.ContentValues;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -39,22 +38,22 @@ public class SpreadSheet extends TableActivity {
 	private static final int IMPORTEXPORT = 5;
 	private static final int OPEN_VIEW_SETTINGS = 6;
 	// context menu IDs
-	private static final int SELECT_COLUMN = 6;
-	private static final int SEND_SMS_ROW = 7;
-	private static final int HISTORY_IN = 8;
-	private static final int DELETE_ROW = 9;
-	private static final int SET_COL_AS_PRIME = 10;
-	private static final int UNSET_COL_AS_PRIME = 11;
-	private static final int SET_COL_AS_ORDERBY = 12;
-	private static final int UNSET_COL_AS_ORDERBY = 13;
-	private static final int OPEN_COL_OPTS = 14;
-	private static final int SET_COL_WIDTH = 15;
-	private static final int SET_FOOTER_OPT = 16;
-	private static final int UNSELECT_COLUMN = 17;
-	private static final int OPEN_FILE = 18;
-	private static final int OPEN_DISPLAYPREFS_DIALOG = 19;
-	private static final int EDIT_CELL = 20;
-	private static final int OPEN_COLLECT_FORM = 21;
+	private static final int SELECT_COLUMN = 7;
+	private static final int SEND_SMS_ROW = 8;
+	private static final int HISTORY_IN = 9;
+	private static final int DELETE_ROW = 10;
+	private static final int SET_COL_AS_PRIME = 11;
+	private static final int UNSET_COL_AS_PRIME = 12;
+	private static final int SET_COL_AS_ORDERBY = 13;
+	private static final int UNSET_COL_AS_ORDERBY = 14;
+	private static final int OPEN_COL_OPTS = 15;
+	private static final int SET_COL_WIDTH = 16;
+	private static final int SET_FOOTER_OPT = 17;
+	private static final int UNSELECT_COLUMN = 18;
+	private static final int OPEN_FILE = 19;
+	private static final int OPEN_DISPLAYPREFS_DIALOG = 20;
+	private static final int EDIT_CELL = 21;
+	private static final int OPEN_COLLECT_FORM = 22;
 	// Activity IDs
 	private static final int ODK_COLLECT_FORM_HANDLE = 100;
 	
@@ -72,8 +71,8 @@ public class SpreadSheet extends TableActivity {
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 		prepOccmListeners();
-		super.onCreate(savedInstanceState);
 		lastHeaderMenued = -1;
 	}
 	
@@ -153,34 +152,34 @@ public class SpreadSheet extends TableActivity {
 			return true;
 		case OPEN_COLLECT_FORM:
 		    collect(selectedCellID / table.getWidth(),
-		            table.getCellValue(selectedCellID));
+		            table.getData(selectedCellID));
 		    return true;
 		case DELETE_ROW: // delete a row
-			deleteRow(table.getRowNum(selectedCellID));
+			deleteRow(selectedCellID / table.getWidth());
 			return true;
 		case SET_COL_AS_PRIME: // set a column to be a prime column
-			setAsPrimeCol(table.getColName(lastHeaderMenued));
+			setAsPrimeCol(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case UNSET_COL_AS_PRIME: // set a column to be a non-prime column
-			unsetAsPrimeCol(table.getColName(lastHeaderMenued));
+			unsetAsPrimeCol(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case SET_COL_AS_ORDERBY: // set a column to be the sort column
-			setAsSortCol(table.getColName(lastHeaderMenued));
+			setAsSortCol(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case UNSET_COL_AS_ORDERBY:
             setAsSortCol(null);
 		    return true;
 		case OPEN_COL_OPTS:
-			openColPropsManager(table.getColName(lastHeaderMenued));
+			openColPropsManager(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case SET_COL_WIDTH:
-			openColWidthDialog(table.getColName(lastHeaderMenued));
+			openColWidthDialog(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case SET_FOOTER_OPT:
-			openFooterOptDialog(table.getColName(lastFooterMenued));
+			openFooterOptDialog(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case OPEN_DISPLAYPREFS_DIALOG:
-		    openDisplayPrefsDialog(table.getColName(lastHeaderMenued));
+		    openDisplayPrefsDialog(tp.getColumnOrder()[lastHeaderMenued]);
 		    return true;
 		default:
 			return super.onContextItemSelected(item);
@@ -192,8 +191,9 @@ public class SpreadSheet extends TableActivity {
 	 */
 	private void openSecurityManager() {
 		Intent i = new Intent(this, SecurityManager.class);
-		i.putExtra("tableName", (new TableList()).getTableName(this.tableID));
+		//i.putExtra("tableName", (new TableList()).getTableName(this.tableID));
 		startActivity(i);
+		throw new RuntimeException("openSecurityManager() called!");
 	}
 	
 	private void handleOpenForm(String formPath) {
@@ -250,8 +250,7 @@ public class SpreadSheet extends TableActivity {
     	Log.e("CheckingThePath", path);
     	
         // Get Col List
-        TableProperty tableProp = new TableProperty(tableID);
-        final List<String> currentColList = tableProp.getColOrderArrayList();
+    	final String[] colOrder = tp.getColumnOrder();
         
         try {
         	File file = new File(path);
@@ -260,23 +259,23 @@ public class SpreadSheet extends TableActivity {
             Document doc = db.parse(file);
             doc.getDocumentElement().normalize();                           
 
-            ContentValues cv = new ContentValues();                                 
+            Map<String, String> values = new HashMap<String, String>();                                 
             
             // Browse content in xml file
             int addedvalue = 0;
          
-            for(int s = 0; s < currentColList.size(); s++) {                   
-            	Log.e("colprint", currentColList.get(s));
-            	NodeList nodeLst = doc.getElementsByTagName(currentColList.get(s));
+            for(int s = 0; s < colOrder.length; s++) {                   
+            	Log.e("colprint", colOrder[s]);
+            	NodeList nodeLst = doc.getElementsByTagName(colOrder[s]);
             	Node fstNode = nodeLst.item(0);
                 if (fstNode != null && fstNode.getNodeType() == Node.ELEMENT_NODE) {                                   
                     Element fstElmnt =  (Element) fstNode;                                                                          
                     NodeList lstNm = fstElmnt.getChildNodes();                                              
                     if(lstNm.item(0) != null) {
-                            addedvalue++;
-                            cv.put(currentColList.get(s), ((Node) lstNm.item(0)).getNodeValue());   
+                        addedvalue++;
+                        values.put(colOrder[s], ((Node) lstNm.item(0)).getNodeValue());   
                     } else {
-                            cv.put(currentColList.get(s), "");                                                      
+                        values.put(colOrder[s], "");                                                      
                     }
                 }    
             }       
@@ -284,10 +283,10 @@ public class SpreadSheet extends TableActivity {
             // Update to database
             if(addedvalue > 0){
                 //dt.addRow(cv, "", "");
-            	int rowNum = table.getRowNum(selectedCellID);
-				int rowID = table.getTableRowID(rowNum);
-				dt.updateRow(cv, rowID);
-            	Log.e("parseXML", cv.toString());
+            	int rowNum = selectedCellID / table.getWidth();
+				int rowId = table.getRowId(rowNum);
+				dbt.updateRow(rowId, values);
+            	Log.e("parseXML", values.toString());
             }
                                 
         } catch (Exception e) {
@@ -309,9 +308,9 @@ public class SpreadSheet extends TableActivity {
 	public void prepRegularCellOccm(ContextMenu menu, int cellId) {
 		selectContentCell(cellId);
 		int none = ContextMenu.NONE;
-		String selectedColName = table.getColName(table.getColNum(selectedCellID));
-		String selectedColType = cp.getType(selectedColName);
-		if ("ODK Collect Form".equals(selectedColType)) {
+		int selectedColType = tp.getColumns()
+		        [selectedCellID % table.getWidth()].getColumnType();
+		if (selectedColType == ColumnProperties.ColumnType.COLLECT_FORM) {
 		    menu.add(none, OPEN_COLLECT_FORM, none, "Open Form in Collect");
 		}
 		menu.add(none, SELECT_COLUMN, none, "Select Column");
@@ -328,9 +327,9 @@ public class SpreadSheet extends TableActivity {
     public void prepIndexedColCellOccm(ContextMenu menu, int cellId) {
         selectContentCell(cellId);
         int none = ContextMenu.NONE;
-        String selectedColName = table.getColName(table.getColNum(selectedCellID));
-        String selectedColType = cp.getType(selectedColName);
-        if (selectedColType.equals("ODK Collect Form")) {
+        ColumnProperties cp = tp.getColumns()
+                [selectedCellID % table.getWidth()];
+        if (cp.getColumnType() == ColumnProperties.ColumnType.COLLECT_FORM) {
             menu.add(none, OPEN_COLLECT_FORM, none, "Open Form in Collect");
         }
         menu.add(none, UNSELECT_COLUMN, none, "Unselect Column");
@@ -347,10 +346,10 @@ public class SpreadSheet extends TableActivity {
 	public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
 		lastHeaderMenued = cellId;
 		int none = ContextMenu.NONE;
-		String colName = table.getHeader().get(cellId);
-		if(cp.getIsIndex(colName)) {
+		String colName = tp.getColumnOrder()[cellId];
+		if(tp.isColumnPrime(colName)) {
 			menu.add(none, UNSET_COL_AS_PRIME, none, "Unset as Index");
-		} else if(colName.equals(tp.getSortBy())) {
+		} else if(colName.equals(tp.getSortColumn())) {
 		    menu.add(none, UNSET_COL_AS_ORDERBY, none, "Unset as Sort");
 		} else {
 			menu.add(none, SET_COL_AS_PRIME, none, "Set as Index");

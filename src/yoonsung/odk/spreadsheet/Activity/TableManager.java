@@ -147,7 +147,7 @@ public class TableManager extends ListActivity {
          default:
              return;
 	     }
-	     i.putExtra("tableID", tp.getTableId());
+	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
 		 startActivity(i);
 	 }
 	 

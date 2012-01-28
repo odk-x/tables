@@ -1,9 +1,11 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.Arrays;
 import java.util.Map;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 /**
  * A class for accessing and modifying a user table.
@@ -21,9 +23,13 @@ public class DbTable {
     private final DbHelper dbh;
     private final TableProperties tp;
     
-    DbTable(DbHelper dbh, TableProperties tp) {
+    public static DbTable getDbTable(DbHelper dbh, long tableId) {
+        return new DbTable(dbh, tableId);
+    }
+    
+    private DbTable(DbHelper dbh, long tableId) {
         this.dbh = dbh;
-        this.tp = tp;
+        this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
     }
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
@@ -37,20 +43,62 @@ public class DbTable {
     }
     
     /**
+     * Gets a table of raw data, including metadata for rows.
+     */
+    public Table getRawComplete() {
+        ColumnProperties[] cps = tp.getColumns();
+        String[] cols = new String[cps.length + 4];
+        cols[0] = DB_SRC_PHONE_NUMBER;
+        cols[1] = DB_LAST_MODIFIED_TIME;
+        cols[2] = DB_SYNC_ID;
+        cols[3] = DB_SYNC_TAG;
+        for (int i = 0; i < cps.length; i++) {
+            cols[i + 4] = cps[i].getColumnDbName();
+        }
+        return dataQuery(cols, null, null, null);
+    }
+    
+    public UserTable getUserTable(String[] selectionKeys,
+            String[] selectionArgs, String orderBy) {
+        String selection = buildSelectionSql(selectionKeys);
+        Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
+                orderBy);
+        String[] footer = footerQuery(tp.getColumnOrder(), selection,
+                selectionArgs, orderBy);
+        return new UserTable(table.getRowIds(), tp.getColumnOrder(),
+                table.getData(), footer);
+    }
+    
+    public UserTable getUserOverview(String[] primes, String[] selectionKeys,
+            String[] selectionArgs, String orderBy) {
+        return getUserTable(selectionKeys, selectionArgs, orderBy);
+    }
+    
+    /**
      * Queries the table with the given options and returns a Table.
      */
     private Table dataQuery(String[] columns, String selection,
-            String[] selectionArgs, String groupBy, String having,
-            String orderBy) {
+            String[] selectionArgs, String orderBy) {
         String[] colArr = new String[columns.length + 1];
         colArr[0] = DB_ROW_ID;
         for (int i = 0; i < columns.length; i++) {
             colArr[i + 1] = columns[i];
         }
-        int[] colIndices = new int[columns.length];
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(tp.getDbTableName(), colArr, selection,
-                selectionArgs, groupBy, having, orderBy);
+                selectionArgs, null, null, orderBy);
+        Table table = buildTable(c, columns);
+        c.close();
+        db.close();
+        return table;
+    }
+    
+    /**
+     * Builds a Table with the data from the given cursor.
+     * The cursor, but not the columns array, must include the row ID column.
+     */
+    private Table buildTable(Cursor c, String[] columns) {
+        int[] colIndices = new int[columns.length];
         int rowCount = c.getCount();
         int[] rowIds = new int[rowCount];
         String[][] data = new String[rowCount][columns.length];
@@ -64,22 +112,14 @@ public class DbTable {
             for (int j = 0; j < columns.length; j++) {
                 data[i][j] = c.getString(colIndices[j]);
             }
+            c.moveToNext();
         }
-        c.close();
-        db.close();
         return new Table(rowIds, data);
     }
     
-    /**
-     * @return an array of the column database names
-     */
-    private String[] getColumnArray() {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] arr = new String[cps.length];
-        for (int i = 0; i < cps.length; i++) {
-            arr[i] = cps[i].getColumnDbName();
-        }
-        return arr;
+    private String[] footerQuery(String[] columns, String selection,
+            String[] selectionArgs, String orderBy) {
+        return new String[columns.length];
     }
     
     /**
@@ -102,7 +142,6 @@ public class DbTable {
         cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
         cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.insert(tp.getDbTableName(), null, cv);
         db.close();
     }
     
@@ -137,5 +176,19 @@ public class DbTable {
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.delete(tp.getDbTableName(), DB_ROW_ID + " = ?", whereArgs);
         db.close();
+    }
+    
+    private String buildSelectionSql(String[] selectionKeys) {
+        if ((selectionKeys == null) || (selectionKeys.length == 0)) {
+            return null;
+        }
+        StringBuilder selBuilder = new StringBuilder();
+        for (String key : selectionKeys) {
+            selBuilder.append(" AND " + key);
+        }
+        if (selBuilder.length() > 0) {
+            selBuilder.delete(0, 5);
+        }
+        return selBuilder.toString();
     }
 }
