@@ -98,6 +98,14 @@ public abstract class TableActivity extends Activity
         Uri.parse(COLLECT_INSTANCES_URI_STRING);
     private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd_kk-mm-ss");
+
+    public static final String[] FOOTER_MODE_LABELS = {
+        "None",
+        "Count",
+        "Minimum",
+        "Maximum",
+        "Mean"
+    };
 	
     protected long tableId;
     private DbHelper dbh;
@@ -440,6 +448,7 @@ public abstract class TableActivity extends Activity
 		Intent i = new Intent(this, PropertyManager.class);
         i.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
 		i.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME, colName);
+		Log.d("TA", "here I am w/ tableId=" + tableId);
 		startActivity(i);
 	}
 	
@@ -784,17 +793,15 @@ public abstract class TableActivity extends Activity
     		v.setOrientation(LinearLayout.VERTICAL);
     		// preparing the text field
     		optSpinner = new Spinner(c);
-            String[] footerModeChoices = {"None", "Average", "Count", "Max",
-            		"Min"};
     		ArrayAdapter<String> adapter = new ArrayAdapter<String>(c,
-    				android.R.layout.simple_spinner_item, footerModeChoices);
+    				android.R.layout.simple_spinner_item, FOOTER_MODE_LABELS);
     		adapter.setDropDownViewResource(
     				android.R.layout.simple_spinner_dropdown_item);
     		optSpinner.setAdapter(adapter);
-    		String selMode = footerModeChoices[cp.getFooterMode()];
+    		String selMode = FOOTER_MODE_LABELS[cp.getFooterMode()];
     		if(selMode != null) {
-    			for(int i=0; i<footerModeChoices.length; i++) {
-    				if(footerModeChoices[i].equals(selMode)) {
+    			for(int i=0; i<FOOTER_MODE_LABELS.length; i++) {
+    				if(FOOTER_MODE_LABELS[i].equals(selMode)) {
     					optSpinner.setSelection(i);
     				}
     			}

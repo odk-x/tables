@@ -74,13 +74,15 @@ public class DbTable {
         Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
                 orderBy);
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
-                selectionArgs, orderBy);
+                selectionArgs);
         return new UserTable(table.getRowIds(), tp.getColumnOrder(),
                 table.getData(), footer);
     }
     
     public UserTable getUserOverview(String[] primes, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
+        String[] footer = footerQuery(tp.getColumnOrder(),
+                buildSelectionSql(selectionKeys), selectionArgs);
         return getUserTable(selectionKeys, selectionArgs, orderBy);
     }
     
@@ -128,8 +130,67 @@ public class DbTable {
     }
     
     private String[] footerQuery(String[] columns, String selection,
-            String[] selectionArgs, String orderBy) {
-        return new String[columns.length];
+            String[] selectionArgs) {
+        ColumnProperties[] cps = new ColumnProperties[columns.length];
+        StringBuilder sqlBuilder = new StringBuilder("SELECT");
+        for (int i = 0; i < columns.length; i++) {
+            String colDbName = columns[i];
+            cps[i] = tp.getColumnByDbName(colDbName);
+            int mode = cps[i].getFooterMode();
+            Log.d("DBT", "colDbName:" + colDbName);
+            Log.d("DBT", "mode:" + mode);
+            switch (mode) {
+            case ColumnProperties.FooterMode.COUNT:
+                sqlBuilder.append(", COUNT(" + colDbName + ") AS " +
+                        colDbName);
+                break;
+            case ColumnProperties.FooterMode.MAXIMUM:
+                sqlBuilder.append(", MAX(" + colDbName + ") AS " + colDbName);
+                break;
+            case ColumnProperties.FooterMode.MEAN:
+                sqlBuilder.append(", COUNT(" + colDbName + ") AS count" +
+                        colDbName);
+                sqlBuilder.append(", SUM(" + colDbName + ") AS sum" +
+                        colDbName);
+                break;
+            case ColumnProperties.FooterMode.MINIMUM:
+                sqlBuilder.append(", MIN(" + colDbName + ") AS " + colDbName);
+                break;
+            }
+        }
+        if (sqlBuilder.length() == 6) {
+            return new String[columns.length];
+        }
+        sqlBuilder.delete(6, 7);
+        sqlBuilder.append(" FROM " + tp.getDbTableName());
+        if ((selection != null) && (selection.length() != 0)) {
+            sqlBuilder.append(" WHERE " + selection);
+        }
+        Log.d("DBT", "footerSql:" + sqlBuilder.toString());
+        String[] footer = new String[columns.length];
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
+        c.moveToFirst();
+        for (int i = 0; i < columns.length; i++) {
+            if (cps[i].getFooterMode() == ColumnProperties.FooterMode.MEAN) {
+                Log.d("DBT", "here I am finding the mean");
+                int sIndex = c.getColumnIndexOrThrow("sum" + columns[i]);
+                int cIndex = c.getColumnIndexOrThrow("count" + columns[i]);
+                double sum = c.getInt(sIndex);
+                int count = c.getInt(cIndex);
+                Log.d("DBT", "footer:sum:" + sum + "/count:" + count);
+                footer[i] = String.valueOf(sum / count);
+            } else if (cps[i].getFooterMode() !=
+                    ColumnProperties.FooterMode.NONE) {
+                Log.d("DBT", "here I am finding something else");
+                int index = c.getColumnIndexOrThrow(columns[i]);
+                footer[i] = c.getString(index);
+            }
+        }
+        c.close();
+        db.close();
+        Log.d("DBT", "footer:" + Arrays.toString(footer));
+        return footer;
     }
     
     /**

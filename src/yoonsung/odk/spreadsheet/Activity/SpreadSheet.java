@@ -176,7 +176,7 @@ public class SpreadSheet extends TableActivity {
 			openColWidthDialog(tp.getColumnOrder()[lastHeaderMenued]);
 			return true;
 		case SET_FOOTER_OPT:
-			openFooterOptDialog(tp.getColumnOrder()[lastHeaderMenued]);
+			openFooterOptDialog(tp.getColumnOrder()[lastFooterMenued]);
 			return true;
 		case OPEN_DISPLAYPREFS_DIALOG:
 		    openDisplayPrefsDialog(tp.getColumnOrder()[lastHeaderMenued]);

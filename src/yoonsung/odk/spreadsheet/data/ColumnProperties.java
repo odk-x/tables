@@ -274,7 +274,7 @@ public class ColumnProperties {
         values.put(property, value);
         SQLiteDatabase db = dbh.getWritableDatabase();
         int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
-        if (count != 1) {
+        if (count != 1000) {
             Log.e(ColumnProperties.class.getName(),
                     "setting " + property + " updated " + count + " rows");
         }

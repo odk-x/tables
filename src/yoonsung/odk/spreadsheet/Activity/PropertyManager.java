@@ -1,20 +1,18 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import android.R;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
-import android.preference.DialogPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
-import android.util.AttributeSet;
 
 /*
  * Activity that allows users to change column property.
@@ -26,18 +24,32 @@ import android.util.AttributeSet;
  */
 public class PropertyManager extends PreferenceActivity {
     
-    public static final String INTENT_KEY_TABLE_ID = "tableID";
+    public static final String INTENT_KEY_TABLE_ID = "tableId";
     public static final String INTENT_KEY_COLUMN_NAME = "colName";
     
+    public static final String[] COLUMN_TYPE_LABELS = {
+        "None",
+        "Text",
+        "Number",
+        "Date",
+        "Date Range",
+        "Phone Number",
+        "File",
+        "Collect Form"
+    };
+    
+    public static final String[] FOOTER_MODE_LABELS = {
+        "None",
+        "Count",
+        "Minimum",
+        "Maximum",
+        "Mean"
+    };
+    
     // Private Fields
-        private ColumnProperty cp;
-        private String tableID;
+        private long tableId;
         private String colName;
-        
-        // Initialize private fields
-        private void init() {
-            this.cp = new ColumnProperty(tableID);
-        }
+        private ColumnProperties cp;
         
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +59,11 @@ public class PropertyManager extends PreferenceActivity {
                 setTitle("ODK Tables > Column Property");
                 
                 // Column Name
-                this.tableID = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+                this.tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
                 this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
-                init();
+                DbHelper dbh = new DbHelper(this);
+                cp = TableProperties.getTablePropertiesForTable(dbh, tableId)
+                        .getColumnByDbName(colName);
                 loadPreferenceScreen();
         }
         
@@ -69,8 +83,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Type<List>
             String type = getType(colName);
-            String[] typeChoices = {"None", "Text", "Numeric Value", "Date", "Phone Number", "Date Range", "File", "ODK Collect Form"};
-            category.addPreference(createListPreference("TYPE", "Type", type, type, typeChoices, typeChoices));                
+            category.addPreference(createListPreference("TYPE", "Type", type, type, COLUMN_TYPE_LABELS, COLUMN_TYPE_LABELS));
             
             // SMS-IN<CheckBox>
             category.addPreference(createCheckBoxPreference("SMSIN", "Get from Incoming", getSMSIn(colName)));
@@ -80,8 +93,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Footer Mode<Lis>
             String footerMode = getFooterMode(colName); 
-            String[] footerModesChoices = {"None", "Average", "Count", "Max", "Min"};
-            category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, footerModesChoices, footerModesChoices));
+            category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, FOOTER_MODE_LABELS, FOOTER_MODE_LABELS));
             
             category.addPreference(new DisplayPreferencesDialogPreference(this));
             
@@ -95,7 +107,7 @@ public class PropertyManager extends PreferenceActivity {
         
         // Get the abreviation on this column.
         private String getAbrev(String colName) {
-            String result = cp.getAbrev(colName);
+            String result = cp.getAbbreviation();
             if (result == null) {
                 return "No Abreviation Defined.";
             }
@@ -104,30 +116,22 @@ public class PropertyManager extends PreferenceActivity {
         
         // Get the type for this column.
         private String getType(String colName) {
-            String result = cp.getType(colName);
-            if (result == null) {
-                return "No Type Defined.";
-            }
-            return result;
+            return COLUMN_TYPE_LABELS[cp.getColumnType()];
         }
         
         // Check if this is SMS-IN column.
         private boolean getSMSIn(String colName) {
-            return cp.getSMSIN(colName);
+            return cp.getSmsIn();
         }
         
         // Check if this is SMS-OUT column.
         private boolean getSMSOut(String colName) {
-            return cp.getSMSOUT(colName);
+            return cp.getSmsOut();
         }
         
         // Get the footer mode for this column.
         private String getFooterMode(String colName) {
-            String result = cp.getFooterMode(colName);
-            if (result == null) {
-                return "No Footer Mode Defined.";
-            }
-            return result;
+            return FOOTER_MODE_LABELS[cp.getFooterMode()];
         }
          
         // If any of fields change, direct the request to appropriate actions.
@@ -137,15 +141,25 @@ public class PropertyManager extends PreferenceActivity {
         
             // Routing
             if (key.equals("ABR")) {
-                cp.setAbrev(colName, getEditBoxContent(pref));
+                cp.setAbbreviation(getEditBoxContent(pref));
             } else if (key.equals("TYPE")) {
-                cp.setType(colName, newVal);
+                for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
+                    if (COLUMN_TYPE_LABELS[i].equals(newVal)) {
+                        cp.setColumnType(i);
+                        break;
+                    }
+                }
             } else if (key.equals("SMSIN")) {
-                cp.setSMSIN(colName, getCheckBoxContent(pref));
+                cp.setSmsIn(getCheckBoxContent(pref));
             } else if (key.equals("SMSOUT")) {
-                cp.setSMSOUT(colName, getCheckBoxContent(pref));
+                cp.setSmsOut(getCheckBoxContent(pref));
             } else if (key.equals("FOOTER")) {
-                cp.setFooterMode(colName, newVal);
+                for (int i = 0; i < FOOTER_MODE_LABELS.length; i++) {
+                    if (FOOTER_MODE_LABELS[i].equals(newVal)) {
+                        cp.setFooterMode(i);
+                        break;
+                    }
+                }
             } 
             
             // Refresh
@@ -254,7 +268,8 @@ public class PropertyManager extends PreferenceActivity {
         public DisplayPreferencesDialogPreference(Context context) {
             super(context);
             dialog = new DisplayPrefsDialog(PropertyManager.this,
-                    new DisplayPrefs(PropertyManager.this, tableID), colName);
+                    new DisplayPrefs(PropertyManager.this,
+                    String.valueOf(tableId)), colName);
             setTitle("Display Preferences");
         }
         

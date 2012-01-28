@@ -1,6 +1,5 @@
 package yoonsung.odk.spreadsheet.Activity;
 
-import java.util.Arrays;
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Library.TouchListView;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
@@ -12,7 +11,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -221,8 +219,8 @@ public class ColumnManager extends ListActivity {
 	// Load Column Property Manager Activity.
 	private void loadColumnPropertyManager(String name) {
 		Intent cpm = new Intent(this, PropertyManager.class);
-		cpm.putExtra("colName", name);
-		cpm.putExtra("tableID", tableId);
+		cpm.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
+        cpm.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME, name);
 		startActivity(cpm);
 	}
 	
