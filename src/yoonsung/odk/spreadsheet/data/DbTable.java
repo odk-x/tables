@@ -1,6 +1,5 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.Arrays;
 import java.util.Map;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -137,8 +136,6 @@ public class DbTable {
             String colDbName = columns[i];
             cps[i] = tp.getColumnByDbName(colDbName);
             int mode = cps[i].getFooterMode();
-            Log.d("DBT", "colDbName:" + colDbName);
-            Log.d("DBT", "mode:" + mode);
             switch (mode) {
             case ColumnProperties.FooterMode.COUNT:
                 sqlBuilder.append(", COUNT(" + colDbName + ") AS " +
@@ -166,30 +163,25 @@ public class DbTable {
         if ((selection != null) && (selection.length() != 0)) {
             sqlBuilder.append(" WHERE " + selection);
         }
-        Log.d("DBT", "footerSql:" + sqlBuilder.toString());
         String[] footer = new String[columns.length];
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
         c.moveToFirst();
         for (int i = 0; i < columns.length; i++) {
             if (cps[i].getFooterMode() == ColumnProperties.FooterMode.MEAN) {
-                Log.d("DBT", "here I am finding the mean");
                 int sIndex = c.getColumnIndexOrThrow("sum" + columns[i]);
                 int cIndex = c.getColumnIndexOrThrow("count" + columns[i]);
                 double sum = c.getInt(sIndex);
                 int count = c.getInt(cIndex);
-                Log.d("DBT", "footer:sum:" + sum + "/count:" + count);
                 footer[i] = String.valueOf(sum / count);
             } else if (cps[i].getFooterMode() !=
                     ColumnProperties.FooterMode.NONE) {
-                Log.d("DBT", "here I am finding something else");
                 int index = c.getColumnIndexOrThrow(columns[i]);
                 footer[i] = c.getString(index);
             }
         }
         c.close();
         db.close();
-        Log.d("DBT", "footer:" + Arrays.toString(footer));
         return footer;
     }
     
@@ -198,21 +190,22 @@ public class DbTable {
      * and the current time as the last modification time.
      */
     public void addRow(Map<String, String> values) {
-        addRow(values, null, DataUtil.getNowInDbFormat());
+        addRow(values, DataUtil.getNowInDbFormat(), null);
     }
     
     /**
      * Adds a row to the table.
      */
-    public void addRow(Map<String, String> values, String srcPhone,
-            String lastModTime) {
+    public void addRow(Map<String, String> values, String lastModTime,
+            String srcPhone) {
         ContentValues cv = new ContentValues();
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
-        cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
         cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
+        cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
         SQLiteDatabase db = dbh.getWritableDatabase();
+        Log.d("DBT", "insert, id=" + db.insert(tp.getDbTableName(), null, cv));
         db.close();
     }
     

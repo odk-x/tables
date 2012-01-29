@@ -4,23 +4,26 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import yoonsung.odk.spreadsheet.Database.DBIO;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.DataUtils;
-import yoonsung.odk.spreadsheet.Database.DefaultsManager;
-import yoonsung.odk.spreadsheet.Database.TableList;
-import yoonsung.odk.spreadsheet.Database.TableProperty;
-import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import android.content.Context;
 import au.com.bytecode.opencsv.CSVReader;
 
 /**
  * A class for importing tables from CSV files.
  */
 public class CSVImporter {
+    
+    private final Context context;
+    
+    public CSVImporter(Context context) {
+        this.context = context;
+    }
 	
 	/**
 	 * Imports to a new table from a CSV file.
@@ -29,137 +32,132 @@ public class CSVImporter {
 	 * @throws CSVException
 	 */
 	public void buildTable(String tableName, File file) throws CSVException {
-		importFile(tableName, file, true);
+	    CSVReader reader = getReader(file);
+	    ImportInfo ii = getImportInfo(reader);
+	    TableProperties tp = addTable(tableName, ii);
+	    importTable(tp, ii, reader);
+	    closeReader(reader);
 	}
 	
 	/**
 	 * Imports to an existing table from a CSV file.
-	 * @param tableName the name of the table to import to
+	 * @param tp the table properties of the table to import to
 	 * @param file the file to import from
 	 * @throws CSVException
 	 */
-	public void importTable(String tableName, File file) throws CSVException {
-		importFile(tableName, file, false);
+	public void importTable(TableProperties tp, File file)
+	        throws CSVException {
+        CSVReader reader = getReader(file);
+        ImportInfo ii = getImportInfo(reader);
+        importTable(tp, ii, reader);
+        closeReader(reader);
 	}
 	
-	/**
-	 * Imports to an existing table from a CSV file.
-	 * @param tableid the name of the table to import to
-	 * @param file the file to import from
-	 * @param createTable whether the table needs to be created
-	 * @throws CSVException
-	 */
-	private void importFile(String tableName, File file, boolean createTable)
-			throws CSVException {
-		CSVReader reader;
-		try {
-			reader = new CSVReader(new FileReader(file));
-		} catch (FileNotFoundException e) {
-			throw new CSVException("File not found", e);
-		}
-		try {
-			String[] header = reader.readNext();
-			if(header == null) {
-				throw new CSVException("File is empty.");
-			}
-			DataTable data;
-			if(createTable) {
-				data = new DataTable(createTable(tableName, header));
-			} else {
-				Integer tID = (new TableList()).getTableID(tableName);
-				data = new DataTable(tID.toString());
-			}
-			int phoneIn = -1;
-			int timestamp = -1;
-			for(int i=0; i<header.length; i++) {
-				String head = header[i];
-				if(head.equals("_phoneNumberIn")) {
-					phoneIn = i;
-				} else if(head.equals("_timestamp")) {
-					timestamp = i;
-				}
-			}
-			String nowTimestamp =
-			    DataUtils.getInstance().formatDateTimeForDB(new Date());
-			String[] next = reader.readNext();
-			while(next != null) {
-				ContentValues cv = getValues(header, next);
-				String pn = "";
-				if(phoneIn >= 0) {
-					pn = next[phoneIn];
-				}
-				String ts = (timestamp < 0) ? nowTimestamp : next[timestamp];
-				try {
-				    data.addRow(cv, pn, ts);
-				} catch(IllegalArgumentException e) {
-				    // TODO: something to handle invalid values
-				}
-				next = reader.readNext();
-			}
-		} catch (IOException e) {
-			throw new CSVException("Could not read file", e);
-		}
+	private CSVReader getReader(File file) {
+	    try {
+	        return new CSVReader(new FileReader(file));
+	    } catch (FileNotFoundException e) {
+	        return null;
+	    }
 	}
 	
-	/**
-	 * Gets content values for a row.
-	 * @param header the array of headers from the CSV file
-	 * @param row the array of values for the row from the CSV file
-	 * @return the content values
-	 */
-	private ContentValues getValues(String[] header, String[] row) {
-		ContentValues vals = new ContentValues();
-		for(int i=0; i<header.length; i++) {
-			String head = "`" + header[i] + "`";
-			if(!head.equals("_phoneNumberIn") && !head.equals("_timestamp")) {
-				vals.put(head, row[i]);
-			}
-		}
-		return vals;
+	private ImportInfo getImportInfo(CSVReader reader) {
+	    String[] row = getRow(reader);
+	    int tsIndex = -1;
+	    int pnIndex = -1;
+	    int colCount = 0;
+	    for (int i = 0; i < row.length; i++) {
+	        if (row[i].equals(DbTable.DB_LAST_MODIFIED_TIME)) {
+	            tsIndex = i;
+	        } else if (row[i].equals(DbTable.DB_SRC_PHONE_NUMBER)) {
+	            pnIndex = i;
+	        } else {
+	            colCount++;
+	        }
+	    }
+	    String[] header = new String[colCount];
+	    int index = 0;
+	    for (int i = 0; i < row.length; i++) {
+	        if ((i != tsIndex) && (i != pnIndex)) {
+	            header[index] = row[i];
+	            index++;
+	        }
+	    }
+	    return new ImportInfo(header, tsIndex, pnIndex);
 	}
 	
-	/**
-	 * Creates a table.
-	 * @param tableName the name for the new table
-	 * @param header the array of column names to add
-	 * @param dt the data
-	 * @return the ID of the newly-created table
-	 */
-	private String createTable(String tableName, String[] header) {
-		TableList tl = new TableList();
-		String res = tl.registerNewTable(tableName);
-		if(res != null) {
-			throw new IllegalArgumentException(res);
-		}
-		String stat = "CREATE TABLE IF NOT EXISTS `" + tableName + "` ("
-				+ DataTable.DATA_ROWID + " INTEGER PRIMARY KEY,"
-				+ DataTable.DATA_PHONE_NUMBER_IN + " TEXT,"
-				+ DataTable.DATA_TIMESTAMP + " TEXT";
-		for(String col : header) {
-		    if(!col.equals("_phoneNumberIn") && !col.equals("_timestamp")) {
-	            stat += ", `" + col + "` TEXT";
-		    }
-		}
-		stat += ");";
-		DBIO db = new DBIO();
-		SQLiteDatabase con = db.getConn();
-		con.execSQL(stat);
-		con.close();
-		Integer tID = tl.getTableID(tableName);
-		String tableID = tID.toString();
-		DefaultsManager dm = new DefaultsManager(tableID);
-		TableProperty tp = new TableProperty(tableID);
-		ArrayList<String> colOrder = tp.getColOrderArrayList();
-		for(String col : header) {
-            if(!col.equals("_phoneNumberIn") && !col.equals("_timestamp")) {
-                Log.d("csvi", "starting col add:" + col);
-                dm.prepForNewCol(col);
-                Log.d("csvi", "just called dm.prepForNewCol");
-                colOrder.add(col);
-            }
-		}
-		tp.setColOrder(colOrder);
-		return tableID;
+	private TableProperties addTable(String tableName, ImportInfo ii) {
+	    DbHelper dbh = new DbHelper(context);
+	    String dbTableName = TableProperties.createDbTableName(dbh, tableName);
+	    TableProperties tp = TableProperties.addTable(dbh, dbTableName,
+	            tableName, TableProperties.TableType.DATA);
+	    Set<String> colNames = new HashSet<String>();
+	    for (int i = 0; i < ii.header.length; i++) {
+	        String colName = ii.header[i];
+	        if (colNames.contains(colName)) {
+	            tp.addColumn(colName);
+	        } else {
+	            tp.addColumn(colName, colName);
+	            colNames.add(colName);
+	        }
+	    }
+	    return tp;
 	}
 	
+	private void importTable(TableProperties tp, ImportInfo ii,
+	        CSVReader reader) {
+	    DbTable dbt = DbTable.getDbTable(new DbHelper(context),
+	            tp.getTableId());
+	    String[] row = getRow(reader);
+	    String tsValue = null;
+	    String pnValue = null;
+	    Map<String, String> values = new HashMap<String, String>();
+	    int index = 0;
+	    while (row != null) {
+	        for (int i = 0; i < row.length; i++) {
+	            if (i == ii.tsIndex) {
+	                tsValue = row[i];
+	            } else if (i == ii.pnIndex) {
+	                pnValue = row[i];
+	            } else {
+	                values.put(ii.header[index], row[i]);
+	                index++;
+	            }
+	        }
+	        dbt.addRow(values, tsValue, pnValue);
+	        tsValue = null;
+	        pnValue = null;
+	        values.clear();
+	        index = 0;
+	        row = getRow(reader);
+	    }
+	}
+	
+	private String[] getRow(CSVReader reader) {
+	    try {
+            return reader.readNext();
+        } catch(IOException e) {
+            return null;
+        }
+	}
+	
+	private void closeReader(CSVReader reader) {
+	    try {
+            reader.close();
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+	}
+	
+	private class ImportInfo {
+	    public String[] header;
+	    public int tsIndex;
+	    public int pnIndex;
+	    public ImportInfo(String[] header, int tsIndex, int pnIndex) {
+	        this.header = header;
+	        this.tsIndex = tsIndex;
+	        this.pnIndex = pnIndex;
+	    }
+	}
 }

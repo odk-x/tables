@@ -4,9 +4,10 @@ import java.io.File;
 import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Database.TableList;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +38,8 @@ public class ImportCSVActivity extends IETabActivity {
 	public static int FILENAMEVAL_ID = 3;
 	public static int IMPORTBUTTON_ID = 4;
 	
+	/* the list of table properties */
+	private TableProperties[] tps;
 	/* the list of table names */
 	private String[] tableNames;
 	/* the view for inputting the new table name (label and text field) */
@@ -85,13 +88,13 @@ public class ImportCSVActivity extends IETabActivity {
 		etn.setTextColor(R.color.black);
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		Map<String, String> tableMap = (new TableList()).getAllTableList();
-		tableNames = new String[tableMap.size() + 1];
+		tps = TableProperties.getTablePropertiesForAll(new DbHelper(this));
+		tableNames = new String[tps.length + 1];
 		tableNames[0] = "New Table";
 		int counter = 1;
-		for(String tableId : tableMap.keySet()) {
-			tableNames[counter] = tableMap.get(tableId);
-			counter++;
+		for (TableProperties tp : tps) {
+		    tableNames[counter] = tp.getDisplayName();
+		    counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
@@ -135,21 +138,17 @@ public class ImportCSVActivity extends IETabActivity {
 	 */
 	private void importSubmission() {
 		File file = new File(filenameValField.getText().toString().trim());
-		String tableName;
+		String tableName = null;
+		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		TableList tList = new TableList();
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
 		} else {
-			tableName = tableNames[pos];
-			if(!tList.isTableExist(tableName)) {
-				showDialog(CSVIMPORT_FAIL_DIALOG);
-				return;
-			}
+		    tp = tps[pos - 1];
 		}
 		Handler iHandler = new ImporterHandler();
-		ImporterThread iThread = new ImporterThread(iHandler, tableName, file,
-				(pos == 0));
+		ImporterThread iThread = new ImporterThread(iHandler, tableName, tp,
+		        file, (pos == 0));
 		showDialog(IMPORT_IN_PROGRESS_DIALOG);
 		iThread.start();
 	}
@@ -197,26 +196,28 @@ public class ImportCSVActivity extends IETabActivity {
 		
 		private Handler mHandler;
 		private String tableName;
+		private TableProperties tp;
 		private File file;
 		private boolean createTable;
 		
-		ImporterThread(Handler h, String tableName, File file,
-				boolean createTable) {
+		ImporterThread(Handler h, String tableName, TableProperties tp,
+		        File file, boolean createTable) {
 			mHandler = h;
 			this.tableName = tableName;
+			this.tp = tp;
 			this.file = file;
 			this.createTable = createTable;
 		}
 		
 		public void run() {
-			CSVImporter importer = new CSVImporter();
+			CSVImporter importer = new CSVImporter(ImportCSVActivity.this);
 			boolean success = true;
 			String errorMsg = null;
 			try {
 				if(createTable) {
 					importer.buildTable(tableName, file);
 				} else {
-					importer.importTable(tableName, file);
+					importer.importTable(tp, file);
 				}
 			} catch(CSVException e) {
 				success = false;
