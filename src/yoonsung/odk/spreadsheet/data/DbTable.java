@@ -80,9 +80,21 @@ public class DbTable {
     
     public UserTable getUserOverview(String[] primes, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
+        if ((primes.length == 0) || (tp.getColumnOrder().length == 0)) {
+            return getUserTable(selectionKeys, selectionArgs, orderBy);
+        }
+        return getUserTable(selectionKeys, selectionArgs, orderBy);
+        /**
+        StringBuilder outerSelColListBuilder = new StringBuilder();
+        StringBuilder innerPrimeColListBuilder = new StringBuilder();
+        for (String col : tp.getColumnOrder()) {
+            outerSelColListBuilder.append(", x." + col);
+        }
+        
         String[] footer = footerQuery(tp.getColumnOrder(),
                 buildSelectionSql(selectionKeys), selectionArgs);
         return getUserTable(selectionKeys, selectionArgs, orderBy);
+        **/
     }
     
     /**

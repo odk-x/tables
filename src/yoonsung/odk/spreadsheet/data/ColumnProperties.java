@@ -24,6 +24,7 @@ public class ColumnProperties {
     private static final String DB_FOOTER_MODE = "footerMode";
     private static final String DB_SMS_IN = "smsIn";
     private static final String DB_SMS_OUT = "smsOut";
+    private static final String DB_MULTIPLE_CHOICE_OPTIONS = "mcOptions";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given column
@@ -37,7 +38,8 @@ public class ColumnProperties {
         DB_COLUMN_TYPE,
         DB_FOOTER_MODE,
         DB_SMS_IN,
-        DB_SMS_OUT
+        DB_SMS_OUT,
+        DB_MULTIPLE_CHOICE_OPTIONS
     };
     
     public class ColumnType {
@@ -49,6 +51,7 @@ public class ColumnProperties {
         public static final int PHONE_NUMBER = 5;
         public static final int FILE = 6;
         public static final int COLLECT_FORM = 7;
+        public static final int MC_OPTIONS = 8;
         private ColumnType() {}
     }
     
@@ -72,10 +75,12 @@ public class ColumnProperties {
     private int footerMode;
     private boolean smsIn;
     private boolean smsOut;
+    private String[] multipleChoiceOptions;
     
     private ColumnProperties(DbHelper dbh, long tableId, String columnDbName,
             String displayName, String abbreviation, int columnType,
-            int footerMode, boolean smsIn, boolean smsOut) {
+            int footerMode, boolean smsIn, boolean smsOut,
+            String[] multipleChoiceOptions) {
         this.dbh = dbh;
         whereArgs = new String[] {String.valueOf(tableId), columnDbName};
         this.tableId = tableId;
@@ -86,6 +91,7 @@ public class ColumnProperties {
         this.footerMode = footerMode;
         this.smsIn = smsIn;
         this.smsOut = smsOut;
+        this.multipleChoiceOptions = multipleChoiceOptions;
     }
     
     static ColumnProperties getColumnProperties(DbHelper dbh, long tableId,
@@ -101,12 +107,18 @@ public class ColumnProperties {
         int footerModeIndex = c.getColumnIndexOrThrow(DB_FOOTER_MODE);
         int smsInIndex = c.getColumnIndexOrThrow(DB_SMS_IN);
         int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
+        int mcOptionsIndex = c.getColumnIndexOrThrow(
+                DB_MULTIPLE_CHOICE_OPTIONS);
+        String mcOptionsValue = c.isNull(mcOptionsIndex) ?
+                null : c.getString(mcOptionsIndex);
+        String[] mcOptionsList = decodeMultipleChoiceOptions(
+                mcOptionsValue);
         c.moveToFirst();
         ColumnProperties cp = new ColumnProperties(dbh, tableId,
                 c.getString(dbcnIndex), c.getString(displayNameIndex),
                 c.getString(abrvIndex), c.getInt(colTypeIndex),
                 c.getInt(footerModeIndex), c.getInt(smsInIndex) == 1,
-                c.getInt(smsOutIndex) == 1);
+                c.getInt(smsOutIndex) == 1, mcOptionsList);
         c.close();
         db.close();
         return cp;
@@ -125,13 +137,20 @@ public class ColumnProperties {
         int footerModeIndex = c.getColumnIndexOrThrow(DB_FOOTER_MODE);
         int smsInIndex = c.getColumnIndexOrThrow(DB_SMS_IN);
         int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
+        int mcOptionsIndex = c.getColumnIndexOrThrow(
+                DB_MULTIPLE_CHOICE_OPTIONS);
         int i = 0;
         c.moveToFirst();
         while (i < cps.length) {
+            String mcOptionsValue = c.isNull(mcOptionsIndex) ?
+                    null : c.getString(mcOptionsIndex);
+            String[] mcOptionsList = decodeMultipleChoiceOptions(
+                    mcOptionsValue);
             cps[i] = new ColumnProperties(dbh, tableId, c.getString(dbcnIndex),
                     c.getString(displayNameIndex), c.getString(abrvIndex),
                     c.getInt(colTypeIndex), c.getInt(footerModeIndex),
-                    c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1);
+                    c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1,
+                    mcOptionsList);
             i++;
             c.moveToNext();
         }
@@ -151,10 +170,11 @@ public class ColumnProperties {
         values.put(DB_FOOTER_MODE, FooterMode.NONE);
         values.put(DB_SMS_IN, 1);
         values.put(DB_SMS_OUT, 1);
+        values.putNull(DB_MULTIPLE_CHOICE_OPTIONS);
         db.insert(DB_TABLENAME, null, values);
         return new ColumnProperties(dbh, tableId, columnDbName,
                 columnDisplayName, null, ColumnType.NONE, FooterMode.NONE,
-                true, true);
+                true, true, new String[0]);
     }
     
     void deleteColumn(SQLiteDatabase db) {
@@ -269,6 +289,53 @@ public class ColumnProperties {
         this.smsOut = setting;
     }
     
+    /**
+     * @return an array of the multiple-choice options
+     */
+    public String[] getMultipleChoiceOptions() {
+        return multipleChoiceOptions;
+    }
+    
+    /**
+     * Sets the multiple-choice options.
+     * @param options the array of options
+     */
+    public void setMultipleChoiceOptions(String[] options) {
+        String encoding = encodeMultipleChoiceOptions(options);
+        setStringProperty(DB_MULTIPLE_CHOICE_OPTIONS, encoding);
+        multipleChoiceOptions = options;
+    }
+    
+    private static String encodeMultipleChoiceOptions(String[] options) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(String.format("%02d", options.length));
+        for (String option : options) {
+            builder.append(String.format("%02d", option.length()));
+        }
+        for (String option : options) {
+            builder.append(option);
+        }
+        return builder.toString();
+    }
+    
+    private static String[] decodeMultipleChoiceOptions(String encoding) {
+        if ((encoding == null) || (encoding.length() == 0)) {
+            return new String[0];
+        }
+        String countString = encoding.substring(0, 2);
+        int count = Integer.valueOf(countString);
+        String[] options = new String[count];
+        int index = (count + 1) * 2;
+        for (int i = 0; i < count; i++) {
+            int ls = (i + 1) * 2;
+            String lengthString = encoding.substring(ls, ls + 2);
+            int length = Integer.valueOf(lengthString);
+            options[i] = encoding.substring(index, index + length);
+            index += length;
+        }
+        return options;
+    }
+    
     private void setIntProperty(String property, int value) {
         ContentValues values = new ContentValues();
         values.put(property, value);
@@ -304,6 +371,7 @@ public class ColumnProperties {
                 ", " + DB_FOOTER_MODE + " TEXT NOT NULL" +
                 ", " + DB_SMS_IN + " INTEGER NOT NULL" +
                 ", " + DB_SMS_OUT + " INTEGER NOT NULL" +
+                ", " + DB_MULTIPLE_CHOICE_OPTIONS + " TEXT" +
                 ")";
     }
 }

@@ -35,7 +35,8 @@ public class PropertyManager extends PreferenceActivity {
         "Date Range",
         "Phone Number",
         "File",
-        "Collect Form"
+        "Collect Form",
+        "Multiple Choice"
     };
     
     public static final String[] FOOTER_MODE_LABELS = {
@@ -50,6 +51,7 @@ public class PropertyManager extends PreferenceActivity {
         private long tableId;
         private String colName;
         private ColumnProperties cp;
+        private boolean showingMcDialog;
         
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +66,7 @@ public class PropertyManager extends PreferenceActivity {
                 DbHelper dbh = new DbHelper(this);
                 cp = TableProperties.getTablePropertiesForTable(dbh, tableId)
                         .getColumnByDbName(colName);
+                showingMcDialog = false;
                 loadPreferenceScreen();
         }
         
@@ -96,6 +99,11 @@ public class PropertyManager extends PreferenceActivity {
             category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, FOOTER_MODE_LABELS, FOOTER_MODE_LABELS));
             
             category.addPreference(new DisplayPreferencesDialogPreference(this));
+            
+            if (cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS) {
+                showingMcDialog = true;
+                category.addPreference(new McOptionSettingsDialogPreference(this));
+            }
             
             // Set 
             //getListView().setBackgroundColor(Color.TRANSPARENT);
@@ -145,6 +153,10 @@ public class PropertyManager extends PreferenceActivity {
             } else if (key.equals("TYPE")) {
                 for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
                     if (COLUMN_TYPE_LABELS[i].equals(newVal)) {
+                        if ((i == ColumnProperties.ColumnType.MC_OPTIONS) &&
+                                !showingMcDialog) {
+                            loadPreferenceScreen();
+                        }
                         cp.setColumnType(i);
                         break;
                     }
@@ -271,6 +283,22 @@ public class PropertyManager extends PreferenceActivity {
                     new DisplayPrefs(PropertyManager.this,
                     String.valueOf(tableId)), colName);
             setTitle("Display Preferences");
+        }
+        
+        @Override
+        protected void onClick() {
+            dialog.show();
+        }
+    }
+    
+    private class McOptionSettingsDialogPreference extends Preference {
+        
+        private final MultipleChoiceSettingDialog dialog;
+        
+        public McOptionSettingsDialogPreference(Context context) {
+            super(context);
+            dialog = new MultipleChoiceSettingDialog(PropertyManager.this, cp);
+            setTitle("Multiple Choice Settings");
         }
         
         @Override

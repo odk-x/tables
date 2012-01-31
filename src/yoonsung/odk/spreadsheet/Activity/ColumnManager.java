@@ -253,12 +253,12 @@ public class ColumnManager extends ListActivity {
 						alertForNewColumnName(colName.replace(' ', '_'));
 					} else {
 						// Create new column
-					    tp.addColumn(colName);
+					    ColumnProperties cp = tp.addColumn(colName);
 					    cps = tp.getColumns();
 					    columnOrder = tp.getColumnOrder();
 						
 						// Load Column Property Manger
-					    loadColumnPropertyManager(colName);
+					    loadColumnPropertyManager(cp.getColumnDbName());
 					}
 				} else {
 					toastColumnNameError(colName + " is already existing column!");
