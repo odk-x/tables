@@ -104,7 +104,8 @@ public abstract class TableActivity extends Activity
         "Count",
         "Minimum",
         "Maximum",
-        "Mean"
+        "Mean",
+        "Sum"
     };
 	
     protected long tableId;
@@ -153,7 +154,7 @@ public abstract class TableActivity extends Activity
 		    return;
 		}
         dbh = new DbHelper(this);
-        dp = new DisplayPrefs(this, String.valueOf(tableId));
+        dp = new DisplayPrefs(this, tableId);
         init();
 		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
 		table = dbt.getUserOverview(tp.getPrimeColumns(), null, null,
@@ -465,7 +466,7 @@ public abstract class TableActivity extends Activity
 	 * @param colName the column name
 	 */
 	protected void openDisplayPrefsDialog(String colName) {
-	    DisplayPrefs dp = new DisplayPrefs(this, String.valueOf(tableId));
+	    DisplayPrefs dp = new DisplayPrefs(this, tableId);
 	    (new DisplayPrefsDialog(this, dp, colName)).show();
 	}
 	
@@ -1067,7 +1068,13 @@ public abstract class TableActivity extends Activity
                     if (spl.length != 2) {
                         continue;
                     }
-                    searchConstraints.put(spl[0], spl[1]);
+                    String colDbName = tp.getColumnByDisplayName(spl[0]);
+                    if (colDbName == null) {
+                        colDbName = tp.getColumnByAbbreviation(spl[0]);
+                    }
+                    if (colDbName != null) {
+                        searchConstraints.put(colDbName, spl[1]);
+                    }
                 }
                 search();
 			}

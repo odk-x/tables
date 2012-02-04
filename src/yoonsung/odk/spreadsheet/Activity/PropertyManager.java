@@ -44,7 +44,8 @@ public class PropertyManager extends PreferenceActivity {
         "Count",
         "Minimum",
         "Maximum",
-        "Mean"
+        "Mean",
+        "Sum"
     };
     
     // Private Fields
@@ -280,8 +281,7 @@ public class PropertyManager extends PreferenceActivity {
         public DisplayPreferencesDialogPreference(Context context) {
             super(context);
             dialog = new DisplayPrefsDialog(PropertyManager.this,
-                    new DisplayPrefs(PropertyManager.this,
-                    String.valueOf(tableId)), colName);
+                    new DisplayPrefs(PropertyManager.this, tableId), colName);
             setTitle("Display Preferences");
         }
         

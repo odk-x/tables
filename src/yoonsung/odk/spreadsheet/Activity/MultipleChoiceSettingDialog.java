@@ -31,6 +31,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         super(context);
         this.context = context;
         this.cp = cp;
+        setTitle("Multiple Choice Options");
         layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         setContentView(layout);
@@ -76,6 +77,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
             row.addView(deleteButton);
             optionList.addView(row);
         }
+        optionList.setColumnStretchable(0, true);
         layout.addView(optionList);
         Button addButton = new Button(context);
         addButton.setText("Add Choice");

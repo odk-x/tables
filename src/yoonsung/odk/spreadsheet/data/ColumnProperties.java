@@ -61,6 +61,7 @@ public class ColumnProperties {
         public static final int MINIMUM = 2;
         public static final int MAXIMUM = 3;
         public static final int MEAN = 4;
+        public static final int SUM = 5;
         private FooterMode() {}
     }
     

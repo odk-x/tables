@@ -1,6 +1,9 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import yoonsung.odk.spreadsheet.Database.DataTable;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -70,6 +73,7 @@ public class DbTable {
     public UserTable getUserTable(String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
         String selection = buildSelectionSql(selectionKeys);
+        Log.d("DBT", "selection:/" + selection + "/");
         Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
                 orderBy);
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
@@ -83,7 +87,23 @@ public class DbTable {
         if ((primes.length == 0) || (tp.getColumnOrder().length == 0)) {
             return getUserTable(selectionKeys, selectionArgs, orderBy);
         }
-        return getUserTable(selectionKeys, selectionArgs, orderBy);
+        //return getUserTable(selectionKeys, selectionArgs, orderBy);
+        ArrayList<String> cols = new ArrayList<String>();
+        for (String col : tp.getColumnOrder()) {
+            cols.add(col);
+        }
+        String selection = buildSelectionSql(selectionKeys);
+        String sql = DataTable.prepareQueryForTable(true, cols,
+                tp.getSortColumn(), selection, tp);
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        Cursor c = db.rawQuery(sql, selectionArgs);
+        Table table = buildTable(c, tp.getColumnOrder());
+        c.close();
+        db.close();
+        String[] footer = footerQuery(tp.getColumnOrder(), selection,
+                selectionArgs);
+        return new UserTable(table.getRowIds(), tp.getColumnOrder(),
+                table.getData(), footer);
         /**
         StringBuilder outerSelColListBuilder = new StringBuilder();
         StringBuilder innerPrimeColListBuilder = new StringBuilder();
@@ -165,6 +185,9 @@ public class DbTable {
             case ColumnProperties.FooterMode.MINIMUM:
                 sqlBuilder.append(", MIN(" + colDbName + ") AS " + colDbName);
                 break;
+            case ColumnProperties.FooterMode.SUM:
+                sqlBuilder.append(", SUM(" + colDbName + ") AS " + colDbName);
+                break;
             }
         }
         if (sqlBuilder.length() == 6) {
@@ -210,6 +233,9 @@ public class DbTable {
      */
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
+        if (lastModTime == null) {
+            lastModTime = DataUtil.getNowInDbFormat();
+        }
         ContentValues cv = new ContentValues();
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
@@ -260,7 +286,7 @@ public class DbTable {
         }
         StringBuilder selBuilder = new StringBuilder();
         for (String key : selectionKeys) {
-            selBuilder.append(" AND " + key);
+            selBuilder.append(" AND " + key + " = ?");
         }
         if (selBuilder.length() > 0) {
             selBuilder.delete(0, 5);

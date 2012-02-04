@@ -2,23 +2,27 @@ package yoonsung.odk.spreadsheet.DataStructure;
 
 import java.util.ArrayList;
 import java.util.List;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty.ColumnType;
+import android.util.Log;
 
 /**
  * Display preferences for a table.
  */
 public class DisplayPrefs {
     
+    private final Context context;
     private final DisplayPrefsDBManager dbm;
-    private final String tableId;
+    private final long tableId;
     
-    public DisplayPrefs(Context context, String tableId) {
+    public DisplayPrefs(Context context, long tableId) {
+        this.context = context;
         this.tableId = tableId;
         dbm = new DisplayPrefsDBManager(context);
     }
@@ -28,7 +32,7 @@ public class DisplayPrefs {
         // querying the database
         String[] cols = {"id", "comp", "val", "foreground", "background"};
         String selection = "tableid = ? AND colname = ?";
-        String[] selectionArgs = {tableId, colName};
+        String[] selectionArgs = {String.valueOf(tableId), colName};
         SQLiteDatabase db = dbm.getReadableDatabase();
         Cursor cs = db.query("colors", cols, selection, selectionArgs, null,
                 null, null, null);
@@ -95,7 +99,7 @@ public class DisplayPrefs {
         // querying the database
         String[] cols = {"comp", "val", "foreground", "background"};
         String selection = "tableid = ? AND colname = ?";
-        String[] selectionArgs = {tableId, colName};
+        String[] selectionArgs = {String.valueOf(tableId), colName};
         SQLiteDatabase db = dbm.getReadableDatabase();
         Cursor cs = db.query("colors", cols, selection, selectionArgs, null,
                 null, null, null);
@@ -104,8 +108,9 @@ public class DisplayPrefs {
         int foregroundIndex = cs.getColumnIndex("foreground");
         int backgroundIndex = cs.getColumnIndex("background");
         // initializing the ccr
-        ColumnProperty cp = new ColumnProperty(tableId);
-        ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType(colName));
+        TableProperties tp = TableProperties.getTablePropertiesForTable(new DbHelper(context), tableId);
+        ColumnProperties cp = tp.getColumnByDbName(colName);
+        ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());
         // adding rules
         boolean done = !cs.moveToFirst();
         while(!done) {
@@ -129,13 +134,13 @@ public class DisplayPrefs {
     
     public class ColumnColorRuler {
         
-        private ColumnType colType;
+        private int colType;
         private final List<Character> ruleComps;
         private final List<String> ruleVals;
         private final List<Integer> foregroundColors;
         private final List<Integer> backgroundColors;
         
-        private ColumnColorRuler(ColumnType colType) {
+        private ColumnColorRuler(int colType) {
             this.colType = colType;
             ruleComps = new ArrayList<Character>();
             ruleVals = new ArrayList<String>();
@@ -176,11 +181,18 @@ public class DisplayPrefs {
         private boolean checkMatch(String val, int index) {
             int compVal;
             String ruleVal = ruleVals.get(index);
-            if(colType == ColumnType.NUMERIC_VALUE) {
+            if(colType == ColumnProperties.ColumnType.NUMBER) {
+                double doubleValue = Double.parseDouble(val);
+                double doubleRule = Double.parseDouble(ruleVal);
+                Log.d("DP", "doubleValue:" + doubleValue);
+                Log.d("DP", "doubleRule:" + doubleRule);
                 compVal = (new Double(val)).compareTo(new Double(ruleVal));
             } else {
                 compVal = val.compareTo(ruleVal);
             }
+            Log.d("DP", "ruleVal:" + ruleVal);
+            Log.d("DP", "val:" + val);
+            Log.d("DP", "compVal:" + compVal);
             switch(ruleComps.get(index)) {
             case '=':
                 return (compVal == 0);

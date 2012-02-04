@@ -18,7 +18,7 @@ public class MainDisplaySettings extends Activity {
     
     public static final String TABLE_ID_INTENT_KEY = "tableId";
     
-    private static final String[] spinnerTexts = { "Table", "List" };
+    private static final String[] spinnerTexts = { "Table", "List", "Line Graph" };
     
     private Preferences prefs;
     private long tableId;

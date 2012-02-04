@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import yoonsung.odk.spreadsheet.DataStructure.Table;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -310,7 +312,7 @@ public class DataTable {
 		SQLiteDatabase con = db.getConn();
 		
 		// Select Data Table
-		String tableSQL = prepareQueryForTable(isMainTable, colOrder, sortBy, whereClause);
+		String tableSQL = prepareQueryForTable(isMainTable, colOrder, sortBy, whereClause, null);
 		Log.d("dt", "tableSQL:" + tableSQL);
 		Cursor cs = con.rawQuery(tableSQL, null);
 		
@@ -400,53 +402,53 @@ public class DataTable {
 		
 	}
 	
-	private String prepareQueryForTable(boolean isMainTable, 
+	public static String prepareQueryForTable(boolean isMainTable, 
 										ArrayList<String> colOrder,
 										String sortBy,
-										String whereClause) 
+										String whereClause, TableProperties tp) 
 	{	
 		Log.e("colOrder", colOrder.toString() + " " + colOrder.size());
 		
 		// No columns to visualize
 		if (colOrder.size() == 0) {
-			return "SELECT `" + DATA_ROWID + "` AS '" + DATA_ROWID + "'"
-					+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null) + " ";
+			return "SELECT `id` AS 'id'"
+					+ " FROM " + DBIO.toSafeSqlColumn(tp.getDbTableName(), false, null) + " ";
 		}
 		
 		// Select statement with ROWID
-		String result = "SELECT " + db.toSafeSqlColumn(DATA_ROWID, true, null) + ", ";
+		String result = "SELECT " + DBIO.toSafeSqlColumn("id", true, null) + ", ";
 	
 		if (isMainTable) {
 			// Main Table
 			String indexList = "";
 			for(String colName : colOrder) {
-				if(colName.equals("column1") || colName.equals("column2")) {
-					indexList += ", " + db.toSafeSqlColumn(colName, false, null);
+				if(tp.isColumnPrime(colName)) {
+					indexList += ", " + DBIO.toSafeSqlColumn(colName, false, null);
 				}
 			}
 			if (indexList.length() != 0) {
 				indexList = indexList.substring(2);
-				result += db.listColumns(colOrder, true, "MAX", sortBy)
-						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
+				result += DBIO.listColumns(colOrder, true, "MAX", sortBy)
+						+ " FROM " + DBIO.toSafeSqlColumn(tp.getDbTableName(), false, null)
 						+ (whereClause == null ? "" : " WHERE " + whereClause)
 						+ " GROUP BY " + indexList
 						+ " ORDER BY " + indexList + " ASC";
 			} else {
-				result += db.listColumns(colOrder, true, null, null) 
-						+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null);
+				result += DBIO.listColumns(colOrder, true, null, null) 
+						+ " FROM " + DBIO.toSafeSqlColumn(tp.getDbTableName(), false, null);
                 if (whereClause != null)
                     result += " WHERE " + whereClause;
 				if (sortBy != null)
-					result += " ORDER BY Cast(" + db.toSafeSqlColumn(sortBy, false, null) + " as integer)";
+					result += " ORDER BY Cast(" + DBIO.toSafeSqlColumn(sortBy, false, null) + " as integer)";
 			}
 		} else {
 			// Into-History
-			result += db.listColumns(colOrder, true, null, null)
-					+ " FROM " + db.toSafeSqlColumn(currentTableName, false, null)
+			result += DBIO.listColumns(colOrder, true, null, null)
+					+ " FROM " + DBIO.toSafeSqlColumn(tp.getDbTableName(), false, null)
 					+ (whereClause == null ? "" : (" WHERE " + whereClause));
 			
 			if (sortBy != null && sortBy.trim().length() != 0)
-					result += " ORDER BY " + db.toSafeSqlColumn(sortBy, false, null) + " DESC";
+					result += " ORDER BY " + DBIO.toSafeSqlColumn(sortBy, false, null) + " DESC";
 		}
 		
 		Log.e("Table Query", result);

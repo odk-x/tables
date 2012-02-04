@@ -113,7 +113,7 @@ public class DBIO {
 		return true;
 	}
 	
-	public String toSafeSqlColumn(String input, boolean as, String func) {
+	public static String toSafeSqlColumn(String input, boolean as, String func) {
 		input = input.trim();
 		if (as && func != null && func.trim().length() != 0)
 			return func + "(" + input + ")" + " AS `" + input + "`"; 
@@ -123,7 +123,7 @@ public class DBIO {
 			return "`" + input + "`";
 	}
 	
-	public String listColumns(ArrayList<String> columns, boolean as, String func, String funcCol) {
+	public static String listColumns(ArrayList<String> columns, boolean as, String func, String funcCol) {
 		String result = "";
 		for (int i = 0; i < columns.size(); i++) {
 			String col = columns.get(i);
@@ -136,7 +136,7 @@ public class DBIO {
 		return result;
 	}
 	
-	public String listColumns(HashMap<String, String> colMapFunc, boolean as) {
+	public static String listColumns(HashMap<String, String> colMapFunc, boolean as) {
 		String result = "";
 		boolean start = true;
 		for (String col : colMapFunc.keySet()) {
@@ -153,7 +153,7 @@ public class DBIO {
 	}
 	
 	// Add Function
-	private String listColumnWithFunc(String col, boolean as, String func, String funCol) {
+	private static String listColumnWithFunc(String col, boolean as, String func, String funCol) {
 		if (col.equals(funCol)) 
 			return toSafeSqlColumn(col, as, func);
 		else

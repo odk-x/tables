@@ -17,6 +17,7 @@ public class Preferences {
     public class ViewType {
         public static final int TABLE = 0;
         public static final int LIST = 1;
+        public static final int LINE_GRAPH = 2;
     }
     
     private final SharedPreferences prefs;
