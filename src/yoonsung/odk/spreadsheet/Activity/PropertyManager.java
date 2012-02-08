@@ -36,7 +36,8 @@ public class PropertyManager extends PreferenceActivity {
         "Phone Number",
         "File",
         "Collect Form",
-        "Multiple Choice"
+        "Multiple Choice",
+        "Join"
     };
     
     public static final String[] FOOTER_MODE_LABELS = {
@@ -104,6 +105,47 @@ public class PropertyManager extends PreferenceActivity {
             if (cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS) {
                 showingMcDialog = true;
                 category.addPreference(new McOptionSettingsDialogPreference(this));
+            } else if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
+                long joinTableId = cp.getJoinTableId();
+                TableProperties[] tps = TableProperties.getTablePropertiesForAll(new DbHelper(this));
+                TableProperties selectedTp = null;
+                String[] tableIds = new String[tps.length];
+                String selectedTableId = tableIds[0] = null;
+                String[] tableNames = new String[tps.length];
+                String selectedDisplayName = tableNames[0] = "Choose a Table";
+                int index = 1;
+                for (TableProperties tp : tps) {
+                    if (tp.getTableId() == tableId) {
+                        continue;
+                    }
+                    tableIds[index] = String.valueOf(tp.getTableId());
+                    tableNames[index] = tp.getDbTableName();
+                    if (tp.getTableId() == joinTableId) {
+                        selectedTp = tp;
+                        selectedTableId = String.valueOf(tp.getTableId());
+                        selectedDisplayName = tp.getDisplayName();
+                    }
+                    index++;
+                }
+                category.addPreference(createListPreference("JOIN_TABLE", "Join Table", selectedDisplayName, selectedTableId, tableNames, tableIds));
+                if (selectedTp != null) {
+                    String joinColName = cp.getJoinColumnName();
+                    ColumnProperties[] cps = selectedTp.getColumns();
+                    String[] colDbNames = new String[cps.length + 1];
+                    String selectedDbName = colDbNames[0] = null;
+                    String[] colDisplayNames = new String[cps.length + 1];
+                    String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
+                    for (int i = 0; i < cps.length; i++) {
+                        String colDbName = cps[i].getColumnDbName();
+                        colDbNames[i + 1] = colDbName;
+                        colDisplayNames[i + 1] = cps[i].getDisplayName();
+                        if ((joinColName != null) && colDbName.equals(joinColName)) {
+                            selectedDbName = colDbName;
+                            selectedColDisplayName = cps[i].getDisplayName();
+                        }
+                    }
+                    category.addPreference(createListPreference("JOIN_COLUMN", "Join Column", selectedColDisplayName, selectedDbName, colDisplayNames, colDbNames));
+                }
             }
             
             // Set 
@@ -154,11 +196,14 @@ public class PropertyManager extends PreferenceActivity {
             } else if (key.equals("TYPE")) {
                 for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
                     if (COLUMN_TYPE_LABELS[i].equals(newVal)) {
+                        cp.setColumnType(i);
                         if ((i == ColumnProperties.ColumnType.MC_OPTIONS) &&
                                 !showingMcDialog) {
                             loadPreferenceScreen();
+                        } else if (i ==
+                            ColumnProperties.ColumnType.TABLE_JOIN) {
+                            loadPreferenceScreen();
                         }
-                        cp.setColumnType(i);
                         break;
                     }
                 }
@@ -173,7 +218,11 @@ public class PropertyManager extends PreferenceActivity {
                         break;
                     }
                 }
-            } 
+            } else if (key.equals("JOIN_TABLE")) {
+                cp.setJoinTableId(Long.parseLong(newVal));
+            } else if (key.equals("JOIN_COLUMN")) {
+                cp.setJoinColumnName(newVal);
+            }
             
             // Refresh
             getPreferenceScreen().removeAll();

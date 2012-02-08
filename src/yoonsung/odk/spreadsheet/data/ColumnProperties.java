@@ -25,6 +25,8 @@ public class ColumnProperties {
     private static final String DB_SMS_IN = "smsIn";
     private static final String DB_SMS_OUT = "smsOut";
     private static final String DB_MULTIPLE_CHOICE_OPTIONS = "mcOptions";
+    private static final String DB_JOIN_TABLE_ID = "joinTableId";
+    private static final String DB_JOIN_COLUMN_NAME = "joinColumnName";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given column
@@ -39,7 +41,9 @@ public class ColumnProperties {
         DB_FOOTER_MODE,
         DB_SMS_IN,
         DB_SMS_OUT,
-        DB_MULTIPLE_CHOICE_OPTIONS
+        DB_MULTIPLE_CHOICE_OPTIONS,
+        DB_JOIN_TABLE_ID,
+        DB_JOIN_COLUMN_NAME
     };
     
     public class ColumnType {
@@ -52,6 +56,7 @@ public class ColumnProperties {
         public static final int FILE = 6;
         public static final int COLLECT_FORM = 7;
         public static final int MC_OPTIONS = 8;
+        public static final int TABLE_JOIN = 9;
         private ColumnType() {}
     }
     
@@ -77,11 +82,14 @@ public class ColumnProperties {
     private boolean smsIn;
     private boolean smsOut;
     private String[] multipleChoiceOptions;
+    private long joinTableId;
+    private String joinColumnName;
     
     private ColumnProperties(DbHelper dbh, long tableId, String columnDbName,
             String displayName, String abbreviation, int columnType,
             int footerMode, boolean smsIn, boolean smsOut,
-            String[] multipleChoiceOptions) {
+            String[] multipleChoiceOptions, long joinTableId,
+            String joinColumnName) {
         this.dbh = dbh;
         whereArgs = new String[] {String.valueOf(tableId), columnDbName};
         this.tableId = tableId;
@@ -93,6 +101,8 @@ public class ColumnProperties {
         this.smsIn = smsIn;
         this.smsOut = smsOut;
         this.multipleChoiceOptions = multipleChoiceOptions;
+        this.joinTableId = joinTableId;
+        this.joinColumnName = joinColumnName;
     }
     
     static ColumnProperties getColumnProperties(DbHelper dbh, long tableId,
@@ -110,6 +120,8 @@ public class ColumnProperties {
         int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
         int mcOptionsIndex = c.getColumnIndexOrThrow(
                 DB_MULTIPLE_CHOICE_OPTIONS);
+        int joinTableIndex = c.getColumnIndexOrThrow(DB_JOIN_TABLE_ID);
+        int joinColumnIndex = c.getColumnIndexOrThrow(DB_JOIN_COLUMN_NAME);
         String mcOptionsValue = c.isNull(mcOptionsIndex) ?
                 null : c.getString(mcOptionsIndex);
         String[] mcOptionsList = decodeMultipleChoiceOptions(
@@ -119,7 +131,8 @@ public class ColumnProperties {
                 c.getString(dbcnIndex), c.getString(displayNameIndex),
                 c.getString(abrvIndex), c.getInt(colTypeIndex),
                 c.getInt(footerModeIndex), c.getInt(smsInIndex) == 1,
-                c.getInt(smsOutIndex) == 1, mcOptionsList);
+                c.getInt(smsOutIndex) == 1, mcOptionsList,
+                c.getLong(joinTableIndex), c.getString(joinColumnIndex));
         c.close();
         db.close();
         return cp;
@@ -140,6 +153,8 @@ public class ColumnProperties {
         int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
         int mcOptionsIndex = c.getColumnIndexOrThrow(
                 DB_MULTIPLE_CHOICE_OPTIONS);
+        int joinTableIndex = c.getColumnIndexOrThrow(DB_JOIN_TABLE_ID);
+        int joinColumnIndex = c.getColumnIndexOrThrow(DB_JOIN_COLUMN_NAME);
         int i = 0;
         c.moveToFirst();
         while (i < cps.length) {
@@ -151,7 +166,8 @@ public class ColumnProperties {
                     c.getString(displayNameIndex), c.getString(abrvIndex),
                     c.getInt(colTypeIndex), c.getInt(footerModeIndex),
                     c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1,
-                    mcOptionsList);
+                    mcOptionsList, c.getLong(joinTableIndex),
+                    c.getString(joinColumnIndex));
             i++;
             c.moveToNext();
         }
@@ -172,10 +188,12 @@ public class ColumnProperties {
         values.put(DB_SMS_IN, 1);
         values.put(DB_SMS_OUT, 1);
         values.putNull(DB_MULTIPLE_CHOICE_OPTIONS);
+        values.put(DB_JOIN_TABLE_ID, -1);
+        values.putNull(DB_JOIN_COLUMN_NAME);
         db.insert(DB_TABLENAME, null, values);
         return new ColumnProperties(dbh, tableId, columnDbName,
                 columnDisplayName, null, ColumnType.NONE, FooterMode.NONE,
-                true, true, new String[0]);
+                true, true, new String[0], -1, null);
     }
     
     void deleteColumn(SQLiteDatabase db) {
@@ -307,6 +325,38 @@ public class ColumnProperties {
         multipleChoiceOptions = options;
     }
     
+    /**
+     * @return the join table ID
+     */
+    public long getJoinTableId() {
+        return joinTableId;
+    }
+    
+    /**
+     * Sets the join table ID.
+     * @param tableId the join table Id
+     */
+    public void setJoinTableId(long tableId) {
+        setIntProperty(DB_JOIN_TABLE_ID, (new Long(tableId)).intValue());
+        joinTableId = tableId;
+    }
+    
+    /**
+     * @return the join table column name
+     */
+    public String getJoinColumnName() {
+        return joinColumnName;
+    }
+    
+    /**
+     * Sets the join column name.
+     * @param columnName the join column name
+     */
+    public void setJoinColumnName(String columnName) {
+        setStringProperty(DB_JOIN_COLUMN_NAME, columnName);
+        joinColumnName = columnName;
+    }
+    
     private static String encodeMultipleChoiceOptions(String[] options) {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("%02d", options.length));
@@ -373,6 +423,8 @@ public class ColumnProperties {
                 ", " + DB_SMS_IN + " INTEGER NOT NULL" +
                 ", " + DB_SMS_OUT + " INTEGER NOT NULL" +
                 ", " + DB_MULTIPLE_CHOICE_OPTIONS + " TEXT" +
+                ", " + DB_JOIN_TABLE_ID + " INTEGER" +
+                ", " + DB_JOIN_COLUMN_NAME + " TEXT" +
                 ")";
     }
 }

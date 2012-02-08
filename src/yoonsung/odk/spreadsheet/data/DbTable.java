@@ -144,36 +144,6 @@ public class DbTable {
         sqlBuilder.append(") x JOIN " + tp.getDbTableName() + " y");
         sqlBuilder.append(" ON x." + DB_ROW_ID + " = y." + DB_ROW_ID);
         
-        Log.d("DBT", "sql:" + sqlBuilder.toString());
-        
-        /**
-        StringBuilder xSelect = new StringBuilder("x." + DB_ROW_ID);
-        for (String col : tp.getColumnOrder()) {
-            xSelect.append(", x." + col);
-        }
-        StringBuilder primeList = new StringBuilder();
-        StringBuilder joinOn = new StringBuilder();
-        for (String prime : primes) {
-            primeList.append(", " + prime);
-            joinOn.append(" AND x." + prime + " = y." + prime);
-        }
-        primeList.delete(0, 2);
-        StringBuilder yQuery = new StringBuilder();
-        yQuery.append("SELECT ");
-        yQuery.append("MAX(" + orderBy + ") as s" + orderBy + ", ");
-        yQuery.append(primeList.toString());
-        yQuery.append(" FROM " + tp.getDbTableName());
-        yQuery.append(" GROUP BY " + primeList.toString());
-        joinOn.delete(0, 5);
-        joinOn.append(" AND x." + orderBy + " = y.s" + orderBy);
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("SELECT " + xSelect.toString());
-        sqlBuilder.append(" FROM " + tp.getDbTableName() + " x");
-        sqlBuilder.append(" JOIN (" + yQuery.toString() + ") y");
-        sqlBuilder.append(" ON " + joinOn.toString());
-        Log.d("DBT", "sql:" + sqlBuilder.toString());
-        **/
-        
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
         Table table = buildTable(c, tp.getColumnOrder());
