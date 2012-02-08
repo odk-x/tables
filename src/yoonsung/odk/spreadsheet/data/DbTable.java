@@ -1,9 +1,6 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import yoonsung.odk.spreadsheet.Database.DataTable;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -45,6 +42,13 @@ public class DbTable {
     }
     
     /**
+     * @return a raw table of all the data in the table
+     */
+    public Table getRaw() {
+        return getRaw(null, null, null, null);
+    }
+    
+    /**
      * Gets a table of raw data.
      * @param columns the columns to select (if null, all columns will be
      * selected)
@@ -73,7 +77,6 @@ public class DbTable {
     public UserTable getUserTable(String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
         String selection = buildSelectionSql(selectionKeys);
-        Log.d("DBT", "selection:/" + selection + "/");
         Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
                 orderBy);
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
@@ -84,19 +87,95 @@ public class DbTable {
     
     public UserTable getUserOverview(String[] primes, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
-        if ((primes.length == 0) || (tp.getColumnOrder().length == 0)) {
+        if (primes.length == 0) {
             return getUserTable(selectionKeys, selectionArgs, orderBy);
         }
-        //return getUserTable(selectionKeys, selectionArgs, orderBy);
-        ArrayList<String> cols = new ArrayList<String>();
-        for (String col : tp.getColumnOrder()) {
-            cols.add(col);
-        }
         String selection = buildSelectionSql(selectionKeys);
-        String sql = DataTable.prepareQueryForTable(true, cols,
-                tp.getSortColumn(), selection, tp);
+        
+        StringBuilder allSelectList = new StringBuilder("y." + DB_ROW_ID +
+                " AS " + DB_ROW_ID);
+        for (String col : tp.getColumnOrder()) {
+            allSelectList.append(", y." + col + " AS " + col);
+        }
+        
+        StringBuilder xList = new StringBuilder();
+        StringBuilder yList = new StringBuilder();
+        for (String prime : primes) {
+            xList.append(prime + ", ");
+            yList.append(", " + prime);
+        }
+        if (orderBy == null) {
+            xList.delete(xList.length() - 2, xList.length());
+        } else {
+            xList.append(orderBy);
+        }
+        yList.delete(0, 2);
+        StringBuilder xSelect = new StringBuilder();
+        xSelect.append("SELECT MAX(" + DB_ROW_ID + ") as id");
+        if (orderBy != null) {
+            xSelect.append(", " + xList.toString());
+        }
+        xSelect.append(" FROM " + tp.getDbTableName());
+        xSelect.append(" GROUP BY " + xList.toString());
+        
+        StringBuilder idSelect;
+        if (orderBy == null) {
+            idSelect = xSelect;
+        } else {
+            StringBuilder joinBuilder = new StringBuilder();
+            joinBuilder.append("y.s" + orderBy + " = x." + orderBy);
+            for (String prime : primes) {
+                joinBuilder.append(" AND x." + prime + " = y." + prime);
+            }
+            idSelect = new StringBuilder();
+            idSelect.append("SELECT x." + DB_ROW_ID + " FROM (");
+            idSelect.append(xSelect.toString());
+            idSelect.append(") x JOIN (");
+            idSelect.append("SELECT MAX(" + orderBy + ") AS s" + orderBy);
+            idSelect.append(", " + yList.toString());
+            idSelect.append(" FROM " + tp.getDbTableName());
+            idSelect.append(" GROUP BY " + yList.toString());
+            idSelect.append(") y ON " + joinBuilder.toString());
+        }
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT " + allSelectList.toString() + " FROM (");
+        sqlBuilder.append(idSelect.toString());
+        sqlBuilder.append(") x JOIN " + tp.getDbTableName() + " y");
+        sqlBuilder.append(" ON x." + DB_ROW_ID + " = y." + DB_ROW_ID);
+        
+        Log.d("DBT", "sql:" + sqlBuilder.toString());
+        
+        /**
+        StringBuilder xSelect = new StringBuilder("x." + DB_ROW_ID);
+        for (String col : tp.getColumnOrder()) {
+            xSelect.append(", x." + col);
+        }
+        StringBuilder primeList = new StringBuilder();
+        StringBuilder joinOn = new StringBuilder();
+        for (String prime : primes) {
+            primeList.append(", " + prime);
+            joinOn.append(" AND x." + prime + " = y." + prime);
+        }
+        primeList.delete(0, 2);
+        StringBuilder yQuery = new StringBuilder();
+        yQuery.append("SELECT ");
+        yQuery.append("MAX(" + orderBy + ") as s" + orderBy + ", ");
+        yQuery.append(primeList.toString());
+        yQuery.append(" FROM " + tp.getDbTableName());
+        yQuery.append(" GROUP BY " + primeList.toString());
+        joinOn.delete(0, 5);
+        joinOn.append(" AND x." + orderBy + " = y.s" + orderBy);
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT " + xSelect.toString());
+        sqlBuilder.append(" FROM " + tp.getDbTableName() + " x");
+        sqlBuilder.append(" JOIN (" + yQuery.toString() + ") y");
+        sqlBuilder.append(" ON " + joinOn.toString());
+        Log.d("DBT", "sql:" + sqlBuilder.toString());
+        **/
+        
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sql, selectionArgs);
+        Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
         Table table = buildTable(c, tp.getColumnOrder());
         c.close();
         db.close();
@@ -104,17 +183,6 @@ public class DbTable {
                 selectionArgs);
         return new UserTable(table.getRowIds(), tp.getColumnOrder(),
                 table.getData(), footer);
-        /**
-        StringBuilder outerSelColListBuilder = new StringBuilder();
-        StringBuilder innerPrimeColListBuilder = new StringBuilder();
-        for (String col : tp.getColumnOrder()) {
-            outerSelColListBuilder.append(", x." + col);
-        }
-        
-        String[] footer = footerQuery(tp.getColumnOrder(),
-                buildSelectionSql(selectionKeys), selectionArgs);
-        return getUserTable(selectionKeys, selectionArgs, orderBy);
-        **/
     }
     
     /**

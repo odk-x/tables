@@ -8,11 +8,11 @@ import java.util.Date;
 
 public class DataUtil {
     
-    private static final DateFormat dbDateFormat =
+    private static final DateFormat DB_DATE_FORMAT =
         new SimpleDateFormat("yyyy-MM-dd-kk-mm-ss");
     
     public static String getNowInDbFormat() {
-        return dbDateFormat.format(new Date());
+        return DB_DATE_FORMAT.format(new Date());
     }
     
     /**
@@ -46,9 +46,9 @@ public class DataUtil {
     }
     
     private static String validifyDateValue(String value) {
-        Date d = tryDateFormat(value, dbDateFormat);
+        Date d = tryDateFormat(value, DB_DATE_FORMAT);
         if (d != null) {
-            return dbDateFormat.format(d);
+            return DB_DATE_FORMAT.format(d);
         }
         return null;
     }
