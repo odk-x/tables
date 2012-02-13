@@ -1,7 +1,8 @@
 package yoonsung.odk.spreadsheet.view;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -12,7 +13,7 @@ import android.webkit.WebViewClient;
  * @author hkworden
  */
 public class CustomDetailView extends WebView {
-
+    
     private RowData jsData;
     
     public CustomDetailView(Context context) {
@@ -23,21 +24,31 @@ public class CustomDetailView extends WebView {
         addJavascriptInterface(jsData, "data");
     }
     
-    public void display(Map<String, String> data) {
-        jsData.setRow(data);
+    public void display(long tableId, int rowId, Map<String, String> data,
+            Map<String, UserTable> joinData) {
+        jsData.set(data, joinData);
         loadUrl("file:///sdcard/odk/tables/detailview.html");
     }
     
+    /**
+     * "Unused" warnings are suppressed because the public methods of this
+     * class are meant to be called through the JavaScript interface.
+     */
     private class RowData {
         
         private Map<String, String> data;
+        private Map<String, UserTable> joinData;
         
-        public RowData() {
-            data = Collections.emptyMap();
+        RowData() {}
+        
+        RowData(Map<String, String> data, Map<String, UserTable> joinData) {
+            this.data = data;
+            this.joinData = joinData;
         }
         
-        public void setRow(Map<String, String> data) {
+        void set(Map<String, String> data, Map<String, UserTable> joinData) {
             this.data = data;
+            this.joinData = joinData;
         }
         
         @SuppressWarnings("unused")
@@ -46,13 +57,35 @@ public class CustomDetailView extends WebView {
         }
         
         @SuppressWarnings("unused")
-        public void set(String key, String value) {
-            
+        public JoinData getJoin(String key) {
+            return new JoinData(joinData.get(key));
+        }
+    }
+    
+    /**
+     * "Unused" warnings are suppressed because the public methods of this
+     * class are meant to be called through the JavaScript interface.
+     */
+    private class JoinData {
+        
+        private UserTable table;
+        
+        public JoinData(UserTable table) {
+            this.table = table;
         }
         
         @SuppressWarnings("unused")
-        public void dialog(String key) {
-            
+        public int getCount() {
+            return table.getHeight();
+        }
+        
+        @SuppressWarnings("unused")
+        public RowData getData(int index) {
+            Map<String, String> data = new HashMap<String, String>();
+            for (int i = 0; i < table.getWidth(); i++) {
+                data.put(table.getHeader(i), table.getData(index, i));
+            }
+            return new RowData(data, null);
         }
     }
 }

@@ -81,7 +81,7 @@ public class DbTable {
                 orderBy);
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
                 selectionArgs);
-        return new UserTable(table.getRowIds(), tp.getColumnOrder(),
+        return new UserTable(table.getRowIds(), getUserHeader(),
                 table.getData(), footer);
     }
     
@@ -151,7 +151,7 @@ public class DbTable {
         db.close();
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
                 selectionArgs);
-        return new UserTable(table.getRowIds(), tp.getColumnOrder(),
+        return new UserTable(table.getRowIds(), getUserHeader(),
                 table.getData(), footer);
     }
     
@@ -196,6 +196,15 @@ public class DbTable {
             c.moveToNext();
         }
         return new Table(rowIds, columns, data);
+    }
+    
+    private String[] getUserHeader() {
+        ColumnProperties[] cps = tp.getColumns();
+        String[] header = new String[cps.length];
+        for (int i = 0; i < header.length; i++) {
+            header[i] = cps[i].getDisplayName();
+        }
+        return header;
     }
     
     private String[] footerQuery(String[] columns, String selection,

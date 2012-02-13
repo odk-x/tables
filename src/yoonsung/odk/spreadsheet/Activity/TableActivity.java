@@ -1553,10 +1553,23 @@ public abstract class TableActivity extends Activity
 	
 	public void onListItemClick(int rowNum) {
 	    Map<String, String> data = new HashMap<String, String>();
+	    Map<String, UserTable> joinData = new HashMap<String, UserTable>();
 	    for (int i = 0; i < table.getWidth(); i++) {
-	        String key = colOrder[i];
+	        String key = table.getHeader(i);
 	        String value = table.getData(rowNum, i);
 	        data.put(key, value);
+	        if (cps[i].getColumnType() ==
+	            ColumnProperties.ColumnType.TABLE_JOIN) {
+	            DbHelper dbh = new DbHelper(this);
+	            long joinTableId = cps[i].getJoinTableId();
+	            TableProperties joinTp = TableProperties
+	                    .getTablePropertiesForTable(dbh, joinTableId);
+	            DbTable joinDbt = DbTable.getDbTable(dbh, joinTableId);
+	            UserTable ut = joinDbt.getUserTable(
+	                    new String[] {cps[i].getJoinColumnName()},
+	                    new String[] {value}, joinTp.getSortColumn());
+	            joinData.put(key, ut);
+	        }
 	    }
         LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -1564,6 +1577,6 @@ public abstract class TableActivity extends Activity
         tableLp.weight = 1;
         tableWrapper.removeAllViews();
         tableWrapper.addView(cdv, tableLp);
-        cdv.display(data);
+        cdv.display(tableId, table.getRowId(rowNum), data, joinData);
 	}
 }
