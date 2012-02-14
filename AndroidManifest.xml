@@ -49,6 +49,7 @@
 <activity android:name=".Activity.Aggregate"></activity>
 <activity android:name=".Activity.settings.ListDisplaySettings"></activity>
 <activity android:name=".Activity.settings.MainDisplaySettings"></activity>
+<activity android:name=".Activity.TablePropertiesManager"></activity>
     
 <uses-library android:name="com.google.android.maps" />
 </application>

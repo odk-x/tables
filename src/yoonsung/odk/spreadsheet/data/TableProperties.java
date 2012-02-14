@@ -27,6 +27,7 @@ public class TableProperties {
     private static final String DB_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
     private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
+    private static final String DB_DETAIL_VIEW_FILE = "detailViewFile";
     private static final String DB_LIST_DISPLAY_FORMAT = "listDisplayFormat";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
@@ -47,6 +48,7 @@ public class TableProperties {
         DB_WRITE_SECURITY_TABLE_ID,
         DB_SYNC_MODIFICATION_NUMBER,
         DB_LAST_SYNC_TIME,
+        DB_DETAIL_VIEW_FILE,
         DB_LIST_DISPLAY_FORMAT
     };
     
@@ -72,13 +74,15 @@ public class TableProperties {
     private long writeSecurityTableId;
     private int syncModificationNumber;
     private long lastSyncTime;
+    private String detailViewFilename;
     private String listDisplayFormat;
     
     private TableProperties(DbHelper dbh, long tableId, String dbTableName,
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn, long readSecurityTableId,
             long writeSecurityTableId, int syncModificationNumber,
-            long lastSyncTime, String listDisplayFormat) {
+            long lastSyncTime, String detailViewFilename,
+            String listDisplayFormat) {
         this.dbh = dbh;
         whereArgs = new String[] {String.valueOf(tableId)};
         this.tableId = tableId;
@@ -93,6 +97,7 @@ public class TableProperties {
         this.writeSecurityTableId = writeSecurityTableId;
         this.syncModificationNumber = syncModificationNumber;
         this.lastSyncTime = lastSyncTime;
+        this.detailViewFilename = detailViewFilename;
         this.listDisplayFormat = listDisplayFormat;
     }
     
@@ -143,6 +148,7 @@ public class TableProperties {
         int syncModNumIndex = c.getColumnIndexOrThrow(
                 DB_SYNC_MODIFICATION_NUMBER);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
+        int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
         int listDisplayFormatIndex = c.getColumnIndexOrThrow(
                 DB_LIST_DISPLAY_FORMAT);
         int i = 0;
@@ -160,6 +166,7 @@ public class TableProperties {
                     c.getString(sortColumnIndex), c.getLong(rsTableId),
                     c.getLong(wsTableId), c.getInt(syncModNumIndex),
                     c.getLong(lastSyncTimeIndex),
+                    c.getString(detailViewFileIndex),
                     c.getString(listDisplayFormatIndex));
             i++;
             c.moveToNext();
@@ -208,6 +215,7 @@ public class TableProperties {
         values.put(DB_WRITE_SECURITY_TABLE_ID, -1);
         values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
+        values.putNull(DB_DETAIL_VIEW_FILE);
         values.putNull(DB_LIST_DISPLAY_FORMAT);
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
@@ -215,7 +223,7 @@ public class TableProperties {
         Log.d("TP", "new id=" + id);
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null, -1,
-                -1, -1, -1, null);
+                -1, -1, -1, null, null);
         DbTable.createDbTable(db, tp);
         db.setTransactionSuccessful();
         db.endTransaction();
@@ -349,7 +357,7 @@ public class TableProperties {
         // ensuring columns is initialized
         getColumns();
         // determining a database name for the column
-        String baseName = "_" + displayName.replace(' ', '_');
+        String baseName = "_" + displayName.toLowerCase().replace(' ', '_');
         if (!columnNameConflict(baseName)) {
             return addColumn(displayName, baseName);
         }
@@ -627,6 +635,22 @@ public class TableProperties {
     }
     
     /**
+     * @return the detail view filename
+     */
+    public String getDetailViewFilename() {
+        return detailViewFilename;
+    }
+    
+    /**
+     * Sets the table's detail view filename.
+     * @param filename the new filename
+     */
+    public void setDetailViewFilename(String filename) {
+        setStringProperty(DB_DETAIL_VIEW_FILE, filename);
+        this.detailViewFilename = filename;
+    }
+    
+    /**
      * @return the format for list displays
      */
     public String getListDisplayFormat() {
@@ -686,6 +710,7 @@ public class TableProperties {
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " INTEGER NOT NULL" +
                 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
+                ", " + DB_DETAIL_VIEW_FILE + " TEXT" +
                 ", " + DB_LIST_DISPLAY_FORMAT + " TEXT" +
                 ")";
     }

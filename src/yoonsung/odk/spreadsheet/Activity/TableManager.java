@@ -44,7 +44,9 @@ public class TableManager extends ListActivity {
 	public static final int UNSET_SECURITY_TABLE    = 10;
 	public static final int UNSET_SHORTCUT_TABLE    = 11;
 	public static final int AGGREGATE               = 12;
-	public static final int LIST_FORMAT             = 13;
+	public static final int DETAIL_VIEW_FILE        = 13;
+	public static final int LIST_FORMAT             = 14;
+	public static final int LAUNCH_TPM              = 15;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -177,7 +179,9 @@ public class TableManager extends ListActivity {
 		 }
 		 menu.add(0, CHANGE_TABLE_NAME, 1, "Change Table Name");
 		 menu.add(0, REMOVE_TABLE, 2, "Delete the Table");
-		 menu.add(0, LIST_FORMAT, 3, "Change List Format");
+         menu.add(0, DETAIL_VIEW_FILE, 3, "Change Detail View File");
+		 menu.add(0, LIST_FORMAT, 4, "Change List Format");
+		 menu.add(0, LAUNCH_TPM, 5, "Edit Table Properties");
 	 }
 	 
 	 private boolean couldBeSecurityTable(TableProperties tp) {
@@ -239,8 +243,16 @@ public class TableManager extends ListActivity {
 		     tp.deleteTable();
 			 refreshList();
 			 return true;
+		 case DETAIL_VIEW_FILE:
+		     alertForDetailViewFileChange(tp);
+		     return true;
 		 case LIST_FORMAT:
 		     alertForListFormatChange(tp);
+		     return true;
+		 case LAUNCH_TPM:
+		     Intent i = new Intent(this, TablePropertiesManager.class);
+		     i.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID, tp.getTableId());
+		     startActivity(i);
 		     return true;
 		 }
 		 return(super.onOptionsItemSelected(item));
@@ -306,6 +318,25 @@ public class TableManager extends ListActivity {
 	     });
 	     alert.show();
 	 }
+     
+     private void alertForDetailViewFileChange(final TableProperties tp) {
+         AlertDialog.Builder alert = new AlertDialog.Builder(this);
+         alert.setTitle("Change Detail View File");
+         final EditText input = new EditText(this);
+         input.setText(tp.getDetailViewFilename());
+         alert.setView(input);
+         alert.setPositiveButton("Change", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                tp.setDetailViewFilename(input.getText().toString());
+            }
+         });
+         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {}
+         });
+         alert.show();
+     }
 	 
 	 // Ask for a new table name.
 	 private void alertForNewTableName(final boolean isNewTable, 
