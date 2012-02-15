@@ -57,7 +57,7 @@ public class ColumnManager extends ListActivity {
 	// Initialize fields.
 	private void init() {
 	    tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
-	    DbHelper dbh = new DbHelper(this);
+	    DbHelper dbh = DbHelper.getDbHelper(this);
 	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
 	    cps = tp.getColumns();
 	    columnOrder = tp.getColumnOrder();

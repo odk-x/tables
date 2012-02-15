@@ -87,7 +87,7 @@ public class CSVImporter {
 	}
 	
 	private TableProperties addTable(String tableName, ImportInfo ii) {
-	    DbHelper dbh = new DbHelper(context);
+	    DbHelper dbh = DbHelper.getDbHelper(context);
 	    String dbTableName = TableProperties.createDbTableName(dbh, tableName);
 	    TableProperties tp = TableProperties.addTable(dbh, dbTableName,
 	            tableName, TableProperties.TableType.DATA);
@@ -106,7 +106,7 @@ public class CSVImporter {
 	
 	private void importTable(TableProperties tp, ImportInfo ii,
 	        CSVReader reader) {
-	    DbTable dbt = DbTable.getDbTable(new DbHelper(context),
+	    DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
 	            tp.getTableId());
 	    String[] row = getRow(reader);
 	    String tsValue = null;

@@ -65,7 +65,7 @@ public class PropertyManager extends PreferenceActivity {
                 // Column Name
                 this.tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
                 this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
-                DbHelper dbh = new DbHelper(this);
+                DbHelper dbh = DbHelper.getDbHelper(this);
                 cp = TableProperties.getTablePropertiesForTable(dbh, tableId)
                         .getColumnByDbName(colName);
                 showingMcDialog = false;
@@ -107,7 +107,7 @@ public class PropertyManager extends PreferenceActivity {
                 category.addPreference(new McOptionSettingsDialogPreference(this));
             } else if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
                 long joinTableId = cp.getJoinTableId();
-                TableProperties[] tps = TableProperties.getTablePropertiesForAll(new DbHelper(this));
+                TableProperties[] tps = TableProperties.getTablePropertiesForAll(DbHelper.getDbHelper(this));
                 TableProperties selectedTp = null;
                 String[] tableIds = new String[tps.length];
                 String selectedTableId = tableIds[0] = null;

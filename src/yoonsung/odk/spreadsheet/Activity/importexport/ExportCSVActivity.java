@@ -54,7 +54,7 @@ public class ExportCSVActivity extends IETabActivity {
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		dbh = new DbHelper(this);
+		dbh = DbHelper.getDbHelper(this);
 		setContentView(getView());
 	}
 	

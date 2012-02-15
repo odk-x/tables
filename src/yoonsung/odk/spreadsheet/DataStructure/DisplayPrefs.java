@@ -108,7 +108,7 @@ public class DisplayPrefs {
         int foregroundIndex = cs.getColumnIndex("foreground");
         int backgroundIndex = cs.getColumnIndex("background");
         // initializing the ccr
-        TableProperties tp = TableProperties.getTablePropertiesForTable(new DbHelper(context), tableId);
+        TableProperties tp = TableProperties.getTablePropertiesForTable(DbHelper.getDbHelper(context), tableId);
         ColumnProperties cp = tp.getColumnByDbName(colName);
         ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());
         // adding rules

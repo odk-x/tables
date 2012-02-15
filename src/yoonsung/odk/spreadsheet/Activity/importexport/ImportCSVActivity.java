@@ -88,7 +88,8 @@ public class ImportCSVActivity extends IETabActivity {
 		etn.setTextColor(R.color.black);
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(new DbHelper(this));
+		tps = TableProperties.getTablePropertiesForAll(
+		        DbHelper.getDbHelper(this));
 		tableNames = new String[tps.length + 1];
 		tableNames[0] = "New Table";
 		int counter = 1;

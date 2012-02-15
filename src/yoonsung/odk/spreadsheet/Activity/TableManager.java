@@ -57,7 +57,7 @@ public class TableManager extends ListActivity {
 	 @Override
 	 public void onCreate(Bundle savedInstanceState) {
 		 super.onCreate(savedInstanceState);
-		 dbh = new DbHelper(this);
+		 dbh = DbHelper.getDbHelper(this);
 		 prefs = new Preferences(this);
 		 
 		 // Set title of activity
