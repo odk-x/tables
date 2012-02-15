@@ -380,11 +380,11 @@ public abstract class TableActivity extends Activity
 	}
 	
 	/**
-	 * Opens the view settings screen.
+	 * Opens the table properties manager.
 	 */
-	protected void openViewSettingsScreen() {
-	    Intent i = new Intent(this, MainDisplaySettings.class);
-	    i.putExtra(MainDisplaySettings.TABLE_ID_INTENT_KEY, tableId);
+	protected void openTablePropertiesManager() {
+	    Intent i = new Intent(this, TablePropertiesManager.class);
+	    i.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID, tableId);
 	    startActivity(i);
 	}
 	

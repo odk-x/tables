@@ -36,7 +36,7 @@ public class SpreadSheet extends TableActivity {
 	private static final int OPEN_SECURITY_MANAGER = 2;
 	private static final int GRAPH = 3;
 	private static final int IMPORTEXPORT = 5;
-	private static final int OPEN_VIEW_SETTINGS = 6;
+	private static final int OPEN_TPM = 6;
 	// context menu IDs
 	private static final int SELECT_COLUMN = 7;
 	private static final int SEND_SMS_ROW = 8;
@@ -89,7 +89,7 @@ public class SpreadSheet extends TableActivity {
 		menu.add(none, OPEN_SECURITY_MANAGER, none, "Security Manager");
 		menu.add(none, GRAPH, none, "Graph");
 		menu.add(none, IMPORTEXPORT, none, "Import/Export");
-		menu.add(none, OPEN_VIEW_SETTINGS, none, "View Settings");
+		menu.add(none, OPEN_TPM, none, "Table Properties");
 		return true;
 	}
 	
@@ -118,8 +118,8 @@ public class SpreadSheet extends TableActivity {
 		case IMPORTEXPORT:
 			openImportExportScreen();
 			return true;
-		case OPEN_VIEW_SETTINGS:
-		    openViewSettingsScreen();
+		case OPEN_TPM:
+		    openTablePropertiesManager();
 		    return true;
 		default:
 			return super.onMenuItemSelected(featureId, item);
