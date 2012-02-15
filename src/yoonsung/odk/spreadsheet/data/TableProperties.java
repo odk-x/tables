@@ -28,7 +28,7 @@ public class TableProperties {
     private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
     private static final String DB_DETAIL_VIEW_FILE = "detailViewFile";
-    private static final String DB_LIST_DISPLAY_FORMAT = "listDisplayFormat";
+    private static final String DB_SUMMARY_DISPLAY_FORMAT = "sumDisplayFormat";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given table
@@ -49,7 +49,7 @@ public class TableProperties {
         DB_SYNC_MODIFICATION_NUMBER,
         DB_LAST_SYNC_TIME,
         DB_DETAIL_VIEW_FILE,
-        DB_LIST_DISPLAY_FORMAT
+        DB_SUMMARY_DISPLAY_FORMAT
     };
     
     public class TableType {
@@ -75,14 +75,14 @@ public class TableProperties {
     private int syncModificationNumber;
     private long lastSyncTime;
     private String detailViewFilename;
-    private String listDisplayFormat;
+    private String sumDisplayFormat;
     
     private TableProperties(DbHelper dbh, long tableId, String dbTableName,
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn, long readSecurityTableId,
             long writeSecurityTableId, int syncModificationNumber,
             long lastSyncTime, String detailViewFilename,
-            String listDisplayFormat) {
+            String sumDisplayFormat) {
         this.dbh = dbh;
         whereArgs = new String[] {String.valueOf(tableId)};
         this.tableId = tableId;
@@ -98,7 +98,7 @@ public class TableProperties {
         this.syncModificationNumber = syncModificationNumber;
         this.lastSyncTime = lastSyncTime;
         this.detailViewFilename = detailViewFilename;
-        this.listDisplayFormat = listDisplayFormat;
+        this.sumDisplayFormat = sumDisplayFormat;
     }
     
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
@@ -149,8 +149,8 @@ public class TableProperties {
                 DB_SYNC_MODIFICATION_NUMBER);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
         int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
-        int listDisplayFormatIndex = c.getColumnIndexOrThrow(
-                DB_LIST_DISPLAY_FORMAT);
+        int sumDisplayFormatIndex = c.getColumnIndexOrThrow(
+                DB_SUMMARY_DISPLAY_FORMAT);
         int i = 0;
         c.moveToFirst();
         while (i < tps.length) {
@@ -167,7 +167,7 @@ public class TableProperties {
                     c.getLong(wsTableId), c.getInt(syncModNumIndex),
                     c.getLong(lastSyncTimeIndex),
                     c.getString(detailViewFileIndex),
-                    c.getString(listDisplayFormatIndex));
+                    c.getString(sumDisplayFormatIndex));
             i++;
             c.moveToNext();
         }
@@ -216,7 +216,7 @@ public class TableProperties {
         values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.putNull(DB_DETAIL_VIEW_FILE);
-        values.putNull(DB_LIST_DISPLAY_FORMAT);
+        values.putNull(DB_SUMMARY_DISPLAY_FORMAT);
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
         long id = db.insert(DB_TABLENAME, null, values);
@@ -651,19 +651,19 @@ public class TableProperties {
     }
     
     /**
-     * @return the format for list displays
+     * @return the format for summary displays
      */
-    public String getListDisplayFormat() {
-        return listDisplayFormat;
+    public String getSummaryDisplayFormat() {
+        return sumDisplayFormat;
     }
     
     /**
-     * Sets the table's list display format.
-     * @param format the new list display format
+     * Sets the table's summary display format.
+     * @param format the new summary display format
      */
-    public void setListDisplayFormat(String format) {
-        setStringProperty(DB_LIST_DISPLAY_FORMAT, format);
-        this.listDisplayFormat = format;
+    public void setSummaryDisplayFormat(String format) {
+        setStringProperty(DB_SUMMARY_DISPLAY_FORMAT, format);
+        this.sumDisplayFormat = format;
     }
     
     private void setIntProperty(String property, int value) {
@@ -711,7 +711,7 @@ public class TableProperties {
                 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_DETAIL_VIEW_FILE + " TEXT" +
-                ", " + DB_LIST_DISPLAY_FORMAT + " TEXT" +
+                ", " + DB_SUMMARY_DISPLAY_FORMAT + " TEXT" +
                 ")";
     }
 }

@@ -18,6 +18,7 @@ import yoonsung.odk.spreadsheet.Activity.util.LanguageUtil;
 import yoonsung.odk.spreadsheet.Activity.util.SecurityUtil;
 import yoonsung.odk.spreadsheet.Activity.util.ShortcutUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.Preferences;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 
 /**
@@ -33,6 +34,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     
     private DbHelper dbh;
     private TableProperties tp;
+    private Preferences prefs;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,6 +46,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         }
         dbh = new DbHelper(this);
         tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+        prefs = new Preferences(this);
         setTitle("ODK Tables > Table Manager > " + tp.getDisplayName());
         init();
     }
@@ -125,22 +128,6 @@ public class TablePropertiesManager extends PreferenceActivity {
         PreferenceCategory displayCat = new PreferenceCategory(this);
         root.addPreference(displayCat);
         displayCat.setTitle("Display");
-
-        EditTextPreference listFormatPref = new EditTextPreference(this);
-        listFormatPref.setTitle("List Display Format");
-        listFormatPref.setDialogTitle("Change List Display Format");
-        listFormatPref.setText(tp.getListDisplayFormat());
-        listFormatPref.setOnPreferenceChangeListener(
-                new OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference,
-                    Object newValue) {
-                tp.setListDisplayFormat((String) newValue);
-                init();
-                return false;
-            }
-        });
-        displayCat.addPreference(listFormatPref);
         
         FileSelectorPreference detailViewPref =
                 new FileSelectorPreference(this);
@@ -158,6 +145,50 @@ public class TablePropertiesManager extends PreferenceActivity {
                     }
         });
         displayCat.addPreference(detailViewPref);
+        
+        EditTextPreference sumFormatPref = new EditTextPreference(this);
+        sumFormatPref.setTitle("Summary Display Format");
+        sumFormatPref.setDialogTitle("Change Summary Display Format");
+        sumFormatPref.setText(tp.getSummaryDisplayFormat());
+        sumFormatPref.setOnPreferenceChangeListener(
+                new OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference,
+                    Object newValue) {
+                tp.setSummaryDisplayFormat((String) newValue);
+                init();
+                return false;
+            }
+        });
+        displayCat.addPreference(sumFormatPref);
+        
+        String[] viewTypeIds = new String[Preferences.ViewType.COUNT];
+        String[] viewTypeNames = new String[Preferences.ViewType.COUNT];
+        for (int i = 0; i < Preferences.ViewType.COUNT; i++) {
+            viewTypeIds[i] = String.valueOf(i);
+            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(i);
+        }
+        ListPreference viewTypePref = new ListPreference(this);
+        viewTypePref.setTitle("Preferred View Type");
+        viewTypePref.setDialogTitle("Change Preferred View Type");
+        viewTypePref.setEntryValues(viewTypeIds);
+        viewTypePref.setEntries(viewTypeNames);
+        int preferredViewType = prefs.getPreferredViewType(tp.getTableId());
+        viewTypePref.setValue(String.valueOf(preferredViewType));
+        viewTypePref.setSummary(LanguageUtil.getViewTypeLabel(
+                preferredViewType));
+        viewTypePref.setOnPreferenceChangeListener(
+                new OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference,
+                    Object newValue) {
+                prefs.setPreferredViewType(tp.getTableId(),
+                        Integer.parseInt((String) newValue));
+                init();
+                return false;
+            }
+        });
+        displayCat.addPreference(viewTypePref);
         
         // security category
         

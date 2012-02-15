@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.Activity.util;
 
+import yoonsung.odk.spreadsheet.data.Preferences;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 
 
@@ -15,6 +16,22 @@ public class LanguageUtil {
             return "Shortcut";
         default:
             throw new RuntimeException("Invalid table type (" + tableType +
+                    ").");
+        }
+    }
+    
+    public static String getViewTypeLabel(int viewType) {
+        switch(viewType) {
+        case Preferences.ViewType.TABLE:
+            return "Table";
+        case Preferences.ViewType.LIST:
+            return "List";
+        case Preferences.ViewType.LINE_GRAPH:
+            return "Line Graph";
+        case Preferences.ViewType.MAP:
+            return "Map";
+        default:
+            throw new RuntimeException("Invalid view type (" + viewType +
                     ").");
         }
     }

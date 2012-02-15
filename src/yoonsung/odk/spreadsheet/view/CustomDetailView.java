@@ -14,10 +14,17 @@ import android.webkit.WebViewClient;
  */
 public class CustomDetailView extends WebView {
     
+    private static final String DEFAULT_HTML =
+        "<html><body>" +
+        "<p>No detail view has been specified.</p>" +
+        "</body></html>";
+    
+    private String filename;
     private RowData jsData;
     
-    public CustomDetailView(Context context) {
+    public CustomDetailView(Context context, String filename) {
         super(context);
+        this.filename = filename;
         getSettings().setJavaScriptEnabled(true);
         setWebViewClient(new WebViewClient() {});
         jsData = new RowData();
@@ -27,7 +34,11 @@ public class CustomDetailView extends WebView {
     public void display(long tableId, int rowId, Map<String, String> data,
             Map<String, UserTable> joinData) {
         jsData.set(data, joinData);
-        loadUrl("file:///sdcard/odk/tables/detailview.html");
+        if (filename == null) {
+            loadUrl("file:///" + filename);
+        } else {
+            loadData(DEFAULT_HTML, "text/html", null);
+        }
     }
     
     /**

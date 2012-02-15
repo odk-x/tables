@@ -304,12 +304,12 @@ public class TableManager extends ListActivity {
 	     AlertDialog.Builder alert = new AlertDialog.Builder(this);
 	     alert.setTitle("Change List Format");
 	     final EditText input = new EditText(this);
-	     input.setText(tp.getListDisplayFormat());
+	     input.setText(tp.getSummaryDisplayFormat());
 	     alert.setView(input);
 	     alert.setPositiveButton("Change", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                tp.setListDisplayFormat(input.getText().toString());
+                tp.setSummaryDisplayFormat(input.getText().toString());
             }
 	     });
 	     alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

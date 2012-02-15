@@ -51,7 +51,7 @@ public class ListDisplayView extends LinearLayout {
     }
     
     private void setFormatInfo() {
-        String format = tp.getListDisplayFormat();
+        String format = tp.getSummaryDisplayFormat();
         if (format == null || format.length() == 0) {
             format = getDefaultFormat();
         }

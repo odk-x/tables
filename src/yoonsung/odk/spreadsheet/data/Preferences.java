@@ -18,6 +18,8 @@ public class Preferences {
         public static final int TABLE = 0;
         public static final int LIST = 1;
         public static final int LINE_GRAPH = 2;
+        public static final int MAP = 3;
+        public static final int COUNT = 4; // the number of types
     }
     
     private final SharedPreferences prefs;
