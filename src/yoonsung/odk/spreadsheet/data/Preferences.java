@@ -13,6 +13,8 @@ public class Preferences {
     private static final String FILE_NAME = "odktables_preferences";
     private static final String DEFAULT_TABLE_KEY = "defaultTable";
     private static final String PREFERRED_VIEW_TYPE_BASE_KEY = "viewType-";
+    private static final String AGGREGATE_URI_KEY = "aggregateURI";
+    private static final String AGGREGATE_USERNAME_KEY = "aggregateUser";
     
     public class ViewType {
         public static final int TABLE = 0;
@@ -45,6 +47,30 @@ public class Preferences {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type);
         editor.commit();
+    }
+    
+    public void setAggregateUri(String aggregateUri)
+    {
+    	SharedPreferences.Editor editor = prefs.edit();
+    	editor.putString(AGGREGATE_URI_KEY, aggregateUri);
+    	editor.commit();
+    }
+    
+    public String getAggregateUri()
+    {
+    	return prefs.getString(AGGREGATE_URI_KEY, null);
+    }
+    
+    public void setAggregateUsername(String aggregateUsername)
+    {
+    	SharedPreferences.Editor editor = prefs.edit();
+    	editor.putString(AGGREGATE_USERNAME_KEY, aggregateUsername);
+    	editor.commit();
+    }
+    
+    public String getAggregateUsername()
+    {
+    	return prefs.getString(AGGREGATE_USERNAME_KEY, null);
     }
     
     public void clearTablePreferences(long tableId) {
