@@ -543,8 +543,10 @@ public class TableProperties {
         for (String cdb : primeColumns) {
             str += cdb + "/";
         }
-        setStringProperty(DB_PRIME_COLUMNS, str.substring(0,
-                str.length() - 1));
+        if (str.length() != 0) {
+            str = str.substring(0, str.length() - 1);
+        }
+        setStringProperty(DB_PRIME_COLUMNS, str);
         this.primeColumns = primeColumns;
     }
     
