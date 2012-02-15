@@ -312,7 +312,8 @@ public class DbTable {
 		for (String column : values.keySet()) {
 			cv.put(column, values.get(column));
 		}
-		cv.put(DB_STATE, State.UPDATING);
+		if (!cv.containsKey(DB_STATE))
+			cv.put(DB_STATE, State.UPDATING);
 		String[] whereArgs = { String.valueOf(rowId),
 				String.valueOf(State.REST),
 				String.valueOf(Transactioning.FALSE) };
