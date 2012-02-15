@@ -24,6 +24,11 @@ public class DbTable {
 	public static final String DB_STATE = "state";
 	public static final String DB_TRANSACTIONING = "transactioning";
 
+	public static final String rowIdEquals = DB_ROW_ID + " = ?";
+	public static final String syndIdEquals = DB_SYNC_ID + " =?";
+	public static final String stateEquals = DB_STATE + " = ?";
+	public static final String transactioningEquals = DB_TRANSACTIONING + " = ?";
+	
 	private final DbHelper dbh;
 	private final TableProperties tp;
 
@@ -291,11 +296,13 @@ public class DbTable {
 		}
 		cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
 		cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
-		cv.put(DB_STATE, State.INSERTING);
+		if (!cv.containsKey(DB_STATE))
+			cv.put(DB_STATE, State.INSERTING);
 		cv.put(DB_TRANSACTIONING, Transactioning.FALSE);
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		Log.d("DBT", "insert, id=" + db.insert(tp.getDbTableName(), null, cv));
 		db.close();
+		tp.setState(State.UPDATING);
 	}
 
 	/**
@@ -311,32 +318,36 @@ public class DbTable {
 	 */
 	public void updateRow(int rowId, Map<String, String> values,
 			String srcPhone, String lastModTime) {
+		
+		values.put(DB_STATE, String.valueOf(State.UPDATING));
+		
+		String whereClause = rowIdEquals + " AND " + stateEquals + " AND " + transactioningEquals;
+		String[] whereArgs = { String.valueOf(rowId), String.valueOf(State.REST), String.valueOf(Transactioning.FALSE) };
+		
+		int numUpdated = updateRowsActual(values, whereClause, whereArgs);
+		
+		if (numUpdated == 0) {
+			// row is not in REST state, so keep it in the state it is in 
+			// or transactioning could be TRUE, in which case we skip the update
+			// TODO: we should somehow signify that the update didn't go through in this case
+			// it shouldn't happen if we have serialized db connection (i.e. one DbHelper instance)
+			whereClause = rowIdEquals + " AND " + transactioningEquals;
+			whereArgs = new String[]{ String.valueOf(rowId), String.valueOf(Transactioning.FALSE) };
+			numUpdated = updateRowsActual(values, whereClause, whereArgs);
+		}
+		tp.setState(State.UPDATING);
+	}
+	
+	public int updateRowsActual(Map<String, String> values, String whereClause, String[] whereArgs)
+	{
 		ContentValues cv = new ContentValues();
 		for (String column : values.keySet()) {
 			cv.put(column, values.get(column));
 		}
-		if (!cv.containsKey(DB_STATE))
-			cv.put(DB_STATE, State.UPDATING);
-		String[] whereArgs = { String.valueOf(rowId),
-				String.valueOf(State.REST),
-				String.valueOf(Transactioning.FALSE) };
-		String rowIdEquals = DB_ROW_ID + " = ?";
-		String stateEquals = DB_STATE + " = ?";
-		String transactioningEquals = DB_TRANSACTIONING + " = ?";
 		SQLiteDatabase db = dbh.getWritableDatabase();
-		int numUpdated = db.update(tp.getDbTableName(), cv, rowIdEquals
-				+ " AND " + stateEquals + " AND " + transactioningEquals,
-				whereArgs);
-		if (numUpdated == 0) {
-			// row is not in REST state, so keep it in the state it is in
-			cv.remove(DB_STATE);
-			String[] newWhereArgs = { String.valueOf(rowId),
-					String.valueOf(Transactioning.FALSE) };
-			numUpdated = db.update(tp.getDbTableName(), cv, rowIdEquals
-					+ " AND " + transactioningEquals, newWhereArgs);
-			assert numUpdated == 1;
-		}
+		int numUpdated = db.update(tp.getDbTableName(), cv, whereClause, whereArgs);
 		db.close();
+		return numUpdated;
 	}
 
 	/**
@@ -353,15 +364,15 @@ public class DbTable {
 		int numUpdated = db.update(tp.getDbTableName(), cv, rowIdEquals + " AND " + transactioningEquals, whereArgs);
 		assert numUpdated == 1;
 		db.close();
+		tp.setState(State.UPDATING);
 	}
 
 	/**
 	 * Deletes the given row from the table.
 	 */
-	public void deleteRowActual(int rowId) {
-		String[] whereArgs = { String.valueOf(rowId) };
+	public void deleteRowsActual(String whereClause, String[] whereArgs) {
 		SQLiteDatabase db = dbh.getWritableDatabase();
-		db.delete(tp.getDbTableName(), DB_ROW_ID + " = ?", whereArgs);
+		db.delete(tp.getDbTableName(), whereClause, whereArgs);
 		db.close();
 	}
 
