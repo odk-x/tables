@@ -37,12 +37,15 @@ public class DbTable {
 	}
 
 	static void createDbTable(SQLiteDatabase db, TableProperties tp) {
-		db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" + DB_ROW_ID
-				+ " INTEGER PRIMARY KEY" + ", " + DB_SRC_PHONE_NUMBER + " TEXT"
-				+ ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" + ", "
-				+ DB_SYNC_ID + " TEXT" + ", " + DB_SYNC_TAG + " TEXT" + ", "
-				+ DB_STATE + " INT NOT NULL" + ", " + DB_TRANSACTIONING
-				+ " INT NOT NULL" + ")");
+		db.execSQL("CREATE TABLE " + tp.getDbTableName() + 
+				"(" + DB_ROW_ID + " INTEGER PRIMARY KEY" + 
+				", " + DB_SRC_PHONE_NUMBER + " TEXT" + 
+				", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" + 
+				", " + DB_SYNC_ID + " TEXT" + 
+				", " + DB_SYNC_TAG + " TEXT" + 
+				", " + DB_STATE + " INT NOT NULL" + 
+				", " + DB_TRANSACTIONING + " INT NOT NULL" + 
+				")");
 	}
 
 	/**
