@@ -253,10 +253,7 @@ public class TableProperties {
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(DB_STATE, State.DELETING);
-		db.beginTransaction();
 		db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
-		db.setTransactionSuccessful();
-		db.endTransaction();
 		db.close();
 	}
 
