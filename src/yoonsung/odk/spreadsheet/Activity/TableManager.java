@@ -254,7 +254,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Access Control Table");
 		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
 		 menu.add(0, IMPORT_EXPORT, 0, "File Import/Export");
-		 menu.add(0, AGGREGATE, 0, "ODK Aggregate Import/Export");
+		 menu.add(0, AGGREGATE, 0, "Sync");
 		 return true;
 	 }
     
