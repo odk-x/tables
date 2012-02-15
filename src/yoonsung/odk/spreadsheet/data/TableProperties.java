@@ -256,7 +256,7 @@ public class TableProperties {
         Log.d("TP", "new id=" + id);
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null, -1,
-                -1, -1, -1, null, null, State.INSERTING, Transactioning.FALSE);
+                -1, -1, null, null, null, State.INSERTING, Transactioning.FALSE);
         DbTable.createDbTable(db, tp);
         db.setTransactionSuccessful();
         db.endTransaction();
@@ -659,19 +659,18 @@ public class TableProperties {
     }
     
     /**
-     * @return the last synchronization time (in seconds) (or -1 if the table
-     * has never been synchronized)
+     * @return the last synchronization time (in the format of {@link DataUtil#getNowInDbFormat()}.
      */
-    public long getLastSyncTime() {
+    public String getLastSyncTime() {
         return lastSyncTime;
     }
     
     /**
      * Sets the table's last synchronization time.
-     * @param time the new synchronization time (in seconds)
+     * @param time the new synchronization time (in the format of {@link DataUtil#getNowInDbFormat()}).
      */
-    public void setLastSyncTime(long time) {
-        setLongProperty(DB_LAST_SYNC_TIME, time);
+    public void setLastSyncTime(String time) {
+        setStringProperty(DB_LAST_SYNC_TIME, time);
         this.lastSyncTime = time;
     }
     
