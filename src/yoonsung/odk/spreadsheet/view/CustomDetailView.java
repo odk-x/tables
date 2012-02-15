@@ -34,7 +34,7 @@ public class CustomDetailView extends WebView {
     public void display(long tableId, int rowId, Map<String, String> data,
             Map<String, UserTable> joinData) {
         jsData.set(data, joinData);
-        if (filename == null) {
+        if (filename != null) {
             loadUrl("file:///" + filename);
         } else {
             loadData(DEFAULT_HTML, "text/html", null);

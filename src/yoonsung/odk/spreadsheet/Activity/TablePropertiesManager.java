@@ -44,7 +44,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             throw new RuntimeException("Table ID (" + tableId +
                     ") is invalid.");
         }
-        dbh = new DbHelper(this);
+        dbh = DbHelper.getDbHelper(this);
         tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
         prefs = new Preferences(this);
         setTitle("ODK Tables > Table Manager > " + tp.getDisplayName());

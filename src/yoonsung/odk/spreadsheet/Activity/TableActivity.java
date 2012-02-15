@@ -153,7 +153,7 @@ public abstract class TableActivity extends Activity
 		    bounceToTableManager();
 		    return;
 		}
-        dbh = new DbHelper(this);
+        dbh = DbHelper.getDbHelper(this);
         dp = new DisplayPrefs(this, tableId);
         init();
 		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
@@ -1560,7 +1560,6 @@ public abstract class TableActivity extends Activity
 	        data.put(key, value);
 	        if (cps[i].getColumnType() ==
 	            ColumnProperties.ColumnType.TABLE_JOIN) {
-	            DbHelper dbh = new DbHelper(this);
 	            long joinTableId = cps[i].getJoinTableId();
 	            TableProperties joinTp = TableProperties
 	                    .getTablePropertiesForTable(dbh, joinTableId);
@@ -1576,7 +1575,7 @@ public abstract class TableActivity extends Activity
                 LinearLayout.LayoutParams.MATCH_PARENT);
         tableLp.weight = 1;
         tableWrapper.removeAllViews();
-        tableWrapper.addView(cdv, tableLp);
         cdv.display(tableId, table.getRowId(rowNum), data, joinData);
+        tableWrapper.addView(cdv, tableLp);
 	}
 }

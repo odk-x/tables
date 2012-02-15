@@ -14,8 +14,17 @@ public class DbHelper extends SQLiteOpenHelper {
     private static final String DB_FILE_NAME = "/sdcard/odk/tables/db.sql";
     private static final int DB_VERSION = 1;
     
+    private static DbHelper dbh = null;
+    
     public DbHelper(Context context) {
         super(context, DB_FILE_NAME, null, DB_VERSION);
+    }
+    
+    public static DbHelper getDbHelper(Context context) {
+        if (dbh == null) {
+            dbh = new DbHelper(context);
+        }
+        return dbh;
     }
     
     @Override
