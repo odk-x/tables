@@ -38,20 +38,29 @@ public class TableProperties {
 	// the SQL where clause to use for selecting by table type
 	private static final String TYPE_WHERE_SQL = DB_TABLE_TYPE + " = ?";
 	// the columns to be selected when initializing TableProperties
-	private static final String[] INIT_COLUMNS = { DB_TABLE_ID,
-			DB_DB_TABLE_NAME, DB_DISPLAY_NAME, DB_TABLE_TYPE, DB_COLUMN_ORDER,
-			DB_PRIME_COLUMNS, DB_SORT_COLUMN, DB_READ_SECURITY_TABLE_ID,
-			DB_WRITE_SECURITY_TABLE_ID, DB_SYNC_MODIFICATION_NUMBER,
-			DB_LAST_SYNC_TIME, DB_LIST_DISPLAY_FORMAT, DB_STATE,
-			DB_TRANSACTIONING, };
+	private static final String[] INIT_COLUMNS = { 
+		DB_TABLE_ID,
+		DB_DB_TABLE_NAME, 
+		DB_DISPLAY_NAME, 
+		DB_TABLE_TYPE, 
+		DB_COLUMN_ORDER,
+		DB_PRIME_COLUMNS, 
+		DB_SORT_COLUMN, 
+		DB_READ_SECURITY_TABLE_ID,
+		DB_WRITE_SECURITY_TABLE_ID, 
+		DB_SYNC_MODIFICATION_NUMBER,
+		DB_LAST_SYNC_TIME, 
+		DB_LIST_DISPLAY_FORMAT, 
+		DB_STATE,
+		DB_TRANSACTIONING, 
+	};
 
 	public class TableType {
 		public static final int DATA = 0;
 		public static final int SECURITY = 1;
 		public static final int SHORTCUT = 2;
 
-		private TableType() {
-		}
+		private TableType() {}
 	}
 
 	public class State {
@@ -61,16 +70,14 @@ public class TableProperties {
 		public static final int DELETING = 3;
 		public static final int CONFLICTING = 4;
 
-		private State() {
-		}
+		private State() {}
 	}
 
 	public class Transactioning {
 		public static final int FALSE = 0;
 		public static final int TRUE = 1;
 
-		private Transactioning() {
-		}
+		private Transactioning() {}
 	}
 
 	private final DbHelper dbh;
@@ -746,16 +753,19 @@ public class TableProperties {
 	}
 
 	static String getTableCreateSql() {
-		return "CREATE TABLE " + DB_TABLENAME + "(" + DB_TABLE_ID
-				+ " INTEGER PRIMARY KEY" + ", " + DB_DB_TABLE_NAME
-				+ " TEXT UNIQUE" + ", " + DB_DISPLAY_NAME + " TEXT NOT NULL"
-				+ ", " + DB_TABLE_TYPE + " INTEGER NOT NULL" + ", "
-				+ DB_COLUMN_ORDER + " TEXT NOT NULL" + ", " + DB_PRIME_COLUMNS
-				+ " TEXT NOT NULL" + ", " + DB_SORT_COLUMN + " TEXT" + ", "
-				+ DB_READ_SECURITY_TABLE_ID + " INTEGER NOT NULL" + ", "
-				+ DB_WRITE_SECURITY_TABLE_ID + " INTEGER NOT NULL" + ", "
-				+ DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" + ", "
-				+ DB_LAST_SYNC_TIME + " INTEGER NOT NULL" + ", "
-				+ DB_LIST_DISPLAY_FORMAT + " TEXT" + ")";
+		return "CREATE TABLE " + DB_TABLENAME + 
+				"(" +   DB_TABLE_ID + " INTEGER PRIMARY KEY" +
+				 ", " + DB_DB_TABLE_NAME + " TEXT UNIQUE" + 
+				 ", " + DB_DISPLAY_NAME + " TEXT NOT NULL" + 
+				 ", " + DB_TABLE_TYPE + " INTEGER NOT NULL" + 
+				 ", " + DB_COLUMN_ORDER + " TEXT NOT NULL" + 
+				 ", " + DB_PRIME_COLUMNS + " TEXT NOT NULL" + 
+				 ", " + DB_SORT_COLUMN + " TEXT" + 
+				 ", " + DB_READ_SECURITY_TABLE_ID + " INTEGER NOT NULL" + 
+				 ", " + DB_WRITE_SECURITY_TABLE_ID + " INTEGER NOT NULL" + 
+				 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" + 
+				 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" + 
+				 ", " + DB_LIST_DISPLAY_FORMAT + " TEXT" + 
+				 ")";
 	}
 }
