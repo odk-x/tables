@@ -766,6 +766,8 @@ public class TableProperties {
 				 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" + 
 				 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" + 
 				 ", " + DB_LIST_DISPLAY_FORMAT + " TEXT" + 
+				 ", " + DB_STATE + " INTEGER NOT NULL" +
+				 ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
 				 ")";
 	}
 }
