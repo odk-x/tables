@@ -707,8 +707,13 @@ public class TableProperties {
 	}
 
 	public void setState(int state) {
-		setIntProperty(DB_STATE, state);
-		this.state = state;
+		// only can move to and from REST state, 
+		// e.g. no skipping straight from INSERTING to UPDATING
+		if (state == State.REST || this.state == State.REST)
+		{
+			setIntProperty(DB_STATE, state);
+			this.state = state;
+		}
 	}
 
 	public int getTransactioning() {
