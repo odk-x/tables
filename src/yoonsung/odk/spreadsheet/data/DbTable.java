@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.Arrays;
 import java.util.Map;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -87,6 +88,7 @@ public class DbTable {
     
     public UserTable getUserOverview(String[] primes, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
+        Log.d("DBT", "selectionKeys:" + Arrays.toString(selectionKeys));
         if (primes.length == 0) {
             return getUserTable(selectionKeys, selectionArgs, orderBy);
         }
@@ -116,6 +118,9 @@ public class DbTable {
             xSelect.append(", " + xList.toString());
         }
         xSelect.append(" FROM " + tp.getDbTableName());
+        if (selection != null) {
+            xSelect.append(" WHERE " + selection);
+        }
         xSelect.append(" GROUP BY " + xList.toString());
         
         StringBuilder idSelect;
@@ -134,6 +139,9 @@ public class DbTable {
             idSelect.append("SELECT MAX(" + orderBy + ") AS s" + orderBy);
             idSelect.append(", " + yList.toString());
             idSelect.append(" FROM " + tp.getDbTableName());
+            if (selection != null) {
+                idSelect.append(" WHERE " + selection);
+            }
             idSelect.append(" GROUP BY " + yList.toString());
             idSelect.append(") y ON " + joinBuilder.toString());
         }
@@ -144,8 +152,18 @@ public class DbTable {
         sqlBuilder.append(") x JOIN " + tp.getDbTableName() + " y");
         sqlBuilder.append(" ON x." + DB_ROW_ID + " = y." + DB_ROW_ID);
         
+        String[] dSelectionArgs = null;
+        if (selectionArgs != null) {
+            dSelectionArgs = new String[selectionArgs.length * 2];
+            for (int i = 0; i < selectionArgs.length; i++) {
+                dSelectionArgs[i] = selectionArgs[i];
+                dSelectionArgs[selectionArgs.length + i] = selectionArgs[i];
+            }
+        }
+        
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
+        Log.d("DBT", "sql:" + sqlBuilder.toString());
+        Cursor c = db.rawQuery(sqlBuilder.toString(), dSelectionArgs);
         Table table = buildTable(c, tp.getColumnOrder());
         c.close();
         db.close();
