@@ -94,7 +94,7 @@ public class TableProperties {
 	private long readSecurityTableId;
 	private long writeSecurityTableId;
 	private int syncModificationNumber;
-	private long lastSyncTime;
+	private String lastSyncTime;
 	private String listDisplayFormat;
 	private int state;
 	private int transactioning;
@@ -103,7 +103,7 @@ public class TableProperties {
 			String displayName, int tableType, String[] columnOrder,
 			String[] primeColumns, String sortColumn, long readSecurityTableId,
 			long writeSecurityTableId, int syncModificationNumber,
-			long lastSyncTime, String listDisplayFormat, int state,
+			String lastSyncTime, String listDisplayFormat, int state,
 			int transactioning) {
 		this.dbh = dbh;
 		whereArgs = new String[] { String.valueOf(tableId) };
@@ -189,7 +189,7 @@ public class TableProperties {
 					c.getInt(tableTypeIndex), columnOrder, primeList,
 					c.getString(sortColumnIndex), c.getLong(rsTableId),
 					c.getLong(wsTableId), c.getInt(syncModNumIndex),
-					c.getLong(lastSyncTimeIndex),
+					c.getString(lastSyncTimeIndex),
 					c.getString(listDisplayFormatIndex), c.getInt(stateIndex),
 					c.getInt(transactioningIndex));
 			i++;
@@ -248,7 +248,7 @@ public class TableProperties {
 		Log.d("TP", "new id=" + id);
 		TableProperties tp = new TableProperties(dbh, id, dbTableName,
 				displayName, tableType, new String[0], new String[0], null, -1,
-				-1, -1, -1, null, State.INSERTING, Transactioning.FALSE);
+				-1, -1, null, null, State.INSERTING, Transactioning.FALSE);
 		DbTable.createDbTable(db, tp);
 		db.setTransactionSuccessful();
 		db.endTransaction();
@@ -667,10 +667,9 @@ public class TableProperties {
 	}
 
 	/**
-	 * @return the last synchronization time (in seconds) (or -1 if the table
-	 *         has never been synchronized)
+	 * @return the last synchronization time (formatted from {@link DataUtil#getNowInDbFormat()}).
 	 */
-	public long getLastSyncTime() {
+	public String getLastSyncTime() {
 		return lastSyncTime;
 	}
 
@@ -678,10 +677,10 @@ public class TableProperties {
 	 * Sets the table's last synchronization time.
 	 * 
 	 * @param time
-	 *            the new synchronization time (in seconds)
+	 *            the new synchronization time (in the format of {@link DataUtil#getNowInDbFormat()}).
 	 */
-	public void setLastSyncTime(long time) {
-		setLongProperty(DB_LAST_SYNC_TIME, time);
+	public void setLastSyncTime(String time) {
+		setStringProperty(DB_LAST_SYNC_TIME, time);
 		this.lastSyncTime = time;
 	}
 
