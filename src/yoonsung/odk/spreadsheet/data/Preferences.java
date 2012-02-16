@@ -51,27 +51,23 @@ public class Preferences {
         editor.commit();
     }
     
-    public void setAggregateUri(String aggregateUri)
-    {
+    public void setAggregateUri(String aggregateUri) {
     	SharedPreferences.Editor editor = prefs.edit();
     	editor.putString(AGGREGATE_URI_KEY, aggregateUri);
     	editor.commit();
     }
     
-    public String getAggregateUri()
-    {
+    public String getAggregateUri() {
     	return prefs.getString(AGGREGATE_URI_KEY, null);
     }
     
-    public void setAggregateUsername(String aggregateUsername)
-    {
+    public void setAggregateUsername(String aggregateUsername) {
     	SharedPreferences.Editor editor = prefs.edit();
     	editor.putString(AGGREGATE_USERNAME_KEY, aggregateUsername);
     	editor.commit();
     }
     
-    public String getAggregateUsername()
-    {
+    public String getAggregateUsername() {
     	return prefs.getString(AGGREGATE_USERNAME_KEY, null);
     }
     

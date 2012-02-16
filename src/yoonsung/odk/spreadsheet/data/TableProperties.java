@@ -139,6 +139,7 @@ public class TableProperties {
     
     private static TableProperties[] queryForTableProperties(DbHelper dbh,
             String where, String[] whereArgs) {
+        where += " AND " + DB_SYNC_STATE + " != " + SyncUtil.State.DELETING;
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, where, whereArgs, null,
                 null, null);
