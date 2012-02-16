@@ -1,6 +1,6 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.Arrays;
+import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -28,7 +28,9 @@ public class TableProperties {
     private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
     private static final String DB_DETAIL_VIEW_FILE = "detailViewFile";
-    private static final String DB_SUMMARY_DISPLAY_FORMAT = "sumDisplayFormat";
+    private static final String DB_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
+    private static final String DB_SYNC_STATE = "syncState";
+    private static final String DB_TRANSACTIONING = "transactioning";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given table
@@ -49,7 +51,9 @@ public class TableProperties {
         DB_SYNC_MODIFICATION_NUMBER,
         DB_LAST_SYNC_TIME,
         DB_DETAIL_VIEW_FILE,
-        DB_SUMMARY_DISPLAY_FORMAT
+        DB_SUM_DISPLAY_FORMAT,
+        DB_SYNC_STATE,
+        DB_TRANSACTIONING, 
     };
     
     public class TableType {
@@ -73,18 +77,20 @@ public class TableProperties {
     private long readSecurityTableId;
     private long writeSecurityTableId;
     private int syncModificationNumber;
-    private long lastSyncTime;
+    private String lastSyncTime;
     private String detailViewFilename;
     private String sumDisplayFormat;
+    private int syncState;
+    private int transactioning;
     
     private TableProperties(DbHelper dbh, long tableId, String dbTableName,
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn, long readSecurityTableId,
             long writeSecurityTableId, int syncModificationNumber,
-            long lastSyncTime, String detailViewFilename,
-            String sumDisplayFormat) {
+            String lastSyncTime, String detailViewFilename,
+            String sumDisplayFormat, int syncState, int transactioning) {
         this.dbh = dbh;
-        whereArgs = new String[] {String.valueOf(tableId)};
+        whereArgs = new String[] { String.valueOf(tableId) };
         this.tableId = tableId;
         this.dbTableName = dbTableName;
         this.displayName = displayName;
@@ -99,6 +105,8 @@ public class TableProperties {
         this.lastSyncTime = lastSyncTime;
         this.detailViewFilename = detailViewFilename;
         this.sumDisplayFormat = sumDisplayFormat;
+        this.syncState = syncState;
+        this.transactioning = transactioning;
     }
     
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
@@ -112,22 +120,21 @@ public class TableProperties {
         return queryForTableProperties(dbh, null, null);
     }
     
-    public static TableProperties[] getTablePropertiesForDataTables(
-            DbHelper dbh) {
+    public static TableProperties[] getTablePropertiesForDataTables(DbHelper dbh) {
         return queryForTableProperties(dbh, TYPE_WHERE_SQL,
-                new String[] {String.valueOf(TableType.DATA)});
+                new String[] { String.valueOf(TableType.DATA) });
     }
     
     public static TableProperties[] getTablePropertiesForSecurityTables(
             DbHelper dbh) {
         return queryForTableProperties(dbh, TYPE_WHERE_SQL,
-                new String[] {String.valueOf(TableType.SECURITY)});
+                new String[] { String.valueOf(TableType.SECURITY) });
     }
     
     public static TableProperties[] getTablePropertiesForShortcutTables(
             DbHelper dbh) {
         return queryForTableProperties(dbh, TYPE_WHERE_SQL,
-                new String[] {String.valueOf(TableType.SHORTCUT)});
+                new String[] { String.valueOf(TableType.SHORTCUT) });
     }
     
     private static TableProperties[] queryForTableProperties(DbHelper dbh,
@@ -145,29 +152,34 @@ public class TableProperties {
         int sortColumnIndex = c.getColumnIndexOrThrow(DB_SORT_COLUMN);
         int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
         int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
-        int syncModNumIndex = c.getColumnIndexOrThrow(
-                DB_SYNC_MODIFICATION_NUMBER);
+        int syncModNumIndex =
+            c.getColumnIndexOrThrow(DB_SYNC_MODIFICATION_NUMBER);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
         int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
-        int sumDisplayFormatIndex = c.getColumnIndexOrThrow(
-                DB_SUMMARY_DISPLAY_FORMAT);
+        int sumDisplayFormatIndex =
+            c.getColumnIndexOrThrow(DB_SUM_DISPLAY_FORMAT);
+        int syncStateIndex = c.getColumnIndexOrThrow(DB_SYNC_STATE);
+        int transactioningIndex = c.getColumnIndexOrThrow(DB_TRANSACTIONING);
+        
         int i = 0;
         c.moveToFirst();
         while (i < tps.length) {
             String columnOrderValue = c.getString(columnOrderIndex);
             String[] columnOrder = (columnOrderValue.length() == 0) ?
-                    new String[] {} : columnOrderValue.split("/");
+                new String[] {} : columnOrderValue.split("/");
             String primeOrderValue = c.getString(primeColumnsIndex);
             String[] primeList = (primeOrderValue.length() == 0) ?
-                    new String[] {} : primeOrderValue.split("/");
+                new String[] {} : primeOrderValue.split("/");
             tps[i] = new TableProperties(dbh, c.getLong(tableIdIndex),
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
                     c.getInt(tableTypeIndex), columnOrder, primeList,
                     c.getString(sortColumnIndex), c.getLong(rsTableId),
                     c.getLong(wsTableId), c.getInt(syncModNumIndex),
-                    c.getLong(lastSyncTimeIndex),
+                    c.getString(lastSyncTimeIndex),
                     c.getString(detailViewFileIndex),
-                    c.getString(sumDisplayFormatIndex));
+                    c.getString(sumDisplayFormatIndex),
+                    c.getInt(syncStateIndex),
+                    c.getInt(transactioningIndex));
             i++;
             c.moveToNext();
         }
@@ -216,14 +228,17 @@ public class TableProperties {
         values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.putNull(DB_DETAIL_VIEW_FILE);
-        values.putNull(DB_SUMMARY_DISPLAY_FORMAT);
+        values.putNull(DB_SUM_DISPLAY_FORMAT);
+        values.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
+        values.put(DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
         long id = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "new id=" + id);
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null, -1,
-                -1, -1, -1, null, null);
+                -1, -1, null, null, null, SyncUtil.State.INSERTING,
+                SyncUtil.Transactioning.FALSE);
         DbTable.createDbTable(db, tp);
         db.setTransactionSuccessful();
         db.endTransaction();
@@ -232,6 +247,14 @@ public class TableProperties {
     }
     
     public void deleteTable() {
+        ContentValues values = new ContentValues();
+        values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
+        db.close();
+    }
+    
+    public void deleteTableActual() {
         ColumnProperties[] columns = getColumns();
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
@@ -504,7 +527,6 @@ public class TableProperties {
     }
     
     private void setColumnOrder(String[] columnOrder, SQLiteDatabase db) {
-        Log.d("TP", "setColumnOrder() w/ arr:" + Arrays.toString(columnOrder));
         StringBuilder orderBuilder = new StringBuilder();
         for (String cdn : columnOrder) {
             orderBuilder.append("/" + cdn);
@@ -538,15 +560,12 @@ public class TableProperties {
      * columns
      */
     public void setPrimeColumns(String[] primeColumns) {
-        Log.d("TP", "setPrimeColumns with:" + Arrays.toString(primeColumns));
         String str = "";
         for (String cdb : primeColumns) {
             str += cdb + "/";
         }
-        if (str.length() != 0) {
-            str = str.substring(0, str.length() - 1);
-        }
-        setStringProperty(DB_PRIME_COLUMNS, str);
+        setStringProperty(DB_PRIME_COLUMNS, str.substring(0,
+                str.length() - 1));
         this.primeColumns = primeColumns;
     }
     
@@ -620,19 +639,18 @@ public class TableProperties {
     }
     
     /**
-     * @return the last synchronization time (in seconds) (or -1 if the table
-     * has never been synchronized)
+     * @return the last synchronization time (in the format of {@link DataUtil#getNowInDbFormat()}.
      */
-    public long getLastSyncTime() {
+    public String getLastSyncTime() {
         return lastSyncTime;
     }
     
     /**
      * Sets the table's last synchronization time.
-     * @param time the new synchronization time (in seconds)
+     * @param time the new synchronization time (in the format of {@link DataUtil#getNowInDbFormat()}).
      */
-    public void setLastSyncTime(long time) {
-        setLongProperty(DB_LAST_SYNC_TIME, time);
+    public void setLastSyncTime(String time) {
+        setStringProperty(DB_LAST_SYNC_TIME, time);
         this.lastSyncTime = time;
     }
     
@@ -664,8 +682,47 @@ public class TableProperties {
      * @param format the new summary display format
      */
     public void setSummaryDisplayFormat(String format) {
-        setStringProperty(DB_SUMMARY_DISPLAY_FORMAT, format);
+        setStringProperty(DB_SUM_DISPLAY_FORMAT, format);
         this.sumDisplayFormat = format;
+    }
+    
+    /**
+     * @return the synchronization state
+     */
+    public int getSyncState() {
+        return syncState;
+    }
+    
+    /**
+     * Sets the table's synchronization state.
+     * Can only move to or from the REST state (e.g., no skipping straight from
+     * INSERTING to UPDATING).
+     * @param state the new synchronization state
+     */
+    public void setSyncState(int state) {
+        if (state == SyncUtil.State.REST ||
+                this.syncState == SyncUtil.State.REST) {
+            setIntProperty(DB_SYNC_STATE, state);
+            this.syncState = state;
+        } else {
+            throw new RuntimeException("invalid call to setSyncState:");
+        }
+    }
+    
+    /**
+     * @return the transactioning status
+     */
+    public int getTransactioning() {
+        return transactioning;
+    }
+    
+    /**
+     * Sets the transactioning status.
+     * @param transactioning the new transactioning status
+     */
+    public void setTransactioning(int transactioning) {
+        setIntProperty(DB_TRANSACTIONING, transactioning);
+        this.transactioning = transactioning;
     }
     
     private void setIntProperty(String property, int value) {
@@ -713,7 +770,9 @@ public class TableProperties {
                 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_DETAIL_VIEW_FILE + " TEXT" +
-                ", " + DB_SUMMARY_DISPLAY_FORMAT + " TEXT" +
+                ", " + DB_SUM_DISPLAY_FORMAT + " TEXT" +
+                ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
+                ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
                 ")";
     }
 }

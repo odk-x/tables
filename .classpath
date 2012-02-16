@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="lib" path="lib/achartengine-0.5.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/opencsv-2.2.jar"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="lib/kxml2-2.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/odk-tables-api-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/gson-1.7.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

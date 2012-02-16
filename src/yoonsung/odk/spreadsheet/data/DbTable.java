@@ -1,7 +1,7 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.Arrays;
 import java.util.Map;
+import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -19,6 +19,8 @@ public class DbTable {
     public static final String DB_LAST_MODIFIED_TIME = "lastModTime";
     public static final String DB_SYNC_ID = "syncId";
     public static final String DB_SYNC_TAG = "syncTag";
+    public static final String DB_SYNC_STATE = "syncState";
+    public static final String DB_TRANSACTIONING = "transactioning";
     
     private final DbHelper dbh;
     private final TableProperties tp;
@@ -39,6 +41,8 @@ public class DbTable {
                 ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
                 ", " + DB_SYNC_ID + " TEXT" +
                 ", " + DB_SYNC_TAG + " TEXT" +
+                ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
+                ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
                 ")");
     }
     
@@ -62,11 +66,13 @@ public class DbTable {
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
             ColumnProperties[] cps = tp.getColumns();
-            columns = new String[cps.length + 4];
+            columns = new String[cps.length + 6];
             columns[0] = DB_SRC_PHONE_NUMBER;
             columns[1] = DB_LAST_MODIFIED_TIME;
             columns[2] = DB_SYNC_ID;
             columns[3] = DB_SYNC_TAG;
+            columns[4] = DB_SYNC_STATE;
+            columns[5] = DB_TRANSACTIONING;
             for (int i = 0; i < cps.length; i++) {
                 columns[i + 4] = cps[i].getColumnDbName();
             }
@@ -75,9 +81,12 @@ public class DbTable {
                 selectionArgs, orderBy);
     }
     
+    /**
+     * Gets a user table. Rows marked as deleted will not be included.
+     */
     public UserTable getUserTable(String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
-        String selection = buildSelectionSql(selectionKeys);
+        String selection = buildUserSelectionSql(selectionKeys);
         Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
                 orderBy);
         String[] footer = footerQuery(tp.getColumnOrder(), selection,
@@ -86,13 +95,16 @@ public class DbTable {
                 table.getData(), footer);
     }
     
+    /**
+     * Gets a collecton overview user table. Rows marked as deleted will not be
+     * included.
+     */
     public UserTable getUserOverview(String[] primes, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
-        Log.d("DBT", "selectionKeys:" + Arrays.toString(selectionKeys));
         if (primes.length == 0) {
             return getUserTable(selectionKeys, selectionArgs, orderBy);
         }
-        String selection = buildSelectionSql(selectionKeys);
+        String selection = buildUserSelectionSql(selectionKeys);
         
         StringBuilder allSelectList = new StringBuilder("y." + DB_ROW_ID +
                 " AS " + DB_ROW_ID);
@@ -162,7 +174,6 @@ public class DbTable {
         }
         
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Log.d("DBT", "sql:" + sqlBuilder.toString());
         Cursor c = db.rawQuery(sqlBuilder.toString(), dSelectionArgs);
         Table table = buildTable(c, tp.getColumnOrder());
         c.close();
@@ -287,14 +298,16 @@ public class DbTable {
     
     /**
      * Adds a row to the table with the given values, no source phone number,
-     * and the current time as the last modification time.
+     * the current time as the last modification time, and an inserting
+     * synchronization state.
      */
     public void addRow(Map<String, String> values) {
         addRow(values, DataUtil.getNowInDbFormat(), null);
     }
     
     /**
-     * Adds a row to the table.
+     * Adds a row to the table with an inserting synchronization state and the
+     * transactioning status set to false.
      */
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
@@ -307,9 +320,21 @@ public class DbTable {
         }
         cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
         cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
+        cv.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
+        cv.put(DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+        actualAddRow(cv);
+    }
+    
+    /**
+     * Actually adds a row.
+     * @param values the values to put in the row
+     */
+    public void actualAddRow(ContentValues values) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        Log.d("DBT", "insert, id=" + db.insert(tp.getDbTableName(), null, cv));
+        long result = db.insert(tp.getDbTableName(), null, values);
         db.close();
+        Log.d("DBT", "insert, id=" + result);
+        tp.setSyncState(SyncUtil.State.UPDATING);
     }
     
     /**
@@ -321,30 +346,78 @@ public class DbTable {
     }
     
     /**
-     * Updates a row in the table.
+     * Updates a row in the table and marks its synchronization state as
+     * updating.
+     * @param rowId the ID of the row to update
+     * @param values the values to update the row with
+     * @param srcPhone the source phone number to put in the row
+     * @param lastModTime the last modification time to put in the row
      */
     public void updateRow(int rowId, Map<String, String> values,
             String srcPhone, String lastModTime) {
         ContentValues cv = new ContentValues();
+        cv.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
+        actualUpdateRowByRowId(rowId, cv);
+    }
+    
+    /**
+     * Actually updates a row.
+     * @param rowId the ID of the row to update
+     * @param values the values to update the row with
+     */
+    public void actualUpdateRowByRowId(int rowId, ContentValues values) {
+        String[] whereArgs = { String.valueOf(rowId) };
+        actualUpdateRow(values, DB_ROW_ID + " = ?", whereArgs);
+    }
+    
+    /**
+     * Actually updates a row.
+     * @param syncId the synchronization ID of the row to update
+     * @param values the values to update the row with
+     */
+    public void actualUpdateRowBySyncId(String syncId, ContentValues values) {
+        String[] whereArgs = { syncId };
+        actualUpdateRow(values, DB_SYNC_ID + " = ?", whereArgs);
+    }
+    
+    private void actualUpdateRow(ContentValues values, String where,
+            String[] whereArgs) {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.update(tp.getDbTableName(), values, where, whereArgs);
+        db.close();
+        tp.setSyncState(SyncUtil.State.UPDATING);
+    }
+    
+    /**
+     * Marks the given row as deleted.
+     */
+    public void markDeleted(int rowId) {
+        String[] whereArgs = { String.valueOf(rowId) };
+        ContentValues values = new ContentValues();
+        values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
+        db.close();
+        tp.setSyncState(SyncUtil.State.UPDATING);
+    }
+    
+    /**
+     * Actually deletes a row from the table.
+     * @param rowId the ID of the row to delete
+     */
+    public void deleteRowActual(int rowId) {
         String[] whereArgs = { String.valueOf(rowId) };
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(tp.getDbTableName(), cv, DB_ROW_ID + " = ?", whereArgs);
+        db.delete(tp.getDbTableName(), DB_ROW_ID + " + ?", whereArgs);
         db.close();
     }
     
     /**
-     * Deletes the given row from the table.
+     * Builds a string of SQL for selection with the given column names.
      */
-    public void deleteRow(int rowId) {
-        String[] whereArgs = { String.valueOf(rowId) };
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.delete(tp.getDbTableName(), DB_ROW_ID + " = ?", whereArgs);
-        db.close();
-    }
-    
     private String buildSelectionSql(String[] selectionKeys) {
         if ((selectionKeys == null) || (selectionKeys.length == 0)) {
             return null;
@@ -353,9 +426,20 @@ public class DbTable {
         for (String key : selectionKeys) {
             selBuilder.append(" AND " + key + " = ?");
         }
-        if (selBuilder.length() > 0) {
-            selBuilder.delete(0, 5);
-        }
+        selBuilder.delete(0, 5);
         return selBuilder.toString();
+    }
+    
+    /**
+     * Builds a SQL selection string that will exclude rows marked as deleted.
+     */
+    private String buildUserSelectionSql(String[] selectionKeys) {
+        String sql = buildSelectionSql(selectionKeys);
+        if (sql == null) {
+            return DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING;
+        } else {
+            return sql + " AND " + DbTable.DB_SYNC_STATE + " != " +
+                    SyncUtil.State.DELETING;
+        }
     }
 }

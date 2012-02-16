@@ -394,7 +394,7 @@ public abstract class TableActivity extends Activity
 	 * ID)
 	 */
 	protected void deleteRow(int rowNum) {
-	    dbt.deleteRow(table.getRowId(rowNum));
+	    dbt.markDeleted(table.getRowId(rowNum));
 		refreshView();
 	}
 	

@@ -17,11 +17,11 @@ public class Table {
         this.data = data;
     }
     
-    int[] getRowIds() {
+    public int[] getRowIds() {
         return rowIds;
     }
     
-    String[][] getData() {
+    public String[][] getData() {
         return data;
     }
     
