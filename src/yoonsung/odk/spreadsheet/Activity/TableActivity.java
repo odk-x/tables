@@ -682,7 +682,7 @@ public abstract class TableActivity extends Activity
                     String value = et.getText().toString();
                     Map<String, String> values = new HashMap<String, String>();
                     values.put(colOrder[cellId % table.getWidth()], value);
-                    int rowId = table.getRowId(cellId / table.getWidth());
+                    String rowId = table.getRowId(cellId / table.getWidth());
                     dbt.updateRow(rowId, values);
                     table.setData(cellId, value);
                     refreshView();
@@ -1532,7 +1532,7 @@ public abstract class TableActivity extends Activity
         if (rowNum == null) {
             return;
         }
-        int rowId = table.getRowId(rowNum);
+        String rowId = table.getRowId(rowNum);
         Map<String, String> updates = new HashMap<String, String>();
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element child = dataEl.getElement(i);

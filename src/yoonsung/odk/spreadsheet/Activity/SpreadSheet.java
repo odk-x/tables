@@ -284,7 +284,7 @@ public class SpreadSheet extends TableActivity {
             if(addedvalue > 0){
                 //dt.addRow(cv, "", "");
             	int rowNum = selectedCellID / table.getWidth();
-				int rowId = table.getRowId(rowNum);
+				String rowId = table.getRowId(rowNum);
 				dbt.updateRow(rowId, values);
             	Log.e("parseXML", values.toString());
             }

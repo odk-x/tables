@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.data;
 
 import java.util.Map;
+import java.util.UUID;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -36,7 +37,7 @@ public class DbTable {
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
         db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
-                       DB_ROW_ID + " INTEGER PRIMARY KEY" +
+                       DB_ROW_ID + " TEXT UNIQUE NOT NULL" +
                 ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
                 ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
                 ", " + DB_SYNC_ID + " TEXT" +
@@ -210,7 +211,7 @@ public class DbTable {
     private Table buildTable(Cursor c, String[] columns) {
         int[] colIndices = new int[columns.length];
         int rowCount = c.getCount();
-        int[] rowIds = new int[rowCount];
+        String[] rowIds = new String[rowCount];
         String[][] data = new String[rowCount][columns.length];
         int rowIdIndex = c.getColumnIndexOrThrow(DB_ROW_ID);
         for (int i = 0; i < columns.length; i++) {
@@ -218,7 +219,7 @@ public class DbTable {
         }
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
-            rowIds[i] = c.getInt(rowIdIndex);
+            rowIds[i] = c.getString(rowIdIndex);
             for (int j = 0; j < columns.length; j++) {
                 data[i][j] = c.getString(colIndices[j]);
             }
@@ -330,6 +331,8 @@ public class DbTable {
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
+        String id = UUID.randomUUID().toString();
+        values.put(DB_ROW_ID, id);
         SQLiteDatabase db = dbh.getWritableDatabase();
         long result = db.insert(tp.getDbTableName(), null, values);
         db.close();
@@ -341,7 +344,7 @@ public class DbTable {
      * Updates a row in the table with the given values, no source phone
      * number, and the current time as the last modification time.
      */
-    public void updateRow(int rowId, Map<String, String> values) {
+    public void updateRow(String rowId, Map<String, String> values) {
         updateRow(rowId, values, null, DataUtil.getNowInDbFormat());
     }
     
@@ -353,7 +356,7 @@ public class DbTable {
      * @param srcPhone the source phone number to put in the row
      * @param lastModTime the last modification time to put in the row
      */
-    public void updateRow(int rowId, Map<String, String> values,
+    public void updateRow(String rowId, Map<String, String> values,
             String srcPhone, String lastModTime) {
         ContentValues cv = new ContentValues();
         cv.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
@@ -368,8 +371,8 @@ public class DbTable {
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
      */
-    public void actualUpdateRowByRowId(int rowId, ContentValues values) {
-        String[] whereArgs = { String.valueOf(rowId) };
+    public void actualUpdateRowByRowId(String rowId, ContentValues values) {
+        String[] whereArgs = { rowId };
         actualUpdateRow(values, DB_ROW_ID + " = ?", whereArgs);
     }
     
@@ -394,8 +397,8 @@ public class DbTable {
     /**
      * Marks the given row as deleted.
      */
-    public void markDeleted(int rowId) {
-        String[] whereArgs = { String.valueOf(rowId) };
+    public void markDeleted(String rowId) {
+        String[] whereArgs = { rowId };
         ContentValues values = new ContentValues();
         values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
         SQLiteDatabase db = dbh.getWritableDatabase();
@@ -408,8 +411,8 @@ public class DbTable {
      * Actually deletes a row from the table.
      * @param rowId the ID of the row to delete
      */
-    public void deleteRowActual(int rowId) {
-        String[] whereArgs = { String.valueOf(rowId) };
+    public void deleteRowActual(String rowId) {
+        String[] whereArgs = { rowId };
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.delete(tp.getDbTableName(), DB_ROW_ID + " + ?", whereArgs);
         db.close();

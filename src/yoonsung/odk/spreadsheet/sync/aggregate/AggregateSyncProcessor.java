@@ -103,14 +103,14 @@ public class AggregateSyncProcessor {
 			rowsToUpdate = getRows(table, SyncUtil.State.UPDATING);
 			rowsToDelete = getRows(table, SyncUtil.State.DELETING);
 
-			int[] rowIds = getAllRowIds(rowsToInsert, rowsToUpdate,
+			String[] rowIds = getAllRowIds(rowsToInsert, rowsToUpdate,
 					rowsToDelete);
 			beginRowsTransaction(table, rowIds);
 
 			insertRows(tp, table, rowsToInsert);
 			updateRows(tp, table, rowsToUpdate);
 			deleteRows(tp, table, rowsToDelete);
-			for (int rowId : rowsToDelete.getRowIds()) {
+			for (String rowId : rowsToDelete.getRowIds()) {
 			    table.deleteRowActual(rowId);
 			}
 
@@ -119,7 +119,7 @@ public class AggregateSyncProcessor {
 
 			break;
 		case SyncUtil.State.DELETING:
-			beginRowsTransaction(table, new int[0]);
+			beginRowsTransaction(table, new String[0]);
 			removeTableSynchronization(String.valueOf(tp.getTableId()));
 			tp.deleteTableActual();
 
@@ -169,8 +169,7 @@ public class AggregateSyncProcessor {
 			        SyncUtil.State.CONFLICTING));
 			values.put(DbTable.DB_TRANSACTIONING,
 					String.valueOf(SyncUtil.Transactioning.FALSE));
-			table.actualUpdateRowByRowId(Integer.valueOf(row.getRowID()),
-			        values);
+			table.actualUpdateRowByRowId(row.getRowID(), values);
 
 			for (Entry<String, String> entry : row.getColumnValuePairs()
 					.entrySet())
@@ -189,8 +188,7 @@ public class AggregateSyncProcessor {
 			for (Entry<String, String> entry : row.getColumnValuePairs()
 					.entrySet())
 				values.put(entry.getKey(), entry.getValue());
-			table.actualUpdateRowByRowId(Integer.valueOf(row.getRowID()),
-			        values);
+			table.actualUpdateRowByRowId(row.getRowID(), values);
 		}
 
 		for (SynchronizedRow row : rowsToInsert) {
@@ -292,8 +290,7 @@ public class AggregateSyncProcessor {
 			    ContentValues values = new ContentValues();
 				values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
 				values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
-				table.actualUpdateRowByRowId(Integer.parseInt(row.getRowID()),
-				        values);
+				table.actualUpdateRowByRowId(row.getRowID(), values);
 			}
 		}
 	}
@@ -389,13 +386,13 @@ public class AggregateSyncProcessor {
 		api.removeTableSynchronization(tableID);
 	}
 
-	public int[] getAllRowIds(Table... tables) {
-		List<Integer> rowIdsList = new ArrayList<Integer>();
+	public String[] getAllRowIds(Table... tables) {
+		List<String> rowIdsList = new ArrayList<String>();
 		for (Table table : tables) {
-			for (int rowId : table.getRowIds())
+			for (String rowId : table.getRowIds())
 				rowIdsList.add(rowId);
 		}
-		int[] rowIds = new int[rowIdsList.size()];
+		String[] rowIds = new String[rowIdsList.size()];
 		for (int i = 0; i < rowIds.length; i++)
 			rowIds[i] = rowIdsList.get(i);
 		return rowIds;
@@ -410,28 +407,28 @@ public class AggregateSyncProcessor {
 		tp.setTransactioning(SyncUtil.Transactioning.FALSE);
 	}
 
-	public void beginRowsTransaction(DbTable table, int[] rowIds) {
+	public void beginRowsTransaction(DbTable table, String[] rowIds) {
 		updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.TRUE);
 	}
 
-	public void endRowsTransaction(DbTable table, int[] rowIds) {
+	public void endRowsTransaction(DbTable table, String[] rowIds) {
 		updateRowsState(table, rowIds, SyncUtil.State.REST);
 		updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.FALSE);
 	}
 
-	public void updateRowsState(DbTable table, int[] rowIds, int state) {
+	public void updateRowsState(DbTable table, String[] rowIds, int state) {
 		ContentValues values = new ContentValues();
 		values.put(DbTable.DB_SYNC_STATE, state);
-		for (int rowId : rowIds) {
+		for (String rowId : rowIds) {
 			table.actualUpdateRowByRowId(rowId, values);
 		}
 	}
 
-	public void updateRowsTransactioning(DbTable table, int[] rowIds,
+	public void updateRowsTransactioning(DbTable table, String[] rowIds,
 			int transactioning) {
 		ContentValues values = new ContentValues();
 		values.put(DbTable.DB_TRANSACTIONING, String.valueOf(transactioning));
-		for (int rowId : rowIds) {
+		for (String rowId : rowIds) {
 			table.actualUpdateRowByRowId(rowId, values);
 		}
 	}

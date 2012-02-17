@@ -1,18 +1,15 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.Arrays;
-import android.util.Log;
-
 
 public class UserTable {
     
-    private final int[] rowIds;
+    private final String[] rowIds;
     private final String[] header;
     private final String[][] data;
     private final String[][] userData;
     private final String[] footer;
     
-    public UserTable(int[] rowIds, String[] header, String[][] data,
+    public UserTable(String[] rowIds, String[] header, String[][] data,
             String[] footer) {
         this.rowIds = rowIds;
         this.header = header;
@@ -27,7 +24,7 @@ public class UserTable {
         this.footer = footer;
     }
     
-    public int getRowId(int rowNum) {
+    public String getRowId(int rowNum) {
         return rowIds[rowNum];
     }
     

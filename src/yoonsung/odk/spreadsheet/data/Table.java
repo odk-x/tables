@@ -7,17 +7,17 @@ package yoonsung.odk.spreadsheet.data;
  */
 public class Table {
     
-    private final int[] rowIds;
+    private final String[] rowIds;
     private String[] header;
     private final String[][] data;
     
-    Table(int[] rowIds, String[] header, String[][] data) {
+    Table(String[] rowIds, String[] header, String[][] data) {
         this.rowIds = rowIds;
         this.header = header;
         this.data = data;
     }
     
-    public int[] getRowIds() {
+    public String[] getRowIds() {
         return rowIds;
     }
     
@@ -25,7 +25,7 @@ public class Table {
         return data;
     }
     
-    public int getRowId(int rowNum) {
+    public String getRowId(int rowNum) {
         return rowIds[rowNum];
     }
     
