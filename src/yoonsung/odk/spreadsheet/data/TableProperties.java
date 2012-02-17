@@ -1,6 +1,9 @@
 package yoonsung.odk.spreadsheet.data;
 
 import java.util.UUID;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -32,6 +35,22 @@ public class TableProperties {
     private static final String DB_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
     private static final String DB_SYNC_STATE = "syncState";
     private static final String DB_TRANSACTIONING = "transactioning";
+    // keys for JSON
+    private static final String JSON_KEY_VERSION = "jVersion";
+    private static final String JSON_KEY_TABLE_ID = "tableId";
+    private static final String JSON_KEY_DB_TABLE_NAME = "dbTableName";
+    private static final String JSON_KEY_DISPLAY_NAME = "displayName";
+    private static final String JSON_KEY_TABLE_TYPE = "type";
+    private static final String JSON_KEY_COLUMNS = "columns";
+    private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
+    private static final String JSON_KEY_SORT_COLUMN = "sortCol";
+    private static final String JSON_KEY_READ_SECURITY_TABLE_ID =
+        "readAccessTid";
+    private static final String JSON_KEY_WRITE_SECURITY_TABLE_ID =
+        "writeAccessTid";
+    private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
+    private static final String JSON_KEY_SUM_DISPLAY_FORMAT =
+        "summaryDisplayFormat";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given table
@@ -733,6 +752,37 @@ public class TableProperties {
     public void setTransactioning(int transactioning) {
         setIntProperty(DB_TRANSACTIONING, transactioning);
         this.transactioning = transactioning;
+    }
+    
+    public String toJson() {
+        JSONArray cols = new JSONArray();
+        for (ColumnProperties cp : columns) {
+            cols.put(cp.toJsonObject());
+        }
+        JSONArray primes = new JSONArray();
+        for (String prime : primeColumns) {
+            primes.put(prime);
+        }
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put(JSON_KEY_VERSION, 1);
+            jo.put(JSON_KEY_TABLE_ID, tableId);
+            jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
+            jo.put(JSON_KEY_DISPLAY_NAME, displayName);
+            jo.put(JSON_KEY_TABLE_TYPE, tableType);
+            jo.put(JSON_KEY_COLUMNS, cols);
+            jo.put(JSON_KEY_PRIME_COLUMNS, primes);
+            jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
+            jo.put(JSON_KEY_READ_SECURITY_TABLE_ID, readSecurityTableId);
+            jo.put(JSON_KEY_WRITE_SECURITY_TABLE_ID, writeSecurityTableId);
+            jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
+            jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
+        } catch(JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        Log.d("TP", "json: " + jo.toString());
+        return jo.toString();
     }
     
     private void setIntProperty(String property, int value) {

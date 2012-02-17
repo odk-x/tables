@@ -1,5 +1,8 @@
 package yoonsung.odk.spreadsheet.data;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -15,7 +18,6 @@ public class ColumnProperties {
     // the name of the column properties table in the database
     private static final String DB_TABLENAME = "colProps";
     // names of columns in the column properties table
-    private static final String DB_COLUMN_ID = "columnId";
     private static final String DB_TABLE_ID = "tableId";
     private static final String DB_DB_COLUMN_NAME = "dbColumnName";
     private static final String DB_DISPLAY_NAME = "displayName";
@@ -27,6 +29,19 @@ public class ColumnProperties {
     private static final String DB_MULTIPLE_CHOICE_OPTIONS = "mcOptions";
     private static final String DB_JOIN_TABLE_ID = "joinTableId";
     private static final String DB_JOIN_COLUMN_NAME = "joinColumnName";
+    // keys for JSON
+    private static final String JSON_KEY_VERSION = "jVersion";
+    private static final String JSON_KEY_TABLE_ID = "tableId";
+    private static final String JSON_KEY_DB_COLUMN_NAME = "dbColumnName";
+    private static final String JSON_KEY_DISPLAY_NAME = "displayName";
+    private static final String JSON_KEY_ABBREVIATION = "abrev";
+    private static final String JSON_KEY_COLUMN_TYPE = "colType";
+    private static final String JSON_KEY_FOOTER_MODE = "footerMode";
+    private static final String JSON_KEY_SMS_IN = "smsIn";
+    private static final String JSON_KEY_SMS_OUT = "smsOut";
+    private static final String JSON_KEY_MULTIPLE_CHOICE_OPTIONS = "mcOptions";
+    private static final String JSON_KEY_JOIN_TABLE_ID = "joinTableId";
+    private static final String JSON_KEY_JOIN_COLUMN_NAME = "joinColumnName";
     
     // the SQL where clause to use for selecting, updating, or deleting the row
     // for a given column
@@ -356,6 +371,36 @@ public class ColumnProperties {
         joinColumnName = columnName;
     }
     
+    public String toJson() {
+        return toJsonObject().toString();
+    }
+    
+    JSONObject toJsonObject() {
+        JSONArray mcOptions = new JSONArray();
+        for (String opt : multipleChoiceOptions) {
+            mcOptions.put(opt);
+        }
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put(JSON_KEY_VERSION, 1);
+            jo.put(JSON_KEY_TABLE_ID, tableId);
+            jo.put(JSON_KEY_DB_COLUMN_NAME, columnDbName);
+            jo.put(JSON_KEY_DISPLAY_NAME, displayName);
+            jo.put(JSON_KEY_ABBREVIATION, abbreviation);
+            jo.put(JSON_KEY_COLUMN_TYPE, columnType);
+            jo.put(JSON_KEY_FOOTER_MODE, footerMode);
+            jo.put(JSON_KEY_SMS_IN, smsIn);
+            jo.put(JSON_KEY_SMS_OUT, smsOut);
+            jo.put(JSON_KEY_MULTIPLE_CHOICE_OPTIONS, mcOptions);
+            jo.put(JSON_KEY_JOIN_TABLE_ID, joinTableId);
+            jo.put(JSON_KEY_JOIN_COLUMN_NAME, joinColumnName);
+        } catch(JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return jo;
+    }
+    
     private static String encodeMultipleChoiceOptions(String[] options) {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("%02d", options.length));
@@ -412,8 +457,7 @@ public class ColumnProperties {
     
     static String getTableCreateSql() {
         return "CREATE TABLE " + DB_TABLENAME + "(" +
-                       DB_COLUMN_ID + " INTEGER PRIMARY KEY" +
-                ", " + DB_TABLE_ID + " TEXT NOT NULL" +
+                       DB_TABLE_ID + " TEXT NOT NULL" +
                 ", " + DB_DB_COLUMN_NAME + " TEXT NOT NULL" +
                 ", " + DB_DISPLAY_NAME + " TEXT NOT NULL" +
                 ", " + DB_ABBREVIATION + " TEXT" +
