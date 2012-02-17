@@ -371,10 +371,6 @@ public class ColumnProperties {
         joinColumnName = columnName;
     }
     
-    public String toJson() {
-        return toJsonObject().toString();
-    }
-    
     JSONObject toJsonObject() {
         JSONArray mcOptions = new JSONArray();
         for (String opt : multipleChoiceOptions) {
@@ -395,10 +391,30 @@ public class ColumnProperties {
             jo.put(JSON_KEY_JOIN_TABLE_ID, joinTableId);
             jo.put(JSON_KEY_JOIN_COLUMN_NAME, joinColumnName);
         } catch(JSONException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return jo;
+    }
+    
+    void setFromJsonObject(JSONObject jo) {
+        try {
+            JSONArray mcJo = jo.getJSONArray(JSON_KEY_MULTIPLE_CHOICE_OPTIONS);
+            String[] mcOpts = new String[mcJo.length()];
+            for (int i = 0; i < mcJo.length(); i++) {
+                mcOpts[i] = mcJo.getString(i);
+            }
+            setDisplayName(jo.getString(JSON_KEY_DISPLAY_NAME));
+            setAbbreviation(jo.optString(JSON_KEY_ABBREVIATION));
+            setColumnType(jo.getInt(JSON_KEY_COLUMN_TYPE));
+            setFooterMode(jo.getInt(JSON_KEY_FOOTER_MODE));
+            setSmsIn(jo.getBoolean(JSON_KEY_SMS_IN));
+            setSmsOut(jo.getBoolean(JSON_KEY_SMS_OUT));
+            setMultipleChoiceOptions(mcOpts);
+            setJoinTableId(jo.optString(JSON_KEY_JOIN_TABLE_ID));
+            setJoinColumnName(jo.optString(JSON_KEY_JOIN_COLUMN_NAME));
+        } catch(JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private static String encodeMultipleChoiceOptions(String[] options) {

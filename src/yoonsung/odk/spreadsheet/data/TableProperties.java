@@ -1,5 +1,7 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,6 +43,7 @@ public class TableProperties {
     private static final String JSON_KEY_DB_TABLE_NAME = "dbTableName";
     private static final String JSON_KEY_DISPLAY_NAME = "displayName";
     private static final String JSON_KEY_TABLE_TYPE = "type";
+    private static final String JSON_KEY_COLUMN_ORDER = "colOrder";
     private static final String JSON_KEY_COLUMNS = "columns";
     private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
     private static final String JSON_KEY_SORT_COLUMN = "sortCol";
@@ -347,19 +350,24 @@ public class TableProperties {
      */
     public ColumnProperties[] getColumns() {
         if (columns == null) {
-            ColumnProperties[] cps = ColumnProperties
-                    .getColumnPropertiesForTable(dbh, tableId);
-            columns = new ColumnProperties[cps.length];
-            for (int i = 0; i < columnOrder.length; i++) {
-                for (int j = 0; j < cps.length; j++) {
-                    if (cps[j].getColumnDbName().equals(columnOrder[i])) {
-                        columns[i] = cps[j];
-                        break;
-                    }
+            columns = ColumnProperties.getColumnPropertiesForTable(dbh,
+                    tableId);
+            orderColumns();
+        }
+        return columns;
+    }
+    
+    private void orderColumns() {
+        ColumnProperties[] newColumns = new ColumnProperties[columns.length];
+        for (int i = 0; i < columnOrder.length; i++) {
+            for (int j = 0; j < columns.length; j++) {
+                if (columns[j].getColumnDbName().equals(columnOrder[i])) {
+                    newColumns[i] = columns[j];
+                    break;
                 }
             }
         }
-        return columns;
+        columns = newColumns;
     }
     
     public ColumnProperties getColumnByDbName(String colDbName) {
@@ -595,8 +603,10 @@ public class TableProperties {
         for (String cdb : primeColumns) {
             str += cdb + "/";
         }
-        setStringProperty(DB_PRIME_COLUMNS, str.substring(0,
-                str.length() - 1));
+        if (str.length() > 0) {
+            str = str.substring(0, str.length() - 1);
+        }
+        setStringProperty(DB_PRIME_COLUMNS, str);
         this.primeColumns = primeColumns;
     }
     
@@ -755,8 +765,11 @@ public class TableProperties {
     }
     
     public String toJson() {
+        getColumns(); // ensuring columns is initialized
+        JSONArray colOrder = new JSONArray();
         JSONArray cols = new JSONArray();
         for (ColumnProperties cp : columns) {
+            colOrder.put(cp.getColumnDbName());
             cols.put(cp.toJsonObject());
         }
         JSONArray primes = new JSONArray();
@@ -770,6 +783,7 @@ public class TableProperties {
             jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
             jo.put(JSON_KEY_DISPLAY_NAME, displayName);
             jo.put(JSON_KEY_TABLE_TYPE, tableType);
+            jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
             jo.put(JSON_KEY_COLUMNS, cols);
             jo.put(JSON_KEY_PRIME_COLUMNS, primes);
             jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
@@ -778,11 +792,57 @@ public class TableProperties {
             jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
             jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
         } catch(JSONException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         Log.d("TP", "json: " + jo.toString());
         return jo.toString();
+    }
+    
+    public void setFromJson(String json) {
+        try {
+            JSONObject jo = new JSONObject(json);
+            JSONArray colOrderJo = jo.getJSONArray(JSON_KEY_COLUMN_ORDER);
+            String[] colOrder = new String[colOrderJo.length()];
+            for (int i = 0; i < colOrderJo.length(); i++) {
+                colOrder[i] = colOrderJo.getString(i);
+            }
+            JSONArray primesJo = jo.getJSONArray(JSON_KEY_PRIME_COLUMNS);
+            String[] primes = new String[primesJo.length()];
+            for (int i = 0; i < primesJo.length(); i++) {
+                primes[i] = primesJo.getString(i);
+            }
+            setDisplayName(jo.getString(JSON_KEY_DISPLAY_NAME));
+            setTableType(jo.getInt(JSON_KEY_TABLE_TYPE));
+            setPrimeColumns(primes);
+            setSortColumn(jo.optString(JSON_KEY_SORT_COLUMN));
+            setReadSecurityTableId(jo.optString(
+                    JSON_KEY_READ_SECURITY_TABLE_ID));
+            setWriteSecurityTableId(jo.optString(
+                    JSON_KEY_WRITE_SECURITY_TABLE_ID));
+            setDetailViewFilename(jo.optString(JSON_KEY_DETAIL_VIEW_FILE));
+            setSummaryDisplayFormat(jo.optString(JSON_KEY_SUM_DISPLAY_FORMAT));
+            Set<String> columnsToDelete = new HashSet<String>();
+            for (String cdn : columnOrder) {
+                columnsToDelete.add(cdn);
+            }
+            JSONArray colJArr = jo.getJSONArray(JSON_KEY_COLUMNS);
+            for (int i = 0; i < colJArr.length(); i++) {
+                JSONObject colJo = colJArr.getJSONObject(i);
+                ColumnProperties cp = getColumnByDbName(colOrder[i]);
+                if (cp == null) {
+                    cp = addColumn(colOrder[i], colOrder[i]);
+                }
+                cp.setFromJsonObject(colJo);
+                columnsToDelete.remove(colOrder[i]);
+            }
+            for (String columnToDelete : columnsToDelete) {
+                deleteColumn(columnToDelete);
+            }
+            setColumnOrder(colOrder);
+            orderColumns();
+        } catch(JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private void setIntProperty(String property, int value) {

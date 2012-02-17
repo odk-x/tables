@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.view;
 
 import java.util.HashMap;
 import java.util.Map;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
 import android.webkit.WebView;
@@ -19,12 +20,12 @@ public class CustomDetailView extends WebView {
         "<p>No detail view has been specified.</p>" +
         "</body></html>";
     
-    private String filename;
+    private TableProperties tp;
     private RowData jsData;
     
-    public CustomDetailView(Context context, String filename) {
+    public CustomDetailView(Context context, TableProperties tp) {
         super(context);
-        this.filename = filename;
+        this.tp = tp;
         getSettings().setJavaScriptEnabled(true);
         setWebViewClient(new WebViewClient() {});
         jsData = new RowData();
@@ -34,6 +35,7 @@ public class CustomDetailView extends WebView {
     public void display(String tableId, String rowId, Map<String, String> data,
             Map<String, UserTable> joinData) {
         jsData.set(data, joinData);
+        String filename = tp.getDetailViewFilename();
         if (filename != null) {
             loadUrl("file:///" + filename);
         } else {

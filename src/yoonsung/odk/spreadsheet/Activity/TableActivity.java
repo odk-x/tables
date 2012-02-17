@@ -165,7 +165,7 @@ public abstract class TableActivity extends Activity
 		searchConstraints = new HashMap<String, String>();
 		collectionRowNum = -1;
 		selectedCellID = -1;
-		cdv = new CustomDetailView(this, tp.getDetailViewFilename());
+		cdv = new CustomDetailView(this, tp);
         tableWrapper = (LinearLayout) findViewById(R.id.tableWrapper);
         setTableView();
         collectInstances = new HashMap<String, Integer>();

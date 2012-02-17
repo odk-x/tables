@@ -115,14 +115,14 @@ public class PropertyManager extends PreferenceActivity {
                 String selectedDisplayName = tableNames[0] = "Choose a Table";
                 int index = 1;
                 for (TableProperties tp : tps) {
-                    if (tp.getTableId() == tableId) {
+                    if (tp.getTableId().equals(tableId)) {
                         continue;
                     }
-                    tableIds[index] = String.valueOf(tp.getTableId());
+                    tableIds[index] = tp.getTableId();
                     tableNames[index] = tp.getDbTableName();
                     if (tp.getTableId().equals(joinTableId)) {
                         selectedTp = tp;
-                        selectedTableId = String.valueOf(tp.getTableId());
+                        selectedTableId = tp.getTableId();
                         selectedDisplayName = tp.getDisplayName();
                     }
                     index++;
