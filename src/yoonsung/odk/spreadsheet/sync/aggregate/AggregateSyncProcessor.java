@@ -358,9 +358,7 @@ public class AggregateSyncProcessor {
 	}
 
 	public boolean isSpecialDbColumn(String colName) {
-		return colName.equals(DbTable.DB_LAST_MODIFIED_TIME)
-				|| colName.equals(DbTable.DB_ROW_ID)
-				|| colName.equals(DbTable.DB_SRC_PHONE_NUMBER)
+		return colName.equals(DbTable.DB_ROW_ID)
 				|| colName.equals(DbTable.DB_SYNC_STATE)
 				|| colName.equals(DbTable.DB_SYNC_ID)
 				|| colName.equals(DbTable.DB_SYNC_TAG)
