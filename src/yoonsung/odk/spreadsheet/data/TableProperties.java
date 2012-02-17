@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.UUID;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -66,7 +67,7 @@ public class TableProperties {
     private final DbHelper dbh;
     private final String[] whereArgs;
     
-    private final long tableId;
+    private final String tableId;
     private String dbTableName;
     private String displayName;
     private int tableType;
@@ -74,8 +75,8 @@ public class TableProperties {
     private String[] columnOrder;
     private String[] primeColumns;
     private String sortColumn;
-    private long readSecurityTableId;
-    private long writeSecurityTableId;
+    private String readSecurityTableId;
+    private String writeSecurityTableId;
     private int syncModificationNumber;
     private String lastSyncTime;
     private String detailViewFilename;
@@ -83,12 +84,13 @@ public class TableProperties {
     private int syncState;
     private int transactioning;
     
-    private TableProperties(DbHelper dbh, long tableId, String dbTableName,
+    private TableProperties(DbHelper dbh, String tableId, String dbTableName,
             String displayName, int tableType, String[] columnOrder,
-            String[] primeColumns, String sortColumn, long readSecurityTableId,
-            long writeSecurityTableId, int syncModificationNumber,
-            String lastSyncTime, String detailViewFilename,
-            String sumDisplayFormat, int syncState, int transactioning) {
+            String[] primeColumns, String sortColumn,
+            String readSecurityTableId, String writeSecurityTableId,
+            int syncModificationNumber, String lastSyncTime,
+            String detailViewFilename, String sumDisplayFormat, int syncState,
+            int transactioning) {
         this.dbh = dbh;
         whereArgs = new String[] { String.valueOf(tableId) };
         this.tableId = tableId;
@@ -110,9 +112,9 @@ public class TableProperties {
     }
     
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
-            long tableId) {
+            String tableId) {
         TableProperties[] res = queryForTableProperties(dbh, ID_WHERE_SQL,
-                new String[] {String.valueOf(tableId)});
+                new String[] {tableId});
         return res[0];
     }
     
@@ -139,7 +141,10 @@ public class TableProperties {
     
     private static TableProperties[] queryForTableProperties(DbHelper dbh,
             String where, String[] whereArgs) {
-        where += " AND " + DB_SYNC_STATE + " != " + SyncUtil.State.DELETING;
+        where = (where == null) ?
+                (DB_SYNC_STATE + " != " + SyncUtil.State.DELETING) :
+                (where + " AND " + DB_SYNC_STATE + " != " +
+                        SyncUtil.State.DELETING);
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, where, whereArgs, null,
                 null, null);
@@ -171,11 +176,11 @@ public class TableProperties {
             String primeOrderValue = c.getString(primeColumnsIndex);
             String[] primeList = (primeOrderValue.length() == 0) ?
                 new String[] {} : primeOrderValue.split("/");
-            tps[i] = new TableProperties(dbh, c.getLong(tableIdIndex),
+            tps[i] = new TableProperties(dbh, c.getString(tableIdIndex),
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
                     c.getInt(tableTypeIndex), columnOrder, primeList,
-                    c.getString(sortColumnIndex), c.getLong(rsTableId),
-                    c.getLong(wsTableId), c.getInt(syncModNumIndex),
+                    c.getString(sortColumnIndex), c.getString(rsTableId),
+                    c.getString(wsTableId), c.getInt(syncModNumIndex),
                     c.getString(lastSyncTimeIndex),
                     c.getString(detailViewFileIndex),
                     c.getString(sumDisplayFormatIndex),
@@ -217,15 +222,17 @@ public class TableProperties {
     
     public static TableProperties addTable(DbHelper dbh, String dbTableName,
             String displayName, int tableType) {
+        String id = UUID.randomUUID().toString();
         ContentValues values = new ContentValues();
+        values.put(DB_TABLE_ID, id);
         values.put(DB_DB_TABLE_NAME, dbTableName);
         values.put(DB_DISPLAY_NAME, displayName);
         values.put(DB_TABLE_TYPE, tableType);
         values.put(DB_COLUMN_ORDER, "");
         values.put(DB_PRIME_COLUMNS, "");
         values.putNull(DB_SORT_COLUMN);
-        values.put(DB_READ_SECURITY_TABLE_ID, -1);
-        values.put(DB_WRITE_SECURITY_TABLE_ID, -1);
+        values.putNull(DB_READ_SECURITY_TABLE_ID);
+        values.putNull(DB_WRITE_SECURITY_TABLE_ID);
         values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.putNull(DB_DETAIL_VIEW_FILE);
@@ -234,12 +241,16 @@ public class TableProperties {
         values.put(DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
-        long id = db.insert(DB_TABLENAME, null, values);
-        Log.d("TP", "new id=" + id);
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
-                displayName, tableType, new String[0], new String[0], null, -1,
-                -1, -1, null, null, null, SyncUtil.State.INSERTING,
+                displayName, tableType, new String[0], new String[0], null,
+                null, null, -1, null, null, null, SyncUtil.State.INSERTING,
                 SyncUtil.Transactioning.FALSE);
+        long result = db.insert(DB_TABLENAME, null, values);
+        Log.d("TP", "row id=" + result);
+        if (result < 0) {
+            throw new RuntimeException(
+                    "Failed to insert table properties row.");
+        }
         DbTable.createDbTable(db, tp);
         db.setTransactionSuccessful();
         db.endTransaction();
@@ -269,7 +280,7 @@ public class TableProperties {
         db.close();
     }
     
-    public long getTableId() {
+    public String getTableId() {
         return tableId;
     }
     
@@ -589,36 +600,36 @@ public class TableProperties {
     }
     
     /**
-     * @return the ID of the read security table, or -1 if there is none
+     * @return the ID of the read security table, or null if there is none
      */
-    public long getReadSecurityTableId() {
+    public String getReadSecurityTableId() {
         return readSecurityTableId;
     }
     
     /**
      * Sets the table's read security table.
-     * @param tableId the ID of the new read security table (or -1 to set no
+     * @param tableId the ID of the new read security table (or null to set no
      * read security table)
      */
-    public void setReadSecurityTableId(long tableId) {
-        setLongProperty(DB_READ_SECURITY_TABLE_ID, tableId);
+    public void setReadSecurityTableId(String tableId) {
+        setStringProperty(DB_READ_SECURITY_TABLE_ID, tableId);
         this.readSecurityTableId = tableId;
     }
     
     /**
-     * @return the ID of the write security table, or -1 if there is none
+     * @return the ID of the write security table, or null if there is none
      */
-    public long getWriteSecurityTableId() {
+    public String getWriteSecurityTableId() {
         return writeSecurityTableId;
     }
     
     /**
      * Sets the table's write security table.
-     * @param tableId the ID of the new write security table (or -1 to set no
+     * @param tableId the ID of the new write security table (or null to set no
      * write security table)
      */
-    public void setWriteSecurityTableId(long tableId) {
-        setLongProperty(DB_WRITE_SECURITY_TABLE_ID, tableId);
+    public void setWriteSecurityTableId(String tableId) {
+        setStringProperty(DB_WRITE_SECURITY_TABLE_ID, tableId);
         this.writeSecurityTableId = tableId;
     }
     
@@ -705,8 +716,6 @@ public class TableProperties {
                 this.syncState == SyncUtil.State.REST) {
             setIntProperty(DB_SYNC_STATE, state);
             this.syncState = state;
-        } else {
-            throw new RuntimeException("invalid call to setSyncState:");
         }
     }
     
@@ -734,14 +743,6 @@ public class TableProperties {
         db.close();
     }
     
-    private void setLongProperty(String property, long value) {
-        ContentValues values = new ContentValues();
-        values.put(property, value);
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
-        db.close();
-    }
-    
     private void setStringProperty(String property, String value) {
         SQLiteDatabase db = dbh.getWritableDatabase();
         setStringProperty(property, value, db);
@@ -759,15 +760,15 @@ public class TableProperties {
     
     static String getTableCreateSql() {
         return "CREATE TABLE " + DB_TABLENAME + "(" +
-                       DB_TABLE_ID + " INTEGER PRIMARY KEY" +
+                       DB_TABLE_ID + " TEXT UNIQUE NOT NULL" +
                 ", " + DB_DB_TABLE_NAME + " TEXT UNIQUE" +
                 ", " + DB_DISPLAY_NAME + " TEXT NOT NULL" +
                 ", " + DB_TABLE_TYPE + " INTEGER NOT NULL" +
                 ", " + DB_COLUMN_ORDER + " TEXT NOT NULL" +
                 ", " + DB_PRIME_COLUMNS + " TEXT NOT NULL" +
                 ", " + DB_SORT_COLUMN + " TEXT" +
-                ", " + DB_READ_SECURITY_TABLE_ID + " INTEGER NOT NULL" +
-                ", " + DB_WRITE_SECURITY_TABLE_ID + " INTEGER NOT NULL" +
+                ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
+                ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_DETAIL_VIEW_FILE + " TEXT" +

@@ -92,7 +92,7 @@ public class TableManager extends ListActivity {
 		     makeNoTableNotice();
 		     return;
 		 }
-		 long defTableId = prefs.getDefaultTableId();
+		 String defTableId = prefs.getDefaultTableId();
 		 List<Map<String, String>> fMaps =
 		     new ArrayList<Map<String, String>>();
 		 for(TableProperties tp : tableProps) {

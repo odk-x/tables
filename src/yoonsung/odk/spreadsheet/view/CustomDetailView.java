@@ -31,7 +31,7 @@ public class CustomDetailView extends WebView {
         addJavascriptInterface(jsData, "data");
     }
     
-    public void display(long tableId, int rowId, Map<String, String> data,
+    public void display(String tableId, int rowId, Map<String, String> data,
             Map<String, UserTable> joinData) {
         jsData.set(data, joinData);
         if (filename != null) {

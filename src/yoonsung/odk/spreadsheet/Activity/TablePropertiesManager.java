@@ -39,8 +39,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        long tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
-        if (tableId < 0) {
+        String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+        if (tableId == null) {
             throw new RuntimeException("Table ID (" + tableId +
                     ") is invalid.");
         }
@@ -209,13 +209,17 @@ public class TablePropertiesManager extends PreferenceActivity {
         accessTableNames[0] = "None";
         int index = 1;
         for (TableProperties accessTp : accessTps) {
-            if (accessTp.getTableId() == tp.getTableId()) {
+            if (accessTp.getTableId().equals(tp.getTableId())) {
                 continue;
             }
-            if (accessTp.getTableId() == tp.getReadSecurityTableId()) {
+            if ((tp.getReadSecurityTableId() != null) &&
+                    accessTp.getTableId().equals(
+                    tp.getReadSecurityTableId())) {
                 readTp = accessTp;
             }
-            if (accessTp.getTableId() == tp.getWriteSecurityTableId()) {
+            if ((tp.getWriteSecurityTableId() != null) &&
+                    accessTp.getTableId().equals(
+                    tp.getWriteSecurityTableId())) {
                 writeTp = accessTp;
             }
             accessTableIds[index] = String.valueOf(accessTp.getTableId());
@@ -240,7 +244,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setReadSecurityTableId(Long.parseLong((String) newValue));
+                tp.setReadSecurityTableId((String) newValue);
                 init();
                 return false;
             }
@@ -264,7 +268,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setWriteSecurityTableId(Long.parseLong((String) newValue));
+                tp.setWriteSecurityTableId((String) newValue);
                 init();
                 return false;
             }

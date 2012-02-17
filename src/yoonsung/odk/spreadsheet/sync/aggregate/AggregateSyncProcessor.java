@@ -70,7 +70,7 @@ public class AggregateSyncProcessor {
 	 * @throws OutOfSynchException
 	 * @throws RowOutOfSynchException
 	 */
-	public void synchronize(long tableId) throws ClientProtocolException,
+	public void synchronize(String tableId) throws ClientProtocolException,
 			TableAlreadyExistsException, AggregateInternalErrorException,
 			IOException, OutOfSynchException, TableDoesNotExistException,
 			PermissionDeniedException, ColumnDoesNotExistException,

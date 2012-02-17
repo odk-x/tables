@@ -19,9 +19,9 @@ public class DisplayPrefs {
     
     private final Context context;
     private final DisplayPrefsDBManager dbm;
-    private final long tableId;
+    private final String tableId;
     
-    public DisplayPrefs(Context context, long tableId) {
+    public DisplayPrefs(Context context, String tableId) {
         this.context = context;
         this.tableId = tableId;
         dbm = new DisplayPrefsDBManager(context);
@@ -109,7 +109,7 @@ public class DisplayPrefs {
         int backgroundIndex = cs.getColumnIndex("background");
         // initializing the ccr
         TableProperties tp = TableProperties.getTablePropertiesForTable(DbHelper.getDbHelper(context), tableId);
-        ColumnProperties cp = tp.getColumnByDbName(colName);
+        ColumnProperties cp = tp.getColumnByDbName(tp.getColumnByDisplayName(colName));
         ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());
         // adding rules
         boolean done = !cs.moveToFirst();

@@ -21,14 +21,14 @@ public class MainDisplaySettings extends Activity {
     private static final String[] spinnerTexts = { "Table", "List", "Line Graph" };
     
     private Preferences prefs;
-    private long tableId;
+    private String tableId;
     private Spinner viewTypeSpinner;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         prefs = new Preferences(this);
-        tableId = getIntent().getLongExtra(TABLE_ID_INTENT_KEY, -1);
+        tableId = getIntent().getStringExtra(TABLE_ID_INTENT_KEY);
         setContentView(R.layout.settings_maindisplay);
         viewTypeSpinner = (Spinner) findViewById(
                 R.id.settings_maindisplay_viewtype);

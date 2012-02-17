@@ -50,7 +50,7 @@ public class PropertyManager extends PreferenceActivity {
     };
     
     // Private Fields
-        private long tableId;
+        private String tableId;
         private String colName;
         private ColumnProperties cp;
         private boolean showingMcDialog;
@@ -63,7 +63,7 @@ public class PropertyManager extends PreferenceActivity {
                 setTitle("ODK Tables > Column Property");
                 
                 // Column Name
-                this.tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
+                this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
                 this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
                 DbHelper dbh = DbHelper.getDbHelper(this);
                 cp = TableProperties.getTablePropertiesForTable(dbh, tableId)
@@ -106,7 +106,7 @@ public class PropertyManager extends PreferenceActivity {
                 showingMcDialog = true;
                 category.addPreference(new McOptionSettingsDialogPreference(this));
             } else if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
-                long joinTableId = cp.getJoinTableId();
+                String joinTableId = cp.getJoinTableId();
                 TableProperties[] tps = TableProperties.getTablePropertiesForAll(DbHelper.getDbHelper(this));
                 TableProperties selectedTp = null;
                 String[] tableIds = new String[tps.length];
@@ -120,7 +120,7 @@ public class PropertyManager extends PreferenceActivity {
                     }
                     tableIds[index] = String.valueOf(tp.getTableId());
                     tableNames[index] = tp.getDbTableName();
-                    if (tp.getTableId() == joinTableId) {
+                    if (tp.getTableId().equals(joinTableId)) {
                         selectedTp = tp;
                         selectedTableId = String.valueOf(tp.getTableId());
                         selectedDisplayName = tp.getDisplayName();
@@ -219,7 +219,7 @@ public class PropertyManager extends PreferenceActivity {
                     }
                 }
             } else if (key.equals("JOIN_TABLE")) {
-                cp.setJoinTableId(Long.parseLong(newVal));
+                cp.setJoinTableId(newVal);
             } else if (key.equals("JOIN_COLUMN")) {
                 cp.setJoinColumnName(newVal);
             }

@@ -30,22 +30,22 @@ public class Preferences {
         prefs = context.getSharedPreferences(FILE_NAME, 0);
     }
     
-    public long getDefaultTableId() {
-        return prefs.getLong(DEFAULT_TABLE_KEY, -1);
+    public String getDefaultTableId() {
+        return prefs.getString(DEFAULT_TABLE_KEY, null);
     }
     
-    public void setDefaultTableId(long tableId) {
+    public void setDefaultTableId(String tableId) {
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong(DEFAULT_TABLE_KEY, tableId);
+        editor.putString(DEFAULT_TABLE_KEY, tableId);
         editor.commit();
     }
     
-    public int getPreferredViewType(long tableId) {
+    public int getPreferredViewType(String tableId) {
         return prefs.getInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId,
                 ViewType.TABLE);
     }
     
-    public void setPreferredViewType(long tableId, int type) {
+    public void setPreferredViewType(String tableId, int type) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type);
         editor.commit();
@@ -71,7 +71,7 @@ public class Preferences {
     	return prefs.getString(AGGREGATE_USERNAME_KEY, null);
     }
     
-    public void clearTablePreferences(long tableId) {
+    public void clearTablePreferences(String tableId) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.remove(PREFERRED_VIEW_TYPE_BASE_KEY + tableId);
         editor.commit();

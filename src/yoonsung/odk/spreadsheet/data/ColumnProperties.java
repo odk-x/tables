@@ -73,7 +73,7 @@ public class ColumnProperties {
     private final DbHelper dbh;
     private final String[] whereArgs;
     
-    private final long tableId;
+    private final String tableId;
     private final String columnDbName;
     private String displayName;
     private String abbreviation;
@@ -82,13 +82,13 @@ public class ColumnProperties {
     private boolean smsIn;
     private boolean smsOut;
     private String[] multipleChoiceOptions;
-    private long joinTableId;
+    private String joinTableId;
     private String joinColumnName;
     
-    private ColumnProperties(DbHelper dbh, long tableId, String columnDbName,
+    private ColumnProperties(DbHelper dbh, String tableId, String columnDbName,
             String displayName, String abbreviation, int columnType,
             int footerMode, boolean smsIn, boolean smsOut,
-            String[] multipleChoiceOptions, long joinTableId,
+            String[] multipleChoiceOptions, String joinTableId,
             String joinColumnName) {
         this.dbh = dbh;
         whereArgs = new String[] {String.valueOf(tableId), columnDbName};
@@ -105,12 +105,11 @@ public class ColumnProperties {
         this.joinColumnName = joinColumnName;
     }
     
-    static ColumnProperties getColumnProperties(DbHelper dbh, long tableId,
+    static ColumnProperties getColumnProperties(DbHelper dbh, String tableId,
             String dbColumnName) {
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, WHERE_SQL,
-                new String[] {String.valueOf(tableId), dbColumnName}, null,
-                null, null);
+                new String[] {tableId, dbColumnName}, null, null, null);
         int dbcnIndex = c.getColumnIndexOrThrow(DB_DB_COLUMN_NAME);
         int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
         int abrvIndex = c.getColumnIndexOrThrow(DB_ABBREVIATION);
@@ -132,17 +131,17 @@ public class ColumnProperties {
                 c.getString(abrvIndex), c.getInt(colTypeIndex),
                 c.getInt(footerModeIndex), c.getInt(smsInIndex) == 1,
                 c.getInt(smsOutIndex) == 1, mcOptionsList,
-                c.getLong(joinTableIndex), c.getString(joinColumnIndex));
+                c.getString(joinTableIndex), c.getString(joinColumnIndex));
         c.close();
         db.close();
         return cp;
     }
     
     static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh,
-            long tableId) {
+            String tableId) {
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, DB_TABLE_ID + " = ?",
-                new String[] {String.valueOf(tableId)}, null, null, null);
+                new String[] {tableId}, null, null, null);
         ColumnProperties[] cps = new ColumnProperties[c.getCount()];
         int dbcnIndex = c.getColumnIndexOrThrow(DB_DB_COLUMN_NAME);
         int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
@@ -166,7 +165,7 @@ public class ColumnProperties {
                     c.getString(displayNameIndex), c.getString(abrvIndex),
                     c.getInt(colTypeIndex), c.getInt(footerModeIndex),
                     c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1,
-                    mcOptionsList, c.getLong(joinTableIndex),
+                    mcOptionsList, c.getString(joinTableIndex),
                     c.getString(joinColumnIndex));
             i++;
             c.moveToNext();
@@ -177,7 +176,7 @@ public class ColumnProperties {
     }
     
     static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
-            long tableId, String columnDbName, String columnDisplayName) {
+            String tableId, String columnDbName, String columnDisplayName) {
         ContentValues values = new ContentValues();
         values.put(DB_TABLE_ID, tableId);
         values.put(DB_DB_COLUMN_NAME, columnDbName);
@@ -188,12 +187,12 @@ public class ColumnProperties {
         values.put(DB_SMS_IN, 1);
         values.put(DB_SMS_OUT, 1);
         values.putNull(DB_MULTIPLE_CHOICE_OPTIONS);
-        values.put(DB_JOIN_TABLE_ID, -1);
+        values.putNull(DB_JOIN_TABLE_ID);
         values.putNull(DB_JOIN_COLUMN_NAME);
         db.insert(DB_TABLENAME, null, values);
         return new ColumnProperties(dbh, tableId, columnDbName,
                 columnDisplayName, null, ColumnType.NONE, FooterMode.NONE,
-                true, true, new String[0], -1, null);
+                true, true, new String[0], null, null);
     }
     
     void deleteColumn(SQLiteDatabase db) {
@@ -328,7 +327,7 @@ public class ColumnProperties {
     /**
      * @return the join table ID
      */
-    public long getJoinTableId() {
+    public String getJoinTableId() {
         return joinTableId;
     }
     
@@ -336,8 +335,8 @@ public class ColumnProperties {
      * Sets the join table ID.
      * @param tableId the join table Id
      */
-    public void setJoinTableId(long tableId) {
-        setIntProperty(DB_JOIN_TABLE_ID, (new Long(tableId)).intValue());
+    public void setJoinTableId(String tableId) {
+        setStringProperty(DB_JOIN_TABLE_ID, tableId);
         joinTableId = tableId;
     }
     
@@ -414,7 +413,7 @@ public class ColumnProperties {
     static String getTableCreateSql() {
         return "CREATE TABLE " + DB_TABLENAME + "(" +
                        DB_COLUMN_ID + " INTEGER PRIMARY KEY" +
-                ", " + DB_TABLE_ID + " INTEGER NOT NULL" +
+                ", " + DB_TABLE_ID + " TEXT NOT NULL" +
                 ", " + DB_DB_COLUMN_NAME + " TEXT NOT NULL" +
                 ", " + DB_DISPLAY_NAME + " TEXT NOT NULL" +
                 ", " + DB_ABBREVIATION + " TEXT" +
@@ -423,7 +422,7 @@ public class ColumnProperties {
                 ", " + DB_SMS_IN + " INTEGER NOT NULL" +
                 ", " + DB_SMS_OUT + " INTEGER NOT NULL" +
                 ", " + DB_MULTIPLE_CHOICE_OPTIONS + " TEXT" +
-                ", " + DB_JOIN_TABLE_ID + " INTEGER" +
+                ", " + DB_JOIN_TABLE_ID + " TEXT" +
                 ", " + DB_JOIN_COLUMN_NAME + " TEXT" +
                 ")";
     }

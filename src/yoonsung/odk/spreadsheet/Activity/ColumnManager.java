@@ -48,7 +48,7 @@ public class ColumnManager extends ListActivity {
 	private IconicAdapter adapter;
 	
 	// Private Fields
-	private long tableId;
+	private String tableId;
 	private TableProperties tp;
 	private ColumnProperties[] cps;
 	private String[] columnOrder;
@@ -56,7 +56,7 @@ public class ColumnManager extends ListActivity {
 	
 	// Initialize fields.
 	private void init() {
-	    tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
+	    tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
 	    DbHelper dbh = DbHelper.getDbHelper(this);
 	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
 	    cps = tp.getColumns();

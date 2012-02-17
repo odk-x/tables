@@ -108,7 +108,7 @@ public abstract class TableActivity extends Activity
         "Sum"
     };
 	
-    protected long tableId;
+    protected String tableId;
     private DbHelper dbh;
     protected DbTable dbt;
     protected Preferences prefs;
@@ -1378,12 +1378,12 @@ public abstract class TableActivity extends Activity
 	 * @return true if a table ID was found; false otherwise
 	 */
 	private boolean setTableId() {
-	    tableId = getIntent().getLongExtra(INTENT_KEY_TABLE_ID, -1);
-	    if (tableId >= 0) {
+	    tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+	    if (tableId != null) {
 	        return true;
 	    }
 	    tableId = prefs.getDefaultTableId();
-	    return (tableId >= 0);
+	    return (tableId != null);
 	}
 	
 	/**
@@ -1560,7 +1560,7 @@ public abstract class TableActivity extends Activity
 	        data.put(key, value);
 	        if (cps[i].getColumnType() ==
 	            ColumnProperties.ColumnType.TABLE_JOIN) {
-	            long joinTableId = cps[i].getJoinTableId();
+	            String joinTableId = cps[i].getJoinTableId();
 	            TableProperties joinTp = TableProperties
 	                    .getTablePropertiesForTable(dbh, joinTableId);
 	            DbTable joinDbt = DbTable.getDbTable(dbh, joinTableId);

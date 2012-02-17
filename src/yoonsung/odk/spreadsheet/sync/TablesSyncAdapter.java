@@ -17,6 +17,7 @@ import org.opendatakit.aggregate.odktables.client.exception.UserDoesNotExistExce
 
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Preferences;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.sync.aggregate.AggregateSyncProcessor;
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -52,7 +53,9 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter
 				SynchronizeAPI api = new SynchronizeAPI(aggregateURI, username);
 		    	DbHelper helper = DbHelper.getDbHelper(context);
 		    	AggregateSyncProcessor processor = new AggregateSyncProcessor(api, helper);
-		    	processor.synchronize(1);
+		    	TableProperties someTp =
+		    	    TableProperties.getTablePropertiesForAll(helper)[0];
+		    	processor.synchronize(someTp.getTableId());
 	    	}
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block

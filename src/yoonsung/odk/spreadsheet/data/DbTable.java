@@ -25,11 +25,11 @@ public class DbTable {
     private final DbHelper dbh;
     private final TableProperties tp;
     
-    public static DbTable getDbTable(DbHelper dbh, long tableId) {
+    public static DbTable getDbTable(DbHelper dbh, String tableId) {
         return new DbTable(dbh, tableId);
     }
     
-    private DbTable(DbHelper dbh, long tableId) {
+    private DbTable(DbHelper dbh, String tableId) {
         this.dbh = dbh;
         this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
     }
