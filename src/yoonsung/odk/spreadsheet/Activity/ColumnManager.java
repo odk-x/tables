@@ -145,15 +145,8 @@ public class ColumnManager extends ListActivity {
 			@Override
 			public void onItemClick(AdapterView adView, View view,
 										int position, long id) {
-				// Selected item in the list
-				View v = adapter.getView(position, null, null);
-				TextView tv = (TextView) v.findViewById(R.id.row_label);
-				
-				// Name of column from the selected item
-				String name = tv.getText().toString();
-				
 				// Load Column Property Manger with this column name
-				loadColumnPropertyManager(name);
+				loadColumnPropertyManager(cps[position].getColumnDbName());
 			}
 		});
 		
@@ -327,7 +320,7 @@ public class ColumnManager extends ListActivity {
 			
 			// Register name of colunm at each row in the list view
 			TextView label = (TextView)row.findViewById(R.id.row_label);		
-			label.setText(currentColName);
+			label.setText(cps[position].getDisplayName());
 			
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);

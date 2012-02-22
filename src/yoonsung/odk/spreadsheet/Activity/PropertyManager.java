@@ -79,7 +79,7 @@ public class PropertyManager extends PreferenceActivity {
             
             // Preference Category
             PreferenceCategory category = new PreferenceCategory(this);
-            category.setTitle(colName);
+            category.setTitle(cp.getDisplayName());
             root.addPreference(category);
             
             // Abreviation<EditText>
