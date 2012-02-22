@@ -1,24 +1,17 @@
 package yoonsung.odk.spreadsheet.Activity.importexport;
 
 import java.io.File;
-import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Activity.importexport.IETabActivity.PickFileButtonListener;
-import yoonsung.odk.spreadsheet.csvie.CSVException;
-import yoonsung.odk.spreadsheet.csvie.CSVExporter;
+import yoonsung.odk.spreadsheet.Activity.util.CsvUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
-import yoonsung.odk.spreadsheet.data.DbTable;
-import yoonsung.odk.spreadsheet.data.Table;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -45,6 +38,8 @@ public class ExportCSVActivity extends IETabActivity {
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
 	private EditText filenameValField;
+	/* the checkbox for including properties */
+	private CheckBox incPropsCheck;
 	/* the checkbox for including source phone numbers */
 	private CheckBox incPNCheck;
 	/* the checkbox for including timestamps */
@@ -92,6 +87,16 @@ public class ExportCSVActivity extends IETabActivity {
 		opt.setText("Options:");
 		opt.setTextColor(R.color.black);
 		v.addView(opt);
+		// adding the include properties checkbox
+		LinearLayout incProps = new LinearLayout(this);
+		incPropsCheck = new CheckBox(this);
+		incPropsCheck.setChecked(true);
+		incProps.addView(incPropsCheck);
+		TextView incPropsLabel = new TextView(this);
+		incPropsLabel.setText("Include Table Settings");
+		incPropsLabel.setTextColor(R.color.black);
+		incProps.addView(incPropsLabel);
+		v.addView(incProps);
 		// adding the include source phone numbers checkbox
 		LinearLayout incPN = new LinearLayout(this);
 		incPNCheck = new CheckBox(this);
@@ -149,25 +154,22 @@ public class ExportCSVActivity extends IETabActivity {
 	 * Attempts to export a table.
 	 */
 	private void exportSubmission() {
-		File file = new File(filenameValField.getText().toString());
-		TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
-		DbTable dbt = DbTable.getDbTable(dbh, tp.getTableId());
-		String[] userCols = tp.getColumnOrder();
-		String[] cols = new String[userCols.length + 2];
-		cols[0] = DbTable.DB_LAST_MODIFIED_TIME;
-		cols[1] = DbTable.DB_SRC_PHONE_NUMBER;
-		for (int i = 0; i < userCols.length; i++) {
-		    cols[i + 2] = userCols[i];
-		}
-		Table table = dbt.getRaw(cols, null, null, null);
-		try {
-			(new CSVExporter()).exportTable(table, file,
-			        incTSCheck.isChecked(), incPNCheck.isChecked());
-			showDialog(CSVEXPORT_SUCCESS_DIALOG);
-		} catch (CSVException e) {
-			showDialog(CSVEXPORT_FAIL_DIALOG);
-			return;
-		}
+	    CsvUtil cu = new CsvUtil(this);
+        File file = new File(filenameValField.getText().toString());
+        TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
+        boolean result;
+        if (incPropsCheck.isChecked()) {
+            result = cu.exportWithProperties(file, tp.getTableId(),
+                    incTSCheck.isChecked(), incPNCheck.isChecked());
+        } else {
+            result = cu.export(file, tp.getTableId(), incTSCheck.isChecked(),
+                    incPNCheck.isChecked());
+        }
+        if (result) {
+            showDialog(CSVEXPORT_SUCCESS_DIALOG);
+        } else {
+            showDialog(CSVEXPORT_FAIL_DIALOG);
+        }
 	}
     
     @Override

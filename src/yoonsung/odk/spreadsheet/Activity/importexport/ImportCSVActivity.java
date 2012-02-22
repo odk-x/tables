@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.Activity.util.CsvUtil;
 import yoonsung.odk.spreadsheet.csvie.CSVException;
 import yoonsung.odk.spreadsheet.csvie.CSVImporter;
 import yoonsung.odk.spreadsheet.data.DbHelper;
@@ -211,6 +212,22 @@ public class ImportCSVActivity extends IETabActivity {
 		}
 		
 		public void run() {
+		    CsvUtil cu = new CsvUtil(ImportCSVActivity.this);
+		    boolean success;
+		    if (createTable) {
+		        success = cu.importNewTable(file, tableName);
+		    } else {
+		        success = cu.importAddToTable(file, tp.getTableId());
+		    }
+		    Bundle b = new Bundle();
+		    b.putBoolean("success", success);
+		    if (!success) {
+		        b.putString("errmsg", "Failed to import file.");
+		    }
+		    Message msg = mHandler.obtainMessage();
+		    msg.setData(b);
+		    mHandler.sendMessage(msg);
+		    /**
 			CSVImporter importer = new CSVImporter(ImportCSVActivity.this);
 			boolean success = true;
 			String errorMsg = null;
@@ -232,6 +249,7 @@ public class ImportCSVActivity extends IETabActivity {
 			Message msg = mHandler.obtainMessage();
 			msg.setData(b);
 			mHandler.sendMessage(msg);
+			**/
 		}
 		
 	}
