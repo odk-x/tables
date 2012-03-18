@@ -130,7 +130,7 @@ public abstract class TableActivity extends Activity
 	protected int collectionRowNum; // the row number of the collection being
 	                                // viewed; -1 if on main table
 	protected int indexedCol; // the column to index on; -1 if not indexed
-	protected Map<String, String> searchConstraints;
+	protected Query q;
 	
 	private Map<String, Integer> collectInstances;
 	
@@ -163,12 +163,9 @@ public abstract class TableActivity extends Activity
         dp = new DisplayPrefs(this, tableId);
         init();
 		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
-		table = dbt.getUserOverview(tp.getPrimeColumns(), null, null,
-		        tp.getSortColumn());
 		TextView led = (TextView) findViewById(R.id.tableNameLed);
 		led.setText(tp.getDisplayName());
 		indexedCol = -1;
-		searchConstraints = new HashMap<String, String>();
 		collectionRowNum = -1;
 		selectedCellID = -1;
 		cdv = new CustomDetailView(this, tp);
@@ -176,12 +173,13 @@ public abstract class TableActivity extends Activity
         collectInstances = new HashMap<String, Integer>();
 		prepButtonListeners();
 		String query = tableId = getIntent().getStringExtra(INTENT_KEY_QUERY);
+        q = new Query(tps, tp);
 		if (query != null) {
 		    setSearchBoxText(query);
-		    handleSearch(query);
-		} else {
-	        setTableView();
+		    q.loadFromUserQuery(query);
 		}
+        table = dbt.getUserOverviewTable(q);
+        setTableView();
 	}
 	
 	private void init() {
@@ -218,18 +216,13 @@ public abstract class TableActivity extends Activity
 	protected void viewCollection(int rowNum) {
 	    collectionRowNum = rowNum;
 	    String[] primes = tp.getPrimeColumns();
-        StringBuilder searchTermBuilder = new StringBuilder();
 	    for (String prime : primes) {
 	        int colNum = tp.getColumnIndex(prime);
 	        String value = table.getData(rowNum, colNum);
-            searchConstraints.put(prime, value);
-            searchTermBuilder.append(" " + prime + ":" + value);
+	        q.addConstraint(tp.getColumnByDbName(prime), value);
 	    }
-        if (searchTermBuilder.length() > 0) {
-            searchTermBuilder.delete(0, 1);
-        }
-        setSearchBoxText(searchTermBuilder.toString());
-	    search();
+        setSearchBoxText(q.toUserQuery());
+        refreshView();
 	}
 	
 	/**
@@ -1057,11 +1050,9 @@ public abstract class TableActivity extends Activity
 				indexedCol = -1;
 				collectionRowNum = -1;
 				selectContentCell(-1);
-				table = dbt.getUserOverview(tp.getPrimeColumns(), null, null,
-				        tp.getSortColumn());
+				q.clear();
 				setSearchBoxText("");
-				searchConstraints.clear();
-				setTableView();
+				refreshView();
 			}
 		});
 	}
@@ -1087,22 +1078,12 @@ public abstract class TableActivity extends Activity
 		ecEnterButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-			    searchConstraints.clear();
                 String val = getSearchBoxText();
-                handleSearch(val);
+                q.clear();
+                q.loadFromUserQuery(val);
+                refreshView();
 			}
 		});
-	}
-	
-	private void handleSearch(String query) {
-	    Query q = new Query(tps, tp);
-	    q.loadFromUserQuery(query);
-	    for (int i = 0; i < q.getConstraintCount(); i++) {
-	        String colDbName = q.getConstraint(i).getColumnDbName();
-	        searchConstraints.put(colDbName, q.getConstraint(i).getValue());
-	    }
-	    Log.d("TA", "sc:" + searchConstraints);
-        search();
 	}
 	
     /**
@@ -1113,7 +1094,6 @@ public abstract class TableActivity extends Activity
         arButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PackageManager packageManager = getPackageManager();
                 Intent intent = new Intent();
                 intent.setComponent(new ComponentName("org.odk.collect.android",
                         "org.odk.collect.android.activities.FormEntryActivity"));
@@ -1121,17 +1101,6 @@ public abstract class TableActivity extends Activity
                 List<ResolveInfo> availList = getPackageManager()
                         .queryIntentActivities(intent,
                         PackageManager.MATCH_DEFAULT_ONLY);
-                /**
-                Intent intent = new Intent();
-                intent.setComponent(new ComponentName(
-                        "org.odk.collect.android",
-                        "org.odk.collect.android.provider.FormsProvider"));
-                intent.setAction("android.intent.action.EDIT");
-                intent.putExtra("formpath", "/sdcard/odk/tables/addrow.xml");
-                Uri uri = ContentUris.withAppendedId(Uri.parse(
-                        "content://org.odk.collect.android.provider.odk.instances/instances"), 0);
-                startActivityForResult(new Intent(Intent.ACTION_EDIT, uri), ODK_COLLECT_FORM_RETURN);
-                **/
                 if (availList.size() == 0) {
                     backUpAddRowDialog();
                 } else {
@@ -1140,25 +1109,6 @@ public abstract class TableActivity extends Activity
             }
         });
     }
-	
-	private void search() {
-	    String[] selectionKeys = new String[searchConstraints.size()];
-        String[] selectionArgs = new String[searchConstraints.size()];
-        int index = 0;
-        for (String key : searchConstraints.keySet()) {
-            selectionKeys[index] = key;
-            selectionArgs[index] = searchConstraints.get(key);
-            index++;
-        }
-	    if (collectionRowNum < 0) {
-	        table = dbt.getUserOverview(tp.getPrimeColumns(), selectionKeys,
-	                selectionArgs, tp.getSortColumn());
-	    } else {
-	        table = dbt.getUserTable(selectionKeys, selectionArgs,
-	                tp.getSortColumn());
-	    }
-        setTableView();
-	}
 	
 	private String getSearchBoxText() {
         EditText et = (EditText) findViewById(R.id.edit_box);
@@ -1370,21 +1320,11 @@ public abstract class TableActivity extends Activity
 		if(isCollectForm) {
 			isCollectForm = false;
 		}
-		String[] selectionKeys = new String[searchConstraints.size()];
-        String[] selectionArgs = new String[searchConstraints.size()];
-        int index = 0;
-        for (String key : searchConstraints.keySet()) {
-            selectionKeys[index] = key;
-            selectionArgs[index] = searchConstraints.get(key);
-            index++;
-        }
         init();
         if (collectionRowNum < 0) {
-            table = dbt.getUserOverview(tp.getPrimeColumns(), selectionKeys,
-                    selectionArgs, tp.getSortColumn());
+            table = dbt.getUserOverviewTable(q);
         } else {
-            table = dbt.getUserTable(selectionKeys, selectionArgs,
-                    tp.getSortColumn());
+            table = dbt.getUserTable(q);
         }
 		setTableView();
 	}
@@ -1606,9 +1546,9 @@ public abstract class TableActivity extends Activity
 	            TableProperties joinTp = TableProperties
 	                    .getTablePropertiesForTable(dbh, joinTableId);
 	            DbTable joinDbt = DbTable.getDbTable(dbh, joinTableId);
-	            UserTable ut = joinDbt.getUserTable(
-	                    new String[] {cps[i].getJoinColumnName()},
-	                    new String[] {value}, joinTp.getSortColumn());
+	            Query joinQuery = new Query(tps, joinTp);
+	            joinQuery.addConstraint(cps[i], value);
+	            UserTable ut = joinDbt.getUserTable(joinQuery);
 	            joinData.put(key, ut);
 	        }
 	    }

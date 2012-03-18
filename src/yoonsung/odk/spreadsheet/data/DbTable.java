@@ -1,7 +1,10 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import yoonsung.odk.spreadsheet.data.Query.SqlData;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -78,127 +81,38 @@ public class DbTable {
                 columns[i + 4] = cps[i].getColumnDbName();
             }
         }
-        return dataQuery(columns, buildSelectionSql(selectionKeys),
-                selectionArgs, orderBy);
-    }
-    
-    /**
-     * Gets a user table. Rows marked as deleted will not be included.
-     */
-    public UserTable getUserTable(String[] selectionKeys,
-            String[] selectionArgs, String orderBy) {
-        String selection = buildUserSelectionSql(selectionKeys);
-        Table table = dataQuery(tp.getColumnOrder(), selection, selectionArgs,
-                orderBy);
-        String[] footer = footerQuery(tp.getColumnOrder(), selection,
-                selectionArgs);
-        return new UserTable(table.getRowIds(), getUserHeader(),
-                table.getData(), footer);
-    }
-    
-    /**
-     * Gets a collecton overview user table. Rows marked as deleted will not be
-     * included.
-     */
-    public UserTable getUserOverview(String[] primes, String[] selectionKeys,
-            String[] selectionArgs, String orderBy) {
-        if (primes.length == 0) {
-            return getUserTable(selectionKeys, selectionArgs, orderBy);
-        }
-        String selection = buildUserSelectionSql(selectionKeys);
-        
-        StringBuilder allSelectList = new StringBuilder("y." + DB_ROW_ID +
-                " AS " + DB_ROW_ID);
-        for (String col : tp.getColumnOrder()) {
-            allSelectList.append(", y." + col + " AS " + col);
-        }
-        
-        StringBuilder xList = new StringBuilder();
-        StringBuilder yList = new StringBuilder();
-        for (String prime : primes) {
-            xList.append(prime + ", ");
-            yList.append(", " + prime);
-        }
-        if (orderBy == null) {
-            xList.delete(xList.length() - 2, xList.length());
-        } else {
-            xList.append(orderBy);
-        }
-        yList.delete(0, 2);
-        StringBuilder xSelect = new StringBuilder();
-        xSelect.append("SELECT MAX(" + DB_ROW_ID + ") as id");
-        if (orderBy != null) {
-            xSelect.append(", " + xList.toString());
-        }
-        xSelect.append(" FROM " + tp.getDbTableName());
-        if (selection != null) {
-            xSelect.append(" WHERE " + selection);
-        }
-        xSelect.append(" GROUP BY " + xList.toString());
-        
-        StringBuilder idSelect;
-        if (orderBy == null) {
-            idSelect = xSelect;
-        } else {
-            StringBuilder joinBuilder = new StringBuilder();
-            joinBuilder.append("y.s" + orderBy + " = x." + orderBy);
-            for (String prime : primes) {
-                joinBuilder.append(" AND x." + prime + " = y." + prime);
-            }
-            idSelect = new StringBuilder();
-            idSelect.append("SELECT x." + DB_ROW_ID + " FROM (");
-            idSelect.append(xSelect.toString());
-            idSelect.append(") x JOIN (");
-            idSelect.append("SELECT MAX(" + orderBy + ") AS s" + orderBy);
-            idSelect.append(", " + yList.toString());
-            idSelect.append(" FROM " + tp.getDbTableName());
-            if (selection != null) {
-                idSelect.append(" WHERE " + selection);
-            }
-            idSelect.append(" GROUP BY " + yList.toString());
-            idSelect.append(") y ON " + joinBuilder.toString());
-        }
-        
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("SELECT " + allSelectList.toString() + " FROM (");
-        sqlBuilder.append(idSelect.toString());
-        sqlBuilder.append(") x JOIN " + tp.getDbTableName() + " y");
-        sqlBuilder.append(" ON x." + DB_ROW_ID + " = y." + DB_ROW_ID);
-        
-        String[] dSelectionArgs = null;
-        if (selectionArgs != null) {
-            dSelectionArgs = new String[selectionArgs.length * 2];
-            for (int i = 0; i < selectionArgs.length; i++) {
-                dSelectionArgs[i] = selectionArgs[i];
-                dSelectionArgs[selectionArgs.length + i] = selectionArgs[i];
-            }
-        }
-        
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sqlBuilder.toString(), dSelectionArgs);
-        Table table = buildTable(c, tp.getColumnOrder());
-        c.close();
-        db.close();
-        String[] footer = footerQuery(tp.getColumnOrder(), selection,
-                selectionArgs);
-        return new UserTable(table.getRowIds(), getUserHeader(),
-                table.getData(), footer);
-    }
-    
-    /**
-     * Queries the table with the given options and returns a Table.
-     */
-    private Table dataQuery(String[] columns, String selection,
-            String[] selectionArgs, String orderBy) {
         String[] colArr = new String[columns.length + 1];
         colArr[0] = DB_ROW_ID;
         for (int i = 0; i < columns.length; i++) {
             colArr[i + 1] = columns[i];
         }
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.query(tp.getDbTableName(), colArr, selection,
+        Cursor c = db.query(tp.getDbTableName(), colArr,
+                buildSelectionSql(selectionKeys),
                 selectionArgs, null, null, orderBy);
         Table table = buildTable(c, columns);
+        c.close();
+        db.close();
+        return table;
+    }
+    
+    public UserTable getUserTable(Query query) {
+        Table table = dataQuery(query.toSql(tp.getColumnOrder()));
+        return new UserTable(table.getRowIds(), getUserHeader(),
+                table.getData(), footerQuery(query));
+    }
+    
+    public UserTable getUserOverviewTable(Query query) {
+        Table table = dataQuery(query.toOverviewSql(tp.getColumnOrder()));
+        return new UserTable(table.getRowIds(), getUserHeader(),
+                table.getData(), footerQuery(query));
+    }
+    
+    private Table dataQuery(SqlData sd) {
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        Log.d("DBTSQ", sd.getSql());
+        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
+        Table table = buildTable(c, tp.getColumnOrder());
         c.close();
         db.close();
         return table;
@@ -237,58 +151,48 @@ public class DbTable {
         return header;
     }
     
-    private String[] footerQuery(String[] columns, String selection,
-            String[] selectionArgs) {
-        ColumnProperties[] cps = new ColumnProperties[columns.length];
-        StringBuilder sqlBuilder = new StringBuilder("SELECT");
-        for (int i = 0; i < columns.length; i++) {
-            String colDbName = columns[i];
-            cps[i] = tp.getColumnByDbName(colDbName);
-            int mode = cps[i].getFooterMode();
+    private String[] footerQuery(Query query) {
+        ColumnProperties[] cps = tp.getColumns();
+        List<String> sc = new ArrayList<String>();
+        for (ColumnProperties cp : cps) {
+            String colDbName = cp.getColumnDbName();
+            int mode = cp.getFooterMode();
             switch (mode) {
             case ColumnProperties.FooterMode.COUNT:
-                sqlBuilder.append(", COUNT(" + colDbName + ") AS " +
-                        colDbName);
+                sc.add("COUNT(" + colDbName + ") AS " + colDbName);
                 break;
             case ColumnProperties.FooterMode.MAXIMUM:
-                sqlBuilder.append(", MAX(" + colDbName + ") AS " + colDbName);
+                sc.add(", MAX(" + colDbName + ") AS " + colDbName);
                 break;
             case ColumnProperties.FooterMode.MEAN:
-                sqlBuilder.append(", COUNT(" + colDbName + ") AS count" +
-                        colDbName);
-                sqlBuilder.append(", SUM(" + colDbName + ") AS sum" +
-                        colDbName);
+                sc.add(", COUNT(" + colDbName + ") AS count" + colDbName);
+                sc.add(", SUM(" + colDbName + ") AS sum" + colDbName);
                 break;
             case ColumnProperties.FooterMode.MINIMUM:
-                sqlBuilder.append(", MIN(" + colDbName + ") AS " + colDbName);
+                sc.add(", MIN(" + colDbName + ") AS " + colDbName);
                 break;
             case ColumnProperties.FooterMode.SUM:
-                sqlBuilder.append(", SUM(" + colDbName + ") AS " + colDbName);
+                sc.add(", SUM(" + colDbName + ") AS " + colDbName);
                 break;
             }
         }
-        if (sqlBuilder.length() == 6) {
-            return new String[columns.length];
-        }
-        sqlBuilder.delete(6, 7);
-        sqlBuilder.append(" FROM " + tp.getDbTableName());
-        if ((selection != null) && (selection.length() != 0)) {
-            sqlBuilder.append(" WHERE " + selection);
-        }
-        String[] footer = new String[columns.length];
+        String[] footer = new String[cps.length];
+        SqlData sd = query.toSql(sc);
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sqlBuilder.toString(), selectionArgs);
+        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
         c.moveToFirst();
-        for (int i = 0; i < columns.length; i++) {
+        for (int i = 0; i < cps.length; i++) {
             if (cps[i].getFooterMode() == ColumnProperties.FooterMode.MEAN) {
-                int sIndex = c.getColumnIndexOrThrow("sum" + columns[i]);
-                int cIndex = c.getColumnIndexOrThrow("count" + columns[i]);
+                int sIndex = c.getColumnIndexOrThrow("sum" +
+                        cps[i].getColumnDbName());
+                int cIndex = c.getColumnIndexOrThrow("count" +
+                        cps[i].getColumnDbName());
                 double sum = c.getInt(sIndex);
                 int count = c.getInt(cIndex);
                 footer[i] = String.valueOf(sum / count);
             } else if (cps[i].getFooterMode() !=
                     ColumnProperties.FooterMode.NONE) {
-                int index = c.getColumnIndexOrThrow(columns[i]);
+                int index = c.getColumnIndexOrThrow(cps[i].getColumnDbName());
                 footer[i] = c.getString(index);
             }
         }
@@ -431,18 +335,5 @@ public class DbTable {
         }
         selBuilder.delete(0, 5);
         return selBuilder.toString();
-    }
-    
-    /**
-     * Builds a SQL selection string that will exclude rows marked as deleted.
-     */
-    private String buildUserSelectionSql(String[] selectionKeys) {
-        String sql = buildSelectionSql(selectionKeys);
-        if (sql == null) {
-            return DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING;
-        } else {
-            return sql + " AND " + DbTable.DB_SYNC_STATE + " != " +
-                    SyncUtil.State.DELETING;
-        }
     }
 }

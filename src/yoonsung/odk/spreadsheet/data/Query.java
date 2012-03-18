@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import yoonsung.odk.spreadsheet.sync.SyncUtil;
 
 
 public class Query {
@@ -34,6 +35,11 @@ public class Query {
     
     public Join getJoin(int index) {
         return joins.get(index);
+    }
+    
+    public void clear() {
+        constraints.clear();
+        joins.clear();
     }
     
     /**
@@ -219,26 +225,35 @@ public class Query {
                 }
             }
             String[] matchSplit = matchString.trim().split("\\s+");
+            String[] matchKeys = new String[matchSplit.length];
+            String[] matchArgs = new String[matchSplit.length];
             boolean allValid = true;
-            for (String match : matchSplit) {
-                allValid = allValid && match.contains("/");
+            for (int j = 0; j < matchSplit.length; j++) {
+                String match = matchSplit[j];
+                boolean valid = match.contains("/");
+                if (!valid) {
+                    allValid = false;
+                    continue;
+                }
+                String[] split = matchSplit[j].split("/");
+                String matchKey = getColumnByUserString(split[0]);
+                String matchArg = getColumnByUserString(split[1]);
+                if ((matchKey == null) || (matchArg == null)) {
+                    allValid = false;
+                    continue;
+                }
+                matchKeys[j] = matchKey;
+                matchArgs[j] = matchArg;
             }
-            if (!allValid) {
+            if (allValid) {
+                joins.add(new Join(joinTp, joinQuery, matchKeys, matchArgs));
+            } else {
                 String cdn = getColumnByUserString(key);
                 if (cdn == null) {
                     return false;
                 }
                 constraints.add(new Constraint(cdn, value));
-                continue;
             }
-            String[] matchKeys = new String[matchSplit.length];
-            String[] matchArgs = new String[matchSplit.length];
-            for (int j = 0; j < matchSplit.length; j++) {
-                String[] split = matchSplit[j].split("/");
-                matchKeys[j] = split[0];
-                matchArgs[j] = split[1];
-            }
-            joins.add(new Join(joinTp, joinQuery, matchKeys, matchArgs));
         }
         return true;
     }
@@ -253,6 +268,123 @@ public class Query {
     
     public void addConstraint(ColumnProperties cp, String value) {
         constraints.add(new Constraint(cp.getColumnDbName(), value));
+    }
+    
+    public SqlData toSql(String[] columns) {
+        return toSql(columns, true);
+    }
+    
+    private SqlData toSql(String[] columns, boolean includeId) {
+        SqlData sd = new SqlData();
+        if (includeId) {
+            sd.appendSql("SELECT " + DbTable.DB_ROW_ID);
+        } else {
+            sd.appendSql("SELECT " + columns[0]);
+        }
+        for (int i = (includeId ? 0 : 1); i < columns.length; i++) {
+            sd.appendSql(", " + columns[i]);
+        }
+        sd.appendSql(" FROM " + tp.getDbTableName());
+        sd.appendSql(" WHERE " + DbTable.DB_SYNC_STATE + " != " +
+                SyncUtil.State.DELETING);
+        for (int i = 0; i < constraints.size(); i++) {
+            SqlData csd = constraints.get(i).toSql();
+            sd.appendSql(" AND " + csd.getSql());
+            sd.appendArgs(csd.getArgList());
+        }
+        for (int i = 0; i < joins.size(); i++) {
+            sd.append(joins.get(i).toSql());
+        }
+        return sd;
+    }
+    
+    /**
+     * Builds the SQL string for querying the database table.
+     * 
+     * Supposing t is the table name, a is a prime column, b is the sort
+     * column, c is another column, and the user's query was "c:12", the query
+     * should be something like:
+     * SELECT id, a, b, c FROM t JOIN (
+     *   SELECT MAX(id) FROM
+     *     (SELECT a, MAX(b) FROM t WHERE c = 12 GROUP BY a) x
+     *     JOIN
+     *     (SELECT id, a, b, from t WHERE c = 12) y
+     *     ON x.a = y.a AND x.b = y.b
+     *     GROUP BY a, b
+     * ) z ON t.id = z.id
+     * Or, if there is no sort column:
+     * SELECT id, a, b, c FROM t JOIN (
+     *   SELECT MAX(id) FROM t WHERE c = 12 GROUP BY a
+     * ) z ON t.id = z.id
+     * @param columns the columns to select
+     * @return a SqlData object, with the SQL string and an array of arguments
+     */
+    public SqlData toOverviewSql(String[] columns) {
+        if (tp.getPrimeColumns().length == 0) {
+            return toSql(columns);
+        }
+        StringBuilder primeList = new StringBuilder();
+        for (String prime : tp.getPrimeColumns()) {
+            primeList.append(", " + prime);
+        }
+        primeList.delete(0, 2);
+        SqlData sd = new SqlData();
+        sd.appendSql("SELECT d." + DbTable.DB_ROW_ID);
+        for (String column : columns) {
+            sd.appendSql(", " + column);
+        }
+        sd.appendSql(" FROM " + tp.getDbTableName() + " d");
+        sd.appendSql(" JOIN (");
+        
+        if (tp.getSortColumn() == null) {
+            sd.append(toSql(new String[] {"MAX(" + DbTable.DB_ROW_ID +
+                    ") AS " + DbTable.DB_ROW_ID}, false));
+            sd.appendSql(" GROUP BY " + primeList.toString());
+        } else {
+            String sort = tp.getSortColumn();
+            sd.appendSql("SELECT MAX(" + DbTable.DB_ROW_ID + ") AS " +
+                    DbTable.DB_ROW_ID + "FROM ");
+            
+            String[] primes = tp.getPrimeColumns();
+            String[] xCols = new String[primes.length + 1];
+            String[] yCols = new String[primes.length + 1];
+            for (int i = 0; i < primes.length; i++) {
+                xCols[i] = primes[i];
+                yCols[i] = primes[i];
+            }
+            xCols[primes.length] = "MAX(" + sort + ")";
+            yCols[primes.length] = sort;
+            
+            sd.appendSql("(" + toSql(xCols, false) + " GROUP BY " +
+                    primeList.toString() + ") x");
+            sd.appendSql(" JOIN ");
+            sd.appendSql("(" + toSql(yCols) + ") y");
+            
+            sd.appendSql(" ON x." + sort + " = y." + sort);
+            for (String prime : tp.getPrimeColumns()) {
+                sd.appendSql(" AND x." + prime + " = y." + prime);
+            }
+            sd.appendSql(" GROUP BY " + primeList.toString() + ", " + sort);
+        }
+        
+        sd.appendSql(") z ON d." + DbTable.DB_ROW_ID + " = z." +
+                DbTable.DB_ROW_ID);
+        return sd;
+    }
+    
+    public SqlData toSql(List<String> columns) {
+        return toSql(columns.toArray(new String[0]));
+    }
+    
+    public String toUserQuery() {
+        StringBuilder sb = new StringBuilder();
+        for (Constraint c : constraints) {
+            sb.append(c.toUserQuery() + " ");
+        }
+        for (Join j : joins) {
+            sb.append(j.toUserQuery() + " ");
+        }
+        return sb.toString().trim();
     }
     
     public class Constraint {
@@ -272,6 +404,17 @@ public class Query {
         public String getValue() {
             return value;
         }
+        
+        public SqlData toSql() {
+            SqlData sd = new SqlData();
+            sd.appendSql(cdn + " = ?");
+            sd.appendArg(value);
+            return sd;
+        }
+        
+        public String toUserQuery() {
+            return tp.getColumnByDbName(cdn).getDisplayName() + ":" + value;
+        }
     }
     
     public class Join {
@@ -284,7 +427,11 @@ public class Query {
         public Join(TableProperties tp, Query query, String[] matchKeys,
                 String[] matchArgs) {
             this.tp = tp;
-            this.query = query;
+            if (query == null) {
+                this.query = new Query(tps, tp);
+            } else {
+                this.query = query;
+            }
             this.matchKeys = matchKeys;
             this.matchArgs = matchArgs;
         }
@@ -307,6 +454,75 @@ public class Query {
         
         public String getMatchArg(int index) {
             return matchArgs[index];
+        }
+        
+        public SqlData toSql() {
+            SqlData sd = new SqlData();
+            sd.appendSql("JOIN ");
+            sd.appendSql("(" + query.toSql(tp.getColumnOrder()) + ")");
+            sd.appendSql(" ON ");
+            sd.appendSql(matchToSql(0));
+            for (int i = 1; i < matchKeys.length; i++) {
+                sd.appendSql(" AND " + matchToSql(i));
+            }
+            return sd;
+        }
+        
+        private String matchToSql(int index) {
+            return matchKeys[index] + " = " + matchArgs[index];
+        }
+        
+        public String toUserQuery() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("join:" + tp.getDisplayName());
+            String qString = query.toUserQuery();
+            if (qString.length() != 0) {
+                sb.append(" (" + qString + ")");
+            }
+            for (int i = 0; i < matchKeys.length; i++) {
+                sb.append(" " + matchKeys[i] + "/" + matchArgs[i]);
+            }
+            return sb.toString();
+        }
+    }
+    
+    public class SqlData {
+        
+        private StringBuilder sql;
+        private List<String> args;
+        
+        public SqlData() {
+            this.sql = new StringBuilder();
+            this.args = new ArrayList<String>();
+        }
+        
+        public void appendSql(String a) {
+            sql.append(a);
+        }
+        
+        public void appendArg(String a) {
+            args.add(a);
+        }
+        
+        private void appendArgs(List<String> a) {
+            args.addAll(a);
+        }
+        
+        public void append(SqlData a) {
+            appendSql(a.getSql());
+            appendArgs(a.getArgList());
+        }
+        
+        public String getSql() {
+            return sql.toString();
+        }
+        
+        private List<String> getArgList() {
+            return args;
+        }
+        
+        public String[] getArgs() {
+            return args.toArray(new String[0]);
         }
     }
 }
