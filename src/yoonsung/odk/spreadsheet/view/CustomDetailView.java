@@ -2,9 +2,13 @@ package yoonsung.odk.spreadsheet.view;
 
 import java.util.HashMap;
 import java.util.Map;
+import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
+import yoonsung.odk.spreadsheet.Activity.TableActivity;
+import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
+import android.content.Intent;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -21,6 +25,7 @@ public class CustomDetailView extends WebView {
         "</body></html>";
     
     private TableProperties tp;
+    private Control control;
     private RowData jsData;
     
     public CustomDetailView(Context context, TableProperties tp) {
@@ -28,6 +33,8 @@ public class CustomDetailView extends WebView {
         this.tp = tp;
         getSettings().setJavaScriptEnabled(true);
         setWebViewClient(new WebViewClient() {});
+        control = new Control(context);
+        addJavascriptInterface(control, "control");
         jsData = new RowData();
         addJavascriptInterface(jsData, "data");
     }
@@ -99,6 +106,34 @@ public class CustomDetailView extends WebView {
                 data.put(table.getHeader(i), table.getData(index, i));
             }
             return new RowData(data, null);
+        }
+    }
+    
+    private class Control {
+        
+        private Context context;
+        
+        public Control(Context context) {
+            this.context = context;
+        }
+        
+        @SuppressWarnings("unused")
+        public void openTable(String tableName, String query) {
+            TableProperties[] tps = TableProperties.getTablePropertiesForAll(
+                    DbHelper.getDbHelper(context));
+            String tableId = null;
+            for (TableProperties tp : tps) {
+                if (tp.getDisplayName().equals(tableName)) {
+                    tableId = tp.getTableId();
+                }
+            }
+            if (tableId == null) {
+                return;
+            }
+            Intent intent = new Intent(context, SpreadSheet.class);
+            intent.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tableId);
+            intent.putExtra(TableActivity.INTENT_KEY_QUERY, query);
+            context.startActivity(intent);
         }
     }
 }

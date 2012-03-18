@@ -120,8 +120,8 @@ public class ColumnProperties {
         this.joinColumnName = joinColumnName;
     }
     
-    static ColumnProperties getColumnProperties(DbHelper dbh, String tableId,
-            String dbColumnName) {
+    public static ColumnProperties getColumnProperties(DbHelper dbh,
+            String tableId, String dbColumnName) {
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, WHERE_SQL,
                 new String[] {tableId, dbColumnName}, null, null, null);

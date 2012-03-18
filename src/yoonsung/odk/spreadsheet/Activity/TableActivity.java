@@ -39,6 +39,7 @@ import yoonsung.odk.spreadsheet.data.DataUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Preferences;
+import yoonsung.odk.spreadsheet.data.Query;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import yoonsung.odk.spreadsheet.Activity.settings.ListDisplaySettings;
@@ -56,6 +57,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -84,6 +87,7 @@ public abstract class TableActivity extends Activity
         implements ListDisplayView.Controller {
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
+    public static final String INTENT_KEY_QUERY = "query";
     
     private static final int ODK_COLLECT_FORM_RETURN = 0;
     private static final int ODK_COLLECT_ADDROW_RETURN = 1;
@@ -110,6 +114,7 @@ public abstract class TableActivity extends Activity
 	
     protected String tableId;
     private DbHelper dbh;
+    private TableProperties[] tps;
     protected DbTable dbt;
     protected Preferences prefs;
     protected TableProperties tp;
@@ -154,6 +159,7 @@ public abstract class TableActivity extends Activity
 		    return;
 		}
         dbh = DbHelper.getDbHelper(this);
+        tps = TableProperties.getTablePropertiesForAll(dbh);
         dp = new DisplayPrefs(this, tableId);
         init();
 		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
@@ -167,9 +173,15 @@ public abstract class TableActivity extends Activity
 		selectedCellID = -1;
 		cdv = new CustomDetailView(this, tp);
         tableWrapper = (LinearLayout) findViewById(R.id.tableWrapper);
-        setTableView();
         collectInstances = new HashMap<String, Integer>();
 		prepButtonListeners();
+		String query = tableId = getIntent().getStringExtra(INTENT_KEY_QUERY);
+		if (query != null) {
+		    setSearchBoxText(query);
+		    handleSearch(query);
+		} else {
+	        setTableView();
+		}
 	}
 	
 	private void init() {
@@ -468,6 +480,20 @@ public abstract class TableActivity extends Activity
 	protected void openDisplayPrefsDialog(String colName) {
 	    DisplayPrefs dp = new DisplayPrefs(this, tableId);
 	    (new DisplayPrefsDialog(this, dp, colName)).show();
+	}
+	
+	protected void openJoinTable(int cellId) {
+	    ColumnProperties cp = cps[cellId % table.getWidth()];
+	    String tableId = cp.getJoinTableId();
+	    TableProperties tp =
+	            TableProperties.getTablePropertiesForTable(dbh, tableId);
+	    String cdn =
+	            tp.getColumnByDbName(cp.getJoinColumnName()).getDisplayName();
+	    String query = cdn + ":" + table.getData(cellId);
+	    Intent intent = new Intent(this, SpreadSheet.class);
+	    intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
+	    intent.putExtra(INTENT_KEY_QUERY, query);
+	    startActivity(intent);
 	}
 	
 	/**
@@ -1063,22 +1089,20 @@ public abstract class TableActivity extends Activity
 			public void onClick(View v) {
 			    searchConstraints.clear();
                 String val = getSearchBoxText();
-                for (String con : val.split(" ")) {
-                    String[] spl = con.split(":");
-                    if (spl.length != 2) {
-                        continue;
-                    }
-                    String colDbName = tp.getColumnByDisplayName(spl[0]);
-                    if (colDbName == null) {
-                        colDbName = tp.getColumnByAbbreviation(spl[0]);
-                    }
-                    if (colDbName != null) {
-                        searchConstraints.put(colDbName, spl[1]);
-                    }
-                }
-                search();
+                handleSearch(val);
 			}
 		});
+	}
+	
+	private void handleSearch(String query) {
+	    Query q = new Query(tps, tp);
+	    q.loadFromUserQuery(query);
+	    for (int i = 0; i < q.getConstraintCount(); i++) {
+	        String colDbName = q.getConstraint(i).getColumnDbName();
+	        searchConstraints.put(colDbName, q.getConstraint(i).getValue());
+	    }
+	    Log.d("TA", "sc:" + searchConstraints);
+        search();
 	}
 	
     /**
@@ -1089,6 +1113,14 @@ public abstract class TableActivity extends Activity
         arButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                PackageManager packageManager = getPackageManager();
+                Intent intent = new Intent();
+                intent.setComponent(new ComponentName("org.odk.collect.android",
+                        "org.odk.collect.android.activities.FormEntryActivity"));
+                intent.setAction(Intent.ACTION_EDIT);
+                List<ResolveInfo> availList = getPackageManager()
+                        .queryIntentActivities(intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
                 /**
                 Intent intent = new Intent();
                 intent.setComponent(new ComponentName(
@@ -1100,8 +1132,11 @@ public abstract class TableActivity extends Activity
                         "content://org.odk.collect.android.provider.odk.instances/instances"), 0);
                 startActivityForResult(new Intent(Intent.ACTION_EDIT, uri), ODK_COLLECT_FORM_RETURN);
                 **/
-                //backUpAddRowDialog();
-                addRowWithCollect();
+                if (availList.size() == 0) {
+                    backUpAddRowDialog();
+                } else {
+                    addRowWithCollect();
+                }
             }
         });
     }
@@ -1537,7 +1572,14 @@ public abstract class TableActivity extends Activity
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element child = dataEl.getElement(i);
             String key = child.getName();
-            int colIndex = tp.getColumnIndex(key);
+            String colDbName = tp.getColumnByDisplayName(key);
+            if (colDbName == null) {
+                colDbName = tp.getColumnByAbbreviation(key);
+            }
+            if (colDbName == null) {
+                continue;
+            }
+            int colIndex = tp.getColumnIndex(colDbName);
             if (colIndex >= 0) {
                 String value = child.getText(0);
                 table.setData(rowNum, colIndex, value);

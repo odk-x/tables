@@ -392,7 +392,7 @@ public class TableProperties {
         ColumnProperties[] cps = getColumns();
         for (ColumnProperties cp : cps) {
             String cdn = cp.getDisplayName();
-            if ((cdn != null) && (cdn.equals(displayName))) {
+            if ((cdn != null) && (cdn.equalsIgnoreCase(displayName))) {
                 return cp.getColumnDbName();
             }
         }
@@ -403,7 +403,7 @@ public class TableProperties {
         ColumnProperties[] cps = getColumns();
         for (ColumnProperties cp : cps) {
             String ca = cp.getAbbreviation();
-            if ((ca != null) && (ca.equals(abbreviation))) {
+            if ((ca != null) && (ca.equalsIgnoreCase(abbreviation))) {
                 return cp.getColumnDbName();
             }
         }

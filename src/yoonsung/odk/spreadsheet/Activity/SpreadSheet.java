@@ -54,6 +54,7 @@ public class SpreadSheet extends TableActivity {
 	private static final int OPEN_DISPLAYPREFS_DIALOG = 20;
 	private static final int EDIT_CELL = 21;
 	private static final int OPEN_COLLECT_FORM = 22;
+	private static final int OPEN_JOIN_TABLE = 23;
 	// Activity IDs
 	private static final int ODK_COLLECT_FORM_HANDLE = 100;
 	
@@ -180,6 +181,9 @@ public class SpreadSheet extends TableActivity {
 			return true;
 		case OPEN_DISPLAYPREFS_DIALOG:
 		    openDisplayPrefsDialog(tp.getColumnOrder()[lastHeaderMenued]);
+		    return true;
+		case OPEN_JOIN_TABLE:
+		    openJoinTable(selectedCellID);
 		    return true;
 		default:
 			return super.onContextItemSelected(item);
@@ -318,6 +322,9 @@ public class SpreadSheet extends TableActivity {
 		menu.add(none, HISTORY_IN, none, "View Collection");
 		menu.add(none, EDIT_CELL, none, "Edit Cell");
 		menu.add(none, DELETE_ROW, none, "Delete Row");
+		if (selectedColType == ColumnProperties.ColumnType.TABLE_JOIN) {
+		    menu.add(none, OPEN_JOIN_TABLE, none, "Open Join Table");
+		}
 	}
     
     /**
@@ -337,6 +344,9 @@ public class SpreadSheet extends TableActivity {
         menu.add(none, HISTORY_IN, none, "View Collection");
         menu.add(none, EDIT_CELL, none, "Edit Cell");
         menu.add(none, DELETE_ROW, none, "Delete Row");
+        if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
+            menu.add(none, OPEN_JOIN_TABLE, none, "Open Join Table");
+        }
     }
 	
 	/**
