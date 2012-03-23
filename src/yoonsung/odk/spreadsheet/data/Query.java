@@ -260,15 +260,14 @@ public class Query {
                     continue;
                 }
                 String[] split = matchSplit[j].split("/");
-                ColumnProperties matchKeyCp =
-                    tp.getColumnByUserLabel(split[0]);
+                String matchKey = getColumnByUserString(split[0]);
                 ColumnProperties matchArgCp =
                     joinTp.getColumnByUserLabel(split[1]);
-                if ((matchKeyCp == null) || (matchArgCp == null)) {
+                if ((matchKey == null) || (matchArgCp == null)) {
                     allValid = false;
                     continue;
                 }
-                matchKeys[j] = matchKeyCp.getColumnDbName();
+                matchKeys[j] = matchKey;
                 matchArgs[j] = matchArgCp.getColumnDbName();
             }
             if (allValid) {
@@ -285,11 +284,8 @@ public class Query {
     }
     
     private String getColumnByUserString(String us) {
-        String cdn = tp.getColumnByDisplayName(us);
-        if (cdn != null) {
-            return cdn;
-        }
-        return tp.getColumnByAbbreviation(cdn);
+        ColumnProperties cp = tp.getColumnByUserLabel(us);
+        return (cp == null) ? null : cp.getColumnDbName();
     }
     
     public void addConstraint(ColumnProperties cp, String value) {
