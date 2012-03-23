@@ -410,6 +410,23 @@ public class TableProperties {
         return null;
     }
     
+    public ColumnProperties getColumnByUserLabel(String name) {
+        ColumnProperties[] cps = getColumns();
+        for (ColumnProperties cp : cps) {
+            String cdn = cp.getDisplayName();
+            if (cdn.equalsIgnoreCase(name)) {
+                return cp;
+            }
+        }
+        for (ColumnProperties cp : cps) {
+            String ca = cp.getAbbreviation();
+            if ((ca != null) && ca.equalsIgnoreCase(name)) {
+                return cp;
+            }
+        }
+        return null;
+    }
+    
     /**
      * Adds a column to the table using a default database name.
      * @param displayName the column's display name
@@ -866,6 +883,20 @@ public class TableProperties {
         int ra = db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
         Log.d("TP", "rows updated:" + ra);
         Log.d("TP", "values:" + values.toString());
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof TableProperties)) {
+            return false;
+        }
+        TableProperties other = (TableProperties) obj;
+        return tableId.equals(other.tableId);
+    }
+    
+    @Override
+    public int hashCode() {
+        return tableId.hashCode();
     }
     
     static String getTableCreateSql() {

@@ -49,10 +49,12 @@ public class AggregateSyncProcessor {
 		private static final long serialVersionUID = 1L;
 	};
 
+	private final DataUtil du;
 	private final SynchronizeAPI api;
 	private final DbHelper helper;
 
 	public AggregateSyncProcessor(SynchronizeAPI api, DbHelper helper) {
+	    du = DataUtil.getDefaultDataUtil();
 		this.api = api;
 		this.helper = helper;
 	}
@@ -125,7 +127,7 @@ public class AggregateSyncProcessor {
 
 			break;
 		}
-		tp.setLastSyncTime(DataUtil.getNowInDbFormat());
+		tp.setLastSyncTime(du.formatNowForDb());
 		endTableTransaction(tp);
 	}
 

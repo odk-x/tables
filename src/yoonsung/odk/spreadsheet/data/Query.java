@@ -1,7 +1,9 @@
 package yoonsung.odk.spreadsheet.data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 
 
@@ -9,16 +11,36 @@ public class Query {
     
     private static final String KW_JOIN = "join";
     
+    public class Comparator {
+        public static final int EQUALS = 0;
+        public static final int NOT_EQUALS = 1;
+        public static final int LESS_THAN = 2;
+        public static final int LESS_THAN_EQUALS = 3;
+        public static final int GREATER_THAN = 4;
+        public static final int GREATER_THAN_EQUALS = 5;
+        public static final int LIKE = 6;
+        private Comparator() {}
+    }
+    
+    public class SortOrder {
+        public static final int ASCENDING = 0;
+        public static final int DESCENDING = 1;
+        private SortOrder() {};
+    }
+    
     private TableProperties[] tps;
     private TableProperties tp;
     private List<Constraint> constraints;
     private List<Join> joins;
+    private String orderBy;
+    private int sortOrder;
     
     public Query(TableProperties[] tps, TableProperties tp) {
         this.tps = tps;
         this.tp = tp;
         constraints = new ArrayList<Constraint>();
         joins = new ArrayList<Join>();
+        orderBy = tp.getSortColumn();
     }
     
     public int getConstraintCount() {
@@ -168,7 +190,7 @@ public class Query {
                 if (cdn == null) {
                     return false;
                 }
-                constraints.add(new Constraint(cdn, value));
+                constraints.add(new Constraint(cdn, Comparator.EQUALS, value));
                 continue;
             }
             String tableName;
@@ -182,7 +204,8 @@ public class Query {
                     if (cdn == null) {
                         return false;
                     }
-                    constraints.add(new Constraint(cdn, value));
+                    constraints.add(new Constraint(cdn, Comparator.EQUALS,
+                            value));
                     continue;
                 }
                 tableName = value.substring(0, leftParenIndex).trim();
@@ -196,7 +219,8 @@ public class Query {
                     if (cdn == null) {
                         return false;
                     }
-                    constraints.add(new Constraint(cdn, value));
+                    constraints.add(new Constraint(cdn, Comparator.EQUALS,
+                            value));
                     continue;
                 }
                 tableName = value.substring(0, firstSpaceIndex);
@@ -214,7 +238,7 @@ public class Query {
                 if (cdn == null) {
                     return false;
                 }
-                constraints.add(new Constraint(cdn, value));
+                constraints.add(new Constraint(cdn, Comparator.EQUALS, value));
                 continue;
             }
             Query joinQuery = null;
@@ -236,14 +260,16 @@ public class Query {
                     continue;
                 }
                 String[] split = matchSplit[j].split("/");
-                String matchKey = getColumnByUserString(split[0]);
-                String matchArg = getColumnByUserString(split[1]);
-                if ((matchKey == null) || (matchArg == null)) {
+                ColumnProperties matchKeyCp =
+                    tp.getColumnByUserLabel(split[0]);
+                ColumnProperties matchArgCp =
+                    joinTp.getColumnByUserLabel(split[1]);
+                if ((matchKeyCp == null) || (matchArgCp == null)) {
                     allValid = false;
                     continue;
                 }
-                matchKeys[j] = matchKey;
-                matchArgs[j] = matchArg;
+                matchKeys[j] = matchKeyCp.getColumnDbName();
+                matchArgs[j] = matchArgCp.getColumnDbName();
             }
             if (allValid) {
                 joins.add(new Join(joinTp, joinQuery, matchKeys, matchArgs));
@@ -252,7 +278,7 @@ public class Query {
                 if (cdn == null) {
                     return false;
                 }
-                constraints.add(new Constraint(cdn, value));
+                constraints.add(new Constraint(cdn, Comparator.EQUALS, value));
             }
         }
         return true;
@@ -267,7 +293,31 @@ public class Query {
     }
     
     public void addConstraint(ColumnProperties cp, String value) {
-        constraints.add(new Constraint(cp.getColumnDbName(), value));
+        constraints.add(new Constraint(cp.getColumnDbName(), Comparator.EQUALS,
+                value));
+    }
+    
+    public void addConstraint(ColumnProperties cp, int comparator,
+            String value) {
+        constraints.add(new Constraint(cp.getColumnDbName(), comparator,
+                value));
+    }
+    
+    public void addOrConstraint(ColumnProperties cp, int comparator1,
+            String value1, int comparator2, String value2) {
+        Constraint oc = new Constraint(cp.getColumnDbName(), comparator1,
+                value1);
+        oc.addComparison(comparator2, value2);
+        constraints.add(oc);
+    }
+    
+    public void removeConstraint(int index) {
+        constraints.remove(index);
+    }
+    
+    public void setOrderBy(ColumnProperties cp, int sortOrder) {
+        orderBy = cp.getColumnDbName();
+        this.sortOrder = sortOrder;
     }
     
     public SqlData toSql(String[] columns) {
@@ -275,25 +325,37 @@ public class Query {
     }
     
     private SqlData toSql(String[] columns, boolean includeId) {
+        String dbTn = tp.getDbTableName();
         SqlData sd = new SqlData();
         if (includeId) {
-            sd.appendSql("SELECT " + DbTable.DB_ROW_ID);
+            sd.appendSql("SELECT " + dbTn + "." + DbTable.DB_ROW_ID + " AS " +
+                    DbTable.DB_ROW_ID);
         } else {
-            sd.appendSql("SELECT " + columns[0]);
+            sd.appendSql("SELECT " + dbTn + "." + columns[0] + " AS " +
+                    columns[0]);
         }
         for (int i = (includeId ? 0 : 1); i < columns.length; i++) {
-            sd.appendSql(", " + columns[i]);
+            sd.appendSql(", " + dbTn + "." + columns[i] + " AS " + columns[i]);
         }
-        sd.appendSql(" FROM " + tp.getDbTableName());
-        sd.appendSql(" WHERE " + DbTable.DB_SYNC_STATE + " != " +
+        sd.appendSql(" FROM " + dbTn);
+        for (int i = 0; i < joins.size(); i++) {
+            SqlData joinSd = joins.get(i).toSql();
+            sd.appendSql(" " + joinSd.getSql());
+            sd.appendArgs(joinSd.getArgList());
+        }
+        sd.appendSql(" WHERE " + dbTn + "." + DbTable.DB_SYNC_STATE + " != " +
                 SyncUtil.State.DELETING);
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             sd.appendSql(" AND " + csd.getSql());
             sd.appendArgs(csd.getArgList());
         }
-        for (int i = 0; i < joins.size(); i++) {
-            sd.append(joins.get(i).toSql());
+        if (orderBy != null) {
+            if (sortOrder == SortOrder.ASCENDING) {
+                sd.appendSql(" ORDER BY " + orderBy + " ASC");
+            } else {
+                sd.appendSql(" ORDER BY " + orderBy + " DESC");
+            }
         }
         return sd;
     }
@@ -387,33 +449,223 @@ public class Query {
         return sb.toString().trim();
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Query)) {
+            return false;
+        }
+        Query other = (Query) obj;
+        if (!tp.equals(other.tp) ||
+                (constraints.size() != other.constraints.size()) ||
+                (joins.size() != other.joins.size()) ||
+                (sortOrder != other.sortOrder)) {
+            return false;
+        }
+        if (((orderBy == null) && (other.orderBy != null)) ||
+                ((orderBy != null) && (other.orderBy == null)) ||
+                ((orderBy != null) && !orderBy.equals(other.orderBy))) {
+            return false;
+        }
+        Set<Integer> indices = new HashSet<Integer>();
+        for (int i = 0; i < constraints.size(); i++) {
+            indices.add(i);
+        }
+        for (int i = 0; i < constraints.size(); i++) {
+            int matchIndex = -1;
+            for (int index : indices) {
+                if (constraints.get(i).equals(other.constraints.get(index))) {
+                    matchIndex = index;
+                }
+            }
+            indices.remove(matchIndex);
+        }
+        if (!indices.isEmpty()) {
+            return false;
+        }
+        indices.clear();
+        for (int i = 0; i < joins.size(); i++) {
+            indices.add(i);
+        }
+        for (int i = 0; i < joins.size(); i++) {
+            int matchIndex = -1;
+            for (int index : indices) {
+                if (joins.get(i).equals(other.joins.get(index))) {
+                    matchIndex = index;
+                }
+            }
+            indices.remove(matchIndex);
+        }
+        return indices.isEmpty();
+    }
+    
+    @Override
+    public int hashCode() {
+        int hashCode = tp.hashCode();
+        if (orderBy != null) {
+            hashCode += orderBy.hashCode() + sortOrder;
+        }
+        for (Constraint c : constraints) {
+            hashCode += c.hashCode();
+        }
+        for (Join j : joins) {
+            hashCode += j.hashCode();
+        }
+        return hashCode;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(tp.toString());
+        if (orderBy != null) {
+            sb.append("/order:" + orderBy + "-" + sortOrder);
+        }
+        sb.append(constraints.toString());
+        sb.append(joins.toString());
+        return sb.toString();
+    }
+    
     public class Constraint {
         
         private String cdn;
-        private String value;
+        private List<Integer> comparators;
+        private List<String> values;
         
-        public Constraint(String cdn, String value) {
+        public Constraint(String cdn, int comparator, String value) {
             this.cdn = cdn;
-            this.value = value;
+            this.comparators = new ArrayList<Integer>();
+            this.values = new ArrayList<String>();
+            comparators.add(comparator);
+            values.add(value);
         }
         
         public String getColumnDbName() {
             return cdn;
         }
         
-        public String getValue() {
-            return value;
+        public int getComparisonCount() {
+            return comparators.size();
+        }
+        
+        public int getComparator(int index) {
+            return comparators.get(index);
+        }
+        
+        public String getValue(int index) {
+            return values.get(index);
+        }
+        
+        public void addComparison(int comparator, String value) {
+            comparators.add(comparator);
+            values.add(value);
         }
         
         public SqlData toSql() {
             SqlData sd = new SqlData();
-            sd.appendSql(cdn + " = ?");
-            sd.appendArg(value);
+            sd.appendSql("(" + getSqlString(0));
+            sd.appendArg(values.get(0));
+            for (int i = 1; i < comparators.size(); i++) {
+                sd.appendSql(" OR " + getSqlString(i));
+                sd.appendArg(values.get(i));
+            }
+            sd.appendSql(")");
             return sd;
         }
         
+        private String getSqlString(int index) {
+            String cName = tp.getDbTableName() + "." + cdn;
+            switch (comparators.get(index)) {
+            case Comparator.EQUALS:
+                return cName + " = ?";
+            case Comparator.NOT_EQUALS:
+                return cName + " != ?";
+            case Comparator.LESS_THAN:
+                return cName + " < ?";
+            case Comparator.LESS_THAN_EQUALS:
+                return cName + " <= ?";
+            case Comparator.GREATER_THAN:
+                return cName + " > ?";
+            case Comparator.GREATER_THAN_EQUALS:
+                return cName + " >= ?";
+            case Comparator.LIKE:
+                return cName + " LIKE ?";
+            default:
+                throw new RuntimeException("Invalid comparator: " +
+                        comparators.get(index));
+            }
+        }
+        
         public String toUserQuery() {
-            return tp.getColumnByDbName(cdn).getDisplayName() + ":" + value;
+            StringBuilder sb = new StringBuilder(
+                    tp.getColumnByDbName(cdn).getDisplayName() + ":");
+            sb.append(values.get(0));
+            for (int i = 1; i < comparators.size(); i++) {
+                sb.append("|" + values.get(i));
+            }
+            return sb.toString();
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Constraint)) {
+                return false;
+            }
+            Constraint other = (Constraint) obj;
+            if ((comparators.size() != other.comparators.size()) ||
+                    !cdn.equals(other.cdn)) {
+                return false;
+            }
+            Set<Integer> indices = new HashSet<Integer>();
+            for (int i = 0; i < comparators.size(); i++) {
+                indices.add(i);
+            }
+            for (int i = 0; i < comparators.size(); i++) {
+                int matchIndex = -1;
+                for (int index : indices) {
+                    if ((comparators.get(i) == other.comparators.get(index)) &&
+                            values.get(i).equals(other.values.get(index))) {
+                        matchIndex = index;
+                    }
+                }
+                indices.remove(matchIndex);
+            }
+            return indices.isEmpty();
+        }
+        
+        @Override
+        public int hashCode() {
+            int hashCode = cdn.hashCode();
+            for (int i = 0; i < comparators.size(); i++) {
+                hashCode += comparators.get(i) + values.get(i).hashCode();
+            }
+            return hashCode;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder(cdn);
+            for (int i = 0; i < comparators.size(); i++) {
+                switch (comparators.get(i)) {
+                case Comparator.EQUALS:
+                    sb.append("/=" + values.get(i));
+                    break;
+                case Comparator.LESS_THAN:
+                    sb.append("/<" + values.get(i));
+                    break;
+                case Comparator.LESS_THAN_EQUALS:
+                    sb.append("/<=" + values.get(i));
+                    break;
+                case Comparator.GREATER_THAN:
+                    sb.append("/>" + values.get(i));
+                    break;
+                case Comparator.GREATER_THAN_EQUALS:
+                    sb.append("/>=" + values.get(i));
+                    break;
+                case Comparator.NOT_EQUALS:
+                    sb.append("/!" + values.get(i));
+                    break;
+                }
+            }
+            return sb.toString();
         }
     }
     
@@ -459,7 +711,9 @@ public class Query {
         public SqlData toSql() {
             SqlData sd = new SqlData();
             sd.appendSql("JOIN ");
-            sd.appendSql("(" + query.toSql(tp.getColumnOrder()) + ")");
+            SqlData qSql = query.toSql(tp.getColumnOrder());
+            sd.appendSql("(" + qSql.getSql() + ")");
+            sd.appendArgs(qSql.getArgList());
             sd.appendSql(" ON ");
             sd.appendSql(matchToSql(0));
             for (int i = 1; i < matchKeys.length; i++) {
@@ -481,6 +735,52 @@ public class Query {
             }
             for (int i = 0; i < matchKeys.length; i++) {
                 sb.append(" " + matchKeys[i] + "/" + matchArgs[i]);
+            }
+            return sb.toString();
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Join)) {
+                return false;
+            }
+            Join other = (Join) obj;
+            if (!tp.equals(other.tp) || !query.equals(other.query) ||
+                    (matchKeys.length != other.matchKeys.length)) {
+                return false;
+            }
+            Set<Integer> indices = new HashSet<Integer>();
+            for (int i = 0; i < matchKeys.length; i++) {
+                indices.add(i);
+            }
+            for (int i = 0; i < matchKeys.length; i++) {
+                int matchIndex = -1;
+                for (int index : indices) {
+                    if (matchKeys[i].equals(other.matchKeys[index]) &&
+                            matchArgs[i].equals(other.matchArgs[index])) {
+                        matchIndex = index;
+                    }
+                }
+                indices.remove(matchIndex);
+            }
+            return indices.isEmpty();
+        }
+        
+        @Override
+        public int hashCode() {
+            int hashCode = tp.hashCode() + query.hashCode();
+            for (int i = 0; i < matchKeys.length; i++) {
+                hashCode += matchKeys[i].hashCode() + matchArgs[i].hashCode();
+            }
+            return hashCode;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder(tp.getDbTableName());
+            sb.append("/" + query.toString());
+            for (int i = 0; i < matchKeys.length; i++) {
+                sb.append("/" + matchKeys[i] + ":" + matchArgs[i]);
             }
             return sb.toString();
         }

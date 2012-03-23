@@ -23,9 +23,11 @@ public class CsvUtil {
     private static final String LAST_MOD_TIME_LABEL = "_ts";
     private static final String SRC_PHONE_LABEL = "_pn";
     
+    private final DataUtil du;
     private final DbHelper dbh;
     
     public CsvUtil(Context context) {
+        du = DataUtil.getDefaultDataUtil();
         dbh = DbHelper.getDbHelper(context);
     }
     
@@ -115,7 +117,7 @@ public class CsvUtil {
                     values.put(columns[i], row[startIndex + i]);
                 }
                 String lastModTime = tsIndex == -1 ?
-                        DataUtil.getNowInDbFormat() : row[tsIndex];
+                        du.formatNowForDb() : row[tsIndex];
                 String srcPhone = pnIndex == -1 ? null : row[pnIndex];
                 dbt.addRow(values, lastModTime, srcPhone);
                 values.clear();

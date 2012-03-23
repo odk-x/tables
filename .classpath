@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/httpcore-4.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/odk-tables-api-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gson-1.7.1.jar"/>
+	<classpathentry kind="lib" path="lib/joda-time-2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

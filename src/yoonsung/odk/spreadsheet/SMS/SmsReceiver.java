@@ -9,10 +9,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import yoonsung.odk.spreadsheet.R;
-import yoonsung.odk.spreadsheet.Database.ColumnProperty;
-import yoonsung.odk.spreadsheet.Database.DataTable;
-import yoonsung.odk.spreadsheet.Database.SecurityTables;
-import yoonsung.odk.spreadsheet.Database.TableList;
+import yoonsung.odk.spreadsheet.Activity.util.SecurityUtil;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DataManager;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -24,14 +25,16 @@ import android.util.Log;
 import android.widget.Toast;
  
 public class SmsReceiver extends BroadcastReceiver {
-    	
-	private SecurityTables st;
 	
-	private String tableName;
-	private String tableID;
+    private TableProperties tp;
 	
 	@Override
     public void onReceive(Context context, Intent intent) {
+	    MsgHandler mh = new MsgHandler(new DataManager(
+	            DbHelper.getDbHelper(context)), new SMSSender());
+	    String body = getSMSBody(intent.getExtras());
+	    mh.handleMessage(body, getSMSFrom(intent.getExtras()));
+	    
 		
 		// Service
         NotificationManager nm =(NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
@@ -42,11 +45,12 @@ public class SmsReceiver extends BroadcastReceiver {
         
         // Header Data
         String phoneNum = getSMSFrom(bundle);
+        /**
         
         // Split Message Received
         String msg = getSMSBody(bundle);
         try {
-            msg = (new MsgHandler()).translateMessage(msg);
+            msg = (new MsgHandler(context)).translateMessage(msg);
         } catch(InvalidQueryException e) {
             e.printStackTrace();
         }
@@ -71,8 +75,16 @@ public class SmsReceiver extends BroadcastReceiver {
         }
         
         // Is table exist?
-        TableList tl = new TableList();
-        if (!tl.isTableExist(splt[0].substring(1))) {
+        TableProperties[] tps = TableProperties.getTablePropertiesForAll(
+                DbHelper.getDbHelper(context));
+        tp = null;
+        String name = splt[0].substring(1);
+        for (TableProperties nextTp : tps) {
+            if (tp.getDisplayName().equals(name)) {
+                tp = nextTp;
+            }
+        }
+        if (tp == null) {
         	Log.e("table not esit", "not exisint");
         	// Handle Error
         	return;
@@ -83,28 +95,22 @@ public class SmsReceiver extends BroadcastReceiver {
         // Make a notice
         makeToastNotice(context, bundle);
         
-        // Table Name
-        this.tableName = splt[0].substring(1);
-        this.tableID = Integer.toString(tl.getTableID(tableName));
-        
-        Log.e("tableID", tableID);
-        
-        // Security
-        this.st = new SecurityTables(tableID);
+        Log.e("tableID", tp.getTableId());
         
         String srcPN = getSMSFrom(bundle);
         String timestamp = getSMSTimestamp(bundle);
-        if(!tl.isSecurityTable(tableID)) {
+        if(tp.getTableType() != TableProperties.TableType.SECURITY) {
 	        // Security table cannot be accessed remotely 
         	if(splt[1].startsWith("+") || (hasPassword && splt[2].startsWith("+"))) {
 	        	// Additions
-	        	if (st.isWriteSecurityTableExist()) {
+	        	if (tp.getWriteSecurityTableId() != null) {
 	        		// Write security table exists
 	        		// Additionally validate password
-	        		String writeSecTableID = st.getWriteTableID();
-	        		Log.e("Validation",  "" + st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password));
-	        		if (st.isPhoneNumInWriteTable(phoneNum)
-	        				&& st.validatePasswordForPhoneNum(writeSecTableID, phoneNum, password)) {
+	        		String writeSecTableID = tp.getWriteSecurityTableId();
+	        		boolean valid = SecurityUtil.isValid(context,
+	        		        writeSecTableID, phoneNum, password);
+	        		Log.e("Validation",  "" + valid);
+	        		if (valid) {
 	        			handleAddition(msg, srcPN, timestamp, hasPassword);
 	        			Log.e("SMSReceiver", "Handling Addtion:" + phoneNum + ":" + password);
 	        		}
@@ -115,12 +121,13 @@ public class SmsReceiver extends BroadcastReceiver {
 	        	}
 	        } else {
 	        	// Querying
-	        	if (st.isReadSecurityTableExist()) {
+	        	if (tp.getReadSecurityTableId() != null) {
 	        		// Read security table exists
 	        		// Additionally validate password
-	        		String readSecTableID = st.getReadTableID();
-	        		if (st.isPhoneNumInReadTable(phoneNum)
-	        				&& st.validatePasswordForPhoneNum(readSecTableID, phoneNum, password)) {
+	        		String readSecTableID = tp.getReadSecurityTableId();
+                    boolean valid = SecurityUtil.isValid(context,
+                            readSecTableID, phoneNum, password);
+	        		if (valid) {
 	        			Log.e("SMSReceiver", "Handling Query");
 	        			handleQuery(msg, srcPN, timestamp);
 	        		}
@@ -130,13 +137,14 @@ public class SmsReceiver extends BroadcastReceiver {
 	        		handleQuery(msg, srcPN, timestamp);
 	        	}
 	        }
-        }
+        }**/
     }
 	
 	private void handleAddition(String msg, String srcPN, String timestamp,
 	        boolean hasPassword) {
+	    /**
         // Parse
-        SMSConverter ps = new SMSConverter(tableID);
+        SMSConverter ps = new SMSConverter(tp);
         Map<String, String> alldata;
         try {
 			alldata = ps.parseSMS(msg, hasPassword);
@@ -148,7 +156,7 @@ public class SmsReceiver extends BroadcastReceiver {
        
         // Filter SMS-IN columns
 		Map<String, String> data = new HashMap<String, String>();
-        ColumnProperty cp = new ColumnProperty(tableID);
+		ColumnProperties[] cps = tp.getColumns();
         for (String key : alldata.keySet()) {
         	if (cp.getSMSIN(key)) {
         		data.put(key, alldata.get(key));
@@ -170,10 +178,11 @@ public class SmsReceiver extends BroadcastReceiver {
         if (data.size() > 0) {
         	// Add to DB
         	addNewData(data, srcPN, timestamp);
-        }
+        }**/
 	}
 	
 	private void handleQuery(String msg, String srcPN, String timestamp) {
+	    /**
 		SMSConverter ps = new SMSConverter(tableID);
 		String resp;
 		try {
@@ -186,7 +195,7 @@ public class SmsReceiver extends BroadcastReceiver {
 		}
 		SMSSender sender = new SMSSender();
 		Log.d("sending", resp);
-		sender.sendSMS(srcPN, resp);
+		sender.sendSMS(srcPN, resp);**/
 	}
     
 	private void addNewData(Map<String, String> data, String phoneNumberIn, String timeStamp) {
@@ -199,14 +208,14 @@ public class SmsReceiver extends BroadcastReceiver {
 			else
 				cv.put(key, val);
 		}
-		
+		/**
 		// Add a new row
 		DataTable dataManager = new DataTable(tableID);
 		try {
 			dataManager.addRow(cv, phoneNumberIn, timeStamp);
 		} catch (Exception e) {
 			Log.e("SMSReiver", "Unable to add new data from SMS");
-		}
+		}**/
 	}
 	
 	private boolean isNumeric(String aStringValue) {

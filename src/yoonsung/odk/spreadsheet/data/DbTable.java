@@ -26,6 +26,7 @@ public class DbTable {
     public static final String DB_SYNC_STATE = "syncState";
     public static final String DB_TRANSACTIONING = "transactioning";
     
+    private final DataUtil du;
     private final DbHelper dbh;
     private final TableProperties tp;
     
@@ -34,6 +35,7 @@ public class DbTable {
     }
     
     private DbTable(DbHelper dbh, String tableId) {
+        this.du = DataUtil.getDefaultDataUtil();
         this.dbh = dbh;
         this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
     }
@@ -94,6 +96,10 @@ public class DbTable {
         c.close();
         db.close();
         return table;
+    }
+    
+    public Table getRaw(Query query, String[] columns) {
+        return dataQuery(query.toSql(columns));
     }
     
     public UserTable getUserTable(Query query) {
@@ -207,7 +213,7 @@ public class DbTable {
      * synchronization state.
      */
     public void addRow(Map<String, String> values) {
-        addRow(values, DataUtil.getNowInDbFormat(), null);
+        addRow(values, null, null);
     }
     
     /**
@@ -217,7 +223,7 @@ public class DbTable {
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
         if (lastModTime == null) {
-            lastModTime = DataUtil.getNowInDbFormat();
+            lastModTime = du.formatNowForDb();
         }
         ContentValues cv = new ContentValues();
         for (String column : values.keySet()) {
@@ -249,7 +255,7 @@ public class DbTable {
      * number, and the current time as the last modification time.
      */
     public void updateRow(String rowId, Map<String, String> values) {
-        updateRow(rowId, values, null, DataUtil.getNowInDbFormat());
+        updateRow(rowId, values, null, du.formatNowForDb());
     }
     
     /**

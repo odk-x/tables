@@ -1,5 +1,10 @@
 package yoonsung.odk.spreadsheet.Activity.util;
 
+import android.content.Context;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
+import yoonsung.odk.spreadsheet.data.Table;
+
 /**
  * A utility class for functions related to security.
  * 
@@ -44,5 +49,15 @@ public class SecurityUtil {
             }
         }
         return indices;
+    }
+    
+    public static boolean isValid(Context context, String tableId,
+            String phoneNum, String password) {
+        DbHelper dbh = DbHelper.getDbHelper(context);
+        DbTable dbt = DbTable.getDbTable(dbh, tableId);
+        Table table = dbt.getRaw(new String[] {DbTable.DB_ROW_ID},
+                new String[] {PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {phoneNum, password}, null);
+        return (table.getHeight() > 0);
     }
 }

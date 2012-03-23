@@ -11,7 +11,7 @@ public class Table {
     private String[] header;
     private final String[][] data;
     
-    Table(String[] rowIds, String[] header, String[][] data) {
+    public Table(String[] rowIds, String[] header, String[][] data) {
         this.rowIds = rowIds;
         this.header = header;
         this.data = data;
