@@ -186,10 +186,10 @@ public class MsgHandler {
             return true;
         }
         String password = "";
-        int lastSpaceIndex = msg.lastIndexOf(' ');
-        if ((msg.length() > lastSpaceIndex + 2) &&
-                (msg.charAt(lastSpaceIndex + 1) == '#')) {
-            password = msg.substring(lastSpaceIndex + 2);
+        int lastHashIndex = msg.lastIndexOf('#');
+        if ((lastHashIndex > 0) && (msg.length() > lastHashIndex + 2) &&
+                (msg.charAt(lastHashIndex - 1) == ' ')) {
+            password = msg.substring(lastHashIndex + 1);
         }
         TableProperties secTp = dm.getTableProperties(secTableId);
         DbTable sDbt = dm.getDbTable(secTableId);

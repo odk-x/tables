@@ -322,25 +322,30 @@ public class Query {
     
     private SqlData toSql(String[] columns, boolean includeId) {
         String dbTn = tp.getDbTableName();
-        SqlData sd = new SqlData();
+        StringBuilder sb = new StringBuilder();
         if (includeId) {
-            sd.appendSql("SELECT " + dbTn + "." + DbTable.DB_ROW_ID + " AS " +
+            sb.append(dbTn + "." + DbTable.DB_ROW_ID + " AS " +
                     DbTable.DB_ROW_ID);
         } else {
-            sd.appendSql("SELECT " + dbTn + "." + columns[0] + " AS " +
-                    columns[0]);
+            sb.append("SELECT " + dbTn + "." + columns[0] + " AS " + columns[0]);
         }
         for (int i = (includeId ? 0 : 1); i < columns.length; i++) {
-            sd.appendSql(", " + dbTn + "." + columns[i] + " AS " + columns[i]);
+            sb.append(", " + dbTn + "." + columns[i] + " AS " + columns[i]);
         }
-        sd.appendSql(" FROM " + dbTn);
+        return toSql(sb.toString());
+    }
+    
+    private SqlData toSql(String selection) {
+        SqlData sd = new SqlData();
+        sd.appendSql("SELECT " + selection);
+        sd.appendSql(" FROM " + tp.getDbTableName());
         for (int i = 0; i < joins.size(); i++) {
             SqlData joinSd = joins.get(i).toSql();
             sd.appendSql(" " + joinSd.getSql());
             sd.appendArgs(joinSd.getArgList());
         }
-        sd.appendSql(" WHERE " + dbTn + "." + DbTable.DB_SYNC_STATE + " != " +
-                SyncUtil.State.DELETING);
+        sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
+                DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             sd.appendSql(" AND " + csd.getSql());
@@ -395,8 +400,8 @@ public class Query {
         sd.appendSql(" JOIN (");
         
         if (tp.getSortColumn() == null) {
-            sd.append(toSql(new String[] {"MAX(" + DbTable.DB_ROW_ID +
-                    ") AS " + DbTable.DB_ROW_ID}, false));
+            sd.append(toSql("MAX(" + tp.getDbTableName() + "." +
+                    DbTable.DB_ROW_ID + ") AS " + DbTable.DB_ROW_ID));
             sd.appendSql(" GROUP BY " + primeList.toString());
         } else {
             String sort = tp.getSortColumn();
