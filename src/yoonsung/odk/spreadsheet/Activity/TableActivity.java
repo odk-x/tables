@@ -35,6 +35,7 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphClassifier;
 import yoonsung.odk.spreadsheet.Library.graphs.GraphDataHelper;
 import yoonsung.odk.spreadsheet.SMS.SMSSender;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DataUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
@@ -112,8 +113,8 @@ public abstract class TableActivity extends Activity
         "Sum"
     };
 	
+    protected DataManager dm;
     protected String tableId;
-    private DbHelper dbh;
     private TableProperties[] tps;
     protected DbTable dbt;
     protected Preferences prefs;
@@ -158,9 +159,11 @@ public abstract class TableActivity extends Activity
 		    bounceToTableManager();
 		    return;
 		}
-        dbh = DbHelper.getDbHelper(this);
-        tps = TableProperties.getTablePropertiesForAll(dbh);
+        dm = new DataManager(DbHelper.getDbHelper(this));
+        tps = dm.getAllTableProperties();
         dp = new DisplayPrefs(this, tableId);
+        dbt = dm.getDbTable(tableId);
+        tp = dm.getTableProperties(tableId);
         init();
 		Log.d("TA", "colOrder in onCreate():" + Arrays.toString(colOrder));
 		TextView led = (TextView) findViewById(R.id.tableNameLed);
@@ -183,8 +186,6 @@ public abstract class TableActivity extends Activity
 	}
 	
 	private void init() {
-        dbt = DbTable.getDbTable(dbh, tableId);
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
         cps = tp.getColumns();
         colOrder = tp.getColumnOrder();
 	}
@@ -478,8 +479,7 @@ public abstract class TableActivity extends Activity
 	protected void openJoinTable(int cellId) {
 	    ColumnProperties cp = cps[cellId % table.getWidth()];
 	    String tableId = cp.getJoinTableId();
-	    TableProperties tp =
-	            TableProperties.getTablePropertiesForTable(dbh, tableId);
+	    tp = dm.getTableProperties(tableId);
 	    String cdn =
 	            tp.getColumnByDbName(cp.getJoinColumnName()).getDisplayName();
 	    String query = cdn + ":" + table.getData(cellId);
@@ -1543,9 +1543,8 @@ public abstract class TableActivity extends Activity
 	        if (cps[i].getColumnType() ==
 	            ColumnProperties.ColumnType.TABLE_JOIN) {
 	            String joinTableId = cps[i].getJoinTableId();
-	            TableProperties joinTp = TableProperties
-	                    .getTablePropertiesForTable(dbh, joinTableId);
-	            DbTable joinDbt = DbTable.getDbTable(dbh, joinTableId);
+	            TableProperties joinTp = dm.getTableProperties(joinTableId);
+	            DbTable joinDbt = dm.getDbTable(joinTableId);
 	            Query joinQuery = new Query(tps, joinTp);
 	            joinQuery.addConstraint(cps[i], value);
 	            UserTable ut = joinDbt.getUserTable(joinQuery);
