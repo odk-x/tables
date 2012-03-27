@@ -1,43 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/aggregate_activity_layout"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent" 
-	android:orientation="vertical" 
-	android:background="#FFFFFF">
-	
-	<TextView
-		android:id="@+id/aggregate_activity_uri_label"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:text="Aggregate URI:" />
-	
-	<EditText
-		android:id="@+id/aggregate_activity_uri_field"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:text="http://" />
-	
-	<TextView
-		android:id="@+id/aggregate_activity_username_label"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:text="Username:" />
-	
-	<EditText
-		android:id="@+id/aggregate_activity_username_field"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-	
-	<Spinner
-		android:id="@+id/aggregate_activity_account_list_spinner"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-	
-	<Button
-	    android:id="@+id/aggregate_activity_save_button"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:text="Save" />
-	
+    android:id="@+id/aggregate_activity_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/aggregate_activity_uri_label"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Aggregate URI:" />
+
+    <EditText
+        android:id="@+id/aggregate_activity_uri_field"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="http://" />
+
+    <Spinner
+        android:id="@+id/aggregate_activity_account_list_spinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/aggregate_activity_save_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Save" />
+
 </LinearLayout>
