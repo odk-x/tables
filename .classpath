@@ -4,13 +4,17 @@
 	<classpathentry kind="lib" path="lib/achartengine-0.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-math-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/opencsv-2.2.jar"/>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/odk-tables-api-1.0.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/opendatakit-tables/lib/odk-tables-api-1.0-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/simple-xml-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/spring-android-core-1.0.0.RC1.jar"/>
+	<classpathentry kind="lib" path="lib/spring-android-rest-template-1.0.0.RC1.jar"/>
+	<classpathentry excluding="yoonsung/odk/spreadsheet/sync/CopyOfTablesSyncAdapter.java|yoonsung/odk/spreadsheet/sync/aggregate/Buscador.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="lib" path="lib/kxml2-2.3.0.jar"/>
-	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
-	<classpathentry kind="lib" path="lib/httpclient-4.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/httpcore-4.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/odk-tables-api-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/gson-1.7.1.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
