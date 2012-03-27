@@ -31,7 +31,7 @@ public class TableProperties {
     private static final String DB_SORT_COLUMN = "sortCol";
     private static final String DB_READ_SECURITY_TABLE_ID = "readAccessTid";
     private static final String DB_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
-    private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
+    private static final String DB_SYNC_DATA_ETAG = "syncDataEtag";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
     private static final String DB_DETAIL_VIEW_FILE = "detailViewFile";
     private static final String DB_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
@@ -71,7 +71,7 @@ public class TableProperties {
         DB_SORT_COLUMN,
         DB_READ_SECURITY_TABLE_ID,
         DB_WRITE_SECURITY_TABLE_ID,
-        DB_SYNC_MODIFICATION_NUMBER,
+        DB_SYNC_DATA_ETAG,
         DB_LAST_SYNC_TIME,
         DB_DETAIL_VIEW_FILE,
         DB_SUM_DISPLAY_FORMAT,
@@ -99,7 +99,7 @@ public class TableProperties {
     private String sortColumn;
     private String readSecurityTableId;
     private String writeSecurityTableId;
-    private int syncModificationNumber;
+    private String syncDataEtag;
     private String lastSyncTime;
     private String detailViewFilename;
     private String sumDisplayFormat;
@@ -110,7 +110,7 @@ public class TableProperties {
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn,
             String readSecurityTableId, String writeSecurityTableId,
-            int syncModificationNumber, String lastSyncTime,
+            String syncDataEtag, String lastSyncTime,
             String detailViewFilename, String sumDisplayFormat, int syncState,
             int transactioning) {
         this.dbh = dbh;
@@ -125,7 +125,7 @@ public class TableProperties {
         this.sortColumn = sortColumn;
         this.readSecurityTableId = readSecurityTableId;
         this.writeSecurityTableId = writeSecurityTableId;
-        this.syncModificationNumber = syncModificationNumber;
+        this.syncDataEtag = syncDataEtag;
         this.lastSyncTime = lastSyncTime;
         this.detailViewFilename = detailViewFilename;
         this.sumDisplayFormat = sumDisplayFormat;
@@ -180,8 +180,8 @@ public class TableProperties {
         int sortColumnIndex = c.getColumnIndexOrThrow(DB_SORT_COLUMN);
         int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
         int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
-        int syncModNumIndex =
-            c.getColumnIndexOrThrow(DB_SYNC_MODIFICATION_NUMBER);
+        int syncDataEtagIndex =
+            c.getColumnIndexOrThrow(DB_SYNC_DATA_ETAG);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
         int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
         int sumDisplayFormatIndex =
@@ -202,7 +202,7 @@ public class TableProperties {
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
                     c.getInt(tableTypeIndex), columnOrder, primeList,
                     c.getString(sortColumnIndex), c.getString(rsTableId),
-                    c.getString(wsTableId), c.getInt(syncModNumIndex),
+                    c.getString(wsTableId), c.getString(syncDataEtagIndex),
                     c.getString(lastSyncTimeIndex),
                     c.getString(detailViewFileIndex),
                     c.getString(sumDisplayFormatIndex),
@@ -255,7 +255,7 @@ public class TableProperties {
         values.putNull(DB_SORT_COLUMN);
         values.putNull(DB_READ_SECURITY_TABLE_ID);
         values.putNull(DB_WRITE_SECURITY_TABLE_ID);
-        values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
+        values.put(DB_SYNC_DATA_ETAG, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.putNull(DB_DETAIL_VIEW_FILE);
         values.putNull(DB_SUM_DISPLAY_FORMAT);
@@ -265,7 +265,7 @@ public class TableProperties {
         db.beginTransaction();
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null,
-                null, null, -1, null, null, null, SyncUtil.State.INSERTING,
+                null, null, null, null, null, null, SyncUtil.State.INSERTING,
                 SyncUtil.Transactioning.FALSE);
         long result = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "row id=" + result);
@@ -663,20 +663,20 @@ public class TableProperties {
     }
     
     /**
-     * @return the sync modification number (or -1 if the table has never been
+     * @return the sync data etag (or null if the table has never been
      * synchronized)
      */
-    public int getSyncModificationNumber() {
-        return syncModificationNumber;
+    public String getSyncDataEtag() {
+        return syncDataEtag;
     }
     
     /**
-     * Sets the table's sync modification number.
-     * @param modNum the new modification number
+     * Sets the table's sync data etag.
+     * @param dataEtag the new data etag
      */
-    public void setSyncModificationNumber(int modNum) {
-        setIntProperty(DB_SYNC_MODIFICATION_NUMBER, modNum);
-        this.syncModificationNumber = modNum;
+    public void setSyncDataEtag(String dataEtag) {
+        setStringProperty(DB_SYNC_DATA_ETAG, dataEtag);
+        this.syncDataEtag = dataEtag;
     }
     
     /**
@@ -879,7 +879,7 @@ public class TableProperties {
                 ", " + DB_SORT_COLUMN + " TEXT" +
                 ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
-                ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
+                ", " + DB_SYNC_DATA_ETAG + " TEXT" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_DETAIL_VIEW_FILE + " TEXT" +
                 ", " + DB_SUM_DISPLAY_FORMAT + " TEXT" +
