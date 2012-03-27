@@ -21,7 +21,6 @@ public class DbTable {
     public static final String DB_ROW_ID = "id";
     public static final String DB_SRC_PHONE_NUMBER = "srcPhoneNum";
     public static final String DB_LAST_MODIFIED_TIME = "lastModTime";
-    public static final String DB_SYNC_ID = "syncId";
     public static final String DB_SYNC_TAG = "syncTag";
     public static final String DB_SYNC_STATE = "syncState";
     public static final String DB_TRANSACTIONING = "transactioning";
@@ -45,7 +44,6 @@ public class DbTable {
                        DB_ROW_ID + " TEXT UNIQUE NOT NULL" +
                 ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
                 ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
-                ", " + DB_SYNC_ID + " TEXT" +
                 ", " + DB_SYNC_TAG + " TEXT" +
                 ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
                 ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
@@ -72,15 +70,14 @@ public class DbTable {
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
             ColumnProperties[] cps = tp.getColumns();
-            columns = new String[cps.length + 6];
+            columns = new String[cps.length + 5];
             columns[0] = DB_SRC_PHONE_NUMBER;
             columns[1] = DB_LAST_MODIFIED_TIME;
-            columns[2] = DB_SYNC_ID;
-            columns[3] = DB_SYNC_TAG;
-            columns[4] = DB_SYNC_STATE;
-            columns[5] = DB_TRANSACTIONING;
+            columns[2] = DB_SYNC_TAG;
+            columns[3] = DB_SYNC_STATE;
+            columns[4] = DB_TRANSACTIONING;
             for (int i = 0; i < cps.length; i++) {
-                columns[i + 4] = cps[i].getColumnDbName();
+                columns[i + 5] = cps[i].getColumnDbName();
             }
         }
         String[] colArr = new String[columns.length + 1];
@@ -284,16 +281,6 @@ public class DbTable {
     public void actualUpdateRowByRowId(String rowId, ContentValues values) {
         String[] whereArgs = { rowId };
         actualUpdateRow(values, DB_ROW_ID + " = ?", whereArgs);
-    }
-    
-    /**
-     * Actually updates a row.
-     * @param syncId the synchronization ID of the row to update
-     * @param values the values to update the row with
-     */
-    public void actualUpdateRowBySyncId(String syncId, ContentValues values) {
-        String[] whereArgs = { syncId };
-        actualUpdateRow(values, DB_SYNC_ID + " = ?", whereArgs);
     }
     
     private void actualUpdateRow(ContentValues values, String where,
