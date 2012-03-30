@@ -212,7 +212,7 @@ public class AggregateSyncProcessor {
 
 	public void updateFromServer(TableProperties tp, DbTable table,
 			TableResource resource) {
-		String dataEtag = String.valueOf(tp.getSyncDataEtag());
+		String dataEtag = String.valueOf(tp.getSyncTag());
 		String newDataEtag = resource.getDataEtag();
 
 		if (newDataEtag.equals(dataEtag))
@@ -224,7 +224,7 @@ public class AggregateSyncProcessor {
 
 		// List<RowResource> rows = r.accept(MediaType.TEXT_XML)
 		// .type(MediaType.TEXT_XML).get(ROW_RESOURCE_LIST);
-		URI url = URI.create(diffUri + "?data_etag=" + tp.getSyncDataEtag())
+		URI url = URI.create(diffUri + "?data_etag=" + tp.getSyncTag())
 				.normalize();
 		List<RowResource> rows = rt.getForObject(url, List.class);
 
@@ -315,7 +315,7 @@ public class AggregateSyncProcessor {
 			syncResult.stats.numDeletes++;
 		}
 
-		tp.setSyncDataEtag(newDataEtag);
+		tp.setSyncTag(newDataEtag);
 	}
 
 	public Table getRows(DbTable table, int state) {
@@ -356,7 +356,7 @@ public class AggregateSyncProcessor {
 				HttpMethod.PUT, requestEntity, TableResource.class);
 		TableResource resource = resourceEntity.getBody();
 
-		tp.setSyncDataEtag(resource.getDataEtag());
+		tp.setSyncTag(resource.getDataEtag());
 		return resource;
 	}
 
@@ -437,7 +437,7 @@ public class AggregateSyncProcessor {
 			// .accept(MediaType.TEXT_XML).get(TableResource.class);
 			resource = rt.getForObject(resource.getSelfUri(),
 					TableResource.class);
-			tp.setSyncDataEtag(resource.getDataEtag());
+			tp.setSyncTag(resource.getDataEtag());
 		}
 		return resource;
 	}
@@ -479,7 +479,7 @@ public class AggregateSyncProcessor {
 			// .get(TableResource.class);
 			resource = rt.getForObject(resource.getSelfUri(),
 					TableResource.class);
-			tp.setSyncDataEtag(resource.getDataEtag());
+			tp.setSyncTag(resource.getDataEtag());
 		}
 
 		return resource;
