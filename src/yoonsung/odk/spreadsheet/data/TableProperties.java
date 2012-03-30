@@ -136,12 +136,16 @@ public class TableProperties {
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
             String tableId) {
         TableProperties[] res = queryForTableProperties(dbh, ID_WHERE_SQL,
-                new String[] {tableId});
+                new String[] {tableId}, true);
         return res[0];
     }
     
     public static TableProperties[] getTablePropertiesForAll(DbHelper dbh) {
         return queryForTableProperties(dbh, null, null);
+    }
+    
+    public static TableProperties[] getTablePropertiesForDeleting(DbHelper dbh) {
+    	return queryForTableProperties(dbh, null, null, true);
     }
     
     public static TableProperties[] getTablePropertiesForDataTables(DbHelper dbh) {
@@ -161,61 +165,64 @@ public class TableProperties {
                 new String[] { String.valueOf(TableType.SHORTCUT) });
     }
     
-    private static TableProperties[] queryForTableProperties(DbHelper dbh,
-            String where, String[] whereArgs) {
-        where = (where == null) ?
-                (DB_SYNC_STATE + " != " + SyncUtil.State.DELETING) :
-                (where + " AND " + DB_SYNC_STATE + " != " +
-                        SyncUtil.State.DELETING);
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, where, whereArgs, null,
-                null, null);
-        TableProperties[] tps = new TableProperties[c.getCount()];
-        int tableIdIndex = c.getColumnIndex(DB_TABLE_ID);
-        int dbtnIndex = c.getColumnIndexOrThrow(DB_DB_TABLE_NAME);
-        int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
-        int tableTypeIndex = c.getColumnIndexOrThrow(DB_TABLE_TYPE);
-        int columnOrderIndex = c.getColumnIndexOrThrow(DB_COLUMN_ORDER);
-        int primeColumnsIndex = c.getColumnIndexOrThrow(DB_PRIME_COLUMNS);
-        int sortColumnIndex = c.getColumnIndexOrThrow(DB_SORT_COLUMN);
-        int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
-        int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
-        int syncDataEtagIndex =
-            c.getColumnIndexOrThrow(DB_SYNC_DATA_ETAG);
-        int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
-        int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
-        int sumDisplayFormatIndex =
-            c.getColumnIndexOrThrow(DB_SUM_DISPLAY_FORMAT);
-        int syncStateIndex = c.getColumnIndexOrThrow(DB_SYNC_STATE);
-        int transactioningIndex = c.getColumnIndexOrThrow(DB_TRANSACTIONING);
-        
-        int i = 0;
-        c.moveToFirst();
-        while (i < tps.length) {
-            String columnOrderValue = c.getString(columnOrderIndex);
-            String[] columnOrder = (columnOrderValue.length() == 0) ?
-                new String[] {} : columnOrderValue.split("/");
-            String primeOrderValue = c.getString(primeColumnsIndex);
-            String[] primeList = (primeOrderValue.length() == 0) ?
-                new String[] {} : primeOrderValue.split("/");
-            tps[i] = new TableProperties(dbh, c.getString(tableIdIndex),
-                    c.getString(dbtnIndex), c.getString(displayNameIndex),
-                    c.getInt(tableTypeIndex), columnOrder, primeList,
-                    c.getString(sortColumnIndex), c.getString(rsTableId),
-                    c.getString(wsTableId), c.getString(syncDataEtagIndex),
-                    c.getString(lastSyncTimeIndex),
-                    c.getString(detailViewFileIndex),
-                    c.getString(sumDisplayFormatIndex),
-                    c.getInt(syncStateIndex),
-                    c.getInt(transactioningIndex));
-            i++;
-            c.moveToNext();
-        }
-        c.close();
-        db.close();
-        return tps;
-    }
-    
+	private static TableProperties[] queryForTableProperties(DbHelper dbh,
+			String where, String[] whereArgs) {
+		return queryForTableProperties(dbh, where, whereArgs, false);
+	}
+
+	private static TableProperties[] queryForTableProperties(DbHelper dbh,
+			String where, String[] whereArgs, boolean includeDeleting) {
+		if (!includeDeleting) {
+			where = (where == null) ? (DB_SYNC_STATE + " != " + SyncUtil.State.DELETING)
+					: (where + " AND " + DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
+		}
+		SQLiteDatabase db = dbh.getReadableDatabase();
+		Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, where, whereArgs, null,
+				null, null);
+		TableProperties[] tps = new TableProperties[c.getCount()];
+		int tableIdIndex = c.getColumnIndex(DB_TABLE_ID);
+		int dbtnIndex = c.getColumnIndexOrThrow(DB_DB_TABLE_NAME);
+		int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
+		int tableTypeIndex = c.getColumnIndexOrThrow(DB_TABLE_TYPE);
+		int columnOrderIndex = c.getColumnIndexOrThrow(DB_COLUMN_ORDER);
+		int primeColumnsIndex = c.getColumnIndexOrThrow(DB_PRIME_COLUMNS);
+		int sortColumnIndex = c.getColumnIndexOrThrow(DB_SORT_COLUMN);
+		int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
+		int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
+		int syncDataEtagIndex = c.getColumnIndexOrThrow(DB_SYNC_DATA_ETAG);
+		int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
+		int detailViewFileIndex = c.getColumnIndexOrThrow(DB_DETAIL_VIEW_FILE);
+		int sumDisplayFormatIndex = c
+				.getColumnIndexOrThrow(DB_SUM_DISPLAY_FORMAT);
+		int syncStateIndex = c.getColumnIndexOrThrow(DB_SYNC_STATE);
+		int transactioningIndex = c.getColumnIndexOrThrow(DB_TRANSACTIONING);
+
+		int i = 0;
+		c.moveToFirst();
+		while (i < tps.length) {
+			String columnOrderValue = c.getString(columnOrderIndex);
+			String[] columnOrder = (columnOrderValue.length() == 0) ? new String[] {}
+					: columnOrderValue.split("/");
+			String primeOrderValue = c.getString(primeColumnsIndex);
+			String[] primeList = (primeOrderValue.length() == 0) ? new String[] {}
+					: primeOrderValue.split("/");
+			tps[i] = new TableProperties(dbh, c.getString(tableIdIndex),
+					c.getString(dbtnIndex), c.getString(displayNameIndex),
+					c.getInt(tableTypeIndex), columnOrder, primeList,
+					c.getString(sortColumnIndex), c.getString(rsTableId),
+					c.getString(wsTableId), c.getString(syncDataEtagIndex),
+					c.getString(lastSyncTimeIndex),
+					c.getString(detailViewFileIndex),
+					c.getString(sumDisplayFormatIndex),
+					c.getInt(syncStateIndex), c.getInt(transactioningIndex));
+			i++;
+			c.moveToNext();
+		}
+		c.close();
+		db.close();
+		return tps;
+	}
+   
     public static String createDbTableName(DbHelper dbh, String displayName) {
         TableProperties[] allProps = getTablePropertiesForAll(dbh);
         String baseName = displayName.replace(' ', '_');
