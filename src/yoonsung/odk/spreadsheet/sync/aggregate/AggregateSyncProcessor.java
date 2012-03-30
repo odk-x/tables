@@ -1,26 +1,32 @@
 package yoonsung.odk.spreadsheet.sync.aggregate;
 
-import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.http.client.ClientProtocolException;
-import org.opendatakit.aggregate.odktables.client.api.SynchronizeAPI;
-import org.opendatakit.aggregate.odktables.client.entity.Column;
-import org.opendatakit.aggregate.odktables.client.entity.Modification;
-import org.opendatakit.aggregate.odktables.client.entity.SynchronizedRow;
-import org.opendatakit.aggregate.odktables.client.exception.AggregateInternalErrorException;
-import org.opendatakit.aggregate.odktables.client.exception.ColumnDoesNotExistException;
-import org.opendatakit.aggregate.odktables.client.exception.OutOfSynchException;
-import org.opendatakit.aggregate.odktables.client.exception.PermissionDeniedException;
-import org.opendatakit.aggregate.odktables.client.exception.RowOutOfSynchException;
-import org.opendatakit.aggregate.odktables.client.exception.TableAlreadyExistsException;
-import org.opendatakit.aggregate.odktables.client.exception.TableDoesNotExistException;
-import org.opendatakit.common.ermodel.simple.AttributeType;
-import android.content.ContentValues;
+import org.opendatakit.aggregate.odktables.entity.Column;
+import org.opendatakit.aggregate.odktables.entity.Row;
+import org.opendatakit.aggregate.odktables.entity.api.RowResource;
+import org.opendatakit.aggregate.odktables.entity.api.TableDefinition;
+import org.opendatakit.aggregate.odktables.entity.api.TableResource;
+import org.opendatakit.aggregate.odktables.entity.serialization.ListConverter;
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.convert.Registry;
+import org.simpleframework.xml.convert.RegistryStrategy;
+import org.simpleframework.xml.core.Persister;
+import org.simpleframework.xml.strategy.Strategy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
@@ -30,76 +36,129 @@ import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Table;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
+import android.content.ContentValues;
+import android.content.SyncResult;
+import android.util.Log;
 
 public class AggregateSyncProcessor {
 
-	private static final Map<Integer, AttributeType> types = new HashMap<Integer, AttributeType>() {
+	private static final String TAG = AggregateSyncProcessor.class
+			.getSimpleName();
+
+	private static final Map<Integer, Column.ColumnType> types = new HashMap<Integer, Column.ColumnType>() {
 		{
-			put(ColumnType.COLLECT_FORM, AttributeType.STRING);
-			put(ColumnType.DATE, AttributeType.DATETIME);
-			put(ColumnType.DATE_RANGE, AttributeType.STRING);
-			put(ColumnType.FILE, AttributeType.STRING);
-			put(ColumnType.MC_OPTIONS, AttributeType.STRING);
-			put(ColumnType.NONE, AttributeType.STRING);
-			put(ColumnType.NUMBER, AttributeType.DECIMAL);
-			put(ColumnType.PHONE_NUMBER, AttributeType.STRING);
-			put(ColumnType.TABLE_JOIN, AttributeType.STRING);
-			put(ColumnType.TEXT, AttributeType.STRING);
+			put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING);
+			put(ColumnType.DATE, Column.ColumnType.DATETIME);
+			put(ColumnType.DATE_RANGE, Column.ColumnType.STRING);
+			put(ColumnType.FILE, Column.ColumnType.STRING);
+			put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING);
+			put(ColumnType.NONE, Column.ColumnType.STRING);
+			put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
+			put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING);
+			put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);
+			put(ColumnType.TEXT, Column.ColumnType.STRING);
 		}
 		private static final long serialVersionUID = 1L;
 	};
 
 	private final DataUtil du;
-	private final SynchronizeAPI api;
+	private final RestTemplate rt;
+	private final URI baseUri;
 	private final DbHelper helper;
+	private final SyncResult syncResult;
+	private final HttpHeaders requestHeaders;
 
-	public AggregateSyncProcessor(SynchronizeAPI api, DbHelper helper) {
-	    du = DataUtil.getDefaultDataUtil();
-		this.api = api;
+	public AggregateSyncProcessor(String aggregateUri, DbHelper helper,
+			SyncResult syncResult) {
+		// this.baseUri = UriBuilder.fromUri(aggregateUri).path("odktables")
+		// .path("tables").build();
+		this.du = DataUtil.getDefaultDataUtil();
+		URI uri = URI.create(aggregateUri);
+		uri = uri.resolve("/odktables/tables/");
+		this.baseUri = uri;
 		this.helper = helper;
+		this.syncResult = syncResult;
+
+		// ServiceFinder.setIteratorProvider(new Buscador());
+		// DefaultApacheHttpClient4Config config = new
+		// DefaultApacheHttpClient4Config();
+		// config.getClasses().add(SimpleXMLMessageReaderWriter.class);
+		// this.c = ApacheHttpClient4.create(config);
+		this.rt = new RestTemplate();
+
+		Registry registry = new Registry();
+		Strategy strategy = new RegistryStrategy(registry);
+		Serializer serializer = new Persister(strategy);
+		ListConverter converter = new ListConverter(serializer);
+		try {
+			registry.bind(List.class, converter);
+			registry.bind(ArrayList.class, converter);
+			registry.bind(LinkedList.class, converter);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to register list converters!", e);
+		}
+		List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+
+		converters.add(new SimpleXmlHttpMessageConverter(serializer));
+		this.rt.setMessageConverters(converters);
+
+		List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
+		acceptableMediaTypes.add(new MediaType("text", "xml"));
+
+		this.requestHeaders = new HttpHeaders();
+		this.requestHeaders.setAccept(acceptableMediaTypes);
+		this.requestHeaders.setContentType(new MediaType("text", "xml"));
 	}
 
-	/**
-	 * 
-	 * @param tableId
-	 * @throws IOException
-	 * @throws AggregateInternalErrorException
-	 * @throws TableAlreadyExistsException
-	 * @throws ClientProtocolException
-	 * @throws ColumnDoesNotExistException
-	 * @throws PermissionDeniedException
-	 * @throws TableDoesNotExistException
-	 * @throws OutOfSynchException
-	 * @throws RowOutOfSynchException
-	 */
-	public void synchronize(String tableId) throws ClientProtocolException,
-			TableAlreadyExistsException, AggregateInternalErrorException,
-			IOException, OutOfSynchException, TableDoesNotExistException,
-			PermissionDeniedException, ColumnDoesNotExistException,
-			RowOutOfSynchException {
-		TableProperties tp = TableProperties.getTablePropertiesForTable(helper,
-				tableId);
+	public void synchronize() {
+		TableProperties[] tps = TableProperties
+				.getTablePropertiesForAll(helper);
+		for (TableProperties tp : tps) {
+			if (tp.getSyncState() != SyncUtil.State.REST) {
+				synchronizeTable(tp);
+			}
+		}
+		TableProperties[] deleting = TableProperties
+				.getTablePropertiesForDeleting(helper);
+		for (TableProperties tp : deleting) {
+			synchronizeTable(tp);
+		}
+	}
+
+	public void synchronizeTable(TableProperties tp) {
+		String tableId = tp.getTableId();
 		DbTable table = DbTable.getDbTable(helper, tableId);
 
 		beginTableTransaction(tp);
 
+		TableResource resource;
 		Table rowsToInsert;
 		Table rowsToUpdate;
 		Table rowsToDelete;
+		boolean success = true;
+
 		switch (tp.getSyncState()) {
 		case SyncUtil.State.INSERTING:
 			rowsToInsert = getRows(table, SyncUtil.State.INSERTING);
 
 			beginRowsTransaction(table, rowsToInsert.getRowIds());
 
-			createTable(tp);
-			insertRows(tp, table, rowsToInsert);
+			try {
+				resource = createTable(tp);
+				insertRows(tp, table, rowsToInsert, resource);
+				success = true;
+			} catch (Exception e) {
+				Log.e(TAG, "Unexpected exception in synchronize on table: "
+						+ tableId, e);
+				success = false;
+			}
 
-			endRowsTransaction(table, rowsToInsert.getRowIds());
+			endRowsTransaction(table, rowsToInsert.getRowIds(), success);
 
 			break;
 		case SyncUtil.State.UPDATING:
-			updateFromServer(tp, table);
+			resource = getTableResource(tableId);
+			updateFromServer(tp, table, resource);
 
 			rowsToInsert = getRows(table, SyncUtil.State.INSERTING);
 			rowsToUpdate = getRows(table, SyncUtil.State.UPDATING);
@@ -109,283 +168,321 @@ public class AggregateSyncProcessor {
 					rowsToDelete);
 			beginRowsTransaction(table, rowIds);
 
-			insertRows(tp, table, rowsToInsert);
-			updateRows(tp, table, rowsToUpdate);
-			deleteRows(tp, table, rowsToDelete);
-			for (String rowId : rowsToDelete.getRowIds()) {
-			    table.deleteRowActual(rowId);
+			try {
+				resource = insertRows(tp, table, rowsToInsert, resource);
+				resource = updateRows(tp, table, rowsToUpdate, resource);
+				resource = deleteRows(tp, table, rowsToDelete, resource);
+				for (String rowId : rowsToDelete.getRowIds()) {
+					table.deleteRowActual(rowId);
+					syncResult.stats.numDeletes++;
+					syncResult.stats.numEntries++;
+				}
+				success = true;
+			} catch (Exception e) {
+				Log.e(TAG, "Unexpected exception in synchronize on table: "
+						+ tableId, e);
+				success = false;
 			}
 
 			rowIds = getAllRowIds(rowsToInsert, rowsToUpdate);
-			endRowsTransaction(table, rowIds);
+			endRowsTransaction(table, rowIds, success);
 
 			break;
 		case SyncUtil.State.DELETING:
-			beginRowsTransaction(table, new String[0]);
-			removeTableSynchronization(String.valueOf(tp.getTableId()));
+			rt.delete(baseUri.resolve(tableId));
 			tp.deleteTableActual();
+			syncResult.stats.numDeletes++;
+			syncResult.stats.numEntries++;
 
 			break;
 		}
 		tp.setLastSyncTime(du.formatNowForDb());
-		endTableTransaction(tp);
+		endTableTransaction(tp, success);
 	}
 
-	public void updateFromServer(TableProperties tp, DbTable table)
-			throws ClientProtocolException, PermissionDeniedException,
-			TableDoesNotExistException, AggregateInternalErrorException,
-			IOException {
-		Modification mod = api.synchronize(String.valueOf(tp.getTableId()),
-				tp.getSyncModificationNumber());
+	public TableResource getTableResource(String tableId) {
+		// UriBuilder ub = UriBuilder.fromUri(baseUri);
+		// WebResource r = c.resource(ub.path(tableId).build());
+		// TableResource resource = r.accept(MediaType.TEXT_XML)
+		// .type(MediaType.TEXT_XML).get(TableResource.class);
+		URI uri = baseUri.resolve(tableId);
+		TableResource resource = rt.getForObject(uri, TableResource.class);
+		return resource;
+	}
+
+	public void updateFromServer(TableProperties tp, DbTable table,
+			TableResource resource) {
+		String dataEtag = String.valueOf(tp.getSyncDataEtag());
+		String newDataEtag = resource.getDataEtag();
+
+		if (newDataEtag.equals(dataEtag))
+			return;
+
+		String diffUri = resource.getDiffUri();
+		// WebResource r = c.resource(UriBuilder.fromUri(diffUri)
+		// .queryParam("data_etag", tp.getSyncDataEtag()).build());
+
+		// List<RowResource> rows = r.accept(MediaType.TEXT_XML)
+		// .type(MediaType.TEXT_XML).get(ROW_RESOURCE_LIST);
+		URI url = URI.create(diffUri + "?data_etag=" + tp.getSyncDataEtag())
+				.normalize();
+		List<RowResource> rows = rt.getForObject(url, List.class);
 
 		Table allRowIds = table.getRaw(new String[] { DbTable.DB_ROW_ID,
-				DbTable.DB_SYNC_ID, DbTable.DB_SYNC_STATE }, null, null, null);
-		List<SynchronizedRow> rowsToInsert = new ArrayList<SynchronizedRow>();
-		List<SynchronizedRow> rowsToUpdate = new ArrayList<SynchronizedRow>();
-		List<SynchronizedRow> rowsToConflict = new ArrayList<SynchronizedRow>();
-		for (SynchronizedRow row : mod.getRows()) {
+				DbTable.DB_SYNC_STATE }, null, null, null);
+
+		List<RowResource> rowsToConflict = new ArrayList<RowResource>();
+		List<RowResource> rowsToUpdate = new ArrayList<RowResource>();
+		List<RowResource> rowsToInsert = new ArrayList<RowResource>();
+		List<RowResource> rowsToDelete = new ArrayList<RowResource>();
+
+		for (RowResource row : rows) {
 			boolean found = false;
 			for (int i = 0; i < allRowIds.getHeight(); i++) {
-				String syncRowId = allRowIds.getData(i, 1);
-				int state = Integer.parseInt(allRowIds.getData(i, 2));
-				if (row.getAggregateRowIdentifier().equals(syncRowId)) {
-					row.setRowID(String.valueOf(allRowIds.getRowId(i)));
+				String rowId = allRowIds.getData(i, 0);
+				int state = Integer.parseInt(allRowIds.getData(i, 1));
+				if (row.getRowId().equals(rowId)) {
 					found = true;
-					if (state == SyncUtil.State.REST)
-						rowsToUpdate.add(row);
-					else
+					if (state == SyncUtil.State.REST) {
+						if (row.isDeleted())
+							rowsToDelete.add(row);
+						else
+							rowsToUpdate.add(row);
+					} else {
 						rowsToConflict.add(row);
+					}
 				}
 			}
 			if (!found)
 				rowsToInsert.add(row);
 		}
 
-		// TODO: refactor these for loops?
+		// TODO: how to conflict?
+		// for (RowResource row : rowsToConflict) {
+		// ContentValues values = new ContentValues();
+		//
+		// values.put(DbTable.DB_ROW_ID, row.getRowId());
+		// values.put(DbTable.DB_SYNC_TAG, row.getRowEtag());
+		// values.put(DbTable.DB_SYNC_STATE,
+		// String.valueOf(SyncUtil.State.CONFLICTING));
+		// values.put(DbTable.DB_TRANSACTIONING,
+		// String.valueOf(SyncUtil.Transactioning.FALSE));
+		// table.actualUpdateRowByRowId(row.getRowId(), values);
+		//
+		// for (Entry<String, String> entry : row.getValues().entrySet())
+		// values.put(entry.getKey(), entry.getValue());
+		//
+		// table.actualAddRow(values);
+		// syncResult.stats.numConflictDetectedExceptions++;
+		// syncResult.stats.numEntries += 2;
+		// }
 
-		for (SynchronizedRow row : rowsToConflict) {
+		for (RowResource row : rowsToUpdate) {
 			ContentValues values = new ContentValues();
-			values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
-			values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
-			values.put(DbTable.DB_SYNC_STATE, String.valueOf(
-			        SyncUtil.State.CONFLICTING));
+
+			values.put(DbTable.DB_SYNC_TAG, row.getRowEtag());
+			values.put(DbTable.DB_SYNC_STATE,
+					String.valueOf(SyncUtil.State.REST));
 			values.put(DbTable.DB_TRANSACTIONING,
 					String.valueOf(SyncUtil.Transactioning.FALSE));
-			table.actualUpdateRowByRowId(row.getRowID(), values);
 
-			for (Entry<String, String> entry : row.getColumnValuePairs()
-					.entrySet())
+			for (Entry<String, String> entry : row.getValues().entrySet())
 				values.put(entry.getKey(), entry.getValue());
-			
-			table.actualAddRow(values);
+
+			table.actualUpdateRowByRowId(row.getRowId(), values);
+			syncResult.stats.numUpdates++;
+			syncResult.stats.numEntries++;
 		}
 
-		for (SynchronizedRow row : rowsToUpdate) {
+		for (RowResource row : rowsToInsert) {
 			ContentValues values = new ContentValues();
-			values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
-			values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
-			values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.REST));
-			values.put(DbTable.DB_TRANSACTIONING,
-					String.valueOf(SyncUtil.Transactioning.FALSE));
-			for (Entry<String, String> entry : row.getColumnValuePairs()
-					.entrySet())
-				values.put(entry.getKey(), entry.getValue());
-			table.actualUpdateRowByRowId(row.getRowID(), values);
-		}
 
-		for (SynchronizedRow row : rowsToInsert) {
-			ContentValues values = new ContentValues();
-			values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
-			values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
+			values.put(DbTable.DB_ROW_ID, row.getRowId());
+			values.put(DbTable.DB_SYNC_TAG, row.getRowEtag());
 			values.put(DbTable.DB_SYNC_STATE, SyncUtil.State.REST);
-			values.put(DbTable.DB_TRANSACTIONING,
-			        SyncUtil.Transactioning.FALSE);
-			for (Entry<String, String> entry : row.getColumnValuePairs()
-					.entrySet())
+			values.put(DbTable.DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+
+			for (Entry<String, String> entry : row.getValues().entrySet())
 				values.put(entry.getKey(), entry.getValue());
+
 			table.actualAddRow(values);
+			syncResult.stats.numInserts++;
+			syncResult.stats.numEntries++;
 		}
-		tp.setSyncModificationNumber(mod.getModificationNumber());
+
+		for (RowResource row : rowsToDelete) {
+			table.deleteRowActual(row.getRowId());
+			syncResult.stats.numDeletes++;
+		}
+
+		tp.setSyncDataEtag(newDataEtag);
 	}
 
 	public Table getRows(DbTable table, int state) {
-		Table rows = table.getRaw(
-				null,
-				new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
-				new String[] { String.valueOf(state),
-						String.valueOf(SyncUtil.Transactioning.FALSE) }, null);
+		Table rows = table
+				.getRaw(null,
+						new String[] { DbTable.DB_SYNC_STATE,
+								DbTable.DB_TRANSACTIONING },
+						new String[] { String.valueOf(state),
+								String.valueOf(SyncUtil.Transactioning.FALSE) },
+						null);
 		return rows;
 	}
 
-	/**
-	 * Creates the given table in Aggregate.
-	 * 
-	 * @param tp
-	 * @throws ClientProtocolException
-	 * @throws TableAlreadyExistsException
-	 * @throws AggregateInternalErrorException
-	 * @throws IOException
-	 */
-	public void createTable(TableProperties tp) throws ClientProtocolException,
-			TableAlreadyExistsException, AggregateInternalErrorException,
-			IOException {
-		String tableID = String.valueOf(tp.getTableId());
-		String tableName = tp.getDbTableName();
+	public TableResource createTable(TableProperties tp) {
+		String tableId = String.valueOf(tp.getTableId());
 		ColumnProperties[] colProps = tp.getColumns();
+
 		List<Column> columns = new ArrayList<Column>();
 		for (ColumnProperties colProp : colProps) {
 			String name = colProp.getColumnDbName();
-			AttributeType type = types.get(colProp.getColumnType());
-			boolean nullable = true;
-			Column column = new Column(name, type, nullable);
+			Column.ColumnType type = types.get(colProp.getColumnType());
+			Column column = new Column(name, type);
 			columns.add(column);
 		}
-		Modification mod = api.createSynchronizedTable(tableID, tableName,
-				columns);
-		tp.setSyncModificationNumber(mod.getModificationNumber());
+
+		// UriBuilder ub = UriBuilder.fromUri(baseUri);
+		// WebResource r = c.resource(ub.path(tableId).build());
+		// TableResource resource = r.accept(MediaType.TEXT_XML)
+		// .type(MediaType.TEXT_XML)
+		// .put(TableResource.class, new TableDefinition(columns));
+		URI uri = baseUri.resolve(tableId);
+
+		TableDefinition definition = new TableDefinition(columns);
+		HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(
+				definition, requestHeaders);
+
+		ResponseEntity<TableResource> resourceEntity = rt.exchange(uri,
+				HttpMethod.PUT, requestEntity, TableResource.class);
+		TableResource resource = resourceEntity.getBody();
+
+		tp.setSyncDataEtag(resource.getDataEtag());
+		return resource;
 	}
 
-	/**
-	 * Inserts the given rows into Aggregate.
-	 * 
-	 * @param tableID
-	 *            the ID of the table to insert into
-	 * @param modificationNumber
-	 *            the current modification number of the table
-	 * @param rowsToInsert
-	 *            the rows to insert.
-	 * @throws IOException
-	 * @throws ColumnDoesNotExistException
-	 * @throws AggregateInternalErrorException
-	 * @throws PermissionDeniedException
-	 * @throws TableDoesNotExistException
-	 * @throws OutOfSynchException
-	 * @throws ClientProtocolException
-	 */
-	public void insertRows(TableProperties tp, DbTable table, Table rowsToInsert)
-			throws ClientProtocolException, OutOfSynchException,
-			TableDoesNotExistException, PermissionDeniedException,
-			AggregateInternalErrorException, ColumnDoesNotExistException,
-			IOException {
-		String tableID = String.valueOf(tp.getTableId());
-		int modificationNumber = tp.getSyncModificationNumber();
-		List<SynchronizedRow> newRows = new ArrayList<SynchronizedRow>();
+	public TableResource insertRows(TableProperties tp, DbTable table,
+			Table rowsToInsert, TableResource resource) {
+
+		List<Row> newRows = new ArrayList<Row>();
 		int numRows = rowsToInsert.getHeight();
 		int numCols = rowsToInsert.getWidth();
 		for (int i = 0; i < numRows; i++) {
-			SynchronizedRow row = new SynchronizedRow();
-			row.setRowID(String.valueOf(rowsToInsert.getRowId(i)));
+			String rowId = String.valueOf(rowsToInsert.getRowId(i));
+			Map<String, String> values = new HashMap<String, String>();
 			for (int j = 0; j < numCols; j++) {
 				String colName = rowsToInsert.getHeader(j);
 				if (!isSpecialDbColumn(colName))
-					row.setValue(colName, rowsToInsert.getData(i, j));
+					values.put(colName, rowsToInsert.getData(i, j));
 			}
+			Row row = Row.forInsert(rowId, null, values);
 			newRows.add(row);
 		}
 
-		if (!newRows.isEmpty()) {
-			Modification mod = api.insertSynchronizedRows(tableID,
-					modificationNumber, newRows);
-
-			tp.setSyncModificationNumber(mod.getModificationNumber());
-			for (SynchronizedRow row : mod.getRows()) {
-			    ContentValues values = new ContentValues();
-				values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
-				values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
-				table.actualUpdateRowByRowId(row.getRowID(), values);
-			}
-		}
+		return insertOrUpdateRows(newRows, tp, table, resource);
 	}
 
-	/**
-	 * Updates the given rows into Aggregate.
-	 * 
-	 * @param tableID
-	 *            the ID of the table to update
-	 * @param modificationNumber
-	 *            the current modification number of the table
-	 * @param rowsToUpdate
-	 *            the rows to update.
-	 * @throws IOException
-	 * @throws ColumnDoesNotExistException
-	 * @throws AggregateInternalErrorException
-	 * @throws RowOutOfSynchException
-	 * @throws TableDoesNotExistException
-	 * @throws OutOfSynchException
-	 * @throws PermissionDeniedException
-	 * @throws ClientProtocolException
-	 */
-	public void updateRows(TableProperties tp, DbTable table, Table rowsToUpdate)
-			throws ClientProtocolException, PermissionDeniedException,
-			OutOfSynchException, TableDoesNotExistException,
-			RowOutOfSynchException, AggregateInternalErrorException,
-			ColumnDoesNotExistException, IOException {
+	public TableResource updateRows(TableProperties tp, DbTable table,
+			Table rowsToUpdate, TableResource resource) {
 
-		String tableID = String.valueOf(tp.getTableId());
-		int modificationNumber = tp.getSyncModificationNumber();
-		List<SynchronizedRow> changedRows = new ArrayList<SynchronizedRow>();
+		List<Row> changedRows = new ArrayList<Row>();
 		int numRows = rowsToUpdate.getHeight();
 		int numCols = rowsToUpdate.getWidth();
 		for (int i = 0; i < numRows; i++) {
-			SynchronizedRow row = new SynchronizedRow();
+			String rowId = null;
+			String rowEtag = null;
+			Map<String, String> values = new HashMap<String, String>();
 			for (int j = 0; j < numCols; j++) {
 				String colName = rowsToUpdate.getHeader(j);
-				if (colName.equals(DbTable.DB_SYNC_ID)) {
-					row.setAggregateRowIdentifier(rowsToUpdate.getData(i, j));
+				if (colName.equals(DbTable.DB_ROW_ID)) {
+					rowId = rowsToUpdate.getData(i, j);
 				} else if (colName.equals(DbTable.DB_SYNC_TAG)) {
-					row.setRevisionTag(rowsToUpdate.getData(i, j));
+					rowEtag = rowsToUpdate.getData(i, j);
 				} else if (!isSpecialDbColumn(colName)) {
-					row.setValue(colName, rowsToUpdate.getData(i, j));
+					values.put(colName, rowsToUpdate.getData(i, j));
 				}
 			}
+			Row row = Row.forUpdate(rowId, rowEtag, values);
 			changedRows.add(row);
 		}
-		if (!changedRows.isEmpty())
-		{
-			Modification mod = api.updateSynchronizedRows(tableID,
-					modificationNumber, changedRows);
-	
-			tp.setSyncModificationNumber(mod.getModificationNumber());
-			for (SynchronizedRow row : mod.getRows()) {
-			    ContentValues values = new ContentValues();
-				values.put(DbTable.DB_SYNC_ID, row.getAggregateRowIdentifier());
-				values.put(DbTable.DB_SYNC_TAG, row.getRevisionTag());
-				table.actualUpdateRowBySyncId(row.getAggregateRowIdentifier(),
-				        values);
+
+		return insertOrUpdateRows(changedRows, tp, table, resource);
+	}
+
+	private TableResource insertOrUpdateRows(List<Row> rows,
+			TableProperties tp, DbTable table, TableResource resource) {
+		if (!rows.isEmpty()) {
+			for (Row row : rows) {
+				// UriBuilder builder =
+				// UriBuilder.fromUri(resource.getDataUri())
+				// .path(row.getRowId());
+				// WebResource r = c.resource(builder.build());
+				// RowResource inserted = r.accept(MediaType.TEXT_XML)
+				// .type(MediaType.TEXT_XML).put(RowResource.class, row);
+				URI url = URI.create(
+						resource.getDataUri() + "/" + row.getRowId())
+						.normalize();
+				HttpEntity<Row> requestEntity = new HttpEntity<Row>(row,
+						requestHeaders);
+				ResponseEntity<RowResource> insertedEntity = rt.exchange(url,
+						HttpMethod.PUT, requestEntity, RowResource.class);
+				RowResource inserted = insertedEntity.getBody();
+
+				ContentValues values = new ContentValues();
+				values.put(DbTable.DB_SYNC_TAG, inserted.getRowEtag());
+
+				table.actualUpdateRowByRowId(inserted.getRowId(), values);
 			}
+
+			// resource = c.resource(resource.getSelfUri())
+			// .accept(MediaType.TEXT_XML).get(TableResource.class);
+			resource = rt.getForObject(resource.getSelfUri(),
+					TableResource.class);
+			tp.setSyncDataEtag(resource.getDataEtag());
 		}
+		return resource;
 	}
 
 	public boolean isSpecialDbColumn(String colName) {
 		return colName.equals(DbTable.DB_ROW_ID)
 				|| colName.equals(DbTable.DB_SYNC_STATE)
-				|| colName.equals(DbTable.DB_SYNC_ID)
 				|| colName.equals(DbTable.DB_SYNC_TAG)
 				|| colName.equals(DbTable.DB_TRANSACTIONING);
 	}
 
-	/**
-	 * 
-	 * @param tableID
-	 * @param modificationNumber
-	 * @param rowsToDelete
-	 */
-	public void deleteRows(TableProperties tp, DbTable table, Table rowsToDelete) {
-		// TODO: implement once there is a deleteSynchronizedRows call
-		//throw new RuntimeException("unimplemented");
-	}
+	public TableResource deleteRows(TableProperties tp, DbTable table,
+			Table rowsToDelete, TableResource resource) {
+		List<String> rowIds = new ArrayList<String>();
+		int numRows = rowsToDelete.getHeight();
+		int numCols = rowsToDelete.getWidth();
+		for (int i = 0; i < numRows; i++) {
+			for (int j = 0; j < numCols; j++) {
+				String colName = rowsToDelete.getHeader(j);
+				if (colName.equals(DbTable.DB_ROW_ID)) {
+					rowIds.add(rowsToDelete.getData(i, j));
+				}
+			}
+		}
 
-	/**
-	 * @param tableID
-	 * @throws IOException
-	 * @throws AggregateInternalErrorException
-	 * @throws TableDoesNotExistException
-	 * @throws ClientProtocolException
-	 */
-	public void removeTableSynchronization(String tableID)
-			throws ClientProtocolException, TableDoesNotExistException,
-			AggregateInternalErrorException, IOException {
-		api.removeTableSynchronization(tableID);
+		if (!rowIds.isEmpty()) {
+			for (String rowId : rowIds) {
+				// UriBuilder builder =
+				// UriBuilder.fromUri(resource.getDataUri())
+				// .path(rowId);
+				// WebResource r = c.resource(builder.build());
+				// r.delete();
+				URI url = URI.create(resource.getDataUri() + "/" + rowId)
+						.normalize();
+				rt.delete(url);
+			}
+			// resource = c.resource(resource.getSelfUri())
+			// .accept(MediaType.TEXT_XML).type(MediaType.TEXT_XML)
+			// .get(TableResource.class);
+			resource = rt.getForObject(resource.getSelfUri(),
+					TableResource.class);
+			tp.setSyncDataEtag(resource.getDataEtag());
+		}
+
+		return resource;
 	}
 
 	public String[] getAllRowIds(Table... tables) {
@@ -404,8 +501,9 @@ public class AggregateSyncProcessor {
 		tp.setTransactioning(SyncUtil.Transactioning.TRUE);
 	}
 
-	public void endTableTransaction(TableProperties tp) {
-		tp.setSyncState(SyncUtil.State.REST);
+	public void endTableTransaction(TableProperties tp, boolean success) {
+		if (success)
+			tp.setSyncState(SyncUtil.State.REST);
 		tp.setTransactioning(SyncUtil.Transactioning.FALSE);
 	}
 
@@ -413,8 +511,10 @@ public class AggregateSyncProcessor {
 		updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.TRUE);
 	}
 
-	public void endRowsTransaction(DbTable table, String[] rowIds) {
-		updateRowsState(table, rowIds, SyncUtil.State.REST);
+	public void endRowsTransaction(DbTable table, String[] rowIds,
+			boolean success) {
+		if (success)
+			updateRowsState(table, rowIds, SyncUtil.State.REST);
 		updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.FALSE);
 	}
 
