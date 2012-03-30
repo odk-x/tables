@@ -274,11 +274,32 @@ public class DataUtil {
                 DB_DATETIME_FORMATTER.parseDateTime(split[1]));
     }
     
+    public String formatForUserDisplay(ColumnProperties cp, String value) {
+        switch (cp.getColumnType()) {
+        case ColumnProperties.ColumnType.DATE:
+            return formatLongDateTimeForUser(parseDateTimeFromDb(value));
+        case ColumnProperties.ColumnType.DATE_RANGE:
+            return formatLongIntervalForUser(parseIntervalFromDb(value));
+        default:
+            return value;
+        }
+    }
+    
     public String formatShortDateTimeForUser(DateTime dt) {
         return userShortFormatter.print(dt);
     }
     
     public String formatLongDateTimeForUser(DateTime dt) {
         return userLongFormatter.print(dt);
+    }
+    
+    public String formatShortIntervalForUser(Interval interval) {
+        return formatShortDateTimeForUser(interval.getStart()) + "-" +
+                formatShortDateTimeForUser(interval.getEnd());
+    }
+    
+    public String formatLongIntervalForUser(Interval interval) {
+        return formatLongDateTimeForUser(interval.getStart()) + " - " +
+                formatLongDateTimeForUser(interval.getEnd());
     }
 }

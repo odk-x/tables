@@ -162,9 +162,9 @@ public class TablePropertiesManager extends PreferenceActivity {
         });
         displayCat.addPreference(sumFormatPref);
         
-        String[] viewTypeIds = new String[Preferences.ViewType.COUNT];
-        String[] viewTypeNames = new String[Preferences.ViewType.COUNT];
-        for (int i = 0; i < Preferences.ViewType.COUNT; i++) {
+        String[] viewTypeIds = new String[TableProperties.ViewType.COUNT];
+        String[] viewTypeNames = new String[TableProperties.ViewType.COUNT];
+        for (int i = 0; i < TableProperties.ViewType.COUNT; i++) {
             viewTypeIds[i] = String.valueOf(i);
             viewTypeNames[i] = LanguageUtil.getViewTypeLabel(i);
         }
