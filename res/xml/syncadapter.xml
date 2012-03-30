@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- @Dylan -->
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
 	android:contentAuthority="yoonsung.odk.spreadsheet.sync.tablescontentprovider"
 	android:accountType="com.google" 
 	android:userVisible="true"
 	/>
-<!-- /@Dylan -->

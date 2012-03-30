@@ -31,7 +31,7 @@ public class TableProperties {
     private static final String DB_SORT_COLUMN = "sortCol";
     private static final String DB_READ_SECURITY_TABLE_ID = "readAccessTid";
     private static final String DB_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
-    private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
+    private static final String DB_SYNC_TAG = "syncModNum";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
     private static final String DB_OV_VIEW_SETTINGS = "ovViewSettings";
     private static final String DB_CO_VIEW_SETTINGS = "coViewSettings";
@@ -75,7 +75,7 @@ public class TableProperties {
         DB_SORT_COLUMN,
         DB_READ_SECURITY_TABLE_ID,
         DB_WRITE_SECURITY_TABLE_ID,
-        DB_SYNC_MODIFICATION_NUMBER,
+        DB_SYNC_TAG,
         DB_LAST_SYNC_TIME,
         DB_OV_VIEW_SETTINGS,
         DB_CO_VIEW_SETTINGS,
@@ -113,7 +113,7 @@ public class TableProperties {
     private String sortColumn;
     private String readSecurityTableId;
     private String writeSecurityTableId;
-    private int syncModificationNumber;
+    private int syncTag;
     private String lastSyncTime;
     private int overviewViewType;
     private String[] overviewViewSettings;
@@ -128,7 +128,7 @@ public class TableProperties {
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn,
             String readSecurityTableId, String writeSecurityTableId,
-            int syncModificationNumber, String lastSyncTime,
+            int syncTag, String lastSyncTime,
             int overviewViewType, String[] overviewViewSettings,
             int collectionViewType, String[] collectionViewSettings,
             String detailViewFilename, String sumDisplayFormat, int syncState,
@@ -145,7 +145,7 @@ public class TableProperties {
         this.sortColumn = sortColumn;
         this.readSecurityTableId = readSecurityTableId;
         this.writeSecurityTableId = writeSecurityTableId;
-        this.syncModificationNumber = syncModificationNumber;
+        this.syncTag = syncTag;
         this.lastSyncTime = lastSyncTime;
         this.overviewViewType = overviewViewType;
         this.overviewViewSettings = overviewViewSettings;
@@ -205,7 +205,7 @@ public class TableProperties {
         int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
         int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
         int syncModNumIndex = c.getColumnIndexOrThrow(
-                DB_SYNC_MODIFICATION_NUMBER);
+                DB_SYNC_TAG);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
         int ovViewSettingsIndex = c.getColumnIndexOrThrow(DB_OV_VIEW_SETTINGS);
         int coViewSettingsIndex = c.getColumnIndexOrThrow(DB_CO_VIEW_SETTINGS);
@@ -287,7 +287,7 @@ public class TableProperties {
         values.putNull(DB_SORT_COLUMN);
         values.putNull(DB_READ_SECURITY_TABLE_ID);
         values.putNull(DB_WRITE_SECURITY_TABLE_ID);
-        values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
+        values.put(DB_SYNC_TAG, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.put(DB_OV_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
         values.put(DB_CO_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
@@ -718,20 +718,20 @@ public class TableProperties {
     }
     
     /**
-     * @return the sync modification number (or -1 if the table has never been
+     * @return the sync sync tag (or null if the table has never been
      * synchronized)
      */
-    public int getSyncModificationNumber() {
-        return syncModificationNumber;
+    public int getSyncTag() {
+        return syncTag;
     }
     
     /**
-     * Sets the table's sync modification number.
-     * @param modNum the new modification number
+     * Sets the table's sync sync tag.
+     * @param syncTag the new sync tag
      */
-    public void setSyncModificationNumber(int modNum) {
-        setIntProperty(DB_SYNC_MODIFICATION_NUMBER, modNum);
-        this.syncModificationNumber = modNum;
+    public void setSyncTag(int syncTag) {
+        setIntProperty(DB_SYNC_TAG, syncTag);
+        this.syncTag = syncTag;
     }
     
     /**
@@ -1054,7 +1054,7 @@ public class TableProperties {
                 ", " + DB_SORT_COLUMN + " TEXT" +
                 ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
-                ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
+                ", " + DB_SYNC_TAG + " INTEGER NOT NULL" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_OV_VIEW_SETTINGS + " TEXT" +
                 ", " + DB_CO_VIEW_SETTINGS + " TEXT" +
