@@ -302,7 +302,7 @@ public class TableProperties {
         values.putNull(DB_SORT_COLUMN);
         values.putNull(DB_READ_SECURITY_TABLE_ID);
         values.putNull(DB_WRITE_SECURITY_TABLE_ID);
-        values.put(DB_SYNC_TAG, -1);
+        values.putNull(DB_SYNC_TAG);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.put(DB_OV_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
         values.put(DB_CO_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
@@ -1069,7 +1069,7 @@ public class TableProperties {
                 ", " + DB_SORT_COLUMN + " TEXT" +
                 ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
-                ", " + DB_SYNC_TAG + " INTEGER NOT NULL" +
+                ", " + DB_SYNC_TAG + " TEXT" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_OV_VIEW_SETTINGS + " TEXT" +
                 ", " + DB_CO_VIEW_SETTINGS + " TEXT" +
