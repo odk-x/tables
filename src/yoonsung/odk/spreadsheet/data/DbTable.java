@@ -244,7 +244,6 @@ public class DbTable {
         long result = db.insert(tp.getDbTableName(), null, values);
         db.close();
         Log.d("DBT", "insert, id=" + result);
-        tp.setSyncState(SyncUtil.State.UPDATING);
     }
     
     /**
@@ -288,7 +287,6 @@ public class DbTable {
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.update(tp.getDbTableName(), values, where, whereArgs);
         db.close();
-        tp.setSyncState(SyncUtil.State.UPDATING);
     }
     
     /**
@@ -301,7 +299,6 @@ public class DbTable {
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
         db.close();
-        tp.setSyncState(SyncUtil.State.UPDATING);
     }
     
     /**
