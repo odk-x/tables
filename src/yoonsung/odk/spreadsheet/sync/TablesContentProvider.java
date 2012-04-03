@@ -36,6 +36,7 @@ public class TablesContentProvider extends ContentProvider {
 
 	@Override
 	public boolean onCreate() {
+		// this actually gets called so we can't throw exception
 		return true;
 	}
 

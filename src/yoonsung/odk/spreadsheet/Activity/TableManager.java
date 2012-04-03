@@ -138,9 +138,9 @@ public class TableManager extends ListActivity {
 	     Intent i;
 	     switch (tp.getTableType()) {
 	     case TableProperties.TableType.DATA:
-	         Controller.launchTableActivity(this, tp, true);
-	         i = new Intent(this, BoxStemGraphDisplayActivity.class);
-	         //i = new Intent(this, SpreadSheet.class);
+	         //Controller.launchTableActivity(this, tp, true);
+	         //i = new Intent(this, BoxStemGraphDisplayActivity.class);
+	         i = new Intent(this, SpreadSheet.class);
 	         break;
 	     case TableProperties.TableType.SECURITY:
 	         i = new Intent(this, SpreadSheet.class);
@@ -153,7 +153,7 @@ public class TableManager extends ListActivity {
 	     }
 	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
 	     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, true);
-		 //startActivity(i);
+		 startActivity(i);
 	 }
 	 
 	 @Override

@@ -31,7 +31,7 @@ public class TableProperties {
     private static final String DB_SORT_COLUMN = "sortCol";
     private static final String DB_READ_SECURITY_TABLE_ID = "readAccessTid";
     private static final String DB_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
-    private static final String DB_SYNC_MODIFICATION_NUMBER = "syncModNum";
+    private static final String DB_SYNC_TAG = "syncTag";
     private static final String DB_LAST_SYNC_TIME = "lastSyncTime";
     private static final String DB_OV_VIEW_SETTINGS = "ovViewSettings";
     private static final String DB_CO_VIEW_SETTINGS = "coViewSettings";
@@ -64,6 +64,8 @@ public class TableProperties {
     private static final String ID_WHERE_SQL = DB_TABLE_ID + " = ?";
     // the SQL where clause to use for selecting by table type
     private static final String TYPE_WHERE_SQL = DB_TABLE_TYPE + " = ?";
+    // the SQL where clause to use for selecting by sync state
+    private static final String STATE_WHERE_SQL = DB_SYNC_STATE + " = ?";
     // the columns to be selected when initializing TableProperties
     private static final String[] INIT_COLUMNS = {
         DB_TABLE_ID,
@@ -75,7 +77,7 @@ public class TableProperties {
         DB_SORT_COLUMN,
         DB_READ_SECURITY_TABLE_ID,
         DB_WRITE_SECURITY_TABLE_ID,
-        DB_SYNC_MODIFICATION_NUMBER,
+        DB_SYNC_TAG,
         DB_LAST_SYNC_TIME,
         DB_OV_VIEW_SETTINGS,
         DB_CO_VIEW_SETTINGS,
@@ -113,7 +115,7 @@ public class TableProperties {
     private String sortColumn;
     private String readSecurityTableId;
     private String writeSecurityTableId;
-    private int syncModificationNumber;
+    private String syncTag;
     private String lastSyncTime;
     private TableViewSettings overviewViewSettings;
     private TableViewSettings collectionViewSettings;
@@ -126,10 +128,9 @@ public class TableProperties {
             String displayName, int tableType, String[] columnOrder,
             String[] primeColumns, String sortColumn,
             String readSecurityTableId, String writeSecurityTableId,
-            int syncModificationNumber, String lastSyncTime,
-            String ovViewSettingsDbString, String coViewSettingsDbString,
-            String detailViewFilename, String sumDisplayFormat, int syncState,
-            int transactioning) {
+            String syncTag, String lastSyncTime, String ovViewSettingsDbString,
+            String coViewSettingsDbString, String detailViewFilename,
+            String sumDisplayFormat, int syncState, int transactioning) {
         this.dbh = dbh;
         whereArgs = new String[] { String.valueOf(tableId) };
         this.tableId = tableId;
@@ -142,7 +143,7 @@ public class TableProperties {
         this.sortColumn = sortColumn;
         this.readSecurityTableId = readSecurityTableId;
         this.writeSecurityTableId = writeSecurityTableId;
-        this.syncModificationNumber = syncModificationNumber;
+        this.syncTag = syncTag;
         this.lastSyncTime = lastSyncTime;
         this.overviewViewSettings = TableViewSettings.newOverviewTVS(this,
                 ovViewSettingsDbString);
@@ -165,6 +166,13 @@ public class TableProperties {
         return queryForTableProperties(dbh, null, null);
     }
     
+    public static TableProperties[] getTablePropertiesForDeleting(
+            DbHelper dbh) {
+        return queryForTableProperties(dbh, STATE_WHERE_SQL,
+                new String[] { String.valueOf(SyncUtil.State.DELETING) },
+                true);
+    }
+    
     public static TableProperties[] getTablePropertiesForDataTables(
             DbHelper dbh) {
         return queryForTableProperties(dbh, TYPE_WHERE_SQL,
@@ -185,10 +193,17 @@ public class TableProperties {
     
     private static TableProperties[] queryForTableProperties(DbHelper dbh,
             String where, String[] whereArgs) {
-        where = (where == null) ?
-                (DB_SYNC_STATE + " != " + SyncUtil.State.DELETING) :
-                (where + " AND " + DB_SYNC_STATE + " != " +
-                        SyncUtil.State.DELETING);
+        return queryForTableProperties(dbh, where, whereArgs, false);
+    }
+    
+    private static TableProperties[] queryForTableProperties(DbHelper dbh,
+            String where, String[] whereArgs, boolean includeDeleting) {
+        if (!includeDeleting) {
+            where = (where == null) ?
+                        (DB_SYNC_STATE + " != " + SyncUtil.State.DELETING) :
+                        (where + " AND " + DB_SYNC_STATE + " != " +
+                                SyncUtil.State.DELETING);
+        }
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, where, whereArgs, null,
                 null, null);
@@ -202,8 +217,7 @@ public class TableProperties {
         int sortColumnIndex = c.getColumnIndexOrThrow(DB_SORT_COLUMN);
         int rsTableId = c.getColumnIndexOrThrow(DB_READ_SECURITY_TABLE_ID);
         int wsTableId = c.getColumnIndexOrThrow(DB_WRITE_SECURITY_TABLE_ID);
-        int syncModNumIndex = c.getColumnIndexOrThrow(
-                DB_SYNC_MODIFICATION_NUMBER);
+        int syncTagIndex = c.getColumnIndexOrThrow(DB_SYNC_TAG);
         int lastSyncTimeIndex = c.getColumnIndexOrThrow(DB_LAST_SYNC_TIME);
         int ovViewSettingsIndex = c.getColumnIndexOrThrow(DB_OV_VIEW_SETTINGS);
         int coViewSettingsIndex = c.getColumnIndexOrThrow(DB_CO_VIEW_SETTINGS);
@@ -226,7 +240,7 @@ public class TableProperties {
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
                     c.getInt(tableTypeIndex), columnOrder, primeList,
                     c.getString(sortColumnIndex), c.getString(rsTableId),
-                    c.getString(wsTableId), c.getInt(syncModNumIndex),
+                    c.getString(wsTableId), c.getString(syncTagIndex),
                     c.getString(lastSyncTimeIndex),
                     c.getString(ovViewSettingsIndex),
                     c.getString(coViewSettingsIndex),
@@ -281,7 +295,7 @@ public class TableProperties {
         values.putNull(DB_SORT_COLUMN);
         values.putNull(DB_READ_SECURITY_TABLE_ID);
         values.putNull(DB_WRITE_SECURITY_TABLE_ID);
-        values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
+        values.putNull(DB_SYNC_TAG);
         values.put(DB_LAST_SYNC_TIME, -1);
         values.putNull(DB_OV_VIEW_SETTINGS);
         values.putNull(DB_CO_VIEW_SETTINGS);
@@ -293,7 +307,7 @@ public class TableProperties {
         db.beginTransaction();
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null,
-                null, null, -1, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 SyncUtil.State.INSERTING, SyncUtil.Transactioning.FALSE);
         long result = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "row id=" + result);
@@ -711,20 +725,19 @@ public class TableProperties {
     }
     
     /**
-     * @return the sync modification number (or -1 if the table has never been
-     * synchronized)
+     * @return the sync tag (or null if the table has never been synchronized)
      */
-    public int getSyncModificationNumber() {
-        return syncModificationNumber;
+    public String getSyncTag() {
+        return syncTag;
     }
     
     /**
-     * Sets the table's sync modification number.
-     * @param modNum the new modification number
+     * Sets the table's sync tag.
+     * @param syncTag the new sync tag
      */
-    public void setSyncModificationNumber(int modNum) {
-        setIntProperty(DB_SYNC_MODIFICATION_NUMBER, modNum);
-        this.syncModificationNumber = modNum;
+    public void setSyncTag(String syncTag) {
+        setStringProperty(DB_SYNC_TAG, syncTag);
+        this.syncTag = syncTag;
     }
     
     /**
@@ -986,7 +999,7 @@ public class TableProperties {
                 ", " + DB_SORT_COLUMN + " TEXT" +
                 ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
-                ", " + DB_SYNC_MODIFICATION_NUMBER + " INTEGER NOT NULL" +
+                ", " + DB_SYNC_TAG + " TEXT" +
                 ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
                 ", " + DB_OV_VIEW_SETTINGS + " TEXT" +
                 ", " + DB_CO_VIEW_SETTINGS + " TEXT" +

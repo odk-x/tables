@@ -1,0 +1,397 @@
+package yoonsung.odk.spreadsheet.sync;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DataUtil;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
+import yoonsung.odk.spreadsheet.data.Table;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import android.content.ContentValues;
+import android.content.SyncResult;
+import android.util.Log;
+
+public class SyncProcessor {
+
+  private static final String TAG = SyncProcessor.class.getSimpleName();
+
+  private final DataUtil du;
+  private final DbHelper helper;
+  private final SyncResult syncResult;
+  private final Synchronizer synchronizer;
+
+  public SyncProcessor(Synchronizer synchronizer, DbHelper helper, SyncResult syncResult) {
+    this.du = DataUtil.getDefaultDataUtil();
+    this.helper = helper;
+    this.syncResult = syncResult;
+    this.synchronizer = synchronizer;
+  }
+
+  public void synchronize() {
+    TableProperties[] tps = TableProperties.getTablePropertiesForAll(helper);
+    for (TableProperties tp : tps) {
+      if (tp.getSyncState() != SyncUtil.State.REST) {
+        synchronizeTable(tp);
+      }
+    }
+    TableProperties[] deleting = TableProperties.getTablePropertiesForDeleting(helper);
+    for (TableProperties tp : deleting) {
+      synchronizeTable(tp);
+    }
+  }
+
+  public void synchronizeTable(TableProperties tp) {
+    DbTable table = DbTable.getDbTable(helper, tp.getTableId());
+
+    beginTableTransaction(tp);
+    boolean success = false;
+
+    switch (tp.getSyncState()) {
+    case SyncUtil.State.INSERTING:
+      success = synchronizeTableInserting(tp, table);
+      break;
+    case SyncUtil.State.UPDATING:
+      success = synchronizeTableUpdating(tp, table);
+      break;
+    case SyncUtil.State.DELETING:
+      success = synchronizeTableDeleting(tp, table);
+      break;
+    case SyncUtil.State.REST:
+      success = synchronizeTableRest(tp, table);
+      break;
+    }
+    tp.setLastSyncTime(du.formatNowForDb());
+    endTableTransaction(tp, success);
+  }
+
+  public boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
+    String tableId = tp.getTableId();
+    Log.d(TAG, "INSERTING " + tableId);
+    List<ColumnProperties> columns = getColumns(tp);
+    boolean success = false;
+    List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
+
+    beginRowsTransaction(table, getRowIdsAsArray(rowsToInsert));
+
+    try {
+      String syncTag = synchronizer.createTable(tableId, columns);
+      tp.setSyncTag(syncTag);
+      Modification modification = synchronizer.insertRows(tableId, rowsToInsert);
+      updateDbFromModification(modification, table, tp);
+      success = true;
+    } catch (HttpClientErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (HttpServerErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize inserting on table: " + tableId, e);
+      success = false;
+    }
+
+    endRowsTransaction(table, getRowIdsAsArray(rowsToInsert), success);
+    return success;
+  }
+
+  public boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
+    String tableId = tp.getTableId();
+    Log.d(TAG, "UPDATING " + tableId);
+    List<ColumnProperties> columns = getColumns(tp);
+    boolean success = false;
+
+    List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
+    List<SyncRow> rowsToUpdate = getRows(table, columns, SyncUtil.State.UPDATING);
+    List<SyncRow> rowsToDelete = getRows(table, columns, SyncUtil.State.DELETING);
+
+    List<SyncRow> allRows = new ArrayList<SyncRow>();
+    allRows.addAll(rowsToInsert);
+    allRows.addAll(rowsToUpdate);
+    allRows.addAll(rowsToDelete);
+    String[] rowIds = getRowIdsAsArray(allRows);
+    beginRowsTransaction(table, rowIds);
+
+    try {
+      updateDbFromServer(tp, table);
+      Modification modification = synchronizer.insertRows(tableId, rowsToInsert);
+      updateDbFromModification(modification, table, tp);
+      modification = synchronizer.updateRows(tableId, rowsToUpdate);
+      updateDbFromModification(modification, table, tp);
+      String syncTag = synchronizer.deleteRows(tableId, getRowIdsAsList(rowsToDelete));
+      tp.setSyncTag(syncTag);
+      for (String rowId : getRowIdsAsArray(rowsToDelete)) {
+        table.deleteRowActual(rowId);
+        syncResult.stats.numDeletes++;
+        syncResult.stats.numEntries++;
+      }
+      success = true;
+    } catch (HttpClientErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (HttpServerErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tableId, e);
+      success = false;
+    }
+
+    allRows.removeAll(rowsToDelete);
+    rowIds = getRowIdsAsArray(allRows);
+    endRowsTransaction(table, rowIds, success);
+    return success;
+  }
+
+  public boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
+    String tableId = tp.getTableId();
+    Log.d(TAG, "DELETING " + tableId);
+    boolean success = false;
+    try {
+      synchronizer.deleteTable(tableId);
+      tp.deleteTableActual();
+      syncResult.stats.numDeletes++;
+      syncResult.stats.numEntries++;
+    } catch (HttpClientErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (HttpServerErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tableId, e);
+      success = false;
+    }
+    return success;
+  }
+
+  public boolean synchronizeTableRest(TableProperties tp, DbTable table) {
+    String tableId = tp.getTableId();
+    Log.d(TAG, "REST " + tableId);
+    boolean success = false;
+    try {
+      updateDbFromServer(tp, table);
+      success = true;
+    } catch (HttpClientErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (HttpServerErrorException e) {
+      Log.e(TAG, e.getResponseBodyAsString());
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tableId, e);
+      success = false;
+    }
+    return success;
+  }
+
+  public void updateDbFromServer(TableProperties tp, DbTable table) {
+
+    IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
+    List<SyncRow> rows = modification.getRows();
+    String newSyncTag = modification.getTableSyncTag();
+
+    Table allRowIds = table.getRaw(new String[] { DbTable.DB_ROW_ID, DbTable.DB_SYNC_STATE }, null,
+        null, null);
+
+    List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
+    List<SyncRow> rowsToUpdate = new ArrayList<SyncRow>();
+    List<SyncRow> rowsToInsert = new ArrayList<SyncRow>();
+    List<SyncRow> rowsToDelete = new ArrayList<SyncRow>();
+
+    for (SyncRow row : rows) {
+      boolean found = false;
+      for (int i = 0; i < allRowIds.getHeight(); i++) {
+        String rowId = allRowIds.getData(i, 0);
+        int state = Integer.parseInt(allRowIds.getData(i, 1));
+        if (row.getRowId().equals(rowId)) {
+          found = true;
+          if (state == SyncUtil.State.REST) {
+            if (row.isDeleted())
+              rowsToDelete.add(row);
+            else
+              rowsToUpdate.add(row);
+          } else {
+            rowsToConflict.add(row);
+          }
+        }
+      }
+      if (!found)
+        rowsToInsert.add(row);
+    }
+
+    conflictRowsInDb(table, rowsToConflict);
+    updateRowsInDb(table, rowsToUpdate);
+    insertRowsInDb(table, rowsToInsert);
+    deleteRowsInDb(table, rowsToDelete);
+
+    tp.setSyncTag(newSyncTag);
+  }
+
+  public void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
+    // TODO: how to conflict?
+    // for (RowResource row : rowsToConflict) {
+    // ContentValues values = new ContentValues();
+    //
+    // values.put(DbTable.DB_ROW_ID, row.getRowId());
+    // values.put(DbTable.DB_SYNC_TAG, row.getRowEtag());
+    // values.put(DbTable.DB_SYNC_STATE,
+    // String.valueOf(SyncUtil.State.CONFLICTING));
+    // values.put(DbTable.DB_TRANSACTIONING,
+    // String.valueOf(SyncUtil.Transactioning.FALSE));
+    // table.actualUpdateRowByRowId(row.getRowId(), values);
+    //
+    // for (Entry<String, String> entry : row.getValues().entrySet())
+    // values.put(entry.getKey(), entry.getValue());
+    //
+    // table.actualAddRow(values);
+    // syncResult.stats.numConflictDetectedExceptions++;
+    // syncResult.stats.numEntries += 2;
+    // }
+  }
+
+  public void insertRowsInDb(DbTable table, List<SyncRow> rows) {
+    for (SyncRow row : rows) {
+      ContentValues values = new ContentValues();
+
+      values.put(DbTable.DB_ROW_ID, row.getRowId());
+      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
+      values.put(DbTable.DB_SYNC_STATE, SyncUtil.State.REST);
+      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+
+      for (Entry<String, String> entry : row.getValues().entrySet())
+        values.put(entry.getKey(), entry.getValue());
+
+      table.actualAddRow(values);
+      syncResult.stats.numInserts++;
+      syncResult.stats.numEntries++;
+    }
+  }
+
+  public void updateRowsInDb(DbTable table, List<SyncRow> rows) {
+    for (SyncRow row : rows) {
+      ContentValues values = new ContentValues();
+
+      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
+      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.REST));
+      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.Transactioning.FALSE));
+
+      for (Entry<String, String> entry : row.getValues().entrySet())
+        values.put(entry.getKey(), entry.getValue());
+
+      table.actualUpdateRowByRowId(row.getRowId(), values);
+      syncResult.stats.numUpdates++;
+      syncResult.stats.numEntries++;
+    }
+  }
+
+  public void deleteRowsInDb(DbTable table, List<SyncRow> rows) {
+    for (SyncRow row : rows) {
+      table.deleteRowActual(row.getRowId());
+      syncResult.stats.numDeletes++;
+    }
+  }
+
+  public void updateDbFromModification(Modification modification, DbTable table, TableProperties tp) {
+    for (Entry<String, String> entry : modification.getSyncTags().entrySet()) {
+      ContentValues values = new ContentValues();
+      values.put(DbTable.DB_SYNC_TAG, entry.getValue());
+      table.actualUpdateRowByRowId(entry.getKey(), values);
+    }
+    tp.setSyncTag(modification.getTableSyncTag());
+  }
+
+  public List<ColumnProperties> getColumns(TableProperties tp) {
+    List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
+    ColumnProperties[] userColumns = tp.getColumns();
+    columns.addAll(Arrays.asList(userColumns));
+    columns.add(tp.getColumnByDbName(DbTable.DB_SRC_PHONE_NUMBER));
+    columns.add(tp.getColumnByDbName(DbTable.DB_LAST_MODIFIED_TIME));
+    return columns;
+  }
+
+  public List<SyncRow> getRows(DbTable table, List<ColumnProperties> columns, int state) {
+
+    String[] columnNames = new String[columns.size()];
+    for (int i = 0; i < columnNames.length; i++)
+      columnNames[i] = columns.get(i).getColumnDbName();
+
+    Table rows = table
+        .getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
+            new String[] { String.valueOf(state), String.valueOf(SyncUtil.Transactioning.FALSE) },
+            null);
+
+    List<SyncRow> changedRows = new ArrayList<SyncRow>();
+    int numRows = rows.getHeight();
+    int numCols = rows.getWidth();
+    for (int i = 0; i < numRows; i++) {
+      String rowId = rows.getRowId(i);
+      String syncTag = null;
+      Map<String, String> values = new HashMap<String, String>();
+      for (int j = 0; j < numCols; j++) {
+        String colName = rows.getHeader(j);
+        if (colName.equals(DbTable.DB_SYNC_TAG)) {
+          syncTag = rows.getData(i, j);
+        } else {
+          values.put(colName, rows.getData(i, j));
+        }
+      }
+      SyncRow row = new SyncRow(rowId, syncTag, false, values);
+      changedRows.add(row);
+    }
+
+    return changedRows;
+  }
+
+  public String[] getRowIdsAsArray(List<SyncRow> rows) {
+    List<String> rowIdsList = getRowIdsAsList(rows);
+    String[] rowIds = new String[rowIdsList.size()];
+    for (int i = 0; i < rowIds.length; i++)
+      rowIds[i] = rowIdsList.get(i);
+    return rowIds;
+  }
+
+  public List<String> getRowIdsAsList(List<SyncRow> rows) {
+    List<String> rowIdsList = new ArrayList<String>();
+    for (SyncRow row : rows) {
+      rowIdsList.add(row.getRowId());
+    }
+    return rowIdsList;
+  }
+
+  public void beginTableTransaction(TableProperties tp) {
+    tp.setTransactioning(SyncUtil.Transactioning.TRUE);
+  }
+
+  public void endTableTransaction(TableProperties tp, boolean success) {
+    if (success)
+      tp.setSyncState(SyncUtil.State.REST);
+    tp.setTransactioning(SyncUtil.Transactioning.FALSE);
+  }
+
+  public void beginRowsTransaction(DbTable table, String[] rowIds) {
+    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.TRUE);
+  }
+
+  public void endRowsTransaction(DbTable table, String[] rowIds, boolean success) {
+    if (success)
+      updateRowsState(table, rowIds, SyncUtil.State.REST);
+    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.FALSE);
+  }
+
+  public void updateRowsState(DbTable table, String[] rowIds, int state) {
+    ContentValues values = new ContentValues();
+    values.put(DbTable.DB_SYNC_STATE, state);
+    for (String rowId : rowIds) {
+      table.actualUpdateRowByRowId(rowId, values);
+    }
+  }
+
+  public void updateRowsTransactioning(DbTable table, String[] rowIds, int transactioning) {
+    ContentValues values = new ContentValues();
+    values.put(DbTable.DB_TRANSACTIONING, String.valueOf(transactioning));
+    for (String rowId : rowIds) {
+      table.actualUpdateRowByRowId(rowId, values);
+    }
+  }
+}

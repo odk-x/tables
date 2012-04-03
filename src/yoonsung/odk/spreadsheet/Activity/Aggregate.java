@@ -28,8 +28,6 @@ public class Aggregate extends Activity {
 
 	private TextView uriLabel;
 	private EditText uriField;
-	private TextView usernameLabel;
-	private EditText usernameField;
 	private Button saveButton;
 	private Spinner accountListSpinner;
 
@@ -54,8 +52,6 @@ public class Aggregate extends Activity {
 	private void findViewComponents() {
 		uriLabel = (TextView) findViewById(R.id.aggregate_activity_uri_label);
 		uriField = (EditText) findViewById(R.id.aggregate_activity_uri_field);
-		usernameLabel = (TextView) findViewById(R.id.aggregate_activity_username_label);
-		usernameField = (EditText) findViewById(R.id.aggregate_activity_username_field);
 		saveButton = (Button) findViewById(R.id.aggregate_activity_save_button);
 		accountListSpinner = (Spinner) findViewById(R.id.aggregate_activity_account_list_spinner);
 	}
@@ -63,8 +59,6 @@ public class Aggregate extends Activity {
 	private void setViewForGettingUserInfo() {
 		uriLabel.setVisibility(View.VISIBLE);
 		uriField.setVisibility(View.VISIBLE);
-		usernameLabel.setVisibility(View.VISIBLE);
-		usernameField.setVisibility(View.VISIBLE);
 		saveButton.setVisibility(View.VISIBLE);
 		accountListSpinner.setVisibility(View.VISIBLE);
 	}
@@ -86,9 +80,7 @@ public class Aggregate extends Activity {
 		@Override
 		public void onClick(View v) {
 			String uri = uriField.getText().toString();
-			String username = usernameField.getText().toString();
-			prefs.setAggregateUri(uri);
-			prefs.setAggregateUsername(username);
+			prefs.setServerUri(uri);
 
 			String accountName = (String) accountListSpinner.getSelectedItem();
 			Account[] accounts = accountManager.getAccountsByType("com.google");
@@ -111,16 +103,12 @@ public class Aggregate extends Activity {
 	}
 
 	private void initializeData() {
-		String aggregateUri = prefs.getAggregateUri();
-		String aggregateUsername = prefs.getAggregateUsername();
+		String serverUri = prefs.getServerUri();
 
-		if (aggregateUri == null)
+		if (serverUri == null)
 			uriField.setText("http://");
 		else
-			uriField.setText(aggregateUri);
-
-		if (aggregateUsername != null)
-			usernameField.setText(aggregateUsername);
+			uriField.setText(serverUri);
 
 		setCurrentSyncAccount();
 	}
