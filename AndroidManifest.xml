@@ -50,6 +50,9 @@
 <activity android:name=".Activity.settings.ListDisplaySettings"></activity>
 <activity android:name=".Activity.settings.MainDisplaySettings"></activity>
 <activity android:name=".Activity.TablePropertiesManager"></activity>
+<activity android:name=".activities.ListDisplayActivity"></activity>
+<activity android:name=".activities.LineGraphDisplayActivity"></activity>
+<activity android:name=".activities.BoxStemGraphDisplayActivity"></activity>
     
 <uses-library android:name="com.google.android.maps" />
 </application>

@@ -115,10 +115,8 @@ public class TableProperties {
     private String writeSecurityTableId;
     private int syncModificationNumber;
     private String lastSyncTime;
-    private int overviewViewType;
-    private String[] overviewViewSettings;
-    private int collectionViewType;
-    private String[] collectionViewSettings;
+    private TableViewSettings overviewViewSettings;
+    private TableViewSettings collectionViewSettings;
     private String detailViewFilename;
     private String sumDisplayFormat;
     private int syncState;
@@ -129,8 +127,7 @@ public class TableProperties {
             String[] primeColumns, String sortColumn,
             String readSecurityTableId, String writeSecurityTableId,
             int syncModificationNumber, String lastSyncTime,
-            int overviewViewType, String[] overviewViewSettings,
-            int collectionViewType, String[] collectionViewSettings,
+            String ovViewSettingsDbString, String coViewSettingsDbString,
             String detailViewFilename, String sumDisplayFormat, int syncState,
             int transactioning) {
         this.dbh = dbh;
@@ -147,10 +144,10 @@ public class TableProperties {
         this.writeSecurityTableId = writeSecurityTableId;
         this.syncModificationNumber = syncModificationNumber;
         this.lastSyncTime = lastSyncTime;
-        this.overviewViewType = overviewViewType;
-        this.overviewViewSettings = overviewViewSettings;
-        this.collectionViewType = collectionViewType;
-        this.collectionViewSettings = collectionViewSettings;
+        this.overviewViewSettings = TableViewSettings.newOverviewTVS(this,
+                ovViewSettingsDbString);
+        this.collectionViewSettings = TableViewSettings.newCollectionTVS(this,
+                coViewSettingsDbString);
         this.detailViewFilename = detailViewFilename;
         this.sumDisplayFormat = sumDisplayFormat;
         this.syncState = syncState;
@@ -168,7 +165,8 @@ public class TableProperties {
         return queryForTableProperties(dbh, null, null);
     }
     
-    public static TableProperties[] getTablePropertiesForDataTables(DbHelper dbh) {
+    public static TableProperties[] getTablePropertiesForDataTables(
+            DbHelper dbh) {
         return queryForTableProperties(dbh, TYPE_WHERE_SQL,
                 new String[] { String.valueOf(TableType.DATA) });
     }
@@ -224,18 +222,14 @@ public class TableProperties {
             String primeOrderValue = c.getString(primeColumnsIndex);
             String[] primeList = (primeOrderValue.length() == 0) ?
                 new String[] {} : primeOrderValue.split("/");
-            String ovSettingsDbString = c.getString(ovViewSettingsIndex);
-            String coSettingsDbString = c.getString(coViewSettingsIndex);
             tps[i] = new TableProperties(dbh, c.getString(tableIdIndex),
                     c.getString(dbtnIndex), c.getString(displayNameIndex),
                     c.getInt(tableTypeIndex), columnOrder, primeList,
                     c.getString(sortColumnIndex), c.getString(rsTableId),
                     c.getString(wsTableId), c.getInt(syncModNumIndex),
                     c.getString(lastSyncTimeIndex),
-                    getViewType(ovSettingsDbString),
-                    getViewSettings(ovSettingsDbString),
-                    getViewType(coSettingsDbString),
-                    getViewSettings(coSettingsDbString),
+                    c.getString(ovViewSettingsIndex),
+                    c.getString(coViewSettingsIndex),
                     c.getString(detailViewFileIndex),
                     c.getString(sumDisplayFormatIndex),
                     c.getInt(syncStateIndex),
@@ -289,8 +283,8 @@ public class TableProperties {
         values.putNull(DB_WRITE_SECURITY_TABLE_ID);
         values.put(DB_SYNC_MODIFICATION_NUMBER, -1);
         values.put(DB_LAST_SYNC_TIME, -1);
-        values.put(DB_OV_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
-        values.put(DB_CO_VIEW_SETTINGS, String.valueOf(ViewType.TABLE));
+        values.putNull(DB_OV_VIEW_SETTINGS);
+        values.putNull(DB_CO_VIEW_SETTINGS);
         values.putNull(DB_DETAIL_VIEW_FILE);
         values.putNull(DB_SUM_DISPLAY_FORMAT);
         values.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
@@ -299,8 +293,7 @@ public class TableProperties {
         db.beginTransaction();
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null,
-                null, null, -1, null, ViewType.TABLE, new String[0],
-                ViewType.TABLE, new String[0], null, null,
+                null, null, -1, null, null, null, null, null,
                 SyncUtil.State.INSERTING, SyncUtil.Transactioning.FALSE);
         long result = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "row id=" + result);
@@ -753,6 +746,36 @@ public class TableProperties {
     }
     
     /**
+     * @return the overview view settings
+     */
+    public TableViewSettings getOverviewViewSettings() {
+        return overviewViewSettings;
+    }
+    
+    /**
+     * Sets the overview view settings.
+     * @param dbString the string to put in the database
+     */
+    void setOverviewViewSettings(String dbString) {
+        setStringProperty(DB_OV_VIEW_SETTINGS, dbString);
+    }
+    
+    /**
+     * @return the collection view settings
+     */
+    public TableViewSettings getCollectionViewSettings() {
+        return collectionViewSettings;
+    }
+    
+    /**
+     * Sets the collection view settings.
+     * @param dbString the string to put in the database
+     */
+    void setCollectionViewSettings(String dbString) {
+        setStringProperty(DB_CO_VIEW_SETTINGS, dbString);
+    }
+    
+    /**
      * @return the detail view filename
      */
     public String getDetailViewFilename() {
@@ -766,74 +789,6 @@ public class TableProperties {
     public void setDetailViewFilename(String filename) {
         setStringProperty(DB_DETAIL_VIEW_FILE, filename);
         this.detailViewFilename = filename;
-    }
-    
-    /**
-     * @return the overview view type
-     */
-    public int getOverviewViewType() {
-        return overviewViewType;
-    }
-    
-    /**
-     * Sets the overview view type.
-     * @param viewType the new overview view type
-     */
-    public void setOverviewViewType(int viewType) {
-        setStringProperty(DB_OV_VIEW_SETTINGS, formViewSettingsDbString(
-                viewType, overviewViewSettings));
-        overviewViewType = viewType;
-    }
-    
-    /**
-     * @return the overview view settings
-     */
-    public String[] getOverviewViewSettings() {
-        return overviewViewSettings;
-    }
-    
-    /**
-     * Sets the overview view settings.
-     * @param settings the new overview view settings
-     */
-    public void setOverviewViewSettings(String[] settings) {
-        setStringProperty(DB_OV_VIEW_SETTINGS, formViewSettingsDbString(
-                overviewViewType, settings));
-        overviewViewSettings = settings;
-    }
-    
-    /**
-     * @return the collection view type
-     */
-    public int getCollectionViewType() {
-        return collectionViewType;
-    }
-    
-    /**
-     * Sets the collection view type.
-     * @param viewType the new collection view type
-     */
-    public void setCollectionViewType(int viewType) {
-        setStringProperty(DB_CO_VIEW_SETTINGS, formViewSettingsDbString(
-                viewType, collectionViewSettings));
-        collectionViewType = viewType;
-    }
-    
-    /**
-     * @return the collection view settings
-     */
-    public String[] getCollectionViewSettings() {
-        return collectionViewSettings;
-    }
-    
-    /**
-     * Sets the collection view settings.
-     * @param settings the new collection view settings
-     */
-    public void setCollectionViewSettings(String[] settings) {
-        setStringProperty(DB_CO_VIEW_SETTINGS, formViewSettingsDbString(
-                collectionViewType, settings));
-        collectionViewSettings = settings;
     }
     
     /**
@@ -914,10 +869,12 @@ public class TableProperties {
             jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
             jo.put(JSON_KEY_READ_SECURITY_TABLE_ID, readSecurityTableId);
             jo.put(JSON_KEY_WRITE_SECURITY_TABLE_ID, writeSecurityTableId);
-            jo.put(JSON_KEY_OV_VIEW_SETTINGS, formViewSettingsDbString(
-                    overviewViewType, overviewViewSettings));
-            jo.put(JSON_KEY_CO_VIEW_SETTINGS, formViewSettingsDbString(
-                    collectionViewType, collectionViewSettings));
+            // TODO
+            jo.put(JSON_KEY_OV_VIEW_SETTINGS,
+                    overviewViewSettings.toJsonObject().toString());
+            // TODO
+            jo.put(JSON_KEY_CO_VIEW_SETTINGS,
+                    collectionViewSettings.toJsonObject().toString());
             jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
             jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
         } catch(JSONException e) {
@@ -950,14 +907,10 @@ public class TableProperties {
             setWriteSecurityTableId(jo.optString(
                     JSON_KEY_WRITE_SECURITY_TABLE_ID));
             if (jo.has(JSON_KEY_OV_VIEW_SETTINGS)) {
-                String dbString = jo.getString(DB_OV_VIEW_SETTINGS);
-                setOverviewViewType(getViewType(dbString));
-                setOverviewViewSettings(getViewSettings(dbString));
+                // TODO
             }
             if (jo.has(JSON_KEY_CO_VIEW_SETTINGS)) {
-                String dbString = jo.getString(DB_CO_VIEW_SETTINGS);
-                setCollectionViewType(getViewType(dbString));
-                setCollectionViewSettings(getViewSettings(dbString));
+                // TODO
             }
             setDetailViewFilename(jo.optString(JSON_KEY_DETAIL_VIEW_FILE));
             setSummaryDisplayFormat(jo.optString(JSON_KEY_SUM_DISPLAY_FORMAT));
@@ -1006,27 +959,6 @@ public class TableProperties {
         int ra = db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
         Log.d("TP", "rows updated:" + ra);
         Log.d("TP", "values:" + values.toString());
-    }
-    
-    private static int getViewType(String dbString) {
-        return Integer.parseInt(dbString.split("/")[0]);
-    }
-    
-    private static String[] getViewSettings(String dbString) {
-        String[] split = dbString.split("/");
-        String[] settings = new String[split.length - 1];
-        for (int i = 1; i < split.length; i++) {
-            settings[i - 1] = split[i];
-        }
-        return settings;
-    }
-    
-    private String formViewSettingsDbString(int viewType, String[] settings) {
-        StringBuilder sb = new StringBuilder(viewType);
-        for (String setting : settings) {
-            sb.append("/" + setting);
-        }
-        return sb.toString();
     }
     
     @Override

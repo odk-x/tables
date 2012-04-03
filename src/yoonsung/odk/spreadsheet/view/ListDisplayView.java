@@ -2,6 +2,7 @@ package yoonsung.odk.spreadsheet.view;
 
 import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.data.TableViewSettings;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -27,23 +28,26 @@ public class ListDisplayView extends LinearLayout {
     private Controller controller; // the table activity to call back to
     private UserTable table; // the table to display
     private TableProperties tp;
+    private TableViewSettings tvs;
     private int[] lineHeights;
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
     private Paint[] colPaints;
     
     public static ListDisplayView buildView(Context context,
-            TableProperties tp, Controller controller, UserTable table) {
-        return new ListDisplayView(context, tp, controller, table);
+            TableProperties tp, TableViewSettings tvs, Controller controller,
+            UserTable table) {
+        return new ListDisplayView(context, tp, tvs, controller, table);
     }
     
     private ListDisplayView(Context context, TableProperties tp,
-            Controller controller, UserTable table) {
+            TableViewSettings tvs, Controller controller, UserTable table) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
         this.controller = controller;
         this.table = table;
         this.tp = tp;
+        this.tvs = tvs;
         setFormatInfo();
         removeAllViews();
         setBackgroundColor(BACKGROUND_COLOR);

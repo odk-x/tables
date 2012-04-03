@@ -1,6 +1,7 @@
 package yoonsung.odk.spreadsheet.Activity.util;
 
 import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.data.TableViewSettings;
 
 
 public class LanguageUtil {
@@ -20,16 +21,17 @@ public class LanguageUtil {
     }
     
     public static String getViewTypeLabel(int viewType) {
-        switch(viewType) {
-        case TableProperties.ViewType.TABLE:
+        switch (viewType) {
+        case TableViewSettings.Type.TABLE:
             return "Table";
-        case TableProperties.ViewType.LIST:
+        case TableViewSettings.Type.LIST:
             return "List";
-        case TableProperties.ViewType.LINE_GRAPH:
+        case TableViewSettings.Type.LINE_GRAPH:
             return "Line Graph";
+        case TableViewSettings.Type.BOX_STEM:
+            return "Box-Stem Graph";
         default:
-            throw new RuntimeException("Invalid view type (" + viewType +
-                    ").");
+            throw new RuntimeException();
         }
     }
 }

@@ -7,6 +7,9 @@ import java.util.Map;
 
 import yoonsung.odk.spreadsheet.R;
 import yoonsung.odk.spreadsheet.Activity.importexport.ImportExportActivity;
+import yoonsung.odk.spreadsheet.activities.BoxStemGraphDisplayActivity;
+import yoonsung.odk.spreadsheet.activities.Controller;
+import yoonsung.odk.spreadsheet.activities.LineGraphDisplayActivity;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Preferences;
@@ -135,7 +138,9 @@ public class TableManager extends ListActivity {
 	     Intent i;
 	     switch (tp.getTableType()) {
 	     case TableProperties.TableType.DATA:
-	         i = new Intent(this, SpreadSheet.class);
+	         Controller.launchTableActivity(this, tp, true);
+	         i = new Intent(this, BoxStemGraphDisplayActivity.class);
+	         //i = new Intent(this, SpreadSheet.class);
 	         break;
 	     case TableProperties.TableType.SECURITY:
 	         i = new Intent(this, SpreadSheet.class);
@@ -147,7 +152,8 @@ public class TableManager extends ListActivity {
              return;
 	     }
 	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-		 startActivity(i);
+	     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, true);
+		 //startActivity(i);
 	 }
 	 
 	 @Override

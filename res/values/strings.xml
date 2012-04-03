@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
-    <string name="app_name">ODK Tables</string>
-<string name="button_search">Search</string>
+	<string name="app_name">ODK Tables</string>
+	<string name="ok">OK</string>
+	<string name="cancel">Cancel</string>
+	<string name="set">Set</string>
+	<string name="xaxis">X-Axis</string>
+	<string name="yaxis">Y-Axis</string>
+	<string name="button_search">Search</string>
+	<string name="box_stem_settings_title">Box-Stem Graph Settings</string>
+	<string name="impossible_box_stem">At least one number column is required for box-stem graphs.</string>
 </resources>
