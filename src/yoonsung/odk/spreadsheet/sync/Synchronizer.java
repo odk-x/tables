@@ -1,12 +1,11 @@
 package yoonsung.odk.spreadsheet.sync;
 
 import java.util.List;
-
-import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import java.util.Map;
 
 public interface Synchronizer {
 
-  public String createTable(String tableId, List<ColumnProperties> colProps);
+  public String createTable(String tableId, Map<String, Integer> cols);
 
   public void deleteTable(String tableId);
 
@@ -17,5 +16,6 @@ public interface Synchronizer {
   public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate);
 
   public String deleteRows(String tableId, List<String> rowIds);
+
 
 }

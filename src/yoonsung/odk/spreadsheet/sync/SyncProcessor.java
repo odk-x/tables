@@ -1,16 +1,13 @@
 package yoonsung.odk.spreadsheet.sync;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
 import yoonsung.odk.spreadsheet.data.DataUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
@@ -37,11 +34,11 @@ public class SyncProcessor {
   }
 
   public void synchronize() {
+    Log.i(TAG, "entered synchronize()");
     TableProperties[] tps = TableProperties.getTablePropertiesForAll(helper);
     for (TableProperties tp : tps) {
-      if (tp.getSyncState() != SyncUtil.State.REST) {
-        synchronizeTable(tp);
-      }
+      Log.i(TAG, "synchronizing table " + tp.getDisplayName());
+      synchronizeTable(tp);
     }
     TableProperties[] deleting = TableProperties.getTablePropertiesForDeleting(helper);
     for (TableProperties tp : deleting) {
@@ -73,10 +70,15 @@ public class SyncProcessor {
     endTableTransaction(tp, success);
   }
 
+  public boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
+    // TODO: update table properties on server
+    return false;
+  }
+
   public boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
-    Log.d(TAG, "INSERTING " + tableId);
-    List<ColumnProperties> columns = getColumns(tp);
+    Log.i(TAG, "INSERTING " + tp.getDisplayName());
+    Map<String, Integer> columns = getColumns(tp);
     boolean success = false;
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
 
@@ -88,10 +90,6 @@ public class SyncProcessor {
       Modification modification = synchronizer.insertRows(tableId, rowsToInsert);
       updateDbFromModification(modification, table, tp);
       success = true;
-    } catch (HttpClientErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (HttpServerErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
     } catch (Exception e) {
       Log.e(TAG, "Unexpected exception in synchronize inserting on table: " + tableId, e);
       success = false;
@@ -101,10 +99,26 @@ public class SyncProcessor {
     return success;
   }
 
-  public boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
+  public boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
-    Log.d(TAG, "UPDATING " + tableId);
-    List<ColumnProperties> columns = getColumns(tp);
+    Log.i(TAG, "DELETING " + tp.getDisplayName());
+    boolean success = false;
+    try {
+      synchronizer.deleteTable(tableId);
+      tp.deleteTableActual();
+      syncResult.stats.numDeletes++;
+      syncResult.stats.numEntries++;
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tableId, e);
+      success = false;
+    }
+    return success;
+  }
+
+  public boolean synchronizeTableRest(TableProperties tp, DbTable table) {
+    String tableId = tp.getTableId();
+    Log.i(TAG, "REST " + tp.getDisplayName());
+    Map<String, Integer> columns = getColumns(tp);
     boolean success = false;
 
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
@@ -132,10 +146,6 @@ public class SyncProcessor {
         syncResult.stats.numEntries++;
       }
       success = true;
-    } catch (HttpClientErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (HttpServerErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
     } catch (Exception e) {
       Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tableId, e);
       success = false;
@@ -144,44 +154,6 @@ public class SyncProcessor {
     allRows.removeAll(rowsToDelete);
     rowIds = getRowIdsAsArray(allRows);
     endRowsTransaction(table, rowIds, success);
-    return success;
-  }
-
-  public boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
-    String tableId = tp.getTableId();
-    Log.d(TAG, "DELETING " + tableId);
-    boolean success = false;
-    try {
-      synchronizer.deleteTable(tableId);
-      tp.deleteTableActual();
-      syncResult.stats.numDeletes++;
-      syncResult.stats.numEntries++;
-    } catch (HttpClientErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (HttpServerErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tableId, e);
-      success = false;
-    }
-    return success;
-  }
-
-  public boolean synchronizeTableRest(TableProperties tp, DbTable table) {
-    String tableId = tp.getTableId();
-    Log.d(TAG, "REST " + tableId);
-    boolean success = false;
-    try {
-      updateDbFromServer(tp, table);
-      success = true;
-    } catch (HttpClientErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (HttpServerErrorException e) {
-      Log.e(TAG, e.getResponseBodyAsString());
-    } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tableId, e);
-      success = false;
-    }
     return success;
   }
 
@@ -301,20 +273,19 @@ public class SyncProcessor {
     tp.setSyncTag(modification.getTableSyncTag());
   }
 
-  public List<ColumnProperties> getColumns(TableProperties tp) {
-    List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
+  public Map<String, Integer> getColumns(TableProperties tp) {
+    Map<String, Integer> columns = new HashMap<String, Integer>();
     ColumnProperties[] userColumns = tp.getColumns();
-    columns.addAll(Arrays.asList(userColumns));
-    columns.add(tp.getColumnByDbName(DbTable.DB_SRC_PHONE_NUMBER));
-    columns.add(tp.getColumnByDbName(DbTable.DB_LAST_MODIFIED_TIME));
+    for (ColumnProperties colProp : userColumns)
+      columns.put(colProp.getColumnDbName(), colProp.getColumnType());
+    columns.put(DbTable.DB_SRC_PHONE_NUMBER, ColumnType.PHONE_NUMBER);
+    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATE);
     return columns;
   }
 
-  public List<SyncRow> getRows(DbTable table, List<ColumnProperties> columns, int state) {
+  public List<SyncRow> getRows(DbTable table, Map<String, Integer> columns, int state) {
 
-    String[] columnNames = new String[columns.size()];
-    for (int i = 0; i < columnNames.length; i++)
-      columnNames[i] = columns.get(i).getColumnDbName();
+    String[] columnNames = columns.keySet().toArray(new String[0]);
 
     Table rows = table
         .getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
