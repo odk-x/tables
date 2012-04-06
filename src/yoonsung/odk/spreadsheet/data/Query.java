@@ -443,7 +443,6 @@ public class Query {
                 primeList.append(", " + prime);
             }
             sd.appendSql("x." + sort);
-            //sd.appendSql(" GROUP BY " + primeList.toString() + ", " + sort);
         }
         
         sd.appendSql(") z ON d." + DbTable.DB_ROW_ID + " = z." +

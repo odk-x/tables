@@ -1337,7 +1337,9 @@ public abstract class TableActivity extends Activity
 	                indexedCol);
 	        break;
 	    case Preferences.ViewType.LIST:
-	        dv = ListDisplayView.buildView(this, tp, this, table);
+	        //dv = ListDisplayView.buildView(this, tp, this, table);
+            dv = TableDisplayView.buildView(this, tp, dp, this, table,
+                    indexedCol);
 	        break;
 	    }
         LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
