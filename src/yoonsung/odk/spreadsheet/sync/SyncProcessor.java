@@ -8,8 +8,8 @@ import java.util.Map.Entry;
 
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
+import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DataUtil;
-import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Table;
 import yoonsung.odk.spreadsheet.data.TableProperties;
@@ -22,32 +22,32 @@ public class SyncProcessor {
   private static final String TAG = SyncProcessor.class.getSimpleName();
 
   private final DataUtil du;
-  private final DbHelper helper;
+  private final DataManager dm;
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
 
-  public SyncProcessor(Synchronizer synchronizer, DbHelper helper, SyncResult syncResult) {
+  public SyncProcessor(Synchronizer synchronizer, DataManager dm, SyncResult syncResult) {
     this.du = DataUtil.getDefaultDataUtil();
-    this.helper = helper;
+    this.dm = dm;
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
   }
 
   public void synchronize() {
     Log.i(TAG, "entered synchronize()");
-    TableProperties[] tps = TableProperties.getTablePropertiesForAll(helper);
+    TableProperties[] tps = dm.getAllTableProperties();
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);
     }
-    TableProperties[] deleting = TableProperties.getTablePropertiesForDeleting(helper);
+    TableProperties[] deleting = dm.getDeletingTableProperties();
     for (TableProperties tp : deleting) {
       synchronizeTable(tp);
     }
   }
 
   public void synchronizeTable(TableProperties tp) {
-    DbTable table = DbTable.getDbTable(helper, tp.getTableId());
+    DbTable table = dm.getDbTable(tp.getTableId());
 
     beginTableTransaction(tp);
     boolean success = false;

@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.sync;
 
+import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Preferences;
 import yoonsung.odk.spreadsheet.sync.aggregate.AggregateSynchronizer;
@@ -28,9 +29,9 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     if (aggregateUri != null) {
       DbHelper helper = DbHelper.getDbHelper(context);
+      DataManager dm = new DataManager(helper);
       AggregateSynchronizer synchronizer = new AggregateSynchronizer(aggregateUri);
-      SyncProcessor processor = new SyncProcessor(synchronizer, helper,
-          syncResult);
+      SyncProcessor processor = new SyncProcessor(synchronizer, dm, syncResult);
       processor.synchronize();
     }
   }
