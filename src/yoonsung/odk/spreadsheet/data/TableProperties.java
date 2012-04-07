@@ -1000,7 +1000,7 @@ public class TableProperties {
                 ", " + DB_READ_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_WRITE_SECURITY_TABLE_ID + " TEXT" +
                 ", " + DB_SYNC_TAG + " TEXT" +
-                ", " + DB_LAST_SYNC_TIME + " INTEGER NOT NULL" +
+                ", " + DB_LAST_SYNC_TIME + " TEXT NOT NULL" +
                 ", " + DB_OV_VIEW_SETTINGS + " TEXT" +
                 ", " + DB_CO_VIEW_SETTINGS + " TEXT" +
                 ", " + DB_DETAIL_VIEW_FILE + " TEXT" +
