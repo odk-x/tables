@@ -37,6 +37,12 @@ import yoonsung.odk.spreadsheet.sync.SyncRow;
 import yoonsung.odk.spreadsheet.sync.Synchronizer;
 import android.util.Log;
 
+/**
+ * Implementation of {@link Synchronizer} for ODK Aggregate.
+ * 
+ * @author the.dylan.price@gmail.com
+ * 
+ */
 public class AggregateSynchronizer implements Synchronizer {
 
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();

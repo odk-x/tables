@@ -17,6 +17,12 @@ import android.content.ContentValues;
 import android.content.SyncResult;
 import android.util.Log;
 
+/**
+ * SyncProcessor implements the cloud synchronization logic for Tables.
+ * 
+ * @author the.dylan.price@gmail.com
+ * 
+ */
 public class SyncProcessor {
 
   private static final String TAG = SyncProcessor.class.getSimpleName();
