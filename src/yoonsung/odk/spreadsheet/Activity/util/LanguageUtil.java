@@ -22,14 +22,16 @@ public class LanguageUtil {
     
     public static String getViewTypeLabel(int viewType) {
         switch (viewType) {
-        case TableViewSettings.Type.TABLE:
-            return "Table";
+        case TableViewSettings.Type.SPREADSHEET:
+            return "Spreadsheet";
         case TableViewSettings.Type.LIST:
             return "List";
         case TableViewSettings.Type.LINE_GRAPH:
             return "Line Graph";
         case TableViewSettings.Type.BOX_STEM:
             return "Box-Stem Graph";
+        case TableViewSettings.Type.BAR_GRAPH:
+            return "Bar Graph";
         default:
             throw new RuntimeException();
         }

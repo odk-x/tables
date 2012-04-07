@@ -10,20 +10,17 @@ import yoonsung.odk.spreadsheet.Library.graphs.GraphFactory;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DbHelper;
-import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Query;
-import yoonsung.odk.spreadsheet.data.TableProperties;
-import yoonsung.odk.spreadsheet.data.TableViewSettings;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -34,63 +31,46 @@ import android.widget.TextView;
 public class BoxStemGraphDisplayActivity extends Activity
         implements DisplayActivity {
     
-    private String searchText;
-    private boolean isOverview;
-    private TableProperties tp;
-    private TableViewSettings tvs;
-    private DbTable dbt;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+    
+    private Controller c;
     private Query query;
     private UserTable table;
-    private Controller controller;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // getting intent information
-        String tableId = getIntent().getStringExtra(
-                Controller.INTENT_KEY_TABLE_ID);
-        if (tableId == null) {
-            throw new RuntimeException("null table ID");
-        }
-        searchText = getIntent().getStringExtra(Controller.INTENT_KEY_SEARCH);
-        if (searchText == null) {
-            searchText = "";
-        }
-        isOverview = getIntent().getBooleanExtra(
-                Controller.INTENT_KEY_IS_OVERVIEW, false);
-        // initializing data objects
+        c = new Controller(this, this, getIntent().getExtras());
         DataManager dm = new DataManager(DbHelper.getDbHelper(this));
-        tp = dm.getTableProperties(tableId);
-        tvs = isOverview ? tp.getOverviewViewSettings() :
-                tp.getCollectionViewSettings();
-        dbt = dm.getDbTable(tableId);
-        query = new Query(dm.getAllTableProperties(), tp);
-        controller = new Controller(this, this);
-        // initializing
+        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
         init();
     }
     
-    private void init() {
-        if ((tvs.getBoxStemXCol() == null) || (tvs.getBoxStemYCol() == null)) {
+    @Override
+    public void init() {
+        ColumnProperties xCol = c.getTableViewSettings().getBoxStemXCol();
+        ColumnProperties yCol = c.getTableViewSettings().getBoxStemYCol();
+        if ((xCol == null) || (yCol == null)) {
             handleInvalidSettings();
             return;
         }
         query.clear();
-        query.loadFromUserQuery(searchText);
-        query.setOrderBy(tvs.getBoxStemYCol(), Query.SortOrder.ASCENDING);
-        table = dbt.getUserTable(query);
-        controller.setSearchText(searchText);
+        query.loadFromUserQuery(c.getSearchText());
+        query.setOrderBy(yCol, Query.SortOrder.ASCENDING);
+        table = c.getDbTable().getUserTable(query);
         View view = buildView();
-        controller.setDisplayView(view);
-        setContentView(controller.getWrapperView());
+        c.setDisplayView(view);
+        setContentView(c.getWrapperView());
     }
     
     private View buildView() {
         if (table.getHeight() == 0) {
             return buildNoDataView();
         }
-        int xCol = tp.getColumnIndex(tvs.getBoxStemXCol().getColumnDbName());
-        int yCol = tp.getColumnIndex(tvs.getBoxStemYCol().getColumnDbName());
+        int xCol = c.getTableProperties().getColumnIndex(
+                c.getTableViewSettings().getBoxStemXCol().getColumnDbName());
+        int yCol = c.getTableProperties().getColumnIndex(
+                c.getTableViewSettings().getBoxStemYCol().getColumnDbName());
         Map<String, List<Double>> lists = new HashMap<String, List<Double>>();
         for (int i = 0; i < table.getHeight(); i++) {
             String x = table.getData(i, xCol);
@@ -144,9 +124,9 @@ public class BoxStemGraphDisplayActivity extends Activity
     }
     
     private View buildNoDataView() {
-        EditText et = new EditText(this);
-        et.setText("No data.");
-        return et;
+        TextView tv = new TextView(this);
+        tv.setText("No data.");
+        return tv;
     }
     
     private void handleInvalidSettings() {
@@ -154,14 +134,16 @@ public class BoxStemGraphDisplayActivity extends Activity
     }
     
     @Override
-    public void onSearch(String searchText) {
-        this.searchText = searchText;
+    public void onSearch() {
         init();
     }
     
     @Override
     public void onAddRow() {
-        // TODO
+        Intent intent = c.getIntentForOdkCollectAddRow();
+        if (intent != null) {
+            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
+        }
     }
     
     private class SettingsDialog extends AlertDialog {
@@ -171,7 +153,7 @@ public class BoxStemGraphDisplayActivity extends Activity
         public SettingsDialog(Context context) {
             super(context);
             numberCols = new ArrayList<ColumnProperties>();
-            for (ColumnProperties cp : tp.getColumns()) {
+            for (ColumnProperties cp : c.getTableProperties().getColumns()) {
                 if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
                     numberCols.add(cp);
                 }
@@ -200,9 +182,11 @@ public class BoxStemGraphDisplayActivity extends Activity
             LinearLayout wrapper = new LinearLayout(context);
             wrapper.setOrientation(LinearLayout.VERTICAL);
             // adding the x-axis spinner
-            ColumnProperties selectedXCp = tvs.getBoxStemXCol();
+            ColumnProperties selectedXCp =
+                c.getTableViewSettings().getBoxStemXCol();
             int xSelection = -1;
-            final ColumnProperties[] xCols = tp.getColumns();
+            final ColumnProperties[] xCols =
+                c.getTableProperties().getColumns();
             String[] xColDisplayNames = new String[xCols.length];
             for (int i = 0; i < xCols.length; i++) {
                 if ((selectedXCp != null) && xCols[i].equals(selectedXCp)) {
@@ -225,7 +209,8 @@ public class BoxStemGraphDisplayActivity extends Activity
             wrapper.addView(xLabel);
             wrapper.addView(xSpinner);
             // adding the y-axis spinner
-            ColumnProperties selectedYCp = tvs.getBoxStemYCol();
+            ColumnProperties selectedYCp =
+                c.getTableViewSettings().getBoxStemYCol();
             int ySelection = -1;
             String[] yColDisplayNames = new String[numberCols.size()];
             for (int i = 0; i < numberCols.size(); i++) {
@@ -255,9 +240,9 @@ public class BoxStemGraphDisplayActivity extends Activity
             setButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    tvs.setBoxStemXCol(
+                    c.getTableViewSettings().setBoxStemXCol(
                             xCols[xSpinner.getSelectedItemPosition()]);
-                    tvs.setBoxStemYCol(numberCols.get(
+                    c.getTableViewSettings().setBoxStemYCol(numberCols.get(
                             ySpinner.getSelectedItemPosition()));
                 }
             });

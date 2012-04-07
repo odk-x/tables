@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
 import yoonsung.odk.spreadsheet.Activity.TableActivity;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.DbTable;
+import yoonsung.odk.spreadsheet.data.Query;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
@@ -39,9 +42,8 @@ public class CustomDetailView extends WebView {
         addJavascriptInterface(jsData, "data");
     }
     
-    public void display(String tableId, String rowId, Map<String, String> data,
-            Map<String, UserTable> joinData) {
-        jsData.set(data, joinData);
+    public void display(String rowId, Map<String, String> data) {
+        jsData.set(data);
         String filename = tp.getDetailViewFilename();
         if (filename != null) {
             loadUrl("file:///" + filename);
@@ -57,28 +59,24 @@ public class CustomDetailView extends WebView {
     private class RowData {
         
         private Map<String, String> data;
-        private Map<String, UserTable> joinData;
         
         RowData() {}
         
-        RowData(Map<String, String> data, Map<String, UserTable> joinData) {
+        RowData(Map<String, String> data) {
             this.data = data;
-            this.joinData = joinData;
         }
         
-        void set(Map<String, String> data, Map<String, UserTable> joinData) {
+        void set(Map<String, String> data) {
             this.data = data;
-            this.joinData = joinData;
         }
         
         @SuppressWarnings("unused")
         public String get(String key) {
-            return data.get(key);
-        }
-        
-        @SuppressWarnings("unused")
-        public JoinData getJoin(String key) {
-            return new JoinData(joinData.get(key));
+            ColumnProperties cp = tp.getColumnByUserLabel(key);
+            if (cp == null) {
+                return null;
+            }
+            return data.get(cp.getColumnDbName());
         }
     }
     
@@ -86,11 +84,11 @@ public class CustomDetailView extends WebView {
      * "Unused" warnings are suppressed because the public methods of this
      * class are meant to be called through the JavaScript interface.
      */
-    private class JoinData {
+    private class TableData {
         
         private UserTable table;
         
-        public JoinData(UserTable table) {
+        public TableData(UserTable table) {
             this.table = table;
         }
         
@@ -105,35 +103,56 @@ public class CustomDetailView extends WebView {
             for (int i = 0; i < table.getWidth(); i++) {
                 data.put(table.getHeader(i), table.getData(index, i));
             }
-            return new RowData(data, null);
+            return new RowData(data);
         }
     }
     
     private class Control {
         
         private Context context;
+        private TableProperties[] allTps;
+        private Map<String, TableProperties> tpMap;
         
         public Control(Context context) {
             this.context = context;
         }
         
-        @SuppressWarnings("unused")
-        public void openTable(String tableName, String query) {
-            TableProperties[] tps = TableProperties.getTablePropertiesForAll(
-                    DbHelper.getDbHelper(context));
-            String tableId = null;
-            for (TableProperties tp : tps) {
-                if (tp.getDisplayName().equals(tableName)) {
-                    tableId = tp.getTableId();
-                }
-            }
-            if (tableId == null) {
+        private void initTpInfo() {
+            if (tpMap != null) {
                 return;
             }
+            tpMap = new HashMap<String, TableProperties>();
+            allTps = TableProperties.getTablePropertiesForAll(
+                    DbHelper.getDbHelper(context));
+            for (TableProperties tp : allTps) {
+                tpMap.put(tp.getDisplayName(), tp);
+            }
+        }
+        
+        @SuppressWarnings("unused")
+        public boolean openTable(String tableName, String query) {
+            initTpInfo();
+            if (!tpMap.containsKey(tableName)) {
+                return false;
+            }
             Intent intent = new Intent(context, SpreadSheet.class);
-            intent.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tableId);
+            intent.putExtra(TableActivity.INTENT_KEY_TABLE_ID,
+                    tpMap.get(tableName).getTableId());
             intent.putExtra(TableActivity.INTENT_KEY_QUERY, query);
             context.startActivity(intent);
+            return true;
+        }
+        
+        @SuppressWarnings("unused")
+        public TableData query(String tableName, String searchText) {
+            if (!tpMap.containsKey(tableName)) {
+                return null;
+            }
+            Query query = new Query(allTps, tpMap.get(tableName));
+            query.loadFromUserQuery(searchText);
+            DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
+                    tpMap.get(tableName).getTableId());
+            return new TableData(dbt.getUserTable(query));
         }
     }
 }

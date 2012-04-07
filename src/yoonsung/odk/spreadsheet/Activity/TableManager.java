@@ -138,7 +138,7 @@ public class TableManager extends ListActivity {
 	     Intent i;
 	     switch (tp.getTableType()) {
 	     case TableProperties.TableType.DATA:
-	         //Controller.launchTableActivity(this, tp, true);
+	         Controller.launchTableActivity(this, tp, true);
 	         //i = new Intent(this, BoxStemGraphDisplayActivity.class);
 	         i = new Intent(this, SpreadSheet.class);
 	         break;
@@ -153,7 +153,7 @@ public class TableManager extends ListActivity {
 	     }
 	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
 	     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, true);
-		 startActivity(i);
+		 //startActivity(i);
 	 }
 	 
 	 @Override

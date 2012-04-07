@@ -94,11 +94,17 @@
         </activity>
         <activity android:name=".Activity.TablePropertiesManager" >
         </activity>
+		<activity android:name=".activities.SpreadsheetDisplayActivity">
+		</activity>
 		<activity android:name=".activities.ListDisplayActivity">
 		</activity>
 		<activity android:name=".activities.LineGraphDisplayActivity">
 		</activity>
 		<activity android:name=".activities.BoxStemGraphDisplayActivity">
+		</activity>
+		<activity android:name=".activities.BarGraphDisplayActivity">
+		</activity>
+		<activity android:name=".activities.DetailDisplayActivity">
 		</activity>
 
         <uses-library android:name="com.google.android.maps" />

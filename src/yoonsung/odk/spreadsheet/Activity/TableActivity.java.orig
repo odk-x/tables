@@ -85,7 +85,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 public abstract class TableActivity extends Activity
-        implements ListDisplayView.Controller {
+        implements ListDisplayView.Controller, TableDisplayView.Controller {
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     public static final String INTENT_KEY_QUERY = "query";
@@ -1537,28 +1537,17 @@ public abstract class TableActivity extends Activity
 	
 	public void onListItemClick(int rowNum) {
 	    Map<String, String> data = new HashMap<String, String>();
-	    Map<String, UserTable> joinData = new HashMap<String, UserTable>();
 	    for (int i = 0; i < table.getWidth(); i++) {
 	        String key = table.getHeader(i);
 	        String value = table.getData(rowNum, i);
 	        data.put(key, value);
-	        if (cps[i].getColumnType() ==
-	            ColumnProperties.ColumnType.TABLE_JOIN) {
-	            String joinTableId = cps[i].getJoinTableId();
-	            TableProperties joinTp = dm.getTableProperties(joinTableId);
-	            DbTable joinDbt = dm.getDbTable(joinTableId);
-	            Query joinQuery = new Query(tps, joinTp);
-	            joinQuery.addConstraint(cps[i], value);
-	            UserTable ut = joinDbt.getUserTable(joinQuery);
-	            joinData.put(key, ut);
-	        }
 	    }
         LinearLayout.LayoutParams tableLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
         tableLp.weight = 1;
         tableWrapper.removeAllViews();
-        cdv.display(tableId, data);
+        cdv.display(table.getRowId(rowNum), data);
         tableWrapper.addView(cdv, tableLp);
 	}
 }

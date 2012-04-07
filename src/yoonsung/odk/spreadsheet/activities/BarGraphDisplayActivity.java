@@ -1,27 +1,26 @@
 package yoonsung.odk.spreadsheet.activities;
 
-import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Query;
 import yoonsung.odk.spreadsheet.data.UserTable;
-import yoonsung.odk.spreadsheet.view.ListDisplayView;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 
-public class ListDisplayActivity extends Activity implements DisplayActivity {
+public class BarGraphDisplayActivity extends Activity
+        implements DisplayActivity {
     
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
     
     private DataManager dm;
     private Controller c;
     private Query query;
-    private ListViewController listController;
     private UserTable table;
     
     @Override
@@ -30,7 +29,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
         query = new Query(dm.getAllTableProperties(), c.getTableProperties());
-        listController = new ListViewController();
         init();
     }
     
@@ -41,26 +39,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        c.setDisplayView(buildView());
-        setContentView(c.getWrapperView());
-    }
-    
-    private View buildView() {
-        return ListDisplayView.buildView(this, c.getTableProperties(),
-                c.getTableViewSettings(), listController, table);
-    }
-    
-    private void openCollectionView(int rowNum) {
-        Query q = new Query(dm.getAllTableProperties(),
-                c.getTableProperties());
-        for (String prime : c.getTableProperties().getPrimeColumns()) {
-            ColumnProperties cp = c.getTableProperties()
-                    .getColumnByDbName(prime);
-            int colNum = c.getTableProperties().getColumnIndex(prime);
-            q.addConstraint(cp, table.getData(rowNum, colNum));
-        }
-        Controller.launchTableActivity(this, c.getTableProperties(),
-                q.toUserQuery(), false);
     }
     
     @Override
@@ -104,23 +82,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         Intent intent = c.getIntentForOdkCollectAddRow();
         if (intent != null) {
             startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
-    }
-    
-    private void onItemClick(int rowNum) {
-        if (c.getIsOverview() &&
-                (c.getTableProperties().getPrimeColumns().length > 0)) {
-            openCollectionView(rowNum);
-        } else {
-            Controller.launchDetailActivity(this, c.getTableProperties(),
-                    table, rowNum);
-        }
-    }
-    
-    private class ListViewController implements ListDisplayView.Controller {
-        @Override
-        public void onListItemClick(int rowNum) {
-            onItemClick(rowNum);
         }
     }
 }

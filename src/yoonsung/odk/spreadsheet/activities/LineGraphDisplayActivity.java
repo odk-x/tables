@@ -12,12 +12,15 @@ import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.TableViewSettings;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
 
 public class LineGraphDisplayActivity extends Activity
         implements DisplayActivity {
+    
+    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
     
     private String searchText;
     private boolean isOverview;
@@ -54,15 +57,15 @@ public class LineGraphDisplayActivity extends Activity
         table = isOverview ? dbt.getUserOverviewTable(query) :
                 dbt.getUserTable(query);
         // setting up display
-        controller = new Controller(this, this);
-        controller.setSearchText(searchText);
+        controller = new Controller(this, this, savedInstanceState);
         View view = buildView();
-        if (view == null) {
-            // TODO
-            return;
-        }
         controller.setDisplayView(view);
         setContentView(controller.getWrapperView());
+    }
+    
+    @Override
+    public void init() {
+        
     }
     
     private View buildView() {
@@ -81,12 +84,15 @@ public class LineGraphDisplayActivity extends Activity
     }
     
     @Override
-    public void onSearch(String searchText) {
+    public void onSearch() {
         
     }
     
     @Override
     public void onAddRow() {
-        
+        Intent intent = controller.getIntentForOdkCollectAddRow();
+        if (intent != null) {
+            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
+        }
     }
 }
