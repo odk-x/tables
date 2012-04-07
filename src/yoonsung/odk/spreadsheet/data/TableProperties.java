@@ -1,11 +1,15 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -86,6 +90,22 @@ public class TableProperties {
         DB_SYNC_STATE,
         DB_TRANSACTIONING, 
     };
+    // columns included in json properties
+    private static final List<String> JSON_COLUMNS = Arrays.asList(new String[]{
+      DB_TABLE_ID,
+      DB_DB_TABLE_NAME,
+      DB_DISPLAY_NAME,
+      DB_TABLE_TYPE,
+      DB_COLUMN_ORDER,
+      DB_PRIME_COLUMNS,
+      DB_SORT_COLUMN,
+      DB_READ_SECURITY_TABLE_ID,
+      DB_WRITE_SECURITY_TABLE_ID,
+      DB_OV_VIEW_SETTINGS,
+      DB_CO_VIEW_SETTINGS,
+      DB_DETAIL_VIEW_FILE,
+      DB_SUM_DISPLAY_FORMAT,
+    });
     
     public class TableType {
         public static final int DATA = 0;
@@ -158,7 +178,7 @@ public class TableProperties {
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
             String tableId) {
         TableProperties[] res = queryForTableProperties(dbh, ID_WHERE_SQL,
-                new String[] {tableId});
+                new String[] {tableId}, true);
         return res[0];
     }
     
@@ -323,11 +343,7 @@ public class TableProperties {
     }
     
     public void deleteTable() {
-        ContentValues values = new ContentValues();
-        values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
-        db.close();
+      setSyncState(SyncUtil.State.DELETING);
     }
     
     public void deleteTableActual() {
@@ -957,12 +973,16 @@ public class TableProperties {
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
         db.close();
+        if (JSON_COLUMNS.contains(property))
+          setSyncState(SyncUtil.State.UPDATING);
     }
     
     private void setStringProperty(String property, String value) {
         SQLiteDatabase db = dbh.getWritableDatabase();
         setStringProperty(property, value, db);
         db.close();
+        if (JSON_COLUMNS.contains(property))
+          setSyncState(SyncUtil.State.UPDATING);
     }
     
     private void setStringProperty(String property, String value,
