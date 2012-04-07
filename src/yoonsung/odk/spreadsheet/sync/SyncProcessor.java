@@ -169,8 +169,7 @@ public class SyncProcessor {
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
 
-    Table allRowIds = table.getRaw(new String[] { DbTable.DB_ROW_ID, DbTable.DB_SYNC_STATE }, null,
-        null, null);
+    Table allRowIds = table.getRaw(new String[] { DbTable.DB_SYNC_STATE }, null, null, null);
 
     List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
     List<SyncRow> rowsToUpdate = new ArrayList<SyncRow>();
@@ -180,8 +179,8 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       boolean found = false;
       for (int i = 0; i < allRowIds.getHeight(); i++) {
-        String rowId = allRowIds.getData(i, 0);
-        int state = Integer.parseInt(allRowIds.getData(i, 1));
+        String rowId = allRowIds.getRowId(i);
+        int state = Integer.parseInt(allRowIds.getData(i, 0));
         if (row.getRowId().equals(rowId)) {
           found = true;
           if (state == SyncUtil.State.REST) {
