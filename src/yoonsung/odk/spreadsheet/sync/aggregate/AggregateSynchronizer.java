@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.opendatakit.aggregate.odktables.entity.Column;
 import org.opendatakit.aggregate.odktables.entity.Row;
@@ -25,21 +26,25 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
 import yoonsung.odk.spreadsheet.sync.IncomingModification;
 import yoonsung.odk.spreadsheet.sync.Modification;
 import yoonsung.odk.spreadsheet.sync.SyncRow;
 import yoonsung.odk.spreadsheet.sync.Synchronizer;
+import android.util.Log;
 
 public class AggregateSynchronizer implements Synchronizer {
+
+  private static final String TAG = AggregateSynchronizer.class.getSimpleName();
 
   private static final Map<Integer, Column.ColumnType> types = new HashMap<Integer, Column.ColumnType>() {
     {
       put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING);
-      put(ColumnType.DATE, Column.ColumnType.DATETIME);
+      put(ColumnType.DATE, Column.ColumnType.STRING);
       put(ColumnType.DATE_RANGE, Column.ColumnType.STRING);
       put(ColumnType.FILE, Column.ColumnType.STRING);
       put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING);
@@ -89,15 +94,19 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources = new HashMap<String, TableResource>();
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#createTable(java.lang.String, java.util.List)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#createTable(java.lang
+   * .String, java.util.List)
    */
   @Override
-  public String createTable(String tableId, List<ColumnProperties> colProps) {
+  public String createTable(String tableId, Map<String, Integer> cols) {
     List<Column> columns = new ArrayList<Column>();
-    for (ColumnProperties colProp : colProps) {
-      String name = colProp.getColumnDbName();
-      Column.ColumnType type = types.get(colProp.getColumnType());
+    for (Entry<String, Integer> col : cols.entrySet()) {
+      String name = col.getKey();
+      Column.ColumnType type = types.get(col.getValue());
       Column column = new Column(name, type);
       columns.add(column);
     }
@@ -132,16 +141,24 @@ public class AggregateSynchronizer implements Synchronizer {
     return resource;
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteTable(java.lang.String)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteTable(java.lang
+   * .String)
    */
   @Override
   public void deleteTable(String tableId) {
     rt.delete(baseUri.resolve(tableId));
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#getUpdates(java.lang.String, java.lang.String)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#getUpdates(java.lang
+   * .String, java.lang.String)
    */
   @Override
   public IncomingModification getUpdates(String tableId, String currentSyncTag) {
@@ -170,8 +187,12 @@ public class AggregateSynchronizer implements Synchronizer {
     return modification;
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#insertRows(java.lang.String, java.util.List)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#insertRows(java.lang
+   * .String, java.util.List)
    */
   @Override
   public Modification insertRows(String tableId, List<SyncRow> rowsToInsert) {
@@ -183,8 +204,12 @@ public class AggregateSynchronizer implements Synchronizer {
     return insertOrUpdateRows(tableId, newRows);
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#updateRows(java.lang.String, java.util.List)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#updateRows(java.lang
+   * .String, java.util.List)
    */
   @Override
   public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate) {
@@ -203,11 +228,18 @@ public class AggregateSynchronizer implements Synchronizer {
       for (Row row : rows) {
         URI url = URI.create(resource.getDataUri() + "/" + row.getRowId()).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
-        ResponseEntity<RowResource> insertedEntity = rt.exchange(url, HttpMethod.PUT,
-            requestEntity, RowResource.class);
-        RowResource inserted = insertedEntity.getBody();
-
-        syncTags.put(inserted.getRowId(), inserted.getRowEtag());
+        try {
+          ResponseEntity<RowResource> insertedEntity = rt.exchange(url, HttpMethod.PUT,
+              requestEntity, RowResource.class);
+          RowResource inserted = insertedEntity.getBody();
+          syncTags.put(inserted.getRowId(), inserted.getRowEtag());
+        } catch (HttpClientErrorException e) {
+          Log.e(TAG, e.getResponseBodyAsString());
+          throw e;
+        } catch (HttpServerErrorException e) {
+          Log.e(TAG, e.getResponseBodyAsString());
+          throw e;
+        }
       }
       resource = refreshResource(tableId);
     }
@@ -219,8 +251,12 @@ public class AggregateSynchronizer implements Synchronizer {
     return modification;
   }
 
-  /* (non-Javadoc)
-   * @see yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteRows(java.lang.String, java.util.List)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteRows(java.lang
+   * .String, java.util.List)
    */
   @Override
   public String deleteRows(String tableId, List<String> rowIds) {
