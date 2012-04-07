@@ -138,7 +138,17 @@ public class DbTable {
         for (int i = 0; i < rowCount; i++) {
             rowIds[i] = c.getString(rowIdIndex);
             for (int j = 0; j < columns.length; j++) {
-                data[i][j] = c.getString(colIndices[j]);
+              String value;
+              try {
+                value = c.getString(colIndices[j]);
+              } catch (Exception e) {
+                try {
+                  value = String.valueOf(c.getInt(colIndices[j]));
+                } catch (Exception f) {
+                  value = String.valueOf(c.getDouble(colIndices[j]));
+                }
+              }
+              data[i][j] = value;
             }
             c.moveToNext();
         }
