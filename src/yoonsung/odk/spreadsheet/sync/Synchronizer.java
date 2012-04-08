@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.sync;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,7 @@ public interface Synchronizer {
    *          {@link ColumnProperties.ColumnType}
    * @return a string which will be stored as the syncTag of the table
    */
-  public String createTable(String tableId, Map<String, Integer> cols);
+  public String createTable(String tableId, Map<String, Integer> cols) throws IOException;
 
   /**
    * Delete the table with the given id from the server.
@@ -31,7 +32,7 @@ public interface Synchronizer {
    * @param tableId
    *          the unique identifier of the table
    */
-  public void deleteTable(String tableId);
+  public void deleteTable(String tableId) throws IOException;
 
   /**
    * Retrieve changes in the server state since the last synchronization.
@@ -42,7 +43,7 @@ public interface Synchronizer {
    *          the last value that was stored as the syncTag
    * @return an IncomingModification representing the latest state of the table
    */
-  public IncomingModification getUpdates(String tableId, String currentSyncTag);
+  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException;
 
   /**
    * Insert the given rows in the table on the server.
@@ -53,7 +54,7 @@ public interface Synchronizer {
    *          the rows to insert
    * @return a Modification of the syncTags to save with the rows and table
    */
-  public Modification insertRows(String tableId, List<SyncRow> rowsToInsert);
+  public Modification insertRows(String tableId, List<SyncRow> rowsToInsert) throws IOException;
 
   /**
    * Update the given rows in the table on the server.
@@ -64,7 +65,7 @@ public interface Synchronizer {
    *          the rows to update
    * @return a Modification of the syncTags to save with the rows and table
    */
-  public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate);
+  public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate) throws IOException;
 
   /**
    * Delete the given row ids from the server.
@@ -75,6 +76,6 @@ public interface Synchronizer {
    *          the row ids of the rows to delete
    * @return a string which will be stored as the syncTag of the table
    */
-  public String deleteRows(String tableId, List<String> rowIds);
+  public String deleteRows(String tableId, List<String> rowIds) throws IOException;
 
 }
