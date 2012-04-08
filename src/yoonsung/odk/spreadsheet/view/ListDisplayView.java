@@ -1,6 +1,5 @@
 package yoonsung.odk.spreadsheet.view;
 
-import yoonsung.odk.spreadsheet.DataStructure.DisplayPrefs;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.TableViewSettings;
 import yoonsung.odk.spreadsheet.data.UserTable;
@@ -8,7 +7,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -22,8 +20,8 @@ import android.widget.ScrollView;
 public class ListDisplayView extends LinearLayout {
     
     private int BACKGROUND_COLOR = Color.WHITE;
-    private int BORDER_COLOR = Color.BLACK;
     private int TEXT_COLOR = Color.BLACK;
+    private int BORDER_COLOR = Color.BLACK;
     
     private Controller controller; // the table activity to call back to
     private UserTable table; // the table to display
@@ -33,6 +31,7 @@ public class ListDisplayView extends LinearLayout {
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
     private Paint[] colPaints;
+    private Paint borderPaint;
     
     public static ListDisplayView buildView(Context context,
             TableProperties tp, TableViewSettings tvs, Controller controller,
@@ -49,13 +48,15 @@ public class ListDisplayView extends LinearLayout {
         this.tp = tp;
         this.tvs = tvs;
         setFormatInfo();
+        borderPaint = new Paint();
+        borderPaint.setColor(BORDER_COLOR);
         removeAllViews();
         setBackgroundColor(BACKGROUND_COLOR);
         buildList(context);
     }
     
     private void setFormatInfo() {
-        String format = tp.getSummaryDisplayFormat();
+        String format = tvs.getListFormat();
         if (format == null || format.length() == 0) {
             format = getDefaultFormat();
         }
@@ -149,7 +150,7 @@ public class ListDisplayView extends LinearLayout {
         public ItemView(Context context, int rowNum) {
             super(context);
             this.rowNum = rowNum;
-            int height = 10;
+            int height = 11;
             for (int i = 0; i < lineHeights.length; i++) {
                 height += lineHeights[i];
             }
@@ -161,8 +162,10 @@ public class ListDisplayView extends LinearLayout {
             int y = 0;
             for (int i = 0; i < lineHeights.length; i++) {
                 y += lineHeights[i];
-                canvas.drawText(getText(i), 0, y, colPaints[i]);
+                canvas.drawText(getText(i), 1, y, colPaints[i]);
             }
+            canvas.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1,
+                    borderPaint);
         }
         
         private String getText(int lineNum) {

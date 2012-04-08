@@ -10,6 +10,8 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.xmlpull.v1.XmlPullParserException;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.TableProperties;
 import android.content.ContentResolver;
 import android.database.Cursor;
 

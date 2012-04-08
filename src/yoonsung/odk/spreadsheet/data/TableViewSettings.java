@@ -1,5 +1,8 @@
 package yoonsung.odk.spreadsheet.data;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,15 +15,19 @@ public class TableViewSettings {
     }
     
     public class Type {
-        public static final int TABLE = 0;
+        public static final int SPREADSHEET = 0;
         public static final int LIST = 1;
         public static final int LINE_GRAPH = 2;
         public static final int BOX_STEM = 3;
-        public static final int COUNT = 4;
+        public static final int BAR_GRAPH = 4;
+        public static final int COUNT = 5;
         private Type() {}
     }
     
     private static final String JSON_KEY_VIEW_TYPE = "viewType";
+    private static final String JSON_KEY_TABLE_SETTINGS = "table";
+    private static final String JSON_KEY_TABLE_COL_WIDTHS = "tableColWidths";
+    private static final String JSON_KEY_TABLE_INDEXED_COL = "tableIndexedCol";
     private static final String JSON_KEY_LIST_SETTINGS = "list";
     private static final String JSON_KEY_LIST_FORMAT = "listFormat";
     private static final String JSON_KEY_LINE_SETTINGS = "line";
@@ -30,9 +37,13 @@ public class TableViewSettings {
     private static final String JSON_KEY_BOX_STEM_X_COL = "boxStemX";
     private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
     
+    private static final int DEFAULT_TABLE_COL_WIDTH = 125;
+    
     private final TableProperties tp;
     private final ViewType type;
     private int viewType;
+    private int[] tableColWidths;
+    private String tableIndexedCol;
     private String listFormat;
     private String lineXCol;
     private String lineYCol;
@@ -44,7 +55,7 @@ public class TableViewSettings {
         this.tp = tp;
         this.type = type;
         if (dbString == null) {
-            viewType = Type.TABLE;
+            viewType = Type.SPREADSHEET;
             return;
         }
         try {
@@ -56,10 +67,13 @@ public class TableViewSettings {
     
     void setFromJsonObject(JSONObject jo) throws JSONException {
         if (jo == null) {
-            viewType = Type.TABLE;
+            viewType = Type.SPREADSHEET;
             return;
         }
         viewType = jo.getInt(JSON_KEY_VIEW_TYPE);
+        if (jo.has(JSON_KEY_TABLE_SETTINGS)) {
+            setTableFromJsonObject(jo.getJSONObject(JSON_KEY_TABLE_SETTINGS));
+        }
         if (jo.has(JSON_KEY_LIST_SETTINGS)) {
             setListFromJsonObject(jo.getJSONObject(JSON_KEY_LIST_SETTINGS));
         }
@@ -70,6 +84,18 @@ public class TableViewSettings {
             setBoxStemFromJsonObject(jo.getJSONObject(
                     JSON_KEY_BOX_STEM_SETTINGS));
         }
+    }
+    
+    private void setTableFromJsonObject(JSONObject jo) throws JSONException {
+        if (jo.has(JSON_KEY_TABLE_COL_WIDTHS)) {
+            JSONArray ja = jo.getJSONArray(JSON_KEY_TABLE_COL_WIDTHS);
+            tableColWidths = new int[ja.length()];
+            for (int i = 0; i < ja.length(); i++) {
+                tableColWidths[i] = ja.getInt(i);
+            }
+        }
+        tableIndexedCol = jo.has(JSON_KEY_TABLE_INDEXED_COL) ?
+                jo.getString(JSON_KEY_TABLE_INDEXED_COL) : null;
     }
     
     private void setListFromJsonObject(JSONObject jo) throws JSONException {
@@ -105,6 +131,29 @@ public class TableViewSettings {
         return viewType;
     }
     
+    public int[] getTableColWidths() {
+        if (tableColWidths != null) {
+            return tableColWidths;
+        }
+        int[] colWidths = new int[tp.getColumns().length];
+        for (int i = 0; i < colWidths.length; i++) {
+            colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+        }
+        return colWidths;
+    }
+    
+    public int getTableIndexedColIndex() {
+        if (tableIndexedCol == null) {
+            return -1;
+        }
+        for (int i = 0; i < tp.getColumnOrder().length; i++) {
+            if (tableIndexedCol.equals(tp.getColumnOrder()[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     public String getListFormat() {
         return listFormat;
     }
@@ -131,6 +180,7 @@ public class TableViewSettings {
         JSONObject jo = new JSONObject();
         try {
             jo.put(JSON_KEY_VIEW_TYPE, viewType);
+            jo.put(JSON_KEY_TABLE_SETTINGS, tableSettingsToJsonObject());
             jo.put(JSON_KEY_LIST_SETTINGS, listSettingsToJsonObject());
             jo.put(JSON_KEY_LINE_SETTINGS, lineSettingsToJsonObject());
             jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
@@ -138,6 +188,21 @@ public class TableViewSettings {
         } catch(JSONException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    private JSONObject tableSettingsToJsonObject() throws JSONException {
+        JSONObject jo = new JSONObject();
+        if (tableColWidths != null) {
+            JSONArray arr = new JSONArray();
+            for (int width : tableColWidths) {
+                arr.put(width);
+            }
+            jo.put(JSON_KEY_TABLE_COL_WIDTHS, arr);
+        }
+        if (tableIndexedCol != null) {
+            jo.put(JSON_KEY_TABLE_INDEXED_COL, tableIndexedCol);
+        }
+        return jo;
     }
     
     private JSONObject listSettingsToJsonObject() throws JSONException {
@@ -175,6 +240,16 @@ public class TableViewSettings {
         set();
     }
     
+    public void setTableColWidths(int[] widths) {
+        tableColWidths = widths;
+        set();
+    }
+    
+    public void setTableIndexedCol(String indexedCol) {
+        tableIndexedCol = indexedCol;
+        set();
+    }
+    
     public void setListFormat(String format) {
         listFormat = format;
         set();
@@ -207,5 +282,29 @@ public class TableViewSettings {
         } else {
             tp.setCollectionViewSettings(dbString);
         }
+    }
+    
+    public int[] getPossibleViewTypes() {
+        int numericColCount = 0;
+        for (ColumnProperties cp : tp.getColumns()) {
+            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                numericColCount++;
+            }
+        }
+        List<Integer> list = new ArrayList<Integer>();
+        list.add(Type.SPREADSHEET);
+        list.add(Type.LIST);
+        if (numericColCount >= 2) {
+            list.add(Type.LINE_GRAPH);
+        }
+        if (numericColCount >= 1) {
+            list.add(Type.BOX_STEM);
+        }
+        list.add(Type.BAR_GRAPH);
+        int[] arr = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            arr[i] = list.get(i);
+        }
+        return arr;
     }
 }
