@@ -258,7 +258,7 @@ public class SyncProcessor {
       values.put(DbTable.DB_ROW_ID, row.getRowId());
       values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
       values.put(DbTable.DB_SYNC_STATE, SyncUtil.State.REST);
-      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.boolToInt(false));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -275,7 +275,7 @@ public class SyncProcessor {
 
       values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
       values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.REST));
-      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.Transactioning.FALSE));
+      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -320,7 +320,7 @@ public class SyncProcessor {
 
     Table rows = table
         .getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
-            new String[] { String.valueOf(state), String.valueOf(SyncUtil.Transactioning.FALSE) },
+            new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) },
             null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
@@ -362,23 +362,23 @@ public class SyncProcessor {
   }
 
   private void beginTableTransaction(TableProperties tp) {
-    tp.setTransactioning(SyncUtil.Transactioning.TRUE);
+    tp.setTransactioning(true);
   }
 
   private void endTableTransaction(TableProperties tp, boolean success) {
     if (success)
       tp.setSyncState(SyncUtil.State.REST);
-    tp.setTransactioning(SyncUtil.Transactioning.FALSE);
+    tp.setTransactioning(false);
   }
 
   private void beginRowsTransaction(DbTable table, String[] rowIds) {
-    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.TRUE);
+    updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(true));
   }
 
   private void endRowsTransaction(DbTable table, String[] rowIds, boolean success) {
     if (success)
       updateRowsState(table, rowIds, SyncUtil.State.REST);
-    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.FALSE);
+    updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(false));
   }
 
   private void updateRowsState(DbTable table, String[] rowIds, int state) {
