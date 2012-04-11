@@ -33,6 +33,9 @@ public class TableViewSettings {
     private static final String JSON_KEY_LINE_SETTINGS = "line";
     private static final String JSON_KEY_LINE_X_COL = "lineX";
     private static final String JSON_KEY_LINE_Y_COL = "lineY";
+    private static final String JSON_KEY_BAR_SETTINGS = "bar";
+    private static final String JSON_KEY_BAR_X_COL = "barX";
+    private static final String JSON_KEY_BAR_Y_COL = "barY";
     private static final String JSON_KEY_BOX_STEM_SETTINGS = "boxStem";
     private static final String JSON_KEY_BOX_STEM_X_COL = "boxStemX";
     private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
@@ -47,6 +50,8 @@ public class TableViewSettings {
     private String listFormat;
     private String lineXCol;
     private String lineYCol;
+    private String barXCol;
+    private String barYCol;
     private String boxStemXCol;
     private String boxStemYCol;
     
@@ -80,6 +85,9 @@ public class TableViewSettings {
         if (jo.has(JSON_KEY_LINE_SETTINGS)) {
             setLineFromJsonObject(jo.getJSONObject(JSON_KEY_LINE_SETTINGS));
         }
+        if (jo.has(JSON_KEY_BAR_SETTINGS)) {
+            setBarFromJsonObject(jo.getJSONObject(JSON_KEY_BAR_SETTINGS));
+        }
         if (jo.has(JSON_KEY_BOX_STEM_SETTINGS)) {
             setBoxStemFromJsonObject(jo.getJSONObject(
                     JSON_KEY_BOX_STEM_SETTINGS));
@@ -108,6 +116,13 @@ public class TableViewSettings {
                 jo.getString(JSON_KEY_LINE_X_COL) : null;
         lineYCol = jo.has(JSON_KEY_LINE_Y_COL) ?
                 jo.getString(JSON_KEY_LINE_Y_COL) : null;
+    }
+    
+    private void setBarFromJsonObject(JSONObject jo) throws JSONException {
+        barXCol = jo.has(JSON_KEY_BAR_X_COL) ?
+                jo.getString(JSON_KEY_BAR_X_COL) : null;
+        barYCol = jo.has(JSON_KEY_BAR_Y_COL) ?
+                jo.getString(JSON_KEY_BAR_Y_COL) : null;
     }
     
     private void setBoxStemFromJsonObject(JSONObject jo) throws JSONException {
@@ -166,6 +181,14 @@ public class TableViewSettings {
         return (lineYCol == null) ? null : tp.getColumnByDbName(lineYCol);
     }
     
+    public ColumnProperties getBarXCol() {
+        return (barXCol == null) ? null : tp.getColumnByDbName(barXCol);
+    }
+    
+    public String getBarYCol() {
+        return barYCol;
+    }
+    
     public ColumnProperties getBoxStemXCol() {
         return (boxStemXCol == null) ? null :
             tp.getColumnByDbName(boxStemXCol);
@@ -183,6 +206,7 @@ public class TableViewSettings {
             jo.put(JSON_KEY_TABLE_SETTINGS, tableSettingsToJsonObject());
             jo.put(JSON_KEY_LIST_SETTINGS, listSettingsToJsonObject());
             jo.put(JSON_KEY_LINE_SETTINGS, lineSettingsToJsonObject());
+            jo.put(JSON_KEY_BAR_SETTINGS, barSettingsToJsonObject());
             jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
             return jo;
         } catch(JSONException e) {
@@ -220,6 +244,17 @@ public class TableViewSettings {
         }
         if (lineYCol != null) {
             jo.put(JSON_KEY_LINE_Y_COL, lineYCol);
+        }
+        return jo;
+    }
+    
+    private JSONObject barSettingsToJsonObject() throws JSONException {
+        JSONObject jo = new JSONObject();
+        if (barXCol != null) {
+            jo.put(JSON_KEY_BAR_X_COL, barXCol);
+        }
+        if (barYCol != null) {
+            jo.put(JSON_KEY_BAR_Y_COL, barYCol);
         }
         return jo;
     }
@@ -262,6 +297,16 @@ public class TableViewSettings {
     
     public void setLineYCol(ColumnProperties cp) {
         lineYCol = (cp == null) ? null : cp.getColumnDbName();
+        set();
+    }
+    
+    public void setBarXCol(ColumnProperties cp) {
+        barXCol = (cp == null) ? null : cp.getColumnDbName();
+        set();
+    }
+    
+    public void setBarYCol(String barYCol) {
+        this.barYCol = barYCol;
         set();
     }
     

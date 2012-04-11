@@ -381,6 +381,77 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
             break;
         
+        case TableViewSettings.Type.BAR_GRAPH:
+            {
+            ColumnProperties xCol = settings.getBarXCol();
+            if (xCol == null) {
+                xCol = tp.getColumns()[0];
+            }
+            String yCol = settings.getBarYCol();
+            String yColSummary;
+            if (yCol == null || yCol.startsWith("*")) {
+                yCol = "*count";
+                yColSummary = "Count";
+            } else {
+                yColSummary = tp.getColumnByDbName(yCol).getDisplayName();
+            }
+            ColumnProperties[] cps = tp.getColumns();
+            String[] xColDbNames = new String[cps.length];
+            String[] xColDisplayNames = new String[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                xColDbNames[i] = cps[i].getColumnDbName();
+                xColDisplayNames[i] = cps[i].getDisplayName();
+            }
+            String[] yColDbNames = new String[numberCols.size() + 1];
+            String[] yColDisplayNames = new String[numberCols.size() + 1];
+            yColDbNames[0] = "*count";
+            yColDisplayNames[0] = "Count";
+            for (int i = 0; i < numberCols.size(); i++) {
+                yColDbNames[i] = numberCols.get(i).getColumnDbName();
+                yColDisplayNames[i] = numberCols.get(i).getDisplayName();
+            }
+            
+            ListPreference barXColPref = new ListPreference(this);
+            barXColPref.setTitle(label + " X Column");
+            barXColPref.setDialogTitle("Change " + label + " X Column");
+            barXColPref.setEntryValues(xColDbNames);
+            barXColPref.setEntries(xColDisplayNames);
+            barXColPref.setValue(xCol.getColumnDbName());
+            barXColPref.setSummary(xCol.getDisplayName());
+            barXColPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setBarXCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(barXColPref);
+            
+            ListPreference barYColPref = new ListPreference(this);
+            barYColPref.setTitle(label + " Y Column");
+            barYColPref.setDialogTitle("Change " + label + " Y Column");
+            barYColPref.setEntryValues(yColDbNames);
+            barYColPref.setEntries(yColDisplayNames);
+            barYColPref.setValue(yCol);
+            barYColPref.setSummary(yColSummary);
+            barYColPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setBarYCol((String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(barYColPref);
+            }
+            break;
+        
         case TableViewSettings.Type.BOX_STEM:
             {
             ColumnProperties xCol = settings.getBoxStemXCol();

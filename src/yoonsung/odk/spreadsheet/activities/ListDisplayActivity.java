@@ -51,16 +51,16 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     }
     
     private void openCollectionView(int rowNum) {
-        Query q = new Query(dm.getAllTableProperties(),
-                c.getTableProperties());
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
                     .getColumnByDbName(prime);
             int colNum = c.getTableProperties().getColumnIndex(prime);
-            q.addConstraint(cp, table.getData(rowNum, colNum));
+            query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                q.toUserQuery(), false);
+                query.toUserQuery(), false);
     }
     
     @Override
@@ -107,20 +107,16 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         }
     }
     
-    private void onItemClick(int rowNum) {
-        if (c.getIsOverview() &&
-                (c.getTableProperties().getPrimeColumns().length > 0)) {
-            openCollectionView(rowNum);
-        } else {
-            Controller.launchDetailActivity(this, c.getTableProperties(),
-                    table, rowNum);
-        }
-    }
-    
     private class ListViewController implements ListDisplayView.Controller {
         @Override
         public void onListItemClick(int rowNum) {
-            onItemClick(rowNum);
+            if (c.getIsOverview() &&
+                    (c.getTableProperties().getPrimeColumns().length > 0)) {
+                openCollectionView(rowNum);
+            } else {
+                Controller.launchDetailActivity(ListDisplayActivity.this,
+                        c.getTableProperties(), table, rowNum);
+            }
         }
     }
 }

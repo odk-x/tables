@@ -111,6 +111,28 @@ public class DbTable {
                 table.getData(), footerQuery(query));
     }
     
+    public GroupTable getGroupTable(Query query, ColumnProperties groupColumn,
+            Query.GroupQueryType type) {
+        SqlData sd = query.toGroupSql(groupColumn.getColumnDbName(), type);
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
+        int gcColIndex = c.getColumnIndexOrThrow(
+                groupColumn.getColumnDbName());
+        int countColIndex = c.getColumnIndexOrThrow("g");
+        int rowCount = c.getCount();
+        String[] keys = new String[rowCount];
+        double[] values = new double[rowCount];
+        c.moveToFirst();
+        for (int i = 0; i < rowCount; i++) {
+            keys[i] = c.getString(gcColIndex);
+            values[i] = c.getDouble(countColIndex);
+            c.moveToNext();
+        }
+        c.close();
+        db.close();
+        return new GroupTable(keys, values);
+    }
+    
     private Table dataQuery(SqlData sd) {
         SQLiteDatabase db = dbh.getReadableDatabase();
         Log.d("DBTSQ", sd.getSql());
@@ -325,5 +347,28 @@ public class DbTable {
         }
         selBuilder.delete(0, 5);
         return selBuilder.toString();
+    }
+    
+    public class GroupTable {
+        
+        private String[] keys;
+        private double[] values;
+        
+        GroupTable(String[] keys, double[] values) {
+            this.keys = keys;
+            this.values = values;
+        }
+        
+        public int getSize() {
+            return values.length;
+        }
+        
+        public String getKey(int index) {
+            return keys[index];
+        }
+        
+        public double getValue(int index) {
+            return values[index];
+        }
     }
 }

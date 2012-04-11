@@ -9,6 +9,8 @@ import yoonsung.odk.spreadsheet.sync.SyncUtil;
 
 public class Query {
     
+    public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM }
+    
     private static final String KW_JOIN = "join";
     
     public class Comparator {
@@ -452,6 +454,30 @@ public class Query {
     
     public SqlData toSql(List<String> columns) {
         return toSql(columns.toArray(new String[0]));
+    }
+    
+    public SqlData toGroupSql(String groupColumn, GroupQueryType type) {
+        String typeSql;
+        switch (type) {
+        case AVERAGE:
+            typeSql = "(SUM(" + groupColumn + ") / COUNT(" + groupColumn +
+                    "))";
+            break;
+        case COUNT:
+            typeSql = "COUNT(" + groupColumn + ")";
+            break;
+        case MAXIMUM:
+            typeSql = "MAX(" + groupColumn + ")";
+            break;
+        case MINIMUM:
+            typeSql = "MIN(" + groupColumn + ")";
+            break;
+        default:
+            throw new RuntimeException();
+        }
+        SqlData sd = toSql(groupColumn + ", " + typeSql + " AS g");
+        sd.appendSql(" GROUP BY " + groupColumn);
+        return sd;
     }
     
     public String toUserQuery() {

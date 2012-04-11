@@ -187,7 +187,7 @@ public class Controller {
     }
     
     String getSearchText() {
-        return searchField.getText().toString();
+        return searchText.peek();
     }
     
     View getWrapperView() {
@@ -404,6 +404,9 @@ public class Controller {
         switch (tvs.getViewType()) {
         case TableViewSettings.Type.LIST:
             intent = new Intent(context, ListDisplayActivity.class);
+            break;
+        case TableViewSettings.Type.LINE_GRAPH:
+            intent = new Intent(context, LineGraphDisplayActivity.class);
             break;
         case TableViewSettings.Type.BOX_STEM:
             intent = new Intent(context, BoxStemGraphDisplayActivity.class);

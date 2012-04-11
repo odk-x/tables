@@ -80,16 +80,16 @@ public class SpreadsheetDisplayActivity extends Activity
     }
     
     private void openCollectionView(int rowNum) {
-        Query q = new Query(dm.getAllTableProperties(),
-                c.getTableProperties());
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
                     .getColumnByDbName(prime);
             int colNum = c.getTableProperties().getColumnIndex(prime);
-            q.addConstraint(cp, table.getData(rowNum, colNum));
+            query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                q.toUserQuery(), false);
+                query.toUserQuery(), false);
     }
     
     void setColumnAsPrime(ColumnProperties cp) {
