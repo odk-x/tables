@@ -70,7 +70,7 @@ public class TableProperties {
     // the SQL where clause to use for selecting by table type
     private static final String TYPE_WHERE_SQL = DB_TABLE_TYPE + " = ?";
     // the SQL where clause to use for selecting by sync state
-    private static final String STATE_WHERE_SQL = DB_SYNC_STATE + " = ?";
+    private static final String IS_SYNCHED_WHERE_SQL = DB_IS_SYNCHED + " = ?";
     // the columns to be selected when initializing TableProperties
     private static final String[] INIT_COLUMNS = {
         DB_TABLE_ID,
@@ -190,11 +190,9 @@ public class TableProperties {
         return queryForTableProperties(dbh, null, null);
     }
     
-    public static TableProperties[] getTablePropertiesForDeleting(
-            DbHelper dbh) {
-        return queryForTableProperties(dbh, STATE_WHERE_SQL,
-                new String[] { String.valueOf(SyncUtil.State.DELETING) },
-                true);
+    public static TableProperties[] getTablePropertiesForSynchronizedTables(DbHelper dbh) {
+        return queryForTableProperties(dbh, IS_SYNCHED_WHERE_SQL,
+            new String[] { String.valueOf(SyncUtil.boolToInt(true)) }, true);
     }
     
     public static TableProperties[] getTablePropertiesForDataTables(
