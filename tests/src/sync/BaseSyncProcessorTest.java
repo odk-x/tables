@@ -83,6 +83,7 @@ public class BaseSyncProcessorTest {
   private void createTable() {
     this.tp = TableProperties.addTable(helper, Data.tableName, Data.tableName,
         TableProperties.TableType.DATA);
+    this.tp.setSynchronized(true);
 
     dbColumnNames = new ArrayList<String>();
     for (Entry<String, Integer> entry : Data.columns.entrySet()) {
