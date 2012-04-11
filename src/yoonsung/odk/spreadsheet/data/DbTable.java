@@ -239,7 +239,7 @@ public class DbTable {
         cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
         cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
         cv.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
-        cv.put(DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+        cv.put(DB_TRANSACTIONING, SyncUtil.boolToInt(false));
         actualAddRow(cv);
     }
     
@@ -275,7 +275,8 @@ public class DbTable {
     public void updateRow(String rowId, Map<String, String> values,
             String srcPhone, String lastModTime) {
         ContentValues cv = new ContentValues();
-        cv.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
+        if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
+          cv.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
@@ -299,29 +300,58 @@ public class DbTable {
         db.close();
     }
     
-    /**
-     * Marks the given row as deleted.
-     */
+   /**
+    * If table is synchronized and not in an INSERTING state, marks row as
+    * deleted. Otherwise, actually deletes the row.
+    */
     public void markDeleted(String rowId) {
-        String[] whereArgs = { rowId };
-        ContentValues values = new ContentValues();
-        values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
-        db.close();
+      if (!tp.isSynchronized()) {
+        deleteRowActual(rowId);
+      } else {
+        int syncState = getSyncState(rowId);
+        if (syncState == SyncUtil.State.INSERTING) {
+          deleteRowActual(rowId);
+        } else if (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING) {
+          String[] whereArgs = { rowId };
+          ContentValues values = new ContentValues();
+          values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
+          db.close();
+        }
+      }
     }
-    
-    /**
-     * Actually deletes a row from the table.
-     * @param rowId the ID of the row to delete
+      
+        /**
+         * Actually deletes a row from the table.
+       * @param rowId the ID of the row to delete
      */
     public void deleteRowActual(String rowId) {
         String[] whereArgs = { rowId };
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.delete(tp.getDbTableName(), DB_ROW_ID + " + ?", whereArgs);
+        db.delete(tp.getDbTableName(), DB_ROW_ID + " = ?", whereArgs);
         db.close();
     }
     
+    /**
+     * @param rowId
+     * @return the sync state of the row (see {@link SyncUtil.State}), or -1 if
+     *         the row does not exist.
+     */
+    private int getSyncState(String rowId) {
+      SQLiteDatabase db = dbh.getReadableDatabase();
+      Cursor c = db.query(tp.getDbTableName(), new String[] { DB_SYNC_STATE }, DB_ROW_ID + " = ?",
+          new String[] { rowId }, null, null, null);
+      int syncState = -1;
+      if (c.moveToFirst()) {
+        int syncStateIndex = c.getColumnIndex(DB_SYNC_STATE);
+        syncState = c.getInt(syncStateIndex);
+      }
+      c.close();
+      db.close();
+      return syncState;
+    }
+     
     /**
      * Builds a string of SQL for selection with the given column names.
      */
