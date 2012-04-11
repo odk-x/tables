@@ -29,7 +29,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
     verify(synchronizer).createTable(eq(tp.getTableId()), argThat(containsKeys(dbColumnNames)));
     tp = this.dm.getTableProperties(tp.getTableId());
     assertEquals(SyncUtil.State.REST, tp.getSyncState());
-    assertEquals(SyncUtil.Transactioning.FALSE, tp.getTransactioning());
+    assertEquals(false, tp.isTransactioning());
   }
 
   @Test
@@ -55,7 +55,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
 
     assertEquals(1, rows.getHeight());
     assertEquals(SyncUtil.State.REST, Integer.parseInt(rows.getData(0, 0)));
-    assertEquals(SyncUtil.Transactioning.FALSE, Integer.parseInt(rows.getData(0, 1)));
+    assertEquals(SyncUtil.boolToInt(false), Integer.parseInt(rows.getData(0, 1)));
   }
 
   @Test
@@ -79,7 +79,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
         null, null, null);
     assertEquals(1, rows.getHeight());
     assertEquals(SyncUtil.State.REST, Integer.parseInt(rows.getData(0, 0)));
-    assertEquals(SyncUtil.Transactioning.FALSE, Integer.parseInt(rows.getData(0, 1)));
+    assertEquals(SyncUtil.boolToInt(false), Integer.parseInt(rows.getData(0, 1)));
   }
 
   @Test
