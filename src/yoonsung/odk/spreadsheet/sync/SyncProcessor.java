@@ -42,20 +42,29 @@ public class SyncProcessor {
     this.synchronizer = synchronizer;
   }
 
+  /**
+   * Synchronize all synchronized tables with the cloud.
+   */
   public void synchronize() {
     Log.i(TAG, "entered synchronize()");
-    TableProperties[] tps = dm.getAllTableProperties();
+    TableProperties[] tps = dm.getSynchronizedTableProperties();
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);
     }
-    TableProperties[] deleting = dm.getDeletingTableProperties();
-    for (TableProperties tp : deleting) {
-      synchronizeTable(tp);
-    }
   }
 
+  /**
+   * Synchronize the table represented by the given TableProperties with the
+   * cloud. If tp.isSynchronized() == false, returns without doing anything.
+   * 
+   * @param tp
+   *          the table to synchronize
+   */
   public void synchronizeTable(TableProperties tp) {
+    if (!tp.isSynchronized())
+      return;
+
     DbTable table = dm.getDbTable(tp.getTableId());
 
     boolean success = false;
@@ -318,10 +327,9 @@ public class SyncProcessor {
     columnSet.add(DbTable.DB_SYNC_TAG);
     String[] columnNames = columnSet.toArray(new String[0]);
 
-    Table rows = table
-        .getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
-            new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) },
-            null);
+    Table rows = table.getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE,
+        DbTable.DB_TRANSACTIONING },
+        new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();
