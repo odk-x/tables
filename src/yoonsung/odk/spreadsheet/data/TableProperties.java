@@ -43,6 +43,7 @@ public class TableProperties {
     private static final String DB_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
     private static final String DB_SYNC_STATE = "syncState";
     private static final String DB_TRANSACTIONING = "transactioning";
+    private static final String DB_IS_SYNCHED = "isSynched";
     // keys for JSON
     private static final String JSON_KEY_VERSION = "jVersion";
     private static final String JSON_KEY_TABLE_ID = "tableId";
@@ -89,6 +90,7 @@ public class TableProperties {
         DB_SUM_DISPLAY_FORMAT,
         DB_SYNC_STATE,
         DB_TRANSACTIONING, 
+        DB_IS_SYNCHED,
     };
     // columns included in json properties
     private static final List<String> JSON_COLUMNS = Arrays.asList(new String[]{
@@ -142,7 +144,8 @@ public class TableProperties {
     private String detailViewFilename;
     private String sumDisplayFormat;
     private int syncState;
-    private int transactioning;
+    private boolean transactioning;
+    private boolean isSynched;
     
     private TableProperties(DbHelper dbh, String tableId, String dbTableName,
             String displayName, int tableType, String[] columnOrder,
@@ -150,7 +153,7 @@ public class TableProperties {
             String readSecurityTableId, String writeSecurityTableId,
             String syncTag, String lastSyncTime, String ovViewSettingsDbString,
             String coViewSettingsDbString, String detailViewFilename,
-            String sumDisplayFormat, int syncState, int transactioning) {
+            String sumDisplayFormat, int syncState, boolean transactioning, boolean isSynched) {
         this.dbh = dbh;
         whereArgs = new String[] { String.valueOf(tableId) };
         this.tableId = tableId;
@@ -173,6 +176,7 @@ public class TableProperties {
         this.sumDisplayFormat = sumDisplayFormat;
         this.syncState = syncState;
         this.transactioning = transactioning;
+        this.isSynched = isSynched;
     }
     
     public static TableProperties getTablePropertiesForTable(DbHelper dbh,
@@ -246,6 +250,7 @@ public class TableProperties {
                 DB_SUM_DISPLAY_FORMAT);
         int syncStateIndex = c.getColumnIndexOrThrow(DB_SYNC_STATE);
         int transactioningIndex = c.getColumnIndexOrThrow(DB_TRANSACTIONING);
+        int isSynchedIndex = c.getColumnIndexOrThrow(DB_IS_SYNCHED);
         
         int i = 0;
         c.moveToFirst();
@@ -267,7 +272,8 @@ public class TableProperties {
                     c.getString(detailViewFileIndex),
                     c.getString(sumDisplayFormatIndex),
                     c.getInt(syncStateIndex),
-                    c.getInt(transactioningIndex));
+                    SyncUtil.intToBool(c.getInt(transactioningIndex)),
+                    SyncUtil.intToBool(c.getInt(isSynchedIndex)));
             i++;
             c.moveToNext();
         }
@@ -322,13 +328,14 @@ public class TableProperties {
         values.putNull(DB_DETAIL_VIEW_FILE);
         values.putNull(DB_SUM_DISPLAY_FORMAT);
         values.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
-        values.put(DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+        values.put(DB_TRANSACTIONING, SyncUtil.boolToInt(false));
+        values.put(DB_IS_SYNCHED, SyncUtil.boolToInt(false));
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.beginTransaction();
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null,
                 null, null, null, null, null, null, null, null,
-                SyncUtil.State.INSERTING, SyncUtil.Transactioning.FALSE);
+                SyncUtil.State.INSERTING, false, false);
         long result = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "row id=" + result);
         if (result < 0) {
@@ -343,7 +350,10 @@ public class TableProperties {
     }
     
     public void deleteTable() {
-      setSyncState(SyncUtil.State.DELETING);
+      if (isSynched && (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING))
+        setSyncState(SyncUtil.State.DELETING);
+      else if (!isSynched || syncState == SyncUtil.State.INSERTING)
+        deleteTableActual();
     }
     
     public void deleteTableActual() {
@@ -860,7 +870,7 @@ public class TableProperties {
     /**
      * @return the transactioning status
      */
-    public int getTransactioning() {
+    public boolean isTransactioning() {
         return transactioning;
     }
     
@@ -868,9 +878,18 @@ public class TableProperties {
      * Sets the transactioning status.
      * @param transactioning the new transactioning status
      */
-    public void setTransactioning(int transactioning) {
-        setIntProperty(DB_TRANSACTIONING, transactioning);
+    public void setTransactioning(boolean transactioning) {
+        setIntProperty(DB_TRANSACTIONING, SyncUtil.boolToInt(transactioning));
         this.transactioning = transactioning;
+    }
+    
+    public boolean isSynchronized() {
+      return isSynched;
+    }
+    
+    public void setSynchronized(boolean isSynchronized) {
+      setIntProperty(DB_IS_SYNCHED, SyncUtil.boolToInt(isSynchronized));
+      this.isSynched = isSynchronized;
     }
     
     public String toJson() {
@@ -973,7 +992,7 @@ public class TableProperties {
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
         db.close();
-        if (JSON_COLUMNS.contains(property))
+        if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
           setSyncState(SyncUtil.State.UPDATING);
     }
     
@@ -981,10 +1000,10 @@ public class TableProperties {
         SQLiteDatabase db = dbh.getWritableDatabase();
         setStringProperty(property, value, db);
         db.close();
-        if (JSON_COLUMNS.contains(property))
+        if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
           setSyncState(SyncUtil.State.UPDATING);
     }
-    
+     
     private void setStringProperty(String property, String value,
             SQLiteDatabase db) {
         ContentValues values = new ContentValues();
@@ -1027,6 +1046,7 @@ public class TableProperties {
                 ", " + DB_SUM_DISPLAY_FORMAT + " TEXT" +
                 ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
                 ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
+                ", " + DB_IS_SYNCHED + " INTEGER NOT NULL" +
                 ")";
     }
 }
