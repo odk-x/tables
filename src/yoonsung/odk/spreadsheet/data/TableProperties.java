@@ -1025,6 +1025,11 @@ public class TableProperties {
         return tableId.hashCode();
     }
     
+    @Override
+    public String toString() {
+      return displayName;
+    }
+    
     static String getTableCreateSql() {
         return "CREATE TABLE " + DB_TABLENAME + "(" +
                        DB_TABLE_ID + " TEXT UNIQUE NOT NULL" +
