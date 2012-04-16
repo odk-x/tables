@@ -1,7 +1,11 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,6 +19,10 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import yoonsung.odk.spreadsheet.Activity.util.LanguageUtil;
 import yoonsung.odk.spreadsheet.Activity.util.SecurityUtil;
 import yoonsung.odk.spreadsheet.Activity.util.ShortcutUtil;
@@ -22,6 +30,7 @@ import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.TableViewSettings;
+import yoonsung.odk.spreadsheet.data.TableViewSettings.ConditionalRuler;
 
 /**
  * An activity for managing a table's properties.
@@ -259,7 +268,18 @@ public class TablePropertiesManager extends PreferenceActivity {
             throw new RuntimeException();
         }
         
-        final List<ColumnProperties> numberCols = getNumberColumns();
+        final List<ColumnProperties> numberCols =
+            new ArrayList<ColumnProperties>();
+        final List<ColumnProperties> locationCols =
+            new ArrayList<ColumnProperties>();
+        for (ColumnProperties cp : tp.getColumns()) {
+            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                numberCols.add(cp);
+            } else if (cp.getColumnType() ==
+                    ColumnProperties.ColumnType.LOCATION) {
+                locationCols.add(cp);
+            }
+        }
         
         List<Integer> viewTypeIndices = new ArrayList<Integer>();
         for (int i = 0; i < TableViewSettings.Type.COUNT; i++) {
@@ -518,17 +538,61 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
             break;
         
-        }
-    }
-    
-    private List<ColumnProperties> getNumberColumns() {
-        List<ColumnProperties> cols = new ArrayList<ColumnProperties>();
-        for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
-                cols.add(cp);
+        case TableViewSettings.Type.MAP:
+            {
+            ColumnProperties locCol = settings.getMapLocationCol();
+            if (locCol == null) {
+                locCol = locationCols.get(0);
             }
+            String[] locColDbNames = new String[locationCols.size()];
+            String[] locColDisplayNames = new String[locationCols.size()];
+            for (int i = 0; i < locationCols.size(); i++) {
+                locColDbNames[i] = locationCols.get(i).getColumnDbName();
+                locColDisplayNames[i] = locationCols.get(i).getDisplayName();
+            }
+            
+            ListPreference mapLocPref = new ListPreference(this);
+            mapLocPref.setTitle(label + " Location Column");
+            mapLocPref.setDialogTitle("Change " + label + " Location Column");
+            mapLocPref.setEntryValues(locColDbNames);
+            mapLocPref.setEntries(locColDisplayNames);
+            mapLocPref.setValue(locCol.getColumnDbName());
+            mapLocPref.setSummary(locCol.getDisplayName());
+            mapLocPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setMapLocationCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLocPref);
+            
+            String[] mapColorLabels =
+                new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
+            for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length;
+                    i++) {
+                mapColorLabels[i] = LanguageUtil.getMapColorLabel(
+                        TableViewSettings.MAP_COLOR_OPTIONS[i]);
+            }
+            Map<ColumnProperties, ConditionalRuler> colorRulers =
+                new HashMap<ColumnProperties, ConditionalRuler>();
+            for (ColumnProperties cp : tp.getColumns()) {
+                colorRulers.put(cp, settings.getMapColorRuler(cp));
+            }
+            ConditionalRulerDialogPreference ccPref =
+                new ConditionalRulerDialogPreference(
+                        TableViewSettings.MAP_COLOR_OPTIONS, mapColorLabels,
+                        colorRulers);
+            ccPref.setTitle(label + " Map Color Options");
+            prefCat.addPreference(ccPref);
+            }
+            break;
+        
         }
-        return cols;
     }
     
     @Override
@@ -574,6 +638,72 @@ public class TablePropertiesManager extends PreferenceActivity {
             List<ResolveInfo> list = packageManager.queryIntentActivities(
                     intent, PackageManager.MATCH_DEFAULT_ONLY);
             return (list.size() > 0);
+        }
+    }
+    
+    private class ConditionalRulerDialogPreference extends Preference {
+        
+        private final int[] values;
+        private final String[] labels;
+        private final Map<ColumnProperties, ConditionalRuler> rulerMap;
+        private final Dialog dialog;
+        
+        public ConditionalRulerDialogPreference(int[] values, String[] labels,
+                Map<ColumnProperties, ConditionalRuler> rulerMap) {
+            super(TablePropertiesManager.this);
+            this.values = values;
+            this.labels = labels;
+            this.rulerMap = rulerMap;
+            dialog = buildDialog();
+        }
+        
+        private Dialog buildDialog() {
+            String[] columnValues = new String[tp.getColumns().length];
+            String[] columnDisplays = new String[tp.getColumns().length];
+            for (int i = 0; i < tp.getColumns().length; i++) {
+                ColumnProperties cp = tp.getColumns()[i];
+                columnValues[i] = cp.getColumnDbName();
+                columnDisplays[i] = cp.getDisplayName();
+            }
+            String[] comparatorValues =
+                new String[ConditionalRuler.Comparator.COUNT];
+            String[] comparatorDisplays =
+                new String[ConditionalRuler.Comparator.COUNT];
+            for (int i = 0; i < ConditionalRuler.Comparator.COUNT; i++) {
+                comparatorValues[i] = String.valueOf(i);
+                comparatorDisplays[i] =
+                    LanguageUtil.getTvsConditionalComparator(i);
+            }
+            LinearLayout.LayoutParams rwLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.FILL_PARENT,
+                    LinearLayout.LayoutParams.FILL_PARENT);
+            Context context = TablePropertiesManager.this;
+            LinearLayout wrapper = new LinearLayout(context);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            for (ColumnProperties cp : tp.getColumns()) {
+                ConditionalRuler cr = rulerMap.get(cp);
+                for (int i = 0; i < cr.getRuleCount(); i++) {
+                    LinearLayout rw = new LinearLayout(context);
+                    Spinner colSpinner = new Spinner(context);
+                    ArrayAdapter<String> colAdapter = new ArrayAdapter<String>(
+                            context, android.R.layout.simple_spinner_item,
+                            columnDisplays);
+                    colSpinner.setAdapter(colAdapter);
+                    rw.addView(colSpinner);
+                    EditText valueEt = new EditText(context);
+                    valueEt.setText(cr.getRuleValue(i));
+                    rw.addView(valueEt);
+                    wrapper.addView(rw, rwLp);
+                }
+            }
+            AlertDialog.Builder ab = new AlertDialog.Builder(context);
+            ab.setView(wrapper);
+            return ab.create();
+        }
+        
+        @Override
+        protected void onClick() {
+            dialog.show();
         }
     }
 }

@@ -11,6 +11,7 @@ import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
+import yoonsung.odk.spreadsheet.Activity.util.UTMConverter;
 
 
 public class DataUtil {
@@ -74,6 +75,16 @@ public class DataUtil {
     private static final Pattern USER_NOW_RELATIVE_FORMAT =
         Pattern.compile("now\\s*(-|\\+)\\s*(\\d+S)");
     
+    private static final Pattern USER_LOCATION_LAT_LON_FORMAT =
+        Pattern.compile("\\(?(-?(\\d+|\\.\\d+|\\d+\\.\\d+))," +
+                "\\s*(-?(\\d+|\\.\\d+|\\d+\\.\\d+))\\)?");
+    private static final Pattern USER_LOCATION_UTM_COMMA_FORMAT =
+        Pattern.compile("(-?(\\d+|\\.\\d+|\\d+\\.\\d+)),\\s*" +
+                "(-?(\\d+|\\.\\d+|\\d+\\.\\d+)),\\s*(\\d+),\\s*(n|N|s|S)");
+    private static final Pattern USER_LOCATION_UTM_SPACE_FORMAT =
+        Pattern.compile("(\\d+)(n|N|s|S)\\s+(-?(\\d+|\\.\\d+|\\d+\\.\\d+))" +
+                "\\s+(-?(\\d+|\\.\\d+|\\d+\\.\\d+))");
+    
     private static final String USER_SHORT_FORMAT = "M/d h:mma";
     private static final String USER_LONG_FORMAT = "M/d/yyyy h:mm:ssa";
     
@@ -132,6 +143,8 @@ public class DataUtil {
             return validifyNumberValue(input);
         case ColumnProperties.ColumnType.MC_OPTIONS:
             return validifyMultipleChoiceValue(cp, input);
+        case ColumnProperties.ColumnType.LOCATION:
+            return validifyLocationValue(input);
         default:
             return input;
         }
@@ -172,6 +185,48 @@ public class DataUtil {
             if (opt.equalsIgnoreCase(input)) {
                 return opt;
             }
+        }
+        return null;
+    }
+    
+    private String validifyLocationValue(String input) {
+        Matcher matcher = USER_LOCATION_LAT_LON_FORMAT.matcher(input);
+        if (matcher.matches()) {
+            Double latDouble = Double.parseDouble(matcher.group(1));
+            Double lonDouble = Double.parseDouble(matcher.group(3));
+            int latInt = Double.valueOf(latDouble * 1000000).intValue();
+            int lonInt = Double.valueOf(lonDouble * 1000000).intValue();
+            return latInt + "," + lonInt;
+        }
+        matcher = USER_LOCATION_UTM_COMMA_FORMAT.matcher(input);
+        if (matcher.matches()) {
+            double x = Double.parseDouble(matcher.group(1));
+            double y = Double.parseDouble(matcher.group(3));
+            int zone = Integer.parseInt(matcher.group(5));
+            String hemi = matcher.group(6);
+            boolean isSouthHemi = hemi.equalsIgnoreCase("s");
+            double[] latLon = UTMConverter.parseUTM(x, y, zone, isSouthHemi);
+            if (latLon == null) {
+                return null;
+            }
+            int latInt = Double.valueOf(latLon[0] * 1000000).intValue();
+            int lonInt = Double.valueOf(latLon[1] * 1000000).intValue();
+            return latInt + "," + lonInt;
+        }
+        matcher = USER_LOCATION_UTM_SPACE_FORMAT.matcher(input);
+        if (matcher.matches()) {
+            double x = Double.parseDouble(matcher.group(3));
+            double y = Double.parseDouble(matcher.group(5));
+            int zone = Integer.parseInt(matcher.group(1));
+            String hemi = matcher.group(2);
+            boolean isSouthHemi = hemi.equalsIgnoreCase("s");
+            double[] latLon = UTMConverter.parseUTM(x, y, zone, isSouthHemi);
+            if (latLon == null) {
+                return null;
+            }
+            int latInt = Double.valueOf(latLon[0] * 1000000).intValue();
+            int lonInt = Double.valueOf(latLon[1] * 1000000).intValue();
+            return latInt + "," + lonInt;
         }
         return null;
     }
@@ -301,5 +356,11 @@ public class DataUtil {
     public String formatLongIntervalForUser(Interval interval) {
         return formatLongDateTimeForUser(interval.getStart()) + " - " +
                 formatLongDateTimeForUser(interval.getEnd());
+    }
+    
+    public int[] parseLocationFromDb(String dbString) {
+        String[] split = dbString.split(",");
+        return new int[] {Integer.parseInt(split[0]),
+                Integer.parseInt(split[1])};
     }
 }

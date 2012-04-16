@@ -72,6 +72,7 @@ public class ColumnProperties {
         public static final int COLLECT_FORM = 7;
         public static final int MC_OPTIONS = 8;
         public static final int TABLE_JOIN = 9;
+        public static final int LOCATION = 10;
         private ColumnType() {}
     }
     

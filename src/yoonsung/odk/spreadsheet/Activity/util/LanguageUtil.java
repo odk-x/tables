@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.Activity.util;
 
+import android.graphics.Color;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.TableViewSettings;
 
@@ -32,6 +33,36 @@ public class LanguageUtil {
             return "Box-Stem Graph";
         case TableViewSettings.Type.BAR_GRAPH:
             return "Bar Graph";
+        case TableViewSettings.Type.MAP:
+            return "Map";
+        default:
+            throw new RuntimeException();
+        }
+    }
+    
+    public static String getTvsConditionalComparator(int comparatorType) {
+        switch (comparatorType) {
+        case TableViewSettings.ConditionalRuler.Comparator.EQUALS:
+            return "=";
+        case TableViewSettings.ConditionalRuler.Comparator.LESS_THAN:
+            return "<";
+        case TableViewSettings.ConditionalRuler.Comparator.LESS_THAN_EQUALS:
+            return "<=";
+        case TableViewSettings.ConditionalRuler.Comparator.GREATER_THAN:
+            return ">";
+        case TableViewSettings.ConditionalRuler.Comparator.GREATER_THAN_EQUALS:
+            return ">=";
+        default:
+            throw new RuntimeException();
+        }
+    }
+    
+    public static String getMapColorLabel(int color) {
+        switch (color) {
+        case Color.BLACK:
+            return "Black";
+        case Color.BLUE:
+            return "Blue";
         default:
             throw new RuntimeException();
         }

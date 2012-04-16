@@ -18,6 +18,7 @@ import yoonsung.odk.spreadsheet.Activity.TablePropertiesManager;
 import yoonsung.odk.spreadsheet.Activity.util.LanguageUtil;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DataManager;
+import yoonsung.odk.spreadsheet.data.DataUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.TableProperties;
@@ -81,6 +82,7 @@ public class Controller {
         "/sdcard/odk/tables/addrowform.xml";
     private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
     
+    private final DataUtil du;
     private final Activity activity;
     private final DisplayActivity da;
     private final DataManager dm;
@@ -95,6 +97,7 @@ public class Controller {
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
+        du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
         this.da = da;
         // getting intent information
@@ -332,8 +335,13 @@ public class Controller {
         }
         Map<String, String> values = new HashMap<String, String>();
         for (String key : formValues.keySet()) {
-            if (tp.getColumnByDbName(key) != null) {
-                values.put(key, formValues.get(key));
+            ColumnProperties cp = tp.getColumnByDbName(key);
+            if (cp == null) {
+                continue;
+            }
+            String value = du.validifyValue(cp, formValues.get(key));
+            if (value != null) {
+                values.put(key, value);
             }
         }
         dbt.addRow(values);
@@ -414,6 +422,9 @@ public class Controller {
         case TableViewSettings.Type.BAR_GRAPH:
             intent = new Intent(context, BarGraphDisplayActivity.class);
             break;
+        case TableViewSettings.Type.MAP:
+            intent = new Intent(context, MapDisplayActivity.class);
+            break;
         default:
             intent = new Intent(context, SpreadsheetDisplayActivity.class);
         }
@@ -459,10 +470,14 @@ public class Controller {
             LinearLayout wrapper = new LinearLayout(context);
             wrapper.setOrientation(LinearLayout.VERTICAL);
             // adding the view type spinner
+            int selectionIndex = 0;
             final int[] viewTypeIds = tvs.getPossibleViewTypes();
             String[] viewTypeStringIds = new String[viewTypeIds.length];
             String[] viewTypeNames = new String[viewTypeIds.length];
             for (int i = 0; i < viewTypeIds.length; i++) {
+                if (tvs.getViewType() == viewTypeIds[i]) {
+                    selectionIndex = i;
+                }
                 viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
                 viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
                         viewTypeIds[i]);
@@ -473,7 +488,7 @@ public class Controller {
                     android.R.layout.simple_spinner_dropdown_item);
             final Spinner spinner = new Spinner(context);
             spinner.setAdapter(adapter);
-            spinner.setSelection(tvs.getViewType());
+            spinner.setSelection(selectionIndex);
             wrapper.addView(spinner);
             // adding the set and cancel buttons
             Button setButton = new Button(context);

@@ -1,10 +1,13 @@
 package yoonsung.odk.spreadsheet.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import android.graphics.Color;
 
 
 public class TableViewSettings {
@@ -20,9 +23,12 @@ public class TableViewSettings {
         public static final int LINE_GRAPH = 2;
         public static final int BOX_STEM = 3;
         public static final int BAR_GRAPH = 4;
-        public static final int COUNT = 5;
+        public static final int MAP = 5;
+        public static final int COUNT = 6;
         private Type() {}
     }
+    
+    public static final int[] MAP_COLOR_OPTIONS = {Color.BLACK, Color.BLUE};
     
     private static final String JSON_KEY_VIEW_TYPE = "viewType";
     private static final String JSON_KEY_TABLE_SETTINGS = "table";
@@ -39,6 +45,10 @@ public class TableViewSettings {
     private static final String JSON_KEY_BOX_STEM_SETTINGS = "boxStem";
     private static final String JSON_KEY_BOX_STEM_X_COL = "boxStemX";
     private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
+    private static final String JSON_KEY_MAP_SETTINGS = "map";
+    private static final String JSON_KEY_MAP_LOC_COL = "mapLocCol";
+    private static final String JSON_KEY_MAP_COLOR_RULERS = "mapColorRulers";
+    private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
     
     private static final int DEFAULT_TABLE_COL_WIDTH = 125;
     
@@ -54,11 +64,16 @@ public class TableViewSettings {
     private String barYCol;
     private String boxStemXCol;
     private String boxStemYCol;
+    private String mapLocCol;
+    private Map<String, ConditionalRuler> mapColorRulers;
+    private Map<String, ConditionalRuler> mapSizeRulers;
     
     private TableViewSettings(TableProperties tp, ViewType type,
             String dbString) {
         this.tp = tp;
         this.type = type;
+        mapColorRulers = new HashMap<String, ConditionalRuler>();
+        mapSizeRulers = new HashMap<String, ConditionalRuler>();
         if (dbString == null) {
             viewType = Type.SPREADSHEET;
             return;
@@ -91,6 +106,9 @@ public class TableViewSettings {
         if (jo.has(JSON_KEY_BOX_STEM_SETTINGS)) {
             setBoxStemFromJsonObject(jo.getJSONObject(
                     JSON_KEY_BOX_STEM_SETTINGS));
+        }
+        if (jo.has(JSON_KEY_MAP_SETTINGS)) {
+            setMapFromJsonObject(jo.getJSONObject(JSON_KEY_MAP_SETTINGS));
         }
     }
     
@@ -130,6 +148,33 @@ public class TableViewSettings {
                 jo.getString(JSON_KEY_BOX_STEM_X_COL) : null;
         boxStemYCol = jo.has(JSON_KEY_BOX_STEM_Y_COL) ?
                 jo.getString(JSON_KEY_BOX_STEM_Y_COL) : null;
+    }
+    
+    private void setMapFromJsonObject(JSONObject jo) throws JSONException {
+        mapLocCol = jo.has(JSON_KEY_MAP_LOC_COL) ?
+                jo.getString(JSON_KEY_MAP_LOC_COL) : null;
+        if (jo.has(JSON_KEY_MAP_COLOR_RULERS)) {
+            JSONObject colorRulerJo =
+                jo.getJSONObject(JSON_KEY_MAP_COLOR_RULERS);
+            for (ColumnProperties cp : tp.getColumns()) {
+                String cdn = cp.getColumnDbName();
+                if (colorRulerJo.has(cdn)) {
+                    mapColorRulers.put(cdn, new ConditionalRuler(
+                            colorRulerJo.getJSONObject(cdn)));
+                }
+            }
+        }
+        if (jo.has(JSON_KEY_MAP_SIZE_RULERS)) {
+            JSONObject sizeRulerJo = jo.getJSONObject(
+                    JSON_KEY_MAP_SIZE_RULERS);
+            for (ColumnProperties cp : tp.getColumns()) {
+                String cdn = cp.getColumnDbName();
+                if (sizeRulerJo.has(cdn)) {
+                    mapSizeRulers.put(cdn, new ConditionalRuler(
+                            sizeRulerJo.getJSONObject(cdn)));
+                }
+            }
+        }
     }
     
     public static TableViewSettings newOverviewTVS(TableProperties tp,
@@ -199,6 +244,30 @@ public class TableViewSettings {
             tp.getColumnByDbName(boxStemYCol);
     }
     
+    public ColumnProperties getMapLocationCol() {
+        return (mapLocCol == null) ? null : tp.getColumnByDbName(mapLocCol);
+    }
+    
+    public ConditionalRuler getMapColorRuler(ColumnProperties cp) {
+        if (mapColorRulers.containsKey(cp.getColumnDbName())) {
+            return mapColorRulers.get(cp.getColumnDbName());
+        } else {
+            ConditionalRuler cr = new ConditionalRuler();
+            mapColorRulers.put(cp.getColumnDbName(), cr);
+            return cr;
+        }
+    }
+    
+    public ConditionalRuler getMapSizeRuler(ColumnProperties cp) {
+        if (mapSizeRulers.containsKey(cp.getColumnDbName())) {
+            return mapSizeRulers.get(cp.getColumnDbName());
+        } else {
+            ConditionalRuler cr = new ConditionalRuler();
+            mapSizeRulers.put(cp.getColumnDbName(), cr);
+            return cr;
+        }
+    }
+    
     JSONObject toJsonObject() {
         JSONObject jo = new JSONObject();
         try {
@@ -208,6 +277,7 @@ public class TableViewSettings {
             jo.put(JSON_KEY_LINE_SETTINGS, lineSettingsToJsonObject());
             jo.put(JSON_KEY_BAR_SETTINGS, barSettingsToJsonObject());
             jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
+            jo.put(JSON_KEY_MAP_SETTINGS, mapSettingsToJsonObject());
             return jo;
         } catch(JSONException e) {
             throw new RuntimeException(e);
@@ -270,6 +340,30 @@ public class TableViewSettings {
         return jo;
     }
     
+    private JSONObject mapSettingsToJsonObject() throws JSONException {
+        JSONObject jo = new JSONObject();
+        if (mapLocCol != null) {
+            jo.put(JSON_KEY_MAP_LOC_COL, mapLocCol);
+        }
+        JSONObject colorRulerJo = new JSONObject();
+        for (String key : mapColorRulers.keySet()) {
+            ConditionalRuler cr = mapColorRulers.get(key);
+            if (cr.getRuleCount() > 0) {
+                colorRulerJo.put(key, cr.toJsonObject());
+            }
+        }
+        jo.put(JSON_KEY_MAP_COLOR_RULERS, colorRulerJo);
+        JSONObject sizeRulerJo = new JSONObject();
+        for (String key : mapSizeRulers.keySet()) {
+            ConditionalRuler cr = mapSizeRulers.get(key);
+            if (cr.getRuleCount() > 0) {
+                sizeRulerJo.put(key, cr.toJsonObject());
+            }
+        }
+        jo.put(JSON_KEY_MAP_SIZE_RULERS, sizeRulerJo);
+        return jo;
+    }
+    
     public void setViewType(int viewType) {
         this.viewType = viewType;
         set();
@@ -320,6 +414,11 @@ public class TableViewSettings {
         set();
     }
     
+    public void setMapLocationCol(ColumnProperties cp) {
+        mapLocCol = (cp == null) ? null : cp.getColumnDbName();
+        set();
+    }
+    
     private void set() {
         String dbString = toJsonObject().toString();
         if (type == ViewType.OVERVIEW_VIEW) {
@@ -331,9 +430,13 @@ public class TableViewSettings {
     
     public int[] getPossibleViewTypes() {
         int numericColCount = 0;
+        int locationColCount = 0;
         for (ColumnProperties cp : tp.getColumns()) {
             if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
                 numericColCount++;
+            } else if (cp.getColumnType() ==
+                ColumnProperties.ColumnType.LOCATION) {
+                locationColCount++;
             }
         }
         List<Integer> list = new ArrayList<Integer>();
@@ -346,10 +449,126 @@ public class TableViewSettings {
             list.add(Type.BOX_STEM);
         }
         list.add(Type.BAR_GRAPH);
+        if (locationColCount >= 1) {
+            list.add(Type.MAP);
+        }
         int[] arr = new int[list.size()];
         for (int i = 0; i < list.size(); i++) {
             arr[i] = list.get(i);
         }
         return arr;
+    }
+    
+    public class ConditionalRuler {
+        
+        private static final String JSON_KEY_COMPARATORS = "comparators";
+        private static final String JSON_KEY_VALUES = "values";
+        private static final String JSON_KEY_SETTINGS = "settings";
+        
+        public class Comparator {
+            public static final int EQUALS = 0;
+            public static final int LESS_THAN = 1;
+            public static final int LESS_THAN_EQUALS = 2;
+            public static final int GREATER_THAN = 3;
+            public static final int GREATER_THAN_EQUALS = 4;
+            public static final int COUNT = 5;
+            private Comparator() {}
+        }
+        
+        private final List<Integer> comparators;
+        private final List<String> values;
+        private final List<Integer> settings;
+        
+        ConditionalRuler() {
+            comparators = new ArrayList<Integer>();
+            values = new ArrayList<String>();
+            settings = new ArrayList<Integer>();
+        }
+        
+        ConditionalRuler(JSONObject jo) {
+            comparators = new ArrayList<Integer>();
+            values = new ArrayList<String>();
+            settings = new ArrayList<Integer>();
+            JSONArray comparatorsArr;
+            try {
+                comparatorsArr = jo.getJSONArray(JSON_KEY_COMPARATORS);
+                JSONArray valuesArr = jo.getJSONArray(JSON_KEY_VALUES);
+                JSONArray colorsArr = jo.getJSONArray(JSON_KEY_SETTINGS);
+                for (int i = 0; i < comparatorsArr.length(); i++) {
+                    comparators.add(comparatorsArr.getInt(i));
+                    values.add(valuesArr.getString(i));
+                    settings.add(colorsArr.getInt(i));
+                }
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        public int getSetting(String value, int defaultSetting) {
+            for (int i = 0; i < comparators.size(); i++) {
+                if (checkMatch(i, value)) {
+                    return settings.get(i);
+                }
+            }
+            return defaultSetting;
+        }
+        
+        private boolean checkMatch(int index, String value) {
+            switch (comparators.get(index)) {
+            case Comparator.EQUALS:
+                return value.equals(values.get(index));
+            case Comparator.LESS_THAN:
+                return (value.compareTo(values.get(index)) < 0);
+            case Comparator.LESS_THAN_EQUALS:
+                return (value.compareTo(values.get(index)) <= 0);
+            case Comparator.GREATER_THAN:
+                return (value.compareTo(values.get(index)) > 0);
+            case Comparator.GREATER_THAN_EQUALS:
+                return (value.compareTo(values.get(index)) >= 0);
+            default:
+                throw new RuntimeException();
+            }
+        }
+        
+        public void addRule(int comparator, String value, int setting) {
+            comparators.add(comparator);
+            values.add(value);
+            settings.add(setting);
+            set();
+        }
+        
+        public int getRuleCount() {
+            return comparators.size();
+        }
+        
+        public int getRuleComparator(int index) {
+            return comparators.get(index);
+        }
+        
+        public String getRuleValue(int index) {
+            return values.get(index);
+        }
+        
+        public int getRuleSetting(int index) {
+            return settings.get(index);
+        }
+        
+        public void deleteRule(int index) {
+            comparators.remove(index);
+            values.remove(index);
+            settings.remove(index);
+        }
+        
+        JSONObject toJsonObject() {
+            JSONObject jo = new JSONObject();
+            try {
+                jo.put(JSON_KEY_COMPARATORS, new JSONArray(comparators));
+                jo.put(JSON_KEY_VALUES, new JSONArray(values));
+                jo.put(JSON_KEY_SETTINGS, new JSONArray(settings));
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+            return jo;
+        }
     }
 }

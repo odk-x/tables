@@ -37,7 +37,8 @@ public class PropertyManager extends PreferenceActivity {
         "File",
         "Collect Form",
         "Multiple Choice",
-        "Join"
+        "Join",
+        "Location"
     };
     
     public static final String[] FOOTER_MODE_LABELS = {
