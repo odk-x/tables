@@ -1,10 +1,13 @@
 package yoonsung.odk.spreadsheet.sync;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
@@ -17,6 +20,12 @@ import android.content.ContentValues;
 import android.content.SyncResult;
 import android.util.Log;
 
+/**
+ * SyncProcessor implements the cloud synchronization logic for Tables.
+ * 
+ * @author the.dylan.price@gmail.com
+ * 
+ */
 public class SyncProcessor {
 
   private static final String TAG = SyncProcessor.class.getSimpleName();
@@ -33,73 +42,90 @@ public class SyncProcessor {
     this.synchronizer = synchronizer;
   }
 
+  /**
+   * Synchronize all synchronized tables with the cloud.
+   */
   public void synchronize() {
     Log.i(TAG, "entered synchronize()");
-    TableProperties[] tps = dm.getAllTableProperties();
+    TableProperties[] tps = dm.getSynchronizedTableProperties();
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);
     }
-    TableProperties[] deleting = dm.getDeletingTableProperties();
-    for (TableProperties tp : deleting) {
-      synchronizeTable(tp);
-    }
   }
 
+  /**
+   * Synchronize the table represented by the given TableProperties with the
+   * cloud. If tp.isSynchronized() == false, returns without doing anything.
+   * 
+   * @param tp
+   *          the table to synchronize
+   */
   public void synchronizeTable(TableProperties tp) {
+    if (!tp.isSynchronized())
+      return;
+
     DbTable table = dm.getDbTable(tp.getTableId());
 
-    beginTableTransaction(tp);
     boolean success = false;
-
-    switch (tp.getSyncState()) {
-    case SyncUtil.State.INSERTING:
-      success = synchronizeTableInserting(tp, table);
-      break;
-    case SyncUtil.State.UPDATING:
-      success = synchronizeTableUpdating(tp, table);
-      break;
-    case SyncUtil.State.DELETING:
-      success = synchronizeTableDeleting(tp, table);
-      break;
-    case SyncUtil.State.REST:
-      success = synchronizeTableRest(tp, table);
-      break;
+    beginTableTransaction(tp);
+    try {
+      switch (tp.getSyncState()) {
+      case SyncUtil.State.INSERTING:
+        success = synchronizeTableInserting(tp, table);
+        break;
+      case SyncUtil.State.UPDATING:
+        success = synchronizeTableUpdating(tp, table);
+        break;
+      case SyncUtil.State.DELETING:
+        success = synchronizeTableDeleting(tp, table);
+        break;
+      case SyncUtil.State.REST:
+        success = synchronizeTableRest(tp, table);
+        break;
+      }
+      tp.setLastSyncTime(du.formatNowForDb());
+    } finally {
+      endTableTransaction(tp, success);
     }
-    tp.setLastSyncTime(du.formatNowForDb());
-    endTableTransaction(tp, success);
   }
 
-  public boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
     // TODO: update table properties on server
     return false;
   }
 
-  public boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
     Map<String, Integer> columns = getColumns(tp);
-    boolean success = false;
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
 
+    boolean success = false;
     beginRowsTransaction(table, getRowIdsAsArray(rowsToInsert));
-
     try {
       String syncTag = synchronizer.createTable(tableId, columns);
       tp.setSyncTag(syncTag);
       Modification modification = synchronizer.insertRows(tableId, rowsToInsert);
       updateDbFromModification(modification, table, tp);
       success = true;
-    } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize inserting on table: " + tableId, e);
+    } catch (IOException e) {
+      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
+      syncResult.stats.numIoExceptions++;
       success = false;
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize inserting on table: " + tp.getDisplayName(),
+          e);
+      syncResult.stats.numSkippedEntries += rowsToInsert.size();
+      success = false;
+    } finally {
+      endRowsTransaction(table, getRowIdsAsArray(rowsToInsert), success);
     }
 
-    endRowsTransaction(table, getRowIdsAsArray(rowsToInsert), success);
     return success;
   }
 
-  public boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "DELETING " + tp.getDisplayName());
     boolean success = false;
@@ -108,18 +134,21 @@ public class SyncProcessor {
       tp.deleteTableActual();
       syncResult.stats.numDeletes++;
       syncResult.stats.numEntries++;
+    } catch (IOException e) {
+      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
+      syncResult.stats.numIoExceptions++;
+      success = false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tableId, e);
+      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tp.getDisplayName(), e);
       success = false;
     }
     return success;
   }
 
-  public boolean synchronizeTableRest(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableRest(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
     Map<String, Integer> columns = getColumns(tp);
-    boolean success = false;
 
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
     List<SyncRow> rowsToUpdate = getRows(table, columns, SyncUtil.State.UPDATING);
@@ -130,8 +159,9 @@ public class SyncProcessor {
     allRows.addAll(rowsToUpdate);
     allRows.addAll(rowsToDelete);
     String[] rowIds = getRowIdsAsArray(allRows);
-    beginRowsTransaction(table, rowIds);
 
+    boolean success = false;
+    beginRowsTransaction(table, rowIds);
     try {
       updateDbFromServer(tp, table);
       Modification modification = synchronizer.insertRows(tableId, rowsToInsert);
@@ -146,25 +176,30 @@ public class SyncProcessor {
         syncResult.stats.numEntries++;
       }
       success = true;
-    } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tableId, e);
+    } catch (IOException e) {
+      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
+      syncResult.stats.numIoExceptions++;
       success = false;
+    } catch (Exception e) {
+      Log.e(TAG, "Unexpected exception in synchronize rest on table: " + tp.getDisplayName(), e);
+      success = false;
+    } finally {
+      if (success)
+        allRows.removeAll(rowsToDelete);
+      rowIds = getRowIdsAsArray(allRows);
+      endRowsTransaction(table, rowIds, success);
     }
 
-    allRows.removeAll(rowsToDelete);
-    rowIds = getRowIdsAsArray(allRows);
-    endRowsTransaction(table, rowIds, success);
     return success;
   }
 
-  public void updateDbFromServer(TableProperties tp, DbTable table) {
+  private void updateDbFromServer(TableProperties tp, DbTable table) throws IOException {
 
     IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
 
-    Table allRowIds = table.getRaw(new String[] { DbTable.DB_ROW_ID, DbTable.DB_SYNC_STATE }, null,
-        null, null);
+    Table allRowIds = table.getRaw(new String[] { DbTable.DB_SYNC_STATE }, null, null, null);
 
     List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
     List<SyncRow> rowsToUpdate = new ArrayList<SyncRow>();
@@ -174,8 +209,8 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       boolean found = false;
       for (int i = 0; i < allRowIds.getHeight(); i++) {
-        String rowId = allRowIds.getData(i, 0);
-        int state = Integer.parseInt(allRowIds.getData(i, 1));
+        String rowId = allRowIds.getRowId(i);
+        int state = Integer.parseInt(allRowIds.getData(i, 0));
         if (row.getRowId().equals(rowId)) {
           found = true;
           if (state == SyncUtil.State.REST) {
@@ -200,7 +235,10 @@ public class SyncProcessor {
     tp.setSyncTag(newSyncTag);
   }
 
-  public void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
+    for (SyncRow row : rows) {
+      Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + row.getSyncTag());
+    }
     // TODO: how to conflict?
     // for (RowResource row : rowsToConflict) {
     // ContentValues values = new ContentValues();
@@ -222,14 +260,14 @@ public class SyncProcessor {
     // }
   }
 
-  public void insertRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void insertRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
       values.put(DbTable.DB_ROW_ID, row.getRowId());
       values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
       values.put(DbTable.DB_SYNC_STATE, SyncUtil.State.REST);
-      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.Transactioning.FALSE);
+      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.boolToInt(false));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -240,13 +278,13 @@ public class SyncProcessor {
     }
   }
 
-  public void updateRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void updateRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
       values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
       values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.REST));
-      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.Transactioning.FALSE));
+      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -257,14 +295,14 @@ public class SyncProcessor {
     }
   }
 
-  public void deleteRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void deleteRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       table.deleteRowActual(row.getRowId());
       syncResult.stats.numDeletes++;
     }
   }
 
-  public void updateDbFromModification(Modification modification, DbTable table, TableProperties tp) {
+  private void updateDbFromModification(Modification modification, DbTable table, TableProperties tp) {
     for (Entry<String, String> entry : modification.getSyncTags().entrySet()) {
       ContentValues values = new ContentValues();
       values.put(DbTable.DB_SYNC_TAG, entry.getValue());
@@ -273,7 +311,7 @@ public class SyncProcessor {
     tp.setSyncTag(modification.getTableSyncTag());
   }
 
-  public Map<String, Integer> getColumns(TableProperties tp) {
+  private Map<String, Integer> getColumns(TableProperties tp) {
     Map<String, Integer> columns = new HashMap<String, Integer>();
     ColumnProperties[] userColumns = tp.getColumns();
     for (ColumnProperties colProp : userColumns)
@@ -283,14 +321,15 @@ public class SyncProcessor {
     return columns;
   }
 
-  public List<SyncRow> getRows(DbTable table, Map<String, Integer> columns, int state) {
+  private List<SyncRow> getRows(DbTable table, Map<String, Integer> columns, int state) {
 
-    String[] columnNames = columns.keySet().toArray(new String[0]);
+    Set<String> columnSet = new HashSet<String>(columns.keySet());
+    columnSet.add(DbTable.DB_SYNC_TAG);
+    String[] columnNames = columnSet.toArray(new String[0]);
 
-    Table rows = table
-        .getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
-            new String[] { String.valueOf(state), String.valueOf(SyncUtil.Transactioning.FALSE) },
-            null);
+    Table rows = table.getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE,
+        DbTable.DB_TRANSACTIONING },
+        new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();
@@ -314,7 +353,7 @@ public class SyncProcessor {
     return changedRows;
   }
 
-  public String[] getRowIdsAsArray(List<SyncRow> rows) {
+  private String[] getRowIdsAsArray(List<SyncRow> rows) {
     List<String> rowIdsList = getRowIdsAsList(rows);
     String[] rowIds = new String[rowIdsList.size()];
     for (int i = 0; i < rowIds.length; i++)
@@ -322,7 +361,7 @@ public class SyncProcessor {
     return rowIds;
   }
 
-  public List<String> getRowIdsAsList(List<SyncRow> rows) {
+  private List<String> getRowIdsAsList(List<SyncRow> rows) {
     List<String> rowIdsList = new ArrayList<String>();
     for (SyncRow row : rows) {
       rowIdsList.add(row.getRowId());
@@ -330,27 +369,27 @@ public class SyncProcessor {
     return rowIdsList;
   }
 
-  public void beginTableTransaction(TableProperties tp) {
-    tp.setTransactioning(SyncUtil.Transactioning.TRUE);
+  private void beginTableTransaction(TableProperties tp) {
+    tp.setTransactioning(true);
   }
 
-  public void endTableTransaction(TableProperties tp, boolean success) {
+  private void endTableTransaction(TableProperties tp, boolean success) {
     if (success)
       tp.setSyncState(SyncUtil.State.REST);
-    tp.setTransactioning(SyncUtil.Transactioning.FALSE);
+    tp.setTransactioning(false);
   }
 
-  public void beginRowsTransaction(DbTable table, String[] rowIds) {
-    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.TRUE);
+  private void beginRowsTransaction(DbTable table, String[] rowIds) {
+    updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(true));
   }
 
-  public void endRowsTransaction(DbTable table, String[] rowIds, boolean success) {
+  private void endRowsTransaction(DbTable table, String[] rowIds, boolean success) {
     if (success)
       updateRowsState(table, rowIds, SyncUtil.State.REST);
-    updateRowsTransactioning(table, rowIds, SyncUtil.Transactioning.FALSE);
+    updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(false));
   }
 
-  public void updateRowsState(DbTable table, String[] rowIds, int state) {
+  private void updateRowsState(DbTable table, String[] rowIds, int state) {
     ContentValues values = new ContentValues();
     values.put(DbTable.DB_SYNC_STATE, state);
     for (String rowId : rowIds) {
@@ -358,7 +397,7 @@ public class SyncProcessor {
     }
   }
 
-  public void updateRowsTransactioning(DbTable table, String[] rowIds, int transactioning) {
+  private void updateRowsTransactioning(DbTable table, String[] rowIds, int transactioning) {
     ContentValues values = new ContentValues();
     values.put(DbTable.DB_TRANSACTIONING, String.valueOf(transactioning));
     for (String rowId : rowIds) {

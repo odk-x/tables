@@ -21,8 +21,8 @@ public class DataManager {
         return TableProperties.getTablePropertiesForAll(dbh);
     }
     
-    public TableProperties[] getDeletingTableProperties() {
-      return TableProperties.getTablePropertiesForDeleting(dbh);
+    public TableProperties[] getSynchronizedTableProperties() {
+      return TableProperties.getTablePropertiesForSynchronizedTables(dbh);
     }
 
     public TableProperties[] getDataTableProperties() {

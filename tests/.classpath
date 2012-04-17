@@ -3,9 +3,12 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ODK Tables"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/mockito-all-1.9.0.jar"/>
+	<classpathentry kind="lib" path="lib/robolectric-all.jar"/>
 	<classpathentry kind="lib" path="/home/hkworden/Else/android-sdk/platforms/android-8/android.jar"/>
+	<classpathentry kind="lib" path="/home/hkworden/Else/android-sdk/add-ons/addon_google_apis_google_inc_8/libs/maps.jar"/>
 	<classpathentry kind="lib" path="/ODK Tables/lib/joda-time-2.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ODK Tables"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

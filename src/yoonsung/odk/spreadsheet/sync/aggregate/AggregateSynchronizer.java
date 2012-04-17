@@ -1,5 +1,6 @@
 package yoonsung.odk.spreadsheet.sync.aggregate;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,8 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
@@ -35,8 +35,13 @@ import yoonsung.odk.spreadsheet.sync.IncomingModification;
 import yoonsung.odk.spreadsheet.sync.Modification;
 import yoonsung.odk.spreadsheet.sync.SyncRow;
 import yoonsung.odk.spreadsheet.sync.Synchronizer;
-import android.util.Log;
 
+/**
+ * Implementation of {@link Synchronizer} for ODK Aggregate.
+ * 
+ * @author the.dylan.price@gmail.com
+ * 
+ */
 public class AggregateSynchronizer implements Synchronizer {
 
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();
@@ -67,6 +72,7 @@ public class AggregateSynchronizer implements Synchronizer {
     uri = uri.resolve("/odktables/tables/");
     this.baseUri = uri;
     this.rt = new RestTemplate();
+    this.rt.setErrorHandler(new AggregateResponseErrorHandler());
 
     Registry registry = new Registry();
     Strategy strategy = new RegistryStrategy(registry);
@@ -102,7 +108,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public String createTable(String tableId, Map<String, Integer> cols) {
+  public String createTable(String tableId, Map<String, Integer> cols) throws IOException {
     List<Column> columns = new ArrayList<Column>();
     for (Entry<String, Integer> col : cols.entrySet()) {
       String name = col.getKey();
@@ -117,8 +123,12 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
         requestHeaders);
 
-    ResponseEntity<TableResource> resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity,
-        TableResource.class);
+    ResponseEntity<TableResource> resourceEntity;
+    try {
+      resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity, TableResource.class);
+    } catch (ResourceAccessException e) {
+      throw new IOException(e.getMessage());
+    }
     TableResource resource = resourceEntity.getBody();
 
     this.resources.put(resource.getTableId(), resource);
@@ -126,7 +136,7 @@ public class AggregateSynchronizer implements Synchronizer {
     return resource.getDataEtag();
   }
 
-  private TableResource getResource(String tableId) {
+  private TableResource getResource(String tableId) throws IOException {
     if (resources.containsKey(tableId)) {
       return resources.get(tableId);
     } else {
@@ -134,9 +144,14 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
-  private TableResource refreshResource(String tableId) {
+  private TableResource refreshResource(String tableId) throws IOException {
     URI uri = baseUri.resolve(tableId);
-    TableResource resource = rt.getForObject(uri, TableResource.class);
+    TableResource resource;
+    try {
+      resource = rt.getForObject(uri, TableResource.class);
+    } catch (ResourceAccessException e) {
+      throw new IOException(e.getMessage());
+    }
     resources.put(resource.getTableId(), resource);
     return resource;
   }
@@ -160,8 +175,9 @@ public class AggregateSynchronizer implements Synchronizer {
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#getUpdates(java.lang
    * .String, java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   @Override
-  public IncomingModification getUpdates(String tableId, String currentSyncTag) {
+  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException {
     IncomingModification modification = new IncomingModification();
     TableResource resource = refreshResource(tableId);
     String newSyncTag = resource.getDataEtag();
@@ -173,8 +189,12 @@ public class AggregateSynchronizer implements Synchronizer {
 
     String diffUri = resource.getDiffUri();
     URI url = URI.create(diffUri + "?data_etag=" + currentSyncTag).normalize();
-    @SuppressWarnings("unchecked")
-    List<RowResource> rows = rt.getForObject(url, List.class);
+    List<RowResource> rows;
+    try {
+      rows = rt.getForObject(url, List.class);
+    } catch (ResourceAccessException e) {
+      throw new IOException(e.getMessage());
+    }
 
     List<SyncRow> syncRows = new ArrayList<SyncRow>();
     for (RowResource row : rows) {
@@ -195,7 +215,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public Modification insertRows(String tableId, List<SyncRow> rowsToInsert) {
+  public Modification insertRows(String tableId, List<SyncRow> rowsToInsert) throws IOException {
     List<Row> newRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToInsert) {
       Row row = Row.forInsert(syncRow.getRowId(), null, syncRow.getValues());
@@ -212,35 +232,32 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate) {
+  public Modification updateRows(String tableId, List<SyncRow> rowsToUpdate) throws IOException {
     List<Row> changedRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToUpdate) {
-      Row row = Row.forInsert(syncRow.getRowId(), syncRow.getSyncTag(), syncRow.getValues());
+      Row row = Row.forUpdate(syncRow.getRowId(), syncRow.getSyncTag(), syncRow.getValues());
       changedRows.add(row);
     }
     return insertOrUpdateRows(tableId, changedRows);
   }
 
-  private Modification insertOrUpdateRows(String tableId, List<Row> rows) {
+  private Modification insertOrUpdateRows(String tableId, List<Row> rows) throws IOException {
     TableResource resource = getResource(tableId);
     Map<String, String> syncTags = new HashMap<String, String>();
     if (!rows.isEmpty()) {
       for (Row row : rows) {
         URI url = URI.create(resource.getDataUri() + "/" + row.getRowId()).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
+        ResponseEntity<RowResource> insertedEntity;
         try {
-          ResponseEntity<RowResource> insertedEntity = rt.exchange(url, HttpMethod.PUT,
-              requestEntity, RowResource.class);
-          RowResource inserted = insertedEntity.getBody();
-          syncTags.put(inserted.getRowId(), inserted.getRowEtag());
-        } catch (HttpClientErrorException e) {
-          Log.e(TAG, e.getResponseBodyAsString());
-          throw e;
-        } catch (HttpServerErrorException e) {
-          Log.e(TAG, e.getResponseBodyAsString());
-          throw e;
+          insertedEntity = rt.exchange(url, HttpMethod.PUT, requestEntity, RowResource.class);
+        } catch (ResourceAccessException e) {
+          throw new IOException(e.getMessage());
         }
+        RowResource inserted = insertedEntity.getBody();
+        syncTags.put(inserted.getRowId(), inserted.getRowEtag());
       }
+      // TODO: figure out error recovery if crash here
       resource = refreshResource(tableId);
     }
 
@@ -259,12 +276,16 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public String deleteRows(String tableId, List<String> rowIds) {
+  public String deleteRows(String tableId, List<String> rowIds) throws IOException {
     TableResource resource = getResource(tableId);
     if (!rowIds.isEmpty()) {
       for (String rowId : rowIds) {
         URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
-        rt.delete(url);
+        try {
+          rt.delete(url);
+        } catch (ResourceAccessException e) {
+          throw new IOException(e.getMessage());
+        }
       }
       resource = refreshResource(tableId);
     }

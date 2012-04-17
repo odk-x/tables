@@ -1,0 +1,169 @@
+package sync;
+
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyMapOf;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+
+import org.junit.After;
+import org.junit.Before;
+import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
+import yoonsung.odk.spreadsheet.data.DataManager;
+import yoonsung.odk.spreadsheet.data.DbHelper;
+import yoonsung.odk.spreadsheet.data.Query;
+import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.sync.IncomingModification;
+import yoonsung.odk.spreadsheet.sync.Modification;
+import yoonsung.odk.spreadsheet.sync.SyncProcessor;
+import yoonsung.odk.spreadsheet.sync.SyncRow;
+import yoonsung.odk.spreadsheet.sync.Synchronizer;
+import android.content.Context;
+import android.content.SyncResult;
+
+public class BaseSyncProcessorTest {
+  protected DbHelper helper;
+  protected DataManager dm;
+  protected SyncProcessor processor;
+  @Mock
+  protected Synchronizer synchronizer;
+  protected List<String> dbColumnNames;
+  protected TableProperties tp;
+  protected Query query;
+
+  @Before
+  public void setUp() throws IOException {
+    MockitoAnnotations.initMocks(this);
+    Context context = new SpreadSheet();
+    this.helper = DbHelper.getDbHelper(context);
+    this.dm = new DataManager(helper);
+    SyncResult syncResult = new SyncResult();
+    this.processor = new SyncProcessor(synchronizer, dm, syncResult);
+
+    setUpSynchronizer();
+    createTable();
+
+    this.tp = dm.getTableProperties(tp.getTableId());
+    this.query = new Query(dm.getAllTableProperties(), tp);
+  }
+
+  @After
+  public void tearDown() {
+    try {
+      this.tp = dm.getTableProperties(tp.getTableId());
+      this.tp.deleteTableActual();
+    } catch (ArrayIndexOutOfBoundsException e) {
+      // ignore
+    }
+  }
+
+  private void setUpSynchronizer() throws IOException {
+    when(synchronizer.createTable(anyString(), anyMapOf(String.class, Integer.class))).thenReturn(
+        uuid());
+    when(synchronizer.getUpdates(anyString(), anyString())).then(returnEmptyIncomingModification());
+    when(synchronizer.insertRows(anyString(), anyListOf(SyncRow.class))).then(returnModification());
+    when(synchronizer.updateRows(anyString(), anyListOf(SyncRow.class))).then(returnModification());
+    when(synchronizer.deleteRows(anyString(), anyListOf(String.class))).thenReturn(uuid());
+  }
+
+  private void createTable() {
+    this.tp = TableProperties.addTable(helper, Data.tableName, Data.tableName,
+        TableProperties.TableType.DATA);
+    this.tp.setSynchronized(true);
+
+    dbColumnNames = new ArrayList<String>();
+    for (Entry<String, Integer> entry : Data.columns.entrySet()) {
+      ColumnProperties colProps = tp.addColumn(entry.getKey(), entry.getKey());
+      colProps.setColumnType(entry.getValue());
+      dbColumnNames.add(colProps.getColumnDbName());
+    }
+  }
+
+  protected String uuid() {
+    return UUID.randomUUID().toString();
+  }
+
+  protected Answer<Modification> returnModification() {
+    return new Answer<Modification>() {
+      @Override
+      public Modification answer(InvocationOnMock invocation) throws Throwable {
+        List<SyncRow> rows = (List<SyncRow>) invocation.getArguments()[1];
+        Map<String, String> syncTags = new HashMap<String, String>();
+        for (SyncRow row : rows) {
+          syncTags.put(row.getRowId(), uuid());
+        }
+        String tableSyncTag = uuid();
+        return new Modification(syncTags, tableSyncTag);
+      }
+    };
+
+  }
+
+  protected Answer<IncomingModification> returnEmptyIncomingModification() {
+    return new Answer<IncomingModification>() {
+      @Override
+      public IncomingModification answer(InvocationOnMock invocation) throws Throwable {
+        String currentSyncTag = (String) invocation.getArguments()[1];
+        IncomingModification modification = new IncomingModification(new ArrayList<SyncRow>(),
+            currentSyncTag);
+        return modification;
+      }
+    };
+  }
+
+  protected ArgumentMatcher<Map<String, Integer>> containsKeys(final List<String> keys) {
+    return new ArgumentMatcher<Map<String, Integer>>() {
+      @Override
+      public boolean matches(Object argument) {
+        Map<String, Integer> given = (Map<String, Integer>) argument;
+        for (String key : keys) {
+          if (!given.containsKey(key))
+            return false;
+        }
+        return true;
+      }
+    };
+  }
+
+  protected <T> ArgumentMatcher<List<T>> isSize(final int size) {
+    return new ArgumentMatcher<List<T>>() {
+      @Override
+      public boolean matches(Object argument) {
+        List<T> list = (List<T>) argument;
+        return list.size() == size;
+      }
+    };
+  }
+
+  protected ArgumentMatcher<List<SyncRow>> containsRowIds(final List<String> rowIds) {
+    return new ArgumentMatcher<List<SyncRow>>() {
+      @Override
+      public boolean matches(Object argument) {
+        List<SyncRow> rows = (List<SyncRow>) argument;
+        for (SyncRow row : rows) {
+          String rowId = row.getRowId();
+          if (!rowIds.remove(rowId))
+            return false;
+        }
+        if (!rowIds.isEmpty())
+          return false;
+        else
+          return true;
+      }
+    };
+  }
+}
