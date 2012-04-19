@@ -10,7 +10,7 @@
         android:id="@+id/aggregate_activity_uri_label"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Aggregate URI:" />
+        android:text="Aggregate URL:" />
 
     <EditText
         android:id="@+id/aggregate_activity_uri_field"
@@ -18,15 +18,38 @@
         android:layout_height="wrap_content"
         android:text="http://" />
 
+    <TextView
+        android:id="@+id/aggregate_activity_account_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Account:" />
+
     <Spinner
         android:id="@+id/aggregate_activity_account_list_spinner"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
     <Button
-        android:id="@+id/aggregate_activity_save_button"
-        android:layout_width="fill_parent"
+        android:id="@+id/aggregate_activity_choose_tables_button"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save" />
+        android:onClick="chooseTables"
+        android:text="Choose tables to sync" />
+
+    <Button
+        android:id="@+id/aggregate_choose_tables_get_table_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:onClick="downloadTableFromServer"
+        android:text="Download table from server" />
+
+    <Button
+        android:id="@+id/aggregate_activity_sync_now_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:onClick="syncNow"
+        android:text="Sync now" />
 
 </LinearLayout>
