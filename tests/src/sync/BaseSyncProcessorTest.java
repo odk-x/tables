@@ -72,12 +72,16 @@ public class BaseSyncProcessorTest {
   }
 
   private void setUpSynchronizer() throws IOException {
-    when(synchronizer.createTable(anyString(), anyMapOf(String.class, Integer.class))).thenReturn(
-        uuid());
+    when(
+        synchronizer.createTable(anyString(), anyString(), anyMapOf(String.class, Integer.class),
+            anyString())).thenReturn(uuid());
     when(synchronizer.getUpdates(anyString(), anyString())).then(returnEmptyIncomingModification());
-    when(synchronizer.insertRows(anyString(), anyListOf(SyncRow.class))).then(returnModification());
-    when(synchronizer.updateRows(anyString(), anyListOf(SyncRow.class))).then(returnModification());
-    when(synchronizer.deleteRows(anyString(), anyListOf(String.class))).thenReturn(uuid());
+    when(synchronizer.insertRows(anyString(), anyString(), anyListOf(SyncRow.class))).then(
+        returnModification());
+    when(synchronizer.updateRows(anyString(), anyString(), anyListOf(SyncRow.class))).then(
+        returnModification());
+    when(synchronizer.deleteRows(anyString(), anyString(), anyListOf(String.class))).thenReturn(
+        uuid());
   }
 
   private void createTable() {
@@ -101,7 +105,7 @@ public class BaseSyncProcessorTest {
     return new Answer<Modification>() {
       @Override
       public Modification answer(InvocationOnMock invocation) throws Throwable {
-        List<SyncRow> rows = (List<SyncRow>) invocation.getArguments()[1];
+        List<SyncRow> rows = (List<SyncRow>) invocation.getArguments()[2];
         Map<String, String> syncTags = new HashMap<String, String>();
         for (SyncRow row : rows) {
           syncTags.put(row.getRowId(), uuid());
@@ -119,7 +123,7 @@ public class BaseSyncProcessorTest {
       public IncomingModification answer(InvocationOnMock invocation) throws Throwable {
         String currentSyncTag = (String) invocation.getArguments()[1];
         IncomingModification modification = new IncomingModification(new ArrayList<SyncRow>(),
-            currentSyncTag);
+            false, null, currentSyncTag);
         return modification;
       }
     };
