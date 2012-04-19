@@ -86,7 +86,8 @@ public class SyncProcessor {
         success = synchronizeTableRest(tp, table);
         break;
       }
-      tp.setLastSyncTime(du.formatNowForDb());
+      if (success)
+        tp.setLastSyncTime(du.formatNowForDb());
     } finally {
       endTableTransaction(tp, success);
     }
@@ -104,11 +105,10 @@ public class SyncProcessor {
       tp.setSyncTag(syncTag);
       success = true;
     } catch (IOException e) {
-      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
-      syncResult.stats.numIoExceptions++;
+      ioException("synchronizeTableUpdating", tp, e);
       success = false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize updating on table: " + tp.getDisplayName(), e);
+      exception("synchronizeTableUpdating", tp, e);
       success = false;
     }
 
@@ -130,12 +130,10 @@ public class SyncProcessor {
       updateDbFromModification(modification, table, tp);
       success = true;
     } catch (IOException e) {
-      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
-      syncResult.stats.numIoExceptions++;
+      ioException("synchronizeTableInserting", tp, e);
       success = false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize inserting on table: " + tp.getDisplayName(),
-          e);
+      exception("synchronizeTableInserting", tp, e);
       syncResult.stats.numSkippedEntries += rowsToInsert.size();
       success = false;
     } finally {
@@ -155,11 +153,10 @@ public class SyncProcessor {
       syncResult.stats.numDeletes++;
       syncResult.stats.numEntries++;
     } catch (IOException e) {
-      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
-      syncResult.stats.numIoExceptions++;
+      ioException("synchronizeTableDeleting", tp, e);
       success = false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize deleting on table: " + tp.getDisplayName(), e);
+      exception("synchronizeTableDeleting", tp, e);
       success = false;
     }
     return success;
@@ -178,11 +175,10 @@ public class SyncProcessor {
     try {
       updateDbFromServer(tp, table);
     } catch (IOException e) {
-      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
-      syncResult.stats.numIoExceptions++;
+      ioException("synchronizeTableRest", tp, e);
       return false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize rest on table: " + tp.getDisplayName(), e);
+      exception("synchronizeTableRest", tp, e);
       return false;
     }
 
@@ -215,11 +211,10 @@ public class SyncProcessor {
       }
       success = true;
     } catch (IOException e) {
-      Log.e(TAG, "IOException for table: " + tp.getDisplayName(), e);
-      syncResult.stats.numIoExceptions++;
+      ioException("synchronizeTableRest", tp, e);
       success = false;
     } catch (Exception e) {
-      Log.e(TAG, "Unexpected exception in synchronize rest on table: " + tp.getDisplayName(), e);
+      exception("synchronizeTableRest", tp, e);
       success = false;
     } finally {
       if (success)
@@ -229,6 +224,16 @@ public class SyncProcessor {
     }
 
     return success;
+  }
+
+  private void ioException(String method, TableProperties tp, IOException e) {
+    Log.e(TAG, String.format("IOException in %s for table: %s", method, tp.getDisplayName()), e);
+    syncResult.stats.numIoExceptions++;
+  }
+
+  private void exception(String method, TableProperties tp, Exception e) {
+    Log.e(TAG,
+        String.format("Unexpected exception in %s on table: %s", method, tp.getDisplayName()), e);
   }
 
   private void updateDbFromServer(TableProperties tp, DbTable table) throws IOException {
@@ -268,7 +273,7 @@ public class SyncProcessor {
           }
         }
       }
-      if (!found)
+      if (!found && !row.isDeleted())
         rowsToInsert.add(row);
     }
 
