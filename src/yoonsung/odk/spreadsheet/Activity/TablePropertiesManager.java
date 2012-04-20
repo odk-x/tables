@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -19,7 +18,10 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -281,21 +283,13 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
         }
         
-        List<Integer> viewTypeIndices = new ArrayList<Integer>();
-        for (int i = 0; i < TableViewSettings.Type.COUNT; i++) {
-            if ((numberCols.size() == 0) && (
-                    (i == TableViewSettings.Type.LINE_GRAPH) ||
-                    (i == TableViewSettings.Type.BOX_STEM))) {
-                continue;
-            }
-            viewTypeIndices.add(i);
-        }
-        String[] viewTypeIds = new String[viewTypeIndices.size()];
-        String[] viewTypeNames = new String[viewTypeIndices.size()];
-        for (int i = 0; i < viewTypeIndices.size(); i++) {
-            int index = viewTypeIndices.get(i);
-            viewTypeIds[i] = String.valueOf(index);
-            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(index);
+        int[] viewTypes = settings.getPossibleViewTypes();
+        String[] viewTypeIds = new String[viewTypes.length];
+        String[] viewTypeNames = new String[viewTypes.length];
+        for (int i = 0; i < viewTypes.length; i++) {
+            int viewType = viewTypes[i];
+            viewTypeIds[i] = String.valueOf(viewType);
+            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
         }
         ListPreference viewTypePref = new ListPreference(this);
         viewTypePref.setTitle(label + " Type");
@@ -643,28 +637,54 @@ public class TablePropertiesManager extends PreferenceActivity {
     
     private class ConditionalRulerDialogPreference extends Preference {
         
-        private final int[] values;
-        private final String[] labels;
-        private final Map<ColumnProperties, ConditionalRuler> rulerMap;
         private final Dialog dialog;
         
         public ConditionalRulerDialogPreference(int[] values, String[] labels,
                 Map<ColumnProperties, ConditionalRuler> rulerMap) {
             super(TablePropertiesManager.this);
+            dialog = new ConditionalRulerDialog(values, labels, rulerMap);
+        }
+        
+        @Override
+        protected void onClick() {
+            dialog.show();
+        }
+    }
+    
+    public class ConditionalRulerDialog extends Dialog {
+        
+        private final int[] values;
+        private final String[] labels;
+        private final Map<ColumnProperties, ConditionalRuler> rulerMap;
+        private final ColumnProperties[] columns;
+        private final String[] comparatorLabels;
+        private final String[] columnDisplays;
+        private LinearLayout ruleList;
+        
+        public ConditionalRulerDialog(int[] values, String[] labels,
+                Map<ColumnProperties, ConditionalRuler> rulerMap) {
+            super(TablePropertiesManager.this);
             this.values = values;
             this.labels = labels;
             this.rulerMap = rulerMap;
-            dialog = buildDialog();
-        }
-        
-        private Dialog buildDialog() {
-            String[] columnValues = new String[tp.getColumns().length];
-            String[] columnDisplays = new String[tp.getColumns().length];
+            columns = new ColumnProperties[tp.getColumns().length];
+            comparatorLabels = new String[ConditionalRuler.Comparator.COUNT];
+            for (int i = 0; i < comparatorLabels.length; i++) {
+                comparatorLabels[i] =
+                    LanguageUtil.getTvsConditionalComparator(i);
+            }
+            columnDisplays = new String[tp.getColumns().length];
             for (int i = 0; i < tp.getColumns().length; i++) {
                 ColumnProperties cp = tp.getColumns()[i];
-                columnValues[i] = cp.getColumnDbName();
+                columns[i] = cp;
                 columnDisplays[i] = cp.getDisplayName();
             }
+            setContentView(buildView());
+        }
+        
+        private View buildView() {
+            ruleList = new LinearLayout(TablePropertiesManager.this);
+            ruleList.setOrientation(LinearLayout.VERTICAL);
             String[] comparatorValues =
                 new String[ConditionalRuler.Comparator.COUNT];
             String[] comparatorDisplays =
@@ -678,32 +698,167 @@ public class TablePropertiesManager extends PreferenceActivity {
                     LinearLayout.LayoutParams.FILL_PARENT,
                     LinearLayout.LayoutParams.FILL_PARENT);
             Context context = TablePropertiesManager.this;
-            LinearLayout wrapper = new LinearLayout(context);
-            wrapper.setOrientation(LinearLayout.VERTICAL);
             for (ColumnProperties cp : tp.getColumns()) {
                 ConditionalRuler cr = rulerMap.get(cp);
                 for (int i = 0; i < cr.getRuleCount(); i++) {
-                    LinearLayout rw = new LinearLayout(context);
-                    Spinner colSpinner = new Spinner(context);
-                    ArrayAdapter<String> colAdapter = new ArrayAdapter<String>(
-                            context, android.R.layout.simple_spinner_item,
-                            columnDisplays);
-                    colSpinner.setAdapter(colAdapter);
-                    rw.addView(colSpinner);
-                    EditText valueEt = new EditText(context);
-                    valueEt.setText(cr.getRuleValue(i));
-                    rw.addView(valueEt);
-                    wrapper.addView(rw, rwLp);
+                    ruleList.addView(buildRuleView(cp, cr, i), rwLp);
                 }
             }
-            AlertDialog.Builder ab = new AlertDialog.Builder(context);
-            ab.setView(wrapper);
-            return ab.create();
+            LinearLayout controlWrapper = new LinearLayout(context);
+            Button addButton = new Button(context);
+            addButton.setText("Add");
+            addButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ColumnProperties cp = columns[0];
+                    ConditionalRuler cr = rulerMap.get(cp);
+                    cr.addRule(ConditionalRuler.Comparator.EQUALS, "",
+                            values[0]);
+                    ruleList.addView(buildRuleView(cp, cr,
+                            cr.getRuleCount() - 1));
+                }
+            });
+            controlWrapper.addView(addButton);
+            Button closeButton = new Button(context);
+            closeButton.setText("Close");
+            closeButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+            controlWrapper.addView(closeButton);
+            LinearLayout wrapper = new LinearLayout(context);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.addView(ruleList);
+            wrapper.addView(controlWrapper);
+            return wrapper;
         }
         
-        @Override
-        protected void onClick() {
-            dialog.show();
+        private View buildRuleView(final ColumnProperties cp,
+                final ConditionalRuler cr, final int ruleIndex) {
+            Context context = TablePropertiesManager.this;
+            
+            final Spinner colSpinner = getSpinner(context, columnDisplays);
+            int columnIndex = -1;
+            for (int i = 0; i < columns.length; i++) {
+                if (cp == columns[i]) {
+                    columnIndex = i;
+                    break;
+                }
+            }
+            if (columnIndex == -1) {
+                throw new RuntimeException();
+            }
+            colSpinner.setSelection(columnIndex);
+            
+            final Spinner settingSpinner = getSpinner(context, labels);
+            int setting = cr.getRuleSetting(ruleIndex);
+            int settingIndex = -1;
+            for (int i = 0; i < values.length; i++) {
+                if (setting == values[i]) {
+                    settingIndex = i;
+                    break;
+                }
+            }
+            if (settingIndex == -1) {
+                throw new RuntimeException();
+            }
+            settingSpinner.setSelection(settingIndex);
+            
+            final Spinner compSpinner = getSpinner(context, comparatorLabels);
+            compSpinner.setSelection(cr.getRuleComparator(ruleIndex));
+            
+            final EditText valueEt = new EditText(context);
+            valueEt.setText(cr.getRuleValue(ruleIndex));
+            
+            Button deleteButton = new Button(context);
+            deleteButton.setText("Delete");
+            
+            colSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    ColumnProperties nextCp = columns[position];
+                    if (cp == nextCp) {
+                        return;
+                    }
+                    cr.deleteRule(ruleIndex);
+                    rulerMap.get(nextCp).addRule(
+                            compSpinner.getSelectedItemPosition(),
+                            valueEt.getText().toString(),
+                            values[settingSpinner.getSelectedItemPosition()]);
+                    setContentView(buildView());
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            settingSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    if (cr.getRuleSetting(ruleIndex) == values[position]) {
+                        return;
+                    }
+                    cr.setRuleSetting(ruleIndex, values[position]);
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            compSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                        @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    if (cr.getRuleComparator(ruleIndex) == position) {
+                        return;
+                    }
+                    cr.setRuleComparator(ruleIndex, position);
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            valueEt.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        return;
+                    }
+                    cr.setRuleValue(ruleIndex, valueEt.getText().toString());
+                }
+            });
+            deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    cr.deleteRule(ruleIndex);
+                    setContentView(buildView());
+                }
+            });
+            
+            LinearLayout topRow = new LinearLayout(context);
+            LinearLayout bottomRow = new LinearLayout(context);
+            topRow.addView(colSpinner);
+            topRow.addView(settingSpinner);
+            bottomRow.addView(compSpinner);
+            bottomRow.addView(valueEt);
+            bottomRow.addView(deleteButton);
+            LinearLayout rw = new LinearLayout(context);
+            rw.setOrientation(LinearLayout.VERTICAL);
+            rw.addView(topRow);
+            rw.addView(bottomRow);
+            return rw;
+        }
+        
+        private Spinner getSpinner(Context context, String[] values) {
+            Spinner spinner = new Spinner(context);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+                    android.R.layout.simple_spinner_item, values);
+            adapter.setDropDownViewResource(
+                    android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+            return spinner;
         }
     }
 }

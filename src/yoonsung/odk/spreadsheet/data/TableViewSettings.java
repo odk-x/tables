@@ -545,18 +545,34 @@ public class TableViewSettings {
             return comparators.get(index);
         }
         
+        public void setRuleComparator(int index, int comparator) {
+            comparators.set(index, comparator);
+            set();
+        }
+        
         public String getRuleValue(int index) {
             return values.get(index);
+        }
+        
+        public void setRuleValue(int index, String value) {
+            values.set(index, value);
+            set();
         }
         
         public int getRuleSetting(int index) {
             return settings.get(index);
         }
         
+        public void setRuleSetting(int index, int setting) {
+            settings.set(index, setting);
+            set();
+        }
+        
         public void deleteRule(int index) {
             comparators.remove(index);
             values.remove(index);
             settings.remove(index);
+            set();
         }
         
         JSONObject toJsonObject() {
