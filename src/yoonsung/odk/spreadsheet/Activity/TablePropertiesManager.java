@@ -534,9 +534,22 @@ public class TablePropertiesManager extends PreferenceActivity {
         
         case TableViewSettings.Type.MAP:
             {
+            ColumnProperties labelCol = settings.getMapLabelCol();
+            if (labelCol == null) {
+                settings.setMapLabelCol(tp.getColumns()[0]);
+                labelCol = tp.getColumns()[0];
+            }
             ColumnProperties locCol = settings.getMapLocationCol();
             if (locCol == null) {
+                settings.setMapLocationCol(locationCols.get(0));
                 locCol = locationCols.get(0);
+            }
+            ColumnProperties[] cps = tp.getColumns();
+            String[] colDbNames = new String[cps.length];
+            String[] colDisplayNames = new String[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                colDbNames[i] = cps[i].getColumnDbName();
+                colDisplayNames[i] = cps[i].getDisplayName();
             }
             String[] locColDbNames = new String[locationCols.size()];
             String[] locColDisplayNames = new String[locationCols.size()];
@@ -564,6 +577,26 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(mapLocPref);
+            
+            ListPreference mapLabelPref = new ListPreference(this);
+            mapLabelPref.setTitle(label + " Label Column");
+            mapLabelPref.setDialogTitle("Change " + label + " Label Column");
+            mapLabelPref.setEntryValues(colDbNames);
+            mapLabelPref.setEntries(colDisplayNames);
+            mapLabelPref.setValue(labelCol.getColumnDbName());
+            mapLabelPref.setSummary(labelCol.getDisplayName());
+            mapLabelPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setMapLabelCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLabelPref);
             
             String[] mapColorLabels =
                 new String[TableViewSettings.MAP_COLOR_OPTIONS.length];

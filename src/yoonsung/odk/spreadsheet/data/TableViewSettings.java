@@ -47,6 +47,7 @@ public class TableViewSettings {
     private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
     private static final String JSON_KEY_MAP_SETTINGS = "map";
     private static final String JSON_KEY_MAP_LOC_COL = "mapLocCol";
+    private static final String JSON_KEY_MAP_LABEL_COL = "mapLabelCol";
     private static final String JSON_KEY_MAP_COLOR_RULERS = "mapColorRulers";
     private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
     
@@ -65,6 +66,7 @@ public class TableViewSettings {
     private String boxStemXCol;
     private String boxStemYCol;
     private String mapLocCol;
+    private String mapLabelCol;
     private Map<String, ConditionalRuler> mapColorRulers;
     private Map<String, ConditionalRuler> mapSizeRulers;
     
@@ -153,6 +155,8 @@ public class TableViewSettings {
     private void setMapFromJsonObject(JSONObject jo) throws JSONException {
         mapLocCol = jo.has(JSON_KEY_MAP_LOC_COL) ?
                 jo.getString(JSON_KEY_MAP_LOC_COL) : null;
+        mapLabelCol = jo.has(JSON_KEY_MAP_LABEL_COL) ?
+                jo.getString(JSON_KEY_MAP_LABEL_COL) : null;
         if (jo.has(JSON_KEY_MAP_COLOR_RULERS)) {
             JSONObject colorRulerJo =
                 jo.getJSONObject(JSON_KEY_MAP_COLOR_RULERS);
@@ -246,6 +250,11 @@ public class TableViewSettings {
     
     public ColumnProperties getMapLocationCol() {
         return (mapLocCol == null) ? null : tp.getColumnByDbName(mapLocCol);
+    }
+    
+    public ColumnProperties getMapLabelCol() {
+        return (mapLabelCol == null) ? null :
+            tp.getColumnByDbName(mapLabelCol);
     }
     
     public ConditionalRuler getMapColorRuler(ColumnProperties cp) {
@@ -345,6 +354,9 @@ public class TableViewSettings {
         if (mapLocCol != null) {
             jo.put(JSON_KEY_MAP_LOC_COL, mapLocCol);
         }
+        if (mapLabelCol != null) {
+            jo.put(JSON_KEY_MAP_LABEL_COL, mapLabelCol);
+        }
         JSONObject colorRulerJo = new JSONObject();
         for (String key : mapColorRulers.keySet()) {
             ConditionalRuler cr = mapColorRulers.get(key);
@@ -416,6 +428,11 @@ public class TableViewSettings {
     
     public void setMapLocationCol(ColumnProperties cp) {
         mapLocCol = (cp == null) ? null : cp.getColumnDbName();
+        set();
+    }
+    
+    public void setMapLabelCol(ColumnProperties cp) {
+        mapLabelCol = (cp == null) ? null : cp.getColumnDbName();
         set();
     }
     
