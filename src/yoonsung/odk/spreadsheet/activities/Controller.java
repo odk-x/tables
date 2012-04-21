@@ -385,6 +385,10 @@ public class Controller {
         return values;
     }
     
+    void openCellEditDialog(String rowId, String value, int colIndex) {
+        (new CellEditDialog(rowId, value, colIndex)).show();
+    }
+    
     public static void launchTableActivity(Context context, TableProperties tp,
             boolean isOverview) {
         Controller.launchTableActivity(context, tp, null, null, isOverview);
@@ -517,6 +521,61 @@ public class Controller {
             buttonWrapper.addView(cancelButton);
             wrapper.addView(buttonWrapper);
             // setting the dialog view
+            setView(wrapper);
+        }
+    }
+    
+    private class CellEditDialog extends AlertDialog {
+        
+        private final String rowId;
+        private final int colIndex;
+        private final CellValueView.CellEditView cev;
+        
+        public CellEditDialog(String rowId, String value, int colIndex) {
+            super(activity);
+            this.rowId = rowId;
+            this.colIndex = colIndex;
+            cev = CellValueView.getCellEditView(activity,
+                    tp.getColumns()[colIndex], value);
+            buildView(activity);
+        }
+        
+        private void buildView(Context context) {
+            Button setButton = new Button(context);
+            setButton.setText(activity.getResources().getString(R.string.set));
+            setButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String value = du.validifyValue(tp.getColumns()[colIndex],
+                            cev.getValue());
+                    if (value == null) {
+                        // TODO: alert the user
+                        return;
+                    }
+                    Map<String, String> values = new HashMap<String, String>();
+                    values.put(tp.getColumns()[colIndex].getColumnDbName(),
+                            value);
+                    dbt.updateRow(rowId, values);
+                    da.init();
+                    dismiss();
+                }
+            });
+            Button cancelButton = new Button(context);
+            cancelButton.setText(activity.getResources().getString(
+                    R.string.cancel));
+            cancelButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+            LinearLayout buttonWrapper = new LinearLayout(context);
+            buttonWrapper.addView(setButton);
+            buttonWrapper.addView(cancelButton);
+            LinearLayout wrapper = new LinearLayout(context);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.addView(cev);
+            wrapper.addView(buttonWrapper);
             setView(wrapper);
         }
     }

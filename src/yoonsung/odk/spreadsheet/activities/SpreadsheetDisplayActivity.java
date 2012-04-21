@@ -173,7 +173,10 @@ public class SpreadsheetDisplayActivity extends Activity
             openCollectionView(lastDataCellMenued / table.getWidth());
             return true;
         case MENU_ITEM_ID_EDIT_CELL:
-            // TODO
+            c.openCellEditDialog(
+                    table.getRowId(lastDataCellMenued / table.getWidth()),
+                    table.getData(lastDataCellMenued),
+                    lastDataCellMenued % table.getWidth());
             return true;
         case MENU_ITEM_ID_DELETE_ROW:
             c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
