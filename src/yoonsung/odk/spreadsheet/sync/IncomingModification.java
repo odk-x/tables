@@ -10,11 +10,15 @@ import java.util.List;
  * 
  */
 public class IncomingModification {
-  List<SyncRow> rows;
-  String tableSyncTag;
+  private List<SyncRow> rows;
+  private boolean tablePropertiesChanged;
+  private String tableProperties;
+  private String tableSyncTag;
 
   public IncomingModification() {
     this.rows = new ArrayList<SyncRow>();
+    this.tableProperties = null;
+    this.tablePropertiesChanged = false;
     this.tableSyncTag = null;
   }
 
@@ -24,10 +28,17 @@ public class IncomingModification {
    * @param rows
    *          a list of rows that represent the changes in the server's state
    *          since the last synchronization
+   * @param tablePropertiesChanged
+   *          true if the table properties have changed since the last
+   *          synchronization
+   * @param tableProperties
+   *          if tablePropertiesChanged is true, then this should be the new
+   *          table properties. Otherwise it will be ignored and may be null.
    * @param tableSyncTag
    *          the latest synchronization tag
    */
-  public IncomingModification(final List<SyncRow> rows, final String tableSyncTag) {
+  public IncomingModification(List<SyncRow> rows, boolean tablePropertiesChanged,
+      String tableProperties, String tableSyncTag) {
     this.rows = rows;
     this.tableSyncTag = tableSyncTag;
   }
@@ -50,6 +61,22 @@ public class IncomingModification {
   }
 
   /**
+   * @return true if the table properties have changed since the last
+   *         synchronization
+   */
+  public boolean hasTablePropertiesChanged() {
+    return tablePropertiesChanged;
+  }
+
+  /**
+   * @return the new table properties if {@link #hasTablePropertiesChanged()} is
+   *         true. Otherwise the value is undefined and means nothing.
+   */
+  public String getTableProperties() {
+    return tableProperties;
+  }
+
+  /**
    * 
    * @param rows
    *          a list of rows that represent the changes in the server's state
@@ -68,20 +95,49 @@ public class IncomingModification {
     this.tableSyncTag = tableSyncTag;
   }
 
+  /**
+   * @param tablePropertiesChanged
+   *          true if the table properties have changed since the last
+   *          synchronization
+   */
+  public void setTablePropertiesChanged(boolean tablePropertiesChanged) {
+    this.tablePropertiesChanged = tablePropertiesChanged;
+  }
+
+  /**
+   * @param tableProperties
+   *          the new table properties if the table properties have changed
+   *          since the last synchronization
+   */
+  public void setTableProperties(String tableProperties) {
+    this.tableProperties = tableProperties;
+  }
+
   @Override
-  public boolean equals(final java.lang.Object o) {
-    if (o == this)
+  public boolean equals(Object obj) {
+    if (this == obj)
       return true;
-    if (!(o instanceof IncomingModification))
+    if (obj == null)
       return false;
-    final IncomingModification other = (IncomingModification) o;
-    if (!other.canEqual((java.lang.Object) this))
+    if (!(obj instanceof IncomingModification))
       return false;
-    if (this.getRows() == null ? other.getRows() != null : !this.getRows().equals(
-        (java.lang.Object) other.getRows()))
+    IncomingModification other = (IncomingModification) obj;
+    if (rows == null) {
+      if (other.rows != null)
+        return false;
+    } else if (!rows.equals(other.rows))
       return false;
-    if (this.getTableSyncTag() == null ? other.getTableSyncTag() != null : !this.getTableSyncTag()
-        .equals((java.lang.Object) other.getTableSyncTag()))
+    if (tableProperties == null) {
+      if (other.tableProperties != null)
+        return false;
+    } else if (!tableProperties.equals(other.tableProperties))
+      return false;
+    if (tablePropertiesChanged != other.tablePropertiesChanged)
+      return false;
+    if (tableSyncTag == null) {
+      if (other.tableSyncTag != null)
+        return false;
+    } else if (!tableSyncTag.equals(other.tableSyncTag))
       return false;
     return true;
   }
@@ -92,17 +148,19 @@ public class IncomingModification {
 
   @Override
   public int hashCode() {
-    final int PRIME = 31;
+    final int prime = 31;
     int result = 1;
-    result = result * PRIME + (this.getRows() == null ? 0 : this.getRows().hashCode());
-    result = result * PRIME
-        + (this.getTableSyncTag() == null ? 0 : this.getTableSyncTag().hashCode());
+    result = prime * result + ((rows == null) ? 0 : rows.hashCode());
+    result = prime * result + ((tableProperties == null) ? 0 : tableProperties.hashCode());
+    result = prime * result + (tablePropertiesChanged ? 1231 : 1237);
+    result = prime * result + ((tableSyncTag == null) ? 0 : tableSyncTag.hashCode());
     return result;
   }
 
   @Override
   public String toString() {
-    return "IncomingModification(rows=" + this.getRows() + ", tableSyncTag="
-        + this.getTableSyncTag() + ")";
+    return "IncomingModification [rows=" + rows + ", tablePropertiesChanged="
+        + tablePropertiesChanged + ", tableProperties=" + tableProperties + ", tableSyncTag="
+        + tableSyncTag + "]";
   }
 }

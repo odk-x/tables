@@ -309,6 +309,11 @@ public class TableProperties {
     public static TableProperties addTable(DbHelper dbh, String dbTableName,
             String displayName, int tableType) {
         String id = UUID.randomUUID().toString();
+        return addTable(dbh, dbTableName, displayName, tableType, id);
+    }
+    
+    public static TableProperties addTable(DbHelper dbh, String dbTableName,
+            String displayName, int tableType, String id) {
         ContentValues values = new ContentValues();
         values.put(DB_TABLE_ID, id);
         values.put(DB_DB_TABLE_NAME, dbTableName);
@@ -1023,6 +1028,11 @@ public class TableProperties {
     @Override
     public int hashCode() {
         return tableId.hashCode();
+    }
+    
+    @Override
+    public String toString() {
+      return displayName;
     }
     
     static String getTableCreateSql() {

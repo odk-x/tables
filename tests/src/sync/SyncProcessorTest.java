@@ -3,13 +3,13 @@ package sync;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -18,15 +18,14 @@ import yoonsung.odk.spreadsheet.data.Table;
 import yoonsung.odk.spreadsheet.sync.SyncRow;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 
-import com.xtremelabs.robolectric.RobolectricTestRunner;
-
 @RunWith(SyncTestRunner.class)
 public class SyncProcessorTest extends BaseSyncProcessorTest {
 
   @Test
   public void testCreateTableCallsSynchronizerAndEndsInRestState() throws IOException {
     this.processor.synchronizeTable(tp);
-    verify(synchronizer).createTable(eq(tp.getTableId()), argThat(containsKeys(dbColumnNames)));
+    verify(synchronizer).createTable(eq(tp.getTableId()), eq(tp.getDisplayName()),
+        argThat(containsKeys(dbColumnNames)), anyString());
     tp = this.dm.getTableProperties(tp.getTableId());
     assertEquals(SyncUtil.State.REST, tp.getSyncState());
     assertEquals(false, tp.isTransactioning());
@@ -48,7 +47,8 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
     table.addRow(Data.Rows.dylan.dataValues());
     this.processor.synchronizeTable(tp);
 
-    verify(synchronizer).insertRows(eq(tp.getTableId()), argThat(super.<SyncRow> isSize(1)));
+    verify(synchronizer).insertRows(eq(tp.getTableId()), anyString(),
+        argThat(super.<SyncRow> isSize(1)));
 
     Table rows = table.getRaw(new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
         new String[] { Data.Columns.name.name() }, new String[] { Data.Rows.dylan.name() }, null);
@@ -73,7 +73,8 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
 
     this.processor.synchronizeTable(tp);
 
-    verify(synchronizer).updateRows(eq(tp.getTableId()), argThat(super.<SyncRow> isSize(1)));
+    verify(synchronizer).updateRows(eq(tp.getTableId()), anyString(),
+        argThat(super.<SyncRow> isSize(1)));
 
     Table rows = table.getRaw(new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
         null, null, null);
@@ -95,7 +96,8 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
     table.markDeleted(rowIds[0]);
     this.processor.synchronizeTable(tp);
 
-    verify(synchronizer).deleteRows(eq(tp.getTableId()), argThat(super.<String> isSize(1)));
+    verify(synchronizer).deleteRows(eq(tp.getTableId()), anyString(),
+        argThat(super.<String> isSize(1)));
 
     Table rows = table.getRaw(new String[] { DbTable.DB_SYNC_STATE }, null, null, null);
     assertEquals(0, rows.getHeight());

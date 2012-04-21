@@ -270,8 +270,10 @@ public class DbTable {
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
-        String id = UUID.randomUUID().toString();
-        values.put(DB_ROW_ID, id);
+        if (!values.containsKey(DB_ROW_ID)) {
+          String id = UUID.randomUUID().toString();
+          values.put(DB_ROW_ID, id);
+        }
         SQLiteDatabase db = dbh.getWritableDatabase();
         long result = db.insert(tp.getDbTableName(), null, values);
         db.close();
