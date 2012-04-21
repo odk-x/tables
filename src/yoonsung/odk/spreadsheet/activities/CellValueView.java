@@ -36,6 +36,14 @@ public class CellValueView {
         public MultipleChoiceEditView(Context context, ColumnProperties cp,
                 String value) {
             super(context);
+            String[] opts = cp.getMultipleChoiceOptions();
+            int selection = -1;
+            for (int i = 0; i < opts.length; i++) {
+                if (opts[i].equals(value)) {
+                    selection = i;
+                    break;
+                }
+            }
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
                     android.R.layout.simple_spinner_item,
                     cp.getMultipleChoiceOptions());
@@ -43,6 +51,9 @@ public class CellValueView {
                     android.R.layout.simple_spinner_dropdown_item);
             spinner = new Spinner(context);
             spinner.setAdapter(adapter);
+            if (selection != -1) {
+                spinner.setSelection(selection);
+            }
             addView(spinner);
         }
         
