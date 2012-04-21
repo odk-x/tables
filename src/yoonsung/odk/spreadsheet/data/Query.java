@@ -9,7 +9,7 @@ import yoonsung.odk.spreadsheet.sync.SyncUtil;
 
 public class Query {
     
-    public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM }
+    public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM, SUM }
     
     private static final String KW_JOIN = "join";
     
@@ -471,6 +471,9 @@ public class Query {
             break;
         case MINIMUM:
             typeSql = "MIN(" + groupColumn + ")";
+            break;
+        case SUM:
+            typeSql = "SUM(" + groupColumn + ")";
             break;
         default:
             throw new RuntimeException();
