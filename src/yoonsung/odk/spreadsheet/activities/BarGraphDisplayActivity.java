@@ -18,8 +18,9 @@ import android.view.MenuItem;
 
 public class BarGraphDisplayActivity extends Activity
         implements DisplayActivity {
-    
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private DataManager dm;
     private Controller c;
@@ -88,6 +89,9 @@ public class BarGraphDisplayActivity extends Activity
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
         switch (requestCode) {
         case RCODE_ODKCOLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(

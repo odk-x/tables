@@ -274,6 +274,12 @@ public class ColumnManager extends ListActivity {
 		 Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
 		 toast.show();
 	}
+    
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_OK);
+        finish();
+    }
 	
 		
 	//								DO	NOT TOUCH BELOW								 //

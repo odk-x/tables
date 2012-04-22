@@ -34,8 +34,9 @@ import com.google.android.maps.Projection;
 
 public class MapDisplayActivity extends MapActivity
         implements DisplayActivity {
-    
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private static final String MAPS_API_KEY =
         "0xikiqqRicaG8hTFp_Lq5_SY7mCwcguCiKtLGlQ";
@@ -130,6 +131,9 @@ public class MapDisplayActivity extends MapActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
         switch (requestCode) {
         case RCODE_ODKCOLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(

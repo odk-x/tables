@@ -640,6 +640,12 @@ public class TablePropertiesManager extends PreferenceActivity {
         }
     }
     
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_OK);
+        finish();
+    }
+    
     private class FileSelectorPreference extends EditTextPreference {
         
         FileSelectorPreference(Context context) {

@@ -41,7 +41,8 @@ public class SpreadsheetDisplayActivity extends Activity
     private static final int MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER =
         Controller.FIRST_FREE_MENU_ITEM_ID + 9;
     
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private DataManager dm;
     private Controller c;
@@ -146,6 +147,9 @@ public class SpreadsheetDisplayActivity extends Activity
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
         switch (requestCode) {
         case RCODE_ODKCOLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(

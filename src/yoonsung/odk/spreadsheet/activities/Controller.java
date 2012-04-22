@@ -70,6 +70,10 @@ public class Controller {
     private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 3;
     static final int FIRST_FREE_MENU_ITEM_ID = 4;
     
+    private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
+    private static final int RCODE_COLUMN_MANAGER = 1;
+    static final int FIRST_FREE_RCODE = 2;
+    
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
     private static final Uri ODKCOLLECT_FORMS_CONTENT_URI =
@@ -86,9 +90,9 @@ public class Controller {
     private final Activity activity;
     private final DisplayActivity da;
     private final DataManager dm;
-    private final TableProperties tp;
-    private final DbTable dbt;
-    private final TableViewSettings tvs;
+    private TableProperties tp;
+    private DbTable dbt;
+    private TableViewSettings tvs;
     private final Stack<String> searchText;
     private final boolean isOverview;
     private final ViewGroup wrapper;
@@ -241,7 +245,8 @@ public class Controller {
             Intent intent = new Intent(activity, TablePropertiesManager.class);
             intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
                     tp.getTableId());
-            activity.startActivity(intent);
+            activity.startActivityForResult(intent,
+                    RCODE_TABLE_PROPERTIES_MANAGER);
             }
             return true;
         case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
@@ -249,7 +254,7 @@ public class Controller {
             Intent intent = new Intent(activity, ColumnManager.class);
             intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
                     tp.getTableId());
-            activity.startActivity(intent);
+            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
             }
             return true;
         case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
@@ -261,6 +266,42 @@ public class Controller {
         default:
             return false;
         }
+    }
+    
+    boolean handleActivityReturn(int requestCode, int returnCode,
+            Intent data) {
+        switch (requestCode) {
+        case RCODE_TABLE_PROPERTIES_MANAGER:
+            handleTablePropertiesManagerReturn();
+            return true;
+        case RCODE_COLUMN_MANAGER:
+            handleColumnManagerReturn();
+            return true;
+        default:
+            return false;
+        }
+    }
+    
+    private void handleTablePropertiesManagerReturn() {
+        int oldViewType = tvs.getViewType();
+        tp = dm.getTableProperties(tp.getTableId());
+        dbt = dm.getDbTable(tp.getTableId());
+        tvs = isOverview ? tp.getOverviewViewSettings() :
+                tp.getCollectionViewSettings();
+        if (oldViewType == tvs.getViewType()) {
+            da.init();
+        } else {
+            launchTableActivity(activity, tp, searchText, isOverview);
+            activity.finish();
+        }
+    }
+    
+    private void handleColumnManagerReturn() {
+        tp = dm.getTableProperties(tp.getTableId());
+        dbt = dm.getDbTable(tp.getTableId());
+        tvs = isOverview ? tp.getOverviewViewSettings() :
+                tp.getCollectionViewSettings();
+        da.init();
     }
     
     void deleteRow(String rowId) {
