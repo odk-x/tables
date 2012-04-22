@@ -63,6 +63,12 @@ public class LanguageUtil {
             return "Black";
         case Color.BLUE:
             return "Blue";
+        case Color.GREEN:
+            return "Green";
+        case Color.RED:
+            return "Red";
+        case Color.YELLOW:
+            return "Yellow";
         default:
             throw new RuntimeException();
         }

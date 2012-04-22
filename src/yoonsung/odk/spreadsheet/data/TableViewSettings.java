@@ -28,7 +28,8 @@ public class TableViewSettings {
         private Type() {}
     }
     
-    public static final int[] MAP_COLOR_OPTIONS = {Color.BLACK, Color.BLUE};
+    public static final int[] MAP_COLOR_OPTIONS = {Color.BLACK, Color.BLUE,
+        Color.GREEN, Color.RED, Color.YELLOW};
     
     private static final String JSON_KEY_VIEW_TYPE = "viewType";
     private static final String JSON_KEY_TABLE_SETTINGS = "table";
