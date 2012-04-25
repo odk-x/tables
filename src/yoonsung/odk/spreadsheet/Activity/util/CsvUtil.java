@@ -126,6 +126,7 @@ public class CsvUtil {
             reader.close();
             return true;
         } catch(IOException e) {
+            e.printStackTrace();
             return false;
         }
     }
