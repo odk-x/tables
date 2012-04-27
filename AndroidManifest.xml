@@ -85,6 +85,7 @@
         </activity>
         <activity android:name=".Activity.ShortcutTableActivity" >
         </activity>
+        <activity android:name=".Activity.AccountInfoActivity" />
         <activity android:name=".Activity.Aggregate" />
             
         <activity android:name=".Activity.AggregateChooseTablesActivity" />
