@@ -15,6 +15,7 @@ public class Preferences {
 	private static final String PREFERRED_VIEW_TYPE_BASE_KEY = "viewType-";
 	private static final String SERVER_URI_KEY = "serverUri";
 	private static final String ACCOUNT_KEY = "account";
+	private static final String AUTH_KEY = "auth";
 
 	public class ViewType {
 		public static final int TABLE = 0;
@@ -69,6 +70,16 @@ public class Preferences {
 	
 	public String getAccount() {
 	  return prefs.getString(ACCOUNT_KEY, null);
+	}
+	
+	public void setAuthToken(String authToken) {
+	  SharedPreferences.Editor editor = prefs.edit();
+	  editor.putString(AUTH_KEY, authToken);
+	  editor.commit();
+	}
+	
+	public String getAuthToken() {
+	  return prefs.getString(AUTH_KEY, null);
 	}
 
 	public void clearTablePreferences(String tableId) {
