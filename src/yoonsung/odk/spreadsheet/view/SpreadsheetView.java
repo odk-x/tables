@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -79,7 +80,7 @@ public class SpreadsheetView extends LinearLayout {
      * Initializes the click listeners.
      */
     private void initListeners() {
-        mainDataCellClickListener = new CellClickListener() {
+        mainDataCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainData.getCellNumber(x, y);
@@ -93,14 +94,33 @@ public class SpreadsheetView extends LinearLayout {
             }
             @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.regularCellClicked(cellId);
             }
             @Override
             protected void takeLongClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.openContextMenu(mainData);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {
+                int cellNum;
+                if (indexedCol < 0) {
+                    cellNum = cellId;
+                } else {
+                    int colNum = cellId % table.getWidth();
+                    int rowNum = cellId / table.getWidth();
+                    cellNum = cellId - rowNum -
+                            ((colNum < indexedCol) ? 0 : 1);
+                }
+                mainData.highlight(cellNum);
+            }
+            @Override
+            protected void takeCancelAction(int cellId) {
+                mainData.highlight(-1);
+            }
         };
-        mainHeaderCellClickListener = new CellClickListener() {
+        mainHeaderCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainHeader.getCellNumber(x, y);
@@ -119,8 +139,12 @@ public class SpreadsheetView extends LinearLayout {
             protected void takeLongClickAction(int cellId) {
                 controller.openContextMenu(mainHeader);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {}
+            @Override
+            protected void takeCancelAction(int cellId) {}
         };
-        mainFooterCellClickListener = new CellClickListener() {
+        mainFooterCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainFooter.getCellNumber(x, y);
@@ -139,8 +163,12 @@ public class SpreadsheetView extends LinearLayout {
             protected void takeLongClickAction(int cellId) {
                 controller.openContextMenu(mainFooter);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {}
+            @Override
+            protected void takeCancelAction(int cellId) {}
         };
-        indexDataCellClickListener = new CellClickListener() {
+        indexDataCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = indexData.getCellNumber(x, y);
@@ -154,8 +182,12 @@ public class SpreadsheetView extends LinearLayout {
             protected void takeLongClickAction(int cellId) {
                 controller.openContextMenu(indexData);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {}
+            @Override
+            protected void takeCancelAction(int cellId) {}
         };
-        indexHeaderCellClickListener = new CellClickListener() {
+        indexHeaderCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 return indexedCol;
@@ -168,8 +200,12 @@ public class SpreadsheetView extends LinearLayout {
             protected void takeLongClickAction(int cellId) {
                 controller.openContextMenu(indexHeader);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {}
+            @Override
+            protected void takeCancelAction(int cellId) {}
         };
-        indexFooterCellClickListener = new CellClickListener() {
+        indexFooterCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
                 return indexedCol;
@@ -182,6 +218,10 @@ public class SpreadsheetView extends LinearLayout {
             protected void takeLongClickAction(int cellId) {
                 controller.openContextMenu(indexFooter);
             }
+            @Override
+            protected void takeHoverAction(int cellId) {}
+            @Override
+            protected void takeCancelAction(int cellId) {}
         };
     }
     
@@ -345,13 +385,19 @@ public class SpreadsheetView extends LinearLayout {
         private String[][] data;
         private int backgroundColor;
         private int foregroundColor;
-        private int borderColor;
         private int[] columnWidths;
         private ColumnColorRuler[] colorRulers;
         private TableType type;
         
+        private Paint textPaint;
+        private Paint bgPaint;
+        private Paint borderPaint;
+        private Paint highlightPaint;
+        
         private int totalHeight;
         private int totalWidth;
+        
+        private int highlightedCellNum;
         
         public TabularView(Context context, String[][] data,
                 int backgroundColor, int foregroundColor, int borderColor,
@@ -377,9 +423,18 @@ public class SpreadsheetView extends LinearLayout {
             this.data = data;
             this.backgroundColor = backgroundColor;
             this.foregroundColor = foregroundColor;
-            this.borderColor = borderColor;
             this.columnWidths = columnWidths;
             this.colorRulers = colorRulers;
+            textPaint = new Paint();
+            textPaint.setAntiAlias(true);
+            textPaint.setTextSize(16);
+            bgPaint = new Paint();
+            bgPaint.setColor(backgroundColor);
+            borderPaint = new Paint();
+            borderPaint.setColor(borderColor);
+            highlightPaint = new Paint();
+            highlightPaint.setColor(Color.CYAN);
+            highlightPaint.setStrokeWidth(3);
             totalHeight = (ROW_HEIGHT + BORDER_WIDTH) * data.length +
                     BORDER_WIDTH;
             totalWidth = BORDER_WIDTH;
@@ -390,6 +445,7 @@ public class SpreadsheetView extends LinearLayout {
             setMinimumWidth(totalWidth);
             this.type = type;
             setClickable(true);
+            highlightedCellNum = -1;
         }
         
         public int getTableHeight() {
@@ -410,34 +466,38 @@ public class SpreadsheetView extends LinearLayout {
             return (row * columnWidths.length) + col; 
         }
         
+        public void highlight(int num) {
+            highlightedCellNum = num;
+            invalidate();
+        }
+        
         @Override
         public void onDraw(Canvas canvas) {
             if (data.length == 0) {
                 return;
             }
-            Paint paint = new Paint();
-            paint.setAntiAlias(true);
             // drawing the background
-            paint.setColor(backgroundColor);
-            canvas.drawRect(0, 0, totalWidth, totalHeight, paint);
+            canvas.drawRect(0, 0, totalWidth, totalHeight, bgPaint);
             // drawing the borders
-            paint.setColor(borderColor);
             int yCoord = 0;
             for (int i = 0; i <= data.length; i++) {
                 canvas.drawRect(0, yCoord, totalWidth, yCoord + BORDER_WIDTH,
-                        paint);
+                        borderPaint);
                 yCoord += ROW_HEIGHT + BORDER_WIDTH;
             }
             int xCoord = 0;
             for (int i = 0; i <= data[0].length; i++) {
                 canvas.drawRect(xCoord, 0, xCoord + BORDER_WIDTH, totalHeight,
-                        paint);
+                        borderPaint);
                 xCoord += (i == data[0].length) ? 0 :
                         columnWidths[i] + BORDER_WIDTH;
             }
             // drawing the cells
-            paint.setTextSize(16);
-            int x = BORDER_WIDTH;
+            int[] xs = new int[data[0].length];
+            xs[0] = BORDER_WIDTH;
+            for (int i = 0; i < data[0].length - 1; i++) {
+                xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
+            }
             int y = BORDER_WIDTH;
             for (int i = 0; i < data.length; i++) {
                 for (int j = 0; j < data[0].length; j++) {
@@ -445,7 +505,6 @@ public class SpreadsheetView extends LinearLayout {
                     if (datum == null) {
                         datum = "";
                     }
-                    int columnWidth = columnWidths[j];
                     int foregroundColor = (colorRulers == null) ?
                             this.foregroundColor :
                             colorRulers[j].getForegroundColor(datum,
@@ -454,30 +513,47 @@ public class SpreadsheetView extends LinearLayout {
                             this.backgroundColor :
                             colorRulers[j].getBackgroundColor(datum,
                                     this.backgroundColor);
-                    drawCell(canvas, paint, x, y, datum, backgroundColor,
-                            foregroundColor, columnWidth);
-                    x += columnWidth + BORDER_WIDTH;
+                    drawCell(canvas, xs[j], y, datum, backgroundColor,
+                            foregroundColor, columnWidths[j]);
                 }
-                x = BORDER_WIDTH;
                 y += ROW_HEIGHT + BORDER_WIDTH;
+            }
+            // highlighting cell (if necessary)
+            if (highlightedCellNum != -1) {
+                int x = highlightedCellNum % data[0].length;
+                int rowNum = highlightedCellNum / data[0].length;
+                highlightCell(canvas, xs[x], ((rowNum + 1) * BORDER_WIDTH) +
+                        (rowNum * ROW_HEIGHT), columnWidths[x]);
             }
         }
         
-        private void drawCell(Canvas canvas, Paint paint, int x, int y,
-                String datum, int backgroundColor, int foregroundColor,
-                int columnWidth) {
+        private void drawCell(Canvas canvas, int x, int y, String datum,
+                int backgroundColor, int foregroundColor, int columnWidth) {
             if (backgroundColor != this.backgroundColor) {
-                paint.setColor(backgroundColor);
-                canvas.drawRect(x, y, x + columnWidth, y + ROW_HEIGHT, paint);
+                bgPaint.setColor(backgroundColor);
+                canvas.drawRect(x, y, x + columnWidth, y + ROW_HEIGHT,
+                        bgPaint);
             }
             canvas.save(Canvas.ALL_SAVE_FLAG);
             canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
                     x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
                     y + ROW_HEIGHT);
-            paint.setColor(foregroundColor);
+            textPaint.setColor(foregroundColor);
             canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING,
-                    (y + ROW_HEIGHT - VERTICAL_CELL_PADDING), paint);
+                    (y + ROW_HEIGHT - VERTICAL_CELL_PADDING), textPaint);
             canvas.restore();
+        }
+        
+        private void highlightCell(Canvas canvas, int x, int y,
+                int columnWidth) {
+            canvas.drawLine(x + 1, y + 1, x + columnWidth - 1, y - 1,
+                    highlightPaint);
+            canvas.drawLine(x + 1, y + 1, x + 1, y + ROW_HEIGHT - 1,
+                    highlightPaint);
+            canvas.drawLine(x + columnWidth - 1, y + 1, x + columnWidth - 1,
+                    y + ROW_HEIGHT - 1, highlightPaint);
+            canvas.drawLine(x + 1, y + ROW_HEIGHT - 1, x + columnWidth - 1,
+                    y + ROW_HEIGHT - 1, highlightPaint);
         }
         
         @Override
@@ -501,25 +577,34 @@ public class SpreadsheetView extends LinearLayout {
         }
     }
     
-    private abstract class CellClickListener implements View.OnTouchListener {
+    private abstract class CellTouchListener implements View.OnTouchListener {
         
         @Override
         public boolean onTouch(View view, MotionEvent event) {
-            long duration = event.getEventTime() - event.getDownTime();
-            if (event.getAction() != MotionEvent.ACTION_UP ||
-                    duration < MIN_CLICK_DURATION) {
-                return false;
-            }
             int x = (new Float(event.getX())).intValue();
             int y = (new Float(event.getY())).intValue();
             int cellId = figureCellId(x, y);
-            if (duration < MIN_LONG_CLICK_DURATION) {
-                takeClickAction(cellId);
+            Log.d("SSV", "cell:" + cellId + " / action:" + event.getAction());
+            long duration = event.getEventTime() - event.getDownTime();
+            if ((event.getAction() == MotionEvent.ACTION_DOWN) ||
+                    (event.getAction() == MotionEvent.ACTION_MOVE)) {
+                takeHoverAction(cellId);
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+                takeCancelAction(cellId);
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_UP &&
+                    duration >= MIN_CLICK_DURATION) {
+                if (duration < MIN_LONG_CLICK_DURATION) {
+                    takeClickAction(cellId);
+                } else {
+                    lastLongClickedCellId = cellId;
+                    takeLongClickAction(cellId);
+                }
                 return true;
             } else {
-                lastLongClickedCellId = cellId;
-                takeLongClickAction(cellId);
-                return true;
+                Log.d("SSV", "here");
+                return false;
             }
         }
         
@@ -528,6 +613,10 @@ public class SpreadsheetView extends LinearLayout {
         protected abstract void takeClickAction(int cellId);
         
         protected abstract void takeLongClickAction(int cellId);
+        
+        protected abstract void takeHoverAction(int cellId);
+        
+        protected abstract void takeCancelAction(int cellId);
     }
     
     public interface Controller {

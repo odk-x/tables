@@ -18,6 +18,7 @@ import yoonsung.odk.spreadsheet.Activity.TablePropertiesManager;
 import yoonsung.odk.spreadsheet.Activity.util.LanguageUtil;
 import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DataManager;
+import yoonsung.odk.spreadsheet.data.DataUtil;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.TableProperties;
@@ -69,6 +70,10 @@ public class Controller {
     private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 3;
     static final int FIRST_FREE_MENU_ITEM_ID = 4;
     
+    private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
+    private static final int RCODE_COLUMN_MANAGER = 1;
+    static final int FIRST_FREE_RCODE = 2;
+    
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
     private static final Uri ODKCOLLECT_FORMS_CONTENT_URI =
@@ -81,12 +86,13 @@ public class Controller {
         "/sdcard/odk/tables/addrowform.xml";
     private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
     
+    private final DataUtil du;
     private final Activity activity;
     private final DisplayActivity da;
     private final DataManager dm;
-    private final TableProperties tp;
-    private final DbTable dbt;
-    private final TableViewSettings tvs;
+    private TableProperties tp;
+    private DbTable dbt;
+    private TableViewSettings tvs;
     private final Stack<String> searchText;
     private final boolean isOverview;
     private final ViewGroup wrapper;
@@ -95,6 +101,7 @@ public class Controller {
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
+        du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
         this.da = da;
         // getting intent information
@@ -187,7 +194,7 @@ public class Controller {
     }
     
     String getSearchText() {
-        return searchField.getText().toString();
+        return searchText.peek();
     }
     
     View getWrapperView() {
@@ -238,7 +245,8 @@ public class Controller {
             Intent intent = new Intent(activity, TablePropertiesManager.class);
             intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
                     tp.getTableId());
-            activity.startActivity(intent);
+            activity.startActivityForResult(intent,
+                    RCODE_TABLE_PROPERTIES_MANAGER);
             }
             return true;
         case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
@@ -246,7 +254,7 @@ public class Controller {
             Intent intent = new Intent(activity, ColumnManager.class);
             intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
                     tp.getTableId());
-            activity.startActivity(intent);
+            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
             }
             return true;
         case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
@@ -258,6 +266,42 @@ public class Controller {
         default:
             return false;
         }
+    }
+    
+    boolean handleActivityReturn(int requestCode, int returnCode,
+            Intent data) {
+        switch (requestCode) {
+        case RCODE_TABLE_PROPERTIES_MANAGER:
+            handleTablePropertiesManagerReturn();
+            return true;
+        case RCODE_COLUMN_MANAGER:
+            handleColumnManagerReturn();
+            return true;
+        default:
+            return false;
+        }
+    }
+    
+    private void handleTablePropertiesManagerReturn() {
+        int oldViewType = tvs.getViewType();
+        tp = dm.getTableProperties(tp.getTableId());
+        dbt = dm.getDbTable(tp.getTableId());
+        tvs = isOverview ? tp.getOverviewViewSettings() :
+                tp.getCollectionViewSettings();
+        if (oldViewType == tvs.getViewType()) {
+            da.init();
+        } else {
+            launchTableActivity(activity, tp, searchText, isOverview);
+            activity.finish();
+        }
+    }
+    
+    private void handleColumnManagerReturn() {
+        tp = dm.getTableProperties(tp.getTableId());
+        dbt = dm.getDbTable(tp.getTableId());
+        tvs = isOverview ? tp.getOverviewViewSettings() :
+                tp.getCollectionViewSettings();
+        da.init();
     }
     
     void deleteRow(String rowId) {
@@ -332,8 +376,13 @@ public class Controller {
         }
         Map<String, String> values = new HashMap<String, String>();
         for (String key : formValues.keySet()) {
-            if (tp.getColumnByDbName(key) != null) {
-                values.put(key, formValues.get(key));
+            ColumnProperties cp = tp.getColumnByDbName(key);
+            if (cp == null) {
+                continue;
+            }
+            String value = du.validifyValue(cp, formValues.get(key));
+            if (value != null) {
+                values.put(key, value);
             }
         }
         dbt.addRow(values);
@@ -377,6 +426,10 @@ public class Controller {
         return values;
     }
     
+    void openCellEditDialog(String rowId, String value, int colIndex) {
+        (new CellEditDialog(rowId, value, colIndex)).show();
+    }
+    
     public static void launchTableActivity(Context context, TableProperties tp,
             boolean isOverview) {
         Controller.launchTableActivity(context, tp, null, null, isOverview);
@@ -405,11 +458,17 @@ public class Controller {
         case TableViewSettings.Type.LIST:
             intent = new Intent(context, ListDisplayActivity.class);
             break;
+        case TableViewSettings.Type.LINE_GRAPH:
+            intent = new Intent(context, LineGraphDisplayActivity.class);
+            break;
         case TableViewSettings.Type.BOX_STEM:
             intent = new Intent(context, BoxStemGraphDisplayActivity.class);
             break;
         case TableViewSettings.Type.BAR_GRAPH:
             intent = new Intent(context, BarGraphDisplayActivity.class);
+            break;
+        case TableViewSettings.Type.MAP:
+            intent = new Intent(context, MapDisplayActivity.class);
             break;
         default:
             intent = new Intent(context, SpreadsheetDisplayActivity.class);
@@ -456,10 +515,14 @@ public class Controller {
             LinearLayout wrapper = new LinearLayout(context);
             wrapper.setOrientation(LinearLayout.VERTICAL);
             // adding the view type spinner
+            int selectionIndex = 0;
             final int[] viewTypeIds = tvs.getPossibleViewTypes();
             String[] viewTypeStringIds = new String[viewTypeIds.length];
             String[] viewTypeNames = new String[viewTypeIds.length];
             for (int i = 0; i < viewTypeIds.length; i++) {
+                if (tvs.getViewType() == viewTypeIds[i]) {
+                    selectionIndex = i;
+                }
                 viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
                 viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
                         viewTypeIds[i]);
@@ -470,7 +533,7 @@ public class Controller {
                     android.R.layout.simple_spinner_dropdown_item);
             final Spinner spinner = new Spinner(context);
             spinner.setAdapter(adapter);
-            spinner.setSelection(tvs.getViewType());
+            spinner.setSelection(selectionIndex);
             wrapper.addView(spinner);
             // adding the set and cancel buttons
             Button setButton = new Button(context);
@@ -499,6 +562,61 @@ public class Controller {
             buttonWrapper.addView(cancelButton);
             wrapper.addView(buttonWrapper);
             // setting the dialog view
+            setView(wrapper);
+        }
+    }
+    
+    private class CellEditDialog extends AlertDialog {
+        
+        private final String rowId;
+        private final int colIndex;
+        private final CellValueView.CellEditView cev;
+        
+        public CellEditDialog(String rowId, String value, int colIndex) {
+            super(activity);
+            this.rowId = rowId;
+            this.colIndex = colIndex;
+            cev = CellValueView.getCellEditView(activity,
+                    tp.getColumns()[colIndex], value);
+            buildView(activity);
+        }
+        
+        private void buildView(Context context) {
+            Button setButton = new Button(context);
+            setButton.setText(activity.getResources().getString(R.string.set));
+            setButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String value = du.validifyValue(tp.getColumns()[colIndex],
+                            cev.getValue());
+                    if (value == null) {
+                        // TODO: alert the user
+                        return;
+                    }
+                    Map<String, String> values = new HashMap<String, String>();
+                    values.put(tp.getColumns()[colIndex].getColumnDbName(),
+                            value);
+                    dbt.updateRow(rowId, values);
+                    da.init();
+                    dismiss();
+                }
+            });
+            Button cancelButton = new Button(context);
+            cancelButton.setText(activity.getResources().getString(
+                    R.string.cancel));
+            cancelButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+            LinearLayout buttonWrapper = new LinearLayout(context);
+            buttonWrapper.addView(setButton);
+            buttonWrapper.addView(cancelButton);
+            LinearLayout wrapper = new LinearLayout(context);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.addView(cev);
+            wrapper.addView(buttonWrapper);
             setView(wrapper);
         }
     }

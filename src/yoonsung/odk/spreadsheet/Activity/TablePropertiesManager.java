@@ -1,7 +1,10 @@
 package yoonsung.odk.spreadsheet.Activity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,6 +18,13 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import yoonsung.odk.spreadsheet.Activity.util.LanguageUtil;
 import yoonsung.odk.spreadsheet.Activity.util.SecurityUtil;
 import yoonsung.odk.spreadsheet.Activity.util.ShortcutUtil;
@@ -22,6 +32,7 @@ import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.TableViewSettings;
+import yoonsung.odk.spreadsheet.data.TableViewSettings.ConditionalRuler;
 
 /**
  * An activity for managing a table's properties.
@@ -259,23 +270,26 @@ public class TablePropertiesManager extends PreferenceActivity {
             throw new RuntimeException();
         }
         
-        final List<ColumnProperties> numberCols = getNumberColumns();
-        
-        List<Integer> viewTypeIndices = new ArrayList<Integer>();
-        for (int i = 0; i < TableViewSettings.Type.COUNT; i++) {
-            if ((numberCols.size() == 0) && (
-                    (i == TableViewSettings.Type.LINE_GRAPH) ||
-                    (i == TableViewSettings.Type.BOX_STEM))) {
-                continue;
+        final List<ColumnProperties> numberCols =
+            new ArrayList<ColumnProperties>();
+        final List<ColumnProperties> locationCols =
+            new ArrayList<ColumnProperties>();
+        for (ColumnProperties cp : tp.getColumns()) {
+            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                numberCols.add(cp);
+            } else if (cp.getColumnType() ==
+                    ColumnProperties.ColumnType.LOCATION) {
+                locationCols.add(cp);
             }
-            viewTypeIndices.add(i);
         }
-        String[] viewTypeIds = new String[viewTypeIndices.size()];
-        String[] viewTypeNames = new String[viewTypeIndices.size()];
-        for (int i = 0; i < viewTypeIndices.size(); i++) {
-            int index = viewTypeIndices.get(i);
-            viewTypeIds[i] = String.valueOf(index);
-            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(index);
+        
+        int[] viewTypes = settings.getPossibleViewTypes();
+        String[] viewTypeIds = new String[viewTypes.length];
+        String[] viewTypeNames = new String[viewTypes.length];
+        for (int i = 0; i < viewTypes.length; i++) {
+            int viewType = viewTypes[i];
+            viewTypeIds[i] = String.valueOf(viewType);
+            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
         }
         ListPreference viewTypePref = new ListPreference(this);
         viewTypePref.setTitle(label + " Type");
@@ -381,6 +395,77 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
             break;
         
+        case TableViewSettings.Type.BAR_GRAPH:
+            {
+            ColumnProperties xCol = settings.getBarXCol();
+            if (xCol == null) {
+                xCol = tp.getColumns()[0];
+            }
+            String yCol = settings.getBarYCol();
+            String yColSummary;
+            if (yCol == null || yCol.startsWith("*")) {
+                yCol = "*count";
+                yColSummary = "Count";
+            } else {
+                yColSummary = tp.getColumnByDbName(yCol).getDisplayName();
+            }
+            ColumnProperties[] cps = tp.getColumns();
+            String[] xColDbNames = new String[cps.length];
+            String[] xColDisplayNames = new String[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                xColDbNames[i] = cps[i].getColumnDbName();
+                xColDisplayNames[i] = cps[i].getDisplayName();
+            }
+            String[] yColDbNames = new String[numberCols.size() + 1];
+            String[] yColDisplayNames = new String[numberCols.size() + 1];
+            yColDbNames[0] = "*count";
+            yColDisplayNames[0] = "Count";
+            for (int i = 0; i < numberCols.size(); i++) {
+                yColDbNames[i] = numberCols.get(i).getColumnDbName();
+                yColDisplayNames[i] = numberCols.get(i).getDisplayName();
+            }
+            
+            ListPreference barXColPref = new ListPreference(this);
+            barXColPref.setTitle(label + " X Column");
+            barXColPref.setDialogTitle("Change " + label + " X Column");
+            barXColPref.setEntryValues(xColDbNames);
+            barXColPref.setEntries(xColDisplayNames);
+            barXColPref.setValue(xCol.getColumnDbName());
+            barXColPref.setSummary(xCol.getDisplayName());
+            barXColPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setBarXCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(barXColPref);
+            
+            ListPreference barYColPref = new ListPreference(this);
+            barYColPref.setTitle(label + " Y Column");
+            barYColPref.setDialogTitle("Change " + label + " Y Column");
+            barYColPref.setEntryValues(yColDbNames);
+            barYColPref.setEntries(yColDisplayNames);
+            barYColPref.setValue(yCol);
+            barYColPref.setSummary(yColSummary);
+            barYColPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setBarYCol((String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(barYColPref);
+            }
+            break;
+        
         case TableViewSettings.Type.BOX_STEM:
             {
             ColumnProperties xCol = settings.getBoxStemXCol();
@@ -447,17 +532,94 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
             break;
         
-        }
-    }
-    
-    private List<ColumnProperties> getNumberColumns() {
-        List<ColumnProperties> cols = new ArrayList<ColumnProperties>();
-        for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
-                cols.add(cp);
+        case TableViewSettings.Type.MAP:
+            {
+            ColumnProperties labelCol = settings.getMapLabelCol();
+            if (labelCol == null) {
+                settings.setMapLabelCol(tp.getColumns()[0]);
+                labelCol = tp.getColumns()[0];
             }
+            ColumnProperties locCol = settings.getMapLocationCol();
+            if (locCol == null) {
+                settings.setMapLocationCol(locationCols.get(0));
+                locCol = locationCols.get(0);
+            }
+            ColumnProperties[] cps = tp.getColumns();
+            String[] colDbNames = new String[cps.length];
+            String[] colDisplayNames = new String[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                colDbNames[i] = cps[i].getColumnDbName();
+                colDisplayNames[i] = cps[i].getDisplayName();
+            }
+            String[] locColDbNames = new String[locationCols.size()];
+            String[] locColDisplayNames = new String[locationCols.size()];
+            for (int i = 0; i < locationCols.size(); i++) {
+                locColDbNames[i] = locationCols.get(i).getColumnDbName();
+                locColDisplayNames[i] = locationCols.get(i).getDisplayName();
+            }
+            
+            ListPreference mapLocPref = new ListPreference(this);
+            mapLocPref.setTitle(label + " Location Column");
+            mapLocPref.setDialogTitle("Change " + label + " Location Column");
+            mapLocPref.setEntryValues(locColDbNames);
+            mapLocPref.setEntries(locColDisplayNames);
+            mapLocPref.setValue(locCol.getColumnDbName());
+            mapLocPref.setSummary(locCol.getDisplayName());
+            mapLocPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setMapLocationCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLocPref);
+            
+            ListPreference mapLabelPref = new ListPreference(this);
+            mapLabelPref.setTitle(label + " Label Column");
+            mapLabelPref.setDialogTitle("Change " + label + " Label Column");
+            mapLabelPref.setEntryValues(colDbNames);
+            mapLabelPref.setEntries(colDisplayNames);
+            mapLabelPref.setValue(labelCol.getColumnDbName());
+            mapLabelPref.setSummary(labelCol.getDisplayName());
+            mapLabelPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setMapLabelCol(tp.getColumnByDbName(
+                            (String) newValue));
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLabelPref);
+            
+            String[] mapColorLabels =
+                new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
+            for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length;
+                    i++) {
+                mapColorLabels[i] = LanguageUtil.getMapColorLabel(
+                        TableViewSettings.MAP_COLOR_OPTIONS[i]);
+            }
+            Map<ColumnProperties, ConditionalRuler> colorRulers =
+                new HashMap<ColumnProperties, ConditionalRuler>();
+            for (ColumnProperties cp : tp.getColumns()) {
+                colorRulers.put(cp, settings.getMapColorRuler(cp));
+            }
+            ConditionalRulerDialogPreference ccPref =
+                new ConditionalRulerDialogPreference(
+                        TableViewSettings.MAP_COLOR_OPTIONS, mapColorLabels,
+                        colorRulers);
+            ccPref.setTitle(label + " Map Color Options");
+            prefCat.addPreference(ccPref);
+            }
+            break;
+        
         }
-        return cols;
     }
     
     @Override
@@ -476,6 +638,12 @@ public class TablePropertiesManager extends PreferenceActivity {
         default:
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+    
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_OK);
+        finish();
     }
     
     private class FileSelectorPreference extends EditTextPreference {
@@ -503,6 +671,233 @@ public class TablePropertiesManager extends PreferenceActivity {
             List<ResolveInfo> list = packageManager.queryIntentActivities(
                     intent, PackageManager.MATCH_DEFAULT_ONLY);
             return (list.size() > 0);
+        }
+    }
+    
+    private class ConditionalRulerDialogPreference extends Preference {
+        
+        private final Dialog dialog;
+        
+        public ConditionalRulerDialogPreference(int[] values, String[] labels,
+                Map<ColumnProperties, ConditionalRuler> rulerMap) {
+            super(TablePropertiesManager.this);
+            dialog = new ConditionalRulerDialog(values, labels, rulerMap);
+        }
+        
+        @Override
+        protected void onClick() {
+            dialog.show();
+        }
+    }
+    
+    public class ConditionalRulerDialog extends Dialog {
+        
+        private final int[] values;
+        private final String[] labels;
+        private final Map<ColumnProperties, ConditionalRuler> rulerMap;
+        private final ColumnProperties[] columns;
+        private final String[] comparatorLabels;
+        private final String[] columnDisplays;
+        private LinearLayout ruleList;
+        
+        public ConditionalRulerDialog(int[] values, String[] labels,
+                Map<ColumnProperties, ConditionalRuler> rulerMap) {
+            super(TablePropertiesManager.this);
+            this.values = values;
+            this.labels = labels;
+            this.rulerMap = rulerMap;
+            columns = new ColumnProperties[tp.getColumns().length];
+            comparatorLabels = new String[ConditionalRuler.Comparator.COUNT];
+            for (int i = 0; i < comparatorLabels.length; i++) {
+                comparatorLabels[i] =
+                    LanguageUtil.getTvsConditionalComparator(i);
+            }
+            columnDisplays = new String[tp.getColumns().length];
+            for (int i = 0; i < tp.getColumns().length; i++) {
+                ColumnProperties cp = tp.getColumns()[i];
+                columns[i] = cp;
+                columnDisplays[i] = cp.getDisplayName();
+            }
+            setContentView(buildView());
+        }
+        
+        private View buildView() {
+            ruleList = new LinearLayout(TablePropertiesManager.this);
+            ruleList.setOrientation(LinearLayout.VERTICAL);
+            String[] comparatorValues =
+                new String[ConditionalRuler.Comparator.COUNT];
+            String[] comparatorDisplays =
+                new String[ConditionalRuler.Comparator.COUNT];
+            for (int i = 0; i < ConditionalRuler.Comparator.COUNT; i++) {
+                comparatorValues[i] = String.valueOf(i);
+                comparatorDisplays[i] =
+                    LanguageUtil.getTvsConditionalComparator(i);
+            }
+            LinearLayout.LayoutParams rwLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.FILL_PARENT,
+                    LinearLayout.LayoutParams.FILL_PARENT);
+            Context context = TablePropertiesManager.this;
+            for (ColumnProperties cp : tp.getColumns()) {
+                ConditionalRuler cr = rulerMap.get(cp);
+                for (int i = 0; i < cr.getRuleCount(); i++) {
+                    ruleList.addView(buildRuleView(cp, cr, i), rwLp);
+                }
+            }
+            LinearLayout controlWrapper = new LinearLayout(context);
+            Button addButton = new Button(context);
+            addButton.setText("Add");
+            addButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ColumnProperties cp = columns[0];
+                    ConditionalRuler cr = rulerMap.get(cp);
+                    cr.addRule(ConditionalRuler.Comparator.EQUALS, "",
+                            values[0]);
+                    ruleList.addView(buildRuleView(cp, cr,
+                            cr.getRuleCount() - 1));
+                }
+            });
+            controlWrapper.addView(addButton);
+            Button closeButton = new Button(context);
+            closeButton.setText("Close");
+            closeButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+            controlWrapper.addView(closeButton);
+            LinearLayout wrapper = new LinearLayout(context);
+            wrapper.setOrientation(LinearLayout.VERTICAL);
+            wrapper.addView(ruleList);
+            wrapper.addView(controlWrapper);
+            return wrapper;
+        }
+        
+        private View buildRuleView(final ColumnProperties cp,
+                final ConditionalRuler cr, final int ruleIndex) {
+            Context context = TablePropertiesManager.this;
+            
+            final Spinner colSpinner = getSpinner(context, columnDisplays);
+            int columnIndex = -1;
+            for (int i = 0; i < columns.length; i++) {
+                if (cp == columns[i]) {
+                    columnIndex = i;
+                    break;
+                }
+            }
+            if (columnIndex == -1) {
+                throw new RuntimeException();
+            }
+            colSpinner.setSelection(columnIndex);
+            
+            final Spinner settingSpinner = getSpinner(context, labels);
+            int setting = cr.getRuleSetting(ruleIndex);
+            int settingIndex = -1;
+            for (int i = 0; i < values.length; i++) {
+                if (setting == values[i]) {
+                    settingIndex = i;
+                    break;
+                }
+            }
+            if (settingIndex == -1) {
+                throw new RuntimeException();
+            }
+            settingSpinner.setSelection(settingIndex);
+            
+            final Spinner compSpinner = getSpinner(context, comparatorLabels);
+            compSpinner.setSelection(cr.getRuleComparator(ruleIndex));
+            
+            final EditText valueEt = new EditText(context);
+            valueEt.setText(cr.getRuleValue(ruleIndex));
+            
+            Button deleteButton = new Button(context);
+            deleteButton.setText("Delete");
+            
+            colSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    ColumnProperties nextCp = columns[position];
+                    if (cp == nextCp) {
+                        return;
+                    }
+                    cr.deleteRule(ruleIndex);
+                    rulerMap.get(nextCp).addRule(
+                            compSpinner.getSelectedItemPosition(),
+                            valueEt.getText().toString(),
+                            values[settingSpinner.getSelectedItemPosition()]);
+                    setContentView(buildView());
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            settingSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    if (cr.getRuleSetting(ruleIndex) == values[position]) {
+                        return;
+                    }
+                    cr.setRuleSetting(ruleIndex, values[position]);
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            compSpinner.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                        @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                        int position, long id) {
+                    if (cr.getRuleComparator(ruleIndex) == position) {
+                        return;
+                    }
+                    cr.setRuleComparator(ruleIndex, position);
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+            valueEt.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        return;
+                    }
+                    cr.setRuleValue(ruleIndex, valueEt.getText().toString());
+                }
+            });
+            deleteButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    cr.deleteRule(ruleIndex);
+                    setContentView(buildView());
+                }
+            });
+            
+            LinearLayout topRow = new LinearLayout(context);
+            LinearLayout bottomRow = new LinearLayout(context);
+            topRow.addView(colSpinner);
+            topRow.addView(settingSpinner);
+            bottomRow.addView(compSpinner);
+            bottomRow.addView(valueEt);
+            bottomRow.addView(deleteButton);
+            LinearLayout rw = new LinearLayout(context);
+            rw.setOrientation(LinearLayout.VERTICAL);
+            rw.addView(topRow);
+            rw.addView(bottomRow);
+            return rw;
+        }
+        
+        private Spinner getSpinner(Context context, String[] values) {
+            Spinner spinner = new Spinner(context);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+                    android.R.layout.simple_spinner_item, values);
+            adapter.setDropDownViewResource(
+                    android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+            return spinner;
         }
     }
 }

@@ -1,7 +1,5 @@
 package yoonsung.odk.spreadsheet.data;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import yoonsung.odk.spreadsheet.data.Query.SqlData;
@@ -111,9 +109,30 @@ public class DbTable {
                 table.getData(), footerQuery(query));
     }
     
+    public GroupTable getGroupTable(Query query, ColumnProperties groupColumn,
+            Query.GroupQueryType type) {
+        SqlData sd = query.toGroupSql(groupColumn.getColumnDbName(), type);
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
+        int gcColIndex = c.getColumnIndexOrThrow(
+                groupColumn.getColumnDbName());
+        int countColIndex = c.getColumnIndexOrThrow("g");
+        int rowCount = c.getCount();
+        String[] keys = new String[rowCount];
+        double[] values = new double[rowCount];
+        c.moveToFirst();
+        for (int i = 0; i < rowCount; i++) {
+            keys[i] = c.getString(gcColIndex);
+            values[i] = c.getDouble(countColIndex);
+            c.moveToNext();
+        }
+        c.close();
+        db.close();
+        return new GroupTable(keys, values);
+    }
+    
     private Table dataQuery(SqlData sd) {
         SQLiteDatabase db = dbh.getReadableDatabase();
-        Log.d("DBTSQ", sd.getSql());
         Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
         Table table = buildTable(c, tp.getColumnOrder());
         c.close();
@@ -166,52 +185,45 @@ public class DbTable {
     
     private String[] footerQuery(Query query) {
         ColumnProperties[] cps = tp.getColumns();
-        List<String> sc = new ArrayList<String>();
-        for (ColumnProperties cp : cps) {
-            String colDbName = cp.getColumnDbName();
-            int mode = cp.getFooterMode();
-            switch (mode) {
+        String[] footer = new String[cps.length];
+        for (int i = 0; i < cps.length; i++) {
+            switch (cps[i].getFooterMode()) {
             case ColumnProperties.FooterMode.COUNT:
-                sc.add("COUNT(" + colDbName + ") AS " + colDbName);
+                footer[i] = getFooterItem(query, cps[i],
+                        Query.GroupQueryType.COUNT);
                 break;
             case ColumnProperties.FooterMode.MAXIMUM:
-                sc.add(", MAX(" + colDbName + ") AS " + colDbName);
-                break;
-            case ColumnProperties.FooterMode.MEAN:
-                sc.add(", COUNT(" + colDbName + ") AS count" + colDbName);
-                sc.add(", SUM(" + colDbName + ") AS sum" + colDbName);
+                footer[i] = getFooterItem(query, cps[i],
+                        Query.GroupQueryType.MAXIMUM);
                 break;
             case ColumnProperties.FooterMode.MINIMUM:
-                sc.add(", MIN(" + colDbName + ") AS " + colDbName);
+                footer[i] = getFooterItem(query, cps[i],
+                        Query.GroupQueryType.MINIMUM);
                 break;
             case ColumnProperties.FooterMode.SUM:
-                sc.add(", SUM(" + colDbName + ") AS " + colDbName);
+                footer[i] = getFooterItem(query, cps[i],
+                        Query.GroupQueryType.SUM);
+                break;
+            case ColumnProperties.FooterMode.MEAN:
+                footer[i] = getFooterItem(query, cps[i],
+                        Query.GroupQueryType.AVERAGE);
                 break;
             }
         }
-        String[] footer = new String[cps.length];
-        SqlData sd = query.toSql(sc);
+        return footer;
+    }
+    
+    private String getFooterItem(Query query, ColumnProperties cp,
+            Query.GroupQueryType type) {
+        SqlData sd = query.toGroupSql(cp.getColumnDbName(), type);
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
+        int gColIndex = c.getColumnIndexOrThrow("g");
         c.moveToFirst();
-        for (int i = 0; i < cps.length; i++) {
-            if (cps[i].getFooterMode() == ColumnProperties.FooterMode.MEAN) {
-                int sIndex = c.getColumnIndexOrThrow("sum" +
-                        cps[i].getColumnDbName());
-                int cIndex = c.getColumnIndexOrThrow("count" +
-                        cps[i].getColumnDbName());
-                double sum = c.getInt(sIndex);
-                int count = c.getInt(cIndex);
-                footer[i] = String.valueOf(sum / count);
-            } else if (cps[i].getFooterMode() !=
-                    ColumnProperties.FooterMode.NONE) {
-                int index = c.getColumnIndexOrThrow(cps[i].getColumnDbName());
-                footer[i] = c.getString(index);
-            }
-        }
+        String value = c.getString(gColIndex);
         c.close();
         db.close();
-        return footer;
+        return value;
     }
     
     /**
@@ -367,5 +379,28 @@ public class DbTable {
         }
         selBuilder.delete(0, 5);
         return selBuilder.toString();
+    }
+    
+    public class GroupTable {
+        
+        private String[] keys;
+        private double[] values;
+        
+        GroupTable(String[] keys, double[] values) {
+            this.keys = keys;
+            this.values = values;
+        }
+        
+        public int getSize() {
+            return values.length;
+        }
+        
+        public String getKey(int index) {
+            return keys[index];
+        }
+        
+        public double getValue(int index) {
+            return values[index];
+        }
     }
 }

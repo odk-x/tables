@@ -15,8 +15,9 @@ import android.view.View;
 
 
 public class ListDisplayActivity extends Activity implements DisplayActivity {
-    
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private DataManager dm;
     private Controller c;
@@ -51,16 +52,16 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     }
     
     private void openCollectionView(int rowNum) {
-        Query q = new Query(dm.getAllTableProperties(),
-                c.getTableProperties());
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
                     .getColumnByDbName(prime);
             int colNum = c.getTableProperties().getColumnIndex(prime);
-            q.addConstraint(cp, table.getData(rowNum, colNum));
+            query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                q.toUserQuery(), false);
+                query.toUserQuery(), false);
     }
     
     @Override
@@ -71,6 +72,9 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
         switch (requestCode) {
         case RCODE_ODKCOLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(
@@ -107,20 +111,16 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         }
     }
     
-    private void onItemClick(int rowNum) {
-        if (c.getIsOverview() &&
-                (c.getTableProperties().getPrimeColumns().length > 0)) {
-            openCollectionView(rowNum);
-        } else {
-            Controller.launchDetailActivity(this, c.getTableProperties(),
-                    table, rowNum);
-        }
-    }
-    
     private class ListViewController implements ListDisplayView.Controller {
         @Override
         public void onListItemClick(int rowNum) {
-            onItemClick(rowNum);
+            if (c.getIsOverview() &&
+                    (c.getTableProperties().getPrimeColumns().length > 0)) {
+                openCollectionView(rowNum);
+            } else {
+                Controller.launchDetailActivity(ListDisplayActivity.this,
+                        c.getTableProperties(), table, rowNum);
+            }
         }
     }
 }

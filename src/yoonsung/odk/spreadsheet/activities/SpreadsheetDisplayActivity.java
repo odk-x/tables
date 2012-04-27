@@ -41,7 +41,8 @@ public class SpreadsheetDisplayActivity extends Activity
     private static final int MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER =
         Controller.FIRST_FREE_MENU_ITEM_ID + 9;
     
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private DataManager dm;
     private Controller c;
@@ -80,16 +81,16 @@ public class SpreadsheetDisplayActivity extends Activity
     }
     
     private void openCollectionView(int rowNum) {
-        Query q = new Query(dm.getAllTableProperties(),
-                c.getTableProperties());
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
                     .getColumnByDbName(prime);
             int colNum = c.getTableProperties().getColumnIndex(prime);
-            q.addConstraint(cp, table.getData(rowNum, colNum));
+            query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                q.toUserQuery(), false);
+                query.toUserQuery(), false);
     }
     
     void setColumnAsPrime(ColumnProperties cp) {
@@ -146,6 +147,9 @@ public class SpreadsheetDisplayActivity extends Activity
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
         switch (requestCode) {
         case RCODE_ODKCOLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(
@@ -173,7 +177,10 @@ public class SpreadsheetDisplayActivity extends Activity
             openCollectionView(lastDataCellMenued / table.getWidth());
             return true;
         case MENU_ITEM_ID_EDIT_CELL:
-            // TODO
+            c.openCellEditDialog(
+                    table.getRowId(lastDataCellMenued / table.getWidth()),
+                    table.getData(lastDataCellMenued),
+                    lastDataCellMenued % table.getWidth());
             return true;
         case MENU_ITEM_ID_DELETE_ROW:
             c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));

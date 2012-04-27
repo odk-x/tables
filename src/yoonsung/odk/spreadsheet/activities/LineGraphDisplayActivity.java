@@ -2,95 +2,104 @@ package yoonsung.odk.spreadsheet.activities;
 
 import java.util.ArrayList;
 import java.util.List;
-import yoonsung.odk.spreadsheet.Library.graphs.GXYPoint;
-import yoonsung.odk.spreadsheet.Library.graphs.GraphFactory;
+import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DbHelper;
-import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Query;
-import yoonsung.odk.spreadsheet.data.TableProperties;
-import yoonsung.odk.spreadsheet.data.TableViewSettings;
 import yoonsung.odk.spreadsheet.data.UserTable;
+import yoonsung.odk.spreadsheet.view.graphs.LineChart;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 
 
 public class LineGraphDisplayActivity extends Activity
         implements DisplayActivity {
+
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
-    
-    private String searchText;
-    private boolean isOverview;
-    private TableProperties tp;
-    private TableViewSettings tvs;
-    private DbTable dbt;
+    private DataManager dm;
+    private Controller c;
     private Query query;
     private UserTable table;
-    private Controller controller;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // getting intent information
-        String tableId = getIntent().getStringExtra(
-                Controller.INTENT_KEY_TABLE_ID);
-        if (tableId == null) {
-            throw new RuntimeException("null table ID");
-        }
-        searchText = getIntent().getStringExtra(Controller.INTENT_KEY_SEARCH);
-        if (searchText == null) {
-            searchText = "";
-        }
-        isOverview = getIntent().getBooleanExtra(
-                Controller.INTENT_KEY_IS_OVERVIEW, false);
-        // initializing data objects
-        DataManager dm = new DataManager(DbHelper.getDbHelper(this));
-        tp = dm.getTableProperties(tableId);
-        tvs = isOverview ? tp.getOverviewViewSettings() :
-                tp.getCollectionViewSettings();
-        dbt = dm.getDbTable(tableId);
-        query = new Query(dm.getAllTableProperties(), tp);
-        query.loadFromUserQuery(searchText);
-        table = isOverview ? dbt.getUserOverviewTable(query) :
-                dbt.getUserTable(query);
-        // setting up display
-        controller = new Controller(this, this, savedInstanceState);
-        View view = buildView();
-        controller.setDisplayView(view);
-        setContentView(controller.getWrapperView());
+        c = new Controller(this, this, getIntent().getExtras());
+        dm = new DataManager(DbHelper.getDbHelper(this));
+        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        init();
     }
     
     @Override
     public void init() {
-        
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
+        ColumnProperties xCol = c.getTableViewSettings().getLineXCol();
+        ColumnProperties yCol = c.getTableViewSettings().getLineYCol();
+        List<Double> xValues = new ArrayList<Double>();
+        List<Double> yValues = new ArrayList<Double>();
+        table = c.getIsOverview() ?
+                c.getDbTable().getUserOverviewTable(query) :
+                c.getDbTable().getUserTable(query);
+        int xIndex = c.getTableProperties().getColumnIndex(
+                xCol.getColumnDbName());
+        int yIndex = c.getTableProperties().getColumnIndex(
+                yCol.getColumnDbName());
+        for (int i = 0; i < table.getHeight(); i++) {
+            xValues.add(Double.valueOf(table.getData(i, xIndex)));
+            yValues.add(Double.valueOf(table.getData(i, yIndex)));
+        }
+        c.setDisplayView(new LineChart(this, xValues, yValues));
+        setContentView(c.getWrapperView());
     }
     
-    private View buildView() {
-        String xColDbName = tvs.getLineXCol().getColumnDbName();
-        String yColDbName = tvs.getLineYCol().getColumnDbName();
-        int xCol = tp.getColumnIndex(xColDbName);
-        int yCol = tp.getColumnIndex(yColDbName);
-        GraphFactory gFactory = new GraphFactory(this);
-        List<GXYPoint> points = new ArrayList<GXYPoint>();
-        for (int i = 0; i < table.getHeight(); i++) {
-            double x = Double.parseDouble(table.getData(i, xCol));
-            double y = Double.parseDouble(table.getData(i, yCol));
-            points.add(new GXYPoint(x, y));
+    @Override
+    public void onBackPressed() {
+        c.onBackPressed();
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
         }
-        return gFactory.getXYLineGraph(points, "", "", "");
+        switch (requestCode) {
+        case RCODE_ODKCOLLECT_ADD_ROW:
+            c.addRowFromOdkCollectForm(
+                    Integer.valueOf(data.getData().getLastPathSegment()));
+            init();
+            break;
+        default:
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        c.buildOptionsMenu(menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        return c.handleMenuItemSelection(item.getItemId());
     }
     
     @Override
     public void onSearch() {
-        
+        c.recordSearch();
+        init();
     }
     
     @Override
     public void onAddRow() {
-        Intent intent = controller.getIntentForOdkCollectAddRow();
+        Intent intent = c.getIntentForOdkCollectAddRow();
         if (intent != null) {
             startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
         }

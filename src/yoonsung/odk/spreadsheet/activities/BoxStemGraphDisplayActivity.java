@@ -18,6 +18,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -30,8 +32,9 @@ import android.widget.TextView;
  */
 public class BoxStemGraphDisplayActivity extends Activity
         implements DisplayActivity {
-    
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 0;
+
+    private static final int RCODE_ODKCOLLECT_ADD_ROW =
+        Controller.FIRST_FREE_RCODE;
     
     private Controller c;
     private Query query;
@@ -131,6 +134,39 @@ public class BoxStemGraphDisplayActivity extends Activity
     
     private void handleInvalidSettings() {
         (new SettingsDialog(this)).show();
+    }
+    
+    @Override
+    public void onBackPressed() {
+        c.onBackPressed();
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+            Intent data) {
+        if (c.handleActivityReturn(requestCode, resultCode, data)) {
+            return;
+        }
+        switch (requestCode) {
+        case RCODE_ODKCOLLECT_ADD_ROW:
+            c.addRowFromOdkCollectForm(
+                    Integer.valueOf(data.getData().getLastPathSegment()));
+            init();
+            break;
+        default:
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        c.buildOptionsMenu(menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+        return c.handleMenuItemSelection(item.getItemId());
     }
     
     @Override

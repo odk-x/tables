@@ -8,6 +8,7 @@ import yoonsung.odk.spreadsheet.data.ColumnProperties;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.DbTable;
 import yoonsung.odk.spreadsheet.data.Query;
+import yoonsung.odk.spreadsheet.data.Table;
 import yoonsung.odk.spreadsheet.data.TableProperties;
 import yoonsung.odk.spreadsheet.data.UserTable;
 import android.content.Context;
@@ -38,7 +39,7 @@ public class CustomDetailView extends WebView {
         setWebViewClient(new WebViewClient() {});
         control = new Control(context);
         addJavascriptInterface(control, "control");
-        jsData = new RowData();
+        jsData = new RowData(tp);
         addJavascriptInterface(jsData, "data");
     }
     
@@ -58,11 +59,15 @@ public class CustomDetailView extends WebView {
      */
     private class RowData {
         
+        private final TableProperties tp;
         private Map<String, String> data;
         
-        RowData() {}
+        RowData(TableProperties tp) {
+            this.tp = tp;
+        }
         
-        RowData(Map<String, String> data) {
+        RowData(TableProperties tp, Map<String, String> data) {
+            this.tp = tp;
             this.data = data;
         }
         
@@ -86,9 +91,11 @@ public class CustomDetailView extends WebView {
      */
     private class TableData {
         
-        private UserTable table;
+        private final TableProperties tp;
+        private final Table table;
         
-        public TableData(UserTable table) {
+        public TableData(TableProperties tp, Table table) {
+            this.tp = tp;
             this.table = table;
         }
         
@@ -103,7 +110,7 @@ public class CustomDetailView extends WebView {
             for (int i = 0; i < table.getWidth(); i++) {
                 data.put(table.getHeader(i), table.getData(index, i));
             }
-            return new RowData(data);
+            return new RowData(tp, data);
         }
     }
     
@@ -145,14 +152,16 @@ public class CustomDetailView extends WebView {
         
         @SuppressWarnings("unused")
         public TableData query(String tableName, String searchText) {
+            initTpInfo();
             if (!tpMap.containsKey(tableName)) {
                 return null;
             }
-            Query query = new Query(allTps, tpMap.get(tableName));
+            TableProperties tp = tpMap.get(tableName);
+            Query query = new Query(allTps, tp);
             query.loadFromUserQuery(searchText);
             DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
-                    tpMap.get(tableName).getTableId());
-            return new TableData(dbt.getUserTable(query));
+                    tp.getTableId());
+            return new TableData(tp, dbt.getRaw(query, tp.getColumnOrder()));
         }
     }
 }
