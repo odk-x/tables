@@ -26,6 +26,7 @@ import android.widget.Toast;
 public class Aggregate extends Activity {
 
   private static final String ACCOUNT_TYPE_G = "com.google";
+  private static final String URI_FIELD_EMPTY = "http://";
 
   private EditText uriField;
   private Spinner accountListSpinner;
@@ -49,16 +50,21 @@ public class Aggregate extends Activity {
   @Override
   protected void onPause() {
     super.onPause();
+    saveSettings();
+  }
 
+  public void saveSettings() {
     // save fields in preferences
     String uri = uriField.getText().toString();
+    if (uri.equals(URI_FIELD_EMPTY))
+      uri = null;
     String accountName = (String) accountListSpinner.getSelectedItem();
 
     prefs.setServerUri(uri);
     prefs.setAccount(accountName);
 
     // set account sync properties
-    Account[] accounts = accountManager.getAccountsByType("com.google");
+    Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
     for (Account account : accounts) {
       if (account.name.equals(accountName)) {
         ContentResolver.setIsSyncable(account, TablesContentProvider.AUTHORITY, 1);
@@ -83,14 +89,14 @@ public class Aggregate extends Activity {
       accountNames.add(accounts[i].name);
 
     ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-        android.R.layout.select_dialog_multichoice, accountNames);
+        android.R.layout.select_dialog_item, accountNames);
     accountListSpinner.setAdapter(adapter);
 
     // Set saved server url
     String serverUri = prefs.getServerUri();
 
     if (serverUri == null)
-      uriField.setText("http://");
+      uriField.setText(URI_FIELD_EMPTY);
     else
       uriField.setText(serverUri);
 
@@ -100,6 +106,17 @@ public class Aggregate extends Activity {
       int index = accountNames.indexOf(accountName);
       accountListSpinner.setSelection(index);
     }
+  }
+
+  /**
+   * Hooked up to save settings button in aggregate_activity.xml
+   */
+  public void saveSettings(View v) {
+    saveSettings();
+    Intent i = new Intent(this, AccountInfoActivity.class);
+    Account account = new Account(prefs.getAccount(), ACCOUNT_TYPE_G);
+    i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
+    startActivity(i);
   }
 
   /**
@@ -122,7 +139,7 @@ public class Aggregate extends Activity {
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
   public void syncNow(View v) {
-    String accountName = (String) accountListSpinner.getSelectedItem();
+    String accountName = prefs.getAccount();
     if (accountName == null) {
       Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
     } else {
