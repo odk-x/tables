@@ -4,13 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import yoonsung.odk.spreadsheet.R;
+import yoonsung.odk.spreadsheet.data.DataManager;
+import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Preferences;
+import yoonsung.odk.spreadsheet.sync.SyncProcessor;
+import yoonsung.odk.spreadsheet.sync.Synchronizer;
 import yoonsung.odk.spreadsheet.sync.TablesContentProvider;
+import yoonsung.odk.spreadsheet.sync.aggregate.AggregateSynchronizer;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SyncResult;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -140,11 +148,14 @@ public class Aggregate extends Activity {
    */
   public void syncNow(View v) {
     String accountName = prefs.getAccount();
+
     if (accountName == null) {
       Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
     } else {
-      requestSync(accountName);
-      Toast.makeText(this, "Sync started.", Toast.LENGTH_SHORT);
+      // requestSync(accountName);
+      // Toast.makeText(this, "Sync started.", Toast.LENGTH_SHORT);
+      SyncNowTask syncTask = new SyncNowTask();
+      syncTask.execute();
     }
   }
 
@@ -153,5 +164,31 @@ public class Aggregate extends Activity {
       Account account = new Account(accountName, ACCOUNT_TYPE_G);
       ContentResolver.requestSync(account, TablesContentProvider.AUTHORITY, new Bundle());
     }
+  }
+
+  private class SyncNowTask extends AsyncTask<Void, Void, Void> {
+    private ProgressDialog pd;
+
+    @Override
+    protected void onPreExecute() {
+      pd = ProgressDialog.show(Aggregate.this, "Please Wait", "Synchronizing...");
+    }
+
+    @Override
+    protected Void doInBackground(Void... params) {
+      DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
+      Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
+          prefs.getAuthToken());
+      SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
+          new SyncResult());
+      processor.synchronize();
+      return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void result) {
+      pd.dismiss();
+    }
+
   }
 }
