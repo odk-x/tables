@@ -27,6 +27,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
 import org.springframework.web.client.ResourceAccessException;
@@ -69,12 +70,17 @@ public class AggregateSynchronizer implements Synchronizer {
   private final URI baseUri;
   private final Map<String, TableResource> resources;
 
-  public AggregateSynchronizer(String aggregateUri) {
-    URI uri = URI.create(aggregateUri);
-    uri = uri.resolve("/odktables/tables/");
+  public AggregateSynchronizer(String aggregateUri, String accessToken) {
+    URI uri = URI.create(aggregateUri).normalize();
+    uri = uri.resolve("/odktables/tables/").normalize();
     this.baseUri = uri;
+
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(accessToken));
+
     this.rt = new RestTemplate();
     this.rt.setErrorHandler(new AggregateResponseErrorHandler());
+    this.rt.setInterceptors(interceptors);
 
     Registry registry = new Registry();
     Strategy strategy = new RegistryStrategy(registry);
