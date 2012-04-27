@@ -27,10 +27,11 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
       ContentProviderClient provider, SyncResult syncResult) {
     Preferences prefs = new Preferences(this.context);
     String aggregateUri = prefs.getServerUri();
-    if (aggregateUri != null) {
+    String authToken = prefs.getAuthToken();
+    if (aggregateUri != null && authToken != null) {
       DbHelper helper = DbHelper.getDbHelper(context);
       DataManager dm = new DataManager(helper);
-      AggregateSynchronizer synchronizer = new AggregateSynchronizer(aggregateUri);
+      AggregateSynchronizer synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
       SyncProcessor processor = new SyncProcessor(synchronizer, dm, syncResult);
       processor.synchronize();
     }
