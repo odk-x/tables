@@ -11,6 +11,7 @@ import yoonsung.odk.spreadsheet.data.DataManager;
 import yoonsung.odk.spreadsheet.data.DbHelper;
 import yoonsung.odk.spreadsheet.data.Preferences;
 import yoonsung.odk.spreadsheet.data.TableProperties;
+import yoonsung.odk.spreadsheet.sync.SyncProcessor;
 import yoonsung.odk.spreadsheet.sync.SyncUtil;
 import yoonsung.odk.spreadsheet.sync.Synchronizer;
 import yoonsung.odk.spreadsheet.sync.aggregate.AggregateSynchronizer;
@@ -18,6 +19,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.SyncResult;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,10 +31,10 @@ public class AggregateDownloadTableActivity extends ListActivity {
 
   private static final String TAG = AggregateDownloadTableActivity.class.getSimpleName();
 
-  private ProgressDialog pd;
   private AlertDialog.Builder finishDialog;
   private Preferences prefs;
   private String aggregateUrl;
+  private String authToken;
   private List<String> tableIds;
   private List<String> tableNames;
 
@@ -48,11 +50,9 @@ public class AggregateDownloadTableActivity extends ListActivity {
 
     prefs = new Preferences(this);
     aggregateUrl = prefs.getServerUri();
+    authToken = prefs.getAuthToken();
 
-    pd.setMessage("Getting tables. Please wait...");
-    pd.show();
     Map<String, String> tables = getTables();
-    pd.dismiss();
 
     if (tables == null) {
       finishDialog.setMessage("Unable to contact server. Please try again later...");
@@ -72,9 +72,6 @@ public class AggregateDownloadTableActivity extends ListActivity {
   }
 
   private void initializeDialogs() {
-    pd = new ProgressDialog(this);
-    pd.setIndeterminate(true);
-
     finishDialog = new AlertDialog.Builder(AggregateDownloadTableActivity.this);
     finishDialog.setCancelable(false);
     finishDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -86,15 +83,17 @@ public class AggregateDownloadTableActivity extends ListActivity {
   }
 
   private Map<String, String> getTables() {
-    GetTablesTask task = new GetTablesTask(aggregateUrl);
+    GetTablesTask task = new GetTablesTask(aggregateUrl, authToken);
     task.execute();
     Map<String, String> tables = null;
     try {
       tables = task.get();
     } catch (ExecutionException e) {
-      Log.i(TAG, "ExecutionException in onCreate", e);
+      Log.i(TAG, "ExecutionException in getTables()", e);
     } catch (InterruptedException e) {
-      Log.i(TAG, "InterrruptedException in onCreate", e);
+      Log.i(TAG, "InterrruptedException in getTables()", e);
+    } catch (Exception e) {
+      Log.e(TAG, "Exception in getTables()", e);
     }
     return tables;
   }
@@ -103,8 +102,6 @@ public class AggregateDownloadTableActivity extends ListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     String tableName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
-    pd.setMessage("Downloading table " + tableName + ". Please wait...");
-    pd.show();
     DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, tableName);
     try {
       task.execute();
@@ -114,21 +111,29 @@ public class AggregateDownloadTableActivity extends ListActivity {
       finishDialog.setMessage("Unable to download table. Please try again later...");
       finishDialog.show();
     }
-    pd.dismiss();
     finishDialog.setMessage("Downloaded " + tableName);
     finishDialog.show();
   }
 
   private class GetTablesTask extends AsyncTask<Void, Void, Map<String, String>> {
     private String aggregateUrl;
+    private String authToken;
+    private ProgressDialog pd;
 
-    public GetTablesTask(String aggregateUrl) {
+    public GetTablesTask(String aggregateUrl, String authToken) {
       this.aggregateUrl = aggregateUrl;
+      this.authToken = authToken;
+    }
+
+    @Override
+    protected void onPreExecute() {
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, "Please Wait",
+          "Getting tables. Please wait...");
     }
 
     @Override
     protected Map<String, String> doInBackground(Void... args) {
-      Synchronizer sync = new AggregateSynchronizer(aggregateUrl);
+      Synchronizer sync = new AggregateSynchronizer(aggregateUrl, authToken);
 
       // get tables from server
       Map<String, String> tables = null;
@@ -136,6 +141,8 @@ public class AggregateDownloadTableActivity extends ListActivity {
         tables = sync.getTables();
       } catch (IOException e) {
         Log.i(TAG, "Could not retrieve table list", e);
+      } catch (Exception e) {
+        Log.e(TAG, "Unexpected exception getting table list", e);
       }
 
       // filter tables to remove ones already downloaded
@@ -153,6 +160,11 @@ public class AggregateDownloadTableActivity extends ListActivity {
 
       return tables;
     }
+
+    @Override
+    protected void onPostExecute(Map<String, String> result) {
+      pd.dismiss();
+    }
   }
 
   private class DownloadTableTask extends AsyncTask<Void, Void, Void> {
@@ -160,11 +172,18 @@ public class AggregateDownloadTableActivity extends ListActivity {
     private String tableId;
     private String tableName;
     private String accountName;
+    private ProgressDialog pd;
 
     public DownloadTableTask(String accountName, String tableId, String tableName) {
       this.accountName = accountName;
       this.tableId = tableId;
       this.tableName = tableName;
+    }
+
+    @Override
+    protected void onPreExecute() {
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, "Please Wait",
+          "Downloading table " + tableName + ". Please wait...");
     }
 
     @Override
@@ -178,9 +197,18 @@ public class AggregateDownloadTableActivity extends ListActivity {
       tp.setSyncState(SyncUtil.State.REST);
       tp.setSyncTag(null);
 
-      Aggregate.requestSync(accountName);
+      Synchronizer synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
+      SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
+          new SyncResult());
+      processor.synchronizeTable(tp);
+      // Aggregate.requestSync(accountName);
 
       return null;
+    }
+
+    @Override
+    protected void onPostExecute(Void result) {
+      pd.dismiss();
     }
 
   }
