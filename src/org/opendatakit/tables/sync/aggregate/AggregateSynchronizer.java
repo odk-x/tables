@@ -53,7 +53,6 @@ import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
-
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
  * 
@@ -297,7 +296,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
     List<Row> newRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToInsert) {
-      Row row = Row.forInsert(syncRow.getRowId(), null, syncRow.getValues());
+      Row row = Row.forInsert(syncRow.getRowId(), syncRow.getValues());
       newRows.add(row);
     }
     return insertOrUpdateRows(tableId, currentSyncTag, newRows);
