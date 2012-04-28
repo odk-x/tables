@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="yoonsung.odk.spreadsheet"
+    package="org.opendatakit.tables"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -109,7 +109,7 @@
 		</activity>
 		<activity android:name=".activities.MapDisplayActivity">
 		</activity>
-		<activity android:name=".activities.DetailDisplayActivity">
+		<activity android:name="org.opendatakit.tables.activities.DetailDisplayActivity">
 		</activity>
 
         <uses-library android:name="com.google.android.maps" />
@@ -128,7 +128,7 @@
 
         <provider
             android:name=".sync.TablesContentProvider"
-            android:authorities="yoonsung.odk.spreadsheet.sync.tablescontentprovider" />
+            android:authorities="org.opendatakit.tables.tablescontentprovider" />
 
     </application>
 
