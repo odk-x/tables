@@ -13,10 +13,10 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import yoonsung.odk.spreadsheet.data.DbTable;
-import yoonsung.odk.spreadsheet.data.Table;
-import yoonsung.odk.spreadsheet.sync.SyncRow;
-import yoonsung.odk.spreadsheet.sync.SyncUtil;
+import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.Table;
+import org.opendatakit.tables.sync.SyncRow;
+import org.opendatakit.tables.sync.SyncUtil;
 
 @RunWith(SyncTestRunner.class)
 public class SyncProcessorTest extends BaseSyncProcessorTest {

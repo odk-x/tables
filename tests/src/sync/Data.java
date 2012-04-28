@@ -3,7 +3,7 @@ package sync;
 import java.util.HashMap;
 import java.util.Map;
 
-import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 
 public class Data {
 

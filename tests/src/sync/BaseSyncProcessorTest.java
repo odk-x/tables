@@ -21,17 +21,17 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import yoonsung.odk.spreadsheet.Activity.SpreadSheet;
-import yoonsung.odk.spreadsheet.data.ColumnProperties;
-import yoonsung.odk.spreadsheet.data.DataManager;
-import yoonsung.odk.spreadsheet.data.DbHelper;
-import yoonsung.odk.spreadsheet.data.Query;
-import yoonsung.odk.spreadsheet.data.TableProperties;
-import yoonsung.odk.spreadsheet.sync.IncomingModification;
-import yoonsung.odk.spreadsheet.sync.Modification;
-import yoonsung.odk.spreadsheet.sync.SyncProcessor;
-import yoonsung.odk.spreadsheet.sync.SyncRow;
-import yoonsung.odk.spreadsheet.sync.Synchronizer;
+import org.opendatakit.tables.Activity.SpreadSheet;
+import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.DataManager;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.sync.IncomingModification;
+import org.opendatakit.tables.sync.Modification;
+import org.opendatakit.tables.sync.SyncProcessor;
+import org.opendatakit.tables.sync.SyncRow;
+import org.opendatakit.tables.sync.Synchronizer;
 import android.content.Context;
 import android.content.SyncResult;
 

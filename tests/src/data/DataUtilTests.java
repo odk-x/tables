@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import yoonsung.odk.spreadsheet.data.DataUtil;
+import org.opendatakit.tables.data.DataUtil;
 import junit.framework.TestCase;
 
 
