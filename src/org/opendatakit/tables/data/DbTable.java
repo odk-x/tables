@@ -56,7 +56,7 @@ public class DbTable {
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
         db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
-                       DB_ROW_ID + " TEXT UNIQUE NOT NULL" +
+                       DB_ROW_ID + " TEXT NOT NULL" +
                 ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
                 ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
                 ", " + DB_SYNC_TAG + " TEXT" +
