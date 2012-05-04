@@ -499,6 +499,46 @@ public class Query {
         return sd;
     }
     
+    @SuppressWarnings("unused")
+    public SqlData toConflictSql() {
+        SqlData idsd = new SqlData();
+        idsd.appendSql("SELECT " + DbTable.DB_ROW_ID);
+        idsd.appendSql(" FROM " + tp.getDbTableName());
+        for (int i = 0; i < joins.size(); i++) {
+            SqlData joinSd = joins.get(i).toSql();
+            idsd.appendSql(" " + joinSd.getSql());
+            idsd.appendArgs(joinSd.getArgList());
+        }
+        idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
+                DbTable.DB_SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+        for (int i = 0; i < constraints.size(); i++) {
+            SqlData csd = constraints.get(i).toSql();
+            idsd.appendSql(" AND " + csd.getSql());
+            idsd.appendArgs(csd.getArgList());
+        }
+        SqlData sd = new SqlData();
+        sd.appendSql("SELECT " + tp.getDbTableName() + "." +
+                DbTable.DB_ROW_ID + " AS " + DbTable.DB_ROW_ID + ", " +
+                tp.getDbTableName() + "." + DbTable.DB_SYNC_TAG + " AS " +
+                DbTable.DB_SYNC_TAG);
+        for (ColumnProperties cp : tp.getColumns()) {
+            sd.appendSql(", " + tp.getDbTableName() + "." +
+                    cp.getColumnDbName() + " AS " + cp.getColumnDbName());
+        }
+        sd.appendSql(" FROM " + tp.getDbTableName());
+        sd.appendSql(" JOIN (");
+        sd.append(idsd);
+        sd.appendSql(") jt ON ");
+        sd.appendSql(tp.getDbTableName() + "." + DbTable.DB_ROW_ID + " = jt." +
+                DbTable.DB_ROW_ID);
+        sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
+                DbTable.DB_ROW_ID + ", " + DbTable.DB_SYNC_STATE + " ");
+        // so that conflicting rows are always after deleting rows
+        sd.appendSql((SyncUtil.State.CONFLICTING > SyncUtil.State.DELETING) ?
+                "ASC" : "DESC");
+        return sd;
+    }
+    
     public String toUserQuery() {
         StringBuilder sb = new StringBuilder();
         for (Constraint c : constraints) {

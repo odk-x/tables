@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.opendatakit.tables.Activity.SpreadSheet;
 import org.opendatakit.tables.Activity.TableActivity;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -158,11 +159,8 @@ public class CustomDetailView extends WebView {
             if (!tpMap.containsKey(tableName)) {
                 return false;
             }
-            Intent intent = new Intent(context, SpreadSheet.class);
-            intent.putExtra(TableActivity.INTENT_KEY_TABLE_ID,
-                    tpMap.get(tableName).getTableId());
-            intent.putExtra(TableActivity.INTENT_KEY_QUERY, query);
-            context.startActivity(intent);
+            Controller.launchTableActivity(context, tpMap.get(tableName),
+                    query, false);
             return true;
         }
         

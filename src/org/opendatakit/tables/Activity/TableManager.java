@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.importexport.ImportExportActivity;
+import org.opendatakit.tables.activities.ConflictResolutionActivity;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
@@ -61,6 +62,7 @@ public class TableManager extends ListActivity {
 	public static final int UNSET_SHORTCUT_TABLE    = 10;
 	public static final int AGGREGATE               = 11;
 	public static final int LAUNCH_TPM              = 12;
+	public static final int LAUNCH_CONFLICT_MANAGER = 13;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -196,6 +198,7 @@ public class TableManager extends ListActivity {
 		 }
 		 menu.add(0, REMOVE_TABLE, 1, "Delete the Table");
 		 menu.add(0, LAUNCH_TPM, 2, "Edit Table Properties");
+		 menu.add(0, LAUNCH_CONFLICT_MANAGER, 3, "Manage Conflicts");
 	 }
 	 
 	 private boolean couldBeSecurityTable(TableProperties tp) {
@@ -254,10 +257,20 @@ public class TableManager extends ListActivity {
 			 refreshList();
 			 return true;
 		 case LAUNCH_TPM:
+		     {
 		     Intent i = new Intent(this, TablePropertiesManager.class);
 		     i.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID, tp.getTableId());
 		     startActivity(i);
 		     return true;
+		     }
+		 case LAUNCH_CONFLICT_MANAGER:
+		     {
+		     Intent i = new Intent(this, ConflictResolutionActivity.class);
+		     i.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+		     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, false);
+		     startActivity(i);
+		     return true;
+		     }
 		 }
 		 return(super.onOptionsItemSelected(item));
 	 }

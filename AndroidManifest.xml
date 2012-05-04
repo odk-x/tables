@@ -111,6 +111,8 @@
 		</activity>
 		<activity android:name="org.opendatakit.tables.activities.DetailDisplayActivity">
 		</activity>
+		<activity android:name="org.opendatakit.tables.activities.ConflictResolutionActivity">
+		</activity>
 
         <uses-library android:name="com.google.android.maps" />
 
