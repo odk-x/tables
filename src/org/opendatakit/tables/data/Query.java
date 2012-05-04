@@ -533,9 +533,9 @@ public class Query {
                 DbTable.DB_ROW_ID);
         sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
                 DbTable.DB_ROW_ID + ", " + DbTable.DB_SYNC_STATE + " ");
-        // so that conflicting rows are always after deleting rows
+        // so that conflicting rows are always before deleting rows
         sd.appendSql((SyncUtil.State.CONFLICTING > SyncUtil.State.DELETING) ?
-                "ASC" : "DESC");
+                "DESC" : "ASC");
         return sd;
     }
     
