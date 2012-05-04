@@ -31,6 +31,7 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 
 public class SpreadsheetDisplayActivity extends Activity
@@ -91,9 +92,15 @@ public class SpreadsheetDisplayActivity extends Activity
     }
     
     private View buildView() {
-        return new SpreadsheetView(this, this, c.getTableViewSettings(), table,
-                indexedCol,
-                new DisplayPrefs(this, c.getTableProperties().getTableId()));
+        if (table.getWidth() == 0) {
+            TextView tv = new TextView(this);
+            tv.setText("No data.");
+            return tv;
+        } else {
+            return new SpreadsheetView(this, this, c.getTableViewSettings(),
+                    table, indexedCol, new DisplayPrefs(this,
+                            c.getTableProperties().getTableId()));
+        }
     }
     
     private void openCollectionView(int rowNum) {
