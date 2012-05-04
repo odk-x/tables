@@ -305,26 +305,22 @@ public class SyncProcessor {
   private void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + row.getSyncTag());
+      ContentValues values = new ContentValues();
+
+      values.put(DbTable.DB_ROW_ID, row.getRowId());
+      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
+      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
+      table.actualUpdateRowByRowId(row.getRowId(), values);
+
+      for (Entry<String, String> entry : row.getValues().entrySet())
+        values.put(entry.getKey(), entry.getValue());
+
+      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
+      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.DELETING));
+      table.actualAddRow(values);
+      syncResult.stats.numConflictDetectedExceptions++;
+      syncResult.stats.numEntries += 2;
     }
-    // TODO: how to conflict?
-    // for (RowResource row : rowsToConflict) {
-    // ContentValues values = new ContentValues();
-    //
-    // values.put(DbTable.DB_ROW_ID, row.getRowId());
-    // values.put(DbTable.DB_SYNC_TAG, row.getRowEtag());
-    // values.put(DbTable.DB_SYNC_STATE,
-    // String.valueOf(SyncUtil.State.CONFLICTING));
-    // values.put(DbTable.DB_TRANSACTIONING,
-    // String.valueOf(SyncUtil.Transactioning.FALSE));
-    // table.actualUpdateRowByRowId(row.getRowId(), values);
-    //
-    // for (Entry<String, String> entry : row.getValues().entrySet())
-    // values.put(entry.getKey(), entry.getValue());
-    //
-    // table.actualAddRow(values);
-    // syncResult.stats.numConflictDetectedExceptions++;
-    // syncResult.stats.numEntries += 2;
-    // }
   }
 
   private void insertRowsInDb(DbTable table, List<SyncRow> rows) {
