@@ -1,7 +1,7 @@
 package data;
 
 import testutil.DataTest;
-import yoonsung.odk.spreadsheet.data.Query;
+import org.opendatakit.tables.data.Query;
 
 
 public class QueryTests extends DataTest {

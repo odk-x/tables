@@ -1,13 +1,13 @@
 package testutil;
 
-import yoonsung.odk.spreadsheet.Activity.util.SecurityUtil;
-import yoonsung.odk.spreadsheet.Activity.util.ShortcutUtil;
-import yoonsung.odk.spreadsheet.data.ColumnProperties;
-import yoonsung.odk.spreadsheet.data.ColumnProperties.ColumnType;
-import yoonsung.odk.spreadsheet.data.DataManager;
-import yoonsung.odk.spreadsheet.data.DbTable;
-import yoonsung.odk.spreadsheet.data.Table;
-import yoonsung.odk.spreadsheet.data.TableProperties;
+import org.opendatakit.tables.Activity.util.SecurityUtil;
+import org.opendatakit.tables.Activity.util.ShortcutUtil;
+import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.DataManager;
+import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.Table;
+import org.opendatakit.tables.data.TableProperties;
 import junit.framework.TestCase;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
