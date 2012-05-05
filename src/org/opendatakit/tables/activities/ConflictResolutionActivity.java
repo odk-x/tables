@@ -13,7 +13,6 @@ import org.opendatakit.tables.view.ConflictResolutionView;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -93,10 +92,6 @@ public class ConflictResolutionActivity extends Activity
     @Override
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
-        if (changes.isEmpty()) {
-            crv.removeRow(index);
-            return;
-        }
         String[] colDbNames = c.getTableProperties().getColumnOrder();
         Map<String, String> values = new HashMap<String, String>();
         while (!changes.isEmpty()) {

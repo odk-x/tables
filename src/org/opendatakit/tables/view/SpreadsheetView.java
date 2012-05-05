@@ -20,6 +20,7 @@ import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
 
 import android.content.Context;
@@ -335,17 +336,21 @@ public class SpreadsheetView extends LinearLayout
         int headerIndex = getResources().getColor(R.color.header_index);
         int footerIndex = getResources().getColor(R.color.footer_index);
         ScrollView dataScroll = new ScrollView(context);
-        TabularView dataTable = new TabularView(this, context, data, avanda,
-                Color.BLACK, Color.GRAY, colWidths, colorRulers,
+        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
+                Color.BLACK, false);
+        ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
+                Color.WHITE, true);
+        TabularView dataTable = new TabularView(context, this, data,
+                Color.BLACK, fgColorDecider, Color.WHITE, bgColorDecider,
+                Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA));
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
-        TabularView headerTable = new TabularView(this, context, header,
-                (isIndexed ? headerIndex : headerData), Color.BLACK,
-                Color.GRAY, colWidths, null,
+        TabularView headerTable = new TabularView(context, this, header,
+                Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER));
-        TabularView footerTable = new TabularView(this, context, footer,
-                footerIndex, Color.BLACK, Color.GRAY, colWidths, null,
+        TabularView footerTable = new TabularView(context, this, footer,
+                Color.BLACK, null, Color.GRAY, null, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER));
         if (isIndexed) {
             indexData = dataTable;
@@ -434,6 +439,26 @@ public class SpreadsheetView extends LinearLayout
         protected abstract void takeHoverAction(int cellId);
         
         protected abstract void takeCancelAction(int cellId);
+    }
+    
+    private class ColorRulerColorDecider implements ColorDecider {
+        
+        private final ColumnColorRuler[] rulers;
+        private final int defaultColor;
+        private final boolean isBackground;
+        
+        public ColorRulerColorDecider(ColumnColorRuler[] rulers,
+                int defaultColor, boolean isBackground) {
+            this.rulers = rulers;
+            this.defaultColor = defaultColor;
+            this.isBackground = isBackground;
+        }
+        
+        public int getColor(int rowNum, int colNum, String value) {
+            return isBackground ?
+                    rulers[colNum].getBackgroundColor(value, defaultColor) :
+                        rulers[colNum].getForegroundColor(value, defaultColor);
+        }
     }
     
     public interface Controller {

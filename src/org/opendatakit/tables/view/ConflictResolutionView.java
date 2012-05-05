@@ -2,6 +2,7 @@ package org.opendatakit.tables.view;
 
 import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.TableViewSettings;
+import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
 import android.content.Context;
 import android.graphics.Color;
@@ -30,6 +31,7 @@ public class ConflictResolutionView extends HorizontalScrollView
     private final ConflictTable table;
     private String[][][] data;
     private final RowItem[] rowItems;
+    private final ColorDecider[] colorDeciders;
     private LinearLayout dataWrap;
     private int lastRowClicked;
     private int lastCellClicked;
@@ -44,6 +46,11 @@ public class ConflictResolutionView extends HorizontalScrollView
         this.table = table;
         data = new String[table.getCount()][2][table.getWidth()];
         rowItems = new RowItem[table.getCount()];
+        colorDeciders = new ColorDecider[table.getCount()];
+        for (int i = 0; i < table.getCount(); i++) {
+            colorDeciders[i] = new ConflictColorDecider(i, Color.WHITE,
+                    Color.GRAY, Color.DKGRAY);
+        }
         lastRowClicked = -1;
         lastCellClicked = -1;
         lastDownTime = -1;
@@ -63,9 +70,9 @@ public class ConflictResolutionView extends HorizontalScrollView
         for (int i = 0; i < table.getWidth(); i++) {
             header[i] = table.getHeader(i);
         }
-        TabularView headerView = new TabularView(this, context, header,
-                HEADER_BACKGROUND_COLOR, FOREGROUND_COLOR, BORDER_COLOR,
-                tvs.getTableColWidths(), null, TableType.MAIN_HEADER);
+        TabularView headerView = new TabularView(context, this, header,
+                FOREGROUND_COLOR, null, HEADER_BACKGROUND_COLOR, null,
+                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_HEADER);
         // creating data views
         dataWrap = new LinearLayout(context);
         dataWrap.setOrientation(LinearLayout.VERTICAL);
@@ -98,9 +105,9 @@ public class ConflictResolutionView extends HorizontalScrollView
             data[index][1][i] = table.getValue(index, 1, i);
         }
         RowItem ri = new RowItem(context, index);
-        TabularView tv = new TabularView(this, context, data[index],
-                BACKGROUND_COLOR, FOREGROUND_COLOR, BORDER_COLOR,
-                tvs.getTableColWidths(), null, TableType.MAIN_DATA);
+        TabularView tv = new TabularView(context, this, data[index],
+                FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
+                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_DATA);
         setTabularViewTouchListener(index, tv);
         ri.setTabularView(tv);
         return ri;
@@ -137,9 +144,9 @@ public class ConflictResolutionView extends HorizontalScrollView
     
     public void setDatum(int index, int rowNum, int colNum, String value) {
         data[index][rowNum][colNum] = value;
-        TabularView tv = new TabularView(this, context, data[index],
-                BACKGROUND_COLOR, FOREGROUND_COLOR, BORDER_COLOR,
-                tvs.getTableColWidths(), null, TableType.MAIN_DATA);
+        TabularView tv = new TabularView(context, this, data[index],
+                FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
+                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_DATA);
         setTabularViewTouchListener(index, tv);
         rowItems[index].setTabularView(tv);
     }
@@ -180,6 +187,32 @@ public class ConflictResolutionView extends HorizontalScrollView
             removeAllViews();
             addView(tv, tv.getTableWidth(), tv.getTableHeight());
             addView(controlWrap);
+        }
+    }
+    
+    private class ConflictColorDecider implements ColorDecider {
+        
+        private final int index;
+        private final int defaultColor;
+        private final int shadedColor;
+        private final int serverRowColor;
+        
+        public ConflictColorDecider(int index, int defaultColor,
+                int shadedColor, int serverRowColor) {
+            this.index = index;
+            this.defaultColor = defaultColor;
+            this.shadedColor = shadedColor;
+            this.serverRowColor = serverRowColor;
+        }
+        
+        public int getColor(int rowNum, int colNum, String value) {
+            if (rowNum == 1) {
+                return serverRowColor;
+            } else if (table.getValue(index, 1, colNum).equals(value)) {
+                return defaultColor;
+            } else {
+                return shadedColor;
+            }
         }
     }
     

@@ -1,6 +1,5 @@
 package org.opendatakit.tables.view;
 
-import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,58 +18,45 @@ class TabularView extends View {
     private static final int VERTICAL_CELL_PADDING = 9;
     private static final int BORDER_WIDTH = 1;
     
-    private Controller controller;
-    private String[][] data;
-    private int backgroundColor;
-    private int foregroundColor;
-    private int[] columnWidths;
-    private ColumnColorRuler[] colorRulers;
-    private TableType type;
-    
-    private Paint textPaint;
-    private Paint bgPaint;
-    private Paint borderPaint;
-    private Paint highlightPaint;
+    private final Controller controller;
+    private final String[][] data;
+    private final ColorDecider foregroundColorDecider;
+    private final int defaultBackgroundColor;
+    private final ColorDecider backgroundColorDecider;
+    private final int[] columnWidths;
+    private final TableType type;
     
     private int totalHeight;
     private int totalWidth;
-    
     private int highlightedCellNum;
     
-    public TabularView(Controller controller, Context context, String[][] data,
-            int backgroundColor, int foregroundColor, int borderColor,
-            int[] columnWidths, ColumnColorRuler[] colorRulers,
-            TableType type) {
-        super(context);
-        init(controller, data, backgroundColor, foregroundColor, borderColor,
-                columnWidths, colorRulers, type);
-    }
+    private final Paint textPaint;
+    private final Paint bgPaint;
+    private final Paint borderPaint;
+    private final Paint highlightPaint;
     
-    public TabularView(Controller controller, Context context, String[] data,
-            int backgroundColor, int foregroundColor, int borderColor,
-            int[] columnWidths, ColumnColorRuler[] colorRulers,
-            TableType type) {
+    public TabularView(Context context, Controller controller, String[][] data,
+            int defaultForegroundColor, ColorDecider foregroundColorDecider,
+            int defaultBackgroundColor, ColorDecider backgroundColorDecider,
+            int borderColor, int[] columnWidths, TableType type) {
         super(context);
-        String[][] outerData = {data};
-        init(controller, outerData, backgroundColor, foregroundColor,
-                borderColor, columnWidths, colorRulers, type);
-    }
-    
-    private void init(Controller controller, String[][] data,
-            int backgroundColor, int foregroundColor, int borderColor,
-            int[] columnWidths, ColumnColorRuler[] colorRulers,
-            TableType type) {
         this.controller = controller;
         this.data = data;
-        this.backgroundColor = backgroundColor;
-        this.foregroundColor = foregroundColor;
+        this.foregroundColorDecider = (foregroundColorDecider == null) ?
+                new DefaultColorDecider(defaultForegroundColor) :
+                    foregroundColorDecider;
+        this.defaultBackgroundColor = defaultBackgroundColor;
+        this.backgroundColorDecider = (backgroundColorDecider == null) ?
+                new DefaultColorDecider(defaultBackgroundColor) :
+                    backgroundColorDecider;
         this.columnWidths = columnWidths;
-        this.colorRulers = colorRulers;
+        this.type = type;
+        highlightedCellNum = -1;
         textPaint = new Paint();
         textPaint.setAntiAlias(true);
         textPaint.setTextSize(16);
         bgPaint = new Paint();
-        bgPaint.setColor(backgroundColor);
+        bgPaint.setColor(defaultBackgroundColor);
         borderPaint = new Paint();
         borderPaint.setColor(borderColor);
         highlightPaint = new Paint();
@@ -83,9 +69,17 @@ class TabularView extends View {
         }
         setMinimumHeight(totalHeight);
         setMinimumWidth(totalWidth);
-        this.type = type;
         setClickable(true);
-        highlightedCellNum = -1;
+    }
+    
+    public TabularView(Context context, Controller controller, String[] data,
+            int defaultForegroundColor, ColorDecider foregroundColorDecider,
+            int defaultBackgroundColor, ColorDecider backgroundColorDecider,
+            int borderColor, int[] columnWidths, TableType type) {
+        this(context, controller, new String[][] {data},
+                defaultForegroundColor, foregroundColorDecider,
+                defaultBackgroundColor, backgroundColorDecider, borderColor,
+                columnWidths, type);
     }
     
     public int getTableHeight() {
@@ -145,14 +139,10 @@ class TabularView extends View {
                 if (datum == null) {
                     datum = "";
                 }
-                int foregroundColor = (colorRulers == null) ?
-                        this.foregroundColor :
-                        colorRulers[j].getForegroundColor(datum,
-                                this.foregroundColor);
-                int backgroundColor = (colorRulers == null) ?
-                        this.backgroundColor :
-                        colorRulers[j].getBackgroundColor(datum,
-                                this.backgroundColor);
+                int foregroundColor = foregroundColorDecider.getColor(i, j,
+                        datum);
+                int backgroundColor = backgroundColorDecider.getColor(i, j,
+                        datum);
                 drawCell(canvas, xs[j], y, datum, backgroundColor,
                         foregroundColor, columnWidths[j]);
             }
@@ -169,7 +159,7 @@ class TabularView extends View {
     
     private void drawCell(Canvas canvas, int x, int y, String datum,
             int backgroundColor, int foregroundColor, int columnWidth) {
-        if (backgroundColor != this.backgroundColor) {
+        if (backgroundColor != this.defaultBackgroundColor) {
             bgPaint.setColor(backgroundColor);
             canvas.drawRect(x, y, x + columnWidth, y + ROW_HEIGHT, bgPaint);
         }
@@ -212,6 +202,23 @@ class TabularView extends View {
         case INDEX_FOOTER:
             controller.onCreateFooterContextMenu(menu);
             return;
+        }
+    }
+    
+    interface ColorDecider {
+        public int getColor(int rowNum, int colNum, String value);
+    }
+    
+    private class DefaultColorDecider implements ColorDecider {
+        
+        private final int color;
+        
+        public DefaultColorDecider(int color) {
+            this.color = color;
+        }
+        
+        public int getColor(int rowNum, int colNum, String value) {
+            return color;
         }
     }
     
