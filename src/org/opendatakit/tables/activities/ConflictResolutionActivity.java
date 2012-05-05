@@ -103,7 +103,8 @@ public class ConflictResolutionActivity extends Activity
             RowChange rc = changes.pop();
             values.put(colDbNames[rc.getColNum()], rc.getNewValue());
         }
-        c.getDbTable().resolveConflict(table.getRowId(index), values);
+        c.getDbTable().resolveConflict(table.getRowId(index),
+                table.getSyncTag(index, 1), values);
         crv.removeRow(index);
     }
     
@@ -119,8 +120,6 @@ public class ConflictResolutionActivity extends Activity
     
     @Override
     public void onDoubleClick(int index, int rowNum, int colNum) {
-        Log.d("CRV", "onDoubleClick called: " + index + "/" + rowNum + "/" +
-                colNum);
         if (rowNum == 0) {
             return;
         }

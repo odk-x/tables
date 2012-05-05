@@ -374,12 +374,14 @@ public class DbTable {
         db.close();
     }
     
-    public void resolveConflict(String rowId, Map<String, String> values) {
+    public void resolveConflict(String rowId, String syncTag,
+            Map<String, String> values) {
         String[] deleteWhereArgs = { rowId,
                 new Integer(SyncUtil.State.DELETING).toString() };
         String deleteSql = DB_ROW_ID + " = ? AND " + DB_SYNC_STATE + " = ?";
         ContentValues updateValues = new ContentValues();
         updateValues.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
+        updateValues.put(DB_SYNC_TAG, syncTag);
         for (String key : values.keySet()) {
             updateValues.put(key, values.get(key));
         }
