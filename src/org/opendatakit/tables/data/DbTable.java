@@ -422,8 +422,13 @@ public class DbTable {
      */
     public void deleteRowActual(String rowId) {
         String[] whereArgs = { rowId };
+        String whereClause = DB_ROW_ID + " = ?";
+        deleteRowActual(whereClause, whereArgs);
+    }
+    
+    public void deleteRowActual(String whereClause, String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.delete(tp.getDbTableName(), DB_ROW_ID + " = ?", whereArgs);
+        db.delete(tp.getDbTableName(), whereClause, whereArgs);
         db.close();
     }
     
