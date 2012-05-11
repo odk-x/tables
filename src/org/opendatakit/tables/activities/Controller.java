@@ -48,8 +48,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -59,6 +61,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 
 /**
@@ -112,9 +115,12 @@ public class Controller {
     private TableViewSettings tvs;
     private final Stack<String> searchText;
     private final boolean isOverview;
-    private final ViewGroup wrapper;
+    private final RelativeLayout container;
+    private final LinearLayout controlWrap;
     private final EditText searchField;
     private final ViewGroup displayWrap;
+    private View overlay;
+    private RelativeLayout.LayoutParams overlayLp;
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
@@ -147,7 +153,7 @@ public class Controller {
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();
         // initializing view objects
-        LinearLayout controlWrap = new LinearLayout(activity);
+        controlWrap = new LinearLayout(activity);
         searchField = new EditText(activity);
         searchField.setText(searchText.peek());
         ImageButton searchButton = new ImageButton(activity);
@@ -191,7 +197,10 @@ public class Controller {
                 LinearLayout.LayoutParams.FILL_PARENT,
                 LinearLayout.LayoutParams.FILL_PARENT);
         wrapper.addView(displayWrap, displayParams);
-        this.wrapper = wrapper;
+        container = new RelativeLayout(activity);
+        container.addView(wrapper, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
     }
     
     TableProperties getTableProperties() {
@@ -214,8 +223,8 @@ public class Controller {
         return searchText.peek();
     }
     
-    View getWrapperView() {
-        return wrapper;
+    View getContainerView() {
+        return container;
     }
     
     void setDisplayView(View dv) {
@@ -226,8 +235,48 @@ public class Controller {
         displayWrap.addView(dv, params);
     }
     
+    void addOverlay(View overlay, int width, int height, int x, int y) {
+        removeOverlay();
+        this.overlay = overlay;
+        overlayLp = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        overlayLp.leftMargin = x;
+        overlayLp.topMargin = y - controlWrap.getHeight();
+        overlayLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        container.addView(overlay, overlayLp);
+    }
+    
+    void removeOverlay() {
+        if (overlay != null) {
+            container.removeView(overlay);
+            overlay = null;
+            overlayLp = null;
+        }
+    }
+    
+    void setOverlayLocation(int x, int y) {
+        overlayLp.leftMargin = x;
+        overlayLp.topMargin = y - controlWrap.getHeight();
+        container.requestLayout();
+    }
+    
     void releaseView(View v) {
         displayWrap.removeView(v);
+    }
+    
+    boolean isInSearchBox(int x, int y) {
+        Log.d("CNTRLR", "isInSearchBox(" + x + "," + y + ")");
+        y -= controlWrap.getHeight();
+        Rect bounds = new Rect();
+        searchField.getHitRect(bounds);
+        Log.d("CNTRLR", bounds.toString());
+        return ((bounds.left <= x) && (bounds.right >= x) &&
+                (bounds.top <= y) && (bounds.bottom >= y));
+    }
+    
+    void appendToSearchBoxText(String text) {
+        searchField.setText((searchField.getText() + text).trim());
     }
     
     void recordSearch() {

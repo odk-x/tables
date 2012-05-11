@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -25,12 +27,21 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.SpreadsheetView;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 
@@ -88,7 +99,7 @@ public class SpreadsheetDisplayActivity extends Activity
         indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
         // setting up the view
         c.setDisplayView(buildView());
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     private View buildView() {
@@ -262,22 +273,37 @@ public class SpreadsheetDisplayActivity extends Activity
     
     @Override
     public void regularCellClicked(int cellId) {
+        c.removeOverlay();
         // TODO
     }
     
     @Override
     public void headerCellClicked(int cellId) {
+        c.removeOverlay();
         // TODO
     }
     
     @Override
     public void footerCellClicked(int cellId) {
+        c.removeOverlay();
         // TODO
     }
     
     @Override
     public void indexedColCellClicked(int cellId) {
+        c.removeOverlay();
         // TODO
+    }
+    
+    @Override
+    public void regularCellLongClicked(int cellId, int rawX, int rawY) {
+        c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
+    }
+    
+    @Override
+    public void regularCellDoubleClicked(int cellId) {
+        c.openCellEditDialog(table.getRowId(cellId / table.getWidth()),
+                table.getData(cellId), cellId % table.getWidth());
     }
     
     @Override
@@ -330,5 +356,101 @@ public class SpreadsheetDisplayActivity extends Activity
     @Override
     public void prepIndexedColCellOccm(ContextMenu menu, int cellId) {
         // TODO
+    }
+    
+    private class CellPopout extends LinearLayout {
+        
+        private final int cellId;
+        private int lastDownX;
+        private int lastDownY;
+        
+        public CellPopout(int cellId) {
+            super(SpreadsheetDisplayActivity.this);
+            this.cellId = cellId;
+            Context context = SpreadsheetDisplayActivity.this;
+            TextView valueView = new TextView(context);
+            valueView.setText(table.getData(cellId));
+            Button menuButton = new Button(context);
+            menuButton.setText("M");
+            menuButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openCellMenu();
+                }
+            });
+            setBackgroundColor(Color.WHITE);
+            addView(valueView);
+            addView(menuButton);
+            lastDownX = 0;
+            lastDownY = 0;
+        }
+        
+        private void openCellMenu() {
+            final List<Integer> itemIds = new ArrayList<Integer>();
+            List<String> itemLabels = new ArrayList<String>();
+            if (c.getIsOverview() &&
+                    (c.getTableProperties().getPrimeColumns().length > 0)) {
+                itemIds.add(MENU_ITEM_ID_HISTORY_IN);
+                itemLabels.add("View Collection");
+            }
+            itemIds.add(MENU_ITEM_ID_EDIT_CELL);
+            itemLabels.add("Edit Cell");
+            itemIds.add(MENU_ITEM_ID_DELETE_ROW);
+            itemLabels.add("Delete Row");
+            AlertDialog.Builder builder = new AlertDialog.Builder(
+                    SpreadsheetDisplayActivity.this);
+            builder.setItems(itemLabels.toArray(new String[0]),
+                    new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (itemIds.get(which)) {
+                    case MENU_ITEM_ID_HISTORY_IN:
+                        openCollectionView(cellId / table.getWidth());
+                        c.removeOverlay();
+                        break;
+                    case MENU_ITEM_ID_EDIT_CELL:
+                        c.openCellEditDialog(
+                                table.getRowId(cellId / table.getWidth()),
+                                table.getData(cellId),
+                                cellId % table.getWidth());
+                        c.removeOverlay();
+                        break;
+                    case MENU_ITEM_ID_DELETE_ROW:
+                        c.deleteRow(table.getRowId(cellId / table.getWidth()));
+                        c.removeOverlay();
+                        init();
+                        break;
+                    }
+                }
+            });
+            builder.create().show();
+        }
+        
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                lastDownX = (new Float(event.getX())).intValue();
+                lastDownY = (new Float(event.getY())).intValue();
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                int x = (new Float(event.getRawX())).intValue();
+                int y = (new Float(event.getRawY())).intValue();
+                c.setOverlayLocation(x - lastDownX, y - lastDownY);
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                int x = (new Float(event.getRawX())).intValue();
+                int y = (new Float(event.getRawY())).intValue();
+                if (c.isInSearchBox(x, y)) {
+                    String colName = c.getTableProperties().getColumns()
+                            [cellId % table.getWidth()].getDisplayName();
+                    String value = table.getData(cellId);
+                    c.appendToSearchBoxText(" " + colName + ":" + value);
+                    c.removeOverlay();
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }

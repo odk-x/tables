@@ -72,7 +72,7 @@ public class LineGraphDisplayActivity extends Activity
             yValues.add(Double.valueOf(table.getData(i, yIndex)));
         }
         c.setDisplayView(new LineChart(this, xValues, yValues));
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     @Override

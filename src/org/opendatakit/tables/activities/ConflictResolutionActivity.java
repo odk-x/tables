@@ -48,7 +48,7 @@ public class ConflictResolutionActivity extends Activity
         crv = new ConflictResolutionView(this, this, c.getTableViewSettings(),
                 table);
         c.setDisplayView(crv);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     @Override

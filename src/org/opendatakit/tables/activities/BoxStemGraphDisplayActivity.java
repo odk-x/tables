@@ -80,7 +80,7 @@ public class BoxStemGraphDisplayActivity extends Activity
         table = c.getDbTable().getUserTable(query);
         View view = buildView();
         c.setDisplayView(view);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     private View buildView() {

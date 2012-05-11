@@ -22,17 +22,17 @@ import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
+import org.opendatakit.tables.view.util.LockableHorizontalScrollView;
+import org.opendatakit.tables.view.util.LockableScrollView;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 
 public class SpreadsheetView extends LinearLayout
@@ -48,8 +48,9 @@ public class SpreadsheetView extends LinearLayout
     private final int indexedCol;
     private final DisplayPrefs dp;
     
-    private ScrollView indexScroll;
-    private ScrollView mainScroll;
+    private LockableHorizontalScrollView wrapScroll;
+    private LockableScrollView indexScroll;
+    private LockableScrollView mainScroll;
     private TabularView indexData;
     private TabularView indexHeader;
     private TabularView indexFooter;
@@ -107,31 +108,22 @@ public class SpreadsheetView extends LinearLayout
                 }
             }
             @Override
+            protected void takeDownAction(int cellId) {
+                mainData.highlight(cellId);
+            }
+            @Override
             protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
                 controller.regularCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
-                mainData.highlight(-1);
-                controller.openContextMenu(mainData);
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
+                controller.regularCellLongClicked(cellId, rawX, rawY);
             }
             @Override
-            protected void takeHoverAction(int cellId) {
-                int cellNum;
-                if (indexedCol < 0) {
-                    cellNum = cellId;
-                } else {
-                    int colNum = cellId % table.getWidth();
-                    int rowNum = cellId / table.getWidth();
-                    cellNum = cellId - rowNum -
-                            ((colNum < indexedCol) ? 0 : 1);
-                }
-                mainData.highlight(cellNum);
-            }
-            @Override
-            protected void takeCancelAction(int cellId) {
-                mainData.highlight(-1);
+            protected void takeDoubleClickAction(int cellId) {
+                controller.regularCellDoubleClicked(cellId);
             }
         };
         mainHeaderCellClickListener = new CellTouchListener() {
@@ -146,17 +138,20 @@ public class SpreadsheetView extends LinearLayout
                 }
             }
             @Override
+            protected void takeDownAction(int cellId) {}
+            @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.headerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
                 controller.openContextMenu(mainHeader);
             }
             @Override
-            protected void takeHoverAction(int cellId) {}
-            @Override
-            protected void takeCancelAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {}
         };
         mainFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -170,17 +165,20 @@ public class SpreadsheetView extends LinearLayout
                 }
             }
             @Override
+            protected void takeDownAction(int cellId) {}
+            @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.footerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
                 controller.openContextMenu(mainFooter);
             }
             @Override
-            protected void takeHoverAction(int cellId) {}
-            @Override
-            protected void takeCancelAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {}
         };
         indexDataCellClickListener = new CellTouchListener() {
             @Override
@@ -189,17 +187,20 @@ public class SpreadsheetView extends LinearLayout
                 return (cellNum * table.getWidth()) + indexedCol;
             }
             @Override
+            protected void takeDownAction(int cellId) {}
+            @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.indexedColCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexData);
             }
             @Override
-            protected void takeHoverAction(int cellId) {}
-            @Override
-            protected void takeCancelAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {}
         };
         indexHeaderCellClickListener = new CellTouchListener() {
             @Override
@@ -207,17 +208,20 @@ public class SpreadsheetView extends LinearLayout
                 return indexedCol;
             }
             @Override
+            protected void takeDownAction(int cellId) {}
+            @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.headerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexHeader);
             }
             @Override
-            protected void takeHoverAction(int cellId) {}
-            @Override
-            protected void takeCancelAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {}
         };
         indexFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -225,17 +229,20 @@ public class SpreadsheetView extends LinearLayout
                 return indexedCol;
             }
             @Override
+            protected void takeDownAction(int cellId) {}
+            @Override
             protected void takeClickAction(int cellId) {
+                mainData.highlight(-1);
                 controller.footerCellClicked(cellId);
             }
             @Override
-            protected void takeLongClickAction(int cellId) {
+            protected void takeLongClickAction(int cellId, int rawX,
+                    int rawY) {
+                lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexFooter);
             }
             @Override
-            protected void takeHoverAction(int cellId) {}
-            @Override
-            protected void takeCancelAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {}
         };
     }
     
@@ -254,7 +261,7 @@ public class SpreadsheetView extends LinearLayout
     private void buildIndexedTable(int indexedCol) {
         View mainWrapper = buildTable(indexedCol, false);
         View indexWrapper = buildTable(indexedCol, true);
-        HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
+        wrapScroll = new LockableHorizontalScrollView(context);
         wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
         LinearLayout wrapper = new LinearLayout(context);
@@ -335,7 +342,7 @@ public class SpreadsheetView extends LinearLayout
         int headerData = getResources().getColor(R.color.header_data);
         int headerIndex = getResources().getColor(R.color.header_index);
         int footerIndex = getResources().getColor(R.color.footer_index);
-        ScrollView dataScroll = new ScrollView(context);
+        LockableScrollView dataScroll = new LockableScrollView(context);
         ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
                 Color.BLACK, false);
         ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
@@ -377,6 +384,14 @@ public class SpreadsheetView extends LinearLayout
         return wrapper;
     }
     
+    public void setScrollEnabled(boolean enabled) {
+        wrapScroll.setScrollable(enabled);
+        if (indexScroll != null) {
+            indexScroll.setScrollable(enabled);
+        }
+        mainScroll.setScrollable(enabled);
+    }
+    
     @Override
     public void onCreateMainDataContextMenu(ContextMenu menu) {
         controller.prepRegularCellOccm(menu, lastLongClickedCellId);
@@ -399,46 +414,52 @@ public class SpreadsheetView extends LinearLayout
     
     private abstract class CellTouchListener implements View.OnTouchListener {
         
+        private static final int MAX_DOUBLE_CLICK_TIME = 500;
+        
+        private long lastDownTime;
+        
+        public CellTouchListener() {
+            lastDownTime = -1;
+        }
+        
         @Override
         public boolean onTouch(View view, MotionEvent event) {
             int x = (new Float(event.getX())).intValue();
             int y = (new Float(event.getY())).intValue();
             int cellId = figureCellId(x, y);
-            Log.d("SSV", "cell:" + cellId + " / action:" + event.getAction());
             long duration = event.getEventTime() - event.getDownTime();
-            if ((event.getAction() == MotionEvent.ACTION_DOWN) ||
-                    (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                //takeHoverAction(cellId);
-                //return true;
-                return false;
-            } else if (event.getAction() == MotionEvent.ACTION_CANCEL) {
-                //takeCancelAction(cellId);
-                //return true;
-                return false;
-            } else if (event.getAction() == MotionEvent.ACTION_UP &&
+            if (event.getAction() == MotionEvent.ACTION_UP &&
                     duration >= MIN_CLICK_DURATION) {
-                if (duration < MIN_LONG_CLICK_DURATION) {
+                if (event.getEventTime() - lastDownTime <
+                        MAX_DOUBLE_CLICK_TIME) {
+                    takeDoubleClickAction(cellId);
+                } else if (duration < MIN_LONG_CLICK_DURATION) {
                     takeClickAction(cellId);
                 } else {
-                    lastLongClickedCellId = cellId;
-                    takeLongClickAction(cellId);
+                    int rawX = (new Float(event.getRawX())).intValue();
+                    int rawY = (new Float(event.getRawY())).intValue();
+                    takeLongClickAction(cellId, rawX, rawY);
                 }
+                lastDownTime = event.getDownTime();
+                return true;
+            } else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                takeDownAction(cellId);
                 return true;
             } else {
-                Log.d("SSV", "here");
                 return false;
             }
         }
         
         protected abstract int figureCellId(int x, int y);
         
+        protected abstract void takeDownAction(int cellId);
+        
         protected abstract void takeClickAction(int cellId);
         
-        protected abstract void takeLongClickAction(int cellId);
+        protected abstract void takeLongClickAction(int cellId, int rawX,
+                int rawY);
         
-        protected abstract void takeHoverAction(int cellId);
-        
-        protected abstract void takeCancelAction(int cellId);
+        protected abstract void takeDoubleClickAction(int cellId);
     }
     
     private class ColorRulerColorDecider implements ColorDecider {
@@ -470,6 +491,10 @@ public class SpreadsheetView extends LinearLayout
         public void footerCellClicked(int cellId);
         
         public void indexedColCellClicked(int cellId);
+        
+        public void regularCellLongClicked(int cellId, int rawX, int rawY);
+        
+        public void regularCellDoubleClicked(int cellId);
         
         public void openContextMenu(View view);
         

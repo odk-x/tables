@@ -59,7 +59,7 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
         c.setDisplayView(buildView());
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     private View buildView() {

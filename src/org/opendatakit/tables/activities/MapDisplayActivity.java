@@ -87,7 +87,7 @@ public class MapDisplayActivity extends MapActivity
         mv.setBuiltInZoomControls(true);
         mapWrapper.addView(mv);
         c.setDisplayView(mapWrapper);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
         init();
     }
     

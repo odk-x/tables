@@ -56,7 +56,7 @@ public class DetailDisplayActivity extends Activity
                 c.getTableProperties());
         cdv.display(rowId, data);
         c.setDisplayView(cdv);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     @Override
