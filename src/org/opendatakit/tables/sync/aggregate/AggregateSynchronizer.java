@@ -34,9 +34,11 @@ import org.opendatakit.aggregate.odktables.entity.api.TableResource;
 import org.opendatakit.aggregate.odktables.entity.serialization.ListConverter;
 import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
+import org.opendatakit.tables.sync.JsonObjectHttpMessageConverter;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.Synchronizer;
+import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.convert.Registry;
 import org.simpleframework.xml.convert.RegistryStrategy;
@@ -50,8 +52,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
@@ -62,6 +68,7 @@ import org.springframework.web.client.RestTemplate;
 public class AggregateSynchronizer implements Synchronizer {
 
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();
+  private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
   private static final Map<Integer, Column.ColumnType> types = new HashMap<Integer, Column.ColumnType>() {
     {
@@ -84,7 +91,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private final URI baseUri;
   private final Map<String, TableResource> resources;
 
-  public AggregateSynchronizer(String aggregateUri, String accessToken) {
+  public AggregateSynchronizer(String aggregateUri, String accessToken)
+      throws InvalidAuthTokenException {
     URI uri = URI.create(aggregateUri).normalize();
     uri = uri.resolve("/odktables/tables/").normalize();
     this.baseUri = uri;
@@ -93,7 +101,6 @@ public class AggregateSynchronizer implements Synchronizer {
     interceptors.add(new AggregateRequestInterceptor(accessToken));
 
     this.rt = new RestTemplate();
-    this.rt.setErrorHandler(new AggregateResponseErrorHandler());
     this.rt.setInterceptors(interceptors);
 
     Registry registry = new Registry();
@@ -109,6 +116,7 @@ public class AggregateSynchronizer implements Synchronizer {
     }
     List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
 
+    converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
     this.rt.setMessageConverters(converters);
 
@@ -120,6 +128,20 @@ public class AggregateSynchronizer implements Synchronizer {
     this.requestHeaders.setContentType(new MediaType("text", "xml"));
 
     this.resources = new HashMap<String, TableResource>();
+
+    checkAccessToken(accessToken);
+  }
+
+  private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
+    try {
+      rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
+    } catch (HttpClientErrorException e) {
+      JsonParser parser = new JsonParser();
+      JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
+      if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
+        throw new InvalidAuthTokenException("Invalid auth token: " + accessToken, e);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
