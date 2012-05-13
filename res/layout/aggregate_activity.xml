@@ -33,22 +33,29 @@
         android:id="@+id/aggregate_activity_save_settings_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="saveSettings"
+        android:onClick="onClickSaveSettings"
         android:text="Save settings" />
-
+    
+    <Button
+        android:id="@+id/aggregate_activity_authorize_account_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onClickAuthorizeAccount"
+        android:text="Authorize account" />
+    
     <Button
         android:id="@+id/aggregate_activity_choose_tables_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="chooseTables"
+        android:onClick="onClickChooseTables"
         android:text="Choose tables to sync" />
 
     <Button
-        android:id="@+id/aggregate_choose_tables_get_table_button"
+        android:id="@+id/aggregate_activity_get_table_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:onClick="downloadTableFromServer"
+        android:onClick="onClickDownloadTableFromServer"
         android:text="Download table from server" />
 
     <Button
@@ -56,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:onClick="syncNow"
+        android:onClick="onClickSyncNow"
         android:text="Sync now" />
 
 </LinearLayout>

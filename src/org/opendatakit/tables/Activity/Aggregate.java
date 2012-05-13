@@ -26,12 +26,17 @@ import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SyncResult;
 import android.os.AsyncTask;
@@ -46,6 +51,7 @@ import android.widget.Toast;
  * An activity for downloading from and uploading to an ODK Aggregate instance.
  * 
  * @author hkworden@gmail.com
+ * @author the.dylan.price@gmail.com
  */
 public class Aggregate extends Activity {
 
@@ -69,35 +75,19 @@ public class Aggregate extends Activity {
     setContentView(R.layout.aggregate_activity);
     findViewComponents();
     initializeData();
+    updateButtonsEnabled();
   }
-
+  
   @Override
-  protected void onPause() {
-    super.onPause();
-    saveSettings();
+  protected void onStart() {
+    super.onStart();
+    updateButtonsEnabled();
   }
-
-  public void saveSettings() {
-    // save fields in preferences
-    String uri = uriField.getText().toString();
-    if (uri.equals(URI_FIELD_EMPTY))
-      uri = null;
-    String accountName = (String) accountListSpinner.getSelectedItem();
-
-    prefs.setServerUri(uri);
-    prefs.setAccount(accountName);
-
-    // set account sync properties
-    Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
-    for (Account account : accounts) {
-      if (account.name.equals(accountName)) {
-        ContentResolver.setIsSyncable(account, TablesContentProvider.AUTHORITY, 1);
-        ContentResolver.setSyncAutomatically(account, TablesContentProvider.AUTHORITY, true);
-      } else {
-        ContentResolver.setSyncAutomatically(account, TablesContentProvider.AUTHORITY, false);
-        ContentResolver.setIsSyncable(account, TablesContentProvider.AUTHORITY, 0);
-      }
-    }
+  
+  @Override
+  protected void onResume() {
+    super.onResume();
+    updateButtonsEnabled();
   }
 
   private void findViewComponents() {
@@ -132,47 +122,117 @@ public class Aggregate extends Activity {
     }
   }
 
+  private void updateButtonsEnabled() {
+    String accountName = prefs.getAccount();
+    String serverUri = prefs.getServerUri();
+    boolean haveSettings = (accountName != null) && (serverUri != null);
+    boolean authorizeAccount = prefs.getAuthToken() == null;
+
+    boolean restOfButtons = haveSettings && !authorizeAccount;
+
+    findViewById(R.id.aggregate_activity_save_settings_button).setEnabled(true);
+    findViewById(R.id.aggregate_activity_authorize_account_button).setEnabled(authorizeAccount);
+    findViewById(R.id.aggregate_activity_choose_tables_button).setEnabled(restOfButtons);
+    findViewById(R.id.aggregate_activity_get_table_button).setEnabled(restOfButtons);
+    findViewById(R.id.aggregate_activity_sync_now_button).setEnabled(restOfButtons);
+  }
+
+  private void saveSettings() {
+
+    // save fields in preferences
+    String uri = uriField.getText().toString();
+    if (uri.equals(URI_FIELD_EMPTY))
+      uri = null;
+    String accountName = (String) accountListSpinner.getSelectedItem();
+
+    prefs.setServerUri(uri);
+    prefs.setAccount(accountName);
+
+    // set account sync properties
+    Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
+    for (Account account : accounts) {
+      if (account.name.equals(accountName)) {
+        ContentResolver.setIsSyncable(account, TablesContentProvider.AUTHORITY, 1);
+        ContentResolver.setSyncAutomatically(account, TablesContentProvider.AUTHORITY, true);
+      } else {
+        ContentResolver.setSyncAutomatically(account, TablesContentProvider.AUTHORITY, false);
+        ContentResolver.setIsSyncable(account, TablesContentProvider.AUTHORITY, 0);
+      }
+    }
+  }
+
+  private AlertDialog.Builder buildOkMessage(String title, String message) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setCancelable(false);
+    builder.setPositiveButton("OK", null);
+    builder.setTitle(title);
+    builder.setMessage(message);
+    return builder;
+  }
+
   /**
    * Hooked up to save settings button in aggregate_activity.xml
    */
-  public void saveSettings(View v) {
-    saveSettings();
+  public void onClickSaveSettings(View v) {
+    // show warning message
+    AlertDialog.Builder msg = buildOkMessage("Are you sure?",
+        "If you change your settings, tables you have synched now "
+            + "may no longer be able to be synched.");
+
+    msg.setPositiveButton("Save", new OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        saveSettings();
+        updateButtonsEnabled();
+      }
+    });
+
+    msg.setNegativeButton("Cancel", null);
+    msg.show();
+  }
+
+  /**
+   * Hooked up to authorizeAccountButton's onClick in aggregate_activity.xml
+   */
+  public void onClickAuthorizeAccount(View v) {
     Intent i = new Intent(this, AccountInfoActivity.class);
     Account account = new Account(prefs.getAccount(), ACCOUNT_TYPE_G);
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
     startActivity(i);
+    updateButtonsEnabled();
   }
 
   /**
    * Hooked to chooseTablesButton's onClick in aggregate_activity.xml
    */
-  public void chooseTables(View v) {
+  public void onClickChooseTables(View v) {
     Intent i = new Intent(this, AggregateChooseTablesActivity.class);
     startActivity(i);
+    updateButtonsEnabled();
   }
 
   /**
    * Hooked up to downloadTableButton's onClick in aggregate_activity.xml
    */
-  public void downloadTableFromServer(View v) {
+  public void onClickDownloadTableFromServer(View v) {
     Intent i = new Intent(this, AggregateDownloadTableActivity.class);
     startActivity(i);
+    updateButtonsEnabled();
   }
 
   /**
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
-  public void syncNow(View v) {
+  public void onClickSyncNow(View v) {
     String accountName = prefs.getAccount();
 
     if (accountName == null) {
       Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
     } else {
-      // requestSync(accountName);
-      // Toast.makeText(this, "Sync started.", Toast.LENGTH_SHORT);
       SyncNowTask syncTask = new SyncNowTask();
       syncTask.execute();
     }
+    updateButtonsEnabled();
   }
 
   public static void requestSync(String accountName) {
@@ -182,28 +242,52 @@ public class Aggregate extends Activity {
     }
   }
 
+  public static void invalidateAuthToken(String authToken, Context context) {
+    AccountManager.get(context).invalidateAuthToken(ACCOUNT_TYPE_G, authToken);
+    Preferences prefs = new Preferences(context);
+    prefs.setAuthToken(null);
+  }
+
   private class SyncNowTask extends AsyncTask<Void, Void, Void> {
     private ProgressDialog pd;
+    private boolean success;
+    private String message;
 
     @Override
     protected void onPreExecute() {
       pd = ProgressDialog.show(Aggregate.this, "Please Wait", "Synchronizing...");
+      success = false;
+      message = null;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
-      DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
-      Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
-          prefs.getAuthToken());
-      SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
-          new SyncResult());
-      processor.synchronize();
+      try {
+        DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
+        Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
+            prefs.getAuthToken());
+        SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
+            new SyncResult());
+        processor.synchronize();
+        success = true;
+      } catch (InvalidAuthTokenException e) {
+        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
+        success = false;
+        message = "Authorization expired. Please re-authorize account.";
+      } catch (Exception e) {
+        success = false;
+        message = e.getMessage();
+      }
       return null;
     }
 
     @Override
     protected void onPostExecute(Void result) {
       pd.dismiss();
+      if (!success && message != null) {
+        buildOkMessage("Sync Error", message).show();
+      }
+      updateButtonsEnabled();
     }
 
   }

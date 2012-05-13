@@ -30,6 +30,7 @@ import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -149,7 +150,13 @@ public class AggregateDownloadTableActivity extends ListActivity {
 
     @Override
     protected Map<String, String> doInBackground(Void... args) {
-      Synchronizer sync = new AggregateSynchronizer(aggregateUrl, authToken);
+      Synchronizer sync;
+      try {
+        sync = new AggregateSynchronizer(aggregateUrl, authToken);
+      } catch (InvalidAuthTokenException e1) {
+        Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this);
+        return null;
+      }
 
       // get tables from server
       Map<String, String> tables = null;
@@ -213,7 +220,13 @@ public class AggregateDownloadTableActivity extends ListActivity {
       tp.setSyncState(SyncUtil.State.REST);
       tp.setSyncTag(null);
 
-      Synchronizer synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
+      Synchronizer synchronizer;
+      try {
+        synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
+      } catch (InvalidAuthTokenException e) {
+        Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this);
+        return null;
+      }
       SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
           new SyncResult());
       processor.synchronizeTable(tp);
