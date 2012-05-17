@@ -199,7 +199,7 @@ public class Controller {
         wrapper.addView(displayWrap, displayParams);
         container = new RelativeLayout(activity);
         container.addView(wrapper, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT));
     }
     
