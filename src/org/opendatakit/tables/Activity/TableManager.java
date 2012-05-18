@@ -152,25 +152,7 @@ public class TableManager extends ListActivity {
 	 
 	 private void loadSelectedTable(int index) {
 	     TableProperties tp = tableProps[index];
-	     Intent i;
-	     switch (tp.getTableType()) {
-	     case TableProperties.TableType.DATA:
-	         Controller.launchTableActivity(this, tp, true);
-	         //i = new Intent(this, BoxStemGraphDisplayActivity.class);
-	         i = new Intent(this, SpreadSheet.class);
-	         break;
-	     case TableProperties.TableType.SECURITY:
-	         i = new Intent(this, SpreadSheet.class);
-	         break;
-	     case TableProperties.TableType.SHORTCUT:
-	         i = new Intent(this, ShortcutTableActivity.class);
-	         break;
-         default:
-             return;
-	     }
-	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-	     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, true);
-		 //startActivity(i);
+	     Controller.launchTableActivity(this, tp, true);
 	 }
 	 
 	 @Override
