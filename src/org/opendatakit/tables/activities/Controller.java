@@ -92,7 +92,8 @@ public class Controller {
     
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
-    static final int FIRST_FREE_RCODE = 2;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
+    static final int FIRST_FREE_RCODE = 3;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -169,7 +170,11 @@ public class Controller {
         addRowButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                da.onAddRow();
+                Intent intent = getIntentForOdkCollectAddRow();
+                if (intent != null) {
+                    Controller.this.activity.startActivityForResult(intent,
+                            RCODE_ODKCOLLECT_ADD_ROW);
+                }
             }
         });
         LinearLayout.LayoutParams searchFieldParams =
@@ -343,6 +348,9 @@ public class Controller {
         case RCODE_COLUMN_MANAGER:
             handleColumnManagerReturn();
             return true;
+        case RCODE_ODKCOLLECT_ADD_ROW:
+            handleOdkCollectAddReturn(returnCode, data);
+            return true;
         default:
             return false;
         }
@@ -433,6 +441,15 @@ public class Controller {
         intent.setAction(Intent.ACTION_EDIT);
         intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
         return intent;
+    }
+    
+    private void handleOdkCollectAddReturn(int returnCode, Intent data) {
+        if (returnCode != Activity.RESULT_OK) {
+            return;
+        }
+        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+        addRowFromOdkCollectForm(instanceId);
+        da.init();
     }
     
     boolean addRowFromOdkCollectForm(int instanceId) {

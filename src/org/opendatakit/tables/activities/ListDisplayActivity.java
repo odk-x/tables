@@ -120,14 +120,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         init();
     }
     
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
-    }
-    
     private class ListViewController implements ListDisplayView.Controller {
         @Override
         public void onListItemClick(int rowNum) {

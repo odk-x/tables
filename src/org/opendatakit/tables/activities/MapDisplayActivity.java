@@ -181,14 +181,6 @@ public class MapDisplayActivity extends MapActivity
     }
     
     @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
-    }
-    
-    @Override
     protected boolean isRouteDisplayed() {
         return false;
     }

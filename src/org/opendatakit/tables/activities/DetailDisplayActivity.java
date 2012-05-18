@@ -64,10 +64,4 @@ public class DetailDisplayActivity extends Activity
         Controller.launchTableActivity(this, c.getTableProperties(),
                 c.getSearchText(), c.getIsOverview());
     }
-    
-    @Override
-    public void onAddRow() {
-        // TODO Auto-generated method stub
-        
-    }
 }

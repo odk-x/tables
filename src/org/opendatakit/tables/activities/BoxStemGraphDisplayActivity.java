@@ -191,14 +191,6 @@ public class BoxStemGraphDisplayActivity extends Activity
         init();
     }
     
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
-    }
-    
     private class SettingsDialog extends AlertDialog {
         
         private List<ColumnProperties> numberCols;

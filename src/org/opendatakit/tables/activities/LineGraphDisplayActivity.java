@@ -113,12 +113,4 @@ public class LineGraphDisplayActivity extends Activity
         c.recordSearch();
         init();
     }
-    
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
-    }
 }

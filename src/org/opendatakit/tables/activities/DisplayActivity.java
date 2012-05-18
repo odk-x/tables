@@ -21,6 +21,4 @@ interface DisplayActivity {
     void init();
     
     void onSearch();
-    
-    void onAddRow();
 }

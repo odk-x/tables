@@ -87,9 +87,6 @@ public class ConflictResolutionActivity extends Activity
     }
     
     @Override
-    public void onAddRow() {}
-    
-    @Override
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
         String[] colDbNames = c.getTableProperties().getColumnOrder();

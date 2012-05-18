@@ -31,9 +31,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -68,9 +66,6 @@ public class SpreadsheetDisplayActivity extends Activity
         Controller.FIRST_FREE_MENU_ITEM_ID + 8;
     private static final int MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER =
         Controller.FIRST_FREE_MENU_ITEM_ID + 9;
-    
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
     
     private DataManager dm;
     private Controller c;
@@ -184,15 +179,7 @@ public class SpreadsheetDisplayActivity extends Activity
         if (c.handleActivityReturn(requestCode, resultCode, data)) {
             return;
         }
-        switch (requestCode) {
-        case RCODE_ODKCOLLECT_ADD_ROW:
-            c.addRowFromOdkCollectForm(
-                    Integer.valueOf(data.getData().getLastPathSegment()));
-            init();
-            break;
-        default:
-            super.onActivityResult(requestCode, resultCode, data);
-        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
     
     @Override
@@ -261,14 +248,6 @@ public class SpreadsheetDisplayActivity extends Activity
     public void onSearch() {
         c.recordSearch();
         init();
-    }
-    
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
     }
     
     @Override
