@@ -307,6 +307,14 @@ public class SyncProcessor {
       Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + row.getSyncTag());
       ContentValues values = new ContentValues();
 
+      // delete conflicting row if it already exists
+      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", DbTable.DB_ROW_ID,
+          DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING);
+      String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.DELETING),
+          String.valueOf(SyncUtil.boolToInt(true)) };
+      table.deleteRowActual(whereClause, whereArgs);
+      
+      // update existing row
       values.put(DbTable.DB_ROW_ID, row.getRowId());
       values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
       values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
@@ -315,8 +323,10 @@ public class SyncProcessor {
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
 
+      // insert conflicting row
       values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
       values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.DELETING));
+      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.boolToInt(true));
       table.actualAddRow(values);
       syncResult.stats.numConflictDetectedExceptions++;
       syncResult.stats.numEntries += 2;

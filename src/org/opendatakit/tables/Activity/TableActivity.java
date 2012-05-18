@@ -43,7 +43,6 @@ import org.opendatakit.tables.Activity.importexport.ImportExportActivity;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.Library.graphs.GraphClassifier;
-import org.opendatakit.tables.Library.graphs.GraphDataHelper;
 import org.opendatakit.tables.SMS.SMSSender;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
@@ -262,7 +261,7 @@ public abstract class TableActivity extends Activity
     	String colTwo = gcf.getColTwo(); // i.e. Y
     	
     	// Process Helper
-    	GraphDataHelper gdh = new GraphDataHelper(null);
+    	//GraphDataHelper gdh = new GraphDataHelper(null);
     	
     	Log.e("report", "graph type: " + graphType + " " + colOne + " " + colTwo);
     	

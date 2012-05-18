@@ -28,6 +28,7 @@ import org.springframework.web.client.ResponseErrorHandler;
 
 import android.util.Log;
 
+// TODO: decide if using and fix
 public class AggregateResponseErrorHandler implements ResponseErrorHandler {
 
   private static final String TAG = AggregateResponseErrorHandler.class.getSimpleName();

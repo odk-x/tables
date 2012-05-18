@@ -15,10 +15,12 @@
  */
 package org.opendatakit.tables.sync;
 
+import org.opendatakit.tables.Activity.Aggregate;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -47,7 +49,14 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
     if (aggregateUri != null && authToken != null) {
       DbHelper helper = DbHelper.getDbHelper(context);
       DataManager dm = new DataManager(helper);
-      AggregateSynchronizer synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
+      AggregateSynchronizer synchronizer;
+      try {
+        synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
+      } catch (InvalidAuthTokenException e) {
+        Aggregate.invalidateAuthToken(authToken, context);
+        syncResult.stats.numAuthExceptions++;
+        return;
+      }
       SyncProcessor processor = new SyncProcessor(synchronizer, dm, syncResult);
       processor.synchronize();
     }
