@@ -63,6 +63,7 @@ public class TableManager extends ListActivity {
 	public static final int AGGREGATE               = 11;
 	public static final int LAUNCH_TPM              = 12;
 	public static final int LAUNCH_CONFLICT_MANAGER = 13;
+	public static final int LAUNCH_DPREFS_MANAGER   = 14;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -284,6 +285,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
 		 menu.add(0, IMPORT_EXPORT, 0, "File Import/Export");
 		 menu.add(0, AGGREGATE, 0, "Sync");
+		 menu.add(0, LAUNCH_DPREFS_MANAGER, 0, "Display Preferences");
 		 return true;
 	 }
     
@@ -312,6 +314,10 @@ public class TableManager extends ListActivity {
 			 Intent j = new Intent(this, Aggregate.class);
 			 startActivity(j);
 			 return true;
+		 case LAUNCH_DPREFS_MANAGER:
+		     Intent k = new Intent(this, DisplayPrefsActivity.class);
+		     startActivity(k);
+		     return true;
 		 }
     	
 		 return super.onMenuItemSelected(featureId, item);

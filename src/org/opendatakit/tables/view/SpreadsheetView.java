@@ -18,6 +18,7 @@ package org.opendatakit.tables.view;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
+import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
@@ -47,6 +48,7 @@ public class SpreadsheetView extends LinearLayout
     private final UserTable table;
     private final int indexedCol;
     private final DisplayPrefs dp;
+    private final int fontSize;
     
     private LockableHorizontalScrollView wrapScroll;
     private LockableScrollView indexScroll;
@@ -77,6 +79,7 @@ public class SpreadsheetView extends LinearLayout
         this.table = table;
         this.indexedCol = indexedCol;
         this.dp = dp;
+        fontSize = (new Preferences(context)).getFontSize();
         initListeners();
         if (indexedCol < 0) {
             buildNonIndexedTable();
@@ -350,15 +353,18 @@ public class SpreadsheetView extends LinearLayout
         TabularView dataTable = new TabularView(context, this, data,
                 Color.BLACK, fgColorDecider, Color.WHITE, bgColorDecider,
                 Color.GRAY, colWidths,
-                (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA));
+                (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA),
+                fontSize);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         TabularView headerTable = new TabularView(context, this, header,
                 Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
-                (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER));
+                (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
+                fontSize);
         TabularView footerTable = new TabularView(context, this, footer,
                 Color.BLACK, null, Color.GRAY, null, Color.GRAY, colWidths,
-                (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER));
+                (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER),
+                fontSize);
         if (isIndexed) {
             indexData = dataTable;
             indexHeader = headerTable;

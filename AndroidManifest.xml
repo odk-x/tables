@@ -109,6 +109,8 @@
 		</activity>
 		<activity android:name=".activities.MapDisplayActivity">
 		</activity>
+		<activity android:name=".Activity.DisplayPrefsActivity">
+		</activity>
 		<activity android:name="org.opendatakit.tables.activities.DetailDisplayActivity">
 		</activity>
 		<activity android:name="org.opendatakit.tables.activities.ConflictResolutionActivity">

@@ -13,7 +13,7 @@ class TabularView extends View {
     enum TableType { MAIN_DATA, MAIN_HEADER, MAIN_FOOTER,
         INDEX_DATA, INDEX_HEADER, INDEX_FOOTER }
     
-    private static final int ROW_HEIGHT = 30;
+    private static final int ROW_HEIGHT_PADDING = 14;
     private static final int HORIZONTAL_CELL_PADDING = 5;
     private static final int VERTICAL_CELL_PADDING = 9;
     private static final int BORDER_WIDTH = 1;
@@ -25,6 +25,8 @@ class TabularView extends View {
     private final ColorDecider backgroundColorDecider;
     private final int[] columnWidths;
     private final TableType type;
+    private final int fontSize;
+    private final int rowHeight;
     
     private int totalHeight;
     private int totalWidth;
@@ -38,7 +40,8 @@ class TabularView extends View {
     public TabularView(Context context, Controller controller, String[][] data,
             int defaultForegroundColor, ColorDecider foregroundColorDecider,
             int defaultBackgroundColor, ColorDecider backgroundColorDecider,
-            int borderColor, int[] columnWidths, TableType type) {
+            int borderColor, int[] columnWidths, TableType type,
+            int fontSize) {
         super(context);
         this.controller = controller;
         this.data = data;
@@ -51,10 +54,12 @@ class TabularView extends View {
                     backgroundColorDecider;
         this.columnWidths = columnWidths;
         this.type = type;
+        this.fontSize = fontSize;
+        rowHeight = fontSize + ROW_HEIGHT_PADDING;
         highlightedCellNum = -1;
         textPaint = new Paint();
         textPaint.setAntiAlias(true);
-        textPaint.setTextSize(16);
+        textPaint.setTextSize(fontSize);
         bgPaint = new Paint();
         bgPaint.setColor(defaultBackgroundColor);
         borderPaint = new Paint();
@@ -62,7 +67,7 @@ class TabularView extends View {
         highlightPaint = new Paint();
         highlightPaint.setColor(Color.CYAN);
         highlightPaint.setStrokeWidth(3);
-        totalHeight = (ROW_HEIGHT + BORDER_WIDTH) * data.length + BORDER_WIDTH;
+        totalHeight = (rowHeight + BORDER_WIDTH) * data.length + BORDER_WIDTH;
         totalWidth = BORDER_WIDTH;
         for (int i = 0; i < columnWidths.length; i++) {
             totalWidth += columnWidths[i] + BORDER_WIDTH;
@@ -75,11 +80,12 @@ class TabularView extends View {
     public TabularView(Context context, Controller controller, String[] data,
             int defaultForegroundColor, ColorDecider foregroundColorDecider,
             int defaultBackgroundColor, ColorDecider backgroundColorDecider,
-            int borderColor, int[] columnWidths, TableType type) {
+            int borderColor, int[] columnWidths, TableType type,
+            int fontSize) {
         this(context, controller, new String[][] {data},
                 defaultForegroundColor, foregroundColorDecider,
                 defaultBackgroundColor, backgroundColorDecider, borderColor,
-                columnWidths, type);
+                columnWidths, type, fontSize);
     }
     
     public int getTableHeight() {
@@ -91,7 +97,7 @@ class TabularView extends View {
     }
     
     public int getCellNumber(int x, int y) {
-        int row = y / (ROW_HEIGHT + BORDER_WIDTH);
+        int row = y / (rowHeight + BORDER_WIDTH);
         int col = -1;
         while (x > 0) {
             col++;
@@ -117,7 +123,7 @@ class TabularView extends View {
         for (int i = 0; i <= data.length; i++) {
             canvas.drawRect(0, yCoord, totalWidth, yCoord + BORDER_WIDTH,
                     borderPaint);
-            yCoord += ROW_HEIGHT + BORDER_WIDTH;
+            yCoord += rowHeight + BORDER_WIDTH;
         }
         int xCoord = 0;
         for (int i = 0; i <= data[0].length; i++) {
@@ -146,14 +152,14 @@ class TabularView extends View {
                 drawCell(canvas, xs[j], y, datum, backgroundColor,
                         foregroundColor, columnWidths[j]);
             }
-            y += ROW_HEIGHT + BORDER_WIDTH;
+            y += rowHeight + BORDER_WIDTH;
         }
         // highlighting cell (if necessary)
         if (highlightedCellNum != -1) {
             int x = highlightedCellNum % data[0].length;
             int rowNum = highlightedCellNum / data[0].length;
             highlightCell(canvas, xs[x], ((rowNum + 1) * BORDER_WIDTH) +
-                    (rowNum * ROW_HEIGHT), columnWidths[x]);
+                    (rowNum * rowHeight), columnWidths[x]);
         }
     }
     
@@ -161,15 +167,15 @@ class TabularView extends View {
             int backgroundColor, int foregroundColor, int columnWidth) {
         if (backgroundColor != this.defaultBackgroundColor) {
             bgPaint.setColor(backgroundColor);
-            canvas.drawRect(x, y, x + columnWidth, y + ROW_HEIGHT, bgPaint);
+            canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
         }
         canvas.save(Canvas.ALL_SAVE_FLAG);
         canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
                 x + columnWidth - (2 * HORIZONTAL_CELL_PADDING),
-                y + ROW_HEIGHT);
+                y + rowHeight);
         textPaint.setColor(foregroundColor);
         canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING,
-                (y + ROW_HEIGHT - VERTICAL_CELL_PADDING), textPaint);
+                (y + rowHeight - VERTICAL_CELL_PADDING), textPaint);
         canvas.restore();
     }
     
@@ -177,12 +183,12 @@ class TabularView extends View {
             int columnWidth) {
         canvas.drawLine(x + 1, y + 1, x + columnWidth - 1, y - 1,
                 highlightPaint);
-        canvas.drawLine(x + 1, y + 1, x + 1, y + ROW_HEIGHT - 1,
+        canvas.drawLine(x + 1, y + 1, x + 1, y + rowHeight - 1,
                 highlightPaint);
         canvas.drawLine(x + columnWidth - 1, y + 1, x + columnWidth - 1,
-                y + ROW_HEIGHT - 1, highlightPaint);
-        canvas.drawLine(x + 1, y + ROW_HEIGHT - 1, x + columnWidth - 1,
-                y + ROW_HEIGHT - 1, highlightPaint);
+                y + rowHeight - 1, highlightPaint);
+        canvas.drawLine(x + 1, y + rowHeight - 1, x + columnWidth - 1,
+                y + rowHeight - 1, highlightPaint);
     }
     
     @Override
