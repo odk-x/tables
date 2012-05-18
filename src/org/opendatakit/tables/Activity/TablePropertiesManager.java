@@ -333,23 +333,23 @@ public class TablePropertiesManager extends PreferenceActivity {
         
         case TableViewSettings.Type.LIST:
             {
-            EditTextPreference formatPref = new EditTextPreference(this);
-            formatPref.setTitle(label + " List Format");
-            formatPref.setDialogTitle("Change " + label + " List Format");
-            if (settings.getListFormat() != null) {
-                formatPref.setDefaultValue(settings.getListFormat());
+            EditTextPreference listFilePref = new EditTextPreference(this);
+            listFilePref.setTitle(label + " List View File");
+            listFilePref.setDialogTitle("Change " + label + " List View File");
+            if (settings.getCustomListFilename() != null) {
+                listFilePref.setDefaultValue(settings.getCustomListFilename());
             }
-            formatPref.setOnPreferenceChangeListener(
+            listFilePref.setOnPreferenceChangeListener(
                     new OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference,
                         Object newValue) {
-                    settings.setListFormat((String) newValue);
+                    settings.setCustomListFilename((String) newValue);
                     init();
                     return false;
                 }
             });
-            prefCat.addPreference(formatPref);
+            prefCat.addPreference(listFilePref);
             }
             break;
         
