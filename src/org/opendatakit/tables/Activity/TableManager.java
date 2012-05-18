@@ -179,7 +179,7 @@ public class TableManager extends ListActivity {
 		 AdapterView.AdapterContextMenuInfo acmi =
 		     (AdapterView.AdapterContextMenuInfo) menuInfo;
 		 TableProperties tp = tableProps[acmi.position];
-		 if(tp.getTableId() == prefs.getDefaultTableId()) {
+		 if(tp.getTableId().equals(prefs.getDefaultTableId())) {
 	         menu.add(0, UNSET_DEFAULT_TABLE, 0, "Unset as Default Table");
 		 } else {
 	         menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
@@ -237,6 +237,10 @@ public class TableManager extends ListActivity {
 		     prefs.setDefaultTableId(tp.getTableId());
 			 refreshList();
 			 return true;
+		 case UNSET_DEFAULT_TABLE:
+		     prefs.setDefaultTableId(null);
+		     refreshList();
+		     return true;
 		 case SET_SECURITY_TABLE:
 		     tp.setTableType(TableProperties.TableType.SECURITY);
              refreshList();
