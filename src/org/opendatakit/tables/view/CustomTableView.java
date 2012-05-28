@@ -60,7 +60,7 @@ public class CustomTableView extends CustomView {
         }
         
         @SuppressWarnings("unused")
-        public boolean openDetailView(int index) {
+        public boolean openItem(int index) {
             Controller.launchDetailActivity(context, tp, table, index);
             return true;
         }
