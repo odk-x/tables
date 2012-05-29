@@ -236,14 +236,32 @@ public class TableViewSettings {
     }
     
     public int[] getTableColWidths() {
-        if (tableColWidths != null) {
+        if (tableColWidths == null) {
+            int[] colWidths = new int[tp.getColumns().length];
+            for (int i = 0; i < colWidths.length; i++) {
+                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+            }
+            return colWidths;
+        } else if (tableColWidths.length < tp.getColumnOrder().length) {
+            int colCount = tp.getColumnOrder().length;
+            int[] colWidths = new int[colCount];
+            for (int i = 0; i < tableColWidths.length; i++) {
+                colWidths[i] = tableColWidths[i];
+            }
+            for (int i = tableColWidths.length; i < colCount; i++) {
+                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+            }
+            return colWidths;
+        } else if (tableColWidths.length > tp.getColumnOrder().length) {
+            int colCount = tp.getColumnOrder().length;
+            int[] colWidths = new int[colCount];
+            for (int i = 0; i < colCount; i++) {
+                colWidths[i] = tableColWidths[i];
+            }
+            return colWidths;
+        } else {
             return tableColWidths;
         }
-        int[] colWidths = new int[tp.getColumns().length];
-        for (int i = 0; i < colWidths.length; i++) {
-            colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
-        }
-        return colWidths;
     }
     
     public int getTableIndexedColIndex() {
