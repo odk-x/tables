@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.Activity;
 
+import org.opendatakit.tables.Activity.util.SliderPreference;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
@@ -69,7 +70,9 @@ public class PropertyManager extends PreferenceActivity {
     // Private Fields
         private String tableId;
         private String colName;
+        private TableProperties tp;
         private ColumnProperties cp;
+        private int colIndex;
         private boolean showingMcDialog;
         
         @Override
@@ -83,8 +86,9 @@ public class PropertyManager extends PreferenceActivity {
                 this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
                 this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
                 DbHelper dbh = DbHelper.getDbHelper(this);
-                cp = TableProperties.getTablePropertiesForTable(dbh, tableId)
-                        .getColumnByDbName(colName);
+                tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+                cp = tp.getColumnByDbName(colName);
+                colIndex = tp.getColumnIndex(colName);
                 showingMcDialog = false;
                 loadPreferenceScreen();
         }
@@ -116,6 +120,24 @@ public class PropertyManager extends PreferenceActivity {
             // Footer Mode<Lis>
             String footerMode = getFooterMode(colName); 
             category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode, FOOTER_MODE_LABELS, FOOTER_MODE_LABELS));
+            
+            SliderPreference colWidthPref = new SliderPreference(this);
+            colWidthPref.setTitle("Column Width");
+            colWidthPref.setDialogTitle("Change Column Width");
+            colWidthPref.setMaxValue(500);
+            colWidthPref.setValue(tp.getOverviewViewSettings().getTableColWidths()[colIndex]);
+            colWidthPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    int width = (Integer) newValue;
+                    int[] widths = tp.getOverviewViewSettings().getTableColWidths();
+                    widths[colIndex] = width;
+                    tp.getOverviewViewSettings().setTableColWidths(widths);
+                    tp.getCollectionViewSettings().setTableColWidths(widths);
+                    return true;
+                }
+            });
+            category.addPreference(colWidthPref);
             
             category.addPreference(new DisplayPreferencesDialogPreference(this));
             
