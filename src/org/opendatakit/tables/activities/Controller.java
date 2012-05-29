@@ -84,6 +84,9 @@ public class Controller {
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
     
+    public static final int VIEW_ID_SEARCH_FIELD = 0;
+    public static final int VIEW_ID_SEARCH_BUTTON = 1;
+    
     private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 0;
     private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 1;
     private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 2;
@@ -156,8 +159,10 @@ public class Controller {
         // initializing view objects
         controlWrap = new LinearLayout(activity);
         searchField = new EditText(activity);
+        searchField.setId(VIEW_ID_SEARCH_FIELD);
         searchField.setText(searchText.peek());
         ImageButton searchButton = new ImageButton(activity);
+        searchButton.setId(VIEW_ID_SEARCH_BUTTON);
         searchButton.setImageResource(R.drawable.search_icon);
         searchButton.setOnClickListener(new OnClickListener() {
             @Override
