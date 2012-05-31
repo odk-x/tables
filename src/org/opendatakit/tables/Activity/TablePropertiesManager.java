@@ -291,12 +291,17 @@ public class TablePropertiesManager extends PreferenceActivity {
             new ArrayList<ColumnProperties>();
         final List<ColumnProperties> locationCols =
             new ArrayList<ColumnProperties>();
+        final List<ColumnProperties> dateCols =
+            new ArrayList<ColumnProperties>();
         for (ColumnProperties cp : tp.getColumns()) {
             if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
                 numberCols.add(cp);
             } else if (cp.getColumnType() ==
                     ColumnProperties.ColumnType.LOCATION) {
                 locationCols.add(cp);
+            } else if (cp.getColumnType() ==
+                ColumnProperties.ColumnType.DATE) {
+                dateCols.add(cp);
             }
         }
         
@@ -365,16 +370,27 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
             String[] numberColDbNames = new String[numberCols.size()];
             String[] numberColDisplayNames = new String[numberCols.size()];
+            String[] possibleXColDbNames =
+                new String[numberCols.size() + dateCols.size()];
+            String[] possibleXColDisplayNames =
+                new String[numberCols.size() + dateCols.size()];
             for (int i = 0; i < numberCols.size(); i++) {
                 numberColDbNames[i] = numberCols.get(i).getColumnDbName();
                 numberColDisplayNames[i] = numberCols.get(i).getDisplayName();
+                possibleXColDbNames[i] = numberCols.get(i).getColumnDbName();
+                possibleXColDisplayNames[i] = numberCols.get(i).getDisplayName();
+            }
+            for (int i = 0; i < dateCols.size(); i++) {
+                int index = numberCols.size() + i;
+                possibleXColDbNames[index] = dateCols.get(i).getColumnDbName();
+                possibleXColDisplayNames[index] = dateCols.get(i).getDisplayName();
             }
             
             ListPreference lineXColPref = new ListPreference(this);
             lineXColPref.setTitle(label + " X Column");
             lineXColPref.setDialogTitle("Change " + label + " X Column");
-            lineXColPref.setEntryValues(numberColDbNames);
-            lineXColPref.setEntries(numberColDisplayNames);
+            lineXColPref.setEntryValues(possibleXColDbNames);
+            lineXColPref.setEntries(possibleXColDisplayNames);
             lineXColPref.setValue(xCol.getColumnDbName());
             lineXColPref.setSummary(xCol.getDisplayName());
             lineXColPref.setOnPreferenceChangeListener(

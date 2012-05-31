@@ -549,18 +549,23 @@ public class TableViewSettings {
     public int[] getPossibleViewTypes() {
         int numericColCount = 0;
         int locationColCount = 0;
+        int dateColCount = 0;
         for (ColumnProperties cp : tp.getColumns()) {
             if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
                 numericColCount++;
             } else if (cp.getColumnType() ==
                 ColumnProperties.ColumnType.LOCATION) {
                 locationColCount++;
+            } else if (cp.getColumnType() ==
+                ColumnProperties.ColumnType.DATE) {
+                dateColCount++;
             }
         }
         List<Integer> list = new ArrayList<Integer>();
         list.add(Type.SPREADSHEET);
         list.add(Type.LIST);
-        if (numericColCount >= 2) {
+        if ((numericColCount >= 2) ||
+                ((numericColCount >= 1) && (dateColCount >= 1))) {
             list.add(Type.LINE_GRAPH);
         }
         if (numericColCount >= 1) {

@@ -32,7 +32,7 @@ public class ScatterChart extends PointPlot {
     
     public ScatterChart(Context context, List<Double> xValues,
             List<Double> yValues) {
-        super(context, xValues, yValues);
+        super(context, xValues, yValues, DataType.NUMBER);
         outerCirclePaint = new Paint();
         outerCirclePaint.setColor(OUTER_CIRCLE_COLOR);
     }

@@ -18,8 +18,10 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.DateTime;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
+import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
@@ -54,24 +56,38 @@ public class LineGraphDisplayActivity extends Activity
     
     @Override
     public void init() {
-        query.clear();
-        query.loadFromUserQuery(c.getSearchText());
         ColumnProperties xCol = c.getTableViewSettings().getLineXCol();
         ColumnProperties yCol = c.getTableViewSettings().getLineYCol();
-        List<Double> xValues = new ArrayList<Double>();
-        List<Double> yValues = new ArrayList<Double>();
+        query.clear();
+        query.loadFromUserQuery(c.getSearchText());
+        query.setOrderBy(Query.SortOrder.ASCENDING, xCol);
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
+        List<Double> yValues = new ArrayList<Double>();
         int xIndex = c.getTableProperties().getColumnIndex(
                 xCol.getColumnDbName());
         int yIndex = c.getTableProperties().getColumnIndex(
                 yCol.getColumnDbName());
-        for (int i = 0; i < table.getHeight(); i++) {
-            xValues.add(Double.valueOf(table.getData(i, xIndex)));
-            yValues.add(Double.valueOf(table.getData(i, yIndex)));
+        if (xCol.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+            List<Double> xValues = new ArrayList<Double>();
+            for (int i = 0; i < table.getHeight(); i++) {
+                xValues.add(Double.valueOf(table.getData(i, xIndex)));
+                yValues.add(Double.valueOf(table.getData(i, yIndex)));
+            }
+            c.setDisplayView(LineChart.createNumberLineChart(this, xValues,
+                    yValues));
+        } else {
+            DataUtil du = DataUtil.getDefaultDataUtil();
+            List<DateTime> xValues = new ArrayList<DateTime>();
+            for (int i = 0; i < table.getHeight(); i++) {
+                DateTime dt = du.parseDateTimeFromDb(table.getData(i, xIndex));
+                xValues.add(dt);
+                yValues.add(Double.valueOf(table.getData(i, yIndex)));
+            }
+            c.setDisplayView(LineChart.createDateLineChart(this, xValues,
+                    yValues));
         }
-        c.setDisplayView(new LineChart(this, xValues, yValues));
         setContentView(c.getContainerView());
     }
     

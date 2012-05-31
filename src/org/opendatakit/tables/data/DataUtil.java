@@ -33,7 +33,7 @@ import org.opendatakit.tables.Activity.util.UTMConverter;
 public class DataUtil {
     
     private static final DateTimeFormatter DB_DATETIME_FORMATTER =
-        DateTimeFormat.forPattern("yyyy-MM-dd-kk-mm-ss").withZoneUTC();
+        DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm-ss").withZoneUTC();
     
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
         "M/d/yy h:mm:ssa",

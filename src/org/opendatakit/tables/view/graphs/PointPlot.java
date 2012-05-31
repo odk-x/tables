@@ -16,6 +16,8 @@
 package org.opendatakit.tables.view.graphs;
 
 import java.util.List;
+import org.joda.time.DateTime;
+import org.opendatakit.tables.data.DataUtil;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -24,19 +26,25 @@ import android.graphics.Paint;
 
 public abstract class PointPlot extends AbstractChart {
     
+    protected enum DataType { NUMBER, DATE }
+    
     private static final double PADDING = 0.05;
     protected static final int POINT_RADIUS = 2;
     
     protected final List<Double> xValues;
     protected final List<Double> yValues;
+    protected final DataType dataType;
+    protected final DataUtil du;
     private final Paint paint;
     
     public PointPlot(Context context, List<Double> xValues,
-            List<Double> yValues) {
+            List<Double> yValues, DataType dataType) {
         super(context);
         if (xValues.size() != yValues.size()) {
             throw new RuntimeException();
         }
+        du = DataUtil.getDefaultDataUtil();
+        this.dataType = dataType;
         this.xValues = xValues;
         this.yValues = yValues;
         paint = new Paint();
@@ -50,12 +58,25 @@ public abstract class PointPlot extends AbstractChart {
         minY = yRange[0] - yPadding;
         maxY = yRange[1] + yPadding;
         // initializing label arrays
+        int[] bFactors = (dataType == DataType.NUMBER) ?
+                DEFAULT_B_FACTORS : DATE_TIME_B_FACTORS;
         double xTickSep = getTickSeparation(minX, maxX, 10, DEFAULT_A_FACTORS,
-                DEFAULT_B_FACTORS);
-        xLabels = getLabels(minX, maxX, xTickSep, LabelAxis.X,
-                LabelOrientation.VERTICAL);
+                bFactors);
+        if (dataType == DataType.NUMBER) {
+            xLabels = getLabels(minX, maxX, xTickSep, LabelAxis.X,
+                    LabelOrientation.VERTICAL);
+        } else {
+            double[] values = getLabelValues(minX, maxX, xTickSep);
+            xLabels = new Label[values.length];
+            for (int i = 0; i < values.length; i++) {
+                DateTime dt = new DateTime(
+                        new Double(values[i] * 1000.0).longValue());
+                xLabels[i] = new Label(LabelAxis.X, LabelOrientation.VERTICAL,
+                        values[i], du.formatShortDateTimeForUser(dt));
+            }
+        }
         double yTickSep = getTickSeparation(minY, maxY, 10, DEFAULT_A_FACTORS,
-                DEFAULT_B_FACTORS);
+                bFactors);
         yLabels = getLabels(minY, maxY, yTickSep, LabelAxis.Y,
                 LabelOrientation.HORIZONTAL);
     }
@@ -63,8 +84,8 @@ public abstract class PointPlot extends AbstractChart {
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
-        drawXAxis(canvas, 0);
-        drawYAxis(canvas, 0);
+        drawXAxis(canvas, minY);
+        drawYAxis(canvas, minX);
         drawXLabels(canvas, true);
         drawYLabels(canvas, true);
         drawData(canvas);
