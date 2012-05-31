@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Library.graphs.GValuePercentilePoint;
-import org.opendatakit.tables.Library.graphs.GraphFactory;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
@@ -49,7 +47,7 @@ import android.widget.TextView;
  * An activity for display box-stem graphs.
  */
 public class BoxStemGraphDisplayActivity extends Activity
-        implements DisplayActivity {
+        implements DisplayActivity, BoxStemChart.ClickListener {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
@@ -57,6 +55,7 @@ public class BoxStemGraphDisplayActivity extends Activity
     private Controller c;
     private Query query;
     private UserTable table;
+    private List<String> xValues;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -92,7 +91,7 @@ public class BoxStemGraphDisplayActivity extends Activity
                 c.getTableViewSettings().getBoxStemXCol().getColumnDbName());
         int yCol = c.getTableProperties().getColumnIndex(
                 c.getTableViewSettings().getBoxStemYCol().getColumnDbName());
-        List<String> xValues = new ArrayList<String>();
+        xValues = new ArrayList<String>();
         Map<String, List<Double>> lists = new HashMap<String, List<Double>>();
         for (int i = 0; i < table.getHeight(); i++) {
             String x = table.getData(i, xCol);
@@ -102,7 +101,6 @@ public class BoxStemGraphDisplayActivity extends Activity
             }
             lists.get(x).add(Double.parseDouble(table.getData(i, yCol)));
         }
-        GraphFactory gFactory = new GraphFactory(this);
         //List<GValuePercentilePoint> data =
         //    new ArrayList<GValuePercentilePoint>();
         BoxStemChart.DataPoint[] data =
@@ -113,7 +111,6 @@ public class BoxStemGraphDisplayActivity extends Activity
             int count = yValues.size();
             double low = yValues.get(0);
             double high = yValues.get(count - 1);
-            double y = findMid(yValues, 0, yValues.size() - 1);
             double midLow;
             double midHigh;
             if (yValues.size() == 1) {
@@ -137,7 +134,7 @@ public class BoxStemGraphDisplayActivity extends Activity
             //data.add(new GValuePercentilePoint(x, y, low, midLow, midHigh,
             //        high));
         }
-        return new BoxStemChart(this, data);
+        return new BoxStemChart(this, data, this);
         //return gFactory.getBoxStemGraph(data, "", "", "");
     }
     
@@ -199,7 +196,19 @@ public class BoxStemGraphDisplayActivity extends Activity
     
     @Override
     public void onSearch() {
+        c.recordSearch();
         init();
+    }
+    
+    @Override
+    public void onClick(int index) {
+        if (!c.getIsOverview()) {
+            return;
+        }
+        ColumnProperties xCol = c.getTableViewSettings().getBoxStemXCol();
+        String searchText = xCol.getDisplayName() + ":" + xValues.get(index);
+        Controller.launchTableActivity(this, c.getTableProperties(),
+                searchText, false);
     }
     
     private class SettingsDialog extends AlertDialog {
