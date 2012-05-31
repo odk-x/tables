@@ -287,7 +287,17 @@ public class ColumnProperties {
      * @param columnType the new type
      */
     public void setColumnType(int columnType) {
-        setIntProperty(DB_COLUMN_TYPE, columnType);
+        TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
+                tableId);
+        String[] colOrder = tp.getColumnOrder();
+        tp.getColumns(); // ensuring columns are initialized
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        setIntProperty(db, DB_COLUMN_TYPE, columnType);
+        tp.reformTable(db, colOrder);
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        db.close();
         this.columnType = columnType;
     }
     
@@ -465,15 +475,20 @@ public class ColumnProperties {
     }
     
     private void setIntProperty(String property, int value) {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        setIntProperty(db, property, value);
+        db.close();
+    }
+    
+    private void setIntProperty(SQLiteDatabase db, String property,
+            int value) {
         ContentValues values = new ContentValues();
         values.put(property, value);
-        SQLiteDatabase db = dbh.getWritableDatabase();
         int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
         if (count != 1000) {
             Log.e(ColumnProperties.class.getName(),
                     "setting " + property + " updated " + count + " rows");
         }
-        db.close();
     }
     
     private void setStringProperty(String property, String value) {

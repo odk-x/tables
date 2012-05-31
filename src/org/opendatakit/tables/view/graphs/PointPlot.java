@@ -63,8 +63,8 @@ public abstract class PointPlot extends AbstractChart {
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
-        drawXAxis(canvas);
-        drawYAxis(canvas);
+        drawXAxis(canvas, 0);
+        drawYAxis(canvas, 0);
         drawXLabels(canvas, true);
         drawYLabels(canvas, true);
         drawData(canvas);

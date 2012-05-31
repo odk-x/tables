@@ -208,11 +208,7 @@ public class DataUtil {
     private String validifyLocationValue(String input) {
         Matcher matcher = USER_LOCATION_LAT_LON_FORMAT.matcher(input);
         if (matcher.matches()) {
-            Double latDouble = Double.parseDouble(matcher.group(1));
-            Double lonDouble = Double.parseDouble(matcher.group(3));
-            int latInt = Double.valueOf(latDouble * 1000000).intValue();
-            int lonInt = Double.valueOf(lonDouble * 1000000).intValue();
-            return latInt + "," + lonInt;
+            return matcher.group(1) + "," + matcher.group(3);
         }
         matcher = USER_LOCATION_UTM_COMMA_FORMAT.matcher(input);
         if (matcher.matches()) {
@@ -225,9 +221,9 @@ public class DataUtil {
             if (latLon == null) {
                 return null;
             }
-            int latInt = Double.valueOf(latLon[0] * 1000000).intValue();
-            int lonInt = Double.valueOf(latLon[1] * 1000000).intValue();
-            return latInt + "," + lonInt;
+            String latStr = String.format("%.5g", latLon[0]);
+            String lonStr = String.format("%.5g", latLon[1]);
+            return latStr + "," + lonStr;
         }
         matcher = USER_LOCATION_UTM_SPACE_FORMAT.matcher(input);
         if (matcher.matches()) {
@@ -240,9 +236,9 @@ public class DataUtil {
             if (latLon == null) {
                 return null;
             }
-            int latInt = Double.valueOf(latLon[0] * 1000000).intValue();
-            int lonInt = Double.valueOf(latLon[1] * 1000000).intValue();
-            return latInt + "," + lonInt;
+            String latStr = String.format("%.5g", latLon[0]);
+            String lonStr = String.format("%.5g", latLon[1]);
+            return latStr + "," + lonStr;
         }
         return null;
     }
@@ -374,9 +370,9 @@ public class DataUtil {
                 formatLongDateTimeForUser(interval.getEnd());
     }
     
-    public int[] parseLocationFromDb(String dbString) {
+    public double[] parseLocationFromDb(String dbString) {
         String[] split = dbString.split(",");
-        return new int[] {Integer.parseInt(split[0]),
-                Integer.parseInt(split[1])};
+        return new double[] {Double.parseDouble(split[0]),
+                Double.parseDouble(split[1])};
     }
 }

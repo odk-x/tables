@@ -310,9 +310,9 @@ public class MsgHandler {
                 cols.add(cp);
             } else if (c == '~') {
                 if ((value != null) && value.startsWith("d")) {
-                    query.setOrderBy(cp, Query.SortOrder.DESCENDING);
+                    query.setOrderBy(Query.SortOrder.DESCENDING, cp);
                 } else {
-                    query.setOrderBy(cp, Query.SortOrder.ASCENDING);
+                    query.setOrderBy(Query.SortOrder.ASCENDING, cp);
                 }
             } else if (c == '/') {
                 if ((drSlotColumn != null) || (value == null) ||
@@ -470,7 +470,7 @@ public class MsgHandler {
                 query.removeConstraint(i);
             }
         }
-        query.setOrderBy(drSlotColumn, Query.SortOrder.ASCENDING);
+        query.setOrderBy(Query.SortOrder.ASCENDING, drSlotColumn);
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query,
                 new String[] {drSlotColumn.getColumnDbName()});

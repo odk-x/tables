@@ -329,8 +329,14 @@ public class Query {
         constraints.remove(index);
     }
     
-    public void setOrderBy(ColumnProperties cp, int sortOrder) {
-        orderBy = cp.getColumnDbName();
+    public void setOrderBy(int sortOrder, ColumnProperties firstCp,
+            ColumnProperties... cps) {
+        StringBuilder orderByBuilder =
+            new StringBuilder(firstCp.getColumnDbName());
+        for (ColumnProperties cp : cps) {
+            orderByBuilder.append(", " + cp.getColumnDbName());
+        }
+        orderBy = orderByBuilder.toString();
         this.sortOrder = sortOrder;
     }
     

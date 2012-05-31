@@ -66,7 +66,7 @@ public class MapDisplayActivity extends MapActivity
     private Controller c;
     private Query query;
     private UserTable table;
-    private int[][] locations;
+    private double[][] locations;
     private RelativeLayout mapWrapper;
     private MapView mv;
     private ItemizedOverlayImpl<OverlayItem> itemizedOverlay;
@@ -98,7 +98,7 @@ public class MapDisplayActivity extends MapActivity
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        locations = new int[table.getHeight()][];
+        locations = new double[table.getHeight()][];
         ColumnProperties locCol = c.getTableViewSettings().getMapLocationCol();
         int locColIndex = c.getTableProperties().getColumnIndex(
                 locCol.getColumnDbName());
@@ -109,7 +109,7 @@ public class MapDisplayActivity extends MapActivity
                 continue;
             }
             locations[i] = du.parseLocationFromDb(locString);
-            GeoPoint gp = new GeoPoint(locations[i][0], locations[i][1]);
+            GeoPoint gp = getGeoPointFromLatLon(locations[i]);
             itemizedOverlay.addPoint(gp, getDrawable(i));
         }
         mv.getOverlays().clear();
@@ -186,9 +186,15 @@ public class MapDisplayActivity extends MapActivity
     }
     
     private void onItemClicked(int index) {
-        GeoPoint gp = new GeoPoint(locations[index][0], locations[index][1]);
+        GeoPoint gp = getGeoPointFromLatLon(locations[index]);
         itemizedOverlay.addInfoWindow(gp, table.getData(index, labelColIndex));
         mv.postInvalidate();
+    }
+    
+    private GeoPoint getGeoPointFromLatLon(double[] latLon) {
+        int latE6Dbl = (new Double(latLon[0] * 1000000)).intValue();
+        int lonE6Dbl = (new Double(latLon[1] * 1000000)).intValue();
+        return new GeoPoint(latE6Dbl, lonE6Dbl);
     }
     
     private class ItemizedOverlayImpl<Item extends OverlayItem>
@@ -278,12 +284,12 @@ public class MapDisplayActivity extends MapActivity
             Point pt = new Point();
             Projection projection = mv.getProjection();
             for (int i = 0; i < locations.length; i++) {
-                int[] loc = locations[i];
+                double[] loc = locations[i];
                 if (loc == null) {
                     continue;
                 }
-                Point pixels = projection.toPixels(
-                        new GeoPoint(loc[0], loc[1]), pt);
+                Point pixels = projection.toPixels(getGeoPointFromLatLon(loc),
+                        pt);
                 double dist = Math.sqrt(Math.pow(pixels.x - x, 2) +
                         Math.pow(pixels.y - y, 2));
                 if (dist < minDist) {

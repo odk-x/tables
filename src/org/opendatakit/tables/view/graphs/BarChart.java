@@ -64,8 +64,8 @@ public class BarChart extends AbstractChart {
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
-        drawXAxis(canvas);
-        drawYAxis(canvas);
+        drawXAxis(canvas, 0);
+        drawYAxis(canvas, 0);
         drawXLabels(canvas, false);
         drawYLabels(canvas, true);
         drawData(canvas);
