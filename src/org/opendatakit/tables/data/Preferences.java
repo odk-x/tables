@@ -28,9 +28,12 @@ public class Preferences {
 	private static final String FILE_NAME = "odktables_preferences";
 	private static final String DEFAULT_TABLE_KEY = "defaultTable";
 	private static final String PREFERRED_VIEW_TYPE_BASE_KEY = "viewType-";
+	private static final String FONT_SIZE = "fontSize";
 	private static final String SERVER_URI_KEY = "serverUri";
 	private static final String ACCOUNT_KEY = "account";
 	private static final String AUTH_KEY = "auth";
+	
+	private static final int DEFAULT_FONT_SIZE = 16;
 
 	public class ViewType {
 		public static final int TABLE = 0;
@@ -65,6 +68,16 @@ public class Preferences {
 		SharedPreferences.Editor editor = prefs.edit();
 		editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type);
 		editor.commit();
+	}
+	
+	public int getFontSize() {
+	    return prefs.getInt(FONT_SIZE, 16);
+	}
+	
+	public void setFontSize(int fontSize) {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(FONT_SIZE, fontSize);
+        editor.commit();
 	}
 
 	public void setServerUri(String serverUri) {

@@ -20,6 +20,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.view.CustomTableView;
 import org.opendatakit.tables.view.ListDisplayView;
 
 import android.app.Activity;
@@ -59,12 +60,12 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
         c.setDisplayView(buildView());
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     private View buildView() {
-        return ListDisplayView.buildView(this, c.getTableProperties(),
-                c.getTableViewSettings(), listController, table);
+        return CustomTableView.get(this, c.getTableProperties(), table,
+                c.getTableViewSettings().getCustomListFilename());
     }
     
     private void openCollectionView(int rowNum) {
@@ -117,14 +118,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     public void onSearch() {
         c.recordSearch();
         init();
-    }
-    
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
     }
     
     private class ListViewController implements ListDisplayView.Controller {

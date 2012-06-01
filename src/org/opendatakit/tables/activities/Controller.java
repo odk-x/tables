@@ -48,8 +48,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -59,6 +61,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 
 /**
@@ -81,6 +84,9 @@ public class Controller {
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
     
+    public static final int VIEW_ID_SEARCH_FIELD = 0;
+    public static final int VIEW_ID_SEARCH_BUTTON = 1;
+    
     private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 0;
     private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 1;
     private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 2;
@@ -89,7 +95,8 @@ public class Controller {
     
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
-    static final int FIRST_FREE_RCODE = 2;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
+    static final int FIRST_FREE_RCODE = 3;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -112,9 +119,12 @@ public class Controller {
     private TableViewSettings tvs;
     private final Stack<String> searchText;
     private final boolean isOverview;
-    private final ViewGroup wrapper;
+    private final RelativeLayout container;
+    private final LinearLayout controlWrap;
     private final EditText searchField;
     private final ViewGroup displayWrap;
+    private View overlay;
+    private RelativeLayout.LayoutParams overlayLp;
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
@@ -147,10 +157,12 @@ public class Controller {
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();
         // initializing view objects
-        LinearLayout controlWrap = new LinearLayout(activity);
+        controlWrap = new LinearLayout(activity);
         searchField = new EditText(activity);
+        searchField.setId(VIEW_ID_SEARCH_FIELD);
         searchField.setText(searchText.peek());
         ImageButton searchButton = new ImageButton(activity);
+        searchButton.setId(VIEW_ID_SEARCH_BUTTON);
         searchButton.setImageResource(R.drawable.search_icon);
         searchButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -163,7 +175,11 @@ public class Controller {
         addRowButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                da.onAddRow();
+                Intent intent = getIntentForOdkCollectAddRow();
+                if (intent != null) {
+                    Controller.this.activity.startActivityForResult(intent,
+                            RCODE_ODKCOLLECT_ADD_ROW);
+                }
             }
         });
         LinearLayout.LayoutParams searchFieldParams =
@@ -191,7 +207,10 @@ public class Controller {
                 LinearLayout.LayoutParams.FILL_PARENT,
                 LinearLayout.LayoutParams.FILL_PARENT);
         wrapper.addView(displayWrap, displayParams);
-        this.wrapper = wrapper;
+        container = new RelativeLayout(activity);
+        container.addView(wrapper, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
     }
     
     TableProperties getTableProperties() {
@@ -214,8 +233,8 @@ public class Controller {
         return searchText.peek();
     }
     
-    View getWrapperView() {
-        return wrapper;
+    View getContainerView() {
+        return container;
     }
     
     void setDisplayView(View dv) {
@@ -226,8 +245,48 @@ public class Controller {
         displayWrap.addView(dv, params);
     }
     
+    void addOverlay(View overlay, int width, int height, int x, int y) {
+        removeOverlay();
+        this.overlay = overlay;
+        overlayLp = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        overlayLp.leftMargin = x;
+        overlayLp.topMargin = y - controlWrap.getHeight();
+        overlayLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        container.addView(overlay, overlayLp);
+    }
+    
+    void removeOverlay() {
+        if (overlay != null) {
+            container.removeView(overlay);
+            overlay = null;
+            overlayLp = null;
+        }
+    }
+    
+    void setOverlayLocation(int x, int y) {
+        overlayLp.leftMargin = x;
+        overlayLp.topMargin = y - controlWrap.getHeight();
+        container.requestLayout();
+    }
+    
     void releaseView(View v) {
         displayWrap.removeView(v);
+    }
+    
+    boolean isInSearchBox(int x, int y) {
+        Log.d("CNTRLR", "isInSearchBox(" + x + "," + y + ")");
+        y -= controlWrap.getHeight();
+        Rect bounds = new Rect();
+        searchField.getHitRect(bounds);
+        Log.d("CNTRLR", bounds.toString());
+        return ((bounds.left <= x) && (bounds.right >= x) &&
+                (bounds.top <= y) && (bounds.bottom >= y));
+    }
+    
+    void appendToSearchBoxText(String text) {
+        searchField.setText((searchField.getText() + text).trim());
     }
     
     void recordSearch() {
@@ -293,6 +352,9 @@ public class Controller {
             return true;
         case RCODE_COLUMN_MANAGER:
             handleColumnManagerReturn();
+            return true;
+        case RCODE_ODKCOLLECT_ADD_ROW:
+            handleOdkCollectAddReturn(returnCode, data);
             return true;
         default:
             return false;
@@ -384,6 +446,15 @@ public class Controller {
         intent.setAction(Intent.ACTION_EDIT);
         intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
         return intent;
+    }
+    
+    private void handleOdkCollectAddReturn(int returnCode, Intent data) {
+        if (returnCode != Activity.RESULT_OK) {
+            return;
+        }
+        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+        addRowFromOdkCollectForm(instanceId);
+        da.init();
     }
     
     boolean addRowFromOdkCollectForm(int instanceId) {

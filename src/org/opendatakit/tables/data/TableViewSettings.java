@@ -68,6 +68,9 @@ public class TableViewSettings {
     private static final String JSON_KEY_MAP_LABEL_COL = "mapLabelCol";
     private static final String JSON_KEY_MAP_COLOR_RULERS = "mapColorRulers";
     private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
+    private static final String JSON_KEY_CUSTOM_SETTINGS = "custom";
+    private static final String JSON_KEY_CUSTOM_LIST_FILE = "customListFile";
+    private static final String JSON_KEY_CUSTOM_VIEWS_INFO = "customViewsInfo";
     
     private static final int DEFAULT_TABLE_COL_WIDTH = 125;
     
@@ -87,6 +90,8 @@ public class TableViewSettings {
     private String mapLabelCol;
     private Map<String, ConditionalRuler> mapColorRulers;
     private Map<String, ConditionalRuler> mapSizeRulers;
+    private String customListFilename;
+    private List<CustomView> customViews;
     
     private TableViewSettings(TableProperties tp, ViewType type,
             String dbString) {
@@ -94,6 +99,7 @@ public class TableViewSettings {
         this.type = type;
         mapColorRulers = new HashMap<String, ConditionalRuler>();
         mapSizeRulers = new HashMap<String, ConditionalRuler>();
+        customViews = new ArrayList<CustomView>();
         if (dbString == null) {
             viewType = Type.SPREADSHEET;
             return;
@@ -129,6 +135,10 @@ public class TableViewSettings {
         }
         if (jo.has(JSON_KEY_MAP_SETTINGS)) {
             setMapFromJsonObject(jo.getJSONObject(JSON_KEY_MAP_SETTINGS));
+        }
+        if (jo.has(JSON_KEY_CUSTOM_SETTINGS)) {
+            setCustomFromJsonObject(jo.getJSONObject(
+                    JSON_KEY_CUSTOM_SETTINGS));
         }
     }
     
@@ -199,6 +209,18 @@ public class TableViewSettings {
         }
     }
     
+    private void setCustomFromJsonObject(JSONObject jo) throws JSONException {
+        if (jo.has(JSON_KEY_CUSTOM_LIST_FILE)) {
+            customListFilename = jo.getString(JSON_KEY_CUSTOM_LIST_FILE);
+        }
+        if (jo.has(JSON_KEY_CUSTOM_VIEWS_INFO)) {
+            JSONArray viewsJa = jo.getJSONArray(JSON_KEY_CUSTOM_VIEWS_INFO);
+            for (int i = 0; i < viewsJa.length(); i++) {
+                customViews.add(new CustomView(viewsJa.getJSONObject(i)));
+            }
+        }
+    }
+    
     public static TableViewSettings newOverviewTVS(TableProperties tp,
             String dbString) {
         return new TableViewSettings(tp, ViewType.OVERVIEW_VIEW, dbString);
@@ -214,14 +236,32 @@ public class TableViewSettings {
     }
     
     public int[] getTableColWidths() {
-        if (tableColWidths != null) {
+        if (tableColWidths == null) {
+            int[] colWidths = new int[tp.getColumns().length];
+            for (int i = 0; i < colWidths.length; i++) {
+                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+            }
+            return colWidths;
+        } else if (tableColWidths.length < tp.getColumnOrder().length) {
+            int colCount = tp.getColumnOrder().length;
+            int[] colWidths = new int[colCount];
+            for (int i = 0; i < tableColWidths.length; i++) {
+                colWidths[i] = tableColWidths[i];
+            }
+            for (int i = tableColWidths.length; i < colCount; i++) {
+                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+            }
+            return colWidths;
+        } else if (tableColWidths.length > tp.getColumnOrder().length) {
+            int colCount = tp.getColumnOrder().length;
+            int[] colWidths = new int[colCount];
+            for (int i = 0; i < colCount; i++) {
+                colWidths[i] = tableColWidths[i];
+            }
+            return colWidths;
+        } else {
             return tableColWidths;
         }
-        int[] colWidths = new int[tp.getColumns().length];
-        for (int i = 0; i < colWidths.length; i++) {
-            colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
-        }
-        return colWidths;
     }
     
     public int getTableIndexedColIndex() {
@@ -295,6 +335,18 @@ public class TableViewSettings {
         }
     }
     
+    public String getCustomListFilename() {
+        return customListFilename;
+    }
+    
+    public int getCustomViewCount() {
+        return customViews.size();
+    }
+    
+    public CustomView getCustomView(int index) {
+        return customViews.get(index);
+    }
+    
     JSONObject toJsonObject() {
         JSONObject jo = new JSONObject();
         try {
@@ -305,6 +357,7 @@ public class TableViewSettings {
             jo.put(JSON_KEY_BAR_SETTINGS, barSettingsToJsonObject());
             jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
             jo.put(JSON_KEY_MAP_SETTINGS, mapSettingsToJsonObject());
+            jo.put(JSON_KEY_CUSTOM_SETTINGS, customSettingsToJsonObject());
             return jo;
         } catch(JSONException e) {
             throw new RuntimeException(e);
@@ -394,6 +447,21 @@ public class TableViewSettings {
         return jo;
     }
     
+    private JSONObject customSettingsToJsonObject() throws JSONException {
+        JSONObject jo = new JSONObject();
+        if (customListFilename != null) {
+            jo.put(JSON_KEY_CUSTOM_LIST_FILE, customListFilename);
+        }
+        if (!customViews.isEmpty()) {
+            JSONArray ja = new JSONArray();
+            for (CustomView cv : customViews) {
+                ja.put(cv.toJsonObject());
+            }
+            jo.put(JSON_KEY_CUSTOM_VIEWS_INFO, ja);
+        }
+        return jo;
+    }
+    
     public void setViewType(int viewType) {
         this.viewType = viewType;
         set();
@@ -454,6 +522,21 @@ public class TableViewSettings {
         set();
     }
     
+    public void setCustomListFilename(String filename) {
+        customListFilename = filename;
+        set();
+    }
+    
+    public void addCustomView(CustomView cv) {
+        customViews.add(cv);
+        set();
+    }
+    
+    public void removeCustomView(int index) {
+        customViews.remove(index);
+        set();
+    }
+    
     private void set() {
         String dbString = toJsonObject().toString();
         if (type == ViewType.OVERVIEW_VIEW) {
@@ -466,18 +549,23 @@ public class TableViewSettings {
     public int[] getPossibleViewTypes() {
         int numericColCount = 0;
         int locationColCount = 0;
+        int dateColCount = 0;
         for (ColumnProperties cp : tp.getColumns()) {
             if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
                 numericColCount++;
             } else if (cp.getColumnType() ==
                 ColumnProperties.ColumnType.LOCATION) {
                 locationColCount++;
+            } else if (cp.getColumnType() ==
+                ColumnProperties.ColumnType.DATE) {
+                dateColCount++;
             }
         }
         List<Integer> list = new ArrayList<Integer>();
         list.add(Type.SPREADSHEET);
         list.add(Type.LIST);
-        if (numericColCount >= 2) {
+        if ((numericColCount >= 2) ||
+                ((numericColCount >= 1) && (dateColCount >= 1))) {
             list.add(Type.LINE_GRAPH);
         }
         if (numericColCount >= 1) {
@@ -618,6 +706,58 @@ public class TableViewSettings {
                 jo.put(JSON_KEY_SETTINGS, new JSONArray(settings));
             } catch(JSONException e) {
                 e.printStackTrace();
+            }
+            return jo;
+        }
+    }
+    
+    public class CustomView {
+        
+        private static final String JSON_KEY_NAME = "name";
+        private static final String JSON_KEY_FILENAME = "filename";
+        
+        private String name;
+        private String filename;
+        
+        CustomView() {
+            name = "";
+            filename = null;
+        }
+        
+        private CustomView(JSONObject jo) {
+            try {
+                name = jo.getString(JSON_KEY_NAME);
+                filename = jo.getString(JSON_KEY_FILENAME);
+            } catch(JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public String getFilename() {
+            return filename;
+        }
+        
+        public void setName(String name) {
+            this.name = name;
+            set();
+        }
+        
+        public void setFilename(String filename) {
+            this.filename = filename;
+            set();
+        }
+        
+        private JSONObject toJsonObject() {
+            JSONObject jo = new JSONObject();
+            try {
+                jo.put(JSON_KEY_NAME, name);
+                jo.put(JSON_KEY_FILENAME, filename);
+            } catch(JSONException e) {
+                throw new RuntimeException(e);
             }
             return jo;
         }

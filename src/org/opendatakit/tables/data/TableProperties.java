@@ -348,12 +348,13 @@ public class TableProperties {
         values.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
         values.put(DB_TRANSACTIONING, SyncUtil.boolToInt(false));
         values.put(DB_IS_SYNCHED, SyncUtil.boolToInt(false));
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.beginTransaction();
         TableProperties tp = new TableProperties(dbh, id, dbTableName,
                 displayName, tableType, new String[0], new String[0], null,
                 null, null, null, null, null, null, null, null,
                 SyncUtil.State.INSERTING, false, false);
+        tp.getColumns(); // ensuring columns are already initialized
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
         long result = db.insert(DB_TABLENAME, null, values);
         Log.d("TP", "row id=" + result);
         if (result < 0) {
@@ -603,29 +604,13 @@ public class TableProperties {
             return;
         }
         // forming a comma-separated list of columns to keep
-        String csv = "";
+        String csv = DbTable.DB_CSV_COLUMN_LIST;
         for (int i = 0; i < columns.length; i++) {
             if (i == colIndex) {
                 continue;
             }
-            csv += columns[i].getColumnDbName() + ",";
+            csv += ", " + columns[i].getColumnDbName();
         }
-        csv = csv.substring(0, csv.length() - 1);
-        // deleting the column
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        db.beginTransaction();
-        columns[colIndex].deleteColumn(db);
-        db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
-        db.execSQL("INSERT INTO backup_ SELECT " + csv + " FROM " +
-                dbTableName);
-        db.execSQL("DROP TABLE " + dbTableName);
-        db.execSQL("CREATE TABLE " + dbTableName + "(" + csv + ")");
-        db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv +
-                " FROM backup_");
-        db.execSQL("DROP TABLE backup_");
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
         // updating TableProperties
         ColumnProperties[] newColumns =
             new ColumnProperties[columns.length - 1];
@@ -637,8 +622,9 @@ public class TableProperties {
             newColumns[index] = columns[i];
             index++;
         }
+        ColumnProperties colToDelete = columns[colIndex];
         columns = newColumns;
-        String[] newColumnOrder = new String[columns.length - 1];
+        String[] newColumnOrder = new String[columns.length];
         index = 0;
         for (String col : columnOrder) {
             if (col.equals(columnDbName)) {
@@ -648,6 +634,34 @@ public class TableProperties {
             index++;
         }
         setColumnOrder(newColumnOrder);
+        // deleting the column
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.beginTransaction();
+        colToDelete.deleteColumn(db);
+        reformTable(db, columnOrder);
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        db.close();
+    }
+    
+    /**
+     * Reforms the table.
+     */
+    public void reformTable(SQLiteDatabase db, String[] existingColumns) {
+        StringBuilder csvBuilder =
+            new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
+        for (String col : existingColumns) {
+            csvBuilder.append(", " + col);
+        }
+        String csv = csvBuilder.toString();
+        db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
+        db.execSQL("INSERT INTO backup_ SELECT " + csv + " FROM " +
+                dbTableName);
+        db.execSQL("DROP TABLE " + dbTableName);
+        DbTable.createDbTable(db, this);
+        db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv +
+                " FROM backup_");
+        db.execSQL("DROP TABLE backup_");
     }
     
     /**

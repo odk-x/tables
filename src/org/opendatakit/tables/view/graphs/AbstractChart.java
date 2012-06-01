@@ -73,18 +73,31 @@ abstract class AbstractChart extends View {
     protected Label[] getLabels(double min, double max, double tickSep,
             LabelAxis axis, LabelOrientation orientation) {
         List<Label> yLabelList = new ArrayList<Label>();
-        if (tickSep == 0) {
-            return new Label[0];
-        }
-        for (double i = min; i < 0; i += tickSep) {
-            yLabelList.add(new Label(axis, orientation, i,
-                    String.format("%.2f", i)));
-        }
-        for (double i = 0; i <= max; i += tickSep) {
-            yLabelList.add(new Label(axis, orientation, i,
-                    String.format("%.2f", i)));
+        double[] values = getLabelValues(min, max, tickSep);
+        for (double value : values) {
+            yLabelList.add(new Label(axis, orientation, value,
+                    String.format("%.2f", value)));
         }
         return yLabelList.toArray(new Label[0]);
+    }
+    
+    protected double[] getLabelValues(double min, double max, double tickSep) {
+        if (tickSep == 0) {
+            return new double[0];
+        }
+        List<Double> valueList = new ArrayList<Double>();
+        min = Math.ceil(min / tickSep) * tickSep;
+        for (double i = min; i < Math.min(0, max); i += tickSep) {
+            valueList.add(i);
+        }
+        for (double i = Math.max(0, min); i <= max; i += tickSep) {
+            valueList.add(i);
+        }
+        double[] arr = new double[valueList.size()];
+        for (int i = 0; i < valueList.size(); i++) {
+            arr[i] = valueList.get(i);
+        }
+        return arr;
     }
     
     protected void setScreenValues() {
@@ -125,7 +138,8 @@ abstract class AbstractChart extends View {
                 double tickSep = af * bf;
                 while (tickSep < range) {
                     double tickCount = range / tickSep;
-                    if (tickCount > bestTickCount) {
+                    if ((tickCount < goalCount) &&
+                            (tickCount > bestTickCount)) {
                         bestSeparation = tickSep;
                         bestTickCount = tickCount;
                     }
@@ -144,15 +158,15 @@ abstract class AbstractChart extends View {
         return bestSeparation;
     }
     
-    protected void drawXAxis(Canvas canvas) {
-        int[] start = getScreenPoint(minX, 0);
-        int[] end = getScreenPoint(maxX, 0);
+    protected void drawXAxis(Canvas canvas, double y) {
+        int[] start = getScreenPoint(minX, y);
+        int[] end = getScreenPoint(maxX, y);
         canvas.drawLine(start[0], start[1], end[0], end[1], paint);
     }
     
-    protected void drawYAxis(Canvas canvas) {
-        int[] start = getScreenPoint(0, minY);
-        int[] end = getScreenPoint(0, maxY);
+    protected void drawYAxis(Canvas canvas, double x) {
+        int[] start = getScreenPoint(x, minY);
+        int[] end = getScreenPoint(x, maxY);
         canvas.drawLine(start[0], start[1], end[0], end[1], paint);
     }
     
@@ -216,9 +230,9 @@ abstract class AbstractChart extends View {
                         pt[1]};
                 pt[1] += paint.getTextSize() / 3;
             }
+            paint.setTextAlign(Paint.Align.RIGHT);
             if (orientation == LabelOrientation.VERTICAL) {
                 canvas.rotate(-90);
-                paint.setTextAlign(Paint.Align.RIGHT);
                 canvas.drawText(label, -1 *pt[1], pt[0], paint);
                 canvas.rotate(90);
             } else {

@@ -15,7 +15,9 @@
  */
 package org.opendatakit.tables.view.graphs;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.joda.time.DateTime;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -29,11 +31,27 @@ public class LineChart extends PointPlot {
     
     private final Paint linePaint;
     
-    public LineChart(Context context, List<Double> xValues,
-            List<Double> yValues) {
-        super(context, xValues, yValues);
+    private LineChart(Context context, List<Double> xNumValues,
+            List<DateTime> xDateValues, List<Double> yValues,
+            DataType dataType) {
+        super(context, xNumValues, yValues, dataType);
         linePaint = new Paint();
         linePaint.setColor(LINE_COLOR);
+    }
+    
+    public static LineChart createNumberLineChart(Context context,
+            List<Double> xValues, List<Double> yValues) {
+        return new LineChart(context, xValues, null, yValues, DataType.NUMBER);
+    }
+    
+    public static LineChart createDateLineChart(Context context,
+            List<DateTime> xValues, List<Double> yValues) {
+        List<Double> xNumValues = new ArrayList<Double>(xValues.size());
+        for (DateTime dt : xValues) {
+            xNumValues.add(dt.getMillis() / 1000.0);
+        }
+        return new LineChart(context, xNumValues, xValues, yValues,
+                DataType.DATE);
     }
     
     @Override

@@ -48,7 +48,7 @@ public class ConflictResolutionActivity extends Activity
         crv = new ConflictResolutionView(this, this, c.getTableViewSettings(),
                 table);
         c.setDisplayView(crv);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     @Override
@@ -85,9 +85,6 @@ public class ConflictResolutionActivity extends Activity
         c.recordSearch();
         init();
     }
-    
-    @Override
-    public void onAddRow() {}
     
     @Override
     public void onSet(int index) {

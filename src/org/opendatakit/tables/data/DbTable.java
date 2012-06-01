@@ -40,6 +40,10 @@ public class DbTable {
     public static final String DB_SYNC_STATE = "syncState";
     public static final String DB_TRANSACTIONING = "transactioning";
     
+    public static final String DB_CSV_COLUMN_LIST =
+        DB_ROW_ID + ", " + DB_SRC_PHONE_NUMBER + ", " + DB_LAST_MODIFIED_TIME +
+        ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING;
+    
     private final DataUtil du;
     private final DbHelper dbh;
     private final TableProperties tp;
@@ -55,6 +59,15 @@ public class DbTable {
     }
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
+        StringBuilder colListBuilder = new StringBuilder();
+        for (ColumnProperties cp : tp.getColumns()) {
+            colListBuilder.append(", " + cp.getColumnDbName());
+            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                colListBuilder.append(" REAL");
+            } else {
+                colListBuilder.append(" TEXT");
+            }
+        }
         db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
                        DB_ROW_ID + " TEXT NOT NULL" +
                 ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
@@ -62,6 +75,7 @@ public class DbTable {
                 ", " + DB_SYNC_TAG + " TEXT" +
                 ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
                 ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
+                colListBuilder.toString() +
                 ")");
     }
     

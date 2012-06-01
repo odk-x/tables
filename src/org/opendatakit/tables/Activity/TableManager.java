@@ -63,6 +63,7 @@ public class TableManager extends ListActivity {
 	public static final int AGGREGATE               = 11;
 	public static final int LAUNCH_TPM              = 12;
 	public static final int LAUNCH_CONFLICT_MANAGER = 13;
+	public static final int LAUNCH_DPREFS_MANAGER   = 14;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -151,25 +152,7 @@ public class TableManager extends ListActivity {
 	 
 	 private void loadSelectedTable(int index) {
 	     TableProperties tp = tableProps[index];
-	     Intent i;
-	     switch (tp.getTableType()) {
-	     case TableProperties.TableType.DATA:
-	         Controller.launchTableActivity(this, tp, true);
-	         //i = new Intent(this, BoxStemGraphDisplayActivity.class);
-	         i = new Intent(this, SpreadSheet.class);
-	         break;
-	     case TableProperties.TableType.SECURITY:
-	         i = new Intent(this, SpreadSheet.class);
-	         break;
-	     case TableProperties.TableType.SHORTCUT:
-	         i = new Intent(this, ShortcutTableActivity.class);
-	         break;
-         default:
-             return;
-	     }
-	     i.putExtra(TableActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-	     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, true);
-		 //startActivity(i);
+	     Controller.launchTableActivity(this, tp, true);
 	 }
 	 
 	 @Override
@@ -178,7 +161,7 @@ public class TableManager extends ListActivity {
 		 AdapterView.AdapterContextMenuInfo acmi =
 		     (AdapterView.AdapterContextMenuInfo) menuInfo;
 		 TableProperties tp = tableProps[acmi.position];
-		 if(tp.getTableId() == prefs.getDefaultTableId()) {
+		 if(tp.getTableId().equals(prefs.getDefaultTableId())) {
 	         menu.add(0, UNSET_DEFAULT_TABLE, 0, "Unset as Default Table");
 		 } else {
 	         menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
@@ -236,6 +219,10 @@ public class TableManager extends ListActivity {
 		     prefs.setDefaultTableId(tp.getTableId());
 			 refreshList();
 			 return true;
+		 case UNSET_DEFAULT_TABLE:
+		     prefs.setDefaultTableId(null);
+		     refreshList();
+		     return true;
 		 case SET_SECURITY_TABLE:
 		     tp.setTableType(TableProperties.TableType.SECURITY);
              refreshList();
@@ -284,6 +271,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
 		 menu.add(0, IMPORT_EXPORT, 0, "File Import/Export");
 		 menu.add(0, AGGREGATE, 0, "Sync");
+		 menu.add(0, LAUNCH_DPREFS_MANAGER, 0, "Display Preferences");
 		 return true;
 	 }
     
@@ -312,6 +300,10 @@ public class TableManager extends ListActivity {
 			 Intent j = new Intent(this, Aggregate.class);
 			 startActivity(j);
 			 return true;
+		 case LAUNCH_DPREFS_MANAGER:
+		     Intent k = new Intent(this, DisplayPrefsActivity.class);
+		     startActivity(k);
+		     return true;
 		 }
     	
 		 return super.onMenuItemSelected(featureId, item);

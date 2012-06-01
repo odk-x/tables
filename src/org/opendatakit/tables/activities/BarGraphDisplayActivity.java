@@ -86,7 +86,7 @@ public class BarGraphDisplayActivity extends Activity
         }
         c.setDisplayView(new BarChart(this, labels, values,
                 new BarChartListener()));
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     private void openCollectionView(int rowNum) {
@@ -135,14 +135,6 @@ public class BarGraphDisplayActivity extends Activity
     public void onSearch() {
         c.recordSearch();
         init();
-    }
-    
-    @Override
-    public void onAddRow() {
-        Intent intent = c.getIntentForOdkCollectAddRow();
-        if (intent != null) {
-            startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
-        }
     }
     
     private class BarChartListener implements BarChart.ClickListener {

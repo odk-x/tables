@@ -56,18 +56,12 @@ public class DetailDisplayActivity extends Activity
                 c.getTableProperties());
         cdv.display(rowId, data);
         c.setDisplayView(cdv);
-        setContentView(c.getWrapperView());
+        setContentView(c.getContainerView());
     }
     
     @Override
     public void onSearch() {
         Controller.launchTableActivity(this, c.getTableProperties(),
                 c.getSearchText(), c.getIsOverview());
-    }
-    
-    @Override
-    public void onAddRow() {
-        // TODO Auto-generated method stub
-        
     }
 }
