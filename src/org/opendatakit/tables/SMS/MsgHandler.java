@@ -16,6 +16,7 @@
 package org.opendatakit.tables.SMS;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import android.util.Log;
 
 
 /**
@@ -91,6 +93,7 @@ public class MsgHandler {
         tps = dm.getAllTableProperties();
         dataTps = dm.getDataTableProperties();
         scTps = dm.getShortcutTableProperties();
+        Log.d("MSGH", "scTps:" + Arrays.toString(scTps));
     }
     
     private boolean checkIsMessage(String msg) {
@@ -139,19 +142,24 @@ public class MsgHandler {
     }
     
     private String convertByShortcut(String msg, String input, String output) {
+        msg = msg.substring(msg.indexOf(' ') + 1);
         Map<String, String> values = new HashMap<String, String>();
         String[] inSplit = input.split("%");
         if (!msg.startsWith(inSplit[0])) {
             return null;
         }
         int index = 0;
-        for (int i = 1; i < inSplit.length; i += 2) {
+        for (int i = 1; i < inSplit.length - 1; i += 2) {
             index += inSplit[i - 1].length();
             int nextIndex = msg.indexOf(inSplit[i + 1], index);
             if (nextIndex < 0) {
                 return null;
             }
             values.put(inSplit[i], msg.substring(index, nextIndex));
+            index = nextIndex;
+        }
+        if (index != msg.length()) {
+            values.put(inSplit[inSplit.length - 1], msg.substring(index + 1));
         }
         String[] outSplit = output.split("%");
         int start = output.startsWith("%") ? 0 : 1;

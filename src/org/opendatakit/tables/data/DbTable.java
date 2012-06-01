@@ -315,6 +315,7 @@ public class DbTable {
      */
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
+        Log.d("DBT", values.toString());
         if (lastModTime == null) {
             lastModTime = du.formatNowForDb();
         }

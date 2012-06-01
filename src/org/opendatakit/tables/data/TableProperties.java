@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.content.ContentValues;
@@ -324,7 +325,14 @@ public class TableProperties {
     public static TableProperties addTable(DbHelper dbh, String dbTableName,
             String displayName, int tableType) {
         String id = UUID.randomUUID().toString();
-        return addTable(dbh, dbTableName, displayName, tableType, id);
+        TableProperties tp = addTable(dbh, dbTableName, displayName, tableType,
+                id);
+        if (tableType == TableType.SHORTCUT) {
+            tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
+            tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
+            tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
+        }
+        return tp;
     }
     
     public static TableProperties addTable(DbHelper dbh, String dbTableName,
