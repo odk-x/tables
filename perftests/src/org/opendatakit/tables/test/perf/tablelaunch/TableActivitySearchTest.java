@@ -29,7 +29,7 @@ public class TableActivitySearchTest
     public void setUp() {
         TableProperties tp = TableProperties.getTablePropertiesForTable(
                 DbHelper.getDbHelper(getInstrumentation().getContext()),
-                DbUtil.TABLE_A_ID);
+                DbUtil.TEMPERATURE_TABLE_ID);
         Intent intent = new Intent(getInstrumentation().getContext(),
                 SpreadsheetDisplayActivity.class);
         intent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());

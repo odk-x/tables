@@ -4,7 +4,6 @@ import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.test.perf.util.DbUtil;
 import org.opendatakit.tables.test.perf.util.Timer;
 import android.app.Activity;
@@ -12,12 +11,12 @@ import android.test.InstrumentationTestCase;
 import android.test.PerformanceTestCase;
 
 
-public class TableActivityLaunchTest extends InstrumentationTestCase
+public class TableCollectionLaunchTest extends InstrumentationTestCase
         implements PerformanceTestCase {
     
     private final Timer timer;
     
-    public TableActivityLaunchTest() {
+    public TableCollectionLaunchTest() {
         timer = new Timer();
     }
     
@@ -32,7 +31,7 @@ public class TableActivityLaunchTest extends InstrumentationTestCase
     
     public void testLaunches() {
         //int viewType = TableViewSettings.Type.SPREADSHEET;
-        String label = "box-stem";
+        String label = "line";
         Activity tableManager = launchActivity("org.opendatakit.tables",
                 TableManager.class, null);
         getInstrumentation().waitForIdleSync();
@@ -40,8 +39,10 @@ public class TableActivityLaunchTest extends InstrumentationTestCase
                 DbHelper.getDbHelper(tableManager),
                 DbUtil.TEMPERATURE_TABLE_ID);
         //tp.getOverviewViewSettings().setViewType(viewType);
-        timer.start();
         Controller.launchTableActivity(tableManager, tp, true);
+        getInstrumentation().waitForIdleSync();
+        timer.start();
+        Controller.launchTableActivity(tableManager, tp, "fridge_id:0", false);
         getInstrumentation().waitForIdleSync();
         timer.end();
         timer.print(label + " launch");

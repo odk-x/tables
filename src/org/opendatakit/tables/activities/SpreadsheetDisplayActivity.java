@@ -307,7 +307,8 @@ public class SpreadsheetDisplayActivity extends Activity
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
         } else if ((c.getTableProperties().getSortColumn() != null) &&
-                c.getTableProperties().equals(cp.getColumnDbName())) {
+                c.getTableProperties().getSortColumn()
+                        .equals(cp.getColumnDbName())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT,
                     ContextMenu.NONE, "Unset as Sort");
         } else {

@@ -398,7 +398,7 @@ public class Query {
      *     JOIN
      *     (SELECT id, a, b, from t WHERE c = 12) y
      *     ON x.a = y.a AND x.b = y.b
-     *     GROUP BY a, b
+     *     GROUP BY a
      * ) z ON t.id = z.id
      * Or, if there is no sort column:
      * SELECT id, a, b, c FROM t JOIN (
@@ -462,11 +462,12 @@ public class Query {
                 sd.appendSql(" AND x." + prime + " = y." + prime);
             }
             sd.appendSql(" GROUP BY ");
+            StringBuilder xPrimeList = new StringBuilder();
             for (String prime : tp.getPrimeColumns()) {
-                sd.appendSql("x." + prime + ", ");
-                primeList.append(", " + prime);
+                xPrimeList.append(", x." + prime);
             }
-            sd.appendSql("x." + sort);
+            xPrimeList.delete(0, 2);
+            sd.appendSql(xPrimeList.toString());
         }
         
         sd.appendSql(") z ON d." + DbTable.DB_ROW_ID + " = z." +
