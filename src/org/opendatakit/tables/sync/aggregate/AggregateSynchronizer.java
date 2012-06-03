@@ -345,8 +345,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
       throws IOException {
     TableResource resource = getResource(tableId);
-    SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
-    Map<String, String> syncTags = new HashMap<String, String>();
+    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
+    Map<String, String> rowTags = new HashMap<String, String>();
 
     if (!rows.isEmpty()) {
       for (Row row : rows) {
@@ -359,17 +359,14 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new IOException(e.getMessage());
         }
         RowResource inserted = insertedEntity.getBody();
-        syncTags.put(inserted.getRowId(), inserted.getRowEtag());
+        rowTags.put(inserted.getRowId(), inserted.getRowEtag());
+        syncTag.incrementDataEtag();
       }
-      // TODO: figure out error recovery if crash here
-      resource = refreshResource(tableId);
     }
 
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), currentTag.getPropertiesEtag());
-
     Modification modification = new Modification();
-    modification.setSyncTags(syncTags);
-    modification.setTableSyncTag(newTag.toString());
+    modification.setSyncTags(rowTags);
+    modification.setTableSyncTag(syncTag.toString());
 
     return modification;
   }
@@ -385,7 +382,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public String deleteRows(String tableId, String currentSyncTag, List<String> rowIds)
       throws IOException {
     TableResource resource = getResource(tableId);
-    SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
+    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
 
     if (!rowIds.isEmpty()) {
       for (String rowId : rowIds) {
@@ -395,12 +392,11 @@ public class AggregateSynchronizer implements Synchronizer {
         } catch (ResourceAccessException e) {
           throw new IOException(e.getMessage());
         }
+        syncTag.incrementDataEtag();
       }
-      resource = refreshResource(tableId);
     }
 
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), currentTag.getPropertiesEtag());
-    return newTag.toString();
+    return syncTag.toString();
   }
 
   @Override

@@ -15,44 +15,53 @@
  */
 package org.opendatakit.tables.sync.aggregate;
 
-
 public class SyncTag {
 
   private static final String DELIM = "::";
 
-  private String dataEtag;
-  private String propertiesEtag;
+  private int dataEtag;
+  private int propertiesEtag;
 
   public SyncTag(String dataEtag, String propertiesEtag) {
-    this.dataEtag = dataEtag;
-    this.propertiesEtag = propertiesEtag;
+    this.dataEtag = Integer.parseInt(dataEtag);
+    this.propertiesEtag = Integer.parseInt(propertiesEtag);
   }
 
   public String getDataEtag() {
-    return dataEtag;
-  }
-
-  public void setDataEtag(String dataEtag) {
-    this.dataEtag = dataEtag;
+    return String.valueOf(dataEtag);
   }
 
   public String getPropertiesEtag() {
-    return propertiesEtag;
+    return String.valueOf(propertiesEtag);
   }
 
-  public void setPropertiesEtag(String propertiesEtag) {
-    this.propertiesEtag = propertiesEtag;
+  public void incrementDataEtag() {
+    this.dataEtag++;
   }
 
+  public void incrementPropertiesEtag() {
+    this.propertiesEtag++;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see java.lang.Object#hashCode()
+   */
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((dataEtag == null) ? 0 : dataEtag.hashCode());
-    result = prime * result + ((propertiesEtag == null) ? 0 : propertiesEtag.hashCode());
+    result = prime * result + dataEtag;
+    result = prime * result + propertiesEtag;
     return result;
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
@@ -62,22 +71,16 @@ public class SyncTag {
     if (!(obj instanceof SyncTag))
       return false;
     SyncTag other = (SyncTag) obj;
-    if (dataEtag == null) {
-      if (other.dataEtag != null)
-        return false;
-    } else if (!dataEtag.equals(other.dataEtag))
+    if (dataEtag != other.dataEtag)
       return false;
-    if (propertiesEtag == null) {
-      if (other.propertiesEtag != null)
-        return false;
-    } else if (!propertiesEtag.equals(other.propertiesEtag))
+    if (propertiesEtag != other.propertiesEtag)
       return false;
     return true;
   }
 
   @Override
   public String toString() {
-    return String.format("%s%s%s", dataEtag, DELIM, propertiesEtag);
+    return String.format("%d%s%d", dataEtag, DELIM, propertiesEtag);
   }
 
   public static SyncTag valueOf(String syncTag) {
