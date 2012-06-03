@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,7 +30,7 @@ import org.opendatakit.aggregate.odktables.entity.api.PropertiesResource;
 import org.opendatakit.aggregate.odktables.entity.api.RowResource;
 import org.opendatakit.aggregate.odktables.entity.api.TableDefinition;
 import org.opendatakit.aggregate.odktables.entity.api.TableResource;
-import org.opendatakit.aggregate.odktables.entity.serialization.ListConverter;
+import org.opendatakit.aggregate.odktables.entity.serialization.SimpleXMLSerializerForAggregate;
 import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.JsonObjectHttpMessageConverter;
@@ -40,10 +39,6 @@ import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.convert.Registry;
-import org.simpleframework.xml.convert.RegistryStrategy;
-import org.simpleframework.xml.core.Persister;
-import org.simpleframework.xml.strategy.Strategy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -103,19 +98,8 @@ public class AggregateSynchronizer implements Synchronizer {
     this.rt = new RestTemplate();
     this.rt.setInterceptors(interceptors);
 
-    Registry registry = new Registry();
-    Strategy strategy = new RegistryStrategy(registry);
-    Serializer serializer = new Persister(strategy);
-    ListConverter converter = new ListConverter(serializer);
-    try {
-      registry.bind(List.class, converter);
-      registry.bind(ArrayList.class, converter);
-      registry.bind(LinkedList.class, converter);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to register list converters!", e);
-    }
+    Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
     List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
     this.rt.setMessageConverters(converters);
