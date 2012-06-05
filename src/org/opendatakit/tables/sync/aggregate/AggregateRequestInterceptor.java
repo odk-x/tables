@@ -48,9 +48,12 @@ public class AggregateRequestInterceptor implements ClientHttpRequestInterceptor
     @Override
     public URI getURI() {
       String uriString = super.getURI().toString();
-      String accessTokenQuery = "?access_token=" + accessToken;
-      if (super.getURI().getQuery() != null)
+      String accessTokenQuery = "access_token=" + accessToken;
+      if (super.getURI().getQuery() == null) {
+        accessTokenQuery = "?" + accessTokenQuery;
+      } else {
         accessTokenQuery = "&" + accessTokenQuery;
+      }
       URI uri = URI.create(uriString + accessTokenQuery);
       return uri;
     }
