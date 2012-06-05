@@ -38,7 +38,7 @@ public class CellValueView {
     
     public static abstract class CellEditView extends LinearLayout {
         
-        public CellEditView(Context context) {
+        private CellEditView(Context context) {
             super(context);
         }
         
