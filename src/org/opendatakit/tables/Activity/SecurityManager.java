@@ -15,11 +15,9 @@
  */
 package org.opendatakit.tables.Activity;
 
-import java.util.HashMap;
-
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Database.TableList;
-import org.opendatakit.tables.Database.TableProperty;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.TableProperties;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -33,8 +31,11 @@ import android.widget.TextView;
 
 public class SecurityManager extends Activity {
 
-	private TableProperty tp;
-	private TableList tl;
+    public static final String INTENT_KEY_TABLE_ID = "tableId";
+    
+    private TableProperties tp;
+	private TableProperties[] tps;
+	private TableProperties[] securityTps;
 	
 	private Spinner readSpin;
 	private Spinner writeSpin;
@@ -46,39 +47,39 @@ public class SecurityManager extends Activity {
 		
 		// Set title of activity
 		setTitle("ODK Tables > Security");
-	
-		// Set current table name
-		TextView tv = (TextView)findViewById(R.id.security_activity_table_name);
-		String currentTableName = "";
-		currentTableName = getIntent().getStringExtra("tableName");
-		tv.setText(currentTableName);
 
 		// Settings
-		tl = new TableList();
-		int tableID = tl.getTableID(currentTableName);
-		tp = new TableProperty(Integer.toString(tableID));
+		String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+		DbHelper dbh = DbHelper.getDbHelper(this);
+		tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+		tps = TableProperties.getTablePropertiesForAll(dbh);
+		securityTps = TableProperties.getTablePropertiesForSecurityTables(dbh);
+    
+        // Set current table name
+        TextView tv = (TextView)findViewById(R.id.security_activity_table_name);
+        String currentTableName = tp.getDisplayName();
+        tv.setText(currentTableName);
 		
 		// Get current read & write security table value
-		String currentReadT = tp.getReadSecurityTableID();
-		String currentWriteT = tp.getWriteSecurityTableID();
+		String currentReadT = tp.getReadSecurityTableId();
+		String currentWriteT = tp.getWriteSecurityTableId();
 		
 		// Get a list of available security tables
-		HashMap<String, String> secTablesMap = tl.getSecurityTableList(); 
-		String[] secTables = new String[secTablesMap.size()+1];
+		String[] secTables = new String[securityTps.length+1];
 		secTables[0] = "";
 		int i = 1;
 		int readTableIndex = 0;
 		int writeTableIndex = 0;
-		for (String key: secTablesMap.keySet()) {
-			String val = secTablesMap.get(key);
-			if (key.equals(currentReadT)) {
-				readTableIndex = i;
-			} 
-			if (key.equals(currentWriteT)) {
-				writeTableIndex = i;
-			}
-			secTables[i] = val; 
-			i++;
+		for (TableProperties secTp : securityTps) {
+		    String id = secTp.getTableId();
+		    if (id.equals(currentReadT)) {
+		        readTableIndex = i;
+		    }
+		    if (id.equals(currentWriteT)) {
+		        writeTableIndex = i;
+		    }
+		    secTables[i] = secTp.getDisplayName();
+		    i++;
 		}
 		
 		// Create a spinner for readable 
@@ -115,12 +116,12 @@ public class SecurityManager extends Activity {
 				long arg3) {
 			String item = (String)adapter.getItemAtPosition(position);
 			Log.e("readSpinner", ""+item);
-			
-			int tableID = tl.getTableID(item);
+			String tableId = (position == 0) ? null :
+			    securityTps[position - 1].getTableId();
 			if (type.equals("read")) {
-				tp.setReadSecurityTableID(Integer.toString(tableID));
+				tp.setReadSecurityTableId(tableId);
 			} else if (type.equals("write")) {
-				tp.setWriteSecurityTableID(Integer.toString(tableID));
+				tp.setWriteSecurityTableId(tableId);
 			}
 		}
 

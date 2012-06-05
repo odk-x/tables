@@ -64,6 +64,7 @@ public class TableManager extends ListActivity {
 	public static final int LAUNCH_TPM              = 12;
 	public static final int LAUNCH_CONFLICT_MANAGER = 13;
 	public static final int LAUNCH_DPREFS_MANAGER   = 14;
+	public static final int LAUNCH_SECURITY_MANAGER = 15;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -182,6 +183,7 @@ public class TableManager extends ListActivity {
 		 menu.add(0, REMOVE_TABLE, 1, "Delete the Table");
 		 menu.add(0, LAUNCH_TPM, 2, "Edit Table Properties");
 		 menu.add(0, LAUNCH_CONFLICT_MANAGER, 3, "Manage Conflicts");
+		 menu.add(0, LAUNCH_SECURITY_MANAGER, 4, "Security Manager");
 	 }
 	 
 	 private boolean couldBeSecurityTable(TableProperties tp) {
@@ -255,6 +257,13 @@ public class TableManager extends ListActivity {
 		     Intent i = new Intent(this, ConflictResolutionActivity.class);
 		     i.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
 		     i.putExtra(Controller.INTENT_KEY_IS_OVERVIEW, false);
+		     startActivity(i);
+		     return true;
+		     }
+		 case LAUNCH_SECURITY_MANAGER:
+		     {
+		     Intent i = new Intent(this, SecurityManager.class);
+		     i.putExtra(SecurityManager.INTENT_KEY_TABLE_ID, tp.getTableId());
 		     startActivity(i);
 		     return true;
 		     }
