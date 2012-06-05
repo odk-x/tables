@@ -32,7 +32,7 @@ public class TableActivityLaunchTest extends InstrumentationTestCase
     
     public void testLaunches() {
         //int viewType = TableViewSettings.Type.SPREADSHEET;
-        String label = "box-stem";
+        String label = "custom list";
         Activity tableManager = launchActivity("org.opendatakit.tables",
                 TableManager.class, null);
         getInstrumentation().waitForIdleSync();

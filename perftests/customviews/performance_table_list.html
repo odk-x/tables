@@ -1,0 +1,27 @@
+<html>
+
+<head>
+
+<script type="text/javascript">
+function display() {
+  var str = "";
+  var count = data.getCount();
+  for (i = 0; i < count; i++) {
+    var value = data.getData(i, "fridge_id");
+    str = str.concat(value);
+  }
+  var wrapper = document.getElementById("wrapper");
+  wrapper.innerHTML = str;
+  wrapper.innerHTML = "hi";
+}
+</script>
+
+</head>
+
+<body onload="display();">
+
+<div id="wrapper"></div>
+
+</body>
+
+</html>
