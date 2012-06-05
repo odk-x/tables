@@ -216,13 +216,10 @@ public class MsgHandler {
                 (msg.charAt(lastHashIndex - 1) == ' ')) {
             password = msg.substring(lastHashIndex + 1);
         }
-        TableProperties secTp = dm.getTableProperties(secTableId);
         DbTable sDbt = dm.getDbTable(secTableId);
         Table table = sDbt.getRaw(
-                new String[] {secTp.getColumnByDisplayName(
-                        SecurityUtil.PASSWORD_COLUMN_NAME)},
-                new String[] {secTp.getColumnByDisplayName(
-                        SecurityUtil.PHONENUM_COLUMN_NAME)},
+                new String[] {SecurityUtil.PASSWORD_COLUMN_NAME},
+                new String[] {SecurityUtil.PHONENUM_COLUMN_NAME},
                 new String[] {phoneNum}, null);
         for (int i = 0; i < table.getHeight(); i++) {
             if (password.equals(table.getData(i, 0))) {

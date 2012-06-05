@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.sync.SyncUtil;
 
@@ -331,6 +332,10 @@ public class TableProperties {
             tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
             tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
             tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
+        } else if (tableType == TableType.SECURITY) {
+            tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
+            tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
+            tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
         }
         return tp;
     }

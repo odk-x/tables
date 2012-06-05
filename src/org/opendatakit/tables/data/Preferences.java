@@ -71,7 +71,7 @@ public class Preferences {
 	}
 	
 	public int getFontSize() {
-	    return prefs.getInt(FONT_SIZE, 16);
+	    return prefs.getInt(FONT_SIZE, DEFAULT_FONT_SIZE);
 	}
 	
 	public void setFontSize(int fontSize) {
