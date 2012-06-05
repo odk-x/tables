@@ -5,7 +5,7 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.view.CustomView;
+import org.opendatakit.tables.view.custom.CustomView;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

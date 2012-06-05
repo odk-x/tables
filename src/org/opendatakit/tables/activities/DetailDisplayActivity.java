@@ -18,7 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.view.CustomDetailView;
+import org.opendatakit.tables.view.custom.CustomDetailView;
 
 import android.app.Activity;
 import android.os.Bundle;

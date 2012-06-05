@@ -19,7 +19,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.CustomTableView;
+import org.opendatakit.tables.view.custom.CustomTableView;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -1,4 +1,4 @@
-package org.opendatakit.tables.view;
+package org.opendatakit.tables.view.custom;
 
 import java.util.HashMap;
 import java.util.Map;
