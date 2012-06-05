@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.opendatakit.aggregate.odktables.api.client.AggregateRequestInterceptor;
 import org.opendatakit.aggregate.odktables.entity.Column;
 import org.opendatakit.aggregate.odktables.entity.Row;
 import org.opendatakit.aggregate.odktables.entity.TableProperties;
@@ -31,19 +31,15 @@ import org.opendatakit.aggregate.odktables.entity.api.PropertiesResource;
 import org.opendatakit.aggregate.odktables.entity.api.RowResource;
 import org.opendatakit.aggregate.odktables.entity.api.TableDefinition;
 import org.opendatakit.aggregate.odktables.entity.api.TableResource;
-import org.opendatakit.aggregate.odktables.entity.serialization.ListConverter;
+import org.opendatakit.aggregate.odktables.entity.serialization.JsonObjectHttpMessageConverter;
+import org.opendatakit.aggregate.odktables.entity.serialization.SimpleXMLSerializerForAggregate;
 import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
-import org.opendatakit.tables.sync.JsonObjectHttpMessageConverter;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.convert.Registry;
-import org.simpleframework.xml.convert.RegistryStrategy;
-import org.simpleframework.xml.core.Persister;
-import org.simpleframework.xml.strategy.Strategy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -103,19 +99,8 @@ public class AggregateSynchronizer implements Synchronizer {
     this.rt = new RestTemplate();
     this.rt.setInterceptors(interceptors);
 
-    Registry registry = new Registry();
-    Strategy strategy = new RegistryStrategy(registry);
-    Serializer serializer = new Persister(strategy);
-    ListConverter converter = new ListConverter(serializer);
-    try {
-      registry.bind(List.class, converter);
-      registry.bind(ArrayList.class, converter);
-      registry.bind(LinkedList.class, converter);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to register list converters!", e);
-    }
+    Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
     List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
     this.rt.setMessageConverters(converters);
@@ -345,8 +330,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
       throws IOException {
     TableResource resource = getResource(tableId);
-    SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
-    Map<String, String> syncTags = new HashMap<String, String>();
+    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
+    Map<String, String> rowTags = new HashMap<String, String>();
 
     if (!rows.isEmpty()) {
       for (Row row : rows) {
@@ -359,17 +344,14 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new IOException(e.getMessage());
         }
         RowResource inserted = insertedEntity.getBody();
-        syncTags.put(inserted.getRowId(), inserted.getRowEtag());
+        rowTags.put(inserted.getRowId(), inserted.getRowEtag());
+        syncTag.incrementDataEtag();
       }
-      // TODO: figure out error recovery if crash here
-      resource = refreshResource(tableId);
     }
 
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), currentTag.getPropertiesEtag());
-
     Modification modification = new Modification();
-    modification.setSyncTags(syncTags);
-    modification.setTableSyncTag(newTag.toString());
+    modification.setSyncTags(rowTags);
+    modification.setTableSyncTag(syncTag.toString());
 
     return modification;
   }
@@ -385,7 +367,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public String deleteRows(String tableId, String currentSyncTag, List<String> rowIds)
       throws IOException {
     TableResource resource = getResource(tableId);
-    SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
+    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
 
     if (!rowIds.isEmpty()) {
       for (String rowId : rowIds) {
@@ -395,12 +377,11 @@ public class AggregateSynchronizer implements Synchronizer {
         } catch (ResourceAccessException e) {
           throw new IOException(e.getMessage());
         }
+        syncTag.incrementDataEtag();
       }
-      resource = refreshResource(tableId);
     }
 
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), currentTag.getPropertiesEtag());
-    return newTag.toString();
+    return syncTag.toString();
   }
 
   @Override
