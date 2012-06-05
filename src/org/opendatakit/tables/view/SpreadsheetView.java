@@ -35,7 +35,10 @@ import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 
-
+/**
+ * A view similar to a spreadsheet. Builds TabularViews for the header, body,
+ * and footer (builds two sets of these if a column is frozen to the left).
+ */
 public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {
     

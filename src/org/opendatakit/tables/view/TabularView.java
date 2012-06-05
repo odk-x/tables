@@ -7,7 +7,9 @@ import android.graphics.Paint;
 import android.view.ContextMenu;
 import android.view.View;
 
-
+/**
+ * A view that draws a single table.
+ */
 class TabularView extends View {
     
     enum TableType { MAIN_DATA, MAIN_HEADER, MAIN_FOOTER,
