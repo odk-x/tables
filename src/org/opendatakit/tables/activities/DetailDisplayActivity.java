@@ -35,6 +35,8 @@ public class DetailDisplayActivity extends Activity
     private Controller c;
     private String[] keys;
     private String[] values;
+    private Map<String, String> data;
+    private CustomDetailView view;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,15 +49,24 @@ public class DetailDisplayActivity extends Activity
     }
     
     @Override
+    public void onResume() {
+        super.onResume();
+        displayView();
+    }
+    
+    @Override
     public void init() {
-        Map<String, String> data = new HashMap<String, String>();
+        data = new HashMap<String, String>();
         for (int i = 0; i < keys.length; i++) {
             data.put(keys[i], values[i]);
         }
-        CustomDetailView cdv = new CustomDetailView(this,
-                c.getTableProperties());
-        cdv.display(rowId, data);
-        c.setDisplayView(cdv);
+        view = new CustomDetailView(this, c.getTableProperties());
+        displayView();
+    }
+    
+    private void displayView() {
+        view.display(rowId, data);
+        c.setDisplayView(view);
         setContentView(c.getContainerView());
     }
     

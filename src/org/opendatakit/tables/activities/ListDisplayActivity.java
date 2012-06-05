@@ -15,20 +15,17 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.CustomTableView;
-import org.opendatakit.tables.view.ListDisplayView;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 
 public class ListDisplayActivity extends Activity implements DisplayActivity {
@@ -39,8 +36,8 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     private DataManager dm;
     private Controller c;
     private Query query;
-    private ListViewController listController;
     private UserTable table;
+    private CustomTableView view;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,8 +45,13 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
         query = new Query(dm.getAllTableProperties(), c.getTableProperties());
-        listController = new ListViewController();
         init();
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        displayView();
     }
     
     @Override
@@ -59,26 +61,15 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        c.setDisplayView(buildView());
-        setContentView(c.getContainerView());
-    }
-    
-    private View buildView() {
-        return CustomTableView.get(this, c.getTableProperties(), table,
+        view = CustomTableView.get(this, c.getTableProperties(), table,
                 c.getTableViewSettings().getCustomListFilename());
+        displayView();
     }
     
-    private void openCollectionView(int rowNum) {
-        query.clear();
-        query.loadFromUserQuery(c.getSearchText());
-        for (String prime : c.getTableProperties().getPrimeColumns()) {
-            ColumnProperties cp = c.getTableProperties()
-                    .getColumnByDbName(prime);
-            int colNum = c.getTableProperties().getColumnIndex(prime);
-            query.addConstraint(cp, table.getData(rowNum, colNum));
-        }
-        Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false);
+    private void displayView() {
+        view.display();
+        c.setDisplayView(view);
+        setContentView(c.getContainerView());
     }
     
     @Override
@@ -118,18 +109,5 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     public void onSearch() {
         c.recordSearch();
         init();
-    }
-    
-    private class ListViewController implements ListDisplayView.Controller {
-        @Override
-        public void onListItemClick(int rowNum) {
-            if (c.getIsOverview() &&
-                    (c.getTableProperties().getPrimeColumns().length > 0)) {
-                openCollectionView(rowNum);
-            } else {
-                Controller.launchDetailActivity(ListDisplayActivity.this,
-                        c.getTableProperties(), table, rowNum);
-            }
-        }
     }
 }

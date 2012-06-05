@@ -11,16 +11,50 @@ import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import android.content.Context;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.LinearLayout;
 
 
-public abstract class CustomView extends WebView {
+public abstract class CustomView extends LinearLayout {
+    
+    protected static WebView webView;
+    private static ViewGroup lastParent;
     
     protected CustomView(Context context) {
         super(context);
-        getSettings().setJavaScriptEnabled(true);
-        setWebViewClient(new WebViewClient() {});
+        initCommonWebView(context);
+    }
+    
+    public static void initCommonWebView(Context context) {
+        if (webView != null) {
+            return;
+        }
+        webView = new WebView(context);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebViewClient(new WebViewClient() {});
+    }
+    
+    protected void initView() {
+        if (lastParent != null) {
+            lastParent.removeView(webView);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.FILL_PARENT);
+        addView(webView, lp);
+        lastParent = this;
+    }
+    
+    protected void load(String url) {
+        webView.clearView();
+        webView.loadUrl(url);
+    }
+    
+    protected void loadData(String data, String mimeType, String encoding) {
+        webView.clearView();
+        webView.loadData(data, mimeType, encoding);
     }
     
     /**

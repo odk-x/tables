@@ -18,10 +18,8 @@ package org.opendatakit.tables.view;
 import java.util.Map;
 
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.view.CustomView.Control;
 
 import android.content.Context;
-import android.webkit.WebViewClient;
 
 /**
  * A view for displaying a customizable detail view of a row of data.
@@ -35,24 +33,27 @@ public class CustomDetailView extends CustomView {
         "<p>No detail view has been specified.</p>" +
         "</body></html>";
     
+    private Context context;
     private TableProperties tp;
     private RowData jsData;
     
     public CustomDetailView(Context context, TableProperties tp) {
         super(context);
+        this.context = context;
         this.tp = tp;
-        addJavascriptInterface(new Control(context), "control");
         jsData = new RowData(tp);
-        addJavascriptInterface(jsData, "data");
     }
     
     public void display(String rowId, Map<String, String> data) {
         jsData.set(data);
+        webView.addJavascriptInterface(new Control(context), "control");
+        webView.addJavascriptInterface(jsData, "data");
         String filename = tp.getDetailViewFilename();
         if (filename != null) {
-            loadUrl("file:///" + filename);
+            load("file:///" + filename);
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }
+        initView();
     }
 }

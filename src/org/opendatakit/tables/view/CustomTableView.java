@@ -16,25 +16,23 @@ public class CustomTableView extends CustomView {
         "<p>No filename has been specified.</p>" +
         "</body></html>";
     
+    private Context context;
     private Map<String, Integer> colIndexTable;
     private TableProperties tp;
     private UserTable table;
+    private String filename;
     
-    private CustomTableView(Context context) {
+    private CustomTableView(Context context, String filename) {
         super(context);
-        addJavascriptInterface(new TableControl(context), "control");
+        this.context = context;
+        this.filename = filename;
         colIndexTable = new HashMap<String, Integer>();
     }
     
     public static CustomTableView get(Context context, TableProperties tp,
             UserTable table, String filename) {
-        CustomTableView ctv = new CustomTableView(context);
+        CustomTableView ctv = new CustomTableView(context, filename);
         ctv.set(tp, table);
-        if (filename != null) {
-            ctv.loadUrl("file:///" + filename);
-        } else {
-            ctv.loadData(DEFAULT_HTML, "text/html", null);
-        }
         return ctv;
     }
     
@@ -50,7 +48,17 @@ public class CustomTableView extends CustomView {
                 colIndexTable.put(abbr, i);
             }
         }
-        addJavascriptInterface(new TableData(tp, table), "data");
+    }
+    
+    public void display() {
+        webView.addJavascriptInterface(new TableControl(context), "control");
+        webView.addJavascriptInterface(new TableData(tp, table), "data");
+        if (filename != null) {
+            load("file:///" + filename);
+        } else {
+            loadData(DEFAULT_HTML, "text/html", null);
+        }
+        initView();
     }
     
     private class TableControl extends Control {
