@@ -16,6 +16,7 @@ public class Launcher extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
         String tableId = (new Preferences(this)).getDefaultTableId();
         if (tableId == null) {
