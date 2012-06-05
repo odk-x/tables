@@ -45,29 +45,7 @@
         </activity>
         <activity android:name=".Activity.PropertyManager" >
         </activity>
-        <activity android:name=".Activity.graphs.LineActivity" >
 
-        </activity>
-        <activity android:name=".Activity.graphs.BoxStemActivity" >
-        </activity>
-        <activity android:name=".Activity.graphs.PieActivity" >
-        </activity>
-        <activity android:name=".Activity.graphs.MapViewActivity" >
-        </activity>
-        <activity android:name=".Activity.graphs.GraphSetting" >
-        </activity>
-
-        <activity android:name=".Activity.graphs.CalActivity" >
-        </activity>
-        <activity android:name=".Activity.defaultopts.DefaultsActivity" >
-        </activity>
-        <activity android:name=".Activity.defaultopts.QueryDefaults" >
-        </activity>
-        <activity android:name=".Activity.defaultopts.AdditionDefaults" >
-        </activity>
-        <activity android:name=".Activity.defaultopts.SmsOutFormatSetActivity" >
-
-        </activity>
         <activity android:name=".Activity.TableManager" >
         </activity>
         <activity android:name=".Activity.importexport.ImportExportActivity" >
