@@ -120,7 +120,7 @@ public class TableManager extends ListActivity {
 		     Map<String, String> map = new HashMap<String, String>();
 		     map.put("label", tp.getDisplayName());
 		     if (tp.getTableType() == TableProperties.TableType.SECURITY) {
-		         map.put("ext", "Access Control Table");
+		         map.put("ext", "SMS Access Control Table");
 		     } else if (tp.getTableType() ==
 		         TableProperties.TableType.SHORTCUT) {
 		         map.put("ext", "Shortcut Table");

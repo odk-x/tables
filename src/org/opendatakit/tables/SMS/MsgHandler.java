@@ -62,11 +62,14 @@ public class MsgHandler {
     }
     
     public boolean handleMessage(String msg, String phoneNum) {
+        Log.d("MSGH", "handling message: " + msg);
         if (!checkIsMessage(msg)) {
+            Log.d("MSGH", "is not message for ODK Tables");
             return false;
         }
         init();
         msg = standardize(msg);
+        Log.d("MSGH", "standardized message is: " + msg);
         TableProperties tp = findTable(msg);
         if (tp == null) {
             return false;
@@ -148,18 +151,17 @@ public class MsgHandler {
         if (!msg.startsWith(inSplit[0])) {
             return null;
         }
-        int index = 0;
+        int index = inSplit[0].length();
         for (int i = 1; i < inSplit.length - 1; i += 2) {
-            index += inSplit[i - 1].length();
             int nextIndex = msg.indexOf(inSplit[i + 1], index);
             if (nextIndex < 0) {
                 return null;
             }
             values.put(inSplit[i], msg.substring(index, nextIndex));
-            index = nextIndex;
+            index = nextIndex + inSplit[i + 1].length();
         }
         if (index != msg.length()) {
-            values.put(inSplit[inSplit.length - 1], msg.substring(index + 1));
+            values.put(inSplit[inSplit.length - 1], msg.substring(index));
         }
         String[] outSplit = output.split("%");
         int start = output.startsWith("%") ? 0 : 1;
@@ -243,16 +245,24 @@ public class MsgHandler {
         Map<String, String> values = new HashMap<String, String>();
         int plusIndex = msg.indexOf(" +") + 1;
         while (plusIndex > 0) {
+            // finding index of space between column and value
             int spaceIndex = msg.indexOf(' ', plusIndex + 2);
+            if (spaceIndex < 0) {
+                return false;
+            }
+            // getting the column name
             String key = msg.substring(plusIndex + 1, spaceIndex).trim();
             int secondSpaceIndex = msg.indexOf(' ', spaceIndex + 1);
             if (secondSpaceIndex < 0) {
+                // we've gotten to the end of the message; the remainder must
+                // be the value
                 String value = msg.substring(spaceIndex).trim();
                 values.put(key, value);
                 break;
             }
             plusIndex = msg.indexOf(" +", secondSpaceIndex) + 1;
-            if (plusIndex < 0) {
+            if (plusIndex < 1) {
+                // we got to the end of the message
                 String value = msg.substring(spaceIndex).trim();
                 values.put(key, value);
                 break;

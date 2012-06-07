@@ -1,0 +1,25 @@
+<html>
+
+<head>
+
+<script type="text/javascript">
+function display() {
+  var list = document.getElementById("list");
+  var count = data.getCount();
+  for (i = 0; i < count; i++) {
+    var d = document.createElement("li");
+    d.innerHTML = data.getData(i, "temperature");
+    list.appendChild(d);
+  }
+}
+</script>
+
+</head>
+
+<body onload="display();">
+
+<div id="wrapper"><ul id="list"></ul></div>
+
+</body>
+
+</html>

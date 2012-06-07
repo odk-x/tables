@@ -1,0 +1,33 @@
+<html>
+
+<head>
+
+<script type="text/javascript">
+function display() {
+  var table = document.getElementById("table");
+  var count = data.getCount();
+  for (i = 0; i < count; i++) {
+    var row = document.createElement("tr");
+    var idD = document.createElement("td");
+    idD.innerHTML = data.getData(i, "fridge_id");
+    row.appendChild(idD);
+    var tempD = document.createElement("td");
+    tempD.innerHTML = data.getData(i, "temperature");
+    row.appendChild(tempD);
+    var timeD = document.createElement("td");
+    timeD.innerHTML = data.getData(i, "time");
+    row.appendChild(timeD);
+    table.appendChild(row);
+  }
+}
+</script>
+
+</head>
+
+<body onload="display();">
+
+<div id="wrapper"><table id="table"></table></div>
+
+</body>
+
+</html>

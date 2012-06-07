@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.TableProperties;
 import android.R;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -109,8 +110,8 @@ public class ExportCSVActivity extends IETabActivity {
 		incPropsCheck.setChecked(true);
 		incProps.addView(incPropsCheck);
 		TextView incPropsLabel = new TextView(this);
+        incPropsLabel.setTextColor(R.color.black);
 		incPropsLabel.setText("Include Table Settings");
-		incPropsLabel.setTextColor(R.color.black);
 		incProps.addView(incPropsLabel);
 		v.addView(incProps);
 		// adding the include source phone numbers checkbox
@@ -170,22 +171,14 @@ public class ExportCSVActivity extends IETabActivity {
 	 * Attempts to export a table.
 	 */
 	private void exportSubmission() {
-	    CsvUtil cu = new CsvUtil(this);
         File file = new File(filenameValField.getText().toString());
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
-        boolean result;
-        if (incPropsCheck.isChecked()) {
-            result = cu.exportWithProperties(file, tp.getTableId(),
-                    incTSCheck.isChecked(), incPNCheck.isChecked());
-        } else {
-            result = cu.export(file, tp.getTableId(), incTSCheck.isChecked(),
-                    incPNCheck.isChecked());
-        }
-        if (result) {
-            showDialog(CSVEXPORT_SUCCESS_DIALOG);
-        } else {
-            showDialog(CSVEXPORT_FAIL_DIALOG);
-        }
+        boolean incProps = incPropsCheck.isChecked();
+        boolean incTs = incTSCheck.isChecked();
+        boolean incPn = incPNCheck.isChecked();
+        ExportTask task = new ExportTask();
+        showDialog(EXPORT_IN_PROGRESS_DIALOG);
+        task.execute(new ExportRequest(tp, file, incProps, incTs, incPn));
 	}
     
     @Override
@@ -203,5 +196,76 @@ public class ExportCSVActivity extends IETabActivity {
 			exportSubmission();
 		}
 	}
+    
+    private class ExportTask
+            extends AsyncTask<ExportRequest, Integer, Boolean> {
+        
+        protected Boolean doInBackground(ExportRequest... exportRequests) {
+            ExportRequest request = exportRequests[0];
+            CsvUtil cu = new CsvUtil(ExportCSVActivity.this);
+            if (request.getIncludeProperties()) {
+                return cu.exportWithProperties(request.getFile(),
+                        request.getTableProperties().getTableId(),
+                        request.getIncludeTimestamps(),
+                        request.getIncludePhoneNums());
+            } else {
+                return cu.export(request.getFile(),
+                        request.getTableProperties().getTableId(),
+                        request.getIncludeTimestamps(),
+                        request.getIncludePhoneNums());
+            }
+        }
+        
+        protected void onProgressUpdate(Integer... progress) {
+            // do nothing
+        }
+        
+        protected void onPostExecute(Boolean result) {
+            dismissDialog(EXPORT_IN_PROGRESS_DIALOG);
+            if (result) {
+                showDialog(CSVEXPORT_SUCCESS_DIALOG);
+            } else {
+                showDialog(CSVEXPORT_FAIL_DIALOG);
+            }
+        }
+    }
 	
+	private class ExportRequest {
+	    
+	    private final TableProperties tp;
+	    private final File file;
+	    private final boolean includeProperties;
+	    private final boolean includeTimestamps;
+	    private final boolean includePhoneNums;
+	    
+	    public ExportRequest(TableProperties tp, File file,
+	            boolean includeProperties, boolean includeTimestamps,
+	            boolean includePhoneNums) {
+	        this.tp = tp;
+	        this.file = file;
+	        this.includeProperties = includeProperties;
+	        this.includeTimestamps = includeTimestamps;
+	        this.includePhoneNums = includePhoneNums;
+	    }
+	    
+	    public TableProperties getTableProperties() {
+	        return tp;
+	    }
+	    
+	    public File getFile() {
+	        return file;
+	    }
+	    
+	    public boolean getIncludeProperties() {
+	        return includeProperties;
+	    }
+	    
+	    public boolean getIncludeTimestamps() {
+	        return includeTimestamps;
+	    }
+	    
+	    public boolean getIncludePhoneNums() {
+	        return includePhoneNums;
+	    }
+	}
 }

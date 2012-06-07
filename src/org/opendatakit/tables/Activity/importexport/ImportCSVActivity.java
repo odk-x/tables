@@ -24,9 +24,8 @@ import org.opendatakit.tables.data.TableProperties;
 import android.R;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -154,16 +153,23 @@ public class ImportCSVActivity extends IETabActivity {
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
+		ImportTask task = new ImportTask();
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
+            showDialog(IMPORT_IN_PROGRESS_DIALOG);
+			task.execute(new ImportRequest(tableName, file));
 		} else {
 		    tp = tps[pos - 1];
+            showDialog(IMPORT_IN_PROGRESS_DIALOG);
+		    task.execute(new ImportRequest(tp, file));
 		}
+		/**
 		Handler iHandler = new ImporterHandler();
 		ImporterThread iThread = new ImporterThread(iHandler, tableName, tp,
 		        file, (pos == 0));
 		showDialog(IMPORT_IN_PROGRESS_DIALOG);
 		iThread.start();
+		**/
 	}
 	
 	@Override
@@ -205,78 +211,72 @@ public class ImportCSVActivity extends IETabActivity {
 		}
 	}
 	
-	private class ImporterThread extends Thread {
-		
-		private Handler mHandler;
-		private String tableName;
-		private TableProperties tp;
-		private File file;
-		private boolean createTable;
-		
-		ImporterThread(Handler h, String tableName, TableProperties tp,
-		        File file, boolean createTable) {
-			mHandler = h;
-			this.tableName = tableName;
-			this.tp = tp;
-			this.file = file;
-			this.createTable = createTable;
-		}
-		
-		public void run() {
-		    CsvUtil cu = new CsvUtil(ImportCSVActivity.this);
-		    boolean success;
-		    if (createTable) {
-		        success = cu.importNewTable(file, tableName);
-		    } else {
-		        success = cu.importAddToTable(file, tp.getTableId());
-		    }
-		    Bundle b = new Bundle();
-		    b.putBoolean("success", success);
-		    if (!success) {
-		        b.putString("errmsg", "Failed to import file.");
-		    }
-		    Message msg = mHandler.obtainMessage();
-		    msg.setData(b);
-		    mHandler.sendMessage(msg);
-		    /**
-			CSVImporter importer = new CSVImporter(ImportCSVActivity.this);
-			boolean success = true;
-			String errorMsg = null;
-			try {
-				if(createTable) {
-					importer.buildTable(tableName, file);
-				} else {
-					importer.importTable(tp, file);
-				}
-			} catch(CSVException e) {
-				success = false;
-				errorMsg = e.getMessage();
-			}
-			Bundle b = new Bundle();
-			b.putBoolean("success", success);
-			if(!success) {
-				b.putString("errmsg", errorMsg);
-			}
-			Message msg = mHandler.obtainMessage();
-			msg.setData(b);
-			mHandler.sendMessage(msg);
-			**/
-		}
-		
+	private class ImportTask
+	        extends AsyncTask<ImportRequest, Integer, Boolean> {
+	    
+	    protected Boolean doInBackground(ImportRequest... importRequests) {
+	        ImportRequest request = importRequests[0];
+            CsvUtil cu = new CsvUtil(ImportCSVActivity.this);
+            if (request.getCreateTable()) {
+                return cu.importNewTable(request.getFile(),
+                        request.getTableName());
+            } else {
+                return cu.importAddToTable(request.getFile(),
+                        request.getTableProperties().getTableId());
+            }
+	    }
+	    
+	    protected void onProgressUpdate(Integer... progress) {
+	        // do nothing
+	    }
+	    
+	    protected void onPostExecute(Boolean result) {
+	        dismissDialog(IMPORT_IN_PROGRESS_DIALOG);
+	        if (result) {
+	            showDialog(CSVIMPORT_SUCCESS_DIALOG);
+	        } else {
+	            showDialog(CSVIMPORT_FAIL_DIALOG);
+	        }
+	    }
 	}
 	
-	private class ImporterHandler extends Handler {
-		
-		public void handleMessage(Message msg) {
-			dismissDialog(IMPORT_IN_PROGRESS_DIALOG);
-			Bundle b = msg.getData();
-			if(b.getBoolean("success")) {
-				showDialog(CSVIMPORT_SUCCESS_DIALOG);
-			} else {
-				showDialog(CSVIMPORT_FAIL_DIALOG);
-			}
-		}
-		
+	private class ImportRequest {
+	    
+	    private final boolean createTable;
+	    private final TableProperties tp;
+	    private final String tableName;
+	    private final File file;
+	    
+	    private ImportRequest(boolean createTable, TableProperties tp,
+	            String tableName, File file) {
+	        this.createTable = createTable;
+	        this.tp = tp;
+	        this.tableName = tableName;
+	        this.file = file;
+	    }
+	    
+	    public ImportRequest(String tableName, File file) {
+	        this(true, null, tableName, file);
+	    }
+	    
+	    public ImportRequest(TableProperties tp, File file) {
+	        this(false, tp, null, file);
+	    }
+	    
+	    public boolean getCreateTable() {
+	        return createTable;
+	    }
+	    
+	    public TableProperties getTableProperties() {
+	        return tp;
+	    }
+	    
+	    public String getTableName() {
+	        return tableName;
+	    }
+	    
+	    public File getFile() {
+	        return file;
+	    }
 	}
-	
 }

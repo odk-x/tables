@@ -16,6 +16,7 @@
 package org.opendatakit.tables.SMS;
 
 import android.telephony.SmsManager;
+import android.util.Log;
 
 public class SMSSender {
     
@@ -30,6 +31,7 @@ public class SMSSender {
 	    if (content.length() > MAX_MSG_LENGTH) {
 	        content = content.substring(0, MAX_MSG_LENGTH - 3) + "...";
 	    }
+	    Log.d("SMSS", "sending to " + destPhNum + ":" + content);
 	    sendSMS(destPhNum, content);
 	}
 }

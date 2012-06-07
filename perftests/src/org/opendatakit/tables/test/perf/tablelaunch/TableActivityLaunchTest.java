@@ -10,6 +10,7 @@ import org.opendatakit.tables.test.perf.util.Timer;
 import android.app.Activity;
 import android.test.InstrumentationTestCase;
 import android.test.PerformanceTestCase;
+import android.view.KeyEvent;
 
 
 public class TableActivityLaunchTest extends InstrumentationTestCase
@@ -43,6 +44,7 @@ public class TableActivityLaunchTest extends InstrumentationTestCase
         timer.start();
         Controller.launchTableActivity(tableManager, tp, true);
         getInstrumentation().waitForIdleSync();
+        getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_A);
         timer.end();
         timer.print(label + " launch");
     }
