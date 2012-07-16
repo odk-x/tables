@@ -534,7 +534,7 @@ public class Controller {
         for (int i = 0; i < dataEl.getChildCount(); i++) {
             Element child = dataEl.getElement(i);
             String key = child.getName();
-            String value = child.getText(0);
+            String value = child.getChildCount() > 0 ? child.getText(0) : null;
             values.put(key, value);
         }
         return values;
