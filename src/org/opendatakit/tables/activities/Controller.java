@@ -51,6 +51,7 @@ import android.database.Cursor;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -439,7 +440,32 @@ public class Controller {
         insertValues.put("jrFormId", ODKCOLLECT_ADDROW_ID);
         Uri insertResult = activity.getContentResolver().insert(
                 ODKCOLLECT_FORMS_CONTENT_URI, insertValues);
-        int formId = Integer.valueOf(insertResult.getLastPathSegment());
+    	int formId;
+        if (insertResult == null) {
+        	// it likely already exists -- try to update...
+        	String where = "jrFormId=?";
+        	String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
+        	int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI, insertValues, 
+        			where, selectionArgs);
+        	if ( updateCount < 1 ) {
+        		return null;
+        	}
+        	// then try to query...
+        	Cursor c = null;
+        	try {
+        		c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where, selectionArgs, null);
+        		if ( !c.moveToFirst() ) {
+        			return null;
+        		}
+        		formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
+        	} finally {
+        		if ( c != null ) {
+        			c.close();
+        		}
+        	}
+        } else {
+        	formId = Integer.valueOf(insertResult.getLastPathSegment());
+        }
         Intent intent = new Intent();
         intent.setComponent(new ComponentName("org.odk.collect.android",
                 "org.odk.collect.android.activities.FormEntryActivity"));
