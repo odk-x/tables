@@ -97,7 +97,8 @@ public class Controller {
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
-    static final int FIRST_FREE_RCODE = 3;
+    private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
+    static final int FIRST_FREE_RCODE = 4;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -126,6 +127,7 @@ public class Controller {
     private final ViewGroup displayWrap;
     private View overlay;
     private RelativeLayout.LayoutParams overlayLp;
+    private String rowId = null;
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
@@ -344,6 +346,15 @@ public class Controller {
             return false;
         }
     }
+  
+    void editRow(UserTable table, int rowNum) {
+        Intent intent = getIntentForOdkCollectEditRow(table, rowNum);
+        if (intent != null) {
+        	this.rowId = table.getRowId(rowNum);
+            activity.startActivityForResult(intent,
+                    RCODE_ODKCOLLECT_EDIT_ROW);
+        }
+    }
     
     boolean handleActivityReturn(int requestCode, int returnCode,
             Intent data) {
@@ -357,6 +368,9 @@ public class Controller {
         case RCODE_ODKCOLLECT_ADD_ROW:
             handleOdkCollectAddReturn(returnCode, data);
             return true;
+        case RCODE_ODKCOLLECT_EDIT_ROW:
+        	handleOdkCollectEditReturn(returnCode, data);
+        	return true;
         default:
             return false;
         }
@@ -387,7 +401,101 @@ public class Controller {
     void deleteRow(String rowId) {
         dbt.markDeleted(rowId);
     }
-    
+
+    Intent getIntentForOdkCollectEditRow(UserTable table, int rowNum) {
+        try {
+            FileWriter writer = new FileWriter(ODKCOLLECT_ADDROW_FILENAME);
+            writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" " +
+                    "xmlns:h=\"http://www.w3.org/1999/xhtml\" " +
+                    "xmlns:ev=\"http://www.w3.org/2001/xml-events\" " +
+                    "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" " +
+                    "xmlns:jr=\"http://openrosa.org/javarosa\">");
+            writer.write("<h:head>");
+            writer.write("<h:title>Add row: " + tp.getDisplayName() +
+                    "</h:title>");
+            writer.write("<model>");
+            writer.write("<instance>");
+            writer.write("<data id=\"" + ODKCOLLECT_ADDROW_ID + "\">");
+            for (ColumnProperties cp : tp.getColumns()) {
+            	String value = table.getData(tp.getColumnIndex(cp.getColumnDbName()), rowNum);
+            	if ( value == null ) {
+                    writer.write("<" + cp.getColumnDbName() + "/>");
+            	} else {
+                    writer.write("<" + cp.getColumnDbName() + ">" +
+                    			value +
+                    			"</" + cp.getColumnDbName() + ">");
+            		
+            	}
+            }
+            writer.write("</data>");
+            writer.write("</instance>");
+            writer.write("<itext>");
+            writer.write("<translation lang=\"eng\">");
+            for (ColumnProperties cp : tp.getColumns()) {
+                writer.write("<text id=\"/data/" + cp.getColumnDbName() +
+                        ":label\">");
+                writer.write("<value>" + cp.getDisplayName() + "</value>");
+                writer.write("</text>");
+            }
+            writer.write("</translation>");
+            writer.write("</itext>");
+            writer.write("</model>");
+            writer.write("</h:head>");
+            writer.write("<h:body>");
+            for (ColumnProperties cp : tp.getColumns()) {
+                writer.write("<input ref=\"/data/" + cp.getColumnDbName() +
+                        "\">");
+                writer.write("<label ref=\"jr:itext('/data/" +
+                        cp.getColumnDbName() + ":label')\"/>");
+                writer.write("</input>");
+            }
+            writer.write("</h:body>");
+            writer.write("</h:html>");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        ContentValues insertValues = new ContentValues();
+        insertValues.put("formFilePath", ODKCOLLECT_ADDROW_FILENAME);
+        insertValues.put("displayName", "Add row: " + tp.getDisplayName());
+        insertValues.put("jrFormId", ODKCOLLECT_ADDROW_ID);
+        Uri insertResult = activity.getContentResolver().insert(
+                ODKCOLLECT_FORMS_CONTENT_URI, insertValues);
+    	int formId;
+        if (insertResult == null) {
+        	// it likely already exists -- try to update...
+        	String where = "jrFormId=?";
+        	String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
+        	int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI, insertValues, 
+        			where, selectionArgs);
+        	if ( updateCount < 1 ) {
+        		return null;
+        	}
+        	// then try to query...
+        	Cursor c = null;
+        	try {
+        		c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where, selectionArgs, null);
+        		if ( !c.moveToFirst() ) {
+        			return null;
+        		}
+        		formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
+        	} finally {
+        		if ( c != null ) {
+        			c.close();
+        		}
+        	}
+        } else {
+        	formId = Integer.valueOf(insertResult.getLastPathSegment());
+        }
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("org.odk.collect.android",
+                "org.odk.collect.android.activities.FormEntryActivity"));
+        intent.setAction(Intent.ACTION_EDIT);
+        intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
+        return intent;
+    }
+
     Intent getIntentForOdkCollectAddRow() {
         try {
             FileWriter writer = new FileWriter(ODKCOLLECT_ADDROW_FILENAME);
@@ -500,6 +608,34 @@ public class Controller {
             }
         }
         dbt.addRow(values);
+        return true;
+    }
+    
+    private void handleOdkCollectEditReturn(int returnCode, Intent data) {
+        if (returnCode != Activity.RESULT_OK) {
+            return;
+        }
+        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+        updateRowFromOdkCollectForm(instanceId);
+        da.init();
+    }
+    
+    boolean updateRowFromOdkCollectForm(int instanceId) {
+        Map<String, String> formValues = getOdkCollectFormValues(instanceId);
+        if (formValues == null) {
+            return false;
+        }
+        Map<String, String> values = new HashMap<String, String>();
+
+        for (ColumnProperties cp : tp.getColumns()) {
+        	String key = cp.getColumnDbName();
+            String value = du.validifyValue(cp, formValues.get(key));
+            if (value != null) {
+            	values.put(key,value);
+            }
+        }
+        dbt.updateRow(rowId, values);
+        rowId = null;
         return true;
     }
     

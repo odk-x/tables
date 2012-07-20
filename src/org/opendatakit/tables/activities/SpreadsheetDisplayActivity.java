@@ -66,6 +66,8 @@ public class SpreadsheetDisplayActivity extends Activity
         Controller.FIRST_FREE_MENU_ITEM_ID + 8;
     private static final int MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER =
         Controller.FIRST_FREE_MENU_ITEM_ID + 9;
+    private static final int MENU_ITEM_ID_EDIT_ROW =
+        Controller.FIRST_FREE_MENU_ITEM_ID + 10;
     
     private DataManager dm;
     private Controller c;
@@ -207,6 +209,10 @@ public class SpreadsheetDisplayActivity extends Activity
             c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
             init();
             return true;
+        case MENU_ITEM_ID_EDIT_ROW:
+    		c.editRow(table, (lastDataCellMenued / table.getWidth()));
+        	// launch ODK Collect
+        	return true;
         case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
             setColumnAsPrime(c.getTableProperties()
                     .getColumns()[lastHeaderCellMenued]);
@@ -297,6 +303,8 @@ public class SpreadsheetDisplayActivity extends Activity
                 "Edit Cell");
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_DELETE_ROW, ContextMenu.NONE,
                 "Delete Row");
+        menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
+        		"Edit Row");
     }
     
     @Override
@@ -377,6 +385,8 @@ public class SpreadsheetDisplayActivity extends Activity
             itemLabels.add("Edit Cell");
             itemIds.add(MENU_ITEM_ID_DELETE_ROW);
             itemLabels.add("Delete Row");
+            itemIds.add(MENU_ITEM_ID_EDIT_ROW);
+            itemLabels.add("Edit Row");
             AlertDialog.Builder builder = new AlertDialog.Builder(
                     SpreadsheetDisplayActivity.this);
             builder.setItems(itemLabels.toArray(new String[0]),
@@ -397,6 +407,11 @@ public class SpreadsheetDisplayActivity extends Activity
                         break;
                     case MENU_ITEM_ID_DELETE_ROW:
                         c.deleteRow(table.getRowId(cellId / table.getWidth()));
+                        c.removeOverlay();
+                        init();
+                        break;
+                    case MENU_ITEM_ID_EDIT_ROW:
+                        c.editRow(table, cellId / table.getWidth());
                         c.removeOverlay();
                         init();
                         break;
