@@ -15,6 +15,11 @@
  */
 package org.opendatakit.tables.Activity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Library.TouchListView;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -26,6 +31,7 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.GpsStatus.Listener;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -67,7 +73,7 @@ public class ColumnManager extends ListActivity {
 	private String tableId;
 	private TableProperties tp;
 	private ColumnProperties[] cps;
-	private String[] columnOrder;
+	private List<String> columnOrder;
 	private String currentCol;
 	
 	// Initialize fields.
@@ -76,7 +82,10 @@ public class ColumnManager extends ListActivity {
 	    DbHelper dbh = DbHelper.getDbHelper(this);
 	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
 	    cps = tp.getColumns();
-	    columnOrder = tp.getColumnOrder();
+	    columnOrder = new LinkedList<String>();
+	    for ( String s : tp.getColumnOrder() ) {
+	    	columnOrder.add(s);
+	    }
 	}
 	
 	/*
@@ -111,8 +120,8 @@ public class ColumnManager extends ListActivity {
 	public void onResume() {
 		super.onResume();
 	
-		// Refresh column order
-		columnOrder = tp.getColumnOrder();
+		String[] order = getNewColOrderFromList();
+		tp.setColumnOrder(order);
 		
 		// Create new Drag & Drop List
 		createDragAndDropList();
@@ -264,7 +273,10 @@ public class ColumnManager extends ListActivity {
 						// Create new column
 					    ColumnProperties cp = tp.addColumn(colName);
 					    cps = tp.getColumns();
-					    columnOrder = tp.getColumnOrder();
+					    columnOrder = new LinkedList<String>();
+					    for ( String s : tp.getColumnOrder() ) {
+					    	columnOrder.add(s);
+					    }
 						
 						// Load Column Property Manger
 					    loadColumnPropertyManager(cp.getColumnDbName());
@@ -305,10 +317,11 @@ public class ColumnManager extends ListActivity {
 	private TouchListView.DropListener onDrop=new TouchListView.DropListener() {
 		@Override
 		public void drop(int from, int to) {
-				String item = adapter.getItem(from);
 				
-				adapter.remove(item);
-				adapter.insert(item, to);
+			String item = adapter.getItem(from);
+			adapter.remove(item);
+			adapter.insert(item, to);
+			adapter.notifyDataSetChanged();
 		}
 	};
 	
@@ -316,7 +329,10 @@ public class ColumnManager extends ListActivity {
 	private TouchListView.RemoveListener onRemove=new TouchListView.RemoveListener() {
 		@Override
 		public void remove(int which) {
-				adapter.remove(adapter.getItem(which));
+			String item = adapter.getItem(which);
+			if ( item != null ) {
+				adapter.remove(item);
+			}
 		}
 	};
 	
@@ -338,7 +354,7 @@ public class ColumnManager extends ListActivity {
 			
 			// Current Position in the List
 			final int currentPosition = position;
-			String currentColName = columnOrder[position];
+			String currentColName = columnOrder.get(position);
 			
 			// Register name of colunm at each row in the list view
 			TextView label = (TextView)row.findViewById(R.id.row_label);		
@@ -362,7 +378,7 @@ public class ColumnManager extends ListActivity {
 						ContextMenuInfo menuInfo) {
 					
 					// Current column selected
-					currentCol = columnOrder[currentPosition];
+					currentCol = columnOrder.get(currentPosition);
 					
 					// Options for each item on the list
 					if(tp.isColumnPrime(currentCol)) {
