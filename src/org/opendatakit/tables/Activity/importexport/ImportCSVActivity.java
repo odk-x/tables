@@ -80,7 +80,7 @@ public class ImportCSVActivity extends IETabActivity {
 		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
 		fnLabel.setText("Filename:");
-		fnLabel.setTextColor(R.color.black);
+		fnLabel.setTextColor(getResources().getColor(R.color.black));
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
 		filenameValField.setId(FILENAMEVAL_ID);
@@ -91,12 +91,12 @@ public class ImportCSVActivity extends IETabActivity {
 		pickFileButton.setOnClickListener(new PickFileButtonListener());
 		v.addView(pickFileButton);
 		// Horizontal divider
-		View ruler1 = new View(this); ruler1.setBackgroundColor(R.color.black);
+		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the table spinner
 		TextView etn = new TextView(this);
 		etn.setText("Import to new table or add to existing table:");
-		etn.setTextColor(R.color.black);
+		etn.setTextColor(getResources().getColor(R.color.black));
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		tps = TableProperties.getTablePropertiesForAll(
@@ -122,7 +122,7 @@ public class ImportCSVActivity extends IETabActivity {
 		ntn.setOrientation(LinearLayout.VERTICAL);
 		TextView ntnLabel = new TextView(this);
 		ntnLabel.setText("New Table Name:");
-		ntnLabel.setTextColor(R.color.black);
+		ntnLabel.setTextColor(getResources().getColor(R.color.black));
 		ntn.addView(ntnLabel);
 		ntnValField = new EditText(this);
 		ntnValField.setId(NTNVAL_ID);
@@ -131,7 +131,7 @@ public class ImportCSVActivity extends IETabActivity {
 		newTableViews = ntn;
 		v.addView(newTableViews);
 		// Horizontal divider
-		View ruler2 = new View(this); ruler2.setBackgroundColor(R.color.black);
+		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the import button
 		Button importB = new Button(this);

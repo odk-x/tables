@@ -65,5 +65,13 @@
         android:layout_gravity="bottom"
         android:onClick="onClickSyncNow"
         android:text="Sync now" />
+    
+    <Button
+        android:id="@+id/aggregate_activity_sync_files_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:onClick="onClickSyncFilesNow"
+        android:text="Sync files now" />
 
 </LinearLayout>
