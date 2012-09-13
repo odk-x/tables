@@ -79,7 +79,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// selecting table
 		TextView est = new TextView(this);
 		est.setText("Exporting Table:");
-		est.setTextColor(R.color.black);
+		est.setTextColor(getResources().getColor(getResources().getColor(R.color.black)));
 		v.addView(est);
 		// adding the table spinner
 		tableSpin = new Spinner(this);
@@ -97,12 +97,12 @@ public class ExportCSVActivity extends IETabActivity {
 		tableSpin.setSelection(0);
 		v.addView(tableSpin);
 		// Horizontal divider
-		View ruler1 = new View(this); ruler1.setBackgroundColor(R.color.black);
+		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// options
 		TextView opt = new TextView(this);
 		opt.setText("Options:");
-		opt.setTextColor(R.color.black);
+		opt.setTextColor(getResources().getColor(getResources().getColor(R.color.black)));
 		v.addView(opt);
 		// adding the include properties checkbox
 		LinearLayout incProps = new LinearLayout(this);
@@ -110,7 +110,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incPropsCheck.setChecked(true);
 		incProps.addView(incPropsCheck);
 		TextView incPropsLabel = new TextView(this);
-        incPropsLabel.setTextColor(R.color.black);
+        incPropsLabel.setTextColor(getResources().getColor(R.color.black));
 		incPropsLabel.setText("Include Table Settings");
 		incProps.addView(incPropsLabel);
 		v.addView(incProps);
@@ -121,7 +121,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incPN.addView(incPNCheck);
 		TextView incPNLabel = new TextView(this);
 		incPNLabel.setText("Include Phone Number for Incoming Rows");
-		incPNLabel.setTextColor(R.color.black);
+		incPNLabel.setTextColor(getResources().getColor(R.color.black));
 		incPN.addView(incPNLabel);
 		v.addView(incPN);
 		// adding the include timestamps checkbox
@@ -131,18 +131,18 @@ public class ExportCSVActivity extends IETabActivity {
 		incTS.addView(incTSCheck);
 		TextView incTSLabel = new TextView(this);
 		incTSLabel.setText("Include Last Modification Timestamp");
-		incTSLabel.setTextColor(R.color.black);
+		incTSLabel.setTextColor(getResources().getColor(R.color.black));
 		incTS.addView(incTSLabel);
 		v.addView(incTS);
 		// Horizontal divider
-		View ruler2 = new View(this); ruler2.setBackgroundColor(R.color.black);
+		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the filename field
 		LinearLayout fn = new LinearLayout(this);
 		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
 		fnLabel.setText("Filename:");
-		fnLabel.setTextColor(R.color.black);
+		fnLabel.setTextColor(getResources().getColor(R.color.black));
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
 		filenameValField.setId(FILENAMEVAL_ID);
@@ -153,7 +153,7 @@ public class ExportCSVActivity extends IETabActivity {
         pickFileButton.setOnClickListener(new PickFileButtonListener());
         v.addView(pickFileButton);
 		// Horizontal divider
-		View ruler3 = new View(this); ruler3.setBackgroundColor(R.color.black);
+		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
 		// adding the export button
 		Button button = new Button(this);

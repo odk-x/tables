@@ -120,5 +120,6 @@
         android:normalScreens="true"
         android:resizeable="true"
         android:smallScreens="true" />
+    <uses-sdk android:minSdkVersion="5"/>
 
 </manifest>
