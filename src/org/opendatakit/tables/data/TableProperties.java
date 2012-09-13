@@ -270,7 +270,7 @@ public class TableProperties {
         int i = 0;
         c.moveToFirst();
         while (i < tps.length) {
-            String columnOrderValue = c.getString(columnOrderIndex);
+            String columnOrderValue = c.getString(columnOrderIndex);  // wtf, in db has value, here returned empty
             String[] columnOrder = (columnOrderValue.length() == 0) ?
                 new String[] {} : columnOrderValue.split("/");
             String primeOrderValue = c.getString(primeColumnsIndex);
@@ -1055,6 +1055,9 @@ public class TableProperties {
         values.put(property, value);
         int ra = db.update(DB_TABLENAME, values, ID_WHERE_SQL, whereArgs);
         Log.d("TP", "rows updated:" + ra);
+        // bug thrown right here, got message "values:colOrder=" and that is
+        // what cleared the colOrder field in the db. happened when hitting
+        // back arrow from columProperties activity
         Log.d("TP", "values:" + values.toString());
     }
     

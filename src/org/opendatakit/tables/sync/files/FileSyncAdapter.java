@@ -53,7 +53,7 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     TableProperties[] tableProperties = dm.getSynchronizedTableProperties();
     for (TableProperties tableProp : tableProperties) {
       String tableId = tableProp.getTableId();
-      SyncUtilities.syncKeyValueEntriesForTable(context, aggregateUri, 
+      SyncUtilities.pullKeyValueEntriesForTable(context, aggregateUri, 
           authToken, tableId);
       
     }

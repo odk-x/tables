@@ -34,6 +34,8 @@ import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStoreDefault;
 import org.opendatakit.tables.util.FileUtils;
 import org.opendatakit.tables.util.TableFileUtils;
 
@@ -59,21 +61,30 @@ public class SyncUtilities {
   public static final String TAG = "SyncUtilities";
   
   /**
-   * Sync the key value entries for a particular table. At the moment only the
+   * Pull the key value entries for a particular table. At the moment only the
    * syncing of files is implemented. The key value stuff writ large is going
    * to wait until there is a clearer case of how it will work.
+   * <p>
+   * This is only the Server->Phone direction. It overwrites all the key value
+   * entries for the table.
    * @param context
    * @param aggregateUri
    * @param authToken
    * @param tableId
    */
-  public static void syncKeyValueEntriesForTable(Context context, 
+  public static void pullKeyValueEntriesForTable(Context context, 
       String aggregateUri, String authToken, String tableId) {
     List<OdkTablesKeyValueStoreEntry> allEntries = 
         getKeyValueEntries(aggregateUri, authToken, tableId);
-    List<OdkTablesFileManifestEntry> fileEntries = 
+    DbHelper dbh = DbHelper.getDbHelper(context);
+    downloadFilesAndUpdateValues(context, allEntries);
+    // so now allEntries should have had their file entries updated.
+    KeyValueStoreDefault kvs = KeyValueStoreDefault.getStore(dbh, tableId);
+    kvs.addEntriesFromManifest(dbh, allEntries, tableId);
+    
+    /*List<OdkTablesFileManifestEntry> fileEntries = 
         getFileEntries(allEntries);
-    compareAndDownloadFiles(context, fileEntries);
+    compareAndDownloadFiles(context, tableId, fileEntries);*/
     // TODO handle non-file entries.
     
   }
@@ -163,6 +174,43 @@ public class SyncUtilities {
     }
   }
   
+  public static void downloadFilesAndUpdateValues(Context context,
+      List<OdkTablesKeyValueStoreEntry> allEntries) {
+    // If the entry is a file, we see if we need to download it and update
+    // the value with the path to the file. Otherwise, we leave the entry.
+    ObjectMapper mapper = new ObjectMapper();
+    TypeReference<OdkTablesFileManifestEntry> typeRef = 
+        new TypeReference<OdkTablesFileManifestEntry>() {};
+    for (OdkTablesKeyValueStoreEntry entry : allEntries) {
+      String entryType = entry.type;
+      String fileDesignation = Type.FILE.getTitle();
+      if (entryType.equals(fileDesignation)) {
+        String fileString = entry.value;
+        String tableId = entry.tableId;
+        try {
+          OdkTablesFileManifestEntry fileEntry = mapper.readValue(
+              fileString, typeRef);
+          if (compareAndDownloadFile(context, tableId, fileEntry)) {
+            String basePath = context.getExternalFilesDir(null).getAbsolutePath();
+            String path = basePath + "/" + tableId + "/" + fileEntry.filename;
+            entry.value = path;
+          } else {
+            // there was an error downloading the file. remove the entry.
+            // IS THIS A SAFE WAY TO DO IT?
+            allEntries.remove(entry);
+          }
+        //TODO--throw the correct errors here! these are hacks.          
+        } catch (JsonMappingException e) {
+          throw new IllegalStateException("problem mapping in getFileEntries");
+        } catch (JsonParseException e) {
+          throw new IllegalStateException("problem parsing in getFileEntries");
+        } catch (IOException e) {
+          throw new IllegalStateException("io trouble in getFileEntries");
+        }
+      }
+    }
+  }
+  
   /**
    * Get only the file entries, leaving out the other entries.
    * @param allEntries List of all the entries on the manifest
@@ -199,12 +247,81 @@ public class SyncUtilities {
   }
   
   /**
-   * Make sure the files on the phone are up to date.
+   * Compares a single file to the information contained in an 
+   * OdkTablesFileManifestEntry and downloads the new file if necessary.
+   * Returns true if the file was successfully downloaded and there were no 
+   * errors, or if the current version of the file already exists at the
+   * given path externalFilesDir/tableId/filename.
+   * @param context
+   * @param tableId
+   * @param fileEntry
+   * @return
+   */
+  public static boolean compareAndDownloadFile(Context context, String tableId, 
+      OdkTablesFileManifestEntry fileEntry) {
+    Log.d(TAG, "in compareAndDownloadFile");
+    // the path for the base of where the app can save its files.
+    String basePath = context.getExternalFilesDir(null).getAbsolutePath();
+    // now we need to look through the manifest and see where the files are
+    // supposed to be stored.
+      // make sure you don't return a bad string.
+    if (fileEntry.filename.equals("") || fileEntry.filename == null) {
+      Log.i(TAG, "returned a null or empty filename");
+      return false;
+     } else {
+      // filename is the unrooted path of the file, so append the tableId
+      // and the basepath.
+      String folderPath = basePath + "/" + tableId;
+      // Before we try dl'ing the file, we have to make the folder, 
+      // b/c otherwise if the folders down to the path have too many non-
+      // existent folders, we'll get a FileNotFoundException when we open
+      // the FileOutputStream.
+      FileUtils.createFolder(folderPath);
+      String path = folderPath + "/" + fileEntry.filename;
+      File newFile = new File(path);
+      if (!newFile.exists()) {
+        // the file doesn't exist on the system
+        //filesToDL.add(newFile);
+        try {
+          downloadFile(newFile, fileEntry.downloadUrl);
+          return true;
+        } catch (Exception e) {
+          e.printStackTrace();
+          Log.e(TAG, "trouble downloading file for first time");
+          return false;
+        }
+      } else {
+        // file exists, see if it's up to date
+        String md5hash = FileUtils.getMd5Hash(newFile);
+        md5hash = "md5:" + md5hash;
+        // so as it comes down from the manifest, the md5 hash includes a 
+        // "md5:" prefix. Add taht and then check.
+        if (!md5hash.equals(fileEntry.md5hash)) {
+          // it's not up to date, we need to download it.
+          try {
+            downloadFile(newFile, fileEntry.downloadUrl);
+            return true;
+          } catch (Exception e) {
+            e.printStackTrace();
+            // TODO throw correct exception
+            Log.e(TAG, "trouble downloading new version of existing file");
+            return false;
+          }
+        } else {
+          return true;
+        }
+      }
+    }    
+  }  
+  
+  /**
+   * Make sure the files on the phone are up to date. Downloads the files
+   * to the directory getExternalFilesDir()/tableId/filename.
    * @param context
    * @param manFiles
    * @return a List of files that need to be downloaded.
    */
-  public static void compareAndDownloadFiles(Context context, 
+  public static void compareAndDownloadFiles(Context context, String tableId, 
       List<OdkTablesFileManifestEntry> manFiles) {
     Log.d(TAG, "in compareAndDownloadFiles");
     // the path for the base of where the app can save its files.
@@ -216,8 +333,9 @@ public class SyncUtilities {
       if (fileEntry.filename.equals("") || fileEntry.filename == null) {
         Log.i(TAG, "returned a null or empty filename");
       } else {
-        // filename is the unrooted path of the file, so just append to basepath.
-        String path = basePath + "/" + fileEntry.filename;
+        // filename is the unrooted path of the file, so append the tableId
+        // and the basepath.
+        String path = basePath + "/" + tableId + "/" + fileEntry.filename;
         File newFile = new File(path);
         if (!newFile.exists()) {
           // the file doesn't exist on the system
