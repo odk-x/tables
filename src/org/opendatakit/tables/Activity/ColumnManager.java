@@ -102,18 +102,8 @@ public class ColumnManager extends ListActivity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		setContentView(R.layout.col_manager);
-		
 		// Set title of activity
 		setTitle("ODK Tables > Column Manager");
-		
-		// Initialize
-//		init();
-		
-		// Add new column button
-		//createAddNewColumnButton();
-				
-		// Drag & Drop List
-//		createDragAndDropList();
 	}
 	
 	@Override 
@@ -276,14 +266,7 @@ public class ColumnManager extends ListActivity {
 					    for ( String s : tp.getColumnOrder() ) {
 					    	columnOrder.add(s);
 					    }
-					    /*
-					    // sam added
-					    adapter.clear();
-					    for (String s : tp.getColumnOrder()) {
-					      adapter.add(s);
-					    }*/
-					    adapter.notifyDataSetChanged();
-						
+					    adapter.notifyDataSetChanged();						
 						// Load Column Property Manger
 					    loadColumnPropertyManager(cp.getColumnDbName());
 					}
@@ -312,33 +295,16 @@ public class ColumnManager extends ListActivity {
     @Override
     public void onBackPressed() {
         setResult(RESULT_OK);
-        // sam
-        //tp.setColumnOrder(getNewColOrderFromList());
         finish();
     }
 		
-	//								DO	NOT TOUCH BELOW								 //
-	// ------------------------------------------------------------------------------//
+	//								DO	NOT TOUCH BELOW		(says who?--not sure)	 //
+	// ----------------------------------------------------------------------//
 	
 	// Drag & Drop 
 	private TouchListView.DropListener onDrop=new TouchListView.DropListener() {
 		@Override
-		public void drop(int from, int to) {
-		  
-        //String item = columnOrder.get(from);
-        //adapter.remove(item);
-        //adapter.insert(item,  to);
-        //columnOrder.add(to, item);
-        //String[] newOrder = new String[columnOrder.size()];
-        //for (int i = 0; i < columnOrder.size(); i++) {
-        //  newOrder[i] = columnOrder.get(i);
-        //}
-        //tp.setColumnOrder(getNewColOrderFromList());
-        //columnOrder.clear();
-        //for (String s : tp.getColumnOrder()) {
-       //   columnOrder.add(s);
-        //}		  
-				
+		public void drop(int from, int to) {	
 		  String item = columnOrder.get(from);
 		  columnOrder.remove(from);
 		  columnOrder.add(to, item);
@@ -347,33 +313,15 @@ public class ColumnManager extends ListActivity {
 		    newOrder[i] = columnOrder.get(i);
 		  }
 		  tp.setColumnOrder(newOrder);
-
 		  columnOrder.clear();
 		  for (String s : tp.getColumnOrder()) {
 		    columnOrder.add(s);
 		  }
 	     // have to call this so that displayName refers to the correct column
-	      DbHelper dbh = DbHelper.getDbHelper(ColumnManager.this);
-	      tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
-	      cps = tp.getColumns();
-		  /* allowing this code clears columnOrder!
-		  adapter.clear();
-		  for (String s : columnOrder) {
-		    adapter.add(s);
-		  }
-		  */
+	     DbHelper dbh = DbHelper.getDbHelper(ColumnManager.this);
+	     tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+	     cps = tp.getColumns();
 		  adapter.notifyDataSetChanged();
-		  //((TouchListView)getListView()).invalidate();
-		  
-		  /*
-			String item = adapter.getItem(from);
-			adapter.remove(item);
-			adapter.insert(item, to);
-			adapter.notifyDataSetChanged();
-			//getListView().requestLayout();*/
-         //tp.setColumnOrder(getNewColOrderFromList());
-
-
 		}
 	};
 	
