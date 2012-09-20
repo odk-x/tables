@@ -299,7 +299,11 @@ public class TableProperties {
     
     public static String createDbTableName(DbHelper dbh, String displayName) {
         TableProperties[] allProps = getTablePropertiesForAll(dbh);
-        String baseName = displayName.replace(' ', '_');
+        // You cannot start with a digit, and you can only have alphanumerics
+        // in SQLite. We are going to thus make the basename the displayName
+        // prepended with an underscore, and replace all non-word characters
+        // with an underscore.
+        String baseName = "_" + displayName.replaceAll("\\W", "_");
         if (!nameConflict(baseName, allProps)) {
             return baseName;
         }
@@ -579,7 +583,9 @@ public class TableProperties {
         newColumnOrder[columns.length] = dbName;
         // adding column
         SQLiteDatabase db = dbh.getWritableDatabase();
+        boolean testOpen = db.isOpen();
         db.beginTransaction();
+        testOpen = db.isOpen();
         ColumnProperties cp = ColumnProperties.addColumn(dbh, db, tableId,
                 dbName, displayName);
         db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);

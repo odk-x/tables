@@ -96,15 +96,15 @@ public class KeyValueStoreDefault {
   
   /**
    * Return a map of key to value for a table's entries in the key value
-   * store.
+   * store. It is assumed that the db is open and closed outside of the
+   * method.
    * @param dbh
    * @param tableId
    * @return
    */
-  public Map<String, String> getKeyValuesForTable(DbHelper dbh, 
-      String tableId) {
+  public Map<String, String> getKeyValuesForTable(DbHelper dbh,
+      SQLiteDatabase db, String tableId) {
     assertRelation(dbh, tableId);
-    SQLiteDatabase db = dbh.getReadableDatabase();
     Cursor c = db.query(DB_TABLENAME, INIT_COLUMNS, TABLE_ID + " = ?", 
         new String[] {tableId}, null, null, null);
     int keyIndex = c.getColumnIndexOrThrow(KEY);
@@ -118,21 +118,23 @@ public class KeyValueStoreDefault {
       c.moveToNext();
     }
     c.close();
-    db.close();
     return keyValues;
   }
   
   /**
    * Delete all the key value pairs for a certain table.
    * @param dbh
+   * @param db the open database
    * @param tableId
    */
-  public void clearKeyValuePairsForTable(DbHelper dbh, String tableId) {
+  public void clearKeyValuePairsForTable(DbHelper dbh, SQLiteDatabase db,
+      String tableId) {
+    boolean testOpen = db.isOpen();
     // Hilary passes in the db. Does this matter?
     // First get the key value pairs for this table.
     assertRelation(dbh, tableId);
-    Map<String, String> keyValues = getKeyValuesForTable(dbh, tableId);
-    SQLiteDatabase db = dbh.getReadableDatabase();
+    Map<String, String> keyValues = getKeyValuesForTable(dbh, db, tableId);
+    testOpen = db.isOpen();
     int count = 0;
     for (String key : keyValues.keySet()) {
       count++;
@@ -155,19 +157,21 @@ public class KeyValueStoreDefault {
    * @param dbh
    * @param entries List of the entries to be added.
    */
-  public void addEntriesFromManifest(DbHelper dbh,
+  public void addEntriesFromManifest(DbHelper dbh, SQLiteDatabase db,
       List<OdkTablesKeyValueStoreEntry> entries,
       String tableId) {
+    boolean testOpen = db.isOpen();
     assertRelation(dbh, tableId);
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    clearKeyValuePairsForTable(dbh, tableId);
+    testOpen = db.isOpen();
+    clearKeyValuePairsForTable(dbh, db, tableId);
+    testOpen = db.isOpen();
     int numInserted = 0;
     for (OdkTablesKeyValueStoreEntry entry : entries) {
       ContentValues values = new ContentValues();
-      values.put(TABLE_ID, entry.tableId);
-      values.put(VALUE_TYPE, entry.type);
-      values.put(VALUE, entry.value);
-      values.put(KEY, entry.key);
+      values.put(TABLE_ID, String.valueOf(entry.tableId));
+      values.put(VALUE_TYPE, String.valueOf(entry.type));
+      values.put(VALUE, String.valueOf(entry.value));
+      values.put(KEY, String.valueOf(entry.key));
       db.insert(DB_TABLENAME, null, values);
       numInserted++;
     }

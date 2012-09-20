@@ -40,6 +40,7 @@ import org.opendatakit.tables.util.FileUtils;
 import org.opendatakit.tables.util.TableFileUtils;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri.Builder;
 import android.net.UrlQuerySanitizer;
 import android.net.UrlQuerySanitizer.ParameterValuePair;
@@ -76,11 +77,33 @@ public class SyncUtilities {
       String aggregateUri, String authToken, String tableId) {
     List<OdkTablesKeyValueStoreEntry> allEntries = 
         getKeyValueEntries(aggregateUri, authToken, tableId);
-    DbHelper dbh = DbHelper.getDbHelper(context);
+    // TODO fix the order here. here you can download new files
+    // but not get the values in the d.b. set. this is wrong.
+    // I need to figure out the correct way to fail here.
     downloadFilesAndUpdateValues(context, allEntries);
     // so now allEntries should have had their file entries updated.
-    KeyValueStoreDefault kvs = KeyValueStoreDefault.getStore(dbh, tableId);
-    kvs.addEntriesFromManifest(dbh, allEntries, tableId);
+    // begin the database stuff.
+    DbHelper dbh = DbHelper.getDbHelper(context);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    boolean isOpen = db.isOpen();
+    // So I'm a bit confused as to why I have the dbhelper and pass
+    // it in here, and then just pass the db directly in? Hmm.
+    // I guess the helper is ensuring that the correct table has
+    // been asserted?
+    db.beginTransaction();
+    isOpen = db.isOpen();
+    try { 
+      KeyValueStoreDefault kvs = KeyValueStoreDefault.getStore(dbh, tableId);
+      isOpen = db.isOpen();
+      kvs.addEntriesFromManifest(dbh, db, allEntries, tableId);
+      db.setTransactionSuccessful();
+    } catch (Exception e) {
+      // TODO notify that the sync failed--resolve the file issue above
+      e.printStackTrace();
+    } finally {
+      db.endTransaction();
+    }
+    isOpen = db.isOpen();
     
     /*List<OdkTablesFileManifestEntry> fileEntries = 
         getFileEntries(allEntries);
@@ -190,7 +213,7 @@ public class SyncUtilities {
         try {
           OdkTablesFileManifestEntry fileEntry = mapper.readValue(
               fileString, typeRef);
-          if (compareAndDownloadFile(context, tableId, fileEntry)) {
+          if (compareAndDownloadFile(context, tableId, entry.key, fileEntry)) {
             String basePath = context.getExternalFilesDir(null).getAbsolutePath();
             String path = basePath + "/" + tableId + "/" + fileEntry.filename;
             entry.value = path;
@@ -254,11 +277,12 @@ public class SyncUtilities {
    * given path externalFilesDir/tableId/filename.
    * @param context
    * @param tableId
+   * @param key the key for the entry
    * @param fileEntry
    * @return
    */
   public static boolean compareAndDownloadFile(Context context, String tableId, 
-      OdkTablesFileManifestEntry fileEntry) {
+      String key, OdkTablesFileManifestEntry fileEntry) {
     Log.d(TAG, "in compareAndDownloadFile");
     // the path for the base of where the app can save its files.
     String basePath = context.getExternalFilesDir(null).getAbsolutePath();
@@ -271,13 +295,14 @@ public class SyncUtilities {
      } else {
       // filename is the unrooted path of the file, so append the tableId
       // and the basepath.
-      String folderPath = basePath + "/" + tableId;
+      String path = basePath + "/" + tableId + "/" + fileEntry.filename;
       // Before we try dl'ing the file, we have to make the folder, 
       // b/c otherwise if the folders down to the path have too many non-
       // existent folders, we'll get a FileNotFoundException when we open
       // the FileOutputStream.
-      FileUtils.createFolder(folderPath);
-      String path = folderPath + "/" + fileEntry.filename;
+      int lastSlash = path.lastIndexOf("/");
+      String folderPath = path.substring(0, lastSlash);
+      FileUtils.createFolder(folderPath);      
       File newFile = new File(path);
       if (!newFile.exists()) {
         // the file doesn't exist on the system

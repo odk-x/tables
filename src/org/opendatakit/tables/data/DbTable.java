@@ -59,6 +59,7 @@ public class DbTable {
     }
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
+      boolean testOpen = db.isOpen();
         StringBuilder colListBuilder = new StringBuilder();
         for (ColumnProperties cp : tp.getColumns()) {
             colListBuilder.append(", " + cp.getColumnDbName());
@@ -68,6 +69,16 @@ public class DbTable {
                 colListBuilder.append(" TEXT");
             }
         }
+        testOpen = db.isOpen();
+        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
+            DB_ROW_ID + " TEXT NOT NULL" +
+     ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
+     ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
+     ", " + DB_SYNC_TAG + " TEXT" +
+     ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
+     ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
+     colListBuilder.toString() +
+     ")";
         db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
                        DB_ROW_ID + " TEXT NOT NULL" +
                 ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
