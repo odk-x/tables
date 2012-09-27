@@ -35,7 +35,7 @@ import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStoreDefault;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.util.FileUtils;
 import org.opendatakit.tables.util.TableFileUtils;
 
@@ -93,7 +93,7 @@ public class SyncUtilities {
     db.beginTransaction();
     isOpen = db.isOpen();
     try { 
-      KeyValueStoreDefault kvs = KeyValueStoreDefault.getStore(dbh, tableId);
+      KeyValueStore kvs = KeyValueStore.getDefaultStore(dbh, tableId);
       isOpen = db.isOpen();
       kvs.addEntriesFromManifest(dbh, db, allEntries, tableId);
       db.setTransactionSuccessful();
