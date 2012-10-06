@@ -1,5 +1,6 @@
 package org.opendatakit.tables.data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,154 +43,179 @@ public class KeyValueStore {
   
   public static final String TAG = "KeyValueStore";
   
-  // These are the names of the active and the default key value stores as 
-  // they will exist in the SQLite db once they are initialized.
-  public static final String DEFAULT_DB_NAME = "keyValueStoreDefault";
-  public static final String ACTIVE_DB_NAME = "keyValueStoreActive";
-  
-  // Names of the columns in the key value store
-  // The underscores preceding are legacy, and are currently the same for 
-  // ease of comparison b/w Aggregate and Tables.
-  public static final String TABLE_ID = "TABLE_UUID";
-  public static final String KEY = "_KEY";
-  public static final String VALUE_TYPE = "_TYPE";
-  public static final String VALUE = "VALUE";
-  
   // The SQL where clause to use for selecting, updating, or deleting the row
   // for a given key.
-  private static final String WHERE_SQL = TABLE_ID + " = ? and " + KEY + 
+  private static final String WHERE_SQL_FOR_KEY = 
+      KeyValueStoreManager.TABLE_ID + " = ? and " + KeyValueStoreManager.KEY + 
       " = ?";
-  // The columns to be selected when initializing KeyStoreValueDefault.
-  private static final String[] INIT_COLUMNS = {
-    TABLE_ID,
-    KEY,
-    VALUE_TYPE,
-    VALUE
-  };
   
-  // These are the key value stores. It is assumed there will only be two:
-  // default and active.
-  private static KeyValueStore defaultKVS = null;
-  private static KeyValueStore activeKVS = null; 
+  /*
+   * The base where clause for selecting a table.
+   */
+  private static final String WHERE_SQL_FOR_TABLE = 
+      KeyValueStoreManager.TABLE_ID + " = ?";
   
-  // Here are the fields copied from ColumnProperties.
+  /*
+   * The base wehre clause for getting only the key values that are contained 
+   * in the list of table properties. Its usage must be followed by appending
+   * ")".
+   */
+  private static final String WHERE_SQL_FOR_PROPS = 
+      KeyValueStoreManager.TABLE_ID + " = ? " + " AND " + 
+      KeyValueStoreManager.KEY + " in (";
+  
   private final DbHelper dbh;
-  private final String[] whereArgs;
+  //private final String[] whereArgs;
   private final String tableId;
+  // The name of the database table that backs the key value store
+  private final String dbBackingName;
   
-  private static void assertDefault(DbHelper dbh, String tableId) {
-    if (defaultKVS == null) {
-      defaultKVS = new KeyValueStore(DEFAULT_DB_NAME, dbh, tableId, KEY);
-    }
-  }
-  
-  private static void assertActive(DbHelper dbh, String tableId) {
-    if (activeKVS == null) {
-      activeKVS = new KeyValueStore(ACTIVE_DB_NAME, dbh, tableId, KEY);
-    }
-  }
-  
-  public static KeyValueStore getDefaultStore(DbHelper dbh, String tableId) {
-    if (defaultKVS == null) {
-      defaultKVS = new KeyValueStore(DEFAULT_DB_NAME, dbh, tableId, KEY);
-    }
-    return defaultKVS;
-  }
-  
-  public static KeyValueStore getActiveStore(DbHelper dbh, String tableId) {
-   if (activeKVS == null) {
-     activeKVS = new KeyValueStore(ACTIVE_DB_NAME, dbh, tableId, KEY);
-   }
-   return activeKVS;
-  }
-  
-  private KeyValueStore(String dbName, DbHelper dbh, String tableId, 
-      String queryColumn) {
+  /**
+   * Construct a key value store object for interacting with a table's key
+   * value store entries.
+   * @param dbName name of the db table backing the store
+   * @param dbh a DbHelper
+   * @param tableId id of the table you are after
+   */
+  public KeyValueStore(String dbName, DbHelper dbh, String tableId) {
+    this.dbBackingName = dbName;
     this.dbh = dbh;
     this.tableId = tableId;
-    // This is how it is called in ColumnProperties. queryColumn is likely the
-    // column you are looking for a particular value of. Most likely this is 
-    // going to be KEY.
-    whereArgs = new String[] {String.valueOf(tableId), queryColumn};
+    //this.whereArgs = new String[] {String.valueOf(tableId)};
   }
-  
+    
   /**
    * Return a map of key to value for a table's entries in the active key value
    * store. It is assumed that the db is open and closed outside of the
    * method.
-   * @param dbh
-   * @param tableId
+   * @param db
    * @return
    */
-  public Map<String, String> getActiveKeyValuesForTable(DbHelper dbh,
-      SQLiteDatabase db, String tableId) {
-    assertActive(dbh, tableId);
-    Cursor c = db.query(ACTIVE_DB_NAME, INIT_COLUMNS, TABLE_ID + " = ?", 
-        new String[] {tableId}, null, null, null);
-    int keyIndex = c.getColumnIndexOrThrow(KEY);
-    int valueIndex = c.getColumnIndexOrThrow(VALUE);
+  public Map<String, String> getKeyValues(SQLiteDatabase db) {
+    Cursor c = db.query(this.dbBackingName, 
+        new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
+        WHERE_SQL_FOR_TABLE, 
+        new String[] {this.tableId}, null, null, null);
+    return getKeyValuesFromCursor(c);
+  }
+  
+  /**
+   * Return a list of all the OdkTablesKeyValueStoreEntry objects that exist
+   * in the key value store.
+   * @param db
+   * @return
+   */
+  public List<OdkTablesKeyValueStoreEntry> getEntries(SQLiteDatabase db) {
+    Cursor c = db.query(this.dbBackingName,
+        new String[] {KeyValueStoreManager.TABLE_ID,
+                      KeyValueStoreManager.KEY,
+                      KeyValueStoreManager.VALUE_TYPE,
+                      KeyValueStoreManager.VALUE},
+        WHERE_SQL_FOR_TABLE,
+        new String[] {this.tableId}, null, null, null);
+    return getEntriesFromCursor(c);
+  }
+  
+  /**
+   * Returns true if there are entries for the table in the key value store.
+   * @param db
+   * @return
+   */
+  public boolean entriesExist(SQLiteDatabase db) {
+    Map<String, String> entries = getKeyValues(db);
+    return (entries.size() != 0);
+  }
+  
+  /**
+   * Return a map of only the properties in the active key value store. These
+   * are the properties as defined as the INIT_COLUMNS in TableProperties. The
+   * rest of the key value pairs are considered to be associated with the 
+   * table, but not "properties" per se. Empty strings are returned as null.
+   * @param db
+   * @return
+   */
+  public Map<String, String>  getProperties(SQLiteDatabase db) {
+    String[] basicProps = TableProperties.getInitColumns();
+    String[] desiredKeys = new String[basicProps.length + 1];
+    // we want the first to be the tableId, b/c that is the table id we are
+    // querying over in the database.
+    desiredKeys[0] = tableId;
+    for (int i = 0; i < basicProps.length; i++) {
+      desiredKeys[i+1] = basicProps[i]; 
+    }
+    String whereClause = WHERE_SQL_FOR_PROPS + 
+        makePlaceHolders(TableProperties.getInitColumns().length) + ")";
+    Cursor c = db.query(this.dbBackingName, 
+        new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
+        whereClause, 
+        desiredKeys, null, null, null);
+    return getKeyValuesFromCursor(c);    
+  }
+  
+  /*
+   * Return a map of key to value from a cursor that has queried the database
+   * backing the key value store.
+   */
+  private Map<String, String> getKeyValuesFromCursor(Cursor c) {
+    int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.KEY);
+    int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE);
     Map<String, String> keyValues = new HashMap<String, String>();
     int i = 0;
     c.moveToFirst();
     while (i < c.getCount()) {
-      keyValues.put(c.getString(keyIndex), c.getString(valueIndex));
+      String value = c.getString(valueIndex);
+      if (value.equals("")) 
+        value = null;
+      keyValues.put(c.getString(keyIndex), value);
       i++;
       c.moveToNext();
     }
     c.close();
-    return keyValues;
+    return keyValues;   
   }
   
-  /**
-   * Return a map of key to value for a table's entries in the default key 
-   * value store. It is assumed that the db is open and closed outside of the
-   * method.
-   * @param dbh
-   * @param tableId
-   * @return
+  /*
+   * Get the full entries from the table. These are the full entries, with
+   * tableId and type information.
    */
-  public Map<String, String> getDefaultKeyValuesForTable(DbHelper dbh,
-      SQLiteDatabase db, String tableId) {
-    assertDefault(dbh, tableId);
-    Cursor c = db.query(DEFAULT_DB_NAME, INIT_COLUMNS, TABLE_ID + " = ?", 
-        new String[] {tableId}, null, null, null);
-    int keyIndex = c.getColumnIndexOrThrow(KEY);
-    int valueIndex = c.getColumnIndexOrThrow(VALUE);
-    Map<String, String> keyValues = new HashMap<String, String>();
+  private List<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        new ArrayList<OdkTablesKeyValueStoreEntry>();
+    int idIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.TABLE_ID);
+    int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.KEY);
+    int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE);
+    int typeIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE_TYPE);
     int i = 0;
     c.moveToFirst();
     while (i < c.getCount()) {
-      keyValues.put(c.getString(keyIndex), c.getString(valueIndex));
+      OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+      entry.key = c.getString(keyIndex);
+      entry.tableId = c.getString(idIndex);
+      entry.type = c.getString(typeIndex);
+      entry.value = c.getString(valueIndex);
+      entries.add(entry);
       i++;
       c.moveToNext();
     }
     c.close();
-    return keyValues;
+    return entries;
   }
   
-  
-  
-  
   /**
-   * Delete all the active key value pairs for a certain table.
+   * Delete all the active key value pairs for the table.
    * @param dbh
    * @param db the open database
    * @param tableId
    */
-  public void clearActiveKeyValuePairsForTable(DbHelper dbh, SQLiteDatabase db,
-      String tableId) {
-    boolean testOpen = db.isOpen();
-    // Hilary passes in the db. Does this matter?
+  public void clearKeyValuePairs(SQLiteDatabase db) {
     // First get the key value pairs for this table.
-    assertActive(dbh, tableId);
     Map<String, String> keyValues = 
-        getActiveKeyValuesForTable(dbh, db, tableId);
-    testOpen = db.isOpen();
+        getKeyValues(db);
     int count = 0;
     for (String key : keyValues.keySet()) {
       count++;
-      db.delete(ACTIVE_DB_NAME, WHERE_SQL, 
-          new String[] {String.valueOf(tableId),key});
+      db.delete(dbBackingName, WHERE_SQL_FOR_KEY, 
+          new String[] {String.valueOf(this.tableId),key});
     }
     if (count != keyValues.size()) {
       Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
@@ -197,36 +223,7 @@ public class KeyValueStore {
           " key value pairs for the table " + tableId);
     }
   }
-  
-  /**
-   * Delete all the default key value pairs for a certain table.
-   * @param dbh
-   * @param db the open database
-   * @param tableId
-   */
-  public void clearDefaultKeyValuePairsForTable(DbHelper dbh, SQLiteDatabase db,
-      String tableId) {
-    boolean testOpen = db.isOpen();
-    // Hilary passes in the db. Does this matter?
-    // First get the key value pairs for this table.
-    assertDefault(dbh, tableId);
-    Map<String, String> keyValues = 
-        getDefaultKeyValuesForTable(dbh, db, tableId);
-    testOpen = db.isOpen();
-    int count = 0;
-    for (String key : keyValues.keySet()) {
-      count++;
-      db.delete(DEFAULT_DB_NAME, WHERE_SQL, 
-          new String[] {String.valueOf(tableId),key});
-    }
-    if (count != keyValues.size()) {
-      Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
-          " the KeyValueStoreDefault, but there were " + keyValues.size() + 
-          " key value pairs for the table " + tableId);
-    }
-  }  
-  
-  
+ 
   /**
    * Add key value pairs to the store from a manifest. It is very important to
    * note that, since you are adding them from a manifest, you are assumed to
@@ -236,47 +233,90 @@ public class KeyValueStore {
    * <p>
    * All of the entries from a manifest are coming from a server, and it is 
    * they are therefore put into the default key value store.
+   * <p> 
+   * Null values are inserted as an empty string.
    * @param dbh
    * @param entries List of the entries to be added.
    */
-  public void addEntriesFromManifest(DbHelper dbh, SQLiteDatabase db,
-      List<OdkTablesKeyValueStoreEntry> entries,
-      String tableId) {
-    boolean testOpen = db.isOpen();
-    assertDefault(dbh, tableId);
-    testOpen = db.isOpen();
-    clearDefaultKeyValuePairsForTable(dbh, db, tableId);
-    testOpen = db.isOpen();
+  public void addEntriesToStore(SQLiteDatabase db,
+      List<OdkTablesKeyValueStoreEntry> entries) {
+    clearKeyValuePairs(db);
     int numInserted = 0;
     for (OdkTablesKeyValueStoreEntry entry : entries) {
-      ContentValues values = new ContentValues();
-      values.put(TABLE_ID, String.valueOf(entry.tableId));
-      values.put(VALUE_TYPE, String.valueOf(entry.type));
-      values.put(VALUE, String.valueOf(entry.value));
-      values.put(KEY, String.valueOf(entry.key));
-      db.insert(DEFAULT_DB_NAME, null, values);
+      if (entry.value == null)
+        entry.value = "";
+      addEntryToStore(db, entry);
       numInserted++;
     }
-    Log.d(TAG, "inserted " + numInserted + " key value pairs");
+    Log.d(TAG, "inserted " + numInserted + " key value pairs to default kvs");
   }
+  
+  /**
+   * Delete the row from the database for that contains the given key.
+   * @param db
+   * @param key
+   * @return the number of rows affected
+   */
+  public int deleteKey(SQLiteDatabase db, String key) {
+    return db.delete(this.dbBackingName, WHERE_SQL_FOR_KEY, 
+        new String[] {this.tableId, key});
+  }
+  
 
-  
-  static String getDefaultTableCreateSql() {
-    return "CREATE TABLE " + DEFAULT_DB_NAME + "(" +
-               TABLE_ID + " TEXT NOT NULL" +
-        ", " + KEY + " TEXT NOT NULL" +
-        ", " + VALUE_TYPE + " TEXT NOT NULL" +
-        ", " + VALUE + " TEXT NOT NULL" +
-        ")";
+  /**
+   * Add the typed key value store to the database, inserting or deleting the
+   * key as needed. Null "value" entries are changed to the empty string.
+   * @param db
+   * @param type
+   * @param key
+   * @param value
+   */
+  public void insertOrUpdateKey(SQLiteDatabase db, String type,
+      String key, String value) {
+    // first try to delete the row. If it's not there, no biggie, just 
+    // returns a 0. So you either delete it or it isn't there.
+    this.deleteKey(db, key);
+    if (value == null)
+      value = "";
+    OdkTablesKeyValueStoreEntry newEntry = new OdkTablesKeyValueStoreEntry();
+    newEntry.key = key;
+    newEntry.tableId = this.tableId;
+    newEntry.type = type;
+    newEntry.value = value;
+    addEntryToStore(db, newEntry);
   }
   
-  static String getActiveTableCreateSql() {
-    return "CREATE TABLE " + ACTIVE_DB_NAME + "(" +
-               TABLE_ID + " TEXT NOT NULL" +
-        ", " + KEY + " TEXT NOT NULL" +
-        ", " + VALUE_TYPE + " TEXT NOT NULL" +
-        ", " + VALUE + " TEXT NOT NULL" +
-        ")";
+  /*
+   * Very basic way to add a key value entry to the store. This is private
+   * because it should only be called via appropriate accessor methods
+   * to ensure that there the keys remain a set and that there are no other
+   * invariants broken my direct manipulation of the database.
+   */
+  private void addEntryToStore(SQLiteDatabase db, 
+      OdkTablesKeyValueStoreEntry entry) {
+    ContentValues values = new ContentValues();
+    values.put(KeyValueStoreManager.TABLE_ID, String.valueOf(entry.tableId));
+    values.put(KeyValueStoreManager.VALUE_TYPE, String.valueOf(entry.type));
+    values.put(KeyValueStoreManager.VALUE, String.valueOf(entry.value));
+    values.put(KeyValueStoreManager.KEY, String.valueOf(entry.key));
+    db.insert(this.dbBackingName, null, values);
+  }
+  
+  /**
+   * Returns a string of question marks separated by commas for use in an
+   * android sqlite query.
+   * @param numArgs number of question marks
+   * @return
+   */
+  public static String makePlaceHolders(int numArgs) {
+    String holders = "";
+    if (numArgs == 0)
+      return holders;
+    for (int i = 0; i < numArgs; i++) {
+      holders = holders + "?,";
+    }
+    holders = holders.substring(0, holders.length()-1);
+    return holders;   
   }
   
     

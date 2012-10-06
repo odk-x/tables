@@ -36,8 +36,22 @@ public class DataManager {
         return TableProperties.getTablePropertiesForAll(dbh);
     }
     
+    /**
+     * Return the active table properties for tables that are set to 
+     * be synched.
+     * @return
+     */
     public TableProperties[] getSynchronizedTableProperties() {
       return TableProperties.getTablePropertiesForSynchronizedTables(dbh);
+    }
+    
+    /**
+     * Return the default table properties for tables that are set to be
+     * synched.
+     * @return
+     */
+    public TableProperties[] getSynchronizedDefaultTableProperties() {
+      return TableProperties.getDefaultPropertiesForSynchronizedTables(dbh);
     }
 
     public TableProperties[] getDataTableProperties() {

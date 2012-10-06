@@ -71,4 +71,9 @@ public class SyncUtil {
   public static int boolToInt(boolean b) {
     return b ? 1 : 0;
   }
+  
+  public static boolean stringToBool(String bool) {
+    return bool.equalsIgnoreCase("true");
+  }
+  
 }

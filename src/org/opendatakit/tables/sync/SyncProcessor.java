@@ -63,7 +63,10 @@ public class SyncProcessor {
    */
   public void synchronize() {
     Log.i(TAG, "entered synchronize()");
-    TableProperties[] tps = dm.getSynchronizedTableProperties();
+    //TableProperties[] tps = dm.getSynchronizedTableProperties();
+    // we want this call rather than just the getSynchronizedTableProperties,
+    // because we only want to push the default to the server.
+    TableProperties[] tps = dm.getSynchronizedDefaultTableProperties();
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);

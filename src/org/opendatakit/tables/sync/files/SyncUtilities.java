@@ -36,6 +36,7 @@ import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.util.FileUtils;
 import org.opendatakit.tables.util.TableFileUtils;
 
@@ -62,9 +63,7 @@ public class SyncUtilities {
   public static final String TAG = "SyncUtilities";
   
   /**
-   * Pull the key value entries for a particular table. At the moment only the
-   * syncing of files is implemented. The key value stuff writ large is going
-   * to wait until there is a clearer case of how it will work.
+   * Pull the key value entries for a particular table from the server.
    * <p>
    * This is only the Server->Phone direction. It overwrites all the key value
    * entries for the table.
@@ -85,31 +84,22 @@ public class SyncUtilities {
     // begin the database stuff.
     DbHelper dbh = DbHelper.getDbHelper(context);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    boolean isOpen = db.isOpen();
     // So I'm a bit confused as to why I have the dbhelper and pass
     // it in here, and then just pass the db directly in? Hmm.
     // I guess the helper is ensuring that the correct table has
     // been asserted?
+    KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     db.beginTransaction();
-    isOpen = db.isOpen();
     try { 
-      KeyValueStore kvs = KeyValueStore.getDefaultStore(dbh, tableId);
-      isOpen = db.isOpen();
-      kvs.addEntriesFromManifest(dbh, db, allEntries, tableId);
+      KeyValueStore kvs = kvms.getDefaultStoreForTable(tableId);
+      kvs.addEntriesToStore(db, allEntries);
       db.setTransactionSuccessful();
     } catch (Exception e) {
       // TODO notify that the sync failed--resolve the file issue above
       e.printStackTrace();
     } finally {
       db.endTransaction();
-    }
-    isOpen = db.isOpen();
-    
-    /*List<OdkTablesFileManifestEntry> fileEntries = 
-        getFileEntries(allEntries);
-    compareAndDownloadFiles(context, tableId, fileEntries);*/
-    // TODO handle non-file entries.
-    
+    }    
   }
   
   /**

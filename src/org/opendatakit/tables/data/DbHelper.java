@@ -44,10 +44,9 @@ public class DbHelper extends SQLiteOpenHelper {
     
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(TableProperties.getTableCreateSql());
         db.execSQL(ColumnProperties.getTableCreateSql());
-        db.execSQL(KeyValueStore.getDefaultTableCreateSql());
-        db.execSQL(KeyValueStore.getActiveTableCreateSql());
+        db.execSQL(KeyValueStoreManager.getDefaultTableCreateSql());
+        db.execSQL(KeyValueStoreManager.getActiveTableCreateSql());
     }
     
     @Override

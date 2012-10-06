@@ -25,15 +25,20 @@ import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.TableViewSettings.ConditionalRuler;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -50,6 +55,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
@@ -70,6 +76,9 @@ public class TablePropertiesManager extends PreferenceActivity {
     private DbHelper dbh;
     private TableProperties tp;
     
+    private AlertDialog revertDialog;
+    private AlertDialog saveAsDefaultDialog;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +94,74 @@ public class TablePropertiesManager extends PreferenceActivity {
     }
     
     private void init() {
+      
+      // TODO move this into the actual preference somehow.
+      AlertDialog.Builder builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Revert to default settings? Any modifications" + 
+          " you have made will be lost.");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore defaultKVS = 
+              kvsm.getDefaultStoreForTable(tp.getTableId());
+          if (!defaultKVS.entriesExist(db)) {
+            AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
+                TablePropertiesManager.this);
+            noDefaultsDialog.setMessage("There are no default settings! " +
+            		"No changes have been made.");
+            noDefaultsDialog.setNeutralButton("OK", null);
+            noDefaultsDialog.show();
+            
+            /*
+            Toast.makeText(TablePropertiesManager.this, 
+                "No default settings!", 
+                Toast.LENGTH_SHORT).show();
+                */
+          } else {
+            kvsm.revertToDefaultPropertiesForTable(tp.getTableId());
+          }
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      revertDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Save settings as default? Any modifications" + 
+          " old default settings will be lost, and these settings will be " +
+          "pushed to the server at next synch.");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore activeKVS = 
+              kvsm.getActiveStoreForTable(tp.getTableId());
+
+          kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      saveAsDefaultDialog = builder.create();     
+      
+      
         PreferenceScreen root =
             getPreferenceManager().createPreferenceScreen(this);
         
@@ -266,6 +343,40 @@ public class TablePropertiesManager extends PreferenceActivity {
             }
         });
         securityCat.addPreference(writeTablePref);
+        
+        // the managing of default properties
+
+        // under development!
+        PreferenceCategory defaultsCat = new PreferenceCategory(this);
+        root.addPreference(defaultsCat);
+        defaultsCat.setTitle("Manage Default Properties");
+        
+        // the actual entry that has the option above.
+        Preference revertPref = new Preference(this);
+        revertPref.setTitle("Revert to default settings.");
+        revertPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                revertDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(revertPref);
+        
+        Preference saveAsDefaultPref = new Preference(this);
+        saveAsDefaultPref.setTitle("Save current settings as default.");
+        saveAsDefaultPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                saveAsDefaultDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(saveAsDefaultPref);
         
         setPreferenceScreen(root);
     }
