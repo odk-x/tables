@@ -277,6 +277,18 @@ public class TableProperties {
     List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
     return constructDefaultPropertiesFromIds(synchedIds, dbh, db, kvsm);
   }
+  
+  /**
+   * Get the sever TableProperties for all the tables that have synchronized
+   * set to true in the active store.
+   */
+  public static TableProperties[] getServerPropertiesForSynchronizedTables(
+      DbHelper dbh) {
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
+    return constructServerPropertiesFromIds(synchedIds, dbh, db, kvsm);
+  }
       
 
   /**
@@ -408,6 +420,25 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs);
     }
     return allProps;     
+  }
+  
+  /*
+   * Construct an array of TableProperties based on the list of table ids.
+   * It is very important to note that these properties will be as they are
+   * reflected in the SERVER key value store.
+   */
+  private static TableProperties[] constructServerPropertiesFromIds(
+      List<String> ids, DbHelper dbh, SQLiteDatabase db, 
+      KeyValueStoreManager kvsm) {
+    TableProperties[] allProps = new TableProperties[ids.size()];
+    for (int i = 0; i < ids.size(); i++) {
+      String tableId = ids.get(i);
+      KeyValueStore currentServer = 
+          kvsm.getServerStoreForTable(tableId);
+      Map<String, String> propPairs = currentServer.getProperties(db);
+      allProps[i] = constructPropertiesFromMap(dbh, propPairs);
+    }
+    return allProps;
   }
 
   public static String createDbTableName(DbHelper dbh, String displayName) {

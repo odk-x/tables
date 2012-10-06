@@ -1,7 +1,9 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 
@@ -9,11 +11,41 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
- * This class manages the key value store. This entails maintaining two 
- * versions of the key value store--a default and an active. The default
- * is the copy that is reflected on the server. The active is the version that
- * is currently being used and modified by the phone. Information will be
- * set between them by "save as default" and a "revert to default" commands.
+ * October, 2012:
+ * This seems to be an ever changing design, so I'm including the date this 
+ * time.
+ * <p>
+ * The key value stores are where properties are kept about the tables. This 
+ * includes things like metadata, as well as things that are important to 
+ * table structure and definition, making them less like "metadata" per se.
+ * <p>
+ * There are three of these key value stores, and they hold information about
+ * the tables in different states. The three are the active, default, and
+ * server key value stores. 
+ * <p> 
+ * The active holds the currently displaying version of the tables, which the
+ * user modifies when they make changes. The server holds the version that was
+ * pulled down from the server. This is also the key value store that is the
+ * source of the table properties at the first synch. After that point, we are
+ * currently not allowing metadata being pushed. (Well, technically you can do
+ * it, but in our model we are planning to make this a privileged operation, as
+ * there are some very important considerations that the values in the key 
+ * value stores can have for the actual structure of a table.)
+ * <p>
+ * The default is a kind of combination between the two. Changes from the 
+ * server before the last sync will have to be merged from the server table
+ * into the default table. Exactly how this happens is at the moment undefined.
+ * Suffice it to say that it is a mixture of the two, and more closely tied
+ * to active than is the server. 
+ * <p>
+ * active<--default<--MERGE--server
+ * active-->default-->server
+ * The exact transitions here are up in the air as to when they can happen.
+ * <p>
+ * There is a fourth key value store. This handles only sync properties. It is
+ * called the keyValueStoreSync, and it handles only things like "setToSync",
+ * whether or not the table should be synched. That kind of thing. It is kind
+ * of TBD...
  * 
  * @author sudar.sam@gmail.com
  *
@@ -26,6 +58,8 @@ public class KeyValueStoreManager {
   // they will exist in the SQLite db once they are initialized.
   public static final String DEFAULT_DB_NAME = "keyValueStoreDefault";
   public static final String ACTIVE_DB_NAME = "keyValueStoreActive";
+  public static final String SERVER_DB_NAME = "keyValueStoreServer";
+  public static final String SYNC_DB_NAME = "keyValueStoreSync";
   
   // Names of the columns in the key value store
   // The underscores preceding are legacy, and are currently the same for 
@@ -70,6 +104,20 @@ public class KeyValueStoreManager {
     return new KeyValueStore(DEFAULT_DB_NAME, this.dbh, tableId);
   }
   
+  public KeyValueStore getServerStoreForTable(String tableId) {
+    return new KeyValueStore(SERVER_DB_NAME, this.dbh, tableId);
+  }
+  
+  /**
+   * Return a key value store object for the sync properties for the given
+   * table id.
+   * @param tableId
+   * @return
+   */
+  public KeyValueStore getSyncStoreForTable(String tableId) {
+    return new KeyValueStore(SYNC_DB_NAME, this.dbh, tableId);
+  }
+  
   /**
    * Return a list of all the table ids in the active key value store.
    * @param db
@@ -92,6 +140,18 @@ public class KeyValueStoreManager {
     Cursor c = db.query(true, ACTIVE_DB_NAME, new String[] {TABLE_ID},
         null, null, null, null, null, null);
     return getTableIdsFromCursor(c);     
+  }
+  
+  /**
+   * Return a list of all the table ids in the server key value store.
+   * @param db
+   * @return
+   */
+  public List<String> getServerTableIds(SQLiteDatabase db) {
+    // We want a distinct query over the TABLE_ID column.
+    Cursor c = db.query(true, SERVER_DB_NAME, new String[] {TABLE_ID},
+        null, null, null, null, null, null);
+    return getTableIdsFromCursor(c);    
   }
   
   public List<String> getSynchronizedTableIds(SQLiteDatabase db) {
@@ -126,6 +186,7 @@ public class KeyValueStoreManager {
   /**
    * Remove all the key values from the active key value store and copy all the
    * key value pairs from the default store into the active.
+   * active<--default
    * @param tableId
    */
   public void revertToDefaultPropertiesForTable(String tableId) {
@@ -141,7 +202,59 @@ public class KeyValueStoreManager {
     activeKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> defaultEntries = 
         defaultKVS.getEntries(db);
+    activeKVS.clearKeyValuePairs(db);
     activeKVS.addEntriesToStore(db, defaultEntries);
+  }
+  
+  /**
+   * This merges the key values in the server store into the default store. 
+   * "Merge" means that, for now (Oct 5, 2012), any keys that are in the both
+   * stores have their value overwritten to that of the server store. 
+   * Additionally, any keys that are not in the default table, but are in the 
+   * server table, will be added to the default table. For now, this is 
+   * considered to be a "merge". Eventually this should encompass smarter
+   * logic about which values should be overwritten and which should be a true
+   * "merge", giving the user an opportunity to determine resolve which value
+   * should be kept.
+   * <p>
+   * In essence, then, the default becomes a union of the server and original
+   * default values, with the identical keys being overwritten to the server
+   * values.
+   * <p>
+   * default<--MERGE--server
+   * @param tableId
+   */
+  public void mergeServerToDefaultForTable(String tableId) {
+    /*
+     * We're just going to go ahead and implement this with a map.
+     * We'll add the default entries first. Any that are present also
+     * in the server table will overwrite them. In the future, instead of 
+     * just adding, logic for checking "user-resolvable" conflicts should be
+     * added here.
+     */
+    Map<String, OdkTablesKeyValueStoreEntry> newDefault =
+        new HashMap<String, OdkTablesKeyValueStoreEntry>();
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);
+    KeyValueStore serverKVS = this.getServerStoreForTable(tableId);
+    List<OdkTablesKeyValueStoreEntry> oldDefaultEntries = 
+        defaultKVS.getEntries(db);
+    List<OdkTablesKeyValueStoreEntry> serverEntries = 
+        serverKVS.getEntries(db);
+    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
+      newDefault.put(entry.key, entry);
+    }
+    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
+      newDefault.put(entry.key, entry);
+    }
+    List<OdkTablesKeyValueStoreEntry> defaultList = 
+        new ArrayList<OdkTablesKeyValueStoreEntry>();
+    for (OdkTablesKeyValueStoreEntry entry : newDefault.values()) {
+      defaultList.add(entry);
+    }
+    // TA-DA! And now we have the merged entries. put them in the store.
+    defaultKVS.clearKeyValuePairs(db);
+    defaultKVS.addEntriesToStore(db, defaultList);
   }
   
   /**
@@ -150,6 +263,8 @@ public class KeyValueStoreManager {
    * <p>
    * This should be a privileged operation, as the defaults will be able to be
    * pushed to the server.
+   * <p>
+   * active-->default
    * @param tableId
    */
   public void setCurrentAsDefaultPropertiesForTable(String tableId) {
@@ -161,7 +276,28 @@ public class KeyValueStoreManager {
     defaultKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> activeEntries =
         activeKVS.getEntries(db);
+    defaultKVS.clearKeyValuePairs(db);
     defaultKVS.addEntriesToStore(db, activeEntries);
+  }
+  
+  /**
+   * Move all of the key value pairs from the default into the server store.
+   * First clears all the key values in the server table and then moves them
+   * into the server table. At the moment this should really only be called
+   * before the first sync. After that it will eventually probably be a 
+   * privileged operation for an admin trying to push their table state up to
+   * the server? This is not yet determined, though.
+   * default-->server
+   * @param tableId
+   */
+  public void copyDefaultToServerForTable(String tableId) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);    
+    KeyValueStore serverKVS = this.getServerStoreForTable(tableId);
+    serverKVS.clearKeyValuePairs(db);
+    List<OdkTablesKeyValueStoreEntry> defaultEntries = 
+        defaultKVS.getEntries(db);
+    serverKVS.addEntriesToStore(db, defaultEntries);
   }
   
   /*
@@ -220,5 +356,29 @@ public class KeyValueStoreManager {
         ", " + VALUE + " TEXT NOT NULL" +
         ")";
   }
+  
+  /**
+   * The table creation SQL for the server store.
+   */
+  static String getServerTableCreateSql() {
+    return "CREATE TABLE " + SERVER_DB_NAME + "(" +
+               TABLE_ID + " TEXT NOT NULL" +
+        ", " + KEY + " TEXT NOT NULL" +
+        ", " + VALUE_TYPE + " TEXT NOT NULL" +
+        ", " + VALUE + " TEXT NOT NULL" +
+        ")";
+  }
+  
+  /**
+   * The table creation SQL for the sync store.
+   */
+  static String getSyncTableCreateSql() {
+    return "CREATE TABLE " + SYNC_DB_NAME + "(" +
+               TABLE_ID + " TEXT NOT NULL" +
+        ", " + KEY + " TEXT NOT NULL" +
+        ", " + VALUE_TYPE + " TEXT NOT NULL" +
+        ", " + VALUE + " TEXT NOT NULL" +
+        ")";
+  }  
 
 }

@@ -66,7 +66,7 @@ public class SyncProcessor {
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = dm.getSynchronizedDefaultTableProperties();
+    TableProperties[] tps = dm.getSynchronizedServerTableProperties();
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);
@@ -75,14 +75,16 @@ public class SyncProcessor {
 
   /**
    * Synchronize the table represented by the given TableProperties with the
-   * cloud. If tp.isSynchronized() == false, returns without doing anything.
+   * cloud. (The following old statement is no longer true. It now only looks
+   * at the tables that have synchronized set to true:
+   * "If tp.isSynchronized() == false, returns without doing anything".)
    * 
    * @param tp
    *          the table to synchronize
    */
   public void synchronizeTable(TableProperties tp) {
-    if (!tp.isSynchronized())
-      return;
+    //if (!tp.isSynchronized())
+     // return;
 
     DbTable table = dm.getDbTable(tp.getTableId());
 

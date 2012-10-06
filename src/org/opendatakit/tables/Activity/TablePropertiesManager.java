@@ -78,6 +78,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     
     private AlertDialog revertDialog;
     private AlertDialog saveAsDefaultDialog;
+    private AlertDialog defaultToServerDialog;
+    private AlertDialog serverToDefaultDialog;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -159,7 +161,55 @@ public class TablePropertiesManager extends PreferenceActivity {
           dialog.cancel();
         }
       });
-      saveAsDefaultDialog = builder.create();     
+      saveAsDefaultDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Move default to server store?");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore activeKVS = 
+              kvsm.getActiveStoreForTable(tp.getTableId());
+
+          kvsm.copyDefaultToServerForTable(tp.getTableId());
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      defaultToServerDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Merge server settings to default settings?");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore activeKVS = 
+              kvsm.getActiveStoreForTable(tp.getTableId());
+
+          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      serverToDefaultDialog = builder.create();    
       
       
         PreferenceScreen root =
@@ -353,7 +403,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         
         // the actual entry that has the option above.
         Preference revertPref = new Preference(this);
-        revertPref.setTitle("Revert to default settings.");
+        revertPref.setTitle("active<--default");
         revertPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
               
@@ -366,7 +416,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         defaultsCat.addPreference(revertPref);
         
         Preference saveAsDefaultPref = new Preference(this);
-        saveAsDefaultPref.setTitle("Save current settings as default.");
+        saveAsDefaultPref.setTitle("active-->default");
         saveAsDefaultPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
               
@@ -377,6 +427,32 @@ public class TablePropertiesManager extends PreferenceActivity {
               }
             });
         defaultsCat.addPreference(saveAsDefaultPref);
+        
+        Preference defaultToServerPref = new Preference(this);
+        defaultToServerPref.setTitle("default-->server");
+        defaultToServerPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                defaultToServerDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(defaultToServerPref);
+        
+        Preference serverToDefaultPref = new Preference(this);
+        serverToDefaultPref.setTitle("default<--MERGE--server");
+        serverToDefaultPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                serverToDefaultDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(serverToDefaultPref);
         
         setPreferenceScreen(root);
     }

@@ -225,22 +225,13 @@ public class KeyValueStore {
   }
  
   /**
-   * Add key value pairs to the store from a manifest. It is very important to
-   * note that, since you are adding them from a manifest, you are assumed to
-   * be wanting to overwrite all the entries currently in the store and 
-   * default to the server state. It therefore clears all the entries for
-   * each table in tableIds so that it can start with a blank slate. 
-   * <p>
-   * All of the entries from a manifest are coming from a server, and it is 
-   * they are therefore put into the default key value store.
-   * <p> 
-   * Null values are inserted as an empty string.
+   * Add key value pairs to the store. Null values are inserted as an empty 
+   * string.
    * @param dbh
    * @param entries List of the entries to be added.
    */
   public void addEntriesToStore(SQLiteDatabase db,
       List<OdkTablesKeyValueStoreEntry> entries) {
-    clearKeyValuePairs(db);
     int numInserted = 0;
     for (OdkTablesKeyValueStoreEntry entry : entries) {
       if (entry.value == null)

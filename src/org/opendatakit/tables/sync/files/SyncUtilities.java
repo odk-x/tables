@@ -91,7 +91,13 @@ public class SyncUtilities {
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     db.beginTransaction();
     try { 
-      KeyValueStore kvs = kvms.getDefaultStoreForTable(tableId);
+      KeyValueStore kvs = kvms.getServerStoreForTable(tableId);
+      // When the table properties are passed down from the server in the key
+      // value store, we will want to clear the original entries and overwrite
+      // them with the current state of the server. For now, however, we aren't
+      // going to do that, b/c the properties aren't coming down from the 
+      // server via the manifest.
+      //kvs.clearKeyValuePairs(db);
       kvs.addEntriesToStore(db, allEntries);
       db.setTransactionSuccessful();
     } catch (Exception e) {
