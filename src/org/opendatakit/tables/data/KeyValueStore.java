@@ -45,14 +45,14 @@ public class KeyValueStore {
   
   // The SQL where clause to use for selecting, updating, or deleting the row
   // for a given key.
-  private static final String WHERE_SQL_FOR_KEY = 
+  protected static final String WHERE_SQL_FOR_KEY = 
       KeyValueStoreManager.TABLE_ID + " = ? and " + KeyValueStoreManager.KEY + 
       " = ?";
   
   /*
    * The base where clause for selecting a table.
    */
-  private static final String WHERE_SQL_FOR_TABLE = 
+  protected static final String WHERE_SQL_FOR_TABLE = 
       KeyValueStoreManager.TABLE_ID + " = ?";
   
   /*
@@ -60,15 +60,15 @@ public class KeyValueStore {
    * in the list of table properties. Its usage must be followed by appending
    * ")".
    */
-  private static final String WHERE_SQL_FOR_PROPS = 
+  protected static final String WHERE_SQL_FOR_KEYS = 
       KeyValueStoreManager.TABLE_ID + " = ? " + " AND " + 
       KeyValueStoreManager.KEY + " in (";
   
-  private final DbHelper dbh;
+  protected final DbHelper dbh;
   //private final String[] whereArgs;
-  private final String tableId;
+  protected final String tableId;
   // The name of the database table that backs the key value store
-  private final String dbBackingName;
+  protected final String dbBackingName;
   
   /**
    * Construct a key value store object for interacting with a table's key
@@ -143,7 +143,7 @@ public class KeyValueStore {
     for (int i = 0; i < basicProps.length; i++) {
       desiredKeys[i+1] = basicProps[i]; 
     }
-    String whereClause = WHERE_SQL_FOR_PROPS + 
+    String whereClause = WHERE_SQL_FOR_KEYS + 
         makePlaceHolders(TableProperties.getInitColumns().length) + ")";
     Cursor c = db.query(this.dbBackingName, 
         new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
@@ -156,7 +156,7 @@ public class KeyValueStore {
    * Return a map of key to value from a cursor that has queried the database
    * backing the key value store.
    */
-  private Map<String, String> getKeyValuesFromCursor(Cursor c) {
+  protected Map<String, String> getKeyValuesFromCursor(Cursor c) {
     int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.KEY);
     int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE);
     Map<String, String> keyValues = new HashMap<String, String>();
@@ -178,7 +178,7 @@ public class KeyValueStore {
    * Get the full entries from the table. These are the full entries, with
    * tableId and type information.
    */
-  private List<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
+  protected List<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
     List<OdkTablesKeyValueStoreEntry> entries = 
         new ArrayList<OdkTablesKeyValueStoreEntry>();
     int idIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.TABLE_ID);
@@ -206,8 +206,9 @@ public class KeyValueStore {
    * @param dbh
    * @param db the open database
    * @param tableId
+   * @return the number of entries deleted from the store.
    */
-  public void clearKeyValuePairs(SQLiteDatabase db) {
+  public int clearKeyValuePairs(SQLiteDatabase db) {
     // First get the key value pairs for this table.
     Map<String, String> keyValues = 
         getKeyValues(db);
@@ -222,6 +223,35 @@ public class KeyValueStore {
           " the KeyValueStoreDefault, but there were " + keyValues.size() + 
           " key value pairs for the table " + tableId);
     }
+    return count;
+  }
+  
+  /**
+   * Return the entries in the key value store with the keys specified in the 
+   * list desiredKeys.
+   * @param db
+   * @param keys
+   * @return
+   */
+  public List<OdkTablesKeyValueStoreEntry> getEntriesForKeys(SQLiteDatabase db,
+      List<String> keys) {
+    String[] desiredKeys = new String[keys.size() + 1];
+    // we want the first to be the tableId, b/c that is the table id we are
+    // querying over in the database.
+    desiredKeys[0] = tableId;
+    for (int i = 0; i < keys.size(); i++) {
+      desiredKeys[i+1] = keys.get(i); 
+    }
+    String whereClause = WHERE_SQL_FOR_KEYS + 
+        makePlaceHolders(keys.size()) + ")";
+    Cursor c = db.query(this.dbBackingName, 
+        new String[] {KeyValueStoreManager.TABLE_ID,
+                      KeyValueStoreManager.KEY,
+                      KeyValueStoreManager.VALUE_TYPE,
+                      KeyValueStoreManager.VALUE}, 
+        whereClause, 
+        desiredKeys, null, null, null);    
+    return getEntriesFromCursor(c);
   }
  
   /**
@@ -283,7 +313,7 @@ public class KeyValueStore {
    * to ensure that there the keys remain a set and that there are no other
    * invariants broken my direct manipulation of the database.
    */
-  private void addEntryToStore(SQLiteDatabase db, 
+  protected void addEntryToStore(SQLiteDatabase db, 
       OdkTablesKeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
     values.put(KeyValueStoreManager.TABLE_ID, String.valueOf(entry.tableId));
@@ -309,6 +339,5 @@ public class KeyValueStore {
     holders = holders.substring(0, holders.length()-1);
     return holders;   
   }
-  
     
 }

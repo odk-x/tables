@@ -166,7 +166,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       builder = new AlertDialog.Builder(
           TablePropertiesManager.this);
       builder.setMessage(
-          "Move default to server store?");
+          "Copy default to server store?");
       builder.setCancelable(true);
       builder.setPositiveButton("Yes", 
           new DialogInterface.OnClickListener() {

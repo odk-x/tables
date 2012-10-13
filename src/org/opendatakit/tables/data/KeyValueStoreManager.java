@@ -114,8 +114,8 @@ public class KeyValueStoreManager {
    * @param tableId
    * @return
    */
-  public KeyValueStore getSyncStoreForTable(String tableId) {
-    return new KeyValueStore(SYNC_DB_NAME, this.dbh, tableId);
+  public KeyValueStoreSync getSyncStoreForTable(String tableId) {
+    return new KeyValueStoreSync(SYNC_DB_NAME, this.dbh, tableId);
   }
   
   /**
@@ -154,17 +154,36 @@ public class KeyValueStoreManager {
     return getTableIdsFromCursor(c);    
   }
   
+  /**
+   * Return a list of the table ids who have isSetToSync set to true in the 
+   * sync KVS.
+   * @param db
+   * @return
+   */
   public List<String> getSynchronizedTableIds(SQLiteDatabase db) {
     // We want a query returning the TABLE_UUID where the key is the 
     // sync state string and the value is true.
-    Cursor c = getTableIdsWithKeyValue(db, ACTIVE_DB_NAME,
-        TableProperties.DB_IS_SYNCHED, "1");
+    Cursor c = getTableIdsWithKeyValue(db, SYNC_DB_NAME,
+        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
     return getTableIdsFromCursor(c);
   }
   
   public List<String> getDataTableIds(SQLiteDatabase db) {
     Cursor c = getTableIdsWithKeyValue(db, ACTIVE_DB_NAME,
         TableProperties.DB_TABLE_TYPE, 
+        Integer.toString(TableProperties.TableType.DATA));
+    return getTableIdsFromCursor(c);
+  }
+  
+  /**
+   * Return a list of the table ids for all the tables in the server KVS that
+   * are of type data.
+   * @param db
+   * @return
+   */
+  public List<String> getServerDataTableIds(SQLiteDatabase db) {
+    Cursor c = getTableIdsWithKeyValue(db, SERVER_DB_NAME,
+        TableProperties.DB_TABLE_TYPE,
         Integer.toString(TableProperties.TableType.DATA));
     return getTableIdsFromCursor(c);
   }
@@ -186,6 +205,7 @@ public class KeyValueStoreManager {
   /**
    * Remove all the key values from the active key value store and copy all the
    * key value pairs from the default store into the active.
+   * <p>
    * active<--default
    * @param tableId
    */
@@ -281,23 +301,66 @@ public class KeyValueStoreManager {
   }
   
   /**
-   * Move all of the key value pairs from the default into the server store.
+   * Copy all of the key value pairs from the default into the server store.
    * First clears all the key values in the server table and then moves them
    * into the server table. At the moment this should really only be called
    * before the first sync. After that it will eventually probably be a 
    * privileged operation for an admin trying to push their table state up to
    * the server? This is not yet determined, though.
+   * <p>
+   * It is also important to note that if an entry for the table does not exist
+   * in the sync key value store, the key isSetToSync will be added an 
+   * initialized to 0. If there becomes a way to put entries into the server
+   * key value store that does NOT use this method, you must be sure to also
+   * add the isSetToSync key to the sync KVS.
+   * <p>
    * default-->server
    * @param tableId
    */
   public void copyDefaultToServerForTable(String tableId) {
     SQLiteDatabase db = dbh.getWritableDatabase();
+    int numClearedFromServerKVS;
     KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);    
     KeyValueStore serverKVS = this.getServerStoreForTable(tableId);
-    serverKVS.clearKeyValuePairs(db);
+    numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> defaultEntries = 
         defaultKVS.getEntries(db);
     serverKVS.addEntriesToStore(db, defaultEntries);
+    // and now add an entry to the sync KVS.
+    addIsSetToSyncToSyncKVSForTable(tableId);
+  }
+  
+  /**
+   * Add the isSetToSynch key to the sync properties key value store for the 
+   * given table. The value is initialized to 0, or false. If the key already
+   * exists in the sync KVS, nothing happens.
+   * @param tableId
+   */
+  public void addIsSetToSyncToSyncKVSForTable(String tableId) {
+    KeyValueStore syncKVS = this.getSyncStoreForTable(tableId);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    // Note! If there ever becomes another way to
+    // add entries to the server key value store, you must be sure to add the
+    // is set to sync key to the sync store.
+    List<String> isSetToSyncKey = new ArrayList<String>();
+    isSetToSyncKey.add(KeyValueStoreSync.SyncPropertiesKeys
+        .IS_SET_TO_SYNC.getKey());
+    List<OdkTablesKeyValueStoreEntry> currentIsSetToSync = 
+        syncKVS.getEntriesForKeys(db, isSetToSyncKey);
+    if (currentIsSetToSync.size() == 0) {
+      // we add the value.
+      OdkTablesKeyValueStoreEntry newEntry = 
+          new OdkTablesKeyValueStoreEntry();
+      newEntry.key = 
+          KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey();
+      newEntry.tableId = tableId;
+      newEntry.type = "Integer";
+      newEntry.value = "0";
+      List<OdkTablesKeyValueStoreEntry> newKey = 
+          new ArrayList<OdkTablesKeyValueStoreEntry>();
+      newKey.add(newEntry);
+      syncKVS.addEntriesToStore(db, newKey);
+    }
   }
   
   /*

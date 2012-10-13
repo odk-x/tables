@@ -67,6 +67,15 @@ public class DataManager {
         return TableProperties.getTablePropertiesForDataTables(dbh);
     }
     
+    /**
+     * Returns the TableProperties for all of the tables in the server KVS that
+     * are of type DATA.
+     * @return
+     */
+    public TableProperties[] getTablePropertiesForServerDataTables() {
+      return TableProperties.getTablePropertiesForServerDataTables(dbh);
+    }
+    
     public TableProperties[] getSecurityTableProperties() {
         return TableProperties.getTablePropertiesForSecurityTables(dbh);
     }

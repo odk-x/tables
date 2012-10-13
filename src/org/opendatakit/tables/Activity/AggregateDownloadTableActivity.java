@@ -24,6 +24,8 @@ import java.util.concurrent.ExecutionException;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.SyncProcessor;
@@ -216,7 +218,10 @@ public class AggregateDownloadTableActivity extends ListActivity {
       TableProperties tp = TableProperties.addTable(dbh,
           TableProperties.createDbTableName(dbh, tableName), tableName,
           TableProperties.TableType.DATA, tableId);
-      tp.setSynchronized(true);
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
+      syncKVS.setIsSetToSync(true);
+      // hilary's original--tp.setSynchronized(true);
       tp.setSyncState(SyncUtil.State.REST);
       tp.setSyncTag(null);
 

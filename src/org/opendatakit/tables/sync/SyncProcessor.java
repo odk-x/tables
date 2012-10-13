@@ -183,6 +183,10 @@ public class SyncProcessor {
     return success;
   }
 
+  /*
+   * I think this is the method that's called when the table is dl'd for the 
+   * first time from the server? SS
+   */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());

@@ -70,7 +70,6 @@ public class TableProperties {
   public static final String DB_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
   public static final String DB_SYNC_STATE = "syncState";
   public static final String DB_TRANSACTIONING = "transactioning";
-  public static final String DB_IS_SYNCHED = "isSynched";
   // keys for JSON
   private static final String JSON_KEY_VERSION = "jVersion";
   private static final String JSON_KEY_TABLE_ID = "tableId";
@@ -96,8 +95,6 @@ public class TableProperties {
   private static final String ID_WHERE_SQL = DB_TABLE_ID + " = ?";
   // the SQL where clause to use for selecting by table type
   private static final String TYPE_WHERE_SQL = DB_TABLE_TYPE + " = ?";
-  // the SQL where clause to use for selecting by sync state
-  private static final String IS_SYNCHED_WHERE_SQL = DB_IS_SYNCHED + " = ?";
   // the columns to be selected when initializing TableProperties
   private static final String[] INIT_COLUMNS = { 
     DB_TABLE_ID, 
@@ -116,8 +113,7 @@ public class TableProperties {
     DB_DETAIL_VIEW_FILE, 
     DB_SUM_DISPLAY_FORMAT, 
     DB_SYNC_STATE,
-    DB_TRANSACTIONING, 
-    DB_IS_SYNCHED, };
+    DB_TRANSACTIONING};
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { 
       DB_TABLE_ID,
@@ -174,10 +170,6 @@ public class TableProperties {
   private String sumDisplayFormat;
   private int syncState;
   private boolean transactioning;
-  // this flag is whether or not the table is set TO be synched with the 
-  // server, not that it IS CURRENTLY synched. That information is in the
-  // a property in the key value store.
-  private boolean isSynched;
 
   private TableProperties(DbHelper dbh, 
       String tableId, 
@@ -196,8 +188,7 @@ public class TableProperties {
       String detailViewFilename,
       String sumDisplayFormat, 
       int syncState, 
-      boolean transactioning, 
-      boolean isSynched) {
+      boolean transactioning) {
     this.dbh = dbh;
     whereArgs = new String[] { String.valueOf(tableId) };
     this.tableId = tableId;
@@ -220,7 +211,6 @@ public class TableProperties {
     this.sumDisplayFormat = sumDisplayFormat;
     this.syncState = syncState;
     this.transactioning = transactioning;
-    this.isSynched = isSynched;
   }
 
   /**
@@ -297,12 +287,26 @@ public class TableProperties {
    * @param dbh
    * @return
    */
-  public static TableProperties[] getTablePropertiesForDataTables(DbHelper dbh) {
+  public static TableProperties[] getTablePropertiesForDataTables(
+      DbHelper dbh) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     List<String> dataIds = kvsm.getDataTableIds(db);
     return constructActivePropertiesFromIds(dataIds, dbh, db, kvsm);
   }
+  
+  /**
+   * Return all the TableProperties for the tables in the server KVS that are
+   * of type DATA.
+   * @param dbh
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForServerDataTables(
+      DbHelper dbh) {
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    List<String> dataIds = kvsm.getServerDataTableIds(db);
+    return constructActivePropertiesFromIds(dataIds, dbh, db, kvsm);  }
 
   
   /**
@@ -346,9 +350,6 @@ public class TableProperties {
     String transactioningStr = props.get(DB_TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
-    String synchedStr = props.get(DB_IS_SYNCHED);
-    int synchedInt = Integer.parseInt(synchedStr);
-    boolean isSynched = SyncUtil.intToBool(synchedInt);
     String columnOrderValue = props.get(DB_COLUMN_ORDER);
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
     // DB_PRIME_COLUMN values to be empty strings, not null. However, when
@@ -381,8 +382,7 @@ public class TableProperties {
         props.get(DB_DETAIL_VIEW_FILE),
         props.get(DB_SUM_DISPLAY_FORMAT),
         syncState,
-        transactioning,
-        isSynched);  
+        transactioning);  
   }
   
   /*
@@ -511,10 +511,9 @@ public class TableProperties {
     values.add(createIntEntry(id, DB_SYNC_STATE, 
         Integer.toString(SyncUtil.State.INSERTING)));
     values.add(createIntEntry(id, DB_TRANSACTIONING, "0"));
-    values.add(createIntEntry(id, DB_IS_SYNCHED, "0"));
     TableProperties tp = new TableProperties(dbh, id, dbTableName, displayName,
         tableType, new String[0], new String[0], null, null, null, null, null, 
-        null, null, null, null, SyncUtil.State.INSERTING, false, false);
+        null, null, null, null, SyncUtil.State.INSERTING, false);
     tp.getColumns(); // ensuring columns are already initialized
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     SQLiteDatabase db = dbh.getWritableDatabase();
@@ -574,9 +573,17 @@ public class TableProperties {
   }
 
   public void deleteTable() {
-    if (isSynched && (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING))
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
+    boolean isSetToSync = syncKVSM.isSetToSync();
+    // hilary's original
+    //if (isSynched && (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING))
+      if (isSetToSync && (syncState == SyncUtil.State.REST 
+                           || syncState == SyncUtil.State.UPDATING))
       setSyncState(SyncUtil.State.DELETING);
-    else if (!isSynched || syncState == SyncUtil.State.INSERTING)
+    // hilary's original
+    //else if (!isSynched || syncState == SyncUtil.State.INSERTING)
+    else if (!isSetToSync || syncState == SyncUtil.State.INSERTING)
       deleteTableActual();
   }
 
@@ -1172,18 +1179,18 @@ public class TableProperties {
    * Whether or not the table is set to be synched with the server.
    * @return
    */
-  public boolean isSynchronized() {
-    return isSynched;
-  }
+  //public boolean isSynchronized() {
+  //  return isSynched;
+  //}
 
   /**
    * Set whether or not the table is due to be synced with the server.
    * @param isSynchronized
    */
-  public void setSynchronized(boolean isSynchronized) {
-    setIntProperty(DB_IS_SYNCHED, SyncUtil.boolToInt(isSynchronized));
-    this.isSynched = isSynchronized;
-  }
+  //public void setSynchronized(boolean isSynchronized) {
+  //  setIntProperty(DB_IS_SYNCHED, SyncUtil.boolToInt(isSynchronized));
+  //  this.isSynched = isSynchronized;
+  //}
 
   public String toJson() {
     getColumns(); // ensuring columns is initialized
@@ -1278,6 +1285,9 @@ public class TableProperties {
 
   private void setIntProperty(String property, int value) {
     SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
+    boolean isSetToSync = syncKVS.isSetToSync();
     db.beginTransaction();
     try {
       setIntProperty(property, value, db);
@@ -1289,7 +1299,10 @@ public class TableProperties {
     } finally {
       db.endTransaction();
     }
-    if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+    // hilary's original:
+    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+    if (isSetToSync && syncState == SyncUtil.State.REST 
+        && JSON_COLUMNS.contains(property))
       setSyncState(SyncUtil.State.UPDATING);
   }
   
@@ -1305,6 +1318,9 @@ public class TableProperties {
 
   private void setStringProperty(String property, String value) {
     SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
+    boolean isSetToSync = syncKVS.isSetToSync();
     db.beginTransaction();
     try {
       setStringProperty(property, value, db);
@@ -1315,7 +1331,10 @@ public class TableProperties {
     } finally {
       db.endTransaction();
     }
-    if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+    // hilary's original
+    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+    if (isSetToSync && syncState == SyncUtil.State.REST 
+        && JSON_COLUMNS.contains(property))
       setSyncState(SyncUtil.State.UPDATING);
   }
 

@@ -375,7 +375,22 @@ public class DbTable {
     public void updateRow(String rowId, Map<String, String> values,
             String srcPhone, String lastModTime) {
         ContentValues cv = new ContentValues();
-        if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
+        // TODO is this a race condition of sorts? isSynchronized(), which 
+        // formerly returned isSynched, may kind of be doing double duty,
+        // saving if it the table is selected TO sync with the server, and also
+        // whether the information is up  to date? If so, and you are somehow
+        // able to uncheck the box before the server starts syncing, this could
+        // cause a problem. This should probably be resolved.
+        // UPDATE: I have used the KeyValueStoreSync to return the same value
+        // as hilary was originally using. However, this might have to be 
+        // updated.
+        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+        KeyValueStoreSync syncKVSM = 
+            kvsm.getSyncStoreForTable(tp.getTableId());
+        boolean isSetToSync = syncKVSM.isSetToSync();
+        // hilary's original
+        //if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
+        if (isSetToSync && getSyncState(rowId) == SyncUtil.State.REST)
           cv.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
@@ -425,7 +440,13 @@ public class DbTable {
      * deleted. Otherwise, actually deletes the row.
      */
     public void markDeleted(String rowId) {
-      if (!tp.isSynchronized()) {
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      KeyValueStoreSync syncKVSM = 
+          kvsm.getSyncStoreForTable(tp.getTableId());
+      boolean isSetToSync = syncKVSM.isSetToSync();
+      // hilary's original
+      //if (!tp.isSynchronized()) {
+      if (!isSetToSync) {
         deleteRowActual(rowId);
       } else {
         int syncState = getSyncState(rowId);
