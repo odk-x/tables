@@ -26,6 +26,7 @@ import org.opendatakit.tables.activities.ConflictResolutionActivity;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -41,6 +42,7 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -107,7 +109,8 @@ public class TableManager extends ListActivity {
 	 
 	 public void refreshList() {
 		 registerForContextMenu(getListView());
-		 tableProps = TableProperties.getTablePropertiesForAll(dbh);
+		 tableProps = TableProperties.getTablePropertiesForAll(dbh,
+		     KeyValueStore.Type.ACTIVE);
 		 Log.d("TM", "refreshing list, tableProps.length=" + tableProps.length);
 		 if (tableProps.length == 0) {
 		     makeNoTableNotice();
@@ -322,6 +325,7 @@ public class TableManager extends ListActivity {
 	 private void alertForNewTableName(final boolean isNewTable, 
 			 final int tableType, final TableProperties tp, String givenTableName) {
 		
+	   AlertDialog newTableAlert;
 		 // Prompt an alert box
 		 AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		 alert.setTitle("Name of New Table");
@@ -359,7 +363,10 @@ public class TableManager extends ListActivity {
 			 }
 		 });
 
-		 alert.show();
+		 newTableAlert = alert.create();
+		 newTableAlert.getWindow().setSoftInputMode(WindowManager.
+		     LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		 newTableAlert.show();
 	 }
 	 
 	 private void toastTableNameError(String msg) {
@@ -371,8 +378,10 @@ public class TableManager extends ListActivity {
 	 private void addTable(String tableName, int tableType) {
 	     String dbTableName =
 	             TableProperties.createDbTableName(dbh, tableName);
+	     // If you're adding through the table manager, you're using the phone,
+	     // and consequently you should be adding to the active store.
 	     TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-	             tableName, tableType);
+	             tableName, tableType, KeyValueStore.Type.ACTIVE);
 	 }
 	 
  }

@@ -4,6 +4,7 @@ import java.io.File;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.view.custom.CustomView;
@@ -32,7 +33,8 @@ public class Launcher extends Activity {
             startActivity(i);
         } else {
             TableProperties tp = TableProperties.getTablePropertiesForTable(
-                    DbHelper.getDbHelper(this), tableId);
+                    DbHelper.getDbHelper(this), tableId, 
+                    KeyValueStore.Type.ACTIVE);
             Controller.launchTableActivity(this, tp, true);
         }
         finish();

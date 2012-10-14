@@ -90,7 +90,8 @@ public class TablePropertiesManager extends PreferenceActivity {
                     ") is invalid.");
         }
         dbh = DbHelper.getDbHelper(this);
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+            KeyValueStore.Type.ACTIVE);
         setTitle("ODK Tables > Table Manager > " + tp.getDisplayName());
         init();
     }
@@ -111,7 +112,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           KeyValueStoreManager kvsm = 
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore defaultKVS = 
-              kvsm.getDefaultStoreForTable(tp.getTableId());
+              kvsm.getStoreForTable(tp.getTableId(), 
+                  KeyValueStore.Type.DEFAULT);
           if (!defaultKVS.entriesExist(db)) {
             AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
                 TablePropertiesManager.this);
@@ -151,7 +153,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           KeyValueStoreManager kvsm = 
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore activeKVS = 
-              kvsm.getActiveStoreForTable(tp.getTableId());
+              kvsm.getStoreForTable(tp.getTableId(), 
+                  KeyValueStore.Type.ACTIVE);
 
           kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
         }
@@ -175,7 +178,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           KeyValueStoreManager kvsm = 
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore activeKVS = 
-              kvsm.getActiveStoreForTable(tp.getTableId());
+              kvsm.getStoreForTable(tp.getTableId(),
+                  KeyValueStore.Type.ACTIVE);
 
           kvsm.copyDefaultToServerForTable(tp.getTableId());
         }
@@ -199,7 +203,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           KeyValueStoreManager kvsm = 
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore activeKVS = 
-              kvsm.getActiveStoreForTable(tp.getTableId());
+              kvsm.getStoreForTable(tp.getTableId(),
+                  KeyValueStore.Type.ACTIVE);
 
           kvsm.mergeServerToDefaultForTable(tp.getTableId());
         }
@@ -316,7 +321,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         securityCat.setTitle("Access Control");
         
         TableProperties[] accessTps =
-            TableProperties.getTablePropertiesForSecurityTables(dbh);
+            TableProperties.getTablePropertiesForSecurityTables(dbh,
+                KeyValueStore.Type.ACTIVE);
         int accessTableCount =
                 (tp.getTableType() == TableProperties.TableType.SECURITY) ?
                 (accessTps.length) : accessTps.length + 1;

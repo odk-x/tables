@@ -18,6 +18,7 @@ package org.opendatakit.tables.Activity;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.TableProperties;
@@ -68,7 +69,7 @@ public class AggregateChooseTablesActivity extends ListActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     DataManager dm = new DataManager(dbh);
     // hilary's original--return dm.getDataTableProperties();
-    return dm.getTablePropertiesForServerDataTables();
+    return dm.getTablePropertiesForDataTables(KeyValueStore.Type.SERVER);
   }
 
   @Override

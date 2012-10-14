@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableViewSettings.ConditionalRuler;
 import org.opendatakit.tables.data.UserTable;
@@ -78,7 +79,8 @@ public class MapDisplayActivity extends MapActivity
         du = DataUtil.getDefaultDataUtil();
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         labelColIndex = c.getTableProperties().getColumnIndex(
                 c.getTableViewSettings().getMapLabelCol().getColumnDbName());
         mapWrapper = new RelativeLayout(this);

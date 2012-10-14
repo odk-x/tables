@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.content.ContentValues;
@@ -125,7 +126,9 @@ public class DisplayPrefs {
         int foregroundIndex = cs.getColumnIndex("foreground");
         int backgroundIndex = cs.getColumnIndex("background");
         // initializing the ccr
-        TableProperties tp = TableProperties.getTablePropertiesForTable(DbHelper.getDbHelper(context), tableId);
+        TableProperties tp = TableProperties.getTablePropertiesForTable(
+            DbHelper.getDbHelper(context), tableId,
+            KeyValueStore.Type.ACTIVE);
         ColumnProperties cp = tp.getColumnByDbName(tp.getColumnByDisplayName(colName));
         ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());
         // adding rules

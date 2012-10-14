@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -66,7 +67,8 @@ public class SyncProcessor {
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = dm.getSynchronizedServerTableProperties();
+    TableProperties[] tps = dm.getTablePropertiesForTablesSetToSync(
+        KeyValueStore.Type.SERVER);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp);

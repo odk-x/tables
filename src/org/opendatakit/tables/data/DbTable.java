@@ -55,7 +55,11 @@ public class DbTable {
     private DbTable(DbHelper dbh, String tableId) {
         this.du = DataUtil.getDefaultDataUtil();
         this.dbh = dbh;
-        this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+        this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+            KeyValueStore.Type.ACTIVE);
+        // so this looks like the problem, needs to somehow know if it should
+        // be drawing the props from the server table (if you'd dl'ing a table)
+        // or if you're creating a table and therefore want the active.
     }
     
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {

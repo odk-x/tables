@@ -148,6 +148,9 @@ public class TableProperties {
     private ViewType() {
     }
   }
+  
+  // This is the Type of the key value store where the properties reside.
+  private final KeyValueStore.Type backingStore;
 
   private final DbHelper dbh;
   private final String[] whereArgs;
@@ -188,7 +191,8 @@ public class TableProperties {
       String detailViewFilename,
       String sumDisplayFormat, 
       int syncState, 
-      boolean transactioning) {
+      boolean transactioning,
+      KeyValueStore.Type backingStore) {
     this.dbh = dbh;
     whereArgs = new String[] { String.valueOf(tableId) };
     this.tableId = tableId;
@@ -211,88 +215,98 @@ public class TableProperties {
     this.sumDisplayFormat = sumDisplayFormat;
     this.syncState = syncState;
     this.transactioning = transactioning;
+    this.backingStore = backingStore;
   }
 
   /**
    * Return the TableProperties for the given table id.
    * @param dbh
    * @param tableId
+   * @param typeOfStore the store from which to get the properties
    * @return
    */
   public static TableProperties getTablePropertiesForTable(DbHelper dbh,
-      String tableId) {
+      String tableId, KeyValueStore.Type typeOfStore) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStore activeKVS = kvsm.getActiveStoreForTable(tableId);
-    Map<String, String> mapProps = activeKVS
+    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, 
+        typeOfStore);
+    Map<String, String> mapProps = intendedKVS
         .getProperties(db);
-    return constructPropertiesFromMap(dbh, mapProps);
+    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
   }
   
   /**
-   * Return the TableProperties for all the tables in the active key value
+   * Return the TableProperties for all the tables in the specified KVS.
    * store.
    * @param dbh
+   * @param typeOfStore the KVS from which to get the store
    * @return
    */
-  public static TableProperties[] getTablePropertiesForAll(DbHelper dbh) {
+  public static TableProperties[] getTablePropertiesForAll(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> activeIds = kvsm.getActiveTableIds(db);
-    return constructActivePropertiesFromIds(activeIds, dbh, db, kvsm);
+    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
+    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
   }
 
   /**
    * Get the TableProperties for all the tables that have synchronized set
-   * to true. Gets the active, currently set settings.
+   * to true in the sync KVS. typeOfStore tells you the KVS (active, default,
+   * or server) from which to construct the properties.
    * @param dbh
+   * @param typeOfStore the KVS from which to get the properties
    * @return
    */
   public static TableProperties[] getTablePropertiesForSynchronizedTables(
-      DbHelper dbh) {
+      DbHelper dbh, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     List<String> synchedIds = kvsm.getSynchronizedTableIds(db);    
-    return constructActivePropertiesFromIds(synchedIds, dbh, db, kvsm);
+    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
   }
   
   /**
    * Get the default TableProperties for all the tables that have 
-   * synchronized set to true in the active store. 
+   * synchronized set to true.
+   * @param dbh
+   * @param intendedStore the KVS from which to get the properties
    */
-  public static TableProperties[] getDefaultPropertiesForSynchronizedTables(
-      DbHelper dbh) {
+  /*public static TableProperties[] getDefaultPropertiesForSynchronizedTables(
+      DbHelper dbh, KeyValueStore.Type intendedStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
     return constructDefaultPropertiesFromIds(synchedIds, dbh, db, kvsm);
-  }
+  }*/
   
   /**
    * Get the sever TableProperties for all the tables that have synchronized
    * set to true in the active store.
    */
-  public static TableProperties[] getServerPropertiesForSynchronizedTables(
+  /*public static TableProperties[] getServerPropertiesForSynchronizedTables(
       DbHelper dbh) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
     return constructServerPropertiesFromIds(synchedIds, dbh, db, kvsm);
-  }
+  }*/
       
 
   /**
    * Get the TableProperties for all the tables of all the type data
-   * in the active key value store.
+   * in the intended store.
    * @param dbh
+   * @param typeOfStore the KVS from which to get the properties
    * @return
    */
   public static TableProperties[] getTablePropertiesForDataTables(
-      DbHelper dbh) {
+      DbHelper dbh, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> dataIds = kvsm.getDataTableIds(db);
-    return constructActivePropertiesFromIds(dataIds, dbh, db, kvsm);
+    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
+    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
   }
   
   /**
@@ -301,39 +315,42 @@ public class TableProperties {
    * @param dbh
    * @return
    */
-  public static TableProperties[] getTablePropertiesForServerDataTables(
+  /*public static TableProperties[] getTablePropertiesForServerDataTables(
       DbHelper dbh) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     List<String> dataIds = kvsm.getServerDataTableIds(db);
-    return constructActivePropertiesFromIds(dataIds, dbh, db, kvsm);  }
+    return constructActivePropertiesFromIds(dataIds, dbh, db, kvsm);  }*/
 
   
   /**
    * Get the TableProperties for all the tables of all the type security
    * in the active key value store.
    * @param dbh
+   * @param typeOfStore the KVS from which to get the properties
    * @return
    */
   public static TableProperties[] getTablePropertiesForSecurityTables(
-      DbHelper dbh) {
+      DbHelper dbh, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> securityIds = kvsm.getSecurityTableIds(db);
-    return constructActivePropertiesFromIds(securityIds, dbh, db, kvsm);
+    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
+    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
   }
 
   /**
    * Get the TableProperties for all the tables of all the type shortcut
-   * in the active key value store.
+   * in the intended store.
    * @param dbh
+   * @param typeOfStore the KVS from which to get the properties
    * @return
    */
-  public static TableProperties[] getTablePropertiesForShortcutTables(DbHelper dbh) {
+  public static TableProperties[] getTablePropertiesForShortcutTables(
+      DbHelper dbh, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = dbh.getReadableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> shortcutIds = kvsm.getShortcutTableIds(db);
-    return constructActivePropertiesFromIds(shortcutIds, dbh, db, kvsm);
+    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
+    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
   }
   
   /*
@@ -341,7 +358,7 @@ public class TableProperties {
    * would be acquired from the key value store.
    */
   private static TableProperties constructPropertiesFromMap(DbHelper dbh,
-      Map<String,String> props) {
+      Map<String,String> props, KeyValueStore.Type backingStore) {
     // first we have to get the appropriate type for the non-string fields.
     String tableTypeStr = props.get(DB_TABLE_TYPE);
     int tableType = Integer.parseInt(tableTypeStr);
@@ -382,14 +399,15 @@ public class TableProperties {
         props.get(DB_DETAIL_VIEW_FILE),
         props.get(DB_SUM_DISPLAY_FORMAT),
         syncState,
-        transactioning);  
+        transactioning,
+        backingStore);  
   }
   
   /*
    * Construct an array of TableProperties based on a list of table ids that
    * you want from the database. Gets from the active store.
    */
-  private static TableProperties[] constructActivePropertiesFromIds(
+  /*private static TableProperties[] constructActivePropertiesFromIds(
       List<String> ids, DbHelper dbh, SQLiteDatabase db, 
       KeyValueStoreManager kvsm) {
     TableProperties[] allProps = new TableProperties[ids.size()];
@@ -401,6 +419,24 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs);
     }
     return allProps;
+  }*/
+  
+  /*
+   * Construct an array of table properties for the given ids. The properties
+   * are collected from the intededStore.
+   */
+  private static TableProperties[] constructPropertiesFromIds(
+      List<String> ids, DbHelper dbh, SQLiteDatabase db,
+      KeyValueStoreManager kvsm, KeyValueStore.Type typeOfStore) {
+    TableProperties[] allProps = new TableProperties[ids.size()];
+    for (int i = 0; i < ids.size(); i++) {
+      String tableId = ids.get(i);
+      KeyValueStore intendedKVS = 
+          kvsm.getStoreForTable(tableId, typeOfStore);
+      Map<String, String> propPairs = intendedKVS.getProperties(db);
+      allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
+    }
+    return allProps;   
   }
   
   /*
@@ -408,7 +444,7 @@ public class TableProperties {
    * It is very important to note that these properties will be as are 
    * reflected in the DEFAULT key value store. 
    */
-  private static TableProperties[] constructDefaultPropertiesFromIds(
+  /*private static TableProperties[] constructDefaultPropertiesFromIds(
       List<String> ids, DbHelper dbh, SQLiteDatabase db,
       KeyValueStoreManager kvsm) {
     TableProperties[] allProps = new TableProperties[ids.size()];
@@ -420,14 +456,14 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs);
     }
     return allProps;     
-  }
+  }*/
   
   /*
    * Construct an array of TableProperties based on the list of table ids.
    * It is very important to note that these properties will be as they are
    * reflected in the SERVER key value store.
    */
-  private static TableProperties[] constructServerPropertiesFromIds(
+  /*private static TableProperties[] constructServerPropertiesFromIds(
       List<String> ids, DbHelper dbh, SQLiteDatabase db, 
       KeyValueStoreManager kvsm) {
     TableProperties[] allProps = new TableProperties[ids.size()];
@@ -439,10 +475,33 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs);
     }
     return allProps;
-  }
+  }*/
 
+  /**
+   * Returns a legal name for a new table. This method checks all three KVS
+   * for possible conflicts.
+   * @param dbh
+   * @param displayName
+   * @return
+   */
   public static String createDbTableName(DbHelper dbh, String displayName) {
-    TableProperties[] allProps = getTablePropertiesForAll(dbh);
+    // so we want all properties. we're just going to check all of them, which
+    // probably isn't the most efficient way this could be done, as you could
+    // end up with triplicate table names. Going to not worry about it, as 
+    // this is probably just O(3N)?
+    TableProperties[] activeProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.ACTIVE);
+    TableProperties[] defaultProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.DEFAULT);
+    TableProperties[] serverProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.SERVER);
+    // this arraylist will hold all the properties.
+    ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
+    listProps.addAll(Arrays.asList(activeProps));
+    listProps.addAll(Arrays.asList(defaultProps));
+    listProps.addAll(Arrays.asList(serverProps));
+    TableProperties[] allProps = 
+        listProps.toArray(new TableProperties[listProps.size()]);
     // You cannot start with a digit, and you can only have alphanumerics
     // in SQLite. We are going to thus make the basename the displayName
     // prepended with an underscore, and replace all non-word characters
@@ -471,11 +530,21 @@ public class TableProperties {
     return false;
   }
 
+  /**
+   * Add a table to the database. The intendedStore type exists to force you
+   * to be specific to which store you are adding the table to.
+   * @param dbh
+   * @param dbTableName
+   * @param displayName
+   * @param tableType
+   * @param intendedStore type of the store to which you're adding. 
+   * @return
+   */
   public static TableProperties addTable(DbHelper dbh, String dbTableName, 
-      String displayName,
-      int tableType) {
+      String displayName, int tableType, KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, dbTableName, displayName, tableType, id);
+    TableProperties tp = addTable(dbh, dbTableName, displayName, tableType, 
+        id, intendedStore);
     if (tableType == TableType.SHORTCUT) {
       tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
       tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
@@ -488,8 +557,20 @@ public class TableProperties {
     return tp;
   }
 
+  /**
+   * Add a table to the database. The intendedStore type exists to force you
+   * to be specific to which store you are adding the table to.
+   * @param dbh
+   * @param dbTableName
+   * @param displayName
+   * @param tableType
+   * @param id
+   * @param typeOfStore
+   * @return
+   */
   public static TableProperties addTable(DbHelper dbh, String dbTableName, 
-      String displayName, int tableType, String id) {
+      String displayName, int tableType, String id, 
+      KeyValueStore.Type typeOfStore) {
     // We want an entry for each of these values.
     List<OdkTablesKeyValueStoreEntry> values = 
         new ArrayList<OdkTablesKeyValueStoreEntry>();
@@ -513,14 +594,15 @@ public class TableProperties {
     values.add(createIntEntry(id, DB_TRANSACTIONING, "0"));
     TableProperties tp = new TableProperties(dbh, id, dbTableName, displayName,
         tableType, new String[0], new String[0], null, null, null, null, null, 
-        null, null, null, null, SyncUtil.State.INSERTING, false);
+        null, null, null, null, SyncUtil.State.INSERTING, false, typeOfStore);
     tp.getColumns(); // ensuring columns are already initialized
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     SQLiteDatabase db = dbh.getWritableDatabase();
     db.beginTransaction();
     try {
-      KeyValueStore activeKVS = kvms.getActiveStoreForTable(id);
-      activeKVS.addEntriesToStore(db, values);
+      KeyValueStore typedStore = kvms.getStoreForTable(id, 
+          typeOfStore);
+      typedStore.addEntriesToStore(db, values);
       Log.d(TAG, "adding table: " + dbTableName);
       DbTable.createDbTable(db, tp);
       db.setTransactionSuccessful();
@@ -602,7 +684,8 @@ public class TableProperties {
         cp.deleteColumn(db);
       }
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore activeKVS = kvsm.getActiveStoreForTable(this.tableId);
+      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
+          KeyValueStore.Type.ACTIVE);
       activeKVS.clearKeyValuePairs(db);
       db.setTransactionSuccessful();
     } catch (Exception e) {
@@ -1309,8 +1392,9 @@ public class TableProperties {
   private void setIntProperty(String property, int value,
       SQLiteDatabase db) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore activeKVS = kvsm.getActiveStoreForTable(this.tableId);
-    activeKVS.insertOrUpdateKey(db, "Integer", property, 
+    KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
+        this.backingStore);
+    backingKVS.insertOrUpdateKey(db, "Integer", property, 
         Integer.toString(value));
     Log.d(TAG, "updated int " + property + " to " + value + "for " + 
       this.tableId);
@@ -1342,8 +1426,9 @@ public class TableProperties {
   private void setStringProperty(String property, String value, 
       SQLiteDatabase db) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore activeKVS = kvsm.getActiveStoreForTable(this.tableId);
-    activeKVS.insertOrUpdateKey(db, "String", property, value);
+    KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
+        this.backingStore);
+    intendedKVS.insertOrUpdateKey(db, "String", property, value);
     Log.d(TAG, "updated string " + property + " to " + value + " for " 
       + this.tableId);
   }

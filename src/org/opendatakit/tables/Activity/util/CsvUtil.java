@@ -27,6 +27,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -48,10 +49,19 @@ public class CsvUtil {
         dbh = DbHelper.getDbHelper(context);
     }
     
+    /**
+     * Tables imported through this function are added to the active key value
+     * store. Doing it another way would give users a workaround to add tables
+     * to the server database.
+     * @param file
+     * @param tableName
+     * @return
+     */
     public boolean importNewTable(File file, String tableName) {
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
         TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-                tableName, TableProperties.TableType.DATA);
+                tableName, TableProperties.TableType.DATA, 
+                KeyValueStore.Type.ACTIVE);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             String[] row = reader.readNext();
@@ -89,8 +99,9 @@ public class CsvUtil {
     }
     
     public boolean importAddToTable(File file, String tableId) {
+      //TODO is this the correct KVS to get the properties from?
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-                tableId);
+                tableId, KeyValueStore.Type.ACTIVE);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             String[] row = reader.readNext();
@@ -160,8 +171,9 @@ public class CsvUtil {
     
     private boolean export(File file, String tableId, boolean includeTs,
             boolean includePn, boolean raw) {
+      //TODO test that this is the correct KVS to get the export from.
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-                tableId);
+                tableId, KeyValueStore.Type.ACTIVE);
         // building array of columns to select and header row for output file
         int columnCount = tp.getColumns().length + (includeTs ? 1 : 0) +
                 (includePn ? 1 : 0);

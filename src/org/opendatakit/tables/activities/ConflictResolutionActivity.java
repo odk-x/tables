@@ -8,6 +8,7 @@ import java.util.Stack;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.view.ConflictResolutionView;
 import android.app.Activity;
@@ -37,7 +38,8 @@ public class ConflictResolutionActivity extends Activity
     
     @Override
     public void init() {
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getDbTable().getConflictTable(query);
         rowChanges = new ArrayList<Stack<RowChange>>(table.getCount());

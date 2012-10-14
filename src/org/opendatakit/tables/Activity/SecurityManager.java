@@ -17,6 +17,7 @@ package org.opendatakit.tables.Activity;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.app.Activity;
@@ -51,9 +52,12 @@ public class SecurityManager extends Activity {
 		// Settings
 		String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
 		DbHelper dbh = DbHelper.getDbHelper(this);
-		tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
-		tps = TableProperties.getTablePropertiesForAll(dbh);
-		securityTps = TableProperties.getTablePropertiesForSecurityTables(dbh);
+		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+		    KeyValueStore.Type.ACTIVE);
+		tps = TableProperties.getTablePropertiesForAll(dbh,
+		    KeyValueStore.Type.ACTIVE);
+		securityTps = TableProperties.getTablePropertiesForSecurityTables(dbh,
+		    KeyValueStore.Type.ACTIVE);
     
         // Set current table name
         TextView tv = (TextView)findViewById(R.id.security_activity_table_name);

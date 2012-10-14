@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.LineChart;
@@ -50,7 +51,8 @@ public class LineGraphDisplayActivity extends Activity
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         init();
     }
     

@@ -6,6 +6,7 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
@@ -159,7 +160,8 @@ public abstract class CustomView extends LinearLayout {
             }
             tpMap = new HashMap<String, TableProperties>();
             allTps = TableProperties.getTablePropertiesForAll(
-                    DbHelper.getDbHelper(context));
+                    DbHelper.getDbHelper(context),
+                    KeyValueStore.Type.ACTIVE);
             for (TableProperties tp : allTps) {
                 tpMap.put(tp.getDisplayName(), tp);
             }

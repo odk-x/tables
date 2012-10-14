@@ -2,6 +2,7 @@ package org.opendatakit.tables.sync.files;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -46,11 +47,10 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
     
-    // ok, not sure, but I think that whether or not the table should have 
-    // its files downloaded is from the tableProperties.isSynchronized.
     DbHelper dbh = DbHelper.getDbHelper(context);
     DataManager dm = new DataManager(dbh);
-    TableProperties[] tableProperties = dm.getSynchronizedTableProperties();
+    TableProperties[] tableProperties = dm.getTablePropertiesForTablesSetToSync(
+        KeyValueStore.Type.SERVER);
     for (TableProperties tableProp : tableProperties) {
       String tableId = tableProp.getTableId();
       SyncUtilities.pullKeyValueEntriesForTable(context, aggregateUri, 

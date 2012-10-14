@@ -339,5 +339,21 @@ public class KeyValueStore {
     holders = holders.substring(0, holders.length()-1);
     return holders;   
   }
+  
+  public static enum Type {
+    ACTIVE(KeyValueStoreManager.ACTIVE_DB_NAME),
+    DEFAULT(KeyValueStoreManager.DEFAULT_DB_NAME),
+    SERVER(KeyValueStoreManager.SERVER_DB_NAME);
+    
+    private String backingName;
+    
+    private Type(String backingName) {
+      this.backingName = backingName;
+    }
+    
+    public String getBackingName() {
+      return backingName;
+    }
+  }
     
 }

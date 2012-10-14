@@ -36,6 +36,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
@@ -155,7 +156,7 @@ public class Controller {
         isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
         // initializing data objects
         dm = new DataManager(DbHelper.getDbHelper(activity));
-        tp = dm.getTableProperties(tableId);
+        tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
         dbt = dm.getDbTable(tableId);
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();
@@ -378,7 +379,7 @@ public class Controller {
     
     private void handleTablePropertiesManagerReturn() {
         int oldViewType = tvs.getViewType();
-        tp = dm.getTableProperties(tp.getTableId());
+        tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
         dbt = dm.getDbTable(tp.getTableId());
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();
@@ -391,7 +392,7 @@ public class Controller {
     }
     
     private void handleColumnManagerReturn() {
-        tp = dm.getTableProperties(tp.getTableId());
+        tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
         dbt = dm.getDbTable(tp.getTableId());
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();

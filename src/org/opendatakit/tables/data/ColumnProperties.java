@@ -288,7 +288,7 @@ public class ColumnProperties {
      */
     public void setColumnType(int columnType) {
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-                tableId);
+                tableId, KeyValueStore.Type.ACTIVE);
         String[] colOrder = tp.getColumnOrder();
         tp.getColumns(); // ensuring columns are initialized
         SQLiteDatabase db = dbh.getWritableDatabase();

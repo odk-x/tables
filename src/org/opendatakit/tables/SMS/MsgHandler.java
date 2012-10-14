@@ -32,6 +32,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.Table;
@@ -93,9 +94,10 @@ public class MsgHandler {
     }
     
     private void init() {
-        tps = dm.getAllTableProperties();
-        dataTps = dm.getDataTableProperties();
-        scTps = dm.getShortcutTableProperties();
+        tps = dm.getAllTableProperties(KeyValueStore.Type.ACTIVE);
+        dataTps = dm.getTablePropertiesForDataTables(
+            KeyValueStore.Type.ACTIVE);
+        scTps = dm.getShortcutTableProperties(KeyValueStore.Type.ACTIVE);
         Log.d("MSGH", "scTps:" + Arrays.toString(scTps));
     }
     

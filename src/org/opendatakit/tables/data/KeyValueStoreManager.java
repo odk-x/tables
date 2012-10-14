@@ -9,6 +9,7 @@ import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 /**
  * October, 2012:
@@ -96,6 +97,19 @@ public class KeyValueStoreManager {
     return kvsManager;
   }
   
+  /**
+   * Return the typed key value store for the given table id.
+   * @param tableId
+   * @param typeOfStore
+   * @return
+   */
+  public KeyValueStore getStoreForTable(String tableId, 
+      KeyValueStore.Type typeOfStore) {
+    String backingName = getBackingNameForStore(typeOfStore);
+    return new KeyValueStore(backingName, this.dbh, tableId);
+  }
+  
+  /*
   public KeyValueStore getActiveStoreForTable(String tableId) {
     return new KeyValueStore(ACTIVE_DB_NAME, this.dbh, tableId);
   }
@@ -106,7 +120,7 @@ public class KeyValueStoreManager {
   
   public KeyValueStore getServerStoreForTable(String tableId) {
     return new KeyValueStore(SERVER_DB_NAME, this.dbh, tableId);
-  }
+  }*/
   
   /**
    * Return a key value store object for the sync properties for the given
@@ -119,40 +133,54 @@ public class KeyValueStoreManager {
   }
   
   /**
+   * Get all the tableIds from the specified store. 
+   * @param db
+   * @param typeOfStore
+   * @return
+   */
+  public List<String> getAllIdsFromStore(SQLiteDatabase db, 
+      KeyValueStore.Type typeOfStore) {
+    String backingName = getBackingNameForStore(typeOfStore);
+    Cursor c = db.query(true, backingName, new String[] {TABLE_ID},
+        null, null, null, null, null, null);
+    return getTableIdsFromCursor(c); 
+  }
+  
+  /**
    * Return a list of all the table ids in the active key value store.
    * @param db
    * @return
    */
-  public List<String> getActiveTableIds(SQLiteDatabase db) {
+  /*public List<String> getActiveTableIds(SQLiteDatabase db) {
     // We want a distinct query over the TABLE_ID column.
     Cursor c = db.query(true, ACTIVE_DB_NAME, new String[] {TABLE_ID},
         null, null, null, null, null, null);
     return getTableIdsFromCursor(c);    
-  }
+  }*/
   
   /**
    * Return a list of all the table ids in the default key value store.
    * @param db
    * @return
    */
-  public List<String> getDefaultTableIds(SQLiteDatabase db) {
+  /*public List<String> getDefaultTableIds(SQLiteDatabase db) {
     // We want a distinct query over the TABLE_ID column.
     Cursor c = db.query(true, ACTIVE_DB_NAME, new String[] {TABLE_ID},
         null, null, null, null, null, null);
     return getTableIdsFromCursor(c);     
-  }
+  }*/
   
   /**
    * Return a list of all the table ids in the server key value store.
    * @param db
    * @return
    */
-  public List<String> getServerTableIds(SQLiteDatabase db) {
+  /*public List<String> getServerTableIds(SQLiteDatabase db) {
     // We want a distinct query over the TABLE_ID column.
     Cursor c = db.query(true, SERVER_DB_NAME, new String[] {TABLE_ID},
         null, null, null, null, null, null);
     return getTableIdsFromCursor(c);    
-  }
+  }*/
   
   /**
    * Return a list of the table ids who have isSetToSync set to true in the 
@@ -168,8 +196,17 @@ public class KeyValueStoreManager {
     return getTableIdsFromCursor(c);
   }
   
-  public List<String> getDataTableIds(SQLiteDatabase db) {
-    Cursor c = getTableIdsWithKeyValue(db, ACTIVE_DB_NAME,
+  /**
+   * Get the ids of all the data tables from the given store.
+   * @param db
+   * @param typeOfStore
+   * @return
+   */
+  public List<String> getDataTableIds(SQLiteDatabase db, 
+      KeyValueStore.Type typeOfStore) {
+    // the backing name of the store from which you'll get the ids.
+    String backingName = getBackingNameForStore(typeOfStore);
+    Cursor c = getTableIdsWithKeyValue(db, backingName,
         TableProperties.DB_TABLE_TYPE, 
         Integer.toString(TableProperties.TableType.DATA));
     return getTableIdsFromCursor(c);
@@ -181,25 +218,63 @@ public class KeyValueStoreManager {
    * @param db
    * @return
    */
-  public List<String> getServerDataTableIds(SQLiteDatabase db) {
+  /*public List<String> getServerDataTableIds(SQLiteDatabase db) {
     Cursor c = getTableIdsWithKeyValue(db, SERVER_DB_NAME,
         TableProperties.DB_TABLE_TYPE,
         Integer.toString(TableProperties.TableType.DATA));
     return getTableIdsFromCursor(c);
-  }
+  }*/
   
-  public List<String> getSecurityTableIds(SQLiteDatabase db) {
-    Cursor c = getTableIdsWithKeyValue(db, ACTIVE_DB_NAME,
+  /**
+   * Get all the table ids for tables of type Security from that exist in the
+   * given store.
+   * @param db
+   * @param typeOfStore
+   * @return
+   */
+  public List<String> getSecurityTableIds(SQLiteDatabase db, 
+      KeyValueStore.Type typeOfStore) {
+    String backingName = getBackingNameForStore(typeOfStore);
+    Cursor c = getTableIdsWithKeyValue(db, backingName,
         TableProperties.DB_TABLE_TYPE,
         Integer.toString(TableProperties.TableType.SECURITY));
     return getTableIdsFromCursor(c);
   }
   
-  public List<String> getShortcutTableIds(SQLiteDatabase db) {
-    Cursor c = getTableIdsWithKeyValue(db, ACTIVE_DB_NAME,
+  /**
+   * Get all the table ids of type Shortcut that exist in the given store.
+   * @param db
+   * @param typeOfStore
+   * @return
+   */
+  public List<String> getShortcutTableIds(SQLiteDatabase db,
+      KeyValueStore.Type typeOfStore) {
+    String backingName = getBackingNameForStore(typeOfStore);  
+    Cursor c = getTableIdsWithKeyValue(db, backingName,
         TableProperties.DB_TABLE_TYPE,
         Integer.toString(TableProperties.TableType.SHORTCUT));
     return getTableIdsFromCursor(c);
+  }
+  
+  /*
+   * Return the database backing name for the given type of KVS. This is just
+   * intended as a convenience method to avoid having switch statements all
+   * over the place.
+   */
+  private String getBackingNameForStore(KeyValueStore.Type typeOfStore) {
+    switch (typeOfStore) {
+    case ACTIVE:
+      return ACTIVE_DB_NAME;
+    case DEFAULT:
+      return DEFAULT_DB_NAME;
+    case SERVER:
+      return SERVER_DB_NAME;
+    default:
+      Log.e(TAG, "nonexistent store rquested: " +
+          typeOfStore.name());
+      throw new IllegalArgumentException("nonexistent requested: " 
+          + typeOfStore.name());
+    }
   }
   
   /**
@@ -217,8 +292,10 @@ public class KeyValueStoreManager {
     // from the default table. Therefore all key value pairs that are in the
     // default store are copied over in this method.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore activeKVS = this.getActiveStoreForTable(tableId);
-    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);
+    KeyValueStore activeKVS = this.getStoreForTable(tableId, 
+        KeyValueStore.Type.ACTIVE);
+    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.DEFAULT);
     activeKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> defaultEntries = 
         defaultKVS.getEntries(db);
@@ -255,8 +332,10 @@ public class KeyValueStoreManager {
     Map<String, OdkTablesKeyValueStoreEntry> newDefault =
         new HashMap<String, OdkTablesKeyValueStoreEntry>();
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);
-    KeyValueStore serverKVS = this.getServerStoreForTable(tableId);
+    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.DEFAULT);
+    KeyValueStore serverKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.SERVER);
     List<OdkTablesKeyValueStoreEntry> oldDefaultEntries = 
         defaultKVS.getEntries(db);
     List<OdkTablesKeyValueStoreEntry> serverEntries = 
@@ -291,8 +370,10 @@ public class KeyValueStoreManager {
     // Remove all the key values from the default key value store for the given
     // table and replace them with the key values from the active store.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore activeKVS = this.getActiveStoreForTable(tableId);
-    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);
+    KeyValueStore activeKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.ACTIVE);
+    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.DEFAULT);
     defaultKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> activeEntries =
         activeKVS.getEntries(db);
@@ -320,8 +401,10 @@ public class KeyValueStoreManager {
   public void copyDefaultToServerForTable(String tableId) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     int numClearedFromServerKVS;
-    KeyValueStore defaultKVS = this.getDefaultStoreForTable(tableId);    
-    KeyValueStore serverKVS = this.getServerStoreForTable(tableId);
+    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.DEFAULT);    
+    KeyValueStore serverKVS = this.getStoreForTable(tableId,
+        KeyValueStore.Type.SERVER);
     numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
     List<OdkTablesKeyValueStoreEntry> defaultEntries = 
         defaultKVS.getEntries(db);

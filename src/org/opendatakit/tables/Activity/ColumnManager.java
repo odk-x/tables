@@ -24,6 +24,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.Library.TouchListView;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.app.AlertDialog;
@@ -40,6 +41,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -80,7 +83,8 @@ public class ColumnManager extends ListActivity {
 	private void init() {
 	    tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
 	    DbHelper dbh = DbHelper.getDbHelper(this);
-	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+	    tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+	        KeyValueStore.Type.ACTIVE);
 	    cps = tp.getColumns();
 	    columnOrder.clear();
 	    for ( String s : tp.getColumnOrder() ) {
@@ -233,13 +237,22 @@ public class ColumnManager extends ListActivity {
 	
 	// Ask for a new column name.
 	private void alertForNewColumnName(String givenColName) {
+	  
+	  AlertDialog newColumnAlert;
 		
 		// Prompt an alert box
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setTitle("Name of New Column");
+		
 	
 		// Set an EditText view to get user input 
 		final EditText input = new EditText(this);
+		input.setFocusableInTouchMode(true);
+		input.setFocusable(true);
+		input.requestFocus();
+		// adding the following line
+		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
+      //.showSoftInput(input, InputMethodManager.SHOW_FORCED);
 		alert.setView(input);
 		if (givenColName != null) 
 			input.setText(givenColName);
@@ -283,7 +296,11 @@ public class ColumnManager extends ListActivity {
 			}
 		});
 
-		alert.show();
+		newColumnAlert = alert.create();
+		newColumnAlert.getWindow().setSoftInputMode(WindowManager.LayoutParams.
+		    SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		newColumnAlert.show();
+		//alert.show();
 	}
 	
 	private void toastColumnNameError(String msg) {
@@ -319,7 +336,8 @@ public class ColumnManager extends ListActivity {
 		  }
 	     // have to call this so that displayName refers to the correct column
 	     DbHelper dbh = DbHelper.getDbHelper(ColumnManager.this);
-	     tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+	     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+	         KeyValueStore.Type.ACTIVE);
 	     cps = tp.getColumns();
 		  adapter.notifyDataSetChanged();
 		}

@@ -22,6 +22,7 @@ import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.SpreadsheetView;
@@ -88,7 +89,8 @@ public class SpreadsheetDisplayActivity extends Activity
     
     @Override
     public void init() {
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
