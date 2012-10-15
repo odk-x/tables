@@ -368,6 +368,7 @@ public class PropertyManager extends PreferenceActivity {
 
     @Override
     protected void onClick() {
+      dialog.onCreate(null); // so we don't save state.
       dialog.show();
     }
   }

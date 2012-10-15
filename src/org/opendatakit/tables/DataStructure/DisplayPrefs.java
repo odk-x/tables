@@ -34,6 +34,8 @@ import android.util.Log;
  * Display preferences for a table.
  */
 public class DisplayPrefs {
+  
+  public static final String TAG = "DisplayPrefs";
     
     private final Context context;
     private final DisplayPrefsDBManager dbm;
@@ -42,33 +44,39 @@ public class DisplayPrefs {
     public DisplayPrefs(Context context, String tableId) {
         this.context = context;
         this.tableId = tableId;
-        dbm = new DisplayPrefsDBManager(context);
+        dbm = DisplayPrefsDBManager.getManager(context);
     }
     
     public List<ColColorRule> getColorRulesForCol(String colName) {
         List<ColColorRule> ruleList = new ArrayList<ColColorRule>();
         // querying the database
-        String[] cols = {"id", "comp", "val", "foreground", "background"};
-        String selection = "tableid = ? AND colname = ?";
+        //String[] cols = {"id", "comp", "val", "foreground", "background"};
+        String[] cols = DisplayPrefsDBManager.getColumns();
+        String selection = DisplayPrefsDBManager.TABLE_ID_COL + " = ? AND " +
+            DisplayPrefsDBManager.COL_NAME_COL + " = ?";
         String[] selectionArgs = {String.valueOf(tableId), colName};
         SQLiteDatabase db = dbm.getReadableDatabase();
-        Cursor cs = db.query("colors", cols, selection, selectionArgs, null,
-                null, null, null);
-        int idIndex = cs.getColumnIndexOrThrow("id");
-        int compIndex = cs.getColumnIndexOrThrow("comp");
-        int valIndex = cs.getColumnIndex("val");
-        int foregroundColorIndex = cs.getColumnIndex("foreground");
-        int backgroundColorIndex = cs.getColumnIndex("background");
+        Cursor cs = db.query(DisplayPrefsDBManager.DB_NAME, cols, selection, 
+            selectionArgs, null, null, null, null);
+        int idIndex = cs.getColumnIndexOrThrow(DisplayPrefsDBManager.ID_COL);
+        int compIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.COMP_COL);
+        int valIndex = cs.getColumnIndexOrThrow(DisplayPrefsDBManager.VAL_COL);
+        int foregroundColorIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.FOREGROUND_COL);
+        int backgroundColorIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.BACKGROUND_COL);
         // adding rules
         boolean done = !cs.moveToFirst();
         while(!done) {
             int id = cs.getInt(idIndex);
-            char compType = cs.getString(compIndex).charAt(0);
+            ColColorRule.RuleType compType = ColColorRule.RuleType.
+                  getEnumFromString(cs.getString(compIndex));
             String val = cs.getString(valIndex);
             int foregroundColor = cs.getInt(foregroundColorIndex);
             int backgroundColor = cs.getInt(backgroundColorIndex);
-            ruleList.add(new ColColorRule(id, compType, val, foregroundColor,
-                    backgroundColor));
+            ruleList.add(new ColColorRule(id, colName, 
+                compType, val, foregroundColor, backgroundColor));
             done = !cs.moveToNext();
         }
         // closing cursor and database and returning
@@ -78,58 +86,76 @@ public class DisplayPrefs {
         
     }
     
-    public void addRule(String colName, char compType, String val,
+    public void addRule(String colName, String compType, String val,
             int foregroundColor, int backgroundColor) {
         SQLiteDatabase db = dbm.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("tableid", tableId);
-        values.put("colname", colName);
-        values.put("comp", compType + "");
-        values.put("val", val);
-        values.put("foreground", foregroundColor);
-        values.put("background", backgroundColor);
-        db.insertOrThrow("colors", null, values);
+        values.put(DisplayPrefsDBManager.TABLE_ID_COL, tableId);
+        values.put(DisplayPrefsDBManager.COL_NAME_COL, colName);
+        //values.put("comp", compType + "");
+        values.put(DisplayPrefsDBManager.COMP_COL, compType);
+        values.put(DisplayPrefsDBManager.VAL_COL, val);
+        values.put(DisplayPrefsDBManager.FOREGROUND_COL, foregroundColor);
+        values.put(DisplayPrefsDBManager.BACKGROUND_COL, backgroundColor);
+        db.insertOrThrow(DisplayPrefsDBManager.DB_NAME, null, values);
         db.close();
+    }
+    
+    public void addRule(ColColorRule newRule) {
+      addRule(newRule.colName, newRule.compType.getSymbol(), newRule.val,
+          newRule.foreground, newRule.background);
+    }
+    
+    public String getTableId() {
+      return tableId;
     }
     
     public void updateRule(ColColorRule rule) {
         SQLiteDatabase db = dbm.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("comp", rule.compType + "");
-        values.put("val", rule.val);
-        values.put("foreground", rule.foreground);
-        values.put("background", rule.background);
-        String whereClause = "id = ?";
+        //values.put("comp", rule.compType + "");
+        values.put(DisplayPrefsDBManager.COMP_COL, rule.compType.getSymbol());
+        values.put(DisplayPrefsDBManager.VAL_COL, rule.val);
+        values.put(DisplayPrefsDBManager.FOREGROUND_COL, rule.foreground);
+        values.put(DisplayPrefsDBManager.BACKGROUND_COL, rule.background);
+        String whereClause = DisplayPrefsDBManager.ID_COL + " = ?";
         String[] whereArgs = {rule.id + ""};
-        db.update("colors", values, whereClause, whereArgs);
+        db.update(DisplayPrefsDBManager.DB_NAME, values, whereClause, 
+            whereArgs);
         db.close();
     }
     
     public void deleteRule(ColColorRule rule) {
         SQLiteDatabase db = dbm.getWritableDatabase();
-        String whereClause = "id = ?";
+        String whereClause = DisplayPrefsDBManager.ID_COL + " = ?";
         String[] whereArgs = {rule.id + ""};
-        db.delete("colors", whereClause, whereArgs);
+        db.delete(DisplayPrefsDBManager.DB_NAME, whereClause, whereArgs);
         db.close();
     }
     
     public ColumnColorRuler getColColorRuler(String colName) {
         // querying the database
-        String[] cols = {"comp", "val", "foreground", "background"};
-        String selection = "tableid = ? AND colname = ?";
+        //String[] cols = {"comp", "val", "foreground", "background"};
+        String[] cols = DisplayPrefsDBManager.getColumns();
+        String selection = DisplayPrefsDBManager.TABLE_ID_COL + 
+            " = ? AND " + DisplayPrefsDBManager.COL_NAME_COL + " = ?";
         String[] selectionArgs = {String.valueOf(tableId), colName};
         SQLiteDatabase db = dbm.getReadableDatabase();
-        Cursor cs = db.query("colors", cols, selection, selectionArgs, null,
-                null, null, null);
-        int compIndex = cs.getColumnIndexOrThrow("comp");
-        int valIndex = cs.getColumnIndex("val");
-        int foregroundIndex = cs.getColumnIndex("foreground");
-        int backgroundIndex = cs.getColumnIndex("background");
+        Cursor cs = db.query(DisplayPrefsDBManager.DB_NAME, cols, selection, 
+            selectionArgs, null, null, null, null);
+        int compIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.COMP_COL);
+        int valIndex = cs.getColumnIndex(DisplayPrefsDBManager.VAL_COL);
+        int foregroundIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.FOREGROUND_COL);
+        int backgroundIndex = cs.getColumnIndexOrThrow(
+            DisplayPrefsDBManager.BACKGROUND_COL);
         // initializing the ccr
         TableProperties tp = TableProperties.getTablePropertiesForTable(
             DbHelper.getDbHelper(context), tableId,
             KeyValueStore.Type.ACTIVE);
-        ColumnProperties cp = tp.getColumnByDbName(tp.getColumnByDisplayName(colName));
+        ColumnProperties cp = tp.getColumnByDbName(
+            tp.getColumnByDisplayName(colName));
         ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());
         // adding rules
         boolean done = !cs.moveToFirst();
@@ -139,7 +165,8 @@ public class DisplayPrefs {
                 done = !cs.moveToNext();
                 continue;
             }
-            char compType = compStr.charAt(0);
+            ColColorRule.RuleType compType = 
+                ColColorRule.RuleType.getEnumFromString(compStr);
             String val = cs.getString(valIndex).trim();
             int foreground = cs.getInt(foregroundIndex);
             int background = cs.getInt(backgroundIndex);
@@ -155,20 +182,21 @@ public class DisplayPrefs {
     public class ColumnColorRuler {
         
         private int colType;
-        private final List<Character> ruleComps;
+        private final List<ColColorRule.RuleType> ruleComps;
         private final List<String> ruleVals;
         private final List<Integer> foregroundColors;
         private final List<Integer> backgroundColors;
         
         private ColumnColorRuler(int colType) {
             this.colType = colType;
-            ruleComps = new ArrayList<Character>();
+            ruleComps = new ArrayList<ColColorRule.RuleType>();
             ruleVals = new ArrayList<String>();
             foregroundColors = new ArrayList<Integer>();
             backgroundColors = new ArrayList<Integer>();
         }
         
-        private void addRule(char compType, String val, int foreground,
+        private void addRule(ColColorRule.RuleType compType, String val, 
+            int foreground,
                 int background) {
             ruleComps.add(compType);
             ruleVals.add(val);
@@ -214,63 +242,25 @@ public class DisplayPrefs {
             Log.d("DP", "val:" + val);
             Log.d("DP", "compVal:" + compVal);
             switch(ruleComps.get(index)) {
-            case '=':
+            case LESS_THAN:
+              return (compVal < 0);
+            case LESS_THAN_OR_EQUAL:
+              return (compVal <= 0);
+            case EQUAL:
                 return (compVal == 0);
-            case '<':
-                return (compVal < 0);
-            case '>':
+            case GREATER_THAN_OR_EQUAL:
+                return (compVal >= 0);
+            case GREATER_THAN:
                 return (compVal > 0);
             default:
-                return false;
+                Log.e(TAG, "unrecongized op passed to checkMatch: " + 
+                    ruleComps.get(index));
+                throw new IllegalArgumentException("unrecognized op passed " +
+                    "to checkMatch: " + ruleComps.get(index));
             }
         }
         
     }
     
-    public class ColColorRule {
-        public int id;
-        public char compType;
-        public String val;
-        public int foreground;
-        public int background;
-        public ColColorRule(int id, char compType, String val, int foreground,
-                int background) {
-            this.id = id;
-            this.compType = compType;
-            this.val = val;
-            this.foreground = foreground;
-            this.background = background;
-        }
-    }
-    
-    private class DisplayPrefsDBManager extends SQLiteOpenHelper {
-        
-        private static final String DB_LOC = "display_prefs.sql";
-        
-        private DisplayPrefsDBManager(Context context) {
-            super(context, DB_LOC, null, 1);
-        }
-        
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            String colorSql;
-            colorSql = "CREATE TABLE colors (" +
-                    "  id INTEGER PRIMARY KEY" +
-                    ", tableid TEXT" +
-                    ", colname TEXT" +
-                    ", comp TEXT" +
-                    ", val TEXT" +
-                    ", foreground TEXT" +
-                    ", background TEXT" +
-                    ");";
-            db.execSQL(colorSql);
-        }
-        
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int v1, int v2) {
-            // TODO Auto-generated method stub
-        }
-        
-    }
     
 }
