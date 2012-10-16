@@ -188,6 +188,10 @@ public class Aggregate extends Activity {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         saveSettings();
+        // SS Oct 15: clear the auth token here.
+        // TODO if you change a user you can switch to their privileges without
+        // this.
+        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         updateButtonsEnabled();
       }
     });

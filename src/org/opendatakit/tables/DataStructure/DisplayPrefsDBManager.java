@@ -54,13 +54,13 @@ public class DisplayPrefsDBManager extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String colorSql;
         colorSql = "CREATE TABLE " + DB_NAME + " (" +
-                ID_COL + " INTEGER PRIMARY KEY," +
+                ID_COL + " TEXT PRIMARY KEY," +
                 TABLE_ID_COL + " TEXT," +
-                COL_NAME_COL + " colname TEXT," +
-                COMP_COL + " comp TEXT," +
-                VAL_COL + " val TEXT," +
-                FOREGROUND_COL + " foreground TEXT," +
-                BACKGROUND_COL + " background TEXT" +
+                COL_NAME_COL + " TEXT," +
+                COMP_COL + " TEXT," +
+                VAL_COL + " TEXT," +
+                FOREGROUND_COL + " TEXT," +
+                BACKGROUND_COL + " TEXT" +
                 ");";
         db.execSQL(colorSql);
     }

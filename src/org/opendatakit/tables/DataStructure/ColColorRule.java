@@ -1,5 +1,7 @@
 package org.opendatakit.tables.DataStructure;
 
+import java.util.UUID;
+
 import android.util.Log;
 
 /**
@@ -12,20 +14,53 @@ public class ColColorRule {
   public static final String TAG = "ColColorRule";
   
   // this is the primary key of the column, so basically an int UUID.
-  public int id;
+  // changing to be a uuid.
+  public String id;
   public String colName;
   public RuleType compType;
   public String val;
   public int foreground;
   public int background;
-  public ColColorRule(int id, String colName, RuleType compType, String val, 
+  
+  /**
+   * Construct a new color rule to dictate the coloring of cells. Constructs
+   * a UUID for the column id.
+   * @param colName
+   * @param compType
+   * @param val
+   * @param foreground
+   * @param background
+   */
+  public ColColorRule(String colName, RuleType compType, String val, 
+      int foreground, int background) {
+    // generate a UUID for the color rule. We can't let it autoincrement ints
+    // as was happening before, as this would become corrupted when rules were
+    // imported from other dbs.
+    this.id = UUID.randomUUID().toString();
+    this.colName = colName;
+    this.compType = compType;
+    this.val = val;
+    this.foreground = foreground;
+    this.background = background;
+  }
+  
+  /**
+   * Construct a new color rule. Presumes that the passed in id is a UUID.
+   * @param id
+   * @param colName
+   * @param compType
+   * @param val
+   * @param foreground
+   * @param background
+   */
+  public ColColorRule(String id, String colName, RuleType compType, String val,
       int foreground, int background) {
     this.id = id;
     this.colName = colName;
     this.compType = compType;
     this.val = val;
     this.foreground = foreground;
-    this.background = background;
+    this.background = background;   
   }
   
   public static enum RuleType {

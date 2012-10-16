@@ -14,28 +14,8 @@ import android.util.Log;
 
 
 /**
- * THESE COMMENTS ARE OUT OF DATE AFTER THE ADDITION OF THE 
- * KEYVALUESTOREMANAGER AND THE ARRIVAL OF THE ACTIVE/DEFAULT OPTIONS.
  * This is a table in the database that stores information with varieties of 
- * metadata about the tables. It is essentially a key value store. It is the
- * phone-side version of DbTableFileInfo on the server. An important 
- * distinction is that only the key-value pairs associated with tables on the 
- * phone that are set to be synched will be included. In this way it is not
- * a direct copy of DbTableFileInfo.
- * <p>
- * An additional important distinction is the way in which "FILE" values are
- * stored. On the server, if the VALUE_TYPE is "FILE", the VALUE field itself
- * holds the uuid that is necessary to access the blob on the server. Here, it 
- * will instead hold the path to the file on disk.
- * <p> 
- * It is important to distinguish this table from KeyValueStoreActive. This is
- * where things are saved as defaults and stored when downloaded from the
- * server. KeyValueStoreActive, on the other hand, is where the currently
- * modifiable values are stored. Data can be moved between these two tables
- * using the functionality provided by setCurrentAsDefault and 
- * revertToDefault.
- * <p>
- * It is modeled off of the implementation seen in {@ ColumnProperties}.
+ * metadata about the tables. It is a key value store. 
  * @author sudar.sam@gmail.com
  *
  */

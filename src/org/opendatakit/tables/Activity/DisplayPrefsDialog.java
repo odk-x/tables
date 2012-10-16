@@ -168,7 +168,8 @@ public class DisplayPrefsDialog extends Dialog {
     } else {
       // hmm, so i think the id is just the column in the db where the tableid
       // is located, or something? not clear to me.
-      rule = new ColColorRule(0, colName, RuleType.NO_OP, "", Color.BLACK, Color.WHITE);
+      rule = new ColColorRule(colName, RuleType.NO_OP, "", Color.BLACK, 
+          Color.WHITE);
       // and now I think we need to add this rule to the list...
       colRules.add(rule);
     }

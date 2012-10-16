@@ -69,7 +69,7 @@ public class DisplayPrefs {
         // adding rules
         boolean done = !cs.moveToFirst();
         while(!done) {
-            int id = cs.getInt(idIndex);
+            String id = cs.getString(idIndex);
             ColColorRule.RuleType compType = ColColorRule.RuleType.
                   getEnumFromString(cs.getString(compIndex));
             String val = cs.getString(valIndex);
@@ -86,10 +86,11 @@ public class DisplayPrefs {
         
     }
     
-    public void addRule(String colName, String compType, String val,
-            int foregroundColor, int backgroundColor) {
+    public void addRule(String ruleId, String colName, String compType, 
+          String val, int foregroundColor, int backgroundColor) {
         SQLiteDatabase db = dbm.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(DisplayPrefsDBManager.ID_COL, ruleId);
         values.put(DisplayPrefsDBManager.TABLE_ID_COL, tableId);
         values.put(DisplayPrefsDBManager.COL_NAME_COL, colName);
         //values.put("comp", compType + "");
@@ -102,8 +103,8 @@ public class DisplayPrefs {
     }
     
     public void addRule(ColColorRule newRule) {
-      addRule(newRule.colName, newRule.compType.getSymbol(), newRule.val,
-          newRule.foreground, newRule.background);
+      addRule(newRule.id, newRule.colName, newRule.compType.getSymbol(), 
+          newRule.val, newRule.foreground, newRule.background);
     }
     
     public String getTableId() {
@@ -114,6 +115,7 @@ public class DisplayPrefs {
         SQLiteDatabase db = dbm.getWritableDatabase();
         ContentValues values = new ContentValues();
         //values.put("comp", rule.compType + "");
+        values.put(DisplayPrefsDBManager.ID_COL, rule.id);
         values.put(DisplayPrefsDBManager.COMP_COL, rule.compType.getSymbol());
         values.put(DisplayPrefsDBManager.VAL_COL, rule.val);
         values.put(DisplayPrefsDBManager.FOREGROUND_COL, rule.foreground);
@@ -139,7 +141,9 @@ public class DisplayPrefs {
         String[] cols = DisplayPrefsDBManager.getColumns();
         String selection = DisplayPrefsDBManager.TABLE_ID_COL + 
             " = ? AND " + DisplayPrefsDBManager.COL_NAME_COL + " = ?";
-        String[] selectionArgs = {String.valueOf(tableId), colName};
+        // we don't want the display name here, b/c in the colors db we have it
+        // as an underscore. so prepend an underscore.
+        String[] selectionArgs = {String.valueOf(tableId), "_" + colName};
         SQLiteDatabase db = dbm.getReadableDatabase();
         Cursor cs = db.query(DisplayPrefsDBManager.DB_NAME, cols, selection, 
             selectionArgs, null, null, null, null);

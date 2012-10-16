@@ -324,6 +324,7 @@ public class SpreadsheetView extends LinearLayout
             int width = (indexedCol < 0) ? table.getWidth() :
                 table.getWidth() - 1;
             header = new String[1][width];
+            // sam fiddling
             data = new String[table.getHeight()][width];
             footer = new String[1][width];
             colorRulers = new ColumnColorRuler[width];
