@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -117,11 +118,11 @@ public class CsvUtil {
             boolean includePn = (row.length > (includeTs ? 1 : 0)) &&
                     row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
             int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
-            String[] columns = new String[tp.getColumns().length];
-            for (int i = 0; i < columns.length; i++) {
+            ArrayList<String> columns = new ArrayList<String>();
+            for (int i = 0; i < columns.size(); i++) {
                 String displayName = row[startIndex + i];
                 String dbName = tp.getColumnByDisplayName(displayName);
-                columns[i] = dbName;
+                columns.add(dbName);
             }
             return importTable(reader, tableId, columns, includeTs, includePn);
         } catch(FileNotFoundException e) {
@@ -132,7 +133,7 @@ public class CsvUtil {
     }
     
     private boolean importTable(CSVReader reader, String tableId,
-            String[] columns, boolean includeTs, boolean includePn) {
+            ArrayList<String> columns, boolean includeTs, boolean includePn) {
         int tsIndex = includeTs ? 0 : -1;
         int pnIndex = includePn ? (includeTs ? 1 : 0) : -1;
         int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
@@ -141,8 +142,8 @@ public class CsvUtil {
             Map<String, String> values = new HashMap<String, String>();
             String[] row = reader.readNext();
             while (row != null) {
-                for (int i = 0; i < columns.length; i++) {
-                    values.put(columns[i], row[startIndex + i]);
+                for (int i = 0; i < columns.size(); i++) {
+                    values.put(columns.get(i), row[startIndex + i]);
                 }
                 String lastModTime = tsIndex == -1 ?
                         du.formatNowForDb() : row[tsIndex];
@@ -177,42 +178,44 @@ public class CsvUtil {
         // building array of columns to select and header row for output file
         int columnCount = tp.getColumns().length + (includeTs ? 1 : 0) +
                 (includePn ? 1 : 0);
-        String[] columns = new String[columnCount];
-        String[] headerRow = new String[columnCount];
+        ArrayList<String> columns = new ArrayList<String>();
+        ArrayList<String> headerRow = new ArrayList<String>();
         int index = 0;
         if (includeTs) {
-            columns[index] = DbTable.DB_LAST_MODIFIED_TIME;
-            headerRow[index] = LAST_MOD_TIME_LABEL;
+            columns.add(DbTable.DB_LAST_MODIFIED_TIME);
+            headerRow.add(LAST_MOD_TIME_LABEL);
             index++;
         }
         if (includePn) {
-            columns[index] = DbTable.DB_SRC_PHONE_NUMBER;
-            headerRow[index] = SRC_PHONE_LABEL;
+            columns.add(DbTable.DB_SRC_PHONE_NUMBER);
+            headerRow.add(SRC_PHONE_LABEL);
             index++;
         }
         if (raw) {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns[index] = cp.getColumnDbName();
-                headerRow[index] = cp.getDisplayName();
+                columns.add(cp.getColumnDbName());
+                headerRow.add(cp.getDisplayName());
                 index++;
             }
         } else {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns[index] = cp.getColumnDbName();
-                headerRow[index] = cp.getColumnDbName();
+                columns.add(cp.getColumnDbName());
+                headerRow.add(cp.getColumnDbName());
                 index++;
             }
         }
         // getting data
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
-        Table table = dbt.getRaw(columns, null, null, null);
+        String[] selectionKeys = { DbTable.DB_SAVED };
+        String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
+        Table table = dbt.getRaw(columns, selectionKeys, selectionArgs, null);
         // writing data
         try {
             CSVWriter cw = new CSVWriter(new FileWriter(file));
             if (!raw) {
                 cw.writeNext(new String[] {tp.toJson()});
             }
-            cw.writeNext(headerRow);
+            cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
             String[] row = new String[columnCount];
             for (int i = 0; i < table.getHeight(); i++) {
                 for (int j = 0; j < table.getWidth(); j++) {

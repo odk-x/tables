@@ -88,10 +88,10 @@ public class PropertyManager extends PreferenceActivity {
     category.setTitle(cp.getDisplayName());
     root.addPreference(category);
 
-    // Abreviation<EditText>
-    String abr = getAbrev(colName);
-    category.addPreference(createEditTextPreference("ABR", "Abbreviation",
-        "Change Column Abreviation", abr, abr));
+    // SMS Label<EditText>
+    String smsLabel = getSmsLabel(colName);
+    category.addPreference(createEditTextPreference("SMSLBL", "SMS Label",
+        "Change SMS Label for Column", smsLabel, smsLabel));
 
     // Type<List>
     String type = getType(colName);
@@ -188,11 +188,11 @@ public class PropertyManager extends PreferenceActivity {
 
   }
 
-  // Get the abreviation on this column.
-  private String getAbrev(String colName) {
-    String result = cp.getAbbreviation();
+  // Get the SMS abbreviation on this column.
+  private String getSmsLabel(String colName) {
+    String result = cp.getSmsLabel();
     if (result == null) {
-      return "No Abreviation Defined.";
+      return "No Sms Abbreviation Defined.";
     }
     return result;
   }
@@ -223,8 +223,8 @@ public class PropertyManager extends PreferenceActivity {
     Preference pref = findPreference(key);
 
     // Routing
-    if (key.equals("ABR")) {
-      cp.setAbbreviation(getEditBoxContent(pref));
+    if (key.equals("SMSLBL")) {
+      cp.setSmsLabel(getEditBoxContent(pref));
     } else if (key.equals("TYPE")) {
       for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
         if (COLUMN_TYPE_LABELS[i].equals(newVal)) {

@@ -27,7 +27,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 /**
@@ -238,7 +237,7 @@ public class DisplayPrefs {
                 double doubleRule = Double.parseDouble(ruleVal);
                 Log.d("DP", "doubleValue:" + doubleValue);
                 Log.d("DP", "doubleRule:" + doubleRule);
-                compVal = (new Double(val)).compareTo(new Double(ruleVal));
+                compVal = (Double.valueOf(val)).compareTo(Double.valueOf(ruleVal));
             } else {
                 compVal = val.compareTo(ruleVal);
             }

@@ -16,7 +16,6 @@
 package org.opendatakit.tables.Activity;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,7 +31,6 @@ import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.location.GpsStatus.Listener;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -42,7 +40,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -186,25 +183,23 @@ public class ColumnManager extends ListActivity {
     		alertForNewColumnName(null);
     		return true;
     	case SET_AS_PRIME:
-    	    String[] aoldPrimes = tp.getPrimeColumns();
-    	    String[] anewPrimes = new String[aoldPrimes.length + 1];
-    	    for (int i = 0; i < aoldPrimes.length; i++) {
-    	        anewPrimes[i] = aoldPrimes[i];
+    	    ArrayList<String> aoldPrimes = tp.getPrimeColumns();
+    	    ArrayList<String> anewPrimes = new ArrayList<String>();
+    	    for (int i = 0; i < aoldPrimes.size(); i++) {
+    	        anewPrimes.add(aoldPrimes.get(i));
     	    }
-    	    anewPrimes[aoldPrimes.length] = currentCol;
+    	    anewPrimes.add(currentCol);
     	    tp.setPrimeColumns(anewPrimes); 
 	    	onResume();
 	    	return true;
     	case SET_AS_NONPRIME:
-            String[] roldPrimes = tp.getPrimeColumns();
-            String[] rnewPrimes = new String[roldPrimes.length - 1];
-            int index = 0;
-            for (int i = 0; i < roldPrimes.length; i++) {
-                if (roldPrimes[i].equals(currentCol)) {
+    		ArrayList<String> roldPrimes = tp.getPrimeColumns();
+    		ArrayList<String> rnewPrimes = new ArrayList<String>();
+            for (int i = 0; i < roldPrimes.size(); i++) {
+                if (roldPrimes.get(i).equals(currentCol)) {
                     continue;
                 }
-                rnewPrimes[index] = roldPrimes[i];
-                index++;
+                rnewPrimes.add(roldPrimes.get(i));
             }
             tp.setPrimeColumns(rnewPrimes); 
 	    	onResume();
@@ -325,9 +320,9 @@ public class ColumnManager extends ListActivity {
 		  String item = columnOrder.get(from);
 		  columnOrder.remove(from);
 		  columnOrder.add(to, item);
-		  String[] newOrder = new String[columnOrder.size()];
+		  ArrayList<String> newOrder = new ArrayList<String>();
 		  for (int i = 0; i < columnOrder.size(); i++) {
-		    newOrder[i] = columnOrder.get(i);
+		    newOrder.add(columnOrder.get(i));
 		  }
 		  tp.setColumnOrder(newOrder);
 		  columnOrder.clear();

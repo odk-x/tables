@@ -1,8 +1,6 @@
 package org.opendatakit.tables.sync.files;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -28,11 +25,8 @@ import org.opendatakit.httpclientandroidlib.client.HttpClient;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.conn.params.ConnManagerParams;
 import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
-import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.httpclientandroidlib.params.BasicHttpParams;
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
-import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -43,9 +37,6 @@ import org.opendatakit.tables.util.TableFileUtils;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri.Builder;
-import android.net.UrlQuerySanitizer;
-import android.net.UrlQuerySanitizer.ParameterValuePair;
-import android.os.Environment;
 import android.util.Log;
 
 /**

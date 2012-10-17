@@ -127,28 +127,26 @@ public class SpreadsheetDisplayActivity extends Activity
     }
     
     void setColumnAsPrime(ColumnProperties cp) {
-        String[] oldPrimes = c.getTableProperties().getPrimeColumns();
-        String[] newPrimes = new String[oldPrimes.length + 1];
-        newPrimes[0] = cp.getColumnDbName();
-        for (int i = 0; i < oldPrimes.length; i++) {
-            newPrimes[i + 1] = oldPrimes[i];
+    	ArrayList<String> oldPrimes = c.getTableProperties().getPrimeColumns();
+    	ArrayList<String> newPrimes = new ArrayList<String>();
+        newPrimes.add(cp.getColumnDbName());
+        for (int i = 0; i < oldPrimes.size(); i++) {
+            newPrimes.add(oldPrimes.get(i));
         }
         c.getTableProperties().setPrimeColumns(newPrimes);
     }
     
     void unsetColumnAsPrime(ColumnProperties cp) {
-        String[] oldPrimes = c.getTableProperties().getPrimeColumns();
-        if (oldPrimes.length == 0) {
+        ArrayList<String> oldPrimes = c.getTableProperties().getPrimeColumns();
+        if (oldPrimes.size() == 0) {
             return;
         }
-        String[] newPrimes = new String[oldPrimes.length - 1];
-        int index = 0;
+        ArrayList<String> newPrimes = new ArrayList<String>();
         for (String prime : oldPrimes) {
             if (prime.equals(cp.getColumnDbName())) {
                 continue;
             }
-            newPrimes[index] = prime;
-            index++;
+            newPrimes.add(prime);
         }
         c.getTableProperties().setPrimeColumns(newPrimes);
     }
@@ -297,7 +295,7 @@ public class SpreadsheetDisplayActivity extends Activity
     public void prepRegularCellOccm(ContextMenu menu, int cellId) {
         lastDataCellMenued = cellId;
         if (c.getIsOverview() &&
-                (c.getTableProperties().getPrimeColumns().length > 0)) {
+                (c.getTableProperties().getPrimeColumns().size() > 0)) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN,
                     ContextMenu.NONE, "View Collection");
         }
@@ -379,7 +377,7 @@ public class SpreadsheetDisplayActivity extends Activity
             final List<Integer> itemIds = new ArrayList<Integer>();
             List<String> itemLabels = new ArrayList<String>();
             if (c.getIsOverview() &&
-                    (c.getTableProperties().getPrimeColumns().length > 0)) {
+                    (c.getTableProperties().getPrimeColumns().size() > 0)) {
                 itemIds.add(MENU_ITEM_ID_HISTORY_IN);
                 itemLabels.add("View Collection");
             }
@@ -426,17 +424,17 @@ public class SpreadsheetDisplayActivity extends Activity
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                lastDownX = (new Float(event.getX())).intValue();
-                lastDownY = (new Float(event.getY())).intValue();
+                lastDownX = (Float.valueOf(event.getX())).intValue();
+                lastDownY = (Float.valueOf(event.getY())).intValue();
                 return true;
             } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                int x = (new Float(event.getRawX())).intValue();
-                int y = (new Float(event.getRawY())).intValue();
+                int x = (Float.valueOf(event.getRawX())).intValue();
+                int y = (Float.valueOf(event.getRawY())).intValue();
                 c.setOverlayLocation(x - lastDownX, y - lastDownY);
                 return true;
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                int x = (new Float(event.getRawX())).intValue();
-                int y = (new Float(event.getRawY())).intValue();
+                int x = (Float.valueOf(event.getRawX())).intValue();
+                int y = (Float.valueOf(event.getRawY())).intValue();
                 if (c.isInSearchBox(x, y)) {
                     String colName = c.getTableProperties().getColumns()
                             [cellId % table.getWidth()].getDisplayName();

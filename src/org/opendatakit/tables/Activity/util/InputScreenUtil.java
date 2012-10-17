@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.Activity.util;
 
+import java.util.ArrayList;
+
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -50,7 +52,7 @@ public class InputScreenUtil {
             return new DateRangeInputView(context, value);
         case ColumnProperties.ColumnType.MC_OPTIONS:
             return new McOptionsInputView(context,
-                    cp.getMultipleChoiceOptions(), value);
+                    cp.getDisplayChoicesMap(), value);
         default:
             return new GeneralInputView(context, value);
         }
@@ -158,19 +160,19 @@ public class InputScreenUtil {
         private final ArrayAdapter<String> adapter;
         private final String originalValue;
         
-        public McOptionsInputView(Context context, String[] options,
+        public McOptionsInputView(Context context, ArrayList<String> arrayList,
                 String value) {
             super(context);
             originalValue = value;
             spinner = new Spinner(context);
             adapter = new ArrayAdapter<String>(context,
-                    android.R.layout.simple_spinner_item, options);
+                    android.R.layout.simple_spinner_item, arrayList);
             adapter.setDropDownViewResource(
                     android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
             int optIndex = -1;
-            for (int i = 0; i < options.length; i++) {
-                if ((value != null) && value.equalsIgnoreCase(options[i])) {
+            for (int i = 0; i < arrayList.size(); i++) {
+                if ((value != null) && value.equalsIgnoreCase(arrayList.get(i))) {
                     optIndex = i;
                 }
             }

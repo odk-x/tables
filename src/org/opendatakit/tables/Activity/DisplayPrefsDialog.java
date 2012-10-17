@@ -16,9 +16,7 @@
 package org.opendatakit.tables.Activity;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.opendatakit.tables.DataStructure.ColColorRule;
 import org.opendatakit.tables.DataStructure.ColColorRule.RuleType;

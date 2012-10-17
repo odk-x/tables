@@ -91,11 +91,11 @@ public class ConflictResolutionActivity extends Activity
     @Override
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
-        String[] colDbNames = c.getTableProperties().getColumnOrder();
+        ArrayList<String> colDbNames = c.getTableProperties().getColumnOrder();
         Map<String, String> values = new HashMap<String, String>();
         while (!changes.isEmpty()) {
             RowChange rc = changes.pop();
-            values.put(colDbNames[rc.getColNum()], rc.getNewValue());
+            values.put(colDbNames.get(rc.getColNum()), rc.getNewValue());
         }
         c.getDbTable().resolveConflict(table.getRowId(index),
                 table.getSyncTag(index, 1), values);

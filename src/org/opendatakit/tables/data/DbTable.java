@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.data;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,10 +40,18 @@ public class DbTable {
     public static final String DB_SYNC_TAG = "syncTag";
     public static final String DB_SYNC_STATE = "syncState";
     public static final String DB_TRANSACTIONING = "transactioning";
+    public static final String DB_TIMESTAMP = "timestamp";
+    public static final String DB_SAVED = "saved";
+    
+    public enum SavedStatus {
+    	COMPLETE,
+    	INCOMPLETE
+    };
     
     public static final String DB_CSV_COLUMN_LIST =
         DB_ROW_ID + ", " + DB_SRC_PHONE_NUMBER + ", " + DB_LAST_MODIFIED_TIME +
-        ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING;
+        ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING +
+        ", " + DB_TIMESTAMP + ", " + DB_SAVED;
     
     private final DataUtil du;
     private final DbHelper dbh;
@@ -81,17 +90,11 @@ public class DbTable {
      ", " + DB_SYNC_TAG + " TEXT" +
      ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
+     ", " + DB_TIMESTAMP + " INTEGER NOT NULL" +
+     ", " + DB_SAVED + " TEXT NULL" +
      colListBuilder.toString() +
      ")";
-        db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
-                       DB_ROW_ID + " TEXT NOT NULL" +
-                ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
-                ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
-                ", " + DB_SYNC_TAG + " TEXT" +
-                ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
-                ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
-                colListBuilder.toString() +
-                ")");
+        db.execSQL(toExecute);
     }
     
     /**
@@ -110,24 +113,24 @@ public class DbTable {
      * @param orderBy the column to order by (can be null)
      * @return a Table of the requested data
      */
-    public Table getRaw(String[] columns, String[] selectionKeys,
+    public Table getRaw(ArrayList<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
             ColumnProperties[] cps = tp.getColumns();
-            columns = new String[cps.length + 5];
-            columns[0] = DB_SRC_PHONE_NUMBER;
-            columns[1] = DB_LAST_MODIFIED_TIME;
-            columns[2] = DB_SYNC_TAG;
-            columns[3] = DB_SYNC_STATE;
-            columns[4] = DB_TRANSACTIONING;
+            columns = new ArrayList<String>();
+            columns.add(DB_SRC_PHONE_NUMBER);
+            columns.add(DB_LAST_MODIFIED_TIME);
+            columns.add(DB_SYNC_TAG);
+            columns.add(DB_SYNC_STATE);
+            columns.add(DB_TRANSACTIONING);
             for (int i = 0; i < cps.length; i++) {
-                columns[i + 5] = cps[i].getColumnDbName();
+            	columns.add(cps[i].getColumnDbName());
             }
         }
-        String[] colArr = new String[columns.length + 1];
+        String[] colArr = new String[columns.size() + 1];
         colArr[0] = DB_ROW_ID;
-        for (int i = 0; i < columns.length; i++) {
-            colArr[i + 1] = columns[i];
+        for (int i = 0; i < columns.size(); i++) {
+            colArr[i + 1] = columns.get(i);
         }
         SQLiteDatabase db = dbh.getReadableDatabase();
         Cursor c = db.query(tp.getDbTableName(), colArr,
@@ -233,19 +236,19 @@ public class DbTable {
      * Builds a Table with the data from the given cursor.
      * The cursor, but not the columns array, must include the row ID column.
      */
-    private Table buildTable(Cursor c, String[] columns) {
-        int[] colIndices = new int[columns.length];
+    private Table buildTable(Cursor c, ArrayList<String> arrayList) {
+        int[] colIndices = new int[arrayList.size()];
         int rowCount = c.getCount();
         String[] rowIds = new String[rowCount];
-        String[][] data = new String[rowCount][columns.length];
+        String[][] data = new String[rowCount][arrayList.size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DB_ROW_ID);
-        for (int i = 0; i < columns.length; i++) {
-            colIndices[i] = c.getColumnIndexOrThrow(columns[i]);
+        for (int i = 0; i < arrayList.size(); i++) {
+            colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
         }
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
             rowIds[i] = c.getString(rowIdIndex);
-            for (int j = 0; j < columns.length; j++) {
+            for (int j = 0; j < arrayList.size(); j++) {
               String value;
               try {
                 value = c.getString(colIndices[j]);
@@ -260,7 +263,7 @@ public class DbTable {
             }
             c.moveToNext();
         }
-        return new Table(rowIds, columns, data);
+        return new Table(rowIds, arrayList, data);
     }
     
     private String[] getUserHeader() {
@@ -355,6 +358,8 @@ public class DbTable {
           values.put(DB_ROW_ID, id);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
+        values.put(DB_TIMESTAMP, System.currentTimeMillis());
+        values.put(DB_SAVED, SavedStatus.COMPLETE.name());
         long result = db.insert(tp.getDbTableName(), null, values);
         db.close();
         Log.d("DBT", "insert, id=" + result);
@@ -415,6 +420,8 @@ public class DbTable {
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
+        values.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+        values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
         db.update(tp.getDbTableName(), values, where, whereArgs);
         db.close();
     }
@@ -422,7 +429,7 @@ public class DbTable {
     public void resolveConflict(String rowId, String syncTag,
             Map<String, String> values) {
         String[] deleteWhereArgs = { rowId,
-                new Integer(SyncUtil.State.DELETING).toString() };
+                Integer.valueOf(SyncUtil.State.DELETING).toString() };
         String deleteSql = DB_ROW_ID + " = ? AND " + DB_SYNC_STATE + " = ?";
         ContentValues updateValues = new ContentValues();
         updateValues.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
@@ -434,6 +441,8 @@ public class DbTable {
         String updateWhereSql = DB_ROW_ID + " = ?";
         SQLiteDatabase db = dbh.getWritableDatabase();
         db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
+        updateValues.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+        updateValues.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
         db.update(tp.getDbTableName(), updateValues, updateWhereSql,
                 updateWhereArgs);
         db.close();
@@ -461,6 +470,8 @@ public class DbTable {
           ContentValues values = new ContentValues();
           values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
           SQLiteDatabase db = dbh.getWritableDatabase();
+          values.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+          values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
           db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
           db.close();
         }

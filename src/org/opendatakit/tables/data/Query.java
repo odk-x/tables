@@ -404,12 +404,12 @@ public class Query {
      * SELECT id, a, b, c FROM t JOIN (
      *   SELECT MAX(id) FROM t WHERE c = 12 GROUP BY a
      * ) z ON t.id = z.id
-     * @param columns the columns to select
+     * @param arrayList the columns to select
      * @return a SqlData object, with the SQL string and an array of arguments
      */
-    public SqlData toOverviewSql(String[] columns) {
-        if (tp.getPrimeColumns().length == 0) {
-            return toSql(columns);
+    public SqlData toOverviewSql(ArrayList<String> arrayList) {
+        if (tp.getPrimeColumns().size() == 0) {
+            return toSql(arrayList);
         }
         StringBuilder primeList = new StringBuilder();
         for (String prime : tp.getPrimeColumns()) {
@@ -418,7 +418,7 @@ public class Query {
         primeList.delete(0, 2);
         SqlData sd = new SqlData();
         sd.appendSql("SELECT d." + DbTable.DB_ROW_ID);
-        for (String column : columns) {
+        for (String column : arrayList) {
             sd.appendSql(", d." + column);
         }
         sd.appendSql(" FROM " + tp.getDbTableName() + " d");
@@ -433,14 +433,14 @@ public class Query {
             sd.appendSql("SELECT MAX(" + DbTable.DB_ROW_ID + ") AS " +
                     DbTable.DB_ROW_ID + " FROM ");
             
-            String[] primes = tp.getPrimeColumns();
-            String[] xCols = new String[primes.length];
-            String[] yCols = new String[primes.length + 1];
-            for (int i = 0; i < primes.length; i++) {
-                xCols[i] = primes[i];
-                yCols[i] = primes[i];
+            ArrayList<String> primes = tp.getPrimeColumns();
+            String[] xCols = new String[primes.size()];
+            String[] yCols = new String[primes.size() + 1];
+            for (int i = 0; i < primes.size(); i++) {
+                xCols[i] = primes.get(i);
+                yCols[i] = primes.get(i);
             }
-            yCols[primes.length] = sort;
+            yCols[primes.size()] = sort;
             
             StringBuilder xSelectionSb = new StringBuilder();
             for (String xCol : xCols) {

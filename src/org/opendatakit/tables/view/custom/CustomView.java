@@ -1,5 +1,6 @@
 package org.opendatakit.tables.view.custom;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.opendatakit.tables.activities.Controller;
@@ -116,7 +117,7 @@ public abstract class CustomView extends LinearLayout {
             ColumnProperties[] cps = tp.getColumns();
             for (int i = 0; i < cps.length; i++) {
                 colMap.put(cps[i].getDisplayName(), i);
-                String abbr = cps[i].getAbbreviation();
+                String abbr = cps[i].getSmsLabel();
                 if (abbr != null) {
                     colMap.put(abbr, i);
                 }
@@ -187,7 +188,8 @@ public abstract class CustomView extends LinearLayout {
             query.loadFromUserQuery(searchText);
             DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
                     tp.getTableId());
-            return new TableData(tp, dbt.getRaw(query, tp.getColumnOrder()));
+            ArrayList<String> columnOrder = tp.getColumnOrder();
+            return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
         }
     }
 }

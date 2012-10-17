@@ -269,8 +269,13 @@ public class SyncProcessor {
     IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
+    ArrayList<String> columns = new ArrayList<String>();
+    columns.add(DbTable.DB_SYNC_STATE);
+    // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
-    Table allRowIds = table.getRaw(new String[] { DbTable.DB_SYNC_STATE }, null, null, null);
+    Table allRowIds = table.getRaw(columns, 
+    		new String[] {DbTable.DB_SAVED},
+            new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
     // update properties if necessary
     // do this before updating data in case columns have changed
@@ -409,11 +414,15 @@ public class SyncProcessor {
 
     Set<String> columnSet = new HashSet<String>(columns.keySet());
     columnSet.add(DbTable.DB_SYNC_TAG);
-    String[] columnNames = columnSet.toArray(new String[0]);
-
-    Table rows = table.getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE,
-        DbTable.DB_TRANSACTIONING },
-        new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
+    ArrayList<String> columnNames = new ArrayList<String>();
+    for ( String s : columnSet ) {
+    	columnNames.add(s);
+    }
+    // TODO: confirm handling of rows that have pending/unsaved changes from Collect
+    Table rows = table.getRaw(columnNames, new String[] {DbTable.DB_SAVED, 
+    			DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
+        new String[] { DbTable.SavedStatus.COMPLETE.name(), 
+    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();

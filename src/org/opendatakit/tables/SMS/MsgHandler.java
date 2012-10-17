@@ -221,10 +221,12 @@ public class MsgHandler {
             password = msg.substring(lastHashIndex + 1);
         }
         DbTable sDbt = dm.getDbTable(secTableId);
+        ArrayList<String> columns = new ArrayList<String>();
+        columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         Table table = sDbt.getRaw(
-                new String[] {SecurityUtil.PASSWORD_COLUMN_NAME},
-                new String[] {SecurityUtil.PHONENUM_COLUMN_NAME},
-                new String[] {phoneNum}, null);
+        		columns,
+        		new String[] {DbTable.DB_SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
+                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
         for (int i = 0; i < table.getHeight(); i++) {
             if (password.equals(table.getData(i, 0))) {
                 return true;
@@ -458,7 +460,7 @@ public class MsgHandler {
             for (int i = 0; i < limit; i++) {
                 StringBuilder sb = new StringBuilder();
                 for (int j = 0; j < cols.size(); j++) {
-                    String colName = cols.get(j).getAbbreviation();
+                    String colName = cols.get(j).getSmsLabel();
                     if (colName == null) {
                         colName = cols.get(j).getDisplayName();
                     }
