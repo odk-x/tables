@@ -22,18 +22,25 @@ public class KeyValueStoreSync extends KeyValueStore {
    * @return
    */
   public boolean isSetToSync() {
-    SQLiteDatabase db = this.dbh.getReadableDatabase();
-    List<String> isSetToSyncKey = new ArrayList<String>();
-    isSetToSyncKey.add(SyncPropertiesKeys.IS_SET_TO_SYNC.getKey());
-    List<OdkTablesKeyValueStoreEntry> isSetToSyncEntry =
-        this.getEntriesForKeys(db, isSetToSyncKey);
-    if (isSetToSyncEntry.size() == 0)
-      return false;
-    // otherwise there is a single entry and it is the one we want.
-    if (isSetToSyncEntry.get(0).value.equals("1")) {
-      return true;
-    } else {
-      return false;
+    SQLiteDatabase db = null;
+    try {
+	    db = this.dbh.getReadableDatabase();
+	    List<String> isSetToSyncKey = new ArrayList<String>();
+	    isSetToSyncKey.add(SyncPropertiesKeys.IS_SET_TO_SYNC.getKey());
+	    List<OdkTablesKeyValueStoreEntry> isSetToSyncEntry =
+	        this.getEntriesForKeys(db, isSetToSyncKey);
+	    if (isSetToSyncEntry.size() == 0)
+	      return false;
+	    // otherwise there is a single entry and it is the one we want.
+	    if (isSetToSyncEntry.get(0).value.equals("1")) {
+	      return true;
+	    } else {
+	      return false;
+	    }
+    } finally {
+   		if ( db != null ) {
+   			db.close();
+   		}
     }
   }
   
@@ -43,10 +50,14 @@ public class KeyValueStoreSync extends KeyValueStore {
    */
   public void setIsSetToSync(boolean val) {
     SQLiteDatabase db = this.dbh.getWritableDatabase();
-    int newValue = SyncUtil.boolToInt(val);
-    this.insertOrUpdateKey(db, "Integer", 
-        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), 
-        Integer.toString(newValue));
+    try {
+	    int newValue = SyncUtil.boolToInt(val);
+	    this.insertOrUpdateKey(db, "Integer", 
+	        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), 
+	        Integer.toString(newValue));
+    } finally {
+    	db.close();
+    }
   }
   
   

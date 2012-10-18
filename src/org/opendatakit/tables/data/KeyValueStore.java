@@ -93,7 +93,13 @@ public class KeyValueStore {
                       KeyValueStoreManager.VALUE},
         WHERE_SQL_FOR_TABLE,
         new String[] {this.tableId}, null, null, null);
-    return getEntriesFromCursor(c);
+    try {
+    	return getEntriesFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
   
   /**
@@ -231,7 +237,13 @@ public class KeyValueStore {
                       KeyValueStoreManager.VALUE}, 
         whereClause, 
         desiredKeys, null, null, null);    
-    return getEntriesFromCursor(c);
+    try {
+    	return getEntriesFromCursor(c);
+    } finally {
+    	if ( c != null && ! c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
  
   /**

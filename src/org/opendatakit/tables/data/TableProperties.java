@@ -230,13 +230,22 @@ public class TableProperties {
    */
   public static TableProperties getTablePropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, 
-        typeOfStore);
-    Map<String, String> mapProps = intendedKVS
-        .getProperties(db);
-    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+	    SQLiteDatabase db = null;
+	    try {
+	        db = dbh.getReadableDatabase();
+		    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+		    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, 
+		        typeOfStore);
+		    Map<String, String> mapProps = intendedKVS
+		        .getProperties(db);
+		    db.close();
+		    db = null;
+		    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+	    } finally {
+	    	if ( db != null ) {
+	    		db.close();
+	    	}
+	    }
   }
   
   /**
@@ -248,10 +257,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForAll(DbHelper dbh,
       KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
-    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
+	    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
 
   /**
@@ -264,10 +280,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForSynchronizedTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);    
-    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);    
+	    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /**
@@ -306,10 +329,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForDataTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /**
@@ -335,10 +365,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForSecurityTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
 
   /**
@@ -350,10 +387,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForShortcutTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+    	db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /*
@@ -384,13 +428,13 @@ public class TableProperties {
 			columnOrder = mapper.readValue(columnOrderValue, ArrayList.class);
 		} catch (JsonParseException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
 		} catch (JsonMappingException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
 		} catch (IOException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
 		}
     }
     String primeOrderValue = props.get(DB_PRIME_COLUMNS);
@@ -627,21 +671,24 @@ public class TableProperties {
     tp.getColumns(); // ensuring columns are already initialized
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      KeyValueStore typedStore = kvms.getStoreForTable(id, 
-          typeOfStore);
-      typedStore.addEntriesToStore(db, values);
-      Log.d(TAG, "adding table: " + dbTableName);
-      DbTable.createDbTable(db, tp);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
+	    db.beginTransaction();
+	    try {
+	      KeyValueStore typedStore = kvms.getStoreForTable(id, 
+	          typeOfStore);
+	      typedStore.addEntriesToStore(db, values);
+	      Log.d(TAG, "adding table: " + dbTableName);
+	      DbTable.createDbTable(db, tp);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	    } finally {
+	      db.endTransaction();
+	    }
+	    return tp;
     } finally {
-      db.endTransaction();
-      db.close();
+    	db.close();
     }
-    return tp;
   }
   
   /*
@@ -706,23 +753,26 @@ public class TableProperties {
     // key value store and drop the table holding the data from the database.
     ColumnProperties[] columns = getColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      db.execSQL("DROP TABLE " + dbTableName);
-      for (ColumnProperties cp : columns) {
-        cp.deleteColumn(db);
-      }
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
-          KeyValueStore.Type.ACTIVE);
-      activeKVS.clearKeyValuePairs(db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error deleting table: " + this.tableId);
-    } finally{
-      db.endTransaction();
-      db.close();     
+	    db.beginTransaction();
+	    try {
+	      db.execSQL("DROP TABLE " + dbTableName);
+	      for (ColumnProperties cp : columns) {
+	        cp.deleteColumn(db);
+	      }
+	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
+	          KeyValueStore.Type.ACTIVE);
+	      activeKVS.clearKeyValuePairs(db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error deleting table: " + this.tableId);
+	    } finally{
+	      db.endTransaction();
+	    }
+    } finally {
+    	db.close();
     }
   }
 
@@ -910,25 +960,29 @@ public class TableProperties {
     newColumnOrder.add(dbName);
     // adding column
     SQLiteDatabase db = dbh.getWritableDatabase();
-    ColumnProperties cp = null;
-    db.beginTransaction();
     try {
-      cp = ColumnProperties.addColumn(dbh, db, tableId, dbName, displayName);
-      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
-      setColumnOrder(newColumnOrder, db);
-      Log.d("TP", "here we are");
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error adding column: " + displayName);
+	    ColumnProperties cp = null;
+	    db.beginTransaction();
+	    try {
+	      cp = ColumnProperties.addColumn(dbh, db, tableId, dbName, displayName);
+	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
+	      setColumnOrder(newColumnOrder, db);
+	      Log.d("TP", "here we are");
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error adding column: " + displayName);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // updating TableProperties
+	    newColumns[columns.length] = cp;
+	    columns = newColumns;
+	    // returning new ColumnProperties
+	    return cp;
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // updating TableProperties
-    newColumns[columns.length] = cp;
-    columns = newColumns;
-    // returning new ColumnProperties
-    return cp;
   }
 
   /**
@@ -985,16 +1039,20 @@ public class TableProperties {
     setColumnOrder(newColumnOrder);
     // deleting the column
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      colToDelete.deleteColumn(db);
-      reformTable(db, columnOrder);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error deleting column: " + columnDbName);
+	    db.beginTransaction();
+	    try {
+	      colToDelete.deleteColumn(db);
+	      reformTable(db, columnOrder);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error deleting column: " + columnDbName);
+	    } finally {
+	      db.endTransaction();
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
   }
 
@@ -1030,8 +1088,11 @@ public class TableProperties {
    */
   public void setColumnOrder(ArrayList<String> colOrder) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    setColumnOrder(colOrder, db);
-    db.close();
+    try {
+    	setColumnOrder(colOrder, db);
+    } finally {
+    	db.close();
+    }
   }
 
   private void setColumnOrder(ArrayList<String> columnOrder, SQLiteDatabase db) {
@@ -1368,13 +1429,13 @@ public class TableProperties {
 		jo = mapper.readValue(json, Map.class);
 	} catch (JsonParseException e) {
 		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json");
+		throw new IllegalArgumentException("invalid json: " + json);
 	} catch (JsonMappingException e) {
 		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json");
+		throw new IllegalArgumentException("invalid json: " + json);
 	} catch (IOException e) {
 		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json");
+		throw new IllegalArgumentException("invalid json: " + json);
 	}
     
     ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
@@ -1416,26 +1477,31 @@ public class TableProperties {
   }
 
   private void setIntProperty(String property, int value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
-    db.beginTransaction();
+    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-      setIntProperty(property, value, db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error setting int property " + property + " with value " + 
-        value + " to table " + tableId);
+	    db.beginTransaction();
+	    try {
+	      setIntProperty(property, value, db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error setting int property " + property + " with value " + 
+	        value + " to table " + tableId);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // hilary's original:
+	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+	    if (isSetToSync && syncState == SyncUtil.State.REST 
+	        && JSON_COLUMNS.contains(property)) {
+	      setSyncState(SyncUtil.State.UPDATING);
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // hilary's original:
-    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-    if (isSetToSync && syncState == SyncUtil.State.REST 
-        && JSON_COLUMNS.contains(property))
-      setSyncState(SyncUtil.State.UPDATING);
   }
   
   private void setIntProperty(String property, int value,
@@ -1450,25 +1516,30 @@ public class TableProperties {
   }
 
   private void setStringProperty(String property, String value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
-    db.beginTransaction();
+    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-      setStringProperty(property, value, db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      Log.e(TAG, "error setting string property " + property + " to " + value
-          + " for " + this.tableId);
+	    db.beginTransaction();
+	    try {
+	      setStringProperty(property, value, db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      Log.e(TAG, "error setting string property " + property + " to " + value
+	          + " for " + this.tableId);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // hilary's original
+	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+	    if (isSetToSync && syncState == SyncUtil.State.REST 
+	        && JSON_COLUMNS.contains(property)) {
+	      setSyncState(SyncUtil.State.UPDATING);
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // hilary's original
-    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-    if (isSetToSync && syncState == SyncUtil.State.REST 
-        && JSON_COLUMNS.contains(property))
-      setSyncState(SyncUtil.State.UPDATING);
   }
 
   //TODO this should maybe be only transactionally?

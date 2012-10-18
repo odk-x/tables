@@ -199,13 +199,19 @@ public class TablePropertiesManager extends PreferenceActivity {
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           SQLiteDatabase db = dbh.getWritableDatabase();
-          KeyValueStoreManager kvsm = 
-              KeyValueStoreManager.getKVSManager(dbh);
-          KeyValueStore activeKVS = 
-              kvsm.getStoreForTable(tp.getTableId(),
-                  KeyValueStore.Type.ACTIVE);
-
-          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+          try {
+	          KeyValueStoreManager kvsm = 
+	              KeyValueStoreManager.getKVSManager(dbh);
+	          KeyValueStore activeKVS = 
+	              kvsm.getStoreForTable(tp.getTableId(),
+	                  KeyValueStore.Type.ACTIVE);
+	
+	          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+          } finally {
+        	  if ( db != null ) {
+        		  db.close();
+        	  }
+          }
         }
       });
       builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -486,13 +492,18 @@ public class TablePropertiesManager extends PreferenceActivity {
         final List<ColumnProperties> dateCols =
             new ArrayList<ColumnProperties>();
         for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+            if (cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL ||
+            	cp.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
                 numberCols.add(cp);
             } else if (cp.getColumnType() ==
                     ColumnProperties.ColumnType.LOCATION) {
                 locationCols.add(cp);
             } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATE) {
+                ColumnProperties.ColumnType.DATE ||
+                cp.getColumnType() ==
+                ColumnProperties.ColumnType.DATETIME ||
+                cp.getColumnType() ==
+                ColumnProperties.ColumnType.TIME) {
                 dateCols.add(cp);
             }
         }

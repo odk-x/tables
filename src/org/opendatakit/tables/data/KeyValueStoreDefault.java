@@ -71,8 +71,8 @@ public class KeyValueStoreDefault {
   private final String tableId;
   
   private void assertRelation(DbHelper dbh, String tableId) {
-    if (this.kvs == null) {
-      this.kvs = new KeyValueStoreDefault(dbh, tableId, KEY);
+    if (KeyValueStoreDefault.kvs == null) {
+    	KeyValueStoreDefault.kvs = new KeyValueStoreDefault(dbh, tableId, KEY);
     }
   }
   

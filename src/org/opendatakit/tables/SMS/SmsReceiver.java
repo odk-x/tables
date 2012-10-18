@@ -44,7 +44,7 @@ public class SmsReceiver extends BroadcastReceiver {
 	    
 		
 		// Service
-        NotificationManager nm =(NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        NotificationManager nm =(NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.cancel(R.string.app_name);
     	
         // Data-in

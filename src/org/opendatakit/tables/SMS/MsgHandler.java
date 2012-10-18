@@ -360,8 +360,11 @@ public class MsgHandler {
     
     private boolean addConstraint(Query query, ColumnProperties cp,
             char comparator, String value) {
+    	// TODO: do Time and DateTime get processed the same as Date???
         if ((cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE) ||
-                (cp.getColumnType() == ColumnProperties.ColumnType.DATE)) {
+                (cp.getColumnType() == ColumnProperties.ColumnType.DATE) ||
+                (cp.getColumnType() == ColumnProperties.ColumnType.DATETIME) ||
+                (cp.getColumnType() == ColumnProperties.ColumnType.TIME)) {
             Interval interval = du.tryParseInterval(value);
             if (interval == null) {
                 DateTime dt = du.tryParseInstant(value);
@@ -391,8 +394,12 @@ public class MsgHandler {
                 }
             } else {
                 if (comparator == '=') {
-                    if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE) {
+                    if ((cp.getColumnType() ==
+                        ColumnProperties.ColumnType.DATE) ||
+                        (cp.getColumnType() ==
+                        ColumnProperties.ColumnType.DATETIME) ||
+                        (cp.getColumnType() ==
+                        ColumnProperties.ColumnType.TIME)) {
                         query.addConstraint(cp,
                                 Query.Comparator.GREATER_THAN_EQUALS,
                                 du.formatDateTimeForDb(interval.getStart()));
@@ -410,8 +417,12 @@ public class MsgHandler {
                             Query.Comparator.GREATER_THAN_EQUALS,
                             du.formatDateTimeForDb(interval.getEnd()));
                 } else {
-                    if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE) {
+                    if ((cp.getColumnType() ==
+                            ColumnProperties.ColumnType.DATE) ||
+                            (cp.getColumnType() ==
+                            ColumnProperties.ColumnType.DATETIME) ||
+                            (cp.getColumnType() ==
+                            ColumnProperties.ColumnType.TIME)) {
                         query.addOrConstraint(cp, Query.Comparator.LESS_THAN,
                                 du.formatDateTimeForDb(interval.getStart()),
                                 Query.Comparator.GREATER_THAN_EQUALS,

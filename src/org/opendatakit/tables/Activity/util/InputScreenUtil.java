@@ -45,15 +45,18 @@ public class InputScreenUtil {
     }
     
     public InputView getInputView(ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
             return new DateInputView(context, value);
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+            return new DateTimeInputView(context, value);
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+            return new TimeInputView(context, value);
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
             return new DateRangeInputView(context, value);
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
             return new McOptionsInputView(context,
                     cp.getDisplayChoicesMap(), value);
-        default:
+        } else {
             return new GeneralInputView(context, value);
         }
     }
@@ -105,6 +108,76 @@ public class InputScreenUtil {
         }
         
         public boolean isValidValue() {
+            String value = field.getText().toString();
+            return (du.tryParseInstant(value) != null) ||
+                (du.tryParseInterval(value) != null);
+        }
+        
+        public String getDbValue() {
+            String value = field.getText().toString();
+            DateTime dt = du.tryParseInstant(value);
+            if (dt != null) {
+                return du.formatDateTimeForDb(dt);
+            }
+            Interval interval = du.tryParseInterval(value);
+            if (interval == null) {
+                return null;
+            } else {
+                return du.formatDateTimeForDb(interval.getStart());
+            }
+        }
+    }
+    
+    private class DateTimeInputView extends InputView {
+        
+        private final EditText field;
+        
+        public DateTimeInputView(Context context, String value) {
+            super(context);
+            field = new EditText(context);
+            if (value != null) {
+                DateTime dt = du.parseDateTimeFromDb(value);
+                field.setText(du.formatLongDateTimeForUser(dt));
+            }
+        }
+        
+        public boolean isValidValue() {
+        	// TODO: does this need to be altered/revised vs. DateInputView
+            String value = field.getText().toString();
+            return (du.tryParseInstant(value) != null) ||
+                (du.tryParseInterval(value) != null);
+        }
+        
+        public String getDbValue() {
+            String value = field.getText().toString();
+            DateTime dt = du.tryParseInstant(value);
+            if (dt != null) {
+                return du.formatDateTimeForDb(dt);
+            }
+            Interval interval = du.tryParseInterval(value);
+            if (interval == null) {
+                return null;
+            } else {
+                return du.formatDateTimeForDb(interval.getStart());
+            }
+        }
+    }
+    
+    private class TimeInputView extends InputView {
+        
+        private final EditText field;
+        
+        public TimeInputView(Context context, String value) {
+            super(context);
+            field = new EditText(context);
+            if (value != null) {
+                DateTime dt = du.parseDateTimeFromDb(value);
+                field.setText(du.formatLongDateTimeForUser(dt));
+            }
+        }
+        
+        public boolean isValidValue() {
+        	// TODO: does this need to be altered/revised vs. DateInputView
             String value = field.getText().toString();
             return (du.tryParseInstant(value) != null) ||
                 (du.tryParseInterval(value) != null);

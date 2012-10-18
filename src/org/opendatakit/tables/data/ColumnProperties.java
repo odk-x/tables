@@ -17,6 +17,9 @@ package org.opendatakit.tables.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +51,8 @@ public class ColumnProperties {
     // display attributes
     private static final String DB_DISPLAY_VISIBLE = "displayVisible"; // true if visible in tables
     private static final String DB_DISPLAY_NAME = "displayName"; // column header to display 
-    private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap"; // was DB_MC_OPTIONS
+    private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap"; // was DB_MC_OPTIONS 
+    // TODO: allocate large storage on Aggregate
     /* displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
      * This is a map used for select1 and select choices, either closed-universe (fixed set) or 
      * open-universe (select1-or-other, select-or-other). Stores the full list of all values in the
@@ -179,21 +183,108 @@ public class ColumnProperties {
         
         DB_FOOTER_MODE
     };
-    
-    public class ColumnType {
-        public static final int NONE = 0;
-        public static final int TEXT = 1;
-        public static final int NUMBER = 2;
-        public static final int DATE = 3;
-        public static final int DATE_RANGE = 4;
-        public static final int PHONE_NUMBER = 5;
-        public static final int FILE = 6;
-        public static final int COLLECT_FORM = 7;
-        public static final int MC_OPTIONS = 8;
-        public static final int TABLE_JOIN = 9;
-        public static final int LOCATION = 10;
-        private ColumnType() {}
-    }
+
+    /**
+     * Act like an enum, in that == comparisons work for comparing two typenames.
+     * But allow the enum to grow, so ColumnType.valueOf() will extend the list of ColumnTypes.
+     * 
+     * It is OK to add values to this enumeration. The name() of the enumeration is stored
+     * in the database, so the order of the names should not be important here.
+     */
+    public static class ColumnType {
+    	private static Map<String,ColumnType> nameMap = new HashMap<String,ColumnType>();
+    	
+    	public static ColumnType NONE;
+    	public static ColumnType STRING;
+    	public static ColumnType INTEGER;
+    	public static ColumnType DECIMAL;
+    	public static ColumnType DATE;
+    	public static ColumnType DATETIME;
+    	public static ColumnType TIME;
+        
+    	public static ColumnType BOOLEAN; // not in Tables, TODO: confirm this propagates into Aggregate OK?
+    	public static ColumnType FILE; // not in Collect TODO: need to track image/audio/video mime type,
+    									// TODO: need file entry in Aggregate (JSON in Tables)
+    	public static ColumnType LOCATION; // TODO: goes away; becomes JSON type
+    	public static ColumnType JSON; // not in Tables TODO: JSON object as string 
+    									// TODO: increase string length in Aggregate
+        
+    	public static ColumnType DATE_RANGE; // not in Collect, Aggregate
+    	public static ColumnType PHONE_NUMBER; // not in Collect, Aggregate
+    	public static ColumnType COLLECT_FORM; // not in Collect, Aggregate
+    	public static ColumnType MC_OPTIONS; // select1/select -- not in Collect, Aggregate
+    	public static ColumnType TABLE_JOIN; // not in Collect (parent table?); needs to be in Aggregate
+
+    	static {
+    		 nameMap.put("NONE", NONE = new ColumnType("NONE", "None"));
+    		 nameMap.put("STRING", STRING = new ColumnType("STRING", "Text"));
+    		 nameMap.put("INTEGER", INTEGER = new ColumnType("INTEGER", "Integer"));
+    		 nameMap.put("DECIMAL", DECIMAL = new ColumnType("DECIMAL", "Number"));
+    		 nameMap.put("DATE", DATE = new ColumnType("DATE", "Date"));
+    		 nameMap.put("DATETIME", DATETIME = new ColumnType("DATETIME", "Date and Time"));
+    		 nameMap.put("TIME", TIME = new ColumnType("TIME", "Time"));
+    	       
+    		 nameMap.put("BOOLEAN", BOOLEAN = new ColumnType("BOOLEAN", "Boolean")); // TODO: Not in tables
+    		 nameMap.put("FILE", FILE = new ColumnType("FILE", "File")); // TODO: add to Collect 2.0. Need to track mime type in this
+    		 nameMap.put("LOCATION", LOCATION = new ColumnType("LOCATION", "Location")); // TODO: goes away; becomes composite element
+    		 nameMap.put("JSON", JSON = new ColumnType("JSON", "JSON")); // TODO: not in tables; needs long string in Aggregate
+    		 
+    		 nameMap.put("DATE_RANGE", DATE_RANGE = new ColumnType("DATE_RANGE", "Date Range")); // TODO: not in collect; becomes composite element
+    		 nameMap.put("PHONE_NUMBER", PHONE_NUMBER = new ColumnType("PHONE_NUMBER", "Phone Number")); // TODO: not in Collect; becomes composite element
+    		 nameMap.put("COLLECT_FORM", COLLECT_FORM = new ColumnType("COLLECT_FORM", "Collect Form")); // TODO: not in Collect; data type is FILE
+    		 nameMap.put("MC_OPTIONS", MC_OPTIONS = new ColumnType("MC_OPTIONS", "Multiple Choices")); // TODO: goes way -- infer by presence of ELEMENT_DISPLAY_OPTIONS
+    		 nameMap.put("TABLE_JOIN", TABLE_JOIN = new ColumnType("TABLE_JOIN", "Join")); // TODO: expand for child forms of parents. Perhaps reverse link to parents?
+    	}
+    	
+    	private final String typename;
+    	private final String label;
+    	
+    	private ColumnType(String typename, String label) {
+    		this.typename = typename;
+    		this.label = label;
+    	}
+    	
+    	public final String name() {
+    		return typename;
+    	}
+    	
+    	public final String label() {
+    		return label;
+    	}
+    	
+    	public final String toString() {
+    		return typename;
+    	}
+    	
+    	public static final ColumnType valueOf(String name) {
+    		ColumnType t = nameMap.get(name);
+    		if ( t != null ) return t;
+    		t = new ColumnType(name, name);
+    		nameMap.put(name, t);
+    		return t;
+    	}
+    	
+    	public static final Collection<ColumnType> getAllColumnTypes() {
+    		ArrayList<ColumnType> sortedList = new ArrayList<ColumnType>(nameMap.values());
+    		Collections.sort(sortedList, new Comparator<ColumnType>(){
+
+				@Override
+				public int compare(ColumnType lhs, ColumnType rhs) {
+					return lhs.label().compareTo(rhs.label());
+				}});
+    		
+    		return sortedList;
+    	}
+    	
+    	public static final String[] getAllColumnTypeLabels() {
+    		String[] vlist = new String[nameMap.size()];
+    		int i = 0;
+    		for ( ColumnType t : getAllColumnTypes() ) {
+    			vlist[i++] = t.label();
+    		}
+    		return vlist;
+    	}
+    };
     
     public class FooterMode {
         public static final int NONE = 0;
@@ -212,7 +303,7 @@ public class ColumnProperties {
     
     private final String elementKey;
     private String elementName;
-    private int elementType;
+    private ColumnType elementType;
     private List<String> listChildElementKeys;
     private String joinTableId;
     private String joinElementKey;
@@ -232,7 +323,7 @@ public class ColumnProperties {
     private ColumnProperties(DbHelper dbh, String tableId, 
     		String elementKey,
     		String elementName,
-    		int elementType,
+    		ColumnType elementType,
     		List<String> listChildElementKeys,
     		String joinTableId,
     		String joinElementKey,
@@ -270,12 +361,14 @@ public class ColumnProperties {
     }
     
     public static ColumnProperties getColumnProperties(DbHelper dbh,
-            String tableId, String dbElementKey) throws JsonParseException, JsonMappingException, IOException {
+            String tableId, String dbElementKey) {
     	
     	SQLiteDatabase db = null;
     	Cursor c = null;
     	ColumnProperties cp = null;
-    	try {
+        String parseValue = null;
+
+        try {
 	        db = dbh.getReadableDatabase();
 	        c = db.query(DB_TABLENAME, INIT_COLUMNS, WHERE_SQL,
 	                new String[] {tableId, dbElementKey}, null, null, null);
@@ -306,17 +399,19 @@ public class ColumnProperties {
 	        ArrayList<String> displayChoicesMap = null;
 	        if ( !c.isNull(displayChoicesMapIndex) ) {
 	        	String displayChoicesMapValue = c.getString(displayChoicesMapIndex);
+	        	parseValue = displayChoicesMapValue;
 	        	displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
 	        }
 	        ArrayList<String> listChildElementKeys = null;
 	        if ( !c.isNull(listChildElementKeysIndex) ) {
 	        	String listChildElementKeysValue = c.getString(listChildElementKeysIndex);
+	        	parseValue = listChildElementKeysValue;
 	        	listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
 	        }
 	        cp = new ColumnProperties(dbh, tableId,
 	        		c.getString(dbcnIndex), 
 	        		c.getString(elementNameIndex),
-	        		c.getInt(elementTypeIndex),
+	        		ColumnType.valueOf(c.getString(elementTypeIndex)),
 	        		listChildElementKeys,
 	        		c.getString(joinTableIndex),
 	        		c.getString(joinElementIndex),
@@ -332,9 +427,18 @@ public class ColumnProperties {
 	        		c.getString(smsLabelIndex),
 	
 	                c.getInt(footerModeIndex));
+        } catch (JsonParseException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException("invalid db value: " + parseValue);
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException("invalid db value: " + parseValue);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException("invalid db value: " + parseValue);
     	} finally {
     		try {
-    			if ( c != null ) {
+    			if ( c != null && !c.isClosed() ) {
     				c.close();
     			}
     		} finally {
@@ -416,7 +520,7 @@ public class ColumnProperties {
 		        cps[i] = new ColumnProperties(dbh, tableId,
 		        		c.getString(dbcnIndex), 
 		        		c.getString(elementNameIndex),
-		        		c.getInt(elementTypeIndex),
+		        		ColumnType.valueOf(c.getString(elementTypeIndex)),
 		        		listChildElementKeys,
 		        		c.getString(joinTableIndex),
 		        		c.getString(joinElementIndex),
@@ -437,7 +541,7 @@ public class ColumnProperties {
 	        }
     	} finally {
     		try {
-    			if ( c != null ) {
+    			if ( c != null && !c.isClosed() ) {
     				c.close();
     			}
     		} finally {
@@ -457,7 +561,7 @@ public class ColumnProperties {
         
         values.put(DB_ELEMENT_KEY, elementKey);
         values.put(DB_ELEMENT_NAME, elementKey);
-        values.put(DB_ELEMENT_TYPE, ColumnType.NONE);
+        values.put(DB_ELEMENT_TYPE, ColumnType.NONE.name());
         values.putNull(DB_LIST_CHILD_ELEMENT_KEYS);
         values.putNull(DB_JOIN_TABLE_ID);
         values.putNull(DB_JOIN_ELEMENT_KEY);
@@ -543,21 +647,25 @@ public class ColumnProperties {
 	}
 	
 	public void setElementName(String elementName) {
+		setStringProperty(DB_ELEMENT_NAME, elementName);
 		this.elementName = elementName;
 	}
-    
-    public int getElementType() {
+
+	// TODO: remove this
+    public ColumnType getElementType() {
 		return elementType;
 	}
 
-	public void setElementType(int elementType) {
+    // TODO: remove this
+	public void setElementType(ColumnType elementType) {
+		setStringProperty(DB_ELEMENT_TYPE, elementType.name());
 		this.elementType = elementType;
 	}
 	   
     /**
      * @return the column's type
      */
-    public int getColumnType() {
+    public ColumnType getColumnType() {
         return elementType;
     }
     
@@ -565,18 +673,23 @@ public class ColumnProperties {
      * Sets the column's type.
      * @param columnType the new type
      */
-    public void setColumnType(int columnType) {
+    public void setColumnType(ColumnType columnType) {
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
                 tableId, KeyValueStore.Type.ACTIVE);
         ArrayList<String> colOrder = tp.getColumnOrder();
         tp.getColumns(); // ensuring columns are initialized
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.beginTransaction();
-        setIntProperty(db, DB_ELEMENT_TYPE, columnType);
-        tp.reformTable(db, colOrder);
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
+        try {
+	        db.beginTransaction();
+	        setStringProperty(db, DB_ELEMENT_TYPE, columnType.name());
+	        tp.reformTable(db, colOrder);
+	        db.setTransactionSuccessful();
+	        db.endTransaction();
+        } finally {
+        	if ( db != null ) {
+        		db.close();
+        	}
+        }
         this.elementType = columnType;
     }
 
@@ -586,14 +699,6 @@ public class ColumnProperties {
 	
 	public void setListChildElementKeys(ArrayList<String> listChildElementKeys) {
 		this.listChildElementKeys = listChildElementKeys;
-	}
-	
-	public String getJoinElementKey() {
-		return joinElementKey;
-	}
-
-	public void setJoinElementKey(String joinElementKey) {
-		this.joinElementKey = joinElementKey;
 	}
 
 	public boolean isPersisted() {
@@ -742,13 +847,13 @@ public class ColumnProperties {
 	        displayChoicesMap = options;
 		} catch (JsonGenerationException e) {
 			e.printStackTrace();
-			throw new IllegalArgumentException("failed JSON toString conversion");
+			throw new IllegalArgumentException("failed JSON toString conversion: " + options.toString());
 		} catch (JsonMappingException e) {
 			e.printStackTrace();
-			throw new IllegalArgumentException("failed JSON toString conversion");
+			throw new IllegalArgumentException("failed JSON toString conversion: " + options.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new IllegalArgumentException("failed JSON toString conversion");
+			throw new IllegalArgumentException("failed JSON toString conversion: " + options.toString());
 		}
     }
     
@@ -767,7 +872,17 @@ public class ColumnProperties {
         setStringProperty(DB_JOIN_TABLE_ID, tableId);
         joinTableId = tableId;
     }
-    
+	
+	public String getJoinElementKey() {
+		return joinElementKey;
+	}
+
+	public void setJoinElementKey(String joinElementKey) {
+        setStringProperty(DB_JOIN_ELEMENT_KEY, tableId);
+		this.joinElementKey = joinElementKey;
+	}
+
+	// TODO: rename to getJoinElementKey()
     /**
      * @return the join table column name
      */
@@ -820,7 +935,7 @@ public class ColumnProperties {
     	jo.put(JSON_KEY_ELEMENT_KEY, elementKey);
     	
     	setElementName((String) jo.get(JSON_KEY_ELEMENT_NAME));
-    	setElementType((Integer) jo.get(JSON_KEY_ELEMENT_TYPE));
+    	setElementType(ColumnType.valueOf((String) jo.get(JSON_KEY_ELEMENT_TYPE)));
     	setListChildElementKeys((ArrayList<String>) jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS));
         setJoinTableId((String) jo.get(JSON_KEY_JOIN_TABLE_ID));
         setJoinColumnName((String) jo.get(JSON_KEY_JOIN_ELEMENT_KEY));
@@ -839,22 +954,13 @@ public class ColumnProperties {
         setFooterMode((Integer) jo.get(JSON_KEY_FOOTER_MODE));
     }
     
-    private static String encodeDisplayChoicesMap(String[] options) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(String.format("%02d", options.length));
-        for (String option : options) {
-            builder.append(String.format("%02d", option.length()));
-        }
-        for (String option : options) {
-            builder.append(option);
-        }
-        return builder.toString();
-    }
-    
     private void setIntProperty(String property, int value) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        setIntProperty(db, property, value);
-        db.close();
+        try {
+        	setIntProperty(db, property, value);
+        } finally {
+            db.close();
+        }
     }
     
     private void setIntProperty(SQLiteDatabase db, String property,
@@ -862,24 +968,31 @@ public class ColumnProperties {
         ContentValues values = new ContentValues();
         values.put(property, value);
         int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
-        if (count != 1000) {
+        if (count != 1) {
             Log.e(ColumnProperties.class.getName(),
                     "setting " + property + " updated " + count + " rows");
         }
     }
     
     private void setStringProperty(String property, String value) {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        try {
+        	setStringProperty(db, property,  value);
+        } finally {
+        	db.close();
+        }
+    }
+    
+    private void setStringProperty(SQLiteDatabase db, String property, String value) {
         ContentValues values = new ContentValues();
         values.put(property, value);
-        SQLiteDatabase db = dbh.getWritableDatabase();
         int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
         if (count != 1) {
             Log.e(ColumnProperties.class.getName(),
                     "setting " + property + " updated " + count + " rows");
         }
-        db.close();
     }
-    
+   
     static String getTableCreateSql() {
         return "CREATE TABLE " + DB_TABLENAME + "(" +
                        DB_TABLE_ID + " TEXT NOT NULL" +

@@ -30,10 +30,10 @@ public class CellValueView {
     
     public static CellEditView getCellEditView(Context context,
             ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+    	
+        if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
             return new MultipleChoiceEditView(context, cp, value);
-        default:
+        } else {
             return new DefaultEditView(context, value);
         }
     }

@@ -221,7 +221,8 @@ public class BoxStemGraphDisplayActivity extends Activity
             super(context);
             numberCols = new ArrayList<ColumnProperties>();
             for (ColumnProperties cp : c.getTableProperties().getColumns()) {
-                if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                if (cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL ||
+                    cp.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
                     numberCols.add(cp);
                 }
             }

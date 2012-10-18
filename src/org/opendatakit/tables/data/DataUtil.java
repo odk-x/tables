@@ -33,7 +33,7 @@ import org.opendatakit.tables.Activity.util.UTMConverter;
 public class DataUtil {
     
     private static final DateTimeFormatter DB_DATETIME_FORMATTER =
-        DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm-ss").withZoneUTC();
+        DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC();
     
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
         "M/d/yy h:mm:ssa",
@@ -150,23 +150,54 @@ public class DataUtil {
     }
     
     public String validifyValue(ColumnProperties cp, String input) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
             return validifyDateValue(input);
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+            return validifyDateTimeValue(input);
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+            return validifyTimeValue(input);
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
             return validifyDateRangeValue(input);
-        case ColumnProperties.ColumnType.NUMBER:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL ) {
             return validifyNumberValue(input);
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.INTEGER ) {
+            return validifyIntegerValue(input);
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
             return validifyMultipleChoiceValue(cp, input);
-        case ColumnProperties.ColumnType.LOCATION:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.LOCATION ) {
             return validifyLocationValue(input);
-        default:
+        } else {
             return input;
         }
     }
     
     private String validifyDateValue(String input) {
+        DateTime instant = tryParseInstant(input);
+        if (instant != null) {
+            return formatDateTimeForDb(instant);
+        }
+        Interval interval = tryParseInterval(input);
+        if (interval != null) {
+            return formatDateTimeForDb(interval.getStart());
+        }
+        return null;
+    }
+    
+    private String validifyDateTimeValue(String input) {
+        DateTime instant = tryParseInstant(input);
+        if (instant != null) {
+            return formatDateTimeForDb(instant);
+        }
+        Interval interval = tryParseInterval(input);
+        if (interval != null) {
+            return formatDateTimeForDb(interval.getStart());
+        }
+        return null;
+    }
+    
+    private String validifyTimeValue(String input) {
+    	// TODO: does this need to be different?
+    	// Need to respect TimeZone. What should Date be?
         DateTime instant = tryParseInstant(input);
         if (instant != null) {
             return formatDateTimeForDb(instant);
@@ -189,6 +220,15 @@ public class DataUtil {
     private String validifyNumberValue(String input) {
         try {
             Double.parseDouble(input);
+            return input;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+    
+    private String validifyIntegerValue(String input) {
+        try {
+            Integer.parseInt(input);
             return input;
         } catch (NumberFormatException e) {
             return null;
@@ -342,12 +382,17 @@ public class DataUtil {
     }
     
     public String formatForUserDisplay(ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+        	// TODO: do we need special conversion
+            return formatLongDateTimeForUser(parseDateTimeFromDb(value));
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+        	// TODO: do we need special conversion
+            return formatLongDateTimeForUser(parseDateTimeFromDb(value));
+        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
             return formatLongIntervalForUser(parseIntervalFromDb(value));
-        default:
+        } else {
             return value;
         }
     }

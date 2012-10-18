@@ -378,6 +378,11 @@ public class Query {
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
+
+        // add restriction for ODK Collect intermediate status...
+        sd.appendSql(" AND " + tp.getDbTableName() + "." +
+                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             sd.appendSql(" AND " + csd.getSql());
@@ -479,6 +484,32 @@ public class Query {
         return toSql(columns.toArray(new String[0]));
     }
     
+    public SqlData toFooterSql(String dataColumn, GroupQueryType type) {
+        String typeSql;
+        switch (type) {
+        case AVERAGE:
+            typeSql = "(SUM(" + dataColumn + ") / COUNT(" + dataColumn +
+                    "))";
+            break;
+        case COUNT:
+            typeSql = "COUNT(" + dataColumn + ")";
+            break;
+        case MAXIMUM:
+            typeSql = "MAX(" + dataColumn + ")";
+            break;
+        case MINIMUM:
+            typeSql = "MIN(" + dataColumn + ")";
+            break;
+        case SUM:
+            typeSql = "SUM(" + dataColumn + ")";
+            break;
+        default:
+            throw new RuntimeException();
+        }
+        SqlData sd = toSql(typeSql + " AS g");
+        return sd;
+    }
+    
     public SqlData toGroupSql(String groupColumn, GroupQueryType type) {
         String typeSql;
         switch (type) {
@@ -518,6 +549,11 @@ public class Query {
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DbTable.DB_SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+        
+        // add restriction for ODK Collect intermediate status...
+        idsd.appendSql(" AND " + tp.getDbTableName() + "." +
+                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             idsd.appendSql(" AND " + csd.getSql());

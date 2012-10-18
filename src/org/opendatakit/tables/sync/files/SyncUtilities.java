@@ -75,29 +75,33 @@ public class SyncUtilities {
     // begin the database stuff.
     DbHelper dbh = DbHelper.getDbHelper(context);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    // So I'm a bit confused as to why I have the dbhelper and pass
-    // it in here, and then just pass the db directly in? Hmm.
-    // I guess the helper is ensuring that the correct table has
-    // been asserted?
-    KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
-    db.beginTransaction();
-    try { 
-      KeyValueStore serverKVS = kvms.getStoreForTable(tableId, 
-          KeyValueStore.Type.SERVER);
-      // When the table properties are passed down from the server in the key
-      // value store, we will want to clear the original entries and overwrite
-      // them with the current state of the server. For now, however, we aren't
-      // going to do that, b/c the properties aren't coming down from the 
-      // server via the manifest.
-      //kvs.clearKeyValuePairs(db);
-      serverKVS.addEntriesToStore(db, allEntries);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      // TODO notify that the sync failed--resolve the file issue above
-      e.printStackTrace();
+    try {
+	    // So I'm a bit confused as to why I have the dbhelper and pass
+	    // it in here, and then just pass the db directly in? Hmm.
+	    // I guess the helper is ensuring that the correct table has
+	    // been asserted?
+	    KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
+	    db.beginTransaction();
+	    try { 
+	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId, 
+	          KeyValueStore.Type.SERVER);
+	      // When the table properties are passed down from the server in the key
+	      // value store, we will want to clear the original entries and overwrite
+	      // them with the current state of the server. For now, however, we aren't
+	      // going to do that, b/c the properties aren't coming down from the 
+	      // server via the manifest.
+	      //kvs.clearKeyValuePairs(db);
+	      serverKVS.addEntriesToStore(db, allEntries);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      // TODO notify that the sync failed--resolve the file issue above
+	      e.printStackTrace();
+	    } finally {
+	      db.endTransaction();
+	    }
     } finally {
-      db.endTransaction();
-    }    
+    	db.close();
+    }
   }
   
   /**

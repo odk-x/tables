@@ -21,6 +21,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -94,9 +95,9 @@ public class PropertyManager extends PreferenceActivity {
         "Change SMS Label for Column", smsLabel, smsLabel));
 
     // Type<List>
-    String type = getType(colName);
-    category.addPreference(createListPreference("TYPE", "Type", type, type, COLUMN_TYPE_LABELS,
-        COLUMN_TYPE_LABELS));
+    String type = getColumnTypeLabel(colName);
+    category.addPreference(createListPreference("TYPE", "Type", type, type, ColumnType.getAllColumnTypeLabels(),
+    		ColumnType.getAllColumnTypeLabels()));
 
     // SMS-IN<CheckBox>
     category
@@ -198,8 +199,8 @@ public class PropertyManager extends PreferenceActivity {
   }
 
   // Get the type for this column.
-  private String getType(String colName) {
-    return COLUMN_TYPE_LABELS[cp.getColumnType()];
+  private String getColumnTypeLabel(String colName) {
+    return cp.getColumnType().label();
   }
 
   // Check if this is SMS-IN column.
@@ -226,12 +227,12 @@ public class PropertyManager extends PreferenceActivity {
     if (key.equals("SMSLBL")) {
       cp.setSmsLabel(getEditBoxContent(pref));
     } else if (key.equals("TYPE")) {
-      for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
-        if (COLUMN_TYPE_LABELS[i].equals(newVal)) {
-          cp.setColumnType(i);
-          if ((i == ColumnProperties.ColumnType.MC_OPTIONS) && !showingMcDialog) {
+      for (ColumnType t : ColumnType.getAllColumnTypes()) {
+        if (t.label().equals(newVal)) {
+          cp.setColumnType(t);
+          if ((t == ColumnProperties.ColumnType.MC_OPTIONS) && !showingMcDialog) {
             loadPreferenceScreen();
-          } else if (i == ColumnProperties.ColumnType.TABLE_JOIN) {
+          } else if (t == ColumnProperties.ColumnType.TABLE_JOIN) {
             loadPreferenceScreen();
           }
           break;

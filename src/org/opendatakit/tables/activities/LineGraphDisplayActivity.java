@@ -71,7 +71,8 @@ public class LineGraphDisplayActivity extends Activity
                 xCol.getColumnDbName());
         int yIndex = c.getTableProperties().getColumnIndex(
                 yCol.getColumnDbName());
-        if (xCol.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+        if (xCol.getColumnType() == ColumnProperties.ColumnType.DECIMAL ||
+        	xCol.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
             List<Double> xValues = new ArrayList<Double>();
             for (int i = 0; i < table.getHeight(); i++) {
                 xValues.add(Double.valueOf(table.getData(i, xIndex)));
