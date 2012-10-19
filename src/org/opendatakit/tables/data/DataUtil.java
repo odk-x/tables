@@ -376,6 +376,7 @@ public class DataUtil {
     }
     
     public Interval parseIntervalFromDb(String dbString) {
+    	// TODO: range should not be slash-separated but stored as two columns OR json in db...
         String[] split = dbString.split("/");
         return new Interval(DB_DATETIME_FORMATTER.parseDateTime(split[0]),
                 DB_DATETIME_FORMATTER.parseDateTime(split[1]));
@@ -416,6 +417,8 @@ public class DataUtil {
     }
     
     public double[] parseLocationFromDb(String dbString) {
+    	// TODO: geopoint should not be comma-separated but stored as four columns OR json in db...
+    	// TODO: note that this expects only 2 coordinates (x,y) ???
         String[] split = dbString.split(",");
         return new double[] {Double.parseDouble(split[0]),
                 Double.parseDouble(split[1])};

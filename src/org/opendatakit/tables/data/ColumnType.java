@@ -56,6 +56,7 @@ public class ColumnType {
 	public static ColumnType MULTIPLE_CHOICES; // NEW
 	
 	// TODO: goes away; becomes plain old composite type?
+	// TODO: was 'Location' -- was that lat-long, or any cartesian coordinate?
 	public static ColumnType GEOPOINT; 
 
 	 // TODO: not in collect; becomes composite element
@@ -105,7 +106,7 @@ public class ColumnType {
 				"Multiple Choices"));
 		// TODO: GO AWAY!!! this info is captured in Column Properties...
 		nameMap.put("tableJoin", TABLE_JOIN = new ColumnType("tableJoin",
-				"Join"));
+				"Join")); 
 	}
 
 	private final String typename;

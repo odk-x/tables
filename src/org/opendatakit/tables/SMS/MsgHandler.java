@@ -505,6 +505,7 @@ public class MsgHandler {
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query,
                 new String[] {drSlotColumn.getColumnDbName()});
+        // TODO: range should not be slash-separated but stored as two columns OR json in db...
         List<String[]> rawRanges = new ArrayList<String[]>();
         for (int i = 0; i < table.getHeight(); i++) {
             rawRanges.add(table.getData(i, 0).split("/"));
