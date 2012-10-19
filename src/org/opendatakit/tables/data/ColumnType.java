@@ -65,6 +65,7 @@ public class ColumnType {
 	 // TODO: not in Collect; becomes text specialization element
 	public static ColumnType PHONE_NUMBER; // not in Collect, Aggregate
 	
+	// TODO: This is a property of the TABLE not any one COLUMN. Move to TableProperties!!!
 	 // TODO: not in Collect; becomes MIMEURI specialization element
 	public static ColumnType COLLECT_FORM; // not in Collect, Aggregate
 	
@@ -99,6 +100,7 @@ public class ColumnType {
 				"Date Range"));
 		nameMap.put("phoneNumber", PHONE_NUMBER = new ColumnType("phoneNumber",
 				"Phone Number"));
+		// TODO: move to TableProperties
 		nameMap.put("collectForm", COLLECT_FORM = new ColumnType("collectForm",
 				"Collect Form"));
 		// TODO: GO AWAY!!! this is replaced by MULTIPLE_CHOICES and element item type
