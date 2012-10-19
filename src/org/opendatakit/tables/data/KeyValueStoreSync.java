@@ -52,7 +52,7 @@ public class KeyValueStoreSync extends KeyValueStore {
     SQLiteDatabase db = this.dbh.getWritableDatabase();
     try {
 	    int newValue = SyncUtil.boolToInt(val);
-	    this.insertOrUpdateKey(db, "Integer", 
+	    this.insertOrUpdateKey(db, ColumnType.INTEGER.name(), 
 	        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), 
 	        Integer.toString(newValue));
     } finally {

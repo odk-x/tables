@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 
 import android.content.Context;
@@ -45,15 +46,15 @@ public class InputScreenUtil {
     }
     
     public InputView getInputView(ColumnProperties cp, String value) {
-        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return new DateInputView(context, value);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
             return new DateTimeInputView(context, value);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
             return new TimeInputView(context, value);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return new DateRangeInputView(context, value);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
+        } else if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return new McOptionsInputView(context,
                     cp.getDisplayChoicesMap(), value);
         } else {

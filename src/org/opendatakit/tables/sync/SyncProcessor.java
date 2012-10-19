@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;

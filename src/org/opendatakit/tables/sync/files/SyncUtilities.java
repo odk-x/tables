@@ -482,6 +482,8 @@ public class SyncUtilities {
     }
   } 
   
+  // TODO: remove this??? Only used for FILE type.
+  // TODO: Make ColumnType consistent impl between Aggregate and Tables
   /**
    * NB: This is currently copy/pasted from the aggregate workspace. Likely
    * going to want to get this working from a JAR or something.

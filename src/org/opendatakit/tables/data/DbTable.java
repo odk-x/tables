@@ -76,9 +76,9 @@ public class DbTable {
         StringBuilder colListBuilder = new StringBuilder();
         for (ColumnProperties cp : tp.getColumns()) {
             colListBuilder.append(", " + cp.getColumnDbName());
-            if (cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL) {
+            if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");
-            } else if (cp.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
+            } else if (cp.getColumnType() == ColumnType.INTEGER) {
                 colListBuilder.append(" INTEGER");
             } else {
                 colListBuilder.append(" TEXT");

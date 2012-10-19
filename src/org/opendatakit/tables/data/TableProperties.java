@@ -698,7 +698,7 @@ public class TableProperties {
       String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = "String";
+    entry.type = ColumnType.TEXT.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -711,7 +711,7 @@ public class TableProperties {
       String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = "Integer";
+    entry.type = ColumnType.INTEGER.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -1509,7 +1509,7 @@ public class TableProperties {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
         this.backingStore);
-    backingKVS.insertOrUpdateKey(db, "Integer", property, 
+    backingKVS.insertOrUpdateKey(db, ColumnType.INTEGER.name(), property, 
         Integer.toString(value));
     Log.d(TAG, "updated int " + property + " to " + value + "for " + 
       this.tableId);
@@ -1548,7 +1548,7 @@ public class TableProperties {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
         this.backingStore);
-    intendedKVS.insertOrUpdateKey(db, "String", property, value);
+    intendedKVS.insertOrUpdateKey(db, ColumnType.TEXT.name(), property, value);
     Log.d(TAG, "updated string " + property + " to " + value + " for " 
       + this.tableId);
   }

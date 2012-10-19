@@ -29,6 +29,7 @@ import org.joda.time.Interval;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
@@ -336,7 +337,7 @@ public class MsgHandler {
             } else if (c == '/') {
                 if ((drSlotColumn != null) || (value == null) ||
                     (cp.getColumnType() !=
-                    ColumnProperties.ColumnType.DATE_RANGE)) {
+                    ColumnType.DATE_RANGE)) {
                     return false;
                 }
                 drSlotColumn = cp;
@@ -361,10 +362,10 @@ public class MsgHandler {
     private boolean addConstraint(Query query, ColumnProperties cp,
             char comparator, String value) {
     	// TODO: do Time and DateTime get processed the same as Date???
-        if ((cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE) ||
-                (cp.getColumnType() == ColumnProperties.ColumnType.DATE) ||
-                (cp.getColumnType() == ColumnProperties.ColumnType.DATETIME) ||
-                (cp.getColumnType() == ColumnProperties.ColumnType.TIME)) {
+        if ((cp.getColumnType() == ColumnType.DATE_RANGE) ||
+                (cp.getColumnType() == ColumnType.DATE) ||
+                (cp.getColumnType() == ColumnType.DATETIME) ||
+                (cp.getColumnType() == ColumnType.TIME)) {
             Interval interval = du.tryParseInterval(value);
             if (interval == null) {
                 DateTime dt = du.tryParseInstant(value);
@@ -374,7 +375,7 @@ public class MsgHandler {
                 String dbValue = du.formatDateTimeForDb(dt);
                 if (comparator == '=') {
                     if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE_RANGE) {
+                        ColumnType.DATE_RANGE) {
                         return false;
                     }
                     query.addConstraint(cp, Query.Comparator.EQUALS, dbValue);
@@ -386,7 +387,7 @@ public class MsgHandler {
                             dbValue);
                 } else {
                     if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE_RANGE) {
+                        ColumnType.DATE_RANGE) {
                         return false;
                     }
                     query.addConstraint(cp, Query.Comparator.NOT_EQUALS,
@@ -395,11 +396,11 @@ public class MsgHandler {
             } else {
                 if (comparator == '=') {
                     if ((cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE) ||
+                        ColumnType.DATE) ||
                         (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATETIME) ||
+                        ColumnType.DATETIME) ||
                         (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.TIME)) {
+                        ColumnType.TIME)) {
                         query.addConstraint(cp,
                                 Query.Comparator.GREATER_THAN_EQUALS,
                                 du.formatDateTimeForDb(interval.getStart()));
@@ -418,11 +419,11 @@ public class MsgHandler {
                             du.formatDateTimeForDb(interval.getEnd()));
                 } else {
                     if ((cp.getColumnType() ==
-                            ColumnProperties.ColumnType.DATE) ||
+                            ColumnType.DATE) ||
                             (cp.getColumnType() ==
-                            ColumnProperties.ColumnType.DATETIME) ||
+                            ColumnType.DATETIME) ||
                             (cp.getColumnType() ==
-                            ColumnProperties.ColumnType.TIME)) {
+                            ColumnType.TIME)) {
                         query.addOrConstraint(cp, Query.Comparator.LESS_THAN,
                                 du.formatDateTimeForDb(interval.getStart()),
                                 Query.Comparator.GREATER_THAN_EQUALS,

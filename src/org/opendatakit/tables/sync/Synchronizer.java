@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnType;
 
 
 /**
@@ -47,7 +46,7 @@ public interface Synchronizer {
    *          a human readable name for the table
    * @param cols
    *          a map from column names to column types, see
-   *          {@link ColumnProperties.ColumnType}
+   *          {@link ColumnType}
    * @param tableProperties
    *          the table's properties, serialized as a string
    * @return a string which will be stored as the syncTag of the table

@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -31,7 +32,7 @@ public class CellValueView {
     public static CellEditView getCellEditView(Context context,
             ColumnProperties cp, String value) {
     	
-        if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
+        if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return new MultipleChoiceEditView(context, cp, value);
         } else {
             return new DefaultEditView(context, value);

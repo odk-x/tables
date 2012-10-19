@@ -17,9 +17,6 @@ package org.opendatakit.tables.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,73 +46,134 @@ public class ColumnProperties {
     // names of columns in the column properties table
     private static final String DB_TABLE_ID = "tableId";
     // display attributes
-    private static final String DB_DISPLAY_VISIBLE = "displayVisible"; // true if visible in tables
-    private static final String DB_DISPLAY_NAME = "displayName"; // column header to display 
-    private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap"; // was DB_MC_OPTIONS 
-    // TODO: allocate large storage on Aggregate
-    /* displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
-     * This is a map used for select1 and select choices, either closed-universe (fixed set) or 
-     * open-universe (select1-or-other, select-or-other). Stores the full list of all values in the
-     * column. Example format (1st label shows localization, 2nd is simple single-language defn:
-     * 
-     * [ { "name": "1",
-     *   "label": { "fr" : "oui", "en" : "yes", "es" : "si" } },
-     *   { "name" : "0",
-     *    "label": "no" } ]
-     *    
-     * an open-universe list could just be a list of labels:
-     * 
-     * [ "yes", "oui", "si", "no" ]
-     * 
-     * i.e., there is no internationalization possible in open-universe lists, as we allow 
-     * free-form text entry. TODO: is this how we want this to work.
-     * 
-     * When a user chooses to enter their own data in the field, we add that entry to this list 
-     * for later display as an available choice (i.e., we update the choices list).
-     */
-    private static final String DB_DISPLAY_FORMAT = "displayFormat"; // format descriptor for column display
-    /* format descriptor for this display column. e.g., 
-	this would be an optional formatting template (ignored if 'displayChoicesMap' are
-	specified) that is a subset of handlebars for displaying the value (in an ODK Tables 
-	column). This allows customized displays for geopoints, etc., and describing 
-	precision scientific format, etc. for numeric values.  'this' and elementName
-	both refer to this display value. E.g., sample usage syntax:
-	           "{{toFixed this "2"}}",   // this.toFixed(2)
-               "{{toExponential this "2"}}"  // this.toExponential(2)
-               "{{toPrecision this "2"}}"  // this.toPrecision(2)
-               "{{toString this "16"}}". // this.toString(16)
-          otherwise, it does {{this}} substitutions for composite types. e.g., for geopoint:
-               "({{toFixed this.latitude "2"}}, {{toFixed this.longitude "2"}) {{toFixed this.altitude "1"}}m error: {{toFixed this.accuracy "1"}}m"
-          to produce '(48.50,32.20) 10.3m error: 6.0m'
-
-	The only helper functions we would support are "toFixed", "toExponential",
-	"toPrecision", "toString" and "localize"         
-	*/
     
-    private static final String DB_ELEMENT_KEY = "elementKey";/* (was DB_DB_COLUMN_NAME)
-    unique id for this element. 
-	There should be only one such elementKey for a given tableId. This is the
-	dbColumnName if it is a value persisted into the database or it can be a
-	simple field name or a synthesized name for sub-terms of composite types. e.g., 
-	northernmostPt, northBoundary.startPt, etc. if those sub-terms are not persisted */
+    private static final String DB_ELEMENT_KEY = "elementKey";// (was DB_DB_COLUMN_NAME)
+    /* (was dbColumnName) unique id for this element. 
+		There should be only one such elementKey for a given tableId. This is the
+		dbColumnName if it is a value persisted into the database */
     private static final String  DB_ELEMENT_NAME = "elementName";
-    /* name for this element. Either the field name or the name of the element within 
-     * its enclosing composite type. This is therefore not 
-	unique within a table row, as there could be multiple entries with 'latitude' as 
-	their element names. The (parentElementId, elementName) tuple is unique. */
+    /* name for this element. Either the elementKey or the
+		name of the element within its enclosing composite type (element name within a struct).
+		This is therefore not unique within a table row, as there could be multiple entries
+		with 'latitude' as  their element names. */
     private static final String DB_ELEMENT_TYPE = "elementType"; // (was DB_COL_TYPE)
-    /* (was colType) 'geopoint', 'string', 
-				  'integer', 'number',
-				  'json', etc. composite type name or primitives */
+    /* This is a string value. see larger comment below */
     private static final String  DB_LIST_CHILD_ELEMENT_KEYS = "listChildElementKeys";
-    /* if this is a composite type, this is a JSON list of the 
-     * element keys of the direct descendants of this field name.
-     */
-    private static final String DB_JOIN_TABLE_ID = "joinTableId";
+    /* if this is a composite type (geopoint), this is a JSON list of the 
+	 * element keys of the direct descendants of this field name.
+	 */
+    private static final String  DB_IS_PERSISTED = "isPersisted"; /* default: 1 (true) -- 
+		whether or not this is persisted to the database. If true, elementId is the dbColumnName 
+		in which this value is written. The value will be written as JSON if it is a composite 
+		type. see larger comment below for example. */
+    private static final String DB_JOIN_TABLE_ID = "joinTableId"; /* tableId of table to join against */
     private static final String DB_JOIN_ELEMENT_KEY = "joinElementKey"; // (was DB_JOIN_COLUMN_NAME)
-    private static final String  DB_IS_PERSISTED = "isPersisted";
-    /* default: 1 (true) -- whether or not this is 
-     * persisted to the database. If true, elementId is the dbColumnName 
+    /* elementKey of the value to join (this table's element) against in other table */
+	/* 
+		Data types and how things are stored:
+		
+		We have these primitive elementTypes:
+		  STRING
+		  INTEGER
+		  DECIMAL
+		  DATE
+		  DATETIME
+		  TIME
+		  BOOLEAN
+		  MIMEURI
+		and this composite type:
+		  MULTIPLE_CHOICE
+		for multiple choice options (arrays). 
+		These could hold any data type, but initial implementation is only for STRING
+		
+		Anything else is user-specified strings that are used to identify struct-like datatype definitions.
+		Initially, this would be 'geopoint'; Tables would add 'phonenumber', 'date range'
+		
+		e.g., multiple-choice list of symptoms:
+		
+		The data is stored under the 'patientSymptoms' column in the database as a JSON
+		encoding of string values. i.e., '["ache","fever"]'
+	
+		ekey: patientSymptoms
+		ename: patientSymptoms
+		etype: MULTIPLE_CHOICE
+		listChildEKeys: '[ patientSymptomsItem ]'
+		isPersist: true
+		
+		ekey: patientSymptomsItem
+		ename: null  // elements are not named within this list
+		etype: STRING
+		listChildEKeys: null
+		isPersist: false
+		
+		-------------
+		e.g., geopoint defining a northernmost point of something:
+		
+		The data is stored as 4 columns, 'northLatitude', 'northLongitude', 'northAltitude', 'northAccuracy'
+		
+		ekey: northernmostPoint
+		ename: northernmostPoint
+		etype: geopoint
+		listChildEKeys: '[ "northLatitude", "northLongitude", "northAltitude", "northAccuracy"]'
+		isPersist: false
+		
+		ekey: northLatitude
+		ename: latitude
+		etype: DECIMAL
+		listChildEKeys: null
+		isPersist: true
+		
+		ekey: northLongitude
+		ename: longitude
+		etype: DECIMAL
+		listChildEKeys: null
+		isPersist: true
+		
+		ekey: northAltitude
+		ename: altitude
+		etype: DECIMAL
+		listChildEKeys: null
+		isPersist: true
+		
+		ekey: northAccuracy
+		ename: accuracy
+		etype: DECIMAL
+		listChildEKeys: null
+		isPersist: true
+		
+		ODK Collect can do calculations and constraint tests like 'northermostPoint.altitude < 4.0'
+	
+		e.g., 'clientPhone' as a phonenumber type, which is just a restriction on a STRING value
+		persists under 'clientPhone' column in database.
+		
+		ekey: clientPhone
+		ename: clientPhone
+		etype: phoneNumber
+		listChildEKeys: [ "clientPhoneNumber" ] // single element
+		isPersist: true
+		
+		ekey: clientPhoneNumber
+		ename: null // null -- indicates restriction on etype
+		etype: STRING
+		listChildEKeys: null
+		isPersist: false
+		
+		e.g., 'image' file capture in ODK Collect. Stored as a MIMEURI
+	
+		ekey: locationImage
+		ename: locationImage
+		etype: MIMEURI
+		listChildEKeys: null
+		isPersist: true
+		
+		MIMEURI stores a JSON object: 
+		
+			'{"path":"/mnt/sdcard/odk/tables/app/instances/2342.jpg","mimetype":"image/jpg"}'
+	
+		i.e., ODK Collect image/audio/video capture store everything as a MIMEURI with different mimetype values.
+	*/
+	
+	/*							  
 	
 	NOTE: you can have a composite type stored in two ways: 
 	   (1) store the leaf nodes of the composite type in the database. Describe the
@@ -127,12 +185,66 @@ public class ColumnProperties {
 	   (1) does independent value updates easily. 
 	   (2) does atomic updates easily.
 	*/
+    private static final String DB_DISPLAY_VISIBLE = "displayVisible";// boolean (stored as Integer) 
+    /* 1 as boolean (true) is this column visible in Tables
+     * [may want tristate -1 = deleted, 0 = hidden, 1 = visible?] */
+    private static final String DB_DISPLAY_NAME = "displayName";  /* perhaps as json i18n */
+    private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap"; /* (was mcOptions) 
+    // choices i18n structure (Java needs rework).
+	// TODO: allocate large storage on Aggregate
+	/* displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
+	 *
+	 * This is a map used for select1 and select choices, either closed-universe (fixed set) or 
+	 * open-universe (select1-or-other, select-or-other). Stores the full list of all values in the
+	 * column. Example format (1st label shows localization, 2nd is simple single-language defn:
+	 * 
+	 * [ { "name": "1",
+	 *   "label": { "fr" : "oui", "en" : "yes", "es" : "si" } },
+	 *   { "name" : "0",
+	 *    "label": "no" } ]
+	 *    
+	 * an open-universe list could just be a list of labels:
+	 * 
+	 * [ "yes", "oui", "si", "no" ]
+	 * 
+	 * i.e., there is no internationalization possible in open-universe lists, as we allow 
+	 * free-form text entry. TODO: is this how we want this to work.
+	 * 
+	 * When a user chooses to enter their own data in the field, we add that entry to this list 
+	 * for later display as an available choice (i.e., we update the choices list).
+	 *
+	 * TODO: how to define open vs. closed universe treatment?
+	 * TODO: generalize for other data types? i.e., "name" as a date range?
+	 */
+    private static final String DB_DISPLAY_FORMAT = "displayFormat";  
+    /* (FUTURE USE)
+	format descriptor for this display column. e.g., 
+	In the Javascript, we have 'handlebars helpers' for template generation. We could
+	share a subset of this functionality in Tables for managing how to render a value.
+	
+	TODO: how does this interact with displayChoicesMap?
+	
+	The proposed eventual subset describes numeric formatting. It could also be used
+	to render qrcode images, etc.  'this' and elementName
+	both refer to this display value. E.g., sample usage syntax:
+	           "{{toFixed this "2"}}",   // this.toFixed(2)
+               "{{toExponential this "2"}}"  // this.toExponential(2)
+               "{{toPrecision this "2"}}"  // this.toPrecision(2)
+               "{{toString this "16"}}". // this.toString(16)
+          otherwise, it does {{this}} substitutions for composite types. e.g., for geopoint:
+               "({{toFixed this.latitude "2"}}, {{toFixed this.longitude "2"}) {{toFixed this.altitude "1"}}m error: {{toFixed this.accuracy "1"}}m"
+          to produce '(48.50,32.20) 10.3m error: 6.0m'
 
-    private static final String DB_SMS_IN = "smsIn";
-    private static final String DB_SMS_OUT = "smsOut";
-	private static final String DB_SMS_LABEL = "smsLabel";
+	The only helper functions envisioned are "toFixed", "toExponential",
+	"toPrecision", "toString" and "localize" and perhaps one for qrcode generation?
+	
+	TODO: how do you work with MULTIPLE_CHOICE e.g., for item separators (',' with final element ', and ')
+	*/
+    private static final String DB_SMS_IN = "smsIn"; /* (allow SMS incoming) default: 1 as boolean (true) */
+    private static final String DB_SMS_OUT = "smsOut"; /* (allow SMS outgoing) default: 1 as boolean (true) */
+	private static final String DB_SMS_LABEL = "smsLabel"; /* for SMS */
 
-    private static final String DB_FOOTER_MODE = "footerMode";
+    private static final String DB_FOOTER_MODE = "footerMode"; /* 0=none, 1=count, 2=minimum, 3=maximum, 4=mean, 5=sum */
 
     // keys for JSON
     private static final String JSON_KEY_VERSION = "jVersion";
@@ -184,108 +296,6 @@ public class ColumnProperties {
         DB_FOOTER_MODE
     };
 
-    /**
-     * Act like an enum, in that == comparisons work for comparing two typenames.
-     * But allow the enum to grow, so ColumnType.valueOf() will extend the list of ColumnTypes.
-     * 
-     * It is OK to add values to this enumeration. The name() of the enumeration is stored
-     * in the database, so the order of the names should not be important here.
-     */
-    public static class ColumnType {
-    	private static Map<String,ColumnType> nameMap = new HashMap<String,ColumnType>();
-    	
-    	public static ColumnType NONE;
-    	public static ColumnType STRING;
-    	public static ColumnType INTEGER;
-    	public static ColumnType DECIMAL;
-    	public static ColumnType DATE;
-    	public static ColumnType DATETIME;
-    	public static ColumnType TIME;
-        
-    	public static ColumnType BOOLEAN; // not in Tables, TODO: confirm this propagates into Aggregate OK?
-    	public static ColumnType FILE; // not in Collect TODO: need to track image/audio/video mime type,
-    									// TODO: need file entry in Aggregate (JSON in Tables)
-    	public static ColumnType LOCATION; // TODO: goes away; becomes JSON type
-    	public static ColumnType JSON; // not in Tables TODO: JSON object as string 
-    									// TODO: increase string length in Aggregate
-        
-    	public static ColumnType DATE_RANGE; // not in Collect, Aggregate
-    	public static ColumnType PHONE_NUMBER; // not in Collect, Aggregate
-    	public static ColumnType COLLECT_FORM; // not in Collect, Aggregate
-    	public static ColumnType MC_OPTIONS; // select1/select -- not in Collect, Aggregate
-    	public static ColumnType TABLE_JOIN; // not in Collect (parent table?); needs to be in Aggregate
-
-    	static {
-    		 nameMap.put("NONE", NONE = new ColumnType("NONE", "None"));
-    		 nameMap.put("STRING", STRING = new ColumnType("STRING", "Text"));
-    		 nameMap.put("INTEGER", INTEGER = new ColumnType("INTEGER", "Integer"));
-    		 nameMap.put("DECIMAL", DECIMAL = new ColumnType("DECIMAL", "Number"));
-    		 nameMap.put("DATE", DATE = new ColumnType("DATE", "Date"));
-    		 nameMap.put("DATETIME", DATETIME = new ColumnType("DATETIME", "Date and Time"));
-    		 nameMap.put("TIME", TIME = new ColumnType("TIME", "Time"));
-    	       
-    		 nameMap.put("BOOLEAN", BOOLEAN = new ColumnType("BOOLEAN", "Boolean")); // TODO: Not in tables
-    		 nameMap.put("FILE", FILE = new ColumnType("FILE", "File")); // TODO: add to Collect 2.0. Need to track mime type in this
-    		 nameMap.put("LOCATION", LOCATION = new ColumnType("LOCATION", "Location")); // TODO: goes away; becomes composite element
-    		 nameMap.put("JSON", JSON = new ColumnType("JSON", "JSON")); // TODO: not in tables; needs long string in Aggregate
-    		 
-    		 nameMap.put("DATE_RANGE", DATE_RANGE = new ColumnType("DATE_RANGE", "Date Range")); // TODO: not in collect; becomes composite element
-    		 nameMap.put("PHONE_NUMBER", PHONE_NUMBER = new ColumnType("PHONE_NUMBER", "Phone Number")); // TODO: not in Collect; becomes composite element
-    		 nameMap.put("COLLECT_FORM", COLLECT_FORM = new ColumnType("COLLECT_FORM", "Collect Form")); // TODO: not in Collect; data type is FILE
-    		 nameMap.put("MC_OPTIONS", MC_OPTIONS = new ColumnType("MC_OPTIONS", "Multiple Choices")); // TODO: goes way -- infer by presence of ELEMENT_DISPLAY_OPTIONS
-    		 nameMap.put("TABLE_JOIN", TABLE_JOIN = new ColumnType("TABLE_JOIN", "Join")); // TODO: expand for child forms of parents. Perhaps reverse link to parents?
-    	}
-    	
-    	private final String typename;
-    	private final String label;
-    	
-    	private ColumnType(String typename, String label) {
-    		this.typename = typename;
-    		this.label = label;
-    	}
-    	
-    	public final String name() {
-    		return typename;
-    	}
-    	
-    	public final String label() {
-    		return label;
-    	}
-    	
-    	public final String toString() {
-    		return typename;
-    	}
-    	
-    	public static final ColumnType valueOf(String name) {
-    		ColumnType t = nameMap.get(name);
-    		if ( t != null ) return t;
-    		t = new ColumnType(name, name);
-    		nameMap.put(name, t);
-    		return t;
-    	}
-    	
-    	public static final Collection<ColumnType> getAllColumnTypes() {
-    		ArrayList<ColumnType> sortedList = new ArrayList<ColumnType>(nameMap.values());
-    		Collections.sort(sortedList, new Comparator<ColumnType>(){
-
-				@Override
-				public int compare(ColumnType lhs, ColumnType rhs) {
-					return lhs.label().compareTo(rhs.label());
-				}});
-    		
-    		return sortedList;
-    	}
-    	
-    	public static final String[] getAllColumnTypeLabels() {
-    		String[] vlist = new String[nameMap.size()];
-    		int i = 0;
-    		for ( ColumnType t : getAllColumnTypes() ) {
-    			vlist[i++] = t.label();
-    		}
-    		return vlist;
-    	}
-    };
-    
     public class FooterMode {
         public static final int NONE = 0;
         public static final int COUNT = 1;

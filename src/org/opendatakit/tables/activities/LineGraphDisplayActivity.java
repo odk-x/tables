@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -71,8 +72,8 @@ public class LineGraphDisplayActivity extends Activity
                 xCol.getColumnDbName());
         int yIndex = c.getTableProperties().getColumnIndex(
                 yCol.getColumnDbName());
-        if (xCol.getColumnType() == ColumnProperties.ColumnType.DECIMAL ||
-        	xCol.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
+        if (xCol.getColumnType() == ColumnType.NUMBER ||
+        	xCol.getColumnType() == ColumnType.INTEGER) {
             List<Double> xValues = new ArrayList<Double>();
             for (int i = 0; i < table.getHeight(); i++) {
                 xValues.add(Double.valueOf(table.getData(i, xIndex)));

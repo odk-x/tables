@@ -454,7 +454,7 @@ public class KeyValueStoreManager {
 	      newEntry.key = 
 	          KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey();
 	      newEntry.tableId = tableId;
-	      newEntry.type = "Integer";
+	      newEntry.type = ColumnType.INTEGER.name();
 	      newEntry.value = "0";
 	      List<OdkTablesKeyValueStoreEntry> newKey = 
 	          new ArrayList<OdkTablesKeyValueStoreEntry>();

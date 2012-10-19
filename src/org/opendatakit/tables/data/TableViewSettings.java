@@ -578,18 +578,18 @@ public class TableViewSettings {
         int locationColCount = 0;
         int dateColCount = 0;
         for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL ||
-            	cp.getColumnType() == ColumnProperties.ColumnType.INTEGER) {
+            if (cp.getColumnType() == ColumnType.NUMBER ||
+            	cp.getColumnType() == ColumnType.INTEGER) {
                 numericColCount++;
             } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.LOCATION) {
+                ColumnType.GEOPOINT) {
                 locationColCount++;
             } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATE ||
+                ColumnType.DATE ||
                 cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATETIME ||
+                ColumnType.DATETIME ||
                 cp.getColumnType() ==
-                ColumnProperties.ColumnType.TIME) {
+                ColumnType.TIME) {
                 dateColCount++;
             }
         }

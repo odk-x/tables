@@ -150,21 +150,21 @@ public class DataUtil {
     }
     
     public String validifyValue(ColumnProperties cp, String input) {
-        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return validifyDateValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
             return validifyDateTimeValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
             return validifyTimeValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return validifyDateRangeValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DECIMAL ) {
+        } else if ( cp.getColumnType() == ColumnType.NUMBER ) {
             return validifyNumberValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.INTEGER ) {
+        } else if ( cp.getColumnType() == ColumnType.INTEGER ) {
             return validifyIntegerValue(input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS ) {
+        } else if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return validifyMultipleChoiceValue(cp, input);
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.LOCATION ) {
+        } else if ( cp.getColumnType() == ColumnType.GEOPOINT ) {
             return validifyLocationValue(input);
         } else {
             return input;
@@ -382,15 +382,15 @@ public class DataUtil {
     }
     
     public String formatForUserDisplay(ColumnProperties cp, String value) {
-        if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE ) {
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATETIME ) {
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
         	// TODO: do we need special conversion
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.TIME ) {
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
         	// TODO: do we need special conversion
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
-        } else if ( cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE ) {
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return formatLongIntervalForUser(parseIntervalFromDb(value));
         } else {
             return value;

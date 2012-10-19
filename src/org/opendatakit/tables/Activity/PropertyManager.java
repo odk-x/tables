@@ -18,10 +18,10 @@ package org.opendatakit.tables.Activity;
 import org.opendatakit.tables.Activity.util.SliderPreference;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -91,7 +91,7 @@ public class PropertyManager extends PreferenceActivity {
 
     // SMS Label<EditText>
     String smsLabel = getSmsLabel(colName);
-    category.addPreference(createEditTextPreference("SMSLBL", "SMS Label",
+    category.addPreference(createEditTextPreference("SMSLABEL", "SMS Label",
         "Change SMS Label for Column", smsLabel, smsLabel));
 
     // Type<List>
@@ -132,10 +132,10 @@ public class PropertyManager extends PreferenceActivity {
 
     category.addPreference(new DisplayPreferencesDialogPreference(this));
 
-    if (cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS) {
+    if (cp.getColumnType() == ColumnType.MC_OPTIONS) {
       showingMcDialog = true;
       category.addPreference(new McOptionSettingsDialogPreference(this));
-    } else if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
+    } else if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
       String joinTableId = cp.getJoinTableId();
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
@@ -224,15 +224,15 @@ public class PropertyManager extends PreferenceActivity {
     Preference pref = findPreference(key);
 
     // Routing
-    if (key.equals("SMSLBL")) {
+    if (key.equals("SMSLABEL")) {
       cp.setSmsLabel(getEditBoxContent(pref));
     } else if (key.equals("TYPE")) {
       for (ColumnType t : ColumnType.getAllColumnTypes()) {
         if (t.label().equals(newVal)) {
           cp.setColumnType(t);
-          if ((t == ColumnProperties.ColumnType.MC_OPTIONS) && !showingMcDialog) {
+          if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
             loadPreferenceScreen();
-          } else if (t == ColumnProperties.ColumnType.TABLE_JOIN) {
+          } else if (t == ColumnType.TABLE_JOIN) {
             loadPreferenceScreen();
           }
           break;

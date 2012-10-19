@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
@@ -266,8 +266,8 @@ public class DisplayPrefs {
         private boolean checkMatch(String val, int index) {
             int compVal;
             String ruleVal = ruleVals.get(index);
-            if(colType == ColumnProperties.ColumnType.DECIMAL ||
-               colType == ColumnProperties.ColumnType.INTEGER) {
+            if(colType == ColumnType.NUMBER ||
+               colType == ColumnType.INTEGER) {
                 double doubleValue = Double.parseDouble(val);
                 double doubleRule = Double.parseDouble(ruleVal);
                 Log.d("DP", "doubleValue:" + doubleValue);
