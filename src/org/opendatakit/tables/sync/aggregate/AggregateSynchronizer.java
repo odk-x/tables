@@ -52,6 +52,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import android.util.Log;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -121,6 +123,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
     } catch (HttpClientErrorException e) {
+      Log.e(TAG, "HttpClientErrorException in checkAccessToken");
       JsonParser parser = new JsonParser();
       JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
       if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
@@ -177,6 +180,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity, TableResource.class);
     } catch (ResourceAccessException e) {
+      Log.e(TAG, "ResourceAccessException in createTable");
       throw new IOException(e.getMessage());
     }
     TableResource resource = resourceEntity.getBody();

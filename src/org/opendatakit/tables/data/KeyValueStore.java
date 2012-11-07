@@ -200,7 +200,7 @@ public class KeyValueStore {
     }
     if (count != keyValues.size()) {
       Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
-          " the KeyValueStoreDefault, but there were " + keyValues.size() + 
+          dbBackingName + ", but there were " + keyValues.size() + 
           " key value pairs for the table " + tableId);
     }
     return count;
