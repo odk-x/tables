@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -221,7 +222,8 @@ public class BoxStemGraphDisplayActivity extends Activity
             super(context);
             numberCols = new ArrayList<ColumnProperties>();
             for (ColumnProperties cp : c.getTableProperties().getColumns()) {
-                if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                if (cp.getColumnType() == ColumnType.NUMBER ||
+                    cp.getColumnType() == ColumnType.INTEGER) {
                     numberCols.add(cp);
                 }
             }

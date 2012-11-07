@@ -29,6 +29,7 @@ import org.joda.time.Interval;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
@@ -221,10 +222,12 @@ public class MsgHandler {
             password = msg.substring(lastHashIndex + 1);
         }
         DbTable sDbt = dm.getDbTable(secTableId);
+        ArrayList<String> columns = new ArrayList<String>();
+        columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         Table table = sDbt.getRaw(
-                new String[] {SecurityUtil.PASSWORD_COLUMN_NAME},
-                new String[] {SecurityUtil.PHONENUM_COLUMN_NAME},
-                new String[] {phoneNum}, null);
+        		columns,
+        		new String[] {DbTable.DB_SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
+                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
         for (int i = 0; i < table.getHeight(); i++) {
             if (password.equals(table.getData(i, 0))) {
                 return true;
@@ -334,7 +337,7 @@ public class MsgHandler {
             } else if (c == '/') {
                 if ((drSlotColumn != null) || (value == null) ||
                     (cp.getColumnType() !=
-                    ColumnProperties.ColumnType.DATE_RANGE)) {
+                    ColumnType.DATE_RANGE)) {
                     return false;
                 }
                 drSlotColumn = cp;
@@ -358,8 +361,11 @@ public class MsgHandler {
     
     private boolean addConstraint(Query query, ColumnProperties cp,
             char comparator, String value) {
-        if ((cp.getColumnType() == ColumnProperties.ColumnType.DATE_RANGE) ||
-                (cp.getColumnType() == ColumnProperties.ColumnType.DATE)) {
+    	// TODO: do Time and DateTime get processed the same as Date???
+        if ((cp.getColumnType() == ColumnType.DATE_RANGE) ||
+                (cp.getColumnType() == ColumnType.DATE) ||
+                (cp.getColumnType() == ColumnType.DATETIME) ||
+                (cp.getColumnType() == ColumnType.TIME)) {
             Interval interval = du.tryParseInterval(value);
             if (interval == null) {
                 DateTime dt = du.tryParseInstant(value);
@@ -369,7 +375,7 @@ public class MsgHandler {
                 String dbValue = du.formatDateTimeForDb(dt);
                 if (comparator == '=') {
                     if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE_RANGE) {
+                        ColumnType.DATE_RANGE) {
                         return false;
                     }
                     query.addConstraint(cp, Query.Comparator.EQUALS, dbValue);
@@ -381,7 +387,7 @@ public class MsgHandler {
                             dbValue);
                 } else {
                     if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE_RANGE) {
+                        ColumnType.DATE_RANGE) {
                         return false;
                     }
                     query.addConstraint(cp, Query.Comparator.NOT_EQUALS,
@@ -389,8 +395,12 @@ public class MsgHandler {
                 }
             } else {
                 if (comparator == '=') {
-                    if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE) {
+                    if ((cp.getColumnType() ==
+                        ColumnType.DATE) ||
+                        (cp.getColumnType() ==
+                        ColumnType.DATETIME) ||
+                        (cp.getColumnType() ==
+                        ColumnType.TIME)) {
                         query.addConstraint(cp,
                                 Query.Comparator.GREATER_THAN_EQUALS,
                                 du.formatDateTimeForDb(interval.getStart()));
@@ -408,8 +418,12 @@ public class MsgHandler {
                             Query.Comparator.GREATER_THAN_EQUALS,
                             du.formatDateTimeForDb(interval.getEnd()));
                 } else {
-                    if (cp.getColumnType() ==
-                        ColumnProperties.ColumnType.DATE) {
+                    if ((cp.getColumnType() ==
+                            ColumnType.DATE) ||
+                            (cp.getColumnType() ==
+                            ColumnType.DATETIME) ||
+                            (cp.getColumnType() ==
+                            ColumnType.TIME)) {
                         query.addOrConstraint(cp, Query.Comparator.LESS_THAN,
                                 du.formatDateTimeForDb(interval.getStart()),
                                 Query.Comparator.GREATER_THAN_EQUALS,
@@ -458,7 +472,7 @@ public class MsgHandler {
             for (int i = 0; i < limit; i++) {
                 StringBuilder sb = new StringBuilder();
                 for (int j = 0; j < cols.size(); j++) {
-                    String colName = cols.get(j).getAbbreviation();
+                    String colName = cols.get(j).getSmsLabel();
                     if (colName == null) {
                         colName = cols.get(j).getDisplayName();
                     }
@@ -491,6 +505,7 @@ public class MsgHandler {
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query,
                 new String[] {drSlotColumn.getColumnDbName()});
+        // TODO: range should not be slash-separated but stored as two columns OR json in db...
         List<String[]> rawRanges = new ArrayList<String[]>();
         for (int i = 0; i < table.getHeight(); i++) {
             rawRanges.add(table.getData(i, 0).split("/"));

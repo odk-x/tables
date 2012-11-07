@@ -28,7 +28,6 @@ import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.files.FileSyncAdapter;
-import org.opendatakit.tables.sync.files.FilesContentProvider;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;

@@ -292,15 +292,19 @@ public class KeyValueStoreManager {
     // from the default table. Therefore all key value pairs that are in the
     // default store are copied over in this method.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore activeKVS = this.getStoreForTable(tableId, 
-        KeyValueStore.Type.ACTIVE);
-    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.DEFAULT);
-    activeKVS.clearKeyValuePairs(db);
-    List<OdkTablesKeyValueStoreEntry> defaultEntries = 
-        defaultKVS.getEntries(db);
-    activeKVS.clearKeyValuePairs(db);
-    activeKVS.addEntriesToStore(db, defaultEntries);
+    try {
+	    KeyValueStore activeKVS = this.getStoreForTable(tableId, 
+	        KeyValueStore.Type.ACTIVE);
+	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.DEFAULT);
+	    activeKVS.clearKeyValuePairs(db);
+	    List<OdkTablesKeyValueStoreEntry> defaultEntries = 
+	        defaultKVS.getEntries(db);
+	    activeKVS.clearKeyValuePairs(db);
+	    activeKVS.addEntriesToStore(db, defaultEntries);
+    } finally {
+    	db.close();
+    }
   }
   
   /**
@@ -332,28 +336,32 @@ public class KeyValueStoreManager {
     Map<String, OdkTablesKeyValueStoreEntry> newDefault =
         new HashMap<String, OdkTablesKeyValueStoreEntry>();
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.DEFAULT);
-    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.SERVER);
-    List<OdkTablesKeyValueStoreEntry> oldDefaultEntries = 
-        defaultKVS.getEntries(db);
-    List<OdkTablesKeyValueStoreEntry> serverEntries = 
-        serverKVS.getEntries(db);
-    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
-      newDefault.put(entry.key, entry);
+    try {
+	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.DEFAULT);
+	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.SERVER);
+	    List<OdkTablesKeyValueStoreEntry> oldDefaultEntries = 
+	        defaultKVS.getEntries(db);
+	    List<OdkTablesKeyValueStoreEntry> serverEntries = 
+	        serverKVS.getEntries(db);
+	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
+	      newDefault.put(entry.key, entry);
+	    }
+	    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
+	      newDefault.put(entry.key, entry);
+	    }
+	    List<OdkTablesKeyValueStoreEntry> defaultList = 
+	        new ArrayList<OdkTablesKeyValueStoreEntry>();
+	    for (OdkTablesKeyValueStoreEntry entry : newDefault.values()) {
+	      defaultList.add(entry);
+	    }
+	    // TA-DA! And now we have the merged entries. put them in the store.
+	    defaultKVS.clearKeyValuePairs(db);
+	    defaultKVS.addEntriesToStore(db, defaultList);
+    } finally {
+    	db.close();
     }
-    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
-      newDefault.put(entry.key, entry);
-    }
-    List<OdkTablesKeyValueStoreEntry> defaultList = 
-        new ArrayList<OdkTablesKeyValueStoreEntry>();
-    for (OdkTablesKeyValueStoreEntry entry : newDefault.values()) {
-      defaultList.add(entry);
-    }
-    // TA-DA! And now we have the merged entries. put them in the store.
-    defaultKVS.clearKeyValuePairs(db);
-    defaultKVS.addEntriesToStore(db, defaultList);
   }
   
   /**
@@ -370,15 +378,19 @@ public class KeyValueStoreManager {
     // Remove all the key values from the default key value store for the given
     // table and replace them with the key values from the active store.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStore activeKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.ACTIVE);
-    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.DEFAULT);
-    defaultKVS.clearKeyValuePairs(db);
-    List<OdkTablesKeyValueStoreEntry> activeEntries =
-        activeKVS.getEntries(db);
-    defaultKVS.clearKeyValuePairs(db);
-    defaultKVS.addEntriesToStore(db, activeEntries);
+    try {
+	    KeyValueStore activeKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.ACTIVE);
+	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.DEFAULT);
+	    defaultKVS.clearKeyValuePairs(db);
+	    List<OdkTablesKeyValueStoreEntry> activeEntries =
+	        activeKVS.getEntries(db);
+	    defaultKVS.clearKeyValuePairs(db);
+	    defaultKVS.addEntriesToStore(db, activeEntries);
+    } finally {
+    	db.close();
+    }
   }
   
   /**
@@ -400,17 +412,21 @@ public class KeyValueStoreManager {
    */
   public void copyDefaultToServerForTable(String tableId) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    int numClearedFromServerKVS;
-    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.DEFAULT);    
-    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-        KeyValueStore.Type.SERVER);
-    numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
-    List<OdkTablesKeyValueStoreEntry> defaultEntries = 
-        defaultKVS.getEntries(db);
-    serverKVS.addEntriesToStore(db, defaultEntries);
-    // and now add an entry to the sync KVS.
-    addIsSetToSyncToSyncKVSForTable(tableId);
+    try {
+	    int numClearedFromServerKVS;
+	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.DEFAULT);    
+	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
+	        KeyValueStore.Type.SERVER);
+	    numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
+	    List<OdkTablesKeyValueStoreEntry> defaultEntries = 
+	        defaultKVS.getEntries(db);
+	    serverKVS.addEntriesToStore(db, defaultEntries);
+	    // and now add an entry to the sync KVS.
+	    addIsSetToSyncToSyncKVSForTable(tableId);
+    } finally {
+    	db.close();
+    }
   }
   
   /**
@@ -422,27 +438,31 @@ public class KeyValueStoreManager {
   public void addIsSetToSyncToSyncKVSForTable(String tableId) {
     KeyValueStore syncKVS = this.getSyncStoreForTable(tableId);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    // Note! If there ever becomes another way to
-    // add entries to the server key value store, you must be sure to add the
-    // is set to sync key to the sync store.
-    List<String> isSetToSyncKey = new ArrayList<String>();
-    isSetToSyncKey.add(KeyValueStoreSync.SyncPropertiesKeys
-        .IS_SET_TO_SYNC.getKey());
-    List<OdkTablesKeyValueStoreEntry> currentIsSetToSync = 
-        syncKVS.getEntriesForKeys(db, isSetToSyncKey);
-    if (currentIsSetToSync.size() == 0) {
-      // we add the value.
-      OdkTablesKeyValueStoreEntry newEntry = 
-          new OdkTablesKeyValueStoreEntry();
-      newEntry.key = 
-          KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey();
-      newEntry.tableId = tableId;
-      newEntry.type = "Integer";
-      newEntry.value = "0";
-      List<OdkTablesKeyValueStoreEntry> newKey = 
-          new ArrayList<OdkTablesKeyValueStoreEntry>();
-      newKey.add(newEntry);
-      syncKVS.addEntriesToStore(db, newKey);
+    try {
+	    // Note! If there ever becomes another way to
+	    // add entries to the server key value store, you must be sure to add the
+	    // is set to sync key to the sync store.
+	    List<String> isSetToSyncKey = new ArrayList<String>();
+	    isSetToSyncKey.add(KeyValueStoreSync.SyncPropertiesKeys
+	        .IS_SET_TO_SYNC.getKey());
+	    List<OdkTablesKeyValueStoreEntry> currentIsSetToSync = 
+	        syncKVS.getEntriesForKeys(db, isSetToSyncKey);
+	    if (currentIsSetToSync.size() == 0) {
+	      // we add the value.
+	      OdkTablesKeyValueStoreEntry newEntry = 
+	          new OdkTablesKeyValueStoreEntry();
+	      newEntry.key = 
+	          KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey();
+	      newEntry.tableId = tableId;
+	      newEntry.type = ColumnType.INTEGER.name();
+	      newEntry.value = "0";
+	      List<OdkTablesKeyValueStoreEntry> newKey = 
+	          new ArrayList<OdkTablesKeyValueStoreEntry>();
+	      newKey.add(newEntry);
+	      syncKVS.addEntriesToStore(db, newKey);
+	    }
+    } finally {
+    	db.close();
     }
   }
   

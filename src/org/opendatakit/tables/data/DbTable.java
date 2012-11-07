@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.data;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,10 +40,18 @@ public class DbTable {
     public static final String DB_SYNC_TAG = "syncTag";
     public static final String DB_SYNC_STATE = "syncState";
     public static final String DB_TRANSACTIONING = "transactioning";
+    public static final String DB_TIMESTAMP = "timestamp";
+    public static final String DB_SAVED = "saved";
+    
+    public enum SavedStatus {
+    	COMPLETE,
+    	INCOMPLETE
+    };
     
     public static final String DB_CSV_COLUMN_LIST =
         DB_ROW_ID + ", " + DB_SRC_PHONE_NUMBER + ", " + DB_LAST_MODIFIED_TIME +
-        ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING;
+        ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING +
+        ", " + DB_TIMESTAMP + ", " + DB_SAVED;
     
     private final DataUtil du;
     private final DbHelper dbh;
@@ -67,8 +76,10 @@ public class DbTable {
         StringBuilder colListBuilder = new StringBuilder();
         for (ColumnProperties cp : tp.getColumns()) {
             colListBuilder.append(", " + cp.getColumnDbName());
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+            if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");
+            } else if (cp.getColumnType() == ColumnType.INTEGER) {
+                colListBuilder.append(" INTEGER");
             } else {
                 colListBuilder.append(" TEXT");
             }
@@ -81,17 +92,11 @@ public class DbTable {
      ", " + DB_SYNC_TAG + " TEXT" +
      ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
+     ", " + DB_TIMESTAMP + " INTEGER NOT NULL" +
+     ", " + DB_SAVED + " TEXT NULL" +
      colListBuilder.toString() +
      ")";
-        db.execSQL("CREATE TABLE " + tp.getDbTableName() + "(" +
-                       DB_ROW_ID + " TEXT NOT NULL" +
-                ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
-                ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
-                ", " + DB_SYNC_TAG + " TEXT" +
-                ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
-                ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
-                colListBuilder.toString() +
-                ")");
+        db.execSQL(toExecute);
     }
     
     /**
@@ -110,33 +115,45 @@ public class DbTable {
      * @param orderBy the column to order by (can be null)
      * @return a Table of the requested data
      */
-    public Table getRaw(String[] columns, String[] selectionKeys,
+    public Table getRaw(ArrayList<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
             ColumnProperties[] cps = tp.getColumns();
-            columns = new String[cps.length + 5];
-            columns[0] = DB_SRC_PHONE_NUMBER;
-            columns[1] = DB_LAST_MODIFIED_TIME;
-            columns[2] = DB_SYNC_TAG;
-            columns[3] = DB_SYNC_STATE;
-            columns[4] = DB_TRANSACTIONING;
+            columns = new ArrayList<String>();
+            columns.add(DB_SRC_PHONE_NUMBER);
+            columns.add(DB_LAST_MODIFIED_TIME);
+            columns.add(DB_SYNC_TAG);
+            columns.add(DB_SYNC_STATE);
+            columns.add(DB_TRANSACTIONING);
             for (int i = 0; i < cps.length; i++) {
-                columns[i + 5] = cps[i].getColumnDbName();
+            	columns.add(cps[i].getColumnDbName());
             }
         }
-        String[] colArr = new String[columns.length + 1];
+        String[] colArr = new String[columns.size() + 1];
         colArr[0] = DB_ROW_ID;
-        for (int i = 0; i < columns.length; i++) {
-            colArr[i + 1] = columns[i];
+        for (int i = 0; i < columns.size(); i++) {
+            colArr[i + 1] = columns.get(i);
         }
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.query(tp.getDbTableName(), colArr,
-                buildSelectionSql(selectionKeys),
-                selectionArgs, null, null, orderBy);
-        Table table = buildTable(c, columns);
-        c.close();
-        db.close();
-        return table;
+        SQLiteDatabase db = null;
+        Cursor c = null;
+        try {
+	        db = dbh.getReadableDatabase();
+	        c = db.query(tp.getDbTableName(), colArr,
+	                buildSelectionSql(selectionKeys),
+	                selectionArgs, null, null, orderBy);
+	        Table table = buildTable(c, columns);
+	        return table;
+	    } finally {
+	    	try {
+	    		if ( c != null && !c.isClosed() ) {
+	    			c.close();
+	    		}
+	    	} finally {
+	    		if ( db != null ) {
+	    			db.close();
+	    		}
+	    	}
+	    }
     }
     
     public Table getRaw(Query query, String[] columns) {
@@ -157,95 +174,129 @@ public class DbTable {
     
     public GroupTable getGroupTable(Query query, ColumnProperties groupColumn,
             Query.GroupQueryType type) {
-        SqlData sd = query.toGroupSql(groupColumn.getColumnDbName(), type);
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
-        int gcColIndex = c.getColumnIndexOrThrow(
-                groupColumn.getColumnDbName());
-        int countColIndex = c.getColumnIndexOrThrow("g");
-        int rowCount = c.getCount();
-        String[] keys = new String[rowCount];
-        double[] values = new double[rowCount];
-        c.moveToFirst();
-        for (int i = 0; i < rowCount; i++) {
-            keys[i] = c.getString(gcColIndex);
-            values[i] = c.getDouble(countColIndex);
-            c.moveToNext();
-        }
-        c.close();
-        db.close();
-        return new GroupTable(keys, values);
+    	SQLiteDatabase db = null;
+    	Cursor c = null;
+    	try {
+	        SqlData sd = query.toGroupSql(groupColumn.getColumnDbName(), type);
+	        db = dbh.getReadableDatabase();
+	        c = db.rawQuery(sd.getSql(), sd.getArgs());
+	        int gcColIndex = c.getColumnIndexOrThrow(
+	                groupColumn.getColumnDbName());
+	        int countColIndex = c.getColumnIndexOrThrow("g");
+	        int rowCount = c.getCount();
+	        String[] keys = new String[rowCount];
+	        double[] values = new double[rowCount];
+	        c.moveToFirst();
+	        for (int i = 0; i < rowCount; i++) {
+	            keys[i] = c.getString(gcColIndex);
+	            values[i] = c.getDouble(countColIndex);
+	            c.moveToNext();
+	        }
+	        return new GroupTable(keys, values);
+	    } finally {
+	    	try {
+	    		if ( c != null && !c.isClosed() ) {
+	    			c.close();
+	    		}
+	    	} finally {
+	    		if ( db != null ) {
+	    			db.close();
+	    		}
+	    	}
+	    }
     }
     
     public ConflictTable getConflictTable(Query query) {
-        SqlData sd = query.toConflictSql();
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
-        Log.d("DBT", sd.getSql());
-        int count = c.getCount() / 2;
-        Log.d("DBT", "cursor count: " + c.getCount());
-        String[] header = new String[tp.getColumns().length];
-        String[] rowIds = new String[count];
-        String[][] syncTags = new String[count][2];
-        String[][][] values = new String[count][2][tp.getColumns().length];
-        if (count == 0) {
-            c.close();
-            db.close();
-            return new ConflictTable(header, rowIds, syncTags, values);
-        }
-        int idColIndex = c.getColumnIndexOrThrow(DB_ROW_ID);
-        int stColIndex = c.getColumnIndexOrThrow(DB_SYNC_TAG);
-        int[] colIndices = new int[tp.getColumns().length];
-        for (int i = 0; i < tp.getColumns().length; i++) {
-            colIndices[i] = c.getColumnIndexOrThrow(
-                    tp.getColumns()[i].getColumnDbName());
-            header[i] = tp.getColumns()[i].getDisplayName();
-        }
-        c.moveToFirst();
-        for (int i = 0; i < count; i++) {
-            rowIds[i] = c.getString(idColIndex);
-            syncTags[i][0] = c.getString(stColIndex);
-            for (int j = 0; j < tp.getColumns().length; j++) {
-                values[i][0][j] = c.getString(colIndices[j]);
-            }
-            c.moveToNext();
-            syncTags[i][1] = c.getString(stColIndex);
-            for (int j = 0; j < tp.getColumns().length; j++) {
-                values[i][1][j] = c.getString(colIndices[j]);
-            }
-            c.moveToNext();
-        }
-        c.close();
-        db.close();
-        return new ConflictTable(header, rowIds, syncTags, values);
+    	SQLiteDatabase db = null;
+    	Cursor c = null;
+    	try {
+	        db = dbh.getReadableDatabase();
+	        SqlData sd = query.toConflictSql();
+	        c = db.rawQuery(sd.getSql(), sd.getArgs());
+	        Log.d("DBT", sd.getSql());
+	        int count = c.getCount() / 2;
+	        Log.d("DBT", "cursor count: " + c.getCount());
+	        String[] header = new String[tp.getColumns().length];
+	        String[] rowIds = new String[count];
+	        String[][] syncTags = new String[count][2];
+	        String[][][] values = new String[count][2][tp.getColumns().length];
+	        if (count == 0) {
+	            return new ConflictTable(header, rowIds, syncTags, values);
+	        }
+	        int idColIndex = c.getColumnIndexOrThrow(DB_ROW_ID);
+	        int stColIndex = c.getColumnIndexOrThrow(DB_SYNC_TAG);
+	        int[] colIndices = new int[tp.getColumns().length];
+	        for (int i = 0; i < tp.getColumns().length; i++) {
+	            colIndices[i] = c.getColumnIndexOrThrow(
+	                    tp.getColumns()[i].getColumnDbName());
+	            header[i] = tp.getColumns()[i].getDisplayName();
+	        }
+	        c.moveToFirst();
+	        for (int i = 0; i < count; i++) {
+	            rowIds[i] = c.getString(idColIndex);
+	            syncTags[i][0] = c.getString(stColIndex);
+	            for (int j = 0; j < tp.getColumns().length; j++) {
+	                values[i][0][j] = c.getString(colIndices[j]);
+	            }
+	            c.moveToNext();
+	            syncTags[i][1] = c.getString(stColIndex);
+	            for (int j = 0; j < tp.getColumns().length; j++) {
+	                values[i][1][j] = c.getString(colIndices[j]);
+	            }
+	            c.moveToNext();
+	        }
+	        return new ConflictTable(header, rowIds, syncTags, values);
+	    } finally {
+	    	try {
+	    		if ( c != null && !c.isClosed() ) {
+	    			c.close();
+	    		}
+	    	} finally {
+	    		if ( db != null ) {
+	    			db.close();
+	    		}
+	    	}
+	    }
     }
     
     private Table dataQuery(SqlData sd) {
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
-        Table table = buildTable(c, tp.getColumnOrder());
-        c.close();
-        db.close();
-        return table;
+        SQLiteDatabase db = null;
+        Cursor c = null;
+        try {
+        	db = dbh.getReadableDatabase();
+        	c = db.rawQuery(sd.getSql(), sd.getArgs());
+        	Table table = buildTable(c, tp.getColumnOrder());
+            return table;
+        } finally {
+        	try {
+        		if ( c != null && !c.isClosed() ) {
+        			c.close();
+        		}
+        	} finally {
+        		if ( db != null ) {
+        			db.close();
+        		}
+        	}
+        }
     }
     
     /**
      * Builds a Table with the data from the given cursor.
      * The cursor, but not the columns array, must include the row ID column.
      */
-    private Table buildTable(Cursor c, String[] columns) {
-        int[] colIndices = new int[columns.length];
+    private Table buildTable(Cursor c, ArrayList<String> arrayList) {
+        int[] colIndices = new int[arrayList.size()];
         int rowCount = c.getCount();
         String[] rowIds = new String[rowCount];
-        String[][] data = new String[rowCount][columns.length];
+        String[][] data = new String[rowCount][arrayList.size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DB_ROW_ID);
-        for (int i = 0; i < columns.length; i++) {
-            colIndices[i] = c.getColumnIndexOrThrow(columns[i]);
+        for (int i = 0; i < arrayList.size(); i++) {
+            colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
         }
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
             rowIds[i] = c.getString(rowIdIndex);
-            for (int j = 0; j < columns.length; j++) {
+            for (int j = 0; j < arrayList.size(); j++) {
               String value;
               try {
                 value = c.getString(colIndices[j]);
@@ -260,7 +311,7 @@ public class DbTable {
             }
             c.moveToNext();
         }
-        return new Table(rowIds, columns, data);
+        return new Table(rowIds, arrayList, data);
     }
     
     private String[] getUserHeader() {
@@ -304,15 +355,31 @@ public class DbTable {
     
     private String getFooterItem(Query query, ColumnProperties cp,
             Query.GroupQueryType type) {
-        SqlData sd = query.toGroupSql(cp.getColumnDbName(), type);
-        SQLiteDatabase db = dbh.getReadableDatabase();
-        Cursor c = db.rawQuery(sd.getSql(), sd.getArgs());
-        int gColIndex = c.getColumnIndexOrThrow("g");
-        c.moveToFirst();
-        String value = c.getString(gColIndex);
-        c.close();
-        db.close();
-        return value;
+    	SQLiteDatabase db = null;
+    	Cursor c = null;
+    	try {
+    		db = dbh.getReadableDatabase();
+	        SqlData sd = query.toFooterSql(cp.getColumnDbName(), type);
+	        c = db.rawQuery(sd.getSql(), sd.getArgs());
+	        if ( c.getCount() == 1 ) {
+		        int gColIndex = c.getColumnIndexOrThrow("g");
+		        c.moveToFirst();
+		        String value = c.getString(gColIndex);
+		        return value;
+	        } else {
+	        	return ""; // TODO: should this return null ???
+	        }
+    	} finally {
+			try {
+	    		if ( c != null && !c.isClosed() ) {
+    				c.close();
+	    		}
+			} finally {
+				if ( db != null ) {
+					db.close();
+				}
+			}
+    	}
     }
     
     /**
@@ -355,9 +422,14 @@ public class DbTable {
           values.put(DB_ROW_ID, id);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
-        long result = db.insert(tp.getDbTableName(), null, values);
-        db.close();
-        Log.d("DBT", "insert, id=" + result);
+        try {
+	        values.put(DB_TIMESTAMP, System.currentTimeMillis());
+	        values.put(DB_SAVED, SavedStatus.COMPLETE.name());
+	        long result = db.insert(tp.getDbTableName(), null, values);
+	        Log.d("DBT", "insert, id=" + result);
+        } finally {
+        	db.close();
+        }
     }
     
     /**
@@ -415,14 +487,19 @@ public class DbTable {
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.update(tp.getDbTableName(), values, where, whereArgs);
-        db.close();
+        try {
+	        values.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+	        values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
+	        db.update(tp.getDbTableName(), values, where, whereArgs);
+        } finally {
+        	db.close();
+        }
     }
     
     public void resolveConflict(String rowId, String syncTag,
             Map<String, String> values) {
         String[] deleteWhereArgs = { rowId,
-                new Integer(SyncUtil.State.DELETING).toString() };
+                Integer.valueOf(SyncUtil.State.DELETING).toString() };
         String deleteSql = DB_ROW_ID + " = ? AND " + DB_SYNC_STATE + " = ?";
         ContentValues updateValues = new ContentValues();
         updateValues.put(DB_SYNC_STATE, SyncUtil.State.UPDATING);
@@ -433,10 +510,15 @@ public class DbTable {
         String[] updateWhereArgs = { rowId };
         String updateWhereSql = DB_ROW_ID + " = ?";
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
-        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
-                updateWhereArgs);
-        db.close();
+        try {
+	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
+	        updateValues.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+	        updateValues.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
+	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
+	                updateWhereArgs);
+        } finally {
+        	db.close();
+        }
     }
     
     /**
@@ -461,8 +543,13 @@ public class DbTable {
           ContentValues values = new ContentValues();
           values.put(DB_SYNC_STATE, SyncUtil.State.DELETING);
           SQLiteDatabase db = dbh.getWritableDatabase();
-          db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
-          db.close();
+          try {
+	          values.put(DbTable.DB_TIMESTAMP, System.currentTimeMillis());
+	          values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
+	          db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
+          } finally {
+        	  db.close();
+          }
         }
       }
     }
@@ -479,8 +566,11 @@ public class DbTable {
     
     public void deleteRowActual(String whereClause, String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        db.delete(tp.getDbTableName(), whereClause, whereArgs);
-        db.close();
+        try {
+        	db.delete(tp.getDbTableName(), whereClause, whereArgs);
+        } finally {
+        	db.close();
+        }
     }
     
     /**
@@ -489,17 +579,29 @@ public class DbTable {
      *         the row does not exist.
      */
     private int getSyncState(String rowId) {
-      SQLiteDatabase db = dbh.getReadableDatabase();
-      Cursor c = db.query(tp.getDbTableName(), new String[] { DB_SYNC_STATE }, DB_ROW_ID + " = ?",
-          new String[] { rowId }, null, null, null);
-      int syncState = -1;
-      if (c.moveToFirst()) {
-        int syncStateIndex = c.getColumnIndex(DB_SYNC_STATE);
-        syncState = c.getInt(syncStateIndex);
-      }
-      c.close();
-      db.close();
-      return syncState;
+		SQLiteDatabase db = null;
+		Cursor c = null;
+		try {
+	      db = dbh.getReadableDatabase();
+	      c = db.query(tp.getDbTableName(), new String[] { DB_SYNC_STATE }, DB_ROW_ID + " = ?",
+	          new String[] { rowId }, null, null, null);
+	      int syncState = -1;
+	      if (c.moveToFirst()) {
+	        int syncStateIndex = c.getColumnIndex(DB_SYNC_STATE);
+	        syncState = c.getInt(syncStateIndex);
+	      }
+	      return syncState;
+	    } finally {
+	    	try {
+	    		if ( c != null && !c.isClosed() ) {
+	    			c.close();
+	    		}
+	    	} finally {
+	    		if ( db != null ) {
+	    			db.close();
+	    		}
+	    	}
+	    }
     }
      
     /**

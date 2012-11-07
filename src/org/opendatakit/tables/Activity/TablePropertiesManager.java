@@ -24,6 +24,7 @@ import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
@@ -55,7 +56,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
@@ -200,13 +200,19 @@ public class TablePropertiesManager extends PreferenceActivity {
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           SQLiteDatabase db = dbh.getWritableDatabase();
-          KeyValueStoreManager kvsm = 
-              KeyValueStoreManager.getKVSManager(dbh);
-          KeyValueStore activeKVS = 
-              kvsm.getStoreForTable(tp.getTableId(),
-                  KeyValueStore.Type.ACTIVE);
-
-          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+          try {
+	          KeyValueStoreManager kvsm = 
+	              KeyValueStoreManager.getKVSManager(dbh);
+	          KeyValueStore activeKVS = 
+	              kvsm.getStoreForTable(tp.getTableId(),
+	                  KeyValueStore.Type.ACTIVE);
+	
+	          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+          } finally {
+        	  if ( db != null ) {
+        		  db.close();
+        	  }
+          }
         }
       });
       builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -487,13 +493,18 @@ public class TablePropertiesManager extends PreferenceActivity {
         final List<ColumnProperties> dateCols =
             new ArrayList<ColumnProperties>();
         for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+            if (cp.getColumnType() == ColumnType.NUMBER ||
+            	cp.getColumnType() == ColumnType.INTEGER) {
                 numberCols.add(cp);
             } else if (cp.getColumnType() ==
-                    ColumnProperties.ColumnType.LOCATION) {
+                    ColumnType.GEOPOINT) {
                 locationCols.add(cp);
             } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATE) {
+                ColumnType.DATE ||
+                cp.getColumnType() ==
+                ColumnType.DATETIME ||
+                cp.getColumnType() ==
+                ColumnType.TIME) {
                 dateCols.add(cp);
             }
         }

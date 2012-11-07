@@ -25,7 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
@@ -141,7 +141,7 @@ public class SyncProcessor {
   private boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
-    Map<String, Integer> columns = getColumns(tp);
+    Map<String, ColumnType> columns = getColumns(tp);
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
 
     boolean success = false;
@@ -192,7 +192,7 @@ public class SyncProcessor {
   private boolean synchronizeTableRest(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
-    Map<String, Integer> columns = getColumns(tp);
+    Map<String, ColumnType> columns = getColumns(tp);
 
     // get updates from server
     // if we fail here we don't try to continue
@@ -269,8 +269,13 @@ public class SyncProcessor {
     IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
+    ArrayList<String> columns = new ArrayList<String>();
+    columns.add(DbTable.DB_SYNC_STATE);
+    // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
-    Table allRowIds = table.getRaw(new String[] { DbTable.DB_SYNC_STATE }, null, null, null);
+    Table allRowIds = table.getRaw(columns, 
+    		new String[] {DbTable.DB_SAVED},
+            new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
     // update properties if necessary
     // do this before updating data in case columns have changed
@@ -395,25 +400,29 @@ public class SyncProcessor {
     tp.setSyncTag(modification.getTableSyncTag());
   }
 
-  private Map<String, Integer> getColumns(TableProperties tp) {
-    Map<String, Integer> columns = new HashMap<String, Integer>();
+  private Map<String, ColumnType> getColumns(TableProperties tp) {
+    Map<String, ColumnType> columns = new HashMap<String, ColumnType>();
     ColumnProperties[] userColumns = tp.getColumns();
     for (ColumnProperties colProp : userColumns)
       columns.put(colProp.getColumnDbName(), colProp.getColumnType());
     columns.put(DbTable.DB_SRC_PHONE_NUMBER, ColumnType.PHONE_NUMBER);
-    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATE);
+    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
     return columns;
   }
 
-  private List<SyncRow> getRows(DbTable table, Map<String, Integer> columns, int state) {
+  private List<SyncRow> getRows(DbTable table, Map<String, ColumnType> columns, int state) {
 
     Set<String> columnSet = new HashSet<String>(columns.keySet());
     columnSet.add(DbTable.DB_SYNC_TAG);
-    String[] columnNames = columnSet.toArray(new String[0]);
-
-    Table rows = table.getRaw(columnNames, new String[] { DbTable.DB_SYNC_STATE,
-        DbTable.DB_TRANSACTIONING },
-        new String[] { String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
+    ArrayList<String> columnNames = new ArrayList<String>();
+    for ( String s : columnSet ) {
+    	columnNames.add(s);
+    }
+    // TODO: confirm handling of rows that have pending/unsaved changes from Collect
+    Table rows = table.getRaw(columnNames, new String[] {DbTable.DB_SAVED, 
+    			DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
+        new String[] { DbTable.SavedStatus.COMPLETE.name(), 
+    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();

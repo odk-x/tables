@@ -1,8 +1,6 @@
 package org.opendatakit.tables.sync.files;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -28,11 +25,8 @@ import org.opendatakit.httpclientandroidlib.client.HttpClient;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.conn.params.ConnManagerParams;
 import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
-import org.opendatakit.httpclientandroidlib.message.BasicNameValuePair;
-import org.opendatakit.httpclientandroidlib.params.BasicHttpParams;
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
-import org.opendatakit.httpclientandroidlib.protocol.HttpContext;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -43,9 +37,6 @@ import org.opendatakit.tables.util.TableFileUtils;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri.Builder;
-import android.net.UrlQuerySanitizer;
-import android.net.UrlQuerySanitizer.ParameterValuePair;
-import android.os.Environment;
 import android.util.Log;
 
 /**
@@ -84,29 +75,33 @@ public class SyncUtilities {
     // begin the database stuff.
     DbHelper dbh = DbHelper.getDbHelper(context);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    // So I'm a bit confused as to why I have the dbhelper and pass
-    // it in here, and then just pass the db directly in? Hmm.
-    // I guess the helper is ensuring that the correct table has
-    // been asserted?
-    KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
-    db.beginTransaction();
-    try { 
-      KeyValueStore serverKVS = kvms.getStoreForTable(tableId, 
-          KeyValueStore.Type.SERVER);
-      // When the table properties are passed down from the server in the key
-      // value store, we will want to clear the original entries and overwrite
-      // them with the current state of the server. For now, however, we aren't
-      // going to do that, b/c the properties aren't coming down from the 
-      // server via the manifest.
-      //kvs.clearKeyValuePairs(db);
-      serverKVS.addEntriesToStore(db, allEntries);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      // TODO notify that the sync failed--resolve the file issue above
-      e.printStackTrace();
+    try {
+	    // So I'm a bit confused as to why I have the dbhelper and pass
+	    // it in here, and then just pass the db directly in? Hmm.
+	    // I guess the helper is ensuring that the correct table has
+	    // been asserted?
+	    KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
+	    db.beginTransaction();
+	    try { 
+	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId, 
+	          KeyValueStore.Type.SERVER);
+	      // When the table properties are passed down from the server in the key
+	      // value store, we will want to clear the original entries and overwrite
+	      // them with the current state of the server. For now, however, we aren't
+	      // going to do that, b/c the properties aren't coming down from the 
+	      // server via the manifest.
+	      //kvs.clearKeyValuePairs(db);
+	      serverKVS.addEntriesToStore(db, allEntries);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      // TODO notify that the sync failed--resolve the file issue above
+	      e.printStackTrace();
+	    } finally {
+	      db.endTransaction();
+	    }
     } finally {
-      db.endTransaction();
-    }    
+    	db.close();
+    }
   }
   
   /**
@@ -487,6 +482,8 @@ public class SyncUtilities {
     }
   } 
   
+  // TODO: remove this??? Only used for FILE type.
+  // TODO: Make ColumnType consistent impl between Aggregate and Tables
   /**
    * NB: This is currently copy/pasted from the aggregate workspace. Likely
    * going to want to get this working from a JAR or something.

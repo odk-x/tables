@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,16 +25,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.sync.SyncUtil;
 
-import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -49,6 +49,9 @@ import android.util.Log;
  * @author hkworden@gmail.com (Hilary Worden)
  */
 public class TableProperties {
+
+  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final String t = "TableProperties";
   
   public static final String TAG = "Table_Properties";
 
@@ -160,8 +163,8 @@ public class TableProperties {
   private String displayName;
   private int tableType;
   private ColumnProperties[] columns;
-  private String[] columnOrder;
-  private String[] primeColumns;
+  private ArrayList<String> columnOrder;
+  private ArrayList<String> primeColumns;
   private String sortColumn;
   private String readSecurityTableId;
   private String writeSecurityTableId;
@@ -179,8 +182,8 @@ public class TableProperties {
       String dbTableName, 
       String displayName,
       int tableType, 
-      String[] columnOrder, 
-      String[] primeColumns, 
+      ArrayList<String> columnOrder, 
+      ArrayList<String> primeColumns, 
       String sortColumn,
       String readSecurityTableId, 
       String writeSecurityTableId, 
@@ -227,13 +230,22 @@ public class TableProperties {
    */
   public static TableProperties getTablePropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, 
-        typeOfStore);
-    Map<String, String> mapProps = intendedKVS
-        .getProperties(db);
-    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+	    SQLiteDatabase db = null;
+	    try {
+	        db = dbh.getReadableDatabase();
+		    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+		    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, 
+		        typeOfStore);
+		    Map<String, String> mapProps = intendedKVS
+		        .getProperties(db);
+		    db.close();
+		    db = null;
+		    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+	    } finally {
+	    	if ( db != null ) {
+	    		db.close();
+	    	}
+	    }
   }
   
   /**
@@ -245,10 +257,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForAll(DbHelper dbh,
       KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
-    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
+	    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
 
   /**
@@ -261,10 +280,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForSynchronizedTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);    
-    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);    
+	    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /**
@@ -303,10 +329,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForDataTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /**
@@ -332,10 +365,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForSecurityTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+        db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
 
   /**
@@ -347,10 +387,17 @@ public class TableProperties {
    */
   public static TableProperties[] getTablePropertiesForShortcutTables(
       DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
-    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+    SQLiteDatabase db = null;
+    try {
+    	db = dbh.getReadableDatabase();
+	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
+	    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+    	if ( db != null ) {
+    		db.close();
+    	}
+    }
   }
   
   /*
@@ -375,13 +422,39 @@ public class TableProperties {
     // check here to set null values for these columns to empty strings.
     if (columnOrderValue == null)
       columnOrderValue = "";
-    String[] columnOrder = (columnOrderValue.length() == 0) ? new String[] {} 
-      : columnOrderValue.split("/");
+    ArrayList<String> columnOrder = new ArrayList<String>();
+    if ( columnOrderValue.length() != 0) {
+    	try {
+			columnOrder = mapper.readValue(columnOrderValue, ArrayList.class);
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
+		} catch (IOException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json: " + columnOrderValue);
+		}
+    }
     String primeOrderValue = props.get(DB_PRIME_COLUMNS);
     if (primeOrderValue == null)
       primeOrderValue = "";
-    String[] primeList = (primeOrderValue.length() == 0) ? new String[] {} 
-      : primeOrderValue.split("/");
+    ArrayList<String> primeList = new ArrayList<String>();
+    if ( primeOrderValue.length() != 0) {
+    	try {
+			primeList = mapper.readValue(primeOrderValue, ArrayList.class);
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json");
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json");
+		} catch (IOException e) {
+			e.printStackTrace();
+			Log.e(t, "ignore invalid json");
+		}
+    }
     return new TableProperties(dbh, 
         props.get(DB_TABLE_ID),
         props.get(DB_DB_TABLE_NAME),
@@ -593,26 +666,29 @@ public class TableProperties {
         Integer.toString(SyncUtil.State.INSERTING)));
     values.add(createIntEntry(id, DB_TRANSACTIONING, "0"));
     TableProperties tp = new TableProperties(dbh, id, dbTableName, displayName,
-        tableType, new String[0], new String[0], null, null, null, null, null, 
+        tableType, new ArrayList<String>(), new ArrayList<String>(), null, null, null, null, null, 
         null, null, null, null, SyncUtil.State.INSERTING, false, typeOfStore);
     tp.getColumns(); // ensuring columns are already initialized
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      KeyValueStore typedStore = kvms.getStoreForTable(id, 
-          typeOfStore);
-      typedStore.addEntriesToStore(db, values);
-      Log.d(TAG, "adding table: " + dbTableName);
-      DbTable.createDbTable(db, tp);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
+	    db.beginTransaction();
+	    try {
+	      KeyValueStore typedStore = kvms.getStoreForTable(id, 
+	          typeOfStore);
+	      typedStore.addEntriesToStore(db, values);
+	      Log.d(TAG, "adding table: " + dbTableName);
+	      DbTable.createDbTable(db, tp);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	    } finally {
+	      db.endTransaction();
+	    }
+	    return tp;
     } finally {
-      db.endTransaction();
-      db.close();
+    	db.close();
     }
-    return tp;
   }
   
   /*
@@ -622,7 +698,7 @@ public class TableProperties {
       String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = "String";
+    entry.type = ColumnType.TEXT.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -635,7 +711,7 @@ public class TableProperties {
       String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = "Integer";
+    entry.type = ColumnType.INTEGER.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -677,23 +753,26 @@ public class TableProperties {
     // key value store and drop the table holding the data from the database.
     ColumnProperties[] columns = getColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      db.execSQL("DROP TABLE " + dbTableName);
-      for (ColumnProperties cp : columns) {
-        cp.deleteColumn(db);
-      }
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
-          KeyValueStore.Type.ACTIVE);
-      activeKVS.clearKeyValuePairs(db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error deleting table: " + this.tableId);
-    } finally{
-      db.endTransaction();
-      db.close();     
+	    db.beginTransaction();
+	    try {
+	      db.execSQL("DROP TABLE " + dbTableName);
+	      for (ColumnProperties cp : columns) {
+	        cp.deleteColumn(db);
+	      }
+	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
+	          KeyValueStore.Type.ACTIVE);
+	      activeKVS.clearKeyValuePairs(db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error deleting table: " + this.tableId);
+	    } finally{
+	      db.endTransaction();
+	    }
+    } finally {
+    	db.close();
     }
   }
 
@@ -757,9 +836,9 @@ public class TableProperties {
 
   private void orderColumns() {
     ColumnProperties[] newColumns = new ColumnProperties[columns.length];
-    for (int i = 0; i < columnOrder.length; i++) {
+    for (int i = 0; i < columnOrder.size(); i++) {
       for (int j = 0; j < columns.length; j++) {
-        if (columns[j].getColumnDbName().equals(columnOrder[i])) {
+        if (columns[j].getColumnDbName().equals(columnOrder.get(i))) {
           newColumns[i] = columns[j];
           break;
         }
@@ -777,9 +856,9 @@ public class TableProperties {
   }
 
   public int getColumnIndex(String colDbName) {
-    String[] colOrder = getColumnOrder();
-    for (int i = 0; i < colOrder.length; i++) {
-      if (colOrder[i].equals(colDbName)) {
+    ArrayList<String> colOrder = getColumnOrder();
+    for (int i = 0; i < colOrder.size(); i++) {
+      if (colOrder.get(i).equals(colDbName)) {
         return i;
       }
     }
@@ -800,7 +879,7 @@ public class TableProperties {
   public String getColumnByAbbreviation(String abbreviation) {
     ColumnProperties[] cps = getColumns();
     for (ColumnProperties cp : cps) {
-      String ca = cp.getAbbreviation();
+      String ca = cp.getSmsLabel();
       if ((ca != null) && (ca.equalsIgnoreCase(abbreviation))) {
         return cp.getColumnDbName();
       }
@@ -817,7 +896,7 @@ public class TableProperties {
       }
     }
     for (ColumnProperties cp : cps) {
-      String ca = cp.getAbbreviation();
+      String ca = cp.getSmsLabel();
       if ((ca != null) && ca.equalsIgnoreCase(name)) {
         return cp;
       }
@@ -873,33 +952,37 @@ public class TableProperties {
     getColumns();
     // preparing column order
     ColumnProperties[] newColumns = new ColumnProperties[columns.length + 1];
-    String[] newColumnOrder = new String[columns.length + 1];
+    ArrayList<String> newColumnOrder = new ArrayList<String>();
     for (int i = 0; i < columns.length; i++) {
       newColumns[i] = columns[i];
-      newColumnOrder[i] = columnOrder[i];
+      newColumnOrder.add(columnOrder.get(i));
     }
-    newColumnOrder[columns.length] = dbName;
+    newColumnOrder.add(dbName);
     // adding column
     SQLiteDatabase db = dbh.getWritableDatabase();
-    ColumnProperties cp = null;
-    db.beginTransaction();
     try {
-      cp = ColumnProperties.addColumn(dbh, db, tableId, dbName, displayName);
-      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
-      setColumnOrder(newColumnOrder, db);
-      Log.d("TP", "here we are");
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error adding column: " + displayName);
+	    ColumnProperties cp = null;
+	    db.beginTransaction();
+	    try {
+	      cp = ColumnProperties.addColumn(dbh, db, tableId, dbName, displayName);
+	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
+	      setColumnOrder(newColumnOrder, db);
+	      Log.d("TP", "here we are");
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error adding column: " + displayName);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // updating TableProperties
+	    newColumns[columns.length] = cp;
+	    columns = newColumns;
+	    // returning new ColumnProperties
+	    return cp;
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // updating TableProperties
-    newColumns[columns.length] = cp;
-    columns = newColumns;
-    // returning new ColumnProperties
-    return cp;
   }
 
   /**
@@ -944,37 +1027,41 @@ public class TableProperties {
     }
     ColumnProperties colToDelete = columns[colIndex];
     columns = newColumns;
-    String[] newColumnOrder = new String[columns.length];
+    ArrayList<String> newColumnOrder = new ArrayList<String>();
     index = 0;
     for (String col : columnOrder) {
       if (col.equals(columnDbName)) {
         continue;
       }
-      newColumnOrder[index] = col;
+      newColumnOrder.add(col);
       index++;
     }
     setColumnOrder(newColumnOrder);
     // deleting the column
     SQLiteDatabase db = dbh.getWritableDatabase();
-    db.beginTransaction();
     try {
-      colToDelete.deleteColumn(db);
-      reformTable(db, columnOrder);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error deleting column: " + columnDbName);
+	    db.beginTransaction();
+	    try {
+	      colToDelete.deleteColumn(db);
+	      reformTable(db, columnOrder);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error deleting column: " + columnDbName);
+	    } finally {
+	      db.endTransaction();
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
   }
 
   /**
    * Reforms the table.
    */
-  public void reformTable(SQLiteDatabase db, String[] existingColumns) {
+  public void reformTable(SQLiteDatabase db, ArrayList<String> columnOrder2) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
-    for (String col : existingColumns) {
+    for (String col : columnOrder2) {
       csvBuilder.append(", " + col);
     }
     String csv = csvBuilder.toString();
@@ -989,38 +1076,47 @@ public class TableProperties {
   /**
    * @return an ordered array of the database names of the table's columns
    */
-  public String[] getColumnOrder() {
+  public ArrayList<String> getColumnOrder() {
     return columnOrder;
   }
 
   /**
    * Sets the column order.
    * 
-   * @param columnOrder
+   * @param colOrder
    *          an ordered array of the database names of the table's columns
    */
-  public void setColumnOrder(String[] columnOrder) {
+  public void setColumnOrder(ArrayList<String> colOrder) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    setColumnOrder(columnOrder, db);
-    db.close();
+    try {
+    	setColumnOrder(colOrder, db);
+    } finally {
+    	db.close();
+    }
   }
 
-  private void setColumnOrder(String[] columnOrder, SQLiteDatabase db) {
-    StringBuilder orderBuilder = new StringBuilder();
-    for (String cdn : columnOrder) {
-      orderBuilder.append("/" + cdn);
-    }
-    if (orderBuilder.length() > 0) {
-      orderBuilder.delete(0, 1);
-    }
-    setStringProperty(DB_COLUMN_ORDER, orderBuilder.toString(), db);
+  private void setColumnOrder(ArrayList<String> columnOrder, SQLiteDatabase db) {
+	String colOrderList = null;
+	try {
+		colOrderList = mapper.writeValueAsString(columnOrder);
+	} catch (JsonGenerationException e) {
+		e.printStackTrace();
+		Log.e(t, "illegal json ignored");
+	} catch (JsonMappingException e) {
+		e.printStackTrace();
+		Log.e(t, "illegal json ignored");
+	} catch (IOException e) {
+		e.printStackTrace();
+		Log.e(t, "illegal json ignored");
+	}
+    setStringProperty(DB_COLUMN_ORDER, colOrderList, db);
     this.columnOrder = columnOrder;
   }
 
   /**
    * @return an array of the database names of the prime columns
    */
-  public String[] getPrimeColumns() {
+  public ArrayList<String> getPrimeColumns() {
     return primeColumns;
   }
 
@@ -1036,19 +1132,19 @@ public class TableProperties {
   /**
    * Sets the table's prime columns.
    * 
-   * @param primeColumns
+   * @param primes
    *          an array of the database names of the table's prime columns
    */
-  public void setPrimeColumns(String[] primeColumns) {
+  public void setPrimeColumns(ArrayList<String> primes) {
     String str = "";
-    for (String cdb : primeColumns) {
+    for (String cdb : primes) {
       str += cdb + "/";
     }
     if (str.length() > 0) {
       str = str.substring(0, str.length() - 1);
     }
     setStringProperty(DB_PRIME_COLUMNS, str);
-    this.primeColumns = primeColumns;
+    this.primeColumns = primes;
   }
 
   /**
@@ -1277,116 +1373,135 @@ public class TableProperties {
 
   public String toJson() {
     getColumns(); // ensuring columns is initialized
-    JSONArray colOrder = new JSONArray();
-    JSONArray cols = new JSONArray();
+    ArrayList<String> colOrder = new ArrayList<String>();
+    ArrayList<Object> cols = new ArrayList<Object>();
     for (ColumnProperties cp : columns) {
-      colOrder.put(cp.getColumnDbName());
-      cols.put(cp.toJsonObject());
+      colOrder.add(cp.getColumnDbName());
+      cols.add(cp.toJsonObject());
     }
-    JSONArray primes = new JSONArray();
+    ArrayList<String> primes = new ArrayList<String>();
     for (String prime : primeColumns) {
-      primes.put(prime);
+      primes.add(prime);
     }
-    JSONObject jo = new JSONObject();
-    try {
-      jo.put(JSON_KEY_VERSION, 1);
-      jo.put(JSON_KEY_TABLE_ID, tableId);
-      jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
-      jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-      jo.put(JSON_KEY_TABLE_TYPE, tableType);
-      jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
-      jo.put(JSON_KEY_COLUMNS, cols);
-      jo.put(JSON_KEY_PRIME_COLUMNS, primes);
-      jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
-      jo.put(JSON_KEY_READ_SECURITY_TABLE_ID, readSecurityTableId);
-      jo.put(JSON_KEY_WRITE_SECURITY_TABLE_ID, writeSecurityTableId);
-      // TODO
-      jo.put(JSON_KEY_OV_VIEW_SETTINGS, overviewViewSettings.toJsonObject().toString());
-      // TODO
-      jo.put(JSON_KEY_CO_VIEW_SETTINGS, collectionViewSettings.toJsonObject().toString());
-      jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
-      jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
-    } catch (JSONException e) {
-      throw new RuntimeException(e);
-    }
-    Log.d("TP", "json: " + jo.toString());
-    String toReturn = jo.toString();
+    Map<String,Object> jo = new HashMap<String,Object>();
+	  jo.put(JSON_KEY_VERSION, 1);
+	  jo.put(JSON_KEY_TABLE_ID, tableId);
+	  jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
+	  jo.put(JSON_KEY_DISPLAY_NAME, displayName);
+	  jo.put(JSON_KEY_TABLE_TYPE, tableType);
+	  jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
+	  jo.put(JSON_KEY_COLUMNS, cols);
+	  jo.put(JSON_KEY_PRIME_COLUMNS, primes);
+	  jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
+	  jo.put(JSON_KEY_READ_SECURITY_TABLE_ID, readSecurityTableId);
+	  jo.put(JSON_KEY_WRITE_SECURITY_TABLE_ID, writeSecurityTableId);
+	  // TODO
+	  jo.put(JSON_KEY_OV_VIEW_SETTINGS, overviewViewSettings.toJsonObject());
+	  // TODO
+	  jo.put(JSON_KEY_CO_VIEW_SETTINGS, collectionViewSettings.toJsonObject());
+	  jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
+	  jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
+	  
+	  String toReturn = null;
+	try {
+		toReturn = mapper.writeValueAsString(jo);
+	} catch (JsonGenerationException e) {
+		e.printStackTrace();
+	} catch (JsonMappingException e) {
+		e.printStackTrace();
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+    Log.d("TP", "json: " + toReturn);
     return toReturn;
   }
 
+  /**
+   * Called from CSV import and server synchronization primitives
+   * 
+   * @param json
+   */
   public void setFromJson(String json) {
     getColumns();
-    try {
-      JSONObject jo = new JSONObject(json);
-      JSONArray colOrderJo = jo.getJSONArray(JSON_KEY_COLUMN_ORDER);
-      String[] colOrder = new String[colOrderJo.length()];
-      for (int i = 0; i < colOrderJo.length(); i++) {
-        colOrder[i] = colOrderJo.getString(i);
-      }
-      JSONArray primesJo = jo.getJSONArray(JSON_KEY_PRIME_COLUMNS);
-      String[] primes = new String[primesJo.length()];
-      for (int i = 0; i < primesJo.length(); i++) {
-        primes[i] = primesJo.getString(i);
-      }
-      setDisplayName(jo.getString(JSON_KEY_DISPLAY_NAME));
-      setTableType(jo.getInt(JSON_KEY_TABLE_TYPE));
-      setPrimeColumns(primes);
-      setSortColumn(jo.optString(JSON_KEY_SORT_COLUMN));
-      setReadSecurityTableId(jo.optString(JSON_KEY_READ_SECURITY_TABLE_ID));
-      setWriteSecurityTableId(jo.optString(JSON_KEY_WRITE_SECURITY_TABLE_ID));
-      if (jo.has(JSON_KEY_OV_VIEW_SETTINGS)) {
-        // TODO
-      }
-      if (jo.has(JSON_KEY_CO_VIEW_SETTINGS)) {
-        // TODO
-      }
-      setDetailViewFilename(jo.optString(JSON_KEY_DETAIL_VIEW_FILE));
-      setSummaryDisplayFormat(jo.optString(JSON_KEY_SUM_DISPLAY_FORMAT));
-      Set<String> columnsToDelete = new HashSet<String>();
-      for (String cdn : columnOrder) {
-        columnsToDelete.add(cdn);
-      }
-      JSONArray colJArr = jo.getJSONArray(JSON_KEY_COLUMNS);
-      for (int i = 0; i < colOrder.length; i++) {
-        JSONObject colJo = colJArr.getJSONObject(i);
-        ColumnProperties cp = getColumnByDbName(colOrder[i]);
-        if (cp == null) {
-          cp = addColumn(colOrder[i], colOrder[i]);
-        }
-        cp.setFromJsonObject(colJo);
-        columnsToDelete.remove(colOrder[i]);
+    @SuppressWarnings("unchecked")
+	Map<String, Object> jo;
+	try {
+		jo = mapper.readValue(json, Map.class);
+	} catch (JsonParseException e) {
+		e.printStackTrace();
+		throw new IllegalArgumentException("invalid json: " + json);
+	} catch (JsonMappingException e) {
+		e.printStackTrace();
+		throw new IllegalArgumentException("invalid json: " + json);
+	} catch (IOException e) {
+		e.printStackTrace();
+		throw new IllegalArgumentException("invalid json: " + json);
+	}
+    
+    ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
+    ArrayList<String> primes = (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
+    
+	  setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
+	  setTableType((Integer) jo.get(JSON_KEY_TABLE_TYPE));
+	  setPrimeColumns(primes);
+	  setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
+	  setReadSecurityTableId((String) jo.get(JSON_KEY_READ_SECURITY_TABLE_ID));
+	  setWriteSecurityTableId((String) jo.get(JSON_KEY_WRITE_SECURITY_TABLE_ID));
+	  if (jo.containsKey(JSON_KEY_OV_VIEW_SETTINGS)) {
+	    // TODO
+	  }
+	  if (jo.containsKey(JSON_KEY_CO_VIEW_SETTINGS)) {
+	    // TODO
+	  }
+	  setDetailViewFilename((String) jo.get(JSON_KEY_DETAIL_VIEW_FILE));
+	  setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
+	  Set<String> columnsToDelete = new HashSet<String>();
+	  for (String cdn : columnOrder) {
+	    columnsToDelete.add(cdn);
+	  }
+	  ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
+	  for (int i = 0; i < colOrder.size(); i++) {
+		  Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
+		  ColumnProperties cp = getColumnByDbName(colOrder.get(i));
+          if (cp == null) {
+            cp = addColumn(colOrder.get(i), colOrder.get(i));
+          }
+          cp.setFromJsonObject(colJo);
+          columnsToDelete.remove(colOrder.get(i));
       }
       for (String columnToDelete : columnsToDelete) {
         deleteColumn(columnToDelete);
       }
       setColumnOrder(colOrder);
       orderColumns();
-    } catch (JSONException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void setIntProperty(String property, int value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
-    db.beginTransaction();
+    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-      setIntProperty(property, value, db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      e.printStackTrace();
-      Log.e(TAG, "error setting int property " + property + " with value " + 
-        value + " to table " + tableId);
+	    db.beginTransaction();
+	    try {
+	      setIntProperty(property, value, db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      Log.e(TAG, "error setting int property " + property + " with value " + 
+	        value + " to table " + tableId);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // hilary's original:
+	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+	    if (isSetToSync && syncState == SyncUtil.State.REST 
+	        && JSON_COLUMNS.contains(property)) {
+	      setSyncState(SyncUtil.State.UPDATING);
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // hilary's original:
-    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-    if (isSetToSync && syncState == SyncUtil.State.REST 
-        && JSON_COLUMNS.contains(property))
-      setSyncState(SyncUtil.State.UPDATING);
   }
   
   private void setIntProperty(String property, int value,
@@ -1394,32 +1509,37 @@ public class TableProperties {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
         this.backingStore);
-    backingKVS.insertOrUpdateKey(db, "Integer", property, 
+    backingKVS.insertOrUpdateKey(db, ColumnType.INTEGER.name(), property, 
         Integer.toString(value));
     Log.d(TAG, "updated int " + property + " to " + value + "for " + 
       this.tableId);
   }
 
   private void setStringProperty(String property, String value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
-    db.beginTransaction();
+    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-      setStringProperty(property, value, db);
-      db.setTransactionSuccessful();
-    } catch (Exception e) {
-      Log.e(TAG, "error setting string property " + property + " to " + value
-          + " for " + this.tableId);
+	    db.beginTransaction();
+	    try {
+	      setStringProperty(property, value, db);
+	      db.setTransactionSuccessful();
+	    } catch (Exception e) {
+	      Log.e(TAG, "error setting string property " + property + " to " + value
+	          + " for " + this.tableId);
+	    } finally {
+	      db.endTransaction();
+	    }
+	    // hilary's original
+	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
+	    if (isSetToSync && syncState == SyncUtil.State.REST 
+	        && JSON_COLUMNS.contains(property)) {
+	      setSyncState(SyncUtil.State.UPDATING);
+	    }
     } finally {
-      db.endTransaction();
+    	db.close();
     }
-    // hilary's original
-    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-    if (isSetToSync && syncState == SyncUtil.State.REST 
-        && JSON_COLUMNS.contains(property))
-      setSyncState(SyncUtil.State.UPDATING);
   }
 
   //TODO this should maybe be only transactionally?
@@ -1428,7 +1548,7 @@ public class TableProperties {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
         this.backingStore);
-    intendedKVS.insertOrUpdateKey(db, "String", property, value);
+    intendedKVS.insertOrUpdateKey(db, ColumnType.TEXT.name(), property, value);
     Log.d(TAG, "updated string " + property + " to " + value + " for " 
       + this.tableId);
   }

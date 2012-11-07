@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.Activity.util;
 
+import java.util.ArrayList;
+
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.Table;
@@ -32,14 +34,14 @@ public class SecurityUtil {
     public static final String PHONENUM_COLUMN_NAME = "phone";
     public static final String PASSWORD_COLUMN_NAME = "pass";
     
-    public static boolean couldBeSecurityTable(String[] columns) {
-        return (getSecurityIndices(columns) != null);
+    public static boolean couldBeSecurityTable(ArrayList<String> arrayList) {
+        return (getSecurityIndices(arrayList) != null);
     }
     
-    private static int[] getSecurityIndices(String[] columns) {
+    private static int[] getSecurityIndices(ArrayList<String> arrayList) {
         int[] indices = {-1, -1, -1};
-        for (int i = 0; i < columns.length; i++) {
-            String column = columns[i];
+        for (int i = 0; i < arrayList.size(); i++) {
+            String column = arrayList.get(i);
             if (column.contains(USER_COLUMN_NAME)) {
                 if (indices[0] != -1) {
                     return null;
@@ -71,9 +73,11 @@ public class SecurityUtil {
             String phoneNum, String password) {
         DbHelper dbh = DbHelper.getDbHelper(context);
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
-        Table table = dbt.getRaw(new String[] {DbTable.DB_ROW_ID},
-                new String[] {PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
-                new String[] {phoneNum, password}, null);
+        ArrayList<String> columns = new ArrayList<String>();
+        columns.add(DbTable.DB_ROW_ID);
+        Table table = dbt.getRaw(columns,
+                new String[] {DbTable.DB_SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
         return (table.getHeight() > 0);
     }
 }

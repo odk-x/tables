@@ -40,7 +40,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     private Context context;
     private ColumnProperties cp;
     private LinearLayout layout;
-    private List<String> optionValues;
+    private ArrayList<String> optionValues;
     private List<EditText> optionFields;
     
     public MultipleChoiceSettingDialog(Context context, ColumnProperties cp) {
@@ -59,7 +59,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         optionValues.clear();
-        for (String option : cp.getMultipleChoiceOptions()) {
+        for (String option : cp.getDisplayChoicesMap()) {
             optionValues.add(option);
         }
         init();
@@ -111,8 +111,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateValueList();
-                cp.setMultipleChoiceOptions(
-                        optionValues.toArray(new String[0]));
+                cp.setDisplayChoicesMap(optionValues);
                 dismiss();
             }
         });

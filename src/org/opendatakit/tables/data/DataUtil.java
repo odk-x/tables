@@ -33,7 +33,7 @@ import org.opendatakit.tables.Activity.util.UTMConverter;
 public class DataUtil {
     
     private static final DateTimeFormatter DB_DATETIME_FORMATTER =
-        DateTimeFormat.forPattern("yyyy-MM-dd-HH-mm-ss").withZoneUTC();
+        DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC();
     
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
         "M/d/yy h:mm:ssa",
@@ -150,23 +150,54 @@ public class DataUtil {
     }
     
     public String validifyValue(ColumnProperties cp, String input) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return validifyDateValue(input);
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
+            return validifyDateTimeValue(input);
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
+            return validifyTimeValue(input);
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return validifyDateRangeValue(input);
-        case ColumnProperties.ColumnType.NUMBER:
+        } else if ( cp.getColumnType() == ColumnType.NUMBER ) {
             return validifyNumberValue(input);
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+        } else if ( cp.getColumnType() == ColumnType.INTEGER ) {
+            return validifyIntegerValue(input);
+        } else if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return validifyMultipleChoiceValue(cp, input);
-        case ColumnProperties.ColumnType.LOCATION:
+        } else if ( cp.getColumnType() == ColumnType.GEOPOINT ) {
             return validifyLocationValue(input);
-        default:
+        } else {
             return input;
         }
     }
     
     private String validifyDateValue(String input) {
+        DateTime instant = tryParseInstant(input);
+        if (instant != null) {
+            return formatDateTimeForDb(instant);
+        }
+        Interval interval = tryParseInterval(input);
+        if (interval != null) {
+            return formatDateTimeForDb(interval.getStart());
+        }
+        return null;
+    }
+    
+    private String validifyDateTimeValue(String input) {
+        DateTime instant = tryParseInstant(input);
+        if (instant != null) {
+            return formatDateTimeForDb(instant);
+        }
+        Interval interval = tryParseInterval(input);
+        if (interval != null) {
+            return formatDateTimeForDb(interval.getStart());
+        }
+        return null;
+    }
+    
+    private String validifyTimeValue(String input) {
+    	// TODO: does this need to be different?
+    	// Need to respect TimeZone. What should Date be?
         DateTime instant = tryParseInstant(input);
         if (instant != null) {
             return formatDateTimeForDb(instant);
@@ -195,9 +226,18 @@ public class DataUtil {
         }
     }
     
+    private String validifyIntegerValue(String input) {
+        try {
+            Integer.parseInt(input);
+            return input;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+    
     private String validifyMultipleChoiceValue(ColumnProperties cp,
             String input) {
-        for (String opt :cp.getMultipleChoiceOptions()) {
+        for (String opt : cp.getDisplayChoicesMap()) {
             if (opt.equalsIgnoreCase(input)) {
                 return opt;
             }
@@ -336,18 +376,24 @@ public class DataUtil {
     }
     
     public Interval parseIntervalFromDb(String dbString) {
+    	// TODO: range should not be slash-separated but stored as two columns OR json in db...
         String[] split = dbString.split("/");
         return new Interval(DB_DATETIME_FORMATTER.parseDateTime(split[0]),
                 DB_DATETIME_FORMATTER.parseDateTime(split[1]));
     }
     
     public String formatForUserDisplay(ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return formatLongDateTimeForUser(parseDateTimeFromDb(value));
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
+        	// TODO: do we need special conversion
+            return formatLongDateTimeForUser(parseDateTimeFromDb(value));
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
+        	// TODO: do we need special conversion
+            return formatLongDateTimeForUser(parseDateTimeFromDb(value));
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return formatLongIntervalForUser(parseIntervalFromDb(value));
-        default:
+        } else {
             return value;
         }
     }
@@ -371,6 +417,8 @@ public class DataUtil {
     }
     
     public double[] parseLocationFromDb(String dbString) {
+    	// TODO: geopoint should not be comma-separated but stored as four columns OR json in db...
+    	// TODO: note that this expects only 2 coordinates (x,y) ???
         String[] split = dbString.split(",");
         return new double[] {Double.parseDouble(split[0]),
                 Double.parseDouble(split[1])};

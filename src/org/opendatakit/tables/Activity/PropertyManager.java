@@ -18,6 +18,7 @@ package org.opendatakit.tables.Activity;
 import org.opendatakit.tables.Activity.util.SliderPreference;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
@@ -88,15 +89,15 @@ public class PropertyManager extends PreferenceActivity {
     category.setTitle(cp.getDisplayName());
     root.addPreference(category);
 
-    // Abreviation<EditText>
-    String abr = getAbrev(colName);
-    category.addPreference(createEditTextPreference("ABR", "Abbreviation",
-        "Change Column Abreviation", abr, abr));
+    // SMS Label<EditText>
+    String smsLabel = getSmsLabel(colName);
+    category.addPreference(createEditTextPreference("SMSLABEL", "SMS Label",
+        "Change SMS Label for Column", smsLabel, smsLabel));
 
     // Type<List>
-    String type = getType(colName);
-    category.addPreference(createListPreference("TYPE", "Type", type, type, COLUMN_TYPE_LABELS,
-        COLUMN_TYPE_LABELS));
+    String type = getColumnTypeLabel(colName);
+    category.addPreference(createListPreference("TYPE", "Type", type, type, ColumnType.getAllColumnTypeLabels(),
+    		ColumnType.getAllColumnTypeLabels()));
 
     // SMS-IN<CheckBox>
     category
@@ -131,10 +132,10 @@ public class PropertyManager extends PreferenceActivity {
 
     category.addPreference(new DisplayPreferencesDialogPreference(this));
 
-    if (cp.getColumnType() == ColumnProperties.ColumnType.MC_OPTIONS) {
+    if (cp.getColumnType() == ColumnType.MC_OPTIONS) {
       showingMcDialog = true;
       category.addPreference(new McOptionSettingsDialogPreference(this));
-    } else if (cp.getColumnType() == ColumnProperties.ColumnType.TABLE_JOIN) {
+    } else if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
       String joinTableId = cp.getJoinTableId();
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
@@ -188,18 +189,18 @@ public class PropertyManager extends PreferenceActivity {
 
   }
 
-  // Get the abreviation on this column.
-  private String getAbrev(String colName) {
-    String result = cp.getAbbreviation();
+  // Get the SMS abbreviation on this column.
+  private String getSmsLabel(String colName) {
+    String result = cp.getSmsLabel();
     if (result == null) {
-      return "No Abreviation Defined.";
+      return "No Sms Abbreviation Defined.";
     }
     return result;
   }
 
   // Get the type for this column.
-  private String getType(String colName) {
-    return COLUMN_TYPE_LABELS[cp.getColumnType()];
+  private String getColumnTypeLabel(String colName) {
+    return cp.getColumnType().label();
   }
 
   // Check if this is SMS-IN column.
@@ -223,15 +224,15 @@ public class PropertyManager extends PreferenceActivity {
     Preference pref = findPreference(key);
 
     // Routing
-    if (key.equals("ABR")) {
-      cp.setAbbreviation(getEditBoxContent(pref));
+    if (key.equals("SMSLABEL")) {
+      cp.setSmsLabel(getEditBoxContent(pref));
     } else if (key.equals("TYPE")) {
-      for (int i = 0; i < COLUMN_TYPE_LABELS.length; i++) {
-        if (COLUMN_TYPE_LABELS[i].equals(newVal)) {
-          cp.setColumnType(i);
-          if ((i == ColumnProperties.ColumnType.MC_OPTIONS) && !showingMcDialog) {
+      for (ColumnType t : ColumnType.getAllColumnTypes()) {
+        if (t.label().equals(newVal)) {
+          cp.setColumnType(t);
+          if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
             loadPreferenceScreen();
-          } else if (i == ColumnProperties.ColumnType.TABLE_JOIN) {
+          } else if (t == ColumnType.TABLE_JOIN) {
             loadPreferenceScreen();
           }
           break;
