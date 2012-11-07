@@ -5,3 +5,4 @@
 tests/.classpath
 perftests/.classpath
 ^perftests/dbs
+db\.sql
