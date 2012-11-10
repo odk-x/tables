@@ -38,9 +38,10 @@ public class KeyValueStoreSync extends KeyValueStore {
 	      return false;
 	    }
     } finally {
-   		if ( db != null ) {
-   			db.close();
-   		}
+      // TODO: fix the when to close problem
+//   		if ( db != null ) {
+//   			db.close();
+//   		}
     }
   }
   
@@ -56,7 +57,8 @@ public class KeyValueStoreSync extends KeyValueStore {
 	        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), 
 	        Integer.toString(newValue));
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   

@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -122,10 +123,10 @@ public class TableManager extends ListActivity {
 		 for(TableProperties tp : tableProps) {
 		     Map<String, String> map = new HashMap<String, String>();
 		     map.put("label", tp.getDisplayName());
-		     if (tp.getTableType() == TableProperties.TableType.SECURITY) {
+		     if (tp.getTableType() == TableType.security) {
 		         map.put("ext", "SMS Access Control Table");
 		     } else if (tp.getTableType() ==
-		         TableProperties.TableType.SHORTCUT) {
+		         TableType.shortcut) {
 		         map.put("ext", "Shortcut Table");
 		     }
 		     if(tp.getTableId() == defTableId) {
@@ -170,17 +171,17 @@ public class TableManager extends ListActivity {
 		 } else {
 	         menu.add(0, SET_DEFAULT_TABLE, 0, "Set as Default Table");
 		 }
-		 int tableType = tp.getTableType();
-		 if (tableType == TableProperties.TableType.DATA) {
+		 TableType tableType = tp.getTableType();
+		 if (tableType == TableType.data) {
 		     if (couldBeSecurityTable(tp)) {
                  menu.add(0, SET_SECURITY_TABLE, 0, "Set as Access Control Table");
 		     }
 		     if (couldBeShortcutTable(tp)) {
                  menu.add(0, SET_SHORTCUT_TABLE, 0, "Set as Shortcut Table");
 		     }
-		 } else if (tableType == TableProperties.TableType.SECURITY) {
+		 } else if (tableType == TableType.security) {
 		     menu.add(0, UNSET_SECURITY_TABLE, 0, "Unset as Access Control Table");
-		 } else if (tableType == TableProperties.TableType.SHORTCUT) {
+		 } else if (tableType == TableType.shortcut) {
 		     menu.add(0, UNSET_SHORTCUT_TABLE, 0, "Unset as Shortcut Table");
 		 }
 		 menu.add(0, REMOVE_TABLE, 1, "Delete the Table");
@@ -229,19 +230,19 @@ public class TableManager extends ListActivity {
 		     refreshList();
 		     return true;
 		 case SET_SECURITY_TABLE:
-		     tp.setTableType(TableProperties.TableType.SECURITY);
+		     tp.setTableType(TableType.security);
              refreshList();
 			 return true;
 		 case UNSET_SECURITY_TABLE:
-             tp.setTableType(TableProperties.TableType.DATA);
+             tp.setTableType(TableType.data);
 		     refreshList();
 		     return true;
 		 case SET_SHORTCUT_TABLE:
-             tp.setTableType(TableProperties.TableType.SHORTCUT);
+             tp.setTableType(TableType.shortcut);
              refreshList();
 		     return true;
          case UNSET_SHORTCUT_TABLE:
-             tp.setTableType(TableProperties.TableType.DATA);
+             tp.setTableType(TableType.data);
              refreshList();
              return true;
 		 case REMOVE_TABLE:
@@ -296,13 +297,13 @@ public class TableManager extends ListActivity {
 		 // HANDLES DIFFERENT MENU OPTIONS
 		 switch(item.getItemId()) {
 		 case ADD_NEW_TABLE:
-			 alertForNewTableName(true, TableProperties.TableType.DATA, null, null);
+			 alertForNewTableName(true, TableType.data, null, null);
 			 return true;
 		 case ADD_NEW_SECURITY_TABLE:
-			 alertForNewTableName(true, TableProperties.TableType.SECURITY, null, null);
+			 alertForNewTableName(true, TableType.security, null, null);
 			 return true;
 		 case ADD_NEW_SHORTCUT_TABLE:
-             alertForNewTableName(true, TableProperties.TableType.SHORTCUT, null, null);
+             alertForNewTableName(true, TableType.shortcut, null, null);
              return true;
 		 case IMPORT_EXPORT:
 			 Intent i = new Intent(this, ImportExportActivity.class);
@@ -323,7 +324,7 @@ public class TableManager extends ListActivity {
 	 
 	 // Ask for a new table name.
 	 private void alertForNewTableName(final boolean isNewTable, 
-			 final int tableType, final TableProperties tp, String givenTableName) {
+			 final TableType tableType, final TableProperties tp, String givenTableName) {
 		
 	   AlertDialog newTableAlert;
 		 // Prompt an alert box
@@ -375,7 +376,7 @@ public class TableManager extends ListActivity {
 		 toast.show();
 	 }
 	 
-	 private void addTable(String tableName, int tableType) {
+	 private void addTable(String tableName, TableType tableType) {
 	     String dbTableName =
 	             TableProperties.createDbTableName(dbh, tableName);
 	     // If you're adding through the table manager, you're using the phone,

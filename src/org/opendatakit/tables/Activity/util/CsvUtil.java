@@ -31,6 +31,7 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 
 import android.content.Context;
 import au.com.bytecode.opencsv.CSVReader;
@@ -61,7 +62,7 @@ public class CsvUtil {
     public boolean importNewTable(File file, String tableName) {
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
         TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-                tableName, TableProperties.TableType.DATA, 
+                tableName, TableType.data, 
                 KeyValueStore.Type.ACTIVE);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));

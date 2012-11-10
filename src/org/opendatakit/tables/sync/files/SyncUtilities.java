@@ -100,7 +100,8 @@ public class SyncUtilities {
 	      db.endTransaction();
 	    }
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   

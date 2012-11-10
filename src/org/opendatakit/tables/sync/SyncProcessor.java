@@ -32,6 +32,7 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.SyncState;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -94,20 +95,22 @@ public class SyncProcessor {
     beginTableTransaction(tp);
     try {
       switch (tp.getSyncState()) {
-      case SyncUtil.State.INSERTING:
+      case inserting:
         success = synchronizeTableInserting(tp, table);
         break;
-      case SyncUtil.State.DELETING:
+      case deleting:
         success = synchronizeTableDeleting(tp, table);
         break;
-      case SyncUtil.State.UPDATING:
+      case updating:
         success = synchronizeTableUpdating(tp, table);
         if (success)
           success = synchronizeTableRest(tp, table);
         break;
-      case SyncUtil.State.REST:
+      case rest:
         success = synchronizeTableRest(tp, table);
         break;
+      default:
+        Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
       if (success)
         tp.setLastSyncTime(du.formatNowForDb());
@@ -468,7 +471,7 @@ public class SyncProcessor {
 
   private void endTableTransaction(TableProperties tp, boolean success) {
     if (success)
-      tp.setSyncState(SyncUtil.State.REST);
+      tp.setSyncState(SyncState.rest);
     tp.setTransactioning(false);
   }
 

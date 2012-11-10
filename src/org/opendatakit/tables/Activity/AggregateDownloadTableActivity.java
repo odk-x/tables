@@ -28,7 +28,9 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
@@ -236,12 +238,12 @@ public class AggregateDownloadTableActivity extends ListActivity {
       // and server stores.
       TableProperties tp = TableProperties.addTable(dbh,
           TableProperties.createDbTableName(dbh, tableName), tableName,
-          TableProperties.TableType.DATA, tableId, KeyValueStore.Type.ACTIVE);
+          TableType.data, tableId, KeyValueStore.Type.ACTIVE);
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
       syncKVS.setIsSetToSync(true);
       // hilary's original--tp.setSynchronized(true);
-      tp.setSyncState(SyncUtil.State.REST);
+      tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
 
       Synchronizer synchronizer;

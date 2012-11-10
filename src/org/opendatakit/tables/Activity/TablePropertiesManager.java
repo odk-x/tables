@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.TableViewSettings.ConditionalRuler;
 
@@ -49,6 +50,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -56,6 +58,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
@@ -63,6 +66,8 @@ import android.widget.Spinner;
  * @author hkworden@gmail.com
  */
 public class TablePropertiesManager extends PreferenceActivity {
+  
+  private static final String TAG = "TablePropertiesManager";
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     
@@ -209,9 +214,10 @@ public class TablePropertiesManager extends PreferenceActivity {
 	
 	          kvsm.mergeServerToDefaultForTable(tp.getTableId());
           } finally {
-        	  if ( db != null ) {
-        		  db.close();
-        	  }
+            // TODO: fix the when to close problem
+//        	  if ( db != null ) {
+//        		  db.close();
+//        	  }
           }
         }
       });
@@ -258,21 +264,21 @@ public class TablePropertiesManager extends PreferenceActivity {
                 (canBeShortcutTable ? 1 : 0);
         String[] tableTypeIds = new String[tableTypeCount];
         String[] tableTypeNames = new String[tableTypeCount];
-        tableTypeIds[0] = String.valueOf(TableProperties.TableType.DATA);
+        tableTypeIds[0] = String.valueOf(TableType.data);
         tableTypeNames[0] = LanguageUtil.getTableTypeLabel(
-                TableProperties.TableType.DATA);
+                TableType.data);
         if (canBeAccessTable) {
             tableTypeIds[1] = String.valueOf(
-                    TableProperties.TableType.SECURITY);
+                    TableType.security);
             tableTypeNames[1] = LanguageUtil.getTableTypeLabel(
-                    TableProperties.TableType.SECURITY);
+                    TableType.security);
         }
         if (canBeShortcutTable) {
             int index = canBeAccessTable ? 2 : 1;
             tableTypeIds[index] = String.valueOf(
-                    TableProperties.TableType.SHORTCUT);
+                    TableType.shortcut);
             tableTypeNames[index] = LanguageUtil.getTableTypeLabel(
-                    TableProperties.TableType.SHORTCUT);
+                    TableType.shortcut);
         }
         ListPreference tableTypePref = new ListPreference(this);
         tableTypePref.setTitle("Table Type");
@@ -287,7 +293,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setTableType(Integer.parseInt((String) newValue));
+                tp.setTableType(TableType.valueOf((String) newValue));
                 init();
                 return false;
             }
@@ -330,7 +336,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             TableProperties.getTablePropertiesForSecurityTables(dbh,
                 KeyValueStore.Type.ACTIVE);
         int accessTableCount =
-                (tp.getTableType() == TableProperties.TableType.SECURITY) ?
+                (tp.getTableType() == TableType.security) ?
                 (accessTps.length) : accessTps.length + 1;
         TableProperties readTp = null;
         TableProperties writeTp = null;
@@ -343,16 +349,18 @@ public class TablePropertiesManager extends PreferenceActivity {
             if (accessTp.getTableId().equals(tp.getTableId())) {
                 continue;
             }
-            if ((tp.getReadSecurityTableId() != null) &&
-                    accessTp.getTableId().equals(
-                    tp.getReadSecurityTableId())) {
-                readTp = accessTp;
-            }
-            if ((tp.getWriteSecurityTableId() != null) &&
-                    accessTp.getTableId().equals(
-                    tp.getWriteSecurityTableId())) {
-                writeTp = accessTp;
-            }
+            // TODO: fix this to handle access correctly. got altered during
+            // schema update.
+//            if ((tp.getReadSecurityTableId() != null) &&
+//                    accessTp.getTableId().equals(
+//                    tp.getReadSecurityTableId())) {
+//                readTp = accessTp;
+//            }
+//            if ((tp.getWriteSecurityTableId() != null) &&
+//                    accessTp.getTableId().equals(
+//                    tp.getWriteSecurityTableId())) {
+//                writeTp = accessTp;
+//            }
             accessTableIds[index] = String.valueOf(accessTp.getTableId());
             accessTableNames[index] = accessTp.getDisplayName();
             index++;
@@ -375,7 +383,9 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setReadSecurityTableId((String) newValue);
+              Log.d(TAG, "access stuff and .onPreferenceChange unimplented");
+              // TODO: fix this, currently does nothing
+                //tp.setReadSecurityTableId((String) newValue);
                 init();
                 return false;
             }
@@ -399,7 +409,9 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setWriteSecurityTableId((String) newValue);
+              Log.d(TAG, ".onPreferenceChange unimplented");
+              // TODO: fix this, currently does nothing
+//                tp.setWriteSecurityTableId((String) newValue);
                 init();
                 return false;
             }

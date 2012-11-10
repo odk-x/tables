@@ -452,14 +452,20 @@ public class ColumnProperties {
     				c.close();
     			}
     		} finally {
-    			if ( db != null ) {
-    				db.close();
-    			}
+    	      // TODO: fix the when to close problem
+//    			if ( db != null ) {
+//    				db.close();
+//    			}
     		}
     	}
         return cp;
     }
     
+    /**
+     * @param dbh
+     * @param tableId
+     * @return
+     */
     static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh,
             String tableId) {
     	SQLiteDatabase db = null;
@@ -555,9 +561,11 @@ public class ColumnProperties {
     				c.close();
     			}
     		} finally {
-    			if ( db != null ) {
-    				db.close();
-    			}
+    		  // TODO: we need to resolve how we are going to prevent closing the
+    		  // db on callers. Removing this here, far far from ideal.
+//    			if ( db != null ) {
+//    				db.close();
+//    			}
     		}
     	}
         return cps;
@@ -696,9 +704,10 @@ public class ColumnProperties {
 	        db.setTransactionSuccessful();
 	        db.endTransaction();
         } finally {
-        	if ( db != null ) {
-        		db.close();
-        	}
+          // TODO: fix the when to close problem
+//        	if ( db != null ) {
+//        		db.close();
+//        	}
         }
         this.elementType = columnType;
     }
@@ -969,7 +978,8 @@ public class ColumnProperties {
         try {
         	setIntProperty(db, property, value);
         } finally {
-            db.close();
+          // TODO: fix the when to close problem
+//            db.close();
         }
     }
     
@@ -989,7 +999,8 @@ public class ColumnProperties {
         try {
         	setStringProperty(db, property,  value);
         } finally {
-        	db.close();
+          // TODO: fix the when to close problem
+//        	db.close();
         }
     }
     

@@ -207,11 +207,13 @@ public class MsgHandler {
     private boolean checkSecurity(String msg, String phoneNum,
             TableProperties tp, Type type) {
         String secTableId;
-        if (type == Type.ADD) {
-            secTableId = tp.getWriteSecurityTableId();
-        } else {
-            secTableId = tp.getReadSecurityTableId();
-        }
+        secTableId = tp.getAccessControls();
+        // TODO fix this 
+//        if (type == Type.ADD) {
+//            secTableId = tp.getWriteSecurityTableId();
+//        } else {
+//            secTableId = tp.getReadSecurityTableId();
+//        }
         if (secTableId == null) {
             return true;
         }

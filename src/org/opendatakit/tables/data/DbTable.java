@@ -149,9 +149,11 @@ public class DbTable {
 	    			c.close();
 	    		}
 	    	} finally {
-	    		if ( db != null ) {
-	    			db.close();
-	    		}
+	        // TODO: fix the when to close problem
+
+//	    		if ( db != null ) {
+//	    			db.close();
+//	    		}
 	    	}
 	    }
     }
@@ -199,9 +201,11 @@ public class DbTable {
 	    			c.close();
 	    		}
 	    	} finally {
-	    		if ( db != null ) {
-	    			db.close();
-	    		}
+	        // TODO: fix the when to close problem
+
+//	    		if ( db != null ) {
+//	    			db.close();
+//	    		}
 	    	}
 	    }
     }
@@ -252,9 +256,10 @@ public class DbTable {
 	    			c.close();
 	    		}
 	    	} finally {
-	    		if ( db != null ) {
-	    			db.close();
-	    		}
+	        // TODO: fix the when to close problem
+//	    		if ( db != null ) {
+//	    			db.close();
+//	    		}
 	    	}
 	    }
     }
@@ -273,9 +278,10 @@ public class DbTable {
         			c.close();
         		}
         	} finally {
-        		if ( db != null ) {
-        			db.close();
-        		}
+           // TODO: fix the when to close problem
+//        		if ( db != null ) {
+//        			db.close();
+//        		}
         	}
         }
     }
@@ -375,9 +381,10 @@ public class DbTable {
     				c.close();
 	    		}
 			} finally {
-				if ( db != null ) {
-					db.close();
-				}
+		      // TODO: fix the when to close problem
+//				if ( db != null ) {
+//					db.close();
+//				}
 			}
     	}
     }
@@ -428,7 +435,8 @@ public class DbTable {
 	        long result = db.insert(tp.getDbTableName(), null, values);
 	        Log.d("DBT", "insert, id=" + result);
         } finally {
-        	db.close();
+          // TODO: fix the when to close problem
+//        	db.close();
         }
     }
     
@@ -492,7 +500,8 @@ public class DbTable {
 	        values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
 	        db.update(tp.getDbTableName(), values, where, whereArgs);
         } finally {
-        	db.close();
+          // TODO: fix the when to close problem
+//        	db.close();
         }
     }
     
@@ -517,7 +526,8 @@ public class DbTable {
 	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
 	                updateWhereArgs);
         } finally {
-        	db.close();
+          // TODO: fix the when to close problem
+//        	db.close();
         }
     }
     
@@ -548,7 +558,8 @@ public class DbTable {
 	          values.put(DbTable.DB_SAVED, DbTable.SavedStatus.COMPLETE.name());
 	          db.update(tp.getDbTableName(), values, DB_ROW_ID + " = ?", whereArgs);
           } finally {
-        	  db.close();
+            // TODO: fix the when to close problem
+//        	  db.close();
           }
         }
       }
@@ -569,7 +580,8 @@ public class DbTable {
         try {
         	db.delete(tp.getDbTableName(), whereClause, whereArgs);
         } finally {
-        	db.close();
+          // TODO: fix the when to close problem
+//        	db.close();
         }
     }
     
@@ -598,7 +610,8 @@ public class DbTable {
 	    		}
 	    	} finally {
 	    		if ( db != null ) {
-	    			db.close();
+	    	      // TODO: fix the when to close problem
+//	    			db.close();
 	    		}
 	    	}
 	    }

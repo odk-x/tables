@@ -121,7 +121,7 @@ public class KeyValueStore {
    * @return
    */
   public Map<String, String>  getProperties(SQLiteDatabase db) {
-    String[] basicProps = TableProperties.getInitColumns();
+    String[] basicProps = TableProperties.getInitKeys();
     String[] desiredKeys = new String[basicProps.length + 1];
     // we want the first to be the tableId, b/c that is the table id we are
     // querying over in the database.
@@ -130,7 +130,7 @@ public class KeyValueStore {
       desiredKeys[i+1] = basicProps[i]; 
     }
     String whereClause = WHERE_SQL_FOR_KEYS + 
-        makePlaceHolders(TableProperties.getInitColumns().length) + ")";
+        makePlaceHolders(TableProperties.getInitKeys().length) + ")";
     Cursor c = db.query(this.dbBackingName, 
         new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
         whereClause, 
@@ -249,6 +249,8 @@ public class KeyValueStore {
   /**
    * Add key value pairs to the store. Null values are inserted as an empty 
    * string.
+   * <p>
+   * Does not close the database.
    * @param dbh
    * @param entries List of the entries to be added.
    */

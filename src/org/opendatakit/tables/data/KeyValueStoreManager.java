@@ -2,8 +2,10 @@ package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 
@@ -197,19 +199,35 @@ public class KeyValueStoreManager {
   }
   
   /**
-   * Get the ids of all the data tables from the given store.
+   * Get the ids of all the data tables that have entries in the given store.
+   * <p>
+   * Does not close the database.
+   * {@link TableDefinitions.getTableIdsForType}
    * @param db
    * @param typeOfStore
    * @return
    */
   public List<String> getDataTableIds(SQLiteDatabase db, 
       KeyValueStore.Type typeOfStore) {
-    // the backing name of the store from which you'll get the ids.
-    String backingName = getBackingNameForStore(typeOfStore);
-    Cursor c = getTableIdsWithKeyValue(db, backingName,
-        TableProperties.DB_TABLE_TYPE, 
-        Integer.toString(TableProperties.TableType.DATA));
-    return getTableIdsFromCursor(c);
+    // the backing name of the store from which you'll check the ids against.
+//    String backingName = getBackingNameForStore(typeOfStore);
+//    Cursor c = getTableIdsWithKeyValue(db, backingName,
+//        TableProperties.DB_TABLE_TYPE, 
+//        Integer.toString(TableProperties.TableType.DATA));
+    // all the datatables in the db.
+    List<String> tableDefinitionIds = 
+        TableDefinitions.getTableIdsForType(TableType.data, db);
+    // the datatables that have entries in this key value store.
+    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
+    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
+    List<String> dataTablesInThisStore = new ArrayList<String>();
+    for (String id : kvsIds) {
+      if (setTableDefIds.contains(id)) {
+        dataTablesInThisStore.add(id);
+      }
+    }
+//    return getTableIdsFromCursor(c);
+    return dataTablesInThisStore;
   }
   
   /**
@@ -226,34 +244,65 @@ public class KeyValueStoreManager {
   }*/
   
   /**
-   * Get all the table ids for tables of type Security from that exist in the
-   * given store.
+   * Get the ids of all the security tables that have entries in the given 
+   * <p>
+   * Does not close the database.
+   * {@link TableDefinitions.getTableIdsForType}
    * @param db
    * @param typeOfStore
    * @return
    */
   public List<String> getSecurityTableIds(SQLiteDatabase db, 
       KeyValueStore.Type typeOfStore) {
-    String backingName = getBackingNameForStore(typeOfStore);
-    Cursor c = getTableIdsWithKeyValue(db, backingName,
-        TableProperties.DB_TABLE_TYPE,
-        Integer.toString(TableProperties.TableType.SECURITY));
-    return getTableIdsFromCursor(c);
+//    String backingName = getBackingNameForStore(typeOfStore);
+//    Cursor c = getTableIdsWithKeyValue(db, backingName,
+//        TableDefinitions.DB_TYPE,
+//        Integer.toString(TableType.security));
+//    return getTableIdsFromCursor(c);
+    List<String> tableDefinitionIds = 
+        TableDefinitions.getTableIdsForType(TableType.security, db);
+    // the datatables that have entries in this key value store.
+    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
+    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
+    List<String> securityTablesInThisStore = new ArrayList<String>();
+    for (String id : kvsIds) {
+      if (setTableDefIds.contains(id)) {
+        securityTablesInThisStore.add(id);
+      }
+    }
+//    return getTableIdsFromCursor(c);
+    return securityTablesInThisStore;
   }
   
   /**
-   * Get all the table ids of type Shortcut that exist in the given store.
+   * Get the ids of all the data tables that have entries in the given store.
+   * <p>
+   * Does not close the database.
+   * {@link TableDefinitions.getTableIdsForType}
    * @param db
    * @param typeOfStore
    * @return
    */
   public List<String> getShortcutTableIds(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
-    String backingName = getBackingNameForStore(typeOfStore);  
-    Cursor c = getTableIdsWithKeyValue(db, backingName,
-        TableProperties.DB_TABLE_TYPE,
-        Integer.toString(TableProperties.TableType.SHORTCUT));
-    return getTableIdsFromCursor(c);
+//    String backingName = getBackingNameForStore(typeOfStore);  
+//    Cursor c = getTableIdsWithKeyValue(db, backingName,
+//        TableDefinitions.DB_TYPE,
+//        Integer.toString(TableProperties.TableType.SHORTCUT));
+//    return getTableIdsFromCursor(c);
+    List<String> tableDefinitionIds = 
+        TableDefinitions.getTableIdsForType(TableType.shortcut, db);
+    // the datatables that have entries in this key value store.
+    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
+    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
+    List<String> shortcutTablesInThisStore = new ArrayList<String>();
+    for (String id : kvsIds) {
+      if (setTableDefIds.contains(id)) {
+        shortcutTablesInThisStore.add(id);
+      }
+    }
+//    return getTableIdsFromCursor(c);
+    return shortcutTablesInThisStore;
   }
   
   /*
@@ -303,7 +352,8 @@ public class KeyValueStoreManager {
 	    activeKVS.clearKeyValuePairs(db);
 	    activeKVS.addEntriesToStore(db, defaultEntries);
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   
@@ -360,7 +410,8 @@ public class KeyValueStoreManager {
 	    defaultKVS.clearKeyValuePairs(db);
 	    defaultKVS.addEntriesToStore(db, defaultList);
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   
@@ -389,7 +440,8 @@ public class KeyValueStoreManager {
 	    defaultKVS.clearKeyValuePairs(db);
 	    defaultKVS.addEntriesToStore(db, activeEntries);
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   
@@ -425,7 +477,8 @@ public class KeyValueStoreManager {
 	    // and now add an entry to the sync KVS.
 	    addIsSetToSyncToSyncKVSForTable(tableId);
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   
@@ -462,7 +515,8 @@ public class KeyValueStoreManager {
 	      syncKVS.addEntriesToStore(db, newKey);
 	    }
     } finally {
-    	db.close();
+      // TODO: fix the when to close problem
+//    	db.close();
     }
   }
   
