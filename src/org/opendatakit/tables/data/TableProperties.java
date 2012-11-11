@@ -170,17 +170,22 @@ public class TableProperties {
     }
   }
   
-  // This is the Type of the key value store where the properties reside.
-  private final KeyValueStore.Type backingStore;
 
-  private final DbHelper dbh;
-  private final String[] whereArgs;
  
   /***********************************
    *  The fields that make up a TableProperties object.
    ***********************************/  
   /*
-   * The fields that reside in TableDefintion
+   * The fields that belong only to the object, and are not related to the 
+   * actual table itself.
+   */
+  // This is the Type of the key value store where the properties reside.
+  private final KeyValueStore.Type backingStore;
+
+  private final DbHelper dbh;
+  private final String[] whereArgs;
+  /*
+   * The fields that reside in TableDefintions
    */
   private final String tableId;
   private String tableKey;
@@ -318,7 +323,8 @@ public class TableProperties {
 //      if ( db != null ) {
 //         db.close();
 //      }
-    }  }
+    }  
+  }
   
   /**
    * Return the TableProperties for all the tables in the specified KVS.
@@ -638,6 +644,8 @@ public class TableProperties {
    * @param displayName
    * @return
    */
+  // TODO with addition of the table definitions table, this probably needs to
+  // be revised to check displaynames, backing names, etc.
   public static String createDbTableName(DbHelper dbh, String displayName) {
     // so we want all properties. we're just going to check all of them, which
     // probably isn't the most efficient way this could be done, as you could
@@ -700,13 +708,19 @@ public class TableProperties {
     TableProperties tp = addTable(dbh, dbTableName, displayName, tableType, 
         id, intendedStore);
     if (tableType == TableType.shortcut) {
-      tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
-      tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
-      tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
+      tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME);
+      tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME);
+      tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME);
+//      tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
+//      tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
+//      tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
     } else if (tableType == TableType.security) {
-      tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
-      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
-      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
+      tp.addColumn(SecurityUtil.USER_COLUMN_NAME);
+      tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME);
+      tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME);
+//      tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
+//      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
+//      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
     }
     return tp;
   }
@@ -824,11 +838,11 @@ public class TableProperties {
    * Creates a key value store entry of the type int.
    */
   private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId,
-      String key, String value) {
+      String key, int value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
     entry.type = ColumnType.INTEGER.name();
-    entry.value = value;
+    entry.value = String.valueOf(value);
     entry.key = key;
     return entry;
   }
@@ -1028,23 +1042,26 @@ public class TableProperties {
    *          the column's display name
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName) {
-    // ensuring columns is initialized
-    getColumns();
-    // determining a database name for the column
-    String baseName = "_" + displayName.toLowerCase().replace(' ', '_');
-    if (!columnNameConflict(baseName)) {
-      return addColumn(displayName, baseName);
-    }
-    int suffix = 1;
-    while (true) {
-      String name = baseName + suffix;
-      if (!columnNameConflict(name)) {
-        return addColumn(displayName, name);
-      }
-      suffix++;
-    }
-  }
+//  public ColumnProperties addColumn(String displayName) {
+//    // ensuring columns is initialized
+//    getColumns();
+//    return addColumn(displayName);
+//    // 
+//    // I think all of this happens in ColumnProperties now.
+//    // determining a database name for the column
+////    String baseName = "_" + displayName.toLowerCase().replace(' ', '_');
+////    if (!columnNameConflict(baseName)) {
+////      return addColumn(displayName, baseName);
+////    }
+////    int suffix = 1;
+////    while (true) {
+////      String name = baseName + suffix;
+////      if (!columnNameConflict(name)) {
+////        return addColumn(displayName, name);
+////      }
+////      suffix++;
+////    }
+//  }
 
   private boolean columnNameConflict(String name) {
     for (ColumnProperties cp : columns) {
@@ -1056,7 +1073,10 @@ public class TableProperties {
   }
 
   /**
-   * Adds a column to the table.
+   * Adds a column to the table. 
+   * <p>
+   * The column is set to the default visibility. The column is added to the 
+   * active column store.
    * 
    * @param displayName
    *          the column's display name
@@ -1064,7 +1084,7 @@ public class TableProperties {
    *          the database name for the new column
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName, String dbName) {
+  public ColumnProperties addColumn(String displayName) {
     // ensuring columns is initialized
     getColumns();
     // preparing column order
@@ -1074,15 +1094,19 @@ public class TableProperties {
       newColumns[i] = columns[i];
       newColumnOrder.add(columnOrder.get(i));
     }
-    newColumnOrder.add(dbName);
     // adding column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    ColumnProperties cp = null;
 	    db.beginTransaction();
 	    try {
-	      cp = ColumnProperties.addColumn(dbh, db, tableId, dbName, displayName);
-	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " + dbName);
+	      cp = ColumnProperties.addColumn(dbh, db, tableId, displayName, 
+	          displayName,
+	          ColumnProperties.DEFAULT_KEY_VISIBLE, 
+	          KeyValueStore.Type.COLUMN_ACTIVE);
+	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " 
+	          + cp.getElementKey());
+	      newColumnOrder.add(cp.getElementKey());
 	      setColumnOrder(newColumnOrder, db);
 	      Log.d("TP", "here we are");
 	      db.setTransactionSuccessful();
@@ -1596,7 +1620,7 @@ public class TableProperties {
 		  Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
 		  ColumnProperties cp = getColumnByDbName(colOrder.get(i));
           if (cp == null) {
-            cp = addColumn(colOrder.get(i), colOrder.get(i));
+            cp = addColumn(colOrder.get(i));
           }
           cp.setFromJsonObject(colJo);
           columnsToDelete.remove(colOrder.get(i));
@@ -1672,8 +1696,8 @@ public class TableProperties {
 	      setStringProperty(property, value, db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
-	      Log.e(TAG, "error setting string property " + property + " to " + value
-	          + " for " + this.tableId);
+	      Log.e(TAG, "error setting string property " + property + " to " 
+	          + value + " for " + this.tableId);
 	    } finally {
 	      db.endTransaction();
 	    }

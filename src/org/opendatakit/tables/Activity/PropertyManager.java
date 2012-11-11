@@ -20,6 +20,7 @@ import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.FooterMode;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -49,8 +50,9 @@ public class PropertyManager extends PreferenceActivity {
   public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number", "Date",
       "Date Range", "Phone Number", "File", "Collect Form", "Multiple Choice", "Join", "Location" };
 
-  public static final String[] FOOTER_MODE_LABELS = { "None", "Count", "Minimum", "Maximum",
-      "Mean", "Sum" };
+  public static final String[] FOOTER_MODE_LABELS = { "none", "count", 
+    "minimum", "maximum",
+      "mean", "sum" };
 
   // Private Fields
   private String tableId;
@@ -136,7 +138,8 @@ public class PropertyManager extends PreferenceActivity {
       showingMcDialog = true;
       category.addPreference(new McOptionSettingsDialogPreference(this));
     } else if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
-      String joinTableId = cp.getJoinTableId();
+//      String joinTableId = cp.getJoinTableId();
+      String joins = cp.getJoins();
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
@@ -151,7 +154,8 @@ public class PropertyManager extends PreferenceActivity {
         }
         tableIds[index] = tp.getTableId();
         tableNames[index] = tp.getDbTableName();
-        if (tp.getTableId().equals(joinTableId)) {
+//        if (tp.getTableId().equals(joinTableId)) {
+        if (tp.getTableId().equals(joins)) {
           selectedTp = tp;
           selectedTableId = tp.getTableId();
           selectedDisplayName = tp.getDisplayName();
@@ -161,7 +165,8 @@ public class PropertyManager extends PreferenceActivity {
       category.addPreference(createListPreference("JOIN_TABLE", "Join Table", selectedDisplayName,
           selectedTableId, tableNames, tableIds));
       if (selectedTp != null) {
-        String joinColName = cp.getJoinColumnName();
+        // TODO: resolve how joins work
+//        String joinColName = cp.getJoinColumnName();
         ColumnProperties[] cps = selectedTp.getColumns();
         String[] colDbNames = new String[cps.length + 1];
         String selectedDbName = colDbNames[0] = null;
@@ -171,7 +176,8 @@ public class PropertyManager extends PreferenceActivity {
           String colDbName = cps[i].getColumnDbName();
           colDbNames[i + 1] = colDbName;
           colDisplayNames[i + 1] = cps[i].getDisplayName();
-          if ((joinColName != null) && colDbName.equals(joinColName)) {
+//          if ((joinColName != null) && colDbName.equals(joinColName)) {
+          if ((joins != null) && colDbName.equals(joins)) {
             selectedDbName = colDbName;
             selectedColDisplayName = cps[i].getDisplayName();
           }
@@ -215,7 +221,8 @@ public class PropertyManager extends PreferenceActivity {
 
   // Get the footer mode for this column.
   private String getFooterMode(String colName) {
-    return FOOTER_MODE_LABELS[cp.getFooterMode()];
+//    return FOOTER_MODE_LABELS[cp.getFooterMode()];
+    return cp.getFooterMode().name();
   }
 
   // If any of fields change, direct the request to appropriate actions.
@@ -245,15 +252,18 @@ public class PropertyManager extends PreferenceActivity {
     } else if (key.equals("FOOTER")) {
       for (int i = 0; i < FOOTER_MODE_LABELS.length; i++) {
         if (FOOTER_MODE_LABELS[i].equals(newVal)) {
-          cp.setFooterMode(i);
+          cp.setFooterMode(FooterMode.valueOf(FOOTER_MODE_LABELS[i]));
           break;
         }
       }
     } else if (key.equals("JOIN_TABLE")) {
-      cp.setJoinTableId(newVal);
-    } else if (key.equals("JOIN_COLUMN")) {
-      cp.setJoinColumnName(newVal);
+      // TODO: resolve the ifs here for joins
+//      cp.setJoinTableId(newVal);
+      cp.setJoins(newVal);
     }
+//    } else if (key.equals("JOIN_COLUMN")) {
+//      cp.setJoinColumnName(newVal);
+//    }
 
     // Refresh
     getPreferenceScreen().removeAll();

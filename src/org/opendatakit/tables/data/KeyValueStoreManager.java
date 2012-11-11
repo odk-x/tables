@@ -63,6 +63,9 @@ public class KeyValueStoreManager {
   public static final String ACTIVE_DB_NAME = "keyValueStoreActive";
   public static final String SERVER_DB_NAME = "keyValueStoreServer";
   public static final String SYNC_DB_NAME = "keyValueStoreSync";
+  // and the db name for the column properties KVS.
+  public static final String COLUMN_ACTIVE_DB_NAME = 
+      "column_key_value_store_active";
   
   // Names of the columns in the key value store
   // The underscores preceding are legacy, and are currently the same for 
@@ -109,6 +112,17 @@ public class KeyValueStoreManager {
       KeyValueStore.Type typeOfStore) {
     String backingName = getBackingNameForStore(typeOfStore);
     return new KeyValueStore(backingName, this.dbh, tableId);
+  }
+  
+  public KeyValueStoreColumn getStoreForColumn(String tableId,
+      String elementKey, KeyValueStore.Type typeOfStore) {
+    if (!ColumnProperties.isValidStore(typeOfStore)) {
+      Log.e(TAG, "ColumnProperties was given a non-column key value store");
+      throw new IllegalArgumentException("non-column key value store passed" +
+            " to ColumnProperties constructor");
+    }
+    String backingName = getBackingNameForStore(typeOfStore);
+    return new KeyValueStoreColumn(backingName, dbh, tableId, elementKey);
   }
   
   /*
@@ -318,6 +332,8 @@ public class KeyValueStoreManager {
       return DEFAULT_DB_NAME;
     case SERVER:
       return SERVER_DB_NAME;
+    case COLUMN_ACTIVE:
+      return COLUMN_ACTIVE_DB_NAME;
     default:
       Log.e(TAG, "nonexistent store rquested: " +
           typeOfStore.name());
@@ -600,5 +616,18 @@ public class KeyValueStoreManager {
         ", " + VALUE + " TEXT NOT NULL" +
         ")";
   }  
+  
+  /**
+   * The table creation SQL for the column properties store.
+   */
+  static String getColumnActiveTableCreateSql() {
+    return "CREATE TABLE " + COLUMN_ACTIVE_DB_NAME + "(" +
+       TABLE_ID + " TEXT NOT NULL" +
+       ", " + ColumnDefinitions.DB_ELEMENT_KEY + " TEXT NOT NULL" +
+       ", " + KEY + " TEXT NOT NULL" +
+       ", " + VALUE_TYPE + " TEXT NOT NULL" +
+       ", " + VALUE + " TEXT NOT NULL" +
+       ")";   
+  }
 
 }

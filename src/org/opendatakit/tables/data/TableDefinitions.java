@@ -94,6 +94,14 @@ public class TableDefinitions {
     return Collections.unmodifiableSet(columnNames);
   }
   
+  /**
+   * Return a map of columnName->Value for the row with the given table id.
+   * TODO: perhaps this should become columnName->TypevValuePair like the rest
+   * of these maps.
+   * @param tableId
+   * @param db
+   * @return
+   */
   public static Map<String, String> getFields(String tableId,
       SQLiteDatabase db) {
     Cursor c = null;
@@ -140,6 +148,7 @@ public class TableDefinitions {
         tableDefMap.put(DB_SYNC_STATE, c.getString(dbSyncStateIndex));
         tableDefMap.put(DB_TRANSACTIONING, 
             Integer.toString(c.getInt(dbTransactioningIndex)));
+        c.moveToNext();
         j++;
       }
     } finally {

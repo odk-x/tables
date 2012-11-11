@@ -188,7 +188,7 @@ public class KeyValueStore {
   }
   
   /**
-   * Delete all the active key value pairs for the table.
+   * Delete all the key value pairs for the table.
    * @param dbh
    * @param db the open database
    * @param tableId
@@ -254,6 +254,7 @@ public class KeyValueStore {
    * @param dbh
    * @param entries List of the entries to be added.
    */
+  // TODO: does this enforce the set invariant?
   public void addEntriesToStore(SQLiteDatabase db,
       List<OdkTablesKeyValueStoreEntry> entries) {
     int numInserted = 0;
@@ -263,7 +264,7 @@ public class KeyValueStore {
       addEntryToStore(db, entry);
       numInserted++;
     }
-    Log.d(TAG, "inserted " + numInserted + " key value pairs to default kvs");
+    Log.d(TAG, "inserted " + numInserted + " key value pairs to kvs");
   }
   
   /**
@@ -305,9 +306,10 @@ public class KeyValueStore {
    * Very basic way to add a key value entry to the store. This is private
    * because it should only be called via appropriate accessor methods
    * to ensure that there the keys remain a set and that there are no other
-   * invariants broken my direct manipulation of the database.
+   * invariants broken by direct manipulation of the database.
    */
-  protected void addEntryToStore(SQLiteDatabase db, 
+  // TODO: does this actually check that keys remain a set?
+  private void addEntryToStore(SQLiteDatabase db, 
       OdkTablesKeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
     values.put(KeyValueStoreManager.TABLE_ID, String.valueOf(entry.tableId));
@@ -337,8 +339,8 @@ public class KeyValueStore {
   public static enum Type {
     ACTIVE(KeyValueStoreManager.ACTIVE_DB_NAME),
     DEFAULT(KeyValueStoreManager.DEFAULT_DB_NAME),
-    SERVER(KeyValueStoreManager.SERVER_DB_NAME);
-    
+    SERVER(KeyValueStoreManager.SERVER_DB_NAME),
+    COLUMN_ACTIVE(KeyValueStoreManager.COLUMN_ACTIVE_DB_NAME);
     private String backingName;
     
     private Type(String backingName) {

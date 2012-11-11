@@ -33,6 +33,8 @@ import android.util.Log;
  * @author hkworden@gmail.com (Hilary Worden)
  */
 public class DbTable {
+  
+  private final static String TAG = "DbTable";
     
     public static final String DB_ROW_ID = "id";
     public static final String DB_SRC_PHONE_NUMBER = "srcPhoneNum";
@@ -334,26 +336,29 @@ public class DbTable {
         String[] footer = new String[cps.length];
         for (int i = 0; i < cps.length; i++) {
             switch (cps[i].getFooterMode()) {
-            case ColumnProperties.FooterMode.COUNT:
+            case count:
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.COUNT);
                 break;
-            case ColumnProperties.FooterMode.MAXIMUM:
+            case maximum:
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.MAXIMUM);
                 break;
-            case ColumnProperties.FooterMode.MINIMUM:
+            case minimum:
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.MINIMUM);
                 break;
-            case ColumnProperties.FooterMode.SUM:
+            case sum:
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.SUM);
                 break;
-            case ColumnProperties.FooterMode.MEAN:
+            case mean:
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.AVERAGE);
                 break;
+            default:
+              Log.e(TAG, "unrecognized footer mode: " + 
+                  cps[i].getFooterMode().name());
             }
         }
         return footer;
