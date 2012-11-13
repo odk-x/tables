@@ -85,7 +85,7 @@ public class CsvUtil {
                     startIndex++;
                 }
                 for (int i = startIndex; i < row.length; i++) {
-                    tp.addColumn(row[i]);
+                    tp.addColumn(row[i], null, null);
                 }
             }
             boolean includeTs = row[0].equals(LAST_MOD_TIME_LABEL);

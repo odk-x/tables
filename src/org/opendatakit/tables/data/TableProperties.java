@@ -27,6 +27,8 @@ import java.util.UUID;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.annotate.JsonMethod;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
@@ -36,6 +38,7 @@ import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * A class for accessing and managing table properties.
@@ -707,17 +710,42 @@ public class TableProperties {
     String id = UUID.randomUUID().toString();
     TableProperties tp = addTable(dbh, dbTableName, displayName, tableType, 
         id, intendedStore);
+    SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
-      tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME);
-      tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME);
-      tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME);
+      tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              ShortcutUtil.LABEL_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              ShortcutUtil.LABEL_COLUMN_NAME, db));
+      tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              ShortcutUtil.INPUT_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              ShortcutUtil.INPUT_COLUMN_NAME, db));
+      tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              ShortcutUtil.OUTPUT_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              ShortcutUtil.OUTPUT_COLUMN_NAME, db));
 //      tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
 //      tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
 //      tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
     } else if (tableType == TableType.security) {
-      tp.addColumn(SecurityUtil.USER_COLUMN_NAME);
-      tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME);
-      tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME);
+      tp.addColumn(SecurityUtil.USER_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              SecurityUtil.USER_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              SecurityUtil.USER_COLUMN_NAME, db));
+      tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              SecurityUtil.PHONENUM_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              SecurityUtil.PHONENUM_COLUMN_NAME, db));
+      tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME,
+          ColumnProperties.createDbElementKey(id, 
+              SecurityUtil.PASSWORD_COLUMN_NAME, db),
+          ColumnProperties.createDbElementName(id,
+              SecurityUtil.PASSWORD_COLUMN_NAME, db));
 //      tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
 //      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
 //      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
@@ -1077,14 +1105,22 @@ public class TableProperties {
    * <p>
    * The column is set to the default visibility. The column is added to the 
    * active column store.
+   * <p>
+   * The elementKey and elementName must be unique to a given table. If you 
+   * are not ensuring this yourself, you should pass in null values and it will
+   * generate names based on the displayName via 
+   * {@link ColumnProperties.createDbElementKey} and 
+   * {@link ColumnProperties.createDbElementName}.
    * 
    * @param displayName
    *          the column's display name
-   * @param dbName
-   *          the database name for the new column
+   * @param elementKey 
+   *           should either be received from the server or null
+   * @param elementName should either be received from the server or null
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName) {
+  public ColumnProperties addColumn(String displayName, String elementKey,
+      String elementName) {
     // ensuring columns is initialized
     getColumns();
     // preparing column order
@@ -1097,11 +1133,21 @@ public class TableProperties {
     // adding column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
+      if (elementKey == null) {
+        elementKey = 
+            ColumnProperties.createDbElementKey(tableId, displayName, db);
+      }
+      if (elementName == null) {
+        elementName = 
+            ColumnProperties.createDbElementName(tableId, displayName, db);
+      }
 	    ColumnProperties cp = null;
 	    db.beginTransaction();
 	    try {
-	      cp = ColumnProperties.addColumn(dbh, db, tableId, displayName, 
-	          displayName,
+	      cp = ColumnProperties.addColumn(dbh, db, tableId, 
+	          displayName, 
+	          elementKey,
+	          elementName,
 	          ColumnProperties.DEFAULT_KEY_VISIBLE, 
 	          KeyValueStore.Type.COLUMN_ACTIVE);
 	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " 
@@ -1126,6 +1172,52 @@ public class TableProperties {
 //    	db.close();
     }
   }
+  
+//  /**
+//   * I'm intending that this be used when you're updating a table after 
+//   * downloading from the server. This should be reimagined, am just doing this
+//   * to hack it together asap.
+//   * TODO WE ARE NOT CHECKING FOR DUPLICATES. THIS IS CRAP, BUT AS I SAID ABOVE
+//   * JUST COBBLING IT TOGETHER FOR NOW. Can't get into the UW CS account to 
+//   * look at the schema. Support staff ftw.
+//   * @param cp
+//   */
+//  public void addColumnFromProperties(ColumnProperties cp) {
+//    // ensuring columns is initialized
+//    getColumns();
+//    // preparing column order
+//    ColumnProperties[] newColumns = new ColumnProperties[columns.length + 1];
+//    ArrayList<String> newColumnOrder = new ArrayList<String>();
+//    for (int i = 0; i < columns.length; i++) {
+//      newColumns[i] = columns[i];
+//      newColumnOrder.add(columnOrder.get(i));
+//    }
+//    // adding column
+//    SQLiteDatabase db = dbh.getWritableDatabase();
+//    try {
+//       db.beginTransaction();
+//       try {
+//         ColumnProperties.addColumn(cp, tableId, backingStore, dbh, db);
+//         db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " 
+//             + cp.getElementKey());
+//         newColumnOrder.add(cp.getElementKey());
+//         setColumnOrder(newColumnOrder, db);
+//         Log.d("TP", "here we are");
+//         db.setTransactionSuccessful();
+//       } catch (Exception e) {
+//         e.printStackTrace();
+//         Log.e(TAG, "error adding column: " + displayName);
+//       } finally {
+//         db.endTransaction();
+//       }
+//       // updating TableProperties
+//       newColumns[columns.length] = cp;
+//       columns = newColumns;
+//    } finally {      
+//      // TODO: fix the when to close problem
+////       db.close();
+//    }
+//  }
 
   /**
    * Deletes a column from the table.
@@ -1531,11 +1623,14 @@ public class TableProperties {
 
   public String toJson() {
     getColumns(); // ensuring columns is initialized
+    // I think this removes exceptions from not having getters/setters...
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
     for (ColumnProperties cp : columns) {
       colOrder.add(cp.getColumnDbName());
-      cols.add(cp.toJsonObject());
+      cols.add(cp.toJson());
     }
     ArrayList<String> primes = new ArrayList<String>();
     for (String prime : primeColumns) {
@@ -1617,12 +1712,42 @@ public class TableProperties {
 	  }
 	  ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
 	  for (int i = 0; i < colOrder.size(); i++) {
-		  Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
+	    //Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
+	    Map<String, Object> colJo = null;
+      try {
+        colJo = mapper.readValue((String) colJArr.get(i), Map.class);
+      } catch (JsonParseException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (JsonMappingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      if (colJo == null) {
+        throw new IllegalStateException("problem reclaiming column from json" +
+        		" in TableProperties.setFromJson");
+      }
+	    //String colJo = (String) colJArr.get(i);
 		  ColumnProperties cp = getColumnByDbName(colOrder.get(i));
           if (cp == null) {
-            cp = addColumn(colOrder.get(i));
+            // then we need to create the bolumn.
+            String coDispName = 
+                (String) colJo.get(ColumnProperties.KEY_DISPLAY_NAME);
+            String coElKey = 
+                (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_KEY);
+            String coElName = 
+                (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_NAME);
+//            cp = ColumnProperties.constructColumnPropertiesFromJson(dbh, 
+//                colJo);
+//            cp = addColumn(colOrder.get(i));
+            cp = addColumn(coDispName, coElKey, coElName);
+//            addColumnFromProperties(cp);
+            cp.setFromJson((String) colJArr.get(i));
           }
-          cp.setFromJsonObject(colJo);
+          //cp.setFromJson(colJo);
           columnsToDelete.remove(colOrder.get(i));
       }
       for (String columnToDelete : columnsToDelete) {

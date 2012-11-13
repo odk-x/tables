@@ -268,7 +268,7 @@ public class ColumnManager extends ListActivity {
 						alertForNewColumnName(colName.replace(' ', '_'));
 					} else {
 						// Create new column
-					    ColumnProperties cp = tp.addColumn(colName);
+					    ColumnProperties cp = tp.addColumn(colName, null, null);
 					    cps = tp.getColumns();
 					    columnOrder.clear();
 					    for ( String s : tp.getColumnOrder() ) {

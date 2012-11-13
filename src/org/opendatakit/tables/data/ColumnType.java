@@ -113,6 +113,15 @@ public class ColumnType {
 
 	private final String typename;
 	private final String label;
+	
+	/*
+	 * I think I need this for serialization...
+	 */
+	private ColumnType() {
+	  // just for serialization
+	  typename = "";
+	  label = "";
+	}
 
 	private ColumnType(String typename, String label) {
 		this.typename = typename;
