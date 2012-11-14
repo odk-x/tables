@@ -18,10 +18,13 @@ package org.opendatakit.tables.activities;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.view.custom.CustomDetailView;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
 
 
 public class DetailDisplayActivity extends Activity
@@ -41,6 +44,7 @@ public class DetailDisplayActivity extends Activity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("");
         rowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
         c = new Controller(this, this, getIntent().getExtras());
         keys = getIntent().getStringArrayExtra(INTENT_KEY_ROW_KEYS);
@@ -74,5 +78,11 @@ public class DetailDisplayActivity extends Activity
     public void onSearch() {
         Controller.launchTableActivity(this, c.getTableProperties(),
                 c.getSearchText(), c.getIsOverview());
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        c.buildOptionsMenu(menu);
+        return true;
     }
 }

@@ -75,7 +75,7 @@ public class ConflictResolutionActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        if (c.handleMenuItemSelection(item.getItemId())) {
+        if (c.handleMenuItemSelection(item)) {
             return true;
         } else {
             return super.onContextItemSelected(item);

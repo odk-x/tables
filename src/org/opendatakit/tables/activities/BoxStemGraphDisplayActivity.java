@@ -194,7 +194,7 @@ public class BoxStemGraphDisplayActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override

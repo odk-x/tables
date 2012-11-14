@@ -303,6 +303,43 @@ public class TablePropertiesManager extends PreferenceActivity {
         addViewPreferences(ViewPreferenceType.OVERVIEW_VIEW, displayCat);
         addViewPreferences(ViewPreferenceType.COLLECTION_VIEW, displayCat);
         
+//        FileSelectorPreference listViewPref =
+//                new FileSelectorPreference(this);
+//        listViewPref.setTitle("List View File");
+//        listViewPref.setDialogTitle("Change List View File");
+//        listViewPref.setText(tp.getDisplayName()); //*****
+//        listViewPref.setOnPreferenceChangeListener(
+//                new OnPreferenceChangeListener() {
+//                    @Override
+//                    public boolean onPreferenceChange(Preference preference,
+//                            Object newValue) {
+//                        tp.setDetailViewFilename((String) newValue);
+//                        init();
+//                        return false;
+//                    }
+//        });
+//        displayCat.addPreference(listViewPref);
+        
+        /*
+         *  FileSelectorPreference listFilePref = new FileSelectorPreference(this);
+            listFilePref.setTitle(label + " List View File");
+            listFilePref.setDialogTitle("Change " + label + " List View File");
+            listViewPref.setText(settings.getCustomListFilename());
+            listFilePref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference,
+                        Object newValue) {
+                    settings.setCustomListFilename((String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(listFilePref);
+            }
+            break;
+         */
+        
         FileSelectorPreference detailViewPref =
                 new FileSelectorPreference(this);
         detailViewPref.setTitle("Detail View File");
@@ -542,25 +579,46 @@ public class TablePropertiesManager extends PreferenceActivity {
         
         case TableViewSettings.Type.LIST:
             {
-            EditTextPreference listFilePref = new EditTextPreference(this);
-            listFilePref.setTitle(label + " List View File");
-            listFilePref.setDialogTitle("Change " + label + " List View File");
-            if (settings.getCustomListFilename() != null) {
-                listFilePref.setDefaultValue(settings.getCustomListFilename());
-            }
-            listFilePref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference,
-                        Object newValue) {
-                    settings.setCustomListFilename((String) newValue);
-                    init();
-                    return false;
+            	// Launches IO File Manager to change the list view file
+            	// (The previous method was to manually enter the filename - see 
+            	//  commented out code below)
+            	FileSelectorPreference listFilePref = new FileSelectorPreference(this);
+                listFilePref.setTitle(label + " List View File");
+                listFilePref.setDialogTitle("Change " + label + " List View File");
+                listFilePref.setText(settings.getCustomListFilename());
+                listFilePref.setOnPreferenceChangeListener(
+                        new OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference,
+                            Object newValue) {
+                        settings.setCustomListFilename((String) newValue);
+                        init();
+                        return false;
+                    }
+                });
+                prefCat.addPreference(listFilePref);
                 }
-            });
-            prefCat.addPreference(listFilePref);
-            }
-            break;
+                break;
+                
+//            EditTextPreference listFilePref = new EditTextPreference(this);
+//            listFilePref.setTitle(label + " List View File");
+//            listFilePref.setDialogTitle("Change " + label + " List View File");
+//            if (settings.getCustomListFilename() != null) {
+//                listFilePref.setDefaultValue(settings.getCustomListFilename());
+//            }
+//            listFilePref.setOnPreferenceChangeListener(
+//                    new OnPreferenceChangeListener() {
+//                @Override
+//                public boolean onPreferenceChange(Preference preference,
+//                        Object newValue) {
+//                    settings.setCustomListFilename((String) newValue);
+//                    init();
+//                    return false;
+//                }
+//            });
+//            prefCat.addPreference(listFilePref);
+//            }
+//            break;
         
         case TableViewSettings.Type.LINE_GRAPH:
             {

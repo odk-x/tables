@@ -17,6 +17,8 @@ package org.opendatakit.tables.activities;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -36,6 +38,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -82,6 +85,8 @@ public class SpreadsheetDisplayActivity extends Activity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // remove a title
+        setTitle("");
         dm = new DataManager(DbHelper.getDbHelper(this));
         c = new Controller(this, this, getIntent().getExtras());
         init();
@@ -192,7 +197,7 @@ public class SpreadsheetDisplayActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        if (c.handleMenuItemSelection(item.getItemId())) {
+        if (c.handleMenuItemSelection(item)) {
             return true;
         }
         switch (item.getItemId()) {

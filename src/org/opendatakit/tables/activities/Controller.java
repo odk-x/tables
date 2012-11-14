@@ -42,6 +42,7 @@ import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -49,14 +50,20 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.util.Log;
+import android.view.ActionProvider;
+import android.view.DragEvent;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnDragListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -64,7 +71,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SearchView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 /**
  * A controller for the elements common to the various table display
@@ -86,14 +95,20 @@ public class Controller {
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
     
+    private String infoBarText = "";
+    
     public static final int VIEW_ID_SEARCH_FIELD = 0;
     public static final int VIEW_ID_SEARCH_BUTTON = 1;
     
-    private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 0;
-    private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 1;
-    private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 2;
-    private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 3;
-    static final int FIRST_FREE_MENU_ITEM_ID = 4;
+    private static final int MENU_ITEM_ID_SEARCH_BUTTON = 1;
+    private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 0;
+	private static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
+	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 3;
+    private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 4;
+    private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 5;
+    static final int FIRST_FREE_MENU_ITEM_ID = 6;
+    
+    private static final int GROUP_ID_SUBMENU = 1;
     
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
@@ -123,12 +138,13 @@ public class Controller {
     private final Stack<String> searchText;
     private final boolean isOverview;
     private final RelativeLayout container;
-    private final LinearLayout controlWrap;
-    private final EditText searchField;
+    private LinearLayout controlWrap;
+    private EditText searchField;
     private final ViewGroup displayWrap;
     private View overlay;
     private RelativeLayout.LayoutParams overlayLp;
     private String rowId = null;
+    
     
     Controller(Activity activity, final DisplayActivity da,
             Bundle intentBundle) {
@@ -160,35 +176,34 @@ public class Controller {
         dbt = dm.getDbTable(tableId);
         tvs = isOverview ? tp.getOverviewViewSettings() :
                 tp.getCollectionViewSettings();
-        // initializing view objects
+        
+        // INITIALIZING VIEW OBJECTS     
+        // controlWrap will hold the search bar and search button 
         controlWrap = new LinearLayout(activity);
+        // searchField is the search bar
         searchField = new EditText(activity);
+        // displayWrap holds the spreadsheet/listView/etc 
+        displayWrap = new LinearLayout(activity);
+        // container holds the entire view of the activity
+        container = new RelativeLayout(activity);
+
+        // BUILD VIEW OBJECTS
+        // controlWrap is initialized to be hidden. clicking Action Item, search,
+        // will show/hide it
         searchField.setId(VIEW_ID_SEARCH_FIELD);
         searchField.setText(searchText.peek());
         ImageButton searchButton = new ImageButton(activity);
         searchButton.setId(VIEW_ID_SEARCH_BUTTON);
-        searchButton.setImageResource(R.drawable.search_icon);
+        searchButton.setImageResource(R.drawable.ic_action_search);
         searchButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 da.onSearch();
             }
         });
-        ImageButton addRowButton = new ImageButton(activity);
-        addRowButton.setImageResource(R.drawable.addrow_icon);
-        addRowButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = getIntentForOdkCollectAddRow();
-                if (intent != null) {
-                    Controller.this.activity.startActivityForResult(intent,
-                            RCODE_ODKCOLLECT_ADD_ROW);
-                }
-            }
-        });
         LinearLayout.LayoutParams searchFieldParams =
                 new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         searchFieldParams.weight = 1;
         controlWrap.addView(searchField, searchFieldParams);
@@ -197,24 +212,60 @@ public class Controller {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         buttonParams.weight = 0;
         controlWrap.addView(searchButton, buttonParams);
-        controlWrap.addView(addRowButton, buttonParams);
-        displayWrap = new LinearLayout(activity);
+        controlWrap.setVisibility(View.GONE);
+        
+        // info bar currently displays just the name of the table
+        TextView infoBar = createInfoBar(tp.getDisplayName(), Color.parseColor("#B0B0B0"), Color.BLACK);
+        
+
         LinearLayout wrapper = new LinearLayout(activity);
         wrapper.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams controlParams =
                 new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         wrapper.addView(controlWrap, controlParams);
+        wrapper.addView(infoBar, controlParams);
+        
         LinearLayout.LayoutParams displayParams =
                 new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
-                LinearLayout.LayoutParams.FILL_PARENT);
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
         wrapper.addView(displayWrap, displayParams);
-        container = new RelativeLayout(activity);
         container.addView(wrapper, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT));
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+    
+    /**
+     * Create a new Info Bar to display below the Action Bar
+     * @param text String to be displayed in the info bar
+     * @param backgroundColor Color of the info bar
+     * @param textColor Color of the text
+     * @return info bar 
+     */
+    public TextView createInfoBar(String text, int backgroundColor, int textColor) {
+        TextView infoBar = new TextView(activity);
+        infoBarText = text;
+        infoBar.setText("Table: " + infoBarText);
+        infoBar.setBackgroundColor(backgroundColor);
+        infoBar.setTextColor(textColor);
+        return infoBar;
+    }
+    
+    /**
+     * Add more text to an existing info bar
+     * @param text String to be added to the info bar
+     */
+    public void addToInfoBar(String text) {
+    	infoBarText += text;
+    }
+    
+    /**
+     * @return the current text in info bar
+     */
+    public String getInfoBarText() {
+    	return infoBarText;
     }
     
     TableProperties getTableProperties() {
@@ -308,43 +359,109 @@ public class Controller {
     }
     
     void buildOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
-                "Table Properties");
+        MenuItem item; 
+        
+        // search 
+        item = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
+                "Search"); 
+        item.setIcon(R.drawable.ic_action_search);
+//        item.setActionProvider(new SearchActionProvider(activity));
+//        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | 
+//        		MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        
+        
+        // view type submenu
+        // 	- determine the possible view types
+        final int[] viewTypeIds = tvs.getPossibleViewTypes();
+        String[] viewTypeStringIds = new String[viewTypeIds.length];
+        String[] viewTypeNames = new String[viewTypeIds.length];
+        for (int i = 0; i < viewTypeIds.length; i++) {
+            viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
+            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
+                    viewTypeIds[i]);
+        }
+        // 	- build a checkable submenu to select the view type
+        SubMenu viewType = menu.addSubMenu("View Type");
+        viewType.setIcon(R.drawable.view);
+        for(int i = 0; i < viewTypeNames.length; i++) {
+        	item = viewType.add(GROUP_ID_SUBMENU, viewTypeIds[i], i, viewTypeNames[i]);
+        	if (tvs.getViewType() == viewTypeIds[i]) {
+                item.setChecked(true);
+            }
+        }
+        viewType.setGroupCheckable(GROUP_ID_SUBMENU, true, true);
+        MenuItem subMenuItem = viewType.getItem();
+        subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        
+        // the other action items / menu items 
+        item = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
+              "Add Row");
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        
+    	menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
+    			"Table Properties");
         menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
                 "Column Manager");
-        menu.add(Menu.NONE, MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE, Menu.NONE,
-                "View Type");
         menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_MANAGER, Menu.NONE,
-                "Table Manager");
+                "Table Manager"); 
+        
+//        trying to get data from the search bar
+//        MenuItem searchItem = menu.findItem(R.id.MENU_ITEM_ID_SEARCH_BUTTON);
+//        SearchView mSearchView = (SearchView) searchItem.getActionView();
     }
-    
-    boolean handleMenuItemSelection(int itemId) {
-        switch (itemId) {
-        case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
-            {
-            Intent intent = new Intent(activity, TablePropertiesManager.class);
-            intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
-                    tp.getTableId());
-            activity.startActivityForResult(intent,
-                    RCODE_TABLE_PROPERTIES_MANAGER);
-            }
+
+    // if the item is part of the submenu for view type, set the view type with its itemId
+    // else, handle accordingly
+	boolean handleMenuItemSelection(MenuItem selectedItem) {
+		int itemId = selectedItem.getItemId();
+		if(selectedItem.getGroupId() == GROUP_ID_SUBMENU) {
+			tvs.setViewType(itemId);
+            Controller.launchTableActivity(activity, tp, searchText,
+                    isOverview);
+            activity.finish();
             return true;
-        case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
-            {
-            Intent intent = new Intent(activity, ColumnManager.class);
-            intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
-                    tp.getTableId());
-            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
-            }
-            return true;
-        case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
-            (new ViewTypeSelectorDialog()).show();
-            return true;
-        case MENU_ITEM_ID_OPEN_TABLE_MANAGER:
-            activity.startActivity(new Intent(activity, TableManager.class));
-            return true;
-        default:
-            return false;
+		} else {
+	        switch (itemId) {
+	        case MENU_ITEM_ID_SEARCH_BUTTON:
+	        	int visible = controlWrap.getVisibility();
+	        	if (visible == View.GONE)
+	        		controlWrap.setVisibility(View.VISIBLE);
+	        	else
+	        		controlWrap.setVisibility(View.GONE);
+	        	return true;  
+	        case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
+	        	return true;
+	        case MENU_ITEM_ID_ADD_ROW_BUTTON:
+	            Intent intentAddRow = getIntentForOdkCollectAddRow();
+	            if (intentAddRow != null) {
+	                Controller.this.activity.startActivityForResult(intentAddRow,
+	                        RCODE_ODKCOLLECT_ADD_ROW);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
+	            {
+	            Intent intent = new Intent(activity, TablePropertiesManager.class);
+	            intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
+	                    tp.getTableId());
+	            activity.startActivityForResult(intent,
+	                    RCODE_TABLE_PROPERTIES_MANAGER);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
+	            {
+	            Intent intent = new Intent(activity, ColumnManager.class);
+	            intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
+	                    tp.getTableId());
+	            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_TABLE_MANAGER:
+	            activity.startActivity(new Intent(activity, TableManager.class));
+	            return true;
+	        default:
+	            return false;
+	        }
         }
     }
   
@@ -755,67 +872,74 @@ public class Controller {
         context.startActivity(intent);
     }
     
-    private class ViewTypeSelectorDialog extends AlertDialog {
-        
-        public ViewTypeSelectorDialog() {
-            super(activity);
-            buildView(activity);
-        }
-        
-        private void buildView(Context context) {
-            LinearLayout wrapper = new LinearLayout(context);
-            wrapper.setOrientation(LinearLayout.VERTICAL);
-            // adding the view type spinner
-            int selectionIndex = 0;
-            final int[] viewTypeIds = tvs.getPossibleViewTypes();
-            String[] viewTypeStringIds = new String[viewTypeIds.length];
-            String[] viewTypeNames = new String[viewTypeIds.length];
-            for (int i = 0; i < viewTypeIds.length; i++) {
-                if (tvs.getViewType() == viewTypeIds[i]) {
-                    selectionIndex = i;
-                }
-                viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
-                viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
-                        viewTypeIds[i]);
-            }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
-                    android.R.layout.simple_spinner_item, viewTypeNames);
-            adapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            final Spinner spinner = new Spinner(context);
-            spinner.setAdapter(adapter);
-            spinner.setSelection(selectionIndex);
-            wrapper.addView(spinner);
-            // adding the set and cancel buttons
-            Button setButton = new Button(context);
-            setButton.setText(activity.getResources().getString(R.string.set));
-            setButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    tvs.setViewType(
-                            viewTypeIds[spinner.getSelectedItemPosition()]);
-                    Controller.launchTableActivity(activity, tp, searchText,
-                            isOverview);
-                    activity.finish();
-                }
-            });
-            Button cancelButton = new Button(context);
-            cancelButton.setText(activity.getResources().getString(
-                    R.string.cancel));
-            cancelButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dismiss();
-                }
-            });
-            LinearLayout buttonWrapper = new LinearLayout(context);
-            buttonWrapper.addView(setButton);
-            buttonWrapper.addView(cancelButton);
-            wrapper.addView(buttonWrapper);
-            // setting the dialog view
-            setView(wrapper);
-        }
-    }
+//    public class SearchActionProvider extends ActionProvider implements OnDragListener {  	 
+//        Context mContext;
+//        public SearchActionProvider(Context context) {
+//            super(context);
+//            mContext = context;
+//        }
+//     
+//        @Override
+//        public View onCreateActionView() {
+//    		controlWrap = new LinearLayout(mContext);
+//            searchField = new EditText(mContext);
+//            searchField.setId(VIEW_ID_SEARCH_FIELD);
+//            searchField.setText(searchText.peek());
+//            ImageButton searchButton = new ImageButton(mContext);
+//            searchButton.setId(VIEW_ID_SEARCH_BUTTON);
+//            searchButton.setImageResource(R.drawable.ic_action_search);
+//            searchButton.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    da.onSearch();
+//                }
+//            });
+//
+//            LinearLayout.LayoutParams searchFieldParams =
+//                    new LinearLayout.LayoutParams(
+//                    LinearLayout.LayoutParams.MATCH_PARENT,
+//                    LinearLayout.LayoutParams.WRAP_CONTENT);
+//            searchFieldParams.weight = 1;
+//            controlWrap.addView(searchField, searchFieldParams);
+//            
+////            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+////                    LinearLayout.LayoutParams.WRAP_CONTENT,
+////                    LinearLayout.LayoutParams.WRAP_CONTENT);
+////            buttonParams.weight = 0;
+////            controlWrap.addView(searchButton, buttonParams);
+//            return controlWrap;
+//        }
+//
+//        @Override
+//        public boolean onDrag(View v, DragEvent event) {
+//        	int action = event.getAction();
+//        	switch (event.getAction()) {
+//        	case DragEvent.ACTION_DRAG_STARTED:
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DRAG_ENTERED:
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DRAG_EXITED:      
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DROP:
+//        		// Dropped, reassign View to ViewGroup
+//        		View view = (View) event.getLocalState();
+//        		ViewGroup owner = (ViewGroup) view.getParent();
+//        		owner.removeView(view);
+//        		LinearLayout container = (LinearLayout) v;
+//        		container.addView(view);
+//        		view.setVisibility(View.VISIBLE);
+//        		break;
+//        	case DragEvent.ACTION_DRAG_ENDED:
+//        		// Do nothing
+//        	default:
+//        		break;
+//        	}
+//        	return true;
+//        }
+//    }
     
     private class CellEditDialog extends AlertDialog {
         

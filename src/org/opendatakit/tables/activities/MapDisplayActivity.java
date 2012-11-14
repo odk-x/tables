@@ -173,7 +173,7 @@ public class MapDisplayActivity extends MapActivity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override

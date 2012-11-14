@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -26,6 +27,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 
@@ -43,6 +45,7 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("");
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
@@ -104,7 +107,7 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override

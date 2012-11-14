@@ -83,8 +83,9 @@ public class TableManager extends ListActivity {
 		 dbh = DbHelper.getDbHelper(this);
 		 prefs = new Preferences(this);
 		 
-		 // Set title of activity
-		 setTitle("ODK Tables > Table Manager");
+		 // Remove title of activity
+		 //setTitle("ODK Tables > Table Manager");
+	     setTitle("");
 		 
 		 // Set Content View
 		 setContentView(R.layout.white_list);
