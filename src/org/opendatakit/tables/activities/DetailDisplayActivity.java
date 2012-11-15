@@ -18,16 +18,15 @@ package org.opendatakit.tables.activities;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.view.custom.CustomDetailView;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
 
 
-public class DetailDisplayActivity extends Activity
+public class DetailDisplayActivity extends SherlockActivity
         implements DisplayActivity {
     
     public static final String INTENT_KEY_ROW_ID = "rowId";
@@ -82,7 +81,7 @@ public class DetailDisplayActivity extends Activity
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        c.buildOptionsMenu(menu);
+        c.buildOptionsMenu(menu, false);
         return true;
     }
 }

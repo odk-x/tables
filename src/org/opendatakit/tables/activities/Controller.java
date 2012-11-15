@@ -42,8 +42,9 @@ import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.ActionBar;
-import android.app.Activity;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockActivity;
+
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.ContentValues;
@@ -56,24 +57,19 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.util.Log;
-import android.view.ActionProvider;
-import android.view.DragEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnDragListener;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.SearchView;
-import android.widget.Spinner;
 import android.widget.TextView;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.SubMenu;
 
 /**
  * A controller for the elements common to the various table display
@@ -129,7 +125,7 @@ public class Controller {
     private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
     
     private final DataUtil du;
-    private final Activity activity;
+    private final SherlockActivity activity;
     private final DisplayActivity da;
     private final DataManager dm;
     private TableProperties tp;
@@ -146,7 +142,7 @@ public class Controller {
     private String rowId = null;
     
     
-    Controller(Activity activity, final DisplayActivity da,
+    Controller(SherlockActivity activity, final DisplayActivity da,
             Bundle intentBundle) {
         du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
@@ -280,6 +276,10 @@ public class Controller {
         return tvs;
     }
     
+    /**
+     * @return True if this is an overview type, false if this is 
+     * 			collection view type
+     */
     boolean getIsOverview() {
         return isOverview;
     }
@@ -358,21 +358,37 @@ public class Controller {
         }
     }
     
+    /**
+     * Builds the option menu (menus in the action bar and overflow)
+     * with menu items enabled
+     * @param menu Menu
+     */
     void buildOptionsMenu(Menu menu) {
+    	this.buildOptionsMenu(menu, true);
+    }
+    
+    /**
+     * Builds the option menu (menus in the action bar and overflow)
+     * Menu items can be enabled (true) or disabled (false)
+     * @param menu Menu
+     * @param enabled boolean
+     */
+    void buildOptionsMenu(Menu menu, boolean enabled) {
+    	ActionBar actionBar = activity.getSupportActionBar();
+    	actionBar.setDisplayHomeAsUpEnabled(true);
+    	
         MenuItem item; 
         
         // search 
         item = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
                 "Search"); 
         item.setIcon(R.drawable.ic_action_search);
-//        item.setActionProvider(new SearchActionProvider(activity));
-//        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | 
-//        		MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        item.setEnabled(enabled);
         
         
         // view type submenu
-        // 	- determine the possible view types
+        // 	  -determine the possible view types
         final int[] viewTypeIds = tvs.getPossibleViewTypes();
         String[] viewTypeStringIds = new String[viewTypeIds.length];
         String[] viewTypeNames = new String[viewTypeIds.length];
@@ -381,7 +397,7 @@ public class Controller {
             viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
                     viewTypeIds[i]);
         }
-        // 	- build a checkable submenu to select the view type
+        // 	  -build a checkable submenu to select the view type
         SubMenu viewType = menu.addSubMenu("View Type");
         viewType.setIcon(R.drawable.view);
         for(int i = 0; i < viewTypeNames.length; i++) {
@@ -393,28 +409,31 @@ public class Controller {
         viewType.setGroupCheckable(GROUP_ID_SUBMENU, true, true);
         MenuItem subMenuItem = viewType.getItem();
         subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        subMenuItem.setEnabled(enabled);
         
         // the other action items / menu items 
         item = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
-              "Add Row");
+              "Add Row").setEnabled(enabled);
+        item.setIcon(R.drawable.addrow_icon);
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         
     	menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
-    			"Table Properties");
+    			"Table Properties").setEnabled(enabled);
         menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
-                "Column Manager");
+                "Column Manager").setEnabled(enabled);
         menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_MANAGER, Menu.NONE,
-                "Table Manager"); 
-        
-//        trying to get data from the search bar
-//        MenuItem searchItem = menu.findItem(R.id.MENU_ITEM_ID_SEARCH_BUTTON);
-//        SearchView mSearchView = (SearchView) searchItem.getActionView();
+                "Table Manager").setEnabled(enabled); 
     }
 
-    // if the item is part of the submenu for view type, set the view type with its itemId
-    // else, handle accordingly
+    /**
+     * Handle menu item that was selected by user
+     * @param selectedItem MenuItem
+     * @return true if selectedItem was handled 
+     */
 	boolean handleMenuItemSelection(MenuItem selectedItem) {
 		int itemId = selectedItem.getItemId();
+		// if the item is part of the sub-menu for view type, set the view type with its itemId
+	    // else, handle accordingly
 		if(selectedItem.getGroupId() == GROUP_ID_SUBMENU) {
 			tvs.setViewType(itemId);
             Controller.launchTableActivity(activity, tp, searchText,
@@ -701,7 +720,7 @@ public class Controller {
     }
     
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (returnCode != Activity.RESULT_OK) {
+        if (returnCode != SherlockActivity.RESULT_OK) {
             return;
         }
         int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
@@ -730,7 +749,7 @@ public class Controller {
     }
     
     private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-        if (returnCode != Activity.RESULT_OK) {
+        if (returnCode != SherlockActivity.RESULT_OK) {
             return;
         }
         int instanceId = Integer.valueOf(data.getData().getLastPathSegment());

@@ -66,7 +66,9 @@ public class TablePropertiesManager extends PreferenceActivity {
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     
+    // these ints are used when selecting/changing the view files
     private static final int RC_DETAIL_VIEW_FILE = 0;
+    private static final int RC_LIST_VIEW_FILE = 1;
     
     private enum ViewPreferenceType {
         OVERVIEW_VIEW,
@@ -303,45 +305,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         addViewPreferences(ViewPreferenceType.OVERVIEW_VIEW, displayCat);
         addViewPreferences(ViewPreferenceType.COLLECTION_VIEW, displayCat);
         
-//        FileSelectorPreference listViewPref =
-//                new FileSelectorPreference(this);
-//        listViewPref.setTitle("List View File");
-//        listViewPref.setDialogTitle("Change List View File");
-//        listViewPref.setText(tp.getDisplayName()); //*****
-//        listViewPref.setOnPreferenceChangeListener(
-//                new OnPreferenceChangeListener() {
-//                    @Override
-//                    public boolean onPreferenceChange(Preference preference,
-//                            Object newValue) {
-//                        tp.setDetailViewFilename((String) newValue);
-//                        init();
-//                        return false;
-//                    }
-//        });
-//        displayCat.addPreference(listViewPref);
-        
-        /*
-         *  FileSelectorPreference listFilePref = new FileSelectorPreference(this);
-            listFilePref.setTitle(label + " List View File");
-            listFilePref.setDialogTitle("Change " + label + " List View File");
-            listViewPref.setText(settings.getCustomListFilename());
-            listFilePref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference,
-                        Object newValue) {
-                    settings.setCustomListFilename((String) newValue);
-                    init();
-                    return false;
-                }
-            });
-            prefCat.addPreference(listFilePref);
-            }
-            break;
-         */
-        
-        FileSelectorPreference detailViewPref =
-                new FileSelectorPreference(this);
+        DetailViewFileSelectorPreference detailViewPref =
+                new DetailViewFileSelectorPreference(this);
         detailViewPref.setTitle("Detail View File");
         detailViewPref.setDialogTitle("Change Detail View File");
         detailViewPref.setText(tp.getDetailViewFilename());
@@ -582,7 +547,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             	// Launches IO File Manager to change the list view file
             	// (The previous method was to manually enter the filename - see 
             	//  commented out code below)
-            	FileSelectorPreference listFilePref = new FileSelectorPreference(this);
+            	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
                 listFilePref.setTitle(label + " List View File");
                 listFilePref.setDialogTitle("Change " + label + " List View File");
                 listFilePref.setText(settings.getCustomListFilename());
@@ -599,7 +564,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 prefCat.addPreference(listFilePref);
                 }
                 break;
-                
+
 //            EditTextPreference listFilePref = new EditTextPreference(this);
 //            listFilePref.setTitle(label + " List View File");
 //            listFilePref.setDialogTitle("Change " + label + " List View File");
@@ -930,6 +895,13 @@ public class TablePropertiesManager extends PreferenceActivity {
             tp.setDetailViewFilename(filename);
             init();
             break;
+        case RC_LIST_VIEW_FILE:
+        	Uri fileUri2 = data.getData();
+            String filename2 = fileUri2.getPath();
+            TableViewSettings settings = tp.getOverviewViewSettings();
+            settings.setCustomListFilename(filename2);
+            init();
+            break;
         default:
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -941,9 +913,9 @@ public class TablePropertiesManager extends PreferenceActivity {
         finish();
     }
     
-    private class FileSelectorPreference extends EditTextPreference {
+    private class DetailViewFileSelectorPreference extends EditTextPreference {
         
-        FileSelectorPreference(Context context) {
+        DetailViewFileSelectorPreference(Context context) {
             super(context);
         }
         
@@ -955,6 +927,34 @@ public class TablePropertiesManager extends PreferenceActivity {
                     intent.setData(Uri.parse("file:///" + getText()));
                 }
                 startActivityForResult(intent, RC_DETAIL_VIEW_FILE);
+            } else {
+                super.onClick();
+            }
+        }
+        
+        private boolean hasFilePicker() {
+            PackageManager packageManager = getPackageManager();
+            Intent intent = new Intent("org.openintents.action.PICK_FILE");
+            List<ResolveInfo> list = packageManager.queryIntentActivities(
+                    intent, PackageManager.MATCH_DEFAULT_ONLY);
+            return (list.size() > 0);
+        }
+    }
+    
+private class ListViewFileSelectorPreference extends EditTextPreference {
+        
+        ListViewFileSelectorPreference(Context context) {
+            super(context);
+        }
+        
+        @Override
+        protected void onClick() {
+            if (hasFilePicker()) {
+                Intent intent = new Intent("org.openintents.action.PICK_FILE");
+                if (getText() != null) {
+                    intent.setData(Uri.parse("file:///" + getText()));
+                }
+                startActivityForResult(intent, RC_LIST_VIEW_FILE);
             } else {
                 super.onClick();
             }

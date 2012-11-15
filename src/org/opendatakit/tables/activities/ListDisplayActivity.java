@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -23,15 +22,15 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomTableView;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 
-public class ListDisplayActivity extends Activity implements DisplayActivity {
+public class ListDisplayActivity extends SherlockActivity implements DisplayActivity {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;

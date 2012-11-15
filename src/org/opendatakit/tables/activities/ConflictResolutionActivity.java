@@ -11,14 +11,15 @@ import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.view.ConflictResolutionView;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 
-public class ConflictResolutionActivity extends Activity
+public class ConflictResolutionActivity extends SherlockActivity
         implements DisplayActivity, ConflictResolutionView.Controller {
     
     private DataManager dm;
@@ -78,7 +79,7 @@ public class ConflictResolutionActivity extends Activity
         if (c.handleMenuItemSelection(item)) {
             return true;
         } else {
-            return super.onContextItemSelected(item);
+            return false;
         }
     }
     

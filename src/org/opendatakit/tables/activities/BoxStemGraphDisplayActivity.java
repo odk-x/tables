@@ -30,14 +30,11 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.BoxStemChart;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -45,10 +42,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+
 /**
  * An activity for display box-stem graphs.
  */
-public class BoxStemGraphDisplayActivity extends Activity
+public class BoxStemGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity, BoxStemChart.ClickListener {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
