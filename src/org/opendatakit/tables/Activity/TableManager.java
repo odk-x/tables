@@ -32,7 +32,6 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,8 +39,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -50,24 +47,29 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-public class TableManager extends ListActivity {
+import com.actionbarsherlock.app.SherlockListActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.SubMenu;
 
-	public static final int ADD_NEW_TABLE     		= 0;
-	public static final int ADD_NEW_SECURITY_TABLE 	= 1;
-	public static final int IMPORT_EXPORT			= 2;
-	public static final int SET_DEFAULT_TABLE 		= 3;
-	public static final int SET_SECURITY_TABLE      = 4;
-	public static final int SET_SHORTCUT_TABLE      = 5;
-	public static final int REMOVE_TABLE      		= 6;
-	public static final int ADD_NEW_SHORTCUT_TABLE  = 7;
-	public static final int UNSET_DEFAULT_TABLE     = 8;
-	public static final int UNSET_SECURITY_TABLE    = 9;
-	public static final int UNSET_SHORTCUT_TABLE    = 10;
-	public static final int AGGREGATE               = 11;
-	public static final int LAUNCH_TPM              = 12;
-	public static final int LAUNCH_CONFLICT_MANAGER = 13;
-	public static final int LAUNCH_DPREFS_MANAGER   = 14;
-	public static final int LAUNCH_SECURITY_MANAGER = 15;
+public class TableManager extends SherlockListActivity {
+
+	public static final int ADD_NEW_TABLE     		= 1;
+	public static final int ADD_NEW_SECURITY_TABLE 	= 2;
+	public static final int IMPORT_EXPORT			= 3;
+	public static final int SET_DEFAULT_TABLE 		= 4;
+	public static final int SET_SECURITY_TABLE      = 5;
+	public static final int SET_SHORTCUT_TABLE      = 6;
+	public static final int REMOVE_TABLE      		= 7;
+	public static final int ADD_NEW_SHORTCUT_TABLE  = 8;
+	public static final int UNSET_DEFAULT_TABLE     = 9;
+	public static final int UNSET_SECURITY_TABLE    = 10;
+	public static final int UNSET_SHORTCUT_TABLE    = 11;
+	public static final int AGGREGATE               = 12;
+	public static final int LAUNCH_TPM              = 13;
+	public static final int LAUNCH_CONFLICT_MANAGER = 14;
+	public static final int LAUNCH_DPREFS_MANAGER   = 15;
+	public static final int LAUNCH_SECURITY_MANAGER = 16;
 	
 	private static String[] from = new String[] {"label", "ext"};
 	private static int[] to = new int[] { android.R.id.text1, android.R.id.text2 };
@@ -84,8 +86,9 @@ public class TableManager extends ListActivity {
 		 dbh = DbHelper.getDbHelper(this);
 		 prefs = new Preferences(this);
 		 
-		 // Set title of activity
-		 setTitle("ODK Tables > Table Manager");
+		 // Remove title of activity
+		 //setTitle("ODK Tables > Table Manager");
+	     setTitle("");
 		 
 		 // Set Content View
 		 setContentView(R.layout.white_list);
@@ -102,7 +105,7 @@ public class TableManager extends ListActivity {
 	 private void makeNoTableNotice() {
 		 List<HashMap<String, String>> fillMaps = new ArrayList<HashMap<String, String>>();
 		 HashMap<String, String> temp = new HashMap<String, String>();
-		 temp.put("label", "Click menu to add new table");
+		 temp.put("label", "Use the + button in the top right corner to add a new table");
 		 fillMaps.add(temp);
 		 arrayAdapter = new SimpleAdapter(this, fillMaps, R.layout.white_list_row, from, to);
 		 setListAdapter(arrayAdapter);
@@ -213,8 +216,7 @@ public class TableManager extends ListActivity {
          return true;
 	 }
 	 
-	 @Override
-	 public boolean onContextItemSelected(MenuItem item) {
+	 public boolean onContextItemSelected(android.view.MenuItem item) {
 	 
 		 AdapterView.AdapterContextMenuInfo info= (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
 		 
@@ -279,9 +281,16 @@ public class TableManager extends ListActivity {
 	 @Override
 	 public boolean onCreateOptionsMenu(Menu menu) {
 		 super.onCreateOptionsMenu(menu);
-		 menu.add(0, ADD_NEW_TABLE, 0, "Add New Data Table");
-		 menu.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Access Control Table");
-		 menu.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
+		 
+		 // Sub-menu containing different "add" menus
+		 SubMenu addNew = menu.addSubMenu("View Type");
+	     addNew.setIcon(R.drawable.addrow_icon);
+	     MenuItem subMenuItem = addNew.getItem();
+	     subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		 addNew.add(0, ADD_NEW_TABLE, 0, "Add New Data Table");
+		 addNew.add(0, ADD_NEW_SECURITY_TABLE, 0, "Add New Access Control Table");
+		 addNew.add(0, ADD_NEW_SHORTCUT_TABLE, 0, "Add New Shortcut Table");
+		 
 		 menu.add(0, IMPORT_EXPORT, 0, "File Import/Export");
 		 menu.add(0, AGGREGATE, 0, "Sync");
 		 menu.add(0, LAUNCH_DPREFS_MANAGER, 0, "Display Preferences");
@@ -296,6 +305,8 @@ public class TableManager extends ListActivity {
         
 		 // HANDLES DIFFERENT MENU OPTIONS
 		 switch(item.getItemId()) {
+		 case 0: 
+			 return true;
 		 case ADD_NEW_TABLE:
 			 alertForNewTableName(true, TableType.data, null, null);
 			 return true;
@@ -318,8 +329,8 @@ public class TableManager extends ListActivity {
 		     startActivity(k);
 		     return true;
 		 }
-    	
-		 return super.onMenuItemSelected(featureId, item);
+		 
+		return super.onMenuItemSelected(featureId, item);
 	 }
 	 
 	 // Ask for a new table name.

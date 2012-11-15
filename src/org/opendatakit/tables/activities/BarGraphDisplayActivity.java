@@ -27,14 +27,15 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.BarChart;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 
-public class BarGraphDisplayActivity extends Activity
+public class BarGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
@@ -130,7 +131,7 @@ public class BarGraphDisplayActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override
