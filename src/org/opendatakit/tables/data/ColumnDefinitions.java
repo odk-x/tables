@@ -34,7 +34,7 @@ public class ColumnDefinitions {
   public static final String DB_TABLE_ID = "table_id";
   public static final String DB_ELEMENT_KEY = 
       "element_key";// (was DB_DB_COLUMN_NAME)
-  public static final String  DB_ELEMENT_NAME = "elementName";
+  public static final String  DB_ELEMENT_NAME = "element_name";
   public static final String DB_ELEMENT_TYPE = 
       "element_type"; // (was DB_COL_TYPE)
   public static final String  DB_LIST_CHILD_ELEMENT_KEYS = 
@@ -414,10 +414,10 @@ public class ColumnDefinitions {
             ", " + DB_ELEMENT_NAME + " TEXT NOT NULL" +
             ", " + DB_ELEMENT_TYPE + " TEXT NOT NULL" +
             ", " + DB_LIST_CHILD_ELEMENT_KEYS + " TEXT NULL" +
+            ", " + DB_IS_PERSISTED + " INTEGER NOT NULL" +
             ", " + DB_JOINS + " TEXT NULL" +
 //            ", " + DB_JOIN_TABLE_ID + " TEXT NULL" +
 //            ", " + DB_JOIN_ELEMENT_KEY + " TEXT NULL" +
-            ", " + DB_IS_PERSISTED + " INTEGER NOT NULL" +
             ")";
 }
 

@@ -16,6 +16,9 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,19 +34,74 @@ import android.util.Log;
  * A class for accessing and modifying a user table.
  * 
  * @author hkworden@gmail.com (Hilary Worden)
+ * @author sudar.sam@gmail.com
  */
 public class DbTable {
   
   private final static String TAG = "DbTable";
     
     public static final String DB_ROW_ID = "id";
-    public static final String DB_SRC_PHONE_NUMBER = "srcPhoneNum";
-    public static final String DB_LAST_MODIFIED_TIME = "lastModTime";
-    public static final String DB_SYNC_TAG = "syncTag";
-    public static final String DB_SYNC_STATE = "syncState";
+    public static final String DB_URI_USER = "uri_user";
+    public static final String DB_LAST_MODIFIED_TIME = "last_mod_time";
+    public static final String DB_SYNC_TAG = "sync_tag";
+    public static final String DB_SYNC_STATE = "sync_state";
     public static final String DB_TRANSACTIONING = "transactioning";
     public static final String DB_TIMESTAMP = "timestamp";
     public static final String DB_SAVED = "saved";
+    public static final String DB_INSTANCE_NAME = "instance_name";
+        /*
+         * For ODKTables generated rows (as opposed to ODK Collect), the 
+         * thought is that this instance name would just be the iso86 pretty
+         * print date of creation.
+         */
+    public static final String DB_LOCALE = "locale";
+    
+    /********************************************************
+     * Default values for those columns which require them.
+     ********************************************************/
+    // some of these are unfortunately littered in various places throughout
+    // the code. I don't have time to track them down at the moment, but they
+    // default values should probably be centralized here.
+    // TODO: see above
+    
+    
+    
+    
+    /*
+     * These are the columns that are present in any row in the database.
+     * Each row should have these in addition to the user-defined columns.
+     * If you add a column here you have to be sure to also add it in the 
+     * create table statement, which can't be programmatically created easily.
+     */
+    private static final List<String> ADMIN_COLUMNS;
+    
+    /*
+     * These are the columns that we want to include in sync rows to sync up
+     * to the server. This is a work in progress that is being added later, so
+     * I can't promise that there isn't some magic happening elsewhere that I
+     * am missing. Hopefully this will be exhaustive, however. It is a map of
+     * column name to column type that we will be putting into a row for
+     * SyncProcessor. (At least that is the obvious place I'm making this for).
+     */
+    private static final Map<String, ColumnType> COLUMNS_TO_SYNC;
+    
+    static {
+      ADMIN_COLUMNS = new ArrayList<String>();
+      ADMIN_COLUMNS.add(DB_ROW_ID);
+      ADMIN_COLUMNS.add(DB_URI_USER);
+      ADMIN_COLUMNS.add(DB_LAST_MODIFIED_TIME);
+      ADMIN_COLUMNS.add(DB_SYNC_TAG);
+      ADMIN_COLUMNS.add(DB_SYNC_STATE);
+      ADMIN_COLUMNS.add(DB_TRANSACTIONING);
+      ADMIN_COLUMNS.add(DB_TIMESTAMP);
+      ADMIN_COLUMNS.add(DB_SAVED);
+      ADMIN_COLUMNS.add(DB_INSTANCE_NAME);
+      // put the columns in to the to-sync map.
+      COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
+      COLUMNS_TO_SYNC.put(DB_URI_USER, ColumnType.PHONE_NUMBER);
+      COLUMNS_TO_SYNC.put(DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
+      COLUMNS_TO_SYNC.put(DB_INSTANCE_NAME, ColumnType.TEXT);
+    }
     
     public enum SavedStatus {
     	COMPLETE,
@@ -51,9 +109,10 @@ public class DbTable {
     };
     
     public static final String DB_CSV_COLUMN_LIST =
-        DB_ROW_ID + ", " + DB_SRC_PHONE_NUMBER + ", " + DB_LAST_MODIFIED_TIME +
+        DB_ROW_ID + ", " + DB_URI_USER + ", " + DB_LAST_MODIFIED_TIME +
         ", " + DB_SYNC_TAG + ", " + DB_SYNC_STATE + ", " + DB_TRANSACTIONING +
-        ", " + DB_TIMESTAMP + ", " + DB_SAVED;
+        ", " + DB_TIMESTAMP + ", " + DB_SAVED + ", " + DB_INSTANCE_NAME +
+        ", " + DB_LOCALE;
     
     private final DataUtil du;
     private final DbHelper dbh;
@@ -61,6 +120,10 @@ public class DbTable {
     
     public static DbTable getDbTable(DbHelper dbh, String tableId) {
         return new DbTable(dbh, tableId);
+    }
+    
+    public static Map<String, ColumnType> getColumnsToSync() {
+      return Collections.unmodifiableMap(COLUMNS_TO_SYNC);
     }
     
     private DbTable(DbHelper dbh, String tableId) {
@@ -89,13 +152,15 @@ public class DbTable {
         testOpen = db.isOpen();
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DB_ROW_ID + " TEXT NOT NULL" +
-     ", " + DB_SRC_PHONE_NUMBER + " TEXT" +
+     ", " + DB_URI_USER + " TEXT NULL" +
      ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
-     ", " + DB_SYNC_TAG + " TEXT" +
+     ", " + DB_SYNC_TAG + " TEXT NULL" +
      ", " + DB_SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DB_TRANSACTIONING + " INTEGER NOT NULL" +
      ", " + DB_TIMESTAMP + " INTEGER NOT NULL" +
      ", " + DB_SAVED + " TEXT NULL" +
+     ", " + DB_INSTANCE_NAME + " TEXT NOT NULL" +
+     ", " + DB_LOCALE + " TEXT NULL" +
      colListBuilder.toString() +
      ")";
         db.execSQL(toExecute);
@@ -121,12 +186,15 @@ public class DbTable {
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
             ColumnProperties[] cps = tp.getColumns();
-            columns = new ArrayList<String>();
-            columns.add(DB_SRC_PHONE_NUMBER);
-            columns.add(DB_LAST_MODIFIED_TIME);
-            columns.add(DB_SYNC_TAG);
-            columns.add(DB_SYNC_STATE);
-            columns.add(DB_TRANSACTIONING);
+             columns = new ArrayList<String>();
+             columns.addAll(ADMIN_COLUMNS);
+//            columns = new ArrayList<String>();
+//            columns.add(DB_URI_USER);
+//            columns.add(DB_LAST_MODIFIED_TIME);
+//            columns.add(DB_SYNC_TAG);
+//            columns.add(DB_SYNC_STATE);
+//            columns.add(DB_TRANSACTIONING);
+//            need to add this stuff now;
             for (int i = 0; i < cps.length; i++) {
             	columns.add(cps[i].getColumnDbName());
             }
@@ -406,6 +474,9 @@ public class DbTable {
     /**
      * Adds a row to the table with an inserting synchronization state and the
      * transactioning status set to false.
+     * <p>
+     * I don't think this is called when downloading table data from the 
+     * server. I think it is only called when creating on the phone...
      */
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
@@ -417,15 +488,22 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
+        // The admin columns get added here and also in actualAddRow
         cv.put(DB_LAST_MODIFIED_TIME, lastModTime);
-        cv.put(DB_SRC_PHONE_NUMBER, srcPhone);
+        cv.put(DB_URI_USER, srcPhone);
         cv.put(DB_SYNC_STATE, SyncUtil.State.INSERTING);
         cv.put(DB_TRANSACTIONING, SyncUtil.boolToInt(false));
+        cv.put(DB_INSTANCE_NAME, 
+            Long.toString(System.currentTimeMillis()));
+        cv.put(DB_LOCALE, (String) null);
         actualAddRow(cv);
     }
     
     /**
      * Actually adds a row.
+     * <p>
+     * I think this gets called when you download a table from the server,
+     * whereas I don't think that addRow() does.
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
@@ -437,7 +515,7 @@ public class DbTable {
         try {
 	        values.put(DB_TIMESTAMP, System.currentTimeMillis());
 	        values.put(DB_SAVED, SavedStatus.COMPLETE.name());
-	        long result = db.insert(tp.getDbTableName(), null, values);
+	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
 	        Log.d("DBT", "insert, id=" + result);
         } finally {
           // TODO: fix the when to close problem

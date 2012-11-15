@@ -182,13 +182,17 @@ public class CsvUtil {
         ArrayList<String> columns = new ArrayList<String>();
         ArrayList<String> headerRow = new ArrayList<String>();
         int index = 0;
+        // TODO: here we'll want to actually include instance name as well...
+        // I think we'll be trying to include every column that also goes to 
+        // the server. I'm not sure how this works, so I am leaving it for 
+        // now.
         if (includeTs) {
             columns.add(DbTable.DB_LAST_MODIFIED_TIME);
             headerRow.add(LAST_MOD_TIME_LABEL);
             index++;
         }
         if (includePn) {
-            columns.add(DbTable.DB_SRC_PHONE_NUMBER);
+            columns.add(DbTable.DB_URI_USER);
             headerRow.add(SRC_PHONE_LABEL);
             index++;
         }

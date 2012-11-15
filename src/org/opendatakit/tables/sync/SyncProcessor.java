@@ -406,10 +406,12 @@ public class SyncProcessor {
   private Map<String, ColumnType> getColumns(TableProperties tp) {
     Map<String, ColumnType> columns = new HashMap<String, ColumnType>();
     ColumnProperties[] userColumns = tp.getColumns();
-    for (ColumnProperties colProp : userColumns)
+    for (ColumnProperties colProp : userColumns) {
       columns.put(colProp.getColumnDbName(), colProp.getColumnType());
-    columns.put(DbTable.DB_SRC_PHONE_NUMBER, ColumnType.PHONE_NUMBER);
-    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
+    }
+//    columns.put(DbTable.DB_URI_USER, ColumnType.PHONE_NUMBER);
+//    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
+    columns.putAll(DbTable.getColumnsToSync());
     return columns;
   }
 

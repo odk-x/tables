@@ -59,10 +59,10 @@ public class KeyValueStoreManager {
   
   // These are the names of the active and the default key value stores as 
   // they will exist in the SQLite db once they are initialized.
-  public static final String DEFAULT_DB_NAME = "keyValueStoreDefault";
-  public static final String ACTIVE_DB_NAME = "keyValueStoreActive";
-  public static final String SERVER_DB_NAME = "keyValueStoreServer";
-  public static final String SYNC_DB_NAME = "keyValueStoreSync";
+  public static final String DEFAULT_DB_NAME = "table_key_value_store_default";
+  public static final String ACTIVE_DB_NAME = "table_key_value_store_active";
+  public static final String SERVER_DB_NAME = "table_key_value_store_server";
+  public static final String SYNC_DB_NAME = "table_key_value_store_sync";
   // and the db name for the column properties KVS.
   public static final String COLUMN_ACTIVE_DB_NAME = 
       "column_key_value_store_active";
