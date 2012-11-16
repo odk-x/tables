@@ -86,8 +86,6 @@ public class TableManager extends SherlockListActivity {
 		 dbh = DbHelper.getDbHelper(this);
 		 prefs = new Preferences(this);
 		 
-		 // Remove title of activity
-		 //setTitle("ODK Tables > Table Manager");
 	     setTitle("");
 		 
 		 // Set Content View
