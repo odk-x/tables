@@ -424,6 +424,9 @@ public class DbTable {
                 footer[i] = getFooterItem(query, cps[i],
                         Query.GroupQueryType.AVERAGE);
                 break;
+            case none:
+                // we'll just do nothing?
+              break;
             default:
               Log.e(TAG, "unrecognized footer mode: " + 
                   cps[i].getFooterMode().name());

@@ -53,7 +53,13 @@ public class SpreadsheetView extends LinearLayout
     private final DisplayPrefs dp;
     private final int fontSize;
     
-    private LockableHorizontalScrollView wrapScroll;
+//    private LockableHorizontalScrollView wrapScroll;
+    /** trying to fix slow draw **/
+    private HorizontalScrollView nonLockScroll;
+    private LockableScrollView dataScroll;
+    private View wrapper;
+    private HorizontalScrollView wrapScroll;
+    
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
     private TabularView indexData;
@@ -253,15 +259,42 @@ public class SpreadsheetView extends LinearLayout
     }
     
     private void buildNonIndexedTable() {
-        View wrapper = buildTable(-1, false);
-        HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
+//        View wrapper = buildTable(-1, false);
+      wrapper = buildTable(-1, false);
+//        HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
+      wrapScroll = new HorizontalScrollView(context);
+        /** sam trying to fix draw problem **/
+        // changing this just made the borders not move correctly....
+//        wrapScroll = new LockableHorizontalScrollView(context);
         wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
+        /*** this was all here before ***/
         LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
         wrapLp.weight = 1;
         addView(wrapScroll, wrapLp);
+        /**** below i copied from buildIndexedTable ****/
+//        LinearLayout wrapper = new LinearLayout(context);
+////        wrapper.addView(indexWrapper);
+//        wrapper.addView(wrapScroll);
+//        addView(wrapper);
+//        indexScroll.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View view, MotionEvent event) {
+//                mainScroll.scrollTo(mainScroll.getScrollX(),
+//                        view.getScrollY());
+//                return false;
+//            }
+//        });
+//        mainScroll.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View view, MotionEvent event) {
+//                indexScroll.scrollTo(indexScroll.getScrollX(),
+//                        view.getScrollY());
+//                return false;
+//            }
+//        });
     }
     
     private void buildIndexedTable(int indexedCol) {
@@ -349,7 +382,8 @@ public class SpreadsheetView extends LinearLayout
         int headerData = getResources().getColor(R.color.header_data);
         int headerIndex = getResources().getColor(R.color.header_index);
         int footerIndex = getResources().getColor(R.color.footer_index);
-        LockableScrollView dataScroll = new LockableScrollView(context);
+//        LockableScrollView dataScroll = new LockableScrollView(context);
+        dataScroll = new LockableScrollView(context);
         ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
                 Color.BLACK, false);
         ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
@@ -395,11 +429,46 @@ public class SpreadsheetView extends LinearLayout
     }
     
     public void setScrollEnabled(boolean enabled) {
-        wrapScroll.setScrollable(enabled);
-        if (indexScroll != null) {
-            indexScroll.setScrollable(enabled);
-        }
-        mainScroll.setScrollable(enabled);
+//        wrapScroll.setScrollable(enabled);
+//        if (indexScroll != null) {
+//            indexScroll.setScrollable(enabled);
+//        }
+//        mainScroll.setScrollable(enabled);
+    }
+    
+    /**
+     * Gets the x translation of the wrap scroll for a non indexed table. 
+     * I'm thinking this will be able to then only draw the area you are 
+     * viewing.
+     * @return
+     */
+    public int getMainScrollX() {
+//      return this.mainScroll.getScrollX();
+//      return this.mainData.getScrollX();
+//      return this.getScrollX();
+//      return this.mainHeader.getScrollX();
+      int result = this.wrapScroll.getScrollX(); // this is getting the right x
+//      int result = this.dataScroll.getScrollX();
+//      int result = this.wrapper.getScrollX();
+      return result;
+    }
+    
+    /**
+     * Gets the y translation of the wrap scroll for a non indexed table. 
+     * I'm thinking this will be able to then only draw the area you are 
+     * viewing.
+     * @return
+     */
+    public int getMainScrollY() {
+//      return this.mainScroll.getScrollY();
+//      int result = this.mainData.getScrollY();
+      int result = this.mainScroll.getScrollY(); // this is getting the right y
+//      return this.getScrollY();
+//      return this.mainHeader.getScrollY();
+//      int result = this.wrapScroll.getScrollY(); // always gives me 0...
+//      int result = this.dataScroll.getScrollY();
+//      int result = this.wrapper.getScrollY();
+      return result;
     }
     
     @Override
@@ -515,5 +584,6 @@ public class SpreadsheetView extends LinearLayout
         public void prepFooterCellOccm(ContextMenu menu, int cellId);
         
         public void prepIndexedColCellOccm(ContextMenu menu, int cellId);
+        
     }
 }
