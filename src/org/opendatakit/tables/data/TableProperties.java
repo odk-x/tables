@@ -31,6 +31,7 @@ import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONException;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
@@ -553,10 +554,8 @@ public class TableProperties {
         props.get(KEY_SORT_COLUMN),
         props.get(TableDefinitions.DB_SYNC_TAG),
         props.get(TableDefinitions.DB_LAST_SYNC_TIME),
-// TODO: replace these nulls with appropriate co_view stuff
-        null, null,
-//        props.get(KEY_OV_VIEW_SETTINGS),
-//        props.get(KEY_CO_VIEW_SETTINGS),
+        props.get(KEY_OV_VIEW_SETTINGS),
+        props.get(KEY_CO_VIEW_SETTINGS),
         props.get(KEY_DETAIL_VIEW_FILE),
         props.get(KEY_SUM_DISPLAY_FORMAT),
         syncState,
@@ -1509,6 +1508,25 @@ public class TableProperties {
    */
   void setOverviewViewSettings(String dbString) {
     setStringProperty(KEY_OV_VIEW_SETTINGS, dbString);
+//    Map<String,Object> dbObject;
+//    try {
+//      dbObject = mapper.readValue(dbString, Map.class);
+//      this.overviewViewSettings.setFromJsonObject(dbObject);
+//    } catch (JSONException e) {
+//      e.printStackTrace();
+//      throw new IllegalStateException("encounted problem setting table view " +
+//      		"settings from json");
+//     } catch (JsonParseException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   } catch (JsonMappingException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   } catch (IOException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   }
+    
   }
 
   /**
@@ -1526,6 +1544,24 @@ public class TableProperties {
    */
   void setCollectionViewSettings(String dbString) {
     setStringProperty(KEY_CO_VIEW_SETTINGS, dbString);
+//    Map<String,Object> dbObject;
+//    try {
+//      dbObject = mapper.readValue(dbString, Map.class);
+//      this.collectionViewSettings.setFromJsonObject(dbObject);
+//    } catch (JSONException e) {
+//      e.printStackTrace();
+//      throw new IllegalStateException("encounted problem setting table view " +
+//            "settings from json");
+//     } catch (JsonParseException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   } catch (JsonMappingException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   } catch (IOException e) {
+//      e.printStackTrace();
+//      throw new IllegalArgumentException("invalid db value: " + dbString);
+//   }
   }
 
   /**

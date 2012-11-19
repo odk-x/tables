@@ -437,9 +437,8 @@ public class SpreadsheetView extends LinearLayout
     }
     
     /**
-     * Gets the x translation of the wrap scroll for a non indexed table. 
-     * I'm thinking this will be able to then only draw the area you are 
-     * viewing.
+     * Gets the x translation of the scroll. This is in particular how far 
+     * you have scrolled to look at columns that do not begin onscreen.
      * @return
      */
     public int getMainScrollX() {
@@ -454,9 +453,9 @@ public class SpreadsheetView extends LinearLayout
     }
     
     /**
-     * Gets the y translation of the wrap scroll for a non indexed table. 
-     * I'm thinking this will be able to then only draw the area you are 
-     * viewing.
+     * Gets the y translation of the scroll. This is in particular the y 
+     * offset for the actual scrolling of the rows, so that a positive
+     * offset will indicate that you have scrolled to some non-zero row.
      * @return
      */
     public int getMainScrollY() {
