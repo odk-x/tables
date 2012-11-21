@@ -39,6 +39,12 @@ import android.widget.LinearLayout;
  * A view similar to a spreadsheet. Builds TabularViews for the header, body,
  * and footer (builds two sets of these if a column is frozen to the left).
  */
+/*
+ * sudar.sam@gmail.com: I made some changes to this to try and make scrolling
+ * more efficient. I am leaving some of the seemingly unreferenced and now
+ * unnecessary methods/fields in case changes someone has made to this class
+ * in parallel rely on these changes.
+ */
 public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {
     
@@ -53,9 +59,10 @@ public class SpreadsheetView extends LinearLayout
     private final DisplayPrefs dp;
     private final int fontSize;
     
+    // Keeping this for now in case someone else needs to work with the code
+    // and relied on this variable.
 //    private LockableHorizontalScrollView wrapScroll;
     /** trying to fix slow draw **/
-    private HorizontalScrollView nonLockScroll;
     private LockableScrollView dataScroll;
     private View wrapper;
     private HorizontalScrollView wrapScroll;
@@ -258,44 +265,19 @@ public class SpreadsheetView extends LinearLayout
         };
     }
     
-    private void buildNonIndexedTable() {
-//        View wrapper = buildTable(-1, false);
-      wrapper = buildTable(-1, false);
-//        HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
-      wrapScroll = new HorizontalScrollView(context);
-        /** sam trying to fix draw problem **/
-        // changing this just made the borders not move correctly....
-//        wrapScroll = new LockableHorizontalScrollView(context);
-        wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        /*** this was all here before ***/
-        LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        wrapLp.weight = 1;
-        addView(wrapScroll, wrapLp);
-        /**** below i copied from buildIndexedTable ****/
-//        LinearLayout wrapper = new LinearLayout(context);
-////        wrapper.addView(indexWrapper);
-//        wrapper.addView(wrapScroll);
-//        addView(wrapper);
-//        indexScroll.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View view, MotionEvent event) {
-//                mainScroll.scrollTo(mainScroll.getScrollX(),
-//                        view.getScrollY());
-//                return false;
-//            }
-//        });
-//        mainScroll.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View view, MotionEvent event) {
-//                indexScroll.scrollTo(indexScroll.getScrollX(),
-//                        view.getScrollY());
-//                return false;
-//            }
-//        });
-    }
+  private void buildNonIndexedTable() {
+    wrapper = buildTable(-1, false);
+    // Keeping this for now in case someone relied on this.
+    // HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
+    wrapScroll = new HorizontalScrollView(context);
+    wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
+        LinearLayout.LayoutParams.MATCH_PARENT);
+    /*** this was all here before ***/
+    LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
+    wrapLp.weight = 1;
+    addView(wrapScroll, wrapLp);
+  }
     
     private void buildIndexedTable(int indexedCol) {
         View mainWrapper = buildTable(indexedCol, false);
@@ -428,13 +410,17 @@ public class SpreadsheetView extends LinearLayout
         return wrapper;
     }
     
-    public void setScrollEnabled(boolean enabled) {
+    // This method was never called, and in order to make scrolling more 
+    // efficient I had to change the type. I am leaving it for now b/c other
+    // people are working on this code and I don't want make them rollback
+    // if they need to use it.
+//    public void setScrollEnabled(boolean enabled) {
 //        wrapScroll.setScrollable(enabled);
 //        if (indexScroll != null) {
 //            indexScroll.setScrollable(enabled);
 //        }
 //        mainScroll.setScrollable(enabled);
-    }
+//    }
     
     /**
      * Gets the x translation of the scroll. This is in particular how far 
@@ -442,13 +428,8 @@ public class SpreadsheetView extends LinearLayout
      * @return
      */
     public int getMainScrollX() {
-//      return this.mainScroll.getScrollX();
-//      return this.mainData.getScrollX();
-//      return this.getScrollX();
-//      return this.mainHeader.getScrollX();
-      int result = this.wrapScroll.getScrollX(); // this is getting the right x
-//      int result = this.dataScroll.getScrollX();
-//      int result = this.wrapper.getScrollX();
+      // this is getting the right x
+      int result = this.wrapScroll.getScrollX(); 
       return result;
     }
     
@@ -459,14 +440,8 @@ public class SpreadsheetView extends LinearLayout
      * @return
      */
     public int getMainScrollY() {
-//      return this.mainScroll.getScrollY();
-//      int result = this.mainData.getScrollY();
-      int result = this.mainScroll.getScrollY(); // this is getting the right y
-//      return this.getScrollY();
-//      return this.mainHeader.getScrollY();
-//      int result = this.wrapScroll.getScrollY(); // always gives me 0...
-//      int result = this.dataScroll.getScrollY();
-//      int result = this.wrapper.getScrollY();
+      // this is getting the right y
+      int result = this.mainScroll.getScrollY(); 
       return result;
     }
     
