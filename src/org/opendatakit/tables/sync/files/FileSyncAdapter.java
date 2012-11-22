@@ -55,7 +55,6 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
       String tableId = tableProp.getTableId();
       SyncUtilities.pullKeyValueEntriesForTable(context, aggregateUri, 
           authToken, tableId);
-      
     }
     
 

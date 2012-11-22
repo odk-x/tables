@@ -211,6 +211,7 @@ public class SyncUtilities {
             String path = basePath + "/" + tableId + "/" + fileEntry.filename;
             entry.value = path;
           } else {
+            // TODO:
             // there was an error downloading the file. remove the entry.
             // IS THIS A SAFE WAY TO DO IT?
             allEntries.remove(entry);

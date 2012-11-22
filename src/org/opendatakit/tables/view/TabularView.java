@@ -103,12 +103,8 @@ class TabularView extends View {
       xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
     }
     this.spans = new int[xs.length];
-//    this.spans[0] = 0;
-//    int total = 1; // we need this to account for the one we did not count
-    // in the xs[0] position.
     int total = 0;
     for (int i = 0; i < this.spans.length; i++) {
-//      total += xs[i];
       spans[i] = total;
       total += BORDER_WIDTH + columnWidths[i];
     }
@@ -161,22 +157,15 @@ class TabularView extends View {
       Log.e(TAG, "controller was not instance of spreadsheet view, " +
             "cannot cast, will have null pointers");
     }
-    // drawing the background --so you're redrawing the background every time...
+    // drawing the background--so you're redrawing the background every time...
     canvas.drawRect(0, 0, totalWidth, totalHeight, bgPaint);
-    /** trying to change the constantly drawn background **/
-    // this seemed to add very little. it didn't outright break, but it did 
-    // mean the footer and headers got removed somehow.
-//    canvas.drawRect(sv.getMainScrollX(), sv.getMainScrollY(), sv.getMainScrollX() + metrics.widthPixels,
-//        sv.getMainScrollY() + metrics.heightPixels, bgPaint);
-    // drawing the borders
-//    int yCoord = 0;
     
     /*
-     * I am going to try and fix this method. There are several things that
+     * SS: I am going to try and fix this method. There are several things that
      * need to be considered. First, a spreadsheet view is composed of several
      * tabular views. The base case for an un-indexed table is composed of a 
      * main_header, main_data, main_footer. It can also include an
-     * index_header, index_data, and index_footer. 
+     * index_header, index_data, and index_footer, if it is indexed. 
      * 
      * We want to support drawing this table efficiently. We are going to do
      * this as follows. The SpreadsheetView object contains methods to get the
@@ -186,30 +175,35 @@ class TabularView extends View {
      * 
      * When we draw a table, we want always to draw the header at the top.
      * Somehow the footer is taking care of itself. Atm I'm not sure how.
+     * Probably some sort of parameters happening in SpreadsheetView?
      * 
      * We do not want to draw the whole spreadsheet, as this would be slower
      * and slower the more data you add. Instead we want to only draw the 
      * necessary bits for the screen to display. We have the dimensions of 
      * the screen in the metrics field, which is a DisplayMetrics object.
+     * We are currently drawing the whole canvas. This seems ok, and we might
+     * even need to do that for clipping rects. 
      * 
      * In the diagram below, we have a phone (the asterisks) viewing a small 
      * set of the table.
-     * I am not bothering to draw the rows, which would fall between the header
-     * and footer. We want to draw as little as possible to still cover 
-     * all the phone would see. 
+     * I am not bothering to draw all the rows that would fall between the 
+     * header and footer. We want to draw as little as possible to still cover 
+     * all that the phone would see. 
      * 
      * The arrow marked "X,Y" points to the X and y offset returned by the
      * getMainScroll methods. X is it's displacement from the left, Y is from
-     * the top.
+     * the top (of the whole canvas, I'm pretty sure). These apparently can
+     * be negative during bounceback, so I am including a check to set them
+     * >= 0.
      * 
      * To draw efficiently, there are several other things we need to know. 
      * First, we need to see the leftmost column which must be drawn. The left
      * border of this column is pointed at with an L in the diagram below.
-     * We also need to know the rightmost column which must be drawn. This is 
-     * pointed at with an R in the diagram below. It is also important to note
-     * that we need to know where the right borders of these columns are, as 
-     * we must tell the canvas from top left to bottom right how to draw the
-     * rectangle that will become the cell.
+     * We also need to know the rightmost column which must be drawn. The left
+     * border of this column is pointed at with an R in the diagram below. It 
+     * is also important to note that we need to know where the right borders 
+     * of these columns are, as we must tell the canvas from top left to 
+     * bottom right how to draw the rectangle that will become the cell.
      * 
      * This information is stored in two separate arrays. One is the xs[] array
      * of integers, which tells where each column begins. xs[0] is the x 
@@ -221,7 +215,7 @@ class TabularView extends View {
      * column width, but you should theoretically be able to, so we are 
      * programming it as such.
      * 
-     * The dimensions of column 7 would this be from 
+     * The dimensions of column 7 would thus be from 
      * xs[7] to columnWidths[7], and it's height would be rowHeight. 
      * 
      * It is also important to note that atm borders and cells are being drawn
@@ -229,16 +223,16 @@ class TabularView extends View {
      * behavior so for now I'm going to leave it.
      * 
      * The header must always be drawn at location 0, as it always needs to 
-     * stay in the top part of the sceen at location 0, even when the data 
+     * stay in the top part of the screen at location 0, even when the data 
      * TabularView object is scrolling under it. 
      * 
-     * However, we also want only to draw as many rows as necessary. These 
-     * begin at the top bordre of the topmost row, the arrow labeled topTopmost
-     * in the diagram below. Similarly, we need to know the top of the bottom
-     * most row, labled topBottommost below. If we have scrolled down in the 
-     * table, there will be rows above topmost. If we are not to the bottom
-     * of the table, there will be rows below bottommost. There are the top and
-     * bottom -most rows that have some portion displayed on the screen. 
+     * We also want only to draw as many rows as necessary. These 
+     * begin at the top of the topmost row, the arrow labeled topTopmost
+     * in the diagram below. Similarly, we need to know the top of the 
+     * bottommost row, labeled topBottommost below. If we have scrolled down in 
+     * the table, there will be rows above topmost. If we are not to the bottom
+     * of the table, there will be rows below bottommost. These two are the top
+     *  and bottom -most rows that have some portion displayed on the screen. 
      * (Whether or not this means you might have one with only 5 pixels on 
      * screen and the rest hidden beneath the header, I am not sure, but it
      * seems likely. This could possibly create drawing problems? I'm not 
@@ -253,9 +247,9 @@ class TabularView extends View {
      * xScroll
      * yScroll.
      * 
-     * The leftmost column is called leftmost, and the rightmost rightmost. 
+     * The leftmost column is called leftmost, and the rightmost, rightmost. 
      * These are 0-indexed ints representing the ordinality of the column.
-     * If the fifth column (4 in a 0-indexed system) would then be in 4.
+     * The fifth column (4 in a 0-indexed system) would then be in 4.
      * leftmost
      * rightmost
      * 
@@ -264,46 +258,52 @@ class TabularView extends View {
      * leftLeftmost  (the L arrow)
      * leftRightmost (the R arrow)
      * 
-     * Topmost is the topmost row.
+     * Topmost is the topmost row, bottommost is the most bottom.
      * topmost
+     * bottommost
      * 
-     * The other two variables we need to maintain are the topmostborder and 
+     * The other two variables we need to maintain are the topmost border and 
      * the leftmost border. We will draw them until we are off the screen and
      * then stop.
      * topmostBorder
      * leftmostBorder
-     * rightRightmostBorder;
      * These are assumed to be (and are by definition, I believe) 
      * xs[col] - BORDER_WIDTH.
      * 
-     * Both of these variables might or might not be off the screen. In the
+     * We also need to know the righthand border of the rightmost column, as 
+     * this is where we will be stopping drawing. 
+     * rightRightmost.
+     * The definition of rightRightmost is defined in the code below, but I 
+     * think it is basically 
+     * xs[rightmost] + columnWidths[rightmost] + BORDER_WIDTH.
+     * 
+     * Both leftLefmost and rightRightmost might be off the screen. In the
      * diagram below, both would be when drawing the data. 
      * The header, however, never would be. 
      *         
      * ______________________________________________________________
      * |       |     |      |rightmost
-     * |       |     |      |         | topTopmost
-     * |_______|_____|______|_________V_______________________________
-     * |     X,Y->***************   |
-     * |       |  *__|header|___*   |
-     * |       |  *  |      |   *   |
-     * |       |  *  |      |   *   |
-     * |       |  *  |data  |   *   |
+     * |       |     |      |           |topTopmost 
+     * |_______|_____|______|___________V_______________________________
+     * |     X,Y->***************   |          bottomOfTheTopmostRow
+     * |       |  *__|header|___*   |topmost     |
+     * |_______|__*__|______|___*___|____________V____________________
+     * |       |  *  |      |   *   |  X=xScroll; y=yScroll
+     * |       |  *  |data  |   *   |  L=leftLeftmost; R=leftRightmost
      * |    L->|  *  |      |   *   |
      * |       |  *  |      |   *   |  | topBottommost
      * |_______|__*__|___R->|___*______V_____________________________
-     * |       |  *__|______|___*   |
-     * |       |  *  |footer|   *   |
-     * |       |  ***************   |
+     * |       |  *__|______|___*   | bottommost(from here to bottomBottommost)
+     * |       |  *  |footer|   *   |                                |
+     * |       |  ***************   |<-rightRightmostBorder          |
+     * |_______|_____|______|_______|________________________________V____    
      * |       |     |      |       |
-     * |       |     |      |       |<- rightRightmostBorder 
      * |       |leftmost    |       |
      * |       |     |      |       |
      */
 
     int xScroll = sv.getMainScrollX();
     int yScroll = sv.getMainScrollY();
-    // sometimes was getting negative, maybe from bounceback?
     if (xScroll < 0) {
       xScroll = 0;
       Log.d(TAG, "xScroll was negative, reset to 0");
@@ -318,29 +318,50 @@ class TabularView extends View {
     int topmostBorder;
     int leftmostBorder;
     int topTopmost;
-    int topBottommost;
+    int topBottommostBorder;
+    int bottommost;
     int leftLeftmost;
     int leftRightmost;
     int rightRightmostBorder;
+    int bottomBottommost; 
     
     // The first thing we must do is recognize that we have to undergo 
     // different procedures if we are dealing with a header. (also maybe a
-    // footer? Unsure at the moment.)
+    // footer? Unsure at the moment. It seems to work with and without the
+    // footer check. I'm going to leave it with the footer check b/c it seems
+    // like it is more correct...)
     // First we will get the correct topmost row. If this is a header of any
     // sort, the first row should be 0.
     if (this.type == TableType.INDEX_HEADER ||
-        this.type == TableType.MAIN_HEADER) {
+        this.type == TableType.MAIN_HEADER ||
+        this.type == TableType.INDEX_FOOTER ||
+        this.type == TableType.MAIN_FOOTER) {
       topmost = 0;
+      bottommost = 0;
     } else {
       // Otherwise, we need to compute the value.
       // First let's get the row.
       topmost = yScroll / (BORDER_WIDTH + rowHeight);
+      bottommost = (yScroll + metrics.heightPixels) / 
+          (BORDER_WIDTH + rowHeight);
+      if (bottommost >= data.length) {
+        Log.d("TAG", "in if to catch, bottommost: " + bottommost);
+        bottommost = data.length - 1; // don't want to go beyond the last row
+        Log.d("TAG", "reset bottommost to: " + bottommost);
+      }
     }
+    // For a while I was getting an error where it looked like this was not
+    // getting appropriately reset. However, it now seems like for whatever
+    // reason it is indeed working...possibly didn't push the new code to the
+    // phone? Going to leave the logs in here for now in case I stumble across
+    // it again.
+    Log.d(TAG, "bottom most after else is: " + bottommost);
     topmostBorder = topmost * (BORDER_WIDTH + rowHeight);
     topTopmost = topmostBorder + BORDER_WIDTH;
+    topBottommostBorder = bottommost * (BORDER_WIDTH + rowHeight);
+    bottomBottommost = topBottommostBorder + BORDER_WIDTH + rowHeight;
     // And now let's get the correct column. The math here can't be as simple,
-    // b/c unlike rowHeight, columnWidth is not a fixed unit. However, we can
-    // get the correct column from the xs array and the xScroll value.
+    // b/c unlike rowHeight, columnWidth is not a fixed unit. 
     leftmost = getLeftmostColumnBasedOnXScroll(xScroll);
     if (leftmost < 0) {
       Log.e(TAG, "leftmost was < 0 from getLeftmostColumnBasedOnXScroll " +
@@ -359,110 +380,22 @@ class TabularView extends View {
     rightRightmostBorder = leftRightmost + columnWidths[rightmost] 
         + BORDER_WIDTH; // i believe at the end, then, this should be total
                         // width, once it is all on the column?
-    
- 
-// commented all this out after adding the lengthy business above.
-//    int yCoord = sv.getMainScrollY();
-////    int yCoord = 0;
-//    int aboveScroll = 0; 
-//    // now populate as much as we can of the left of scroll.
-//    int row = 0;
-//    // first we want to check we're not at the beginning.
-//    if (yCoord > 0) {
-//      aboveScroll = BORDER_WIDTH; // for the first border
-//      for (row = 0; row < data.length; row++) {
-//        aboveScroll += rowHeight;
-//        aboveScroll += BORDER_WIDTH;
-//        if (aboveScroll > yCoord) {
-//          // if we got too big, undo the damage.
-//          aboveScroll -= rowHeight;
-//          aboveScroll -= BORDER_WIDTH;
-//          //TODO: could there be an edge case here we we only break by border_
-//          //width and undo too much?
-//          break;
-//        }
-//      }
-//    }
-//    yCoord = aboveScroll; // to actually make what we just checked matter
-    // this will store the int that is the top left of our borders.
     int yCoord = topmostBorder;
-    for (int i = topmost; i < data.length; i++) {
-      // i hate this total width thing. it should probably be changed at some 
-      // point if i can figure out how it's being used.
+    for (int i = topmost; i < bottommost + 1; i++) {
       canvas.drawRect(leftmostBorder, yCoord, rightRightmostBorder, yCoord + 
-//      canvas.clipRect(0, yCoord, totalWidth, yCoord+ 
           BORDER_WIDTH, borderPaint);
       yCoord += rowHeight + BORDER_WIDTH;
-      /** adding to try and fix draw**/
-      if (yCoord > sv.getMainScrollY() + metrics.heightPixels) 
-        break;
     }
-//    int xCoord = 0;
-    int xCoord = sv.getMainScrollX();
-    /*
-     * Ok, so now the xcoordinate for drawing the borders around the cells is
-     * set to be where we are in our scrollable view. We want to now compute
-     * the offset correctly. As it was, it was stopping when it got too big,
-     * but that meant everything to the left of the screen was always getting
-     * drawn. That isn't what we want.
-     * 
-     * There are several ways we might do this. Atm column widths are all set
-     * at 125, so we could do some clever math to figure out where to start.
-     * I think it would be something like start drawing at:
-     * (scroll - borderWidth) % (col + borderWidth). The minus border width
-     * is because we have one too many--the first one doesn't pair nicely with
-     * a column. We would then continue drawing at:
-     * colWidth[(scroll - width) / (col + width)] + 2.
-     * So we would then pick up at the right spot in the columnWidths.
-     * 
-     * I'm not positive the above is correct, but it gives you an idea of my
-     * thinking. Instead, however, it seems like we should allow for non-
-     * uniform column widths. This means we'll have to parse through the array
-     * each time. This makes things more flexible, although it might make them
-     * a little bit slower.
-     */
-    int leftOfScroll = 0; // for the first border.
-    // now populate as much as we can of the left of scroll.
-    int col = 0;
-    // first we want to check we're not at the beginning.
-    if (xCoord > 0) {
-      leftOfScroll = BORDER_WIDTH;
-      for (col = 0; col < columnWidths.length; col++) {
-        leftOfScroll += columnWidths[col];
-        leftOfScroll += BORDER_WIDTH;
-        if (leftOfScroll > xCoord) {
-          // if we got too big, undo the damage.
-          leftOfScroll -= columnWidths[col];
-          leftOfScroll -= BORDER_WIDTH;
-          //TODO: could there be an edge case here we we only break by border_
-          //width and undo too much?
-          break;
-        }
-      }
-    }
-    // else we just proceed.
-    // and now we know where we are in the scrollable.
-    xCoord = leftOfScroll;
-//    int xCoord = this.getScrollX();
-    // i used to be zero. changing it.
-    for (int i = col; i < data[0].length; i++) {
-      canvas.drawRect(xCoord, 0, xCoord + BORDER_WIDTH, totalHeight, 
-          borderPaint);
+    int xCoord = leftmostBorder;
+    for (int i = leftmost; i < rightmost + 1; i++) {
+    canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH, 
+        bottomBottommost, borderPaint);
       xCoord += (i == data[0].length) ? 0 : columnWidths[i] + BORDER_WIDTH;
-      /** adding to try and fix draw **/
-      if (xCoord > sv.getMainScrollX() + metrics.widthPixels) 
-        break;
     }
     // drawing the cells
-    int y = BORDER_WIDTH;
-//    boolean broke = false;
-    for (int i = 0; i < data.length; i++) {
-//      if (!broke) { // so we don't check each time of we already broke
-      for (int j = 0; j < data[0].length; j++) {
-        /** adding to try and fix draw **/
-        if (xs[j] > sv.getMainScrollX() + metrics.widthPixels){
-          break;
-        }
+    int y = topTopmost;
+    for (int i = topmost; i < bottommost + 1; i++) {
+      for (int j = leftmost; j < rightmost + 1; j++) {
         String datum = data[i][j];
         if (datum == null) {
           datum = "";
@@ -474,8 +407,6 @@ class TabularView extends View {
       }
       y += rowHeight + BORDER_WIDTH;
       /** adding to try and fix draw **/
-      if (y > sv.getMainScrollY() + metrics.heightPixels)
-        break;
     }
     // highlighting cell (if necessary)
     if (highlightedCellNum != -1) {

@@ -28,6 +28,7 @@ import org.opendatakit.tables.view.util.LockableScrollView;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -47,6 +48,8 @@ import android.widget.LinearLayout;
  */
 public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {
+  
+  private static final String TAG = "SpreadsheetView";
     
     private static final int MIN_CLICK_DURATION = 0;
     private static final int MIN_LONG_CLICK_DURATION = 1000;
@@ -294,14 +297,39 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 mainScroll.scrollTo(mainScroll.getScrollX(),
                         view.getScrollY());
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                  indexScroll.startScrollerTask();
+                  mainScroll.startScrollerTask();
+                }
                 return false;
             }
         });
+        indexScroll.setOnScrollStoppedListener(new 
+            LockableScrollView.OnScrollStoppedListener() {
+              
+              @Override
+              public void onScrollStopped() {
+                Log.i(TAG, "stopped in onStopped of indexScroll");             
+              }
+            });
+        mainScroll.setOnScrollStoppedListener(new 
+            LockableScrollView.OnScrollStoppedListener() {
+              
+              @Override
+              public void onScrollStopped() {
+                Log.i(TAG, "stopped in onStopped of mainScroll");
+                
+              }
+            });
         mainScroll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 indexScroll.scrollTo(indexScroll.getScrollX(),
                         view.getScrollY());
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                  indexScroll.startScrollerTask();
+                  mainScroll.startScrollerTask();
+                }
                 return false;
             }
         });
@@ -428,7 +456,7 @@ public class SpreadsheetView extends LinearLayout
      * @return
      */
     public int getMainScrollX() {
-      // this is getting the right x
+      // this is getting the correct x
       int result = this.wrapScroll.getScrollX(); 
       return result;
     }
@@ -440,7 +468,7 @@ public class SpreadsheetView extends LinearLayout
      * @return
      */
     public int getMainScrollY() {
-      // this is getting the right y
+      // this is getting the correct y
       int result = this.mainScroll.getScrollY(); 
       return result;
     }
