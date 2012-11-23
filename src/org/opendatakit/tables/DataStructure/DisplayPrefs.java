@@ -156,7 +156,8 @@ public class DisplayPrefs {
         }
     }
     
-    public ColumnColorRuler getColColorRuler(String colName) {
+    public ColumnColorRuler getColColorRuler(TableProperties tp, 
+        String colName) {
         // querying the database
         //String[] cols = {"comp", "val", "foreground", "background"};
         String[] cols = DisplayPrefsDBManager.getColumns();
@@ -179,9 +180,6 @@ public class DisplayPrefs {
 	        int backgroundIndex = cs.getColumnIndexOrThrow(
 	            DisplayPrefsDBManager.BACKGROUND_COL);
 	        // initializing the ccr
-	        TableProperties tp = TableProperties.getTablePropertiesForTable(
-	            DbHelper.getDbHelper(context), tableId,
-	            KeyValueStore.Type.ACTIVE);
 	        ColumnProperties cp = tp.getColumnByDbName(
 	            tp.getColumnByDisplayName(colName));
 	        ColumnColorRuler ccr = new ColumnColorRuler(cp.getColumnType());

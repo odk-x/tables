@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.SpreadsheetView;
 
@@ -89,25 +90,27 @@ public class SpreadsheetDisplayActivity extends Activity
     
     @Override
     public void init() {
+      TableProperties tp = c.getTableProperties();
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
-            c.getTableProperties());
+            tp);
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
         indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
         // setting up the view
-        c.setDisplayView(buildView());
+        c.setDisplayView(buildView(tp));
         setContentView(c.getContainerView());
     }
     
-    private View buildView() {
+    private View buildView(TableProperties tp) {
         if (table.getWidth() == 0) {
             TextView tv = new TextView(this);
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, c.getTableViewSettings(),
+            return new SpreadsheetView(this, this, tp, 
+                c.getTableViewSettings(),
                     table, indexedCol, new DisplayPrefs(this,
                             c.getTableProperties().getTableId()));
         }

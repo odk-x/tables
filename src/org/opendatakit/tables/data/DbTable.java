@@ -372,10 +372,10 @@ public class DbTable {
         }
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
-          Log.i(TAG, "i (row): " + i);
+//          Log.i(TAG, "i (row): " + i);
             rowIds[i] = c.getString(rowIdIndex);
             for (int j = 0; j < arrayList.size(); j++) {
-              Log.i(TAG, " j (column): " + j);
+//              Log.i(TAG, " j (column): " + j);
               String value;
               try {
                 value = c.getString(colIndices[j]);

@@ -19,6 +19,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
@@ -62,6 +63,8 @@ public class SpreadsheetView extends LinearLayout
     private final DisplayPrefs dp;
     private final int fontSize;
     
+    private final TableProperties tp;
+    
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
 //    private LockableHorizontalScrollView wrapScroll;
@@ -89,11 +92,13 @@ public class SpreadsheetView extends LinearLayout
     private int lastLongClickedCellId;
     
     public SpreadsheetView(Context context, Controller controller,
+            TableProperties tp ,
             TableViewSettings tvs, UserTable table, int indexedCol,
             DisplayPrefs dp) {
         super(context);
         this.context = context;
         this.controller = controller;
+        this.tp = tp;
         this.tvs = tvs;
         this.table = table;
         this.indexedCol = indexedCol;
@@ -362,38 +367,31 @@ public class SpreadsheetView extends LinearLayout
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
             colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = dp.getColColorRuler(table.getHeader(indexedCol));
+            colorRulers[0] = dp.getColColorRuler(tp, 
+                table.getHeader(indexedCol));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
         } else {
             int width = (indexedCol < 0) ? table.getWidth() :
                 table.getWidth() - 1;
             header = new String[1][width];
-            // sam fiddling
             data = new String[table.getHeight()][width];
             footer = new String[1][width];
             colorRulers = new ColumnColorRuler[width];
             colWidths = new int[width];
             int addIndex = 0;
             for (int i = 0; i < table.getWidth(); i++) {
-              Log.i(TAG, "in outer for loop in build table, index: " + i);
                 if (i == indexedCol) {
                     continue;
                 }
                 header[0][addIndex] = table.getHeader(i);
                 for (int j = 0; j < table.getHeight(); j++) {
-                  Log.i(TAG, "in inner for loop in build table, i: " + i + 
-                      "j: " + j);
                     data[j][addIndex] = table.getData(j, i);
                 }
-                Log.i(TAG, "out of inner for loop");
                 footer[0][addIndex] = table.getFooter(i);
-                Log.i(TAG, "added footer");
                 colorRulers[addIndex] =
-                    dp.getColColorRuler(table.getHeader(i));
-                Log.i(TAG, "added colorRulers");
+                    dp.getColColorRuler(tp, header[0][addIndex]);
                 colWidths[addIndex] = completeColWidths[i];
-                Log.i(TAG, "added column widths");
                 addIndex++;
             }
         }
