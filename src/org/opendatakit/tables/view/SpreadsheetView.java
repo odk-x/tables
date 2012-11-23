@@ -344,6 +344,8 @@ public class SpreadsheetView extends LinearLayout
      * @return a view including the header, body, and footer of the table
      */
     private View buildTable(int indexedCol, boolean isIndexed) {
+      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol + 
+          "isIndexed: " + isIndexed);
         String[][] header;
         String[][] data;
         String[][] footer;
@@ -374,20 +376,28 @@ public class SpreadsheetView extends LinearLayout
             colWidths = new int[width];
             int addIndex = 0;
             for (int i = 0; i < table.getWidth(); i++) {
+              Log.i(TAG, "in outer for loop in build table, index: " + i);
                 if (i == indexedCol) {
                     continue;
                 }
                 header[0][addIndex] = table.getHeader(i);
                 for (int j = 0; j < table.getHeight(); j++) {
+                  Log.i(TAG, "in inner for loop in build table, i: " + i + 
+                      "j: " + j);
                     data[j][addIndex] = table.getData(j, i);
                 }
+                Log.i(TAG, "out of inner for loop");
                 footer[0][addIndex] = table.getFooter(i);
+                Log.i(TAG, "added footer");
                 colorRulers[addIndex] =
                     dp.getColColorRuler(table.getHeader(i));
+                Log.i(TAG, "added colorRulers");
                 colWidths[addIndex] = completeColWidths[i];
+                Log.i(TAG, "added column widths");
                 addIndex++;
             }
         }
+        Log.i(TAG, "out of the else / for loop in buildTable");
         int avanda = getResources().getColor(R.color.Avanda);
         int headerData = getResources().getColor(R.color.header_data);
         int headerIndex = getResources().getColor(R.color.header_index);

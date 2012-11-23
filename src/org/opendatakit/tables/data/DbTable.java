@@ -361,6 +361,7 @@ public class DbTable {
      * The cursor, but not the columns array, must include the row ID column.
      */
     private Table buildTable(Cursor c, ArrayList<String> arrayList) {
+      Log.i(TAG, "entered dbTable buildTable");
         int[] colIndices = new int[arrayList.size()];
         int rowCount = c.getCount();
         String[] rowIds = new String[rowCount];
@@ -371,8 +372,10 @@ public class DbTable {
         }
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
+          Log.i(TAG, "i (row): " + i);
             rowIds[i] = c.getString(rowIdIndex);
             for (int j = 0; j < arrayList.size(); j++) {
+              Log.i(TAG, " j (column): " + j);
               String value;
               try {
                 value = c.getString(colIndices[j]);
@@ -387,6 +390,7 @@ public class DbTable {
             }
             c.moveToNext();
         }
+        Log.i(TAG, "leaving Table buildTable");
         return new Table(rowIds, arrayList, data);
     }
     

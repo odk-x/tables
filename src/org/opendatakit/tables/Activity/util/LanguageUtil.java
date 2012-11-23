@@ -20,9 +20,12 @@ import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewSettings;
 
 import android.graphics.Color;
+import android.util.Log;
 
 
 public class LanguageUtil {
+  
+  private static final String TAG = "LanguageUtil";
     
     public static String getTableTypeLabel(TableType tableType) {
         switch (tableType) {
@@ -53,6 +56,8 @@ public class LanguageUtil {
         case TableViewSettings.Type.MAP:
             return "Map";
         default:
+          Log.e(TAG, "unrecognized viewType in getViewTypeLabel: " +
+              viewType);
             throw new RuntimeException();
         }
     }

@@ -254,14 +254,15 @@ public class KeyValueStore {
    * @param dbh
    * @param entries List of the entries to be added.
    */
-  // TODO: does this enforce the set invariant?
   public void addEntriesToStore(SQLiteDatabase db,
       List<OdkTablesKeyValueStoreEntry> entries) {
     int numInserted = 0;
     for (OdkTablesKeyValueStoreEntry entry : entries) {
       if (entry.value == null)
         entry.value = "";
-      addEntryToStore(db, entry);
+      // We're going to go through insertOrUpdate key to ensure that the set
+      // invariant of the keys in the kvs is enforced.
+      insertOrUpdateKey(db, entry.type, entry.key, entry.value);
       numInserted++;
     }
     Log.d(TAG, "inserted " + numInserted + " key value pairs to kvs");
@@ -304,11 +305,14 @@ public class KeyValueStore {
   
   /*
    * Very basic way to add a key value entry to the store. This is private
-   * because it should only be called via appropriate accessor methods
+   * because it should only be called via insertOrUpdateKey
    * to ensure that there the keys remain a set and that there are no other
    * invariants broken by direct manipulation of the database.
+   * 
+   * If you find that you are using this directly, rather than through 
+   * insertOrUpdateKey, you are responsible for ensuring that the keys for the
+   * table remain a set.
    */
-  // TODO: does this actually check that keys remain a set?
   private void addEntryToStore(SQLiteDatabase db, 
       OdkTablesKeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();

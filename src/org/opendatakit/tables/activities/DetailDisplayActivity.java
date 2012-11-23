@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.tables.view.custom.CustomDetailView;
+import org.opendatakit.tables.view.custom.CustomTableView;
 
 import android.app.Activity;
 import android.os.Bundle;

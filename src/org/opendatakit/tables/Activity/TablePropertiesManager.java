@@ -573,6 +573,29 @@ public class TablePropertiesManager extends PreferenceActivity {
             prefCat.addPreference(listFilePref);
             }
             break;
+            
+        
+//        case TableViewSettings.Type.DETAIL:
+//        {
+//        EditTextPreference detailFilePref = new EditTextPreference(this);
+//        detailFilePref.setTitle(label + " Detail View File");
+//        detailFilePref.setDialogTitle("Change " + label + " Detail View File");
+//        if (settings.getCustomDetailFileName() != null) {
+//            detailFilePref.setDefaultValue(settings.getCustomDetailFileName());
+//        }
+//        detailFilePref.setOnPreferenceChangeListener(
+//                new OnPreferenceChangeListener() {
+//            @Override
+//            public boolean onPreferenceChange(Preference preference,
+//                    Object newValue) {
+//                settings.setCustomDetailFilename((String) newValue);
+//                init();
+//                return false;
+//            }
+//        });
+//        prefCat.addPreference(detailFilePref);
+//        }
+//        break;
         
         case TableViewSettings.Type.LINE_GRAPH:
             {

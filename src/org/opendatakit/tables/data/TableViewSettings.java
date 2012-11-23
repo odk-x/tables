@@ -31,6 +31,8 @@ import org.json.JSONException;
 import android.graphics.Color;
 
 public class TableViewSettings {
+  
+  private static final String TAG = "TableViewSettings";
   private static final ObjectMapper mapper = new ObjectMapper();
 
   enum ViewType {
@@ -50,8 +52,12 @@ public class TableViewSettings {
     }
   }
 
-  public static final int[] MAP_COLOR_OPTIONS = { Color.BLACK, Color.BLUE, Color.GREEN, Color.RED,
-      Color.YELLOW };
+  public static final int[] MAP_COLOR_OPTIONS = { 
+    Color.BLACK, 
+    Color.BLUE, 
+    Color.GREEN, 
+    Color.RED,
+    Color.YELLOW };
 
   private static final String JSON_KEY_VIEW_TYPE = "viewType";
   private static final String JSON_KEY_TABLE_SETTINGS = "table";
@@ -75,8 +81,23 @@ public class TableViewSettings {
   private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
   private static final String JSON_KEY_CUSTOM_SETTINGS = "custom";
   private static final String JSON_KEY_CUSTOM_LIST_FILE = "customListFile";
-  private static final String JSON_KEY_CUSTOM_DETAIL_FILE = "customDetailFile";
   private static final String JSON_KEY_CUSTOM_VIEWS_INFO = "customViewsInfo";
+  
+  /****************************
+   * Keys for key value store.
+   ****************************/
+  /*
+   * Eventually the plan is to have all the keys in the key value store 
+   * managed by the very classes to which they matter, as opposed to saving 
+   * them all in a table properties object, as they do now. The custom will be
+   * class.key. So the list key for this class would be 
+   * "TableViewSettings.list". 
+   * 
+   * This is not yet what happens, but this class is the prime candidate
+   * for where this would happen, as opposed to doing all this mapping into
+   * json objects. So I am making this note about it here.
+   */
+  public static final String KEY_LIST_FILE = "TableViewSettings.list";
 
   private static final int DEFAULT_TABLE_COL_WIDTH = 125;
 
@@ -96,12 +117,11 @@ public class TableViewSettings {
   private String mapLabelCol;
   private Map<String, ConditionalRuler> mapColorRulers;
   private Map<String, ConditionalRuler> mapSizeRulers;
-  // I am adding custom detail name as well. Both of these should point to
-  // filenames on the system that have the information to display the
-  // appropriate views (list or detail). It is not clear to me what the
+  // customListFilename should point to the file on the file system that is
+  // responsible for rendering the  list view of the table.
+  // It is not clear to me what the
   // listFormat String up there is doing.
   private String customListFilename;
-  private String customDetailFilename;
   private List<CustomView> customViews;
 
   private TableViewSettings(TableProperties tp, ViewType type, String dbString) {
@@ -110,7 +130,7 @@ public class TableViewSettings {
     mapColorRulers = new HashMap<String, ConditionalRuler>();
     mapSizeRulers = new HashMap<String, ConditionalRuler>();
     customViews = new ArrayList<CustomView>();
-    if (dbString == null) {
+    if (dbString == null || dbString.equals("")) {
       viewType = Type.SPREADSHEET;
       return;
     }
@@ -226,9 +246,6 @@ public class TableViewSettings {
   private void setCustomFromJsonObject(Map<String, Object> jo) throws JSONException {
     if (jo.containsKey(JSON_KEY_CUSTOM_LIST_FILE)) {
       customListFilename = (String) jo.get(JSON_KEY_CUSTOM_LIST_FILE);
-    }
-    if (jo.containsKey(JSON_KEY_CUSTOM_DETAIL_FILE)) {
-      customDetailFilename = (String) jo.get(JSON_KEY_CUSTOM_DETAIL_FILE);
     }
     if (jo.containsKey(JSON_KEY_CUSTOM_VIEWS_INFO)) {
       ArrayList<Map<String, Object>> viewsJa = (ArrayList<Map<String, Object>>) jo
@@ -351,10 +368,6 @@ public class TableViewSettings {
   public String getCustomListFilename() {
     return customListFilename;
   }
-  
-  public String getCustomDetailFileName() {
-    return customDetailFilename;
-  }
 
   public int getCustomViewCount() {
     return customViews.size();
@@ -465,9 +478,6 @@ public class TableViewSettings {
     if (customListFilename != null) {
       jo.put(JSON_KEY_CUSTOM_LIST_FILE, customListFilename);
     }
-    if (customDetailFilename != null) {
-      jo.put(JSON_KEY_CUSTOM_DETAIL_FILE, customDetailFilename);
-    }
     if (!customViews.isEmpty()) {
       JSONArray ja = new JSONArray();
       for (CustomView cv : customViews) {
@@ -542,11 +552,6 @@ public class TableViewSettings {
     customListFilename = filename;
     set();
   }
-  
-  public void setCustomDetailFilename(String filename) {
-    customDetailFilename = filename;
-    set();
-  }
 
   public void addCustomView(CustomView cv) {
     customViews.add(cv);
@@ -579,6 +584,14 @@ public class TableViewSettings {
     }
   }
 
+  /**
+   * From what I can tell, this method is responsible for populating the menus
+   * where you select what view you want to have for the table.
+   * 
+   * As of Nov22,2012, the only things we support are spreadsheet, list, and
+   * detail.
+   * @return
+   */
   public int[] getPossibleViewTypes() {
     int numericColCount = 0;
     int locationColCount = 0;
@@ -602,7 +615,8 @@ public class TableViewSettings {
     if (numericColCount >= 1) {
       list.add(Type.BOX_STEM);
     }
-    list.add(Type.BAR_GRAPH);
+    // Not adding this b/c it's not working atm.
+//    list.add(Type.BAR_GRAPH);
     if (locationColCount >= 1) {
       list.add(Type.MAP);
     }

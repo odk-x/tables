@@ -1492,6 +1492,10 @@ public class TableProperties {
     setStringProperty(TableDefinitions.DB_LAST_SYNC_TIME, time);
     this.lastSyncTime = time;
   }
+  
+  public KeyValueStore.Type getBackingStoreType() {
+    return this.backingStore;
+  }
 
   /**
    * @return the overview view settings
@@ -1569,6 +1573,7 @@ public class TableProperties {
    */
   public String getDetailViewFilename() {
     return detailViewFilename;
+
   }
 
   /**
