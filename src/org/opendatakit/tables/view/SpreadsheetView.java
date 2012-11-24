@@ -284,6 +284,7 @@ public class SpreadsheetView extends LinearLayout
     LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
     wrapLp.weight = 1;
+    wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
     addView(wrapScroll, wrapLp);
   }
     
@@ -293,6 +294,7 @@ public class SpreadsheetView extends LinearLayout
         wrapScroll = new LockableHorizontalScrollView(context);
         wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
+        wrapScroll.setHorizontalFadingEdgeEnabled(true);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.addView(indexWrapper);
         wrapper.addView(wrapScroll);
@@ -413,6 +415,8 @@ public class SpreadsheetView extends LinearLayout
                 fontSize);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
+        dataScroll.setVerticalFadingEdgeEnabled(true);
+        dataScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = new TabularView(context, this, header,
                 Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),

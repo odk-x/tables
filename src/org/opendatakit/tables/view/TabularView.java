@@ -93,6 +93,8 @@ class TabularView extends View {
     for (int i = 0; i < columnWidths.length; i++) {
       totalWidth += columnWidths[i] + BORDER_WIDTH;
     }
+    setVerticalFadingEdgeEnabled(true);
+    setHorizontalFadingEdgeEnabled(true);
     setMinimumHeight(totalHeight);
     setMinimumWidth(totalWidth);
     setClickable(true);

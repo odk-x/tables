@@ -10,5 +10,5 @@
 	<string name="box_stem_settings_title">Box-Stem Graph Settings</string>
 	<string name="impossible_box_stem">At least one number column is required for box-stem graphs.</string>
 	<!--  authority name for table files -->
-	<string name="table_files_authority">org.opendatakit.tables.tablefilesauthority</string>
+	<string name="table_files_authority">org.opendatakit.tables.tablefilesauthority</string>	
 </resources>

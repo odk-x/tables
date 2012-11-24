@@ -42,29 +42,34 @@ import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.Activity;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockActivity;
+
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.SubMenu;
 
 /**
  * A controller for the elements common to the various table display activities.
@@ -79,123 +84,184 @@ import android.widget.Spinner;
  * display activities be children of MapActivity for no good reason).
  */
 public class Controller {
-
-  public static final String INTENT_KEY_TABLE_ID = "tableId";
-  public static final String INTENT_KEY_SEARCH = "search";
-  public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
-  public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
-
-  public static final int VIEW_ID_SEARCH_FIELD = 0;
-  public static final int VIEW_ID_SEARCH_BUTTON = 1;
-
-  private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 0;
-  private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 1;
-  private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 2;
-  private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 3;
-  static final int FIRST_FREE_MENU_ITEM_ID = 4;
-
-  private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
-  private static final int RCODE_COLUMN_MANAGER = 1;
-  private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
-  private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
-  static final int FIRST_FREE_RCODE = 4;
-
-  private static final String COLLECT_FORMS_URI_STRING = "content://org.odk.collect.android.provider.odk.forms/forms";
-  private static final Uri ODKCOLLECT_FORMS_CONTENT_URI = Uri.parse(COLLECT_FORMS_URI_STRING);
-  private static final String COLLECT_INSTANCES_URI_STRING = "content://org.odk.collect.android.provider.odk.instances/instances";
-  private static final Uri COLLECT_INSTANCES_CONTENT_URI = Uri.parse(COLLECT_INSTANCES_URI_STRING);
-  private static final String ODKCOLLECT_ADDROW_FILENAME = "/sdcard/odk/tables/addrowform.xml";
-  private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
-
-  private final DataUtil du;
-  private final Activity activity;
-  private final DisplayActivity da;
-  private final DataManager dm;
-  private TableProperties tp;
-  private DbTable dbt;
-  private TableViewSettings tvs;
-  private final Stack<String> searchText;
-  private final boolean isOverview;
-  private final RelativeLayout container;
-  private final LinearLayout controlWrap;
-  private final EditText searchField;
-  private final ViewGroup displayWrap;
-  private View overlay;
-  private RelativeLayout.LayoutParams overlayLp;
-  private String rowId = null;
-
-  Controller(Activity activity, final DisplayActivity da, Bundle intentBundle) {
-    du = DataUtil.getDefaultDataUtil();
-    this.activity = activity;
-    this.da = da;
-    // getting intent information
-    String tableId = intentBundle.getString(INTENT_KEY_TABLE_ID);
-    if (tableId == null) {
-      throw new RuntimeException();
-    }
-    searchText = new Stack<String>();
-    if (intentBundle.containsKey(INTENT_KEY_SEARCH_STACK)) {
-      String[] searchValues = intentBundle.getStringArray(INTENT_KEY_SEARCH_STACK);
-      for (String searchValue : searchValues) {
-        searchText.add(searchValue);
-      }
-    } else {
-      String initialSearchText = intentBundle.getString(INTENT_KEY_SEARCH);
-      searchText.add((initialSearchText == null) ? "" : initialSearchText);
-    }
-    isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
-    // initializing data objects
-    dm = new DataManager(DbHelper.getDbHelper(activity));
-    tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tableId);
-    tvs = isOverview ? tp.getOverviewViewSettings() : tp.getCollectionViewSettings();
-    // initializing view objects
-    controlWrap = new LinearLayout(activity);
-    searchField = new EditText(activity);
-    searchField.setId(VIEW_ID_SEARCH_FIELD);
-    searchField.setText(searchText.peek());
-    ImageButton searchButton = new ImageButton(activity);
-    searchButton.setId(VIEW_ID_SEARCH_BUTTON);
-    searchButton.setImageResource(R.drawable.search_icon);
-    searchButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        da.onSearch();
-      }
-    });
-    ImageButton addRowButton = new ImageButton(activity);
-    addRowButton.setImageResource(R.drawable.addrow_icon);
-    addRowButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = getIntentForOdkCollectAddRow();
-        if (intent != null) {
-          Controller.this.activity.startActivityForResult(intent, RCODE_ODKCOLLECT_ADD_ROW);
+    
+    public static final String INTENT_KEY_TABLE_ID = "tableId";
+    public static final String INTENT_KEY_SEARCH = "search";
+    public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
+    public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
+    
+    private String infoBarText = "";
+    
+    public static final int VIEW_ID_SEARCH_FIELD = 0;
+    public static final int VIEW_ID_SEARCH_BUTTON = 1;
+    
+    private static final int MENU_ITEM_ID_SEARCH_BUTTON = 1;
+    private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 0;
+	private static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
+	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 3;
+    private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 4;
+    private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 5;
+    static final int FIRST_FREE_MENU_ITEM_ID = 6;
+    
+    private static final int GROUP_ID_SUBMENU = 1;
+    
+    private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
+    private static final int RCODE_COLUMN_MANAGER = 1;
+    private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
+    private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
+    static final int FIRST_FREE_RCODE = 4;
+    
+    private static final String COLLECT_FORMS_URI_STRING =
+        "content://org.odk.collect.android.provider.odk.forms/forms";
+    private static final Uri ODKCOLLECT_FORMS_CONTENT_URI =
+        Uri.parse(COLLECT_FORMS_URI_STRING);
+    private static final String COLLECT_INSTANCES_URI_STRING =
+        "content://org.odk.collect.android.provider.odk.instances/instances";
+    private static final Uri COLLECT_INSTANCES_CONTENT_URI =
+        Uri.parse(COLLECT_INSTANCES_URI_STRING);
+    private static final String ODKCOLLECT_ADDROW_FILENAME =
+        "/sdcard/odk/tables/addrowform.xml";
+    private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
+    
+    private final DataUtil du;
+    private final SherlockActivity activity;
+    private final DisplayActivity da;
+    private final DataManager dm;
+    private TableProperties tp;
+    private DbTable dbt;
+    private TableViewSettings tvs;
+    private final Stack<String> searchText;
+    private final boolean isOverview;
+    private final RelativeLayout container;
+    private LinearLayout controlWrap;
+    private EditText searchField;
+    private final ViewGroup displayWrap;
+    private View overlay;
+    private RelativeLayout.LayoutParams overlayLp;
+    private String rowId = null;
+    
+    
+    Controller(SherlockActivity activity, final DisplayActivity da,
+            Bundle intentBundle) {
+        du = DataUtil.getDefaultDataUtil();
+        this.activity = activity;
+        this.da = da;
+        // getting intent information
+        String tableId = intentBundle.getString(INTENT_KEY_TABLE_ID);
+        if (tableId == null) {
+            throw new RuntimeException();
         }
-      }
-    });
-    LinearLayout.LayoutParams searchFieldParams = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    searchFieldParams.weight = 1;
-    controlWrap.addView(searchField, searchFieldParams);
-    LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    buttonParams.weight = 0;
-    controlWrap.addView(searchButton, buttonParams);
-    controlWrap.addView(addRowButton, buttonParams);
-    displayWrap = new LinearLayout(activity);
-    LinearLayout wrapper = new LinearLayout(activity);
-    wrapper.setOrientation(LinearLayout.VERTICAL);
-    LinearLayout.LayoutParams controlParams = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    wrapper.addView(controlWrap, controlParams);
-    LinearLayout.LayoutParams displayParams = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT);
-    wrapper.addView(displayWrap, displayParams);
-    container = new RelativeLayout(activity);
-    container.addView(wrapper, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-        ViewGroup.LayoutParams.FILL_PARENT));
-  }
+        searchText = new Stack<String>();
+        if (intentBundle.containsKey(INTENT_KEY_SEARCH_STACK)) {
+            String[] searchValues = intentBundle.getStringArray(
+                    INTENT_KEY_SEARCH_STACK);
+            for (String searchValue : searchValues) {
+                searchText.add(searchValue);
+            }
+        } else {
+            String initialSearchText = intentBundle.getString(
+                    INTENT_KEY_SEARCH);
+            searchText.add((initialSearchText == null) ? "" :
+                initialSearchText);
+        }
+        isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
+        // initializing data objects
+        dm = new DataManager(DbHelper.getDbHelper(activity));
+        tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
+        dbt = dm.getDbTable(tableId);
+        tvs = isOverview ? tp.getOverviewViewSettings() :
+                tp.getCollectionViewSettings();
+        
+        // INITIALIZING VIEW OBJECTS     
+        // controlWrap will hold the search bar and search button 
+        controlWrap = new LinearLayout(activity);
+        // searchField is the search bar
+        searchField = new EditText(activity);
+        // displayWrap holds the spreadsheet/listView/etc 
+        displayWrap = new LinearLayout(activity);
+        // container holds the entire view of the activity
+        container = new RelativeLayout(activity);
+
+        // BUILD VIEW OBJECTS
+        // controlWrap is initialized to be hidden. clicking Action Item, search,
+        // will show/hide it
+        searchField.setId(VIEW_ID_SEARCH_FIELD);
+        searchField.setText(searchText.peek());
+        ImageButton searchButton = new ImageButton(activity);
+        searchButton.setId(VIEW_ID_SEARCH_BUTTON);
+        searchButton.setImageResource(R.drawable.ic_action_search);
+        searchButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                da.onSearch();
+            }
+        });
+        LinearLayout.LayoutParams searchFieldParams =
+                new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        searchFieldParams.weight = 1;
+        controlWrap.addView(searchField, searchFieldParams);
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        buttonParams.weight = 0;
+        controlWrap.addView(searchButton, buttonParams);
+        controlWrap.setVisibility(View.GONE);
+        
+        // info bar currently displays just the name of the table
+        TextView infoBar = createInfoBar(tp.getDisplayName(), Color.parseColor("#B0B0B0"), Color.BLACK);
+        
+
+        LinearLayout wrapper = new LinearLayout(activity);
+        wrapper.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams controlParams =
+                new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        wrapper.addView(controlWrap, controlParams);
+        wrapper.addView(infoBar, controlParams);
+        
+        LinearLayout.LayoutParams displayParams =
+                new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        wrapper.addView(displayWrap, displayParams);
+        container.addView(wrapper, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+    
+    /**
+     * Create a new Info Bar to display below the Action Bar
+     * @param text String to be displayed in the info bar
+     * @param backgroundColor Color of the info bar
+     * @param textColor Color of the text
+     * @return info bar 
+     */
+    public TextView createInfoBar(String text, int backgroundColor, int textColor) {
+        TextView infoBar = new TextView(activity);
+        infoBarText = text;
+        infoBar.setText("Table: " + infoBarText);
+        infoBar.setBackgroundColor(backgroundColor);
+        infoBar.setTextColor(textColor);
+        return infoBar;
+    }
+    
+    /**
+     * Add more text to an existing info bar
+     * @param text String to be added to the info bar
+     */
+    public void addToInfoBar(String text) {
+    	infoBarText += text;
+    }
+    
+    /**
+     * @return the current text in info bar
+     */
+    public String getInfoBarText() {
+    	return infoBarText;
+    }
 
   TableProperties getTableProperties() {
     return tp;
@@ -208,9 +274,13 @@ public class Controller {
   TableViewSettings getTableViewSettings() {
     return tvs;
   }
-
+  
+  /**
+   * @return True if this is an overview type, false if this is 
+   *         collection view type
+   */
   boolean getIsOverview() {
-    return isOverview;
+      return isOverview;
   }
 
   String getSearchText() {
@@ -283,38 +353,7 @@ public class Controller {
       da.init();
     }
   }
-
-  void buildOptionsMenu(Menu menu) {
-    menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties");
-    menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager");
-    menu.add(Menu.NONE, MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE, Menu.NONE, "View Type");
-    menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_MANAGER, Menu.NONE, "Table Manager");
-  }
-
-  boolean handleMenuItemSelection(int itemId) {
-    switch (itemId) {
-    case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES: {
-      Intent intent = new Intent(activity, TablePropertiesManager.class);
-      intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID, tp.getTableId());
-      activity.startActivityForResult(intent, RCODE_TABLE_PROPERTIES_MANAGER);
-    }
-      return true;
-    case MENU_ITEM_ID_OPEN_COLUMN_MANAGER: {
-      Intent intent = new Intent(activity, ColumnManager.class);
-      intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID, tp.getTableId());
-      activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
-    }
-      return true;
-    case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
-      (new ViewTypeSelectorDialog()).show();
-      return true;
-    case MENU_ITEM_ID_OPEN_TABLE_MANAGER:
-      activity.startActivity(new Intent(activity, TableManager.class));
-      return true;
-    default:
-      return false;
-    }
-  }
+ 
 
   void editRow(UserTable table, int rowNum) {
     Intent intent = getIntentForOdkCollectEditRow(table, rowNum);
@@ -421,41 +460,166 @@ public class Controller {
     insertValues.put("formFilePath", ODKCOLLECT_ADDROW_FILENAME);
     insertValues.put("displayName", "Add row: " + tp.getDisplayName());
     insertValues.put("jrFormId", ODKCOLLECT_ADDROW_ID);
-    Uri insertResult = activity.getContentResolver().insert(ODKCOLLECT_FORMS_CONTENT_URI,
-        insertValues);
+    Uri insertResult = activity.getContentResolver().insert(
+            ODKCOLLECT_FORMS_CONTENT_URI, insertValues);
     int formId;
     if (insertResult == null) {
-      // it likely already exists -- try to update...
-      String where = "jrFormId=?";
-      String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
-      int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI,
-          insertValues, where, selectionArgs);
-      if (updateCount < 1) {
-        return null;
-      }
-      // then try to query...
-      Cursor c = null;
-      try {
-        c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where,
-            selectionArgs, null);
-        if (!c.moveToFirst()) {
-          return null;
-        }
-        formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
-      } finally {
-        if (c != null) {
-          c.close();
-        }
-      }
+            // it likely already exists -- try to update...
+            String where = "jrFormId=?";
+            String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
+            int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI, insertValues, 
+                            where, selectionArgs);
+            if ( updateCount < 1 ) {
+                    return null;
+            }
+            // then try to query...
+            Cursor c = null;
+            try {
+                    c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where, selectionArgs, null);
+                    if ( !c.moveToFirst() ) {
+                            return null;
+                    }
+                    formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
+            } finally {
+                    if ( c != null ) {
+                            c.close();
+                    }
+            }
     } else {
-      formId = Integer.valueOf(insertResult.getLastPathSegment());
+            formId = Integer.valueOf(insertResult.getLastPathSegment());
     }
     Intent intent = new Intent();
     intent.setComponent(new ComponentName("org.odk.collect.android",
-        "org.odk.collect.android.activities.FormEntryActivity"));
+            "org.odk.collect.android.activities.FormEntryActivity"));
     intent.setAction(Intent.ACTION_EDIT);
     intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
     return intent;
+}
+    
+    /**
+     * Builds the option menu (menus in the action bar and overflow)
+     * with menu items enabled
+     * @param menu Menu
+     */
+    void buildOptionsMenu(Menu menu) {
+    	this.buildOptionsMenu(menu, true);
+    }
+    
+    /**
+     * Builds the option menu (menus in the action bar and overflow)
+     * Menu items can be enabled (true) or disabled (false)
+     * @param menu Menu
+     * @param enabled boolean
+     */
+    void buildOptionsMenu(Menu menu, boolean enabled) {
+    	ActionBar actionBar = activity.getSupportActionBar();
+    	actionBar.setDisplayHomeAsUpEnabled(true);
+    	
+        MenuItem item; 
+        
+        // search 
+        item = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
+                "Search"); 
+        item.setIcon(R.drawable.ic_action_search);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        item.setEnabled(enabled);
+        
+        
+        // view type submenu
+        // 	  -determine the possible view types
+        final int[] viewTypeIds = tvs.getPossibleViewTypes();
+        String[] viewTypeStringIds = new String[viewTypeIds.length];
+        String[] viewTypeNames = new String[viewTypeIds.length];
+        for (int i = 0; i < viewTypeIds.length; i++) {
+            viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
+            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
+                    viewTypeIds[i]);
+        }
+        // 	  -build a checkable submenu to select the view type
+        SubMenu viewType = menu.addSubMenu("View Type");
+        viewType.setIcon(R.drawable.view);
+        for(int i = 0; i < viewTypeNames.length; i++) {
+        	item = viewType.add(GROUP_ID_SUBMENU, viewTypeIds[i], i, viewTypeNames[i]);
+        	if (tvs.getViewType() == viewTypeIds[i]) {
+                item.setChecked(true);
+            }
+        }
+        viewType.setGroupCheckable(GROUP_ID_SUBMENU, true, true);
+        MenuItem subMenuItem = viewType.getItem();
+        subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        subMenuItem.setEnabled(enabled);
+        
+        // the other action items / menu items 
+        item = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
+              "Add Row").setEnabled(enabled);
+        item.setIcon(R.drawable.addrow_icon);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        
+    	menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
+    			"Table Properties").setEnabled(enabled);
+        menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
+                "Column Manager").setEnabled(enabled);
+        menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_MANAGER, Menu.NONE,
+                "Table Manager").setEnabled(enabled); 
+    }
+
+    /**
+     * Handle menu item that was selected by user
+     * @param selectedItem MenuItem
+     * @return true if selectedItem was handled 
+     */
+	boolean handleMenuItemSelection(MenuItem selectedItem) {
+		int itemId = selectedItem.getItemId();
+		// if the item is part of the sub-menu for view type, set the view type with its itemId
+	    // else, handle accordingly
+		if(selectedItem.getGroupId() == GROUP_ID_SUBMENU) {
+			tvs.setViewType(itemId);
+            Controller.launchTableActivity(activity, tp, searchText,
+                    isOverview);
+            activity.finish();
+            return true;
+		} else {
+	        switch (itemId) {
+	        case MENU_ITEM_ID_SEARCH_BUTTON:
+	        	int visible = controlWrap.getVisibility();
+	        	if (visible == View.GONE)
+	        		controlWrap.setVisibility(View.VISIBLE);
+	        	else
+	        		controlWrap.setVisibility(View.GONE);
+	        	return true;  
+	        case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
+	        	return true;
+	        case MENU_ITEM_ID_ADD_ROW_BUTTON:
+	            Intent intentAddRow = getIntentForOdkCollectAddRow();
+	            if (intentAddRow != null) {
+	                Controller.this.activity.startActivityForResult(intentAddRow,
+	                        RCODE_ODKCOLLECT_ADD_ROW);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
+	            {
+	            Intent intent = new Intent(activity, TablePropertiesManager.class);
+	            intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
+	                    tp.getTableId());
+	            activity.startActivityForResult(intent,
+	                    RCODE_TABLE_PROPERTIES_MANAGER);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
+	            {
+	            Intent intent = new Intent(activity, ColumnManager.class);
+	            intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
+	                    tp.getTableId());
+	            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
+	            }
+	            return true;
+	        case MENU_ITEM_ID_OPEN_TABLE_MANAGER:
+	            activity.startActivity(new Intent(activity, TableManager.class));
+	            return true;
+	        default:
+	            return false;
+	        }
+        }
   }
 
   Intent getIntentForOdkCollectAddRow() {
@@ -541,15 +705,6 @@ public class Controller {
     return intent;
   }
 
-  private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-    if (returnCode != Activity.RESULT_OK) {
-      return;
-    }
-    int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-    addRowFromOdkCollectForm(instanceId);
-    da.init();
-  }
-
   boolean addRowFromOdkCollectForm(int instanceId) {
     Map<String, String> formValues = getOdkCollectFormValues(instanceId);
     if (formValues == null) {
@@ -557,45 +712,54 @@ public class Controller {
     }
     Map<String, String> values = new HashMap<String, String>();
     for (String key : formValues.keySet()) {
-      ColumnProperties cp = tp.getColumnByDbName(key);
-      if (cp == null) {
-        continue;
-      }
-      String value = du.validifyValue(cp, formValues.get(key));
-      if (value != null) {
-        values.put(key, value);
-      }
+        ColumnProperties cp = tp.getColumnByDbName(key);
+        if (cp == null) {
+            continue;
+        }
+        String value = du.validifyValue(cp, formValues.get(key));
+        if (value != null) {
+            values.put(key, value);
+        }
     }
     dbt.addRow(values);
     return true;
   }
-
-  private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-    if (returnCode != Activity.RESULT_OK) {
-      return;
+    
+    private void handleOdkCollectAddReturn(int returnCode, Intent data) {
+        if (returnCode != SherlockActivity.RESULT_OK) {
+            return;
+        }
+        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+        addRowFromOdkCollectForm(instanceId);
+        da.init();
     }
-    int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-    updateRowFromOdkCollectForm(instanceId);
-    da.init();
-  }
-
-  boolean updateRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-    if (formValues == null) {
-      return false;
+    
+    private void handleOdkCollectEditReturn(int returnCode, Intent data) {
+        if (returnCode != SherlockActivity.RESULT_OK) {
+            return;
+        }
+        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+        updateRowFromOdkCollectForm(instanceId);
+        da.init();
     }
-    Map<String, String> values = new HashMap<String, String>();
-
-    for (ColumnProperties cp : tp.getColumns()) {
-      String key = cp.getColumnDbName();
-      String value = du.validifyValue(cp, formValues.get(key));
-      if (value != null) {
-        values.put(key, value);
+    
+    boolean updateRowFromOdkCollectForm(int instanceId) {
+      Map<String, String> formValues = getOdkCollectFormValues(instanceId);
+      if (formValues == null) {
+          return false;
       }
-    }
-    dbt.updateRow(rowId, values);
-    rowId = null;
-    return true;
+      Map<String, String> values = new HashMap<String, String>();
+
+      for (ColumnProperties cp : tp.getColumns()) {
+              String key = cp.getColumnDbName();
+          String value = du.validifyValue(cp, formValues.get(key));
+          if (value != null) {
+              values.put(key,value);
+          }
+      }
+      dbt.updateRow(rowId, values);
+      rowId = null;
+      return true;
   }
 
   private Map<String, String> getOdkCollectFormValues(int instanceId) {
@@ -708,95 +872,110 @@ public class Controller {
     context.startActivity(intent);
   }
 
-  private class ViewTypeSelectorDialog extends AlertDialog {
 
-    public ViewTypeSelectorDialog() {
-      super(activity);
-      buildView(activity);
-    }
-
-    private void buildView(Context context) {
-      LinearLayout wrapper = new LinearLayout(context);
-      wrapper.setOrientation(LinearLayout.VERTICAL);
-      // adding the view type spinner
-      int selectionIndex = 0;
-      final int[] viewTypeIds = tvs.getPossibleViewTypes();
-      String[] viewTypeStringIds = new String[viewTypeIds.length];
-      String[] viewTypeNames = new String[viewTypeIds.length];
-      for (int i = 0; i < viewTypeIds.length; i++) {
-        if (tvs.getViewType() == viewTypeIds[i]) {
-          selectionIndex = i;
+//    public class SearchActionProvider extends ActionProvider implements OnDragListener {  	 
+//        Context mContext;
+//        public SearchActionProvider(Context context) {
+//            super(context);
+//            mContext = context;
+//        }
+//     
+//        @Override
+//        public View onCreateActionView() {
+//    		controlWrap = new LinearLayout(mContext);
+//            searchField = new EditText(mContext);
+//            searchField.setId(VIEW_ID_SEARCH_FIELD);
+//            searchField.setText(searchText.peek());
+//            ImageButton searchButton = new ImageButton(mContext);
+//            searchButton.setId(VIEW_ID_SEARCH_BUTTON);
+//            searchButton.setImageResource(R.drawable.ic_action_search);
+//            searchButton.setOnClickListener(new OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    da.onSearch();
+//                }
+//            });
+//
+//            LinearLayout.LayoutParams searchFieldParams =
+//                    new LinearLayout.LayoutParams(
+//                    LinearLayout.LayoutParams.MATCH_PARENT,
+//                    LinearLayout.LayoutParams.WRAP_CONTENT);
+//            searchFieldParams.weight = 1;
+//            controlWrap.addView(searchField, searchFieldParams);
+//            
+////            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
+////                    LinearLayout.LayoutParams.WRAP_CONTENT,
+////                    LinearLayout.LayoutParams.WRAP_CONTENT);
+////            buttonParams.weight = 0;
+////            controlWrap.addView(searchButton, buttonParams);
+//            return controlWrap;
+//        }
+//
+//        @Override
+//        public boolean onDrag(View v, DragEvent event) {
+//        	int action = event.getAction();
+//        	switch (event.getAction()) {
+//        	case DragEvent.ACTION_DRAG_STARTED:
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DRAG_ENTERED:
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DRAG_EXITED:      
+//        		// Do nothing
+//        		break;
+//        	case DragEvent.ACTION_DROP:
+//        		// Dropped, reassign View to ViewGroup
+//        		View view = (View) event.getLocalState();
+//        		ViewGroup owner = (ViewGroup) view.getParent();
+//        		owner.removeView(view);
+//        		LinearLayout container = (LinearLayout) v;
+//        		container.addView(view);
+//        		view.setVisibility(View.VISIBLE);
+//        		break;
+//        	case DragEvent.ACTION_DRAG_ENDED:
+//        		// Do nothing
+//        	default:
+//        		break;
+//        	}
+//        	return true;
+//        }
+//    }
+    
+    private class CellEditDialog extends AlertDialog {
+        
+        private final String rowId;
+        private final int colIndex;
+        private final CellValueView.CellEditView cev;
+        
+        public CellEditDialog(String rowId, String value, int colIndex) {
+            super(activity);
+            this.rowId = rowId;
+            this.colIndex = colIndex;
+            cev = CellValueView.getCellEditView(activity,
+                    tp.getColumns()[colIndex], value);
+            buildView(activity);
         }
-        viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
-        viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewTypeIds[i]);
-      }
-      ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
-          android.R.layout.simple_spinner_item, viewTypeNames);
-      adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-      final Spinner spinner = new Spinner(context);
-      spinner.setAdapter(adapter);
-      spinner.setSelection(selectionIndex);
-      wrapper.addView(spinner);
-      // adding the set and cancel buttons
-      Button setButton = new Button(context);
-      setButton.setText(activity.getResources().getString(R.string.set));
-      setButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          tvs.setViewType(viewTypeIds[spinner.getSelectedItemPosition()]);
-          Controller.launchTableActivity(activity, tp, searchText, isOverview);
-          activity.finish();
-        }
-      });
-      Button cancelButton = new Button(context);
-      cancelButton.setText(activity.getResources().getString(R.string.cancel));
-      cancelButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          dismiss();
-        }
-      });
-      LinearLayout buttonWrapper = new LinearLayout(context);
-      buttonWrapper.addView(setButton);
-      buttonWrapper.addView(cancelButton);
-      wrapper.addView(buttonWrapper);
-      // setting the dialog view
-      setView(wrapper);
-    }
-  }
-
-  private class CellEditDialog extends AlertDialog {
-
-    private final String rowId;
-    private final int colIndex;
-    private final CellValueView.CellEditView cev;
-
-    public CellEditDialog(String rowId, String value, int colIndex) {
-      super(activity);
-      this.rowId = rowId;
-      this.colIndex = colIndex;
-      cev = CellValueView.getCellEditView(activity, tp.getColumns()[colIndex], value);
-      buildView(activity);
-    }
-
-    private void buildView(Context context) {
-      Button setButton = new Button(context);
-      setButton.setText(activity.getResources().getString(R.string.set));
-      setButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          String value = du.validifyValue(tp.getColumns()[colIndex], cev.getValue());
-          if (value == null) {
-            // TODO: alert the user
-            return;
-          }
-          Map<String, String> values = new HashMap<String, String>();
-          values.put(tp.getColumns()[colIndex].getColumnDbName(), value);
-          dbt.updateRow(rowId, values);
-          da.init();
-          dismiss();
-        }
-      });
+        private void buildView(Context context) {
+          Button setButton = new Button(context);
+          setButton.setText(activity.getResources().getString(R.string.set));
+          setButton.setOnClickListener(new View.OnClickListener() {
+              @Override
+              public void onClick(View v) {
+                  String value = du.validifyValue(tp.getColumns()[colIndex],
+                          cev.getValue());
+                  if (value == null) {
+                      // TODO: alert the user
+                      return;
+                  }
+                  Map<String, String> values = new HashMap<String, String>();
+                  values.put(tp.getColumns()[colIndex].getColumnDbName(),
+                          value);
+                  dbt.updateRow(rowId, values);
+                  da.init();
+                  dismiss();
+              }
+          });
       Button cancelButton = new Button(context);
       cancelButton.setText(activity.getResources().getString(R.string.cancel));
       cancelButton.setOnClickListener(new View.OnClickListener() {

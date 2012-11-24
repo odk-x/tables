@@ -38,10 +38,13 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.RelativeLayout;
+
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -51,7 +54,7 @@ import com.google.android.maps.OverlayItem;
 import com.google.android.maps.Projection;
 
 
-public class MapDisplayActivity extends MapActivity
+public class MapDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
@@ -165,15 +168,13 @@ public class MapDisplayActivity extends MapActivity
         }
     }
     
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu);
         return true;
     }
     
-    @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override
@@ -182,7 +183,6 @@ public class MapDisplayActivity extends MapActivity
         init();
     }
     
-    @Override
     protected boolean isRouteDisplayed() {
         return false;
     }

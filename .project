@@ -30,4 +30,11 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>library</name>
+			<type>2</type>
+			<location>/usr/local/Library/ActionBarSherlock-4.2.0/library</location>
+		</link>
+	</linkedResources>
 </projectDescription>

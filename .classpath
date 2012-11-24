@@ -17,6 +17,5 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/httpclientandroidlib-4.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/fileManifestObjects.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/android-support-v4.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
