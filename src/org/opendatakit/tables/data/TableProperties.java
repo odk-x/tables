@@ -553,10 +553,8 @@ public class TableProperties {
         props.get(KEY_SORT_COLUMN),
         props.get(TableDefinitions.DB_SYNC_TAG),
         props.get(TableDefinitions.DB_LAST_SYNC_TIME),
-// TODO: replace these nulls with appropriate co_view stuff
-        null, null,
-//        props.get(KEY_OV_VIEW_SETTINGS),
-//        props.get(KEY_CO_VIEW_SETTINGS),
+        props.get(KEY_OV_VIEW_SETTINGS),
+        props.get(KEY_CO_VIEW_SETTINGS),
         props.get(KEY_DETAIL_VIEW_FILE),
         props.get(KEY_SUM_DISPLAY_FORMAT),
         syncState,

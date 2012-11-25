@@ -374,8 +374,8 @@ public class Controller {
      * @param enabled boolean
      */
     void buildOptionsMenu(Menu menu, boolean enabled) {
-    	ActionBar actionBar = activity.getSupportActionBar();
-    	actionBar.setDisplayHomeAsUpEnabled(true);
+//    	ActionBar actionBar = activity.getSupportActionBar();
+//    	actionBar.setDisplayHomeAsUpEnabled(true);
     	
         MenuItem item; 
         
@@ -415,7 +415,7 @@ public class Controller {
         item = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
               "Add Row").setEnabled(enabled);
         item.setIcon(R.drawable.addrow_icon);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM|MenuItem.SHOW_AS_ACTION_WITH_TEXT);
         
     	menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
     			"Table Properties").setEnabled(enabled);

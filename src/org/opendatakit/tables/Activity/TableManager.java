@@ -103,7 +103,7 @@ public class TableManager extends SherlockListActivity {
 	 private void makeNoTableNotice() {
 		 List<HashMap<String, String>> fillMaps = new ArrayList<HashMap<String, String>>();
 		 HashMap<String, String> temp = new HashMap<String, String>();
-		 temp.put("label", "Use the + button in the top right corner to add a new table");
+		 temp.put("label", "Use the + button to add a new table");
 		 fillMaps.add(temp);
 		 arrayAdapter = new SimpleAdapter(this, fillMaps, R.layout.white_list_row, from, to);
 		 setListAdapter(arrayAdapter);

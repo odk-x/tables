@@ -90,6 +90,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         setTitle("");
         dm = new DataManager(DbHelper.getDbHelper(this));
         c = new Controller(this, this, getIntent().getExtras());
+    	ActionBar actionBar = getSupportActionBar();
+    	actionBar.setDisplayHomeAsUpEnabled(true);
         init();
     }
     
