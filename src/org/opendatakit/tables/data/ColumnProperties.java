@@ -417,7 +417,7 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private String joins;
+  private JoinColumn joins;
   // private String joinTableId;
   // private String joinElementKey;
   private boolean isPersisted;
@@ -439,7 +439,7 @@ public class ColumnProperties {
       String elementName,
       ColumnType elementType,
       List<String> listChildElementKeys,
-      String joins,
+      JoinColumn joins,
       // String joinTableId,
       // String joinElementKey,
       boolean isPersisted, 
@@ -661,6 +661,7 @@ public class ColumnProperties {
     String parseValue = null;
     ArrayList<String> displayChoicesMap = null;
     ArrayList<String> listChildElementKeys = null;
+    JoinColumn joins = null;
     try {
       if (props.get(KEY_DISPLAY_CHOICES_MAP) != null)  {
         String displayChoicesMapValue = props.get(KEY_DISPLAY_CHOICES_MAP);
@@ -673,6 +674,11 @@ public class ColumnProperties {
             props.get(ColumnDefinitions.DB_LIST_CHILD_ELEMENT_KEYS);
         parseValue = listChildElementKeysValue;
         listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
+      }
+      if (props.get(ColumnDefinitions.DB_JOINS) != null) {
+        String joinsValue = props.get(ColumnDefinitions.DB_JOINS);
+        parseValue = joinsValue;
+        joins = mapper.readValue(joinsValue, JoinColumn.class);
       }
     } catch (JsonParseException e) {
       e.printStackTrace();
@@ -695,7 +701,7 @@ public class ColumnProperties {
         props.get(ColumnDefinitions.DB_ELEMENT_NAME),
         columnType,
         listChildElementKeys,
-        props.get(ColumnDefinitions.DB_JOINS),
+        joins,
         isPersisted,
         displayVisible,
         props.get(KEY_DISPLAY_NAME),
@@ -1423,13 +1429,38 @@ public class ColumnProperties {
   // return joinTableId;
   // }
 
-  public String getJoins() {
+  public JoinColumn getJoins() {
     return joins;
   }
 
-  public void setJoins(String joins) {
-    setStringProperty(ColumnDefinitions.DB_JOINS, joins);
-    this.joins = joins;
+  /**
+   * Converts the JoinColumn to the json representation of the object 
+   * using a mapper and adds it to the database.
+   * <p>
+   * If there is a mapping exception of writing the JoinColumn to a String, it
+   * does nothing, leaving the database untouched.
+   * @param joins
+   */
+  public void setJoins(JoinColumn joins) {
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
+    String joinsStr = null;
+    try {
+      joinsStr = mapper.writeValueAsString(joins);
+    } catch (JsonGenerationException e) {
+      Log.e(TAG, "JsonGenerationException writing joins in ColumnProperties");
+      e.printStackTrace();
+    } catch (JsonMappingException e) {
+      Log.e(TAG, "JsonMappingException writing joins in ColumnProperties");
+      e.printStackTrace();
+    } catch (IOException e) {
+      Log.e(TAG, "IOException writing joins in ColumnProperties");
+      e.printStackTrace();
+    } 
+    if (joinsStr != null) {
+      setStringProperty(ColumnDefinitions.DB_JOINS, joinsStr);
+      this.joins = joins;
+    }
   }
 
   /**
@@ -1548,7 +1579,7 @@ public class ColumnProperties {
         "",
         ColumnType.NONE,
         new ArrayList<String>(),
-        "",
+        null,
         true,
         1,
         "",
@@ -1595,11 +1626,14 @@ public class ColumnProperties {
 //        (String) jo.get(JSON_KEY_ELEMENT_TYPE)));
     String joElType = (String) jo.get(JSON_KEY_ELEMENT_TYPE);
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
+    String joJoins = (String) jo.get(JSON_KEY_JOINS);
     ColumnType colType = null;
     FooterMode footMode = null;
+    JoinColumn joins = null;
     try {
       colType = mapper.readValue(joElType, ColumnType.class);
       footMode = mapper.readValue(joFootMode, FooterMode.class);
+      joins = mapper.readValue(joJoins, JoinColumn.class);
     } catch (JsonParseException e) {
       e.printStackTrace();
     } catch (JsonMappingException e) {
@@ -1616,9 +1650,9 @@ public class ColumnProperties {
     }
     setElementType(colType);
     setFooterMode(footMode);
+    setJoins(joins);
     setListChildElementKeys(
         (ArrayList<String>) jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS));
-    setJoins((String) jo.get(JSON_KEY_JOINS));
     // setJoinTableId((String) jo.get(JSON_KEY_JOIN_TABLE_ID));
     // setJoinColumnName((String) jo.get(JSON_KEY_JOIN_ELEMENT_KEY));
     setIsPersisted((Boolean) jo.get(JSON_KEY_IS_PERSISTED));
