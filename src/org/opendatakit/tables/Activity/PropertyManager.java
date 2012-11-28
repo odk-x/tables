@@ -142,7 +142,8 @@ public class PropertyManager extends PreferenceActivity {
       // first handle what happens if it's null.
       JoinColumn joins = cp.getJoins();
       if (joins == null) {
-        joins = new JoinColumn("","");
+        joins = new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE,
+            JoinColumn.DEFAULT_NOT_SET_VALUE);
         cp.setJoins(joins);
       }
       String joinTableId = cp.getJoins().getTableId();

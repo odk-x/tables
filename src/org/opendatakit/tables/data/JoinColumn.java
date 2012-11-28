@@ -28,6 +28,11 @@ package org.opendatakit.tables.data;
  */
 public class JoinColumn {
   
+  /**
+   * This is the message that should be added to the join column upon creation.
+   */
+  public static final String DEFAULT_NOT_SET_VALUE = "";
+  
   /*
    * The table id of the table to which you are joining.
    */

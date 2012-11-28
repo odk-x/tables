@@ -1012,6 +1012,18 @@ public class TableProperties {
     }
     return getColumns()[colIndex];
   }
+  
+  /**
+   * Return a column properties object for the column at the given index.
+   * @param index
+   * @return
+   */
+  public ColumnProperties getColumnByIndex(int index) {
+    if (index < 0) {
+      return null;
+    }
+    return getColumns()[index];
+  }
 
   public int getColumnIndex(String colDbName) {
     ArrayList<String> colOrder = getColumnOrder();

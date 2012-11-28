@@ -1180,6 +1180,7 @@ public class ColumnProperties {
    */
 
   /**
+   * Returns the elementKey of the column.
    * @return the column's name in the database
    */
   public String getColumnDbName() {

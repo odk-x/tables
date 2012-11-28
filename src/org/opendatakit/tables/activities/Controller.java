@@ -84,6 +84,8 @@ import com.actionbarsherlock.view.SubMenu;
  * display activities be children of MapActivity for no good reason).
  */
 public class Controller {
+  
+  private static final String TAG = "Controller";
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     public static final String INTENT_KEY_SEARCH = "search";
@@ -511,11 +513,12 @@ public class Controller {
      * @param menu Menu
      * @param enabled boolean
      */
-    void buildOptionsMenu(Menu menu, boolean enabled) {
+    void buildOptionsMenu(com.actionbarsherlock.view.Menu menu, 
+        boolean enabled) {
     	ActionBar actionBar = activity.getSupportActionBar();
     	actionBar.setDisplayHomeAsUpEnabled(true);
     	
-        MenuItem item; 
+    	com.actionbarsherlock.view.MenuItem item; 
         
         // search 
         item = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
@@ -568,7 +571,9 @@ public class Controller {
      * @param selectedItem MenuItem
      * @return true if selectedItem was handled 
      */
-	boolean handleMenuItemSelection(MenuItem selectedItem) {
+	boolean handleMenuItemSelection(com.actionbarsherlock.view.MenuItem selectedItem) {
+	  Log.d(TAG, "entered handleMenuItemSelection for item: " 
+	      + selectedItem.getItemId());
 		int itemId = selectedItem.getItemId();
 		// if the item is part of the sub-menu for view type, set the view type with its itemId
 	    // else, handle accordingly
@@ -617,6 +622,8 @@ public class Controller {
 	            activity.startActivity(new Intent(activity, TableManager.class));
 	            return true;
 	        default:
+	          Log.d(TAG, "reached default in handleItemSelection, selected " +
+	          		"item not found: " + itemId);
 	            return false;
 	        }
         }
