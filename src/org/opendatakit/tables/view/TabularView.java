@@ -100,16 +100,23 @@ class TabularView extends View {
     setMinimumWidth(totalWidth);
     setClickable(true);
     this.metrics = getResources().getDisplayMetrics();
-    this.xs = new int[data[0].length];
-    xs[0] = BORDER_WIDTH;
-    for (int i = 0; i < data[0].length - 1; i++) {
-      xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
+    // check to make sure you don't get out of bounds exceptions.
+    if (data.length > 0) {
+      this.xs = new int[data[0].length];
+      xs[0] = BORDER_WIDTH;
+      for (int i = 0; i < data[0].length - 1; i++) {
+        xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
+      }
+    } else {
+      this.xs = new int[0];
     }
     this.spans = new int[xs.length];
-    int total = 0;
-    for (int i = 0; i < this.spans.length; i++) {
-      spans[i] = total;
-      total += BORDER_WIDTH + columnWidths[i];
+    if (spans.length > 0) {
+      int total = 0;
+      for (int i = 0; i < this.spans.length; i++) {
+        spans[i] = total;
+        total += BORDER_WIDTH + columnWidths[i];
+      }
     }
   }
 
@@ -148,7 +155,7 @@ class TabularView extends View {
   @Override
   public void onDraw(Canvas canvas) {
     // Logging when this is called to see why it is so slow to view a table.
-    Log.d(TAG, "onDraw called");
+    Log.d(TAG, "onDraw called for type: " + this.type);
     if (data.length == 0) {
       return;
     }

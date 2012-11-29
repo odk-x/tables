@@ -167,18 +167,20 @@ public class TableViewSettings {
     if (jo.containsKey(JSON_KEY_LIST_SETTINGS)) {
       setListFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LIST_SETTINGS));
     }
-    if (jo.containsKey(JSON_KEY_LINE_SETTINGS)) {
-      setLineFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LINE_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_BAR_SETTINGS)) {
-      setBarFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BAR_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_BOX_STEM_SETTINGS)) {
-      setBoxStemFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BOX_STEM_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_MAP_SETTINGS)) {
-      setMapFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_MAP_SETTINGS));
-    }
+// TODO removing these so that it speeds up creation. We should figure out how
+    // to incorporate these correctly, though.
+//    if (jo.containsKey(JSON_KEY_LINE_SETTINGS)) {
+//      setLineFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LINE_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BAR_SETTINGS)) {
+//      setBarFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BAR_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BOX_STEM_SETTINGS)) {
+//      setBoxStemFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BOX_STEM_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_MAP_SETTINGS)) {
+//      setMapFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_MAP_SETTINGS));
+//    }
     if (jo.containsKey(JSON_KEY_CUSTOM_SETTINGS)) {
       setCustomFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_CUSTOM_SETTINGS));
     }

@@ -216,6 +216,65 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	  return true;
 	}
 	
+	@Override
+	public boolean onContextItemSelected(android.view.MenuItem item) {
+	  Log.d(TAG, "onContextItemSelected, android MenuItem");
+     switch (item.getItemId()) {
+     case MENU_ITEM_ID_HISTORY_IN:
+         openCollectionView(lastDataCellMenued / table.getWidth());
+         return true;
+     case MENU_ITEM_ID_EDIT_CELL:
+         c.openCellEditDialog(
+                 table.getRowId(lastDataCellMenued / table.getWidth()),
+                 table.getData(lastDataCellMenued),
+                 lastDataCellMenued % table.getWidth());
+         return true;
+     case MENU_ITEM_ID_DELETE_ROW:
+         c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
+         init();
+         return true;
+     case MENU_ITEM_ID_EDIT_ROW:
+       c.editRow(table, (lastDataCellMenued / table.getWidth()));
+       // launch ODK Collect
+       return true;
+     case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
+         setColumnAsPrime(c.getTableProperties()
+                 .getColumns()[lastHeaderCellMenued]);
+         init();
+         return true;
+     case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
+         unsetColumnAsPrime(c.getTableProperties()
+                 .getColumns()[lastHeaderCellMenued]);
+         init();
+         return true;
+     case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
+         setColumnAsSort(c.getTableProperties()
+                 .getColumns()[lastHeaderCellMenued]);
+         init();
+         return true;
+     case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
+         setColumnAsSort(null);
+         init();
+         return true;
+     case MENU_ITEM_ID_SET_AS_INDEXED_COL:
+         setColumnAsIndexedCol(c.getTableProperties()
+                 .getColumns()[lastHeaderCellMenued]);
+         init();
+         return true;
+     case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
+         setColumnAsIndexedCol(null);
+         init();
+         return true;
+     case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
+         openColumnPropertiesManager(c.getTableProperties()
+                 .getColumns()[lastHeaderCellMenued]);
+         return true;
+     default:
+       Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
+         return false;
+     }
+	}
+	
 
     
 	/**
@@ -223,71 +282,71 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	 * clicks stemming from the View, or from android.view.MenuItem items. The
 	 * one to handle ActionBarSherlock methods is elsewhere.
 	 */
-    @Override
-    public boolean onMenuItemSelected(int featureId, 
-        android.view.MenuItem item) {
-      Log.d(TAG, "entered android's onMenuItemSelected");
-//        if (c.handleMenuItemSelection(item)) {
-//          Log.d(TAG, "item was already handled");
+//    @Override
+//    public boolean onMenuItemSelected(int featureId, 
+//        android.view.MenuItem item) {
+//      Log.d(TAG, "entered android's onMenuItemSelected");
+////        if (c.handleMenuItemSelection(item)) {
+////          Log.d(TAG, "item was already handled");
+////            return true;
+////        }
+//      Log.d(TAG, "item instance of sherlock: " + 
+//          (item instanceof com.actionbarsherlock.view.MenuItem));
+//        switch (item.getItemId()) {
+//        case MENU_ITEM_ID_HISTORY_IN:
+//            openCollectionView(lastDataCellMenued / table.getWidth());
 //            return true;
+//        case MENU_ITEM_ID_EDIT_CELL:
+//            c.openCellEditDialog(
+//                    table.getRowId(lastDataCellMenued / table.getWidth()),
+//                    table.getData(lastDataCellMenued),
+//                    lastDataCellMenued % table.getWidth());
+//            return true;
+//        case MENU_ITEM_ID_DELETE_ROW:
+//            c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_EDIT_ROW:
+//    		c.editRow(table, (lastDataCellMenued / table.getWidth()));
+//        	// launch ODK Collect
+//        	return true;
+//        case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
+//            setColumnAsPrime(c.getTableProperties()
+//                    .getColumns()[lastHeaderCellMenued]);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
+//            unsetColumnAsPrime(c.getTableProperties()
+//                    .getColumns()[lastHeaderCellMenued]);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
+//            setColumnAsSort(c.getTableProperties()
+//                    .getColumns()[lastHeaderCellMenued]);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
+//            setColumnAsSort(null);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_SET_AS_INDEXED_COL:
+//            setColumnAsIndexedCol(c.getTableProperties()
+//                    .getColumns()[lastHeaderCellMenued]);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
+//            setColumnAsIndexedCol(null);
+//            init();
+//            return true;
+//        case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
+//            openColumnPropertiesManager(c.getTableProperties()
+//                    .getColumns()[lastHeaderCellMenued]);
+//            return true;
+//        default:
+//          Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
+//            return false;
 //        }
-      Log.d(TAG, "item instance of sherlock: " + 
-          (item instanceof com.actionbarsherlock.view.MenuItem));
-        switch (item.getItemId()) {
-        case MENU_ITEM_ID_HISTORY_IN:
-            openCollectionView(lastDataCellMenued / table.getWidth());
-            return true;
-        case MENU_ITEM_ID_EDIT_CELL:
-            c.openCellEditDialog(
-                    table.getRowId(lastDataCellMenued / table.getWidth()),
-                    table.getData(lastDataCellMenued),
-                    lastDataCellMenued % table.getWidth());
-            return true;
-        case MENU_ITEM_ID_DELETE_ROW:
-            c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
-            init();
-            return true;
-        case MENU_ITEM_ID_EDIT_ROW:
-    		c.editRow(table, (lastDataCellMenued / table.getWidth()));
-        	// launch ODK Collect
-        	return true;
-        case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
-            setColumnAsPrime(c.getTableProperties()
-                    .getColumns()[lastHeaderCellMenued]);
-            init();
-            return true;
-        case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
-            unsetColumnAsPrime(c.getTableProperties()
-                    .getColumns()[lastHeaderCellMenued]);
-            init();
-            return true;
-        case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-            setColumnAsSort(c.getTableProperties()
-                    .getColumns()[lastHeaderCellMenued]);
-            init();
-            return true;
-        case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-            setColumnAsSort(null);
-            init();
-            return true;
-        case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-            setColumnAsIndexedCol(c.getTableProperties()
-                    .getColumns()[lastHeaderCellMenued]);
-            init();
-            return true;
-        case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-            setColumnAsIndexedCol(null);
-            init();
-            return true;
-        case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
-            openColumnPropertiesManager(c.getTableProperties()
-                    .getColumns()[lastHeaderCellMenued]);
-            return true;
-        default:
-          Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
-            return false;
-        }
-    }
+//    }
     
     /**
      * NB: This is the onMenuItemSelected for the action bar. NOT for context
