@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.Activity.PropertyManager;
+import org.opendatakit.tables.Activity.util.CollectUtil;
+import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -234,7 +236,17 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          init();
          return true;
      case MENU_ITEM_ID_EDIT_ROW:
-       c.editRow(table, (lastDataCellMenued / table.getWidth()));
+       // It is possible that a custom form has been defined for this table.
+       // We will get the strings we need, and then set the parameter object.
+       String formId = c.getTableProperties().getStringEntry(
+           CollectUtil.KEY_FORM_ID);
+       String formVersion = c.getTableProperties().getStringEntry(
+           CollectUtil.KEY_FORM_VERSION);
+       String rootElement = c.getTableProperties().getStringEntry(
+           CollectUtil.KEY_FORM_ROOT_ELEMENT);
+       CollectFormParameters params = 
+           new CollectFormParameters(formId, formVersion, rootElement);
+       c.editRow(table, (lastDataCellMenued / table.getWidth()), params);
        // launch ODK Collect
        return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
@@ -570,7 +582,17 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    init();
 	                    break;
 	                case MENU_ITEM_ID_EDIT_ROW:
-	                    c.editRow(table, cellId / table.getWidth());
+	                  // It is possible that a custom form has been defined for this table.
+	                  // We will get the strings we need, and then set the parameter object.
+	                  String formId = c.getTableProperties().getStringEntry(
+	                      CollectUtil.KEY_FORM_ID);
+	                  String formVersion = c.getTableProperties().getStringEntry(
+	                      CollectUtil.KEY_FORM_VERSION);
+	                  String rootElement = c.getTableProperties().getStringEntry(
+	                      CollectUtil.KEY_FORM_ROOT_ELEMENT);
+	                  CollectFormParameters params = 
+	                      new CollectFormParameters(formId, formVersion, rootElement);
+	                    c.editRow(table, cellId / table.getWidth(), params);
 	                    c.removeOverlay();
 	                    init();
 	                    break;
