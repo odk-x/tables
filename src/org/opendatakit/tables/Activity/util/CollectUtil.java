@@ -358,8 +358,8 @@ public class CollectUtil {
      *   form has been programmatically generated.
      * @return the uri of the form.
      */
-    public static Uri getUriOfFormForAddRow(ContentResolver resolver, 
-        String formId, String formDisplayName) {
+    public static Uri getUriOfForm(ContentResolver resolver, 
+        String formId) {
       Uri resultUri = null;
       Cursor c = null;
       try {
@@ -368,13 +368,9 @@ public class CollectUtil {
             CollectUtil.COLLECT_KEY_JR_FORM_ID +"=?",
             new String[] {formId}, null);
         if (!c.moveToFirst()) {
-          // moveToFirst() returns false if the cursor was empty. So, if we are
-          // here we need to insert the form.
-          resultUri = CollectUtil.insertFormIntoCollect(
-              resolver, CollectUtil.COLLECT_ADDROW_FILENAME,
-              formDisplayName, formId);
+          Log.e(TAG, "query of Collect for form returned no results");
         } else {
-          // we got a result, meaning that the form already exists in collect.
+          // we got a result, meaning that the form exists in collect.
           // so we just need to set the URI.
           int collectFormKey; // this is the primary key of the form in Collect's
           // database.
@@ -388,6 +384,45 @@ public class CollectUtil {
         }
       } 
       return resultUri;
+    }
+    
+    /**
+     * This is a convenience method that should be called when generating
+     * non-user defined forms for adding or editing rows. It calls, in this
+     * order, {@link deleteForm}, {@link buildBlankForm}, and 
+     * {@link insertFormIntoCollect}. 
+     * @param resolver content resolver of the calling activity
+     * @param params 
+     * @param tp
+     * @return true if every method returned successfully
+     */
+    public static boolean deleteWriteAndInsertFormIntoCollect(
+        ContentResolver resolver, CollectFormParameters params,
+        TableProperties tp) {
+      if (params.isCustom()) {
+        Log.e(TAG, "passed custom form to be deleted, rewritten, and " +
+        		"inserted into Collect. Not performing task.");
+        return false;
+      }
+      CollectUtil.deleteForm(resolver, 
+          params.getFormId());
+      // First we want to write the file. 
+      boolean writeSuccessful = 
+          CollectUtil.buildBlankForm(CollectUtil.COLLECT_ADDROW_FILENAME, 
+              tp.getColumns(), tp.getDisplayName(), params.getFormId());
+      if (!writeSuccessful) {
+        Log.e(TAG, "problem writing file for add row");
+        return false;
+      }
+      // Now we want to insert the file.
+      Uri insertedFormUri = CollectUtil.insertFormIntoCollect(
+          resolver, CollectUtil.COLLECT_ADDROW_FILENAME,
+          tp.getDisplayName(), params.getFormId());
+      if (insertedFormUri == null) {
+        Log.e(TAG, "problem inserting form into collect, return uri was null");
+        return false;
+      }
+      return true;
     }
         
     /**

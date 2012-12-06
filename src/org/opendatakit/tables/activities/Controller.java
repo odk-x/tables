@@ -489,17 +489,10 @@ public class Controller {
     // Check if there is a custom form. If there is not, we want to delete
     // the old form and write the new form.
     if (!params.isCustom()) {
-      CollectUtil.deleteForm(activity.getContentResolver(), 
-          params.getFormId());
-      // First we want to write the file. 
-      boolean writeFormSuccessful = 
-          CollectUtil.buildBlankForm(CollectUtil.COLLECT_ADDROW_FILENAME, 
-              tp.getColumns(), tp.getDisplayName(), params.getFormId());
-      CollectUtil.insertFormIntoCollect(activity.getContentResolver(), 
-          CollectUtil.COLLECT_ADDROW_FILENAME, tp.getDisplayName(), 
-          params.getFormId());
-      if (!writeFormSuccessful) {
-        Log.e(TAG, "problem writing form for edit row");
+      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
+          activity.getContentResolver(), params, tp);
+      if (!formIsReady) {
+        Log.e(TAG, "could not delete, write, or insert a generated form");
         return null;
       }
     }
@@ -674,19 +667,15 @@ public class Controller {
     // Check if there is a custom form. If there is not, we want to delete
     // the old form and write the new form.
     if (!params.isCustom()) {
-      CollectUtil.deleteForm(activity.getContentResolver(), 
-          params.getFormId());
-      // First we want to write the file. 
-      boolean writeSuccessful = 
-          CollectUtil.buildBlankForm(CollectUtil.COLLECT_ADDROW_FILENAME, 
-              tp.getColumns(), tp.getDisplayName(), params.getFormId());
-      if (!writeSuccessful) {
-        Log.e(TAG, "problem writing file for add row");
+      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
+          activity.getContentResolver(), params, tp);
+      if (!formIsReady) {
+        Log.e(TAG, "could not delete, write, or insert a generated form");
         return null;
       }
     }
-    Uri formToLaunch = CollectUtil.getUriOfFormForAddRow(activity.getContentResolver(), 
-        params.getFormId(), tp.getDisplayName());
+    Uri formToLaunch = CollectUtil.getUriOfForm(activity.getContentResolver(), 
+        params.getFormId());
     if (formToLaunch == null) {
       Log.e(TAG, "URI of the form to pass to Collect and launch was null");
       return null;
