@@ -30,7 +30,9 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 /**
@@ -46,15 +48,17 @@ public class CollectUtil {
    * The names here should match those in the version of collect that is on
    * the phone. They came from InstanceProviderApi.
    */
-  public static final String STATUS = "status";
-  public static final String STATUS_INCOMPLETE = "incomplete";
-  public static final String STATUS_COMPLETE = "complete";
-  public static final String CAN_EDIT_WHEN_COMPLETE = "canEditWhenComplete";
-  public static final String SUBMISSION_URI = "submissionUri";
-  public static final String INSTANCE_FILE_PATH = "instanceFilePath";
-  public static final String JR_FORM_ID = "jrFormId";
-  public static final String JR_VERSION = "jrVersion";
-  public static final String DISPLAY_NAME = "displayName";
+  public static final String COLLECT_KEY_STATUS = "status";
+  public static final String COLLECT_KEY_STATUS_INCOMPLETE = "incomplete";
+  public static final String COLLECT_KEY_STATUS_COMPLETE = "complete";
+  public static final String COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE = 
+      "canEditWhenComplete";
+  public static final String COLLECT_KEY_SUBMISSION_URI = "submissionUri";
+  public static final String COLLECT_KEY_INSTANCE_FILE_PATH = 
+      "instanceFilePath";
+  public static final String COLLECT_KEY_JR_FORM_ID = "jrFormId";
+  public static final String COLLECT_KEY_JR_VERSION = "jrVersion";
+  public static final String COLLECT_KEY_DISPLAY_NAME = "displayName";
   public static final String COLLECT_INSTANCE_AUTHORITY = 
       "org.odk.collect.android.provider.odk.instances";
   public static final Uri CONTENT_INSTANCE_URI = 
@@ -284,14 +288,14 @@ public class CollectUtil {
       } else {
         displayName = params.getRowDisplayName();
       }
-      values.put(DISPLAY_NAME, displayName);
-      values.put(STATUS, STATUS_COMPLETE);
-      values.put(CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
-      values.put(INSTANCE_FILE_PATH, DATA_FILE_PATH_AND_NAME);
-      values.put(JR_FORM_ID, params.getFormId());
+      values.put(COLLECT_KEY_DISPLAY_NAME, displayName);
+      values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_COMPLETE);
+      values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
+      values.put(COLLECT_KEY_INSTANCE_FILE_PATH, DATA_FILE_PATH_AND_NAME);
+      values.put(COLLECT_KEY_JR_FORM_ID, params.getFormId());
       // only add the version if it exists (ie not null)
       if (params.getFormVersion() != null) {
-        values.put(JR_VERSION, params.getFormVersion());
+        values.put(COLLECT_KEY_JR_VERSION, params.getFormVersion());
       }
       // now we want to get the uri for the insertion.
       Uri uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values); 
@@ -306,7 +310,7 @@ public class CollectUtil {
      * @return the result of the the delete call
      */
     public static int deleteForm(ContentResolver resolver, String formId) {
-      return resolver.delete(CONTENT_FORM_URI, JR_FORM_ID + "=?", 
+      return resolver.delete(CONTENT_FORM_URI, COLLECT_KEY_JR_FORM_ID + "=?", 
           new String[] {formId});
     }
     
@@ -329,18 +333,61 @@ public class CollectUtil {
         String formFilePath, String displayName, String formId) {
       ContentValues insertValues = new ContentValues();
       insertValues.put(COLLECT_KEY_FORM_FILE_PATH, formFilePath);
-      insertValues.put(DISPLAY_NAME, displayName);
-      insertValues.put(JR_FORM_ID, formId);
+      insertValues.put(COLLECT_KEY_DISPLAY_NAME, displayName);
+      insertValues.put(COLLECT_KEY_JR_FORM_ID, formId);
       return resolver.insert(CONTENT_FORM_URI, insertValues);
     }
     
-    public static CollectFormParameters constructCollectFormParameters(
-        TableProperties tp) {
-      String formId = tp.getStringEntry(CollectUtil.KEY_FORM_ID);
-      String formVersion = tp.getStringEntry(CollectUtil.KEY_FORM_VERSION);
-      String rootElement = 
-          tp.getStringEntry(CollectUtil.KEY_FORM_ROOT_ELEMENT);
-      return new CollectFormParameters(formId, formVersion, rootElement);
+    /**
+     * Return the URI of the form for adding a row to a table. If the formId
+     * is custom defined it must exist to Collect (most likely by putting the
+     * form in Collect's form folder and starting Collect once). If the form
+     * does not exist, it inserts the static addRowForm information into 
+     * Collect.
+     * <p>
+     * Display name only matters if it is a programmatically generated form.
+     * <p>
+     * Precondition: If formId refers to a custom form, it must have already 
+     * been scanned in and known to exist to Collect. If the formId is not
+     * custom, but refers to a form built on the fly, it should be the id
+     * of {@link COLLECT_ADDROW_FORM_ID}, and the form should already have
+     * been written.
+     * @param resolver ContentResolver of the calling activity
+     * @param formId id of the form whose uri will be returned
+     * @param formDisplayName display name of the table. Only pertinent if the
+     *   form has been programmatically generated.
+     * @return the uri of the form.
+     */
+    public static Uri getUriOfFormForAddRow(ContentResolver resolver, 
+        String formId, String formDisplayName) {
+      Uri resultUri = null;
+      Cursor c = null;
+      try {
+        c = resolver.query(
+            CollectUtil.CONTENT_FORM_URI, null, 
+            CollectUtil.COLLECT_KEY_JR_FORM_ID +"=?",
+            new String[] {formId}, null);
+        if (!c.moveToFirst()) {
+          // moveToFirst() returns false if the cursor was empty. So, if we are
+          // here we need to insert the form.
+          resultUri = CollectUtil.insertFormIntoCollect(
+              resolver, CollectUtil.COLLECT_ADDROW_FILENAME,
+              formDisplayName, formId);
+        } else {
+          // we got a result, meaning that the form already exists in collect.
+          // so we just need to set the URI.
+          int collectFormKey; // this is the primary key of the form in Collect's
+          // database.
+          collectFormKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+          resultUri = (Uri.parse(CollectUtil.CONTENT_FORM_URI + "/" + 
+            collectFormKey));
+        }
+      } finally {
+        if (c != null && !c.isClosed()) {
+          c.close();
+        }
+      } 
+      return resultUri;
     }
         
     /**
@@ -367,6 +414,7 @@ public class CollectUtil {
       private String mFormVersion;
       private String mFormXMLRootElement;
       private String mRowDisplayName;
+      private boolean mIsCustom;
       
       /*
        * Just putting this here in case it needs to be serialized at some point
@@ -375,18 +423,63 @@ public class CollectUtil {
       private CollectFormParameters() {
       }
       
-      public CollectFormParameters(String formId) {
+      private CollectFormParameters(String formId) {
         this.mFormId = formId;
         this.mFormVersion = null;
         this.mFormVersion = null;
         this.mRowDisplayName = null;
+        this.mIsCustom = false;
       }
       
-      public CollectFormParameters(String formId, String formVersion, 
-          String formXMLRootElement) {
+      /**
+       * Create an object housing parameters for a Collect form. Very 
+       * important is the isCustom parameter, which should be true is a custom
+       * form has been defined, and false otherwise. This will have 
+       * implications for which forms are used and deleted and created, and is
+       * very important to get right.
+       * @param isCustom
+       * @param formId
+       * @param formVersion
+       * @param formXMLRootElement
+       */
+      private CollectFormParameters(boolean isCustom, String formId, 
+          String formVersion, String formXMLRootElement) {
+        this.mIsCustom = isCustom;
         this.mFormId = formId;
         this.mFormVersion = formVersion;
         this.mFormXMLRootElement = formXMLRootElement;
+      }
+      
+      /**
+       * Construct a CollectFormProperties object from the given 
+       * TableProperties.
+       * The object is determined to have custom parameters if a formId can be
+       * retrieved from the TableProperties object. Otherwise the default 
+       * addrow
+       * parameters are set. If no formVersion is defined, it is left as null,
+       *  as
+       * later on a check is used that if none is defined (ie is null), do not
+       * insert it to a map. If no root element is defined, the default root 
+       * element is added.
+       * @param tp
+       * @return
+       */
+      public static CollectFormParameters constructCollectFormParameters(
+          TableProperties tp) {
+        String formId = tp.getStringEntry(CollectUtil.KEY_FORM_ID);
+        if (formId == null) {
+          return new CollectFormParameters(false,
+              COLLECT_ADDROW_FORM_ID, null, DEFAULT_ROOT_ELEMENT);
+        }
+        // Else we know it is custom.
+        String formVersion = tp.getStringEntry(CollectUtil.KEY_FORM_VERSION);
+        String rootElement = 
+            tp.getStringEntry(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+        if (rootElement == null) {
+          rootElement = DEFAULT_ROOT_ELEMENT;
+        }
+        return new CollectFormParameters(true, formId, formVersion, 
+            rootElement);
       }
       
       public void setFormId(String formId) {
@@ -403,6 +496,14 @@ public class CollectUtil {
       
       public void setRowDisplayName(String name) {
         this.mRowDisplayName = name;
+      }
+      
+      public void setIsCustom(boolean isCustom) {
+        this.mIsCustom = isCustom;
+      }
+      
+      public boolean isCustom() {
+        return this.mIsCustom;
       }
       
       /**
