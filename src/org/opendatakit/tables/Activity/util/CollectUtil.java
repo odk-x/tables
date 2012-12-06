@@ -35,6 +35,8 @@ import android.util.Log;
 
 /**
  * Utility methods for using ODK Collect.
+ * 
+ * @author:sudar.sam@gmail.com --and somebody else, unknown
  */
 public class CollectUtil {
   
@@ -53,10 +55,21 @@ public class CollectUtil {
   public static final String JR_FORM_ID = "jrFormId";
   public static final String JR_VERSION = "jrVersion";
   public static final String DISPLAY_NAME = "displayName";
-  public static final String COLLECT_AUTHORITY = 
+  public static final String COLLECT_INSTANCE_AUTHORITY = 
       "org.odk.collect.android.provider.odk.instances";
-  public static final Uri CONTENT_URI = 
-      Uri.parse("content://" + COLLECT_AUTHORITY + "/instances");
+  public static final Uri CONTENT_INSTANCE_URI = 
+      Uri.parse("content://" + COLLECT_INSTANCE_AUTHORITY + "/instances");
+  
+  public static final String COLLECT_ADDROW_FILENAME =
+      "/sdcard/odk/tables/addrowform.xml"; 
+  public static final String COLLECT_ADDROW_FORM_ID = "tablesaddrowformid";
+  
+  public static final String COLLECT_FORM_AUTHORITY = 
+      "org.odk.collect.android.provider.odk.forms";
+  public static final Uri CONTENT_FORM_URI =
+      Uri.parse("content://" + COLLECT_FORM_AUTHORITY + "/forms");
+  public static final String COLLECT_KEY_FORM_FILE_PATH = "formFilePath";
+
   
   /********************
    * Keys present in the Key Value Store. These should represent data about
@@ -81,51 +94,65 @@ public class CollectUtil {
    */
   public static final String DEFAULT_ROOT_ELEMENT = "data";
     
-    public static void buildForm(String filename, String[] keys, String title,
-            String id) {
-        try {
-            FileWriter writer = new FileWriter(filename);
-            writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" " +
-                    "xmlns:h=\"http://www.w3.org/1999/xhtml\" " +
-                    "xmlns:ev=\"http://www.w3.org/2001/xml-events\" " +
-                    "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" " +
-                    "xmlns:jr=\"http://openrosa.org/javarosa\">");
-            writer.write("<h:head>");
-            writer.write("<h:title>" + title + "</h:title>");
-            writer.write("<model>");
-            writer.write("<instance>");
-            writer.write("<data id=\"" + id + "\">");
-            for (String key : keys) {
-                writer.write("<" + key + "/>");
-            }
-            writer.write("</data>");
-            writer.write("</instance>");
-            writer.write("<itext>");
-            writer.write("<translation lang=\"eng\">");
-            for (String key : keys) {
-                writer.write("<text id=\"/data/" + key + ":label\">");
-                writer.write("<value>" + key + "</value>");
-                writer.write("</text>");
-            }
-            writer.write("</translation>");
-            writer.write("</itext>");
-            writer.write("</model>");
-            writer.write("</h:head>");
-            writer.write("<h:body>");
-            for (String key : keys) {
-                writer.write("<input ref=\"/data/" + key + "\">");
-                writer.write("<label ref=\"jr:itext('/data/" + key +
-                        ":label')\"/>");
-                writer.write("</input>");
-            }
-            writer.write("</h:body>");
-            writer.write("</h:html>");
-            writer.close();
-        } catch(IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+  /**
+   * Build a default form. This form will allow being swiped through, 
+   * one field at a time. 
+   * @param filename the filename to write the form to
+   * @param columns the columnProperties of the table.
+   * @param title the title of the form
+   * @param formId the id of the form
+   * @return true if the file was successfully written
+   */
+  public static boolean buildBlankForm(String filename, 
+      ColumnProperties[] columns, String title, String formId) {
+    try {
+      FileWriter writer = new FileWriter(filename);
+      writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
+          + "xmlns:h=\"http://www.w3.org/1999/xhtml\" "
+          + "xmlns:ev=\"http://www.w3.org/2001/xml-events\" "
+          + "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" "
+          + "xmlns:jr=\"http://openrosa.org/javarosa\">");
+      writer.write("<h:head>");
+      writer.write("<h:title>" + title + "</h:title>");
+      writer.write("<model>");
+      writer.write("<instance>");
+      writer.write("<" + DEFAULT_ROOT_ELEMENT + " ");
+      writer.write("id=\"" + formId + "\">");
+      for (ColumnProperties cp : columns) {
+        writer.write("<" + cp.getElementName() + "/>");
+      }
+      writer.write("</" + DEFAULT_ROOT_ELEMENT + ">");
+      writer.write("</instance>");
+      writer.write("<itext>");
+      writer.write("<translation lang=\"eng\">");
+      for (ColumnProperties cp : columns) {
+        writer.write("<text id=\"/" + DEFAULT_ROOT_ELEMENT + "/" + 
+          cp.getElementName() + ":label\">");
+        writer.write("<value>" + cp.getDisplayName() + "</value>");
+        writer.write("</text>");
+      }
+      writer.write("</translation>");
+      writer.write("</itext>");
+      writer.write("</model>");
+      writer.write("</h:head>");
+      writer.write("<h:body>");
+      for (ColumnProperties cp : columns) {
+        writer.write("<input ref=\"/" + DEFAULT_ROOT_ELEMENT + "/" + 
+          cp.getElementName() + "\">");
+        writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" +
+          cp.getElementName() + ":label')\"/>");
+        writer.write("</input>");
+      }
+      writer.write("</h:body>");
+      writer.write("</h:html>");
+      writer.close();
+      return true;
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+      return false;
     }
+  }
     
     public static String getJrFormId(String filepath) {
         Document formDoc = parseForm(filepath);
@@ -196,7 +223,9 @@ public class CollectUtil {
        */
       try {
         FileWriter writer = new FileWriter(DATA_FILE_PATH_AND_NAME);
-        writer.write("<?xml version='1.0' ?><data id=\"");
+        writer.write("<?xml version='1.0' ?><");
+        writer.write(params.getRootElement());
+        writer.write(" id=\"");
         writer.write(params.getFormId());
         writer.write("\">");
         for (ColumnProperties cp : tp.getColumns()) {
@@ -211,7 +240,9 @@ public class CollectUtil {
 
           }
         }
-        writer.write("</data>");
+        writer.write("</");
+        writer.write(params.getRootElement());
+        writer.write(">");
         writer.close();
         return true;
       } catch (IOException e) {
@@ -263,10 +294,55 @@ public class CollectUtil {
         values.put(JR_VERSION, params.getFormVersion());
       }
       // now we want to get the uri for the insertion.
-      Uri uriOfForm = resolver.insert(CONTENT_URI, values); 
+      Uri uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values); 
       return uriOfForm;
     }
     
+    /**
+     * Delete the form specified by the id given in the parameters. Does not
+     * check form version. 
+     * @param resolver ContentResolver of the calling activity
+     * @param formId the id of the form to be deleted
+     * @return the result of the the delete call
+     */
+    public static int deleteForm(ContentResolver resolver, String formId) {
+      return resolver.delete(CONTENT_FORM_URI, JR_FORM_ID + "=?", 
+          new String[] {formId});
+    }
+    
+    /**
+     * Insert a form into collect. Returns the URI of the inserted form. Note 
+     * that form version is not passed in with the content values and is likely
+     * therefore not considered. (Not sure exactly how collect checks this.)
+     * <p>
+     * Precondition: the form should not exist in Collect before this call is
+     * made. In other words, the a query made on the form should return no 
+     * results. 
+     * @param resolver the ContentResolver of the calling activity
+     * @param formFilePath the filePath to the form
+     * @param displayName the displayName of the form
+     * @param formId the id of the form
+     * @return the result of the insert call, likely the URI of the resulting
+     *   form. If the form was not first deleted there could be a problem
+     */
+    public static Uri insertFormIntoCollect(ContentResolver resolver, 
+        String formFilePath, String displayName, String formId) {
+      ContentValues insertValues = new ContentValues();
+      insertValues.put(COLLECT_KEY_FORM_FILE_PATH, formFilePath);
+      insertValues.put(DISPLAY_NAME, displayName);
+      insertValues.put(JR_FORM_ID, formId);
+      return resolver.insert(CONTENT_FORM_URI, insertValues);
+    }
+    
+    public static CollectFormParameters constructCollectFormParameters(
+        TableProperties tp) {
+      String formId = tp.getStringEntry(CollectUtil.KEY_FORM_ID);
+      String formVersion = tp.getStringEntry(CollectUtil.KEY_FORM_VERSION);
+      String rootElement = 
+          tp.getStringEntry(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+      return new CollectFormParameters(formId, formVersion, rootElement);
+    }
+        
     /**
      * This is holds the most basic information needed to define
      * a form to be opened by Collect. Essentially it wraps the formVersion,

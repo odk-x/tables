@@ -1530,7 +1530,12 @@ public class ColumnProperties {
     jo.put(JSON_KEY_FOOTER_MODE, footMode);
 //    jo.put(JSON_KEY_FOOTER_MODE, footerMode);
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-    jo.put(JSON_KEY_JOINS, joins);
+    // Do this to try and avoid null pointer exceptions.
+    if (joins == null) {
+      jo.put(JSON_KEY_JOINS, JoinColumn.DEFAULT_NOT_SET_VALUE);
+    } else {
+      jo.put(JSON_KEY_JOINS, joins);
+    }
     // jo.put(JSON_KEY_JOIN_TABLE_ID, joinTableId);
     // jo.put(JSON_KEY_JOIN_ELEMENT_KEY, joinElementKey);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
@@ -1628,6 +1633,11 @@ public class ColumnProperties {
     String joElType = (String) jo.get(JSON_KEY_ELEMENT_TYPE);
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
     String joJoins = (String) jo.get(JSON_KEY_JOINS);
+    // check for null, was a problem earlier. REALLY need to rely on jackson
+    // more heavily, not just piecemeal like this.
+    if (joJoins == null) {
+      joJoins = JoinColumn.DEFAULT_NOT_SET_VALUE;
+    }
     ColumnType colType = null;
     FooterMode footMode = null;
     JoinColumn joins = null;

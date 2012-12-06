@@ -122,9 +122,6 @@ public class Controller {
         "content://org.odk.collect.android.provider.odk.instances/instances";
     private static final Uri COLLECT_INSTANCES_CONTENT_URI =
         Uri.parse(COLLECT_INSTANCES_URI_STRING);
-    private static final String ODKCOLLECT_ADDROW_FILENAME =
-        "/sdcard/odk/tables/addrowform.xml";
-    private static final String ODKCOLLECT_ADDROW_ID = "tablesaddrowformid";
     
     private final DataUtil du;
     private final SherlockActivity activity;
@@ -507,7 +504,7 @@ public class Controller {
 
   Intent getIntentForOdkCollectEditRow(UserTable table, int rowNum) {
     try {
-      FileWriter writer = new FileWriter(ODKCOLLECT_ADDROW_FILENAME);
+      FileWriter writer = new FileWriter(CollectUtil.COLLECT_ADDROW_FILENAME);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
           + "xmlns:h=\"http://www.w3.org/1999/xhtml\" "
           + "xmlns:ev=\"http://www.w3.org/2001/xml-events\" "
@@ -517,7 +514,7 @@ public class Controller {
       writer.write("<h:title>Add row: " + tp.getDisplayName() + "</h:title>");
       writer.write("<model>");
       writer.write("<instance>");
-      writer.write("<data id=\"" + ODKCOLLECT_ADDROW_ID + "\">");
+      writer.write("<data id=\"" + CollectUtil.COLLECT_ADDROW_FORM_ID + "\">");
       for (ColumnProperties cp : tp.getColumns()) {
         String value = table.getData(rowNum, 
             tp.getColumnIndex(cp.getColumnDbName()));
@@ -556,16 +553,16 @@ public class Controller {
       return null;
     }
     ContentValues insertValues = new ContentValues();
-    insertValues.put("formFilePath", ODKCOLLECT_ADDROW_FILENAME);
+    insertValues.put("formFilePath", CollectUtil.COLLECT_ADDROW_FILENAME);
     insertValues.put("displayName", "Add row: " + tp.getDisplayName());
-    insertValues.put("jrFormId", ODKCOLLECT_ADDROW_ID);
+    insertValues.put("jrFormId", CollectUtil.COLLECT_ADDROW_FORM_ID);
     Uri insertResult = activity.getContentResolver().insert(
             ODKCOLLECT_FORMS_CONTENT_URI, insertValues);
     int formId;
     if (insertResult == null) {
             // it likely already exists -- try to update...
             String where = "jrFormId=?";
-            String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
+            String[] selectionArgs = { CollectUtil.COLLECT_ADDROW_FORM_ID };
             int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI, insertValues, 
                             where, selectionArgs);
             if ( updateCount < 1 ) {
@@ -692,7 +689,9 @@ public class Controller {
 	        case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
 	        	return true;
 	        case MENU_ITEM_ID_ADD_ROW_BUTTON:
-	            Intent intentAddRow = getIntentForOdkCollectAddRow();
+	          CollectFormParameters params = 
+	            CollectUtil.constructCollectFormParameters(tp);
+	            Intent intentAddRow = getIntentForOdkCollectAddRow(params);
 	            if (intentAddRow != null) {
 	                Controller.this.activity.startActivityForResult(intentAddRow,
 	                        RCODE_ODKCOLLECT_ADD_ROW);
@@ -726,87 +725,160 @@ public class Controller {
         }
   }
 
-  Intent getIntentForOdkCollectAddRow() {
-    try {
-      FileWriter writer = new FileWriter(ODKCOLLECT_ADDROW_FILENAME);
-      writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
-          + "xmlns:h=\"http://www.w3.org/1999/xhtml\" "
-          + "xmlns:ev=\"http://www.w3.org/2001/xml-events\" "
-          + "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" "
-          + "xmlns:jr=\"http://openrosa.org/javarosa\">");
-      writer.write("<h:head>");
-      writer.write("<h:title>Add row: " + tp.getDisplayName() + "</h:title>");
-      writer.write("<model>");
-      writer.write("<instance>");
-      writer.write("<data id=\"" + ODKCOLLECT_ADDROW_ID + "\">");
-      for (ColumnProperties cp : tp.getColumns()) {
-        writer.write("<" + cp.getColumnDbName() + "/>");
-      }
-      writer.write("</data>");
-      writer.write("</instance>");
-      writer.write("<itext>");
-      writer.write("<translation lang=\"eng\">");
-      for (ColumnProperties cp : tp.getColumns()) {
-        writer.write("<text id=\"/data/" + cp.getColumnDbName() + ":label\">");
-        writer.write("<value>" + cp.getDisplayName() + "</value>");
-        writer.write("</text>");
-      }
-      writer.write("</translation>");
-      writer.write("</itext>");
-      writer.write("</model>");
-      writer.write("</h:head>");
-      writer.write("<h:body>");
-      for (ColumnProperties cp : tp.getColumns()) {
-        writer.write("<input ref=\"/data/" + cp.getColumnDbName() + "\">");
-        writer.write("<label ref=\"jr:itext('/data/" + cp.getColumnDbName() + ":label')\"/>");
-        writer.write("</input>");
-      }
-      writer.write("</h:body>");
-      writer.write("</h:html>");
-      writer.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
+  Intent getIntentForOdkCollectAddRow(CollectFormParameters params) {
+    // We want to use an existing form if one exists. Going to add an ugly
+    // if/else to check for it.
+//    try {
+//      FileWriter writer = new FileWriter(ODKCOLLECT_ADDROW_FILENAME);
+//      writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
+//          + "xmlns:h=\"http://www.w3.org/1999/xhtml\" "
+//          + "xmlns:ev=\"http://www.w3.org/2001/xml-events\" "
+//          + "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" "
+//          + "xmlns:jr=\"http://openrosa.org/javarosa\">");
+//      writer.write("<h:head>");
+//      writer.write("<h:title>Add row: " + tp.getDisplayName() + "</h:title>");
+//      writer.write("<model>");
+//      writer.write("<instance>");
+//      writer.write("<data id=\"" + ODKCOLLECT_ADDROW_ID + "\">");
+//      for (ColumnProperties cp : tp.getColumns()) {
+//        writer.write("<" + cp.getColumnDbName() + "/>");
+//      }
+//      writer.write("</data>");
+//      writer.write("</instance>");
+//      writer.write("<itext>");
+//      writer.write("<translation lang=\"eng\">");
+//      for (ColumnProperties cp : tp.getColumns()) {
+//        writer.write("<text id=\"/data/" + cp.getColumnDbName() + ":label\">");
+//        writer.write("<value>" + cp.getDisplayName() + "</value>");
+//        writer.write("</text>");
+//      }
+//      writer.write("</translation>");
+//      writer.write("</itext>");
+//      writer.write("</model>");
+//      writer.write("</h:head>");
+//      writer.write("<h:body>");
+//      for (ColumnProperties cp : tp.getColumns()) {
+//        writer.write("<input ref=\"/data/" + cp.getColumnDbName() + "\">");
+//        writer.write("<label ref=\"jr:itext('/data/" + cp.getColumnDbName() + ":label')\"/>");
+//        writer.write("</input>");
+//      }
+//      writer.write("</h:body>");
+//      writer.write("</h:html>");
+//      writer.close();
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//      return null;
+//    }
+    /*
+     * So, there are several things to check here. The first thing we want to 
+     * do is see if a custom form has been defined for this table. If there is
+     * not, then we will need to write a custom one. When we do this, we will
+     * then have to call delete on Collect to remove the old form, which will
+     * have used the same id. This will not fail if a form has not been already
+     * been written--delete will simply return 0.
+     */
+    // First determine what the formId for this form will be. I don't want to
+    // modify params in case the caller is using it for something.
+    String formId;
+    if (params.getFormId() == null) {
+      formId = CollectUtil.COLLECT_ADDROW_FORM_ID;
+    } else {
+      formId = params.getFormId();
     }
-    ContentValues insertValues = new ContentValues();
-    insertValues.put("formFilePath", ODKCOLLECT_ADDROW_FILENAME);
-    insertValues.put("displayName", "Add row: " + tp.getDisplayName());
-    insertValues.put("jrFormId", ODKCOLLECT_ADDROW_ID);
-    Uri insertResult = activity.getContentResolver().insert(ODKCOLLECT_FORMS_CONTENT_URI,
-        insertValues);
-    int formId;
-    if (insertResult == null) {
-      // it likely already exists -- try to update...
-      String where = "jrFormId=?";
-      String[] selectionArgs = { ODKCOLLECT_ADDROW_ID };
-      int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI,
-          insertValues, where, selectionArgs);
-      if (updateCount < 1) {
+    // Check if there is a custom form. If there is not, we want to delete
+    // the old form and write the new form.
+    if (params.getFormId() == null) {
+      CollectUtil.deleteForm(activity.getContentResolver(), formId);
+      // First we want to write the file. 
+      boolean writeSuccessful = 
+          CollectUtil.buildBlankForm(CollectUtil.COLLECT_ADDROW_FILENAME, 
+              tp.getColumns(), tp.getDisplayName(), formId);
+      if (!writeSuccessful) {
+        Log.e(TAG, "problem writing file for add row");
         return null;
       }
-      // then try to query...
-      Cursor c = null;
-      try {
-        c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where,
-            selectionArgs, null);
-        if (!c.moveToFirst()) {
-          return null;
-        }
-        formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
-      } finally {
-        if (c != null) {
-          c.close();
-        }
-      }
-    } else {
-      formId = Integer.valueOf(insertResult.getLastPathSegment());
     }
+    // Now we need to query for the form. If it is there we will construct a 
+    // URI and launch if. If it is not we will insert it and then launch the
+    // resulting URI. Note that if we have written a new form the query should
+    // always return 0, as we delete the form before we write it.
+    Uri formToLaunch = null;
+    Cursor c = null;
+    try {
+      c = activity.getContentResolver().query(
+          CollectUtil.CONTENT_FORM_URI, null, CollectUtil.JR_FORM_ID +"=?",
+          new String[] {formId}, null);
+      if (!c.moveToFirst()) {
+        // moveToFirst() returns false if the cursor was empty. So, if we are
+        // here we need to insert the form.
+        formToLaunch = CollectUtil.insertFormIntoCollect(
+            activity.getContentResolver(), CollectUtil.COLLECT_ADDROW_FILENAME,
+            tp.getDisplayName(), formId);
+      } else {
+        // we got a result, meaning that the form already exists in collect.
+        // so we just need to set the URI.
+        int collectFormKey; // this is the primary key of the form in Collect's
+        // database.
+        collectFormKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+        formToLaunch = (Uri.parse(CollectUtil.CONTENT_FORM_URI + "/" + 
+          collectFormKey));
+      }
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+    if (formToLaunch == null) {
+      Log.e(TAG, "URI of the form to pass to Collect and launch was null");
+      return null;
+    }
+    // And now finally create the intent.
     Intent intent = new Intent();
     intent.setComponent(new ComponentName("org.odk.collect.android",
         "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
+    intent.setAction(Intent.ACTION_EDIT);    
+    intent.setData(formToLaunch);
     return intent;
+    
+//    ContentValues insertValues = new ContentValues();
+//    insertValues.put("formFilePath", CollectUtil.COLLECT_ADDROW_FILENAME);
+//    insertValues.put("displayName", "Add row: " + tp.getDisplayName());
+//    insertValues.put("jrFormId", CollectUtil.COLLECT_ADDROW_FORM_ID);
+//    Uri insertResult = activity.getContentResolver().insert(ODKCOLLECT_FORMS_CONTENT_URI,
+//        insertValues);
+//    int formId;
+//    if (insertResult == null) {
+//      // it likely already exists -- try to update...
+//      String where = "jrFormId=?";
+//      String[] selectionArgs = { CollectUtil.COLLECT_ADDROW_FORM_ID };
+//      int updateCount = activity.getContentResolver().update(ODKCOLLECT_FORMS_CONTENT_URI,
+//          insertValues, where, selectionArgs);
+//      if (updateCount < 1) {
+//        return null;
+//      }
+//      // then try to query...
+//      Cursor c = null;
+//      try {
+//        c = activity.getContentResolver().query(ODKCOLLECT_FORMS_CONTENT_URI, null, where,
+//            selectionArgs, null);
+//        if (!c.moveToFirst()) {
+//          return null;
+//        }
+//        formId = c.getInt(c.getColumnIndex(BaseColumns._ID));
+//      } finally {
+//        if (c != null) {
+//          c.close();
+//        }
+//      }
+//    } else {
+//      formId = Integer.valueOf(insertResult.getLastPathSegment());
+//    }
+//    Intent intent = new Intent();
+//    intent.setComponent(new ComponentName("org.odk.collect.android",
+//        "org.odk.collect.android.activities.FormEntryActivity"));
+//    intent.setAction(Intent.ACTION_EDIT);
+//    intent.setData(Uri.parse(COLLECT_FORMS_URI_STRING + "/" + formId));
+//    return intent;
   }
 
   boolean addRowFromOdkCollectForm(int instanceId) {

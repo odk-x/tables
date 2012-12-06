@@ -424,7 +424,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
                     ContextMenu.NONE, "Freeze Column");
         }
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER,
-                ContextMenu.NONE, "TEST Manage Column Properties");
+                ContextMenu.NONE, "Manage Column Properties");
     }
     
     @Override

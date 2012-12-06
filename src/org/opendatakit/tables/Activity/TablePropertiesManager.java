@@ -537,6 +537,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         viewTypePref.setEntryValues(viewTypeIds);
         viewTypePref.setEntries(viewTypeNames);
         viewTypePref.setValue(String.valueOf(settings.getViewType()));
+        // TODO: currently throwing an error i think
         viewTypePref.setSummary(LanguageUtil.getViewTypeLabel(
                 settings.getViewType()));
         viewTypePref.setOnPreferenceChangeListener(
