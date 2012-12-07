@@ -1,0 +1,3 @@
+com.android.ide.eclipse.adt.fixLegacyEditors=1
+com.android.ide.eclipse.adt.sdk=/usr/local/Cellar/android-sdk/r20
+eclipse.preferences.version=1

@@ -18,6 +18,9 @@ package org.opendatakit.tables.Activity;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.app.ListActivity;
@@ -36,7 +39,8 @@ public class AggregateChooseTablesActivity extends ListActivity {
     setContentView(R.layout.aggregate_choose_tables_activity);
 
     setListAdapter(new ArrayAdapter<TableProperties>(this,
-        android.R.layout.simple_list_item_multiple_choice, getTables()));
+        android.R.layout.simple_list_item_multiple_choice, 
+        getServerDataTables()));
 
     final ListView listView = getListView();
 
@@ -44,24 +48,40 @@ public class AggregateChooseTablesActivity extends ListActivity {
     listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
     int count = listView.getCount();
+    DbHelper dbh = DbHelper.getDbHelper(this);
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     for (int i = 0; i < count; i++) {
       TableProperties tp = (TableProperties) listView.getItemAtPosition(i);
-      if (tp.isSynchronized()) {
+      // hilary's original
+      //if (tp.isSynchronized()) {
+      if (kvsm.getSyncStoreForTable(tp.getTableId()).isSetToSync()) {
         listView.setItemChecked(i, true);
       }
     }
   }
 
-  private TableProperties[] getTables() {
+  /*
+   * This should only display the data tables that are in the server KVS.
+   * An invariant that must be maintained is that any table in the server KVS
+   * must also have an "isSetToSync" entry in the sync KVS.
+   */
+  private TableProperties[] getServerDataTables() {
     DbHelper dbh = DbHelper.getDbHelper(this);
     DataManager dm = new DataManager(dbh);
-    return dm.getDataTableProperties();
+    // hilary's original--return dm.getDataTableProperties();
+    return dm.getTablePropertiesForDataTables(KeyValueStore.Type.SERVER);
   }
 
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     ListView listView = getListView();
-    TableProperties tp = (TableProperties) listView.getItemAtPosition(position);
-    tp.setSynchronized(listView.isItemChecked(position));
+    TableProperties tp = 
+        (TableProperties) listView.getItemAtPosition(position);
+    // hilary's original
+    //tp.setSynchronized(listView.isItemChecked(position));
+    DbHelper dbh = DbHelper.getDbHelper(this);
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tp.getTableId());
+    syncKVS.setIsSetToSync(listView.isItemChecked(position));
   }
 }

@@ -8,16 +8,18 @@ import java.util.Stack;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.view.ConflictResolutionView;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 
-public class ConflictResolutionActivity extends Activity
+public class ConflictResolutionActivity extends SherlockActivity
         implements DisplayActivity, ConflictResolutionView.Controller {
     
     private DataManager dm;
@@ -37,7 +39,8 @@ public class ConflictResolutionActivity extends Activity
     
     @Override
     public void init() {
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getDbTable().getConflictTable(query);
         rowChanges = new ArrayList<Stack<RowChange>>(table.getCount());
@@ -73,10 +76,10 @@ public class ConflictResolutionActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        if (c.handleMenuItemSelection(item.getItemId())) {
+        if (c.handleMenuItemSelection(item)) {
             return true;
         } else {
-            return super.onContextItemSelected(item);
+            return false;
         }
     }
     
@@ -89,11 +92,11 @@ public class ConflictResolutionActivity extends Activity
     @Override
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
-        String[] colDbNames = c.getTableProperties().getColumnOrder();
+        ArrayList<String> colDbNames = c.getTableProperties().getColumnOrder();
         Map<String, String> values = new HashMap<String, String>();
         while (!changes.isEmpty()) {
             RowChange rc = changes.pop();
-            values.put(colDbNames[rc.getColNum()], rc.getNewValue());
+            values.put(colDbNames.get(rc.getColNum()), rc.getNewValue());
         }
         c.getDbTable().resolveConflict(table.getRowId(index),
                 table.getSyncTag(index, 1), values);

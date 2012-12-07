@@ -15,7 +15,10 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.util.ArrayList;
+
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;
@@ -28,10 +31,10 @@ public class CellValueView {
     
     public static CellEditView getCellEditView(Context context,
             ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+    	
+        if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return new MultipleChoiceEditView(context, cp, value);
-        default:
+        } else {
             return new DefaultEditView(context, value);
         }
     }
@@ -52,17 +55,17 @@ public class CellValueView {
         public MultipleChoiceEditView(Context context, ColumnProperties cp,
                 String value) {
             super(context);
-            String[] opts = cp.getMultipleChoiceOptions();
+            ArrayList<String> opts = cp.getDisplayChoicesMap();
             int selection = -1;
-            for (int i = 0; i < opts.length; i++) {
-                if (opts[i].equals(value)) {
+            for (int i = 0; i < opts.size(); i++) {
+                if (opts.get(i).equals(value)) {
                     selection = i;
                     break;
                 }
             }
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
                     android.R.layout.simple_spinner_item,
-                    cp.getMultipleChoiceOptions());
+                    cp.getDisplayChoicesMap());
             adapter.setDropDownViewResource(
                     android.R.layout.simple_spinner_dropdown_item);
             spinner = new Spinner(context);

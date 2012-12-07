@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.data;
 
+import java.util.ArrayList;
+
 /**
  * A table of all or some of the data in a database table.
  * 
@@ -23,12 +25,12 @@ package org.opendatakit.tables.data;
 public class Table {
     
     private final String[] rowIds;
-    private String[] header;
+    private ArrayList<String> header;
     private final String[][] data;
     
-    public Table(String[] rowIds, String[] header, String[][] data) {
+    public Table(String[] rowIds, ArrayList<String> arrayList, String[][] data) {
         this.rowIds = rowIds;
-        this.header = header;
+        this.header = arrayList;
         this.data = data;
     }
     
@@ -45,7 +47,7 @@ public class Table {
     }
     
     public String getHeader(int colNum) {
-        return header[colNum];
+        return header.get(colNum);
     }
     
     public String getData(int rowNum, int colNum) {
@@ -53,7 +55,7 @@ public class Table {
     }
     
     public int getWidth() {
-        return header.length;
+        return header.size();
     }
     
     public int getHeight() {

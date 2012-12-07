@@ -28,27 +28,73 @@ public class DataManager {
         return DbTable.getDbTable(dbh, tableId);
     }
     
-    public TableProperties getTableProperties(String tableId) {
-        return TableProperties.getTablePropertiesForTable(dbh, tableId);
+    public TableProperties getTableProperties(String tableId,
+        KeyValueStore.Type typeOfStore) {
+        return TableProperties.getTablePropertiesForTable(dbh, tableId,
+            typeOfStore);
     }
     
-    public TableProperties[] getAllTableProperties() {
-        return TableProperties.getTablePropertiesForAll(dbh);
+    public TableProperties[] getAllTableProperties(
+        KeyValueStore.Type typeOfStore) {
+        return TableProperties.getTablePropertiesForAll(dbh, typeOfStore);
     }
     
-    public TableProperties[] getSynchronizedTableProperties() {
-      return TableProperties.getTablePropertiesForSynchronizedTables(dbh);
+    /**
+     * Return the active table properties for tables that are set to 
+     * be synched.
+     * @return
+     */
+    /*public TableProperties[] getSynchronizedActiveTableProperties() {
+      return TableProperties.getTablePropertiesForSynchronizedTables(dbh,
+          KeyValueStore.Type.ACTIVE);
+    }*/
+    
+    /**
+     * Return the default table properties for tables that are set to be
+     * synched.
+     * @return
+     */
+    /*public TableProperties[] getSynchronizedDefaultTableProperties() {
+      return TableProperties.getTablePropertiesForSynchronizedTables(dbh,
+          KeyValueStore.Type.DEFAULT);
+    }*/
+    
+    /**
+     * Return the server table properties for tables that are set to be
+     * synched.
+     * @return
+     */
+    public TableProperties[] getTablePropertiesForTablesSetToSync(
+        KeyValueStore.Type typeOfStore) {
+      return TableProperties.getTablePropertiesForSynchronizedTables(dbh,
+          typeOfStore);
     }
 
-    public TableProperties[] getDataTableProperties() {
-        return TableProperties.getTablePropertiesForDataTables(dbh);
+    public TableProperties[] getTablePropertiesForDataTables(
+        KeyValueStore.Type typeOfStore) {
+        return TableProperties.getTablePropertiesForDataTables(dbh, 
+            typeOfStore);
     }
     
-    public TableProperties[] getSecurityTableProperties() {
-        return TableProperties.getTablePropertiesForSecurityTables(dbh);
+    /**
+     * Returns the TableProperties for all of the tables in the server KVS that
+     * are of type DATA.
+     * @return
+     */
+    /*public TableProperties[] getTablePropertiesForServerDataTables() {
+      return TableProperties.getTablePropertiesForDataTables(dbh,
+          KeyValueStore.Type.SERVER);
+    }*/
+    
+    public TableProperties[] getSecurityTableProperties(
+        KeyValueStore.Type typeOfStore) {
+        return TableProperties.getTablePropertiesForSecurityTables(dbh, 
+            typeOfStore);
     }
     
-    public TableProperties[] getShortcutTableProperties() {
-        return TableProperties.getTablePropertiesForShortcutTables(dbh);
+    public TableProperties[] getShortcutTableProperties(
+        KeyValueStore.Type typeOfStore) {
+        return TableProperties.getTablePropertiesForShortcutTables(dbh,
+            typeOfStore);
     }
 }

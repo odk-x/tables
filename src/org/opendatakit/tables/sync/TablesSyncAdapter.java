@@ -28,6 +28,7 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SyncResult;
 import android.os.Bundle;
+import android.util.Log;
 
 public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String TAG = "TablesSyncAdapter";
@@ -43,6 +44,7 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
   @Override
   public void onPerformSync(Account account, Bundle extras, String authority,
       ContentProviderClient provider, SyncResult syncResult) {
+    Log.d(TAG, "in onPerformSync");
     Preferences prefs = new Preferences(this.context);
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();

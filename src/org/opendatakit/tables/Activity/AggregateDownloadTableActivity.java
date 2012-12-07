@@ -24,8 +24,13 @@ import java.util.concurrent.ExecutionException;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
@@ -171,7 +176,14 @@ public class AggregateDownloadTableActivity extends ListActivity {
       // filter tables to remove ones already downloaded
       if (tables != null) {
         DataManager dm = new DataManager(DbHelper.getDbHelper(AggregateDownloadTableActivity.this));
-        TableProperties[] props = dm.getDataTableProperties();
+        // we're going to check for downloaded tables ONLY in the server store,
+        // b/c there will only be UUID collisions if the tables have been
+        // downloaded, which means they must be in the server KVS. The 
+        // probability of a user defined table, which would NOT have entries
+        // in the server KVS, having the same UUID as another table is 
+        // virtually zero.
+        TableProperties[] props = dm.getTablePropertiesForDataTables(
+            KeyValueStore.Type.SERVER);
         Set<String> tableIds = tables.keySet();
         for (TableProperties tp : props) {
           String tableId = tp.getTableId();
@@ -212,12 +224,26 @@ public class AggregateDownloadTableActivity extends ListActivity {
     @Override
     protected Void doInBackground(Void... params) {
       DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
-
+//TODO the order of synching should probably be re-arranged so that you first
+// get the table properties and column entries (ie the table definition) and 
+// THEN get the row data. This would make it more resilient to network failures
+// during the process. along those lines, the same process should exist in the
+// table creation on the phone. or rather, THAT should try and follow the same
+// order.
+      // There is some weirdness here. Downloaded tables should be added to the
+      // server KVS, so you would think this should create it there. However,
+      // in order to keep the flow of table creation the same in all cases,
+      // we in fact first add the properties to the active store and allow the
+      // table to be created, then copy the properties through to the default
+      // and server stores.
       TableProperties tp = TableProperties.addTable(dbh,
           TableProperties.createDbTableName(dbh, tableName), tableName,
-          TableProperties.TableType.DATA, tableId);
-      tp.setSynchronized(true);
-      tp.setSyncState(SyncUtil.State.REST);
+          TableType.data, tableId, KeyValueStore.Type.ACTIVE);
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
+      syncKVS.setIsSetToSync(true);
+      // hilary's original--tp.setSynchronized(true);
+      tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
 
       Synchronizer synchronizer;
@@ -231,6 +257,12 @@ public class AggregateDownloadTableActivity extends ListActivity {
           new SyncResult());
       processor.synchronizeTable(tp);
       // Aggregate.requestSync(accountName);
+      //SS: and now at this point the table is up to date in the active store.
+      // however, it is exceedingly important that the properties also be 
+      // copied into the server and default store, or else several invariants
+      // are broken.
+      kvsm.setCurrentAsDefaultPropertiesForTable(tableId);
+      kvsm.copyDefaultToServerForTable(tableId);
 
       return null;
     }

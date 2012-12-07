@@ -22,20 +22,19 @@ import java.util.Map;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.BoxStemChart;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -43,10 +42,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+
 /**
  * An activity for display box-stem graphs.
  */
-public class BoxStemGraphDisplayActivity extends Activity
+public class BoxStemGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity, BoxStemChart.ClickListener {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
@@ -62,7 +65,8 @@ public class BoxStemGraphDisplayActivity extends Activity
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         DataManager dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         init();
     }
     
@@ -191,7 +195,7 @@ public class BoxStemGraphDisplayActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override
@@ -219,7 +223,8 @@ public class BoxStemGraphDisplayActivity extends Activity
             super(context);
             numberCols = new ArrayList<ColumnProperties>();
             for (ColumnProperties cp : c.getTableProperties().getColumns()) {
-                if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+                if (cp.getColumnType() == ColumnType.NUMBER ||
+                    cp.getColumnType() == ColumnType.INTEGER) {
                     numberCols.add(cp);
                 }
             }

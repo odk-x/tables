@@ -19,6 +19,7 @@ import java.io.File;
 
 import org.opendatakit.tables.Activity.util.CsvUtil;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.R;
@@ -84,7 +85,8 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(dbh);
+		tps = TableProperties.getTablePropertiesForAll(dbh, 
+		    KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
 		    tableNames[i] = tps[i].getDisplayName();

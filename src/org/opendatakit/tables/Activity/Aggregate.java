@@ -27,6 +27,7 @@ import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.files.FileSyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -41,6 +42,7 @@ import android.content.Intent;
 import android.content.SyncResult;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -54,6 +56,8 @@ import android.widget.Toast;
  * @author the.dylan.price@gmail.com
  */
 public class Aggregate extends Activity {
+  
+  public static final String TAG = "Aggregate--Activity";
 
   private static final String ACCOUNT_TYPE_G = "com.google";
   private static final String URI_FIELD_EMPTY = "http://";
@@ -183,6 +187,10 @@ public class Aggregate extends Activity {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         saveSettings();
+        // SS Oct 15: clear the auth token here.
+        // TODO if you change a user you can switch to their privileges without
+        // this.
+        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         updateButtonsEnabled();
       }
     });
@@ -224,6 +232,7 @@ public class Aggregate extends Activity {
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
   public void onClickSyncNow(View v) {
+    Log.d(TAG, "in onClickSyncNow");
     String accountName = prefs.getAccount();
 
     if (accountName == null) {
@@ -233,6 +242,31 @@ public class Aggregate extends Activity {
       syncTask.execute();
     }
     updateButtonsEnabled();
+  }
+  
+  /**
+   * Hooked to syncFilesNowButton's onClick in aggregate_activity.xml
+   * @param accountName
+   */
+  public void onClickSyncFilesNow(View v) {
+    Log.d(TAG, "in onClickSyncFilesNow");
+    String accountName = prefs.getAccount();
+    //Intent i = new Intent()
+    if (accountName == null) {
+      Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
+    } else {
+      Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
+      for (Account account : accounts) {
+        if (account.name.equals(accountName)) {
+          Bundle extras = new Bundle();
+          ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 1);
+          ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", true);
+          ContentResolver.requestSync(account,
+              "org.opendatakit.tables.tablefilesauthority", extras);         
+        }
+      }
+
+    }
   }
 
   public static void requestSync(String accountName) {
@@ -290,5 +324,39 @@ public class Aggregate extends Activity {
       updateButtonsEnabled();
     }
 
+  }
+  
+  /*
+   * Hopefully the task for syncing files. Modeled on SyncNowTask.
+   */
+  private class SyncFilesNowTask extends AsyncTask<Void, Void, Void> {
+    private ProgressDialog pd;
+    private boolean success;
+    private String message;
+    
+    @Override
+    protected void onPreExecute() {
+      pd = ProgressDialog.show(Aggregate.this, "Please Wait", 
+          "Synchonizing files...");
+      success = false;
+      message = null;
+    }
+    
+    @Override
+    protected Void doInBackground(Void... params) {
+      try {
+        // first see if the server is null. For a while this was a bug in the
+        // above code.
+        if (prefs.getServerUri() == null) {
+          message = "Please save settings first.";
+          return null;
+        } 
+        FileSyncAdapter syncAdapter = new FileSyncAdapter(
+            getApplicationContext(), true);
+        return null;
+      }  finally{
+        
+      }
+    }
   }
 }

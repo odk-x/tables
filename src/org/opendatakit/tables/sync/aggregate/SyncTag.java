@@ -23,8 +23,18 @@ public class SyncTag {
   private int propertiesEtag;
 
   public SyncTag(String dataEtag, String propertiesEtag) {
-    this.dataEtag = Integer.parseInt(dataEtag);
-    this.propertiesEtag = Integer.parseInt(propertiesEtag);
+    // SS: adding cases for if the passed in tags are null. not sure which
+    // is correct, going to try -1.
+    if (dataEtag.equals("")) {
+      this.dataEtag = -1;
+    } else {
+      this.dataEtag = Integer.parseInt(dataEtag);
+    }
+    if (propertiesEtag.equals("")) {
+      this.propertiesEtag = -1;
+    } else {
+      this.propertiesEtag = Integer.parseInt(propertiesEtag);
+    }
   }
 
   public String getDataEtag() {

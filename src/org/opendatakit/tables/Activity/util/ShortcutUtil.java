@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.Activity.util;
 
+import java.util.ArrayList;
+
 /**
  * A utility class for functions related to shortcuts.
  * 
@@ -26,14 +28,14 @@ public class ShortcutUtil {
     public static final String INPUT_COLUMN_NAME = "input";
     public static final String OUTPUT_COLUMN_NAME = "output";
     
-    public static boolean couldBeShortcutTable(String[] columns) {
-        return (getShortcutIndices(columns) != null);
+    public static boolean couldBeShortcutTable(ArrayList<String> arrayList) {
+        return (getShortcutIndices(arrayList) != null);
     }
     
-    private static int[] getShortcutIndices(String[] columns) {
+    private static int[] getShortcutIndices(ArrayList<String> columns) {
         int[] indices = {-1, -1, -1};
-        for (int i = 0; i < columns.length; i++) {
-            String column = columns[i];
+        for (int i = 0; i < columns.size(); i++) {
+            String column = columns.get(i);
             if (column.contains(LABEL_COLUMN_NAME)) {
                 if (indices[0] != -1) {
                     return null;

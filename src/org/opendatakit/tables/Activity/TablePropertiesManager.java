@@ -24,16 +24,23 @@ import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.TableViewSettings.ConditionalRuler;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -43,6 +50,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -50,6 +58,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
@@ -57,10 +66,14 @@ import android.widget.Spinner;
  * @author hkworden@gmail.com
  */
 public class TablePropertiesManager extends PreferenceActivity {
+  
+  private static final String TAG = "TablePropertiesManager";
     
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     
+    // these ints are used when selecting/changing the view files
     private static final int RC_DETAIL_VIEW_FILE = 0;
+    private static final int RC_LIST_VIEW_FILE = 1;
     
     private enum ViewPreferenceType {
         OVERVIEW_VIEW,
@@ -69,6 +82,11 @@ public class TablePropertiesManager extends PreferenceActivity {
     
     private DbHelper dbh;
     private TableProperties tp;
+    
+    private AlertDialog revertDialog;
+    private AlertDialog saveAsDefaultDialog;
+    private AlertDialog defaultToServerDialog;
+    private AlertDialog serverToDefaultDialog;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,12 +97,140 @@ public class TablePropertiesManager extends PreferenceActivity {
                     ") is invalid.");
         }
         dbh = DbHelper.getDbHelper(this);
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId);
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+            KeyValueStore.Type.ACTIVE);
         setTitle("ODK Tables > Table Manager > " + tp.getDisplayName());
         init();
     }
     
     private void init() {
+      
+      // TODO move this into the actual preference somehow.
+      AlertDialog.Builder builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Revert to default settings? Any modifications" + 
+          " you have made will be lost.");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore defaultKVS = 
+              kvsm.getStoreForTable(tp.getTableId(), 
+                  KeyValueStore.Type.DEFAULT);
+          if (!defaultKVS.entriesExist(db)) {
+            AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
+                TablePropertiesManager.this);
+            noDefaultsDialog.setMessage("There are no default settings! " +
+            		"No changes have been made.");
+            noDefaultsDialog.setNeutralButton("OK", null);
+            noDefaultsDialog.show();
+            
+            /*
+            Toast.makeText(TablePropertiesManager.this, 
+                "No default settings!", 
+                Toast.LENGTH_SHORT).show();
+                */
+          } else {
+            kvsm.revertToDefaultPropertiesForTable(tp.getTableId());
+          }
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      revertDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Save settings as default? Any modifications" + 
+          " old default settings will be lost, and these settings will be " +
+          "pushed to the server at next synch.");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore activeKVS = 
+              kvsm.getStoreForTable(tp.getTableId(), 
+                  KeyValueStore.Type.ACTIVE);
+
+          kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      saveAsDefaultDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Copy default to server store?");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          KeyValueStoreManager kvsm = 
+              KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore activeKVS = 
+              kvsm.getStoreForTable(tp.getTableId(),
+                  KeyValueStore.Type.ACTIVE);
+
+          kvsm.copyDefaultToServerForTable(tp.getTableId());
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      defaultToServerDialog = builder.create();
+      
+      builder = new AlertDialog.Builder(
+          TablePropertiesManager.this);
+      builder.setMessage(
+          "Merge server settings to default settings?");
+      builder.setCancelable(true);
+      builder.setPositiveButton("Yes", 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          SQLiteDatabase db = dbh.getWritableDatabase();
+          try {
+	          KeyValueStoreManager kvsm = 
+	              KeyValueStoreManager.getKVSManager(dbh);
+	          KeyValueStore activeKVS = 
+	              kvsm.getStoreForTable(tp.getTableId(),
+	                  KeyValueStore.Type.ACTIVE);
+	
+	          kvsm.mergeServerToDefaultForTable(tp.getTableId());
+          } finally {
+            // TODO: fix the when to close problem
+//        	  if ( db != null ) {
+//        		  db.close();
+//        	  }
+          }
+        }
+      });
+      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int id) {
+          dialog.cancel();
+        }
+      });
+      serverToDefaultDialog = builder.create();    
+      
+      
         PreferenceScreen root =
             getPreferenceManager().createPreferenceScreen(this);
         
@@ -120,21 +266,21 @@ public class TablePropertiesManager extends PreferenceActivity {
                 (canBeShortcutTable ? 1 : 0);
         String[] tableTypeIds = new String[tableTypeCount];
         String[] tableTypeNames = new String[tableTypeCount];
-        tableTypeIds[0] = String.valueOf(TableProperties.TableType.DATA);
+        tableTypeIds[0] = String.valueOf(TableType.data);
         tableTypeNames[0] = LanguageUtil.getTableTypeLabel(
-                TableProperties.TableType.DATA);
+                TableType.data);
         if (canBeAccessTable) {
             tableTypeIds[1] = String.valueOf(
-                    TableProperties.TableType.SECURITY);
+                    TableType.security);
             tableTypeNames[1] = LanguageUtil.getTableTypeLabel(
-                    TableProperties.TableType.SECURITY);
+                    TableType.security);
         }
         if (canBeShortcutTable) {
             int index = canBeAccessTable ? 2 : 1;
             tableTypeIds[index] = String.valueOf(
-                    TableProperties.TableType.SHORTCUT);
+                    TableType.shortcut);
             tableTypeNames[index] = LanguageUtil.getTableTypeLabel(
-                    TableProperties.TableType.SHORTCUT);
+                    TableType.shortcut);
         }
         ListPreference tableTypePref = new ListPreference(this);
         tableTypePref.setTitle("Table Type");
@@ -149,7 +295,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setTableType(Integer.parseInt((String) newValue));
+                tp.setTableType(TableType.valueOf((String) newValue));
                 init();
                 return false;
             }
@@ -165,8 +311,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         addViewPreferences(ViewPreferenceType.OVERVIEW_VIEW, displayCat);
         addViewPreferences(ViewPreferenceType.COLLECTION_VIEW, displayCat);
         
-        FileSelectorPreference detailViewPref =
-                new FileSelectorPreference(this);
+        DetailViewFileSelectorPreference detailViewPref =
+                new DetailViewFileSelectorPreference(this);
         detailViewPref.setTitle("Detail View File");
         detailViewPref.setDialogTitle("Change Detail View File");
         detailViewPref.setText(tp.getDetailViewFilename());
@@ -189,9 +335,10 @@ public class TablePropertiesManager extends PreferenceActivity {
         securityCat.setTitle("Access Control");
         
         TableProperties[] accessTps =
-            TableProperties.getTablePropertiesForSecurityTables(dbh);
+            TableProperties.getTablePropertiesForSecurityTables(dbh,
+                KeyValueStore.Type.ACTIVE);
         int accessTableCount =
-                (tp.getTableType() == TableProperties.TableType.SECURITY) ?
+                (tp.getTableType() == TableType.security) ?
                 (accessTps.length) : accessTps.length + 1;
         TableProperties readTp = null;
         TableProperties writeTp = null;
@@ -204,16 +351,18 @@ public class TablePropertiesManager extends PreferenceActivity {
             if (accessTp.getTableId().equals(tp.getTableId())) {
                 continue;
             }
-            if ((tp.getReadSecurityTableId() != null) &&
-                    accessTp.getTableId().equals(
-                    tp.getReadSecurityTableId())) {
-                readTp = accessTp;
-            }
-            if ((tp.getWriteSecurityTableId() != null) &&
-                    accessTp.getTableId().equals(
-                    tp.getWriteSecurityTableId())) {
-                writeTp = accessTp;
-            }
+            // TODO: fix this to handle access correctly. got altered during
+            // schema update.
+//            if ((tp.getReadSecurityTableId() != null) &&
+//                    accessTp.getTableId().equals(
+//                    tp.getReadSecurityTableId())) {
+//                readTp = accessTp;
+//            }
+//            if ((tp.getWriteSecurityTableId() != null) &&
+//                    accessTp.getTableId().equals(
+//                    tp.getWriteSecurityTableId())) {
+//                writeTp = accessTp;
+//            }
             accessTableIds[index] = String.valueOf(accessTp.getTableId());
             accessTableNames[index] = accessTp.getDisplayName();
             index++;
@@ -236,7 +385,9 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setReadSecurityTableId((String) newValue);
+              Log.d(TAG, "access stuff and .onPreferenceChange unimplented");
+              // TODO: fix this, currently does nothing
+                //tp.setReadSecurityTableId((String) newValue);
                 init();
                 return false;
             }
@@ -260,12 +411,74 @@ public class TablePropertiesManager extends PreferenceActivity {
             @Override
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
-                tp.setWriteSecurityTableId((String) newValue);
+              Log.d(TAG, ".onPreferenceChange unimplented");
+              // TODO: fix this, currently does nothing
+//                tp.setWriteSecurityTableId((String) newValue);
                 init();
                 return false;
             }
         });
         securityCat.addPreference(writeTablePref);
+        
+        // the managing of default properties
+
+        // under development!
+        PreferenceCategory defaultsCat = new PreferenceCategory(this);
+        root.addPreference(defaultsCat);
+        defaultsCat.setTitle("Manage Default Properties");
+        
+        // the actual entry that has the option above.
+        Preference revertPref = new Preference(this);
+        revertPref.setTitle("active<--default");
+        revertPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                revertDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(revertPref);
+        
+        Preference saveAsDefaultPref = new Preference(this);
+        saveAsDefaultPref.setTitle("active-->default");
+        saveAsDefaultPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                saveAsDefaultDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(saveAsDefaultPref);
+        
+        Preference defaultToServerPref = new Preference(this);
+        defaultToServerPref.setTitle("default-->server");
+        defaultToServerPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                defaultToServerDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(defaultToServerPref);
+        
+        Preference serverToDefaultPref = new Preference(this);
+        serverToDefaultPref.setTitle("default<--MERGE--server");
+        serverToDefaultPref.setOnPreferenceClickListener(
+            new Preference.OnPreferenceClickListener() {
+              
+              @Override
+              public boolean onPreferenceClick(Preference preference) {
+                serverToDefaultDialog.show();
+                return true;
+              }
+            });
+        defaultsCat.addPreference(serverToDefaultPref);
         
         setPreferenceScreen(root);
     }
@@ -294,13 +507,18 @@ public class TablePropertiesManager extends PreferenceActivity {
         final List<ColumnProperties> dateCols =
             new ArrayList<ColumnProperties>();
         for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+            if (cp.getColumnType() == ColumnType.NUMBER ||
+            	cp.getColumnType() == ColumnType.INTEGER) {
                 numberCols.add(cp);
             } else if (cp.getColumnType() ==
-                    ColumnProperties.ColumnType.LOCATION) {
+                    ColumnType.GEOPOINT) {
                 locationCols.add(cp);
             } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATE) {
+                ColumnType.DATE ||
+                cp.getColumnType() ==
+                ColumnType.DATETIME ||
+                cp.getColumnType() ==
+                ColumnType.TIME) {
                 dateCols.add(cp);
             }
         }
@@ -338,25 +556,68 @@ public class TablePropertiesManager extends PreferenceActivity {
         
         case TableViewSettings.Type.LIST:
             {
-            EditTextPreference listFilePref = new EditTextPreference(this);
-            listFilePref.setTitle(label + " List View File");
-            listFilePref.setDialogTitle("Change " + label + " List View File");
-            if (settings.getCustomListFilename() != null) {
-                listFilePref.setDefaultValue(settings.getCustomListFilename());
-            }
-            listFilePref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference,
-                        Object newValue) {
-                    settings.setCustomListFilename((String) newValue);
-                    init();
-                    return false;
+            	// Launches IO File Manager to change the list view file
+            	// (The previous method was to manually enter the filename - see 
+            	//  commented out code below)
+            	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
+                listFilePref.setTitle(label + " List View File");
+                listFilePref.setDialogTitle("Change " + label + " List View File");
+                listFilePref.setText(settings.getCustomListFilename());
+                listFilePref.setOnPreferenceChangeListener(
+                        new OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference,
+                            Object newValue) {
+                        settings.setCustomListFilename((String) newValue);
+                        init();
+                        return false;
+                    }
+                });
+                prefCat.addPreference(listFilePref);
                 }
-            });
-            prefCat.addPreference(listFilePref);
-            }
-            break;
+                break;
+
+//            EditTextPreference listFilePref = new EditTextPreference(this);
+//            listFilePref.setTitle(label + " List View File");
+//            listFilePref.setDialogTitle("Change " + label + " List View File");
+//            if (settings.getCustomListFilename() != null) {
+//                listFilePref.setDefaultValue(settings.getCustomListFilename());
+//            }
+//            listFilePref.setOnPreferenceChangeListener(
+//                    new OnPreferenceChangeListener() {
+//                @Override
+//                public boolean onPreferenceChange(Preference preference,
+//                        Object newValue) {
+//                    settings.setCustomListFilename((String) newValue);
+//                    init();
+//                    return false;
+//                }
+//            });
+//            prefCat.addPreference(listFilePref);
+//            }
+//            break;
+        
+//        case TableViewSettings.Type.DETAIL:
+//        {
+//        EditTextPreference detailFilePref = new EditTextPreference(this);
+//        detailFilePref.setTitle(label + " Detail View File");
+//        detailFilePref.setDialogTitle("Change " + label + " Detail View File");
+//        if (settings.getCustomDetailFileName() != null) {
+//            detailFilePref.setDefaultValue(settings.getCustomDetailFileName());
+//        }
+//        detailFilePref.setOnPreferenceChangeListener(
+//                new OnPreferenceChangeListener() {
+//            @Override
+//            public boolean onPreferenceChange(Preference preference,
+//                    Object newValue) {
+//                settings.setCustomDetailFilename((String) newValue);
+//                init();
+//                return false;
+//            }
+//        });
+//        prefCat.addPreference(detailFilePref);
+//        }
+//        break;
         
         case TableViewSettings.Type.LINE_GRAPH:
             {
@@ -668,6 +929,13 @@ public class TablePropertiesManager extends PreferenceActivity {
             tp.setDetailViewFilename(filename);
             init();
             break;
+        case RC_LIST_VIEW_FILE:
+        	Uri fileUri2 = data.getData();
+            String filename2 = fileUri2.getPath();
+            TableViewSettings settings = tp.getOverviewViewSettings();
+            settings.setCustomListFilename(filename2);
+            init();
+            break;
         default:
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -679,9 +947,9 @@ public class TablePropertiesManager extends PreferenceActivity {
         finish();
     }
     
-    private class FileSelectorPreference extends EditTextPreference {
+    private class DetailViewFileSelectorPreference extends EditTextPreference {
         
-        FileSelectorPreference(Context context) {
+        DetailViewFileSelectorPreference(Context context) {
             super(context);
         }
         
@@ -693,6 +961,34 @@ public class TablePropertiesManager extends PreferenceActivity {
                     intent.setData(Uri.parse("file:///" + getText()));
                 }
                 startActivityForResult(intent, RC_DETAIL_VIEW_FILE);
+            } else {
+                super.onClick();
+            }
+        }
+        
+        private boolean hasFilePicker() {
+            PackageManager packageManager = getPackageManager();
+            Intent intent = new Intent("org.openintents.action.PICK_FILE");
+            List<ResolveInfo> list = packageManager.queryIntentActivities(
+                    intent, PackageManager.MATCH_DEFAULT_ONLY);
+            return (list.size() > 0);
+        }
+    }
+    
+private class ListViewFileSelectorPreference extends EditTextPreference {
+        
+        ListViewFileSelectorPreference(Context context) {
+            super(context);
+        }
+        
+        @Override
+        protected void onClick() {
+            if (hasFilePicker()) {
+                Intent intent = new Intent("org.openintents.action.PICK_FILE");
+                if (getText() != null) {
+                    intent.setData(Uri.parse("file:///" + getText()));
+                }
+                startActivityForResult(intent, RC_LIST_VIEW_FILE);
             } else {
                 super.onClick();
             }
