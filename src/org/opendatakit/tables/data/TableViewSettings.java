@@ -15,751 +15,783 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.graphics.Color;
 
-
 public class TableViewSettings {
-    
-    enum ViewType {
-        OVERVIEW_VIEW,
-        COLLECTION_VIEW
+  
+  private static final String TAG = "TableViewSettings";
+  private static final ObjectMapper mapper = new ObjectMapper();
+
+  enum ViewType {
+    OVERVIEW_VIEW, COLLECTION_VIEW
+  }
+
+  public class Type {
+    public static final int SPREADSHEET = 0;
+    public static final int LIST = 1;
+    public static final int LINE_GRAPH = 2;
+    public static final int BOX_STEM = 3;
+    public static final int BAR_GRAPH = 4;
+    public static final int MAP = 5;
+    public static final int COUNT = 6;
+
+    private Type() {
     }
-    
-    public class Type {
-        public static final int SPREADSHEET = 0;
-        public static final int LIST = 1;
-        public static final int LINE_GRAPH = 2;
-        public static final int BOX_STEM = 3;
-        public static final int BAR_GRAPH = 4;
-        public static final int MAP = 5;
-        public static final int COUNT = 6;
-        private Type() {}
+  }
+
+  public static final int[] MAP_COLOR_OPTIONS = { 
+    Color.BLACK, 
+    Color.BLUE, 
+    Color.GREEN, 
+    Color.RED,
+    Color.YELLOW };
+
+  private static final String JSON_KEY_VIEW_TYPE = "viewType";
+  private static final String JSON_KEY_TABLE_SETTINGS = "table";
+  private static final String JSON_KEY_TABLE_COL_WIDTHS = "tableColWidths";
+  private static final String JSON_KEY_TABLE_INDEXED_COL = "tableIndexedCol";
+  private static final String JSON_KEY_LIST_SETTINGS = "list";
+  private static final String JSON_KEY_LIST_FORMAT = "listFormat";
+  private static final String JSON_KEY_LINE_SETTINGS = "line";
+  private static final String JSON_KEY_LINE_X_COL = "lineX";
+  private static final String JSON_KEY_LINE_Y_COL = "lineY";
+  private static final String JSON_KEY_BAR_SETTINGS = "bar";
+  private static final String JSON_KEY_BAR_X_COL = "barX";
+  private static final String JSON_KEY_BAR_Y_COL = "barY";
+  private static final String JSON_KEY_BOX_STEM_SETTINGS = "boxStem";
+  private static final String JSON_KEY_BOX_STEM_X_COL = "boxStemX";
+  private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
+  private static final String JSON_KEY_MAP_SETTINGS = "map";
+  private static final String JSON_KEY_MAP_LOC_COL = "mapLocCol";
+  private static final String JSON_KEY_MAP_LABEL_COL = "mapLabelCol";
+  private static final String JSON_KEY_MAP_COLOR_RULERS = "mapColorRulers";
+  private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
+  private static final String JSON_KEY_CUSTOM_SETTINGS = "custom";
+  private static final String JSON_KEY_CUSTOM_LIST_FILE = "customListFile";
+  private static final String JSON_KEY_CUSTOM_VIEWS_INFO = "customViewsInfo";
+  
+  /****************************
+   * Keys for key value store.
+   ****************************/
+  /*
+   * Eventually the plan is to have all the keys in the key value store 
+   * managed by the very classes to which they matter, as opposed to saving 
+   * them all in a table properties object, as they do now. The custom will be
+   * class.key. So the list key for this class would be 
+   * "TableViewSettings.list". 
+   * 
+   * This is not yet what happens, but this class is the prime candidate
+   * for where this would happen, as opposed to doing all this mapping into
+   * json objects. So I am making this note about it here.
+   */
+  public static final String KEY_LIST_FILE = "TableViewSettings.list";
+
+  private static final int DEFAULT_TABLE_COL_WIDTH = 125;
+
+  private final TableProperties tp;
+  private final ViewType type;
+  private int viewType;
+  private int[] tableColWidths;
+  private String tableIndexedCol;
+  private String listFormat;
+  private String lineXCol;
+  private String lineYCol;
+  private String barXCol;
+  private String barYCol;
+  private String boxStemXCol;
+  private String boxStemYCol;
+  private String mapLocCol;
+  private String mapLabelCol;
+  private Map<String, ConditionalRuler> mapColorRulers;
+  private Map<String, ConditionalRuler> mapSizeRulers;
+  // customListFilename should point to the file on the file system that is
+  // responsible for rendering the  list view of the table.
+  // It is not clear to me what the
+  // listFormat String up there is doing.
+  private String customListFilename;
+  private List<CustomView> customViews;
+
+  private TableViewSettings(TableProperties tp, ViewType type, String dbString) {
+    this.tp = tp;
+    this.type = type;
+    mapColorRulers = new HashMap<String, ConditionalRuler>();
+    mapSizeRulers = new HashMap<String, ConditionalRuler>();
+    customViews = new ArrayList<CustomView>();
+    if (dbString == null || dbString.equals("")) {
+      viewType = Type.SPREADSHEET;
+      return;
     }
-    
-    public static final int[] MAP_COLOR_OPTIONS = {Color.BLACK, Color.BLUE,
-        Color.GREEN, Color.RED, Color.YELLOW};
-    
-    private static final String JSON_KEY_VIEW_TYPE = "viewType";
-    private static final String JSON_KEY_TABLE_SETTINGS = "table";
-    private static final String JSON_KEY_TABLE_COL_WIDTHS = "tableColWidths";
-    private static final String JSON_KEY_TABLE_INDEXED_COL = "tableIndexedCol";
-    private static final String JSON_KEY_LIST_SETTINGS = "list";
-    private static final String JSON_KEY_LIST_FORMAT = "listFormat";
-    private static final String JSON_KEY_LINE_SETTINGS = "line";
-    private static final String JSON_KEY_LINE_X_COL = "lineX";
-    private static final String JSON_KEY_LINE_Y_COL = "lineY";
-    private static final String JSON_KEY_BAR_SETTINGS = "bar";
-    private static final String JSON_KEY_BAR_X_COL = "barX";
-    private static final String JSON_KEY_BAR_Y_COL = "barY";
-    private static final String JSON_KEY_BOX_STEM_SETTINGS = "boxStem";
-    private static final String JSON_KEY_BOX_STEM_X_COL = "boxStemX";
-    private static final String JSON_KEY_BOX_STEM_Y_COL = "boxStemY";
-    private static final String JSON_KEY_MAP_SETTINGS = "map";
-    private static final String JSON_KEY_MAP_LOC_COL = "mapLocCol";
-    private static final String JSON_KEY_MAP_LABEL_COL = "mapLabelCol";
-    private static final String JSON_KEY_MAP_COLOR_RULERS = "mapColorRulers";
-    private static final String JSON_KEY_MAP_SIZE_RULERS = "mapSizeRulers";
-    private static final String JSON_KEY_CUSTOM_SETTINGS = "custom";
-    private static final String JSON_KEY_CUSTOM_LIST_FILE = "customListFile";
-    private static final String JSON_KEY_CUSTOM_VIEWS_INFO = "customViewsInfo";
-    
-    private static final int DEFAULT_TABLE_COL_WIDTH = 125;
-    
-    private final TableProperties tp;
-    private final ViewType type;
-    private int viewType;
-    private int[] tableColWidths;
-    private String tableIndexedCol;
-    private String listFormat;
-    private String lineXCol;
-    private String lineYCol;
-    private String barXCol;
-    private String barYCol;
-    private String boxStemXCol;
-    private String boxStemYCol;
-    private String mapLocCol;
-    private String mapLabelCol;
-    private Map<String, ConditionalRuler> mapColorRulers;
-    private Map<String, ConditionalRuler> mapSizeRulers;
-    private String customListFilename;
-    private List<CustomView> customViews;
-    
-    private TableViewSettings(TableProperties tp, ViewType type,
-            String dbString) {
-        this.tp = tp;
-        this.type = type;
-        mapColorRulers = new HashMap<String, ConditionalRuler>();
-        mapSizeRulers = new HashMap<String, ConditionalRuler>();
-        customViews = new ArrayList<CustomView>();
-        if (dbString == null) {
-            viewType = Type.SPREADSHEET;
-            return;
-        }
-        try {
-            setFromJsonObject(new JSONObject(dbString));
-        } catch(JSONException e) {
-            throw new RuntimeException(e);
-        }
+    try {
+      Map<String, Object> dbObject = mapper.readValue(dbString, Map.class);
+      setFromJsonObject(dbObject);
+    } catch (JSONException e) {
+      throw new RuntimeException(e);
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid db value: " + dbString);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid db value: " + dbString);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid db value: " + dbString);
     }
-    
-    void setFromJsonObject(JSONObject jo) throws JSONException {
-        if (jo == null) {
-            viewType = Type.SPREADSHEET;
-            return;
-        }
-        viewType = jo.getInt(JSON_KEY_VIEW_TYPE);
-        if (jo.has(JSON_KEY_TABLE_SETTINGS)) {
-            setTableFromJsonObject(jo.getJSONObject(JSON_KEY_TABLE_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_LIST_SETTINGS)) {
-            setListFromJsonObject(jo.getJSONObject(JSON_KEY_LIST_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_LINE_SETTINGS)) {
-            setLineFromJsonObject(jo.getJSONObject(JSON_KEY_LINE_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_BAR_SETTINGS)) {
-            setBarFromJsonObject(jo.getJSONObject(JSON_KEY_BAR_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_BOX_STEM_SETTINGS)) {
-            setBoxStemFromJsonObject(jo.getJSONObject(
-                    JSON_KEY_BOX_STEM_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_MAP_SETTINGS)) {
-            setMapFromJsonObject(jo.getJSONObject(JSON_KEY_MAP_SETTINGS));
-        }
-        if (jo.has(JSON_KEY_CUSTOM_SETTINGS)) {
-            setCustomFromJsonObject(jo.getJSONObject(
-                    JSON_KEY_CUSTOM_SETTINGS));
-        }
+  }
+
+  void setFromJsonObject(Map<String, Object> jo) throws JSONException {
+    if (jo == null) {
+      viewType = Type.SPREADSHEET;
+      return;
     }
-    
-    private void setTableFromJsonObject(JSONObject jo) throws JSONException {
-        if (jo.has(JSON_KEY_TABLE_COL_WIDTHS)) {
-            JSONArray ja = jo.getJSONArray(JSON_KEY_TABLE_COL_WIDTHS);
-            tableColWidths = new int[ja.length()];
-            for (int i = 0; i < ja.length(); i++) {
-                tableColWidths[i] = ja.getInt(i);
-            }
-        }
-        tableIndexedCol = jo.has(JSON_KEY_TABLE_INDEXED_COL) ?
-                jo.getString(JSON_KEY_TABLE_INDEXED_COL) : null;
+    if (!jo.containsKey(JSON_KEY_VIEW_TYPE)) {
+      viewType = Type.SPREADSHEET;
+      return;
     }
-    
-    private void setListFromJsonObject(JSONObject jo) throws JSONException {
-        listFormat = jo.has(JSON_KEY_LIST_FORMAT) ?
-                jo.getString(JSON_KEY_LIST_FORMAT) : null;
+    viewType = (Integer) jo.get(JSON_KEY_VIEW_TYPE);
+    if (jo.containsKey(JSON_KEY_TABLE_SETTINGS)) {
+      setTableFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_TABLE_SETTINGS));
     }
-    
-    private void setLineFromJsonObject(JSONObject jo) throws JSONException {
-        lineXCol = jo.has(JSON_KEY_LINE_X_COL) ?
-                jo.getString(JSON_KEY_LINE_X_COL) : null;
-        lineYCol = jo.has(JSON_KEY_LINE_Y_COL) ?
-                jo.getString(JSON_KEY_LINE_Y_COL) : null;
+    if (jo.containsKey(JSON_KEY_LIST_SETTINGS)) {
+      setListFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LIST_SETTINGS));
     }
-    
-    private void setBarFromJsonObject(JSONObject jo) throws JSONException {
-        barXCol = jo.has(JSON_KEY_BAR_X_COL) ?
-                jo.getString(JSON_KEY_BAR_X_COL) : null;
-        barYCol = jo.has(JSON_KEY_BAR_Y_COL) ?
-                jo.getString(JSON_KEY_BAR_Y_COL) : null;
+// TODO removing these so that it speeds up creation. We should figure out how
+    // to incorporate these correctly, though.
+//    if (jo.containsKey(JSON_KEY_LINE_SETTINGS)) {
+//      setLineFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LINE_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BAR_SETTINGS)) {
+//      setBarFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BAR_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BOX_STEM_SETTINGS)) {
+//      setBoxStemFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BOX_STEM_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_MAP_SETTINGS)) {
+//      setMapFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_MAP_SETTINGS));
+//    }
+    if (jo.containsKey(JSON_KEY_CUSTOM_SETTINGS)) {
+      setCustomFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_CUSTOM_SETTINGS));
     }
-    
-    private void setBoxStemFromJsonObject(JSONObject jo) throws JSONException {
-        boxStemXCol = jo.has(JSON_KEY_BOX_STEM_X_COL) ?
-                jo.getString(JSON_KEY_BOX_STEM_X_COL) : null;
-        boxStemYCol = jo.has(JSON_KEY_BOX_STEM_Y_COL) ?
-                jo.getString(JSON_KEY_BOX_STEM_Y_COL) : null;
+  }
+
+  private void setTableFromJsonObject(Map<String, Object> jo) throws JSONException {
+    if (jo.containsKey(JSON_KEY_TABLE_COL_WIDTHS)) {
+      ArrayList<Integer> ja = (ArrayList<Integer>) jo.get(JSON_KEY_TABLE_COL_WIDTHS);
+      tableColWidths = new int[ja.size()];
+      for (int i = 0; i < ja.size(); i++) {
+        tableColWidths[i] = ja.get(i);
+      }
     }
-    
-    private void setMapFromJsonObject(JSONObject jo) throws JSONException {
-        mapLocCol = jo.has(JSON_KEY_MAP_LOC_COL) ?
-                jo.getString(JSON_KEY_MAP_LOC_COL) : null;
-        mapLabelCol = jo.has(JSON_KEY_MAP_LABEL_COL) ?
-                jo.getString(JSON_KEY_MAP_LABEL_COL) : null;
-        if (jo.has(JSON_KEY_MAP_COLOR_RULERS)) {
-            JSONObject colorRulerJo =
-                jo.getJSONObject(JSON_KEY_MAP_COLOR_RULERS);
-            for (ColumnProperties cp : tp.getColumns()) {
-                String cdn = cp.getColumnDbName();
-                if (colorRulerJo.has(cdn)) {
-                    mapColorRulers.put(cdn, new ConditionalRuler(
-                            colorRulerJo.getJSONObject(cdn)));
-                }
-            }
+    tableIndexedCol = jo.containsKey(JSON_KEY_TABLE_INDEXED_COL) ? (String) jo
+        .get(JSON_KEY_TABLE_INDEXED_COL) : null;
+  }
+
+  private void setListFromJsonObject(Map<String, Object> jo) throws JSONException {
+    listFormat = jo.containsKey(JSON_KEY_LIST_FORMAT) ? (String) jo.get(JSON_KEY_LIST_FORMAT)
+        : null;
+  }
+
+  private void setLineFromJsonObject(Map<String, Object> jo) throws JSONException {
+    lineXCol = jo.containsKey(JSON_KEY_LINE_X_COL) ? (String) jo.get(JSON_KEY_LINE_X_COL) : null;
+    lineYCol = jo.containsKey(JSON_KEY_LINE_Y_COL) ? (String) jo.get(JSON_KEY_LINE_Y_COL) : null;
+  }
+
+  private void setBarFromJsonObject(Map<String, Object> jo) throws JSONException {
+    barXCol = jo.containsKey(JSON_KEY_BAR_X_COL) ? (String) jo.get(JSON_KEY_BAR_X_COL) : null;
+    barYCol = jo.containsKey(JSON_KEY_BAR_Y_COL) ? (String) jo.get(JSON_KEY_BAR_Y_COL) : null;
+  }
+
+  private void setBoxStemFromJsonObject(Map<String, Object> jo) throws JSONException {
+    boxStemXCol = jo.containsKey(JSON_KEY_BOX_STEM_X_COL) ? (String) jo
+        .get(JSON_KEY_BOX_STEM_X_COL) : null;
+    boxStemYCol = jo.containsKey(JSON_KEY_BOX_STEM_Y_COL) ? (String) jo
+        .get(JSON_KEY_BOX_STEM_Y_COL) : null;
+  }
+
+  private void setMapFromJsonObject(Map<String, Object> jo) throws JSONException {
+    mapLocCol = jo.containsKey(JSON_KEY_MAP_LOC_COL) ? (String) jo.get(JSON_KEY_MAP_LOC_COL) : null;
+    mapLabelCol = jo.containsKey(JSON_KEY_MAP_LABEL_COL) ? (String) jo.get(JSON_KEY_MAP_LABEL_COL)
+        : null;
+    if (jo.containsKey(JSON_KEY_MAP_COLOR_RULERS)) {
+      Map<String, Object> colorRulerJo = (Map<String, Object>) jo.get(JSON_KEY_MAP_COLOR_RULERS);
+      for (ColumnProperties cp : tp.getColumns()) {
+        String cdn = cp.getColumnDbName();
+        if (colorRulerJo.containsKey(cdn)) {
+          mapColorRulers
+              .put(cdn, new ConditionalRuler((Map<String, Object>) colorRulerJo.get(cdn)));
         }
-        if (jo.has(JSON_KEY_MAP_SIZE_RULERS)) {
-            JSONObject sizeRulerJo = jo.getJSONObject(
-                    JSON_KEY_MAP_SIZE_RULERS);
-            for (ColumnProperties cp : tp.getColumns()) {
-                String cdn = cp.getColumnDbName();
-                if (sizeRulerJo.has(cdn)) {
-                    mapSizeRulers.put(cdn, new ConditionalRuler(
-                            sizeRulerJo.getJSONObject(cdn)));
-                }
-            }
-        }
+      }
     }
-    
-    private void setCustomFromJsonObject(JSONObject jo) throws JSONException {
-        if (jo.has(JSON_KEY_CUSTOM_LIST_FILE)) {
-            customListFilename = jo.getString(JSON_KEY_CUSTOM_LIST_FILE);
+    if (jo.containsKey(JSON_KEY_MAP_SIZE_RULERS)) {
+      Map<String, Object> sizeRulerJo = (Map<String, Object>) jo.get(JSON_KEY_MAP_SIZE_RULERS);
+      for (ColumnProperties cp : tp.getColumns()) {
+        String cdn = cp.getColumnDbName();
+        if (sizeRulerJo.containsKey(cdn)) {
+          mapSizeRulers.put(cdn, new ConditionalRuler((Map<String, Object>) sizeRulerJo.get(cdn)));
         }
-        if (jo.has(JSON_KEY_CUSTOM_VIEWS_INFO)) {
-            JSONArray viewsJa = jo.getJSONArray(JSON_KEY_CUSTOM_VIEWS_INFO);
-            for (int i = 0; i < viewsJa.length(); i++) {
-                customViews.add(new CustomView(viewsJa.getJSONObject(i)));
-            }
-        }
+      }
     }
-    
-    public static TableViewSettings newOverviewTVS(TableProperties tp,
-            String dbString) {
-        return new TableViewSettings(tp, ViewType.OVERVIEW_VIEW, dbString);
+  }
+
+  private void setCustomFromJsonObject(Map<String, Object> jo) throws JSONException {
+    if (jo.containsKey(JSON_KEY_CUSTOM_LIST_FILE)) {
+      customListFilename = (String) jo.get(JSON_KEY_CUSTOM_LIST_FILE);
     }
-    
-    public static TableViewSettings newCollectionTVS(TableProperties tp,
-            String dbString) {
-        return new TableViewSettings(tp, ViewType.COLLECTION_VIEW, dbString);
+    if (jo.containsKey(JSON_KEY_CUSTOM_VIEWS_INFO)) {
+      ArrayList<Map<String, Object>> viewsJa = (ArrayList<Map<String, Object>>) jo
+          .get(JSON_KEY_CUSTOM_VIEWS_INFO);
+      for (int i = 0; i < viewsJa.size(); i++) {
+        customViews.add(new CustomView(viewsJa.get(i)));
+      }
     }
-    
-    public int getViewType() {
-        return viewType;
+  }
+
+  public static TableViewSettings newOverviewTVS(TableProperties tp, String dbString) {
+    return new TableViewSettings(tp, ViewType.OVERVIEW_VIEW, dbString);
+  }
+
+  public static TableViewSettings newCollectionTVS(TableProperties tp, String dbString) {
+    return new TableViewSettings(tp, ViewType.COLLECTION_VIEW, dbString);
+  }
+
+  public int getViewType() {
+    return viewType;
+  }
+
+  public int[] getTableColWidths() {
+    if (tableColWidths == null) {
+      int[] colWidths = new int[tp.getColumns().length];
+      for (int i = 0; i < colWidths.length; i++) {
+        colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+      }
+      return colWidths;
+    } else if (tableColWidths.length < tp.getColumnOrder().size()) {
+      int colCount = tp.getColumnOrder().size();
+      int[] colWidths = new int[colCount];
+      for (int i = 0; i < tableColWidths.length; i++) {
+        colWidths[i] = tableColWidths[i];
+      }
+      for (int i = tableColWidths.length; i < colCount; i++) {
+        colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
+      }
+      return colWidths;
+    } else if (tableColWidths.length > tp.getColumnOrder().size()) {
+      int colCount = tp.getColumnOrder().size();
+      int[] colWidths = new int[colCount];
+      for (int i = 0; i < colCount; i++) {
+        colWidths[i] = tableColWidths[i];
+      }
+      return colWidths;
+    } else {
+      return tableColWidths;
     }
-    
-    public int[] getTableColWidths() {
-        if (tableColWidths == null) {
-            int[] colWidths = new int[tp.getColumns().length];
-            for (int i = 0; i < colWidths.length; i++) {
-                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
-            }
-            return colWidths;
-        } else if (tableColWidths.length < tp.getColumnOrder().length) {
-            int colCount = tp.getColumnOrder().length;
-            int[] colWidths = new int[colCount];
-            for (int i = 0; i < tableColWidths.length; i++) {
-                colWidths[i] = tableColWidths[i];
-            }
-            for (int i = tableColWidths.length; i < colCount; i++) {
-                colWidths[i] = DEFAULT_TABLE_COL_WIDTH;
-            }
-            return colWidths;
-        } else if (tableColWidths.length > tp.getColumnOrder().length) {
-            int colCount = tp.getColumnOrder().length;
-            int[] colWidths = new int[colCount];
-            for (int i = 0; i < colCount; i++) {
-                colWidths[i] = tableColWidths[i];
-            }
-            return colWidths;
-        } else {
-            return tableColWidths;
-        }
+  }
+
+  public int getTableIndexedColIndex() {
+    if (tableIndexedCol == null) {
+      return -1;
     }
-    
-    public int getTableIndexedColIndex() {
-        if (tableIndexedCol == null) {
-            return -1;
-        }
-        for (int i = 0; i < tp.getColumnOrder().length; i++) {
-            if (tableIndexedCol.equals(tp.getColumnOrder()[i])) {
-                return i;
-            }
-        }
-        return -1;
+    for (int i = 0; i < tp.getColumnOrder().size(); i++) {
+      if (tableIndexedCol.equals(tp.getColumnOrder().get(i))) {
+        return i;
+      }
     }
-    
-    public String getListFormat() {
-        return listFormat;
+    return -1;
+  }
+
+  public String getListFormat() {
+    return listFormat;
+  }
+
+  public ColumnProperties getLineXCol() {
+    return (lineXCol == null) ? null : tp.getColumnByDbName(lineXCol);
+  }
+
+  public ColumnProperties getLineYCol() {
+    return (lineYCol == null) ? null : tp.getColumnByDbName(lineYCol);
+  }
+
+  public ColumnProperties getBarXCol() {
+    return (barXCol == null) ? null : tp.getColumnByDbName(barXCol);
+  }
+
+  public String getBarYCol() {
+    return barYCol;
+  }
+
+  public ColumnProperties getBoxStemXCol() {
+    return (boxStemXCol == null) ? null : tp.getColumnByDbName(boxStemXCol);
+  }
+
+  public ColumnProperties getBoxStemYCol() {
+    return (boxStemYCol == null) ? null : tp.getColumnByDbName(boxStemYCol);
+  }
+
+  public ColumnProperties getMapLocationCol() {
+    return (mapLocCol == null) ? null : tp.getColumnByDbName(mapLocCol);
+  }
+
+  public ColumnProperties getMapLabelCol() {
+    return (mapLabelCol == null) ? null : tp.getColumnByDbName(mapLabelCol);
+  }
+
+  public ConditionalRuler getMapColorRuler(ColumnProperties cp) {
+    if (mapColorRulers.containsKey(cp.getColumnDbName())) {
+      return mapColorRulers.get(cp.getColumnDbName());
+    } else {
+      ConditionalRuler cr = new ConditionalRuler();
+      mapColorRulers.put(cp.getColumnDbName(), cr);
+      return cr;
     }
-    
-    public ColumnProperties getLineXCol() {
-        return (lineXCol == null) ? null : tp.getColumnByDbName(lineXCol);
+  }
+
+  public ConditionalRuler getMapSizeRuler(ColumnProperties cp) {
+    if (mapSizeRulers.containsKey(cp.getColumnDbName())) {
+      return mapSizeRulers.get(cp.getColumnDbName());
+    } else {
+      ConditionalRuler cr = new ConditionalRuler();
+      mapSizeRulers.put(cp.getColumnDbName(), cr);
+      return cr;
     }
-    
-    public ColumnProperties getLineYCol() {
-        return (lineYCol == null) ? null : tp.getColumnByDbName(lineYCol);
+  }
+
+  public String getCustomListFilename() {
+    return customListFilename;
+  }
+
+  public int getCustomViewCount() {
+    return customViews.size();
+  }
+
+  public CustomView getCustomView(int index) {
+    return customViews.get(index);
+  }
+
+  Map<String, Object> toJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    jo.put(JSON_KEY_VIEW_TYPE, viewType);
+    jo.put(JSON_KEY_TABLE_SETTINGS, tableSettingsToJsonObject());
+    jo.put(JSON_KEY_LIST_SETTINGS, listSettingsToJsonObject());
+    jo.put(JSON_KEY_LINE_SETTINGS, lineSettingsToJsonObject());
+    jo.put(JSON_KEY_BAR_SETTINGS, barSettingsToJsonObject());
+    jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
+    jo.put(JSON_KEY_MAP_SETTINGS, mapSettingsToJsonObject());
+    jo.put(JSON_KEY_CUSTOM_SETTINGS, customSettingsToJsonObject());
+    return jo;
+  }
+
+  private Map<String, Object> tableSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (tableColWidths != null) {
+      ArrayList<Integer> arr = new ArrayList<Integer>();
+      for (int width : tableColWidths) {
+        arr.add(width);
+      }
+      jo.put(JSON_KEY_TABLE_COL_WIDTHS, arr);
     }
-    
-    public ColumnProperties getBarXCol() {
-        return (barXCol == null) ? null : tp.getColumnByDbName(barXCol);
+    if (tableIndexedCol != null) {
+      jo.put(JSON_KEY_TABLE_INDEXED_COL, tableIndexedCol);
     }
-    
-    public String getBarYCol() {
-        return barYCol;
+    return jo;
+  }
+
+  private Map<String, Object> listSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (listFormat != null) {
+      jo.put(JSON_KEY_LIST_FORMAT, listFormat);
     }
-    
-    public ColumnProperties getBoxStemXCol() {
-        return (boxStemXCol == null) ? null :
-            tp.getColumnByDbName(boxStemXCol);
+    return jo;
+  }
+
+  private Map<String, Object> lineSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (lineXCol != null) {
+      jo.put(JSON_KEY_LINE_X_COL, lineXCol);
     }
-    
-    public ColumnProperties getBoxStemYCol() {
-        return (boxStemYCol == null) ? null :
-            tp.getColumnByDbName(boxStemYCol);
+    if (lineYCol != null) {
+      jo.put(JSON_KEY_LINE_Y_COL, lineYCol);
     }
-    
-    public ColumnProperties getMapLocationCol() {
-        return (mapLocCol == null) ? null : tp.getColumnByDbName(mapLocCol);
+    return jo;
+  }
+
+  private Map<String, Object> barSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (barXCol != null) {
+      jo.put(JSON_KEY_BAR_X_COL, barXCol);
     }
-    
-    public ColumnProperties getMapLabelCol() {
-        return (mapLabelCol == null) ? null :
-            tp.getColumnByDbName(mapLabelCol);
+    if (barYCol != null) {
+      jo.put(JSON_KEY_BAR_Y_COL, barYCol);
     }
-    
-    public ConditionalRuler getMapColorRuler(ColumnProperties cp) {
-        if (mapColorRulers.containsKey(cp.getColumnDbName())) {
-            return mapColorRulers.get(cp.getColumnDbName());
-        } else {
-            ConditionalRuler cr = new ConditionalRuler();
-            mapColorRulers.put(cp.getColumnDbName(), cr);
-            return cr;
-        }
+    return jo;
+  }
+
+  private Map<String, Object> boxStemSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (boxStemXCol != null) {
+      jo.put(JSON_KEY_BOX_STEM_X_COL, boxStemXCol);
     }
-    
-    public ConditionalRuler getMapSizeRuler(ColumnProperties cp) {
-        if (mapSizeRulers.containsKey(cp.getColumnDbName())) {
-            return mapSizeRulers.get(cp.getColumnDbName());
-        } else {
-            ConditionalRuler cr = new ConditionalRuler();
-            mapSizeRulers.put(cp.getColumnDbName(), cr);
-            return cr;
-        }
+    if (boxStemYCol != null) {
+      jo.put(JSON_KEY_BOX_STEM_Y_COL, boxStemYCol);
     }
-    
-    public String getCustomListFilename() {
-        return customListFilename;
+    return jo;
+  }
+
+  private Map<String, Object> mapSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (mapLocCol != null) {
+      jo.put(JSON_KEY_MAP_LOC_COL, mapLocCol);
     }
-    
-    public int getCustomViewCount() {
-        return customViews.size();
+    if (mapLabelCol != null) {
+      jo.put(JSON_KEY_MAP_LABEL_COL, mapLabelCol);
     }
-    
-    public CustomView getCustomView(int index) {
-        return customViews.get(index);
+    Map<String, Object> colorRulerJo = new HashMap<String, Object>();
+    for (String key : mapColorRulers.keySet()) {
+      ConditionalRuler cr = mapColorRulers.get(key);
+      if (cr.getRuleCount() > 0) {
+        colorRulerJo.put(key, cr.toJsonObject());
+      }
     }
-    
-    JSONObject toJsonObject() {
-        JSONObject jo = new JSONObject();
-        try {
-            jo.put(JSON_KEY_VIEW_TYPE, viewType);
-            jo.put(JSON_KEY_TABLE_SETTINGS, tableSettingsToJsonObject());
-            jo.put(JSON_KEY_LIST_SETTINGS, listSettingsToJsonObject());
-            jo.put(JSON_KEY_LINE_SETTINGS, lineSettingsToJsonObject());
-            jo.put(JSON_KEY_BAR_SETTINGS, barSettingsToJsonObject());
-            jo.put(JSON_KEY_BOX_STEM_SETTINGS, boxStemSettingsToJsonObject());
-            jo.put(JSON_KEY_MAP_SETTINGS, mapSettingsToJsonObject());
-            jo.put(JSON_KEY_CUSTOM_SETTINGS, customSettingsToJsonObject());
-            return jo;
-        } catch(JSONException e) {
-            throw new RuntimeException(e);
-        }
+    jo.put(JSON_KEY_MAP_COLOR_RULERS, colorRulerJo);
+    Map<String, Object> sizeRulerJo = new HashMap<String, Object>();
+    for (String key : mapSizeRulers.keySet()) {
+      ConditionalRuler cr = mapSizeRulers.get(key);
+      if (cr.getRuleCount() > 0) {
+        sizeRulerJo.put(key, cr.toJsonObject());
+      }
     }
-    
-    private JSONObject tableSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (tableColWidths != null) {
-            JSONArray arr = new JSONArray();
-            for (int width : tableColWidths) {
-                arr.put(width);
-            }
-            jo.put(JSON_KEY_TABLE_COL_WIDTHS, arr);
-        }
-        if (tableIndexedCol != null) {
-            jo.put(JSON_KEY_TABLE_INDEXED_COL, tableIndexedCol);
-        }
-        return jo;
+    jo.put(JSON_KEY_MAP_SIZE_RULERS, sizeRulerJo);
+    return jo;
+  }
+
+  private Map<String, Object> customSettingsToJsonObject() {
+    Map<String, Object> jo = new HashMap<String, Object>();
+    if (customListFilename != null) {
+      jo.put(JSON_KEY_CUSTOM_LIST_FILE, customListFilename);
     }
-    
-    private JSONObject listSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (listFormat != null) {
-            jo.put(JSON_KEY_LIST_FORMAT, listFormat);
-        }
-        return jo;
+    if (!customViews.isEmpty()) {
+      JSONArray ja = new JSONArray();
+      for (CustomView cv : customViews) {
+        ja.put(cv.toJsonObject());
+      }
+      jo.put(JSON_KEY_CUSTOM_VIEWS_INFO, ja);
     }
-    
-    private JSONObject lineSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (lineXCol != null) {
-            jo.put(JSON_KEY_LINE_X_COL, lineXCol);
-        }
-        if (lineYCol != null) {
-            jo.put(JSON_KEY_LINE_Y_COL, lineYCol);
-        }
-        return jo;
+    return jo;
+  }
+
+  public void setViewType(int viewType) {
+    this.viewType = viewType;
+    set();
+  }
+
+  public void setTableColWidths(int[] widths) {
+    tableColWidths = widths;
+    set();
+  }
+
+  public void setTableIndexedCol(String indexedCol) {
+    tableIndexedCol = indexedCol;
+    set();
+  }
+
+  public void setListFormat(String format) {
+    listFormat = format;
+    set();
+  }
+
+  public void setLineXCol(ColumnProperties cp) {
+    lineXCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setLineYCol(ColumnProperties cp) {
+    lineYCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setBarXCol(ColumnProperties cp) {
+    barXCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setBarYCol(String barYCol) {
+    this.barYCol = barYCol;
+    set();
+  }
+
+  public void setBoxStemXCol(ColumnProperties cp) {
+    boxStemXCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setBoxStemYCol(ColumnProperties cp) {
+    boxStemYCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setMapLocationCol(ColumnProperties cp) {
+    mapLocCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setMapLabelCol(ColumnProperties cp) {
+    mapLabelCol = (cp == null) ? null : cp.getColumnDbName();
+    set();
+  }
+
+  public void setCustomListFilename(String filename) {
+    customListFilename = filename;
+    set();
+  }
+
+  public void addCustomView(CustomView cv) {
+    customViews.add(cv);
+    set();
+  }
+
+  public void removeCustomView(int index) {
+    customViews.remove(index);
+    set();
+  }
+
+  private void set() {
+    String dbString;
+    try {
+      dbString = mapper.writeValueAsString(toJsonObject());
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid conversion: " + toJsonObject().toString());
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid conversion: " + toJsonObject().toString());
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid conversion: " + toJsonObject().toString());
     }
-    
-    private JSONObject barSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (barXCol != null) {
-            jo.put(JSON_KEY_BAR_X_COL, barXCol);
-        }
-        if (barYCol != null) {
-            jo.put(JSON_KEY_BAR_Y_COL, barYCol);
-        }
-        return jo;
+    if (type == ViewType.OVERVIEW_VIEW) {
+      tp.setOverviewViewSettings(dbString);
+    } else {
+      tp.setCollectionViewSettings(dbString);
     }
-    
-    private JSONObject boxStemSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (boxStemXCol != null) {
-            jo.put(JSON_KEY_BOX_STEM_X_COL, boxStemXCol);
-        }
-        if (boxStemYCol != null) {
-            jo.put(JSON_KEY_BOX_STEM_Y_COL, boxStemYCol);
-        }
-        return jo;
+  }
+
+  /**
+   * From what I can tell, this method is responsible for populating the menus
+   * where you select what view you want to have for the table.
+   * 
+   * As of Nov22,2012, the only things we support are spreadsheet, list, and
+   * detail.
+   * @return
+   */
+  public int[] getPossibleViewTypes() {
+    int numericColCount = 0;
+    int locationColCount = 0;
+    int dateColCount = 0;
+    for (ColumnProperties cp : tp.getColumns()) {
+      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+        numericColCount++;
+      } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
+        locationColCount++;
+      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
+          || cp.getColumnType() == ColumnType.TIME) {
+        dateColCount++;
+      }
     }
-    
-    private JSONObject mapSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (mapLocCol != null) {
-            jo.put(JSON_KEY_MAP_LOC_COL, mapLocCol);
-        }
-        if (mapLabelCol != null) {
-            jo.put(JSON_KEY_MAP_LABEL_COL, mapLabelCol);
-        }
-        JSONObject colorRulerJo = new JSONObject();
-        for (String key : mapColorRulers.keySet()) {
-            ConditionalRuler cr = mapColorRulers.get(key);
-            if (cr.getRuleCount() > 0) {
-                colorRulerJo.put(key, cr.toJsonObject());
-            }
-        }
-        jo.put(JSON_KEY_MAP_COLOR_RULERS, colorRulerJo);
-        JSONObject sizeRulerJo = new JSONObject();
-        for (String key : mapSizeRulers.keySet()) {
-            ConditionalRuler cr = mapSizeRulers.get(key);
-            if (cr.getRuleCount() > 0) {
-                sizeRulerJo.put(key, cr.toJsonObject());
-            }
-        }
-        jo.put(JSON_KEY_MAP_SIZE_RULERS, sizeRulerJo);
-        return jo;
+    List<Integer> list = new ArrayList<Integer>();
+    list.add(Type.SPREADSHEET);
+    list.add(Type.LIST);
+    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
+      list.add(Type.LINE_GRAPH);
     }
-    
-    private JSONObject customSettingsToJsonObject() throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (customListFilename != null) {
-            jo.put(JSON_KEY_CUSTOM_LIST_FILE, customListFilename);
-        }
-        if (!customViews.isEmpty()) {
-            JSONArray ja = new JSONArray();
-            for (CustomView cv : customViews) {
-                ja.put(cv.toJsonObject());
-            }
-            jo.put(JSON_KEY_CUSTOM_VIEWS_INFO, ja);
-        }
-        return jo;
+    if (numericColCount >= 1) {
+      list.add(Type.BOX_STEM);
     }
-    
-    public void setViewType(int viewType) {
-        this.viewType = viewType;
-        set();
+    // Not adding this b/c it's not working atm.
+//    list.add(Type.BAR_GRAPH);
+    if (locationColCount >= 1) {
+      list.add(Type.MAP);
     }
-    
-    public void setTableColWidths(int[] widths) {
-        tableColWidths = widths;
-        set();
+    int[] arr = new int[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+      arr[i] = list.get(i);
     }
-    
-    public void setTableIndexedCol(String indexedCol) {
-        tableIndexedCol = indexedCol;
-        set();
+    return arr;
+  }
+
+  public class ConditionalRuler {
+
+    private static final String JSON_KEY_COMPARATORS = "comparators";
+    private static final String JSON_KEY_VALUES = "values";
+    private static final String JSON_KEY_SETTINGS = "settings";
+
+    public class Comparator {
+      public static final int EQUALS = 0;
+      public static final int LESS_THAN = 1;
+      public static final int LESS_THAN_EQUALS = 2;
+      public static final int GREATER_THAN = 3;
+      public static final int GREATER_THAN_EQUALS = 4;
+      public static final int COUNT = 5;
+
+      private Comparator() {
+      }
     }
-    
-    public void setListFormat(String format) {
-        listFormat = format;
-        set();
+
+    private final List<Integer> comparators;
+    private final List<String> values;
+    private final List<Integer> settings;
+
+    ConditionalRuler() {
+      comparators = new ArrayList<Integer>();
+      values = new ArrayList<String>();
+      settings = new ArrayList<Integer>();
     }
-    
-    public void setLineXCol(ColumnProperties cp) {
-        lineXCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    ConditionalRuler(Map<String, Object> jo) {
+      comparators = new ArrayList<Integer>();
+      values = new ArrayList<String>();
+      settings = new ArrayList<Integer>();
+      ArrayList<Integer> comparatorsArr = (ArrayList<Integer>) jo.get(JSON_KEY_COMPARATORS);
+      ArrayList<String> valuesArr = (ArrayList<String>) jo.get(JSON_KEY_VALUES);
+      ArrayList<Integer> colorsArr = (ArrayList<Integer>) jo.get(JSON_KEY_SETTINGS);
+      for (int i = 0; i < comparatorsArr.size(); i++) {
+        comparators.add(comparatorsArr.get(i));
+        values.add((String) valuesArr.get(i));
+        settings.add((Integer) colorsArr.get(i));
+      }
     }
-    
-    public void setLineYCol(ColumnProperties cp) {
-        lineYCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    public int getSetting(String value, int defaultSetting) {
+      for (int i = 0; i < comparators.size(); i++) {
+        if (checkMatch(i, value)) {
+          return settings.get(i);
+        }
+      }
+      return defaultSetting;
     }
-    
-    public void setBarXCol(ColumnProperties cp) {
-        barXCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    private boolean checkMatch(int index, String value) {
+      switch (comparators.get(index)) {
+      case Comparator.EQUALS:
+        return value.equals(values.get(index));
+      case Comparator.LESS_THAN:
+        return (value.compareTo(values.get(index)) < 0);
+      case Comparator.LESS_THAN_EQUALS:
+        return (value.compareTo(values.get(index)) <= 0);
+      case Comparator.GREATER_THAN:
+        return (value.compareTo(values.get(index)) > 0);
+      case Comparator.GREATER_THAN_EQUALS:
+        return (value.compareTo(values.get(index)) >= 0);
+      default:
+        throw new RuntimeException();
+      }
     }
-    
-    public void setBarYCol(String barYCol) {
-        this.barYCol = barYCol;
-        set();
+
+    public void addRule(int comparator, String value, int setting) {
+      comparators.add(comparator);
+      values.add(value);
+      settings.add(setting);
+      set();
     }
-    
-    public void setBoxStemXCol(ColumnProperties cp) {
-        boxStemXCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    public int getRuleCount() {
+      return comparators.size();
     }
-    
-    public void setBoxStemYCol(ColumnProperties cp) {
-        boxStemYCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    public int getRuleComparator(int index) {
+      return comparators.get(index);
     }
-    
-    public void setMapLocationCol(ColumnProperties cp) {
-        mapLocCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    public void setRuleComparator(int index, int comparator) {
+      comparators.set(index, comparator);
+      set();
     }
-    
-    public void setMapLabelCol(ColumnProperties cp) {
-        mapLabelCol = (cp == null) ? null : cp.getColumnDbName();
-        set();
+
+    public String getRuleValue(int index) {
+      return values.get(index);
     }
-    
-    public void setCustomListFilename(String filename) {
-        customListFilename = filename;
-        set();
+
+    public void setRuleValue(int index, String value) {
+      values.set(index, value);
+      set();
     }
-    
-    public void addCustomView(CustomView cv) {
-        customViews.add(cv);
-        set();
+
+    public int getRuleSetting(int index) {
+      return settings.get(index);
     }
-    
-    public void removeCustomView(int index) {
-        customViews.remove(index);
-        set();
+
+    public void setRuleSetting(int index, int setting) {
+      settings.set(index, setting);
+      set();
     }
-    
-    private void set() {
-        String dbString = toJsonObject().toString();
-        if (type == ViewType.OVERVIEW_VIEW) {
-            tp.setOverviewViewSettings(dbString);
-        } else {
-            tp.setCollectionViewSettings(dbString);
-        }
+
+    public void deleteRule(int index) {
+      comparators.remove(index);
+      values.remove(index);
+      settings.remove(index);
+      set();
     }
-    
-    public int[] getPossibleViewTypes() {
-        int numericColCount = 0;
-        int locationColCount = 0;
-        int dateColCount = 0;
-        for (ColumnProperties cp : tp.getColumns()) {
-            if (cp.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
-                numericColCount++;
-            } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.LOCATION) {
-                locationColCount++;
-            } else if (cp.getColumnType() ==
-                ColumnProperties.ColumnType.DATE) {
-                dateColCount++;
-            }
-        }
-        List<Integer> list = new ArrayList<Integer>();
-        list.add(Type.SPREADSHEET);
-        list.add(Type.LIST);
-        if ((numericColCount >= 2) ||
-                ((numericColCount >= 1) && (dateColCount >= 1))) {
-            list.add(Type.LINE_GRAPH);
-        }
-        if (numericColCount >= 1) {
-            list.add(Type.BOX_STEM);
-        }
-        list.add(Type.BAR_GRAPH);
-        if (locationColCount >= 1) {
-            list.add(Type.MAP);
-        }
-        int[] arr = new int[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            arr[i] = list.get(i);
-        }
-        return arr;
+
+    Map<String, Object> toJsonObject() {
+      Map<String, Object> jo = new HashMap<String, Object>();
+      jo.put(JSON_KEY_COMPARATORS, comparators);
+      jo.put(JSON_KEY_VALUES, values);
+      jo.put(JSON_KEY_SETTINGS, settings);
+      return jo;
     }
-    
-    public class ConditionalRuler {
-        
-        private static final String JSON_KEY_COMPARATORS = "comparators";
-        private static final String JSON_KEY_VALUES = "values";
-        private static final String JSON_KEY_SETTINGS = "settings";
-        
-        public class Comparator {
-            public static final int EQUALS = 0;
-            public static final int LESS_THAN = 1;
-            public static final int LESS_THAN_EQUALS = 2;
-            public static final int GREATER_THAN = 3;
-            public static final int GREATER_THAN_EQUALS = 4;
-            public static final int COUNT = 5;
-            private Comparator() {}
-        }
-        
-        private final List<Integer> comparators;
-        private final List<String> values;
-        private final List<Integer> settings;
-        
-        ConditionalRuler() {
-            comparators = new ArrayList<Integer>();
-            values = new ArrayList<String>();
-            settings = new ArrayList<Integer>();
-        }
-        
-        ConditionalRuler(JSONObject jo) {
-            comparators = new ArrayList<Integer>();
-            values = new ArrayList<String>();
-            settings = new ArrayList<Integer>();
-            JSONArray comparatorsArr;
-            try {
-                comparatorsArr = jo.getJSONArray(JSON_KEY_COMPARATORS);
-                JSONArray valuesArr = jo.getJSONArray(JSON_KEY_VALUES);
-                JSONArray colorsArr = jo.getJSONArray(JSON_KEY_SETTINGS);
-                for (int i = 0; i < comparatorsArr.length(); i++) {
-                    comparators.add(comparatorsArr.getInt(i));
-                    values.add(valuesArr.getString(i));
-                    settings.add(colorsArr.getInt(i));
-                }
-            } catch(JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        public int getSetting(String value, int defaultSetting) {
-            for (int i = 0; i < comparators.size(); i++) {
-                if (checkMatch(i, value)) {
-                    return settings.get(i);
-                }
-            }
-            return defaultSetting;
-        }
-        
-        private boolean checkMatch(int index, String value) {
-            switch (comparators.get(index)) {
-            case Comparator.EQUALS:
-                return value.equals(values.get(index));
-            case Comparator.LESS_THAN:
-                return (value.compareTo(values.get(index)) < 0);
-            case Comparator.LESS_THAN_EQUALS:
-                return (value.compareTo(values.get(index)) <= 0);
-            case Comparator.GREATER_THAN:
-                return (value.compareTo(values.get(index)) > 0);
-            case Comparator.GREATER_THAN_EQUALS:
-                return (value.compareTo(values.get(index)) >= 0);
-            default:
-                throw new RuntimeException();
-            }
-        }
-        
-        public void addRule(int comparator, String value, int setting) {
-            comparators.add(comparator);
-            values.add(value);
-            settings.add(setting);
-            set();
-        }
-        
-        public int getRuleCount() {
-            return comparators.size();
-        }
-        
-        public int getRuleComparator(int index) {
-            return comparators.get(index);
-        }
-        
-        public void setRuleComparator(int index, int comparator) {
-            comparators.set(index, comparator);
-            set();
-        }
-        
-        public String getRuleValue(int index) {
-            return values.get(index);
-        }
-        
-        public void setRuleValue(int index, String value) {
-            values.set(index, value);
-            set();
-        }
-        
-        public int getRuleSetting(int index) {
-            return settings.get(index);
-        }
-        
-        public void setRuleSetting(int index, int setting) {
-            settings.set(index, setting);
-            set();
-        }
-        
-        public void deleteRule(int index) {
-            comparators.remove(index);
-            values.remove(index);
-            settings.remove(index);
-            set();
-        }
-        
-        JSONObject toJsonObject() {
-            JSONObject jo = new JSONObject();
-            try {
-                jo.put(JSON_KEY_COMPARATORS, new JSONArray(comparators));
-                jo.put(JSON_KEY_VALUES, new JSONArray(values));
-                jo.put(JSON_KEY_SETTINGS, new JSONArray(settings));
-            } catch(JSONException e) {
-                e.printStackTrace();
-            }
-            return jo;
-        }
+  }
+
+  public class CustomView {
+
+    private static final String JSON_KEY_NAME = "name";
+    private static final String JSON_KEY_FILENAME = "filename";
+
+    private String name;
+    private String filename;
+
+    CustomView() {
+      name = "";
+      filename = null;
     }
-    
-    public class CustomView {
-        
-        private static final String JSON_KEY_NAME = "name";
-        private static final String JSON_KEY_FILENAME = "filename";
-        
-        private String name;
-        private String filename;
-        
-        CustomView() {
-            name = "";
-            filename = null;
-        }
-        
-        private CustomView(JSONObject jo) {
-            try {
-                name = jo.getString(JSON_KEY_NAME);
-                filename = jo.getString(JSON_KEY_FILENAME);
-            } catch(JSONException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        
-        public String getName() {
-            return name;
-        }
-        
-        public String getFilename() {
-            return filename;
-        }
-        
-        public void setName(String name) {
-            this.name = name;
-            set();
-        }
-        
-        public void setFilename(String filename) {
-            this.filename = filename;
-            set();
-        }
-        
-        private JSONObject toJsonObject() {
-            JSONObject jo = new JSONObject();
-            try {
-                jo.put(JSON_KEY_NAME, name);
-                jo.put(JSON_KEY_FILENAME, filename);
-            } catch(JSONException e) {
-                throw new RuntimeException(e);
-            }
-            return jo;
-        }
+
+    private CustomView(Map<String, Object> jo) {
+      name = (String) jo.get(JSON_KEY_NAME);
+      filename = (String) jo.get(JSON_KEY_FILENAME);
     }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getFilename() {
+      return filename;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+      set();
+    }
+
+    public void setFilename(String filename) {
+      this.filename = filename;
+      set();
+    }
+
+    private Map<String, Object> toJsonObject() {
+      Map<String, Object> jo = new HashMap<String, Object>();
+      jo.put(JSON_KEY_NAME, name);
+      jo.put(JSON_KEY_FILENAME, filename);
+      return jo;
+    }
+  }
 }

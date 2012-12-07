@@ -378,6 +378,11 @@ public class Query {
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
+
+        // add restriction for ODK Collect intermediate status...
+        sd.appendSql(" AND " + tp.getDbTableName() + "." +
+                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             sd.appendSql(" AND " + csd.getSql());
@@ -404,12 +409,12 @@ public class Query {
      * SELECT id, a, b, c FROM t JOIN (
      *   SELECT MAX(id) FROM t WHERE c = 12 GROUP BY a
      * ) z ON t.id = z.id
-     * @param columns the columns to select
+     * @param arrayList the columns to select
      * @return a SqlData object, with the SQL string and an array of arguments
      */
-    public SqlData toOverviewSql(String[] columns) {
-        if (tp.getPrimeColumns().length == 0) {
-            return toSql(columns);
+    public SqlData toOverviewSql(ArrayList<String> arrayList) {
+        if (tp.getPrimeColumns().size() == 0) {
+            return toSql(arrayList);
         }
         StringBuilder primeList = new StringBuilder();
         for (String prime : tp.getPrimeColumns()) {
@@ -418,7 +423,7 @@ public class Query {
         primeList.delete(0, 2);
         SqlData sd = new SqlData();
         sd.appendSql("SELECT d." + DbTable.DB_ROW_ID);
-        for (String column : columns) {
+        for (String column : arrayList) {
             sd.appendSql(", d." + column);
         }
         sd.appendSql(" FROM " + tp.getDbTableName() + " d");
@@ -433,14 +438,14 @@ public class Query {
             sd.appendSql("SELECT MAX(" + DbTable.DB_ROW_ID + ") AS " +
                     DbTable.DB_ROW_ID + " FROM ");
             
-            String[] primes = tp.getPrimeColumns();
-            String[] xCols = new String[primes.length];
-            String[] yCols = new String[primes.length + 1];
-            for (int i = 0; i < primes.length; i++) {
-                xCols[i] = primes[i];
-                yCols[i] = primes[i];
+            ArrayList<String> primes = tp.getPrimeColumns();
+            String[] xCols = new String[primes.size()];
+            String[] yCols = new String[primes.size() + 1];
+            for (int i = 0; i < primes.size(); i++) {
+                xCols[i] = primes.get(i);
+                yCols[i] = primes.get(i);
             }
-            yCols[primes.length] = sort;
+            yCols[primes.size()] = sort;
             
             StringBuilder xSelectionSb = new StringBuilder();
             for (String xCol : xCols) {
@@ -477,6 +482,32 @@ public class Query {
     
     public SqlData toSql(List<String> columns) {
         return toSql(columns.toArray(new String[0]));
+    }
+    
+    public SqlData toFooterSql(String dataColumn, GroupQueryType type) {
+        String typeSql;
+        switch (type) {
+        case AVERAGE:
+            typeSql = "(SUM(" + dataColumn + ") / COUNT(" + dataColumn +
+                    "))";
+            break;
+        case COUNT:
+            typeSql = "COUNT(" + dataColumn + ")";
+            break;
+        case MAXIMUM:
+            typeSql = "MAX(" + dataColumn + ")";
+            break;
+        case MINIMUM:
+            typeSql = "MIN(" + dataColumn + ")";
+            break;
+        case SUM:
+            typeSql = "SUM(" + dataColumn + ")";
+            break;
+        default:
+            throw new RuntimeException();
+        }
+        SqlData sd = toSql(typeSql + " AS g");
+        return sd;
     }
     
     public SqlData toGroupSql(String groupColumn, GroupQueryType type) {
@@ -518,6 +549,11 @@ public class Query {
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DbTable.DB_SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+        
+        // add restriction for ODK Collect intermediate status...
+        idsd.appendSql(" AND " + tp.getDbTableName() + "." +
+                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
             idsd.appendSql(" AND " + csd.getSql());

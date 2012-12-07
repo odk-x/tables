@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,8 +28,10 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 
 import android.content.Context;
 import au.com.bytecode.opencsv.CSVReader;
@@ -48,10 +51,19 @@ public class CsvUtil {
         dbh = DbHelper.getDbHelper(context);
     }
     
+    /**
+     * Tables imported through this function are added to the active key value
+     * store. Doing it another way would give users a workaround to add tables
+     * to the server database.
+     * @param file
+     * @param tableName
+     * @return
+     */
     public boolean importNewTable(File file, String tableName) {
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
         TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-                tableName, TableProperties.TableType.DATA);
+                tableName, TableType.data, 
+                KeyValueStore.Type.ACTIVE);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             String[] row = reader.readNext();
@@ -73,7 +85,7 @@ public class CsvUtil {
                     startIndex++;
                 }
                 for (int i = startIndex; i < row.length; i++) {
-                    tp.addColumn(row[i]);
+                    tp.addColumn(row[i], null, null);
                 }
             }
             boolean includeTs = row[0].equals(LAST_MOD_TIME_LABEL);
@@ -89,8 +101,9 @@ public class CsvUtil {
     }
     
     public boolean importAddToTable(File file, String tableId) {
+      //TODO is this the correct KVS to get the properties from?
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-                tableId);
+                tableId, KeyValueStore.Type.ACTIVE);
         try {
             CSVReader reader = new CSVReader(new FileReader(file));
             String[] row = reader.readNext();
@@ -106,11 +119,11 @@ public class CsvUtil {
             boolean includePn = (row.length > (includeTs ? 1 : 0)) &&
                     row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
             int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
-            String[] columns = new String[tp.getColumns().length];
-            for (int i = 0; i < columns.length; i++) {
+            ArrayList<String> columns = new ArrayList<String>();
+            for (int i = 0; i < columns.size(); i++) {
                 String displayName = row[startIndex + i];
                 String dbName = tp.getColumnByDisplayName(displayName);
-                columns[i] = dbName;
+                columns.add(dbName);
             }
             return importTable(reader, tableId, columns, includeTs, includePn);
         } catch(FileNotFoundException e) {
@@ -121,7 +134,7 @@ public class CsvUtil {
     }
     
     private boolean importTable(CSVReader reader, String tableId,
-            String[] columns, boolean includeTs, boolean includePn) {
+            ArrayList<String> columns, boolean includeTs, boolean includePn) {
         int tsIndex = includeTs ? 0 : -1;
         int pnIndex = includePn ? (includeTs ? 1 : 0) : -1;
         int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
@@ -130,8 +143,8 @@ public class CsvUtil {
             Map<String, String> values = new HashMap<String, String>();
             String[] row = reader.readNext();
             while (row != null) {
-                for (int i = 0; i < columns.length; i++) {
-                    values.put(columns[i], row[startIndex + i]);
+                for (int i = 0; i < columns.size(); i++) {
+                    values.put(columns.get(i), row[startIndex + i]);
                 }
                 String lastModTime = tsIndex == -1 ?
                         du.formatNowForDb() : row[tsIndex];
@@ -160,47 +173,54 @@ public class CsvUtil {
     
     private boolean export(File file, String tableId, boolean includeTs,
             boolean includePn, boolean raw) {
+      //TODO test that this is the correct KVS to get the export from.
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-                tableId);
+                tableId, KeyValueStore.Type.ACTIVE);
         // building array of columns to select and header row for output file
         int columnCount = tp.getColumns().length + (includeTs ? 1 : 0) +
                 (includePn ? 1 : 0);
-        String[] columns = new String[columnCount];
-        String[] headerRow = new String[columnCount];
+        ArrayList<String> columns = new ArrayList<String>();
+        ArrayList<String> headerRow = new ArrayList<String>();
         int index = 0;
+        // TODO: here we'll want to actually include instance name as well...
+        // I think we'll be trying to include every column that also goes to 
+        // the server. I'm not sure how this works, so I am leaving it for 
+        // now.
         if (includeTs) {
-            columns[index] = DbTable.DB_LAST_MODIFIED_TIME;
-            headerRow[index] = LAST_MOD_TIME_LABEL;
+            columns.add(DbTable.DB_LAST_MODIFIED_TIME);
+            headerRow.add(LAST_MOD_TIME_LABEL);
             index++;
         }
         if (includePn) {
-            columns[index] = DbTable.DB_SRC_PHONE_NUMBER;
-            headerRow[index] = SRC_PHONE_LABEL;
+            columns.add(DbTable.DB_URI_USER);
+            headerRow.add(SRC_PHONE_LABEL);
             index++;
         }
         if (raw) {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns[index] = cp.getColumnDbName();
-                headerRow[index] = cp.getDisplayName();
+                columns.add(cp.getColumnDbName());
+                headerRow.add(cp.getDisplayName());
                 index++;
             }
         } else {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns[index] = cp.getColumnDbName();
-                headerRow[index] = cp.getColumnDbName();
+                columns.add(cp.getColumnDbName());
+                headerRow.add(cp.getColumnDbName());
                 index++;
             }
         }
         // getting data
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
-        Table table = dbt.getRaw(columns, null, null, null);
+        String[] selectionKeys = { DbTable.DB_SAVED };
+        String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
+        Table table = dbt.getRaw(columns, selectionKeys, selectionArgs, null);
         // writing data
         try {
             CSVWriter cw = new CSVWriter(new FileWriter(file));
             if (!raw) {
                 cw.writeNext(new String[] {tp.toJson()});
             }
-            cw.writeNext(headerRow);
+            cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
             String[] row = new String[columnCount];
             for (int i = 0; i < table.getHeight(); i++) {
                 for (int j = 0; j < table.getWidth(); j++) {

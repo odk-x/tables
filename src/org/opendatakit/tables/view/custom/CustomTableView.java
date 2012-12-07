@@ -44,9 +44,9 @@ public class CustomTableView extends CustomView {
         ColumnProperties[] cps = tp.getColumns();
         for (int i = 0; i < cps.length; i++) {
             colIndexTable.put(cps[i].getDisplayName(), i);
-            String abbr = cps[i].getAbbreviation();
-            if (abbr != null) {
-                colIndexTable.put(abbr, i);
+            String smsLabel = cps[i].getSmsLabel();
+            if (smsLabel != null) {
+                colIndexTable.put(smsLabel, i);
             }
         }
     }

@@ -20,21 +20,23 @@ import java.util.List;
 
 import org.joda.time.DateTime;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.LineChart;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 
-public class LineGraphDisplayActivity extends Activity
+public class LineGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
@@ -50,7 +52,8 @@ public class LineGraphDisplayActivity extends Activity
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+            c.getTableProperties());
         init();
     }
     
@@ -69,7 +72,8 @@ public class LineGraphDisplayActivity extends Activity
                 xCol.getColumnDbName());
         int yIndex = c.getTableProperties().getColumnIndex(
                 yCol.getColumnDbName());
-        if (xCol.getColumnType() == ColumnProperties.ColumnType.NUMBER) {
+        if (xCol.getColumnType() == ColumnType.NUMBER ||
+        	xCol.getColumnType() == ColumnType.INTEGER) {
             List<Double> xValues = new ArrayList<Double>();
             for (int i = 0; i < table.getHeight(); i++) {
                 xValues.add(Double.valueOf(table.getData(i, xIndex)));
@@ -121,7 +125,7 @@ public class LineGraphDisplayActivity extends Activity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-        return c.handleMenuItemSelection(item.getItemId());
+        return c.handleMenuItemSelection(item);
     }
     
     @Override

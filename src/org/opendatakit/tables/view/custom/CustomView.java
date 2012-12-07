@@ -9,6 +9,7 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
@@ -118,7 +119,7 @@ public abstract class CustomView extends LinearLayout {
 			 ColumnProperties[] cps = tp.getColumns();
 			 for (int i = 0; i < cps.length; i++) {
 				 colMap.put(cps[i].getDisplayName(), i);
-				 String abbr = cps[i].getAbbreviation();
+                                 String abbr = cps[i].getSmsLabel();
 				 if (abbr != null) {
 					 colMap.put(abbr, i);
 				 }
@@ -193,7 +194,8 @@ public abstract class CustomView extends LinearLayout {
 			 }
 			 tpMap = new HashMap<String, TableProperties>();
 			 allTps = TableProperties.getTablePropertiesForAll(
-					 DbHelper.getDbHelper(context));
+                    DbHelper.getDbHelper(context),
+                    KeyValueStore.Type.ACTIVE);
 			 for (TableProperties tp : allTps) {
 				 tpMap.put(tp.getDisplayName(), tp);
 			 }
@@ -219,7 +221,8 @@ public abstract class CustomView extends LinearLayout {
 			 query.loadFromUserQuery(searchText);
 			 DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
 					 tp.getTableId());
-			 return new TableData(tp, dbt.getRaw(query, tp.getColumnOrder()));
+            ArrayList<String> columnOrder = tp.getColumnOrder();
+            return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
 		 }
 	 }
 }

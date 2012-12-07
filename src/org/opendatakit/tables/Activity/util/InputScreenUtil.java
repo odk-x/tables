@@ -15,9 +15,12 @@
  */
 package org.opendatakit.tables.Activity.util;
 
+import java.util.ArrayList;
+
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 
 import android.content.Context;
@@ -43,15 +46,18 @@ public class InputScreenUtil {
     }
     
     public InputView getInputView(ColumnProperties cp, String value) {
-        switch (cp.getColumnType()) {
-        case ColumnProperties.ColumnType.DATE:
+        if ( cp.getColumnType() == ColumnType.DATE ) {
             return new DateInputView(context, value);
-        case ColumnProperties.ColumnType.DATE_RANGE:
+        } else if ( cp.getColumnType() == ColumnType.DATETIME ) {
+            return new DateTimeInputView(context, value);
+        } else if ( cp.getColumnType() == ColumnType.TIME ) {
+            return new TimeInputView(context, value);
+        } else if ( cp.getColumnType() == ColumnType.DATE_RANGE ) {
             return new DateRangeInputView(context, value);
-        case ColumnProperties.ColumnType.MC_OPTIONS:
+        } else if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return new McOptionsInputView(context,
-                    cp.getMultipleChoiceOptions(), value);
-        default:
+                    cp.getDisplayChoicesMap(), value);
+        } else {
             return new GeneralInputView(context, value);
         }
     }
@@ -123,6 +129,76 @@ public class InputScreenUtil {
         }
     }
     
+    private class DateTimeInputView extends InputView {
+        
+        private final EditText field;
+        
+        public DateTimeInputView(Context context, String value) {
+            super(context);
+            field = new EditText(context);
+            if (value != null) {
+                DateTime dt = du.parseDateTimeFromDb(value);
+                field.setText(du.formatLongDateTimeForUser(dt));
+            }
+        }
+        
+        public boolean isValidValue() {
+        	// TODO: does this need to be altered/revised vs. DateInputView
+            String value = field.getText().toString();
+            return (du.tryParseInstant(value) != null) ||
+                (du.tryParseInterval(value) != null);
+        }
+        
+        public String getDbValue() {
+            String value = field.getText().toString();
+            DateTime dt = du.tryParseInstant(value);
+            if (dt != null) {
+                return du.formatDateTimeForDb(dt);
+            }
+            Interval interval = du.tryParseInterval(value);
+            if (interval == null) {
+                return null;
+            } else {
+                return du.formatDateTimeForDb(interval.getStart());
+            }
+        }
+    }
+    
+    private class TimeInputView extends InputView {
+        
+        private final EditText field;
+        
+        public TimeInputView(Context context, String value) {
+            super(context);
+            field = new EditText(context);
+            if (value != null) {
+                DateTime dt = du.parseDateTimeFromDb(value);
+                field.setText(du.formatLongDateTimeForUser(dt));
+            }
+        }
+        
+        public boolean isValidValue() {
+        	// TODO: does this need to be altered/revised vs. DateInputView
+            String value = field.getText().toString();
+            return (du.tryParseInstant(value) != null) ||
+                (du.tryParseInterval(value) != null);
+        }
+        
+        public String getDbValue() {
+            String value = field.getText().toString();
+            DateTime dt = du.tryParseInstant(value);
+            if (dt != null) {
+                return du.formatDateTimeForDb(dt);
+            }
+            Interval interval = du.tryParseInterval(value);
+            if (interval == null) {
+                return null;
+            } else {
+                return du.formatDateTimeForDb(interval.getStart());
+            }
+        }
+    }
+    
     private class DateRangeInputView extends InputView {
         
         private final EditText field;
@@ -158,19 +234,19 @@ public class InputScreenUtil {
         private final ArrayAdapter<String> adapter;
         private final String originalValue;
         
-        public McOptionsInputView(Context context, String[] options,
+        public McOptionsInputView(Context context, ArrayList<String> arrayList,
                 String value) {
             super(context);
             originalValue = value;
             spinner = new Spinner(context);
             adapter = new ArrayAdapter<String>(context,
-                    android.R.layout.simple_spinner_item, options);
+                    android.R.layout.simple_spinner_item, arrayList);
             adapter.setDropDownViewResource(
                     android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
             int optIndex = -1;
-            for (int i = 0; i < options.length; i++) {
-                if ((value != null) && value.equalsIgnoreCase(options[i])) {
+            for (int i = 0; i < arrayList.size(); i++) {
+                if ((value != null) && value.equalsIgnoreCase(arrayList.get(i))) {
                     optIndex = i;
                 }
             }

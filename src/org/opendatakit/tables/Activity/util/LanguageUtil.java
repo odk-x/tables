@@ -16,20 +16,24 @@
 package org.opendatakit.tables.Activity.util;
 
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewSettings;
 
 import android.graphics.Color;
+import android.util.Log;
 
 
 public class LanguageUtil {
+  
+  private static final String TAG = "LanguageUtil";
     
-    public static String getTableTypeLabel(int tableType) {
+    public static String getTableTypeLabel(TableType tableType) {
         switch (tableType) {
-        case TableProperties.TableType.DATA:
+        case data:
             return "Data";
-        case TableProperties.TableType.SECURITY:
+        case security:
             return "Access Control";
-        case TableProperties.TableType.SHORTCUT:
+        case shortcut:
             return "Shortcut";
         default:
             throw new RuntimeException("Invalid table type (" + tableType +
@@ -52,6 +56,8 @@ public class LanguageUtil {
         case TableViewSettings.Type.MAP:
             return "Map";
         default:
+          Log.e(TAG, "unrecognized viewType in getViewTypeLabel: " +
+              viewType);
             throw new RuntimeException();
         }
     }

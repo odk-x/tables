@@ -33,7 +33,7 @@ import org.opendatakit.aggregate.odktables.entity.api.TableDefinition;
 import org.opendatakit.aggregate.odktables.entity.api.TableResource;
 import org.opendatakit.aggregate.odktables.entity.serialization.JsonObjectHttpMessageConverter;
 import org.opendatakit.aggregate.odktables.entity.serialization.SimpleXMLSerializerForAggregate;
-import org.opendatakit.tables.data.ColumnProperties.ColumnType;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
@@ -52,6 +52,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import android.util.Log;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -66,18 +68,35 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
-  private static final Map<Integer, Column.ColumnType> types = new HashMap<Integer, Column.ColumnType>() {
+  // TODO: how do we support new column types without breaking this map???
+  private static final Map<ColumnType, Column.ColumnType> types = 
+		  				new HashMap<ColumnType, Column.ColumnType>() {
     {
-      put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING);
-      put(ColumnType.DATE, Column.ColumnType.STRING);
-      put(ColumnType.DATE_RANGE, Column.ColumnType.STRING);
-      put(ColumnType.FILE, Column.ColumnType.STRING);
-      put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING);
-      put(ColumnType.NONE, Column.ColumnType.STRING);
-      put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
-      put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING);
-      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);
-      put(ColumnType.TEXT, Column.ColumnType.STRING);
+        put(ColumnType.NONE, Column.ColumnType.STRING);
+        put(ColumnType.TEXT, Column.ColumnType.STRING);
+        put(ColumnType.INTEGER, Column.ColumnType.INTEGER);
+        put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
+        put(ColumnType.DATE, Column.ColumnType.STRING);
+        put(ColumnType.DATETIME, Column.ColumnType.STRING);
+        put(ColumnType.TIME, Column.ColumnType.STRING);
+
+        put(ColumnType.BOOLEAN, Column.ColumnType.BOOLEAN); // TODO: confirm this propagates OK?
+
+        put(ColumnType.MIMEURI, Column.ColumnType.STRING); // TODO: need File + contentType entry in Aggregate (as JSON in Tables)
+
+        put(ColumnType.MULTIPLE_CHOICES, Column.ColumnType.STRING); // TODO: should be extra-wide storage or split out in Aggregate???
+
+        put(ColumnType.GEOPOINT, Column.ColumnType.STRING); // TODO: can we handle this generically?
+
+      put(ColumnType.DATE_RANGE, Column.ColumnType.STRING); // not in Collect, Aggregate
+      put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING); // not in Collect, Aggregate
+      put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING); // not in Collect, Aggregate
+
+      // TODO: goes away -- becomes MULTIPLE_CHOICES + item element type
+      put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING); // select1/select - not in Collect, Aggregate
+      
+      // TODO: what is this for???
+      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
     }
     private static final long serialVersionUID = 1L;
   };
@@ -121,6 +140,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
     } catch (HttpClientErrorException e) {
+      Log.e(TAG, "HttpClientErrorException in checkAccessToken");
       JsonParser parser = new JsonParser();
       JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
       if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
@@ -155,11 +175,11 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public String createTable(String tableId, String tableName, Map<String, Integer> cols,
+  public String createTable(String tableId, String tableName, Map<String, ColumnType> cols,
       String tableProperties) throws IOException {
     // create column objects
     List<Column> columns = new ArrayList<Column>();
-    for (Entry<String, Integer> col : cols.entrySet()) {
+    for (Entry<String, ColumnType> col : cols.entrySet()) {
       String name = col.getKey();
       Column.ColumnType type = types.get(col.getValue());
       Column column = new Column(name, type);
@@ -177,6 +197,7 @@ public class AggregateSynchronizer implements Synchronizer {
     try {
       resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity, TableResource.class);
     } catch (ResourceAccessException e) {
+      Log.e(TAG, "ResourceAccessException in createTable");
       throw new IOException(e.getMessage());
     }
     TableResource resource = resourceEntity.getBody();

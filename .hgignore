@@ -5,3 +5,8 @@
 tests/.classpath
 perftests/.classpath
 ^perftests/dbs
+db\.sql
+perftests/project\.properties
+perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
+perftests/\.settings/org\.eclipse\.jdt\.core\.prefs
+AndroidManifest\.out\.xml

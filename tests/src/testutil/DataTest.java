@@ -219,7 +219,7 @@ public abstract class DataTest extends TestCase {
             ColumnProperties cp = mock(ColumnProperties.class);
             when(cp.getColumnDbName()).thenReturn(colDbName);
             when(cp.getDisplayName()).thenReturn(displayName);
-            when(cp.getAbbreviation()).thenReturn(abbrev);
+            when(cp.getSmsLabel()).thenReturn(abbrev);
             when(cp.getColumnType()).thenReturn(colType);
             when(cp.getSmsIn()).thenReturn(true);
             when(cp.getSmsOut()).thenReturn(true);

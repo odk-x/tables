@@ -19,6 +19,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
@@ -28,6 +29,7 @@ import org.opendatakit.tables.view.util.LockableScrollView;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,8 +41,16 @@ import android.widget.LinearLayout;
  * A view similar to a spreadsheet. Builds TabularViews for the header, body,
  * and footer (builds two sets of these if a column is frozen to the left).
  */
+/*
+ * sudar.sam@gmail.com: I made some changes to this to try and make scrolling
+ * more efficient. I am leaving some of the seemingly unreferenced and now
+ * unnecessary methods/fields in case changes someone has made to this class
+ * in parallel rely on these changes.
+ */
 public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {
+  
+  private static final String TAG = "SpreadsheetView";
     
     private static final int MIN_CLICK_DURATION = 0;
     private static final int MIN_LONG_CLICK_DURATION = 1000;
@@ -53,7 +63,16 @@ public class SpreadsheetView extends LinearLayout
     private final DisplayPrefs dp;
     private final int fontSize;
     
-    private LockableHorizontalScrollView wrapScroll;
+    private final TableProperties tp;
+    
+    // Keeping this for now in case someone else needs to work with the code
+    // and relied on this variable.
+//    private LockableHorizontalScrollView wrapScroll;
+    /** trying to fix slow draw **/
+    private LockableScrollView dataScroll;
+    private View wrapper;
+    private HorizontalScrollView wrapScroll;
+    
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
     private TabularView indexData;
@@ -73,11 +92,13 @@ public class SpreadsheetView extends LinearLayout
     private int lastLongClickedCellId;
     
     public SpreadsheetView(Context context, Controller controller,
+            TableProperties tp ,
             TableViewSettings tvs, UserTable table, int indexedCol,
             DisplayPrefs dp) {
         super(context);
         this.context = context;
         this.controller = controller;
+        this.tp = tp;
         this.tvs = tvs;
         this.table = table;
         this.indexedCol = indexedCol;
@@ -252,17 +273,20 @@ public class SpreadsheetView extends LinearLayout
         };
     }
     
-    private void buildNonIndexedTable() {
-        View wrapper = buildTable(-1, false);
-        HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
-        wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        wrapLp.weight = 1;
-        addView(wrapScroll, wrapLp);
-    }
+  private void buildNonIndexedTable() {
+    wrapper = buildTable(-1, false);
+    // Keeping this for now in case someone relied on this.
+    // HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
+    wrapScroll = new HorizontalScrollView(context);
+    wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
+        LinearLayout.LayoutParams.MATCH_PARENT);
+    /*** this was all here before ***/
+    LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
+    wrapLp.weight = 1;
+    wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
+    addView(wrapScroll, wrapLp);
+  }
     
     private void buildIndexedTable(int indexedCol) {
         View mainWrapper = buildTable(indexedCol, false);
@@ -270,6 +294,7 @@ public class SpreadsheetView extends LinearLayout
         wrapScroll = new LockableHorizontalScrollView(context);
         wrapScroll.addView(mainWrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
+        wrapScroll.setHorizontalFadingEdgeEnabled(true);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.addView(indexWrapper);
         wrapper.addView(wrapScroll);
@@ -279,14 +304,39 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 mainScroll.scrollTo(mainScroll.getScrollX(),
                         view.getScrollY());
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                  indexScroll.startScrollerTask();
+                  mainScroll.startScrollerTask();
+                }
                 return false;
             }
         });
+        indexScroll.setOnScrollStoppedListener(new 
+            LockableScrollView.OnScrollStoppedListener() {
+              
+              @Override
+              public void onScrollStopped() {
+                Log.i(TAG, "stopped in onStopped of indexScroll");             
+              }
+            });
+        mainScroll.setOnScrollStoppedListener(new 
+            LockableScrollView.OnScrollStoppedListener() {
+              
+              @Override
+              public void onScrollStopped() {
+                Log.i(TAG, "stopped in onStopped of mainScroll");
+                
+              }
+            });
         mainScroll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 indexScroll.scrollTo(indexScroll.getScrollX(),
                         view.getScrollY());
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                  indexScroll.startScrollerTask();
+                  mainScroll.startScrollerTask();
+                }
                 return false;
             }
         });
@@ -301,6 +351,8 @@ public class SpreadsheetView extends LinearLayout
      * @return a view including the header, body, and footer of the table
      */
     private View buildTable(int indexedCol, boolean isIndexed) {
+      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol + 
+          "isIndexed: " + isIndexed);
         String[][] header;
         String[][] data;
         String[][] footer;
@@ -317,7 +369,8 @@ public class SpreadsheetView extends LinearLayout
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
             colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = dp.getColColorRuler(table.getHeader(indexedCol));
+            colorRulers[0] = dp.getColColorRuler(tp, 
+                table.getHeader(indexedCol));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
         } else {
@@ -339,16 +392,18 @@ public class SpreadsheetView extends LinearLayout
                 }
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                    dp.getColColorRuler(table.getHeader(i));
+                    dp.getColColorRuler(tp, header[0][addIndex]);
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }
         }
+        Log.i(TAG, "out of the else / for loop in buildTable");
         int avanda = getResources().getColor(R.color.Avanda);
         int headerData = getResources().getColor(R.color.header_data);
         int headerIndex = getResources().getColor(R.color.header_index);
         int footerIndex = getResources().getColor(R.color.footer_index);
-        LockableScrollView dataScroll = new LockableScrollView(context);
+//        LockableScrollView dataScroll = new LockableScrollView(context);
+        dataScroll = new LockableScrollView(context);
         ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
                 Color.BLACK, false);
         ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
@@ -360,6 +415,8 @@ public class SpreadsheetView extends LinearLayout
                 fontSize);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
+        dataScroll.setVerticalFadingEdgeEnabled(true);
+        dataScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = new TabularView(context, this, header,
                 Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
@@ -393,12 +450,39 @@ public class SpreadsheetView extends LinearLayout
         return wrapper;
     }
     
-    public void setScrollEnabled(boolean enabled) {
-        wrapScroll.setScrollable(enabled);
-        if (indexScroll != null) {
-            indexScroll.setScrollable(enabled);
-        }
-        mainScroll.setScrollable(enabled);
+    // This method was never called, and in order to make scrolling more 
+    // efficient I had to change the type. I am leaving it for now b/c other
+    // people are working on this code and I don't want make them rollback
+    // if they need to use it.
+//    public void setScrollEnabled(boolean enabled) {
+//        wrapScroll.setScrollable(enabled);
+//        if (indexScroll != null) {
+//            indexScroll.setScrollable(enabled);
+//        }
+//        mainScroll.setScrollable(enabled);
+//    }
+    
+    /**
+     * Gets the x translation of the scroll. This is in particular how far 
+     * you have scrolled to look at columns that do not begin onscreen.
+     * @return
+     */
+    public int getMainScrollX() {
+      // this is getting the correct x
+      int result = this.wrapScroll.getScrollX(); 
+      return result;
+    }
+    
+    /**
+     * Gets the y translation of the scroll. This is in particular the y 
+     * offset for the actual scrolling of the rows, so that a positive
+     * offset will indicate that you have scrolled to some non-zero row.
+     * @return
+     */
+    public int getMainScrollY() {
+      // this is getting the correct y
+      int result = this.mainScroll.getScrollY(); 
+      return result;
     }
     
     @Override
@@ -514,5 +598,6 @@ public class SpreadsheetView extends LinearLayout
         public void prepFooterCellOccm(ContextMenu menu, int cellId);
         
         public void prepIndexedColCellOccm(ContextMenu menu, int cellId);
+        
     }
 }
