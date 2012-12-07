@@ -7,6 +7,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import android.content.Context;
+import android.util.Log;
 
 
 public class CustomTableView extends CustomView {
