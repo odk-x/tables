@@ -93,26 +93,39 @@ public abstract class CustomView extends LinearLayout {
      * class are meant to be called through the JavaScript interface.
      */
     protected class TableData {
-        
         private final Table rawTable;
         private final UserTable userTable;
-        private Map<String, Integer> colMap;
-        
+        private Map<String, Integer> colMap;			//Maps the column names with an index number
+        private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
+        private String[] primeColumns;					//Holds the db names of indexed columns
+        protected Context context;
+        private TableProperties tp;
+    
         public TableData(TableProperties tp, Table table) {
             rawTable = table;
             userTable = null;
-            initColMap(tp);
+            this.tp = tp;
+            initMaps(tp);
         }
         
         public TableData(TableProperties tp, UserTable table) {
             rawTable = null;
             userTable = table;
-            initColMap(tp);
+            this.tp = tp;
+            initMaps(tp);
+            
+            //The collectionMap will be initialized if the table is indexed.
+            if(isIndexed()) {
+            	initCollectionMap(tp);
+            }
         }
         
-        private void initColMap(TableProperties tp) {
+        //Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
+        private void initMaps(TableProperties tp) {
             colMap = new HashMap<String, Integer>();
             ColumnProperties[] cps = tp.getColumns();
+            primeColumns = tp.getPrimeColumns();
+            
             for (int i = 0; i < cps.length; i++) {
                 colMap.put(cps[i].getDisplayName(), i);
                 String abbr = cps[i].getAbbreviation();
@@ -122,6 +135,7 @@ public abstract class CustomView extends LinearLayout {
             }
         }
         
+        //Returns the number of rows in the table being viewed.
         public int getCount() {
             if (rawTable == null) {
                 return userTable.getHeight();
@@ -130,6 +144,37 @@ public abstract class CustomView extends LinearLayout {
             }
         }
         
+        //Maps the number of rows to every collection of a table.
+        private void initCollectionMap(TableProperties tp) {
+        	Control c = new Control(context);
+        	collectionMap = new HashMap<Integer, Integer>();
+        	String colName = primeColumns[0].substring(1);			//Assumes that the first col is the main, indexed col
+        	for(String col : colMap.keySet()) {
+        		if(col.equalsIgnoreCase(colName)) {
+        			colName = col;
+        		}
+        	}
+        	
+        	//Queries the original table for the rows in every collection and stores the number of resulting rows for each.
+        	for(int i = 0; i < getCount(); i++) {	            	
+            	String tableName = tp.getDisplayName();
+            	String searchText = colName + ":" + getData(i, colName);
+            	TableData data = c.query(tableName, searchText);
+            	collectionMap.put(i, data.getCount());
+        	}
+    	}
+        
+        //Returns the number of rows in the collection at the given row index.
+        public int getCollectionSize(int rowNum) {
+        	return collectionMap.get(rowNum);
+        }
+        
+        //Returns whether the table is indexed.
+        public boolean isIndexed() {
+        	return (primeColumns.length != 0);
+	    }
+
+        //Returns the cell data at the given offset into the table. 
         public String getData(int rowNum, String colName) {
             if (colMap.containsKey(colName)) {
                 if (rawTable == null) {
@@ -141,6 +186,7 @@ public abstract class CustomView extends LinearLayout {
                 return null;
             }
         }
+
     }
     
     protected class Control {
