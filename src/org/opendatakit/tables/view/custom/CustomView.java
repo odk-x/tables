@@ -99,7 +99,7 @@ public abstract class CustomView extends LinearLayout {
         private final UserTable userTable;
         private Map<String, Integer> colMap;			//Maps the column names with an index number
         private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
-        private String[] primeColumns;					//Holds the db names of indexed columns
+        private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
         protected Context context;
         private TableProperties tp;
     
@@ -150,7 +150,7 @@ public abstract class CustomView extends LinearLayout {
         private void initCollectionMap(TableProperties tp) {
         	Control c = new Control(context);
         	collectionMap = new HashMap<Integer, Integer>();
-        	String colName = primeColumns[0].substring(1);			//Assumes that the first col is the main, indexed col
+        	String colName = primeColumns.get(0).substring(1);			//Assumes that the first col is the main, indexed col
         	for(String col : colMap.keySet()) {
         		if(col.equalsIgnoreCase(colName)) {
         			colName = col;
@@ -173,7 +173,7 @@ public abstract class CustomView extends LinearLayout {
         
         //Returns whether the table is indexed.
         public boolean isIndexed() {
-        	return (primeColumns.length != 0);
+        	return (!primeColumns.isEmpty());
 	    }
 
         //Returns the cell data at the given offset into the table. 
