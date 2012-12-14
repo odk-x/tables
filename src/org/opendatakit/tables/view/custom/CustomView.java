@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -65,7 +67,7 @@ public abstract class CustomView extends LinearLayout {
 	 * "Unused" warnings are suppressed because the public methods of this
 	 * class are meant to be called through the JavaScript interface.
 	 */
-	 protected class RowData {
+	protected class RowData {
 
 		private final TableProperties tp;
 		private Map<String, String> data;
@@ -90,139 +92,144 @@ public abstract class CustomView extends LinearLayout {
 			}
 			return data.get(cp.getColumnDbName());
 		}
-	 }
+	}
 
-	 /**
-	  * "Unused" warnings are suppressed because the public methods of this
-	  * class are meant to be called through the JavaScript interface.
-	  */
-	 protected class TableData {
+	/**
+	 * "Unused" warnings are suppressed because the public methods of this
+	 * class are meant to be called through the JavaScript interface.
+	 */
+	protected class TableData {
 
-		 private final Table rawTable;
-		 private final UserTable userTable;
-		 private Map<String, Integer> colMap;
+		private final Table rawTable;
+		private final UserTable userTable;
+		private TableProperties tp;
+		private Map<String, Integer> colMap;
 
-		 public TableData(TableProperties tp, Table table) {
-			 rawTable = table;
-			 userTable = null;
-			 initColMap(tp);
-		 }
+		public TableData(TableProperties tp, Table table) {
+			this.tp = tp;
+			rawTable = table;
+			userTable = null;
+			initColMap();
+		}
 
-		 public TableData(TableProperties tp, UserTable table) {
-			 rawTable = null;
-			 userTable = table;
-			 initColMap(tp);
-		 }
+		public TableData(TableProperties tp, UserTable table) {
+			this.tp = tp;
+			rawTable = null;
+			userTable = table;
+			initColMap();
+		}
 
-		 private void initColMap(TableProperties tp) {
-			 colMap = new HashMap<String, Integer>();
-			 ColumnProperties[] cps = tp.getColumns();
-			 for (int i = 0; i < cps.length; i++) {
-				 colMap.put(cps[i].getDisplayName(), i);
-                                 String abbr = cps[i].getSmsLabel();
-				 if (abbr != null) {
-					 colMap.put(abbr, i);
-				 }
-			 }
-		 }
+		private void initColMap() {
+			colMap = new HashMap<String, Integer>();
 
-		 public int getCount() {
-			 if (rawTable == null) {
-				 return userTable.getHeight();
-			 } else {
-				 return rawTable.getHeight();
-			 }
-		 }
+			ColumnProperties[] cps = tp.getColumns();
+			for (int i = 0; i < cps.length; i++) {
+				colMap.put(cps[i].getDisplayName(), i);
+				String abbr = cps[i].getSmsLabel();
+				if (abbr != null) {
+					colMap.put(abbr, i);
+				}
+			}
+		}
 
-		 /*
-		  * @param: colName, column name in the userTable/rawTable
-		  * @return: returns a String in JSONArray format containing all
-		  * the row data for the given column name
-		  * format: [row1, row2, row3, row4]
-		  */
-		 public String getColumnData(String colName) {
-			 ArrayList<String> arr = new ArrayList<String>();
-			 for(int i = 0; i < getCount(); i++) {
-				 if (colMap.containsKey(colName)) {
-					 if (rawTable == null) {
-						 
+		public int getCount() {
+			if (rawTable == null) {
+				return userTable.getHeight();
+			} else {
+				return rawTable.getHeight();
+			}
+		}
+
+		/*
+		 * @param: colName, column name in the userTable/rawTable
+		 * @return: returns a String in JSONArray format containing all
+		 * the row data for the given column name
+		 * format: [row1, row2, row3, row4]
+		 */
+		public String getColumnData(String colName) {
+			ArrayList<String> arr = new ArrayList<String>();
+			for(int i = 0; i < getCount(); i++) {
+				if (colMap.containsKey(colName)) {
+					if (rawTable == null) {
 						arr.add(i, userTable.getData(i, colMap.get(colName)));
-					 } else {
-						 arr.add(i, rawTable.getData(i, colMap.get(colName)));
-					 }
-				 } else {
-					 arr.add(i, "");
-				 }
-			 }
-			 return new JSONArray(arr).toString();
-		 }
-		 
-		 public String getColumns() {
-			 ArrayList<String> arr = new ArrayList<String>();
-			 for(String column: colMap.keySet()) {
-				 arr.add(column);
-			 }
-			 return new JSONArray(arr).toString();
-		 }
-		 
-		 public String getData(int rowNum, String colName) {
-			 if (colMap.containsKey(colName)) {
-				 if (rawTable == null) {
-					 return userTable.getData(rowNum, colMap.get(colName));
-				 } else {
-					 return rawTable.getData(rowNum, colMap.get(colName));
-				 }
-			 } else {
-				 return null;
-			 }
-		 }
-	 }
+					} else {
+						arr.add(i, rawTable.getData(i, colMap.get(colName)));
+					}
+				} else {
+					arr.add(i, "");
+				}
+			}
+			return new JSONArray(arr).toString();
+		}
 
-	 protected class Control {
+		public String getColumns() {
+			Map<String, String> colInfo = new HashMap<String, String>();
+			for(String column: colMap.keySet()) {
+				String dBName = tp.getColumnByDisplayName(column);
+				String label = tp.getColumnByDbName(dBName).getColumnType().label();
+				colInfo.put(column, label);
+			}			
+			return new JSONObject(colInfo).toString();
+		}
 
-		 protected Context context;
-		 private TableProperties[] allTps;
-		 private Map<String, TableProperties> tpMap;
+		public String getData(int rowNum, String colName) {
+			if (colMap.containsKey(colName)) {
+				if (rawTable == null) {
+					return userTable.getData(rowNum, colMap.get(colName));
+				} else {
+					return rawTable.getData(rowNum, colMap.get(colName));
+				}
+			} else {
+				return null;
+			}
+		}
+	}
 
-		 public Control(Context context) {
-			 this.context = context;
-		 }
+	protected class Control {
 
-		 private void initTpInfo() {
-			 if (tpMap != null) {
-				 return;
-			 }
-			 tpMap = new HashMap<String, TableProperties>();
-			 allTps = TableProperties.getTablePropertiesForAll(
-                    DbHelper.getDbHelper(context),
-                    KeyValueStore.Type.ACTIVE);
-			 for (TableProperties tp : allTps) {
-				 tpMap.put(tp.getDisplayName(), tp);
-			 }
-		 }
+		protected Context context;
+		private TableProperties[] allTps;
+		private Map<String, TableProperties> tpMap;
 
-		 public boolean openTable(String tableName, String query) {
-			 initTpInfo();
-			 if (!tpMap.containsKey(tableName)) {
-				 return false;
-			 }
-			 Controller.launchTableActivity(context, tpMap.get(tableName),
-					 query, false);
-			 return true;
-		 }
+		public Control(Context context) {
+			this.context = context;
+		}
 
-		 public TableData query(String tableName, String searchText) {
-			 initTpInfo();
-			 if (!tpMap.containsKey(tableName)) {
-				 return null;
-			 }
-			 TableProperties tp = tpMap.get(tableName);
-			 Query query = new Query(allTps, tp);
-			 query.loadFromUserQuery(searchText);
-			 DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
-					 tp.getTableId());
-            ArrayList<String> columnOrder = tp.getColumnOrder();
-            return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
-		 }
-	 }
+		private void initTpInfo() {
+			if (tpMap != null) {
+				return;
+			}
+			tpMap = new HashMap<String, TableProperties>();
+			allTps = TableProperties.getTablePropertiesForAll(
+					DbHelper.getDbHelper(context),
+					KeyValueStore.Type.ACTIVE);
+			for (TableProperties tp : allTps) {
+				tpMap.put(tp.getDisplayName(), tp);
+			}
+		}
+
+		public boolean openTable(String tableName, String query) {
+			initTpInfo();
+			if (!tpMap.containsKey(tableName)) {
+				return false;
+			}
+			Controller.launchTableActivity(context, tpMap.get(tableName),
+					query, false);
+			return true;
+		}
+
+		public TableData query(String tableName, String searchText) {
+			initTpInfo();
+			if (!tpMap.containsKey(tableName)) {
+				return null;
+			}
+			TableProperties tp = tpMap.get(tableName);
+			Query query = new Query(allTps, tp);
+			query.loadFromUserQuery(searchText);
+			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
+					tp.getTableId());
+			ArrayList<String> columnOrder = tp.getColumnOrder();
+			return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
+		}
+	}
 }

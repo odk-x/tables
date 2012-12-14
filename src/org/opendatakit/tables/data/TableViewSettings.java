@@ -611,14 +611,14 @@ public class TableViewSettings {
     List<Integer> list = new ArrayList<Integer>();
     list.add(Type.SPREADSHEET);
     list.add(Type.LIST);
-    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
-      list.add(Type.LINE_GRAPH);
-    }
-    if (numericColCount >= 1) {
-      list.add(Type.BOX_STEM);
-    }
+//    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
+//      list.add(Type.LINE_GRAPH);
+//    }
+//    if (numericColCount >= 1) {
+//      list.add(Type.BOX_STEM);
+//    }
     // Not adding this b/c it's not working atm.
-//    list.add(Type.BAR_GRAPH);
+    list.add(Type.BAR_GRAPH);
     if (locationColCount >= 1) {
       list.add(Type.MAP);
     }

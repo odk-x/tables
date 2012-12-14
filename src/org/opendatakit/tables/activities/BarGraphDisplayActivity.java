@@ -54,7 +54,8 @@ public class BarGraphDisplayActivity extends SherlockActivity
 	        super.onCreate(savedInstanceState);
 	        c = new Controller(this, this, getIntent().getExtras());
 	        dm = new DataManager(DbHelper.getDbHelper(this));
-	        query = new Query(dm.getAllTableProperties(), c.getTableProperties());
+	        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+	        		c.getTableProperties());
 	        init();
 	    }
 	    
@@ -112,7 +113,7 @@ public class BarGraphDisplayActivity extends SherlockActivity
 	    
 	    @Override
 	    public boolean onMenuItemSelected(int featureId, MenuItem item) {
-	        return c.handleMenuItemSelection(item.getItemId());
+	        return c.handleMenuItemSelection(item);
 	    }
 	    
 	    @Override
