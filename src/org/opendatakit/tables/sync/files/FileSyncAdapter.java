@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.sync.files;
 
 import java.util.ArrayList;
@@ -96,7 +111,8 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         desiredKeys.add(TableViewSettings.KEY_LIST_FILE);
         // now check the value. if there is an entry, we should set it.
         List<OdkTablesKeyValueStoreEntry> entries = 
-            kvs.getEntriesForKeys(db, desiredKeys);
+            kvs.getEntriesForKeys(db, TableProperties.KVS_PARTITION,
+                TableProperties.KVS_ASPECT, desiredKeys);
         if (entries.size() > 1) {
           Log.e(TAG, "query for " + TableViewSettings.KEY_LIST_FILE +
               " for table " + tableProp.getTableId() + " in the kvs of type " +
@@ -115,7 +131,8 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         desiredKeys.clear();
         desiredKeys.add(TableProperties.KEY_DETAIL_VIEW_FILE);
         entries = 
-            kvs.getEntriesForKeys(db, desiredKeys);
+            kvs.getEntriesForKeys(db, TableProperties.KVS_PARTITION,
+                TableProperties.KVS_ASPECT, desiredKeys);
         if (entries.size() > 1) {
           Log.e(TAG, "query for " + TableProperties.KEY_DETAIL_VIEW_FILE +
               " for table " + tableProp.getTableId() + " in the kvs of type " +

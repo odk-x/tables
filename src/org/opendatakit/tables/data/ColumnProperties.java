@@ -255,7 +255,13 @@ public class ColumnProperties {
   // * Default values for those columns that have defaults.
   // ***********************************/
   // public static final int DEFAULT_DB_IS_PERSISTED = 1;
+  
+  /***********************************
+   * The partition name of the column keys in the key value store.
+   ***********************************/
+  public static final String KVS_PARTITION = "Column";
 
+  
   /***********************************
    * The names of keys that are defaulted to exist in the column key value
    * store.
@@ -471,13 +477,14 @@ public class ColumnProperties {
     this.smsOut = smsOut;
     this.smsLabel = smsLabel;
     this.footerMode = footerMode;
-    if (backingStore == KeyValueStore.Type.ACTIVE ||
-        backingStore == KeyValueStore.Type.DEFAULT ||
-        backingStore == KeyValueStore.Type.SERVER) {
-      Log.e(TAG, "ColumnProperties was given a non-column key value store");
-      throw new IllegalArgumentException("non-column key value store passed" +
-      		" to ColumnProperties constructor");
-    }
+// this no longer necessary b/c now column kvs resides within the other three.
+//    if (backingStore == KeyValueStore.Type.ACTIVE ||
+//        backingStore == KeyValueStore.Type.DEFAULT ||
+//        backingStore == KeyValueStore.Type.SERVER) {
+//      Log.e(TAG, "ColumnProperties was given a non-column key value store");
+//      throw new IllegalArgumentException("non-column key value store passed" +
+//      		" to ColumnProperties constructor");
+//    }
     this.backingStore = backingStore;
   }
   
@@ -494,16 +501,15 @@ public class ColumnProperties {
    * @param typeOfStore the type of the backing store from which to source the
    * mutable column properties
    * @return
-   * @throws IllegalArgumentException if typeOfStore is not a column KVS
    */
   public static ColumnProperties getColumnProperties(DbHelper dbh, 
       String tableId, String dbElementKey, KeyValueStore.Type typeOfStore) {
-    if (!isValidStore(typeOfStore)) {
-      Log.e(TAG, "invalid KeyValueStore.Type passed to getColumnPropties: " +
-      		typeOfStore);
-      throw new IllegalArgumentException("invalid KeyValueStore.Type passed " +
-      		"to getColumnPropties: " + typeOfStore);
-    }
+//    if (!isValidStore(typeOfStore)) {
+//      Log.e(TAG, "invalid KeyValueStore.Type passed to getColumnPropties: " +
+//      		typeOfStore);
+//      throw new IllegalArgumentException("invalid KeyValueStore.Type passed " +
+//      		"to getColumnPropties: " + typeOfStore);
+//    }
     Map<String, String> mapProps = getMapForColumn(dbh, tableId, dbElementKey, 
         typeOfStore);
     return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
@@ -608,11 +614,15 @@ public class ColumnProperties {
     try {
       db = dbh.getReadableDatabase();
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStoreColumn intendedKVS = kvsm.getStoreForColumn(tableId, 
-          elementKey, typeOfStore);
+      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
+//      KeyValueStoreColumn intendedKVS = 
+//          kvsm.getStoreForColumn(tableId, 
+//          elementKey, typeOfStore);
       Map<String, String> columnDefinitionsMap = 
           ColumnDefinitions.getFields(tableId, elementKey, db);
-      Map<String, String> kvsMap = intendedKVS.getProperties(db);
+//      Map<String, String> kvsMap = intendedKVS.getProperties(db);
+      Map<String, String> kvsMap = intendedKVS.getKeyValues(
+          ColumnProperties.KVS_PARTITION, elementKey, db);
       Map<String, String> mapProps = new HashMap<String, String>();
       mapProps.putAll(columnDefinitionsMap);
       mapProps.putAll(kvsMap);
@@ -666,14 +676,16 @@ public class ColumnProperties {
       if (props.get(KEY_DISPLAY_CHOICES_MAP) != null)  {
         String displayChoicesMapValue = props.get(KEY_DISPLAY_CHOICES_MAP);
         parseValue = displayChoicesMapValue;
-        displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
+        displayChoicesMap = 
+            mapper.readValue(displayChoicesMapValue, ArrayList.class);
       }
 
       if (props.get(ColumnDefinitions.DB_LIST_CHILD_ELEMENT_KEYS) != null) {
         String listChildElementKeysValue = 
             props.get(ColumnDefinitions.DB_LIST_CHILD_ELEMENT_KEYS);
         parseValue = listChildElementKeysValue;
-        listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
+        listChildElementKeys = 
+            mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
       if (props.get(ColumnDefinitions.DB_JOINS) != null) {
         String joinsValue = props.get(ColumnDefinitions.DB_JOINS);
@@ -722,11 +734,11 @@ public class ColumnProperties {
    * @param typeOfStore
    * @return
    */
-  public static boolean isValidStore(KeyValueStore.Type typeOfStore) {
-    return !(typeOfStore == KeyValueStore.Type.ACTIVE ||
-      typeOfStore == KeyValueStore.Type.DEFAULT ||
-      typeOfStore == KeyValueStore.Type.SERVER);
-  }
+//  public static boolean isValidStore(KeyValueStore.Type typeOfStore) {
+//    return !(typeOfStore == KeyValueStore.Type.ACTIVE ||
+//      typeOfStore == KeyValueStore.Type.DEFAULT ||
+//      typeOfStore == KeyValueStore.Type.SERVER);
+//  }
 
   /**
    * Return the ColumnProperties for the PERSISTED columns belonging to this
@@ -741,7 +753,7 @@ public class ColumnProperties {
    * @return
    */
   static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh, 
-      String tableId) {
+      String tableId, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
@@ -750,7 +762,7 @@ public class ColumnProperties {
       ColumnProperties[] cps = new ColumnProperties[elementKeys.size()];
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId, 
-            elementKeys.get(i), KeyValueStore.Type.COLUMN_ACTIVE);
+            elementKeys.get(i), typeOfStore);
         cps[i] = cp;
       }
       return cps;
@@ -884,33 +896,33 @@ public class ColumnProperties {
     // We're going to do this just by calling the corresponding methods on the
     // ColumnDefinitions and the key value store.
     
-    if (!isValidStore(typeOfStore)) {
-      Log.e(TAG, "store passed in to addColumn is not a valid column store" +
-      		typeOfStore);
-      throw new IllegalStateException("invalid column store passed to" +
-      		"addColumn: " + typeOfStore);
-    }
+//    if (!isValidStore(typeOfStore)) {
+//      Log.e(TAG, "store passed in to addColumn is not a valid column store" +
+//      		typeOfStore);
+//      throw new IllegalStateException("invalid column store passed to" +
+//      		"addColumn: " + typeOfStore);
+//    }
     
     // First prepare the entries for the key value store.
-    List<KeyValueStoreColumnEntry> values = 
-        new ArrayList<KeyValueStoreColumnEntry>();
-    values.add(createIntEntry(tableId, elementKey, 
-        KEY_DISPLAY_VISIBLE, displayVisible));
-    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_NAME, 
-        displayName));
-    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_CHOICES_MAP,
-        DEFAULT_KEY_DISPLAY_CHOICES_MAP));
-    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_FORMAT,
-        DEFAULT_KEY_DISPLAY_FORMAT));
+    List<OdkTablesKeyValueStoreEntry> values = 
+        new ArrayList<OdkTablesKeyValueStoreEntry>();
+    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION, 
+        elementKey, KEY_DISPLAY_VISIBLE, displayVisible));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_DISPLAY_NAME, displayName));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_CHOICES_MAP));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_DISPLAY_FORMAT, DEFAULT_KEY_DISPLAY_FORMAT));
     // TODO: both the SMS entries should become booleans?
-    values.add(createIntEntry(tableId, elementKey, KEY_SMS_IN, 
-        DEFAULT_KEY_SMS_IN));
-    values.add(createIntEntry(tableId, elementKey, KEY_SMS_OUT,
-        DEFAULT_KEY_SMS_OUT));
-    values.add(createStringEntry(tableId, elementKey, KEY_SMS_LABEL,
-        DEFAULT_KEY_SMS_LABEL));
-    values.add(createStringEntry(tableId, elementKey, KEY_FOOTER_MODE,
-        DEFAULT_KEY_FOOTER_MODE.name()));
+    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_SMS_IN, DEFAULT_KEY_SMS_IN));
+    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_SMS_OUT, DEFAULT_KEY_SMS_OUT));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_SMS_LABEL, DEFAULT_KEY_SMS_LABEL));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
+        elementKey, KEY_FOOTER_MODE, DEFAULT_KEY_FOOTER_MODE.name()));
     Map<String, String> mapProps = new HashMap<String, String>();
     // TODO: might have to account for the null values being passed in here, 
     // maybe should be putting in empty strings instead?
@@ -933,9 +945,10 @@ public class ColumnProperties {
             DEFAULT_KEY_DISPLAY_CHOICES_MAP, 
             ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
             ColumnDefinitions.DEFAULT_DB_JOINS);
-        KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-            typeOfStore);
-        kvsc.addEntriesToColumnStore(db, values);
+//        KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
+//            typeOfStore);
+        KeyValueStore kvs = kvsm.getStoreForTable(tableId, typeOfStore);
+        kvs.addEntriesToStore(db, values);
         mapProps.putAll(columnDefProps);
         cp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
         db.setTransactionSuccessful();
@@ -1070,38 +1083,42 @@ public class ColumnProperties {
    * Deletes the column represented by this ColumnProperties by deleting it
    * from the ColumnDefinitions table as well as the given key value store.
    * TODO: should probably delete the column from ALL the column key value
-   * stores.
+   * stores to avoid conflict with ColumnDefinitions?
    * @param db
    */
   void deleteColumn(SQLiteDatabase db) {
     ColumnDefinitions.deleteColumn(tableId, elementKey, db);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-        backingStore);
+//    KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
+//        backingStore);
+    KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+    kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
     
 //    int count = db.delete(DB_TABLENAME, WHERE_SQL, new String[] { String.valueOf(tableId),
 //        elementKey });
 //    if (count != 1) {
-//      Log.e(ColumnProperties.class.getName(), "deleteColumn() deleted " + count + " rows");
+//      Log.e(TAG, "deleteColumn() deleted " + count + " rows");
 //    }
   }
   
-  private static KeyValueStoreColumnEntry createStringEntry(String tableId,
-      String elementKey, String key, String value) {
-    KeyValueStoreColumnEntry entry = new KeyValueStoreColumnEntry();
+  private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
+      String partition, String elementKey, String key, String value) {
+    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.elementKey = elementKey;
+    entry.partition = partition;
+    entry.aspect = elementKey;
     entry.type = ColumnType.TEXT.name();
     entry.value = value;
     entry.key = key;
     return entry;
   }
   
-  private static KeyValueStoreColumnEntry createIntEntry(String tableId,
-      String elementKey, String key, int value) {
-    KeyValueStoreColumnEntry entry = new KeyValueStoreColumnEntry();
+  private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId,
+      String partition, String elementKey, String key, int value) {
+    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.elementKey = elementKey;
+    entry.partition = partition;
+    entry.aspect = elementKey;
     entry.type = ColumnType.INTEGER.name();
     entry.value = String.valueOf(value);
     entry.key = key;
@@ -1225,8 +1242,8 @@ public class ColumnProperties {
    *          the new type
    */
   public void setColumnType(ColumnType columnType) {
-    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-        KeyValueStore.Type.ACTIVE);
+    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, 
+        tableId, backingStore);
     ArrayList<String> colOrder = tp.getColumnOrder();
     tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
@@ -1237,13 +1254,13 @@ public class ColumnProperties {
       tp.reformTable(db, colOrder);
       db.setTransactionSuccessful();
       db.endTransaction();
+      this.elementType = columnType;
     } finally {
       // TODO: fix the when to close problem
       // if ( db != null ) {
       // db.close();
       // }
     }
-    this.elementType = columnType;
   }
 
   public List<String> getListChildElementKeys() {
@@ -1577,8 +1594,7 @@ public class ColumnProperties {
   // unique. Couldn't do it here b/c can't look at schema, just trying to
   // get it to work.
   public static ColumnProperties constructColumnPropertiesFromJson(
-      DbHelper dbh,
-      String json) {
+      DbHelper dbh, String json, KeyValueStore.Type typeOfStore) {
     ColumnProperties cp = new ColumnProperties(dbh,
         "",
         "",
@@ -1595,7 +1611,8 @@ public class ColumnProperties {
         true,
         "",
         FooterMode.none,
-        KeyValueStore.Type.COLUMN_ACTIVE);
+//        KeyValueStore.Type.COLUMN_ACTIVE);
+        typeOfStore);
     cp.setFromJson(json);
     return cp;
     
@@ -1698,9 +1715,11 @@ public class ColumnProperties {
     } else {
       // or a kvs property?
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-          backingStore);
-      kvsc.insertOrUpdateKey(db, ColumnType.INTEGER.name(), property, 
+//      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
+//          backingStore);
+      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION,
+          elementKey, property, ColumnType.INTEGER.name(),
           Integer.toString(value));
     }
     Log.d(TAG, "updated int property " + property + " to " + value +
@@ -1731,9 +1750,11 @@ public class ColumnProperties {
     } else {
       // or a kvs property?
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-          backingStore);
-      kvsc.insertOrUpdateKey(db, ColumnType.TEXT.name(), property, value);
+//      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
+//          backingStore);
+      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION,
+          elementKey, property, ColumnType.TEXT.name(), value);
     }
     Log.d(TAG, "updated string property " + property + " to " + value +
         " for table " + tableId + ", column " + elementKey);

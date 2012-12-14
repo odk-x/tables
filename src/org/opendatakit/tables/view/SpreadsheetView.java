@@ -40,12 +40,13 @@ import android.widget.LinearLayout;
 /**
  * A view similar to a spreadsheet. Builds TabularViews for the header, body,
  * and footer (builds two sets of these if a column is frozen to the left).
- */
-/*
- * sudar.sam@gmail.com: I made some changes to this to try and make scrolling
+ * <p>
+ * SS: I made some changes to this to try and make scrolling
  * more efficient. I am leaving some of the seemingly unreferenced and now
  * unnecessary methods/fields in case changes someone has made to this class
  * in parallel rely on these changes.
+ * @author sudar.sam@gmail.com
+ * @author unknown
  */
 public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {

@@ -1,12 +1,30 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.DataStructure;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-/*
- * SS: refactored and changing all the colNames
- * to public static final.
+/**
+ * This class is being cleaned up and refactored, but the refactoring is not
+ * yet complete. I (sudar.sam) am putting my name on it just because I've 
+ * changed it, but I did not write it.
+ * @author sudar.sam@gmail.com
+ *
  */
 public class DisplayPrefsDBManager extends SQLiteOpenHelper {
     

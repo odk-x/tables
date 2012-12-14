@@ -64,7 +64,13 @@ public class TableProperties {
   private static final ObjectMapper mapper = new ObjectMapper();
   private static final String t = "TableProperties";
   
-  public static final String TAG = "Table_Properties";
+  public static final String TAG = "TableProperties";
+  
+  /***********************************
+   *  The partition and aspect of table properties in the key value store.
+   ***********************************/
+  public static final String KVS_PARTITION = "Table";
+  public static final String KVS_ASPECT = "global";
 
   /***********************************
    *  The names of keys that are defaulted to exist in the key value store.
@@ -257,12 +263,16 @@ public class TableProperties {
    */
   public static TableProperties getTablePropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
-    Map<String, String> mapProps = getMapForTable(dbh, tableId, typeOfStore);
+    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
     return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
   }
   
   /*
-   * Return the map of all the properties for the given table. Atm this is just
+   * Return the map of all the properties for the given table. The properties
+   * include both the values of this table's row in TableDefinition and the
+   * values in the key value store pointed to by INIT_KEYS. 
+   * 
+   * Atm this is just
    * key->value. The caller must know the intended type of the value and 
    * parse it correctly. This map should eventually become a key->TypeValuePair
    * or something like that.
@@ -275,7 +285,7 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  private static Map<String, String> getMapForTable(DbHelper dbh,
+  private static Map<String, String> getMapOfPropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
@@ -510,7 +520,7 @@ public class TableProperties {
 //          kvsm.getStoreForTable(tableId, typeOfStore);
 //      Map<String, String> propPairs = intendedKVS.getProperties(db);
       Map<String, String> propPairs = 
-          getMapForTable(dbh, tableId, typeOfStore);
+          getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
       allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
     }
     return allProps;   
@@ -653,25 +663,32 @@ public class TableProperties {
     // First we will add the entry in TableDefinitions. 
     //  TODO: this should check for duplicate names.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    boolean testOpen = db.isOpen();
     // Now we want to add an entry to the key value store for all of the 
     // keys defined in this class.
     List<OdkTablesKeyValueStoreEntry> values = 
         new ArrayList<OdkTablesKeyValueStoreEntry>();
-    values.add(createStringEntry(id, KEY_DISPLAY_NAME, displayName));
-    values.add(createStringEntry(id, KEY_COLUMN_ORDER, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_DISPLAY_NAME, displayName));
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_COLUMN_ORDER, 
         DEFAULT_KEY_COLUMN_ORDER));
-    values.add(createStringEntry(id, KEY_PRIME_COLUMNS, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, 
         DEFAULT_KEY_PRIME_COLUMNS));
-    values.add(createStringEntry(id, KEY_SORT_COLUMN, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, 
         DEFAULT_KEY_SORT_COLUMN));
-    values.add(createStringEntry(id, KEY_OV_VIEW_SETTINGS, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, 
         DEFAULT_KEY_OV_VIEW_SETTINGS));
-    values.add(createStringEntry(id, KEY_CO_VIEW_SETTINGS, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, 
         DEFAULT_KEY_CO_VIEW_SETTINGS));
-    values.add(createStringEntry(id, KEY_DETAIL_VIEW_FILE, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, 
         DEFAULT_KEY_DETAIL_VIEW_FILE));
-    values.add(createStringEntry(id, KEY_SUM_DISPLAY_FORMAT, 
+    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_SUM_DISPLAY_FORMAT, 
         DEFAULT_KEY_SUM_DISPLAY_FORMAT));
     Map<String, String> mapProps = new HashMap<String, String>();
     mapProps.put(KEY_DISPLAY_NAME, displayName);
@@ -695,22 +712,16 @@ public class TableProperties {
     try {
 	    db.beginTransaction();
 	    try {
-	      testOpen = db.isOpen();
 	      Map<String, String> tableDefProps = 
 	          TableDefinitions.addTable(db, id, dbTableName, dbTableName, 
 	          tableType);
-	      testOpen = db.isOpen();
 	      KeyValueStore typedStore = kvms.getStoreForTable(id, 
 	          typeOfStore);
-	        testOpen = db.isOpen();
 	        typedStore.addEntriesToStore(db, values);
 	      mapProps.putAll(tableDefProps);
-	        testOpen = db.isOpen();
 	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-	        testOpen = db.isOpen();
 	        tp.getColumns();
 	      Log.d(TAG, "adding table: " + dbTableName);
-         testOpen = db.isOpen();
          DbTable.createDbTable(db, tp);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
@@ -729,11 +740,13 @@ public class TableProperties {
    * Creates a key value store entry of the type String.
    */
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
-      String key, String value) {
+      String partition, String aspect, String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = ColumnType.TEXT.name();
+    entry.partition = partition;
+    entry.aspect = aspect;
     entry.value = value;
+    entry.type = ColumnType.TEXT.name();
     entry.key = key;
     return entry;
   }
@@ -742,11 +755,13 @@ public class TableProperties {
    * Creates a key value store entry of the type int.
    */
   private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId,
-      String key, int value) {
+      String partition, String aspect, String key, int value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = ColumnType.INTEGER.name();
+    entry.partition = partition;
+    entry.aspect = aspect;
     entry.value = String.valueOf(value);
+    entry.type = ColumnType.INTEGER.name();
     entry.key = key;
     return entry;
   }
@@ -755,11 +770,13 @@ public class TableProperties {
    * Creates a key value store of the type boolean.
    */
   private static OdkTablesKeyValueStoreEntry createBoolEntry(String tableId,
-      String key, String value) {
+      String partition, String aspect, String key, boolean value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
     entry.tableId = tableId;
-    entry.type = "Boolean";
-    entry.value = value;
+    entry.partition = partition;
+    entry.aspect = aspect;
+    entry.value = String.valueOf(value);
+    entry.type = ColumnType.BOOLEAN.name();
     entry.key = key;
     return entry;
   }
@@ -836,7 +853,8 @@ public class TableProperties {
    *          the new display name
    */
   public void setDisplayName(String displayName) {
-    setStringProperty(KEY_DISPLAY_NAME, displayName);
+    setStringProperty(TableProperties.KVS_PARTITION, 
+        TableProperties.KVS_ASPECT, KEY_DISPLAY_NAME, displayName);
     this.displayName = displayName;
   }
 
@@ -854,7 +872,9 @@ public class TableProperties {
    *          the new table type
    */
   public void setTableType(TableType tableType) {
-    setStringProperty(TableDefinitions.DB_TYPE, tableType.name());
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, TableDefinitions.DB_TYPE, 
+        tableType.name());
     this.tableType = tableType;
   }
 
@@ -863,7 +883,8 @@ public class TableProperties {
    */
   public ColumnProperties[] getColumns() {
     if (columns == null) {
-      columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId);
+      columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId, 
+          backingStore);
       orderColumns();
     }
     return columns;
@@ -1010,7 +1031,8 @@ public class TableProperties {
 	          elementKey,
 	          elementName,
 	          ColumnProperties.DEFAULT_KEY_VISIBLE, 
-	          KeyValueStore.Type.COLUMN_ACTIVE);
+//	          KeyValueStore.Type.COLUMN_ACTIVE);
+	          this.getBackingStoreType());
 	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " 
 	          + cp.getElementKey());
 	      newColumnOrder.add(cp.getElementKey());
@@ -1160,7 +1182,8 @@ public class TableProperties {
 		e.printStackTrace();
 		Log.e(t, "illegal json ignored");
 	}
-    setStringProperty(KEY_COLUMN_ORDER, colOrderList, db);
+    setStringProperty(TableProperties.KVS_PARTITION, 
+        TableProperties.KVS_ASPECT, KEY_COLUMN_ORDER, colOrderList, db);
     this.columnOrder = columnOrder;
   }
 
@@ -1194,7 +1217,8 @@ public class TableProperties {
     if (str.length() > 0) {
       str = str.substring(0, str.length() - 1);
     }
-    setStringProperty(KEY_PRIME_COLUMNS, str);
+    setStringProperty(TableProperties.KVS_PARTITION, 
+        TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, str);
     this.primeColumns = primes;
   }
 
@@ -1216,7 +1240,8 @@ public class TableProperties {
     if ((sortColumn != null) && (sortColumn.length() == 0)) {
       sortColumn = null;
     }
-    setStringProperty(KEY_SORT_COLUMN, sortColumn);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
 
@@ -1232,8 +1257,9 @@ public class TableProperties {
   }
   
   public void setAccessControls(String accessControls) {
-    setStringProperty(TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS, 
-        accessControls);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT,
+        TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS, accessControls);
     this.accessControls = accessControls;
   }
   
@@ -1285,7 +1311,8 @@ public class TableProperties {
    *          the new sync tag
    */
   public void setSyncTag(String syncTag) {
-    setStringProperty(TableDefinitions.DB_SYNC_TAG, syncTag);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, TableDefinitions.DB_SYNC_TAG, syncTag);
     this.syncTag = syncTag;
   }
 
@@ -1305,7 +1332,8 @@ public class TableProperties {
    *          {@link DataUtil#getNowInDbFormat()}).
    */
   public void setLastSyncTime(String time) {
-    setStringProperty(TableDefinitions.DB_LAST_SYNC_TIME, time);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, TableDefinitions.DB_LAST_SYNC_TIME, time);
     this.lastSyncTime = time;
   }
   
@@ -1327,7 +1355,8 @@ public class TableProperties {
    *          the string to put in the database
    */
   void setOverviewViewSettings(String dbString) {
-    setStringProperty(KEY_OV_VIEW_SETTINGS, dbString);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, dbString);
 //    Map<String,Object> dbObject;
 //    try {
 //      dbObject = mapper.readValue(dbString, Map.class);
@@ -1363,7 +1392,8 @@ public class TableProperties {
    *          the string to put in the database
    */
   void setCollectionViewSettings(String dbString) {
-    setStringProperty(KEY_CO_VIEW_SETTINGS, dbString);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, dbString);
 //    Map<String,Object> dbObject;
 //    try {
 //      dbObject = mapper.readValue(dbString, Map.class);
@@ -1399,7 +1429,8 @@ public class TableProperties {
    *          the new filename
    */
   public void setDetailViewFilename(String filename) {
-    setStringProperty(KEY_DETAIL_VIEW_FILE, filename);
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, filename);
     this.detailViewFilename = filename;
   }
 
@@ -1417,7 +1448,8 @@ public class TableProperties {
    *          the new summary display format
    */
   public void setSummaryDisplayFormat(String format) {
-    setStringProperty(KEY_SUM_DISPLAY_FORMAT, format);
+    setStringProperty(TableProperties.KVS_PARTITION, 
+        TableProperties.KVS_ASPECT, KEY_SUM_DISPLAY_FORMAT, format);
     this.sumDisplayFormat = format;
   }
 
@@ -1437,7 +1469,9 @@ public class TableProperties {
    */
   public void setSyncState(SyncState state) {
     if (state == SyncState.rest || this.syncState == SyncState.rest) {
-      setStringProperty(TableDefinitions.DB_SYNC_STATE, state.name());
+      setStringProperty(TableProperties.KVS_PARTITION, 
+          TableProperties.KVS_ASPECT, TableDefinitions.DB_SYNC_STATE, 
+          state.name());
       this.syncState = state;
     }
   }
@@ -1456,7 +1490,8 @@ public class TableProperties {
    *          the new transactioning status
    */
   public void setTransactioning(boolean transactioning) {
-    setIntProperty(TableDefinitions.DB_TRANSACTIONING, 
+    setIntProperty(TableProperties.KVS_PARTITION, TableProperties.KVS_ASPECT,
+        TableDefinitions.DB_TRANSACTIONING, 
         SyncUtil.boolToInt(transactioning));
     this.transactioning = transactioning;
   }
@@ -1619,6 +1654,8 @@ public class TableProperties {
    * object. NB: Special care should be taken when using this method, as it is 
    * currently in transition. If there is an accessor defined for the property
    * you are interested in, you should use that method instead.
+   * @param partition
+   * @param aspect
    * @param key
    * @return the value for the key if the key is found, else null
    */
@@ -1643,14 +1680,14 @@ public class TableProperties {
    * entries with null. However, exactly what to return where in the event of
    * absence is still a work in progress.
    */
-  public String getStringEntry(String key) {
+  public String getStringEntry(String partition, String aspect, String key) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
     SQLiteDatabase db = dbh.getReadableDatabase();
     List<String> keyList = new ArrayList<String>();
     keyList.add(key);
     List<OdkTablesKeyValueStoreEntry> entries = 
-        store.getEntriesForKeys(db, keyList);
+        store.getEntriesForKeys(db, partition, aspect, keyList);
     // Do some sanity checking. There should only ever be one entry per key.
     if (entries.size() > 1) {
       Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
@@ -1667,7 +1704,8 @@ public class TableProperties {
     }
   }
 
-  private void setIntProperty(String property, int value) {
+  private void setIntProperty(String partition, String aspect, String property,
+      int value) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
@@ -1675,7 +1713,7 @@ public class TableProperties {
     try {
 	    db.beginTransaction();
 	    try {
-	      setIntProperty(property, value, db);
+	      setIntProperty(partition, aspect, property, value, db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();
@@ -1698,13 +1736,15 @@ public class TableProperties {
   
   /**
    * Actually handle the updating of the property. Checks whether this property
-   * resides in TableDefinitions of the KVS, and sets to the correct place.
+   * resides in TableDefinitions or the KVS, and sets to the correct place. If
+   * the property resides in TableDefinitions, the partition and aspect are 
+   * unused and may be null.
    * @param property
    * @param value
    * @param db
    */
-  private void setIntProperty(String property, int value,
-      SQLiteDatabase db) {
+  private void setIntProperty(String partition, String aspect,
+      String property, int value, SQLiteDatabase db) {
     // First check if the property is in TableDefinitions.
     if (TableDefinitions.columnNames.contains(property)) {
       // We need to do it through TableDefinitions.
@@ -1713,14 +1753,16 @@ public class TableProperties {
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
           this.backingStore);
-      backingKVS.insertOrUpdateKey(db, ColumnType.INTEGER.name(), property, 
+      backingKVS.insertOrUpdateKey(db, partition,
+          aspect, property, ColumnType.INTEGER.name(),
           Integer.toString(value));
     }
     Log.d(TAG, "updated int " + property + " to " + value + "for " + 
       this.tableId);
   }
 
-  private void setStringProperty(String property, String value) {
+  private void setStringProperty(String partition, String aspect, 
+      String property, String value) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVS.isSetToSync();
@@ -1728,7 +1770,7 @@ public class TableProperties {
     try {
 	    db.beginTransaction();
 	    try {
-	      setStringProperty(property, value, db);
+	      setStringProperty(partition, aspect, property, value, db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      Log.e(TAG, "error setting string property " + property + " to " 
@@ -1756,8 +1798,8 @@ public class TableProperties {
    * @param value
    * @param db
    */
-  private void setStringProperty(String property, String value, 
-      SQLiteDatabase db) {
+  private void setStringProperty(String partition, String aspect, 
+      String property, String value, SQLiteDatabase db) {
     if (TableDefinitions.columnNames.contains(property)) {
       // We need to do it through TableDefinitions.
       TableDefinitions.setValue(tableId, property, value, db);
@@ -1765,7 +1807,8 @@ public class TableProperties {
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
           this.backingStore);
-      intendedKVS.insertOrUpdateKey(db, ColumnType.TEXT.name(), property, value);
+      intendedKVS.insertOrUpdateKey(db, partition,
+          aspect, property, ColumnType.TEXT.name(), value);
     }
     Log.d(TAG, "updated string " + property + " to " + value + " for " 
       + this.tableId);

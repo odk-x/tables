@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
@@ -15,7 +30,8 @@ import android.util.Log;
 
 /**
  * This is a table in the database that stores information with varieties of 
- * metadata about the tables. It is a key value store. 
+ * metadata about the tables. It is a key value store. For more detailed 
+ * comments see {@link KeyValueStoreManager}.
  * @author sudar.sam@gmail.com
  *
  */
@@ -25,9 +41,20 @@ public class KeyValueStore {
   
   // The SQL where clause to use for selecting, updating, or deleting the row
   // for a given key.
-  protected static final String WHERE_SQL_FOR_KEY = 
-      KeyValueStoreManager.TABLE_ID + " = ? and " + KeyValueStoreManager.KEY + 
-      " = ?";
+  protected static final String WHERE_SQL_FOR_PARTITION_ASPECT_KEY = 
+      KeyValueStoreManager.TABLE_ID + " = ? AND " + 
+      KeyValueStoreManager.PARTITION + " = ? AND " + 
+      KeyValueStoreManager.ASPECT + " = ? AND " + 
+      KeyValueStoreManager.KEY + " = ?";
+  
+  /*
+   * The SQL where clause for selecting entries from the key value store based
+   * on table id, partition, and aspect.
+   */
+  protected static final String WHERE_SQL_FOR_PARTITION_ASPECT = 
+      KeyValueStoreManager.TABLE_ID + " = ? AND " + 
+      KeyValueStoreManager.PARTITION + " = ? AND " + 
+      KeyValueStoreManager.ASPECT + " = ?";
   
   /*
    * The base where clause for selecting a table.
@@ -40,8 +67,10 @@ public class KeyValueStore {
    * in the list of table properties. Its usage must be followed by appending
    * ")".
    */
-  protected static final String WHERE_SQL_FOR_KEYS = 
-      KeyValueStoreManager.TABLE_ID + " = ? " + " AND " + 
+  protected static final String WHERE_SQL_FOR_PARTITION_ASPECT_KEYS = 
+      KeyValueStoreManager.TABLE_ID + " = ? AND " + 
+      KeyValueStoreManager.PARTITION + " = ? AND " + 
+      KeyValueStoreManager.ASPECT + " = ? AND " + 
       KeyValueStoreManager.KEY + " in (";
   
   protected final DbHelper dbh;
@@ -65,29 +94,50 @@ public class KeyValueStore {
   }
     
   /**
-   * Return a map of key to value for a table's entries in the active key value
-   * store. It is assumed that the db is open and closed outside of the
-   * method.
+   * Return a map of key to value for the keys in a given partition and aspect
+   * for the table specified by this object. It is assumed that the db is open 
+   * and closed outside of the
+   * method. 
+   * <p>
+   * The caller must know how to interpret the values, the type of which will
+   * all be string, but which will be parseable into their appropriate types.
    * @param db
    * @return
    */
-  public Map<String, String> getKeyValues(SQLiteDatabase db) {
+  public Map<String, String> getKeyValues(String partition, String aspect, 
+      SQLiteDatabase db) {
     Cursor c = db.query(this.dbBackingName, 
         new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
-        WHERE_SQL_FOR_TABLE, 
-        new String[] {this.tableId}, null, null, null);
+        WHERE_SQL_FOR_PARTITION_ASPECT, 
+        new String[] {this.tableId, partition, aspect}, null, null, null);
     return getKeyValuesFromCursor(c);
   }
   
   /**
+   * Delete all the entries in the key value store for the given partition and
+   * aspect.
+   * @param partition
+   * @param aspect
+   * @param db
+   * @return
+   */
+  public int clearEntries(String partition, String aspect, SQLiteDatabase db) {
+    int count = db.delete(dbBackingName, WHERE_SQL_FOR_PARTITION_ASPECT, 
+        new String[] {this.tableId, partition, aspect});
+    return count;
+  }
+  
+  /**
    * Return a list of all the OdkTablesKeyValueStoreEntry objects that exist
-   * in the key value store.
+   * in the key value store for this table.
    * @param db
    * @return
    */
   public List<OdkTablesKeyValueStoreEntry> getEntries(SQLiteDatabase db) {
     Cursor c = db.query(this.dbBackingName,
         new String[] {KeyValueStoreManager.TABLE_ID,
+                      KeyValueStoreManager.PARTITION,
+                      KeyValueStoreManager.ASPECT,
                       KeyValueStoreManager.KEY,
                       KeyValueStoreManager.VALUE_TYPE,
                       KeyValueStoreManager.VALUE},
@@ -108,28 +158,32 @@ public class KeyValueStore {
    * @return
    */
   public boolean entriesExist(SQLiteDatabase db) {
-    Map<String, String> entries = getKeyValues(db);
-    return (entries.size() != 0);
+//    Map<String, String> entries = getKeyValues(db);
+//    return (entries.size() != 0);
+    List<OdkTablesKeyValueStoreEntry> allEntries = getEntries(db);
+    return allEntries.size() > 0;
   }
   
   /**
-   * Return a map of only the properties in the active key value store. These
-   * are the properties as defined as the INIT_COLUMNS in TableProperties. The
-   * rest of the key value pairs are considered to be associated with the 
-   * table, but not "properties" per se. Empty strings are returned as null.
+   * Return a map of only the properties from the store backing this
+   * object. These
+   * are the properties as defined as the {@link INIT_KEYS} in TableProperties. 
+   * Empty strings are returned as null.
    * @param db
    * @return
    */
   public Map<String, String>  getProperties(SQLiteDatabase db) {
     String[] basicProps = TableProperties.getInitKeys();
-    String[] desiredKeys = new String[basicProps.length + 1];
+    String[] desiredKeys = new String[basicProps.length + 3];
     // we want the first to be the tableId, b/c that is the table id we are
     // querying over in the database.
     desiredKeys[0] = tableId;
+    desiredKeys[1] = TableProperties.KVS_PARTITION;
+    desiredKeys[2] = TableProperties.KVS_ASPECT;
     for (int i = 0; i < basicProps.length; i++) {
-      desiredKeys[i+1] = basicProps[i]; 
+      desiredKeys[i+3] = basicProps[i]; 
     }
-    String whereClause = WHERE_SQL_FOR_KEYS + 
+    String whereClause = WHERE_SQL_FOR_PARTITION_ASPECT_KEYS + 
         makePlaceHolders(TableProperties.getInitKeys().length) + ")";
     Cursor c = db.query(this.dbBackingName, 
         new String[] {KeyValueStoreManager.KEY, KeyValueStoreManager.VALUE}, 
@@ -168,6 +222,9 @@ public class KeyValueStore {
     List<OdkTablesKeyValueStoreEntry> entries = 
         new ArrayList<OdkTablesKeyValueStoreEntry>();
     int idIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.TABLE_ID);
+    int partitionIndex = 
+        c.getColumnIndexOrThrow(KeyValueStoreManager.PARTITION);
+    int aspectIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.ASPECT);
     int keyIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.KEY);
     int valueIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE);
     int typeIndex = c.getColumnIndexOrThrow(KeyValueStoreManager.VALUE_TYPE);
@@ -175,8 +232,10 @@ public class KeyValueStore {
     c.moveToFirst();
     while (i < c.getCount()) {
       OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-      entry.key = c.getString(keyIndex);
       entry.tableId = c.getString(idIndex);
+      entry.partition = c.getString(partitionIndex);
+      entry.aspect = c.getString(aspectIndex);
+      entry.key = c.getString(keyIndex);
       entry.type = c.getString(typeIndex);
       entry.value = c.getString(valueIndex);
       entries.add(entry);
@@ -189,49 +248,55 @@ public class KeyValueStore {
   
   /**
    * Delete all the key value pairs for the table.
-   * @param dbh
    * @param db the open database
-   * @param tableId
    * @return the number of entries deleted from the store.
    */
   public int clearKeyValuePairs(SQLiteDatabase db) {
     // First get the key value pairs for this table.
-    Map<String, String> keyValues = 
-        getKeyValues(db);
-    int count = 0;
-    for (String key : keyValues.keySet()) {
-      count++;
-      db.delete(dbBackingName, WHERE_SQL_FOR_KEY, 
-          new String[] {String.valueOf(this.tableId),key});
-    }
-    if (count != keyValues.size()) {
-      Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
-          dbBackingName + ", but there were " + keyValues.size() + 
-          " key value pairs for the table " + tableId);
-    }
+//    Map<String, String> keyValues = 
+//        getKeyValues(db);
+    int count = db.delete(dbBackingName, WHERE_SQL_FOR_TABLE, 
+        new String[] {this.tableId});
+    
+//    for (String key : keyValues.keySet()) {
+//      count++;
+//      db.delete(dbBackingName, WHERE_SQL_FOR_PARTITION_ASPECT_KEY, 
+//          new String[] {String.valueOf(this.tableId),key});
+//    }
+//    if (count != keyValues.size()) {
+//      Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
+//          dbBackingName + ", but there were " + keyValues.size() + 
+//          " key value pairs for the table " + tableId);
+//    }
     return count;
   }
   
   /**
    * Return the entries in the key value store with the keys specified in the 
-   * list desiredKeys.
+   * list desiredKeys from the given partition and aspect.
    * @param db
+   * @param partition
+   * @param aspect
    * @param keys
    * @return
    */
   public List<OdkTablesKeyValueStoreEntry> getEntriesForKeys(SQLiteDatabase db,
-      List<String> keys) {
-    String[] desiredKeys = new String[keys.size() + 1];
+      String partition, String aspect, List<String> keys) {
+    String[] desiredKeys = new String[keys.size() + 3];
     // we want the first to be the tableId, b/c that is the table id we are
     // querying over in the database.
     desiredKeys[0] = tableId;
+    desiredKeys[1] = partition;
+    desiredKeys[2] = aspect;
     for (int i = 0; i < keys.size(); i++) {
-      desiredKeys[i+1] = keys.get(i); 
+      desiredKeys[i+3] = keys.get(i); 
     }
-    String whereClause = WHERE_SQL_FOR_KEYS + 
+    String whereClause = WHERE_SQL_FOR_PARTITION_ASPECT_KEYS + 
         makePlaceHolders(keys.size()) + ")";
     Cursor c = db.query(this.dbBackingName, 
         new String[] {KeyValueStoreManager.TABLE_ID,
+                      KeyValueStoreManager.PARTITION,
+                      KeyValueStoreManager.ASPECT,
                       KeyValueStoreManager.KEY,
                       KeyValueStoreManager.VALUE_TYPE,
                       KeyValueStoreManager.VALUE}, 
@@ -262,7 +327,8 @@ public class KeyValueStore {
         entry.value = "";
       // We're going to go through insertOrUpdate key to ensure that the set
       // invariant of the keys in the kvs is enforced.
-      insertOrUpdateKey(db, entry.type, entry.key, entry.value);
+      insertOrUpdateKey(db, entry.partition, entry.aspect, entry.key, 
+          entry.type, entry.value);
       numInserted++;
     }
     Log.d(TAG, "inserted " + numInserted + " key value pairs to kvs");
@@ -271,12 +337,21 @@ public class KeyValueStore {
   /**
    * Delete the row from the database for that contains the given key.
    * @param db
+   * @param partition
+   * @param aspect
    * @param key
-   * @return the number of rows affected
+   * @return the number of rows affected--should only ever be one
    */
-  public int deleteKey(SQLiteDatabase db, String key) {
-    return db.delete(this.dbBackingName, WHERE_SQL_FOR_KEY, 
-        new String[] {this.tableId, key});
+  public int deleteKey(SQLiteDatabase db, String partition, String aspect,
+      String key) {
+    int numDeleted = db.delete(this.dbBackingName, 
+        WHERE_SQL_FOR_PARTITION_ASPECT_KEY, 
+        new String[] {this.tableId, partition, aspect, key});
+    if (numDeleted > 1) {
+      Log.e(TAG, "deleted > 1 entry from the key value store with name: " +
+          this.dbBackingName + " and key: " + key);
+    }
+    return numDeleted;
   }
   
 
@@ -284,20 +359,24 @@ public class KeyValueStore {
    * Add the typed key value store to the database, inserting or deleting the
    * key as needed. Null "value" entries are changed to the empty string.
    * @param db
-   * @param type
+   * @param partition
+   * @param aspect
    * @param key
+   * @param type
    * @param value
    */
-  public void insertOrUpdateKey(SQLiteDatabase db, String type,
-      String key, String value) {
+  public void insertOrUpdateKey(SQLiteDatabase db, String partition, 
+      String aspect, String key, String type, String value) {
     // first try to delete the row. If it's not there, no biggie, just 
     // returns a 0. So you either delete it or it isn't there.
-    this.deleteKey(db, key);
+    this.deleteKey(db, partition, aspect, key);
     if (value == null)
       value = "";
     OdkTablesKeyValueStoreEntry newEntry = new OdkTablesKeyValueStoreEntry();
-    newEntry.key = key;
     newEntry.tableId = this.tableId;
+    newEntry.partition = partition;
+    newEntry.aspect = aspect;
+    newEntry.key = key;
     newEntry.type = type;
     newEntry.value = value;
     addEntryToStore(db, newEntry);
@@ -317,6 +396,9 @@ public class KeyValueStore {
       OdkTablesKeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
     values.put(KeyValueStoreManager.TABLE_ID, String.valueOf(entry.tableId));
+    values.put(KeyValueStoreManager.PARTITION, 
+        String.valueOf(entry.partition));
+    values.put(KeyValueStoreManager.ASPECT, String.valueOf(entry.aspect));
     values.put(KeyValueStoreManager.VALUE_TYPE, String.valueOf(entry.type));
     values.put(KeyValueStoreManager.VALUE, String.valueOf(entry.value));
     values.put(KeyValueStoreManager.KEY, String.valueOf(entry.key));
@@ -343,8 +425,8 @@ public class KeyValueStore {
   public static enum Type {
     ACTIVE(KeyValueStoreManager.ACTIVE_DB_NAME),
     DEFAULT(KeyValueStoreManager.DEFAULT_DB_NAME),
-    SERVER(KeyValueStoreManager.SERVER_DB_NAME),
-    COLUMN_ACTIVE(KeyValueStoreManager.COLUMN_ACTIVE_DB_NAME);
+    SERVER(KeyValueStoreManager.SERVER_DB_NAME);
+//    COLUMN_ACTIVE(KeyValueStoreManager.COLUMN_ACTIVE_DB_NAME);
     private String backingName;
     
     private Type(String backingName) {

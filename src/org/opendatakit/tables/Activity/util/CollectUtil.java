@@ -44,6 +44,9 @@ public class CollectUtil {
   
   private static final String TAG = "CollectUtil";
   
+  public static final String KVS_PARTITION = "CollectUtil";
+  public static final String KVS_ASPECT = "default";
+  
   /*
    * The names here should match those in the version of collect that is on
    * the phone. They came from InstanceProviderApi.
@@ -501,15 +504,18 @@ public class CollectUtil {
        */
       public static CollectFormParameters constructCollectFormParameters(
           TableProperties tp) {
-        String formId = tp.getStringEntry(CollectUtil.KEY_FORM_ID);
+        String formId = tp.getStringEntry(CollectUtil.KVS_PARTITION,
+            CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_ID);
         if (formId == null) {
           return new CollectFormParameters(false,
               COLLECT_ADDROW_FORM_ID, null, DEFAULT_ROOT_ELEMENT);
         }
         // Else we know it is custom.
-        String formVersion = tp.getStringEntry(CollectUtil.KEY_FORM_VERSION);
+        String formVersion = tp.getStringEntry(CollectUtil.KVS_PARTITION,
+            CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_VERSION);
         String rootElement = 
-            tp.getStringEntry(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+            tp.getStringEntry(CollectUtil.KVS_PARTITION,
+                CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_ROOT_ELEMENT);
         if (rootElement == null) {
           rootElement = DEFAULT_ROOT_ELEMENT;
         }

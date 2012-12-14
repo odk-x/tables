@@ -23,6 +23,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * A helper class for the database.
  * 
  * @author hkworden@gmail.com
+ * @author sudar.sam@gmail.com
  */
 public class DbHelper extends SQLiteOpenHelper {
     
@@ -49,7 +50,7 @@ public class DbHelper extends SQLiteOpenHelper {
         db.execSQL(KeyValueStoreManager.getActiveTableCreateSql());
         db.execSQL(KeyValueStoreManager.getServerTableCreateSql());
         db.execSQL(KeyValueStoreManager.getSyncTableCreateSql());
-        db.execSQL(KeyValueStoreManager.getColumnActiveTableCreateSql());
+//        db.execSQL(KeyValueStoreManager.getColumnActiveTableCreateSql());
         db.execSQL(TableDefinitions.getTableCreateSql());
     }
     

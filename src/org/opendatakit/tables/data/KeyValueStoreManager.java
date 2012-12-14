@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
@@ -18,9 +33,77 @@ import android.util.Log;
  * This seems to be an ever changing design, so I'm including the date this 
  * time.
  * <p>
- * The key value stores are where properties are kept about the tables. This 
- * includes things like metadata, as well as things that are important to 
- * table structure and definition, making them less like "metadata" per se.
+ * The key value stores are where ODKTables-specific properties are kept about 
+ * the tables. In general this is things like "displayName" and eventually
+ * view settings that do NOT affect the definition of a table.
+ * <p>
+ * The columns in the KVS are as follows:
+ * tableId,
+ * partition,
+ * aspect,
+ * key,
+ * type,
+ * value
+ * <p>
+ * These columns intend to restrict the scope of a key and to prevent collision
+ * of keys. The primary key is essentially a composite of tableId, partition,
+ * aspect, and key. 
+ * <p>
+ * The tableId is the id of the table to which the key 
+ * applies. 
+ * <p>
+ * The partition defines roughly to whom the key is relevant. A key that 
+ * matters to the Table as a whole (eg display name) is given the partition
+ * "Table". A key that matters only to a column (eg display name of that 
+ * column) will be given the partition "Column". Additional partitions will be
+ * generated as new classes are created that need to store information in the 
+ * KVS. For instance, "ListView" and "CollectUtil" would be the partitions that
+ * store data for the ListView and CollectUtil classes, respectively.
+ * <p>
+ * The aspect is roughly equivalent to a particular instance of a partition. In
+ * another sense, it refers to which specific view, or aspect, of the data the
+ * key is associated with.
+ * In many cases this will simply be "default". The display name of the table
+ * would exist in partition=Table, aspect=default. A column's aspect would be
+ * the element_key of the column. The element_key is fixed, and with the table
+ * id forms a composite key for the column. The display name of a column with
+ * the element key "weight" would exist in partition=Column, aspect=weight. 
+ * The aspect of a particular list view or graph is the name of that view. At
+ * the moment (Dec, 2012) we are not allowing named list views or graph views.
+ * Currently, therefore, the aspect for these views is assigned "default". A 
+ * font size in the list view (if such a property was able to be set) would 
+ * exist in partition=ListView, aspect=default, key=fontSize. If a graph view 
+ * was named
+ * Fridge Count, the x axis would exist in partition=GraphView, 
+ * aspect=Fridge Count, key=xAxis. (In this example both the name of graph view
+ * and the key xAxis were manufactured and do not reflect the true state of
+ * the code.) 
+ * <p>
+ * Key is the key assigned to a particular property and must be unique within
+ * a partition and aspect.
+ * <p>
+ * Type is the type of the value. The value field is set as a string, and this
+ * type column allows appropriate interpretation of the string residing in 
+ * value. Obvious types are text, integer, double, and boolean.
+ * <p>
+ * Value is the actual value of the key. A key specifying font size might have 
+ * a value of 12. A key specifying display name might have a value of 
+ * "Admin Areas".
+ * <p>
+ * Taken in sum, the entry for a table's display name might be as follows:
+ * tableId=myUUID, partition=Table, aspect=default, key=displayName, type=text,
+ * value=My Custom Name. 
+ * <p>
+ * The font size of the font size in a list view (which is currently not 
+ * nameable) might be:
+ * tableId=myUUID, partition=ListView, aspect=default, key=fontSize, 
+ * type=integer, value=12.
+ * <p>
+ * The x axis of a graph view named Fridge Count (although graph views are 
+ * not currently nameable) might be (assuming that GraphView.java is the class
+ * responsible for managing graph views):
+ * tableId=myUUID, partition=GraphView, aspect=Fridge Count, key=xAxis,
+ * type=text, value=count.
  * <p>
  * There are three of these key value stores, and they hold information about
  * the tables in different states. The three are the active, default, and
@@ -29,8 +112,9 @@ import android.util.Log;
  * The active holds the currently displaying version of the tables, which the
  * user modifies when they make changes. The server holds the version that was
  * pulled down from the server. This is also the key value store that is the
- * source of the table properties at the first synch. After that point, we are
- * currently not allowing metadata being pushed. (Well, technically you can do
+ * source of the table properties at the first sync. After that point, we are
+ * currently not allowing definition changes to be pushed. 
+ * (Well, technically you can do
  * it, but in our model we are planning to make this a privileged operation, as
  * there are some very important considerations that the values in the key 
  * value stores can have for the actual structure of a table.)
@@ -59,21 +143,21 @@ public class KeyValueStoreManager {
   
   // These are the names of the active and the default key value stores as 
   // they will exist in the SQLite db once they are initialized.
-  public static final String DEFAULT_DB_NAME = "table_key_value_store_default";
-  public static final String ACTIVE_DB_NAME = "table_key_value_store_active";
-  public static final String SERVER_DB_NAME = "table_key_value_store_server";
-  public static final String SYNC_DB_NAME = "table_key_value_store_sync";
+  public static final String DEFAULT_DB_NAME = "key_value_store_default";
+  public static final String ACTIVE_DB_NAME = "key_value_store_active";
+  public static final String SERVER_DB_NAME = "key_value_store_server";
+  public static final String SYNC_DB_NAME = "key_value_store_sync";
   // and the db name for the column properties KVS.
-  public static final String COLUMN_ACTIVE_DB_NAME = 
-      "column_key_value_store_active";
+//  public static final String COLUMN_ACTIVE_DB_NAME = 
+//      "column_key_value_store_active";
   
-  // Names of the columns in the key value store
-  // The underscores preceding are legacy, and are currently the same for 
-  // ease of comparison b/w Aggregate and Tables.
-  public static final String TABLE_ID = "TABLE_UUID";
-  public static final String KEY = "_KEY";
-  public static final String VALUE_TYPE = "_TYPE";
-  public static final String VALUE = "VALUE"; 
+  // Names of the columns in the key value store.
+  public static final String TABLE_ID = "table_id";
+  public static final String PARTITION = "partition";
+  public static final String ASPECT = "aspect";
+  public static final String KEY = "key";
+  public static final String VALUE_TYPE = "type";
+  public static final String VALUE = "value"; 
   
   public static final String WHERE_SQL_KEY_VALUE = KEY + " = ? " + " and " +
       VALUE + " = ? ";
@@ -81,6 +165,8 @@ public class KeyValueStoreManager {
   // The columns to be selected when initializing KeyStoreValueDefault.
   private static final String[] INIT_COLUMNS = {
     TABLE_ID,
+    PARTITION,
+    ASPECT,
     KEY,
     VALUE_TYPE,
     VALUE
@@ -114,16 +200,16 @@ public class KeyValueStoreManager {
     return new KeyValueStore(backingName, this.dbh, tableId);
   }
   
-  public KeyValueStoreColumn getStoreForColumn(String tableId,
-      String elementKey, KeyValueStore.Type typeOfStore) {
-    if (!ColumnProperties.isValidStore(typeOfStore)) {
-      Log.e(TAG, "ColumnProperties was given a non-column key value store");
-      throw new IllegalArgumentException("non-column key value store passed" +
-            " to ColumnProperties constructor");
-    }
-    String backingName = getBackingNameForStore(typeOfStore);
-    return new KeyValueStoreColumn(backingName, dbh, tableId, elementKey);
-  }
+//  public KeyValueStoreColumn getStoreForColumn(String tableId,
+//      String elementKey, KeyValueStore.Type typeOfStore) {
+////    if (!ColumnProperties.isValidStore(typeOfStore)) {
+////      Log.e(TAG, "ColumnProperties was given a non-column key value store");
+////      throw new IllegalArgumentException("non-column key value store passed" +
+////            " to ColumnProperties constructor");
+////    }
+//    String backingName = getBackingNameForStore(typeOfStore);
+//    return new KeyValueStoreColumn(backingName, dbh, tableId, elementKey);
+//  }
   
   /*
   public KeyValueStore getActiveStoreForTable(String tableId) {
@@ -332,8 +418,8 @@ public class KeyValueStoreManager {
       return DEFAULT_DB_NAME;
     case SERVER:
       return SERVER_DB_NAME;
-    case COLUMN_ACTIVE:
-      return COLUMN_ACTIVE_DB_NAME;
+//    case COLUMN_ACTIVE:
+//      return COLUMN_ACTIVE_DB_NAME;
     default:
       Log.e(TAG, "nonexistent store rquested: " +
           typeOfStore.name());
@@ -515,7 +601,8 @@ public class KeyValueStoreManager {
 	    isSetToSyncKey.add(KeyValueStoreSync.SyncPropertiesKeys
 	        .IS_SET_TO_SYNC.getKey());
 	    List<OdkTablesKeyValueStoreEntry> currentIsSetToSync = 
-	        syncKVS.getEntriesForKeys(db, isSetToSyncKey);
+	        syncKVS.getEntriesForKeys(db, KeyValueStoreSync.KVS_PARTITION,
+	            KeyValueStoreSync.KVS_ASPECT, isSetToSyncKey);
 	    if (currentIsSetToSync.size() == 0) {
 	      // we add the value.
 	      OdkTablesKeyValueStoreEntry newEntry = 
@@ -574,6 +661,8 @@ public class KeyValueStoreManager {
   static String getDefaultTableCreateSql() {
     return "CREATE TABLE " + DEFAULT_DB_NAME + "(" +
                TABLE_ID + " TEXT NOT NULL" +
+        ", " + PARTITION + " TEXT NOT NULL" +
+        ", " + ASPECT + " TEXT NOT NULL" +
         ", " + KEY + " TEXT NOT NULL" +
         ", " + VALUE_TYPE + " TEXT NOT NULL" +
         ", " + VALUE + " TEXT NOT NULL" +
@@ -587,6 +676,8 @@ public class KeyValueStoreManager {
   static String getActiveTableCreateSql() {
     return "CREATE TABLE " + ACTIVE_DB_NAME + "(" +
                TABLE_ID + " TEXT NOT NULL" +
+         ", " + PARTITION + " TEXT NOT NULL" +
+         ", " + ASPECT + " TEXT NOT NULL" +
         ", " + KEY + " TEXT NOT NULL" +
         ", " + VALUE_TYPE + " TEXT NOT NULL" +
         ", " + VALUE + " TEXT NOT NULL" +
@@ -599,6 +690,8 @@ public class KeyValueStoreManager {
   static String getServerTableCreateSql() {
     return "CREATE TABLE " + SERVER_DB_NAME + "(" +
                TABLE_ID + " TEXT NOT NULL" +
+         ", " + PARTITION + " TEXT NOT NULL" +
+         ", " + ASPECT + " TEXT NOT NULL" +
         ", " + KEY + " TEXT NOT NULL" +
         ", " + VALUE_TYPE + " TEXT NOT NULL" +
         ", " + VALUE + " TEXT NOT NULL" +
@@ -611,6 +704,8 @@ public class KeyValueStoreManager {
   static String getSyncTableCreateSql() {
     return "CREATE TABLE " + SYNC_DB_NAME + "(" +
                TABLE_ID + " TEXT NOT NULL" +
+         ", " + PARTITION + " TEXT NOT NULL" +
+         ", " + ASPECT + " TEXT NOT NULL" +
         ", " + KEY + " TEXT NOT NULL" +
         ", " + VALUE_TYPE + " TEXT NOT NULL" +
         ", " + VALUE + " TEXT NOT NULL" +
@@ -619,15 +714,15 @@ public class KeyValueStoreManager {
   
   /**
    * The table creation SQL for the column properties store.
-   */
-  static String getColumnActiveTableCreateSql() {
-    return "CREATE TABLE " + COLUMN_ACTIVE_DB_NAME + "(" +
-       TABLE_ID + " TEXT NOT NULL" +
-       ", " + ColumnDefinitions.DB_ELEMENT_KEY + " TEXT NOT NULL" +
-       ", " + KEY + " TEXT NOT NULL" +
-       ", " + VALUE_TYPE + " TEXT NOT NULL" +
-       ", " + VALUE + " TEXT NOT NULL" +
-       ")";   
-  }
+//   */
+//  static String getColumnActiveTableCreateSql() {
+//    return "CREATE TABLE " + COLUMN_ACTIVE_DB_NAME + "(" +
+//       TABLE_ID + " TEXT NOT NULL" +
+//       ", " + ColumnDefinitions.DB_ELEMENT_KEY + " TEXT NOT NULL" +
+//       ", " + KEY + " TEXT NOT NULL" +
+//       ", " + VALUE_TYPE + " TEXT NOT NULL" +
+//       ", " + VALUE + " TEXT NOT NULL" +
+//       ")";   
+//  }
 
 }

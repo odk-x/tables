@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
@@ -21,7 +36,7 @@ import android.util.Log;
  * This table works together with the key value store to define a table's 
  * properties. The traits here are considered part of the definition of the
  * table as opposed to various display and ODK Tables-specific properties.
- * @author sudars
+ * @author sudar.sam@gmail.com
  *
  */
 public class TableDefinitions {

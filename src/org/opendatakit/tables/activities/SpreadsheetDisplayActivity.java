@@ -239,10 +239,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
        // It is possible that a custom form has been defined for this table.
        // We will get the strings we need, and then set the parameter object.
        String formId = c.getTableProperties().getStringEntry(
+           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
            CollectUtil.KEY_FORM_ID);
        String formVersion = c.getTableProperties().getStringEntry(
+           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
            CollectUtil.KEY_FORM_VERSION);
        String rootElement = c.getTableProperties().getStringEntry(
+           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
            CollectUtil.KEY_FORM_ROOT_ELEMENT);
        CollectFormParameters params = 
 //           new CollectFormParameters(formId, formVersion, rootElement);

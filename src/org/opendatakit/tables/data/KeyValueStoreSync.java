@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
@@ -8,7 +23,18 @@ import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 
+/**
+ * A key value store to store sync state. It exists outside of the active,
+ * default, and server stores because all interactions with a table must point
+ * to it, and it doesn't make sense that if someone pushed their sync setting
+ * to the server that it should affect the sync behavior of other users.
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class KeyValueStoreSync extends KeyValueStore {
+  
+  public static final String KVS_PARTITION = "Table";
+  public static final String KVS_ASPECT = "global";
 
   public KeyValueStoreSync(String dbName, DbHelper dbh, String tableId) {
     super(dbName, dbh, tableId);
@@ -28,7 +54,8 @@ public class KeyValueStoreSync extends KeyValueStore {
 	    List<String> isSetToSyncKey = new ArrayList<String>();
 	    isSetToSyncKey.add(SyncPropertiesKeys.IS_SET_TO_SYNC.getKey());
 	    List<OdkTablesKeyValueStoreEntry> isSetToSyncEntry =
-	        this.getEntriesForKeys(db, isSetToSyncKey);
+	        this.getEntriesForKeys(db, KeyValueStoreSync.KVS_PARTITION,
+	            KeyValueStoreSync.KVS_PARTITION, isSetToSyncKey);
 	    if (isSetToSyncEntry.size() == 0)
 	      return false;
 	    // otherwise there is a single entry and it is the one we want.
@@ -53,8 +80,10 @@ public class KeyValueStoreSync extends KeyValueStore {
     SQLiteDatabase db = this.dbh.getWritableDatabase();
     try {
 	    int newValue = SyncUtil.boolToInt(val);
-	    this.insertOrUpdateKey(db, ColumnType.INTEGER.name(), 
+	    this.insertOrUpdateKey(db, KeyValueStoreSync.KVS_PARTITION,
+	        KeyValueStoreSync.KVS_ASPECT,
 	        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), 
+	        ColumnType.INTEGER.name(),
 	        Integer.toString(newValue));
     } finally {
       // TODO: fix the when to close problem
