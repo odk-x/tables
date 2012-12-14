@@ -477,14 +477,6 @@ public class ColumnProperties {
     this.smsOut = smsOut;
     this.smsLabel = smsLabel;
     this.footerMode = footerMode;
-// this no longer necessary b/c now column kvs resides within the other three.
-//    if (backingStore == KeyValueStore.Type.ACTIVE ||
-//        backingStore == KeyValueStore.Type.DEFAULT ||
-//        backingStore == KeyValueStore.Type.SERVER) {
-//      Log.e(TAG, "ColumnProperties was given a non-column key value store");
-//      throw new IllegalArgumentException("non-column key value store passed" +
-//      		" to ColumnProperties constructor");
-//    }
     this.backingStore = backingStore;
   }
   
@@ -504,97 +496,9 @@ public class ColumnProperties {
    */
   public static ColumnProperties getColumnProperties(DbHelper dbh, 
       String tableId, String dbElementKey, KeyValueStore.Type typeOfStore) {
-//    if (!isValidStore(typeOfStore)) {
-//      Log.e(TAG, "invalid KeyValueStore.Type passed to getColumnPropties: " +
-//      		typeOfStore);
-//      throw new IllegalArgumentException("invalid KeyValueStore.Type passed " +
-//      		"to getColumnPropties: " + typeOfStore);
-//    }
     Map<String, String> mapProps = getMapForColumn(dbh, tableId, dbElementKey, 
         typeOfStore);
     return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-
-//    SQLiteDatabase db = null;
-//    Cursor c = null;
-//    ColumnProperties cp = null;
-//    String parseValue = null;
-//
-//    try {
-//      db = dbh.getReadableDatabase();
-//      c = db.query(DB_TABLENAME, INIT_COLUMNS, WHERE_SQL, new String[] { tableId, dbElementKey },
-//          null, null, null);
-//
-//      int dbcnIndex = c.getColumnIndexOrThrow(DB_ELEMENT_KEY);
-//
-//      int elementNameIndex = c.getColumnIndexOrThrow(DB_ELEMENT_NAME);
-//      int elementTypeIndex = c.getColumnIndexOrThrow(DB_ELEMENT_TYPE);
-//      int listChildElementKeysIndex = c.getColumnIndexOrThrow(DB_LIST_CHILD_ELEMENT_KEYS);
-//      int joinIndex = c.getColumnIndexOrThrow(DB_JOINS);
-//      // int joinTableIndex = c.getColumnIndexOrThrow(DB_JOIN_TABLE_ID);
-//      // int joinElementIndex = c.getColumnIndexOrThrow(DB_JOIN_ELEMENT_KEY);
-//      int isPersistedIndex = c.getColumnIndexOrThrow(DB_IS_PERSISTED);
-//
-//      int displayVisibleIndex = c.getColumnIndexOrThrow(DB_DISPLAY_VISIBLE);
-//      int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
-//      int displayChoicesMapIndex = c.getColumnIndexOrThrow(DB_DISPLAY_CHOICES_MAP);
-//      int displayFormatIndex = c.getColumnIndexOrThrow(DB_DISPLAY_FORMAT);
-//
-//      int smsInIndex = c.getColumnIndexOrThrow(DB_SMS_IN);
-//      int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
-//      int smsLabelIndex = c.getColumnIndexOrThrow(DB_SMS_LABEL);
-//
-//      int footerModeIndex = c.getColumnIndexOrThrow(DB_FOOTER_MODE);
-//
-//      c.moveToFirst();
-//
-//      @SuppressWarnings("unchecked")
-//      ArrayList<String> displayChoicesMap = null;
-//      if (!c.isNull(displayChoicesMapIndex)) {
-//        String displayChoicesMapValue = c.getString(displayChoicesMapIndex);
-//        parseValue = displayChoicesMapValue;
-//        displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
-//      }
-//      ArrayList<String> listChildElementKeys = null;
-//      if (!c.isNull(listChildElementKeysIndex)) {
-//        String listChildElementKeysValue = c.getString(listChildElementKeysIndex);
-//        parseValue = listChildElementKeysValue;
-//        listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
-//      }
-//      cp = new ColumnProperties(dbh, tableId, c.getString(dbcnIndex),
-//          c.getString(elementNameIndex), ColumnType.valueOf(c.getString(elementTypeIndex)),
-//          listChildElementKeys, c.getString(joinIndex),
-//          // c.getString(joinTableIndex),
-//          // c.getString(joinElementIndex),
-//          c.getInt(isPersistedIndex) == 1,
-//
-//          c.getInt(displayVisibleIndex) == 1, c.getString(displayNameIndex), displayChoicesMap,
-//          c.getString(displayFormatIndex),
-//
-//          c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1, c.getString(smsLabelIndex),
-//
-//          c.getInt(footerModeIndex));
-//    } catch (JsonParseException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + parseValue);
-//    } catch (JsonMappingException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + parseValue);
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + parseValue);
-//    } finally {
-//      try {
-//        if (c != null && !c.isClosed()) {
-//          c.close();
-//        }
-//      } finally {
-//        // TODO: fix the when to close problem
-//        // if ( db != null ) {
-//        // db.close();
-//        // }
-//      }
-//    }
-//    return cp;
   }
 
   /*
@@ -615,12 +519,8 @@ public class ColumnProperties {
       db = dbh.getReadableDatabase();
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
-//      KeyValueStoreColumn intendedKVS = 
-//          kvsm.getStoreForColumn(tableId, 
-//          elementKey, typeOfStore);
       Map<String, String> columnDefinitionsMap = 
           ColumnDefinitions.getFields(tableId, elementKey, db);
-//      Map<String, String> kvsMap = intendedKVS.getProperties(db);
       Map<String, String> kvsMap = intendedKVS.getKeyValues(
           ColumnProperties.KVS_PARTITION, elementKey, db);
       Map<String, String> mapProps = new HashMap<String, String>();
@@ -723,22 +623,8 @@ public class ColumnProperties {
         smsOut,
         props.get(KEY_SMS_LABEL),
         footerMode,
-        backingStore);
-    
-    
+        backingStore);  
   }
-  
-  
-  /**
-   * Return whether or not this is a typeOfStore appropriate for columns.
-   * @param typeOfStore
-   * @return
-   */
-//  public static boolean isValidStore(KeyValueStore.Type typeOfStore) {
-//    return !(typeOfStore == KeyValueStore.Type.ACTIVE ||
-//      typeOfStore == KeyValueStore.Type.DEFAULT ||
-//      typeOfStore == KeyValueStore.Type.SERVER);
-//  }
 
   /**
    * Return the ColumnProperties for the PERSISTED columns belonging to this
@@ -773,104 +659,6 @@ public class ColumnProperties {
 //    // db.close();
 //    // }
     }
-    
-
-//    SQLiteDatabase db = null;
-//    Cursor c = null;
-//    ColumnProperties[] cps = null;
-//
-//    try {
-//      db = dbh.getReadableDatabase();
-//      c = db.query(DB_TABLENAME, INIT_COLUMNS, DB_TABLE_ID + " = ?", new String[] { tableId },
-//          null, null, null);
-//      cps = new ColumnProperties[c.getCount()];
-//
-//      int dbcnIndex = c.getColumnIndexOrThrow(DB_ELEMENT_KEY);
-//      int elementNameIndex = c.getColumnIndexOrThrow(DB_ELEMENT_NAME);
-//      int elementTypeIndex = c.getColumnIndexOrThrow(DB_ELEMENT_TYPE);
-//      int listChildElementKeysIndex = c.getColumnIndexOrThrow(DB_LIST_CHILD_ELEMENT_KEYS);
-//      int joinsIndex = c.getColumnIndexOrThrow(DB_JOINS);
-//      // int joinTableIndex = c.getColumnIndexOrThrow(DB_JOIN_TABLE_ID);
-//      // int joinElementIndex = c.getColumnIndexOrThrow(DB_JOIN_ELEMENT_KEY);
-//      int isPersistedIndex = c.getColumnIndexOrThrow(DB_IS_PERSISTED);
-//
-//      int displayVisibleIndex = c.getColumnIndexOrThrow(DB_DISPLAY_VISIBLE);
-//      int displayNameIndex = c.getColumnIndexOrThrow(DB_DISPLAY_NAME);
-//      int displayChoicesMapIndex = c.getColumnIndexOrThrow(DB_DISPLAY_CHOICES_MAP);
-//      int displayFormatIndex = c.getColumnIndexOrThrow(DB_DISPLAY_FORMAT);
-//
-//      int smsInIndex = c.getColumnIndexOrThrow(DB_SMS_IN);
-//      int smsOutIndex = c.getColumnIndexOrThrow(DB_SMS_OUT);
-//      int smsLabelIndex = c.getColumnIndexOrThrow(DB_SMS_LABEL);
-//
-//      int footerModeIndex = c.getColumnIndexOrThrow(DB_FOOTER_MODE);
-//
-//      int i = 0;
-//      c.moveToFirst();
-//      while (i < cps.length) {
-//        @SuppressWarnings("unchecked")
-//        ArrayList<String> displayChoicesMap = null;
-//        if (!c.isNull(displayChoicesMapIndex)) {
-//          String displayChoicesMapValue = c.getString(displayChoicesMapIndex);
-//          try {
-//            displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
-//          } catch (JsonParseException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          } catch (JsonMappingException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          } catch (IOException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          }
-//        }
-//        ArrayList<String> listChildElementKeys = null;
-//        if (!c.isNull(listChildElementKeysIndex)) {
-//          String listChildElementKeysValue = c.getString(listChildElementKeysIndex);
-//          try {
-//            listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
-//          } catch (JsonParseException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          } catch (JsonMappingException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          } catch (IOException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "ignored expection");
-//          }
-//        }
-//        cps[i] = new ColumnProperties(dbh, tableId, c.getString(dbcnIndex),
-//            c.getString(elementNameIndex), ColumnType.valueOf(c.getString(elementTypeIndex)),
-//            listChildElementKeys, c.getString(joinsIndex),
-//            // c.getString(joinTableIndex),
-//            // c.getString(joinElementIndex),
-//            c.getInt(isPersistedIndex) == 1,
-//
-//            c.getInt(displayVisibleIndex) == 1, c.getString(displayNameIndex), displayChoicesMap,
-//            c.getString(displayFormatIndex),
-//
-//            c.getInt(smsInIndex) == 1, c.getInt(smsOutIndex) == 1, c.getString(smsLabelIndex),
-//
-//            c.getInt(footerModeIndex));
-//        i++;
-//        c.moveToNext();
-//      }
-//    } finally {
-//      try {
-//        if (c != null && !c.isClosed()) {
-//          c.close();
-//        }
-//      } finally {
-//        // TODO: we need to resolve how we are going to prevent closing the
-//        // db on callers. Removing this here, far far from ideal.
-//        // if ( db != null ) {
-//        // db.close();
-//        // }
-//      }
-//    }
-//    return cps;
   }
 
   /**
@@ -895,13 +683,6 @@ public class ColumnProperties {
       KeyValueStore.Type typeOfStore) {
     // We're going to do this just by calling the corresponding methods on the
     // ColumnDefinitions and the key value store.
-    
-//    if (!isValidStore(typeOfStore)) {
-//      Log.e(TAG, "store passed in to addColumn is not a valid column store" +
-//      		typeOfStore);
-//      throw new IllegalStateException("invalid column store passed to" +
-//      		"addColumn: " + typeOfStore);
-//    }
     
     // First prepare the entries for the key value store.
     List<OdkTablesKeyValueStoreEntry> values = 
@@ -945,8 +726,6 @@ public class ColumnProperties {
             DEFAULT_KEY_DISPLAY_CHOICES_MAP, 
             ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
             ColumnDefinitions.DEFAULT_DB_JOINS);
-//        KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-//            typeOfStore);
         KeyValueStore kvs = kvsm.getStoreForTable(tableId, typeOfStore);
         kvs.addEntriesToStore(db, values);
         mapProps.putAll(columnDefProps);
@@ -962,122 +741,8 @@ public class ColumnProperties {
       // TODO: fix the when to close problem
 //    db.close();     
     }
-    
-    
-    
-//    ContentValues values = new ContentValues();
-//
-//    values.put(DB_TABLE_ID, tableId);
-//
-//    values.put(DB_ELEMENT_KEY, elementKey);
-//    values.put(DB_ELEMENT_NAME, elementKey);
-//    values.put(DB_ELEMENT_TYPE, ColumnType.NONE.name());
-//    values.putNull(DB_LIST_CHILD_ELEMENT_KEYS);
-//    values.putNull(DB_JOINS);
-//    // values.putNull(DB_JOIN_TABLE_ID);
-//    // values.putNull(DB_JOIN_ELEMENT_KEY);
-//    values.put(DB_IS_PERSISTED, 1);
-//
-//    values.put(DB_DISPLAY_VISIBLE, 1);
-//    values.put(DB_DISPLAY_NAME, displayName);
-//    values.putNull(DB_DISPLAY_CHOICES_MAP);
-//    values.putNull(DB_DISPLAY_FORMAT);
-//
-//    values.put(DB_SMS_IN, 1);
-//    values.put(DB_SMS_OUT, 1);
-//    values.putNull(DB_SMS_LABEL);
-//
-//    values.put(DB_FOOTER_MODE, FooterMode.NONE);
-//
-//    db.insert(DB_TABLENAME, null, values);
-//    return new ColumnProperties(dbh, tableId, elementKey, elementKey, ColumnType.NONE, null,
-//    // null,
-//    // null,
-//        null, true,
-//
-//        true, displayName, null, null,
-//
-//        true, true, null,
-//
-//        FooterMode.NONE);
   }
   
-//  /**
-//   * Add a column when you are given the column properties. This is likely to
-//   * be used for when you add a column based on re-claimed, de-json'd 
-//   * ColumnProperties objects you get from the server.
-//   * TODO: check for redundancies.
-//   * @param cp
-//   * @param tableId
-//   * @param typeOfStore
-//   * @param dbh
-//   * @param db
-//   */
-//  static void addColumn(ColumnProperties cp, String tableId,
-//      KeyValueStore.Type typeOfStore, DbHelper dbh, SQLiteDatabase db) {
-//    // Get the things shared by lots of stuff.
-//    String elementKey = cp.getElementKey();
-//    String listChildMapStr = null;
-//    String choicesMapStr = null;
-//    try {
-//      choicesMapStr = 
-//          mapper.writeValueAsString(cp.getDisplayChoicesMap());
-//      listChildMapStr = 
-//          mapper.writeValueAsString(cp.getListChildElementKeys());
-//    } catch (JsonGenerationException e1) {
-//      e1.printStackTrace();
-//    } catch (JsonMappingException e1) {
-//      e1.printStackTrace();
-//    } catch (IOException e1) {
-//      e1.printStackTrace();
-//    }
-//    // First we want to make the entries for the store.
-//    List<KeyValueStoreColumnEntry> values = 
-//        new ArrayList<KeyValueStoreColumnEntry>();
-//    values.add(createIntEntry(tableId, elementKey, 
-//        KEY_DISPLAY_VISIBLE, cp.getDisplayVisible()));
-//    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_NAME, 
-//        cp.getDisplayName()));
-//    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_CHOICES_MAP,
-//        choicesMapStr));
-//    values.add(createStringEntry(tableId, elementKey, KEY_DISPLAY_FORMAT,
-//        cp.getDisplayFormat()));
-//    // TODO: both the SMS entries should become booleans?
-//    values.add(createIntEntry(tableId, elementKey, KEY_SMS_IN, 
-//        SyncUtil.boolToInt(cp.getSmsIn())));
-//    values.add(createIntEntry(tableId, elementKey, KEY_SMS_OUT,
-//        SyncUtil.boolToInt(cp.getSmsOut())));
-//    values.add(createStringEntry(tableId, elementKey, KEY_SMS_LABEL,
-//        cp.getSmsLabel()));
-//    values.add(createStringEntry(tableId, elementKey, KEY_FOOTER_MODE,
-//        cp.getFooterMode().name()));
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    try {
-//      db.beginTransaction();
-//      try {
-//        Map<String, String> columnDefProps = ColumnDefinitions.addColumn(db, 
-//            tableId, elementKey, cp.getElementName(), 
-//            cp.getElementType(), 
-//            listChildMapStr, 
-//            SyncUtil.boolToInt(cp.isPersisted()),
-//            cp.getJoins());
-//        KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, 
-//            cp.getElementKey(), 
-//            typeOfStore);
-//        kvsc.addEntriesToColumnStore(db, values);
-////        mapProps.putAll(columnDefProps);
-////        cp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-//        db.setTransactionSuccessful();
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//      } finally {
-//        db.endTransaction();
-//      }
-//    } finally {
-//      // TODO: fix the when to close problem
-////    db.close();     
-//    }      
-//  }
 
   /**
    * Deletes the column represented by this ColumnProperties by deleting it
@@ -1089,16 +754,8 @@ public class ColumnProperties {
   void deleteColumn(SQLiteDatabase db) {
     ColumnDefinitions.deleteColumn(tableId, elementKey, db);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-//        backingStore);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
-    
-//    int count = db.delete(DB_TABLENAME, WHERE_SQL, new String[] { String.valueOf(tableId),
-//        elementKey });
-//    if (count != 1) {
-//      Log.e(TAG, "deleteColumn() deleted " + count + " rows");
-//    }
   }
   
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
@@ -1125,9 +782,20 @@ public class ColumnProperties {
     return entry;   
   }
   
+  /**
+   * Create an element key based on the proposedKey parameter. The first 
+   * attempt will be the proposedKey with whitespace replaced by an underscore.
+   * If that elementKey is already used for this table, an integer suffix,
+   * beginning with 1, is tried to be added to key until a conflict no longer
+   * exists.
+   * @param tableId
+   * @param proposedKey
+   * @param db
+   * @return
+   */
   public static String createDbElementKey(String tableId, String proposedKey,
       SQLiteDatabase db) {
-    String baseName = "_" + proposedKey.replace("\\W", "_");
+    String baseName = proposedKey.replace("\\W", "_");
     if (!keyConflict(tableId, baseName, db)) {
       return baseName;
     }
@@ -1142,9 +810,20 @@ public class ColumnProperties {
     }
   }
   
+  /**
+   * Create an element name based on the proposedName parameter. The first 
+   * attempt will be the proposedName with whitespace replaced by an underscore.
+   * If that elementName is already used for this table, an integer suffix,
+   * beginning with 1, is tried to be added to key until a conflict no longer
+   * exists. 
+   * @param tableId
+   * @param proposedName
+   * @param db
+   * @return
+   */
   public static String createDbElementName(String tableId, String proposedName,
       SQLiteDatabase db) {
-    String baseName = "_" + proposedName.replace("\\W", "_");
+    String baseName = proposedName.replace("\\W", "_");
     if (!nameConflict(tableId, baseName, db)) {
       return baseName;
     }
@@ -1715,8 +1394,6 @@ public class ColumnProperties {
     } else {
       // or a kvs property?
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-//          backingStore);
       KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION,
           elementKey, property, ColumnType.INTEGER.name(),
@@ -1724,12 +1401,6 @@ public class ColumnProperties {
     }
     Log.d(TAG, "updated int property " + property + " to " + value +
         " for table " + tableId + ", column " + elementKey);
-//    ContentValues values = new ContentValues();
-//    values.put(property, value);
-//    int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
-//    if (count != 1) {
-//      Log.e(ColumnProperties.class.getName(), "setting " + property + " updated " + count + " rows");
-//    }
   }
 
   private void setStringProperty(String property, String value) {
@@ -1750,44 +1421,12 @@ public class ColumnProperties {
     } else {
       // or a kvs property?
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//      KeyValueStoreColumn kvsc = kvsm.getStoreForColumn(tableId, elementKey, 
-//          backingStore);
       KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION,
           elementKey, property, ColumnType.TEXT.name(), value);
     }
     Log.d(TAG, "updated string property " + property + " to " + value +
         " for table " + tableId + ", column " + elementKey);
-//    ContentValues values = new ContentValues();
-//    values.put(property, value);
-//    int count = db.update(DB_TABLENAME, values, WHERE_SQL, whereArgs);
-//    if (count != 1) {
-//      Log.e(ColumnProperties.class.getName(), "setting " + property + " updated " + count + " rows");
-//    }
   }
 
-  // static String getTableCreateSql() {
-  // return "CREATE TABLE " + DB_TABLENAME + "(" +
-  // DB_TABLE_ID + " TEXT NOT NULL" +
-  // ", " + DB_ELEMENT_KEY + " TEXT NOT NULL" +
-  // ", " + DB_ELEMENT_NAME + " TEXT NOT NULL" +
-  // ", " + DB_ELEMENT_TYPE + " TEXT NOT NULL" +
-  // ", " + DB_LIST_CHILD_ELEMENT_KEYS + " TEXT NULL" +
-  // ", " + DB_JOINS + " TEXT NULL" +
-  // // ", " + DB_JOIN_TABLE_ID + " TEXT NULL" +
-  // // ", " + DB_JOIN_ELEMENT_KEY + " TEXT NULL" +
-  // ", " + DB_IS_PERSISTED + " INTEGER NOT NULL" +
-  //
-  // ", " + DB_DISPLAY_VISIBLE + " INTEGER NOT NULL" +
-  // ", " + DB_DISPLAY_NAME + " TEXT NOT NULL" +
-  // ", " + DB_DISPLAY_CHOICES_MAP + " TEXT NULL" +
-  // ", " + DB_DISPLAY_FORMAT + " TEXT NULL" +
-  //
-  // ", " + DB_SMS_IN + " INTEGER NOT NULL" +
-  // ", " + DB_SMS_OUT + " INTEGER NOT NULL" +
-  // ", " + DB_SMS_LABEL + " TEXT NULL" +
-  //
-  // ", " + DB_FOOTER_MODE + " TEXT NOT NULL" +
-  // ")";
-  // }
 }

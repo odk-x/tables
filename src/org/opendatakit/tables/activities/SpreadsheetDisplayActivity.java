@@ -44,6 +44,7 @@ import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -218,6 +219,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	  return true;
 	}
 	
+	/**
+	 * It's unclear to me when this is getting used. I don't think it should be
+	 * offering to handle the things like delete row, which should only be
+	 * accessible through the cell popout menu. 
+	 */
 	@Override
 	public boolean onContextItemSelected(android.view.MenuItem item) {
 	  Log.d(TAG, "onContextItemSelected, android MenuItem");
@@ -582,9 +588,33 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    c.removeOverlay();
 	                    break;
 	                case MENU_ITEM_ID_DELETE_ROW:
-	                    c.deleteRow(table.getRowId(cellId / table.getWidth()));
-	                    c.removeOverlay();
-	                    init();
+	                  AlertDialog confirmDeleteAlert;
+	                  // Prompt an alert box
+	                  AlertDialog.Builder alert = 
+	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);
+	                  alert.setTitle("Delete this row?");
+	                  // OK Action => delete the row
+	                  alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+	                     public void onClick(DialogInterface dialog, int whichButton) {
+	                       c.deleteRow(table.getRowId(cellId / table.getWidth()));
+	                       c.removeOverlay();
+	                       init();
+	                     }
+	                  });
+
+	                  // Cancel Action
+	                  alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+	                     public void onClick(DialogInterface dialog, int whichButton) {
+	                      // Canceled.
+	                       c.removeOverlay();
+	                     }
+	                  });
+	                  // show the dialog
+	                  confirmDeleteAlert = alert.create();
+	                  confirmDeleteAlert.show();
+//	                    c.deleteRow(table.getRowId(cellId / table.getWidth()));
+//	                    c.removeOverlay();
+//	                    init();
 	                    break;
 	                case MENU_ITEM_ID_EDIT_ROW:
 	                  // It is possible that a custom form has been defined for this table.

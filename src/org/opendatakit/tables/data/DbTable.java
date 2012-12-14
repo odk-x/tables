@@ -40,21 +40,21 @@ public class DbTable {
   
   private final static String TAG = "DbTable";
     
-    public static final String DB_ROW_ID = "id";
-    public static final String DB_URI_USER = "uri_user";
-    public static final String DB_LAST_MODIFIED_TIME = "last_mod_time";
-    public static final String DB_SYNC_TAG = "sync_tag";
-    public static final String DB_SYNC_STATE = "sync_state";
-    public static final String DB_TRANSACTIONING = "transactioning";
-    public static final String DB_TIMESTAMP = "timestamp";
-    public static final String DB_SAVED = "saved";
-    public static final String DB_INSTANCE_NAME = "instance_name";
+    public static final String DB_ROW_ID = "_id";
+    public static final String DB_URI_USER = "_uri_user";
+    public static final String DB_LAST_MODIFIED_TIME = "_last_mod_time";
+    public static final String DB_SYNC_TAG = "_sync_tag";
+    public static final String DB_SYNC_STATE = "_sync_state";
+    public static final String DB_TRANSACTIONING = "_transactioning";
+    public static final String DB_TIMESTAMP = "_timestamp";
+    public static final String DB_SAVED = "_saved";
+    public static final String DB_INSTANCE_NAME = "_instance_name";
         /*
          * For ODKTables generated rows (as opposed to ODK Collect), the 
          * thought is that this instance name would just be the iso86 pretty
          * print date of creation.
          */
-    public static final String DB_LOCALE = "locale";
+    public static final String DB_LOCALE = "_locale";
     
     /********************************************************
      * Default values for those columns which require them.
@@ -150,7 +150,7 @@ public class DbTable {
             }
         }
         testOpen = db.isOpen();
-        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
+        String toExecute = "CREATE TABLE \"" + tp.getDbTableName() + "\"(" +
             DB_ROW_ID + " TEXT NOT NULL" +
      ", " + DB_URI_USER + " TEXT NULL" +
      ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +

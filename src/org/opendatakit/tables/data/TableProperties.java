@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
@@ -529,7 +530,9 @@ public class TableProperties {
 
   /**
    * Returns a legal name for a new table. This method checks all three KVS
-   * for possible conflicts.
+   * for possible conflicts. The name is the displayName with whitespace 
+   * replaced with underscores, and a suffix of an integer if there was a 
+   * conflict.
    * @param dbh
    * @param displayName
    * @return
@@ -558,7 +561,7 @@ public class TableProperties {
     // in SQLite. We are going to thus make the basename the displayName
     // prepended with an underscore, and replace all non-word characters
     // with an underscore.
-    String baseName = "_" + displayName.replaceAll("\\W", "_");
+    String baseName = displayName.replaceAll("\\W", "_");
     if (!nameConflict(baseName, allProps)) {
       return baseName;
     }
@@ -813,7 +816,7 @@ public class TableProperties {
 	      }
 	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
-	          KeyValueStore.Type.ACTIVE);
+	          this.backingStore);
 	      activeKVS.clearKeyValuePairs(db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
@@ -1033,8 +1036,8 @@ public class TableProperties {
 	          ColumnProperties.DEFAULT_KEY_VISIBLE, 
 //	          KeyValueStore.Type.COLUMN_ACTIVE);
 	          this.getBackingStoreType());
-	      db.execSQL("ALTER TABLE " + dbTableName + " ADD COLUMN " 
-	          + cp.getElementKey());
+	      db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \"" 
+	          + cp.getElementKey() + "\"");
 	      newColumnOrder.add(cp.getElementKey());
 	      setColumnOrder(newColumnOrder, db);
 	      Log.d("TP", "here we are");
@@ -1658,6 +1661,8 @@ public class TableProperties {
    * @param aspect
    * @param key
    * @return the value for the key if the key is found, else null
+   * @throws illegal argument exception if the entry in the store is not of
+   * type TEXT.
    */
   /*
    * This is a risky method to add at this time. Eventually it should be 
@@ -1700,7 +1705,142 @@ public class TableProperties {
     if (entries.size() == 0) {
       return null;
     } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.TEXT.getLabel())) {
+        throw new IllegalArgumentException("requested string entry for " +
+          "key: " + key + ", but the corresponding entry in the store was " +
+            "not of type: " + KeyValueStoreEntryType.TEXT.getLabel());
+      }
       return entries.get(0).value;
+    }
+  }
+  
+  /**
+   * Get an int entry from the key value store. If there is an accessor method
+   * for the particular key or property you are requesting, you must use that
+   * instead. 
+   * <p>
+   * If the entry does not exist, it returns null cast to type Integer.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   * @throws IllegalArgumentException if the key returns an entry that is not
+   * of type INTEGER.
+   */
+  public int getIntegerEntry(String partition, String aspect, String key) {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> keyList = new ArrayList<String>();
+    keyList.add(key);
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        store.getEntriesForKeys(db, partition, aspect, keyList);
+    // Do some sanity checking. There should only ever be one entry per key.
+    if (entries.size() > 1) {
+      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
+          " for table: " + tableId + " returned " + entries.size() + 
+          "entries. It should return at most 1, as it is a key in a set.");
+    }
+    // Since we know that the value field in the KVS is of type String/TEXT,
+    // there is no worry that it will not exist. We can just go ahead and 
+    // return the value as we find it.
+    if (entries.size() == 0) {
+      return (Integer) null;
+    } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.INTEGER.getLabel())) {
+        throw new IllegalArgumentException("requested string entry for " +
+          "key: " + key + ", but the corresponding entry in the store was " +
+            "not of type: " + KeyValueStoreEntryType.INTEGER.getLabel());
+      }
+      return Integer.parseInt(entries.get(0).value);
+    }
+  }
+  
+  /**
+   * Get a boolean entry from the key value store. If there is an accessor 
+   * method for the particular key or property you are requesting, you must use 
+   * that instead. 
+   * <p>
+   * If the entry does not exist, it returns null cast to type Boolean.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   * @throws IllegalArgumentException if the key corresponds to an entry that 
+   * is not of type BOOLEAN.
+   */
+  public boolean getBooleanEntry(String partition, String aspect, String key) {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> keyList = new ArrayList<String>();
+    keyList.add(key);
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        store.getEntriesForKeys(db, partition, aspect, keyList);
+    // Do some sanity checking. There should only ever be one entry per key.
+    if (entries.size() > 1) {
+      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
+          " for table: " + tableId + " returned " + entries.size() + 
+          "entries. It should return at most 1, as it is a key in a set.");
+    }
+    // Since we know that the value field in the KVS is of type String/TEXT,
+    // there is no worry that it will not exist. We can just go ahead and 
+    // return the value as we find it.
+    if (entries.size() == 0) {
+      return (Boolean) null;
+    } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.BOOLEAN.getLabel())) {
+        throw new IllegalArgumentException("requested string entry for " +
+          "key: " + key + ", but the corresponding entry in the store was " +
+            "not of type: " + KeyValueStoreEntryType.BOOLEAN.getLabel());
+      }
+      return SyncUtil.intToBool(Integer.parseInt(entries.get(0).value));
+    }
+  }
+  
+  /**
+   * Get an int entry from the key value store. If there is an accessor method
+   * for the particular key or property you are requesting, you must use that
+   * instead. 
+   * <p>
+   * If the entry does not exist, it returns null cast to type Double.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   * @throws IllegalArgumentException if the type of the entry in the store
+   * is not of type NUMBER.
+   */
+  public double getNumericEntry(String partition, String aspect, String key) {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> keyList = new ArrayList<String>();
+    keyList.add(key);
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        store.getEntriesForKeys(db, partition, aspect, keyList);
+    // Do some sanity checking. There should only ever be one entry per key.
+    if (entries.size() > 1) {
+      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
+          " for table: " + tableId + " returned " + entries.size() + 
+          "entries. It should return at most 1, as it is a key in a set.");
+    }
+    // Since we know that the value field in the KVS is of type String/TEXT,
+    // there is no worry that it will not exist. We can just go ahead and 
+    // return the value as we find it.
+    if (entries.size() == 0) {
+      return (Double) null;
+    } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.NUMBER.getLabel())) {
+        throw new IllegalArgumentException("requested string entry for " +
+          "key: " + key + ", but the corresponding entry in the store was " +
+            "not of type: " + KeyValueStoreEntryType.NUMBER.getLabel());
+      }
+      return Double.parseDouble(entries.get(0).value);
     }
   }
 
@@ -1735,6 +1875,84 @@ public class TableProperties {
   }
   
   /**
+   * Set an integer entry in the key value store. If an entry already exists
+   * it will be overwritten.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param value
+   */
+  public void setIntegerEntry(String partition, String aspect, 
+      String key, int value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
+    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
+        aspect + ", key: " + key + " to " + value);
+  }
+  
+  /**
+   * Set a numeric entry in the key value store. If an entry already exists
+   * it will be overwritten.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param value
+   */
+  public void setNumericEntry(String partition, String aspect, 
+      String key, double value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
+    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
+        aspect + ", key: " + key + " to " + value);
+  }
+  
+  /**
+   * Set a boolean entry in the key value store. If an entry already exists
+   * it will be overwritten.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param value
+   */
+  public void setBooleanEntry(String partition, String aspect, 
+      String key, boolean value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.BOOLEAN.getLabel(), 
+        Integer.toString(SyncUtil.boolToInt(value)));
+    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
+        aspect + ", key: " + key + " to " + value);
+  }
+  
+  /**
+   * Set a String entry in the key value store. If an entry already exists
+   * it will be overwritten.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param value
+   */
+  public void setStringEntry(String partition, String aspect, 
+      String key, String value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.TEXT.getLabel(), value);
+    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
+        aspect + ", key: " + key + " to " + value);
+  }
+  
+  
+  /**
    * Actually handle the updating of the property. Checks whether this property
    * resides in TableDefinitions or the KVS, and sets to the correct place. If
    * the property resides in TableDefinitions, the partition and aspect are 
@@ -1754,7 +1972,7 @@ public class TableProperties {
       KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
           this.backingStore);
       backingKVS.insertOrUpdateKey(db, partition,
-          aspect, property, ColumnType.INTEGER.name(),
+          aspect, property, KeyValueStoreEntryType.INTEGER.getLabel(),
           Integer.toString(value));
     }
     Log.d(TAG, "updated int " + property + " to " + value + "for " + 
@@ -1808,7 +2026,7 @@ public class TableProperties {
       KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
           this.backingStore);
       intendedKVS.insertOrUpdateKey(db, partition,
-          aspect, property, ColumnType.TEXT.name(), value);
+          aspect, property, KeyValueStoreEntryType.TEXT.getLabel(), value);
     }
     Log.d(TAG, "updated string " + property + " to " + value + " for " 
       + this.tableId);

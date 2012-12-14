@@ -74,7 +74,6 @@ public class KeyValueStore {
       KeyValueStoreManager.KEY + " in (";
   
   protected final DbHelper dbh;
-  //private final String[] whereArgs;
   protected final String tableId;
   // The name of the database table that backs the key value store
   protected final String dbBackingName;
@@ -90,7 +89,6 @@ public class KeyValueStore {
     this.dbBackingName = dbName;
     this.dbh = dbh;
     this.tableId = tableId;
-    //this.whereArgs = new String[] {String.valueOf(tableId)};
   }
     
   /**
@@ -158,8 +156,6 @@ public class KeyValueStore {
    * @return
    */
   public boolean entriesExist(SQLiteDatabase db) {
-//    Map<String, String> entries = getKeyValues(db);
-//    return (entries.size() != 0);
     List<OdkTablesKeyValueStoreEntry> allEntries = getEntries(db);
     return allEntries.size() > 0;
   }
@@ -252,22 +248,8 @@ public class KeyValueStore {
    * @return the number of entries deleted from the store.
    */
   public int clearKeyValuePairs(SQLiteDatabase db) {
-    // First get the key value pairs for this table.
-//    Map<String, String> keyValues = 
-//        getKeyValues(db);
     int count = db.delete(dbBackingName, WHERE_SQL_FOR_TABLE, 
         new String[] {this.tableId});
-    
-//    for (String key : keyValues.keySet()) {
-//      count++;
-//      db.delete(dbBackingName, WHERE_SQL_FOR_PARTITION_ASPECT_KEY, 
-//          new String[] {String.valueOf(this.tableId),key});
-//    }
-//    if (count != keyValues.size()) {
-//      Log.e(TAG, "clearKeyValuePairsForTable deleted " + count + " rows from" +
-//          dbBackingName + ", but there were " + keyValues.size() + 
-//          " key value pairs for the table " + tableId);
-//    }
     return count;
   }
   
@@ -426,7 +408,7 @@ public class KeyValueStore {
     ACTIVE(KeyValueStoreManager.ACTIVE_DB_NAME),
     DEFAULT(KeyValueStoreManager.DEFAULT_DB_NAME),
     SERVER(KeyValueStoreManager.SERVER_DB_NAME);
-//    COLUMN_ACTIVE(KeyValueStoreManager.COLUMN_ACTIVE_DB_NAME);
+    
     private String backingName;
     
     private Type(String backingName) {

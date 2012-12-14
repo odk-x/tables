@@ -147,9 +147,6 @@ public class KeyValueStoreManager {
   public static final String ACTIVE_DB_NAME = "key_value_store_active";
   public static final String SERVER_DB_NAME = "key_value_store_server";
   public static final String SYNC_DB_NAME = "key_value_store_sync";
-  // and the db name for the column properties KVS.
-//  public static final String COLUMN_ACTIVE_DB_NAME = 
-//      "column_key_value_store_active";
   
   // Names of the columns in the key value store.
   public static final String TABLE_ID = "table_id";
@@ -200,30 +197,6 @@ public class KeyValueStoreManager {
     return new KeyValueStore(backingName, this.dbh, tableId);
   }
   
-//  public KeyValueStoreColumn getStoreForColumn(String tableId,
-//      String elementKey, KeyValueStore.Type typeOfStore) {
-////    if (!ColumnProperties.isValidStore(typeOfStore)) {
-////      Log.e(TAG, "ColumnProperties was given a non-column key value store");
-////      throw new IllegalArgumentException("non-column key value store passed" +
-////            " to ColumnProperties constructor");
-////    }
-//    String backingName = getBackingNameForStore(typeOfStore);
-//    return new KeyValueStoreColumn(backingName, dbh, tableId, elementKey);
-//  }
-  
-  /*
-  public KeyValueStore getActiveStoreForTable(String tableId) {
-    return new KeyValueStore(ACTIVE_DB_NAME, this.dbh, tableId);
-  }
-  
-  public KeyValueStore getDefaultStoreForTable(String tableId) {
-    return new KeyValueStore(DEFAULT_DB_NAME, this.dbh, tableId);
-  }
-  
-  public KeyValueStore getServerStoreForTable(String tableId) {
-    return new KeyValueStore(SERVER_DB_NAME, this.dbh, tableId);
-  }*/
-  
   /**
    * Return a key value store object for the sync properties for the given
    * table id.
@@ -247,42 +220,6 @@ public class KeyValueStoreManager {
         null, null, null, null, null, null);
     return getTableIdsFromCursor(c); 
   }
-  
-  /**
-   * Return a list of all the table ids in the active key value store.
-   * @param db
-   * @return
-   */
-  /*public List<String> getActiveTableIds(SQLiteDatabase db) {
-    // We want a distinct query over the TABLE_ID column.
-    Cursor c = db.query(true, ACTIVE_DB_NAME, new String[] {TABLE_ID},
-        null, null, null, null, null, null);
-    return getTableIdsFromCursor(c);    
-  }*/
-  
-  /**
-   * Return a list of all the table ids in the default key value store.
-   * @param db
-   * @return
-   */
-  /*public List<String> getDefaultTableIds(SQLiteDatabase db) {
-    // We want a distinct query over the TABLE_ID column.
-    Cursor c = db.query(true, ACTIVE_DB_NAME, new String[] {TABLE_ID},
-        null, null, null, null, null, null);
-    return getTableIdsFromCursor(c);     
-  }*/
-  
-  /**
-   * Return a list of all the table ids in the server key value store.
-   * @param db
-   * @return
-   */
-  /*public List<String> getServerTableIds(SQLiteDatabase db) {
-    // We want a distinct query over the TABLE_ID column.
-    Cursor c = db.query(true, SERVER_DB_NAME, new String[] {TABLE_ID},
-        null, null, null, null, null, null);
-    return getTableIdsFromCursor(c);    
-  }*/
   
   /**
    * Return a list of the table ids who have isSetToSync set to true in the 
@@ -330,18 +267,6 @@ public class KeyValueStoreManager {
     return dataTablesInThisStore;
   }
   
-  /**
-   * Return a list of the table ids for all the tables in the server KVS that
-   * are of type data.
-   * @param db
-   * @return
-   */
-  /*public List<String> getServerDataTableIds(SQLiteDatabase db) {
-    Cursor c = getTableIdsWithKeyValue(db, SERVER_DB_NAME,
-        TableProperties.DB_TABLE_TYPE,
-        Integer.toString(TableProperties.TableType.DATA));
-    return getTableIdsFromCursor(c);
-  }*/
   
   /**
    * Get the ids of all the security tables that have entries in the given 
@@ -418,8 +343,6 @@ public class KeyValueStoreManager {
       return DEFAULT_DB_NAME;
     case SERVER:
       return SERVER_DB_NAME;
-//    case COLUMN_ACTIVE:
-//      return COLUMN_ACTIVE_DB_NAME;
     default:
       Log.e(TAG, "nonexistent store rquested: " +
           typeOfStore.name());
@@ -711,18 +634,5 @@ public class KeyValueStoreManager {
         ", " + VALUE + " TEXT NOT NULL" +
         ")";
   }  
-  
-  /**
-   * The table creation SQL for the column properties store.
-//   */
-//  static String getColumnActiveTableCreateSql() {
-//    return "CREATE TABLE " + COLUMN_ACTIVE_DB_NAME + "(" +
-//       TABLE_ID + " TEXT NOT NULL" +
-//       ", " + ColumnDefinitions.DB_ELEMENT_KEY + " TEXT NOT NULL" +
-//       ", " + KEY + " TEXT NOT NULL" +
-//       ", " + VALUE_TYPE + " TEXT NOT NULL" +
-//       ", " + VALUE + " TEXT NOT NULL" +
-//       ")";   
-//  }
 
 }
