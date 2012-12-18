@@ -25,7 +25,6 @@ import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.TableViewSettings.ConditionalRuler;
 import org.opendatakit.tables.data.UserTable;
 
 import android.content.Intent;
@@ -38,6 +37,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.RelativeLayout;
 
@@ -53,9 +53,16 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.Projection;
 
-
+/**
+ * This class was written to go make use of the now defunct TableViewSettings 
+ * object. It needs to be refactored to use the key value store via 
+ * TableProperties.
+ *
+ */
 public class MapDisplayActivity extends SherlockActivity
         implements DisplayActivity {
+  
+  private static final String TAG = "MapDisplayActivity";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
@@ -84,8 +91,8 @@ public class MapDisplayActivity extends SherlockActivity
         dm = new DataManager(DbHelper.getDbHelper(this));
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
             c.getTableProperties());
-        labelColIndex = c.getTableProperties().getColumnIndex(
-                c.getTableViewSettings().getMapLabelCol().getColumnDbName());
+//        labelColIndex = c.getTableProperties().getColumnIndex(
+//                c.getTableViewSettings().getMapLabelCol().getColumnDbName());
         mapWrapper = new RelativeLayout(this);
         mv = new MapView(this, MAPS_API_KEY);
         mv.setClickable(true);
@@ -98,53 +105,55 @@ public class MapDisplayActivity extends SherlockActivity
     
     @Override
     public void init() {
-        query.clear();
-        query.loadFromUserQuery(c.getSearchText());
-        table = c.getIsOverview() ?
-                c.getDbTable().getUserOverviewTable(query) :
-                c.getDbTable().getUserTable(query);
-        locations = new double[table.getHeight()][];
-        ColumnProperties locCol = c.getTableViewSettings().getMapLocationCol();
-        int locColIndex = c.getTableProperties().getColumnIndex(
-                locCol.getColumnDbName());
-        itemizedOverlay = new ItemizedOverlayImpl<OverlayItem>();
-        for (int i = 0; i < table.getHeight(); i++) {
-            String locString = table.getData(i, locColIndex);
-            if (locString == null) {
-                continue;
-            }
-            locations[i] = du.parseLocationFromDb(locString);
-            GeoPoint gp = getGeoPointFromLatLon(locations[i]);
-            itemizedOverlay.addPoint(gp, getDrawable(i));
-        }
-        mv.getOverlays().clear();
-        mv.getOverlays().add(itemizedOverlay);
-        mv.postInvalidate();
+      Log.e(TAG, "the mapdisplayactivity has been refactored and needs to " +
+      		"be repaired before being used!");
+//        query.clear();
+//        query.loadFromUserQuery(c.getSearchText());
+//        table = c.getIsOverview() ?
+//                c.getDbTable().getUserOverviewTable(query) :
+//                c.getDbTable().getUserTable(query);
+//        locations = new double[table.getHeight()][];
+//        ColumnProperties locCol = c.getTableViewSettings().getMapLocationCol();
+//        int locColIndex = c.getTableProperties().getColumnIndex(
+//                locCol.getColumnDbName());
+//        itemizedOverlay = new ItemizedOverlayImpl<OverlayItem>();
+//        for (int i = 0; i < table.getHeight(); i++) {
+//            String locString = table.getData(i, locColIndex);
+//            if (locString == null) {
+//                continue;
+//            }
+//            locations[i] = du.parseLocationFromDb(locString);
+//            GeoPoint gp = getGeoPointFromLatLon(locations[i]);
+//            itemizedOverlay.addPoint(gp, getDrawable(i));
+//        }
+//        mv.getOverlays().clear();
+//        mv.getOverlays().add(itemizedOverlay);
+//        mv.postInvalidate();
     }
     
-    private int getDrawable(int rowNum) {
-        ColumnProperties[] cps = c.getTableProperties().getColumns();
-        for (int i = 0; i < cps.length; i++) {
-            ConditionalRuler cr =
-                c.getTableViewSettings().getMapColorRuler(cps[i]);
-            int color = cr.getSetting(table.getData(rowNum, i), -1);
-            if (color != -1) {
-                switch (color) {
-                case Color.BLACK:
-                    return R.drawable.map_marker_small_black;
-                case Color.BLUE:
-                    return R.drawable.map_marker_small_blue;
-                case Color.GREEN:
-                    return R.drawable.map_marker_small_green;
-                case Color.RED:
-                    return R.drawable.map_marker_small_red;
-                case Color.YELLOW:
-                    return R.drawable.map_marker_small_yellow;
-                }
-            }
-        }
-        return R.drawable.map_marker_small_black;
-    }
+//    private int getDrawable(int rowNum) {
+//        ColumnProperties[] cps = c.getTableProperties().getColumns();
+//        for (int i = 0; i < cps.length; i++) {
+//            ConditionalRuler cr =
+//                c.getTableViewSettings().getMapColorRuler(cps[i]);
+//            int color = cr.getSetting(table.getData(rowNum, i), -1);
+//            if (color != -1) {
+//                switch (color) {
+//                case Color.BLACK:
+//                    return R.drawable.map_marker_small_black;
+//                case Color.BLUE:
+//                    return R.drawable.map_marker_small_blue;
+//                case Color.GREEN:
+//                    return R.drawable.map_marker_small_green;
+//                case Color.RED:
+//                    return R.drawable.map_marker_small_red;
+//                case Color.YELLOW:
+//                    return R.drawable.map_marker_small_yellow;
+//                }
+//            }
+//        }
+//        return R.drawable.map_marker_small_black;
+//    }
     
     @Override
     public void onBackPressed() {

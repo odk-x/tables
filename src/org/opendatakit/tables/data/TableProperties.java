@@ -80,9 +80,9 @@ public class TableProperties {
   public static final String KEY_COLUMN_ORDER = "colOrder";
   public static final String KEY_PRIME_COLUMNS = "primeCols";
   public static final String KEY_SORT_COLUMN = "sortCol";
-  public static final String KEY_OV_VIEW_SETTINGS = "ovViewSettings";
-  public static final String KEY_CO_VIEW_SETTINGS = "coViewSettings";
-  public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
+  public static final String KEY_INDEX_COLUMN = "indexCol";
+  public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
+//  public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
   public static final String KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
@@ -106,13 +106,17 @@ public class TableProperties {
   private static final String JSON_KEY_COLUMNS = "columns";
   private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
+  private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
   private static final String JSON_KEY_READ_SECURITY_TABLE_ID = 
       "readAccessTid";
   private static final String JSON_KEY_WRITE_SECURITY_TABLE_ID = 
       "writeAccessTid";
-  private static final String JSON_KEY_OV_VIEW_SETTINGS = "ovViewSettings";
-  private static final String JSON_KEY_CO_VIEW_SETTINGS = "coViewSettings";
-  private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
+  private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
+//  private static final String JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE = 
+//      "currentOverviewViewType";
+//  private static final String JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE = 
+//      "currentCollectionViewType";
+//  private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
   private static final String JSON_KEY_SUM_DISPLAY_FORMAT = 
       "summaryDisplayFormat";
   
@@ -124,8 +128,15 @@ public class TableProperties {
    ***********************************/
   public static final String DEFAULT_KEY_PRIME_COLUMNS = "";
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
+  public static final String DEFAULT_KEY_INDEX_COLUMN = "";
   public static final String DEFAULT_KEY_CO_VIEW_SETTINGS = "";
-  public static final String DEFAULT_KEY_DETAIL_VIEW_FILE = "";
+  public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE =
+      TableViewType.Spreadsheet.name();
+//  public static final String DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE = 
+//      TableViewType.Spreadsheet.name();
+//  public static final String DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE =
+//      TableViewType.Spreadsheet.name();
+//  public static final String DEFAULT_KEY_DETAIL_VIEW_FILE = "";
   public static final String DEFAULT_KEY_SUM_DISPLAY_FORMAT = "";
   public static final String DEFAULT_KEY_OV_VIEW_SETTINGS = "";
   public static final String DEFAULT_KEY_COLUMN_ORDER = ""; 
@@ -140,9 +151,11 @@ public class TableProperties {
     KEY_COLUMN_ORDER, 
     KEY_PRIME_COLUMNS, 
     KEY_SORT_COLUMN, 
-    KEY_OV_VIEW_SETTINGS,
-    KEY_CO_VIEW_SETTINGS, 
-    KEY_DETAIL_VIEW_FILE, 
+    KEY_CURRENT_VIEW_TYPE,
+    KEY_INDEX_COLUMN,
+//    KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+//    KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//    KEY_DETAIL_VIEW_FILE, 
     KEY_SUM_DISPLAY_FORMAT};
   
   // columns included in json properties
@@ -151,21 +164,12 @@ public class TableProperties {
       KEY_COLUMN_ORDER, 
       KEY_PRIME_COLUMNS,
       KEY_SORT_COLUMN, 
-      KEY_OV_VIEW_SETTINGS,
-      KEY_CO_VIEW_SETTINGS, 
-      KEY_DETAIL_VIEW_FILE, 
+      KEY_CURRENT_VIEW_TYPE,
+      KEY_INDEX_COLUMN,
+//      KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+//      KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//      KEY_DETAIL_VIEW_FILE, 
       KEY_SUM_DISPLAY_FORMAT, });
-
-
-  public class ViewType {
-    public static final int TABLE = 0;
-    public static final int LIST = 1;
-    public static final int LINE_GRAPH = 2;
-    public static final int COUNT = 3;
-
-    private ViewType() {
-    }
-  }
   
 
  
@@ -203,11 +207,13 @@ public class TableProperties {
   private ArrayList<String> columnOrder;
   private ArrayList<String> primeColumns;
   private String sortColumn;
+  private String indexColumn;
 //  private String readSecurityTableId;
 //  private String writeSecurityTableId;
-  private TableViewSettings overviewViewSettings;
-  private TableViewSettings collectionViewSettings;
-  private String detailViewFilename;
+  private TableViewType currentViewType;
+//  private TableViewType currentOverviewViewType;
+//  private TableViewType currentCollectionViewType;
+//  private String detailViewFilename;
   private String sumDisplayFormat;
 
   private TableProperties(DbHelper dbh, 
@@ -220,11 +226,13 @@ public class TableProperties {
       ArrayList<String> columnOrder, 
       ArrayList<String> primeColumns, 
       String sortColumn,
+      String indexColumn,
       String syncTag, 
       String lastSyncTime,
-      String ovViewSettingsDbString, 
-      String coViewSettingsDbString, 
-      String detailViewFilename,
+      TableViewType currentViewType,
+//      TableViewType overviewViewType,
+//      TableViewType collectionViewType,
+//      String detailViewFilename,
       String sumDisplayFormat, 
       SyncState syncState, 
       boolean transactioning,
@@ -241,14 +249,14 @@ public class TableProperties {
     this.columnOrder = columnOrder;
     this.primeColumns = primeColumns;
     this.sortColumn = sortColumn;
+    this.indexColumn = indexColumn;
     this.accessControls = accessControls;
     this.syncTag = syncTag;
     this.lastSyncTime = lastSyncTime;
-    this.overviewViewSettings = 
-        TableViewSettings.newOverviewTVS(this, ovViewSettingsDbString);
-    this.collectionViewSettings = 
-        TableViewSettings.newCollectionTVS(this, coViewSettingsDbString);
-    this.detailViewFilename = detailViewFilename;
+    this.currentViewType = currentViewType;
+//    this.currentOverviewViewType = overviewViewType;
+//    this.currentCollectionViewType = collectionViewType;
+//    this.detailViewFilename = detailViewFilename;
     this.sumDisplayFormat = sumDisplayFormat;
     this.syncState = syncState;
     this.transactioning = transactioning;
@@ -445,6 +453,14 @@ public class TableProperties {
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
+    String currentViewTypeStr = props.get(KEY_CURRENT_VIEW_TYPE);
+    TableViewType currentViewType = TableViewType.valueOf(currentViewTypeStr);
+//    String overviewViewTypeStr = props.get(KEY_CURRENT_OVERVIEW_VIEW_TYPE);
+//    TableViewType overviewViewType = 
+//        TableViewType.valueOf(overviewViewTypeStr);
+//    String collectionViewTypeStr = props.get(KEY_CURRENT_COLLECTION_VIEW_TYPE);
+//    TableViewType collectionViewType = 
+//        TableViewType.valueOf(collectionViewTypeStr);
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
     // DB_PRIME_COLUMN values to be empty strings, not null. However, when
     // retrieving values from the key value store, empty strings are converted
@@ -495,11 +511,13 @@ public class TableProperties {
         columnOrder,
         primeList,
         props.get(KEY_SORT_COLUMN),
+        props.get(KEY_INDEX_COLUMN),
         props.get(TableDefinitions.DB_SYNC_TAG),
         props.get(TableDefinitions.DB_LAST_SYNC_TIME),
-        props.get(KEY_OV_VIEW_SETTINGS),
-        props.get(KEY_CO_VIEW_SETTINGS),
-        props.get(KEY_DETAIL_VIEW_FILE),
+        currentViewType,
+//        overviewViewType,
+//        collectionViewType,
+//        props.get(KEY_DETAIL_VIEW_FILE),
         props.get(KEY_SUM_DISPLAY_FORMAT),
         syncState,
         transactioning,
@@ -682,14 +700,20 @@ public class TableProperties {
         TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, 
         DEFAULT_KEY_SORT_COLUMN));
     values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, 
-        DEFAULT_KEY_OV_VIEW_SETTINGS));
+        TableProperties.KVS_ASPECT, KEY_INDEX_COLUMN,
+        DEFAULT_KEY_INDEX_COLUMN));
     values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, 
-        DEFAULT_KEY_CO_VIEW_SETTINGS));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, 
-        DEFAULT_KEY_DETAIL_VIEW_FILE));
+        TableProperties.KVS_ASPECT, KEY_CURRENT_VIEW_TYPE,
+        DEFAULT_KEY_CURRENT_VIEW_TYPE));
+//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+//        DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE));
+//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//        DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE));
+//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, 
+//        DEFAULT_KEY_DETAIL_VIEW_FILE));
     values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
         TableProperties.KVS_ASPECT, KEY_SUM_DISPLAY_FORMAT, 
         DEFAULT_KEY_SUM_DISPLAY_FORMAT));
@@ -698,9 +722,13 @@ public class TableProperties {
     mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
     mapProps.put(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
     mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
-    mapProps.put(KEY_OV_VIEW_SETTINGS, DEFAULT_KEY_OV_VIEW_SETTINGS);
-    mapProps.put(KEY_CO_VIEW_SETTINGS, DEFAULT_KEY_CO_VIEW_SETTINGS);
-    mapProps.put(KEY_DETAIL_VIEW_FILE, DEFAULT_KEY_DETAIL_VIEW_FILE);
+    mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
+    mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
+//    mapProps.put(KEY_CURRENT_OVERVIEW_VIEW_TYPE, 
+//        DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE);
+//    mapProps.put(KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//        DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE);
+//    mapProps.put(KEY_DETAIL_VIEW_FILE, DEFAULT_KEY_DETAIL_VIEW_FILE);
     mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
     
 // don't know why we did it this way...instead just call it through the map
@@ -880,6 +908,90 @@ public class TableProperties {
         tableType.name());
     this.tableType = tableType;
   }
+  
+//  /**
+//   * Get the current view type for the overview of this table.
+//   * <p>
+//   * The overview
+//   * view is the one that shows all the rows. This stands in contrast to the
+//   * collection view, which shows only a single row of the "prime column",
+//   * similar to a conversation in gmail where only the most recent is 
+//   * displayed.
+//   * @return
+//   */
+//  public TableViewType getCurrentOverviewViewType() {
+//    return this.currentOverviewViewType;
+//  }
+//  
+//  /**
+//   * Set the overview view type for the table.
+//   * <p>
+//   * The overview
+//   * view is the one that shows all the rows. This stands in contrast to the
+//   * collection view, which shows only a single row of the "prime column",
+//   * similar to a conversation in gmail where only the most recent is 
+//   * displayed.
+//   * @param viewType
+//   */
+//  public void setCurrentOverviewViewType(TableViewType viewType) {
+//    setStringProperty(TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, 
+//        TableProperties.KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+//        viewType.name());
+//    this.currentOverviewViewType = viewType;
+//  }
+//  
+//  /**
+//   * Get the current view type for the collection view of this table.
+//   * <p>
+//   * The overview
+//   * view is the one that shows all the rows. This stands in contrast to the
+//   * collection view, which shows only a single row of the "prime column",
+//   * similar to a conversation in gmail where only the most recent is 
+//   * displayed.
+//   * @return
+//   */
+//  public TableViewType getCurrentCollectionViewType() {
+//    return this.currentCollectionViewType;
+//  }
+//  
+//  /**
+//   * Set the current collection view type for this table.
+//   * <p>
+//   * The overview
+//   * view is the one that shows all the rows. This stands in contrast to the
+//   * collection view, which shows only a single row of the "prime column",
+//   * similar to a conversation in gmail where only the most recent is 
+//   * displayed.
+//   * @param viewType
+//   */
+//  public void setCurrentCollectionViewType(TableViewType viewType) {
+//    setStringProperty(TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, 
+//        TableProperties.KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//        viewType.name());   
+//    this.currentCollectionViewType = viewType;
+//  }
+  
+  /**
+   * Get the current view type of the table. 
+   * @return
+   */
+  public TableViewType getCurrentViewType() {
+    return this.currentViewType;
+  }
+  
+  /**
+   * Set the current view type of the table.
+   * @param viewType
+   */
+  public void setCurrentViewType(TableViewType viewType) {
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT,
+        TableProperties.KEY_CURRENT_VIEW_TYPE,
+        viewType.name());
+    this.currentViewType = viewType;
+  }
 
   /**
    * @return an unordered array of the table's columns
@@ -926,6 +1038,12 @@ public class TableProperties {
     return getColumns()[index];
   }
 
+  /**
+   * Get the index of the column. Currently by display name...
+   * TODO: make it element key instead
+   * @param colDbName
+   * @return
+   */
   public int getColumnIndex(String colDbName) {
     ArrayList<String> colOrder = getColumnOrder();
     for (int i = 0; i < colOrder.size(); i++) {
@@ -1078,7 +1196,8 @@ public class TableProperties {
       }
     }
     if (colIndex == columns.length) {
-      Log.e(TableProperties.class.getName(), "deleteColumn() did not find the column");
+      Log.e(TableProperties.class.getName(), 
+          "deleteColumn() did not find the column");
       return;
     }
     // forming a comma-separated list of columns to keep
@@ -1247,6 +1366,32 @@ public class TableProperties {
         TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
+  
+  /**
+   * Return the display name of the index column.
+   * TODO: make this work with element key
+   * @return
+   */
+  public String getIndexColumn() {
+    return this.indexColumn;
+  }
+  
+  /**
+   * Set the index column for the table. This should be set by the display name
+   * of the column. A null value will set the index column back to the default
+   * value.
+   * TODO: make this use the element key
+   * @param indexColumnElementKey
+   */
+  public void setIndexColumn(String indexColumnElementKey) {
+    if ((indexColumnElementKey == null)) {
+      indexColumnElementKey = DEFAULT_KEY_INDEX_COLUMN;
+    }
+    setStringProperty(TableProperties.KVS_PARTITION,
+        TableProperties.KVS_ASPECT,
+        KEY_INDEX_COLUMN, indexColumnElementKey);
+    this.indexColumn = indexColumnElementKey;
+  }
 
   /**
    * @return the ID of the read security table, or null if there is none
@@ -1344,22 +1489,15 @@ public class TableProperties {
     return this.backingStore;
   }
 
-  /**
-   * @return the overview view settings
-   */
-  public TableViewSettings getOverviewViewSettings() {
-    return overviewViewSettings;
-  }
-
-  /**
-   * Sets the overview view settings.
-   * 
-   * @param dbString
-   *          the string to put in the database
-   */
-  void setOverviewViewSettings(String dbString) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, dbString);
+//  /**
+//   * Sets the overview view settings.
+//   * 
+//   * @param dbString
+//   *          the string to put in the database
+//   */
+//  void setOverviewViewSettings(String dbString) {
+//    setStringProperty(TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, dbString);
 //    Map<String,Object> dbObject;
 //    try {
 //      dbObject = mapper.readValue(dbString, Map.class);
@@ -1378,25 +1516,18 @@ public class TableProperties {
 //      e.printStackTrace();
 //      throw new IllegalArgumentException("invalid db value: " + dbString);
 //   }
-    
-  }
+//    
+//  }
 
-  /**
-   * @return the collection view settings
-   */
-  public TableViewSettings getCollectionViewSettings() {
-    return collectionViewSettings;
-  }
-
-  /**
-   * Sets the collection view settings.
-   * 
-   * @param dbString
-   *          the string to put in the database
-   */
-  void setCollectionViewSettings(String dbString) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, dbString);
+//  /**
+//   * Sets the collection view settings.
+//   * 
+//   * @param dbString
+//   *          the string to put in the database
+//   */
+//  void setCollectionViewSettings(String dbString) {
+//    setStringProperty(TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, dbString);
 //    Map<String,Object> dbObject;
 //    try {
 //      dbObject = mapper.readValue(dbString, Map.class);
@@ -1415,15 +1546,15 @@ public class TableProperties {
 //      e.printStackTrace();
 //      throw new IllegalArgumentException("invalid db value: " + dbString);
 //   }
-  }
+//  }
 
-  /**
-   * @return the detail view filename
-   */
-  public String getDetailViewFilename() {
-    return detailViewFilename;
-
-  }
+//  /**
+//   * @return the detail view filename
+//   */
+//  public String getDetailViewFilename() {
+//    return detailViewFilename;
+//
+//  }
 
   /**
    * Sets the table's detail view filename.
@@ -1431,11 +1562,11 @@ public class TableProperties {
    * @param filename
    *          the new filename
    */
-  public void setDetailViewFilename(String filename) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, filename);
-    this.detailViewFilename = filename;
-  }
+//  public void setDetailViewFilename(String filename) {
+//    setStringProperty(TableProperties.KVS_PARTITION,
+//        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, filename);
+//    this.detailViewFilename = filename;
+//  }
 
   /**
    * @return the format for summary displays
@@ -1542,11 +1673,15 @@ public class TableProperties {
 	  jo.put(JSON_KEY_COLUMNS, cols);
 	  jo.put(JSON_KEY_PRIME_COLUMNS, primes);
 	  jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
+	  jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
 	  // TODO
-	  jo.put(JSON_KEY_OV_VIEW_SETTINGS, overviewViewSettings.toJsonObject());
 	  // TODO
-	  jo.put(JSON_KEY_CO_VIEW_SETTINGS, collectionViewSettings.toJsonObject());
-	  jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
+	  jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
+//	  jo.put(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE, 
+//	      currentOverviewViewType.name());
+//	  jo.put(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE,
+//	      currentCollectionViewType.name());
+//	  jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
 	  jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
 	  
 	  String toReturn = null;
@@ -1585,21 +1720,31 @@ public class TableProperties {
 		throw new IllegalArgumentException("invalid json: " + json);
 	}
     
-    ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
-    ArrayList<String> primes = (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
+    ArrayList<String> colOrder = 
+        (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
+    ArrayList<String> primes = 
+        (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
     
 	  setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
 	  setTableType(TableType.valueOf((String)jo.get(JSON_KEY_TABLE_TYPE)));
 	  setPrimeColumns(primes);
 	  setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
-	  setAccessControls((String) jo.get(TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS));
-	  if (jo.containsKey(JSON_KEY_OV_VIEW_SETTINGS)) {
-	    // TODO
-	  }
-	  if (jo.containsKey(JSON_KEY_CO_VIEW_SETTINGS)) {
-	    // TODO
-	  }
-	  setDetailViewFilename((String) jo.get(JSON_KEY_DETAIL_VIEW_FILE));
+	  setIndexColumn((String)jo.get(JSON_KEY_INDEX_COLUMN));
+	  setAccessControls(
+	      (String) jo.get(TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS));
+//	  if (jo.containsKey(JSON_KEY_OV_VIEW_SETTINGS)) {
+//	    // TODO
+//	  }
+//	  if (jo.containsKey(JSON_KEY_CO_VIEW_SETTINGS)) {
+//	    // TODO
+//	  }
+	  setCurrentViewType(TableViewType.valueOf(
+	      (String)jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
+//	  setCurrentOverviewViewType(TableViewType.valueOf(
+//	      (String)jo.get(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE)));
+//	  setCurrentOverviewViewType(TableViewType.valueOf(
+//	      (String)jo.get(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE)));
+//	  setDetailViewFilename((String) jo.get(JSON_KEY_DETAIL_VIEW_FILE));
 	  setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
 	  Set<String> columnsToDelete = new HashSet<String>();
 	  for (String cdn : columnOrder) {
@@ -1650,6 +1795,56 @@ public class TableProperties {
       }
       setColumnOrder(colOrder);
       orderColumns();
+  }
+  
+  /**
+   * Get the possible view types for this table. This is modeled after a method
+   * in TableViewSettings. It used to perform checks on column types, but for
+   * now it just returns spreadsheet, list, and graph views. It does not return
+   * map.
+   * @return
+   */
+  public TableViewType[] getPossibleViewTypes() {
+    int numericColCount = 0;
+    int locationColCount = 0;
+    int dateColCount = 0;
+    for (ColumnProperties cp : this.getColumns()) {
+      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+        numericColCount++;
+      } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
+        locationColCount++;
+      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
+          || cp.getColumnType() == ColumnType.TIME) {
+        dateColCount++;
+      }
+    }
+    List<TableViewType> list = new ArrayList<TableViewType>();
+    list.add(TableViewType.Spreadsheet);
+    list.add(TableViewType.List);
+    list.add(TableViewType.Graph);
+//    List<Integer> list = new ArrayList<Integer>();
+//    list.add(Type.SPREADSHEET);
+//    list.add(Type.LIST);
+//    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
+//      list.add(Type.LINE_GRAPH);
+//    }
+//    if (numericColCount >= 1) {
+//      list.add(Type.BOX_STEM);
+//    }
+    // Not adding this b/c it's not working atm.
+//    list.add(Type.BAR_GRAPH);
+//    if (locationColCount >= 1) {
+//      list.add(Type.MAP);
+//    }
+//    int[] arr = new int[list.size()];
+//    for (int i = 0; i < list.size(); i++) {
+//      arr[i] = list.get(i);
+//    }
+    TableViewType[] arr = new TableViewType[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+      arr[i] = list.get(i);
+    }
+    return arr;
   }
   
   /**
@@ -1728,7 +1923,7 @@ public class TableProperties {
    * @throws IllegalArgumentException if the key returns an entry that is not
    * of type INTEGER.
    */
-  public int getIntegerEntry(String partition, String aspect, String key) {
+  public Integer getIntegerEntry(String partition, String aspect, String key) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
     SQLiteDatabase db = dbh.getReadableDatabase();

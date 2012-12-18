@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.FooterMode;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.view.SpreadsheetView;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -119,15 +120,29 @@ public class PropertyManager extends PreferenceActivity {
     colWidthPref.setTitle("Column Width");
     colWidthPref.setDialogTitle("Change Column Width");
     colWidthPref.setMaxValue(500);
-    colWidthPref.setValue(tp.getOverviewViewSettings().getTableColWidths()[colIndex]);
-    colWidthPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+//    colWidthPref.setValue(tp.getOverviewViewSettings()
+//        .getTableColWidths()[colIndex]);
+    Integer savedColumnWidth = 
+        tp.getIntegerEntry(ColumnProperties.KVS_PARTITION,
+        tp.getColumnByIndex(colIndex).getElementKey(), 
+        SpreadsheetView.KEY_COLUMN_WIDTH);
+    if (savedColumnWidth == null) {
+      savedColumnWidth = SpreadsheetView.DEFAULT_COL_WIDTH;
+    }
+    colWidthPref.setValue(savedColumnWidth);
+    colWidthPref.setOnPreferenceChangeListener(
+        new Preference.OnPreferenceChangeListener() {
       @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
+      public boolean onPreferenceChange(Preference preference, 
+          Object newValue) {
         int width = (Integer) newValue;
-        int[] widths = tp.getOverviewViewSettings().getTableColWidths();
-        widths[colIndex] = width;
-        tp.getOverviewViewSettings().setTableColWidths(widths);
-        tp.getCollectionViewSettings().setTableColWidths(widths);
+        tp.setIntegerEntry(ColumnProperties.KVS_PARTITION,
+            tp.getColumnByIndex(colIndex).getElementKey(),
+            SpreadsheetView.KEY_COLUMN_WIDTH, width);
+//        int[] widths = tp.getOverviewViewSettings().getTableColWidths();
+//        widths[colIndex] = width;
+//        tp.getOverviewViewSettings().setTableColWidths(widths);
+//        tp.getCollectionViewSettings().setTableColWidths(widths);
         return true;
       }
     });

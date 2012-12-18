@@ -40,7 +40,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewSettings;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -129,7 +129,6 @@ public class Controller {
     private final DataManager dm;
     private TableProperties tp;
     private DbTable dbt;
-    private TableViewSettings tvs;
     private final Stack<String> searchText;
     private final boolean isOverview;
     private final RelativeLayout container;
@@ -169,8 +168,6 @@ public class Controller {
         dm = new DataManager(DbHelper.getDbHelper(activity));
         tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
         dbt = dm.getDbTable(tableId);
-        tvs = isOverview ? tp.getOverviewViewSettings() :
-                tp.getCollectionViewSettings();
         
         // INITIALIZING VIEW OBJECTS     
         // controlWrap will hold the search bar and search button 
@@ -271,10 +268,6 @@ public class Controller {
     return dbt;
   }
 
-  TableViewSettings getTableViewSettings() {
-    return tvs;
-  }
-  
   /**
    * @return True if this is an overview type, false if this is 
    *         collection view type
@@ -412,11 +405,16 @@ public class Controller {
   }
 
   private void handleTablePropertiesManagerReturn() {
-    int oldViewType = tvs.getViewType();
+//    int oldViewType = tvs.getViewType();
+    // so for now I think that the boolean of whether or not the current view
+    // is an overview of a collection view is stored here in Controller.
+    // This should eventually move, if we decide to keep this architecture. but
+    // for now I'm going to just hardcode in a solution.
+    TableViewType oldViewType = tp.getCurrentViewType();
     tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
     dbt = dm.getDbTable(tp.getTableId());
-    tvs = isOverview ? tp.getOverviewViewSettings() : tp.getCollectionViewSettings();
-    if (oldViewType == tvs.getViewType()) {
+//    if (oldViewType == tvs.getViewType()) {
+    if (oldViewType == tp.getCurrentViewType()) {
       da.init();
     } else {
       launchTableActivity(activity, tp, searchText, isOverview);
@@ -427,7 +425,6 @@ public class Controller {
   private void handleColumnManagerReturn() {
     tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
     dbt = dm.getDbTable(tp.getTableId());
-    tvs = isOverview ? tp.getOverviewViewSettings() : tp.getCollectionViewSettings();
     da.init();
   }
 
@@ -545,22 +542,27 @@ public class Controller {
         
         // view type submenu
         // 	  -determine the possible view types
-        final int[] viewTypeIds = tvs.getPossibleViewTypes();
-        String[] viewTypeStringIds = new String[viewTypeIds.length];
-        String[] viewTypeNames = new String[viewTypeIds.length];
-        for (int i = 0; i < viewTypeIds.length; i++) {
-            viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
-            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
-                    viewTypeIds[i]);
-        }
+//        final int[] viewTypeIds = tvs.getPossibleViewTypes();
+        final TableViewType[] viewTypes = tp.getPossibleViewTypes();
+//        String[] viewTypeStringIds = new String[viewTypes.length];
+//        String[] viewTypeNames = new String[viewTypes.length];
+//        for (int i = 0; i < viewTypes.length; i++) {
+//            viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
+//            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
+//                    viewTypeIds[i]);
+//        }
         // 	  -build a checkable submenu to select the view type
         SubMenu viewType = menu.addSubMenu("View Type");
         viewType.setIcon(R.drawable.view);
-        for(int i = 0; i < viewTypeNames.length; i++) {
-        	item = viewType.add(GROUP_ID_SUBMENU, viewTypeIds[i], i, viewTypeNames[i]);
-        	if (tvs.getViewType() == viewTypeIds[i]) {
-                item.setChecked(true);
-            }
+        for(int i = 0; i < viewTypes.length; i++) {
+        	item = viewType.add(GROUP_ID_SUBMENU, viewTypes[i].getId(), i, 
+        	    viewTypes[i].name());
+//        	if (tvs.getViewType() == viewTypeIds[i]) {
+//                item.setChecked(true);
+//            }
+        	if (tp.getCurrentViewType() == viewTypes[i]) {
+        	  item.setChecked(true);
+        	}
         }
         viewType.setGroupCheckable(GROUP_ID_SUBMENU, true, true);
         MenuItem subMenuItem = viewType.getItem();
@@ -593,11 +595,14 @@ public class Controller {
 		// if the item is part of the sub-menu for view type, set the view type with its itemId
 	    // else, handle accordingly
 		if(selectedItem.getGroupId() == GROUP_ID_SUBMENU) {
-			tvs.setViewType(itemId);
-            Controller.launchTableActivity(activity, tp, searchText,
-                    isOverview);
-            activity.finish();
-            return true;
+//			tvs.setViewType(itemId);
+// no current view type under current setting. have to know if is overview 
+// or collection
+		  tp.setCurrentViewType(
+		      TableViewType.getViewTypeFromId(selectedItem.getItemId()));
+        Controller.launchTableActivity(activity, tp, searchText, isOverview);
+        activity.finish();
+        return true;
 		} else {
 	        switch (itemId) {
 	        case MENU_ITEM_ID_SEARCH_BUTTON:
@@ -803,24 +808,35 @@ public class Controller {
   private static void launchTableActivity(Context context, TableProperties tp, 
       String searchText,
       Stack<String> searchStack, boolean isOverview) {
-    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
-        .getCollectionViewSettings();
+    //TODO: need to figure out how CollectionViewSettings should work. 
+    // make them work.
+//    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
+//        .getCollectionViewSettings();
+    TableViewType viewType = tp.getCurrentViewType();
     Intent intent;
-    switch (tvs.getViewType()) {
-    case TableViewSettings.Type.LIST:
+//    switch (tvs.getViewType()) {
+    switch (viewType) {
+//    case TableViewSettings.Type.LIST:
+    //TODO: figure out which of these graph was originally and update it.
+    case List:
       intent = new Intent(context, ListDisplayActivity.class);
       break;
-    case TableViewSettings.Type.LINE_GRAPH:
-      intent = new Intent(context, LineGraphDisplayActivity.class);
-      break;
-    case TableViewSettings.Type.BOX_STEM:
-      intent = new Intent(context, BoxStemGraphDisplayActivity.class);
-      break;
-    case TableViewSettings.Type.BAR_GRAPH:
+//    case TableViewSettings.Type.LINE_GRAPH:
+//      intent = new Intent(context, LineGraphDisplayActivity.class);
+//      break;
+//    case TableViewSettings.Type.BOX_STEM:
+//      intent = new Intent(context, BoxStemGraphDisplayActivity.class);
+//      break;
+//    case TableViewSettings.Type.BAR_GRAPH:
+    case Graph:
       intent = new Intent(context, BarGraphDisplayActivity.class);
       break;
-    case TableViewSettings.Type.MAP:
+//    case TableViewSettings.Type.MAP:
+    case Map:
       intent = new Intent(context, MapDisplayActivity.class);
+      break;
+    case Spreadsheet:
+      intent = new Intent(context, SpreadsheetDisplayActivity.class);
       break;
     default:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);

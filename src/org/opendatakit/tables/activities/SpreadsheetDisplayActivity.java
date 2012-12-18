@@ -111,7 +111,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
+//        indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
+        String indexedColElementKey = c.getTableProperties().getIndexColumn();
+        indexedCol = 
+            c.getTableProperties().getColumnIndex(indexedColElementKey);
         // setting up the view
         c.setDisplayView(buildView(tp));
         setContentView(c.getContainerView());
@@ -123,9 +126,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, tp, 
-                c.getTableViewSettings(),
-                    table, indexedCol, new DisplayPrefs(this,
+            return new SpreadsheetView(this, this, tp, table, indexedCol, 
+                new DisplayPrefs(this,
                             c.getTableProperties().getTableId()));
         }
     }
@@ -174,8 +176,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
     
     void setColumnAsIndexedCol(ColumnProperties cp) {
-        c.getTableViewSettings().setTableIndexedCol(
-                (cp == null) ? null : cp.getColumnDbName());
+      c.getTableProperties().setIndexColumn(
+          (cp == null) ? null : cp.getColumnDbName());
     }
     
     void openColumnPropertiesManager(ColumnProperties cp) {

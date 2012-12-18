@@ -16,7 +16,6 @@
 package org.opendatakit.tables.view;
 
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 
 import android.content.Context;
@@ -42,7 +41,6 @@ public class ListDisplayView extends LinearLayout {
     private Controller controller; // the table activity to call back to
     private UserTable table; // the table to display
     private TableProperties tp;
-    private TableViewSettings tvs;
     private int[] lineHeights;
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
@@ -50,19 +48,18 @@ public class ListDisplayView extends LinearLayout {
     private Paint borderPaint;
     
     public static ListDisplayView buildView(Context context,
-            TableProperties tp, TableViewSettings tvs, Controller controller,
+            TableProperties tp, Controller controller,
             UserTable table) {
-        return new ListDisplayView(context, tp, tvs, controller, table);
+        return new ListDisplayView(context, tp, controller, table);
     }
     
     private ListDisplayView(Context context, TableProperties tp,
-            TableViewSettings tvs, Controller controller, UserTable table) {
+            Controller controller, UserTable table) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
         this.controller = controller;
         this.table = table;
         this.tp = tp;
-        this.tvs = tvs;
         setFormatInfo();
         borderPaint = new Paint();
         borderPaint.setColor(BORDER_COLOR);
@@ -72,7 +69,9 @@ public class ListDisplayView extends LinearLayout {
     }
     
     private void setFormatInfo() {
-        String format = tvs.getListFormat();
+// removed this when TableViewSettings was removed.
+//        String format = tvs.getListFormat();
+      String format = null;
         if (format == null || format.length() == 0) {
             format = getDefaultFormat();
         }

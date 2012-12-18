@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomTableView;
@@ -29,8 +30,31 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-
-public class ListDisplayActivity extends SherlockActivity implements DisplayActivity {
+/**
+ * This class is responsible for the list view of a table.
+ * 
+ * SS: not sure who the original author is. Putting my tag on it because I'm
+ * adding some things.
+ * @author sudar.sam@gmail.com
+ * @author unknown
+ *
+ */
+public class ListDisplayActivity extends SherlockActivity 
+    implements DisplayActivity {
+  
+  private static final String TAG = "ListDisplayActivity";
+  /**************************
+   * Strings necessary for the key value store.
+   **************************/
+  public static final String KVS_PARTITION = "ListDisplayActivity";
+  
+  /**
+   * This is the default aspect for the list view. This should be all that is 
+   * used until we allow multiple list views for a single file.
+   */
+  public static final String KVS_ASPECT_DEFAULT = "default";
+  
+  public static final String KEY_FILENAME = "filename";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
@@ -40,13 +64,17 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
     private Query query;
     private UserTable table;
     private CustomTableView view;
+    private DbHelper dbh;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("");
+        dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
+        // TODO: why do we get all table properties here? this is an expensive
+        // call. I don't think we should do it.
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
             c.getTableProperties());
         init();
@@ -65,8 +93,19 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
+        String filename = c.getTableProperties().getStringEntry(
+            ListDisplayActivity.KVS_PARTITION,
+            ListDisplayActivity.KVS_ASPECT_DEFAULT,
+            ListDisplayActivity.KEY_FILENAME);
+        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+        KeyValueStore kvs = 
+            kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
+            c.getTableProperties().getBackingStoreType());
+//        view = CustomTableView.get(this, c.getTableProperties(), table,
+//                c.getTableViewSettings().getCustomListFilename());
         view = CustomTableView.get(this, c.getTableProperties(), table,
-                c.getTableViewSettings().getCustomListFilename());
+            filename);
+            
         displayView();
     }
     

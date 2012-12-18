@@ -17,7 +17,7 @@ package org.opendatakit.tables.view;
 
 import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.TableViewSettings;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
 import android.content.Context;
@@ -43,7 +43,8 @@ public class ConflictResolutionView extends HorizontalScrollView
     
     private final Controller controller;
     private final Context context;
-    private final TableViewSettings tvs;
+//    private final TableViewSettings tvs;
+    private final TableProperties tp;
     private final int fontSize;
     private final ConflictTable table;
     private String[][][] data;
@@ -55,11 +56,12 @@ public class ConflictResolutionView extends HorizontalScrollView
     private long lastDownTime;
     
     public ConflictResolutionView(Controller controller, Context context,
-            TableViewSettings tvs, ConflictTable table) {
+            TableProperties tp, ConflictTable table) {
         super(context);
         this.controller = controller;
         this.context = context;
-        this.tvs = tvs;
+        this.tp = tp;
+//        this.tvs = tvs;
         fontSize = (new Preferences(context)).getFontSize();
         this.table = table;
         data = new String[table.getCount()][2][table.getWidth()];
@@ -90,7 +92,8 @@ public class ConflictResolutionView extends HorizontalScrollView
         }
         TabularView headerView = new TabularView(context, this, header,
                 FOREGROUND_COLOR, null, HEADER_BACKGROUND_COLOR, null,
-                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_HEADER,
+                BORDER_COLOR, SpreadsheetView.getColumnWidths(tp), 
+                TableType.MAIN_HEADER,
                 fontSize);
         // creating data views
         dataWrap = new LinearLayout(context);
@@ -126,7 +129,8 @@ public class ConflictResolutionView extends HorizontalScrollView
         RowItem ri = new RowItem(context, index);
         TabularView tv = new TabularView(context, this, data[index],
                 FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
-                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_DATA,
+                BORDER_COLOR, SpreadsheetView.getColumnWidths(tp),
+                TableType.MAIN_DATA,
                 fontSize);
         setTabularViewTouchListener(index, tv);
         ri.setTabularView(tv);
@@ -166,7 +170,8 @@ public class ConflictResolutionView extends HorizontalScrollView
         data[index][rowNum][colNum] = value;
         TabularView tv = new TabularView(context, this, data[index],
                 FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
-                BORDER_COLOR, tvs.getTableColWidths(), TableType.MAIN_DATA,
+                BORDER_COLOR, SpreadsheetView.getColumnWidths(tp), 
+                TableType.MAIN_DATA,
                 fontSize);
         setTabularViewTouchListener(index, tv);
         rowItems[index].setTabularView(tv);

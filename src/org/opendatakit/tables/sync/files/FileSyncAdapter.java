@@ -19,13 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewSettings;
+import org.opendatakit.tables.view.custom.CustomDetailView;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -108,13 +109,14 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         KeyValueStore kvs = kvsm.getStoreForTable(tableProp.getTableId(), 
             tableProp.getBackingStoreType());
         List<String> desiredKeys = new ArrayList<String>();
-        desiredKeys.add(TableViewSettings.KEY_LIST_FILE);
+//        desiredKeys.add(TableViewSettings.KEY_LIST_FILE);
+        desiredKeys.add(ListDisplayActivity.KEY_FILENAME);
         // now check the value. if there is an entry, we should set it.
         List<OdkTablesKeyValueStoreEntry> entries = 
             kvs.getEntriesForKeys(db, TableProperties.KVS_PARTITION,
                 TableProperties.KVS_ASPECT, desiredKeys);
         if (entries.size() > 1) {
-          Log.e(TAG, "query for " + TableViewSettings.KEY_LIST_FILE +
+          Log.e(TAG, "query for " + ListDisplayActivity.KEY_FILENAME +
               " for table " + tableProp.getTableId() + " in the kvs of type " +
               tableProp.getBackingStoreType() + " returned " + entries.size()
               + " entries. It should be at most one.");
@@ -123,18 +125,23 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // this means we got something. Doing check > 0 rather than == 1 just
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
-          TableViewSettings ovViewSettings = 
-              tableProp.getOverviewViewSettings();
-          ovViewSettings.setCustomListFilename(entries.get(0).value);
+//          TableViewSettings ovViewSettings = 
+//              tableProp.getOverviewViewSettings();
+//          ovViewSettings.setCustomListFilename(entries.get(0).value);
+          tableProp.setStringEntry(ListDisplayActivity.KVS_PARTITION, 
+              ListDisplayActivity.KVS_ASPECT_DEFAULT, 
+              ListDisplayActivity.KEY_FILENAME, 
+              entries.get(0).value);
         }
         // and now check for detail.
         desiredKeys.clear();
-        desiredKeys.add(TableProperties.KEY_DETAIL_VIEW_FILE);
+//        desiredKeys.add(TableProperties.KEY_DETAIL_VIEW_FILE);
+        desiredKeys.add(CustomDetailView.KEY_FILENAME);
         entries = 
-            kvs.getEntriesForKeys(db, TableProperties.KVS_PARTITION,
-                TableProperties.KVS_ASPECT, desiredKeys);
+            kvs.getEntriesForKeys(db, CustomDetailView.KVS_PARTITION,
+                CustomDetailView.KVS_ASPECT_DEFAULT, desiredKeys);
         if (entries.size() > 1) {
-          Log.e(TAG, "query for " + TableProperties.KEY_DETAIL_VIEW_FILE +
+          Log.e(TAG, "query for " + CustomDetailView.KEY_FILENAME +
               " for table " + tableProp.getTableId() + " in the kvs of type " +
               tableProp.getBackingStoreType() + " returned " + entries.size()
               + " entries. It should be at most one.");
@@ -143,7 +150,11 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // this means we got something. Doing check > 0 rather than == 1 just
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
-          tableProp.setDetailViewFilename(entries.get(0).value);
+//          tableProp.setDetailViewFilename(entries.get(0).value);
+          tableProp.setStringEntry(CustomDetailView.KVS_PARTITION,
+              CustomDetailView.KVS_ASPECT_DEFAULT, 
+              CustomDetailView.KEY_FILENAME,
+              entries.get(0).value);
         }
       } finally {
         //TODO: fix when to close db problem.

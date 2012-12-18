@@ -18,9 +18,9 @@ package org.opendatakit.tables.view;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
+import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
@@ -52,13 +52,27 @@ public class SpreadsheetView extends LinearLayout
         implements TabularView.Controller {
   
   private static final String TAG = "SpreadsheetView";
+  
+  // moved this from the old TableViewSettings
+  public static final int DEFAULT_COL_WIDTH = 125;
+  
+  /******************************
+   * These are constants needed for the key value store.
+   ******************************/
+  public static final String KVS_PARTITION = "SpreadsheetView";
+  public static final String KVS_ASPECT_DEFAULT = "default";
+  // So this key should go into the column aspect, b/c it is a column key value
+  // entry that needs to be associated with a single column, but also needs
+  // to have this naming convention to avoid namespace collisions.
+  public static final String KEY_COLUMN_WIDTH = "SpreadsheetView.columnWidth";
+  public static final String DEFAULT_KEY_COLUMN_WIDTHS = 
+      Integer.toString(DEFAULT_COL_WIDTH);
     
     private static final int MIN_CLICK_DURATION = 0;
     private static final int MIN_LONG_CLICK_DURATION = 1000;
     
     private final Context context;
     private final Controller controller;
-    private final TableViewSettings tvs;
     private final UserTable table;
     private final int indexedCol;
     private final DisplayPrefs dp;
@@ -93,14 +107,12 @@ public class SpreadsheetView extends LinearLayout
     private int lastLongClickedCellId;
     
     public SpreadsheetView(Context context, Controller controller,
-            TableProperties tp ,
-            TableViewSettings tvs, UserTable table, int indexedCol,
+            TableProperties tp, UserTable table, int indexedCol,
             DisplayPrefs dp) {
         super(context);
         this.context = context;
         this.controller = controller;
         this.tp = tp;
-        this.tvs = tvs;
         this.table = table;
         this.indexedCol = indexedCol;
         this.dp = dp;
@@ -359,7 +371,8 @@ public class SpreadsheetView extends LinearLayout
         String[][] footer;
         ColumnColorRuler[] colorRulers;
         int[] colWidths;
-        int[] completeColWidths = tvs.getTableColWidths();
+//        int[] completeColWidths = tvs.getTableColWidths();
+        int[] completeColWidths = getColumnWidths();
         if (isIndexed) {
             header = new String[1][1];
             header[0][0] = table.getHeader(indexedCol);
@@ -472,6 +485,18 @@ public class SpreadsheetView extends LinearLayout
       // this is getting the correct x
       int result = this.wrapScroll.getScrollX(); 
       return result;
+    }
+    
+    /**
+     * Get the column widths for the table. The values in the array match the
+     * order specified in {@link TableProperties.getColumns}.
+     * @return
+     */
+    public int[] getColumnWidths() {
+      // So what we want to do is go through and get the column widths for each
+      // column. A problem here is that there is no caching, and if you have a
+      // lot of columns you're really working the gut of the database.
+      return SpreadsheetView.getColumnWidths(tp);
     }
     
     /**
@@ -600,5 +625,32 @@ public class SpreadsheetView extends LinearLayout
         
         public void prepIndexedColCellOccm(ContextMenu menu, int cellId);
         
+    }
+    
+    /**
+     * Get the column widths for the table. The values in the array match the
+     * order specified in {@link TableProperties.getColumns}. 
+     * <p>
+     * NB: If getting this from outside of spreadsheet view, you should really
+     * consider if you need to be accessing column widths.
+     * @return
+     */
+    public static int[] getColumnWidths(TableProperties tp) {
+      // So what we want to do is go through and get the column widths for each
+      // column. A problem here is that there is no caching, and if you have a
+      // lot of columns you're really working the gut of the database.
+      ColumnProperties[] colProps = tp.getColumns();
+      int[] columnWidths = new int[colProps.length];
+      for (int i = 0; i < columnWidths.length; i++) {
+        String elementKey = colProps[i].getElementKey();
+        Integer value = tp.getIntegerEntry(ColumnProperties.KVS_PARTITION,
+            elementKey, SpreadsheetView.KEY_COLUMN_WIDTH);
+        if (value == null) {
+          columnWidths[i] = DEFAULT_COL_WIDTH;
+        } else {
+          columnWidths[i] = value;
+        }
+      }
+      return columnWidths;
     }
 }

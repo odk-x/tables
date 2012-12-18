@@ -25,8 +25,24 @@ import android.content.Context;
  * A view for displaying a customizable detail view of a row of data.
  * 
  * @author hkworden
+ * @author sudar.sam@gmail.com
  */
 public class CustomDetailView extends CustomView {
+  
+  private static final String TAG = "CustomDetailView";
+  
+  /**************************
+   * Strings necessary for the key value store.
+   **************************/
+  public static final String KVS_PARTITION = "CustomDetailView";
+  
+  /**
+   * This is the default aspect for the list view. This should be all that is 
+   * used until we allow multiple list views for a single file.
+   */
+  public static final String KVS_ASPECT_DEFAULT = "default";
+  
+  public static final String KEY_FILENAME = "filename"; 
     
     private static final String DEFAULT_HTML =
         "<html><body>" +
@@ -48,7 +64,10 @@ public class CustomDetailView extends CustomView {
         jsData.set(data);
         webView.addJavascriptInterface(new Control(context), "control");
         webView.addJavascriptInterface(jsData, "data");
-        String filename = tp.getDetailViewFilename();
+//        String filename = tp.getDetailViewFilename();
+        String filename = tp.getStringEntry(CustomDetailView.KVS_PARTITION, 
+            CustomDetailView.KVS_ASPECT_DEFAULT,
+            CustomDetailView.KEY_FILENAME);
         if (filename != null) {
             load("file:///" + filename);
         } else {

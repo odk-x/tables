@@ -63,7 +63,7 @@ public class ConflictResolutionActivity extends SherlockActivity
             rowChanges.add(new Stack<RowChange>());
         }
         // setting up the view
-        crv = new ConflictResolutionView(this, this, c.getTableViewSettings(),
+        crv = new ConflictResolutionView(this, this, c.getTableProperties(),
                 table);
         c.setDisplayView(crv);
         setContentView(c.getContainerView());

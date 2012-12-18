@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.Activity.util;
 
+import org.opendatakit.tables.data.ConditionalRuler;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
-import org.opendatakit.tables.data.TableViewSettings;
 
 import android.graphics.Color;
 import android.util.Log;
@@ -41,38 +41,38 @@ public class LanguageUtil {
         }
     }
     
-    public static String getViewTypeLabel(int viewType) {
-        switch (viewType) {
-        case TableViewSettings.Type.SPREADSHEET:
-            return "Spreadsheet";
-        case TableViewSettings.Type.LIST:
-            return "List";
-        case TableViewSettings.Type.LINE_GRAPH:
-            return "Line Graph";
-        case TableViewSettings.Type.BOX_STEM:
-            return "Box-Stem Graph";
-        case TableViewSettings.Type.BAR_GRAPH:
-            return "Bar Graph";
-        case TableViewSettings.Type.MAP:
-            return "Map";
-        default:
-          Log.e(TAG, "unrecognized viewType in getViewTypeLabel: " +
-              viewType);
-            throw new RuntimeException();
-        }
-    }
+//    public static String getViewTypeLabel(int viewType) {
+//        switch (viewType) {
+//        case TableViewSettings.Type.SPREADSHEET:
+//            return "Spreadsheet";
+//        case TableViewSettings.Type.LIST:
+//            return "List";
+//        case TableViewSettings.Type.LINE_GRAPH:
+//            return "Line Graph";
+//        case TableViewSettings.Type.BOX_STEM:
+//            return "Box-Stem Graph";
+//        case TableViewSettings.Type.BAR_GRAPH:
+//            return "Graph";
+//        case TableViewSettings.Type.MAP:
+//            return "Map";
+//        default:
+//          Log.e(TAG, "unrecognized viewType in getViewTypeLabel: " +
+//              viewType);
+//            throw new RuntimeException();
+//        }
+//    }
     
     public static String getTvsConditionalComparator(int comparatorType) {
         switch (comparatorType) {
-        case TableViewSettings.ConditionalRuler.Comparator.EQUALS:
+        case ConditionalRuler.Comparator.EQUALS:
             return "=";
-        case TableViewSettings.ConditionalRuler.Comparator.LESS_THAN:
+        case ConditionalRuler.Comparator.LESS_THAN:
             return "<";
-        case TableViewSettings.ConditionalRuler.Comparator.LESS_THAN_EQUALS:
+        case ConditionalRuler.Comparator.LESS_THAN_EQUALS:
             return "<=";
-        case TableViewSettings.ConditionalRuler.Comparator.GREATER_THAN:
+        case ConditionalRuler.Comparator.GREATER_THAN:
             return ">";
-        case TableViewSettings.ConditionalRuler.Comparator.GREATER_THAN_EQUALS:
+        case ConditionalRuler.Comparator.GREATER_THAN_EQUALS:
             return ">=";
         default:
             throw new RuntimeException();
