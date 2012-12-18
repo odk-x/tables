@@ -407,7 +407,7 @@ public class SyncProcessor {
     Map<String, ColumnType> columns = new HashMap<String, ColumnType>();
     ColumnProperties[] userColumns = tp.getColumns();
     for (ColumnProperties colProp : userColumns) {
-      columns.put(colProp.getColumnDbName(), colProp.getColumnType());
+      columns.put(colProp.getElementKey(), colProp.getColumnType());
     }
 //    columns.put(DbTable.DB_URI_USER, ColumnType.PHONE_NUMBER);
 //    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);

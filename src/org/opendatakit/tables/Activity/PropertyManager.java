@@ -92,6 +92,11 @@ public class PropertyManager extends PreferenceActivity {
     PreferenceCategory category = new PreferenceCategory(this);
     category.setTitle(cp.getDisplayName());
     root.addPreference(category);
+    
+    String displayName = cp.getDisplayName();
+    category.addPreference(createEditTextPreference("DISPLAY_NAME", 
+        "Display Name", "Change display name of column", displayName,
+        displayName));
 
     // SMS Label<EditText>
     String smsLabel = getSmsLabel(colName);
@@ -197,7 +202,7 @@ public class PropertyManager extends PreferenceActivity {
         String[] colDisplayNames = new String[cps.length + 1];
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
         for (int i = 0; i < cps.length; i++) {
-          String colDbName = cps[i].getColumnDbName();
+          String colDbName = cps[i].getElementKey();
           colDbNames[i + 1] = colDbName;
           colDisplayNames[i + 1] = cps[i].getDisplayName();
           if ((joinColName != null) && colDbName.equals(joinColName)) {
@@ -292,6 +297,8 @@ public class PropertyManager extends PreferenceActivity {
       JoinColumn oldJoins = cp.getJoins();
       oldJoins.setElementKey(newVal);
       cp.setJoins(oldJoins);
+    } else if (key.equals("DISPLAY_NAME")) {
+      cp.setDisplayName(newVal);
     }
 
     // Refresh
@@ -361,7 +368,8 @@ public class PropertyManager extends PreferenceActivity {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // Ask the router what to do
-        onFieldChangeRouter(preference.getKey(), null);
+//        onFieldChangeRouter(preference.getKey(), null);
+        onFieldChangeRouter(preference.getKey(), (String) newValue);
         return false;
       }
     });

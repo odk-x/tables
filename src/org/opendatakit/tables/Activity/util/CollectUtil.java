@@ -237,13 +237,13 @@ public class CollectUtil {
         writer.write("\">");
         for (ColumnProperties cp : tp.getColumns()) {
           String value = table.getData(rowNum,
-              tp.getColumnIndex(cp.getColumnDbName()));
+              tp.getColumnIndex(cp.getElementName()));
           if (value == null) {
-            writer.write("<" + cp.getColumnDbName() + "/>");
+            writer.write("<" + cp.getElementName() + "/>");
           } else {
             writer
-                .write("<" + cp.getColumnDbName() + ">" + value + "</" + 
-                    cp.getColumnDbName() + ">");
+                .write("<" + cp.getElementName() + ">" + value + "</" + 
+                    cp.getElementName() + ">");
 
           }
         }

@@ -40,21 +40,21 @@ public class DbTable {
   
   private final static String TAG = "DbTable";
     
-    public static final String DB_ROW_ID = "_id";
-    public static final String DB_URI_USER = "_uri_user";
-    public static final String DB_LAST_MODIFIED_TIME = "_last_mod_time";
-    public static final String DB_SYNC_TAG = "_sync_tag";
-    public static final String DB_SYNC_STATE = "_sync_state";
-    public static final String DB_TRANSACTIONING = "_transactioning";
-    public static final String DB_TIMESTAMP = "_timestamp";
-    public static final String DB_SAVED = "_saved";
-    public static final String DB_INSTANCE_NAME = "_instance_name";
+    public static final String DB_ROW_ID = "id";
+    public static final String DB_URI_USER = "uri_user";
+    public static final String DB_LAST_MODIFIED_TIME = "last_mod_time";
+    public static final String DB_SYNC_TAG = "sync_tag";
+    public static final String DB_SYNC_STATE = "sync_state";
+    public static final String DB_TRANSACTIONING = "transactioning";
+    public static final String DB_TIMESTAMP = "timestamp";
+    public static final String DB_SAVED = "saved";
+    public static final String DB_INSTANCE_NAME = "instance_name";
         /*
          * For ODKTables generated rows (as opposed to ODK Collect), the 
          * thought is that this instance name would just be the iso86 pretty
          * print date of creation.
          */
-    public static final String DB_LOCALE = "_locale";
+    public static final String DB_LOCALE = "locale";
     
     /********************************************************
      * Default values for those columns which require them.
@@ -140,7 +140,7 @@ public class DbTable {
       boolean testOpen = db.isOpen();
         StringBuilder colListBuilder = new StringBuilder();
         for (ColumnProperties cp : tp.getColumns()) {
-            colListBuilder.append(", " + cp.getColumnDbName());
+            colListBuilder.append(", " + cp.getElementKey());
             if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");
             } else if (cp.getColumnType() == ColumnType.INTEGER) {
@@ -150,7 +150,7 @@ public class DbTable {
             }
         }
         testOpen = db.isOpen();
-        String toExecute = "CREATE TABLE \"" + tp.getDbTableName() + "\"(" +
+        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DB_ROW_ID + " TEXT NOT NULL" +
      ", " + DB_URI_USER + " TEXT NULL" +
      ", " + DB_LAST_MODIFIED_TIME + " TEXT NOT NULL" +
@@ -196,7 +196,7 @@ public class DbTable {
 //            columns.add(DB_TRANSACTIONING);
 //            need to add this stuff now;
             for (int i = 0; i < cps.length; i++) {
-            	columns.add(cps[i].getColumnDbName());
+            	columns.add(cps[i].getElementKey());
             }
         }
         String[] colArr = new String[columns.size() + 1];
@@ -249,11 +249,11 @@ public class DbTable {
     	SQLiteDatabase db = null;
     	Cursor c = null;
     	try {
-	        SqlData sd = query.toGroupSql(groupColumn.getColumnDbName(), type);
+	        SqlData sd = query.toGroupSql(groupColumn.getElementKey(), type);
 	        db = dbh.getReadableDatabase();
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
 	        int gcColIndex = c.getColumnIndexOrThrow(
-	                groupColumn.getColumnDbName());
+	                groupColumn.getElementKey());
 	        int countColIndex = c.getColumnIndexOrThrow("g");
 	        int rowCount = c.getCount();
 	        String[] keys = new String[rowCount];
@@ -302,7 +302,7 @@ public class DbTable {
 	        int[] colIndices = new int[tp.getColumns().length];
 	        for (int i = 0; i < tp.getColumns().length; i++) {
 	            colIndices[i] = c.getColumnIndexOrThrow(
-	                    tp.getColumns()[i].getColumnDbName());
+	                    tp.getColumns()[i].getElementKey());
 	            header[i] = tp.getColumns()[i].getDisplayName();
 	        }
 	        c.moveToFirst();
@@ -445,7 +445,7 @@ public class DbTable {
     	Cursor c = null;
     	try {
     		db = dbh.getReadableDatabase();
-	        SqlData sd = query.toFooterSql(cp.getColumnDbName(), type);
+	        SqlData sd = query.toFooterSql(cp.getElementKey(), type);
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
 	        if ( c.getCount() == 1 ) {
 		        int gColIndex = c.getColumnIndexOrThrow("g");

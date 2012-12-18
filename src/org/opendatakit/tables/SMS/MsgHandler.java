@@ -287,7 +287,7 @@ public class MsgHandler {
             if (value == null) {
                 return false;
             } else if (cp.getSmsIn()) {
-                rowValues.put(cp.getColumnDbName(), value);
+                rowValues.put(cp.getElementKey(), value);
             }
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
@@ -461,7 +461,7 @@ public class MsgHandler {
         }
         String[] colNames = new String[cols.size()];
         for (int i = 0; i < cols.size(); i++) {
-            colNames[i] = cols.get(i).getColumnDbName();
+            colNames[i] = cols.get(i).getElementKey();
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query, colNames);
@@ -498,7 +498,7 @@ public class MsgHandler {
         Set<Constraint> constraints = new HashSet<Constraint>();
         for (int i = query.getConstraintCount(); i >= 0; i--) {
             Constraint c = query.getConstraint(i);
-            if (c.getColumnDbName().equals(drSlotColumn.getColumnDbName())) {
+            if (c.getColumnDbName().equals(drSlotColumn.getElementKey())) {
                 constraints.add(c);
                 query.removeConstraint(i);
             }
@@ -506,7 +506,7 @@ public class MsgHandler {
         query.setOrderBy(Query.SortOrder.ASCENDING, drSlotColumn);
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query,
-                new String[] {drSlotColumn.getColumnDbName()});
+                new String[] {drSlotColumn.getElementKey()});
         // TODO: range should not be slash-separated but stored as two columns OR json in db...
         List<String[]> rawRanges = new ArrayList<String[]>();
         for (int i = 0; i < table.getHeight(); i++) {

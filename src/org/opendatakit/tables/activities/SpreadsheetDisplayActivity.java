@@ -148,7 +148,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     void setColumnAsPrime(ColumnProperties cp) {
     	ArrayList<String> oldPrimes = c.getTableProperties().getPrimeColumns();
     	ArrayList<String> newPrimes = new ArrayList<String>();
-        newPrimes.add(cp.getColumnDbName());
+        newPrimes.add(cp.getElementKey());
         for (int i = 0; i < oldPrimes.size(); i++) {
             newPrimes.add(oldPrimes.get(i));
         }
@@ -162,7 +162,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         }
         ArrayList<String> newPrimes = new ArrayList<String>();
         for (String prime : oldPrimes) {
-            if (prime.equals(cp.getColumnDbName())) {
+            if (prime.equals(cp.getElementKey())) {
                 continue;
             }
             newPrimes.add(prime);
@@ -172,12 +172,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     
     void setColumnAsSort(ColumnProperties cp) {
         c.getTableProperties().setSortColumn(
-                (cp == null) ? null : cp.getColumnDbName());
+                (cp == null) ? null : cp.getElementKey());
     }
     
     void setColumnAsIndexedCol(ColumnProperties cp) {
       c.getTableProperties().setIndexColumn(
-          (cp == null) ? null : cp.getColumnDbName());
+          (cp == null) ? null : cp.getElementKey());
     }
     
     void openColumnPropertiesManager(ColumnProperties cp) {
@@ -185,7 +185,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         intent.putExtra(PropertyManager.INTENT_KEY_TABLE_ID,
                 c.getTableProperties().getTableId());
         intent.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME,
-                cp.getColumnDbName());
+                cp.getElementKey());
         startActivity(intent);
     }
     
@@ -415,12 +415,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
         lastHeaderCellMenued = cellId;
         ColumnProperties cp = c.getTableProperties().getColumns()[cellId];
-        if (c.getTableProperties().isColumnPrime(cp.getColumnDbName())) {
+        if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
         } else if ((c.getTableProperties().getSortColumn() != null) &&
                 c.getTableProperties().getSortColumn()
-                        .equals(cp.getColumnDbName())) {
+                        .equals(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT,
                     ContextMenu.NONE, "Unset as Sort");
         } else {
@@ -472,12 +472,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	public void prepFooterCellOccm(ContextMenu menu, int cellId) {
 		lastHeaderCellMenued = cellId;
         ColumnProperties cp = c.getTableProperties().getColumns()[cellId];
-        if (c.getTableProperties().isColumnPrime(cp.getColumnDbName())) {
+        if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
         } else if ((c.getTableProperties().getSortColumn() != null) &&
                 c.getTableProperties().getSortColumn()
-                        .equals(cp.getColumnDbName())) {
+                        .equals(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT,
                     ContextMenu.NONE, "Unset as Sort");
         } else {

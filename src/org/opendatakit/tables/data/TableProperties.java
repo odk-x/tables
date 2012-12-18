@@ -22,25 +22,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONException;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.sync.SyncUtil;
 
+import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * A class for accessing and managing table properties.
@@ -548,8 +545,10 @@ public class TableProperties {
 
   /**
    * Returns a legal name for a new table. This method checks all three KVS
-   * for possible conflicts. The name is the displayName with whitespace 
-   * replaced with underscores, and a suffix of an integer if there was a 
+   * for possible conflicts. The name is the displayName prepended with an 
+   * underscore, non word 
+   * characters (as defined by java's "\\W" replaced by underscores, and a 
+   * suffix of an integer if there was a 
    * conflict.
    * @param dbh
    * @param displayName
@@ -579,7 +578,7 @@ public class TableProperties {
     // in SQLite. We are going to thus make the basename the displayName
     // prepended with an underscore, and replace all non-word characters
     // with an underscore.
-    String baseName = displayName.replaceAll("\\W", "_");
+    String baseName = "_" + displayName.replaceAll("\\W", "_");
     if (!nameConflict(baseName, allProps)) {
       return baseName;
     }
@@ -1009,7 +1008,7 @@ public class TableProperties {
     ColumnProperties[] newColumns = new ColumnProperties[columns.length];
     for (int i = 0; i < columnOrder.size(); i++) {
       for (int j = 0; j < columns.length; j++) {
-        if (columns[j].getColumnDbName().equals(columnOrder.get(i))) {
+        if (columns[j].getElementKey().equals(columnOrder.get(i))) {
           newColumns[i] = columns[j];
           break;
         }
@@ -1054,12 +1053,19 @@ public class TableProperties {
     return -1;
   }
 
+  /**
+   * Return the element key of the column with the given display name. This 
+   * behavior is undefined if there are two columns with the same name. so this
+   * method should be destroyed.
+   * @param displayName
+   * @return
+   */
   public String getColumnByDisplayName(String displayName) {
     ColumnProperties[] cps = getColumns();
     for (ColumnProperties cp : cps) {
       String cdn = cp.getDisplayName();
       if ((cdn != null) && (cdn.equalsIgnoreCase(displayName))) {
-        return cp.getColumnDbName();
+        return cp.getElementKey();
       }
     }
     return null;
@@ -1070,7 +1076,7 @@ public class TableProperties {
     for (ColumnProperties cp : cps) {
       String ca = cp.getSmsLabel();
       if ((ca != null) && (ca.equalsIgnoreCase(abbreviation))) {
-        return cp.getColumnDbName();
+        return cp.getElementKey();
       }
     }
     return null;
@@ -1093,10 +1099,15 @@ public class TableProperties {
     return null;
   }
 
-
+  /**
+   * Check all the columns to see if "name" conflicts with any existing element
+   * keys.
+   * @param name
+   * @return
+   */
   private boolean columnNameConflict(String name) {
     for (ColumnProperties cp : columns) {
-      if (cp.getColumnDbName().equals(name)) {
+      if (cp.getElementKey().equals(name)) {
         return true;
       }
     }
@@ -1180,16 +1191,16 @@ public class TableProperties {
   /**
    * Deletes a column from the table.
    * 
-   * @param columnDbName
-   *          the database name of the column to delete
+   * @param elementKey
+   *          the elementKey of the column to delete
    */
-  public void deleteColumn(String columnDbName) {
+  public void deleteColumn(String elementKey) {
     // ensuring columns is initialized
     getColumns();
     // finding the index of the column in columns
     int colIndex = 0;
     for (ColumnProperties cp : columns) {
-      if (cp.getColumnDbName().equals(columnDbName)) {
+      if (cp.getElementKey().equals(elementKey)) {
         break;
       } else {
         colIndex++;
@@ -1206,7 +1217,7 @@ public class TableProperties {
       if (i == colIndex) {
         continue;
       }
-      csv += ", " + columns[i].getColumnDbName();
+      csv += ", " + columns[i].getElementKey();
     }
     // updating TableProperties
     ColumnProperties[] newColumns = new ColumnProperties[columns.length - 1];
@@ -1223,7 +1234,7 @@ public class TableProperties {
     ArrayList<String> newColumnOrder = new ArrayList<String>();
     index = 0;
     for (String col : columnOrder) {
-      if (col.equals(columnDbName)) {
+      if (col.equals(elementKey)) {
         continue;
       }
       newColumnOrder.add(col);
@@ -1240,7 +1251,7 @@ public class TableProperties {
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();
-	      Log.e(TAG, "error deleting column: " + columnDbName);
+	      Log.e(TAG, "error deleting column: " + elementKey);
 	    } finally {
 	      db.endTransaction();
 	    }
@@ -1490,65 +1501,6 @@ public class TableProperties {
   }
 
 //  /**
-//   * Sets the overview view settings.
-//   * 
-//   * @param dbString
-//   *          the string to put in the database
-//   */
-//  void setOverviewViewSettings(String dbString) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_OV_VIEW_SETTINGS, dbString);
-//    Map<String,Object> dbObject;
-//    try {
-//      dbObject = mapper.readValue(dbString, Map.class);
-//      this.overviewViewSettings.setFromJsonObject(dbObject);
-//    } catch (JSONException e) {
-//      e.printStackTrace();
-//      throw new IllegalStateException("encounted problem setting table view " +
-//      		"settings from json");
-//     } catch (JsonParseException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   } catch (JsonMappingException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   } catch (IOException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   }
-//    
-//  }
-
-//  /**
-//   * Sets the collection view settings.
-//   * 
-//   * @param dbString
-//   *          the string to put in the database
-//   */
-//  void setCollectionViewSettings(String dbString) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_CO_VIEW_SETTINGS, dbString);
-//    Map<String,Object> dbObject;
-//    try {
-//      dbObject = mapper.readValue(dbString, Map.class);
-//      this.collectionViewSettings.setFromJsonObject(dbObject);
-//    } catch (JSONException e) {
-//      e.printStackTrace();
-//      throw new IllegalStateException("encounted problem setting table view " +
-//            "settings from json");
-//     } catch (JsonParseException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   } catch (JsonMappingException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   } catch (IOException e) {
-//      e.printStackTrace();
-//      throw new IllegalArgumentException("invalid db value: " + dbString);
-//   }
-//  }
-
-//  /**
 //   * @return the detail view filename
 //   */
 //  public String getDetailViewFilename() {
@@ -1655,7 +1607,7 @@ public class TableProperties {
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
     for (ColumnProperties cp : columns) {
-      colOrder.add(cp.getColumnDbName());
+      colOrder.add(cp.getElementKey());
       cols.add(cp.toJson());
     }
     ArrayList<String> primes = new ArrayList<String>();

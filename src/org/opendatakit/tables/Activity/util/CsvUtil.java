@@ -198,14 +198,14 @@ public class CsvUtil {
         }
         if (raw) {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns.add(cp.getColumnDbName());
+                columns.add(cp.getElementKey());
                 headerRow.add(cp.getDisplayName());
                 index++;
             }
         } else {
             for (ColumnProperties cp : tp.getColumns()) {
-                columns.add(cp.getColumnDbName());
-                headerRow.add(cp.getColumnDbName());
+                columns.add(cp.getElementKey());
+                headerRow.add(cp.getElementKey());
                 index++;
             }
         }

@@ -286,7 +286,7 @@ public class Query {
                     continue;
                 }
                 matchKeys[j] = matchKey;
-                matchArgs[j] = matchArgCp.getColumnDbName();
+                matchArgs[j] = matchArgCp.getElementKey();
             }
             if (allValid) {
                 joins.add(new Join(joinTp, joinQuery, matchKeys, matchArgs));
@@ -303,23 +303,23 @@ public class Query {
     
     private String getColumnByUserString(String us) {
         ColumnProperties cp = tp.getColumnByUserLabel(us);
-        return (cp == null) ? null : cp.getColumnDbName();
+        return (cp == null) ? null : cp.getElementKey();
     }
     
     public void addConstraint(ColumnProperties cp, String value) {
-        constraints.add(new Constraint(cp.getColumnDbName(), Comparator.EQUALS,
+        constraints.add(new Constraint(cp.getElementKey(), Comparator.EQUALS,
                 value));
     }
     
     public void addConstraint(ColumnProperties cp, int comparator,
             String value) {
-        constraints.add(new Constraint(cp.getColumnDbName(), comparator,
+        constraints.add(new Constraint(cp.getElementKey(), comparator,
                 value));
     }
     
     public void addOrConstraint(ColumnProperties cp, int comparator1,
             String value1, int comparator2, String value2) {
-        Constraint oc = new Constraint(cp.getColumnDbName(), comparator1,
+        Constraint oc = new Constraint(cp.getElementKey(), comparator1,
                 value1);
         oc.addComparison(comparator2, value2);
         constraints.add(oc);
@@ -332,9 +332,9 @@ public class Query {
     public void setOrderBy(int sortOrder, ColumnProperties firstCp,
             ColumnProperties... cps) {
         StringBuilder orderByBuilder =
-            new StringBuilder(firstCp.getColumnDbName());
+            new StringBuilder(firstCp.getElementKey());
         for (ColumnProperties cp : cps) {
-            orderByBuilder.append(", " + cp.getColumnDbName());
+            orderByBuilder.append(", " + cp.getElementKey());
         }
         orderBy = orderByBuilder.toString();
         this.sortOrder = sortOrder;
@@ -356,15 +356,13 @@ public class Query {
         String dbTn = tp.getDbTableName();
         StringBuilder sb = new StringBuilder();
         if (includeId) {
-            sb.append("\"" + dbTn + "\".\"" + DbTable.DB_ROW_ID + 
-                "\" AS \"" + DbTable.DB_ROW_ID + "\"");
+            sb.append(dbTn + "." + DbTable.DB_ROW_ID + " AS " +
+                    DbTable.DB_ROW_ID);
         } else {
-            sb.append("\"" + dbTn + "\".\"" + columns[0] + "\" AS \"" + 
-                columns[0] + "\"");
+            sb.append(dbTn + "." + columns[0] + " AS " + columns[0]);
         }
         for (int i = (includeId ? 0 : 1); i < columns.length; i++) {
-            sb.append(", \"" + dbTn + "\".\"" + columns[i] + "\" AS \"" 
-                + columns[i] +"\"");
+            sb.append(", " + dbTn + "." + columns[i] + " AS " + columns[i]);
         }
         return toSql(sb.toString());
     }
@@ -372,18 +370,18 @@ public class Query {
     private SqlData toSql(String selection) {
         SqlData sd = new SqlData();
         sd.appendSql("SELECT " + selection);
-        sd.appendSql(" FROM \"" + tp.getDbTableName() + "\"");
+        sd.appendSql(" FROM " + tp.getDbTableName());
         for (int i = 0; i < joins.size(); i++) {
             SqlData joinSd = joins.get(i).toSql();
             sd.appendSql(" " + joinSd.getSql());
             sd.appendArgs(joinSd.getArgList());
         }
-        sd.appendSql(" WHERE \"" + tp.getDbTableName() + "\".\"" +
-                DbTable.DB_SYNC_STATE + "\" != " + SyncUtil.State.DELETING);
+        sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
+                DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
 
         // add restriction for ODK Collect intermediate status...
-        sd.appendSql(" AND \"" + tp.getDbTableName() + "\".\"" +
-                DbTable.DB_SAVED + "\" == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+        sd.appendSql(" AND " + tp.getDbTableName() + "." +
+                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
 
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
@@ -424,22 +422,21 @@ public class Query {
         }
         primeList.delete(0, 2);
         SqlData sd = new SqlData();
-        sd.appendSql("SELECT d.\"" + DbTable.DB_ROW_ID + "\"");
+        sd.appendSql("SELECT d." + DbTable.DB_ROW_ID);
         for (String column : arrayList) {
-            sd.appendSql(", d.\"" + column + "\"");
+            sd.appendSql(", d." + column);
         }
-        sd.appendSql(" FROM \"" + tp.getDbTableName() + "\" d");
+        sd.appendSql(" FROM " + tp.getDbTableName() + " d");
         sd.appendSql(" JOIN (");
         
         if (tp.getSortColumn() == null) {
-            sd.append(toSql("MAX(\"" + tp.getDbTableName() + "\".\"" +
-                    DbTable.DB_ROW_ID + "\") AS \"" + DbTable.DB_ROW_ID 
-                    + "\""));
+            sd.append(toSql("MAX(" + tp.getDbTableName() + "." +
+                    DbTable.DB_ROW_ID + ") AS " + DbTable.DB_ROW_ID));
             sd.appendSql(" GROUP BY " + primeList.toString());
         } else {
             String sort = tp.getSortColumn();
-            sd.appendSql("SELECT MAX(\"" + DbTable.DB_ROW_ID + "\") AS \"" +
-                    DbTable.DB_ROW_ID + "\" FROM ");
+            sd.appendSql("SELECT MAX(" + DbTable.DB_ROW_ID + ") AS " +
+                    DbTable.DB_ROW_ID + " FROM ");
             
             ArrayList<String> primes = tp.getPrimeColumns();
             String[] xCols = new String[primes.size()];
@@ -452,11 +449,10 @@ public class Query {
             
             StringBuilder xSelectionSb = new StringBuilder();
             for (String xCol : xCols) {
-                xSelectionSb.append("\"" + tp.getDbTableName() + "\".\"" 
-                    + xCol + "\" AS \"" +
-                        xCol + "\", ");
+                xSelectionSb.append(tp.getDbTableName() + "." + xCol + " AS " +
+                        xCol + ", ");
             }
-            xSelectionSb.append("MAX(\"" + sort + "\") AS \"" + sort + "\"");
+            xSelectionSb.append("MAX(" + sort + ") AS " + sort);
             SqlData xSqlData = toSql(xSelectionSb.toString());
             SqlData ySqlData = toSql(yCols);
             sd.appendSql("(" + xSqlData.getSql() + " GROUP BY " +
@@ -570,7 +566,7 @@ public class Query {
                 DbTable.DB_SYNC_TAG);
         for (ColumnProperties cp : tp.getColumns()) {
             sd.appendSql(", " + tp.getDbTableName() + "." +
-                    cp.getColumnDbName() + " AS " + cp.getColumnDbName());
+                    cp.getElementKey() + " AS " + cp.getElementKey());
         }
         sd.appendSql(" FROM " + tp.getDbTableName());
         sd.appendSql(" JOIN (");

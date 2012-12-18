@@ -740,10 +740,12 @@ public class Controller {
       Map<String, String> values = new HashMap<String, String>();
 
       for (ColumnProperties cp : tp.getColumns()) {
-              String key = cp.getColumnDbName();
-          String value = du.validifyValue(cp, formValues.get(key));
+        // we want to use element name here, b/c that is what Collect should be
+        // using to access all of the columns/elements.
+          String elementName = cp.getElementName();
+          String value = du.validifyValue(cp, formValues.get(elementName));
           if (value != null) {
-              values.put(key,value);
+              values.put(elementName,value);
           }
       }
       dbt.updateRow(rowId, values);
@@ -861,7 +863,7 @@ public class Controller {
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumns()[i].getColumnDbName();
+      keys[i] = tp.getColumns()[i].getElementKey();
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
@@ -969,7 +971,7 @@ public class Controller {
                       return;
                   }
                   Map<String, String> values = new HashMap<String, String>();
-                  values.put(tp.getColumns()[colIndex].getColumnDbName(),
+                  values.put(tp.getColumns()[colIndex].getElementKey(),
                           value);
                   dbt.updateRow(rowId, values);
                   da.init();

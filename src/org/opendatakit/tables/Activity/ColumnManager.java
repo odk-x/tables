@@ -161,7 +161,7 @@ public class ColumnManager extends ListActivity {
 			public void onItemClick(AdapterView adView, View view,
 										int position, long id) {
 				// Load Column Property Manger with this column name
-				loadColumnPropertyManager(cps[position].getColumnDbName());
+				loadColumnPropertyManager(cps[position].getElementKey());
 			}
 		});
 		
@@ -266,6 +266,11 @@ public class ColumnManager extends ListActivity {
 					} else if (colName.contains(" ")) {
 						toastColumnNameError("Column name cannot contain spaces!");
 						alertForNewColumnName(colName.replace(' ', '_'));
+					} else if (ColumnProperties.displayNameConflict(tableId, 
+					    colName, DbHelper.getDbHelper(ColumnManager.this))){
+					  toastColumnNameError("\"" + colName + 
+					      "\" is already in use!");
+					  alertForNewColumnName(null);
 					} else {
 						// Create new column
 					    ColumnProperties cp = tp.addColumn(colName, null, null);
@@ -276,7 +281,7 @@ public class ColumnManager extends ListActivity {
 					    }
 					    adapter.notifyDataSetChanged();						
 						// Load Column Property Manger
-					    loadColumnPropertyManager(cp.getColumnDbName());
+					    loadColumnPropertyManager(cp.getElementKey());
 					}
 				} else {
 					toastColumnNameError(colName + " is already existing column!");

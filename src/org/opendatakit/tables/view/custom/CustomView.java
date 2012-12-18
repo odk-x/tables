@@ -105,7 +105,7 @@ public abstract class CustomView extends LinearLayout {
 			if (cp == null) {
 				return null;
 			}
-			return data.get(cp.getColumnDbName());
+			return data.get(cp.getElementKey());
 		}
 	}
 
