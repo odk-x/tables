@@ -223,10 +223,10 @@ public class ColumnManager extends ListActivity {
 	}
 		
 	// Load Column Property Manager Activity.
-	private void loadColumnPropertyManager(String name) {
+	private void loadColumnPropertyManager(String elementKey) {
 		Intent cpm = new Intent(this, PropertyManager.class);
 		cpm.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
-        cpm.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME, name);
+        cpm.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY, elementKey);
 		startActivity(cpm);
 	}
 	

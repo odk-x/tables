@@ -16,8 +16,7 @@
 package org.opendatakit.tables.view;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.DataStructure.DisplayPrefs;
-import org.opendatakit.tables.DataStructure.DisplayPrefs.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
@@ -75,7 +74,6 @@ public class SpreadsheetView extends LinearLayout
     private final Controller controller;
     private final UserTable table;
     private final int indexedCol;
-    private final DisplayPrefs dp;
     private final int fontSize;
     
     private final TableProperties tp;
@@ -107,15 +105,13 @@ public class SpreadsheetView extends LinearLayout
     private int lastLongClickedCellId;
     
     public SpreadsheetView(Context context, Controller controller,
-            TableProperties tp, UserTable table, int indexedCol,
-            DisplayPrefs dp) {
+            TableProperties tp, UserTable table, int indexedCol) {
         super(context);
         this.context = context;
         this.controller = controller;
         this.tp = tp;
         this.table = table;
         this.indexedCol = indexedCol;
-        this.dp = dp;
         fontSize = (new Preferences(context)).getFontSize();
         initListeners();
         if (indexedCol < 0) {
@@ -383,8 +379,8 @@ public class SpreadsheetView extends LinearLayout
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
             colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = dp.getColColorRuler(tp, 
-                table.getHeader(indexedCol));
+            colorRulers[0] = ColumnColorRuler.getColumnColorRuler(tp, 
+                tp.getColumnByDisplayName(table.getHeader(indexedCol)));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
         } else {
@@ -406,7 +402,8 @@ public class SpreadsheetView extends LinearLayout
                 }
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                    dp.getColColorRuler(tp, header[0][addIndex]);
+                   ColumnColorRuler.getColumnColorRuler(tp,
+                       tp.getColumnByDisplayName(header[0][addIndex]));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }

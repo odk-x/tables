@@ -474,10 +474,15 @@ class TabularView extends View {
   private void drawCell(Canvas canvas, int x, int y, String datum, 
       int backgroundColor, int foregroundColor, int columnWidth) {
     Log.d(TAG, "drawCell called");
+    // have to do this check to reset to the default, otherwise it uses the 
+    // old object which was previously saved and paints all the columns the 
+    // wrong color.
     if (backgroundColor != this.defaultBackgroundColor) {
       bgPaint.setColor(backgroundColor);
-      canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
+    } else {
+      bgPaint.setColor(this.defaultBackgroundColor);
     }
+      canvas.drawRect(x, y, x + columnWidth, y + rowHeight, bgPaint);
     canvas.save(Canvas.ALL_SAVE_FLAG);
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
         x + columnWidth - (2 * HORIZONTAL_CELL_PADDING), y + rowHeight);

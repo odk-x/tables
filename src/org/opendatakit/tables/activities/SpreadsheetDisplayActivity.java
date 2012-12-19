@@ -21,7 +21,6 @@ import java.util.List;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.DataStructure.DisplayPrefs;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -126,9 +125,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, tp, table, indexedCol, 
-                new DisplayPrefs(this,
-                            c.getTableProperties(), tp.getIndexColumn()));
+            return new SpreadsheetView(this, this, tp, table, indexedCol);
         }
     }
     
@@ -137,7 +134,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
-                    .getColumnByDbName(prime);
+                    .getColumnByElementKey(prime);
             int colNum = c.getTableProperties().getColumnIndex(prime);
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
@@ -184,7 +181,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         Intent intent = new Intent(this, PropertyManager.class);
         intent.putExtra(PropertyManager.INTENT_KEY_TABLE_ID,
                 c.getTableProperties().getTableId());
-        intent.putExtra(PropertyManager.INTENT_KEY_COLUMN_NAME,
+        intent.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY,
                 cp.getElementKey());
         startActivity(intent);
     }
@@ -670,7 +667,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                      dm.getTableProperties(tableId,
 	                          KeyValueStore.Type.ACTIVE);
 	                  String joinedColDisplayName = 
-	                      joinedTable.getColumnByDbName(elementKey)
+	                      joinedTable.getColumnByElementKey(elementKey)
 	                      .getDisplayName();
 	                  // I would prefer this kind of query to be set in another
 	                  // object, but alas, it looks like atm it is hardcoded.

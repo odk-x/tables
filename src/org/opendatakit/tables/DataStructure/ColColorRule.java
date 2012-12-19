@@ -30,12 +30,12 @@ public class ColColorRule {
   
   // this is the primary key of the column, so basically an int UUID.
   // changing to be a uuid.
-  public String id;
-  public String colName;
-  public RuleType compType;
-  public String val;
-  public int foreground;
-  public int background;
+  private String id;
+  private String columnElementKey;
+  private RuleType operator;
+  private String val;
+  private int foreground;
+  private int background;
   
   // ONLY FOR SERIALIZATION
   private ColColorRule() {
@@ -51,14 +51,14 @@ public class ColColorRule {
    * @param foreground
    * @param background
    */
-  public ColColorRule(String colName, RuleType compType, String val, 
+  public ColColorRule(String colElementKey, RuleType compType, String val, 
       int foreground, int background) {
     // generate a UUID for the color rule. We can't let it autoincrement ints
     // as was happening before, as this would become corrupted when rules were
     // imported from other dbs.
     this.id = UUID.randomUUID().toString();
-    this.colName = colName;
-    this.compType = compType;
+    this.columnElementKey = colElementKey;
+    this.operator = compType;
     this.val = val;
     this.foreground = foreground;
     this.background = background;
@@ -76,11 +76,51 @@ public class ColColorRule {
   public ColColorRule(String id, String colName, RuleType compType, String val,
       int foreground, int background) {
     this.id = id;
-    this.colName = colName;
-    this.compType = compType;
+    this.columnElementKey = colName;
+    this.operator = compType;
     this.val = val;
     this.foreground = foreground;
     this.background = background;   
+  }
+  
+  public String getId() {
+    return id;
+  }
+  
+  public String getColumnElementKey() {
+    return columnElementKey;
+  }
+  
+  public String getVal() {
+    return val;
+  }
+  
+  public void setVal(String newVal) {
+    this.val = newVal;
+  }
+  
+  public int getForeground() {
+    return foreground;
+  }
+  
+  public void setForeground(int newForeground) {
+    this.foreground = newForeground;
+  }
+  
+  public int getBackground() {
+    return background;
+  }
+  
+  public void setBackground(int newBackground) {
+    this.background = newBackground;
+  }
+  
+  public RuleType getOperator() {
+    return operator;
+  }
+  
+  public void setOperator(RuleType newOperator) {
+    this.operator = newOperator;
   }
   
   public static enum RuleType {

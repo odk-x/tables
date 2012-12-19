@@ -322,7 +322,7 @@ public class KeyValueStore {
    * @param partition
    * @param aspect
    * @param key
-   * @return the number of rows affected--should only ever be one
+   * @return the number of rows affected--should only ever be one or zero
    */
   public int deleteKey(SQLiteDatabase db, String partition, String aspect,
       String key) {

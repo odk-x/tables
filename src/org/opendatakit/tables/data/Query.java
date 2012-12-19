@@ -740,7 +740,7 @@ public class Query {
         
         public String toUserQuery() {
             StringBuilder sb = new StringBuilder(
-                    tp.getColumnByDbName(cdn).getDisplayName() + ":");
+                    tp.getColumnByElementKey(cdn).getDisplayName() + ":");
             sb.append(values.get(0));
             for (int i = 1; i < comparators.size(); i++) {
                 sb.append("|" + values.get(i));

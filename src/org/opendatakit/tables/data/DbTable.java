@@ -287,9 +287,9 @@ public class DbTable {
 	        db = dbh.getReadableDatabase();
 	        SqlData sd = query.toConflictSql();
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        Log.d("DBT", sd.getSql());
+	        Log.d(TAG, sd.getSql());
 	        int count = c.getCount() / 2;
-	        Log.d("DBT", "cursor count: " + c.getCount());
+	        Log.d(TAG, "cursor count: " + c.getCount());
 	        String[] header = new String[tp.getColumns().length];
 	        String[] rowIds = new String[count];
 	        String[][] syncTags = new String[count][2];
@@ -487,7 +487,7 @@ public class DbTable {
      */
     public void addRow(Map<String, String> values, String lastModTime,
             String srcPhone) {
-        Log.d("DBT", values.toString());
+        Log.d(TAG, values.toString());
         if (lastModTime == null) {
             lastModTime = du.formatNowForDb();
         }
@@ -523,7 +523,7 @@ public class DbTable {
 	        values.put(DB_TIMESTAMP, System.currentTimeMillis());
 	        values.put(DB_SAVED, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
-	        Log.d("DBT", "insert, id=" + result);
+	        Log.d(TAG, "insert, id=" + result);
         } finally {
           // TODO: fix the when to close problem
 //        	db.close();

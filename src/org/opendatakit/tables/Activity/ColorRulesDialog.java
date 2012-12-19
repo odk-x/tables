@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.opendatakit.tables.DataStructure.ColColorRule;
 import org.opendatakit.tables.DataStructure.ColColorRule.RuleType;
-import org.opendatakit.tables.DataStructure.DisplayPrefs;
+import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.lib.ColorPickerDialog;
 
 import android.app.AlertDialog;
@@ -38,17 +38,23 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 /**
- * The dialog for managing display preferences for a column.
+ * The dialog for managing the color rules for a column.
+ * <p>
+ * SS: reworking it to be functional, but still could be cleaned up. It should
+ * probably be using an array adapter or something, but hacked it together
+ * based on what code was already here.
  * 
- * Big freaking mess and currently in an indeterminate state! Oct13
+ * @author sudar.sam@gmail.com
+ * @author unknown
  */
-public class DisplayPrefsDialog extends Dialog {
+public class ColorRulesDialog extends Dialog {
 
   public static final String TAG = "DisplayPrefsDialog";
 
   private Context c;
-  private DisplayPrefs dp;
   private String colName;
+  private String columnDisplayName;
+  private ColumnColorRuler colorRuler;
   // SS: going to set this as null and ONLY refresh from the db once. Otherwise
   // we overwrite our new rules. What we really want is the rules from the db
   // and then the new ones we add. and then those only committed to the db
@@ -60,14 +66,16 @@ public class DisplayPrefsDialog extends Dialog {
   private List<EditText> ruleInputFields;
   int lastFocusedRow;
 
-  DisplayPrefsDialog(Context c, DisplayPrefs dp, String colName) {
+  ColorRulesDialog(Context c, ColumnColorRuler ruler, String colName,
+      String displayName) {
     super(c);
     this.c = c;
-    this.dp = dp;
+    this.colorRuler = ruler;
     this.colName = colName;
+    this.columnDisplayName = displayName;
     // get rid of the leading underscore, as this will probably confuse the
     // user. the underscore is just for us.
-    setTitle("Conditional Colors: " + colName.substring(1));
+    setTitle("Conditional Colors: " + displayName);
   }
   
 
@@ -102,7 +110,7 @@ public class DisplayPrefsDialog extends Dialog {
       // only do this once, b/c it clears the list, removing any that we've
       // added here that are not yet in the database.
       lastFocusedRow = -1;
-      colRules = dp.getColorRules();
+      colRules = colorRuler.getColorRules();
       // and now we want to remember which rules are original ones.
       numOriginalRules = colRules.size();
     }
@@ -111,7 +119,8 @@ public class DisplayPrefsDialog extends Dialog {
     ll.setOrientation(LinearLayout.VERTICAL);
     final TableLayout tl = new TableLayout(c);
     LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams.FILL_PARENT, 
+        LinearLayout.LayoutParams.WRAP_CONTENT);
     tl.setLayoutParams(tlp);
     for (int i = 0; i < colRules.size(); i++) {
       TableRow row = getEditRow(i);
@@ -123,7 +132,7 @@ public class DisplayPrefsDialog extends Dialog {
     addRuleButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        updateLastRowVal();
+//        updateLastRowVal();
         // dp.addRule(colName, ' ', "", Color.BLACK, Color.WHITE);
         // refreshView();
         // SS: so, we don't want to add this row like they have done.
@@ -139,7 +148,7 @@ public class DisplayPrefsDialog extends Dialog {
     closeButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        updateLastRowVal(); // to save any changes that haven't been
+//        updateLastRowVal(); // to save any changes that haven't been
         // clicked out of
         persistRows();
         // set the colRules to null so that we have to reload if they
@@ -180,7 +189,7 @@ public class DisplayPrefsDialog extends Dialog {
       public void onClick(View v) {
         //updateLastRowVal();
         if (index != -1) {
-          dp.deleteRule(rule);
+//          colorRuler.removeRule(rule);
           // take it out of the set and the list.
           colRules.remove(index);
           // if it isn't a new row, this also means that we want to decrement
@@ -205,7 +214,8 @@ public class DisplayPrefsDialog extends Dialog {
     // preparing the text field
     EditText input = new EditText(c);
     if (index != -1) {
-      input.setText((rule.compType.getSymbol() + " " + rule.val).trim());
+      input.setText((rule.getOperator().getSymbol() + " " 
+          + rule.getVal()).trim());
     } else {
       input.setText(RuleType.NO_OP.getSymbol());
     }
@@ -234,7 +244,7 @@ public class DisplayPrefsDialog extends Dialog {
     // preparing the foreground color picker button
     Button foregroundPickButton = new Button(c);
     foregroundPickButton.setText("T");
-    foregroundPickButton.setBackgroundColor(rule.foreground);
+    foregroundPickButton.setBackgroundColor(rule.getForeground());
     foregroundPickButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -242,12 +252,13 @@ public class DisplayPrefsDialog extends Dialog {
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
           @Override
           public void colorChanged(int color) {
-            rule.foreground = color;
-            dp.updateRule(rule);
+            rule.setForeground(color);
+            colorRuler.updateRule(rule);
             refreshView();
           }
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, rule.foreground);
+        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, 
+            rule.getForeground());
         cpd.show();
       }
     });
@@ -255,7 +266,7 @@ public class DisplayPrefsDialog extends Dialog {
     // preparing the background color picker button
     Button backgroundPickButton = new Button(c);
     backgroundPickButton.setText("  ");
-    backgroundPickButton.setBackgroundColor(rule.background);
+    backgroundPickButton.setBackgroundColor(rule.getBackground());
     backgroundPickButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -263,12 +274,13 @@ public class DisplayPrefsDialog extends Dialog {
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
           @Override
           public void colorChanged(int color) {
-            rule.background = color;
-            dp.updateRule(rule);
+            rule.setBackground(color);
+            colorRuler.updateRule(rule);
             refreshView();
           }
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, rule.background);
+        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, 
+            rule.getBackground());
         cpd.show();
       }
     });
@@ -285,15 +297,19 @@ public class DisplayPrefsDialog extends Dialog {
    * call update, otherwise we add the rule. There is a case where a new row is
    * added and never touched, and therefore is never enforced. Catch this.
    */
+  /*
+   * Ok, in the reimagining I'm just replacing the rows, but I do still need 
+   * to catch the no op case.
+   */
   private void persistRows() {
-    dp.saveRuleList();
-//    for (int i = 0; i < colRules.size(); i++) {
-//      if (i < numOriginalRules) {
-//        dp.updateRule(colRules.get(i));
-//      } else if (colRules.get(i).compType != ColColorRule.RuleType.NO_OP) {
-//        dp.addRule(colRules.get(i));
-//      }
-//    }
+    List<ColColorRule> rulesToPersist = new ArrayList<ColColorRule>();
+    for (int i = 0; i < colRules.size(); i++) {
+      if (colRules.get(i).getOperator() != ColColorRule.RuleType.NO_OP) {
+        rulesToPersist.add(colRules.get(i));
+      }
+    }
+    colorRuler.replaceColorRuleList(rulesToPersist);
+    colorRuler.saveRuleList();
   }
 
   /*
@@ -317,8 +333,8 @@ public class DisplayPrefsDialog extends Dialog {
       if (opVal.length != 2)
         throw new IllegalArgumentException("not: op val");
       newType = ColColorRule.RuleType.getEnumFromString(opVal[0]);
-      rule.compType = newType;
-      rule.val = opVal[1];
+      rule.setOperator(newType);
+      rule.setVal(opVal[1]);
       // we shouldn't be updating until they hit ok
       // dp.updateRule(rule);
     } catch (IllegalArgumentException e) {

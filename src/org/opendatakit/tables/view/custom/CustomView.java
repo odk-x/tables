@@ -192,7 +192,7 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, String> colInfo = new HashMap<String, String>();
 			for(String column: colMap.keySet()) {
 				String dBName = tp.getColumnByDisplayName(column);
-				String label = tp.getColumnByDbName(dBName).getColumnType().label();
+				String label = tp.getColumnByElementKey(dBName).getColumnType().label();
 				colInfo.put(column, label);
 			}			
 			return new JSONObject(colInfo).toString();

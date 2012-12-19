@@ -1017,8 +1017,8 @@ public class TableProperties {
     columns = newColumns;
   }
 
-  public ColumnProperties getColumnByDbName(String colDbName) {
-    int colIndex = getColumnIndex(colDbName);
+  public ColumnProperties getColumnByElementKey(String colElementKey) {
+    int colIndex = getColumnIndex(colElementKey);
     if (colIndex < 0) {
       return null;
     }
@@ -1049,8 +1049,10 @@ public class TableProperties {
 
   /**
    * Return the element key of the column with the given display name. This 
-   * behavior is undefined if there are two columns with the same name. so this
-   * method should be destroyed.
+   * behavior is undefined if there are two columns with the same name. This
+   * means that all the methods in {@link ColumnProperties} for creating a 
+   * column must be used for creation and changing of display names to ensure
+   * there are no collisions.
    * @param displayName
    * @return
    */
@@ -1717,7 +1719,7 @@ public class TableProperties {
         		" in TableProperties.setFromJson");
       }
 	    //String colJo = (String) colJArr.get(i);
-		  ColumnProperties cp = getColumnByDbName(colOrder.get(i));
+		  ColumnProperties cp = getColumnByElementKey(colOrder.get(i));
           if (cp == null) {
             // then we need to create the bolumn.
             String coDispName = 
@@ -2225,6 +2227,20 @@ public class TableProperties {
     }
     backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
         KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
+  }
+  
+  /**
+   * Remove the given key from the KVS backing this TableProperties. 
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   */
+  public int removeEntry(String partition, String aspect, String key) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    return backingKVS.deleteKey(db, partition, aspect, key);
   }
   
   

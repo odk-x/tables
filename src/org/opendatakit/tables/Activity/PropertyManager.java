@@ -16,7 +16,7 @@
 package org.opendatakit.tables.Activity;
 
 import org.opendatakit.tables.Activity.util.SliderPreference;
-import org.opendatakit.tables.DataStructure.DisplayPrefs;
+import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
@@ -47,7 +47,7 @@ import android.preference.PreferenceScreen;
 public class PropertyManager extends PreferenceActivity {
 
   public static final String INTENT_KEY_TABLE_ID = "tableId";
-  public static final String INTENT_KEY_COLUMN_NAME = "colName";
+  public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
 
   public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number", "Date",
       "Date Range", "Phone Number", "File", "Collect Form", "Multiple Choice", "Join", "Location" };
@@ -58,7 +58,7 @@ public class PropertyManager extends PreferenceActivity {
 
   // Private Fields
   private String tableId;
-  private String colName;
+  private String elementKey;
   private TableProperties tp;
   private ColumnProperties cp;
   private int colIndex;
@@ -73,12 +73,12 @@ public class PropertyManager extends PreferenceActivity {
 
     // Column Name
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-    this.colName = getIntent().getStringExtra(INTENT_KEY_COLUMN_NAME);
+    this.elementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     DbHelper dbh = DbHelper.getDbHelper(this);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
-    cp = tp.getColumnByDbName(colName);
-    colIndex = tp.getColumnIndex(colName);
+    cp = tp.getColumnByElementKey(elementKey);
+    colIndex = tp.getColumnIndex(elementKey);
     showingMcDialog = false;
     loadPreferenceScreen();
   }
@@ -99,25 +99,25 @@ public class PropertyManager extends PreferenceActivity {
         displayName));
 
     // SMS Label<EditText>
-    String smsLabel = getSmsLabel(colName);
+    String smsLabel = getSmsLabel(elementKey);
     category.addPreference(createEditTextPreference("SMSLABEL", "SMS Label",
         "Change SMS Label for Column", smsLabel, smsLabel));
 
     // Type<List>
-    String type = getColumnTypeLabel(colName);
+    String type = getColumnTypeLabel(elementKey);
     category.addPreference(createListPreference("TYPE", "Type", type, type, ColumnType.getAllColumnTypeLabels(),
     		ColumnType.getAllColumnTypeLabels()));
 
     // SMS-IN<CheckBox>
     category
-        .addPreference(createCheckBoxPreference("SMSIN", "Get from Incoming", getSMSIn(colName)));
+        .addPreference(createCheckBoxPreference("SMSIN", "Get from Incoming", getSMSIn(elementKey)));
 
     // SMS-OUT<CheckBox>
     category
-        .addPreference(createCheckBoxPreference("SMSOUT", "Put in Outgoing", getSMSOut(colName)));
+        .addPreference(createCheckBoxPreference("SMSOUT", "Put in Outgoing", getSMSOut(elementKey)));
 
     // Footer Mode<Lis>
-    String footerMode = getFooterMode(colName);
+    String footerMode = getFooterMode(elementKey);
     category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode,
         FOOTER_MODE_LABELS, FOOTER_MODE_LABELS));
 
@@ -405,13 +405,14 @@ public class PropertyManager extends PreferenceActivity {
 
   private class DisplayPreferencesDialogPreference extends Preference {
 
-    private final DisplayPrefsDialog dialog;
+    private final ColorRulesDialog dialog;
 
     public DisplayPreferencesDialogPreference(Context context) {
       super(context);
-      dialog = new DisplayPrefsDialog(PropertyManager.this, 
-          new DisplayPrefs(PropertyManager.this,
-          tp, colName), colName);
+      // is colname element key or the display name? should be el key..
+      dialog = new ColorRulesDialog(PropertyManager.this,
+          ColumnColorRuler.getColumnColorRuler(tp, elementKey), elementKey,
+          cp.getDisplayName());
       setTitle("Display Preferences");
     }
 

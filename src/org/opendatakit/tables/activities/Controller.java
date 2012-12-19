@@ -701,7 +701,7 @@ public class Controller {
     }
     Map<String, String> values = new HashMap<String, String>();
     for (String key : formValues.keySet()) {
-        ColumnProperties cp = tp.getColumnByDbName(key);
+        ColumnProperties cp = tp.getColumnByElementKey(key);
         if (cp == null) {
             continue;
         }
