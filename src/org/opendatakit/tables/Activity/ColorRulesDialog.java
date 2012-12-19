@@ -53,7 +53,6 @@ public class ColorRulesDialog extends Dialog {
 
   private Context c;
   private String colName;
-  private String columnDisplayName;
   private ColumnColorRuler colorRuler;
   // SS: going to set this as null and ONLY refresh from the db once. Otherwise
   // we overwrite our new rules. What we really want is the rules from the db
@@ -72,7 +71,6 @@ public class ColorRulesDialog extends Dialog {
     this.c = c;
     this.colorRuler = ruler;
     this.colName = colName;
-    this.columnDisplayName = displayName;
     // get rid of the leading underscore, as this will probably confuse the
     // user. the underscore is just for us.
     setTitle("Conditional Colors: " + displayName);

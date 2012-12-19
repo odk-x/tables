@@ -263,8 +263,23 @@ public class Controller {
   TableProperties getTableProperties() {
     return tp;
   }
+  
+  /**
+   * Update the dbTable that Controller is monitoring. This should be called 
+   * only 
+   * if there is no way to update the dbTable held by the
+   * Controller if a change happens outside of the Controller's realm of 
+   * control. For instance, changing a column display name in PropertyManager 
+   * does not get updated to the dbTable without calling this method. This is 
+   * a messy way of doing things, and a refactor should probably end up fixing
+   * this.
+   */
+  void refreshDbTable() {
+    this.dbt = dm.getDbTable(tp.getTableId());
+  }
 
   DbTable getDbTable() {
+    tp.refreshColumns();
     return dbt;
   }
 

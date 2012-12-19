@@ -49,8 +49,9 @@ public class PropertyManager extends PreferenceActivity {
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
 
-  public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number", "Date",
-      "Date Range", "Phone Number", "File", "Collect Form", "Multiple Choice", "Join", "Location" };
+  public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number",
+    "Date", "Date Range", "Phone Number", "File", "Collect Form", 
+    "Multiple Choice", "Join", "Location" };
 
   public static final String[] FOOTER_MODE_LABELS = { "none", "count", 
     "minimum", "maximum",
@@ -304,6 +305,15 @@ public class PropertyManager extends PreferenceActivity {
     // Refresh
     getPreferenceScreen().removeAll();
     loadPreferenceScreen();
+  }
+  
+
+  @Override
+  public void onBackPressed() {
+    // do this here to save your column changes into the tp. This is esp 
+    // important for things like displayName.
+    tp.refreshColumns();
+    super.onBackPressed();
   }
 
   // What value is in this edit box?

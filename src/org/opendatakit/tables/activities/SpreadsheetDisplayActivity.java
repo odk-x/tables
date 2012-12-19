@@ -98,12 +98,23 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         setTitle("");
         dm = new DataManager(DbHelper.getDbHelper(this));
         c = new Controller(this, this, getIntent().getExtras());
-        init();
+//        init();
+    }
+    
+    @Override
+    public void onResume() {
+      super.onResume();
+      Log.d(TAG, "on resume, should re-init");
+      init();
     }
     
     @Override
     public void init() {
+      // I hate having to do these two refreshes here, but with the code the
+      // way it is it seems the only way.
       TableProperties tp = c.getTableProperties();
+      c.refreshDbTable();
+//      tp.refreshColumns();
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
             tp);
         query.loadFromUserQuery(c.getSearchText());

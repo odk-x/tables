@@ -129,7 +129,7 @@ public class ColColorRule {
     EQUAL("="),
     GREATER_THAN_OR_EQUAL(">="),
     GREATER_THAN(">"),
-    NO_OP("add: operation value");
+    NO_OP("operation value");
     
     // This is the string that represents this operation.
     private String symbol;

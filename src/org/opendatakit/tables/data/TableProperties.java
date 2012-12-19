@@ -993,6 +993,9 @@ public class TableProperties {
   }
 
   /**
+   * Return an unordered array of a table's columns. If something has happened
+   * to a column that did not go through TableProperties, update row also needs
+   * to be called.
    * @return an unordered array of the table's columns
    */
   public ColumnProperties[] getColumns() {
@@ -1003,6 +1006,17 @@ public class TableProperties {
     }
     return columns;
  }
+  
+  /**
+   * Pulls the columns from the database into this TableProperties and orders
+   * them according to the column order. This is an optimization and should 
+   * only be done if necessary.
+   */
+  public void refreshColumns() {
+    columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId, 
+        backingStore);
+    orderColumns();
+  }
 
   private void orderColumns() {
     ColumnProperties[] newColumns = new ColumnProperties[columns.length];
