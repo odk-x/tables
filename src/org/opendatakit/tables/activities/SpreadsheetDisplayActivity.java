@@ -128,7 +128,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         } else {
             return new SpreadsheetView(this, this, tp, table, indexedCol, 
                 new DisplayPrefs(this,
-                            c.getTableProperties().getTableId()));
+                            c.getTableProperties(), tp.getIndexColumn()));
         }
     }
     

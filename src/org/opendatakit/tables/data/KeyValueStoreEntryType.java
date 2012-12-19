@@ -26,7 +26,9 @@ public enum KeyValueStoreEntryType {
   TEXT("text"),
   INTEGER("integer"),
   NUMBER("number"),
-  BOOLEAN("boolean");
+  BOOLEAN("boolean"),
+  ARRAYLIST("arraylist"),
+  OBJECT("object");
   
   private String label;
   

@@ -37,6 +37,11 @@ public class ColColorRule {
   public int foreground;
   public int background;
   
+  // ONLY FOR SERIALIZATION
+  private ColColorRule() {
+    // not implemented, used only for serialization
+  }
+  
   /**
    * Construct a new color rule to dictate the coloring of cells. Constructs
    * a UUID for the column id.

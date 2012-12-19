@@ -409,8 +409,9 @@ public class PropertyManager extends PreferenceActivity {
 
     public DisplayPreferencesDialogPreference(Context context) {
       super(context);
-      dialog = new DisplayPrefsDialog(PropertyManager.this, new DisplayPrefs(PropertyManager.this,
-          tableId), colName);
+      dialog = new DisplayPrefsDialog(PropertyManager.this, 
+          new DisplayPrefs(PropertyManager.this,
+          tp, colName), colName);
       setTitle("Display Preferences");
     }
 

@@ -102,7 +102,7 @@ public class DisplayPrefsDialog extends Dialog {
       // only do this once, b/c it clears the list, removing any that we've
       // added here that are not yet in the database.
       lastFocusedRow = -1;
-      colRules = dp.getColorRulesForCol(colName);
+      colRules = dp.getColorRules();
       // and now we want to remember which rules are original ones.
       numOriginalRules = colRules.size();
     }
@@ -286,13 +286,14 @@ public class DisplayPrefsDialog extends Dialog {
    * added and never touched, and therefore is never enforced. Catch this.
    */
   private void persistRows() {
-    for (int i = 0; i < colRules.size(); i++) {
-      if (i < numOriginalRules) {
-        dp.updateRule(colRules.get(i));
-      } else if (colRules.get(i).compType != ColColorRule.RuleType.NO_OP) {
-        dp.addRule(colRules.get(i));
-      }
-    }
+    dp.saveRuleList();
+//    for (int i = 0; i < colRules.size(); i++) {
+//      if (i < numOriginalRules) {
+//        dp.updateRule(colRules.get(i));
+//      } else if (colRules.get(i).compType != ColColorRule.RuleType.NO_OP) {
+//        dp.addRule(colRules.get(i));
+//      }
+//    }
   }
 
   /*

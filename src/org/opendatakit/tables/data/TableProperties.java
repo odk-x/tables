@@ -1037,12 +1037,6 @@ public class TableProperties {
     return getColumns()[index];
   }
 
-  /**
-   * Get the index of the column. Currently by display name...
-   * TODO: make it element key instead
-   * @param colDbName
-   * @return
-   */
   public int getColumnIndex(String colDbName) {
     ArrayList<String> colOrder = getColumnOrder();
     for (int i = 0; i < colOrder.size(); i++) {
@@ -1863,6 +1857,92 @@ public class TableProperties {
   }
   
   /**
+   * Return a list object from the key value store. The caller will have to 
+   * know what the Objects are in the list. Returns null if there is no 
+   * corresponding entry in the key value store.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   */
+  public ArrayList<Object> getListEntry(String partition, String aspect, 
+      String key) {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> keyList = new ArrayList<String>();
+    keyList.add(key);
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        store.getEntriesForKeys(db, partition, aspect, keyList);
+    ArrayList<Object> result = null;
+    // Do some sanity checking. There should only ever be one entry per key.
+    if (entries.size() > 1) {
+      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
+          " for table: " + tableId + " returned " + entries.size() + 
+          "entries. It should return at most 1, as it is a key in a set.");
+    }
+    if (entries.size() == 0) {
+      return null;
+    } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.ARRAYLIST.getLabel())) {
+        throw new IllegalArgumentException("requested list entry for " +
+            "key: " + key + ", but the corresponding entry in the store was " +
+              "not of type: " + KeyValueStoreEntryType.ARRAYLIST.getLabel());      
+      }
+      try {
+        result = mapper.readValue(entries.get(0).value, ArrayList.class);
+        return result;
+      } catch (JsonParseException e) {
+        Log.e(TAG, "problem parsing json list entry from the kvs");
+        e.printStackTrace();
+      } catch (JsonMappingException e) {
+        Log.e(TAG, "problem mapping json list entry from the kvs");
+        e.printStackTrace();
+      } catch (IOException e) {
+        Log.e(TAG, "i/o problem with json for list entry from the kvs");
+        e.printStackTrace();
+      }
+    }
+    return result;   
+  }
+  
+  /**
+   * Get the string representation of an object in the key value store. The
+   * caller is expected to have to do the mapping back to an object.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @return
+   */
+  public String getObjectEntry(String partition, String aspect, String key) {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> keyList = new ArrayList<String>();
+    keyList.add(key);
+    List<OdkTablesKeyValueStoreEntry> entries = 
+        store.getEntriesForKeys(db, partition, aspect, keyList);
+    // Do some sanity checking. There should only ever be one entry per key.
+    if (entries.size() > 1) {
+      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
+          " for table: " + tableId + " returned " + entries.size() + 
+          "entries. It should return at most 1, as it is a key in a set.");
+    }
+    if (entries.size() == 0) {
+      return null;
+    } else {
+      if (!entries.get(0).type.equals(
+          KeyValueStoreEntryType.OBJECT.getLabel())) {
+        throw new IllegalArgumentException("requested object entry for " +
+            "key: " + key + ", but the corresponding entry in the store was " +
+              "not of type: " + KeyValueStoreEntryType.OBJECT.getLabel());      
+      }
+      return entries.get(0).value;
+    }
+  }
+  
+  /**
    * Get an int entry from the key value store. If there is an accessor method
    * for the particular key or property you are requesting, you must use that
    * instead. 
@@ -2060,6 +2140,25 @@ public class TableProperties {
   }
   
   /**
+   * Set an object entry in the key value store. The caller is expected to 
+   * first map the object to JSON.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param jsonOfObject
+   */
+  public void setObjectEntry(String partition, String aspect, String key,
+      String jsonOfObject) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
+    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
+        aspect + ", key: " + key + " to " + jsonOfObject);    
+  }
+  
+  /**
    * Set a boolean entry in the key value store. If an entry already exists
    * it will be overwritten.
    * @param partition
@@ -2096,6 +2195,36 @@ public class TableProperties {
         KeyValueStoreEntryType.TEXT.getLabel(), value);
     Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
         aspect + ", key: " + key + " to " + value);
+  }
+  
+  /**
+   * Set an ArrayList entry in the key value store.
+   * @param partition
+   * @param aspect
+   * @param key
+   * @param value
+   */
+  public void setListEntry(String partition, String aspect, String key, 
+      ArrayList<Object> value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
+    String entryValue = null;
+    try {
+      entryValue = mapper.writeValueAsString(value);
+    } catch (JsonGenerationException e) {
+      Log.e(TAG, "problem parsing json list entry while writing to the kvs");
+      e.printStackTrace();
+    } catch (JsonMappingException e) {
+      Log.e(TAG, "problem mapping json list entry while writing to the kvs");
+      e.printStackTrace();
+    } catch (IOException e) {
+      Log.e(TAG, "i/o exception with json list entry while writing to the" +
+      		" kvs");
+      e.printStackTrace();
+    }
+    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
+        KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
   }
   
   
