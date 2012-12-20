@@ -2,15 +2,17 @@ package org.opendatakit.tables.Activity;
 
 import org.opendatakit.tables.Activity.util.SliderPreference;
 import org.opendatakit.tables.data.Preferences;
+
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 
+import com.actionbarsherlock.app.SherlockPreferenceActivity;
 
-public class DisplayPrefsActivity extends PreferenceActivity {
+
+public class DisplayPrefsActivity extends SherlockPreferenceActivity {
     
     private Preferences prefs;
     

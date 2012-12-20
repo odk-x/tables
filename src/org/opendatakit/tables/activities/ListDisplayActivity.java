@@ -46,6 +46,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
         super.onCreate(savedInstanceState);
         setTitle("");
         c = new Controller(this, this, getIntent().getExtras());
+
         dm = new DataManager(DbHelper.getDbHelper(this));
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
             c.getTableProperties());
@@ -67,6 +68,8 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
                 c.getDbTable().getUserTable(query);
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 c.getTableViewSettings().getCustomListFilename());
+        // change the info bar text
+        c.setInfoBarText(c.getInfoBarText() + " (List)");
         displayView();
     }
     

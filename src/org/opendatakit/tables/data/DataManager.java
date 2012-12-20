@@ -28,6 +28,12 @@ public class DataManager {
         return DbTable.getDbTable(dbh, tableId);
     }
     
+    /**
+     * 
+     * @param tableId
+     * @param typeOfStore
+     * @return org.opendatakit.tables.data.TableProperties
+     */
     public TableProperties getTableProperties(String tableId,
         KeyValueStore.Type typeOfStore) {
         return TableProperties.getTablePropertiesForTable(dbh, tableId,

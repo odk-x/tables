@@ -23,13 +23,14 @@ import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.TableProperties;
 
-import android.app.ListActivity;
+import com.actionbarsherlock.app.SherlockListActivity;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class AggregateChooseTablesActivity extends ListActivity {
+public class AggregateChooseTablesActivity extends SherlockListActivity {
 
   ListView tablesView;
 

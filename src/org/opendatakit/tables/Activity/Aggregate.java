@@ -29,9 +29,10 @@ import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.files.FileSyncAdapter;
 
+import com.actionbarsherlock.app.SherlockActivity;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
@@ -55,7 +56,7 @@ import android.widget.Toast;
  * @author hkworden@gmail.com
  * @author the.dylan.price@gmail.com
  */
-public class Aggregate extends Activity {
+public class Aggregate extends SherlockActivity {
   
   public static final String TAG = "Aggregate--Activity";
 
@@ -75,7 +76,7 @@ public class Aggregate extends Activity {
     accountManager = AccountManager.get(this);
     prefs = new Preferences(this);
 
-    setTitle("ODK Tables > Sync");
+    setTitle("");
     setContentView(R.layout.aggregate_activity);
     findViewComponents();
     initializeData();

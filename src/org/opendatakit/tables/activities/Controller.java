@@ -28,6 +28,7 @@ import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.ColumnManager;
+import org.opendatakit.tables.Activity.DisplayPrefsActivity;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.Activity.TablePropertiesManager;
 import org.opendatakit.tables.Activity.util.LanguageUtil;
@@ -40,10 +41,8 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewSettings;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.data.TableViewSettings.Type;
 import org.xmlpull.v1.XmlPullParserException;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockActivity;
 
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -67,6 +66,8 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
@@ -89,22 +90,19 @@ public class Controller {
     public static final String INTENT_KEY_SEARCH = "search";
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
-    
-    private String infoBarText = "";
-    
+      
     public static final int VIEW_ID_SEARCH_FIELD = 0;
     public static final int VIEW_ID_SEARCH_BUTTON = 1;
     
-    private static final int MENU_ITEM_ID_SEARCH_BUTTON = 1;
-    private static final int MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE = 0;
+    private static final int MENU_ITEM_ID_SEARCH_BUTTON = 0;
+    private static final int MENU_ITEM_ID_VIEW_TYPE_SUBMENU = 1;
 	private static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
-	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 3;
-    private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 4;
-    private static final int MENU_ITEM_ID_OPEN_TABLE_MANAGER = 5;
-    static final int FIRST_FREE_MENU_ITEM_ID = 6;
-    
-    private static final int GROUP_ID_SUBMENU = 1;
-    
+	private static final int MENU_ITEM_ID_SETTINGS_SUBMENU = 3;
+	private static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
+	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
+    private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
+    static final int FIRST_FREE_MENU_ITEM_ID = 7;
+        
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
@@ -135,6 +133,7 @@ public class Controller {
     private final RelativeLayout container;
     private LinearLayout controlWrap;
     private EditText searchField;
+    private TextView infoBar;
     private final ViewGroup displayWrap;
     private View overlay;
     private RelativeLayout.LayoutParams overlayLp;
@@ -210,8 +209,10 @@ public class Controller {
         controlWrap.setVisibility(View.GONE);
         
         // info bar currently displays just the name of the table
-        TextView infoBar = createInfoBar(tp.getDisplayName(), Color.parseColor("#B0B0B0"), Color.BLACK);
-        
+        infoBar = new TextView(activity);
+        infoBar.setText("Table: " + tp.getDisplayName());
+        infoBar.setBackgroundColor(Color.parseColor("#B0B0B0"));
+        infoBar.setTextColor(Color.BLACK);
 
         LinearLayout wrapper = new LinearLayout(activity);
         wrapper.setOrientation(LinearLayout.VERTICAL);
@@ -233,44 +234,37 @@ public class Controller {
     }
     
     /**
-     * Create a new Info Bar to display below the Action Bar
-     * @param text String to be displayed in the info bar
-     * @param backgroundColor Color of the info bar
-     * @param textColor Color of the text
-     * @return info bar 
+     *  Set the text in the info bar
+     * @param text String to display in info bar
      */
-    public TextView createInfoBar(String text, int backgroundColor, int textColor) {
-        TextView infoBar = new TextView(activity);
-        infoBarText = text;
-        infoBar.setText("Table: " + infoBarText);
-        infoBar.setBackgroundColor(backgroundColor);
-        infoBar.setTextColor(textColor);
-        return infoBar;
-    }
-    
-    /**
-     * Add more text to an existing info bar
-     * @param text String to be added to the info bar
-     */
-    public void addToInfoBar(String text) {
-    	infoBarText += text;
+    public void setInfoBarText(String text) {
+    	infoBar.setText(text);
     }
     
     /**
      * @return the current text in info bar
      */
     public String getInfoBarText() {
-    	return infoBarText;
+    	return infoBar.getText().toString();
     }
 
+    /** 
+     * @return TableProperties properties of this table
+     */
   TableProperties getTableProperties() {
     return tp;
   }
 
+  /**
+   * @return DbTable this data table
+   */
   DbTable getDbTable() {
     return dbt;
   }
 
+  /**
+   * @return TableViewSettings view settings of this table
+   */
   TableViewSettings getTableViewSettings() {
     return tvs;
   }
@@ -283,10 +277,16 @@ public class Controller {
       return isOverview;
   }
 
+  /**
+   * @return String text currently in the search bar
+   */
   String getSearchText() {
     return searchText.peek();
   }
 
+  /**
+   * @return the view generated for this
+   */
   View getContainerView() {
     return container;
   }
@@ -511,18 +511,17 @@ public class Controller {
      * @param menu Menu
      * @param enabled boolean
      */
-    void buildOptionsMenu(Menu menu, boolean enabled) {
+    void buildOptionsMenu(Menu menu, boolean enabled) {     
+		// set the app icon as an action to go home
     	ActionBar actionBar = activity.getSupportActionBar();
     	actionBar.setDisplayHomeAsUpEnabled(true);
     	
-        MenuItem item; 
-        
         // search 
-        item = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
+        MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
                 "Search"); 
-        item.setIcon(R.drawable.ic_action_search);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        item.setEnabled(enabled);
+        searchItem.setIcon(R.drawable.ic_action_search);
+        searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        searchItem.setEnabled(enabled);
         
         
         // view type submenu
@@ -536,31 +535,47 @@ public class Controller {
                     viewTypeIds[i]);
         }
         // 	  -build a checkable submenu to select the view type
-        SubMenu viewType = menu.addSubMenu("View Type");
+        SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE, "ViewType");
+        MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
+        viewType.setEnabled(enabled);
+        viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        MenuItem item;
         for(int i = 0; i < viewTypeNames.length; i++) {
-        	item = viewType.add(GROUP_ID_SUBMENU, viewTypeIds[i], i, viewTypeNames[i]);
+        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypeIds[i], i, viewTypeNames[i]);
+        	// mark the current viewType as selected
         	if (tvs.getViewType() == viewTypeIds[i]) {
                 item.setChecked(true);
             }
+        	
+        	// disable list view if no file is specified
+        	if (viewTypeIds[i] == Type.LIST && tvs.getCustomListFilename() == null) {
+        		item.setEnabled(false);
+        	}
         }
-        viewType.setGroupCheckable(GROUP_ID_SUBMENU, true, true);
-        MenuItem subMenuItem = viewType.getItem();
-        subMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        subMenuItem.setEnabled(enabled);
+        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, true, true);
         
-        // the other action items / menu items 
-        item = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
+        // Add Row
+        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
               "Add Row").setEnabled(enabled);
-        item.setIcon(R.drawable.addrow_icon);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        addItem.setIcon(R.drawable.addrow_icon);
+        addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         
-    	menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
+        // Settings submenu
+        SubMenu settings = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, Menu.NONE, "Settings");
+        MenuItem settingsItem = settings.getItem();
+        settingsItem.setIcon(R.drawable.settings_icon2);
+        settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS); 
+        // TODO: change to setEnabled(enabled) once DisplayPrefActivity is finished
+        MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE, 
+        		"Display Preferences").setEnabled(false);
+        // always disable DisplayPreferences if it is currently in list view
+        if (tvs.getViewType() == Type.LIST)
+        	display.setEnabled(false);
+        settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
     			"Table Properties").setEnabled(enabled);
-        menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
-                "Column Manager").setEnabled(enabled);
-        menu.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_MANAGER, Menu.NONE,
-                "Table Manager").setEnabled(enabled); 
+        settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
+              "Column Manager").setEnabled(enabled);
     }
 
     /**
@@ -572,7 +587,7 @@ public class Controller {
 		int itemId = selectedItem.getItemId();
 		// if the item is part of the sub-menu for view type, set the view type with its itemId
 	    // else, handle accordingly
-		if(selectedItem.getGroupId() == GROUP_ID_SUBMENU) {
+		if(selectedItem.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
 			tvs.setViewType(itemId);
             Controller.launchTableActivity(activity, tp, searchText,
                     isOverview);
@@ -587,7 +602,7 @@ public class Controller {
 	        	else
 	        		controlWrap.setVisibility(View.GONE);
 	        	return true;  
-	        case MENU_ITEM_ID_CHANGE_TABLE_VIEW_TYPE:
+	        case MENU_ITEM_ID_VIEW_TYPE_SUBMENU:
 	        	return true;
 	        case MENU_ITEM_ID_ADD_ROW_BUTTON:
 	            Intent intentAddRow = getIntentForOdkCollectAddRow();
@@ -596,6 +611,14 @@ public class Controller {
 	                        RCODE_ODKCOLLECT_ADD_ROW);
 	            }
 	            return true;
+	        case MENU_ITEM_ID_SETTINGS_SUBMENU:
+	        	return true;
+	        case MENU_ITEM_ID_DISPLAY_PREFERENCES:
+	        	Intent k = new Intent(activity, DisplayPrefsActivity.class);
+	        	k.putExtra("tableId", tp.getTableId());
+	        	
+			    activity.startActivity(k);
+	        	return true;
 	        case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
 	            {
 	            Intent intent = new Intent(activity, TablePropertiesManager.class);
@@ -613,7 +636,7 @@ public class Controller {
 	            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
 	            }
 	            return true;
-	        case MENU_ITEM_ID_OPEN_TABLE_MANAGER:
+	        case android.R.id.home:
 	            activity.startActivity(new Intent(activity, TableManager.class));
 	            return true;
 	        default:
