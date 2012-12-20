@@ -167,18 +167,20 @@ public class TableViewSettings {
     if (jo.containsKey(JSON_KEY_LIST_SETTINGS)) {
       setListFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LIST_SETTINGS));
     }
-    if (jo.containsKey(JSON_KEY_LINE_SETTINGS)) {
-      setLineFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LINE_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_BAR_SETTINGS)) {
-      setBarFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BAR_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_BOX_STEM_SETTINGS)) {
-      setBoxStemFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BOX_STEM_SETTINGS));
-    }
-    if (jo.containsKey(JSON_KEY_MAP_SETTINGS)) {
-      setMapFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_MAP_SETTINGS));
-    }
+// TODO removing these so that it speeds up creation. We should figure out how
+    // to incorporate these correctly, though.
+//    if (jo.containsKey(JSON_KEY_LINE_SETTINGS)) {
+//      setLineFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_LINE_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BAR_SETTINGS)) {
+//      setBarFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BAR_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_BOX_STEM_SETTINGS)) {
+//      setBoxStemFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_BOX_STEM_SETTINGS));
+//    }
+//    if (jo.containsKey(JSON_KEY_MAP_SETTINGS)) {
+//      setMapFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_MAP_SETTINGS));
+//    }
     if (jo.containsKey(JSON_KEY_CUSTOM_SETTINGS)) {
       setCustomFromJsonObject((Map<String, Object>) jo.get(JSON_KEY_CUSTOM_SETTINGS));
     }
@@ -609,14 +611,14 @@ public class TableViewSettings {
     List<Integer> list = new ArrayList<Integer>();
     list.add(Type.SPREADSHEET);
     list.add(Type.LIST);
-    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
-      list.add(Type.LINE_GRAPH);
-    }
-    if (numericColCount >= 1) {
-      list.add(Type.BOX_STEM);
-    }
+//    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
+//      list.add(Type.LINE_GRAPH);
+//    }
+//    if (numericColCount >= 1) {
+//      list.add(Type.BOX_STEM);
+//    }
     // Not adding this b/c it's not working atm.
-//    list.add(Type.BAR_GRAPH);
+    list.add(Type.BAR_GRAPH);
     if (locationColCount >= 1) {
       list.add(Type.MAP);
     }

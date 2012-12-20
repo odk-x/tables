@@ -15,6 +15,7 @@ import org.opendatakit.tables.data.TableViewSettings;
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SyncResult;
 import android.database.sqlite.SQLiteDatabase;
@@ -129,6 +130,12 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         }
       } finally {
         //TODO: fix when to close db problem.
+        // here we also want to try and stop syncing the file. This is b/c we
+        // don't want to keep on synching in the background, or else you start
+        // throwing errors about html issues. This might go away if we move
+        // away from sync adapters as the pattern.
+        ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 0);
+        ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", false);
       }
     }
     

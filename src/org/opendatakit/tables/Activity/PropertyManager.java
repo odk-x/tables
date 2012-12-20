@@ -21,6 +21,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.FooterMode;
+import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -138,8 +139,15 @@ public class PropertyManager extends PreferenceActivity {
       showingMcDialog = true;
       category.addPreference(new McOptionSettingsDialogPreference(this));
     } else if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
-//      String joinTableId = cp.getJoinTableId();
-      String joins = cp.getJoins();
+      // first handle what happens if it's null.
+      JoinColumn joins = cp.getJoins();
+      if (joins == null) {
+        joins = new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE,
+            JoinColumn.DEFAULT_NOT_SET_VALUE);
+        cp.setJoins(joins);
+      }
+      String joinTableId = cp.getJoins().getTableId();
+//      String joins = cp.getJoins();
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
@@ -154,8 +162,8 @@ public class PropertyManager extends PreferenceActivity {
         }
         tableIds[index] = tp.getTableId();
         tableNames[index] = tp.getDbTableName();
-//        if (tp.getTableId().equals(joinTableId)) {
-        if (tp.getTableId().equals(joins)) {
+        if (tp.getTableId().equals(joinTableId)) {
+//        if (tp.getTableId().equals(joins)) {
           selectedTp = tp;
           selectedTableId = tp.getTableId();
           selectedDisplayName = tp.getDisplayName();
@@ -167,6 +175,7 @@ public class PropertyManager extends PreferenceActivity {
       if (selectedTp != null) {
         // TODO: resolve how joins work
 //        String joinColName = cp.getJoinColumnName();
+        String joinColName = cp.getJoins().getElementKey();
         ColumnProperties[] cps = selectedTp.getColumns();
         String[] colDbNames = new String[cps.length + 1];
         String selectedDbName = colDbNames[0] = null;
@@ -176,8 +185,8 @@ public class PropertyManager extends PreferenceActivity {
           String colDbName = cps[i].getColumnDbName();
           colDbNames[i + 1] = colDbName;
           colDisplayNames[i + 1] = cps[i].getDisplayName();
-//          if ((joinColName != null) && colDbName.equals(joinColName)) {
-          if ((joins != null) && colDbName.equals(joins)) {
+          if ((joinColName != null) && colDbName.equals(joinColName)) {
+//          if ((joins != null) && colDbName.equals(joins)) {
             selectedDbName = colDbName;
             selectedColDisplayName = cps[i].getDisplayName();
           }
@@ -259,11 +268,16 @@ public class PropertyManager extends PreferenceActivity {
     } else if (key.equals("JOIN_TABLE")) {
       // TODO: resolve the ifs here for joins
 //      cp.setJoinTableId(newVal);
-      cp.setJoins(newVal);
-    }
-//    } else if (key.equals("JOIN_COLUMN")) {
+//      cp.setJoins(newVal);
+      JoinColumn oldJoins = cp.getJoins();
+      oldJoins.setTableId(newVal);
+      cp.setJoins(oldJoins);
+    } else if (key.equals("JOIN_COLUMN")) {
 //      cp.setJoinColumnName(newVal);
-//    }
+      JoinColumn oldJoins = cp.getJoins();
+      oldJoins.setElementKey(newVal);
+      cp.setJoins(oldJoins);
+    }
 
     // Refresh
     getPreferenceScreen().removeAll();

@@ -52,7 +52,7 @@ public class LanguageUtil {
         case TableViewSettings.Type.BOX_STEM:
             return "Box-Stem Graph";
         case TableViewSettings.Type.BAR_GRAPH:
-            return "Bar Graph";
+            return "Graph";
         case TableViewSettings.Type.MAP:
             return "Map";
         default:
