@@ -8,3 +8,5 @@ perftests/.classpath
 syntax: glob
 .settings/org.eclipse.jdt.core.prefs
 db\.sql
+perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
+perftests/project\.properties
