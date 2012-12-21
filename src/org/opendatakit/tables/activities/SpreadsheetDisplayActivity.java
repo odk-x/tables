@@ -400,9 +400,22 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
     
     @Override
-    public void regularCellDoubleClicked(int cellId) {
+    public void regularCellDoubleClicked(int cellId, boolean isIndexed) {
+      // TODO: NOT GETTING THE CORRECT CELLS ON INDEXED TABLES
+      // So it seems like the cellId is coming from the mainData table, which
+      // does NOT include the index. So to get the right row here we actually
+      // have to perform a little extra.
+      if (!isIndexed) {
         c.openCellEditDialog(table.getRowId(cellId / table.getWidth()),
-                table.getData(cellId), cellId % table.getWidth());
+                table.getData(cellId), cellId % table.getWidth());    
+      } else { // it's indexed
+        int colNum = cellId % (table.getWidth() - 1);
+        int rowNum = cellId / (table.getWidth() - 1);
+        int trueNum = cellId + rowNum + ((colNum < indexedCol) ? 0 : 1);
+        c.openCellEditDialog(table.getRowId(rowNum), table.getData(trueNum),
+            colNum);
+      }
+
     }
     
     @Override
@@ -476,6 +489,15 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 		c.removeOverlay();
 		// TODO Auto-generated method stub
 		
+	}
+	
+	@Override
+	public void indexedColCellDoubleClicked(int cellId) {
+     // Ok, so here the cellId is also the row number, as we only allow a 
+     // single indexed column atm. So if you double click the 5th cell, it will
+     // also have to be the 5th row.
+     c.openCellEditDialog(table.getRowId(cellId), 
+         table.getData(cellId, indexedCol), indexedCol);
 	}
 
 	@Override

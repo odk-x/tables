@@ -135,16 +135,21 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainData.getCellNumber(x, y);
+                Log.d(TAG, "mainDataCellClickListener cellId: " + cellNum);
                 if (indexedCol < 0) {
                     return cellNum;
                 } else {
-                    int colNum = cellNum % (table.getWidth() - 1);
-                    int rowNum = cellNum / (table.getWidth() - 1);
-                    return cellNum + rowNum + ((colNum < indexedCol) ? 0 : 1);
+                  return cellNum;
+//                    int colNum = cellNum % (table.getWidth() - 1);
+//                    int rowNum = cellNum / (table.getWidth() - 1);
+//                    return cellNum + rowNum + ((colNum < indexedCol) ? 0 : 1);
                 }
             }
             @Override
             protected void takeDownAction(int cellId) {
+              if (indexedCol >= 0) {
+                indexData.highlight(-1);
+              }
                 mainData.highlight(cellId);
             }
             @Override
@@ -159,7 +164,8 @@ public class SpreadsheetView extends LinearLayout
             }
             @Override
             protected void takeDoubleClickAction(int cellId) {
-                controller.regularCellDoubleClicked(cellId);
+              boolean isIndexed = indexedCol >= 0;
+                controller.regularCellDoubleClicked(cellId, isIndexed);
             }
         };
         mainHeaderCellClickListener = new CellTouchListener() {
@@ -220,10 +226,15 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = indexData.getCellNumber(x, y);
-                return (cellNum * table.getWidth()) + indexedCol;
+                Log.d(TAG, "indexDataCellClickListener cellNum: " + cellNum);
+                return cellNum;
+//                return (cellNum * table.getWidth()) + indexedCol;
             }
             @Override
-            protected void takeDownAction(int cellId) {}
+            protected void takeDownAction(int cellId) {
+              mainData.highlight(-1);
+              indexData.highlight(cellId);
+            }
             @Override
             protected void takeClickAction(int cellId) {
                 mainData.highlight(-1);
@@ -236,7 +247,9 @@ public class SpreadsheetView extends LinearLayout
                 controller.openContextMenu(indexData);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId) {
+              controller.indexedColCellDoubleClicked(cellId);
+            }
         };
         indexHeaderCellClickListener = new CellTouchListener() {
             @Override
@@ -610,7 +623,9 @@ public class SpreadsheetView extends LinearLayout
         
         public void regularCellLongClicked(int cellId, int rawX, int rawY);
         
-        public void regularCellDoubleClicked(int cellId);
+        public void regularCellDoubleClicked(int cellId, boolean isIndexed);
+        
+        public void indexedColCellDoubleClicked(int cellId);
         
         public void openContextMenu(View view);
         
