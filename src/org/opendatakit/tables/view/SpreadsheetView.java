@@ -159,8 +159,10 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected void takeLongClickAction(int cellId, int rawX,
                     int rawY) {
+              boolean isIndexed = indexedCol >= 0;
                 lastLongClickedCellId = cellId;
-                controller.regularCellLongClicked(cellId, rawX, rawY);
+                controller.regularCellLongClicked(cellId, rawX, rawY, 
+                    isIndexed);
             }
             @Override
             protected void takeDoubleClickAction(int cellId) {
@@ -243,8 +245,11 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected void takeLongClickAction(int cellId, int rawX,
                     int rawY) {
+//                lastLongClickedCellId = cellId;
+//                controller.openContextMenu(indexData);
+              // TODO: THIS IS STORING THE WRONG CELLID
                 lastLongClickedCellId = cellId;
-                controller.openContextMenu(indexData);
+                controller.indexedColCellLongClicked(cellId, rawX, rawY);
             }
             @Override
             protected void takeDoubleClickAction(int cellId) {
@@ -621,11 +626,14 @@ public class SpreadsheetView extends LinearLayout
         
         public void indexedColCellClicked(int cellId);
         
-        public void regularCellLongClicked(int cellId, int rawX, int rawY);
+        public void regularCellLongClicked(int cellId, int rawX, int rawY,
+            boolean isIndexed);
         
         public void regularCellDoubleClicked(int cellId, boolean isIndexed);
         
         public void indexedColCellDoubleClicked(int cellId);
+        
+        public void indexedColCellLongClicked(int cellId, int rawX, int rawY);
         
         public void openContextMenu(View view);
         

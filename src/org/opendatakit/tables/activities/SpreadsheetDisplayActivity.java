@@ -395,13 +395,32 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
     
     @Override
-    public void regularCellLongClicked(int cellId, int rawX, int rawY) {
+    public void regularCellLongClicked(int cellId, int rawX, int rawY,
+        boolean isIndexed) {
+      // So we need to check for whether or not the table is indexed again and
+      // alter the cellId appropriately.
+      if (isIndexed) {
+        int colNum = cellId % (table.getWidth() - 1);
+        int rowNum = cellId / (table.getWidth() - 1);
+        cellId = cellId + rowNum + ((colNum < indexedCol) ? 0 : 1);
+      }
         c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
     }
     
     @Override
+    public void indexedColCellLongClicked(int cellId, int rawX, int rawY) {
+//      int colNum = cellId % (table.getWidth() - 1);
+//      int rowNum = cellId / (table.getWidth() - 1);
+//      int trueNum = colNum + rowNum;
+      // here it's just the row plus the number of the indexed column.
+      // So the true cell id is the cellId parameter, which is essentially the
+      // row number, * the width of the table, plus the indexed col
+      int trueNum = cellId * table.getWidth() + indexedCol;
+      c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
+    }
+    
+    @Override
     public void regularCellDoubleClicked(int cellId, boolean isIndexed) {
-      // TODO: NOT GETTING THE CORRECT CELLS ON INDEXED TABLES
       // So it seems like the cellId is coming from the mainData table, which
       // does NOT include the index. So to get the right row here we actually
       // have to perform a little extra.
