@@ -27,7 +27,7 @@ import android.widget.TabHost;
  * An activity for importing and exporting tables.
  */
 public class ImportExportActivity extends TabActivity {
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.importexport_view);
@@ -47,5 +47,5 @@ public class ImportExportActivity extends TabActivity {
 		spec.setContent(intent);
 		th.addTab(spec);
 	}
-	
+
 }

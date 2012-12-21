@@ -22,7 +22,6 @@ import java.util.Arrays;
 
 import org.opendatakit.tables.R;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -30,13 +29,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.actionbarsherlock.app.SherlockActivity;
 /*
  * Depricated Code. It will be updated in near future.
  * Ignore now.
  * 
  * @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
-public class FileManager extends Activity {
+public class FileManager extends SherlockActivity {
 	
 	public static final String FILE_LOAD_PATH = "File Load Path";
 	

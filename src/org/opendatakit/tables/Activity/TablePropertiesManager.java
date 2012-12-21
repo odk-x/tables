@@ -109,7 +109,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         dbh = DbHelper.getDbHelper(this);
         tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
             KeyValueStore.Type.ACTIVE);
-        setTitle("ODK Tables > Table Manager > " + tp.getDisplayName());
+        setTitle("Table Manager > " + tp.getDisplayName());
         init();
     }
     
@@ -260,8 +260,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
                 tp.setDisplayName((String) newValue);
-                setTitle("ODK Tables > Table Manager > " +
-                        tp.getDisplayName());
+                setTitle("Table Manager > " + tp.getDisplayName());
                 init();
                 return false;
             }
@@ -589,12 +588,10 @@ public class TablePropertiesManager extends PreferenceActivity {
         });
         prefCat.addPreference(viewTypePref);
         
-//        switch (settings.getViewType()) {
         switch (tp.getCurrentViewType()) {
-//        case TableViewSettings.Type.LIST:
         case List:
             {
-            	// Launches IO File Manager to change the list view file
+            	// June: Launches IO File Manager to change the list view file
             	// (The previous method was to manually enter the filename - see 
             	//  commented out code below)
             	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
@@ -622,262 +619,14 @@ public class TablePropertiesManager extends PreferenceActivity {
                 prefCat.addPreference(listFilePref);
                 }
                 break;
-
-//            EditTextPreference listFilePref = new EditTextPreference(this);
-//            listFilePref.setTitle(label + " List View File");
-//            listFilePref.setDialogTitle("Change " + label + " List View File");
-//            if (settings.getCustomListFilename() != null) {
-//                listFilePref.setDefaultValue(settings.getCustomListFilename());
-//            }
-//            listFilePref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setCustomListFilename((String) newValue);
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(listFilePref);
-//            }
-//            break;
-        
-//        case TableViewSettings.Type.DETAIL:
-//        {
-//        EditTextPreference detailFilePref = new EditTextPreference(this);
-//        detailFilePref.setTitle(label + " Detail View File");
-//        detailFilePref.setDialogTitle("Change " + label + " Detail View File");
-//        if (settings.getCustomDetailFileName() != null) {
-//            detailFilePref.setDefaultValue(settings.getCustomDetailFileName());
-//        }
-//        detailFilePref.setOnPreferenceChangeListener(
-//                new OnPreferenceChangeListener() {
-//            @Override
-//            public boolean onPreferenceChange(Preference preference,
-//                    Object newValue) {
-//                settings.setCustomDetailFilename((String) newValue);
-//                init();
-//                return false;
-//            }
-//        });
-//        prefCat.addPreference(detailFilePref);
-//        }
-//        break;
-        
-//        case TableViewSettings.Type.LINE_GRAPH:
-//            {
-//            ColumnProperties xCol = settings.getLineXCol();
-//            if (xCol == null) {
-//                xCol = numberCols.get(0);
-//            }
-//            ColumnProperties yCol = settings.getLineYCol();
-//            if (yCol == null) {
-//                yCol = numberCols.get(0);
-//            }
-//            String[] numberColDbNames = new String[numberCols.size()];
-//            String[] numberColDisplayNames = new String[numberCols.size()];
-//            String[] possibleXColDbNames =
-//                new String[numberCols.size() + dateCols.size()];
-//            String[] possibleXColDisplayNames =
-//                new String[numberCols.size() + dateCols.size()];
-//            for (int i = 0; i < numberCols.size(); i++) {
-//                numberColDbNames[i] = numberCols.get(i).getColumnDbName();
-//                numberColDisplayNames[i] = numberCols.get(i).getDisplayName();
-//                possibleXColDbNames[i] = numberCols.get(i).getColumnDbName();
-//                possibleXColDisplayNames[i] = numberCols.get(i).getDisplayName();
-//            }
-//            for (int i = 0; i < dateCols.size(); i++) {
-//                int index = numberCols.size() + i;
-//                possibleXColDbNames[index] = dateCols.get(i).getColumnDbName();
-//                possibleXColDisplayNames[index] = dateCols.get(i).getDisplayName();
-//            }
-//            
-//            ListPreference lineXColPref = new ListPreference(this);
-//            lineXColPref.setTitle(label + " X Column");
-//            lineXColPref.setDialogTitle("Change " + label + " X Column");
-//            lineXColPref.setEntryValues(possibleXColDbNames);
-//            lineXColPref.setEntries(possibleXColDisplayNames);
-//            lineXColPref.setValue(xCol.getColumnDbName());
-//            lineXColPref.setSummary(xCol.getDisplayName());
-//            lineXColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setLineXCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(lineXColPref);
-//            
-//            ListPreference lineYColPref = new ListPreference(this);
-//            lineYColPref.setTitle(label + " Y Column");
-//            lineYColPref.setDialogTitle("Change " + label + " Y Column");
-//            lineYColPref.setEntryValues(numberColDbNames);
-//            lineYColPref.setEntries(numberColDisplayNames);
-//            lineYColPref.setValue(yCol.getColumnDbName());
-//            lineYColPref.setSummary(yCol.getDisplayName());
-//            lineYColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setLineYCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(lineYColPref);
-//            }
-//            break;
-//        
-//        case TableViewSettings.Type.BAR_GRAPH:
         case Graph:
-// so this changes big time with the addition of the D3 stuff, so I'm just
-// commenting this out so that we don't have to deal with the giant freaking
-// mess that is table view settings.
-//            {
-//            ColumnProperties xCol = settings.getBarXCol();
-//            if (xCol == null) {
-//                xCol = tp.getColumns()[0];
-//            }
-//            String yCol = settings.getBarYCol();
-//            String yColSummary;
-//            if (yCol == null || yCol.startsWith("*")) {
-//                yCol = "*count";
-//                yColSummary = "Count";
-//            } else {
-//                yColSummary = tp.getColumnByDbName(yCol).getDisplayName();
-//            }
-//            ColumnProperties[] cps = tp.getColumns();
-//            String[] xColDbNames = new String[cps.length];
-//            String[] xColDisplayNames = new String[cps.length];
-//            for (int i = 0; i < cps.length; i++) {
-//                xColDbNames[i] = cps[i].getColumnDbName();
-//                xColDisplayNames[i] = cps[i].getDisplayName();
-//            }
-//            String[] yColDbNames = new String[numberCols.size() + 1];
-//            String[] yColDisplayNames = new String[numberCols.size() + 1];
-//            yColDbNames[0] = "*count";
-//            yColDisplayNames[0] = "Count";
-//            for (int i = 0; i < numberCols.size(); i++) {
-//                yColDbNames[i] = numberCols.get(i).getColumnDbName();
-//                yColDisplayNames[i] = numberCols.get(i).getDisplayName();
-//            }
-//            
-//            ListPreference barXColPref = new ListPreference(this);
-//            barXColPref.setTitle(label + " X Column");
-//            barXColPref.setDialogTitle("Change " + label + " X Column");
-//            barXColPref.setEntryValues(xColDbNames);
-//            barXColPref.setEntries(xColDisplayNames);
-//            barXColPref.setValue(xCol.getColumnDbName());
-//            barXColPref.setSummary(xCol.getDisplayName());
-//            barXColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setBarXCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(barXColPref);
-//            
-//            ListPreference barYColPref = new ListPreference(this);
-//            barYColPref.setTitle(label + " Y Column");
-//            barYColPref.setDialogTitle("Change " + label + " Y Column");
-//            barYColPref.setEntryValues(yColDbNames);
-//            barYColPref.setEntries(yColDisplayNames);
-//            barYColPref.setValue(yCol);
-//            barYColPref.setSummary(yColSummary);
-//            barYColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setBarYCol((String) newValue);
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(barYColPref);
-//            }
-            break;
-        
-//        case TableViewSettings.Type.BOX_STEM:
-//            {
-//            ColumnProperties xCol = settings.getBoxStemXCol();
-//            if (xCol == null) {
-//                xCol = tp.getColumns()[0];
-//            }
-//            ColumnProperties yCol = settings.getBoxStemYCol();
-//            if (yCol == null) {
-//                yCol = numberCols.get(0);
-//            }
-//            ColumnProperties[] cps = tp.getColumns();
-//            String[] colDbNames = new String[cps.length];
-//            String[] colDisplayNames = new String[cps.length];
-//            for (int i = 0; i < cps.length; i++) {
-//                colDbNames[i] = cps[i].getColumnDbName();
-//                colDisplayNames[i] = cps[i].getDisplayName();
-//            }
-//            String[] numberColDbNames = new String[numberCols.size()];
-//            String[] numberColDisplayNames = new String[numberCols.size()];
-//            for (int i = 0; i < numberCols.size(); i++) {
-//                numberColDbNames[i] = numberCols.get(i).getColumnDbName();
-//                numberColDisplayNames[i] = numberCols.get(i).getDisplayName();
-//            }
-//            
-//            ListPreference boxStemXColPref = new ListPreference(this);
-//            boxStemXColPref.setTitle(label + " X Column");
-//            boxStemXColPref.setDialogTitle("Change " + label + " X Column");
-//            boxStemXColPref.setEntryValues(colDbNames);
-//            boxStemXColPref.setEntries(colDisplayNames);
-//            boxStemXColPref.setValue(xCol.getColumnDbName());
-//            boxStemXColPref.setSummary(xCol.getDisplayName());
-//            boxStemXColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setBoxStemXCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(boxStemXColPref);
-//            
-//            ListPreference boxStemYColPref = new ListPreference(this);
-//            boxStemYColPref.setTitle(label + " Y Column");
-//            boxStemYColPref.setDialogTitle("Change " + label + " Y Column");
-//            boxStemYColPref.setEntryValues(numberColDbNames);
-//            boxStemYColPref.setEntries(numberColDisplayNames);
-//            boxStemYColPref.setValue(yCol.getColumnDbName());
-//            boxStemYColPref.setSummary(yCol.getDisplayName());
-//            boxStemYColPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setBoxStemYCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(boxStemYColPref);
-//            }
-//            break;
-//        
-//        case TableViewSettings.Type.MAP:
+          Log.d(TAG, "Graph view type was selected");
+          break;
+
         case Map:
+// SS: i'm unsure about the implementation state of this, and get possible 
+// views is set up to never return map, so I'm just commenting this out but
+// leaving a place for it.
 //            {
 //            ColumnProperties labelCol = settings.getMapLabelCol();
 //            if (labelCol == null) {

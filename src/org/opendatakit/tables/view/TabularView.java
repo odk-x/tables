@@ -473,7 +473,7 @@ class TabularView extends View {
 
   private void drawCell(Canvas canvas, int x, int y, String datum, 
       int backgroundColor, int foregroundColor, int columnWidth) {
-    Log.d(TAG, "drawCell called");
+//    Log.d(TAG, "drawCell called");
     // have to do this check to reset to the default, otherwise it uses the 
     // old object which was previously saved and paints all the columns the 
     // wrong color.

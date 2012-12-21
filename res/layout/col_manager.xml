@@ -3,23 +3,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/column_manager_view" 
 	android:layout_width="fill_parent" 
-	android:layout_height="wrap_content" 
-	android:background="#FFFFFF">	
-	
-	 
-	<TextView android:id="@+id/label"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="#000000"
-    	android:background="#FFFFFF"
-        android:layout_width="wrap_content"
-        android:paddingLeft="9dip"
-        android:layout_height="wrap_content"
-        android:layout_alignWithParentIfMissing="true"
-		android:layout_centerVertical="true"
-        android:ellipsize="marquee"
-        android:singleLine="true"
-        android:text="Click Menu to Add a New Column"
-		/>
+	android:layout_height="wrap_content" >	
 		
 	<org.opendatakit.tables.Library.TouchListView
 		xmlns:android="http://schemas.android.com/apk/res/android"
@@ -28,10 +12,9 @@
 		android:id="@android:id/list"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:layout_below="@+id/label"
 		android:drawSelectorOnTop="false"
 		android:divider="#C0C0C0"
-        android:dividerHeight="1px"
+        android:dividerHeight="1dp"
 		tlv:normal_height="64dip"
 		tlv:grabber="@+id/icon"
 		tlv:remove_mode="slideRight"

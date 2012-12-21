@@ -32,13 +32,11 @@ import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
 
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SyncResult;
@@ -49,7 +47,9 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class AggregateDownloadTableActivity extends ListActivity {
+import com.actionbarsherlock.app.SherlockListActivity;
+
+public class AggregateDownloadTableActivity extends SherlockListActivity {
 
   private static final String TAG = AggregateDownloadTableActivity.class.getSimpleName();
 

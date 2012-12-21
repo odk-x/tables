@@ -18,13 +18,14 @@ import java.io.IOException;
 
 import org.opendatakit.tables.data.Preferences;
 
+import com.actionbarsherlock.app.SherlockActivity;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
@@ -38,7 +39,7 @@ import android.os.Bundle;
  * @author the.dylan.price@gmail.com (modified by)
  */
 
-public class AccountInfoActivity extends Activity {
+public class AccountInfoActivity extends SherlockActivity {
   public static final String INTENT_EXTRAS_ACCOUNT = "account";
 
   private final static int WAITING_ID = 1;

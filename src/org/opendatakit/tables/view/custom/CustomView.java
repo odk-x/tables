@@ -32,7 +32,11 @@ import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import android.content.Context;
+import android.util.Log;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
+import android.webkit.WebStorage.QuotaUpdater;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
@@ -54,7 +58,39 @@ public abstract class CustomView extends LinearLayout {
 		}
 		webView = new WebView(context);
 		webView.getSettings().setJavaScriptEnabled(true);
-		webView.setWebViewClient(new WebViewClient() {});
+		webView.setWebViewClient(new WebViewClient() {
+
+      @Override
+      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        super.onReceivedError(view, errorCode, description, failingUrl);
+        Log.e("CustomView", "onReceivedError: " + description + " at " + failingUrl);
+      }});
+		
+		webView.setWebChromeClient(new WebChromeClient(){
+
+      @Override
+      public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+        Log.i("CustomView", "onConsoleMessage " + 
+            consoleMessage.messageLevel().name() + consoleMessage.message());
+        
+        return super.onConsoleMessage(consoleMessage);
+      }
+
+      @Override
+      @Deprecated
+      public void onConsoleMessage(String message, int lineNumber, String sourceID) {
+        // TODO Auto-generated method stub
+        super.onConsoleMessage(message, lineNumber, sourceID);
+        Log.i("CustomView", "onConsoleMessage " + message);
+      }
+
+      @Override
+      public void onReachedMaxAppCacheSize(long requiredStorage, long quota,
+          QuotaUpdater quotaUpdater) {
+        // TODO Auto-generated method stub
+        super.onReachedMaxAppCacheSize(requiredStorage, quota, quotaUpdater);
+        Log.i("CustomView", "onReachedMaxAppCacheSize " + Long.toString(quota));
+      }});
 	}
 
 	protected void initView() {

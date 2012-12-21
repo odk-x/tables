@@ -72,6 +72,7 @@ public class ListDisplayActivity extends SherlockActivity
         setTitle("");
         dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
+
         dm = new DataManager(DbHelper.getDbHelper(this));
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
@@ -104,8 +105,9 @@ public class ListDisplayActivity extends SherlockActivity
 //        view = CustomTableView.get(this, c.getTableProperties(), table,
 //                c.getTableViewSettings().getCustomListFilename());
         view = CustomTableView.get(this, c.getTableProperties(), table,
-            filename);
-            
+                filename);
+        // change the info bar text
+        c.setInfoBarText(c.getInfoBarText() + " (List)");
         displayView();
     }
     
