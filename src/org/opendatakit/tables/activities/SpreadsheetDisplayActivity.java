@@ -420,19 +420,25 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
     
     @Override
-    public void regularCellDoubleClicked(int cellId, boolean isIndexed) {
+    public void regularCellDoubleClicked(int cellId, boolean isIndexed,
+        int rawX, int rawY) {
       // So it seems like the cellId is coming from the mainData table, which
       // does NOT include the index. So to get the right row here we actually
       // have to perform a little extra.
       if (!isIndexed) {
-        c.openCellEditDialog(table.getRowId(cellId / table.getWidth()),
-                table.getData(cellId), cellId % table.getWidth());    
+        c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
+//        c.openCellEditDialog(table.getRowId(cellId / table.getWidth()),
+//                table.getData(cellId), cellId % table.getWidth());    
       } else { // it's indexed
         int colNum = cellId % (table.getWidth() - 1);
         int rowNum = cellId / (table.getWidth() - 1);
         int trueNum = cellId + rowNum + ((colNum < indexedCol) ? 0 : 1);
-        c.openCellEditDialog(table.getRowId(rowNum), table.getData(trueNum),
-            colNum);
+        // trying to hack together correct thing for overlay
+        int trueCellId = rowNum * table.getWidth() + 
+            colNum + ((colNum < indexedCol) ? 0 : 1);
+        c.addOverlay(new CellPopout(trueCellId), 100, 100, rawX, rawY);
+//        c.openCellEditDialog(table.getRowId(rowNum), table.getData(trueNum),
+//            colNum);
       }
 
     }
@@ -511,12 +517,14 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	}
 	
 	@Override
-	public void indexedColCellDoubleClicked(int cellId) {
+	public void indexedColCellDoubleClicked(int cellId, int rawX, int rawY) {
      // Ok, so here the cellId is also the row number, as we only allow a 
      // single indexed column atm. So if you double click the 5th cell, it will
      // also have to be the 5th row.
-     c.openCellEditDialog(table.getRowId(cellId), 
-         table.getData(cellId, indexedCol), indexedCol);
+     int trueNum = cellId * table.getWidth() + indexedCol;
+     c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
+//     c.openCellEditDialog(table.getRowId(cellId), 
+//         table.getData(cellId, indexedCol), indexedCol);
 	}
 
 	@Override
@@ -570,7 +578,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        valueView.setText(table.getData(cellId));
 	        valueView.setTextColor(Color.parseColor("#000000"));
 	        Button menuButton = new Button(context);
-	        menuButton.setText("M");
+	        menuButton.setText("Menu");
 	        menuButton.setTextColor(Color.parseColor("#000000"));
 	        menuButton.setOnClickListener(new View.OnClickListener() {
 	            @Override

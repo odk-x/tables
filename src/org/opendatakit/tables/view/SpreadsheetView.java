@@ -165,9 +165,11 @@ public class SpreadsheetView extends LinearLayout
                     isIndexed);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {
+            protected void takeDoubleClickAction(int cellId, int rawX, 
+                int rawY) {
               boolean isIndexed = indexedCol >= 0;
-                controller.regularCellDoubleClicked(cellId, isIndexed);
+                controller.regularCellDoubleClicked(cellId, isIndexed,
+                    rawX, rawY);
             }
         };
         mainHeaderCellClickListener = new CellTouchListener() {
@@ -195,7 +197,8 @@ public class SpreadsheetView extends LinearLayout
                 controller.openContextMenu(mainHeader);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId, int rawX, 
+                int rawY) {}
         };
         mainFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -222,7 +225,8 @@ public class SpreadsheetView extends LinearLayout
                 controller.openContextMenu(mainFooter);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId, int rawX, 
+                int rawY) {}
         };
         indexDataCellClickListener = new CellTouchListener() {
             @Override
@@ -252,8 +256,9 @@ public class SpreadsheetView extends LinearLayout
                 controller.indexedColCellLongClicked(cellId, rawX, rawY);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {
-              controller.indexedColCellDoubleClicked(cellId);
+            protected void takeDoubleClickAction(int cellId, int rawX,
+                int rawY) {
+              controller.indexedColCellDoubleClicked(cellId, rawX, rawY);
             }
         };
         indexHeaderCellClickListener = new CellTouchListener() {
@@ -275,7 +280,8 @@ public class SpreadsheetView extends LinearLayout
                 controller.openContextMenu(indexHeader);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId, int rawX,
+                int rawY) {}
         };
         indexFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -296,7 +302,8 @@ public class SpreadsheetView extends LinearLayout
                 controller.openContextMenu(indexFooter);
             }
             @Override
-            protected void takeDoubleClickAction(int cellId) {}
+            protected void takeDoubleClickAction(int cellId, int rawX,
+                int rawY) {}
         };
     }
     
@@ -566,7 +573,9 @@ public class SpreadsheetView extends LinearLayout
                     duration >= MIN_CLICK_DURATION) {
                 if (event.getEventTime() - lastDownTime <
                         MAX_DOUBLE_CLICK_TIME) {
-                    takeDoubleClickAction(cellId);
+                    takeDoubleClickAction(cellId, 
+                        (new Float(event.getRawX())).intValue(),
+                        (new Float(event.getRawY())).intValue());
                 } else if (duration < MIN_LONG_CLICK_DURATION) {
                     takeClickAction(cellId);
                 } else {
@@ -593,7 +602,8 @@ public class SpreadsheetView extends LinearLayout
         protected abstract void takeLongClickAction(int cellId, int rawX,
                 int rawY);
         
-        protected abstract void takeDoubleClickAction(int cellId);
+        protected abstract void takeDoubleClickAction(int cellId, int rawX,
+            int rawY);
     }
     
     private class ColorRulerColorDecider implements ColorDecider {
@@ -629,9 +639,11 @@ public class SpreadsheetView extends LinearLayout
         public void regularCellLongClicked(int cellId, int rawX, int rawY,
             boolean isIndexed);
         
-        public void regularCellDoubleClicked(int cellId, boolean isIndexed);
+        public void regularCellDoubleClicked(int cellId, boolean isIndexed,
+            int rawX, int rawY);
         
-        public void indexedColCellDoubleClicked(int cellId);
+        public void indexedColCellDoubleClicked(int cellId, int rawX, 
+            int rawY);
         
         public void indexedColCellLongClicked(int cellId, int rawX, int rawY);
         
