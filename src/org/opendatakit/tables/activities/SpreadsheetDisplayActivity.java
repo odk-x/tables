@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
@@ -42,6 +43,7 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -586,7 +588,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                openCellMenu();
 	            }
 	        });
-	        setBackgroundColor(Color.WHITE);
+	        
+	        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+	        lp.setMargins(5, 5, 5, 5);
+	        setLayoutParams(lp);
+	        setBackgroundResource(R.drawable.my_border);
+//	        setBackgroundColor(Color.WHITE);
 	        addView(valueView);
 	        addView(menuButton);
 	        lastDownX = 0;
