@@ -54,6 +54,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.PaintDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -340,6 +341,25 @@ public class Controller {
     searchField.getHitRect(bounds);
     Log.d("CNTRLR", bounds.toString());
     return ((bounds.left <= x) && (bounds.right >= x) && (bounds.top <= y) && (bounds.bottom >= y));
+  }
+  
+  /**
+   * This is used to invert the color of the search box. The boolean parameter
+   * specifies whether or not the color should be inverted or returned to 
+   * normal.
+   * <p>
+   * The inversion values
+   * are not tied to any particular theme, but are set using the 
+   * ActionBarSherlock themes. These need to change if the app themes are 
+   * changed.
+   * @param invert
+   */
+  void invertSearchBoxColor(boolean invert) {
+    if (invert) {
+      searchField.setBackgroundResource(R.color.abs__background_holo_light);
+    } else {
+      searchField.setBackgroundResource(R.color.abs__background_holo_dark);
+    }
   }
 
   void appendToSearchBoxText(String text) {

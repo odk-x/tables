@@ -769,6 +769,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
 	            c.setOverlayLocation(x - lastDownX, y - lastDownY);
+	            if (c.isInSearchBox(x, y)) {
+	              c.invertSearchBoxColor(true);
+	            } else {
+	              c.invertSearchBoxColor(false);
+	            }
 	            return true;
 	        } else if (event.getAction() == MotionEvent.ACTION_UP) {
 	            int x = (Float.valueOf(event.getRawX())).intValue();
@@ -778,6 +783,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                        [cellId % table.getWidth()].getDisplayName();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
+	                c.invertSearchBoxColor(false);
 	                c.removeOverlay();
 	            }
 	            return true;
