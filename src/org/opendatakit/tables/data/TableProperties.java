@@ -81,6 +81,9 @@ public class TableProperties {
   public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
 //  public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
   public static final String KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
+  // this should just be the saved query on a table. it isn't a property, it's
+  // just a key. The default is the empty string.
+  public static final String KEY_CURRENT_QUERY = "currentQuery";
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
    * can be added her just as a sanity check. Note that they are NOT guaranteed
@@ -137,6 +140,7 @@ public class TableProperties {
   public static final String DEFAULT_KEY_SUM_DISPLAY_FORMAT = "";
   public static final String DEFAULT_KEY_OV_VIEW_SETTINGS = "";
   public static final String DEFAULT_KEY_COLUMN_ORDER = ""; 
+  public static final String DEFAULT_KEY_CURRENT_QUERY = "";
 
   /*
    * These are the keys that exist in the key value store after the creation
@@ -153,6 +157,7 @@ public class TableProperties {
 //    KEY_CURRENT_OVERVIEW_VIEW_TYPE,
 //    KEY_CURRENT_COLLECTION_VIEW_TYPE,
 //    KEY_DETAIL_VIEW_FILE, 
+    KEY_CURRENT_QUERY,
     KEY_SUM_DISPLAY_FORMAT};
   
   // columns included in json properties
@@ -751,6 +756,7 @@ public class TableProperties {
 	      mapProps.putAll(tableDefProps);
 	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
 	        tp.getColumns();
+	        tp.setStringEntry(KVS_PARTITION, KVS_ASPECT, KEY_CURRENT_QUERY, "");
 	      Log.d(TAG, "adding table: " + dbTableName);
          DbTable.createDbTable(db, tp);
 	      db.setTransactionSuccessful();

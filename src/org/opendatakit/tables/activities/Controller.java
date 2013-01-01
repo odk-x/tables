@@ -191,6 +191,11 @@ public class Controller {
         searchButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+              // when you click the search button, save that query.
+              tp.setStringEntry(TableProperties.KVS_PARTITION, 
+                  TableProperties.KVS_ASPECT, 
+                  TableProperties.KEY_CURRENT_QUERY, 
+                  searchField.getText().toString());
                 da.onSearch();
             }
         });
@@ -357,8 +362,12 @@ public class Controller {
   void invertSearchBoxColor(boolean invert) {
     if (invert) {
       searchField.setBackgroundResource(R.color.abs__background_holo_light);
+      searchField.setTextColor(searchField.getContext().getResources()
+          .getColor(R.color.abs__background_holo_dark));
     } else {
       searchField.setBackgroundResource(R.color.abs__background_holo_dark);
+      searchField.setTextColor(searchField.getContext().getResources()
+          .getColor(R.color.abs__background_holo_light));
     }
   }
 
@@ -908,6 +917,13 @@ public class Controller {
       intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
     } else if (searchText != null) {
       intent.putExtra(INTENT_KEY_SEARCH, searchText);
+    } else if (searchText == null) {
+      String savedQuery = tp.getStringEntry(TableProperties.KVS_PARTITION, 
+          TableProperties.KVS_ASPECT, TableProperties.KEY_CURRENT_QUERY);
+      if (savedQuery == null) {
+        savedQuery = "";
+      }
+      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
     }
     intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
     context.startActivity(intent);
