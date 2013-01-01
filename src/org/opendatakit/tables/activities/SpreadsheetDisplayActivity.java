@@ -768,6 +768,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
+//	            c.setOverlayLocation(x - lastDownX, y - lastDownY);
 	            c.setOverlayLocation(x - lastDownX, y - lastDownY);
 	            if (c.isInSearchBox(x, y)) {
 	              c.invertSearchBoxColor(true);

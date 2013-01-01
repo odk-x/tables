@@ -316,7 +316,8 @@ public class Controller {
     overlayLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
         ViewGroup.LayoutParams.WRAP_CONTENT);
     overlayLp.leftMargin = x;
-    overlayLp.topMargin = y - controlWrap.getHeight();
+    overlayLp.topMargin = y - activity.getSupportActionBar().getHeight() -
+        infoBar.getHeight();
     overlayLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
     container.addView(overlay, overlayLp);
   }
@@ -331,7 +332,8 @@ public class Controller {
 
   void setOverlayLocation(int x, int y) {
     overlayLp.leftMargin = x;
-    overlayLp.topMargin = y - controlWrap.getHeight();
+    overlayLp.topMargin = y - activity.getSupportActionBar().getHeight() -
+        infoBar.getHeight();
     container.requestLayout();
   }
 
