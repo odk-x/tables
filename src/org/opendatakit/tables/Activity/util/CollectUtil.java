@@ -313,8 +313,14 @@ public class CollectUtil {
      * @return the result of the the delete call
      */
     public static int deleteForm(ContentResolver resolver, String formId) {
-      return resolver.delete(CONTENT_FORM_URI, COLLECT_KEY_JR_FORM_ID + "=?", 
-          new String[] {formId});
+      try {
+        return resolver.delete(CONTENT_FORM_URI, COLLECT_KEY_JR_FORM_ID + "=?", 
+            new String[] {formId});
+      } catch (Exception e) {
+        Log.d(TAG, "caught an exception while deleting a form, returning" +
+        		" 0 and proceeding");
+        return 0;
+      }
     }
     
     /**
