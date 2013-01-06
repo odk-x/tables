@@ -101,7 +101,7 @@ public class Controller {
     
     private static final int MENU_ITEM_ID_SEARCH_BUTTON = 0;
     private static final int MENU_ITEM_ID_VIEW_TYPE_SUBMENU = 1;
-	private static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
+	public static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
 	private static final int MENU_ITEM_ID_SETTINGS_SUBMENU = 3;
 	private static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
 	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
@@ -803,23 +803,46 @@ public class Controller {
       if (formValues == null) {
           return false;
       }
-      Map<String, String> values = new HashMap<String, String>();
-
-      for (ColumnProperties cp : tp.getColumns()) {
-        // we want to use element name here, b/c that is what Collect should be
-        // using to access all of the columns/elements.
-          String elementName = cp.getElementName();
-          String value = du.validifyValue(cp, formValues.get(elementName));
-          if (value != null) {
-              values.put(elementName,value);
-          }
-      }
+      Map<String, String> values = getMapForInsertion(formValues);
+//      Map<String, String> values = new HashMap<String, String>();
+//
+//      for (ColumnProperties cp : tp.getColumns()) {
+//        // we want to use element name here, b/c that is what Collect should be
+//        // using to access all of the columns/elements.
+//          String elementName = cp.getElementName();
+//          String value = du.validifyValue(cp, formValues.get(elementName));
+//          if (value != null) {
+//              values.put(elementName,value);
+//          }
+//      }
       dbt.updateRow(rowId, values);
       rowId = null;
       return true;
   }
+    
+  /**
+   * This gets a map of values for insertion into a row after returning from
+   * a Collect form.
+   * @param formValues
+   * @return
+   */
+  Map<String, String> getMapForInsertion(
+      Map<String, String> formValues) {
+    Map<String, String> values = new HashMap<String, String>();
 
-  private Map<String, String> getOdkCollectFormValues(int instanceId) {
+    for (ColumnProperties cp : tp.getColumns()) {
+      // we want to use element name here, b/c that is what Collect should be
+      // using to access all of the columns/elements.
+        String elementName = cp.getElementName();
+        String value = du.validifyValue(cp, formValues.get(elementName));
+        if (value != null) {
+            values.put(elementName,value);
+        }
+    }
+    return values;
+  }
+
+  protected Map<String, String> getOdkCollectFormValues(int instanceId) {
     String[] projection = { "instanceFilePath" };
     String selection = "_id = ?";
     String[] selectionArgs = { (instanceId + "") };

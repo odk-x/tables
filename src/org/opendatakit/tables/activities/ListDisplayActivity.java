@@ -20,6 +20,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomTableView;
 
@@ -78,17 +79,19 @@ public class ListDisplayActivity extends SherlockActivity
         // call. I don't think we should do it.
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
             c.getTableProperties());
-        init();
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        displayView();
+        init();
     }
     
     @Override
     public void init() {
+      // I hate having to do these two refreshes here, but with the code the
+      // way it is it seems the only way.
+      c.refreshDbTable();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
@@ -106,8 +109,10 @@ public class ListDisplayActivity extends SherlockActivity
 //                c.getTableViewSettings().getCustomListFilename());
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);
-        // change the info bar text
-        c.setInfoBarText(c.getInfoBarText() + " (List)");
+        // change the info bar text IF necessary
+        if (!c.getInfoBarText().endsWith(" (List)")) {
+          c.setInfoBarText(c.getInfoBarText() + " (List)");
+        }
         displayView();
     }
     

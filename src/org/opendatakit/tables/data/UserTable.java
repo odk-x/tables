@@ -82,4 +82,23 @@ public class UserTable {
         int colNum = cellNum % getWidth();
         setData(rowNum, colNum, value);
     }
+    
+    /**
+     * Scan the rowIds to get the row number. As the rowIds are not sorted,
+     * this is a potentially expensive operation, scanning the entire array,
+     * as well as the cost of checking String equality. Should be used only
+     * when necessary.
+     * <p>
+     * Return -1 if the row Id is not found.
+     * @param rowId
+     * @return
+     */
+    public int getRowNumFromId(String rowId) {
+      for (int i = 0; i < rowIds.length; i++) {
+        if (rowIds[i].equals(rowId)) {
+          return i;
+        }
+      }
+      return -1;
+    }
 }
