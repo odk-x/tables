@@ -682,9 +682,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  // show the dialog
 	                  confirmDeleteAlert = alert.create();
 	                  confirmDeleteAlert.show();
-//	                    c.deleteRow(table.getRowId(cellId / table.getWidth()));
-//	                    c.removeOverlay();
-//	                    init();
 	                    break;
 	                case MENU_ITEM_ID_EDIT_ROW:
 	                  // It is possible that a custom form has been defined for this table.
