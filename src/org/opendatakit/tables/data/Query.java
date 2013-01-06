@@ -247,7 +247,8 @@ public class Query {
             }
             TableProperties joinTp = null;
             for (TableProperties tp : tps) {
-                if (tp.getDisplayName().toLowerCase().equals(tableName)) {
+                if (tp.getDisplayName().toLowerCase().equals(
+                      tableName.toLowerCase())) {
                     joinTp = tp;
                 }
             }
