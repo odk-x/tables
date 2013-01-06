@@ -118,6 +118,9 @@ public class DetailDisplayActivity extends SherlockActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu, false);
+        // We want to be able to edit a row from the detail view. Rather than
+        // add a new button, we're just going to hook onto the add row
+        // button, change the png.
         MenuItem addRow = menu.getItem(Controller.MENU_ITEM_ID_ADD_ROW_BUTTON);
         addRow.setIcon(R.drawable.content_edit);
         addRow.setEnabled(true);
@@ -126,6 +129,8 @@ public class DetailDisplayActivity extends SherlockActivity
     
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
+      // If they've selected the edit button, we need to handle it here.
+      // Otherwise, we let controller handle it.
       if (item.getItemId() == Controller.MENU_ITEM_ID_ADD_ROW_BUTTON) {
         CollectFormParameters params = 
             CollectUtil.CollectFormParameters
@@ -146,7 +151,7 @@ public class DetailDisplayActivity extends SherlockActivity
         // handle the case that it wasn't found, and do nothing
         if (rowNum == -1) {
           Toast.makeText(this.getApplicationContext(), "Row ID not found, " +
-          		"please edit via Spreadsheet View", Toast.LENGTH_SHORT);
+          		"please edit via Spreadsheet View", Toast.LENGTH_SHORT).show();
           return true;
         }
         c.editRow(table, rowNum, params);

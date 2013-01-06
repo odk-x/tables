@@ -43,8 +43,7 @@
         </activity>
         <activity android:name=".Activity.PropertyManager" >
         </activity>
-        <activity android:name=".Activity.TableManager" >
-        </activity>
+        <activity android:name=".Activity.TableManager"/>
         <activity android:name=".Activity.importexport.ImportExportActivity" >
         </activity>
         <activity android:name=".Activity.importexport.ImportCSVActivity" >

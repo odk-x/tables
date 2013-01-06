@@ -16,7 +16,6 @@
 package org.opendatakit.tables.activities;
 
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +32,6 @@ import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.Activity.TablePropertiesManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
@@ -43,21 +41,19 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.lib.ClearableEditText;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.PaintDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -101,6 +97,7 @@ public class Controller {
     
     private static final int MENU_ITEM_ID_SEARCH_BUTTON = 0;
     private static final int MENU_ITEM_ID_VIEW_TYPE_SUBMENU = 1;
+    // The add row button serves as an edit row button in DetailDisplayActivity
 	public static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
 	private static final int MENU_ITEM_ID_SETTINGS_SUBMENU = 3;
 	private static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
@@ -133,7 +130,7 @@ public class Controller {
     private final boolean isOverview;
     private final RelativeLayout container;
     private LinearLayout controlWrap;
-    private EditText searchField;
+    private ClearableEditText searchField;
     private TextView infoBar;
     private final ViewGroup displayWrap;
     private View overlay;
@@ -174,7 +171,7 @@ public class Controller {
         // controlWrap will hold the search bar and search button 
         controlWrap = new LinearLayout(activity);
         // searchField is the search bar
-        searchField = new EditText(activity);
+        searchField = new ClearableEditText(activity);
         // displayWrap holds the spreadsheet/listView/etc 
         displayWrap = new LinearLayout(activity);
         // container holds the entire view of the activity
@@ -184,7 +181,7 @@ public class Controller {
         // controlWrap is initialized to be hidden. clicking Action Item, search,
         // will show/hide it
         searchField.setId(VIEW_ID_SEARCH_FIELD);
-        searchField.setText(searchText.peek());
+        searchField.getEditText().setText(searchText.peek());
         ImageButton searchButton = new ImageButton(activity);
         searchButton.setId(VIEW_ID_SEARCH_BUTTON);
         searchButton.setImageResource(R.drawable.ic_action_search);
@@ -195,7 +192,7 @@ public class Controller {
               tp.setStringEntry(TableProperties.KVS_PARTITION, 
                   TableProperties.KVS_ASPECT, 
                   TableProperties.KEY_CURRENT_QUERY, 
-                  searchField.getText().toString());
+                  searchField.getEditText().getText().toString());
                 da.onSearch();
             }
         });
@@ -364,21 +361,28 @@ public class Controller {
   void invertSearchBoxColor(boolean invert) {
     if (invert) {
       searchField.setBackgroundResource(R.color.abs__background_holo_light);
-      searchField.setTextColor(searchField.getContext().getResources()
+      searchField.getEditText().setTextColor(
+          searchField.getContext().getResources()
           .getColor(R.color.abs__background_holo_dark));
+      searchField.getClearButton()
+        .setBackgroundResource(R.drawable.content_remove_dark);
     } else {
       searchField.setBackgroundResource(R.color.abs__background_holo_dark);
-      searchField.setTextColor(searchField.getContext().getResources()
+      searchField.getEditText().setTextColor(searchField.getContext()
+          .getResources()
           .getColor(R.color.abs__background_holo_light));
+      searchField.getClearButton()
+        .setBackgroundResource(R.drawable.content_remove_light);
     }
   }
 
   void appendToSearchBoxText(String text) {
-    searchField.setText((searchField.getText() + text).trim());
+    searchField.getEditText().setText((
+        searchField.getEditText().getText() + text).trim());
   }
 
   void recordSearch() {
-    searchText.add(searchField.getText().toString());
+    searchText.add(searchField.getEditText().getText().toString());
   }
 
   void onBackPressed() {
@@ -386,7 +390,7 @@ public class Controller {
       activity.finish();
     } else {
       searchText.pop();
-      searchField.setText(searchText.peek());
+      searchField.getEditText().setText(searchText.peek());
       da.init();
     }
   }
@@ -629,7 +633,7 @@ public class Controller {
         // Add Row
         MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
               "Add Row").setEnabled(enabled);
-        addItem.setIcon(R.drawable.addrow_icon);
+        addItem.setIcon(R.drawable.content_new);
         addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         
         // Settings submenu
@@ -710,7 +714,12 @@ public class Controller {
 	            }
 	            return true;
 	        case android.R.id.home:
-	            activity.startActivity(new Intent(activity, TableManager.class));
+	          Intent tableManagerIntent = new Intent(activity, 
+	              TableManager.class);
+	          // Add this flag so that you don't back from TableManager back 
+	          // into the table.
+	          tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+	          activity.startActivity(tableManagerIntent);
 	            return true;
 	        default:
 	            return false;

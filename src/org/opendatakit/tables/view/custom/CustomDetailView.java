@@ -64,7 +64,6 @@ public class CustomDetailView extends CustomView {
         jsData.set(data);
         webView.addJavascriptInterface(new Control(context), "control");
         webView.addJavascriptInterface(jsData, "data");
-//        String filename = tp.getDetailViewFilename();
         String filename = tp.getStringEntry(CustomDetailView.KVS_PARTITION, 
             CustomDetailView.KVS_ASPECT_DEFAULT,
             CustomDetailView.KEY_FILENAME);
