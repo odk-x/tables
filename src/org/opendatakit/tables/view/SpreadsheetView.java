@@ -196,9 +196,14 @@ public class SpreadsheetView extends LinearLayout
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(mainHeader);
             }
+            /**
+             * Make this do the same thing as a long click.
+             */
             @Override
             protected void takeDoubleClickAction(int cellId, int rawX, 
-                int rawY) {}
+                int rawY) {
+              takeLongClickAction(cellId, rawX, rawY);
+            }
         };
         mainFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -224,9 +229,14 @@ public class SpreadsheetView extends LinearLayout
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(mainFooter);
             }
+            /**
+             * Make this do the same thing as long press.
+             */
             @Override
             protected void takeDoubleClickAction(int cellId, int rawX, 
-                int rawY) {}
+                int rawY) {
+              takeLongClickAction(cellId, rawX, rawY);
+            }
         };
         indexDataCellClickListener = new CellTouchListener() {
             @Override
@@ -279,9 +289,14 @@ public class SpreadsheetView extends LinearLayout
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexHeader);
             }
+            /**
+             * Do the same thing as a long click.
+             */
             @Override
             protected void takeDoubleClickAction(int cellId, int rawX,
-                int rawY) {}
+                int rawY) {
+              takeLongClickAction(cellId, rawX, rawY);
+            }
         };
         indexFooterCellClickListener = new CellTouchListener() {
             @Override
@@ -301,9 +316,14 @@ public class SpreadsheetView extends LinearLayout
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexFooter);
             }
+            /**
+             * Do the same thing as a long click.
+             */
             @Override
             protected void takeDoubleClickAction(int cellId, int rawX,
-                int rawY) {}
+                int rawY) {
+              takeLongClickAction(cellId, rawX, rawY);
+            }
         };
     }
     

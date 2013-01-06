@@ -494,13 +494,13 @@ public class TableProperties {
 			primeList = mapper.readValue(primeOrderValue, ArrayList.class);
 		} catch (JsonParseException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + primeList);
 		} catch (JsonMappingException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + primeList);
 		} catch (IOException e) {
 			e.printStackTrace();
-			Log.e(t, "ignore invalid json");
+			Log.e(t, "ignore invalid json: " + primeList);
 		}
     }
     return new TableProperties(dbh, 
@@ -1359,16 +1359,30 @@ public class TableProperties {
    *          an array of the database names of the table's prime columns
    */
   public void setPrimeColumns(ArrayList<String> primes) {
-    String str = "";
-    for (String cdb : primes) {
-      str += cdb + "/";
+//    String str = "";
+//    for (String cdb : primes) {
+//      str += cdb + "/";
+//    }
+//    if (str.length() > 0) {
+//      str = str.substring(0, str.length() - 1);
+//    }
+    String primesStr;
+    try {
+      primesStr = mapper.writeValueAsString(primes);
+      setStringProperty(TableProperties.KVS_PARTITION, 
+          TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, primesStr);
+      this.primeColumns = primes;
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      Log.e(TAG, "problem mapping prime colums");
+    } catch (JsonMappingException e) {
+      Log.e(TAG, "problem mapping prime colums");
+      e.printStackTrace();
+    } catch (IOException e) {
+      Log.e(TAG, "problem mapping prime colums");
+      e.printStackTrace();
     }
-    if (str.length() > 0) {
-      str = str.substring(0, str.length() - 1);
-    }
-    setStringProperty(TableProperties.KVS_PARTITION, 
-        TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, str);
-    this.primeColumns = primes;
+
   }
 
   /**
