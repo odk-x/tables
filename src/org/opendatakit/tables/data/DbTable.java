@@ -96,11 +96,21 @@ public class DbTable {
       ADMIN_COLUMNS.add(DB_TIMESTAMP);
       ADMIN_COLUMNS.add(DB_SAVED);
       ADMIN_COLUMNS.add(DB_INSTANCE_NAME);
+      ADMIN_COLUMNS.add(DB_LOCALE);
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
       COLUMNS_TO_SYNC.put(DB_URI_USER, ColumnType.PHONE_NUMBER);
       COLUMNS_TO_SYNC.put(DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
       COLUMNS_TO_SYNC.put(DB_INSTANCE_NAME, ColumnType.TEXT);
+    }
+    
+    /**
+     * Return an unmodifiable list of the admin columns that must be present
+     * in every database table.
+     * @return
+     */
+    public static List<String> getAdminColumns() {
+      return Collections.unmodifiableList(ADMIN_COLUMNS);
     }
     
     public enum SavedStatus {
@@ -361,7 +371,7 @@ public class DbTable {
      * The cursor, but not the columns array, must include the row ID column.
      */
     private Table buildTable(Cursor c, ArrayList<String> arrayList) {
-      Log.i(TAG, "entered dbTable buildTable");
+      //Log.i(TAG, "entered dbTable buildTable");
         int[] colIndices = new int[arrayList.size()];
         int rowCount = c.getCount();
         String[] rowIds = new String[rowCount];
@@ -390,7 +400,7 @@ public class DbTable {
             }
             c.moveToNext();
         }
-        Log.i(TAG, "leaving Table buildTable");
+        //Log.i(TAG, "leaving Table buildTable");
         return new Table(rowIds, arrayList, data);
     }
     

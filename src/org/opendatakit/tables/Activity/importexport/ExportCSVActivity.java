@@ -39,6 +39,31 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+
+/**
+ * This class is responsible for exporting a table to CSV from the phone. 
+ * <p>
+ * There appear to me to be two possible reasons for doing this. The first is 
+ * to o present the
+ * data to a user or admin so that they can view it and use it in a 
+ * spreadsheet application. 
+ * <p>
+ * The second is to create a CSV that Tables can import to create the table as
+ * it existed on the phone at the time of the export.
+ * <p>
+ * There are several options available to the user, such as including the user
+ * who modified it, and including the timestamp. An additional option is to
+ * include the table settings. This checkbox includes the table settings as a
+ * metadata string, and it also includes all the metadata columns of each row
+ * for which the saved status is complete. In other words, it exports the table
+ * that the user is able to see (the saved == complete rows) and all the 
+ * metadata for those rows at the time of the export.
+ * 
+ * 
+ * @author unknown
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class ExportCSVActivity extends IETabActivity {
 	
 	/** view IDs (for use in testing) */
@@ -80,7 +105,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// selecting table
 		TextView est = new TextView(this);
 		est.setText("Exporting Table:");
-		est.setTextColor(getResources().getColor(getResources().getColor(R.color.black)));
+		est.setTextColor(getResources().getColor(R.color.white));
 		v.addView(est);
 		// adding the table spinner
 		tableSpin = new Spinner(this);
@@ -104,7 +129,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// options
 		TextView opt = new TextView(this);
 		opt.setText("Options:");
-		opt.setTextColor(getResources().getColor(getResources().getColor(R.color.black)));
+		opt.setTextColor(getResources().getColor(R.color.white));
 		v.addView(opt);
 		// adding the include properties checkbox
 		LinearLayout incProps = new LinearLayout(this);
@@ -112,8 +137,8 @@ public class ExportCSVActivity extends IETabActivity {
 		incPropsCheck.setChecked(true);
 		incProps.addView(incPropsCheck);
 		TextView incPropsLabel = new TextView(this);
-        incPropsLabel.setTextColor(getResources().getColor(R.color.black));
-		incPropsLabel.setText("Include Table Settings");
+        incPropsLabel.setTextColor(getResources().getColor(R.color.white));
+		incPropsLabel.setText("Include Metadata to Allow for Import");
 		incProps.addView(incPropsLabel);
 		v.addView(incProps);
 		// adding the include source phone numbers checkbox
@@ -123,7 +148,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incPN.addView(incPNCheck);
 		TextView incPNLabel = new TextView(this);
 		incPNLabel.setText("Include Phone Number for Incoming Rows");
-		incPNLabel.setTextColor(getResources().getColor(R.color.black));
+		incPNLabel.setTextColor(getResources().getColor(R.color.white));
 		incPN.addView(incPNLabel);
 		v.addView(incPN);
 		// adding the include timestamps checkbox
@@ -133,7 +158,7 @@ public class ExportCSVActivity extends IETabActivity {
 		incTS.addView(incTSCheck);
 		TextView incTSLabel = new TextView(this);
 		incTSLabel.setText("Include Last Modification Timestamp");
-		incTSLabel.setTextColor(getResources().getColor(R.color.black));
+		incTSLabel.setTextColor(getResources().getColor(R.color.white));
 		incTS.addView(incTSLabel);
 		v.addView(incTS);
 		// Horizontal divider
@@ -144,7 +169,7 @@ public class ExportCSVActivity extends IETabActivity {
 		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
 		fnLabel.setText("Filename:");
-		fnLabel.setTextColor(getResources().getColor(R.color.black));
+		fnLabel.setTextColor(getResources().getColor(R.color.white));
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
 		filenameValField.setId(FILENAMEVAL_ID);

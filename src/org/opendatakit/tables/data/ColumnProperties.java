@@ -1281,7 +1281,15 @@ public class ColumnProperties {
     //jo.put(JSON_KEY_ELEMENT_TYPE, elementType);
     String elType = null;
     String footMode = null;
+    String joinCol = null;
+    // Do this to try and avoid null pointer exceptions.
+    if (joins == null) {
+      joinCol = JoinColumn.DEFAULT_NOT_SET_VALUE;
+    }   
     try {
+      if (joinCol == null) {
+        joinCol = mapper.writeValueAsString(joins);
+      }
       elType = mapper.writeValueAsString(elementType);
       footMode = mapper.writeValueAsString(footerMode);
     } catch (JsonGenerationException e) {
@@ -1293,14 +1301,10 @@ public class ColumnProperties {
    }
     jo.put(JSON_KEY_ELEMENT_TYPE, elType);
     jo.put(JSON_KEY_FOOTER_MODE, footMode);
+    jo.put(JSON_KEY_JOINS, joinCol);
 //    jo.put(JSON_KEY_FOOTER_MODE, footerMode);
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-    // Do this to try and avoid null pointer exceptions.
-    if (joins == null) {
-      jo.put(JSON_KEY_JOINS, JoinColumn.DEFAULT_NOT_SET_VALUE);
-    } else {
-      jo.put(JSON_KEY_JOINS, joins);
-    }
+
     // jo.put(JSON_KEY_JOIN_TABLE_ID, joinTableId);
     // jo.put(JSON_KEY_JOIN_ELEMENT_KEY, joinElementKey);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);

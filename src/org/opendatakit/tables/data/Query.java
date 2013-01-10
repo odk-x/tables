@@ -22,8 +22,12 @@ import java.util.Set;
 
 import org.opendatakit.tables.sync.SyncUtil;
 
+import android.util.Log;
+
 
 public class Query {
+  
+  private static final String TAG = "Query";
     
     public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM, SUM }
     
@@ -389,6 +393,7 @@ public class Query {
             sd.appendSql(" AND " + csd.getSql());
             sd.appendArgs(csd.getArgList());
         }
+        //Log.i(TAG, "sql query: " + sd.getSql());
         return sd;
     }
     

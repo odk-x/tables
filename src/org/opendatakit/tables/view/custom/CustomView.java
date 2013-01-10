@@ -150,6 +150,8 @@ public abstract class CustomView extends LinearLayout {
 	 * class are meant to be called through the JavaScript interface.
 	 */
 	protected class TableData {
+	  
+	  private static final String TAG = "TableData";
 
 		private final Table rawTable;
 		private final UserTable userTable;
@@ -160,6 +162,7 @@ public abstract class CustomView extends LinearLayout {
         private TableProperties tp;
     
 		public TableData(TableProperties tp, Table table) {
+		  Log.d(TAG, "calling TableData constructor with Table");
 			rawTable = table;
 			userTable = null;
             this.tp = tp;
@@ -167,6 +170,7 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		public TableData(TableProperties tp, UserTable table) {
+		  Log.d(TAG, "calling TableData constructor with UserTable");
 			rawTable = null;
 			userTable = table;
             this.tp = tp;
@@ -281,6 +285,8 @@ public abstract class CustomView extends LinearLayout {
 	}
 
 	protected class Control {
+	  
+	  private static final String TAG = "Control";
 
 		protected Context context;
 		private TableProperties[] allTps;
@@ -288,6 +294,7 @@ public abstract class CustomView extends LinearLayout {
 
 		public Control(Context context) {
 			this.context = context;
+			Log.d(TAG, "calling Control Constructor");
 		}
 
 		private void initTpInfo() {

@@ -17,6 +17,7 @@ package org.opendatakit.tables.view.custom;
 
 import java.util.Map;
 
+import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.content.Context;
