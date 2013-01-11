@@ -224,19 +224,23 @@ public class ExportCSVActivity extends IETabActivity {
 		}
 	}
     
-    private class ExportTask
+    public class ExportTask
             extends AsyncTask<ExportRequest, Integer, Boolean> {
+      
+      // This says whether or not the secondary entries in the key value store
+      // were written successfully. 
+      public boolean keyValueStoreSuccessful = true;
         
         protected Boolean doInBackground(ExportRequest... exportRequests) {
             ExportRequest request = exportRequests[0];
             CsvUtil cu = new CsvUtil(ExportCSVActivity.this);
             if (request.getIncludeProperties()) {
-                return cu.exportWithProperties(request.getFile(),
+                return cu.exportWithProperties(this, request.getFile(),
                         request.getTableProperties().getTableId(),
                         request.getIncludeTimestamps(),
                         request.getIncludePhoneNums());
             } else {
-                return cu.export(request.getFile(),
+                return cu.export(this, request.getFile(),
                         request.getTableProperties().getTableId(),
                         request.getIncludeTimestamps(),
                         request.getIncludePhoneNums());
@@ -250,7 +254,11 @@ public class ExportCSVActivity extends IETabActivity {
         protected void onPostExecute(Boolean result) {
             dismissDialog(EXPORT_IN_PROGRESS_DIALOG);
             if (result) {
+              if (keyValueStoreSuccessful) {
                 showDialog(CSVEXPORT_SUCCESS_DIALOG);
+              } else {
+                showDialog(CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
+              }
             } else {
                 showDialog(CSVEXPORT_FAIL_DIALOG);
             }

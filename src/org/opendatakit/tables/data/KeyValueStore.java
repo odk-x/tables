@@ -73,6 +73,10 @@ public class KeyValueStore {
       KeyValueStoreManager.ASPECT + " = ? AND " + 
       KeyValueStoreManager.KEY + " in (";
   
+  protected static final String WHERE_SQL_FOR_PARTITIONS = 
+      KeyValueStoreManager.TABLE_ID + " = ? AND " +
+      KeyValueStoreManager.PARTITION + " in (";
+  
   protected final DbHelper dbh;
   protected final String tableId;
   // The name of the database table that backs the key value store
@@ -291,6 +295,86 @@ public class KeyValueStore {
     		c.close();
     	}
     }
+  }
+  
+  /**
+   * Retrieve a unique list of all the distinct partitions in the key value
+   * store.
+   * @param db
+   * @return
+   */
+  public List<String> getAllPartitions(SQLiteDatabase db) {
+    Cursor c = db.query(true, this.dbBackingName, 
+        new String[] {KeyValueStoreManager.PARTITION},
+        WHERE_SQL_FOR_TABLE,
+        new String[] {this.tableId}, null, null, null, null);
+    List<String> partitions = new ArrayList<String>();
+    int partitionIndex = 
+        c.getColumnIndexOrThrow(KeyValueStoreManager.PARTITION);
+    int i = 0;
+    c.moveToFirst();
+    while (i < c.getCount()) {
+      partitions.add(c.getString(partitionIndex));
+      i++;
+      c.moveToNext();
+    }
+    c.close();
+    return partitions;
+  }
+  
+  /**
+   * Return a list of all the entries in the given partitions.
+   * <p>
+   * NB: This returns them exactly as they exist in the key value store. Thus
+   * filename keys are not extracted as a file. Any processing to prepare
+   * for syncing to the server, say, where the value is replaced by a 
+   * file manifest entry, is not done.
+   * @return
+   */
+  public List<OdkTablesKeyValueStoreEntry> getEntriesForPartitions(
+      SQLiteDatabase db, List<String> partitions) {
+    // The number of fixed items regardless of how many partitions. In this 
+    // case that's just the tableId.
+    int numFixedItems = 1;
+    String[] desiredPartitions = new String[partitions.size() + 1];
+    desiredPartitions[0] = this.tableId;
+    for (int i = 0; i < partitions.size(); i++) {
+      desiredPartitions[i + numFixedItems] = partitions.get(i);
+    }
+    String whereClause = WHERE_SQL_FOR_PARTITIONS + 
+        makePlaceHolders(partitions.size()) + ")";
+    Cursor c = db.query(this.dbBackingName, 
+        new String[] {KeyValueStoreManager.TABLE_ID,
+                      KeyValueStoreManager.PARTITION,
+                      KeyValueStoreManager.ASPECT,
+                      KeyValueStoreManager.KEY,
+                      KeyValueStoreManager.VALUE_TYPE,
+                      KeyValueStoreManager.VALUE},
+        whereClause,
+        desiredPartitions, null, null, null);
+    try {
+      return getEntriesFromCursor(c);
+    } finally {
+      if (c != null && !c.isClosed()) {
+        c.close();
+      }
+    }
+  }
+  
+  /**
+   * Return a list of all the entries for the given partition.
+   * <p>
+   * Equivalent to calling {@link getEntriesForPartitions} with a single 
+   * element list. 
+   * @param db
+   * @param partition
+   * @return
+   */
+  public List<OdkTablesKeyValueStoreEntry> getEntriesForPartition(
+      SQLiteDatabase db, String partition) {
+    List<String> desiredPartitions = new ArrayList<String>();
+    desiredPartitions.add(partition);
+    return getEntriesForPartitions(db, desiredPartitions);
   }
  
   /**

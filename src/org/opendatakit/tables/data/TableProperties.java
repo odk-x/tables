@@ -33,9 +33,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
+import org.opendatakit.tables.exception.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
 
-import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -597,10 +597,32 @@ public class TableProperties {
     }
   }
 
+  /**
+   * Return true if a table in allProps has the dbTableName dbTableName.
+   * @param dbTableName
+   * @param allProps
+   * @return
+   */
   private static boolean nameConflict(String dbTableName, 
       TableProperties[] allProps) {
     for (TableProperties tp : allProps) {
       if (tp.getDbTableName().equals(dbTableName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Return true if a table in allProps has the id tableId.
+   * @param tableId
+   * @param allProps
+   * @return
+   */
+  private static boolean tableIdConflict(String tableId, 
+      TableProperties[] allProps) {
+    for (TableProperties tp : allProps) {
+      if (tp.getTableId().equals(tableId)) {
         return true;
       }
     }
@@ -662,6 +684,72 @@ public class TableProperties {
 //      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
 //      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
     }
+    return tp;
+  }
+  
+  /**
+   * Add a table from the JSON representation of a TableProperties object, as
+   * set from {@link toJson}. There is currently no control for versioning or 
+   * anything of that nature. 
+   * <p>
+   * This method is equivalent to parsing the json object yourself to get the
+   * id and database names, calling the appropriate {@link addTable} method,
+   * and then calling {@link setFromJson}.
+   * @param dbh
+   * @param json
+   * @param typeOfStore
+   * @return
+   * @throws TableAlreadyExistsException if the dbTableName or tableId 
+   * specified
+   * by the json string conflict with any of the properties from the three
+   * key value stores. If so, nothing is done.
+   */
+  public static TableProperties addTableFromJson(DbHelper dbh, String json,
+      KeyValueStore.Type typeOfStore) throws TableAlreadyExistsException {
+    // we just need to reclaim the bare minimum that we need to call the other
+    // methods.
+    Map<String, Object> jo;
+    try {
+       jo = mapper.readValue(json, Map.class);
+    } catch (JsonParseException e) {
+       e.printStackTrace();
+       throw new IllegalArgumentException("invalid json: " + json);
+    } catch (JsonMappingException e) {
+       e.printStackTrace();
+       throw new IllegalArgumentException("invalid json: " + json);
+    } catch (IOException e) {
+       e.printStackTrace();
+       throw new IllegalArgumentException("invalid json: " + json);
+    }
+    String tableId = (String) jo.get(JSON_KEY_TABLE_ID);
+    String dbTableName = (String) jo.get(JSON_KEY_DB_TABLE_NAME);
+    String dbTableType = (String) jo.get(JSON_KEY_TABLE_TYPE);
+    String displayName = (String) jo.get(JSON_KEY_DISPLAY_NAME);
+    // And now we need to check for conflicts that would mess up the database.
+    TableProperties[] activeProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.ACTIVE);
+    TableProperties[] defaultProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.DEFAULT);
+    TableProperties[] serverProps = getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.SERVER);
+    // this arraylist will hold all the properties.
+    ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
+    listProps.addAll(Arrays.asList(activeProps));
+    listProps.addAll(Arrays.asList(defaultProps));
+    listProps.addAll(Arrays.asList(serverProps));
+    TableProperties[] allProps = 
+        listProps.toArray(new TableProperties[listProps.size()]);
+    if (nameConflict(dbTableName, allProps) || 
+        tableIdConflict(tableId, allProps)) {
+      Log.e(TAG, "a table already exists with the dbTableName: " + 
+        dbTableName + " or with the tableId: " + tableId);
+      throw new TableAlreadyExistsException("a table already exists with the" +
+      		" dbTableName: " +  dbTableName + " or with the tableId: "
+          + tableId);
+    }
+    TableProperties tp = addTable(dbh, dbTableName, displayName,
+        TableType.valueOf(dbTableType), tableId, typeOfStore);
+    tp.setFromJson(json);
     return tp;
   }
 

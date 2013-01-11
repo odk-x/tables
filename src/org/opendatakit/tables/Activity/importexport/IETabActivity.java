@@ -27,6 +27,9 @@ import android.view.View.OnClickListener;
 
 /**
  * An abstract parent class for import/export activities.
+ * 
+ * @author sudar.sam@gmail.com
+ * @author unknown
  */
 public abstract class IETabActivity extends Activity {
 	
@@ -37,6 +40,14 @@ public abstract class IETabActivity extends Activity {
 	protected static final int IMPORT_IN_PROGRESS_DIALOG = 4;
 	protected static final int CSVIMPORT_FAIL_DIALOG = 5;
 	protected static final int CSVEXPORT_FAIL_DIALOG = 6;
+	// This is intended to say that "your csv exported successfully, but there
+	// was a problem with the key value store setting mapping.
+	protected static final int 
+	  CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
+	protected static final int 
+	  CSVIMPORT_FAIL_DUPLICATE_TABLE = 8;
+	protected static final int 
+	  CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 9;
 	
 	@Override
 	protected Dialog onCreateDialog(int id) {
@@ -57,6 +68,15 @@ public abstract class IETabActivity extends Activity {
 			return getDialog("Failed to import.");
 		case CSVEXPORT_FAIL_DIALOG:
 			return getDialog("Failed to export.");
+		case CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
+		  return getDialog("Data exported, but some customized settings were " +
+		  		"not able to exported.");
+		case CSVIMPORT_FAIL_DUPLICATE_TABLE:
+		  return getDialog("Failed to import. A table already exists with the " +
+		  		"given table id or database name.");
+		case CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
+		  return getDialog("Imported file, but was not able to recover all " +
+		  		"customized settings.");
 		default:
 			throw new IllegalArgumentException();
 		}

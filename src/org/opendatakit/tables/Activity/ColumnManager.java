@@ -177,7 +177,7 @@ public class ColumnManager extends SherlockListActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		MenuItem addItem = menu.add(0, ADD_NEW_COL, 0, "Add New Column");
-		addItem.setIcon(R.drawable.addrow_icon);
+		addItem.setIcon(R.drawable.content_new);
 		addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		return true;
 	}

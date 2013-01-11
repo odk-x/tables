@@ -21,12 +21,14 @@ import org.opendatakit.tables.Activity.util.CsvUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.exception.TableAlreadyExistsException;
 
 import android.R;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -38,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * An activity for importing CSV files to a table.
@@ -212,23 +215,34 @@ public class ImportCSVActivity extends IETabActivity {
 		}
 	}
 	
-	private class ImportTask
+	public class ImportTask
 	        extends AsyncTask<ImportRequest, Integer, Boolean> {
+	  
+	  private static final String TAG = "ImportTask";
+	  
+	  public boolean caughtDuplicateTableException = false;
+	  public boolean problemImportingKVSEntries = false;
 	    
-	    protected Boolean doInBackground(ImportRequest... importRequests) {
+	  @Override
+	  protected Boolean doInBackground(ImportRequest... importRequests) {
 	        ImportRequest request = importRequests[0];
             CsvUtil cu = new CsvUtil(ImportCSVActivity.this);
             if (request.getCreateTable()) {
-                return cu.importNewTable(request.getFile(),
+              try {
+                return cu.importNewTable(this, request.getFile(),
                         request.getTableName());
+              } catch (TableAlreadyExistsException e) {
+                caughtDuplicateTableException = true;
+                return false;
+              }
             } else {
                 return cu.importAddToTable(request.getFile(),
-                        request.getTableProperties().getTableId());
+                    request.getTableProperties().getTableId());
             }
 	    }
 	    
 	    protected void onProgressUpdate(Integer... progress) {
-	        // do nothing
+	        // do nothing.
 	    }
 	    
 	    protected void onPostExecute(Boolean result) {
@@ -236,7 +250,13 @@ public class ImportCSVActivity extends IETabActivity {
 	        if (result) {
 	            showDialog(CSVIMPORT_SUCCESS_DIALOG);
 	        } else {
+	          if (caughtDuplicateTableException) {
+	            showDialog(CSVIMPORT_FAIL_DUPLICATE_TABLE);
+	          } else if (problemImportingKVSEntries) {
+	            showDialog(CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
+	          } else {
 	            showDialog(CSVIMPORT_FAIL_DIALOG);
+	          }
 	        }
 	    }
 	}

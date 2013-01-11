@@ -33,6 +33,7 @@ public class ColumnColorRuler {
   /*****************************
    * Things needed for the key value store.
    *****************************/
+  public static final String KVS_PARTITION = "ColumnColorRuler";
   public static final String KEY_COLOR_RULES = 
       "ColumnColorRuler.ruleList";
   public static final String DEFAULT_KEY_COLOR_RULES = "[]";
@@ -83,7 +84,7 @@ public class ColumnColorRuler {
         return new ArrayList<ColColorRule>();
       }
       String jsonRulesString = 
-          tp.getObjectEntry(ColumnProperties.KVS_PARTITION,
+          tp.getObjectEntry(KVS_PARTITION,
           this.elementKey, KEY_COLOR_RULES);
       if (jsonRulesString == null) { // no values in the kvs
         return new ArrayList<ColColorRule>();
@@ -138,7 +139,7 @@ public class ColumnColorRuler {
       }
       // if there are no rules, we want to remove the key from the kvs.
       if (ruleList.size() == 0) {
-        tp.removeEntry(ColumnProperties.KVS_PARTITION, elementKey, 
+        tp.removeEntry(KVS_PARTITION, elementKey, 
             KEY_COLOR_RULES);
         return;
       }
@@ -150,7 +151,7 @@ public class ColumnColorRuler {
       String ruleListJson = DEFAULT_KEY_COLOR_RULES;
       try {
         ruleListJson = mapper.writeValueAsString(ruleList);
-        tp.setObjectEntry(ColumnProperties.KVS_PARTITION, elementKey, 
+        tp.setObjectEntry(KVS_PARTITION, elementKey, 
             KEY_COLOR_RULES, ruleListJson);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing list of color rules");

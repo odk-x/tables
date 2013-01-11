@@ -25,14 +25,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
+import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.Activity.importexport.ExportCSVActivity.ExportTask;
+import org.opendatakit.tables.Activity.importexport.ImportCSVActivity.ImportTask;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
+import org.opendatakit.tables.exception.TableAlreadyExistsException;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -70,15 +80,19 @@ public class CsvUtil {
      * Tables imported through this function are added to the active key value
      * store. Doing it another way would give users a workaround to add tables
      * to the server database.
+     * @param importTask the ImportTask calling this method. It is used to
+     * pass messages to the user in case of error. Null safe.
      * @param file
      * @param tableName
      * @return
+     * @throws TableAlreadyExistsException if settings are included and a 
+     * table already exists with the matching tableId or dbTableName 
      */
-    public boolean importNewTable(File file, String tableName) {
+    public boolean importNewTable(ImportTask importTask, File file, 
+        String tableName) throws 
+      TableAlreadyExistsException {
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
-        TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-                tableName, TableType.data, 
-                KeyValueStore.Type.ACTIVE);
+        TableProperties tp;
         try {
           boolean includesProperties = false;
           // these columns will either be just those present in TablePropeties,
@@ -96,16 +110,50 @@ public class CsvUtil {
             if (row[0].startsWith("{")) {
               // then it has been exported with properties.
               includesProperties = true;
-              // It is possible that the read CSV has broken up what was output
-              // as a single cell into a longer cell, due a missed case of 
-              // exporting all the commas in a json string. Therefore we 
-              // recombine it to be a single string.
-              StringBuilder builder = new StringBuilder();
-              for (int i = 0; i < row.length; i++) {
-                builder.append(row[i]);
+              String jsonProperties = row[0];
+              // now we need the tableId. It is tempting to just scan the 
+              // string until we find it, but if there are other occurrences
+              // of the tableId json key we will get into trouble. So, we must
+              // deserialize it.
+              tp = TableProperties.addTableFromJson(dbh, jsonProperties, 
+                  KeyValueStore.Type.ACTIVE);
+              // we need to check if we need to import all the key value store
+              // things as well.
+              if (row.length > 1) {
+                // This is, by convention, the key value store entries in list 
+                // form.
+                try {
+                  ObjectMapper mapper = new ObjectMapper();
+                  mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+                      .withFieldVisibility(Visibility.ANY));
+                  List<OdkTablesKeyValueStoreEntry> recoveredEntries =
+                      mapper.readValue(row[1], 
+                          new 
+                          TypeReference<List<OdkTablesKeyValueStoreEntry>>(){});
+                  KeyValueStoreManager kvsm = 
+                      KeyValueStoreManager.getKVSManager(dbh);
+                  KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), 
+                      tp.getBackingStoreType());
+                  kvs.addEntriesToStore(dbh.getWritableDatabase(), 
+                      recoveredEntries);
+                  // TODO: sort out closing database appropriately.
+                } catch (JsonGenerationException e) {
+                  e.printStackTrace();
+                  if (importTask != null) {
+                    importTask.problemImportingKVSEntries = true;
+                  }
+                } catch (JsonMappingException e) {
+                   e.printStackTrace();
+                   if (importTask != null) {
+                     importTask.problemImportingKVSEntries = true;
+                   }
+                } catch (IOException e) {
+                   e.printStackTrace();
+                   if (importTask != null) {
+                     importTask.problemImportingKVSEntries = true;
+                   }
+                }
               }
-              String jsonProperties = builder.toString();
-              tp.setFromJson(jsonProperties);
               row = reader.readNext();
               // now collect all the headings.
               columns = new ArrayList<String>();
@@ -113,6 +161,9 @@ public class CsvUtil {
                 columns.add(columnHeading);
               }
             } else {
+              tp = TableProperties.addTable(dbh, dbTableName,
+                  tableName, TableType.data, 
+                  KeyValueStore.Type.ACTIVE);
                 int startIndex = 0;
                 if (row[startIndex].equals(LAST_MOD_TIME_LABEL)) {
                     startIndex++;
@@ -218,17 +269,45 @@ public class CsvUtil {
         }
     }
     
-    public boolean export(File file, String tableId, boolean includeTs,
+    /**
+     * Export a table to CSV without the properties.
+     * @param file
+     * @param tableId
+     * @param includeTs
+     * @param includePn
+     * @return
+     */
+    public boolean export(ExportTask exportTask, File file, String tableId, 
+        boolean includeTs,
             boolean includePn) {
-        return export(file, tableId, includeTs, includePn, true);
+        return export(exportTask, file, tableId, includeTs, includePn, true);
     }
     
-    public boolean exportWithProperties(File file, String tableId,
+    public boolean exportWithProperties(ExportTask exportTask, File file, 
+        String tableId,
             boolean includeTs, boolean includePn) {
-        return export(file, tableId, includeTs, includePn, false);
+        return export(exportTask, file, tableId, includeTs, includePn, false);
     }
     
-    private boolean export(File file, String tableId, boolean includeTs,
+    /**
+     * Export the file.
+     * <p>
+     * If raw is false, it means that you DO export the settings. In this case
+     * the first row is: 
+     * [json representation of table properties, json of list of kvs entries],
+     * and all the column headings are the column element keys or the names of
+     * the admin columns in the table.
+     * @param exportTask the exportTask to which a message is sent if writing
+     * key value store settings fails. null safe.
+     * @param file
+     * @param tableId
+     * @param includeTs
+     * @param includePn
+     * @param raw
+     * @return
+     */
+    private boolean export(ExportTask exportTask, File file, String tableId, 
+        boolean includeTs,
             boolean includePn, boolean raw) {
       //TODO test that this is the correct KVS to get the export from.
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
@@ -302,7 +381,54 @@ public class CsvUtil {
             CSVWriter cw = new CSVWriter(new FileWriter(file), DELIMITING_CHAR,
                 QUOTE_CHAR, ESCAPE_CHAR);
             if (!raw) {
-                cw.writeNext(new String[] {tp.toJson()});
+              // The first row must be [tableProperties, secondaryKVSEntries]
+              // The tableProperties json is easily had, 
+              // so first we must get the secondary entries.
+              KeyValueStoreManager kvsm = 
+                  KeyValueStoreManager.getKVSManager(dbh);
+              KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), 
+                  tp.getBackingStoreType());
+              List<String> partitions = 
+                  kvs.getAllPartitions(dbh.getReadableDatabase());
+              // TODO sort out and handle appropriate closing of database
+              // We do NOT want to include the table or column partitions.
+              partitions.remove(TableProperties.KVS_PARTITION);
+              partitions.remove(ColumnProperties.KVS_PARTITION);
+              List<OdkTablesKeyValueStoreEntry> kvsEntries = 
+                  kvs.getEntriesForPartitions(dbh.getReadableDatabase(),
+                      partitions);
+              // TODO sort out and handle appropriate closing of database
+              ObjectMapper mapper = new ObjectMapper();
+              mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+                  .withFieldVisibility(Visibility.ANY));
+              String[] settingsRow;
+              String strKvsEntries = null;              
+              try {
+                strKvsEntries = mapper.writeValueAsString(kvsEntries);
+              } catch (JsonGenerationException e) {
+                e.printStackTrace();
+                if (exportTask != null) {
+                  exportTask.keyValueStoreSuccessful = false;
+                }
+              } catch (JsonMappingException e) {
+                 e.printStackTrace();
+                 if (exportTask != null) {
+                   exportTask.keyValueStoreSuccessful = false;
+                 }
+              } catch (IOException e) {
+                 e.printStackTrace();
+                 if (exportTask != null) {
+                   exportTask.keyValueStoreSuccessful = false;
+                 }
+              }
+              if (strKvsEntries == null) {
+                // mapping failed
+                settingsRow = new String[] {tp.toJson()};
+              } else {
+                // something was mapped
+                settingsRow = new String[] {tp.toJson(), strKvsEntries};
+              }
+              cw.writeNext(settingsRow);
             }
             cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
             String[] row = new String[columnCount];
@@ -318,4 +444,5 @@ public class CsvUtil {
             return false;
         }
     }
+  
 }

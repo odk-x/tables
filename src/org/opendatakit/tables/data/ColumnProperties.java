@@ -28,6 +28,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.content.ContentValues;
@@ -747,7 +748,9 @@ public class ColumnProperties {
   /**
    * Deletes the column represented by this ColumnProperties by deleting it
    * from the ColumnDefinitions table as well as the given key value store.
-   * TODO: should probably delete the column from ALL the column key value
+   * <p>
+   * Also clears all the column color rules for the column.
+   * TODO: should maybe delete the column from ALL the column key value
    * stores to avoid conflict with ColumnDefinitions?
    * @param db
    */
@@ -756,6 +759,11 @@ public class ColumnProperties {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
+    // this is to clear all the color rules. If we didn't do this, you could
+    // have old color rules build up, and worse still, if you deleted this 
+    // column and then added a new column whose element key ended up being the
+    // same, you would have rules suddenly applying to them.
+    kvs.clearEntries(ColumnColorRuler.KVS_PARTITION, elementKey, db);
   }
   
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,

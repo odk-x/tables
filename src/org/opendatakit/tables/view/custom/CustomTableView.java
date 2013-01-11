@@ -71,7 +71,7 @@ public class CustomTableView extends CustomView {
     public void display() {
       // Load a basic screen as you're getting the other stuff ready to 
       // clear the old data.
-      load("file:////sdcard/odk/tables/loadingHtml.html");
+      //load("file:////sdcard/odk/tables/loadingHtml.html");
         webView.addJavascriptInterface(new TableControl(context), "control");
         webView.addJavascriptInterface(new TableData(tp, table), "data");
         if (filename != null) {

@@ -131,8 +131,7 @@ import android.util.Log;
  * <p>
  * There is a fourth key value store. This handles only sync properties. It is
  * called the keyValueStoreSync, and it handles only things like "setToSync",
- * whether or not the table should be synched. That kind of thing. It is kind
- * of TBD...
+ * whether or not the table should be synched.
  * 
  * @author sudar.sam@gmail.com
  *

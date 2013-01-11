@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -54,6 +55,10 @@ public abstract class CustomView extends LinearLayout {
 
 	public static void initCommonWebView(Context context) {
 		if (webView != null) {
+		  // do this every time to try and clear the old data.
+	      //webView.clearView();
+	      //webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html", 
+	      //    null);
 			return;
 		}
 		webView = new WebView(context);
