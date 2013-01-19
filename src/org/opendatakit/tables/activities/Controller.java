@@ -510,15 +510,7 @@ public class Controller {
         
         // view type submenu
         // 	  -determine the possible view types
-//        final int[] viewTypeIds = tvs.getPossibleViewTypes();
         final TableViewType[] viewTypes = tp.getPossibleViewTypes();
-//        String[] viewTypeStringIds = new String[viewTypes.length];
-//        String[] viewTypeNames = new String[viewTypes.length];
-//        for (int i = 0; i < viewTypes.length; i++) {
-//            viewTypeStringIds[i] = String.valueOf(viewTypeIds[i]);
-//            viewTypeNames[i] = LanguageUtil.getViewTypeLabel(
-//                    viewTypeIds[i]);
-//        }
         // 	  -build a checkable submenu to select the view type
         SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE, "ViewType");
         MenuItem viewType = viewTypeSubMenu.getItem();
@@ -536,9 +528,6 @@ public class Controller {
         	    viewTypes[i].getId(), i, 
         	    viewTypes[i].name());
         	// mark the current viewType as selected
-//        	if (tvs.getViewType() == viewTypeIds[i]) {
-//                item.setChecked(true);
-//            }
           	if (tp.getCurrentViewType() == viewTypes[i]) {
           	  item.setChecked(true);
           	}
