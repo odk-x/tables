@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 
 import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
@@ -209,7 +210,8 @@ public class CollectUtil {
      * method in Controller that handles the case for editing every column
      * in a screen by screen fashion, generating the entire form on the fly.
      */
-    public static boolean writeRowDataToBeEdited(UserTable table, int rowNum,
+    public static boolean writeRowDataToBeEdited(//UserTable table, int rowNum,
+        Map<String, String> values,
         TableProperties tp, CollectFormParameters params) {
       /*
        * This is currently implemented thinking that all you need to have
@@ -236,8 +238,7 @@ public class CollectUtil {
         writer.write(params.getFormId());
         writer.write("\">");
         for (ColumnProperties cp : tp.getColumns()) {
-          String value = table.getData(rowNum,
-              tp.getColumnIndex(cp.getElementName()));
+          String value = values.get(cp.getElementName());
           if (value == null) {
             writer.write("<" + cp.getElementName() + "/>");
           } else {
@@ -247,6 +248,17 @@ public class CollectUtil {
 
           }
         }
+//      for (Map.Entry<String, String> entry : values.entrySet()) {
+//      String value = entry.getValue();
+//      if (value == null) {
+//        writer.write("<" + entry.getKey() + "/>");
+//      } else {
+//        writer
+//            .write("<" + entry.getKey() + ">" + value + "</" + 
+//                entry.getKey() + ">");
+//
+//      }
+//    }
         writer.write("</");
         writer.write(params.getRootElement());
         writer.write(">");

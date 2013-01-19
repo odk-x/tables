@@ -38,6 +38,8 @@ import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
@@ -59,7 +61,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -478,84 +479,6 @@ public class Controller {
   void deleteRow(String rowId) {
     dbt.markDeleted(rowId);
   }
-  
-  /**
-   * The idea here is that we might want to edit a row of the table using a 
-   * pre-set Collect form. This form would be user-defined and would be a more
-   * user-friendly thing that would display only the pertinent information for
-   * a particular user. 
-   * @param table
-   * @param rowNum
-   * @return
-   */
-  /*
-   * This is a move away from the general "odk add row" usage that is going on
-   * when no row is defined. As I understand it, the new case will work as 
-   * follows. 
-   * 
-   * There exits an "tableEditRow" form for a particular table. This form, as I
-   * understand it, must exist both in the tables directory, as well as in
-   * Collect so that Collect can launch it with an Intent. 
-   * 
-   * You then also construct a "values" sort of file, that is the data from the
-   * database that will pre-populate the fields. Mitch referred to something 
-   * like this as the "instance" file. 
-   * 
-   * Once you have both of these files, the form and the data, you insert the 
-   * data into the form. When you launch the form, it is then pre-populated
-   * with data from the database.
-   * 
-   * In order to make this work, the form must exist both within the places
-   * Collect knows to look, as well as in the Tables folder. You also must know
-   * the:
-   * 
-   * collectFormVersion
-   * collectFormId
-   * collectXFormRootElement (default to "data")
-   * 
-   * These will most likely exist as keys in the key value store. They must 
-   * match the form.
-   * 
-   * Other things needed will be:
-   * 
-   * instanceFilePath  // I think the filepath with all the values
-   * displayName       // just text, eg a row ID
-   * formId            // the same thing as collectFormId?
-   * formVersion
-   * status            // either INCOMPLETE or COMPLETE
-   * 
-   * Examples for how this is done in Collect can be found in the Collect code
-   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the 
-   * updateInstanceDatabase() method.
-   */
-  public Intent getIntentForOdkCollectEditRow(UserTable table, 
-      int rowNum, CollectFormParameters params) {
-    // Check if there is a custom form. If there is not, we want to delete
-    // the old form and write the new form.
-    if (!params.isCustom()) {
-      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-          activity.getContentResolver(), params, tp);
-      if (!formIsReady) {
-        Log.e(TAG, "could not delete, write, or insert a generated form");
-        return null;
-      }
-    }
-    boolean writeDataSuccessful = 
-        CollectUtil.writeRowDataToBeEdited(table, rowNum, tp, params);
-    if (!writeDataSuccessful) {
-      Log.e(TAG, "could not write instance file successfully!");
-    }
-    Uri insertUri = 
-        CollectUtil.getUriForInsertedData(params, rowNum, 
-            activity.getContentResolver()); 
-    // Copied the below from getIntentForOdkCollectEditRow().
-    Intent intent = new Intent();
-    intent.setComponent(new ComponentName("org.odk.collect.android",
-            "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(insertUri);
-    return intent;
-  }
     
     /**
      * Builds the option menu (menus in the action bar and overflow)
@@ -682,12 +605,31 @@ public class Controller {
 	          CollectFormParameters params = 
 	            CollectUtil.CollectFormParameters
 	              .constructCollectFormParameters(tp);
-	            Intent intentAddRow = getIntentForOdkCollectAddRow(params);
-	            if (intentAddRow != null) {
-	                Controller.this.activity.startActivityForResult(intentAddRow,
-	                        RCODE_ODKCOLLECT_ADD_ROW);
-	            }
-	            return true;
+	          // Try to construct the values currently in the search bar to 
+	          // prepopulate with the form. We're going to ignore joins. This 
+	          // means that if there IS a join column, we'll throw an error!!!
+	          // So be careful.
+	          Intent intentAddRow;
+	          if (getSearchText().equals("")) {
+	            intentAddRow = getIntentForOdkCollectAddRow(params, null);
+	          } else {
+    	          Query currentQuery = new Query(null, tp);
+    	          currentQuery.loadFromUserQuery(getSearchText());
+    	          Map<String, String> elementNameToValue = 
+    	              new HashMap<String, String>();
+    	          for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
+    	            Constraint constraint = currentQuery.getConstraint(i);
+    	            elementNameToValue.put(constraint.getColumnDbName(),
+    	                constraint.getValue(i));
+    	          }
+    	         intentAddRow = getIntentForOdkCollectAddRow(params, 
+    	             elementNameToValue);
+	          }      
+	          if (intentAddRow != null) {
+	              Controller.this.activity.startActivityForResult(intentAddRow,
+	                      RCODE_ODKCOLLECT_ADD_ROW);
+	          }
+	          return true;
 	        case MENU_ITEM_ID_SETTINGS_SUBMENU:
 	        	return true;
 	        case MENU_ITEM_ID_DISPLAY_PREFERENCES:
@@ -727,6 +669,90 @@ public class Controller {
         }
   }
 
+	  /**
+	   * The idea here is that we might want to edit a row of the table using a 
+	   * pre-set Collect form. This form would be user-defined and would be a more
+	   * user-friendly thing that would display only the pertinent information for
+	   * a particular user. 
+	   * @param table
+	   * @param rowNum
+	   * @return
+	   */
+	  /*
+	   * This is a move away from the general "odk add row" usage that is going on
+	   * when no row is defined. As I understand it, the new case will work as 
+	   * follows. 
+	   * 
+	   * There exits an "tableEditRow" form for a particular table. This form, as I
+	   * understand it, must exist both in the tables directory, as well as in
+	   * Collect so that Collect can launch it with an Intent. 
+	   * 
+	   * You then also construct a "values" sort of file, that is the data from the
+	   * database that will pre-populate the fields. Mitch referred to something 
+	   * like this as the "instance" file. 
+	   * 
+	   * Once you have both of these files, the form and the data, you insert the 
+	   * data into the form. When you launch the form, it is then pre-populated
+	   * with data from the database.
+	   * 
+	   * In order to make this work, the form must exist both within the places
+	   * Collect knows to look, as well as in the Tables folder. You also must know
+	   * the:
+	   * 
+	   * collectFormVersion
+	   * collectFormId
+	   * collectXFormRootElement (default to "data")
+	   * 
+	   * These will most likely exist as keys in the key value store. They must 
+	   * match the form.
+	   * 
+	   * Other things needed will be:
+	   * 
+	   * instanceFilePath  // I think the filepath with all the values
+	   * displayName       // just text, eg a row ID
+	   * formId            // the same thing as collectFormId?
+	   * formVersion
+	   * status            // either INCOMPLETE or COMPLETE
+	   * 
+	   * Examples for how this is done in Collect can be found in the Collect code
+	   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the 
+	   * updateInstanceDatabase() method.
+	   */
+	  public Intent getIntentForOdkCollectEditRow(UserTable table, 
+	      int rowNum, CollectFormParameters params) {
+	    // Check if there is a custom form. If there is not, we want to delete
+	    // the old form and write the new form.
+	    if (!params.isCustom()) {
+	      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
+	          activity.getContentResolver(), params, tp);
+	      if (!formIsReady) {
+	        Log.e(TAG, "could not delete, write, or insert a generated form");
+	        return null;
+	      }
+	    }
+	    Map<String, String> elementNameToValue = new HashMap<String, String>();
+	    for (ColumnProperties cp : tp.getColumns()) {
+	      String value = table.getData(rowNum,
+	          tp.getColumnIndex(cp.getElementName()));
+	      elementNameToValue.put(cp.getElementName(), value);
+	    }
+	    boolean writeDataSuccessful = 
+	        CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
+	    if (!writeDataSuccessful) {
+	      Log.e(TAG, "could not write instance file successfully!");
+	    }
+	    Uri insertUri = 
+	        CollectUtil.getUriForInsertedData(params, rowNum, 
+	            activity.getContentResolver()); 
+	    // Copied the below from getIntentForOdkCollectEditRow().
+	    Intent intent = new Intent();
+	    intent.setComponent(new ComponentName("org.odk.collect.android",
+	            "org.odk.collect.android.activities.FormEntryActivity"));
+	    intent.setAction(Intent.ACTION_EDIT);
+	    intent.setData(insertUri);
+	    return intent;
+	  }
+	  
 	/**
 	 * Generate the Intent to add a row using Collect. For safety, the params 
 	 * object, particularly it's isCustom field, determines exactly which action
@@ -735,7 +761,8 @@ public class Controller {
 	 * @param params
 	 * @return
 	 */
-  public Intent getIntentForOdkCollectAddRow(CollectFormParameters params) {
+  public Intent getIntentForOdkCollectAddRow(CollectFormParameters params,
+      Map<String, String> elementNameToValue) {
     /*
      * So, there are several things to check here. The first thing we want to 
      * do is see if a custom form has been defined for this table. If there is
@@ -754,11 +781,26 @@ public class Controller {
         return null;
       }
     }
-    Uri formToLaunch = CollectUtil.getUriOfForm(activity.getContentResolver(), 
-        params.getFormId());
-    if (formToLaunch == null) {
-      Log.e(TAG, "URI of the form to pass to Collect and launch was null");
-      return null;
+    Uri formToLaunch;
+    if (elementNameToValue == null) {
+      formToLaunch = CollectUtil.getUriOfForm(activity.getContentResolver(), 
+          params.getFormId());
+      if (formToLaunch == null) {
+        Log.e(TAG, "URI of the form to pass to Collect and launch was null");
+        return null;
+      }
+    } else { 
+      // we've received some values to prepopulate the add row with.
+      boolean writeDataSuccessful = 
+          CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
+      if (!writeDataSuccessful) {
+        Log.e(TAG, "could not write instance file successfully!");
+      }
+      // Here we'll just act as if we're inserting 0, which 
+      // really doesn't matter?
+      formToLaunch = 
+          CollectUtil.getUriForInsertedData(params, 0, 
+              activity.getContentResolver()); 
     }
     // And now finally create the intent.
     Intent intent = new Intent();
