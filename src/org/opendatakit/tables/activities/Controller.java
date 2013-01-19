@@ -613,15 +613,8 @@ public class Controller {
 	          if (getSearchText().equals("")) {
 	            intentAddRow = getIntentForOdkCollectAddRow(params, null);
 	          } else {
-    	          Query currentQuery = new Query(null, tp);
-    	          currentQuery.loadFromUserQuery(getSearchText());
     	          Map<String, String> elementNameToValue = 
-    	              new HashMap<String, String>();
-    	          for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
-    	            Constraint constraint = currentQuery.getConstraint(i);
-    	            elementNameToValue.put(constraint.getColumnDbName(),
-    	                constraint.getValue(i));
-    	          }
+    	              getMapFromLimitedQuery();
     	         intentAddRow = getIntentForOdkCollectAddRow(params, 
     	             elementNameToValue);
 	          }      
@@ -810,6 +803,31 @@ public class Controller {
     intent.setData(formToLaunch);
     return intent;
   }
+  
+  private Map<String, String> getMapFromLimitedQuery() {
+    Map<String, String> elementNameToValue = 
+        new HashMap<String, String>();
+    // First add all empty strings. We will overwrite the ones that are queried
+    // for in the search box. We need this so that if an add is canceled, we 
+    // can check for equality and know not to add it. If we didn't do this,
+    // but we've prepopulated an add with a query, when we return and don't do
+    // a check, we'll add a blank row b/c there are values in the key value 
+    // pairs, even though they were our prepopulated values.
+    for (ColumnProperties cp : tp.getColumns()) {
+      elementNameToValue.put(cp.getElementName(), "");
+    }
+    Query currentQuery = new Query(null, tp);
+    currentQuery.loadFromUserQuery(getSearchText());
+    for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
+      Constraint constraint = currentQuery.getConstraint(i);
+      // NB: This is predicated on their only ever being a single
+     // search value. I'm not sure how additional values could be
+     // added.
+      elementNameToValue.put(constraint.getColumnDbName(),
+          constraint.getValue(0));
+    }
+    return elementNameToValue;
+  }
 
   boolean addRowFromOdkCollectForm(int instanceId) {
     Map<String, String> formValues = getOdkCollectFormValues(instanceId);
@@ -826,6 +844,12 @@ public class Controller {
         if (value != null) {
             values.put(key, value);
         }
+    }
+    // Now we want to check for equality of this and the query map. If they
+    // are the same, we know we hit ignore and didn't save anything.
+    Map<String, String> prepopulatedValues = getMapFromLimitedQuery();
+    if (prepopulatedValues.equals(values)) {
+      return false;
     }
     dbt.addRow(values);
     return true;
