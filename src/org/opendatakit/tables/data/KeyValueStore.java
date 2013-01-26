@@ -94,6 +94,30 @@ public class KeyValueStore {
     this.dbh = dbh;
     this.tableId = tableId;
   }
+  
+  /**
+   * Get the {@link DbHelper} associated with this key value store.
+   * @return
+   */
+  public DbHelper getDbHelper() {
+    return this.dbh;
+  }
+  
+  /**
+   * Get the name of the database table backing the key value store.
+   * @return
+   */
+  public String getDbBackingName() {
+    return this.dbBackingName;
+  }
+  
+  /**
+   * Get the table id of the table belonging to this key value store.
+   * @return
+   */
+  public String getTableId() {
+    return this.tableId;
+  }
     
   /**
    * Return a map of key to value for the keys in a given partition and aspect
@@ -318,9 +342,48 @@ public class KeyValueStore {
       i++;
       c.moveToNext();
     }
-    c.close();
+    if (c != null && !c.isClosed()) {
+      c.close();
+    }
     return partitions;
   }
+  
+  /**
+   * Return a list of all the aspects that exist in the given partition.
+   * <p>
+   * Leverages the database to do this, meaning that it ought to be more 
+   * efficient than doing something along the lines of getting all the entries
+   * for a table and iterating through them to create this list.
+   * @param db
+   * @param partition
+   * @return
+   */
+  public List<String> getAspectsForPartition(SQLiteDatabase db, 
+      String partition) {
+    String[] targetQuery = new String[2];
+    targetQuery[0] = tableId;
+    targetQuery[1] = partition;
+    // We're doing 1 b/c we're only getting a single partition.
+    String whereClause = WHERE_SQL_FOR_PARTITIONS + makePlaceHolders(1) + ")";
+    Cursor c = db.query(true, this.dbBackingName,
+        new String[] {KeyValueStoreManager.ASPECT},
+        whereClause,
+        new String[] {this.tableId, partition}, null, null, null, null);
+    List<String> aspects = new ArrayList<String>();
+    int aspectIndex = 
+        c.getColumnIndexOrThrow(KeyValueStoreManager.ASPECT);
+    int i = 0;
+    c.moveToFirst();
+    while (i < c.getCount()) {
+      aspects.add(c.getString(aspectIndex));
+      i++;
+    }
+    if (c != null && !c.isClosed()) {
+      c.close();
+    }
+    return aspects;
+  }
+  
   
   /**
    * Return a list of all the entries in the given partitions.
