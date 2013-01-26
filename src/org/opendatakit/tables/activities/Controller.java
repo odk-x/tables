@@ -38,6 +38,7 @@ import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
@@ -190,8 +191,9 @@ public class Controller {
             @Override
             public void onClick(View v) {
               // when you click the search button, save that query.
-              tp.setStringEntry(TableProperties.KVS_PARTITION, 
-                  TableProperties.KVS_ASPECT, 
+              KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(
+                  TableProperties.KVS_PARTITION);
+              kvsh.setStringEntry(
                   TableProperties.KEY_CURRENT_QUERY, 
                   searchField.getEditText().getText().toString());
                 da.onSearch();
@@ -520,8 +522,9 @@ public class Controller {
         MenuItem item;
         // This will be the list filename, which we need to have here so we 
         // know whether or not it's specified.
-        String listViewFilename = tp.getStringEntry(ListDisplayActivity.KVS_PARTITION,
-            ListDisplayActivity.KVS_ASPECT_DEFAULT, 
+        KeyValueStoreHelper kvsh = 
+            tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+        String listViewFilename = kvsh.getString( 
             ListDisplayActivity.KEY_FILENAME);
         for(int i = 0; i < viewTypes.length; i++) {
         	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
@@ -1007,8 +1010,9 @@ public class Controller {
     } else if (searchText != null) {
       intent.putExtra(INTENT_KEY_SEARCH, searchText);
     } else if (searchText == null) {
-      String savedQuery = tp.getStringEntry(TableProperties.KVS_PARTITION, 
-          TableProperties.KVS_ASPECT, TableProperties.KEY_CURRENT_QUERY);
+      KeyValueStoreHelper kvsh = 
+          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
       if (savedQuery == null) {
         savedQuery = "";
       }

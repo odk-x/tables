@@ -28,6 +28,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
@@ -327,10 +328,10 @@ public class TablePropertiesManager extends PreferenceActivity {
                 new DetailViewFileSelectorPreference(this);
         detailViewPref.setTitle("Detail View File");
         detailViewPref.setDialogTitle("Change Detail View File");
-        String detailViewFilename = tp.getStringEntry(
-            CustomDetailView.KVS_PARTITION,
-            CustomDetailView.KVS_ASPECT_DEFAULT,
-            CustomDetailView.KEY_FILENAME);
+        final KeyValueStoreHelper kvsh = 
+            tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+        String detailViewFilename = 
+            kvsh.getString(CustomDetailView.KEY_FILENAME);
         detailViewPref.setText(detailViewFilename);
         detailViewPref.setOnPreferenceChangeListener(
                 new OnPreferenceChangeListener() {
@@ -338,8 +339,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                     public boolean onPreferenceChange(Preference preference,
                             Object newValue) {
 //                        tp.setDetailViewFilename((String) newValue);
-                      tp.setStringEntry(CustomDetailView.KVS_PARTITION,
-                          CustomDetailView.KVS_ASPECT_DEFAULT,
+                      kvsh.setStringEntry(
                           CustomDetailView.KEY_FILENAME,
                           (String) newValue);
                         init();
@@ -597,9 +597,10 @@ public class TablePropertiesManager extends PreferenceActivity {
             	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
                 listFilePref.setTitle(label + " List View File");
                 listFilePref.setDialogTitle("Change " + label + " List View File");
-                String currentFilename = tp.getStringEntry(
-                    ListDisplayActivity.KVS_PARTITION, 
-                    ListDisplayActivity.KVS_ASPECT_DEFAULT,
+                final KeyValueStoreHelper kvsh = 
+                    tp.getKeyValueStoreHelper(
+                        ListDisplayActivity.KVS_PARTITION);
+                String currentFilename = kvsh.getString(
                     ListDisplayActivity.KEY_FILENAME);
                 listFilePref.setText(currentFilename);
                 listFilePref.setOnPreferenceChangeListener(
@@ -608,8 +609,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                     public boolean onPreferenceChange(Preference preference,
                             Object newValue) {
 //                        settings.setCustomListFilename((String) newValue);
-                      tp.setStringEntry(ListDisplayActivity.KVS_PARTITION,
-                          ListDisplayActivity.KVS_ASPECT_DEFAULT,
+                      kvsh.setStringEntry(
                           ListDisplayActivity.KEY_FILENAME,
                           (String) newValue);
                         init();
@@ -726,12 +726,13 @@ public class TablePropertiesManager extends PreferenceActivity {
         if (resultCode == RESULT_CANCELED) {
             return;
         }
+        KeyValueStoreHelper kvsh;
         switch (requestCode) {
         case RC_DETAIL_VIEW_FILE:
             Uri fileUri = data.getData();
             String filename = fileUri.getPath();
-            tp.setStringEntry(CustomDetailView.KVS_PARTITION,
-                CustomDetailView.KVS_ASPECT_DEFAULT,
+            kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+            kvsh.setStringEntry(
                 CustomDetailView.KEY_FILENAME,
                 filename);
 //            tp.setDetailViewFilename(filename);
@@ -740,8 +741,9 @@ public class TablePropertiesManager extends PreferenceActivity {
         case RC_LIST_VIEW_FILE:
         	Uri fileUri2 = data.getData();
             String filename2 = fileUri2.getPath();
-            tp.setStringEntry(ListDisplayActivity.KVS_PARTITION,
-                ListDisplayActivity.KVS_ASPECT_DEFAULT,
+            kvsh = 
+                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+            kvsh.setStringEntry(
                 ListDisplayActivity.KEY_FILENAME,
                 filename2);
 //            TableViewSettings settings = tp.getOverviewViewSettings();

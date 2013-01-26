@@ -25,8 +25,9 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.KeyValueHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.ContentResolver;
@@ -522,18 +523,20 @@ public class CollectUtil {
        */
       public static CollectFormParameters constructCollectFormParameters(
           TableProperties tp) {
-        String formId = tp.getStringEntry(CollectUtil.KVS_PARTITION,
-            CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_ID);
+        KeyValueStoreHelper kvsh = 
+            tp.getKeyValueStoreHelper(CollectUtil.KVS_PARTITION);
+        KeyValueHelper aspectHelper = 
+            kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
+        String formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
         if (formId == null) {
           return new CollectFormParameters(false,
               COLLECT_ADDROW_FORM_ID, null, DEFAULT_ROOT_ELEMENT);
         }
         // Else we know it is custom.
-        String formVersion = tp.getStringEntry(CollectUtil.KVS_PARTITION,
-            CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_VERSION);
+        String formVersion = 
+            aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
         String rootElement = 
-            tp.getStringEntry(CollectUtil.KVS_PARTITION,
-                CollectUtil.KVS_ASPECT, CollectUtil.KEY_FORM_ROOT_ELEMENT);
+            aspectHelper.getString(CollectUtil.KEY_FORM_ROOT_ELEMENT);
         if (rootElement == null) {
           rootElement = DEFAULT_ROOT_ELEMENT;
         }

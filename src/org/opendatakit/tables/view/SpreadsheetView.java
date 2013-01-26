@@ -18,6 +18,8 @@ package org.opendatakit.tables.view;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.KeyValueHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -693,10 +695,13 @@ public class SpreadsheetView extends LinearLayout
       // lot of columns you're really working the gut of the database.
       ColumnProperties[] colProps = tp.getColumns();
       int[] columnWidths = new int[colProps.length];
+      KeyValueStoreHelper columnKVSH = 
+          tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
       for (int i = 0; i < columnWidths.length; i++) {
         String elementKey = colProps[i].getElementKey();
-        Integer value = tp.getIntegerEntry(ColumnProperties.KVS_PARTITION,
-            elementKey, SpreadsheetView.KEY_COLUMN_WIDTH);
+        KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
+        Integer value = 
+            aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
         if (value == null) {
           columnWidths[i] = DEFAULT_COL_WIDTH;
         } else {

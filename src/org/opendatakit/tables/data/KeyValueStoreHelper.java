@@ -71,6 +71,16 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
   
   /**
+   * Get the accessor for the partition specified by this object as well as 
+   * the given aspect.
+   * @param aspect
+   * @return
+   */
+  public KeyValueHelper getAspectHelper(String aspect) {
+    return new AspectHelper(aspect);
+  }
+  
+  /**
    * The partition of the key value store.
    * @return
    */
@@ -401,7 +411,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     
     private final String aspect;
     
-    public AspectHelper(String aspect) {
+    /**
+     * Private so that you can only get it via the factory class.
+     * @param aspect
+     */
+    private AspectHelper(String aspect) {
       this.aspect = aspect;
     }
 

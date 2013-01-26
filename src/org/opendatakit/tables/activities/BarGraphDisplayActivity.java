@@ -15,23 +15,16 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomGraphView;
-import org.opendatakit.tables.view.custom.CustomTableView;
-import org.opendatakit.tables.view.graphs.BarChart;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
@@ -48,6 +41,7 @@ public class BarGraphDisplayActivity extends SherlockActivity
 	    private Query query;
 	    private UserTable table;
 	    private CustomGraphView view;
+	    private KeyValueStoreHelper kvsh;
 	    
 	    @Override
 	    public void onCreate(Bundle savedInstanceState) {
@@ -69,13 +63,12 @@ public class BarGraphDisplayActivity extends SherlockActivity
 	    public void init() {
 	        query.clear();
 	        query.loadFromUserQuery(c.getSearchText());
+	        kvsh = c.getTableProperties().getKeyValueStoreHelper(
+	            ListDisplayActivity.KVS_PARTITION);
 	        table = c.getIsOverview() ?
 	                c.getDbTable().getUserOverviewTable(query) :
 	                c.getDbTable().getUserTable(query);
-	        String filename = c.getTableProperties().getStringEntry(
-	            ListDisplayActivity.KVS_PARTITION,
-	            ListDisplayActivity.KVS_ASPECT_DEFAULT,
-	            ListDisplayActivity.KEY_FILENAME);
+	        String filename = kvsh.getString(ListDisplayActivity.KEY_FILENAME);
 	        view = CustomGraphView.get(this, c.getTableProperties(), table,
 	                filename);
 	        displayView();

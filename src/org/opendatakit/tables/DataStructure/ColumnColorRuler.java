@@ -12,6 +12,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.tables.data.KeyValueHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.util.Log;
@@ -46,11 +48,15 @@ public class ColumnColorRuler {
   private final String elementKey;
   private final ObjectMapper mapper;
   private final TypeFactory typeFactory;
+  private final KeyValueStoreHelper kvsh;
+  private final KeyValueHelper aspectHelper;
   // This is the list of actual rules that make up the ruler.
   private List<ColColorRule> ruleList;
           
     private ColumnColorRuler(TableProperties tp, String elementKey) {
       this.tp = tp;
+      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
+      this.aspectHelper = kvsh.getAspectHelper(elementKey);
       this.elementKey = elementKey;
       this.mapper = new ObjectMapper();
       this.typeFactory = mapper.getTypeFactory();
@@ -84,8 +90,7 @@ public class ColumnColorRuler {
         return new ArrayList<ColColorRule>();
       }
       String jsonRulesString = 
-          tp.getObjectEntry(KVS_PARTITION,
-          this.elementKey, KEY_COLOR_RULES);
+          aspectHelper.getObject(KEY_COLOR_RULES);
       if (jsonRulesString == null) { // no values in the kvs
         return new ArrayList<ColColorRule>();
       }
@@ -151,8 +156,7 @@ public class ColumnColorRuler {
       String ruleListJson = DEFAULT_KEY_COLOR_RULES;
       try {
         ruleListJson = mapper.writeValueAsString(ruleList);
-        tp.setObjectEntry(KVS_PARTITION, elementKey, 
-            KEY_COLOR_RULES, ruleListJson);
+        aspectHelper.setObjectEntry(KEY_COLOR_RULES, ruleListJson);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing list of color rules");
         e.printStackTrace();

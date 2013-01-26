@@ -18,9 +18,9 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomTableView;
 
@@ -66,6 +66,7 @@ public class ListDisplayActivity extends SherlockActivity
     private UserTable table;
     private CustomTableView view;
     private DbHelper dbh;
+    private KeyValueStoreHelper kvsh;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,7 @@ public class ListDisplayActivity extends SherlockActivity
         setTitle("");
         dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
-
+        kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
         dm = new DataManager(DbHelper.getDbHelper(this));
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
@@ -97,10 +98,7 @@ public class ListDisplayActivity extends SherlockActivity
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        String filename = c.getTableProperties().getStringEntry(
-            ListDisplayActivity.KVS_PARTITION,
-            ListDisplayActivity.KVS_ASPECT_DEFAULT,
-            ListDisplayActivity.KEY_FILENAME);
+        String filename = kvsh.getString(ListDisplayActivity.KEY_FILENAME);
         KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
         KeyValueStore kvs = 
             kvsm.getStoreForTable(c.getTableProperties().getTableId(), 

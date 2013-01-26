@@ -23,6 +23,7 @@ import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
@@ -125,12 +126,10 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // this means we got something. Doing check > 0 rather than == 1 just
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
-//          TableViewSettings ovViewSettings = 
-//              tableProp.getOverviewViewSettings();
-//          ovViewSettings.setCustomListFilename(entries.get(0).value);
-          tableProp.setStringEntry(ListDisplayActivity.KVS_PARTITION, 
-              ListDisplayActivity.KVS_ASPECT_DEFAULT, 
-              ListDisplayActivity.KEY_FILENAME, 
+          KeyValueStoreHelper listHelper = 
+              tableProp.getKeyValueStoreHelper(
+                  ListDisplayActivity.KVS_PARTITION);
+          listHelper.setStringEntry(ListDisplayActivity.KEY_FILENAME, 
               entries.get(0).value);
         }
         // and now check for detail.
@@ -150,10 +149,9 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // this means we got something. Doing check > 0 rather than == 1 just
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
-//          tableProp.setDetailViewFilename(entries.get(0).value);
-          tableProp.setStringEntry(CustomDetailView.KVS_PARTITION,
-              CustomDetailView.KVS_ASPECT_DEFAULT, 
-              CustomDetailView.KEY_FILENAME,
+          KeyValueStoreHelper detailHelper = 
+              tableProp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+          detailHelper.setStringEntry(CustomDetailView.KEY_FILENAME,
               entries.get(0).value);
         }
       } finally {

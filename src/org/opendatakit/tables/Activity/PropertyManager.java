@@ -22,7 +22,9 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.FooterMode;
 import org.opendatakit.tables.data.JoinColumn;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.view.SpreadsheetView;
 
@@ -64,6 +66,7 @@ public class PropertyManager extends PreferenceActivity {
   private ColumnProperties cp;
   private int colIndex;
   private boolean showingMcDialog;
+  private KeyValueStoreHelper columnKVSH;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +81,8 @@ public class PropertyManager extends PreferenceActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
+    this.columnKVSH = 
+        tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
     cp = tp.getColumnByElementKey(elementKey);
     colIndex = tp.getColumnIndex(elementKey);
     showingMcDialog = false;
@@ -128,10 +133,11 @@ public class PropertyManager extends PreferenceActivity {
     colWidthPref.setMaxValue(500);
 //    colWidthPref.setValue(tp.getOverviewViewSettings()
 //        .getTableColWidths()[colIndex]);
+    final KeyValueHelper aspectHelper = 
+        columnKVSH.getAspectHelper(
+            tp.getColumnByIndex(colIndex).getElementKey());
     Integer savedColumnWidth = 
-        tp.getIntegerEntry(ColumnProperties.KVS_PARTITION,
-        tp.getColumnByIndex(colIndex).getElementKey(), 
-        SpreadsheetView.KEY_COLUMN_WIDTH);
+        aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
     if (savedColumnWidth == null) {
       savedColumnWidth = SpreadsheetView.DEFAULT_COL_WIDTH;
     }
@@ -142,9 +148,7 @@ public class PropertyManager extends PreferenceActivity {
       public boolean onPreferenceChange(Preference preference, 
           Object newValue) {
         int width = (Integer) newValue;
-        tp.setIntegerEntry(ColumnProperties.KVS_PARTITION,
-            tp.getColumnByIndex(colIndex).getElementKey(),
-            SpreadsheetView.KEY_COLUMN_WIDTH, width);
+        aspectHelper.setIntegerEntry(SpreadsheetView.KEY_COLUMN_WIDTH, width);
 //        int[] widths = tp.getOverviewViewSettings().getTableColWidths();
 //        widths[colIndex] = width;
 //        tp.getOverviewViewSettings().setTableColWidths(widths);

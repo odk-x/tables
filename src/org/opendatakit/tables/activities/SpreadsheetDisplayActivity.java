@@ -27,7 +27,9 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.JoinColumn;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -43,9 +45,7 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -258,17 +258,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      case MENU_ITEM_ID_EDIT_ROW:
        // It is possible that a custom form has been defined for this table.
        // We will get the strings we need, and then set the parameter object.
-       String formId = c.getTableProperties().getStringEntry(
-           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
-           CollectUtil.KEY_FORM_ID);
-       String formVersion = c.getTableProperties().getStringEntry(
-           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
-           CollectUtil.KEY_FORM_VERSION);
-       String rootElement = c.getTableProperties().getStringEntry(
-           CollectUtil.KVS_PARTITION, CollectUtil.KVS_ASPECT,
-           CollectUtil.KEY_FORM_ROOT_ELEMENT);
        CollectFormParameters params = 
-//           new CollectFormParameters(formId, formVersion, rootElement);
            CollectUtil.CollectFormParameters
              .constructCollectFormParameters(c.getTableProperties());
        c.editRow(table, (lastDataCellMenued / table.getWidth()), params);
