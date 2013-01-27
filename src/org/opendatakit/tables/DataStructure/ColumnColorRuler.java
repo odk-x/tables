@@ -144,8 +144,9 @@ public class ColumnColorRuler {
       }
       // if there are no rules, we want to remove the key from the kvs.
       if (ruleList.size() == 0) {
-        tp.removeEntry(KVS_PARTITION, elementKey, 
-            KEY_COLOR_RULES);
+        aspectHelper.removeEntry(KEY_COLOR_RULES);
+//        tp.removeEntry(KVS_PARTITION, elementKey, 
+//            KEY_COLOR_RULES);
         return;
       }
       // set it to this default just in case something goes wrong and it is 

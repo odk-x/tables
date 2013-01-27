@@ -115,7 +115,7 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         // now check the value. if there is an entry, we should set it.
         List<OdkTablesKeyValueStoreEntry> entries = 
             kvs.getEntriesForKeys(db, TableProperties.KVS_PARTITION,
-                TableProperties.KVS_ASPECT, desiredKeys);
+                KeyValueStoreHelper.DEFAULT_ASPECT, desiredKeys);
         if (entries.size() > 1) {
           Log.e(TAG, "query for " + ListDisplayActivity.KEY_FILENAME +
               " for table " + tableProp.getTableId() + " in the kvs of type " +

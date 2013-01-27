@@ -203,7 +203,7 @@ public class KeyValueStore {
     // querying over in the database.
     desiredKeys[0] = tableId;
     desiredKeys[1] = TableProperties.KVS_PARTITION;
-    desiredKeys[2] = TableProperties.KVS_ASPECT;
+    desiredKeys[2] = KeyValueStoreHelper.DEFAULT_ASPECT;
     for (int i = 0; i < basicProps.length; i++) {
       desiredKeys[i+3] = basicProps[i]; 
     }

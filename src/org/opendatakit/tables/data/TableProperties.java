@@ -68,7 +68,6 @@ public class TableProperties {
    *  The partition and aspect of table properties in the key value store.
    ***********************************/
   public static final String KVS_PARTITION = "Table";
-  public static final String KVS_ASPECT = "global";
 
   /***********************************
    *  The names of keys that are defaulted to exist in the key value store.
@@ -217,7 +216,8 @@ public class TableProperties {
 //  private TableViewType currentCollectionViewType;
 //  private String detailViewFilename;
   private String sumDisplayFormat;
-
+  private KeyValueStoreHelper tableKVSH;
+  
   private TableProperties(DbHelper dbh, 
       String tableId, 
       String tableKey,
@@ -263,6 +263,8 @@ public class TableProperties {
     this.syncState = syncState;
     this.transactioning = transactioning;
     this.backingStore = backingStore;
+    this.tableKVSH = 
+        this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
   }
 
   /**
@@ -776,39 +778,6 @@ public class TableProperties {
     // First we will add the entry in TableDefinitions. 
     //  TODO: this should check for duplicate names.
     SQLiteDatabase db = dbh.getWritableDatabase();
-    // Now we want to add an entry to the key value store for all of the 
-    // keys defined in this class.
-    List<OdkTablesKeyValueStoreEntry> values = 
-        new ArrayList<OdkTablesKeyValueStoreEntry>();
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_DISPLAY_NAME, displayName));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_COLUMN_ORDER, 
-        DEFAULT_KEY_COLUMN_ORDER));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, 
-        DEFAULT_KEY_PRIME_COLUMNS));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, 
-        DEFAULT_KEY_SORT_COLUMN));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_INDEX_COLUMN,
-        DEFAULT_KEY_INDEX_COLUMN));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_CURRENT_VIEW_TYPE,
-        DEFAULT_KEY_CURRENT_VIEW_TYPE));
-//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//        DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE));
-//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//        DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE));
-//    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, 
-//        DEFAULT_KEY_DETAIL_VIEW_FILE));
-    values.add(createStringEntry(id, TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_SUM_DISPLAY_FORMAT, 
-        DEFAULT_KEY_SUM_DISPLAY_FORMAT));
     Map<String, String> mapProps = new HashMap<String, String>();
     mapProps.put(KEY_DISPLAY_NAME, displayName);
     mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
@@ -816,11 +785,6 @@ public class TableProperties {
     mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
     mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
     mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
-//    mapProps.put(KEY_CURRENT_OVERVIEW_VIEW_TYPE, 
-//        DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE);
-//    mapProps.put(KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//        DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE);
-//    mapProps.put(KEY_DETAIL_VIEW_FILE, DEFAULT_KEY_DETAIL_VIEW_FILE);
     mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
     
 // don't know why we did it this way...instead just call it through the map
@@ -838,13 +802,22 @@ public class TableProperties {
 	      Map<String, String> tableDefProps = 
 	          TableDefinitions.addTable(db, id, dbTableName, dbTableName, 
 	          tableType);
-	      KeyValueStore typedStore = kvms.getStoreForTable(id, 
-	          typeOfStore);
-	        typedStore.addEntriesToStore(db, values);
+//	      KeyValueStore typedStore = kvms.getStoreForTable(id, 
+//	          typeOfStore);
+//	        typedStore.addEntriesToStore(db, values);
 	      mapProps.putAll(tableDefProps);
 	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
 	        tp.getColumns();
 	        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
+	        kvsh.setStringEntry(KEY_DISPLAY_NAME, displayName);
+	        kvsh.setStringEntry(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
+	        kvsh.setStringEntry(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
+	        kvsh.setStringEntry(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
+	        kvsh.setStringEntry(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
+	        kvsh.setStringEntry(KEY_CURRENT_VIEW_TYPE, 
+	            DEFAULT_KEY_CURRENT_VIEW_TYPE);
+	        kvsh.setStringEntry(KEY_SUM_DISPLAY_FORMAT, 
+	            DEFAULT_KEY_SUM_DISPLAY_FORMAT);
 	        kvsh.setStringEntry(KEY_CURRENT_QUERY, "");
 	      Log.d(TAG, "adding table: " + dbTableName);
          DbTable.createDbTable(db, tp);
@@ -859,51 +832,6 @@ public class TableProperties {
       // TODO: fix the when to close problem
 //    	db.close();
     }
-  }
-  
-  /*
-   * Creates a key value store entry of the type String.
-   */
-  private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
-      String partition, String aspect, String key, String value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-    entry.tableId = tableId;
-    entry.partition = partition;
-    entry.aspect = aspect;
-    entry.value = value;
-    entry.type = ColumnType.TEXT.name();
-    entry.key = key;
-    return entry;
-  }
-  
-  /*
-   * Creates a key value store entry of the type int.
-   */
-  private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId,
-      String partition, String aspect, String key, int value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-    entry.tableId = tableId;
-    entry.partition = partition;
-    entry.aspect = aspect;
-    entry.value = String.valueOf(value);
-    entry.type = ColumnType.INTEGER.name();
-    entry.key = key;
-    return entry;
-  }
-  
-  /*
-   * Creates a key value store of the type boolean.
-   */
-  private static OdkTablesKeyValueStoreEntry createBoolEntry(String tableId,
-      String partition, String aspect, String key, boolean value) {
-    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
-    entry.tableId = tableId;
-    entry.partition = partition;
-    entry.aspect = aspect;
-    entry.value = String.valueOf(value);
-    entry.type = ColumnType.BOOLEAN.name();
-    entry.key = key;
-    return entry;
   }
 
   public void deleteTable() {
@@ -978,8 +906,7 @@ public class TableProperties {
    *          the new display name
    */
   public void setDisplayName(String displayName) {
-    setStringProperty(TableProperties.KVS_PARTITION, 
-        TableProperties.KVS_ASPECT, KEY_DISPLAY_NAME, displayName);
+    tableKVSH.setStringEntry(KEY_DISPLAY_NAME, displayName);
     this.displayName = displayName;
   }
 
@@ -997,75 +924,12 @@ public class TableProperties {
    *          the new table type
    */
   public void setTableType(TableType tableType) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, TableDefinitions.DB_TYPE, 
-        tableType.name());
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    TableDefinitions.setValue(tableId, TableDefinitions.DB_TYPE, 
+        tableType.name(), db);
     this.tableType = tableType;
+    // TODO: handle closing of the database
   }
-  
-//  /**
-//   * Get the current view type for the overview of this table.
-//   * <p>
-//   * The overview
-//   * view is the one that shows all the rows. This stands in contrast to the
-//   * collection view, which shows only a single row of the "prime column",
-//   * similar to a conversation in gmail where only the most recent is 
-//   * displayed.
-//   * @return
-//   */
-//  public TableViewType getCurrentOverviewViewType() {
-//    return this.currentOverviewViewType;
-//  }
-//  
-//  /**
-//   * Set the overview view type for the table.
-//   * <p>
-//   * The overview
-//   * view is the one that shows all the rows. This stands in contrast to the
-//   * collection view, which shows only a single row of the "prime column",
-//   * similar to a conversation in gmail where only the most recent is 
-//   * displayed.
-//   * @param viewType
-//   */
-//  public void setCurrentOverviewViewType(TableViewType viewType) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, 
-//        TableProperties.KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//        viewType.name());
-//    this.currentOverviewViewType = viewType;
-//  }
-//  
-//  /**
-//   * Get the current view type for the collection view of this table.
-//   * <p>
-//   * The overview
-//   * view is the one that shows all the rows. This stands in contrast to the
-//   * collection view, which shows only a single row of the "prime column",
-//   * similar to a conversation in gmail where only the most recent is 
-//   * displayed.
-//   * @return
-//   */
-//  public TableViewType getCurrentCollectionViewType() {
-//    return this.currentCollectionViewType;
-//  }
-//  
-//  /**
-//   * Set the current collection view type for this table.
-//   * <p>
-//   * The overview
-//   * view is the one that shows all the rows. This stands in contrast to the
-//   * collection view, which shows only a single row of the "prime column",
-//   * similar to a conversation in gmail where only the most recent is 
-//   * displayed.
-//   * @param viewType
-//   */
-//  public void setCurrentCollectionViewType(TableViewType viewType) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, 
-//        TableProperties.KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//        viewType.name());   
-//    this.currentCollectionViewType = viewType;
-//  }
   
   /**
    * Get the current view type of the table. 
@@ -1080,9 +944,7 @@ public class TableProperties {
    * @param viewType
    */
   public void setCurrentViewType(TableViewType viewType) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT,
-        TableProperties.KEY_CURRENT_VIEW_TYPE,
+    tableKVSH.setStringEntry(TableProperties.KEY_CURRENT_VIEW_TYPE,
         viewType.name());
     this.currentViewType = viewType;
   }
@@ -1420,8 +1282,7 @@ public class TableProperties {
 		e.printStackTrace();
 		Log.e(t, "illegal json ignored");
 	}
-    setStringProperty(TableProperties.KVS_PARTITION, 
-        TableProperties.KVS_ASPECT, KEY_COLUMN_ORDER, colOrderList, db);
+	tableKVSH.setStringEntry(KEY_COLUMN_ORDER, colOrderList);
     this.columnOrder = columnOrder;
   }
 
@@ -1458,8 +1319,7 @@ public class TableProperties {
     String primesStr;
     try {
       primesStr = mapper.writeValueAsString(primes);
-      setStringProperty(TableProperties.KVS_PARTITION, 
-          TableProperties.KVS_ASPECT, KEY_PRIME_COLUMNS, primesStr);
+      tableKVSH.setStringEntry(KEY_PRIME_COLUMNS, primesStr);
       this.primeColumns = primes;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -1492,8 +1352,7 @@ public class TableProperties {
     if ((sortColumn != null) && (sortColumn.length() == 0)) {
       sortColumn = null;
     }
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, KEY_SORT_COLUMN, sortColumn);
+    tableKVSH.setStringEntry(KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
   
@@ -1517,9 +1376,7 @@ public class TableProperties {
     if ((indexColumnElementKey == null)) {
       indexColumnElementKey = DEFAULT_KEY_INDEX_COLUMN;
     }
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT,
-        KEY_INDEX_COLUMN, indexColumnElementKey);
+    tableKVSH.setStringEntry(KEY_INDEX_COLUMN, indexColumnElementKey);
     this.indexColumn = indexColumnElementKey;
   }
 
@@ -1535,10 +1392,11 @@ public class TableProperties {
   }
   
   public void setAccessControls(String accessControls) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT,
-        TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS, accessControls);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    TableDefinitions.setValue(tableId, 
+        TableDefinitions.DB_TABLE_ID_ACCESS_CONTROLS, accessControls, db);
     this.accessControls = accessControls;
+    // TODO: figure out how to handle closing the db
   }
   
   // TODO: fix how these security tables are accessed. need to figure this out
@@ -1589,9 +1447,11 @@ public class TableProperties {
    *          the new sync tag
    */
   public void setSyncTag(String syncTag) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, TableDefinitions.DB_SYNC_TAG, syncTag);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    TableDefinitions.setValue(tableId, TableDefinitions.DB_SYNC_TAG, syncTag,
+        db);
     this.syncTag = syncTag;
+    // TODO: figure out how to handle closing the database
   }
 
   /**
@@ -1610,8 +1470,7 @@ public class TableProperties {
    *          {@link DataUtil#getNowInDbFormat()}).
    */
   public void setLastSyncTime(String time) {
-    setStringProperty(TableProperties.KVS_PARTITION,
-        TableProperties.KVS_ASPECT, TableDefinitions.DB_LAST_SYNC_TIME, time);
+    tableKVSH.setStringEntry(TableDefinitions.DB_LAST_SYNC_TIME, time);
     this.lastSyncTime = time;
   }
   
@@ -1653,8 +1512,7 @@ public class TableProperties {
    *          the new summary display format
    */
   public void setSummaryDisplayFormat(String format) {
-    setStringProperty(TableProperties.KVS_PARTITION, 
-        TableProperties.KVS_ASPECT, KEY_SUM_DISPLAY_FORMAT, format);
+    tableKVSH.setStringEntry(KEY_SUM_DISPLAY_FORMAT, format);
     this.sumDisplayFormat = format;
   }
 
@@ -1674,10 +1532,11 @@ public class TableProperties {
    */
   public void setSyncState(SyncState state) {
     if (state == SyncState.rest || this.syncState == SyncState.rest) {
-      setStringProperty(TableProperties.KVS_PARTITION, 
-          TableProperties.KVS_ASPECT, TableDefinitions.DB_SYNC_STATE, 
-          state.name());
+      SQLiteDatabase db = dbh.getWritableDatabase();
+      TableDefinitions.setValue(tableId, TableDefinitions.DB_SYNC_STATE, 
+          state.name(), db);
       this.syncState = state;
+      // TODO: figure out how to handle closing the db
     }
   }
 
@@ -1695,8 +1554,7 @@ public class TableProperties {
    *          the new transactioning status
    */
   public void setTransactioning(boolean transactioning) {
-    setIntProperty(TableProperties.KVS_PARTITION, TableProperties.KVS_ASPECT,
-        TableDefinitions.DB_TRANSACTIONING, 
+    tableKVSH.setIntegerEntry(TableDefinitions.DB_TRANSACTIONING, 
         SyncUtil.boolToInt(transactioning));
     this.transactioning = transactioning;
   }
@@ -1916,535 +1774,6 @@ public class TableProperties {
       arr[i] = list.get(i);
     }
     return arr;
-  }
-  
-  /**
-   * Retrieve a String from the key value store that backs this TableProperties
-   * object. NB: Special care should be taken when using this method, as it is 
-   * currently in transition. If there is an accessor defined for the property
-   * you are interested in, you should use that method instead.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return the value for the key if the key is found, else null
-   * @throws illegal argument exception if the entry in the store is not of
-   * type TEXT.
-   */
-  /*
-   * This is a risky method to add at this time. Eventually it should be 
-   * called "getStringProperty", and should be retried from a map of key to
-   * keyValueStoreEntry objects, or something along those lines. This method
-   * would then retrieve it from the map, check that the type specified matches
-   * the type of the data (which it will always do for String, but might not 
-   * for boolean, for instance), and thow an exception if not.
-   * 
-   * At the time
-   * of this writing, however, most properties are stored as fields within the
-   * TableProperties object. This has several downsides. One is notably that
-   * for non-required keys, you would have to keep around these fields even 
-   * if they weren't in use. Instead, we're going to make a request to the 
-   * key value store here.
-   * 
-   * Note also that in absence of the key in the key value store, null is 
-   * returned. This is to try and provide the same functionality as getting
-   * a map of keys to values from the key value store, which replaces "" value
-   * entries with null. However, exactly what to return where in the event of
-   * absence is still a work in progress.
-   */
-//  public String getStringEntry(String partition, String aspect, String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    // Since we know that the value field in the KVS is of type String/TEXT,
-//    // there is no worry that it will not exist. We can just go ahead and 
-//    // return the value as we find it.
-//    if (entries.size() == 0) {
-//      return null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.TEXT.getLabel())) {
-//        throw new IllegalArgumentException("requested string entry for " +
-//          "key: " + key + ", but the corresponding entry in the store was " +
-//            "not of type: " + KeyValueStoreEntryType.TEXT.getLabel());
-//      }
-//      return entries.get(0).value;
-//    }
-//  }
-  
-  /**
-   * Return a list object from the key value store. The caller will have to 
-   * know what the Objects are in the list. Returns null if there is no 
-   * corresponding entry in the key value store.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   */
-//  public ArrayList<Object> getListEntry(String partition, String aspect, 
-//      String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    ArrayList<Object> result = null;
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    if (entries.size() == 0) {
-//      return null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.ARRAYLIST.getLabel())) {
-//        throw new IllegalArgumentException("requested list entry for " +
-//            "key: " + key + ", but the corresponding entry in the store was " +
-//              "not of type: " + KeyValueStoreEntryType.ARRAYLIST.getLabel());      
-//      }
-//      try {
-//        result = mapper.readValue(entries.get(0).value, ArrayList.class);
-//        return result;
-//      } catch (JsonParseException e) {
-//        Log.e(TAG, "problem parsing json list entry from the kvs");
-//        e.printStackTrace();
-//      } catch (JsonMappingException e) {
-//        Log.e(TAG, "problem mapping json list entry from the kvs");
-//        e.printStackTrace();
-//      } catch (IOException e) {
-//        Log.e(TAG, "i/o problem with json for list entry from the kvs");
-//        e.printStackTrace();
-//      }
-//    }
-//    return result;   
-//  }
-  
-  /**
-   * Get the string representation of an object in the key value store. The
-   * caller is expected to have to do the mapping back to an object.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   */
-//  public String getObjectEntry(String partition, String aspect, String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    if (entries.size() == 0) {
-//      return null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.OBJECT.getLabel())) {
-//        throw new IllegalArgumentException("requested object entry for " +
-//            "key: " + key + ", but the corresponding entry in the store was " +
-//              "not of type: " + KeyValueStoreEntryType.OBJECT.getLabel());      
-//      }
-//      return entries.get(0).value;
-//    }
-//  }
-  
-  /**
-   * Get an int entry from the key value store. If there is an accessor method
-   * for the particular key or property you are requesting, you must use that
-   * instead. 
-   * <p>
-   * If the entry does not exist, it returns null cast to type Integer.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   * @throws IllegalArgumentException if the key returns an entry that is not
-   * of type INTEGER.
-   */
-//  public Integer getIntegerEntry(String partition, String aspect, String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    // Since we know that the value field in the KVS is of type String/TEXT,
-//    // there is no worry that it will not exist. We can just go ahead and 
-//    // return the value as we find it.
-//    if (entries.size() == 0) {
-//      return (Integer) null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.INTEGER.getLabel())) {
-//        throw new IllegalArgumentException("requested string entry for " +
-//          "key: " + key + ", but the corresponding entry in the store was " +
-//            "not of type: " + KeyValueStoreEntryType.INTEGER.getLabel());
-//      }
-//      return Integer.parseInt(entries.get(0).value);
-//    }
-//  }
-  
-  /**
-   * Get a boolean entry from the key value store. If there is an accessor 
-   * method for the particular key or property you are requesting, you must use 
-   * that instead. 
-   * <p>
-   * If the entry does not exist, it returns null cast to type Boolean.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   * @throws IllegalArgumentException if the key corresponds to an entry that 
-   * is not of type BOOLEAN.
-   */
-//  public boolean getBooleanEntry(String partition, String aspect, String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    // Since we know that the value field in the KVS is of type String/TEXT,
-//    // there is no worry that it will not exist. We can just go ahead and 
-//    // return the value as we find it.
-//    if (entries.size() == 0) {
-//      return (Boolean) null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.BOOLEAN.getLabel())) {
-//        throw new IllegalArgumentException("requested string entry for " +
-//          "key: " + key + ", but the corresponding entry in the store was " +
-//            "not of type: " + KeyValueStoreEntryType.BOOLEAN.getLabel());
-//      }
-//      return SyncUtil.intToBool(Integer.parseInt(entries.get(0).value));
-//    }
-//  }
-  
-  /**
-   * Get an int entry from the key value store. If there is an accessor method
-   * for the particular key or property you are requesting, you must use that
-   * instead. 
-   * <p>
-   * If the entry does not exist, it returns null cast to type Double.
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   * @throws IllegalArgumentException if the type of the entry in the store
-   * is not of type NUMBER.
-   */
-//  public double getNumericEntry(String partition, String aspect, String key) {
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore store = kvsm.getStoreForTable(tableId, backingStore);
-//    SQLiteDatabase db = dbh.getReadableDatabase();
-//    List<String> keyList = new ArrayList<String>();
-//    keyList.add(key);
-//    List<OdkTablesKeyValueStoreEntry> entries = 
-//        store.getEntriesForKeys(db, partition, aspect, keyList);
-//    // Do some sanity checking. There should only ever be one entry per key.
-//    if (entries.size() > 1) {
-//      Log.e(TAG, "request for key: " + key + " in KVS " + backingStore +
-//          " for table: " + tableId + " returned " + entries.size() + 
-//          "entries. It should return at most 1, as it is a key in a set.");
-//    }
-//    // Since we know that the value field in the KVS is of type String/TEXT,
-//    // there is no worry that it will not exist. We can just go ahead and 
-//    // return the value as we find it.
-//    if (entries.size() == 0) {
-//      return (Double) null;
-//    } else {
-//      if (!entries.get(0).type.equals(
-//          KeyValueStoreEntryType.NUMBER.getLabel())) {
-//        throw new IllegalArgumentException("requested string entry for " +
-//          "key: " + key + ", but the corresponding entry in the store was " +
-//            "not of type: " + KeyValueStoreEntryType.NUMBER.getLabel());
-//      }
-//      return Double.parseDouble(entries.get(0).value);
-//    }
-//  }
-
-  private void setIntProperty(String partition, String aspect, String property,
-      int value) {
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
-    boolean isSetToSync = syncKVS.isSetToSync();
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    try {
-	    db.beginTransaction();
-	    try {
-	      setIntProperty(partition, aspect, property, value, db);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      Log.e(TAG, "error setting int property " + property + " with value " + 
-	        value + " to table " + tableId);
-	    } finally {
-	      db.endTransaction();
-	    }
-	    // hilary's original:
-	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-	    if (isSetToSync && syncState == SyncState.rest 
-	        && JSON_COLUMNS.contains(property)) {
-	      setSyncState(SyncState.updating);
-	    }
-    } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-    }
-  }
-  
-//  /**
-//   * Set an integer entry in the key value store. If an entry already exists
-//   * it will be overwritten.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param value
-//   */
-//  public void setIntegerEntry(String partition, String aspect, 
-//      String key, int value) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
-//    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-//        aspect + ", key: " + key + " to " + value);
-//  }
-//  
-//  /**
-//   * Set a numeric entry in the key value store. If an entry already exists
-//   * it will be overwritten.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param value
-//   */
-//  public void setNumericEntry(String partition, String aspect, 
-//      String key, double value) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
-//    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-//        aspect + ", key: " + key + " to " + value);
-//  }
-//  
-//  /**
-//   * Set an object entry in the key value store. The caller is expected to 
-//   * first map the object to JSON.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param jsonOfObject
-//   */
-//  public void setObjectEntry(String partition, String aspect, String key,
-//      String jsonOfObject) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
-//    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-//        aspect + ", key: " + key + " to " + jsonOfObject);    
-//  }
-//  
-//  /**
-//   * Set a boolean entry in the key value store. If an entry already exists
-//   * it will be overwritten.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param value
-//   */
-//  public void setBooleanEntry(String partition, String aspect, 
-//      String key, boolean value) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.BOOLEAN.getLabel(), 
-//        Integer.toString(SyncUtil.boolToInt(value)));
-//    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-//        aspect + ", key: " + key + " to " + value);
-//  }
-//  
-//  /**
-//   * Set a String entry in the key value store. If an entry already exists
-//   * it will be overwritten.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param value
-//   */
-//  public void setStringEntry(String partition, String aspect, 
-//      String key, String value) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.TEXT.getLabel(), value);
-//    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-//        aspect + ", key: " + key + " to " + value);
-//  }
-//  
-//  /**
-//   * Set an ArrayList entry in the key value store.
-//   * @param partition
-//   * @param aspect
-//   * @param key
-//   * @param value
-//   */
-//  public void setListEntry(String partition, String aspect, String key, 
-//      ArrayList<Object> value) {
-//    SQLiteDatabase db = dbh.getWritableDatabase();
-//    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-//    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-//    String entryValue = null;
-//    try {
-//      entryValue = mapper.writeValueAsString(value);
-//    } catch (JsonGenerationException e) {
-//      Log.e(TAG, "problem parsing json list entry while writing to the kvs");
-//      e.printStackTrace();
-//    } catch (JsonMappingException e) {
-//      Log.e(TAG, "problem mapping json list entry while writing to the kvs");
-//      e.printStackTrace();
-//    } catch (IOException e) {
-//      Log.e(TAG, "i/o exception with json list entry while writing to the" +
-//      		" kvs");
-//      e.printStackTrace();
-//    }
-//    backingKVS.insertOrUpdateKey(db, partition, aspect, key, 
-//        KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
-//  }
-  
-  /**
-   * Remove the given key from the KVS backing this TableProperties. 
-   * @param partition
-   * @param aspect
-   * @param key
-   * @return
-   */
-  public int removeEntry(String partition, String aspect, String key) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore backingKVS = kvsm.getStoreForTable(tableId, backingStore);
-    return backingKVS.deleteKey(db, partition, aspect, key);
-  }
-  
-  
-  /**
-   * Actually handle the updating of the property. Checks whether this property
-   * resides in TableDefinitions or the KVS, and sets to the correct place. If
-   * the property resides in TableDefinitions, the partition and aspect are 
-   * unused and may be null.
-   * @param property
-   * @param value
-   * @param db
-   */
-  private void setIntProperty(String partition, String aspect,
-      String property, int value, SQLiteDatabase db) {
-    // First check if the property is in TableDefinitions.
-    if (TableDefinitions.columnNames.contains(property)) {
-      // We need to do it through TableDefinitions.
-      TableDefinitions.setValue(tableId, property, value, db);
-    } else {
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore backingKVS = kvsm.getStoreForTable(this.tableId,
-          this.backingStore);
-      backingKVS.insertOrUpdateKey(db, partition,
-          aspect, property, KeyValueStoreEntryType.INTEGER.getLabel(),
-          Integer.toString(value));
-    }
-    Log.d(TAG, "updated int " + property + " to " + value + "for " + 
-      this.tableId);
-  }
-
-  private void setStringProperty(String partition, String aspect, 
-      String property, String value) {
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
-    boolean isSetToSync = syncKVS.isSetToSync();
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    try {
-	    db.beginTransaction();
-	    try {
-	      setStringProperty(partition, aspect, property, value, db);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      Log.e(TAG, "error setting string property " + property + " to " 
-	          + value + " for " + this.tableId);
-	    } finally {
-	      db.endTransaction();
-	    }
-	    // hilary's original
-	    //if (isSynched && syncState == SyncUtil.State.REST && JSON_COLUMNS.contains(property))
-	    if (isSetToSync && syncState == SyncState.rest 
-	        && JSON_COLUMNS.contains(property)) {
-	      setSyncState(SyncState.updating);
-	    }
-    } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-    }
-  }
-
-  //TODO this should maybe be only transactionally?
-  /**
-   * Actually handle the updating of the property. Checks whether this property
-   * resides in TableDefinitions of the KVS, and sets to the correct place.
-   * @param property
-   * @param value
-   * @param db
-   */
-  private void setStringProperty(String partition, String aspect, 
-      String property, String value, SQLiteDatabase db) {
-    if (TableDefinitions.columnNames.contains(property)) {
-      // We need to do it through TableDefinitions.
-      TableDefinitions.setValue(tableId, property, value, db);
-    } else {
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore intendedKVS = kvsm.getStoreForTable(this.tableId,
-          this.backingStore);
-      intendedKVS.insertOrUpdateKey(db, partition,
-          aspect, property, KeyValueStoreEntryType.TEXT.getLabel(), value);
-    }
-    Log.d(TAG, "updated string " + property + " to " + value + " for " 
-      + this.tableId);
   }
   
   /**

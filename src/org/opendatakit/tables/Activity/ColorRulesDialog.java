@@ -232,9 +232,10 @@ public class ColorRulesDialog extends Dialog {
             lastFocusedRow = index;
           }
           return;
-        } else {
-          updateLastRowVal();
         }
+//        } else {
+//          updateLastRowVal();
+//        }
       }
     });
     ruleInputFields.add(input);
@@ -316,6 +317,11 @@ public class ColorRulesDialog extends Dialog {
    */
   private void updateLastRowVal() {
     if (lastFocusedRow < 0) {
+      return;
+    }
+    if (colRules.size() == 0) {
+      lastFocusedRow = -1;
+      refreshView();
       return;
     }
     EditText inputEt = ruleInputFields.get(lastFocusedRow);
