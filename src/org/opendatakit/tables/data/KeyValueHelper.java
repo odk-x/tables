@@ -103,78 +103,60 @@ public interface KeyValueHelper {
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.INTEGER} in the key
    * value store.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setIntegerEntry(String key, Integer value);
+  public void setInteger(String key, Integer value);
   
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.NUMBER} in the key
    * value store.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setNumericEntry(String key, Double value);
+  public void setNumeric(String key, Double value);
   
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.OBJECT} in the key
    * value store. The Object must be written to a String in a way such that
    * future callers will be able to reclaim the Object.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setObjectEntry(String key, String jsonOfObject);
+  public void setObject(String key, String jsonOfObject);
   
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.BOOLEAN} in the key
    * value store.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setBooleanEntry(String key, Boolean value);
+  public void setBoolean(String key, Boolean value);
   
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.STRING} in the key
    * value store.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setStringEntry(String key, String value);
+  public void setString(String key, String value);
   
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.ARRAYLIST} in the key
    * value store. The value will be converted to a String. Consequently, the 
    * caller must ensure that the ArrayList and all the objects
    * therein can be parsed and written correctly by the JSON libraries.
-   * <p>
-   * A null value means the key will be removed. This is equivalent to calling
-   * {@link removeEntry} on the key.
    * @param key
    * @param value
    */
-  public void setListEntry(String key, ArrayList<Object> value);
+  public void setList(String key, ArrayList<Object> value);
   
   /**
    * Remove the given key from the key value store.
    * @param key
    * @return
    */
-  public int removeEntry(String key);
+  public int removeKey(String key);
   
   /**
    * Return the entry matching this key. 

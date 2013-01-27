@@ -339,7 +339,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                     public boolean onPreferenceChange(Preference preference,
                             Object newValue) {
 //                        tp.setDetailViewFilename((String) newValue);
-                      kvsh.setStringEntry(
+                      kvsh.setString(
                           CustomDetailView.KEY_FILENAME,
                           (String) newValue);
                         init();
@@ -609,7 +609,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                     public boolean onPreferenceChange(Preference preference,
                             Object newValue) {
 //                        settings.setCustomListFilename((String) newValue);
-                      kvsh.setStringEntry(
+                      kvsh.setString(
                           ListDisplayActivity.KEY_FILENAME,
                           (String) newValue);
                         init();
@@ -732,7 +732,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             Uri fileUri = data.getData();
             String filename = fileUri.getPath();
             kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-            kvsh.setStringEntry(
+            kvsh.setString(
                 CustomDetailView.KEY_FILENAME,
                 filename);
 //            tp.setDetailViewFilename(filename);
@@ -743,7 +743,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             String filename2 = fileUri2.getPath();
             kvsh = 
                 tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-            kvsh.setStringEntry(
+            kvsh.setString(
                 ListDisplayActivity.KEY_FILENAME,
                 filename2);
 //            TableViewSettings settings = tp.getOverviewViewSettings();

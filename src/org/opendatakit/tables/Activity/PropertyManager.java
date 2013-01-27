@@ -148,7 +148,7 @@ public class PropertyManager extends PreferenceActivity {
       public boolean onPreferenceChange(Preference preference, 
           Object newValue) {
         int width = (Integer) newValue;
-        aspectHelper.setIntegerEntry(SpreadsheetView.KEY_COLUMN_WIDTH, width);
+        aspectHelper.setInteger(SpreadsheetView.KEY_COLUMN_WIDTH, width);
 //        int[] widths = tp.getOverviewViewSettings().getTableColWidths();
 //        widths[colIndex] = width;
 //        tp.getOverviewViewSettings().setTableColWidths(widths);

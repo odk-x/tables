@@ -144,7 +144,7 @@ public class ColumnColorRuler {
       }
       // if there are no rules, we want to remove the key from the kvs.
       if (ruleList.size() == 0) {
-        aspectHelper.removeEntry(KEY_COLOR_RULES);
+        aspectHelper.removeKey(KEY_COLOR_RULES);
 //        tp.removeEntry(KVS_PARTITION, elementKey, 
 //            KEY_COLOR_RULES);
         return;
@@ -157,7 +157,7 @@ public class ColumnColorRuler {
       String ruleListJson = DEFAULT_KEY_COLOR_RULES;
       try {
         ruleListJson = mapper.writeValueAsString(ruleList);
-        aspectHelper.setObjectEntry(KEY_COLOR_RULES, ruleListJson);
+        aspectHelper.setObject(KEY_COLOR_RULES, ruleListJson);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing list of color rules");
         e.printStackTrace();

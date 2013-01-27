@@ -193,7 +193,7 @@ public class Controller {
               // when you click the search button, save that query.
               KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(
                   TableProperties.KVS_PARTITION);
-              kvsh.setStringEntry(
+              kvsh.setString(
                   TableProperties.KEY_CURRENT_QUERY, 
                   searchField.getEditText().getText().toString());
                 da.onSearch();

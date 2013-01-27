@@ -210,15 +210,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setIntegerEntry(String key, Integer value) {
+  public void setInteger(String key, Integer value) {
     setIntegerEntry(DEFAULT_ASPECT, key, value);
   }
   
   private void setIntegerEntry(String aspect, String key, Integer value) {
-    if (value == null) {
-      removeEntry(key);
-      return;
-    }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
@@ -227,15 +223,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setNumericEntry(String key, Double value) {
+  public void setNumeric(String key, Double value) {
     setNumericEntry(DEFAULT_ASPECT, key, value);
   }
   
   private void setNumericEntry(String aspect, String key, Double value) {
-    if (value == null) {
-      removeEntry(key);
-      return;
-    }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
@@ -244,15 +236,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setObjectEntry(String key, String jsonOfObject) {
+  public void setObject(String key, String jsonOfObject) {
     setObjectEntry(DEFAULT_ASPECT, key, jsonOfObject);
   }
   
   private void setObjectEntry(String aspect, String key, String jsonOfObject) {
-    if (jsonOfObject == null) {
-      removeEntry(key);
-      return;
-    }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
@@ -261,7 +249,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setBooleanEntry(String key, Boolean value) {
+  public void setBoolean(String key, Boolean value) {
     setBooleanEntry(DEFAULT_ASPECT, key, value);
   }
   
@@ -272,10 +260,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setBooleanEntry(String aspect, String key, Boolean value) {
-    if (value == null) {
-      removeEntry(key);
-      return;
-    }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.BOOLEAN.getLabel(), 
@@ -285,7 +269,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setStringEntry(String key, String value) {
+  public void setString(String key, String value) {
     setStringEntry(DEFAULT_ASPECT, key, value);
   }
   
@@ -296,10 +280,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setStringEntry(String aspect, String key, String value) {
-    if (value == null) {
-      removeEntry(key);
-      return;
-    }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.TEXT.getLabel(), value);
@@ -308,7 +288,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setListEntry(String key, ArrayList<Object> value) {
+  public void setList(String key, ArrayList<Object> value) {
     setListEntry(DEFAULT_ASPECT, key, value);
   }
   
@@ -320,10 +300,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   private void setListEntry(String aspect, String key, 
       ArrayList<Object> value) {
-    if (value == null) {
-      removeEntry(key);
-      return;
-    }
     String entryValue = null;
     try {
       entryValue = mapper.writeValueAsString(value);
@@ -350,7 +326,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public int removeEntry(String key) {
+  public int removeKey(String key) {
     return removeEntry(DEFAULT_ASPECT, key);
   }
   
@@ -450,37 +426,37 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public void setIntegerEntry(String key, Integer value) {
+    public void setInteger(String key, Integer value) {
       KeyValueStoreHelper.this.setIntegerEntry(aspect, key, value);
     }
 
     @Override
-    public void setNumericEntry(String key, Double value) {
+    public void setNumeric(String key, Double value) {
       KeyValueStoreHelper.this.setNumericEntry(aspect, key, value);
     }
 
     @Override
-    public void setObjectEntry(String key, String jsonOfObject) {
+    public void setObject(String key, String jsonOfObject) {
       KeyValueStoreHelper.this.setObjectEntry(aspect, key, jsonOfObject);
     }
 
     @Override
-    public void setBooleanEntry(String key, Boolean value) {
+    public void setBoolean(String key, Boolean value) {
       KeyValueStoreHelper.this.setBooleanEntry(aspect, key, value);
     }
 
     @Override
-    public void setStringEntry(String key, String value) {
+    public void setString(String key, String value) {
       KeyValueStoreHelper.this.setStringEntry(aspect, key, value);
     }
 
     @Override
-    public void setListEntry(String key, ArrayList<Object> value) {
+    public void setList(String key, ArrayList<Object> value) {
       KeyValueStoreHelper.this.setListEntry(aspect, key, value);
     }
 
     @Override
-    public int removeEntry(String key) {
+    public int removeKey(String key) {
       return KeyValueStoreHelper.this.removeEntry(aspect, key);
     }
 

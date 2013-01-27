@@ -809,16 +809,16 @@ public class TableProperties {
 	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
 	        tp.getColumns();
 	        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
-	        kvsh.setStringEntry(KEY_DISPLAY_NAME, displayName);
-	        kvsh.setStringEntry(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
-	        kvsh.setStringEntry(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
-	        kvsh.setStringEntry(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
-	        kvsh.setStringEntry(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
-	        kvsh.setStringEntry(KEY_CURRENT_VIEW_TYPE, 
+	        kvsh.setString(KEY_DISPLAY_NAME, displayName);
+	        kvsh.setString(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
+	        kvsh.setString(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
+	        kvsh.setString(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
+	        kvsh.setString(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
+	        kvsh.setString(KEY_CURRENT_VIEW_TYPE, 
 	            DEFAULT_KEY_CURRENT_VIEW_TYPE);
-	        kvsh.setStringEntry(KEY_SUM_DISPLAY_FORMAT, 
+	        kvsh.setString(KEY_SUM_DISPLAY_FORMAT, 
 	            DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-	        kvsh.setStringEntry(KEY_CURRENT_QUERY, "");
+	        kvsh.setString(KEY_CURRENT_QUERY, "");
 	      Log.d(TAG, "adding table: " + dbTableName);
          DbTable.createDbTable(db, tp);
 	      db.setTransactionSuccessful();
@@ -906,7 +906,7 @@ public class TableProperties {
    *          the new display name
    */
   public void setDisplayName(String displayName) {
-    tableKVSH.setStringEntry(KEY_DISPLAY_NAME, displayName);
+    tableKVSH.setString(KEY_DISPLAY_NAME, displayName);
     this.displayName = displayName;
   }
 
@@ -944,7 +944,7 @@ public class TableProperties {
    * @param viewType
    */
   public void setCurrentViewType(TableViewType viewType) {
-    tableKVSH.setStringEntry(TableProperties.KEY_CURRENT_VIEW_TYPE,
+    tableKVSH.setString(TableProperties.KEY_CURRENT_VIEW_TYPE,
         viewType.name());
     this.currentViewType = viewType;
   }
@@ -1282,7 +1282,7 @@ public class TableProperties {
 		e.printStackTrace();
 		Log.e(t, "illegal json ignored");
 	}
-	tableKVSH.setStringEntry(KEY_COLUMN_ORDER, colOrderList);
+	tableKVSH.setString(KEY_COLUMN_ORDER, colOrderList);
     this.columnOrder = columnOrder;
   }
 
@@ -1319,7 +1319,7 @@ public class TableProperties {
     String primesStr;
     try {
       primesStr = mapper.writeValueAsString(primes);
-      tableKVSH.setStringEntry(KEY_PRIME_COLUMNS, primesStr);
+      tableKVSH.setString(KEY_PRIME_COLUMNS, primesStr);
       this.primeColumns = primes;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -1352,7 +1352,7 @@ public class TableProperties {
     if ((sortColumn != null) && (sortColumn.length() == 0)) {
       sortColumn = null;
     }
-    tableKVSH.setStringEntry(KEY_SORT_COLUMN, sortColumn);
+    tableKVSH.setString(KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
   
@@ -1376,7 +1376,7 @@ public class TableProperties {
     if ((indexColumnElementKey == null)) {
       indexColumnElementKey = DEFAULT_KEY_INDEX_COLUMN;
     }
-    tableKVSH.setStringEntry(KEY_INDEX_COLUMN, indexColumnElementKey);
+    tableKVSH.setString(KEY_INDEX_COLUMN, indexColumnElementKey);
     this.indexColumn = indexColumnElementKey;
   }
 
@@ -1470,7 +1470,7 @@ public class TableProperties {
    *          {@link DataUtil#getNowInDbFormat()}).
    */
   public void setLastSyncTime(String time) {
-    tableKVSH.setStringEntry(TableDefinitions.DB_LAST_SYNC_TIME, time);
+    tableKVSH.setString(TableDefinitions.DB_LAST_SYNC_TIME, time);
     this.lastSyncTime = time;
   }
   
@@ -1512,7 +1512,7 @@ public class TableProperties {
    *          the new summary display format
    */
   public void setSummaryDisplayFormat(String format) {
-    tableKVSH.setStringEntry(KEY_SUM_DISPLAY_FORMAT, format);
+    tableKVSH.setString(KEY_SUM_DISPLAY_FORMAT, format);
     this.sumDisplayFormat = format;
   }
 
@@ -1554,7 +1554,7 @@ public class TableProperties {
    *          the new transactioning status
    */
   public void setTransactioning(boolean transactioning) {
-    tableKVSH.setIntegerEntry(TableDefinitions.DB_TRANSACTIONING, 
+    tableKVSH.setInteger(TableDefinitions.DB_TRANSACTIONING, 
         SyncUtil.boolToInt(transactioning));
     this.transactioning = transactioning;
   }

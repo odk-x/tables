@@ -129,7 +129,7 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           KeyValueStoreHelper listHelper = 
               tableProp.getKeyValueStoreHelper(
                   ListDisplayActivity.KVS_PARTITION);
-          listHelper.setStringEntry(ListDisplayActivity.KEY_FILENAME, 
+          listHelper.setString(ListDisplayActivity.KEY_FILENAME, 
               entries.get(0).value);
         }
         // and now check for detail.
@@ -151,7 +151,7 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // the set invariant.
           KeyValueStoreHelper detailHelper = 
               tableProp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-          detailHelper.setStringEntry(CustomDetailView.KEY_FILENAME,
+          detailHelper.setString(CustomDetailView.KEY_FILENAME,
               entries.get(0).value);
         }
       } finally {
