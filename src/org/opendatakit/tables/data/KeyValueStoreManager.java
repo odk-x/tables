@@ -58,7 +58,9 @@ import android.util.Log;
  * column) will be given the partition "Column". Additional partitions will be
  * generated as new classes are created that need to store information in the 
  * KVS. For instance, "ListView" and "CollectUtil" would be the partitions that
- * store data for the ListView and CollectUtil classes, respectively.
+ * store data for the ListView and CollectUtil classes, respectively. 
+ * Generally, with the exceptions of Table and Column, a rule of thumb is that
+ * partitions should be class names for clarity.
  * <p>
  * The aspect is roughly equivalent to a particular instance of a partition. In
  * another sense, it refers to which specific view, or aspect, of the data the
@@ -77,18 +79,22 @@ import android.util.Log;
  * Fridge Count, the x axis would exist in partition=GraphView, 
  * aspect=Fridge Count, key=xAxis. (In this example both the name of graph view
  * and the key xAxis were manufactured and do not reflect the true state of
- * the code.) 
+ * the code. Further, it remains to be seen if we'll actually want to allow 
+ * spaces.) 
  * <p>
  * Key is the key assigned to a particular property and must be unique within
  * a partition and aspect.
  * <p>
  * Type is the type of the value. The value field is set as a string, and this
  * type column allows appropriate interpretation of the string residing in 
- * value. Obvious types are text, integer, double, and boolean.
+ * value. Obvious types are text, integer, double, and boolean. The complete
+ * list of types is reflected in {@link KeyValueStoreEntryType}. For now, the 
+ * entry object itself comes from aggregate as a JAR. It is essentially just a
+ * struct.
  * <p>
  * Value is the actual value of the key. A key specifying font size might have 
  * a value of 12. A key specifying display name might have a value of 
- * "Admin Areas".
+ * "Admin Areas". The class using the key must know how to interpret the value.
  * <p>
  * Taken in sum, the entry for a table's display name might be as follows:
  * tableId=myUUID, partition=Table, aspect=default, key=displayName, type=text,
