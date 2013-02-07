@@ -17,11 +17,11 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
-import org.opendatakit.tables.Activity.util.CsvUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.exception.TableAlreadyExistsException;
+import org.opendatakit.tables.util.CsvUtil;
 
 import android.R;
 import android.content.Intent;

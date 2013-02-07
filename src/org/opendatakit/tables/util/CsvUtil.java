@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.Activity.util;
+package org.opendatakit.tables.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
