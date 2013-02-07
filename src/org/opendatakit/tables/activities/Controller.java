@@ -102,7 +102,8 @@ public class Controller {
     // The add row button serves as an edit row button in DetailDisplayActivity
 	public static final int MENU_ITEM_ID_ADD_ROW_BUTTON = 2;
 	private static final int MENU_ITEM_ID_SETTINGS_SUBMENU = 3;
-	private static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
+	// Display preferences is used differently in SpreadsheetDisplayActivity
+	public static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
 	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
     private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
     static final int FIRST_FREE_MENU_ITEM_ID = 7;
@@ -556,9 +557,11 @@ public class Controller {
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS); 
-        // TODO: change to setEnabled(enabled) once DisplayPrefActivity is finished
+        
+        // TODO: change so that Is manually changed to enabled in 
+        // SpreadsheetDisplayActivity.onCreateOptionsMenu
         MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE, 
-        		"Display Preferences").setEnabled(false);
+        		"Display Preferences").setEnabled(enabled);
         // always disable DisplayPreferences if it is currently in list view
         if (tp.getCurrentViewType() == TableViewType.List)
         	display.setEnabled(false);
@@ -619,7 +622,7 @@ public class Controller {
 	        	return true;
 	        case MENU_ITEM_ID_DISPLAY_PREFERENCES:
 	        	Intent k = new Intent(activity, DisplayPrefsActivity.class);
-	        	k.putExtra("tableId", tp.getTableId());
+	        	k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
 	        	
 			    activity.startActivity(k);
 	        	return true;

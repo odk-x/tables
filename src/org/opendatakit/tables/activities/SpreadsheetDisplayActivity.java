@@ -27,9 +27,7 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -50,6 +48,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
 
 public class SpreadsheetDisplayActivity extends SherlockActivity
         implements DisplayActivity, SpreadsheetView.Controller {
@@ -222,8 +222,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	}
 
 	@Override
-    public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu);
+        // TODO: 
+//        MenuItem displayPref = menu.getItem(Controller.MENU_ITEM_ID_DISPLAY_PREFERENCES);
+//        if (displayPref != null)
+//        	displayPref.setEnabled(true);
         return true;
     }
 	

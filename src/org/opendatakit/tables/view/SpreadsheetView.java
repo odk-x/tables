@@ -114,7 +114,15 @@ public class SpreadsheetView extends LinearLayout
         this.tp = tp;
         this.table = table;
         this.indexedCol = indexedCol;
-        fontSize = (new Preferences(context)).getFontSize();
+        
+        // if a custom font size is defined in the KeyValueStore, use that
+        // if not, use the general font size defined in preferences
+        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
+        if (kvsh.getInteger("fontSize") == null)
+        	fontSize = (new Preferences(context)).getFontSize();
+        else 
+        	fontSize = kvsh.getInteger("fontSize");
+        
         initListeners();
         if (indexedCol < 0) {
             buildNonIndexedTable();
