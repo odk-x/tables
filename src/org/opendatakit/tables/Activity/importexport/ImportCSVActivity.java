@@ -17,16 +17,15 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
+import org.opendatakit.tables.Task.ImportRequest;
+import org.opendatakit.tables.Task.ImportTask;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.exception.TableAlreadyExistsException;
-import org.opendatakit.tables.util.CsvUtil;
 
 import android.R;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -157,7 +156,7 @@ public class ImportCSVActivity extends IETabActivity {
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		ImportTask task = new ImportTask();
+		ImportTask task = new ImportTask(this);
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
             showDialog(IMPORT_IN_PROGRESS_DIALOG);
@@ -213,91 +212,5 @@ public class ImportCSVActivity extends IETabActivity {
 		public void onClick(View v) {
 			importSubmission();
 		}
-	}
-	
-	public class ImportTask
-	        extends AsyncTask<ImportRequest, Integer, Boolean> {
-	  
-	  private static final String TAG = "ImportTask";
-	  
-	  public boolean caughtDuplicateTableException = false;
-	  public boolean problemImportingKVSEntries = false;
-	    
-	  @Override
-	  protected Boolean doInBackground(ImportRequest... importRequests) {
-	        ImportRequest request = importRequests[0];
-            CsvUtil cu = new CsvUtil(ImportCSVActivity.this);
-            if (request.getCreateTable()) {
-              try {
-                return cu.importNewTable(this, request.getFile(),
-                        request.getTableName());
-              } catch (TableAlreadyExistsException e) {
-                caughtDuplicateTableException = true;
-                return false;
-              }
-            } else {
-                return cu.importAddToTable(request.getFile(),
-                    request.getTableProperties().getTableId());
-            }
-	    }
-	    
-	    protected void onProgressUpdate(Integer... progress) {
-	        // do nothing.
-	    }
-	    
-	    protected void onPostExecute(Boolean result) {
-	        dismissDialog(IMPORT_IN_PROGRESS_DIALOG);
-	        if (result) {
-	            showDialog(CSVIMPORT_SUCCESS_DIALOG);
-	        } else {
-	          if (caughtDuplicateTableException) {
-	            showDialog(CSVIMPORT_FAIL_DUPLICATE_TABLE);
-	          } else if (problemImportingKVSEntries) {
-	            showDialog(CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
-	          } else {
-	            showDialog(CSVIMPORT_FAIL_DIALOG);
-	          }
-	        }
-	    }
-	}
-	
-	private class ImportRequest {
-	    
-	    private final boolean createTable;
-	    private final TableProperties tp;
-	    private final String tableName;
-	    private final File file;
-	    
-	    private ImportRequest(boolean createTable, TableProperties tp,
-	            String tableName, File file) {
-	        this.createTable = createTable;
-	        this.tp = tp;
-	        this.tableName = tableName;
-	        this.file = file;
-	    }
-	    
-	    public ImportRequest(String tableName, File file) {
-	        this(true, null, tableName, file);
-	    }
-	    
-	    public ImportRequest(TableProperties tp, File file) {
-	        this(false, tp, null, file);
-	    }
-	    
-	    public boolean getCreateTable() {
-	        return createTable;
-	    }
-	    
-	    public TableProperties getTableProperties() {
-	        return tp;
-	    }
-	    
-	    public String getTableName() {
-	        return tableName;
-	    }
-	    
-	    public File getFile() {
-	        return file;
-	    }
 	}
 }

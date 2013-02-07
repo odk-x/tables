@@ -17,15 +17,15 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
+import org.opendatakit.tables.Task.ExportRequest;
+import org.opendatakit.tables.Task.ExportTask;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.util.CsvUtil;
 
 import android.R;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -203,7 +203,7 @@ public class ExportCSVActivity extends IETabActivity {
         boolean incProps = incPropsCheck.isChecked();
         boolean incTs = incTSCheck.isChecked();
         boolean incPn = incPNCheck.isChecked();
-        ExportTask task = new ExportTask();
+        ExportTask task = new ExportTask(this);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
         task.execute(new ExportRequest(tp, file, incProps, incTs, incPn));
 	}
@@ -222,85 +222,5 @@ public class ExportCSVActivity extends IETabActivity {
 		public void onClick(View v) {
 			exportSubmission();
 		}
-	}
-    
-    public class ExportTask
-            extends AsyncTask<ExportRequest, Integer, Boolean> {
-      
-      // This says whether or not the secondary entries in the key value store
-      // were written successfully. 
-      public boolean keyValueStoreSuccessful = true;
-        
-        protected Boolean doInBackground(ExportRequest... exportRequests) {
-            ExportRequest request = exportRequests[0];
-            CsvUtil cu = new CsvUtil(ExportCSVActivity.this);
-            if (request.getIncludeProperties()) {
-                return cu.exportWithProperties(this, request.getFile(),
-                        request.getTableProperties().getTableId(),
-                        request.getIncludeTimestamps(),
-                        request.getIncludePhoneNums());
-            } else {
-                return cu.export(this, request.getFile(),
-                        request.getTableProperties().getTableId(),
-                        request.getIncludeTimestamps(),
-                        request.getIncludePhoneNums());
-            }
-        }
-        
-        protected void onProgressUpdate(Integer... progress) {
-            // do nothing
-        }
-        
-        protected void onPostExecute(Boolean result) {
-            dismissDialog(EXPORT_IN_PROGRESS_DIALOG);
-            if (result) {
-              if (keyValueStoreSuccessful) {
-                showDialog(CSVEXPORT_SUCCESS_DIALOG);
-              } else {
-                showDialog(CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG);
-              }
-            } else {
-                showDialog(CSVEXPORT_FAIL_DIALOG);
-            }
-        }
-    }
-	
-	private class ExportRequest {
-	    
-	    private final TableProperties tp;
-	    private final File file;
-	    private final boolean includeProperties;
-	    private final boolean includeTimestamps;
-	    private final boolean includePhoneNums;
-	    
-	    public ExportRequest(TableProperties tp, File file,
-	            boolean includeProperties, boolean includeTimestamps,
-	            boolean includePhoneNums) {
-	        this.tp = tp;
-	        this.file = file;
-	        this.includeProperties = includeProperties;
-	        this.includeTimestamps = includeTimestamps;
-	        this.includePhoneNums = includePhoneNums;
-	    }
-	    
-	    public TableProperties getTableProperties() {
-	        return tp;
-	    }
-	    
-	    public File getFile() {
-	        return file;
-	    }
-	    
-	    public boolean getIncludeProperties() {
-	        return includeProperties;
-	    }
-	    
-	    public boolean getIncludeTimestamps() {
-	        return includeTimestamps;
-	    }
-	    
-	    public boolean getIncludePhoneNums() {
-	        return includePhoneNums;
-	    }
 	}
 }

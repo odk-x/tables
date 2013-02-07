@@ -34,17 +34,17 @@ import android.view.View.OnClickListener;
 public abstract class IETabActivity extends Activity {
 	
 	/** dialog IDs */
-	protected static final int CSVEXPORT_SUCCESS_DIALOG = 1;
-	protected static final int CSVIMPORT_SUCCESS_DIALOG = 2;
-	protected static final int EXPORT_IN_PROGRESS_DIALOG = 3;
-	protected static final int IMPORT_IN_PROGRESS_DIALOG = 4;
-	protected static final int CSVIMPORT_FAIL_DIALOG = 5;
-	protected static final int CSVEXPORT_FAIL_DIALOG = 6;
+	public static final int CSVEXPORT_SUCCESS_DIALOG = 1;
+	public static final int CSVIMPORT_SUCCESS_DIALOG = 2;
+	public static final int EXPORT_IN_PROGRESS_DIALOG = 3;
+	public static final int IMPORT_IN_PROGRESS_DIALOG = 4;
+	public static final int CSVIMPORT_FAIL_DIALOG = 5;
+	public static final int CSVEXPORT_FAIL_DIALOG = 6;
 	// This is intended to say that "your csv exported successfully, but there
 	// was a problem with the key value store setting mapping.
-	protected static final int 
+	public static final int 
 	  CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
-	protected static final int 
+	public static final int 
 	  CSVIMPORT_FAIL_DUPLICATE_TABLE = 8;
 	protected static final int 
 	  CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 9;
