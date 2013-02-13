@@ -53,7 +53,7 @@ public class ColumnColorRuler {
   // This is the list of actual rules that make up the ruler.
   private List<ColColorRule> ruleList;
           
-    private ColumnColorRuler(TableProperties tp, String elementKey) {
+    public ColumnColorRuler(TableProperties tp, String elementKey) {
       this.tp = tp;
       this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
       this.aspectHelper = kvsh.getAspectHelper(elementKey);
