@@ -424,23 +424,4 @@ public class ColumnDefinitions {
     return count;
   }
 
-  /**
-   * Get the create sql for the column_definitions table.
-   * @return
-   */
-  static String getTableCreateSql() {
-    return "CREATE TABLE " + DB_BACKING_NAME + "(" +
-                   ColumnDefinitionsColumns.TABLE_ID + " TEXT NOT NULL" +
-            ", " + ColumnDefinitionsColumns.ELEMENT_KEY + " TEXT NOT NULL" +
-            ", " + ColumnDefinitionsColumns.ELEMENT_NAME + " TEXT NOT NULL" +
-            ", " + ColumnDefinitionsColumns.ELEMENT_TYPE + " TEXT NOT NULL" +
-            ", " + ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS + " TEXT NULL" +
-            ", " + ColumnDefinitionsColumns.IS_PERSISTED + " INTEGER NOT NULL" +
-            ", " + ColumnDefinitionsColumns.JOINS + " TEXT NULL" +
-//            ", " + DB_JOIN_TABLE_ID + " TEXT NULL" +
-//            ", " + DB_JOIN_ELEMENT_KEY + " TEXT NULL" +
-            ")";
-}
-
-
 }

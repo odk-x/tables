@@ -146,7 +146,7 @@ public class DbTable {
         }
         testOpen = db.isOpen();
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
-            DataTableColumns.ROW_ID + " TEXT NOT NULL PRIMARY KEY" +
+            DataTableColumns.ROW_ID + " TEXT NOT NULL" +
      ", " + DataTableColumns.URI_USER + " TEXT NULL" +
      ", " + DataTableColumns.LAST_MODIFIED_TIME + " TEXT NOT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +

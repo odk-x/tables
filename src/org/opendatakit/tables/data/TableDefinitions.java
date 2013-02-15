@@ -287,9 +287,4 @@ public class TableDefinitions {
     return tableIds;
   }
 
-
-  public static String getTableCreateSql() {
-	return TableDefinitionsColumns.getTableCreateSql(DB_BACKING_NAME);
-  }
-
 }
