@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -273,11 +274,11 @@ public class SyncProcessor {
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
     ArrayList<String> columns = new ArrayList<String>();
-    columns.add(DbTable.DB_SYNC_STATE);
+    columns.add(DataTableColumns.SYNC_STATE);
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
     Table allRowIds = table.getRaw(columns, 
-    		new String[] {DbTable.DB_SAVED},
+    		new String[] {DataTableColumns.SAVED},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
     // update properties if necessary
@@ -327,25 +328,25 @@ public class SyncProcessor {
       ContentValues values = new ContentValues();
 
       // delete conflicting row if it already exists
-      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", DbTable.DB_ROW_ID,
-          DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING);
+      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", DataTableColumns.ROW_ID,
+          DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING);
       String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.DELETING),
           String.valueOf(SyncUtil.boolToInt(true)) };
       table.deleteRowActual(whereClause, whereArgs);
       
       // update existing row
-      values.put(DbTable.DB_ROW_ID, row.getRowId());
-      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
-      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
+      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
+      values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
       table.actualUpdateRowByRowId(row.getRowId(), values);
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
 
       // insert conflicting row
-      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
-      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.DELETING));
-      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.boolToInt(true));
+      values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
+      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.DELETING));
+      values.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(true));
       table.actualAddRow(values);
       syncResult.stats.numConflictDetectedExceptions++;
       syncResult.stats.numEntries += 2;
@@ -356,10 +357,10 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
-      values.put(DbTable.DB_ROW_ID, row.getRowId());
-      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
-      values.put(DbTable.DB_SYNC_STATE, SyncUtil.State.REST);
-      values.put(DbTable.DB_TRANSACTIONING, SyncUtil.boolToInt(false));
+      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
+      values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.REST);
+      values.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -374,9 +375,9 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
-      values.put(DbTable.DB_SYNC_TAG, row.getSyncTag());
-      values.put(DbTable.DB_SYNC_STATE, String.valueOf(SyncUtil.State.REST));
-      values.put(DbTable.DB_TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
+      values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
+      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.REST));
+      values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
 
       for (Entry<String, String> entry : row.getValues().entrySet())
         values.put(entry.getKey(), entry.getValue());
@@ -397,7 +398,7 @@ public class SyncProcessor {
   private void updateDbFromModification(Modification modification, DbTable table, TableProperties tp) {
     for (Entry<String, String> entry : modification.getSyncTags().entrySet()) {
       ContentValues values = new ContentValues();
-      values.put(DbTable.DB_SYNC_TAG, entry.getValue());
+      values.put(DataTableColumns.SYNC_TAG, entry.getValue());
       table.actualUpdateRowByRowId(entry.getKey(), values);
     }
     tp.setSyncTag(modification.getTableSyncTag());
@@ -418,14 +419,14 @@ public class SyncProcessor {
   private List<SyncRow> getRows(DbTable table, Map<String, ColumnType> columns, int state) {
 
     Set<String> columnSet = new HashSet<String>(columns.keySet());
-    columnSet.add(DbTable.DB_SYNC_TAG);
+    columnSet.add(DataTableColumns.SYNC_TAG);
     ArrayList<String> columnNames = new ArrayList<String>();
     for ( String s : columnSet ) {
     	columnNames.add(s);
     }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
-    Table rows = table.getRaw(columnNames, new String[] {DbTable.DB_SAVED, 
-    			DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
+    Table rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED, 
+    			DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING },
         new String[] { DbTable.SavedStatus.COMPLETE.name(), 
     			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
@@ -438,7 +439,7 @@ public class SyncProcessor {
       Map<String, String> values = new HashMap<String, String>();
       for (int j = 0; j < numCols; j++) {
         String colName = rows.getHeader(j);
-        if (colName.equals(DbTable.DB_SYNC_TAG)) {
+        if (colName.equals(DataTableColumns.SYNC_TAG)) {
           syncTag = rows.getData(i, j);
         } else {
           values.put(colName, rows.getData(i, j));
@@ -489,7 +490,7 @@ public class SyncProcessor {
 
   private void updateRowsState(DbTable table, String[] rowIds, int state) {
     ContentValues values = new ContentValues();
-    values.put(DbTable.DB_SYNC_STATE, state);
+    values.put(DataTableColumns.SYNC_STATE, state);
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
     }
@@ -497,7 +498,7 @@ public class SyncProcessor {
 
   private void updateRowsTransactioning(DbTable table, String[] rowIds, int transactioning) {
     ContentValues values = new ContentValues();
-    values.put(DbTable.DB_TRANSACTIONING, String.valueOf(transactioning));
+    values.put(DataTableColumns.TRANSACTIONING, String.valueOf(transactioning));
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
     }

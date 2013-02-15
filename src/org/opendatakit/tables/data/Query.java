@@ -20,19 +20,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.sync.SyncUtil;
-
-import android.util.Log;
 
 
 public class Query {
-  
+
   private static final String TAG = "Query";
-    
+
     public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM, SUM }
-    
+
     private static final String KW_JOIN = "join";
-    
+
     public class Comparator {
         public static final int EQUALS = 0;
         public static final int NOT_EQUALS = 1;
@@ -43,20 +42,20 @@ public class Query {
         public static final int LIKE = 6;
         private Comparator() {}
     }
-    
+
     public class SortOrder {
         public static final int ASCENDING = 0;
         public static final int DESCENDING = 1;
         private SortOrder() {};
     }
-    
+
     private TableProperties[] tps;
     private TableProperties tp;
     private List<Constraint> constraints;
     private List<Join> joins;
     private String orderBy;
     private int sortOrder;
-    
+
     public Query(TableProperties[] tps, TableProperties tp) {
         this.tps = tps;
         this.tp = tp;
@@ -64,28 +63,28 @@ public class Query {
         joins = new ArrayList<Join>();
         orderBy = tp.getSortColumn();
     }
-    
+
     public int getConstraintCount() {
         return constraints.size();
     }
-    
+
     public Constraint getConstraint(int index) {
         return constraints.get(index);
     }
-    
+
     public int getJoinCount() {
         return joins.size();
     }
-    
+
     public Join getJoin(int index) {
         return joins.get(index);
     }
-    
+
     public void clear() {
         constraints.clear();
         joins.clear();
     }
-    
+
     /**
      * Attempts to parse a user query. If the query is malformed, it may return
      * false, but this is not guaranteed (if it does return false though, the
@@ -305,23 +304,23 @@ public class Query {
         }
         return true;
     }
-    
+
     private String getColumnByUserString(String us) {
         ColumnProperties cp = tp.getColumnByUserLabel(us);
         return (cp == null) ? null : cp.getElementKey();
     }
-    
+
     public void addConstraint(ColumnProperties cp, String value) {
         constraints.add(new Constraint(cp.getElementKey(), Comparator.EQUALS,
                 value));
     }
-    
+
     public void addConstraint(ColumnProperties cp, int comparator,
             String value) {
         constraints.add(new Constraint(cp.getElementKey(), comparator,
                 value));
     }
-    
+
     public void addOrConstraint(ColumnProperties cp, int comparator1,
             String value1, int comparator2, String value2) {
         Constraint oc = new Constraint(cp.getElementKey(), comparator1,
@@ -329,11 +328,11 @@ public class Query {
         oc.addComparison(comparator2, value2);
         constraints.add(oc);
     }
-    
+
     public void removeConstraint(int index) {
         constraints.remove(index);
     }
-    
+
     public void setOrderBy(int sortOrder, ColumnProperties firstCp,
             ColumnProperties... cps) {
         StringBuilder orderByBuilder =
@@ -344,7 +343,7 @@ public class Query {
         orderBy = orderByBuilder.toString();
         this.sortOrder = sortOrder;
     }
-    
+
     public SqlData toSql(String[] columns) {
         SqlData sd = toSql(columns, true);
         if (orderBy != null) {
@@ -356,13 +355,13 @@ public class Query {
         }
         return sd;
     }
-    
+
     private SqlData toSql(String[] columns, boolean includeId) {
         String dbTn = tp.getDbTableName();
         StringBuilder sb = new StringBuilder();
         if (includeId) {
-            sb.append(dbTn + "." + DbTable.DB_ROW_ID + " AS " +
-                    DbTable.DB_ROW_ID);
+            sb.append(dbTn + "." + DataTableColumns.ROW_ID + " AS " +
+                    DataTableColumns.ROW_ID);
         } else {
             sb.append(dbTn + "." + columns[0] + " AS " + columns[0]);
         }
@@ -371,7 +370,7 @@ public class Query {
         }
         return toSql(sb.toString());
     }
-    
+
     private SqlData toSql(String selection) {
         SqlData sd = new SqlData();
         sd.appendSql("SELECT " + selection);
@@ -382,11 +381,11 @@ public class Query {
             sd.appendArgs(joinSd.getArgList());
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DbTable.DB_SYNC_STATE + " != " + SyncUtil.State.DELETING);
+                DataTableColumns.SYNC_STATE + " != " + SyncUtil.State.DELETING);
 
         // add restriction for ODK Collect intermediate status...
         sd.appendSql(" AND " + tp.getDbTableName() + "." +
-                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+                DataTableColumns.SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
 
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
@@ -396,10 +395,10 @@ public class Query {
         //Log.i(TAG, "sql query: " + sd.getSql());
         return sd;
     }
-    
+
     /**
      * Builds the SQL string for querying the database table.
-     * 
+     *
      * Supposing t is the table name, a is a prime column, b is the sort
      * column, c is another column, and the user's query was "c:12", the query
      * should be something like:
@@ -428,22 +427,22 @@ public class Query {
         }
         primeList.delete(0, 2);
         SqlData sd = new SqlData();
-        sd.appendSql("SELECT d." + DbTable.DB_ROW_ID);
+        sd.appendSql("SELECT d." + DataTableColumns.ROW_ID);
         for (String column : arrayList) {
             sd.appendSql(", d." + column);
         }
         sd.appendSql(" FROM " + tp.getDbTableName() + " d");
         sd.appendSql(" JOIN (");
-        
+
         if (tp.getSortColumn() == null) {
             sd.append(toSql("MAX(" + tp.getDbTableName() + "." +
-                    DbTable.DB_ROW_ID + ") AS " + DbTable.DB_ROW_ID));
+                    DataTableColumns.ROW_ID + ") AS " + DataTableColumns.ROW_ID));
             sd.appendSql(" GROUP BY " + primeList.toString());
         } else {
             String sort = tp.getSortColumn();
-            sd.appendSql("SELECT MAX(" + DbTable.DB_ROW_ID + ") AS " +
-                    DbTable.DB_ROW_ID + " FROM ");
-            
+            sd.appendSql("SELECT MAX(" + DataTableColumns.ROW_ID + ") AS " +
+                    DataTableColumns.ROW_ID + " FROM ");
+
             ArrayList<String> primes = tp.getPrimeColumns();
             String[] xCols = new String[primes.size()];
             String[] yCols = new String[primes.size() + 1];
@@ -452,7 +451,7 @@ public class Query {
                 yCols[i] = primes.get(i);
             }
             yCols[primes.size()] = sort;
-            
+
             StringBuilder xSelectionSb = new StringBuilder();
             for (String xCol : xCols) {
                 xSelectionSb.append(tp.getDbTableName() + "." + xCol + " AS " +
@@ -467,7 +466,7 @@ public class Query {
             sd.appendSql("(" + ySqlData.getSql() + ") y");
             sd.appendArgs(xSqlData.getArgList());
             sd.appendArgs(ySqlData.getArgList());
-            
+
             sd.appendSql(" ON x." + sort + " = y." + sort);
             for (String prime : tp.getPrimeColumns()) {
                 sd.appendSql(" AND x." + prime + " = y." + prime);
@@ -480,16 +479,16 @@ public class Query {
             xPrimeList.delete(0, 2);
             sd.appendSql(xPrimeList.toString());
         }
-        
-        sd.appendSql(") z ON d." + DbTable.DB_ROW_ID + " = z." +
-                DbTable.DB_ROW_ID);
+
+        sd.appendSql(") z ON d." + DataTableColumns.ROW_ID + " = z." +
+                DataTableColumns.ROW_ID);
         return sd;
     }
-    
+
     public SqlData toSql(List<String> columns) {
         return toSql(columns.toArray(new String[0]));
     }
-    
+
     public SqlData toFooterSql(String dataColumn, GroupQueryType type) {
         String typeSql;
         switch (type) {
@@ -515,7 +514,7 @@ public class Query {
         SqlData sd = toSql(typeSql + " AS g");
         return sd;
     }
-    
+
     public SqlData toGroupSql(String groupColumn, GroupQueryType type) {
         String typeSql;
         switch (type) {
@@ -542,11 +541,11 @@ public class Query {
         sd.appendSql(" GROUP BY " + groupColumn);
         return sd;
     }
-    
+
     @SuppressWarnings("unused")
     public SqlData toConflictSql() {
         SqlData idsd = new SqlData();
-        idsd.appendSql("SELECT " + DbTable.DB_ROW_ID);
+        idsd.appendSql("SELECT " + DataTableColumns.ROW_ID);
         idsd.appendSql(" FROM " + tp.getDbTableName());
         for (int i = 0; i < joins.size(); i++) {
             SqlData joinSd = joins.get(i).toSql();
@@ -554,11 +553,11 @@ public class Query {
             idsd.appendArgs(joinSd.getArgList());
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DbTable.DB_SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
-        
+                DataTableColumns.SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+
         // add restriction for ODK Collect intermediate status...
         idsd.appendSql(" AND " + tp.getDbTableName() + "." +
-                DbTable.DB_SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+                DataTableColumns.SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
 
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
@@ -567,27 +566,29 @@ public class Query {
         }
         SqlData sd = new SqlData();
         sd.appendSql("SELECT " + tp.getDbTableName() + "." +
-                DbTable.DB_ROW_ID + " AS " + DbTable.DB_ROW_ID + ", " +
-                tp.getDbTableName() + "." + DbTable.DB_SYNC_TAG + " AS " +
-                DbTable.DB_SYNC_TAG);
+                DataTableColumns.ROW_ID + " AS " + DataTableColumns.ROW_ID + ", " +
+                tp.getDbTableName() + "." + DataTableColumns.SYNC_TAG + " AS " +
+                DataTableColumns.SYNC_TAG);
         for (ColumnProperties cp : tp.getColumns()) {
+          if ( cp.isPersisted() ) {
             sd.appendSql(", " + tp.getDbTableName() + "." +
                     cp.getElementKey() + " AS " + cp.getElementKey());
+          }
         }
         sd.appendSql(" FROM " + tp.getDbTableName());
         sd.appendSql(" JOIN (");
         sd.append(idsd);
         sd.appendSql(") jt ON ");
-        sd.appendSql(tp.getDbTableName() + "." + DbTable.DB_ROW_ID + " = jt." +
-                DbTable.DB_ROW_ID);
+        sd.appendSql(tp.getDbTableName() + "." + DataTableColumns.ROW_ID + " = jt." +
+                DataTableColumns.ROW_ID);
         sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
-                DbTable.DB_ROW_ID + ", " + DbTable.DB_SYNC_STATE + " ");
+                DataTableColumns.ROW_ID + ", " + DataTableColumns.SYNC_STATE + " ");
         // so that conflicting rows are always before deleting rows
         sd.appendSql((SyncUtil.State.CONFLICTING > SyncUtil.State.DELETING) ?
                 "DESC" : "ASC");
         return sd;
     }
-    
+
     public String toUserQuery() {
         StringBuilder sb = new StringBuilder();
         for (Constraint c : constraints) {
@@ -598,7 +599,7 @@ public class Query {
         }
         return sb.toString().trim();
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Query)) {
@@ -647,7 +648,7 @@ public class Query {
         }
         return indices.isEmpty();
     }
-    
+
     @Override
     public int hashCode() {
         int hashCode = tp.hashCode();
@@ -662,7 +663,7 @@ public class Query {
         }
         return hashCode;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(tp.toString());
@@ -673,13 +674,13 @@ public class Query {
         sb.append(joins.toString());
         return sb.toString();
     }
-    
+
     public class Constraint {
-        
+
         private String cdn;
         private List<Integer> comparators;
         private List<String> values;
-        
+
         public Constraint(String cdn, int comparator, String value) {
             this.cdn = cdn;
             this.comparators = new ArrayList<Integer>();
@@ -687,28 +688,28 @@ public class Query {
             comparators.add(comparator);
             values.add(value);
         }
-        
+
         public String getColumnDbName() {
             return cdn;
         }
-        
+
         public int getComparisonCount() {
             return comparators.size();
         }
-        
+
         public int getComparator(int index) {
             return comparators.get(index);
         }
-        
+
         public String getValue(int index) {
             return values.get(index);
         }
-        
+
         public void addComparison(int comparator, String value) {
             comparators.add(comparator);
             values.add(value);
         }
-        
+
         public SqlData toSql() {
             SqlData sd = new SqlData();
             sd.appendSql("(" + getSqlString(0));
@@ -720,7 +721,7 @@ public class Query {
             sd.appendSql(")");
             return sd;
         }
-        
+
         private String getSqlString(int index) {
             String cName = tp.getDbTableName() + "." + cdn;
             switch (comparators.get(index)) {
@@ -743,7 +744,7 @@ public class Query {
                         comparators.get(index));
             }
         }
-        
+
         public String toUserQuery() {
             StringBuilder sb = new StringBuilder(
                     tp.getColumnByElementKey(cdn).getDisplayName() + ":");
@@ -753,7 +754,7 @@ public class Query {
             }
             return sb.toString();
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Constraint)) {
@@ -780,7 +781,7 @@ public class Query {
             }
             return indices.isEmpty();
         }
-        
+
         @Override
         public int hashCode() {
             int hashCode = cdn.hashCode();
@@ -789,7 +790,7 @@ public class Query {
             }
             return hashCode;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder(cdn);
@@ -818,14 +819,14 @@ public class Query {
             return sb.toString();
         }
     }
-    
+
     public class Join {
-        
+
         private TableProperties tp;
         private Query query;
         private String[] matchKeys;
         private String[] matchArgs;
-        
+
         public Join(TableProperties tp, Query query, String[] matchKeys,
                 String[] matchArgs) {
             this.tp = tp;
@@ -837,27 +838,27 @@ public class Query {
             this.matchKeys = matchKeys;
             this.matchArgs = matchArgs;
         }
-        
+
         public TableProperties getJoinTable() {
             return tp;
         }
-        
+
         public Query getQuery() {
             return query;
         }
-        
+
         public int getMatchCount() {
             return matchKeys.length;
         }
-        
+
         public String getMatchKey(int index) {
             return matchKeys[index];
         }
-        
+
         public String getMatchArg(int index) {
             return matchArgs[index];
         }
-        
+
         public SqlData toSql() {
             SqlData sd = new SqlData();
             sd.appendSql("JOIN ");
@@ -871,11 +872,11 @@ public class Query {
             }
             return sd;
         }
-        
+
         private String matchToSql(int index) {
             return matchKeys[index] + " = " + matchArgs[index];
         }
-        
+
         public String toUserQuery() {
             StringBuilder sb = new StringBuilder();
             sb.append("join:" + tp.getDisplayName());
@@ -888,7 +889,7 @@ public class Query {
             }
             return sb.toString();
         }
-        
+
         @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof Join)) {
@@ -915,7 +916,7 @@ public class Query {
             }
             return indices.isEmpty();
         }
-        
+
         @Override
         public int hashCode() {
             int hashCode = tp.hashCode() + query.hashCode();
@@ -924,7 +925,7 @@ public class Query {
             }
             return hashCode;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder(tp.getDbTableName());
@@ -935,42 +936,42 @@ public class Query {
             return sb.toString();
         }
     }
-    
+
     public class SqlData {
-        
+
         private StringBuilder sql;
         private List<String> args;
-        
+
         public SqlData() {
             this.sql = new StringBuilder();
             this.args = new ArrayList<String>();
         }
-        
+
         public void appendSql(String a) {
             sql.append(a);
         }
-        
+
         public void appendArg(String a) {
             args.add(a);
         }
-        
+
         private void appendArgs(List<String> a) {
             args.addAll(a);
         }
-        
+
         public void append(SqlData a) {
             appendSql(a.getSql());
             appendArgs(a.getArgList());
         }
-        
+
         public String getSql() {
             return sql.toString();
         }
-        
+
         private List<String> getArgList() {
             return args;
         }
-        
+
         public String[] getArgs() {
             return args.toArray(new String[0]);
         }

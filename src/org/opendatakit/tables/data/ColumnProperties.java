@@ -17,7 +17,6 @@ package org.opendatakit.tables.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +27,10 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.sync.SyncUtil;
 
-import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -42,14 +41,14 @@ import android.util.Log;
  * completely, immutable properties are located in a table that is defined in
  * {@link ColumnDefinitions}. The mutable, mostly ODK Tables-specific columns
  * are located in {@link KeyValueStoreColumn}. ColumnProperties is this an
- * abstraction of both of these. 
+ * abstraction of both of these.
  * <p>
- * It is the column analogue of {@link TableProperties}. 
+ * It is the column analogue of {@link TableProperties}.
  * <p>
- * In the future, it might make sense to have TableProperties and 
+ * In the future, it might make sense to have TableProperties and
  * ColumnProperties share a common parent class, as they essentially have the
  * same functionality. Same thing for TableDefinitions and ColumnDefinitions.
- * 
+ *
  * @author hkworden@gmail.com (Hilary Worden)
  * @author sudar.sam@gmail.com
  */
@@ -109,81 +108,81 @@ public class ColumnProperties {
    */
   /*
    * Data types and how things are stored:
-   * 
+   *
    * We have these primitive elementTypes: STRING INTEGER DECIMAL DATE DATETIME
    * TIME BOOLEAN MIMEURI and this composite type: MULTIPLE_CHOICE for multiple
    * choice options (arrays). These could hold any data type, but initial
    * implementation is only for STRING
-   * 
+   *
    * Anything else is user-specified strings that are used to identify
    * struct-like datatype definitions. Initially, this would be 'geopoint';
    * Tables would add 'phonenumber', 'date range'
-   * 
+   *
    * e.g., multiple-choice list of symptoms:
-   * 
+   *
    * The data is stored under the 'patientSymptoms' column in the database as a
    * JSON encoding of string values. i.e., '["ache","fever"]'
-   * 
+   *
    * ekey: patientSymptoms ename: patientSymptoms etype: MULTIPLE_CHOICE
    * listChildEKeys: '[ patientSymptomsItem ]' isPersist: true
-   * 
+   *
    * ekey: patientSymptomsItem ename: null // elements are not named within this
    * list etype: STRING listChildEKeys: null isPersist: false
-   * 
+   *
    * ------------- e.g., geopoint defining a northernmost point of something:
-   * 
+   *
    * The data is stored as 4 columns, 'northLatitude', 'northLongitude',
    * 'northAltitude', 'northAccuracy'
-   * 
+   *
    * ekey: northernmostPoint ename: northernmostPoint etype: geopoint
    * listChildEKeys: '[ "northLatitude", "northLongitude", "northAltitude",
    * "northAccuracy"]' isPersist: false
-   * 
+   *
    * ekey: northLatitude ename: latitude etype: DECIMAL listChildEKeys: null
    * isPersist: true
-   * 
+   *
    * ekey: northLongitude ename: longitude etype: DECIMAL listChildEKeys: null
    * isPersist: true
-   * 
+   *
    * ekey: northAltitude ename: altitude etype: DECIMAL listChildEKeys: null
    * isPersist: true
-   * 
+   *
    * ekey: northAccuracy ename: accuracy etype: DECIMAL listChildEKeys: null
    * isPersist: true
-   * 
+   *
    * ODK Collect can do calculations and constraint tests like
    * 'northermostPoint.altitude < 4.0'
-   * 
+   *
    * e.g., 'clientPhone' as a phonenumber type, which is just a restriction on a
    * STRING value persists under 'clientPhone' column in database.
-   * 
+   *
    * ekey: clientPhone ename: clientPhone etype: phoneNumber listChildEKeys: [
    * "clientPhoneNumber" ] // single element isPersist: true
-   * 
+   *
    * ekey: clientPhoneNumber ename: null // null -- indicates restriction on
    * etype etype: STRING listChildEKeys: null isPersist: false
-   * 
+   *
    * e.g., 'image' file capture in ODK Collect. Stored as a MIMEURI
-   * 
+   *
    * ekey: locationImage ename: locationImage etype: MIMEURI listChildEKeys:
    * null isPersist: true
-   * 
+   *
    * MIMEURI stores a JSON object:
-   * 
+   *
    * '{"path":"/mnt/sdcard/odk/tables/app/instances/2342.jpg","mimetype":"image/jpg"}'
-   * 
+   *
    * i.e., ODK Collect image/audio/video capture store everything as a MIMEURI
    * with different mimetype values.
    */
 
   /*
-   * 
+   *
    * NOTE: you can have a composite type stored in two ways: (1) store the leaf
    * nodes of the composite type in the database. Describe the entire type
    * hierarchy down to those leaf nodes. (2) store it as a json object at the
    * top level. Describe the structure of this json object and its leaf nodes
    * (but none of these persist anything).
-   * 
+   *
    * Each has its advantages -- (1) does independent value updates easily. (2)
    * does atomic updates easily.
    */
@@ -201,26 +200,26 @@ public class ColumnProperties {
   // TODO: allocate large storage on Aggregate
   /*
    * displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
-   * 
+   *
    * This is a map used for select1 and select choices, either closed-universe
    * (fixed set) or open-universe (select1-or-other, select-or-other). Stores
    * the full list of all values in the column. Example format (1st label shows
    * localization, 2nd is simple single-language defn:
-   * 
+   *
    * [ { "name": "1", "label": { "fr" : "oui", "en" : "yes", "es" : "si" } }, {
    * "name" : "0", "label": "no" } ]
-   * 
+   *
    * an open-universe list could just be a list of labels:
-   * 
+   *
    * [ "yes", "oui", "si", "no" ]
-   * 
+   *
    * i.e., there is no internationalization possible in open-universe lists, as
    * we allow free-form text entry. TODO: is this how we want this to work.
-   * 
+   *
    * When a user chooses to enter their own data in the field, we add that entry
    * to this list for later display as an available choice (i.e., we update the
    * choices list).
-   * 
+   *
    * TODO: how to define open vs. closed universe treatment? TODO: generalize
    * for other data types? i.e., "name" as a date range?
    */
@@ -230,9 +229,9 @@ public class ColumnProperties {
    * Javascript, we have 'handlebars helpers' for template generation. We could
    * share a subset of this functionality in Tables for managing how to render a
    * value.
-   * 
+   *
    * TODO: how does this interact with displayChoicesMap?
-   * 
+   *
    * The proposed eventual subset describes numeric formatting. It could also be
    * used to render qrcode images, etc. 'this' and elementName both refer to
    * this display value. E.g., sample usage syntax: "{{toFixed this "2"}}", //
@@ -243,11 +242,11 @@ public class ColumnProperties {
    * "({{toFixed this.latitude "2"}}, {{toFixed this.longitude "
    * 2"}) {{toFixed this.altitude "1"}}m error: {{toFixed this.accuracy "1"}}m"
    * to produce '(48.50,32.20) 10.3m error: 6.0m'
-   * 
+   *
    * The only helper functions envisioned are "toFixed", "toExponential",
    * "toPrecision", "toString" and "localize" and perhaps one for qrcode
    * generation?
-   * 
+   *
    * TODO: how do you work with MULTIPLE_CHOICE e.g., for item separators (','
    * with final element ', and ')
    */
@@ -256,13 +255,13 @@ public class ColumnProperties {
   // * Default values for those columns that have defaults.
   // ***********************************/
   // public static final int DEFAULT_DB_IS_PERSISTED = 1;
-  
+
   /***********************************
    * The partition name of the column keys in the key value store.
    ***********************************/
   public static final String KVS_PARTITION = "Column";
 
-  
+
   /***********************************
    * The names of keys that are defaulted to exist in the column key value
    * store.
@@ -280,7 +279,7 @@ public class ColumnProperties {
      */
   public static final String KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
     /*
-     * Text, null. 
+     * Text, null.
      */
   public static final String KEY_DISPLAY_FORMAT = "displayFormat";
     /*
@@ -302,40 +301,40 @@ public class ColumnProperties {
     /*
      * What the footer should display.
      */
-  
-  
+
+
   /***********************************
    *  Default values for those keys which require them.
-   *  TODO When the keys in the KVS are moved to the respective classes that 
+   *  TODO When the keys in the KVS are moved to the respective classes that
    *  use them, these should go there most likely.
    ***********************************/
-  public static final int DEFAULT_KEY_VISIBLE = 1;
+  public static final boolean DEFAULT_KEY_VISIBLE = true;
   public static final FooterMode DEFAULT_KEY_FOOTER_MODE = FooterMode.none;
-  public static final int DEFAULT_KEY_SMS_IN = 1;
-  public static final int DEFAULT_KEY_SMS_OUT = 1;
+  public static final boolean DEFAULT_KEY_SMS_IN = true;
+  public static final boolean DEFAULT_KEY_SMS_OUT = true;
   public static final String DEFAULT_KEY_SMS_LABEL = null;
   public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
   public static final String DEFAULT_KEY_DISPLAY_CHOICES_MAP = null;
-  
-  
+
+
   /*
    * These KEYS are distinct from columns b/c the keys are vertical keys in the
    * key value store, not horizontal columns in the column definitions table.
    */
-  private static final String[] INIT_KEYS = { 
-    KEY_DISPLAY_VISIBLE, 
+  private static final String[] INIT_KEYS = {
+    KEY_DISPLAY_VISIBLE,
     KEY_DISPLAY_NAME,
-    KEY_DISPLAY_CHOICES_MAP, 
-    KEY_DISPLAY_FORMAT, 
-    KEY_SMS_IN, 
-    KEY_SMS_OUT, 
+    KEY_DISPLAY_CHOICES_MAP,
+    KEY_DISPLAY_FORMAT,
+    KEY_SMS_IN,
+    KEY_SMS_OUT,
     KEY_SMS_LABEL,
     KEY_FOOTER_MODE };
-  
-  
+
+
   /***********************************
    *  Keys for json.
-   ***********************************/ 
+   ***********************************/
 
   // private static final String DB_SMS_IN = "smsIn"; /* (allow SMS incoming)
   // default: 1 as boolean (true) */
@@ -374,7 +373,7 @@ public class ColumnProperties {
 
   // the SQL where clause to use for selecting, updating,
   // or deleting the row for a given column
-//  private static final String WHERE_SQL = DB_TABLE_ID + " = ? and " 
+//  private static final String WHERE_SQL = DB_TABLE_ID + " = ? and "
 //      + DB_ELEMENT_KEY + " = ?";
 
   // the columns to be selected when initializing ColumnProperties
@@ -407,9 +406,9 @@ public class ColumnProperties {
 
   /***********************************
    *  The fields that make up a ColumnProperties object.
-   ***********************************/  
+   ***********************************/
   /*
-   * The fields that belong only to the object, and are not related to the 
+   * The fields that belong only to the object, and are not related to the
    * actual column itself.
    */
   private final DbHelper dbh;
@@ -431,7 +430,7 @@ public class ColumnProperties {
   /*
    * The fields that reside in the key value store.
    */
-  private int displayVisible;
+  private boolean displayVisible;
   private String displayName;
   private ArrayList<String> displayChoicesMap;
   private String displayFormat;
@@ -440,8 +439,8 @@ public class ColumnProperties {
   private String smsLabel;
   private FooterMode footerMode;
 
-  private ColumnProperties(DbHelper dbh, 
-      String tableId, 
+  private ColumnProperties(DbHelper dbh,
+      String tableId,
       String elementKey,
       String elementName,
       ColumnType elementType,
@@ -449,14 +448,14 @@ public class ColumnProperties {
       JoinColumn joins,
       // String joinTableId,
       // String joinElementKey,
-      boolean isPersisted, 
-      int displayVisible, 
+      boolean isPersisted,
+      boolean displayVisible,
       String displayName,
-      ArrayList<String> displayChoicesMap, 
-      String displayFormat, 
+      ArrayList<String> displayChoicesMap,
+      String displayFormat,
       boolean smsIn,
       boolean smsOut,
-      String smsLabel, 
+      String smsLabel,
       FooterMode footerMode,
       KeyValueStore.Type backingStore) {
     this.dbh = dbh;
@@ -480,7 +479,7 @@ public class ColumnProperties {
     this.footerMode = footerMode;
     this.backingStore = backingStore;
   }
-  
+
   public static String[] getInitKeys() {
     return INIT_KEYS;
   }
@@ -495,38 +494,40 @@ public class ColumnProperties {
    * mutable column properties
    * @return
    */
-  public static ColumnProperties getColumnProperties(DbHelper dbh, 
+  public static ColumnProperties getColumnProperties(DbHelper dbh,
       String tableId, String dbElementKey, KeyValueStore.Type typeOfStore) {
-    Map<String, String> mapProps = getMapForColumn(dbh, tableId, dbElementKey, 
+    Map<String, String> mapProps = getMapForColumn(dbh, tableId, dbElementKey,
         typeOfStore);
     return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
   }
 
   /*
-   * Return the map of all the properties for the given column. Atm this is 
-   * just key->value. The caller must know the intended value and parse it 
+   * Return the map of all the properties for the given column. Atm this is
+   * just key->value. The caller must know the intended value and parse it
    * correctly.
-   * 
+   *
    * This map should eventually become a key->TypeValuePair or something like
    * that. TODO: make it the above
-   * 
-   * This deserves its own method b/c to get the properties you are forced to 
+   *
+   * This deserves its own method b/c to get the properties you are forced to
    * go through both the key value store and the column properties table.
    */
-  private static Map<String, String> getMapForColumn(DbHelper dbh, 
+  private static Map<String, String> getMapForColumn(DbHelper dbh,
       String tableId, String elementKey, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
-      Map<String, String> columnDefinitionsMap = 
+      Map<String, String> columnDefinitionsMap =
           ColumnDefinitions.getFields(tableId, elementKey, db);
       Map<String, String> kvsMap = intendedKVS.getKeyValues(
           ColumnProperties.KVS_PARTITION, elementKey, db);
       Map<String, String> mapProps = new HashMap<String, String>();
-      mapProps.putAll(columnDefinitionsMap);
+      // make sure that the values in the columnDefinitions are always
+      // respected, even if the kvsMap somehow has a colliding key.
       mapProps.putAll(kvsMap);
+      mapProps.putAll(columnDefinitionsMap);
       // TODO: fix the when to close problem
 //    db.close();
 //    db = null;
@@ -538,36 +539,33 @@ public class ColumnProperties {
 //      }
     }
   }
-  
+
   private static ColumnProperties constructPropertiesFromMap(DbHelper dbh,
       Map<String, String> props, KeyValueStore.Type backingStore) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_SMS_IN
     String smsInStr = props.get(KEY_SMS_IN);
-    int smsInInt = Integer.parseInt(smsInStr);
-    boolean smsIn = SyncUtil.intToBool(smsInInt);
+    boolean smsIn = SyncUtil.stringToBool(smsInStr);
     // KEY_SMS_OUT
     String smsOutStr = props.get(KEY_SMS_OUT);
-    int smsOutInt = Integer.parseInt(smsOutStr);
-    boolean smsOut = SyncUtil.intToBool(smsOutInt);
+    boolean smsOut = SyncUtil.stringToBool(smsOutStr);
     // KEY_DISPLAY_VISIBLE
     String displayVisibleStr = props.get(KEY_DISPLAY_VISIBLE);
-    int displayVisible = Integer.parseInt(displayVisibleStr);
+    boolean displayVisible = SyncUtil.stringToBool(displayVisibleStr);
     // KEY_FOOTER_MODE
     String footerModeStr = props.get(KEY_FOOTER_MODE);
-    // TODO don't forget that all of these value ofs for all these enums 
+    // TODO don't forget that all of these value ofs for all these enums
     // should eventually be surrounded with try/catch to support versioning
     // when new values might come down from the server.
     FooterMode footerMode = FooterMode.valueOf(footerModeStr);
     // DB_IS_PERSISTED
-    String isPersistedStr = props.get(ColumnDefinitions.DB_IS_PERSISTED);
-    int isPersistedInt = Integer.parseInt(isPersistedStr);
-    boolean isPersisted = SyncUtil.intToBool(isPersistedInt);
-    // DB_COLUMN_TYPE 
-    String columnTypeStr = props.get(ColumnDefinitions.DB_ELEMENT_TYPE);
+    String isPersistedStr = props.get(ColumnDefinitionsColumns.IS_PERSISTED);
+    boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
+    // DB_COLUMN_TYPE
+    String columnTypeStr = props.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);
-    
+
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
     ArrayList<String> displayChoicesMap = null;
@@ -577,19 +575,19 @@ public class ColumnProperties {
       if (props.get(KEY_DISPLAY_CHOICES_MAP) != null)  {
         String displayChoicesMapValue = props.get(KEY_DISPLAY_CHOICES_MAP);
         parseValue = displayChoicesMapValue;
-        displayChoicesMap = 
+        displayChoicesMap =
             mapper.readValue(displayChoicesMapValue, ArrayList.class);
       }
 
-      if (props.get(ColumnDefinitions.DB_LIST_CHILD_ELEMENT_KEYS) != null) {
-        String listChildElementKeysValue = 
-            props.get(ColumnDefinitions.DB_LIST_CHILD_ELEMENT_KEYS);
+      if (props.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
+        String listChildElementKeysValue =
+            props.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
         parseValue = listChildElementKeysValue;
-        listChildElementKeys = 
+        listChildElementKeys =
             mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
-      if (props.get(ColumnDefinitions.DB_JOINS) != null) {
-        String joinsValue = props.get(ColumnDefinitions.DB_JOINS);
+      if (props.get(ColumnDefinitionsColumns.JOINS) != null) {
+        String joinsValue = props.get(ColumnDefinitionsColumns.JOINS);
         parseValue = joinsValue;
         joins = mapper.readValue(joinsValue, JoinColumn.class);
       }
@@ -608,10 +606,14 @@ public class ColumnProperties {
       // db.close();
       // }
     }
+    String displayName = props.get(KEY_DISPLAY_NAME);
+    if ( displayName == null ) {
+      displayName = props.get(ColumnDefinitionsColumns.ELEMENT_KEY);
+    }
     return new ColumnProperties(dbh,
-        props.get(ColumnDefinitions.DB_TABLE_ID),
-        props.get(ColumnDefinitions.DB_ELEMENT_KEY),
-        props.get(ColumnDefinitions.DB_ELEMENT_NAME),
+        props.get(ColumnDefinitionsColumns.TABLE_ID),
+        props.get(ColumnDefinitionsColumns.ELEMENT_KEY),
+        props.get(ColumnDefinitionsColumns.ELEMENT_NAME),
         columnType,
         listChildElementKeys,
         joins,
@@ -624,31 +626,31 @@ public class ColumnProperties {
         smsOut,
         props.get(KEY_SMS_LABEL),
         footerMode,
-        backingStore);  
+        backingStore);
   }
 
   /**
    * Return the ColumnProperties for the PERSISTED columns belonging to this
-   * table. 
+   * table.
    * TODO: this should probably be modified in the future to return both the
    * persisted and non persisted columns. At the moment ODK Tables only cares
    * about the persisted columns, and with this message returning only those
    * columns it removes the need to deal with non-persisted columns at this
-   * juncture. 
+   * juncture.
    * @param dbh
    * @param tableId
    * @return
    */
-  static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh, 
+  static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
-      List<String> elementKeys = 
+      List<String> elementKeys =
           ColumnDefinitions.getPersistedElementKeysForTable(tableId, db);
       ColumnProperties[] cps = new ColumnProperties[elementKeys.size()];
       for (int i = 0; i < elementKeys.size(); i++) {
-        ColumnProperties cp = getColumnProperties(dbh, tableId, 
+        ColumnProperties cp = getColumnProperties(dbh, tableId,
             elementKeys.get(i), typeOfStore);
         cps[i] = cp;
       }
@@ -663,32 +665,32 @@ public class ColumnProperties {
   }
 
   /**
-   * Add a column to the datastore. elementKey and elementName should be 
+   * Add a column to the datastore. elementKey and elementName should be
    * made via createDbElementKey and createDbElementName to avoid conflicts.
    * A possible idea would be to pass them display name.
    * @param dbh
    * @param db
    * @param tableId
-   * @param displayName 
+   * @param displayName
    * @param elementKey
    * @param elementName
    * @param displayVisible
    * @return
    */
-  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db, 
+  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
       String tableId,
       String displayName,
       String elementKey,
       String elementName,
-      int displayVisible,
+      boolean displayVisible,
       KeyValueStore.Type typeOfStore) {
     // We're going to do this just by calling the corresponding methods on the
     // ColumnDefinitions and the key value store.
-    
+
     // First prepare the entries for the key value store.
-    List<OdkTablesKeyValueStoreEntry> values = 
+    List<OdkTablesKeyValueStoreEntry> values =
         new ArrayList<OdkTablesKeyValueStoreEntry>();
-    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION, 
+    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_DISPLAY_VISIBLE, displayVisible));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_DISPLAY_NAME, displayName));
@@ -697,16 +699,16 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_DISPLAY_FORMAT, DEFAULT_KEY_DISPLAY_FORMAT));
     // TODO: both the SMS entries should become booleans?
-    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION,
+    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_SMS_IN, DEFAULT_KEY_SMS_IN));
-    values.add(createIntEntry(tableId, ColumnProperties.KVS_PARTITION,
+    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_SMS_OUT, DEFAULT_KEY_SMS_OUT));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_SMS_LABEL, DEFAULT_KEY_SMS_LABEL));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_FOOTER_MODE, DEFAULT_KEY_FOOTER_MODE.name()));
     Map<String, String> mapProps = new HashMap<String, String>();
-    // TODO: might have to account for the null values being passed in here, 
+    // TODO: might have to account for the null values being passed in here,
     // maybe should be putting in empty strings instead?
     mapProps.put(KEY_DISPLAY_VISIBLE, String.valueOf(displayVisible));
     mapProps.put(KEY_DISPLAY_NAME, displayName);
@@ -721,10 +723,10 @@ public class ColumnProperties {
     try {
       db.beginTransaction();
       try {
-        Map<String, String> columnDefProps = ColumnDefinitions.addColumn(db, 
-            tableId, elementKey, elementName, 
-            ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, 
-            DEFAULT_KEY_DISPLAY_CHOICES_MAP, 
+        Map<String, String> columnDefProps = ColumnDefinitions.addColumn(db,
+            tableId, elementKey, elementName,
+            ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE,
+            DEFAULT_KEY_DISPLAY_CHOICES_MAP,
             ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
             ColumnDefinitions.DEFAULT_DB_JOINS);
         KeyValueStore kvs = kvsm.getStoreForTable(tableId, typeOfStore);
@@ -740,10 +742,10 @@ public class ColumnProperties {
       return cp;
     } finally {
       // TODO: fix the when to close problem
-//    db.close();     
+//    db.close();
     }
   }
-  
+
 
   /**
    * Deletes the column represented by this ColumnProperties by deleting it
@@ -760,12 +762,12 @@ public class ColumnProperties {
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
     // this is to clear all the color rules. If we didn't do this, you could
-    // have old color rules build up, and worse still, if you deleted this 
+    // have old color rules build up, and worse still, if you deleted this
     // column and then added a new column whose element key ended up being the
     // same, you would have rules suddenly applying to them.
     kvs.clearEntries(ColumnColorRuler.KVS_PARTITION, elementKey, db);
   }
-  
+
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
       String partition, String elementKey, String key, String value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
@@ -777,7 +779,7 @@ public class ColumnProperties {
     entry.key = key;
     return entry;
   }
-  
+
   private static OdkTablesKeyValueStoreEntry createIntEntry(String tableId,
       String partition, String elementKey, String key, int value) {
     OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
@@ -787,13 +789,25 @@ public class ColumnProperties {
     entry.type = ColumnType.INTEGER.name();
     entry.value = String.valueOf(value);
     entry.key = key;
-    return entry;   
+    return entry;
   }
-  
+
+  private static OdkTablesKeyValueStoreEntry createBooleanEntry(String tableId,
+      String partition, String elementKey, String key, boolean value) {
+    OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+    entry.tableId = tableId;
+    entry.partition = partition;
+    entry.aspect = elementKey;
+    entry.type = ColumnType.BOOLEAN.name();
+    entry.value = String.valueOf(value);
+    entry.key = key;
+    return entry;
+  }
+
   /**
-   * Create an element key based on the proposedKey parameter. The first 
-   * attempt will be the proposedKey prepended with an underscore and with 
-   * non-word characters (as defined by java's "\\W") replaced by an 
+   * Create an element key based on the proposedKey parameter. The first
+   * attempt will be the proposedKey prepended with an underscore and with
+   * non-word characters (as defined by java's "\\W") replaced by an
    * underscore.
    * If that elementKey is already used for this table, an integer suffix,
    * beginning with 1, is tried to be added to key until a conflict no longer
@@ -819,14 +833,14 @@ public class ColumnProperties {
       suffix++;
     }
   }
-  
+
   /**
-   * Create an element name based on the proposedName parameter. The first 
-   * attempt will be the proposedName prepended with an underscore with 
+   * Create an element name based on the proposedName parameter. The first
+   * attempt will be the proposedName prepended with an underscore with
    * whitespace (as defined by java's "\\W") replaced by an underscore.
    * If that elementName is already used for this table, an integer suffix,
    * beginning with 1, is tried to be added to key until a conflict no longer
-   * exists. 
+   * exists.
    * @param tableId
    * @param proposedName
    * @param db
@@ -846,14 +860,14 @@ public class ColumnProperties {
         return nextName;
       }
       suffix++;
-    }   
+    }
   }
-  
+
   /**
-   * Return true if a column already exists with the display name for the 
-   * given table. 
+   * Return true if a column already exists with the display name for the
+   * given table.
    * <p>
-   * This should only be called when adding a column or doing a 
+   * This should only be called when adding a column or doing a
    * check without reference to a given column. For instance, if it was used to
    * check a display name for an existing column and no changes had been made
    * to that column, it would return an error.
@@ -865,7 +879,7 @@ public class ColumnProperties {
   public static boolean displayNameConflict(String tableId, String displayName,
       DbHelper dbh) {
     DataManager dm = new DataManager(dbh);
-    TableProperties tp = dm.getTableProperties(tableId, 
+    TableProperties tp = dm.getTableProperties(tableId,
         KeyValueStore.Type.ACTIVE);
     for (ColumnProperties cp : tp.getColumns()) {
       if (cp.getDisplayName().equals(displayName)) {
@@ -874,10 +888,10 @@ public class ColumnProperties {
     }
     return false;
   }
-  
+
   private static boolean keyConflict(String tableId, String elementKey,
       SQLiteDatabase db) {
-    List<String> existingKeys = 
+    List<String> existingKeys =
         ColumnDefinitions.getAllElementKeysForTable(tableId, db);
     for (String existingKey : existingKeys) {
       if (existingKey.equals(elementKey)) {
@@ -886,23 +900,23 @@ public class ColumnProperties {
     }
     return false;
   }
-  
+
   private static boolean nameConflict(String tableId, String elementName,
       SQLiteDatabase db) {
-    List<String> existingNames = 
+    List<String> existingNames =
         ColumnDefinitions.getAllElementNamesForTable(tableId, db);
     for (String existingName : existingNames) {
       if (existingName.equals(elementName)) {
         return true;
       }
     }
-    return false;   
+    return false;
   }
-  
+
   /**
-   * Return true if the proposed display name is in use for a column that is 
+   * Return true if the proposed display name is in use for a column that is
    * NOT the column of which this method is a member. In other words, check for
-   * name conflicts, but if the name conflicts with itself, do not throw an 
+   * name conflicts, but if the name conflicts with itself, do not throw an
    * error.
    * @param proposedDisplayName
    * @return
@@ -911,16 +925,16 @@ public class ColumnProperties {
     DataManager dm = new DataManager(dbh);
     TableProperties tp = dm.getTableProperties(tableId, backingStore);
     for (ColumnProperties cp : tp.getColumns()) {
-      if (cp.getDisplayName().equalsIgnoreCase(proposedDisplayName) 
+      if (cp.getDisplayName().equalsIgnoreCase(proposedDisplayName)
           && !cp.getElementKey().equals(elementKey)) {
         return true;
       }
     }
     return false;
   }
-  
+
   /**
-   * Take the proposed display name and return a display name that has no 
+   * Take the proposed display name and return a display name that has no
    * conflicts with other display names in the table. If there is a conflict,
    * integers are appended to the proposed name until there are no conflicts.
    * @param proposedDisplayName
@@ -938,19 +952,19 @@ public class ColumnProperties {
         return nextName;
       }
       suffix++;
-    }  
+    }
   }
 
   /**
    * DB_ELEMENT_KEY, DB_ELEMENT_NAME, DB_ELEMENT_TYPE,
    * DB_LIST_CHILD_ELEMENT_KEYS, DB_JOIN_TABLE_ID, DB_JOIN_ELEMENT_KEY,
    * DB_IS_PERSISTED,
-   * 
+   *
    * DB_DISPLAY_VISIBLE, DB_DISPLAY_NAME, DB_DISPLAY_CHOICES_MAP,
    * DB_DISPLAY_FORMAT,
-   * 
+   *
    * DB_SMS_IN, DB_SMS_OUT, DB_SMS_LABEL,
-   * 
+   *
    * DB_FOOTER_MODE
    */
 
@@ -974,7 +988,7 @@ public class ColumnProperties {
 
   // TODO: remove this
   public void setElementType(ColumnType elementType) {
-    setStringProperty(ColumnDefinitions.DB_ELEMENT_TYPE, elementType.name());
+    setStringProperty(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
     this.elementType = elementType;
   }
 
@@ -987,19 +1001,19 @@ public class ColumnProperties {
 
   /**
    * Sets the column's type.
-   * 
+   *
    * @param columnType
    *          the new type
    */
   public void setColumnType(ColumnType columnType) {
-    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, 
+    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
         tableId, backingStore);
     ArrayList<String> colOrder = tp.getColumnOrder();
     tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       db.beginTransaction();
-      setStringProperty(db, ColumnDefinitions.DB_ELEMENT_TYPE, 
+      setStringProperty(db, ColumnDefinitionsColumns.ELEMENT_TYPE,
           columnType.name());
       tp.reformTable(db, colOrder);
       db.setTransactionSuccessful();
@@ -1026,25 +1040,25 @@ public class ColumnProperties {
   }
 
   public void setIsPersisted(boolean setting) {
-    setIntProperty(ColumnDefinitions.DB_IS_PERSISTED, setting ? 1 : 0);
+    setBooleanProperty(ColumnDefinitionsColumns.IS_PERSISTED, setting);
     this.isPersisted = setting;
   }
 
   /**
    * @return whether or not this column is visible within Tables
    */
-  public int getDisplayVisible() {
+  public boolean getDisplayVisible() {
     return displayVisible;
   }
 
   /**
    * Sets whether or not this column is visible within Tables
-   * 
+   *
    * @param setting
    *          the new display visibility setting
    */
-  public void setDisplayVisible(int setting) {
-    setIntProperty(KEY_DISPLAY_VISIBLE, setting);
+  public void setDisplayVisible(boolean setting) {
+    setBooleanProperty(KEY_DISPLAY_VISIBLE, setting);
     this.displayVisible = setting;
   }
 
@@ -1061,10 +1075,10 @@ public class ColumnProperties {
    * the name will be set as proposed. If there is a conflict, integers will be
    * appended to the display name parameter until there are no conflicts (this
    * depends on the behavior of createDisplayName).
-   * 
+   *
    * @param displayName
    *          the new display name
-   * @return the 
+   * @return the
    */
   public void setDisplayName(String displayName) {
     String safeName = createDisplayName(displayName);
@@ -1081,7 +1095,7 @@ public class ColumnProperties {
 
   /**
    * Sets the column's display format string.
-   * 
+   *
    * @param abbreviation
    *          the new abbreviation (or null for no abbreviation)
    */
@@ -1099,7 +1113,7 @@ public class ColumnProperties {
 
   /**
    * Sets the column's footer mode.
-   * 
+   *
    * @param footerMode
    *          the new footer mode
    */
@@ -1117,7 +1131,7 @@ public class ColumnProperties {
 
   /**
    * Sets the column's abbreviation.
-   * 
+   *
    * @param abbreviation
    *          the new abbreviation (or null for no abbreviation)
    */
@@ -1135,12 +1149,12 @@ public class ColumnProperties {
 
   /**
    * Sets the SMS-in setting.
-   * 
+   *
    * @param setting
    *          the new SMS-in setting
    */
   public void setSmsIn(boolean setting) {
-    setIntProperty(KEY_SMS_IN, setting ? 1 : 0);
+    setBooleanProperty(KEY_SMS_IN, setting);
     this.smsIn = setting;
   }
 
@@ -1153,12 +1167,12 @@ public class ColumnProperties {
 
   /**
    * Sets the SMS-out setting.
-   * 
+   *
    * @param setting
    *          the new SMS-out setting
    */
   public void setSmsOut(boolean setting) {
-    setIntProperty(KEY_SMS_OUT, setting ? 1 : 0);
+    setBooleanProperty(KEY_SMS_OUT, setting);
     this.smsOut = setting;
   }
 
@@ -1171,7 +1185,7 @@ public class ColumnProperties {
 
   /**
    * Sets the multiple-choice options.
-   * 
+   *
    * @param options
    *          the array of options
    * @throws IOException
@@ -1208,7 +1222,7 @@ public class ColumnProperties {
   }
 
   /**
-   * Converts the JoinColumn to the json representation of the object 
+   * Converts the JoinColumn to the json representation of the object
    * using a mapper and adds it to the database.
    * <p>
    * If there is a mapping exception of writing the JoinColumn to a String, it
@@ -1230,16 +1244,16 @@ public class ColumnProperties {
     } catch (IOException e) {
       Log.e(TAG, "IOException writing joins in ColumnProperties");
       e.printStackTrace();
-    } 
+    }
     if (joinsStr != null) {
-      setStringProperty(ColumnDefinitions.DB_JOINS, joinsStr);
+      setStringProperty(ColumnDefinitionsColumns.JOINS, joinsStr);
       this.joins = joins;
     }
   }
 
   /**
    * Sets the join table ID.
-   * 
+   *
    * @param tableId
    *          the join table Id
    */
@@ -1267,7 +1281,7 @@ public class ColumnProperties {
 
   /**
    * Sets the join column name.
-   * 
+   *
    * @param columnName
    *          the join column name
    */
@@ -1293,7 +1307,7 @@ public class ColumnProperties {
     // Do this to try and avoid null pointer exceptions.
     if (joins == null) {
       joinCol = JoinColumn.DEFAULT_NOT_SET_VALUE;
-    }   
+    }
     try {
       if (joinCol == null) {
         joinCol = mapper.writeValueAsString(joins);
@@ -1325,7 +1339,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_SMS_IN, smsIn);
     jo.put(JSON_KEY_SMS_OUT, smsOut);
     jo.put(JSON_KEY_SMS_LABEL, smsLabel);
-    
+
     String toReturn = null;
     try {
       // I think this removes exceptions from not having getters/setters...
@@ -1341,7 +1355,7 @@ public class ColumnProperties {
 //    return jo;
     return toReturn;
   }
-  
+
   /**
    * This should be called when you first are creating a ColumnProperties when
    * you have a json. Eg when you are downloading a table from the server.
@@ -1363,7 +1377,7 @@ public class ColumnProperties {
         new ArrayList<String>(),
         null,
         true,
-        1,
+        true,
         "",
         new ArrayList<String>(),
         "",
@@ -1375,10 +1389,10 @@ public class ColumnProperties {
         typeOfStore);
     cp.setFromJson(json);
     return cp;
-    
+
   }
-  
-  
+
+
 
 
 //  void setFromJsonObject(Map<String, Object> jo) {
@@ -1428,7 +1442,7 @@ public class ColumnProperties {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
-    } 
+    }
     // do a check just in case there was an error
     if (colType == null) {
       colType = ColumnType.NONE;
@@ -1445,7 +1459,7 @@ public class ColumnProperties {
     // setJoinColumnName((String) jo.get(JSON_KEY_JOIN_ELEMENT_KEY));
     setIsPersisted((Boolean) jo.get(JSON_KEY_IS_PERSISTED));
 
-    setDisplayVisible((Integer) jo.get(JSON_KEY_DISPLAY_VISIBLE));
+    setDisplayVisible((Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE));
     setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
     setDisplayChoicesMap(
         (ArrayList<String>) jo.get(JSON_KEY_DISPLAY_CHOICES_MAP));
@@ -1494,7 +1508,7 @@ public class ColumnProperties {
     }
   }
 
-  private void setStringProperty(SQLiteDatabase db, String property, 
+  private void setStringProperty(SQLiteDatabase db, String property,
       String value) {
     // is it a column definition property?
     if (ColumnDefinitions.columnNames.contains(property)) {
@@ -1507,6 +1521,31 @@ public class ColumnProperties {
           elementKey, property, ColumnType.TEXT.name(), value);
     }
     Log.d(TAG, "updated string property " + property + " to " + value +
+        " for table " + tableId + ", column " + elementKey);
+  }
+
+  private void setBooleanProperty(String property, boolean value) {
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    try {
+      setBooleanProperty(db, property, value);
+    } finally {
+      // TODO: fix the when to close problem
+      // db.close();
+    }
+  }
+
+  private void setBooleanProperty(SQLiteDatabase db, String property, boolean value) {
+    if (ColumnDefinitions.columnNames.contains(property)) {
+      ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
+    } else {
+      // or a kvs property?
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION,
+          elementKey, property, ColumnType.BOOLEAN.name(),
+          Boolean.toString(value));
+    }
+    Log.d(TAG, "updated int property " + property + " to " + value +
         " for table " + tableId + ", column " + elementKey);
   }
 

@@ -21,10 +21,8 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -32,6 +30,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+
 import android.content.Context;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -57,7 +56,7 @@ public abstract class CustomView extends LinearLayout {
 		if (webView != null) {
 		  // do this every time to try and clear the old data.
 	      //webView.clearView();
-	      //webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html", 
+	      //webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html",
 	      //    null);
 			return;
 		}
@@ -70,14 +69,14 @@ public abstract class CustomView extends LinearLayout {
         super.onReceivedError(view, errorCode, description, failingUrl);
         Log.e("CustomView", "onReceivedError: " + description + " at " + failingUrl);
       }});
-		
+
 		webView.setWebChromeClient(new WebChromeClient(){
 
       @Override
       public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-        Log.i("CustomView", "onConsoleMessage " + 
+        Log.i("CustomView", "onConsoleMessage " +
             consoleMessage.messageLevel().name() + consoleMessage.message());
-        
+
         return super.onConsoleMessage(consoleMessage);
       }
 
@@ -155,7 +154,7 @@ public abstract class CustomView extends LinearLayout {
 	 * class are meant to be called through the JavaScript interface.
 	 */
 	protected class TableData {
-	  
+
 	  private static final String TAG = "TableData";
 
 		private final Table rawTable;
@@ -165,7 +164,7 @@ public abstract class CustomView extends LinearLayout {
         private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
         protected Context context;
         private TableProperties tp;
-    
+
 		public TableData(TableProperties tp, Table table) {
 		  Log.d(TAG, "calling TableData constructor with Table");
 			rawTable = table;
@@ -180,7 +179,7 @@ public abstract class CustomView extends LinearLayout {
 			userTable = table;
             this.tp = tp;
             initMaps(tp);
-            
+
             //The collectionMap will be initialized if the table is indexed.
             if(isIndexed()) {
             	initCollectionMap(tp);
@@ -193,7 +192,7 @@ public abstract class CustomView extends LinearLayout {
 
 			ColumnProperties[] cps = tp.getColumns();
             primeColumns = tp.getPrimeColumns();
-            
+
 			for (int i = 0; i < cps.length; i++) {
 				colMap.put(cps[i].getDisplayName(), i);
 				String abbr = cps[i].getSmsLabel();
@@ -239,7 +238,7 @@ public abstract class CustomView extends LinearLayout {
 				String dBName = tp.getColumnByDisplayName(column);
 				String label = tp.getColumnByElementKey(dBName).getColumnType().label();
 				colInfo.put(column, label);
-			}			
+			}
 			return new JSONObject(colInfo).toString();
 		}
 
@@ -253,27 +252,27 @@ public abstract class CustomView extends LinearLayout {
         			colName = col;
         		}
         	}
-        	
+
         	//Queries the original table for the rows in every collection and stores the number of resulting rows for each.
-        	for(int i = 0; i < getCount(); i++) {	            	
+        	for(int i = 0; i < getCount(); i++) {
             	String tableName = tp.getDisplayName();
             	String searchText = colName + ":" + getData(i, colName);
             	TableData data = c.query(tableName, searchText);
             	collectionMap.put(i, data.getCount());
         	}
     	}
-        
+
         //Returns the number of rows in the collection at the given row index.
         public int getCollectionSize(int rowNum) {
         	return collectionMap.get(rowNum);
         }
-        
+
         //Returns whether the table is indexed.
         public boolean isIndexed() {
         	return (!primeColumns.isEmpty());
 	    }
 
-        //Returns the cell data at the given offset into the table. 
+        //Returns the cell data at the given offset into the table.
 
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
@@ -290,7 +289,7 @@ public abstract class CustomView extends LinearLayout {
 	}
 
 	protected class Control {
-	  
+
 	  private static final String TAG = "Control";
 
 		protected Context context;

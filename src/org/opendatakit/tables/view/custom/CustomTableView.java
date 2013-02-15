@@ -18,42 +18,41 @@ package org.opendatakit.tables.view.custom;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+
 import android.content.Context;
-import android.util.Log;
 
 
 public class CustomTableView extends CustomView {
-    
+
     private static final String DEFAULT_HTML =
         "<html><body>" +
         "<p>No filename has been specified.</p>" +
         "</body></html>";
-    
+
     private Context context;
     private Map<String, Integer> colIndexTable;
     private TableProperties tp;
     private UserTable table;
     private String filename;
-    
+
     private CustomTableView(Context context, String filename) {
         super(context);
         this.context = context;
         this.filename = filename;
         colIndexTable = new HashMap<String, Integer>();
     }
-    
+
     public static CustomTableView get(Context context, TableProperties tp,
             UserTable table, String filename) {
         CustomTableView ctv = new CustomTableView(context, filename);
         ctv.set(tp, table);
         return ctv;
     }
-    
+
     private void set(TableProperties tp, UserTable table) {
         this.tp = tp;
         this.table = table;
@@ -67,9 +66,9 @@ public class CustomTableView extends CustomView {
             }
         }
     }
-    
+
     public void display() {
-      // Load a basic screen as you're getting the other stuff ready to 
+      // Load a basic screen as you're getting the other stuff ready to
       // clear the old data.
       //load("file:////sdcard/odk/tables/loadingHtml.html");
         webView.addJavascriptInterface(new TableControl(context), "control");
@@ -81,13 +80,13 @@ public class CustomTableView extends CustomView {
         }
         initView();
     }
-    
+
     private class TableControl extends Control {
-        
+
         public TableControl(Context context) {
             super(context);
         }
-        
+
         @SuppressWarnings("unused")
         public boolean openItem(int index) {
             Controller.launchDetailActivity(context, tp, table, index);
