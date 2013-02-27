@@ -28,6 +28,7 @@ import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.ColumnManager;
 import org.opendatakit.tables.Activity.DisplayPrefsActivity;
+import org.opendatakit.tables.Activity.ListOfListViewsActivity;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.Activity.TablePropertiesManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
@@ -580,6 +581,18 @@ public class Controller {
 		if(selectedItem.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
 		  tp.setCurrentViewType(
 		      TableViewType.getViewTypeFromId(selectedItem.getItemId()));
+		  // Here we will check if it is a list view. If it is, we need to for 
+		  // now launch the special case of the list selector thing.
+		  TableViewType viewType = tp.getCurrentViewType();
+		  if (viewType == TableViewType.List) {
+		    Intent selectListViewIntent = 
+		        new Intent(activity, ListOfListViewsActivity.class);
+		    selectListViewIntent.putExtra(
+		        ListOfListViewsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
+		    activity.startActivity(selectListViewIntent);
+		    activity.finish();
+		    return true;
+		  }
 		  Controller.launchTableActivity(activity, tp, searchText, isOverview);
         return true;
 		} else {

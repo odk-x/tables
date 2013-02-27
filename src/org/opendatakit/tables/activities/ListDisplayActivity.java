@@ -47,7 +47,20 @@ public class ListDisplayActivity extends SherlockActivity
   /**************************
    * Strings necessary for the key value store.
    **************************/
+  /**
+   * The general partition in which table-wide ListDisplayActivity information
+   * is stored. An example might be the current list view for a table.
+   */
   public static final String KVS_PARTITION = "ListDisplayActivity";
+  /**
+   * The partition under which actual individual view information is stored.
+   * For instance if a user added a list view named "Doctor", the partition
+   * would be KVS_PARTITION_VIEWS, and all the keys relating to this view would
+   * fall within this partition and a particular aspect. (Perhaps the name
+   * "Doctor"?)
+   */
+  public static final String KVS_PARTITION_VIEWS = KVS_PARTITION + ".views";
+  
   
   /**
    * This is the default aspect for the list view. This should be all that is 

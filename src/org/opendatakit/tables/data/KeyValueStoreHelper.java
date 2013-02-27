@@ -87,6 +87,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   public String getPartition() {
     return this.partition;
   }
+  
+  /**
+   * Get all the aspects residing in this partition. No checking is done to 
+   * avoid default or null aspects.
+   * @return
+   */
+  public List<String> getAspectsForPartition() {
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
+    // TODO: sort out and handle closing of the database.
+    return aspects;
+  }
 
   @Override
   public Integer getInteger(String key) {

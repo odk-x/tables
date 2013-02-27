@@ -25,6 +25,7 @@ import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
@@ -598,9 +599,19 @@ public class TablePropertiesManager extends PreferenceActivity {
                     public boolean onPreferenceChange(Preference preference,
                             Object newValue) {
 //                        settings.setCustomListFilename((String) newValue);
-                      kvsh.setString(
-                          ListDisplayActivity.KEY_FILENAME,
+                      // Here we're going to just add a junk name and add it to
+                      // the _VIEWS partition to see if that activity works.
+                      // Eventually will want to transition.
+                      KeyValueStoreHelper kvshViews = 
+                          tp.getKeyValueStoreHelper(
+                              ListDisplayActivity.KVS_PARTITION_VIEWS);
+                      KeyValueHelper aspectHelper = 
+                          kvshViews.getAspectHelper("List View 1");
+                      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
                           (String) newValue);
+//                      kvsh.setString(
+//                          ListDisplayActivity.KEY_FILENAME,
+//                          (String) newValue);
                         init();
                         return false;
                     }
@@ -730,11 +741,22 @@ public class TablePropertiesManager extends PreferenceActivity {
         case RC_LIST_VIEW_FILE:
         	Uri fileUri2 = data.getData();
             String filename2 = fileUri2.getPath();
-            kvsh =
-                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-            kvsh.setString(
-                ListDisplayActivity.KEY_FILENAME,
+// This set it in the main partition. We actually want to set it in the 
+            // other partition for now.
+//            kvsh =
+//                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//            kvsh.setString(
+//                ListDisplayActivity.KEY_FILENAME,
+//                filename2);
+            // Trying to get the new name to the _VIEWS partition.
+            kvsh = tp.getKeyValueStoreHelper(
+                ListDisplayActivity.KVS_PARTITION_VIEWS);
+            // Set the name here statically, just to test. Later will want to
+            // allow custom naming, checking for redundancy, etc.
+            KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
+            aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
                 filename2);
+            
 //            TableViewSettings settings = tp.getOverviewViewSettings();
 //            settings.setCustomListFilename(filename2);
             init();
