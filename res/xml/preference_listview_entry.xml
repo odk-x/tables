@@ -2,12 +2,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <!-- Display and change the user-defined name of the list view. -->
     <EditTextPreference
-        android:id="@+id/listview_edit_user_defined_name"
         android:key="listview_name"
         android:title="@string/user_defined_listview_name_label" />
     <!-- Display and select a file for that list view. -->
     <Preference
-        android:id="@+id/listview_selected_file_preference" />
+        android:key="listview_file"
+        android:title="@string/file" />
     
         
     

@@ -15,13 +15,26 @@
  */
 package org.opendatakit.tables.Activity;
 
+import java.util.List;
+
+import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 
-import android.R;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
+import android.util.Log;
+import android.widget.Toast;
 
 /**
  * This class is the point of interaction by which list views are added and 
@@ -37,15 +50,32 @@ import android.preference.PreferenceActivity;
  * It should do checking for things like duplicate names, limit values and
  * things so that we won't be able to inject into the underlying SQL db, etc.
  */
-public class EditSavedListViewEntryActivity extends PreferenceActivity {
+public class EditSavedListViewEntryActivity extends PreferenceActivity 
+    implements OnSharedPreferenceChangeListener {
   
   private static final String TAG = 
       EditSavedListViewEntryActivity.class.getName();
+  
+  private static final String OI_FILE_PICKER_INTENT_STRING = 
+      "org.openintents.action.PICK_FILE";
+  
+  /*
+   * These are the keys in the preference_listview_entry.xml file that 
+   * correspond to the preferences for what they sound like.
+   */
+  private static final String PREFERENCE_KEY_LISTVIEW_NAME = "listview_name";
+  private static final String PREFERENCE_KEY_LISTVIEW_FILE = "listview_file";
   
   /**
    * Intent key for the table id.
    */
   public static final String INTENT_KEY_TABLE_ID = "tableId";
+  
+  /**
+   * Name of the list view. Also the name of the aspect where the info about 
+   * the last view resides.
+   */
+  public static final String INTENT_KEY_LISTVIEW_NAME = "listViewName";
   
   /**
    * Return code for having added a file name for the list view.
@@ -57,20 +87,161 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity {
   // The table properties object for the table to which it belongs.
   private TableProperties tp;
   private DbHelper dbh;
+  // These are the partition and aspect helpers for setting info in the KVS.
+  private KeyValueStoreHelper kvsh;
+  private AspectHelper aspectHelper;
+  // This is the user-defined name of the list view.
+  private String listViewName;
+  // This is the filename defined for this list view.
+  private String listViewFilename;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.dbh = DbHelper.getDbHelper(this);
+    this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
     this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, 
         KeyValueStore.Type.ACTIVE);
+    this.kvsh = 
+        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+    this.aspectHelper = kvsh.getAspectHelper(listViewName);
+    this.listViewFilename = 
+        aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
     addPreferencesFromResource(
         org.opendatakit.tables.R.xml.preference_listview_entry);
   }
   
-  public void init() {
-    // PreferenceManager pm = getPreferenceManager();
+  @Override
+  public void onResume() {
+    super.onResume();
+    init();
+    // Since we are relying on Android's Preference stuff to create a dialog
+    // to handle the intputting of new names, we need to make sure that the
+    // key in the database Android generates is updated to hold the current 
+    // name. Otherwise, the dialog box will show the wrong thing.
+    getPreferenceScreen().getSharedPreferences().edit()
+      .putString(PREFERENCE_KEY_LISTVIEW_NAME, listViewName).commit();
+    // Now register the listener to update things for us in the KVS.
+    getPreferenceScreen().getSharedPreferences()
+      .registerOnSharedPreferenceChangeListener(this);
+  }
+  
+  /**
+   * Just init some local things like the handlers we need to custom manager.
+   */
+  private void init() {
+    // First set the appropriate summary information of the filename to 
+    // display to the user.
+    EditTextPreference namePreference = (EditTextPreference) 
+        findPreference(PREFERENCE_KEY_LISTVIEW_NAME);
+    // We want the edit text to display the current name.
+    namePreference.getEditText().setText(listViewName);
+    namePreference.setSummary(listViewName);
+    Preference filePreference = findPreference(PREFERENCE_KEY_LISTVIEW_FILE);
+    filePreference.setSummary(listViewFilename);
+    // Changing the name of the listview is handled by android. We need to 
+    // handle the intent for launching and saving the file name ourselves.
+    filePreference.setOnPreferenceClickListener(
+        new OnPreferenceClickListener() {
+
+      /**
+       * If clicked, we want to launch the OI File Manager and be ready to
+       * have it returned to us.
+       * <p>
+       * Will error if OI File Manager isn't installed.
+       */
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
+        // Set the current filename.
+        if (listViewFilename != null) {
+          filePickerIntent.setData(Uri.parse("file:///" + listViewFilename));
+        }
+        startActivityForResult(filePickerIntent, RETURN_CODE_NEW_FILE);
+        return true;
+      }
+      
+    });
+  }
+
+  @Override
+  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, 
+      String key) {
+    // Since we are storing our preferences in the KeyValueStore rather than
+    // in android's however it does it, we need to intercept and do the actions
+    // ourselves.
+    if (key.equals(PREFERENCE_KEY_LISTVIEW_NAME)) {
+      // Then they've changed the name of the list view.
+      // TODO: check for conflicts--this is supremely important.
+      EditTextPreference namePreference = 
+          (EditTextPreference) findPreference(PREFERENCE_KEY_LISTVIEW_NAME);
+      String returnedName = 
+          sharedPreferences.getString(PREFERENCE_KEY_LISTVIEW_NAME, 
+              listViewName);
+      if (returnedName.equals(listViewName)) {
+        // Then nothing was changed, or the key did not exist.
+        return;
+      }
+      // First let's do a check to see if it's a duplicate that we'll need to
+      // disallow.
+      List<String> existingListNames = kvsh.getAspectsForPartition();
+      for (String name : existingListNames) {
+        if (returnedName.equals(name)) {
+          // Duplicate name, don't allow it.
+          Toast.makeText(this, "The name \"" + returnedName 
+              + "\" is already in use!", Toast.LENGTH_LONG).show();
+          return;
+        }
+      }
+      // Otherwise, it changed and is an acceptable name. First we need to 
+      // delete the old entry, which we'll do by deleting the aspect.
+      int numDeleted = aspectHelper.deleteAllEntriesInThisAspect();
+      Log.d(TAG, "deleted " + numDeleted + " entries from aspect: " 
+          + listViewFilename);
+      // Update the name.
+      listViewName = returnedName;
+      // Update the aspect helper so we are moving things to the correct place.
+      aspectHelper = kvsh.getAspectHelper(listViewName);
+      // If a filename exists, set it.
+      if (listViewFilename != null && !listViewFilename.equals("")) {
+        aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
+            listViewFilename);
+        namePreference.setSummary(listViewName);
+      }
+    }
+    
+  }
+  
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (resultCode == RESULT_CANCELED) {
+      return;
+    }
+    switch (requestCode) {
+    case RETURN_CODE_NEW_FILE:
+      Uri newFileUri = data.getData();
+      String newFilename = newFileUri.getPath();
+      if (newFilename != null && !newFilename.equals("")) {
+        aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, newFilename);
+      } else {
+        Log.d(TAG, "received null or empty string from file picker: " 
+            + newFilename);
+      }
+      break;
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
+    }
+  }
+  
+  @Override
+  protected void onPause() {
+    super.onPause();
+    // According to: 
+    // http://developer.android.com/guide/topics/ui/settings.html#Activity
+    // the listener should be unregistered here.
+    getPreferenceScreen().getSharedPreferences()
+      .unregisterOnSharedPreferenceChangeListener(this);
   }
 
 }

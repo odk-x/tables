@@ -198,9 +198,26 @@ public class ListOfListViewsActivity extends SherlockListActivity {
   public boolean onMenuItemSelected(int featureId, 
       com.actionbarsherlock.view.MenuItem item) {
     switch (item.getItemId()) {
-    case ADD_NEW_LIST_VIEW: 
-      Toast.makeText(ListOfListViewsActivity.this, 
-          "would have added new list view", Toast.LENGTH_SHORT).show();
+    case ADD_NEW_LIST_VIEW:
+      // If this is the case we need to launch the edit activity. 
+      // The default name will just be some constant that changes when you
+      // add new information.
+      String baseName = "List View ";
+      List<String> existingListViewNames = kvsh.getAspectsForPartition();
+      int suffix = existingListViewNames.size();
+      String potentialName = baseName + suffix;
+      while (existingListViewNames.contains(potentialName)) {
+        suffix++;
+        potentialName = baseName + suffix;
+      }
+      Intent newListViewIntent = 
+          new Intent(this, EditSavedListViewEntryActivity.class);
+      newListViewIntent.putExtra(
+          EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+      newListViewIntent.putExtra(
+          EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
+          potentialName);
+      startActivity(newListViewIntent);
       return true;
     case android.R.id.home:
       startActivity(new Intent(this, TableManager.class));
@@ -251,7 +268,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
             parent, false);
       }
       final int currentPosition = position;
-      String listViewName = listViewNames.get(currentPosition);
+      final String listViewName = listViewNames.get(currentPosition);
       // Set the label of this row.
       TextView label = 
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
@@ -281,6 +298,9 @@ public class ListOfListViewsActivity extends SherlockListActivity {
               EditSavedListViewEntryActivity.class);
           editListViewIntent.putExtra(
               EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+          editListViewIntent.putExtra(
+              EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
+                listViewName);
           startActivity(editListViewIntent);
         }
       });

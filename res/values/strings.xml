@@ -13,4 +13,5 @@
 	<string name="table_files_authority">org.opendatakit.tables.tablefilesauthority</string>
 	<!-- For editing ListView things -->
 	<string name="user_defined_listview_name_label">Name</string>
+	<string name="file">File</string>
 </resources>
