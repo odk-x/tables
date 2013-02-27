@@ -27,7 +27,6 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 
-import android.R;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -277,9 +276,12 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       editView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          Toast.makeText(getContext(), 
-              "Edit view info for: " + listViewNames.get(currentPosition), 
-              Toast.LENGTH_SHORT).show();
+          // We'll want to be able to edit the preferences.
+          Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
+              EditSavedListViewEntryActivity.class);
+          editListViewIntent.putExtra(
+              EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+          startActivity(editListViewIntent);
         }
       });
       // And now we're set, so just kick it on back.
