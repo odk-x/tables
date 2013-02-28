@@ -61,6 +61,14 @@ public class EditNameDialogPreference extends DialogPreference {
   /**
    * We need to override this so that we can get at our edit text that we've 
    * defined in the layout xml.
+   * <p>
+   * Normally we would find the view from a layout resource and then call 
+   * findViewById on that view to get at our widgets we've defined in that xml.
+   * However, we have no way of getting at that layout, as we've hooked it into
+   * this class in the xml for this class, and the dialog is created for us,
+   * which is functionality offered by PreferenceDialog. This is common 
+   * practice, so to get at your view and thus offer access to the objects they
+   * give you this method to override and bind to data.
    */
   @Override
   protected void onBindDialogView(View view) {

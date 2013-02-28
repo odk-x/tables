@@ -30,10 +30,14 @@ import org.opendatakit.tables.data.TableViewType;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnCreateContextMenuListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -68,6 +72,23 @@ public class ListOfListViewsActivity extends SherlockListActivity {
    * The char sequence for the add new list view item.
    */
   public static final String ADD_NEW_LIST_VIEW_TEXT = "Add New List View";
+  
+  /**
+   * Menu ID for deleting an entry.
+   */
+  public static final int MENU_DELETE_ENTRY = 1;
+  /**
+   * Text for the entry deletion.
+   */
+  public static final String MENU_TEXT_DELETE_ENTRY = "Delete this List View";
+  /**
+   * Menu ID for opening the edit entry activity.
+   */
+  public static final int MENU_EDIT_ENTRY = 2;
+  /**
+   * Text for the entry editing.
+   */
+  public static final String MENU_TEXT_EDIT_ENTRY = "Edit this List View";
 
   /**
    * This will be the names of all the possible list views.
@@ -175,6 +196,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
     // Set the app icon as an action to go home.
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
+    registerForContextMenu(getListView());
   }
   
   @Override
@@ -224,6 +246,37 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       return true;
     }
     return false;    
+  }
+  
+  @Override
+  public boolean onContextItemSelected(android.view.MenuItem item) {
+    switch(item.getItemId()) {
+    case MENU_DELETE_ENTRY:
+      AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+      Toast.makeText(this, "number: " + menuInfo.position, Toast.LENGTH_SHORT).show();
+      return true;
+    case MENU_EDIT_ENTRY:
+      menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+      Toast.makeText(this, "number: " + menuInfo.position, Toast.LENGTH_SHORT).show();
+      return true;
+    default:
+      Log.e(TAG, "android MenuItem id not recognized: " + item.getItemId());
+      return false;
+    }
+  }
+  
+  @Override
+  public void onCreateContextMenu(ContextMenu menu, View v, 
+      ContextMenuInfo menuInfo) {
+    menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
+    menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
+    // And now we want to put the position that was clicked into 
+    // the item. 
+    // NB: There is also an actionbarsherlock object by this
+    // AdapterContextMenuInfo name--might have to import that one?
+    AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+    int position = info.position;
+    position = info.position;
   }
 
   /**
@@ -289,21 +342,45 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       // thought has to be given to actually writing up that activity.
       final ImageView editView = (ImageView) 
           row.findViewById(org.opendatakit.tables.R.id.row_options);
+      final View holderView = row;
       // We'll set the click listener to just toast for now.
       editView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
+          holderView.showContextMenu();
           // We'll want to be able to edit the preferences.
-          Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
-              EditSavedListViewEntryActivity.class);
-          editListViewIntent.putExtra(
-              EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
-          editListViewIntent.putExtra(
-              EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
-                listViewName);
-          startActivity(editListViewIntent);
+//          Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
+//              EditSavedListViewEntryActivity.class);
+//          editListViewIntent.putExtra(
+//              EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+//          editListViewIntent.putExtra(
+//              EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
+//                listViewName);
+//          startActivity(editListViewIntent);
         }
       });
+      // Create the context menu that will open for this list entry. We want
+      // this to give options to delete and to manage the properties of the 
+      // entry.
+//      editView.setOnCreateContextMenuListener(
+//          new OnCreateContextMenuListener() {
+//
+////            @Override
+////            public void onCreateContextMenu(ContextMenu menu, View v, 
+////                ContextMenuInfo menuInfo) {
+////              menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
+////              menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
+////              // And now we want to put the position that was clicked into 
+////              // the item. 
+////              // NB: There is also an actionbarsherlock object by this
+////              // AdapterContextMenuInfo name--might have to import that one?
+////              AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+////              int position = info.position;
+////              info.position = currentPosition;
+////              position = info.position;
+////            }
+        
+//      });
       // And now we're set, so just kick it on back.
       return row;
     }
