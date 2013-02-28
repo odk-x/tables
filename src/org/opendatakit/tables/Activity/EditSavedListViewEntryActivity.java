@@ -23,10 +23,9 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.lib.EditNameDialogPreference;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -50,8 +49,7 @@ import android.widget.Toast;
  * It should do checking for things like duplicate names, limit values and
  * things so that we won't be able to inject into the underlying SQL db, etc.
  */
-public class EditSavedListViewEntryActivity extends PreferenceActivity 
-    implements OnSharedPreferenceChangeListener {
+public class EditSavedListViewEntryActivity extends PreferenceActivity {
   
   private static final String TAG = 
       EditSavedListViewEntryActivity.class.getName();
@@ -116,15 +114,10 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
   public void onResume() {
     super.onResume();
     init();
-    // Since we are relying on Android's Preference stuff to create a dialog
-    // to handle the intputting of new names, we need to make sure that the
-    // key in the database Android generates is updated to hold the current 
-    // name. Otherwise, the dialog box will show the wrong thing.
-    getPreferenceScreen().getSharedPreferences().edit()
-      .putString(PREFERENCE_KEY_LISTVIEW_NAME, listViewName).commit();
-    // Now register the listener to update things for us in the KVS.
-    getPreferenceScreen().getSharedPreferences()
-      .registerOnSharedPreferenceChangeListener(this);
+  }
+  
+  public String getCurrentListViewName() {
+    return listViewName;
   }
   
   /**
@@ -133,11 +126,11 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
   private void init() {
     // First set the appropriate summary information of the filename to 
     // display to the user.
-    EditTextPreference namePreference = (EditTextPreference) 
+    EditNameDialogPreference namePreference = 
+        (EditNameDialogPreference) 
         findPreference(PREFERENCE_KEY_LISTVIEW_NAME);
+    namePreference.setCallingActivity(this);
     // We want the edit text to display the current name.
-    namePreference.getEditText().setText(listViewName);
-    namePreference.setSummary(listViewName);
     Preference filePreference = findPreference(PREFERENCE_KEY_LISTVIEW_FILE);
     filePreference.setSummary(listViewFilename);
     // Changing the name of the listview is handled by android. We need to 
@@ -165,31 +158,21 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
     });
   }
 
-  @Override
-  public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, 
-      String key) {
-    // Since we are storing our preferences in the KeyValueStore rather than
-    // in android's however it does it, we need to intercept and do the actions
-    // ourselves.
-    if (key.equals(PREFERENCE_KEY_LISTVIEW_NAME)) {
-      // Then they've changed the name of the list view.
-      // TODO: check for conflicts--this is supremely important.
-      EditTextPreference namePreference = 
-          (EditTextPreference) findPreference(PREFERENCE_KEY_LISTVIEW_NAME);
-      String returnedName = 
-          sharedPreferences.getString(PREFERENCE_KEY_LISTVIEW_NAME, 
-              listViewName);
-      if (returnedName.equals(listViewName)) {
+  public void tryToSaveNewName(String newName) {
+      EditNameDialogPreference namePreference = (EditNameDialogPreference) 
+          findPreference(PREFERENCE_KEY_LISTVIEW_NAME);
+      if (newName.equals(listViewName)) {
         // Then nothing was changed, or the key did not exist.
         return;
       }
+      // Otherwise, something changed and we need to update.
       // First let's do a check to see if it's a duplicate that we'll need to
       // disallow.
       List<String> existingListNames = kvsh.getAspectsForPartition();
       for (String name : existingListNames) {
-        if (returnedName.equals(name)) {
+        if (newName.equals(name)) {
           // Duplicate name, don't allow it.
-          Toast.makeText(this, "The name \"" + returnedName 
+          Toast.makeText(this, "The name \"" + newName 
               + "\" is already in use!", Toast.LENGTH_LONG).show();
           return;
         }
@@ -200,17 +183,15 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
       Log.d(TAG, "deleted " + numDeleted + " entries from aspect: " 
           + listViewFilename);
       // Update the name.
-      listViewName = returnedName;
+      listViewName = newName;
       // Update the aspect helper so we are moving things to the correct place.
       aspectHelper = kvsh.getAspectHelper(listViewName);
       // If a filename exists, set it.
       if (listViewFilename != null && !listViewFilename.equals("")) {
         aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
             listViewFilename);
-        namePreference.setSummary(listViewName);
       }
-    }
-    
+      namePreference.setSummary(listViewName);   
   }
   
   @Override
@@ -224,6 +205,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
       String newFilename = newFileUri.getPath();
       if (newFilename != null && !newFilename.equals("")) {
         aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, newFilename);
+        listViewFilename = newFilename;
       } else {
         Log.d(TAG, "received null or empty string from file picker: " 
             + newFilename);
@@ -240,8 +222,8 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity
     // According to: 
     // http://developer.android.com/guide/topics/ui/settings.html#Activity
     // the listener should be unregistered here.
-    getPreferenceScreen().getSharedPreferences()
-      .unregisterOnSharedPreferenceChangeListener(this);
+//    getPreferenceScreen().getSharedPreferences()
+//      .unregisterOnSharedPreferenceChangeListener(this);
   }
 
 }
