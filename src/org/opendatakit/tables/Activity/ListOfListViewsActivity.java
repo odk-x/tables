@@ -24,9 +24,12 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,9 +37,7 @@ import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnCreateContextMenuListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -132,60 +133,49 @@ public class ListOfListViewsActivity extends SherlockListActivity {
     // Set the adapter. It adds the list view itself.
     this.adapter = new ListViewAdapter();
     setListAdapter(adapter);
-    // Now we need to get the list view that actually supports this object. It
-    // is NOT THE SAME LISTVIEW AS THE "LIST VIEW" ON A TABLE. This is an
-    // unfortunate namespace issue.
-    ListView androidListView = getListView();
-    // Set the click to open the given list view.
-    androidListView.setOnItemClickListener(
-        new AdapterView.OnItemClickListener() {
-          /**
-           * Click this, open the list view displaying the info you're after.
-           */
-          @Override
-          public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, 
-              long arg3) {
-            // Since at the moment we are counting on the Controller class to
-            // do the changing, we don't use the intent directly. If someone 
-            // clicks on this view, that means they want to display the list
-            // view using this activity. Further, it means that they want to
-            // see the list view. To get this to work, we need to set the view
-            // type to list view, and change the default list view to be this
-            // one.
-            tp.setCurrentViewType(TableViewType.List);
-            // This will help us access keys for the general partition. (We 
-            // need this to set this view as the default list view for the 
-            // table.)
-            KeyValueStoreHelper kvshListViewPartition = 
-                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-            // We need this to get the filename of the current list view.
-            KeyValueHelper aspectHelper = 
-                kvsh.getAspectHelper(listViewNames.get(arg2));
-            String filenameOfSelectedView = 
-                aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-            // Now we have the filename of the selected view. Add it to the kvs
-            // in the appropriate place so controller will fetch it when it's
-            // time to open that activity.
-            kvshListViewPartition.setString(ListDisplayActivity.KEY_FILENAME, 
-                filenameOfSelectedView);
-            // Check if there are prime columns. If there are, then we're using
-            // the collection view? This needs to be sorted out.
-            // TODO: launch if something is a collection view correctly.
-            // For example, right now there is an issue where you might be 
-            // selecting a collection list view but you're not viewing the 
-            // table with a prime column, or vice versa, and this could create
-            // an issue.
-            ArrayList<String> primeColumns = tp.getPrimeColumns();
-            boolean isOverview;
-            if (primeColumns == null || primeColumns.size() == 0) {
-              isOverview = false;
-            } else {
-              isOverview = true;
-            }
-            Controller.launchTableActivity(ListOfListViewsActivity.this, tp, 
-                isOverview);
-          }
-    });
+  }
+  
+  @Override
+  protected void onListItemClick(ListView l, View v, int position, long id) {
+    // Since at the moment we are counting on the Controller class to
+    // do the changing, we don't use the intent directly. If someone 
+    // clicks on this view, that means they want to display the list
+    // view using this activity. Further, it means that they want to
+    // see the list view. To get this to work, we need to set the view
+    // type to list view, and change the default list view to be this
+    // one.
+    tp.setCurrentViewType(TableViewType.List);
+    // This will help us access keys for the general partition. (We 
+    // need this to set this view as the default list view for the 
+    // table.)
+    KeyValueStoreHelper kvshListViewPartition = 
+        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+    // We need this to get the filename of the current list view.
+    KeyValueHelper aspectHelper = 
+        kvsh.getAspectHelper((String) getListView().getItemAtPosition(position));
+    String filenameOfSelectedView = 
+        aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+    // Now we have the filename of the selected view. Add it to the kvs
+    // in the appropriate place so controller will fetch it when it's
+    // time to open that activity.
+    kvshListViewPartition.setString(ListDisplayActivity.KEY_FILENAME, 
+        filenameOfSelectedView);
+    // Check if there are prime columns. If there are, then we're using
+    // the collection view? This needs to be sorted out.
+    // TODO: launch if something is a collection view correctly.
+    // For example, right now there is an issue where you might be 
+    // selecting a collection list view but you're not viewing the 
+    // table with a prime column, or vice versa, and this could create
+    // an issue.
+    ArrayList<String> primeColumns = tp.getPrimeColumns();
+    boolean isOverview;
+    if (primeColumns == null || primeColumns.size() == 0) {
+      isOverview = false;
+    } else {
+      isOverview = true;
+    }
+    Controller.launchTableActivity(ListOfListViewsActivity.this, tp, 
+        isOverview);
   }
   
   @Override
@@ -250,14 +240,62 @@ public class ListOfListViewsActivity extends SherlockListActivity {
   
   @Override
   public boolean onContextItemSelected(android.view.MenuItem item) {
+    // We need this so we can get the position of the thing that was clicked.
+    AdapterContextMenuInfo menuInfo = 
+        (AdapterContextMenuInfo) item.getMenuInfo();
+    final int position = menuInfo.position;
+    final String entryName = 
+        (String) getListView().getItemAtPosition(position);
     switch(item.getItemId()) {
     case MENU_DELETE_ENTRY:
-      AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-      Toast.makeText(this, "number: " + menuInfo.position, Toast.LENGTH_SHORT).show();
+      // Make an alert dialog that will give them the option to delete it or
+      // cancel.
+      AlertDialog confirmDeleteAlert;
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setTitle("Delete " + entryName + "?");
+      // For the OK action we want to actually delete this list view.
+      builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+        
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          // We need to delete the entry. First delete it in the key value 
+          // store.
+          AspectHelper aspectHelper = kvsh.getAspectHelper(entryName);
+          aspectHelper.deleteAllEntriesInThisAspect();
+          // Now remove it from the list view.
+          listViewNames.remove(position);
+          adapter.notifyDataSetChanged();
+          // TODO:
+          // There is a possibility that this was also the file set to be the
+          // default for the table. Therefore a reference to it might remain
+          // in the KVS. Not yet known what to do in this case. Also note that
+          // if the default just stores the file name, it's possible that 
+          // several views might share a filename and therefore we can't just 
+          // delete based on filename. Maybe should move to a name being stored
+          // as the entry rather than the filename for the default.
+          
+        }
+      });
+      
+      builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          // Canceled. Do nothing.
+        }
+      });
+      confirmDeleteAlert = builder.create();
+      confirmDeleteAlert.show();
       return true;
     case MENU_EDIT_ENTRY:
       menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-      Toast.makeText(this, "number: " + menuInfo.position, Toast.LENGTH_SHORT).show();
+      Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
+      EditSavedListViewEntryActivity.class);
+      editListViewIntent.putExtra(
+          EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+      editListViewIntent.putExtra(
+          EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, entryName);
+      startActivity(editListViewIntent);
       return true;
     default:
       Log.e(TAG, "android MenuItem id not recognized: " + item.getItemId());
@@ -270,13 +308,6 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       ContextMenuInfo menuInfo) {
     menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
     menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
-    // And now we want to put the position that was clicked into 
-    // the item. 
-    // NB: There is also an actionbarsherlock object by this
-    // AdapterContextMenuInfo name--might have to import that one?
-    AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-    int position = info.position;
-    position = info.position;
   }
 
   /**
@@ -347,40 +378,11 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       editView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
+          // Open the context menu of the view, because that's where we're 
+          // doing the logistics.
           holderView.showContextMenu();
-          // We'll want to be able to edit the preferences.
-//          Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
-//              EditSavedListViewEntryActivity.class);
-//          editListViewIntent.putExtra(
-//              EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
-//          editListViewIntent.putExtra(
-//              EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
-//                listViewName);
-//          startActivity(editListViewIntent);
         }
       });
-      // Create the context menu that will open for this list entry. We want
-      // this to give options to delete and to manage the properties of the 
-      // entry.
-//      editView.setOnCreateContextMenuListener(
-//          new OnCreateContextMenuListener() {
-//
-////            @Override
-////            public void onCreateContextMenu(ContextMenu menu, View v, 
-////                ContextMenuInfo menuInfo) {
-////              menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
-////              menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
-////              // And now we want to put the position that was clicked into 
-////              // the item. 
-////              // NB: There is also an actionbarsherlock object by this
-////              // AdapterContextMenuInfo name--might have to import that one?
-////              AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-////              int position = info.position;
-////              info.position = currentPosition;
-////              position = info.position;
-////            }
-        
-//      });
       // And now we're set, so just kick it on back.
       return row;
     }
