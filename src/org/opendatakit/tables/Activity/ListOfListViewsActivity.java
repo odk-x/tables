@@ -348,7 +348,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       // it up from scratch.
       if (row == null) {
         row = getLayoutInflater().inflate(
-            org.opendatakit.tables.R.layout.touchlistview_row2,
+            org.opendatakit.tables.R.layout.row_for_edit_view_entry,
             parent, false);
       }
       final int currentPosition = position;
@@ -374,7 +374,6 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       final ImageView editView = (ImageView) 
           row.findViewById(org.opendatakit.tables.R.id.row_options);
       final View holderView = row;
-      // We'll set the click listener to just toast for now.
       editView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
