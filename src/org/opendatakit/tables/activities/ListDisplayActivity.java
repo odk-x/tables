@@ -19,6 +19,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
@@ -68,7 +69,22 @@ public class ListDisplayActivity extends SherlockActivity
    */
   public static final String KVS_ASPECT_DEFAULT = "default";
   
+  /**
+   * This key holds the filename associated with the view.
+   */
   public static final String KEY_FILENAME = "filename";
+  
+  /**
+   * This key holds the name of the list view. In the default aspect the idea
+   * is that this will then give the value of the aspect for which the default
+   * list view is set. 
+   * <p>
+   * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT, 
+   * key="KEY_LIST_VIEW_NAME", value="My Custom List View" would mean that
+   * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS 
+   * partition that had the information regarding a custom list view.
+   */
+  public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
@@ -111,13 +127,15 @@ public class ListDisplayActivity extends SherlockActivity
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        String filename = kvsh.getString(ListDisplayActivity.KEY_FILENAME);
+        String nameOfView = 
+            kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+        String filename = 
+            aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
         KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
         KeyValueStore kvs = 
             kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
             c.getTableProperties().getBackingStoreType());
-//        view = CustomTableView.get(this, c.getTableProperties(), table,
-//                c.getTableViewSettings().getCustomListFilename());
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);
         // change the info bar text IF necessary

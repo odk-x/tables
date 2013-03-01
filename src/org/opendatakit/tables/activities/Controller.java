@@ -515,18 +515,20 @@ public class Controller {
         // 	  -determine the possible view types
         final TableViewType[] viewTypes = tp.getPossibleViewTypes();
         // 	  -build a checkable submenu to select the view type
-        SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE, "ViewType");
+        SubMenu viewTypeSubMenu = 
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+                Menu.NONE, "ViewType");
         MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
         viewType.setEnabled(enabled);
         viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         MenuItem item;
-        // This will be the list filename, which we need to have here so we 
-        // know whether or not it's specified.
+        // This will be the name of the default list view, which if exists
+        // means we should display the list view as an option.
         KeyValueStoreHelper kvsh = 
             tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-        String listViewFilename = kvsh.getString( 
-            ListDisplayActivity.KEY_FILENAME);
+        String nameOfView = kvsh.getString( 
+            ListDisplayActivity.KEY_LIST_VIEW_NAME);
         for(int i = 0; i < viewTypes.length; i++) {
         	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
         	    viewTypes[i].getId(), i, 
@@ -537,7 +539,7 @@ public class Controller {
           	}
             // disable list view if no file is specified
             if (viewTypes[i] == TableViewType.List &&
-                listViewFilename == null) {
+                nameOfView == null) {
                item.setEnabled(false);
             }
         }
@@ -547,18 +549,23 @@ public class Controller {
             true, true);
         
         // Add Row
-        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
+        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, 
+            Menu.NONE,
               "Add Row").setEnabled(enabled);
         addItem.setIcon(R.drawable.content_new);
         addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         
         // Settings submenu
-        SubMenu settings = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, Menu.NONE, "Settings");
+        SubMenu settings = 
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, 
+                Menu.NONE, "Settings");
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS); 
         // TODO: change to setEnabled(enabled) once DisplayPrefActivity is finished
-        MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE, 
+        MenuItem display = 
+            settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, 
+                Menu.NONE, 
         		"Display Preferences").setEnabled(false);
         // always disable DisplayPreferences if it is currently in list view
         if (tp.getCurrentViewType() == TableViewType.List)

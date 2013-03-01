@@ -19,6 +19,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomGraphView;
@@ -68,7 +69,11 @@ public class BarGraphDisplayActivity extends SherlockActivity
 	        table = c.getIsOverview() ?
 	                c.getDbTable().getUserOverviewTable(query) :
 	                c.getDbTable().getUserTable(query);
-	        String filename = kvsh.getString(ListDisplayActivity.KEY_FILENAME);
+	        String nameOfView = 
+	            kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+	        AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+	        String filename = 
+	            aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
 	        view = CustomGraphView.get(this, c.getTableProperties(), table,
 	                filename);
 	        displayView();

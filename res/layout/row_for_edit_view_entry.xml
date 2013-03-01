@@ -6,13 +6,14 @@
     android:ignoreGravity="@+id/icon" >
 <!-- This file is based on touchlistview_row2 as being used by ColumnManager.
  -->
-    <ImageView
-        android:id="@+id/icon"
+
+    <RadioButton
+        android:id="@+id/radio_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
         android:paddingLeft="9dip"
-        android:src="@drawable/arrowsign" />
+        android:layout_centerVertical="true"
+        android:focusable="false" />
 
     <ImageView
         android:id="@+id/row_options"
@@ -27,7 +28,7 @@
         android:id="@+id/twoline_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/icon"
+        android:layout_toRightOf="@+id/radio_button"
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:mode="twoLine"
         android:paddingBottom="2dip"

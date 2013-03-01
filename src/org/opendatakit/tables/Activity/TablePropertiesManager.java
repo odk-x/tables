@@ -47,6 +47,7 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -581,42 +582,62 @@ public class TablePropertiesManager extends PreferenceActivity {
         switch (tp.getCurrentViewType()) {
         case List:
             {
+              Preference listViewPrefs = new Preference(this);
+              listViewPrefs.setTitle("Edit List Views");
+              listViewPrefs.setOnPreferenceClickListener(
+                  new OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                  Intent selectListViewIntent = 
+                      new Intent(TablePropertiesManager.this, 
+                          ListOfListViewsActivity.class);
+                  selectListViewIntent.putExtra(
+                      ListOfListViewsActivity.INTENT_KEY_TABLE_ID, 
+                      tp.getTableId());
+                  startActivity(selectListViewIntent);
+                  return true;
+                }
+                
+              });
+              prefCat.addPreference(listViewPrefs);
             	// June: Launches IO File Manager to change the list view file
             	// (The previous method was to manually enter the filename - see
             	//  commented out code below)
-            	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
-                listFilePref.setTitle(label + " List View File");
-                listFilePref.setDialogTitle("Change " + label + " List View File");
-                final KeyValueStoreHelper kvsh =
-                    tp.getKeyValueStoreHelper(
-                        ListDisplayActivity.KVS_PARTITION);
-                String currentFilename = kvsh.getString(
-                    ListDisplayActivity.KEY_FILENAME);
-                listFilePref.setText(currentFilename);
-                listFilePref.setOnPreferenceChangeListener(
-                        new OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference,
-                            Object newValue) {
-//                        settings.setCustomListFilename((String) newValue);
-                      // Here we're going to just add a junk name and add it to
-                      // the _VIEWS partition to see if that activity works.
-                      // Eventually will want to transition.
-                      KeyValueStoreHelper kvshViews = 
-                          tp.getKeyValueStoreHelper(
-                              ListDisplayActivity.KVS_PARTITION_VIEWS);
-                      KeyValueHelper aspectHelper = 
-                          kvshViews.getAspectHelper("List View 1");
-                      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
-                          (String) newValue);
-//                      kvsh.setString(
-//                          ListDisplayActivity.KEY_FILENAME,
+//            	ListViewFileSelectorPreference listFilePref = 
+//            	    new ListViewFileSelectorPreference(this);
+//                listFilePref.setTitle(label + " List View File");
+//                listFilePref.setDialogTitle("Change " + label + " List View File");
+//                final KeyValueStoreHelper kvsh =
+//                    tp.getKeyValueStoreHelper(
+//                        ListDisplayActivity.KVS_PARTITION);
+//                String currentFilename = kvsh.getString(
+//                    ListDisplayActivity.KEY_FILENAME);
+//                listFilePref.setText(currentFilename);
+//                listFilePref.setOnPreferenceChangeListener(
+//                        new OnPreferenceChangeListener() {
+//                    @Override
+//                    public boolean onPreferenceChange(Preference preference,
+//                            Object newValue) {
+////                        settings.setCustomListFilename((String) newValue);
+//                      // Here we're going to just add a junk name and add it to
+//                      // the _VIEWS partition to see if that activity works.
+//                      // Eventually will want to transition.
+//                      KeyValueStoreHelper kvshViews = 
+//                          tp.getKeyValueStoreHelper(
+//                              ListDisplayActivity.KVS_PARTITION_VIEWS);
+//                      KeyValueHelper aspectHelper = 
+//                          kvshViews.getAspectHelper("List View 1");
+//                      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
 //                          (String) newValue);
-                        init();
-                        return false;
-                    }
-                });
-                prefCat.addPreference(listFilePref);
+////                      kvsh.setString(
+////                          ListDisplayActivity.KEY_FILENAME,
+////                          (String) newValue);
+//                        init();
+//                        return false;
+//                    }
+//                });
+//                prefCat.addPreference(listFilePref);
                 }
                 break;
         case Graph:

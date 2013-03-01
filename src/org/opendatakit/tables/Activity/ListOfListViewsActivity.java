@@ -42,6 +42,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -118,6 +119,17 @@ public class ListOfListViewsActivity extends SherlockListActivity {
    */
   private KeyValueStoreHelper kvsh;
   
+  /**
+   * This is the name of the list view that is currently set to the default.
+   */
+  private String defaultListViewName;
+  
+  /**
+   * This is the aspect helper for the general list view partition. This stands
+   * opposed to the partition where the named views themselves reside.
+   */
+  private KeyValueStoreHelper listViewKvsh;
+  
   /*
    * Get the fields up and running. 
    */
@@ -128,6 +140,10 @@ public class ListOfListViewsActivity extends SherlockListActivity {
         KeyValueStore.Type.ACTIVE);
     this.kvsh = 
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+    this.listViewKvsh = 
+        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+    this.defaultListViewName = 
+        listViewKvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
     this.listViewNames = kvsh.getAspectsForPartition();
     Log.d(TAG, "listViewNames: " + listViewNames);
     // Set the adapter. It adds the list view itself.
@@ -152,7 +168,8 @@ public class ListOfListViewsActivity extends SherlockListActivity {
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
     // We need this to get the filename of the current list view.
     KeyValueHelper aspectHelper = 
-        kvsh.getAspectHelper((String) getListView().getItemAtPosition(position));
+        kvsh.getAspectHelper((String) 
+            getListView().getItemAtPosition(position));
     String filenameOfSelectedView = 
         aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
     // Now we have the filename of the selected view. Add it to the kvs
@@ -187,6 +204,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
+//    getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
   }
   
   @Override
@@ -362,15 +380,33 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       TextView extraString = 
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
       extraString.setVisibility(View.GONE);
-      // We also want to hide the drag and drop icon, as that doesn't do 
-      // anything here. Eventually we might want to make our own layout to 
-      // avoid having to GONE this stuff.
-      View dragIcon = row.findViewById(org.opendatakit.tables.R.id.icon);
-      dragIcon.setVisibility(View.GONE);
-      // Instead we need to establish the behavior of what will happen when
-      // we click the settings icon. Eventually we want to be able to edit the
-      // name and change the file. For now we're not going to do that, as more
-      // thought has to be given to actually writing up that activity.
+      // The radio button showing whether or not this is the default list view.
+      final RadioButton radioButton = (RadioButton)
+          row.findViewById(org.opendatakit.tables.R.id.radio_button);
+      if (isDefault(listViewName)) {
+        radioButton.setChecked(true);
+      } else {
+        radioButton.setChecked(false);
+      }
+      radioButton.setVisibility(View.VISIBLE);
+      // Set the click listener to set as default.
+      radioButton.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+          if (isDefault(listViewName)) {
+            // Already set to default, do nothing.
+          } else {
+            setToDefault(listViewName);
+            radioButton.setChecked(true);
+            Toast.makeText(getContext(), 
+                listViewName + " has been set to default." , 
+                Toast.LENGTH_SHORT).show();
+          }
+        }
+        
+      });
+      // And now prepare the listener for the settings icon.
       final ImageView editView = (ImageView) 
           row.findViewById(org.opendatakit.tables.R.id.row_options);
       final View holderView = row;
@@ -385,6 +421,40 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       // And now we're set, so just kick it on back.
       return row;
     }
+    
+    /**
+     * Return true if the passed in name is defined as the default list view
+     * for this table.
+     * <p>
+     * Checks that the defaultListViewName might be null, and returns false in
+     * this case as if it is null it hasn't been defined.
+     * @param nameOfListView
+     * @return
+     */
+    private boolean isDefault(String nameOfListView) {
+      if (defaultListViewName == null) {
+        return false;
+      }
+      if (defaultListViewName.equals(nameOfListView)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    /**
+     * Set the list view with name nameOfListView to be the default for this
+     * table. Updates the KVS as well as the global field in the activity.
+     * @param nameOfListView
+     */
+    private void setToDefault(String nameOfListView) {
+      listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME, 
+          nameOfListView);
+      defaultListViewName = nameOfListView;
+      adapter.notifyDataSetChanged();
+    }
+    
+    
   }
 
 }
