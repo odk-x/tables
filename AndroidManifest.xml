@@ -122,7 +122,7 @@
         <provider
             android:name="org.opendatakit.tables.sync.files.FilesContentProvider"
             android:authorities="org.opendatakit.tables.tablefilesauthority" />
-        <activity android:name=".Activity.ListOfListViewsActivity"></activity>
+        <activity android:name=".Activity.ListViewManager"></activity>
         <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
     </application>
 

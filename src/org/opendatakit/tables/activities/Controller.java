@@ -28,7 +28,7 @@ import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.ColumnManager;
 import org.opendatakit.tables.Activity.DisplayPrefsActivity;
-import org.opendatakit.tables.Activity.ListOfListViewsActivity;
+import org.opendatakit.tables.Activity.ListViewManager;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.Activity.TablePropertiesManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
@@ -666,8 +666,8 @@ public class Controller {
 	        case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
 	          {
 	          Intent intent = 
-	              new Intent(activity, ListOfListViewsActivity.class);
-	          intent.putExtra(ListOfListViewsActivity.INTENT_KEY_TABLE_ID, 
+	              new Intent(activity, ListViewManager.class);
+	          intent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID, 
 	              tp.getTableId());
 	          activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
 	          }
@@ -981,24 +981,46 @@ public class Controller {
     (new CellEditDialog(rowId, value, colIndex)).show();
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview);
+  public static void launchTableActivity(Context context, TableProperties tp, 
+      boolean isOverview) {
+    Controller.launchTableActivity(context, tp, null, null, isOverview, null);
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, String searchText,
-      boolean isOverview) {
-    Controller.launchTableActivity(context, tp, searchText, null, isOverview);
+  public static void launchTableActivity(Context context, TableProperties tp, 
+      String searchText, boolean isOverview) {
+    Controller.launchTableActivity(context, tp, searchText, null, isOverview,
+        null);
   }
 
   private static void launchTableActivity(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, searchStack, isOverview);
+    Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
+        null);
      context.finish();
+  }
+  
+  /**
+   * This is based on the other launch table activity methods. This one, 
+   * however, allows a filename to be passed to the launching activity. This is
+   * intended to be used to launch things like list view activities with a file
+   * other than the default.
+   * @param context
+   * @param tp
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   */
+  public static void launchTableActivityWithFilename(Activity context, 
+      TableProperties tp, Stack<String> searchStack, boolean isOverview,
+      String filename) {
+    Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
+        filename);
+    context.finish();
   }
 
   private static void launchTableActivity(Context context, TableProperties tp, 
       String searchText,
-      Stack<String> searchStack, boolean isOverview) {
+      Stack<String> searchStack, boolean isOverview, String filename) {
     //TODO: need to figure out how CollectionViewSettings should work. 
     // make them work.
 //    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
@@ -1011,6 +1033,9 @@ public class Controller {
     //TODO: figure out which of these graph was originally and update it.
     case List:
       intent = new Intent(context, ListDisplayActivity.class);
+      if (filename != null) {
+        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      }
       break;
 //    case TableViewSettings.Type.LINE_GRAPH:
 //      intent = new Intent(context, LineGraphDisplayActivity.class);

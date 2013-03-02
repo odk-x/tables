@@ -37,6 +37,7 @@ import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
@@ -59,9 +60,9 @@ import com.actionbarsherlock.app.SherlockListActivity;
  * @author sudar.sam@gmail.com
  * 
  */
-public class ListOfListViewsActivity extends SherlockListActivity {
+public class ListViewManager extends SherlockListActivity {
   
-  public static final String TAG = ListOfListViewsActivity.class.getName();
+  public static final String TAG = ListViewManager.class.getName();
   
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   private static final String ACTIVITY_TITLE = "List View Manager";
@@ -158,8 +159,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
     // clicks on this view, that means they want to display the list
     // view using this activity. Further, it means that they want to
     // see the list view. To get this to work, we need to set the view
-    // type to list view, and change the default list view to be this
-    // one.
+    // type to list view
     tp.setCurrentViewType(TableViewType.List);
     // This will help us access keys for the general partition. (We 
     // need this to set this view as the default list view for the 
@@ -172,11 +172,6 @@ public class ListOfListViewsActivity extends SherlockListActivity {
             getListView().getItemAtPosition(position));
     String filenameOfSelectedView = 
         aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-    // Now we have the filename of the selected view. Add it to the kvs
-    // in the appropriate place so controller will fetch it when it's
-    // time to open that activity.
-    kvshListViewPartition.setString(ListDisplayActivity.KEY_FILENAME, 
-        filenameOfSelectedView);
     // Check if there are prime columns. If there are, then we're using
     // the collection view? This needs to be sorted out.
     // TODO: launch if something is a collection view correctly.
@@ -191,20 +186,19 @@ public class ListOfListViewsActivity extends SherlockListActivity {
     } else {
       isOverview = true;
     }
-    Controller.launchTableActivity(ListOfListViewsActivity.this, tp, 
-        isOverview);
+    Controller.launchTableActivityWithFilename(ListViewManager.this, tp, 
+        null, isOverview, filenameOfSelectedView);
   }
   
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    setContentView(org.opendatakit.tables.R.layout.col_manager);
+    setContentView(org.opendatakit.tables.R.layout.list_view_manager);
     setTitle(ACTIVITY_TITLE);
     // Set the app icon as an action to go home.
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
-//    getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
   }
   
   @Override
@@ -280,18 +274,16 @@ public class ListOfListViewsActivity extends SherlockListActivity {
           // store.
           AspectHelper aspectHelper = kvsh.getAspectHelper(entryName);
           aspectHelper.deleteAllEntriesInThisAspect();
+          if (entryName.equals(defaultListViewName)) {
+            KeyValueStoreHelper generalViewHelper = 
+                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+            generalViewHelper.removeKey(
+                ListDisplayActivity.KEY_LIST_VIEW_NAME);
+          }
+          defaultListViewName = null;
           // Now remove it from the list view.
           listViewNames.remove(position);
           adapter.notifyDataSetChanged();
-          // TODO:
-          // There is a possibility that this was also the file set to be the
-          // default for the table. Therefore a reference to it might remain
-          // in the KVS. Not yet known what to do in this case. Also note that
-          // if the default just stores the file name, it's possible that 
-          // several views might share a filename and therefore we can't just 
-          // delete based on filename. Maybe should move to a name being stored
-          // as the entry rather than the filename for the default.
-          
         }
       });
       
@@ -307,7 +299,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       return true;
     case MENU_EDIT_ENTRY:
       menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-      Intent editListViewIntent = new Intent(ListOfListViewsActivity.this,
+      Intent editListViewIntent = new Intent(ListViewManager.this,
       EditSavedListViewEntryActivity.class);
       editListViewIntent.putExtra(
           EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
@@ -345,7 +337,7 @@ public class ListOfListViewsActivity extends SherlockListActivity {
      * Set this adapter to use the @listViewNames as its backing object.
      */
     ListViewAdapter() {
-      super(ListOfListViewsActivity.this, 
+      super(ListViewManager.this, 
           org.opendatakit.tables.R.layout.touchlistview_row2,
           listViewNames);
     }

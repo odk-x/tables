@@ -46,6 +46,13 @@ public class ListDisplayActivity extends SherlockActivity
     implements DisplayActivity {
   
   private static final String TAG = "ListDisplayActivity";
+  
+  /**
+   * The filename the list view should be opened with. If not present, default
+   * behavior might be to open the default file.
+   */
+  public static final String INTENT_KEY_FILENAME = "filename";
+  
   /**************************
    * Strings necessary for the key value store.
    **************************/
@@ -130,18 +137,22 @@ public class ListDisplayActivity extends SherlockActivity
                 c.getDbTable().getUserTable(query);
         String nameOfView = 
             kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
-        KeyValueStoreHelper namedListViewsPartitionKvsh = 
-            c.getTableProperties().getKeyValueStoreHelper(
-                ListDisplayActivity.KVS_PARTITION_VIEWS);
-        AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
-        AspectHelper viewAspectHelper = 
-            namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
         String filename = 
-            viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore kvs = 
-            kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
-            c.getTableProperties().getBackingStoreType());
+            getIntent().getExtras().getString(INTENT_KEY_FILENAME);
+        if (filename == null) {
+          KeyValueStoreHelper namedListViewsPartitionKvsh = 
+              c.getTableProperties().getKeyValueStoreHelper(
+                  ListDisplayActivity.KVS_PARTITION_VIEWS);
+          AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+          AspectHelper viewAspectHelper = 
+              namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
+          filename = 
+              viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+          KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore kvs = 
+              kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
+              c.getTableProperties().getBackingStoreType());
+        }
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);
         // change the info bar text IF necessary
