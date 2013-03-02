@@ -379,7 +379,10 @@ public class ListOfListViewsActivity extends SherlockListActivity {
       // other information we wish to be displaying.
       TextView extraString = 
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
-      extraString.setVisibility(View.GONE);
+      AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
+      String filename = 
+          aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+      extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
       final RadioButton radioButton = (RadioButton)
           row.findViewById(org.opendatakit.tables.R.id.radio_button);

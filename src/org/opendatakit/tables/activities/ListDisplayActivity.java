@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
@@ -129,9 +130,14 @@ public class ListDisplayActivity extends SherlockActivity
                 c.getDbTable().getUserTable(query);
         String nameOfView = 
             kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        KeyValueStoreHelper namedListViewsPartitionKvsh = 
+            c.getTableProperties().getKeyValueStoreHelper(
+                ListDisplayActivity.KVS_PARTITION_VIEWS);
         AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+        AspectHelper viewAspectHelper = 
+            namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
         String filename = 
-            aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+            viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
         KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
         KeyValueStore kvs = 
             kvsm.getStoreForTable(c.getTableProperties().getTableId(), 

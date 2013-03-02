@@ -106,13 +106,15 @@ public class Controller {
 	private static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
 	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
     private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
-    static final int FIRST_FREE_MENU_ITEM_ID = 7;
+   private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
+    static final int FIRST_FREE_MENU_ITEM_ID = 8;
         
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
     private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
-    static final int FIRST_FREE_RCODE = 4;
+    private static final int RCODE_LIST_VIEW_MANAGER = 4;
+    static final int FIRST_FREE_RCODE = 5;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -451,9 +453,18 @@ public class Controller {
     case RCODE_ODKCOLLECT_EDIT_ROW:
       handleOdkCollectEditReturn(returnCode, data);
       return true;
+    case RCODE_LIST_VIEW_MANAGER:
+      handleListViewManagerReturn();
+      return true;
     default:
       return false;
     }
+  }
+
+  private void handleListViewManagerReturn() {
+    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
+    dbt = dm.getDbTable(tp.getTableId());
+    da.init();
   }
 
   private void handleTablePropertiesManagerReturn() {
@@ -574,6 +585,10 @@ public class Controller {
     			"Table Properties").setEnabled(enabled);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
               "Column Manager").setEnabled(enabled);
+        // Now an option for editing list views.
+        MenuItem manageListViews = 
+            settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER, 
+                Menu.NONE, "List View Manager").setEnabled(true);
     }
 
     /**
@@ -588,18 +603,6 @@ public class Controller {
 		if(selectedItem.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
 		  tp.setCurrentViewType(
 		      TableViewType.getViewTypeFromId(selectedItem.getItemId()));
-		  // Here we will check if it is a list view. If it is, we need to for 
-		  // now launch the special case of the list selector thing.
-		  TableViewType viewType = tp.getCurrentViewType();
-		  if (viewType == TableViewType.List) {
-		    Intent selectListViewIntent = 
-		        new Intent(activity, ListOfListViewsActivity.class);
-		    selectListViewIntent.putExtra(
-		        ListOfListViewsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-		    activity.startActivity(selectListViewIntent);
-		    activity.finish();
-		    return true;
-		  }
 		  Controller.launchTableActivity(activity, tp, searchText, isOverview);
         return true;
 		} else {
@@ -660,6 +663,15 @@ public class Controller {
 	            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
 	            }
 	            return true;
+	        case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
+	          {
+	          Intent intent = 
+	              new Intent(activity, ListOfListViewsActivity.class);
+	          intent.putExtra(ListOfListViewsActivity.INTENT_KEY_TABLE_ID, 
+	              tp.getTableId());
+	          activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
+	          }
+	          return true;
 	        case android.R.id.home:
 	          Intent tableManagerIntent = new Intent(activity, 
 	              TableManager.class);
