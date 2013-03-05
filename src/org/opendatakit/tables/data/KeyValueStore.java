@@ -379,6 +379,7 @@ public class KeyValueStore {
     c.moveToFirst();
     while (i < c.getCount()) {
       aspects.add(c.getString(aspectIndex));
+      c.moveToNext();
       i++;
     }
     if (c != null && !c.isClosed()) {
