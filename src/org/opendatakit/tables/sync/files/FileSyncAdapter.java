@@ -126,6 +126,11 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // this means we got something. Doing check > 0 rather than == 1 just
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
+          // TODO: this will be broken as it hasn't been updated to reflect
+          // the possibility of multiple list views and the fact that the 
+          // default partition now only stores a NAME of a list view, not the
+          // filename. Not fixing because it should be subsumed by the more 
+          // complete and general solution to syncing the KVS.
           KeyValueStoreHelper listHelper = 
               tableProp.getKeyValueStoreHelper(
                   ListDisplayActivity.KVS_PARTITION);

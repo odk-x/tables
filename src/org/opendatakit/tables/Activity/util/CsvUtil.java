@@ -31,6 +31,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.Activity.importexport.ExportCSVActivity.ExportTask;
 import org.opendatakit.tables.Activity.importexport.ImportCSVActivity.ImportTask;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -59,8 +60,8 @@ import au.com.bytecode.opencsv.CSVWriter;
 public class CsvUtil {
 
     private static final String LAST_MOD_TIME_LABEL = 
-        DbTable.DB_LAST_MODIFIED_TIME;
-    private static final String SRC_PHONE_LABEL = DbTable.DB_URI_USER;
+        DataTableColumns.LAST_MODIFIED_TIME;
+    private static final String SRC_PHONE_LABEL = DataTableColumns.URI_USER;
     
     private static final char DELIMITING_CHAR = ",".charAt(0);
     private static final char QUOTE_CHAR = "\"".charAt(0);
@@ -331,12 +332,12 @@ public class CsvUtil {
         // the server. I'm not sure how this works, so I am leaving it for 
         // now.
         if (includeTs) {
-            columns.add(DbTable.DB_LAST_MODIFIED_TIME);
+            columns.add(DataTableColumns.LAST_MODIFIED_TIME);
             headerRow.add(LAST_MOD_TIME_LABEL);
             index++;
         }
         if (includePn) {
-            columns.add(DbTable.DB_URI_USER);
+            columns.add(DataTableColumns.URI_USER);
             headerRow.add(SRC_PHONE_LABEL);
             index++;
         }
@@ -373,7 +374,7 @@ public class CsvUtil {
         }
         // getting data
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
-        String[] selectionKeys = { DbTable.DB_SAVED };
+        String[] selectionKeys = { DataTableColumns.SAVED };
         String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
         Table table = dbt.getRaw(columns, selectionKeys, selectionArgs, null);
         // writing data

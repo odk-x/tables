@@ -17,8 +17,10 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
@@ -44,10 +46,30 @@ public class ListDisplayActivity extends SherlockActivity
     implements DisplayActivity {
   
   private static final String TAG = "ListDisplayActivity";
+  
+  /**
+   * The filename the list view should be opened with. If not present, default
+   * behavior might be to open the default file.
+   */
+  public static final String INTENT_KEY_FILENAME = "filename";
+  
   /**************************
    * Strings necessary for the key value store.
    **************************/
+  /**
+   * The general partition in which table-wide ListDisplayActivity information
+   * is stored. An example might be the current list view for a table.
+   */
   public static final String KVS_PARTITION = "ListDisplayActivity";
+  /**
+   * The partition under which actual individual view information is stored.
+   * For instance if a user added a list view named "Doctor", the partition
+   * would be KVS_PARTITION_VIEWS, and all the keys relating to this view would
+   * fall within this partition and a particular aspect. (Perhaps the name
+   * "Doctor"?)
+   */
+  public static final String KVS_PARTITION_VIEWS = KVS_PARTITION + ".views";
+  
   
   /**
    * This is the default aspect for the list view. This should be all that is 
@@ -55,7 +77,22 @@ public class ListDisplayActivity extends SherlockActivity
    */
   public static final String KVS_ASPECT_DEFAULT = "default";
   
+  /**
+   * This key holds the filename associated with the view.
+   */
   public static final String KEY_FILENAME = "filename";
+  
+  /**
+   * This key holds the name of the list view. In the default aspect the idea
+   * is that this will then give the value of the aspect for which the default
+   * list view is set. 
+   * <p>
+   * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT, 
+   * key="KEY_LIST_VIEW_NAME", value="My Custom List View" would mean that
+   * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS 
+   * partition that had the information regarding a custom list view.
+   */
+  public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
@@ -98,13 +135,24 @@ public class ListDisplayActivity extends SherlockActivity
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
                 c.getDbTable().getUserTable(query);
-        String filename = kvsh.getString(ListDisplayActivity.KEY_FILENAME);
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore kvs = 
-            kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
-            c.getTableProperties().getBackingStoreType());
-//        view = CustomTableView.get(this, c.getTableProperties(), table,
-//                c.getTableViewSettings().getCustomListFilename());
+        String nameOfView = 
+            kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        String filename = 
+            getIntent().getExtras().getString(INTENT_KEY_FILENAME);
+        if (filename == null) {
+          KeyValueStoreHelper namedListViewsPartitionKvsh = 
+              c.getTableProperties().getKeyValueStoreHelper(
+                  ListDisplayActivity.KVS_PARTITION_VIEWS);
+          AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+          AspectHelper viewAspectHelper = 
+              namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
+          filename = 
+              viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+          KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+          KeyValueStore kvs = 
+              kvsm.getStoreForTable(c.getTableProperties().getTableId(), 
+              c.getTableProperties().getBackingStoreType());
+        }
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);
         // change the info bar text IF necessary

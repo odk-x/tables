@@ -78,6 +78,8 @@
         </activity>
         <activity android:name=".activities.BarGraphDisplayActivity" >
         </activity>
+        <activity android:name=".activities.GraphDisplayActivity" >
+        </activity>
         <activity android:name=".activities.MapDisplayActivity" >
         </activity>
         <activity android:name=".Activity.DisplayPrefsActivity" >

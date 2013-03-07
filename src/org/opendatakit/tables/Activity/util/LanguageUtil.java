@@ -16,17 +16,15 @@
 package org.opendatakit.tables.Activity.util;
 
 import org.opendatakit.tables.data.ConditionalRuler;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 
 import android.graphics.Color;
-import android.util.Log;
 
 
 public class LanguageUtil {
-  
+
   private static final String TAG = "LanguageUtil";
-    
+
     public static String getTableTypeLabel(TableType tableType) {
         switch (tableType) {
         case data:
@@ -40,7 +38,7 @@ public class LanguageUtil {
                     ").");
         }
     }
-    
+
 //    public static String getViewTypeLabel(int viewType) {
 //        switch (viewType) {
 //        case TableViewSettings.Type.SPREADSHEET:
@@ -61,7 +59,7 @@ public class LanguageUtil {
 //            throw new RuntimeException();
 //        }
 //    }
-    
+
     public static String getTvsConditionalComparator(int comparatorType) {
         switch (comparatorType) {
         case ConditionalRuler.Comparator.EQUALS:
@@ -78,7 +76,7 @@ public class LanguageUtil {
             throw new RuntimeException();
         }
     }
-    
+
     public static String getMapColorLabel(int color) {
         switch (color) {
         case Color.BLACK:

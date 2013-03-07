@@ -17,18 +17,17 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.util.CsvUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.exception.TableAlreadyExistsException;
 
-import android.R;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -40,19 +39,18 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * An activity for importing CSV files to a table.
  */
 public class ImportCSVActivity extends IETabActivity {
-	
+
 	/** view IDs (for use in testing) */
 	public static int NTNVAL_ID = 1;
 	public static int TABLESPIN_ID = 2;
 	public static int FILENAMEVAL_ID = 3;
 	public static int IMPORTBUTTON_ID = 4;
-	
+
 	/* the list of table properties */
 	private TableProperties[] tps;
 	/* the list of table names */
@@ -67,12 +65,12 @@ public class ImportCSVActivity extends IETabActivity {
 	private EditText filenameValField;
 	/* the button for selecting a file */
 	private Button pickFileButton;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(getView());
 	}
-	
+
 	/**
 	 * @return the view
 	 */
@@ -148,7 +146,7 @@ public class ImportCSVActivity extends IETabActivity {
 		scroll.addView(v);
 		return scroll;
 	}
-	
+
 	/**
 	 * Attempts to import a CSV file.
 	 */
@@ -175,7 +173,7 @@ public class ImportCSVActivity extends IETabActivity {
 		iThread.start();
 		**/
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 	        Intent data) {
@@ -184,7 +182,7 @@ public class ImportCSVActivity extends IETabActivity {
 	    String filepath = fileUri.getPath();
 	    filenameValField.setText(filepath);
 	}
-	
+
 	/**
 	 * A listener for the table name spinner. Adds or removes the "New Table"
 	 * name field as necessary.
@@ -204,7 +202,7 @@ public class ImportCSVActivity extends IETabActivity {
 		public void onNothingSelected(AdapterView<?> parent) {
 		}
 	}
-	
+
 	/**
 	 * A listener for the import button. Calls importSubmission() on click.
 	 */
@@ -214,15 +212,15 @@ public class ImportCSVActivity extends IETabActivity {
 			importSubmission();
 		}
 	}
-	
+
 	public class ImportTask
 	        extends AsyncTask<ImportRequest, Integer, Boolean> {
-	  
+
 	  private static final String TAG = "ImportTask";
-	  
+
 	  public boolean caughtDuplicateTableException = false;
 	  public boolean problemImportingKVSEntries = false;
-	    
+
 	  @Override
 	  protected Boolean doInBackground(ImportRequest... importRequests) {
 	        ImportRequest request = importRequests[0];
@@ -240,11 +238,11 @@ public class ImportCSVActivity extends IETabActivity {
                     request.getTableProperties().getTableId());
             }
 	    }
-	    
+
 	    protected void onProgressUpdate(Integer... progress) {
 	        // do nothing.
 	    }
-	    
+
 	    protected void onPostExecute(Boolean result) {
 	        dismissDialog(IMPORT_IN_PROGRESS_DIALOG);
 	        if (result) {
@@ -260,14 +258,14 @@ public class ImportCSVActivity extends IETabActivity {
 	        }
 	    }
 	}
-	
+
 	private class ImportRequest {
-	    
+
 	    private final boolean createTable;
 	    private final TableProperties tp;
 	    private final String tableName;
 	    private final File file;
-	    
+
 	    private ImportRequest(boolean createTable, TableProperties tp,
 	            String tableName, File file) {
 	        this.createTable = createTable;
@@ -275,27 +273,27 @@ public class ImportCSVActivity extends IETabActivity {
 	        this.tableName = tableName;
 	        this.file = file;
 	    }
-	    
+
 	    public ImportRequest(String tableName, File file) {
 	        this(true, null, tableName, file);
 	    }
-	    
+
 	    public ImportRequest(TableProperties tp, File file) {
 	        this(false, tp, null, file);
 	    }
-	    
+
 	    public boolean getCreateTable() {
 	        return createTable;
 	    }
-	    
+
 	    public TableProperties getTableProperties() {
 	        return tp;
 	    }
-	    
+
 	    public String getTableName() {
 	        return tableName;
 	    }
-	    
+
 	    public File getFile() {
 	        return file;
 	    }

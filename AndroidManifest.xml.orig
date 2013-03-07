@@ -22,7 +22,7 @@
     <application
         android:icon="@drawable/icon"
         android:label="@string/app_name"
-        android:theme="@style/Theme.Sherlock" >
+        android:theme="@style/InvertTables" >
         <activity
             android:name=".Activity.util.Launcher"
             android:label="@string/app_name" >
@@ -43,8 +43,7 @@
         </activity>
         <activity android:name=".Activity.PropertyManager" >
         </activity>
-        <activity android:name=".Activity.TableManager" >
-        </activity>
+        <activity android:name=".Activity.TableManager"/>
         <activity android:name=".Activity.importexport.ImportExportActivity" >
         </activity>
         <activity android:name=".Activity.importexport.ImportCSVActivity" >
@@ -78,6 +77,8 @@
         <activity android:name=".activities.BoxStemGraphDisplayActivity" >
         </activity>
         <activity android:name=".activities.BarGraphDisplayActivity" >
+        </activity>
+        <activity android:name=".activities.GraphDisplayActivity" >
         </activity>
         <activity android:name=".activities.MapDisplayActivity" >
         </activity>

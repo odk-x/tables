@@ -15,19 +15,11 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.joda.time.DateTime;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
-import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.graphs.LineChart;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -42,25 +34,25 @@ public class LineGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
   private static final String TAG = "LineGraphDisplayActivity";
-  
+
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
-    
+
     private DataManager dm;
     private Controller c;
     private Query query;
     private UserTable table;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         init();
     }
-    
+
     @Override
     public void init() {
       Log.e(TAG, "the defunct LineGraphDisplayActivity should not be used!");
@@ -99,12 +91,12 @@ public class LineGraphDisplayActivity extends SherlockActivity
 //        }
 //        setContentView(c.getContainerView());
     }
-    
+
     @Override
     public void onBackPressed() {
         c.onBackPressed();
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
@@ -121,18 +113,18 @@ public class LineGraphDisplayActivity extends SherlockActivity
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu);
         return true;
     }
-    
+
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
         return c.handleMenuItemSelection(item);
     }
-    
+
     @Override
     public void onSearch() {
         c.recordSearch();
