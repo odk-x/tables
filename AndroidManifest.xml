@@ -78,8 +78,6 @@
         </activity>
         <activity android:name=".activities.BarGraphDisplayActivity" >
         </activity>
-        <activity android:name=".activities.GraphDisplayActivity" >
-        </activity>
         <activity android:name=".activities.MapDisplayActivity" >
         </activity>
         <activity android:name=".Activity.DisplayPrefsActivity" >
@@ -124,6 +122,8 @@
         <provider
             android:name="org.opendatakit.tables.sync.files.FilesContentProvider"
             android:authorities="org.opendatakit.tables.tablefilesauthority" />
+        <activity android:name=".Activity.ListViewManager"></activity>
+        <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
     </application>
 
     <supports-screens
