@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.content.Context;
+import android.webkit.WebViewClient;
 
 
 public class CustomTableView extends CustomView {
@@ -90,8 +91,8 @@ public class CustomTableView extends CustomView {
     	return ctv;
     }
     
-    public int getWebHeight() {
-    	return webView.getMeasuredHeight();
+    public void setOnFinishedLoaded(WebViewClient client) {
+    	webView.setWebViewClient(client);
     }
     
     //////////////////////////// END TEST /////////////////////////////

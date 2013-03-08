@@ -16,6 +16,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 
 import com.actionbarsherlock.app.SherlockFragment;
@@ -117,7 +119,7 @@ public class TableMapFragment extends Fragment {
 		
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);	
+			super.onCreate(savedInstanceState);
 			mIndex = 0;
 		}
 		
@@ -125,14 +127,13 @@ public class TableMapFragment extends Fragment {
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			mContainer = container;
-			mContainer.setVisibility(View.GONE);
 			return null;
 		}
 		
 		@Override
 		public void onResume() {
 	        super.onResume();
-	        resetView();
+	        mContainer.setVisibility(View.GONE);
 	    }
 		
 		private void resetView() {
@@ -147,10 +148,18 @@ public class TableMapFragment extends Fragment {
 			        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
 			mContainer.removeAllViews();
 	        mContainer.addView(view, params);
-	        if (view.getWebHeight() > 0) {
-	        	LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, view.getWebHeight());
-		        //mContainer.setLayoutParams(containerParams);
-	        }
+	        
+	        WebViewClient client = new WebViewClient() {
+        	   public void onPageFinished(WebView view, String url) {
+        		   LinearLayout.LayoutParams containerParams = 
+        				   new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, view.getMeasuredHeight());
+   		           if (containerParams.height > 0) {
+   		        	   //mContainer.setLayoutParams(containerParams);
+   		           }
+   		           mContainer.setVisibility(View.VISIBLE);
+        	    }
+	        };
+	        view.setOnFinishedLoaded(client);
 		}
 		
 		/** Sets the index of the list view, which will be the row of the data wanting to be displayed. */
@@ -164,6 +173,10 @@ public class TableMapFragment extends Fragment {
 		 */
 		public int getIndex() {
 			return mIndex;
+		}
+		
+		public boolean isListVisible() {
+			return mContainer.getVisibility() == View.VISIBLE;
 		}
 	}
 	
@@ -207,7 +220,14 @@ public class TableMapFragment extends Fragment {
 		 * Sets the location markers based off of the columns set in the table properties.
 		 */
 	    private void setMarkers() {
-	    	mMarkerIds = new HashMap<Marker, Integer>();
+	    	if (mMarkerIds == null) {
+	    		mMarkerIds = new HashMap<Marker, Integer>();
+	    	} else {
+	    		for(Marker marker : mMarkerIds.keySet()) {
+	    			marker.remove();
+	    		}
+	    		mMarkerIds.clear();
+	    	}
 	    	
 	    	// Grab the key value store helper from the table activity.
 	    	final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(KVS_PARTITION);
@@ -269,17 +289,8 @@ public class TableMapFragment extends Fragment {
 			return new OnMapClickListener() {
 				@Override
 				public void onMapClick(LatLng point) {
-					ListFragment list = getListFragment();
-					if (list.mContainer.getVisibility() == View.VISIBLE) {
-						list.mContainer.setVisibility(View.GONE);
-						int index = mMarkerIds.get(mCurrentMarker);
-						Marker newMarker = getMap().addMarker(new MarkerOptions()
-							.position(mCurrentMarker.getPosition())
-							.draggable(false));
-						mCurrentMarker.remove();
-						mMarkerIds.remove(mCurrentMarker);
-						mMarkerIds.put(newMarker, index);
-						mCurrentMarker = null;
+					if (getListFragment().isListVisible()) {
+						deselectCurrentMarker();
 					}
 				}
 			};
@@ -306,49 +317,60 @@ public class TableMapFragment extends Fragment {
 			{
 				@Override
 				public boolean onMarkerClick(Marker arg0) {
-					ListFragment list = getListFragment();
-					int currentIndex = list.getIndex();
+					int currentIndex = getListFragment().getIndex();
 					
 					// Make the marker visible if it is either invisible or a new marker.
 					// Make the marker invisible if clicking on the already selected marker.
-					if (currentIndex != mMarkerIds.get(arg0) || list.mContainer.getVisibility() == View.GONE) {
-						if (currentIndex != mMarkerIds.get(arg0) && mCurrentMarker != null) {
-							int index = mMarkerIds.get(mCurrentMarker);
-							Marker newMarker = getMap().addMarker(new MarkerOptions()
-								.position(mCurrentMarker.getPosition())
-								.draggable(false));
-							mCurrentMarker.remove();
-							mMarkerIds.remove(mCurrentMarker);
-							mMarkerIds.put(newMarker, index);
+					if (currentIndex != mMarkerIds.get(arg0) || !getListFragment().isListVisible()) {
+						if (currentIndex != mMarkerIds.get(arg0)) {
+							deselectCurrentMarker();
 						}
 						int newIndex = mMarkerIds.get(arg0);
-						list.setIndex(newIndex);
-						list.mContainer.setVisibility(View.VISIBLE);
-						Marker newMarker = getMap().addMarker(new MarkerOptions()
-							.position(arg0.getPosition())
-							.draggable(false)
-							.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-						arg0.remove();
-						mMarkerIds.remove(arg0);
-						mMarkerIds.put(newMarker, newIndex);
-						mCurrentMarker = newMarker;
+						getListFragment().setIndex(newIndex);
+						selectMarker(arg0);
 					} else {
-						list.mContainer.setVisibility(View.GONE);
-						int index = mMarkerIds.get(arg0);
-						Marker newMarker = getMap().addMarker(new MarkerOptions()
-							.position(arg0.getPosition())
-							.draggable(false));
-						arg0.remove();
-						mMarkerIds.remove(arg0);
-						mMarkerIds.put(newMarker, index);
-						mCurrentMarker = null;
+						deselectCurrentMarker();
 					}
-					
 					
 					return true;
 				}
 			};
 		}
+	    
+	    /**
+	     * Selects a marker, updating the marker list, and changing the marker's color to green.
+	     * Makes the marker the currently selected marker.
+	     * @param marker The marker to be selected.
+	     */
+	    private void selectMarker(Marker marker) {
+	    	int index = mMarkerIds.get(marker);
+	    	Marker newMarker = getMap().addMarker(new MarkerOptions()
+				.position(marker.getPosition())
+				.draggable(false)
+				.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+	    	marker.remove();
+	    	mMarkerIds.remove(marker);
+	    	mMarkerIds.put(newMarker, index);
+	    	mCurrentMarker = newMarker;
+	    }
+	    
+	    /**
+	     * Deselects the currently selected marker, updating the marker list, and changing the marker 
+	     * back to a default color.
+	     */
+	    private void deselectCurrentMarker() {
+	    	if (mCurrentMarker == null) return;
+	    	
+	    	int index = mMarkerIds.get(mCurrentMarker);
+			Marker newMarker = getMap().addMarker(new MarkerOptions()
+				.position(mCurrentMarker.getPosition())
+				.draggable(false));
+			mCurrentMarker.remove();
+			mMarkerIds.remove(mCurrentMarker);
+			mMarkerIds.put(newMarker, index);
+			mCurrentMarker = null;
+			getListFragment().mContainer.setVisibility(View.GONE);
+	    }
 	    
 	    public ListFragment getListFragment() {
 	    	return ((TableMapFragment)getParentFragment()).mList;
