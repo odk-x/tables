@@ -1049,7 +1049,7 @@ public class Controller {
       break;
 //    case TableViewSettings.Type.MAP:
     case Map:
-      intent = new Intent(context, MapDisplayActivity.class);
+      intent = new Intent(context, TableActivity.class);
       break;
     case Spreadsheet:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
