@@ -26,6 +26,7 @@ import org.opendatakit.tables.activities.TableMapFragment;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
@@ -47,6 +48,7 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -581,34 +583,27 @@ public class TablePropertiesManager extends PreferenceActivity {
         switch (tp.getCurrentViewType()) {
         case List:
             {
-            	// June: Launches IO File Manager to change the list view file
-            	// (The previous method was to manually enter the filename - see
-            	//  commented out code below)
-            	ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
-                listFilePref.setTitle(label + " List View File");
-                listFilePref.setDialogTitle("Change " + label + " List View File");
-                final KeyValueStoreHelper kvsh =
-                    tp.getKeyValueStoreHelper(
-                        ListDisplayActivity.KVS_PARTITION);
-                String currentFilename = kvsh.getString(
-                    ListDisplayActivity.KEY_FILENAME);
-                listFilePref.setText(currentFilename);
-                listFilePref.setOnPreferenceChangeListener(
-                        new OnPreferenceChangeListener() {
-                    @Override
-                    public boolean onPreferenceChange(Preference preference,
-                            Object newValue) {
-//                        settings.setCustomListFilename((String) newValue);
-                      kvsh.setString(
-                          ListDisplayActivity.KEY_FILENAME,
-                          (String) newValue);
-                        init();
-                        return false;
-                    }
-                });
-                prefCat.addPreference(listFilePref);
+              Preference listViewPrefs = new Preference(this);
+              listViewPrefs.setTitle("List View Manager");
+              listViewPrefs.setOnPreferenceClickListener(
+                  new OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                  Intent selectListViewIntent = 
+                      new Intent(TablePropertiesManager.this, 
+                          ListViewManager.class);
+                  selectListViewIntent.putExtra(
+                      ListViewManager.INTENT_KEY_TABLE_ID, 
+                      tp.getTableId());
+                  startActivity(selectListViewIntent);
+                  return true;
                 }
-                break;
+                
+              });
+              prefCat.addPreference(listViewPrefs);
+              }
+              break;
         case Graph:
           Log.d(TAG, "Graph view type was selected");
           break;
@@ -798,11 +793,22 @@ public class TablePropertiesManager extends PreferenceActivity {
         case RC_LIST_VIEW_FILE:
         	Uri fileUri2 = data.getData();
             String filename2 = fileUri2.getPath();
-            kvsh =
-                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-            kvsh.setString(
-                ListDisplayActivity.KEY_FILENAME,
+// This set it in the main partition. We actually want to set it in the 
+            // other partition for now.
+//            kvsh =
+//                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//            kvsh.setString(
+//                ListDisplayActivity.KEY_FILENAME,
+//                filename2);
+            // Trying to get the new name to the _VIEWS partition.
+            kvsh = tp.getKeyValueStoreHelper(
+                ListDisplayActivity.KVS_PARTITION_VIEWS);
+            // Set the name here statically, just to test. Later will want to
+            // allow custom naming, checking for redundancy, etc.
+            KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
+            aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
                 filename2);
+            
 //            TableViewSettings settings = tp.getOverviewViewSettings();
 //            settings.setCustomListFilename(filename2);
             init();
