@@ -97,6 +97,8 @@
         </activity>
         <activity android:name="org.opendatakit.tables.activities.ConflictResolutionActivity" >
         </activity>
+        <activity android:name=".Activity.ListViewManager"></activity>
+        <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
 
         <uses-library android:name="com.google.android.maps" />
         <!--
