@@ -15,8 +15,6 @@
  */
 package org.opendatakit.tables.lib;
 
-import org.opendatakit.tables.Activity.EditSavedListViewEntryActivity;
-
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -33,7 +31,7 @@ import android.widget.EditText;
 public class EditNameDialogPreference extends DialogPreference {
   
   // This is the Activity that calls this object.
-  private EditSavedListViewEntryActivity callingActivity;
+  private EditSavedViewEntryActivity callingActivity;
   private EditText mEditText;
   private String mText;
   
@@ -42,7 +40,7 @@ public class EditNameDialogPreference extends DialogPreference {
   }
     
   public EditNameDialogPreference(Context context, AttributeSet attrs, 
-      EditSavedListViewEntryActivity callingActivity) {
+      EditSavedViewEntryActivity callingActivity) {
     super(context, attrs);
   }
   
@@ -50,14 +48,15 @@ public class EditNameDialogPreference extends DialogPreference {
    * Set the calling activity as well as the listview name for this dialog.
    * @param callingActivity
    */
-  public void setCallingActivity(EditSavedListViewEntryActivity 
+  public void setCallingActivity(EditSavedViewEntryActivity 
       callingActivity) {
     this.callingActivity = callingActivity;
-    mText = callingActivity.getCurrentListViewName();
+    mText = callingActivity.getCurrentViewName();
     // Display the name to the user.
     this.setSummary(mText);
   }
   
+
   /**
    * We need to override this so that we can get at our edit text that we've 
    * defined in the layout xml.
@@ -72,9 +71,11 @@ public class EditNameDialogPreference extends DialogPreference {
    */
   @Override
   protected void onBindDialogView(View view) {
+	int viewName = org.opendatakit.tables.R.id.edit_view_name;
     mEditText = (EditText) 
-        view.findViewById(org.opendatakit.tables.R.id.edit_listview_name);
+        view.findViewById(viewName);
     mEditText.setText(mText);
+ 
   }
   
   /**
@@ -101,4 +102,5 @@ public class EditNameDialogPreference extends DialogPreference {
   public EditText getEditText() {
     return mEditText;
   }
+
 }
