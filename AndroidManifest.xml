@@ -83,6 +83,8 @@
         </activity>
         <activity android:name=".activities.ListDisplayActivity" >
         </activity>
+        <activity android:name=".activities.GraphDisplayActivity" >
+        </activity>
         <activity android:name=".activities.LineGraphDisplayActivity" >
         </activity>
         <activity android:name=".activities.BoxStemGraphDisplayActivity" >
