@@ -19,13 +19,9 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.custom.CustomGraphView;
-import org.opendatakit.tables.view.custom.CustomTableView;
-import org.opendatakit.tables.view.custom.CustomView;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -69,15 +65,15 @@ implements DisplayActivity {
 	/**
 	 * This key holds the name of the list view. In the default aspect the idea
 	 * is that this will then give the value of the aspect for which the default
-	 * list view is set. 
+	 * list view is set.
 	 * <p>
-	 * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT, 
+	 * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT,
 	 * key="KEY_LIST_VIEW_NAME", value="My Custom List View" would mean that
-	 * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS 
+	 * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS
 	 * partition that had the information regarding a custom list view.
 	 */
-	public static final String KEY_GRAPH_VIEW_NAME = "nameOfGraphView";	
-	public static final String POTENTIAL_GRAPH_VIEW_NAME = "potentialGraphName";	
+	public static final String KEY_GRAPH_VIEW_NAME = "nameOfGraphView";
+	public static final String POTENTIAL_GRAPH_VIEW_NAME = "potentialGraphName";
 
 	public static final String GRAPH_TYPE = "graphtype";
 
@@ -109,7 +105,7 @@ implements DisplayActivity {
 		dm = new DataManager(DbHelper.getDbHelper(this));
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
-		query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+		query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
 				c.getTableProperties());
 	}
 
@@ -149,15 +145,15 @@ implements DisplayActivity {
 		view.deleteDefaultGraph();
 		c.onBackPressed();
 	}
-	
+
 	@Override
 	public void onBackPressed() {
 		//check if it should ask to save
 		if(!view.graphIsModified()) {
 			backPressedWhileInGraph();
 		}
-		
-		
+
+
 		//ask if they wish to save
 		final String getOldGraphName;
 		if(graphName.equals(potentialGraphName)) {
@@ -231,7 +227,7 @@ implements DisplayActivity {
 		alert.setTitle("Name of New Graph");
 
 
-		// Set an EditText view to get user input 
+		// Set an EditText view to get user input
 		final EditText input = new EditText(this);
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
@@ -240,7 +236,7 @@ implements DisplayActivity {
 		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
 		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
 		alert.setView(input);
-		if (givenGraphName != null) 
+		if (givenGraphName != null)
 			input.setText(givenGraphName);
 
 		// OK Action => Create new Column
@@ -326,7 +322,7 @@ implements DisplayActivity {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         init();
     }

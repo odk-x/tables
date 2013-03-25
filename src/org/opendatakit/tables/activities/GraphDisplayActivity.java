@@ -15,15 +15,9 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.ColumnManager;
-import org.opendatakit.tables.Activity.TableManager;
-import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.activities.BarGraphDisplayActivity;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -31,29 +25,22 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.view.custom.CustomGraphView;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.WindowManager;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockListActivity;
@@ -67,9 +54,9 @@ import com.actionbarsherlock.view.SubMenu;
  * <p>
  * It's general structure is modeled on the ColumnManager class, so that we keep
  * a standard feel throughout the app.
- * 
+ *
  * @author sudar.sam@gmail.com
- * 
+ *
  */
 public class GraphDisplayActivity extends SherlockListActivity {
 
@@ -147,18 +134,18 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	private KeyValueStoreHelper graphViewKvsh;
 
 	/*
-	 * Get the fields up and running. 
+	 * Get the fields up and running.
 	 */
 	private void init() {
 		this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
 		DbHelper dbh = DbHelper.getDbHelper(this);
-		this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, 
+		this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
-		this.kvsh = 
+		this.kvsh =
 				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
-		this.graphViewKvsh = 
+		this.graphViewKvsh =
 				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
-		this.defaultGraphViewName = 
+		this.defaultGraphViewName =
 				graphViewKvsh.getString(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
 		this.graphViewNames = kvsh.getAspectsForPartition();
 		Log.d(TAG, "graphViewNames: " + graphViewNames);
@@ -170,28 +157,28 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		// Since at the moment we are counting on the Controller class to
-		// do the changing, we don't use the intent directly. If someone 
+		// do the changing, we don't use the intent directly. If someone
 		// clicks on this view, that means they want to display the list
 		// view using this activity. Further, it means that they want to
 		// see the list view. To get this to work, we need to set the view
 		// type to list view
 		tp.setCurrentViewType(TableViewType.Graph);
-		// This will help us access keys for the general partition. (We 
-		// need this to set this view as the default list view for the 
+		// This will help us access keys for the general partition. (We
+		// need this to set this view as the default list view for the
 		// table.)
-		KeyValueStoreHelper kvshGraphViewPartition = 
+		KeyValueStoreHelper kvshGraphViewPartition =
 				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
 		// We need this to get the filename of the current list view.
-		KeyValueHelper aspectHelper = 
-				kvsh.getAspectHelper((String) 
+		KeyValueHelper aspectHelper =
+				kvsh.getAspectHelper((String)
 						getListView().getItemAtPosition(position));
-		String filenameOfSelectedView = 
+		String filenameOfSelectedView =
 				aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
 		// Check if there are prime columns. If there are, then we're using
 		// the collection view? This needs to be sorted out.
 		// TODO: launch if something is a collection view correctly.
-		// For example, right now there is an issue where you might be 
-		// selecting a collection list view but you're not viewing the 
+		// For example, right now there is an issue where you might be
+		// selecting a collection list view but you're not viewing the
 		// table with a prime column, or vice versa, and this could create
 		// an issue.
 		String graphName = (String)getListView().getItemAtPosition(position);
@@ -225,8 +212,8 @@ public class GraphDisplayActivity extends SherlockListActivity {
 
 		final TableViewType[] viewTypes = tp.getPossibleViewTypes();
 		// 	  -build a checkable submenu to select the view type
-		SubMenu viewTypeSubMenu = 
-				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, 
+		SubMenu viewTypeSubMenu =
+				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON,
 						Menu.NONE, "ViewType");
 		MenuItem viewType = viewTypeSubMenu.getItem();
 		viewType.setIcon(R.drawable.view);
@@ -235,13 +222,13 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		MenuItem item;
 		// This will be the name of the default list view, which if exists
 		// means we should display the list view as an option.
-		KeyValueStoreHelper kvsh = 
+		KeyValueStoreHelper kvsh =
 				tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-		String nameOfView = kvsh.getString( 
+		String nameOfView = kvsh.getString(
 				ListDisplayActivity.KEY_LIST_VIEW_NAME);
 		for(int i = 0; i < viewTypes.length; i++) {
-			item = viewTypeSubMenu.add(MENU_ITEM_ID_SEARCH_BUTTON, 
-					viewTypes[i].getId(), i, 
+			item = viewTypeSubMenu.add(MENU_ITEM_ID_SEARCH_BUTTON,
+					viewTypes[i].getId(), i,
 					viewTypes[i].name());
 			// mark the current viewType as selected
 			if (tp.getCurrentViewType() == viewTypes[i]) {
@@ -254,11 +241,11 @@ public class GraphDisplayActivity extends SherlockListActivity {
 			}
 		}
 
-		viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_SEARCH_BUTTON, 
+		viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_SEARCH_BUTTON,
 				true, true);
 
 
-		MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW, 
+		MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW,
 				Menu.NONE,
 				"Add Row").setEnabled(true);
 		addItem.setIcon(R.drawable.content_new);
@@ -267,8 +254,8 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		return true;
 	}
 
-	@Override 
-	public boolean onMenuItemSelected(int featureId, 
+	@Override
+	public boolean onMenuItemSelected(int featureId,
 			com.actionbarsherlock.view.MenuItem item) {
 
 		if(item.getGroupId() == MENU_ITEM_ID_SEARCH_BUTTON) {
@@ -285,16 +272,16 @@ public class GraphDisplayActivity extends SherlockListActivity {
 			createNewGraph();
 			return true;
 		}
-		return false;    
+		return false;
 	}
 
 	@Override
 	public boolean onContextItemSelected(android.view.MenuItem item) {
 		// We need this so we can get the position of the thing that was clicked.
-		AdapterContextMenuInfo menuInfo = 
+		AdapterContextMenuInfo menuInfo =
 				(AdapterContextMenuInfo) item.getMenuInfo();
 		final int position = menuInfo.position;
-		final String entryName = 
+		final String entryName =
 				(String) getListView().getItemAtPosition(position);
 		switch(item.getItemId()) {
 		case MENU_DELETE_ENTRY:
@@ -308,12 +295,12 @@ public class GraphDisplayActivity extends SherlockListActivity {
 
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					// We need to delete the entry. First delete it in the key value 
+					// We need to delete the entry. First delete it in the key value
 					// store.
 					AspectHelper aspectHelper = kvsh.getAspectHelper(entryName);
 					aspectHelper.deleteAllEntriesInThisAspect();
 					if (entryName.equals(defaultGraphViewName)) {
-						KeyValueStoreHelper generalViewHelper = 
+						KeyValueStoreHelper generalViewHelper =
 								tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
 						generalViewHelper.removeKey(
 								BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
@@ -353,7 +340,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	}
 
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, 
+	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
 		menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
 		menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
@@ -366,9 +353,9 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	 * <p>
 	 * The general idea is that this class gives the icon necessary for viewing
 	 * the adapter and adding settings.
-	 * 
+	 *
 	 * @author sudar.sam@gmail.com
-	 * 
+	 *
 	 */
 	class GraphViewAdapter extends ArrayAdapter<String> {
 
@@ -376,7 +363,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		 * Set this adapter to use the @listViewNames as its backing object.
 		 */
 		GraphViewAdapter() {
-			super(GraphDisplayActivity.this, 
+			super(GraphDisplayActivity.this,
 					org.opendatakit.tables.R.layout.touchlistview_row2,
 					graphViewNames);
 		}
@@ -403,27 +390,27 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	      final int currentPosition = position;
 	      final String listViewName = graphViewNames.get(currentPosition);
 	      // Set the label of this row.
-	      TextView label = 
+	      TextView label =
 	          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
 	      label.setText(listViewName);
 	      // We can ignore the "ext" TextView, as there's not at this point any
 	      // other information we wish to be displaying.
-	      TextView extraString = 
+	      TextView extraString =
 	          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
 	      AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
-	      String filename = 
+	      String filename =
 	          aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
 	      extraString.setText(filename);
 	      // The radio button showing whether or not this is the default list view.
-	     
+
 	      // And now prepare the listener for the settings icon.
-	      final ImageView editView = (ImageView) 
+	      final ImageView editView = (ImageView)
 	          row.findViewById(org.opendatakit.tables.R.id.row_options);
 	      final View holderView = row;
 	      editView.setOnClickListener(new OnClickListener() {
 	        @Override
 	        public void onClick(View v) {
-	          // Open the context menu of the view, because that's where we're 
+	          // Open the context menu of the view, because that's where we're
 	          // doing the logistics.
 	          holderView.showContextMenu();
 	        }
