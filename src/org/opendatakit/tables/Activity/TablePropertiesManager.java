@@ -22,6 +22,7 @@ import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.activities.ListDisplayActivity;
+import org.opendatakit.tables.activities.TableMapFragment;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
@@ -605,93 +606,160 @@ public class TablePropertiesManager extends PreferenceActivity {
           break;
 
         case Map:
-// SS: i'm unsure about the implementation state of this, and get possible
-// views is set up to never return map, so I'm just commenting this out but
-// leaving a place for it.
-//            {
-//            ColumnProperties labelCol = settings.getMapLabelCol();
-//            if (labelCol == null) {
-//                settings.setMapLabelCol(tp.getColumns()[0]);
-//                labelCol = tp.getColumns()[0];
-//            }
-//            ColumnProperties locCol = settings.getMapLocationCol();
-//            if (locCol == null) {
-//                settings.setMapLocationCol(locationCols.get(0));
-//                locCol = locationCols.get(0);
-//            }
-//            ColumnProperties[] cps = tp.getColumns();
-//            String[] colDbNames = new String[cps.length];
-//            String[] colDisplayNames = new String[cps.length];
-//            for (int i = 0; i < cps.length; i++) {
-//                colDbNames[i] = cps[i].getColumnDbName();
-//                colDisplayNames[i] = cps[i].getDisplayName();
-//            }
-//            String[] locColDbNames = new String[locationCols.size()];
-//            String[] locColDisplayNames = new String[locationCols.size()];
-//            for (int i = 0; i < locationCols.size(); i++) {
-//                locColDbNames[i] = locationCols.get(i).getColumnDbName();
-//                locColDisplayNames[i] = locationCols.get(i).getDisplayName();
-//            }
-//
-//            ListPreference mapLocPref = new ListPreference(this);
-//            mapLocPref.setTitle(label + " Location Column");
-//            mapLocPref.setDialogTitle("Change " + label + " Location Column");
-//            mapLocPref.setEntryValues(locColDbNames);
-//            mapLocPref.setEntries(locColDisplayNames);
-//            mapLocPref.setValue(locCol.getColumnDbName());
-//            mapLocPref.setSummary(locCol.getDisplayName());
-//            mapLocPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setMapLocationCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(mapLocPref);
-//
-//            ListPreference mapLabelPref = new ListPreference(this);
-//            mapLabelPref.setTitle(label + " Label Column");
-//            mapLabelPref.setDialogTitle("Change " + label + " Label Column");
-//            mapLabelPref.setEntryValues(colDbNames);
-//            mapLabelPref.setEntries(colDisplayNames);
-//            mapLabelPref.setValue(labelCol.getColumnDbName());
-//            mapLabelPref.setSummary(labelCol.getDisplayName());
-//            mapLabelPref.setOnPreferenceChangeListener(
-//                    new OnPreferenceChangeListener() {
-//                @Override
-//                public boolean onPreferenceChange(Preference preference,
-//                        Object newValue) {
-//                    settings.setMapLabelCol(tp.getColumnByDbName(
-//                            (String) newValue));
-//                    init();
-//                    return false;
-//                }
-//            });
-//            prefCat.addPreference(mapLabelPref);
-//
-//            String[] mapColorLabels =
-//                new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
-//            for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length;
-//                    i++) {
-//                mapColorLabels[i] = LanguageUtil.getMapColorLabel(
-//                        TableViewSettings.MAP_COLOR_OPTIONS[i]);
-//            }
-//            Map<ColumnProperties, ConditionalRuler> colorRulers =
-//                new HashMap<ColumnProperties, ConditionalRuler>();
-//            for (ColumnProperties cp : tp.getColumns()) {
-//                colorRulers.put(cp, settings.getMapColorRuler(cp));
-//            }
-//            ConditionalRulerDialogPreference ccPref =
-//                new ConditionalRulerDialogPreference(
-//                        TableViewSettings.MAP_COLOR_OPTIONS, mapColorLabels,
-//                        colorRulers);
-//            ccPref.setTitle(label + " Map Color Options");
-//            prefCat.addPreference(ccPref);
-//            }
+        	// Grab the key value store helper from the table activity.
+        	final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+        	// Try to find the map label column in the store.
+        	ColumnProperties labelCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LABEL_COL));
+        	// If there is none, take the first of the table columns and set it.
+            if (labelCol == null) {
+                labelCol = tp.getColumns()[0];
+                kvsHelper.setString(TableMapFragment.KEY_MAP_LABEL_COL, labelCol.getElementKey());
+            }
+            // Try to find the location column in the store.
+            ColumnProperties locCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LOC_COL));
+            // If there is none, take the first of the location columns and set it.
+            if (locCol == null) {
+            	locCol = locationCols.get(0);
+                kvsHelper.setString(TableMapFragment.KEY_MAP_LOC_COL, locCol.getElementKey());
+            }
+            
+            // Try to find the location column in the store.
+            ColumnProperties latCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL));
+            // If there is none, take the first of the location columns and set it.
+            if (latCol == null) {
+            	latCol = tp.getColumns()[0];
+                kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latCol.getElementKey());
+            }
+            
+            // Try to find the location column in the store.
+            ColumnProperties longCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL));
+            // If there is none, take the first of the location columns and set it.
+            if (longCol == null) {
+            	longCol = tp.getColumns()[0];
+                kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
+            }
+            
+            // Go through each of the columns and add it as an option.
+            ColumnProperties[] cps = tp.getColumns();
+            String[] colDisplayNames = new String[cps.length];
+            String[] colElementKeys = new String[cps.length];
+            for (int i = 0; i < cps.length; i++) {
+                colDisplayNames[i] = cps[i].getDisplayName();
+                colElementKeys[i] = cps[i].getElementKey();
+            }
+            // Go through every location column and add it as an option.
+            String[] locColDisplayNames = new String[locationCols.size()];
+            String[] locColElementKeys = new String[locationCols.size()];
+            for (int i = 0; i < locationCols.size(); i++) {
+                locColDisplayNames[i] = locationCols.get(i).getDisplayName();
+                locColElementKeys[i] = locationCols.get(i).getElementKey();
+            }
+            
+            // Label Preference!
+            ListPreference mapLabelPref = new ListPreference(this);
+            mapLabelPref.setTitle(label + " Label Column");
+            mapLabelPref.setDialogTitle("Change " + label + " Label Column");
+            mapLabelPref.setEntryValues(colElementKeys);
+            mapLabelPref.setEntries(colDisplayNames);
+            mapLabelPref.setValue(labelCol.getElementKey());
+            mapLabelPref.setSummary(labelCol.getDisplayName());
+            mapLabelPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                	kvsHelper.setString(TableMapFragment.KEY_MAP_LABEL_COL, (String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLabelPref);
+            
+            // Lat Preference!
+            ListPreference mapLatPref = new ListPreference(this);
+            mapLatPref.setTitle(label + " Latitude Column");
+            mapLatPref.setDialogTitle("Change " + label + " Latitude Column");
+            mapLatPref.setEntryValues(colElementKeys);
+            mapLatPref.setEntries(colDisplayNames);
+            mapLatPref.setValue(latCol.getElementKey());
+            mapLatPref.setSummary(latCol.getDisplayName());
+            mapLatPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                	kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLatPref);
+            
+            // Long Preference!
+            ListPreference mapLongPref = new ListPreference(this);
+            mapLongPref.setTitle(label + " Longitude Column");
+            mapLongPref.setDialogTitle("Change " + label + " Longitude Column");
+            mapLongPref.setEntryValues(colElementKeys);
+            mapLongPref.setEntries(colDisplayNames);
+            mapLongPref.setValue(longCol.getElementKey());
+            mapLongPref.setSummary(longCol.getDisplayName());
+            mapLongPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                	kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLongPref);
+            
+            // Location Preference!
+            ListPreference mapLocPref = new ListPreference(this);
+            mapLocPref.setTitle(label + " Location Column");
+            mapLocPref.setDialogTitle("Change " + label + " Location Column");
+            mapLocPref.setEntryValues(locColElementKeys);
+            mapLocPref.setEntries(locColDisplayNames);
+            mapLocPref.setValue(locCol.getElementKey());
+            mapLocPref.setSummary(locCol.getDisplayName());
+            mapLocPref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                	kvsHelper.setString(TableMapFragment.KEY_MAP_LOC_COL, (String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(mapLocPref);
+            
+            // ListView Preference!
+            ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
+            listFilePref.setTitle(label + " List View File");
+            listFilePref.setDialogTitle("Change " + label + " List View File");
+            String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
+            listFilePref.setText(currentFilename);
+            listFilePref.setOnPreferenceChangeListener(
+                    new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                	kvsHelper.setString(TableMapFragment.KEY_FILENAME, (String) newValue);
+                    init();
+                    return false;
+                }
+            });
+            prefCat.addPreference(listFilePref);
+        
+            /**String[] mapColorLabels = new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
+            for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length; i++) {
+                mapColorLabels[i] = LanguageUtil.getMapColorLabel(TableViewSettings.MAP_COLOR_OPTIONS[i]);
+            }
+            Map<ColumnProperties, ConditionalRuler> colorRulers = new HashMap<ColumnProperties, ConditionalRuler>();
+            for (ColumnProperties cp : tp.getColumns()) {
+                colorRulers.put(cp, settings.getMapColorRuler(cp));
+            }
+            ConditionalRulerDialogPreference ccPref = 
+            		new ConditionalRulerDialogPreference(TableViewSettings.MAP_COLOR_OPTIONS, mapColorLabels, colorRulers);
+            ccPref.setTitle(label + " Map Color Options");
+            prefCat.addPreference(ccPref);*/
             break;
         default:
           Log.e(TAG, "unrecognized view type: " + tp.getCurrentViewType() +

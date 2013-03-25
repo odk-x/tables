@@ -21,8 +21,11 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.tables.Activity.util.CustomViewUtil;
+import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -30,7 +33,6 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-
 import android.content.Context;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -54,47 +56,47 @@ public abstract class CustomView extends LinearLayout {
 
 	public static void initCommonWebView(Context context) {
 		if (webView != null) {
-		  // do this every time to try and clear the old data.
-	      //webView.clearView();
-	      //webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html",
-	      //    null);
+			// do this every time to try and clear the old data.
+			//webView.clearView();
+			//webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html", 
+			//    null);
 			return;
 		}
 		webView = new WebView(context);
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.setWebViewClient(new WebViewClient() {
 
-      @Override
-      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-        super.onReceivedError(view, errorCode, description, failingUrl);
-        Log.e("CustomView", "onReceivedError: " + description + " at " + failingUrl);
-      }});
+			@Override
+			public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+				super.onReceivedError(view, errorCode, description, failingUrl);
+				Log.e("CustomView", "onReceivedError: " + description + " at " + failingUrl);
+			}});
 
 		webView.setWebChromeClient(new WebChromeClient(){
 
-      @Override
-      public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-        Log.i("CustomView", "onConsoleMessage " +
-            consoleMessage.messageLevel().name() + consoleMessage.message());
+			@Override
+			public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+				Log.i("CustomView", "onConsoleMessage " + 
+						consoleMessage.messageLevel().name() + consoleMessage.message());
 
-        return super.onConsoleMessage(consoleMessage);
-      }
+				return super.onConsoleMessage(consoleMessage);
+			}
 
-      @Override
-      @Deprecated
-      public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-        // TODO Auto-generated method stub
-        super.onConsoleMessage(message, lineNumber, sourceID);
-        Log.i("CustomView", "onConsoleMessage " + message);
-      }
+			@Override
+			@Deprecated
+			public void onConsoleMessage(String message, int lineNumber, String sourceID) {
+				// TODO Auto-generated method stub
+				super.onConsoleMessage(message, lineNumber, sourceID);
+				Log.i("CustomView", "onConsoleMessage " + message);
+			}
 
-      @Override
-      public void onReachedMaxAppCacheSize(long requiredStorage, long quota,
-          QuotaUpdater quotaUpdater) {
-        // TODO Auto-generated method stub
-        super.onReachedMaxAppCacheSize(requiredStorage, quota, quotaUpdater);
-        Log.i("CustomView", "onReachedMaxAppCacheSize " + Long.toString(quota));
-      }});
+			@Override
+			public void onReachedMaxAppCacheSize(long requiredStorage, long quota,
+					QuotaUpdater quotaUpdater) {
+				// TODO Auto-generated method stub
+				super.onReachedMaxAppCacheSize(requiredStorage, quota, quotaUpdater);
+				Log.i("CustomView", "onReachedMaxAppCacheSize " + Long.toString(quota));
+			}});
 	}
 
 	protected void initView() {
@@ -155,43 +157,43 @@ public abstract class CustomView extends LinearLayout {
 	 */
 	protected class TableData {
 
-	  private static final String TAG = "TableData";
+		private static final String TAG = "TableData";
 
 		private final Table rawTable;
 		private final UserTable userTable;
-        private Map<String, Integer> colMap;			//Maps the column names with an index number
-        private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
-        private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
-        protected Context context;
-        private TableProperties tp;
+		private Map<String, Integer> colMap;			//Maps the column names with an index number
+		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
+		private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
+		protected Context context;
+		private TableProperties tp;
 
 		public TableData(TableProperties tp, Table table) {
-		  Log.d(TAG, "calling TableData constructor with Table");
+			Log.d(TAG, "calling TableData constructor with Table");
 			rawTable = table;
 			userTable = null;
-            this.tp = tp;
-            initMaps(tp);
+			this.tp = tp;
+			initMaps(tp);
 		}
 
 		public TableData(TableProperties tp, UserTable table) {
-		  Log.d(TAG, "calling TableData constructor with UserTable");
+			Log.d(TAG, "calling TableData constructor with UserTable");
 			rawTable = null;
 			userTable = table;
-            this.tp = tp;
-            initMaps(tp);
+			this.tp = tp;
+			initMaps(tp);
 
-            //The collectionMap will be initialized if the table is indexed.
-            if(isIndexed()) {
-            	initCollectionMap(tp);
-            }
+			//The collectionMap will be initialized if the table is indexed.
+			if(isIndexed()) {
+				initCollectionMap(tp);
+			}
 		}
 
-        //Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
-        private void initMaps(TableProperties tp) {
+		//Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
+		private void initMaps(TableProperties tp) {
 			colMap = new HashMap<String, Integer>();
 
 			ColumnProperties[] cps = tp.getColumns();
-            primeColumns = tp.getPrimeColumns();
+			primeColumns = tp.getPrimeColumns();
 
 			for (int i = 0; i < cps.length; i++) {
 				colMap.put(cps[i].getDisplayName(), i);
@@ -202,7 +204,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 		}
 
-        //Returns the number of rows in the table being viewed.
+		//Returns the number of rows in the table being viewed.
 		public int getCount() {
 			if (rawTable == null) {
 				return userTable.getHeight();
@@ -238,41 +240,47 @@ public abstract class CustomView extends LinearLayout {
 				String dBName = tp.getColumnByDisplayName(column);
 				String label = tp.getColumnByElementKey(dBName).getColumnType().label();
 				colInfo.put(column, label);
-			}
+			}			
 			return new JSONObject(colInfo).toString();
 		}
+		
+		//get color rules for colName
+		public String getColumnColorRules(String colName, int value) {
+			String elementKey = tp.getColumnByDisplayName(colName);
+			ColumnColorRuler colRul = new ColumnColorRuler(tp, elementKey);
+			return String.format("#%06X", (0xFFFFFF & colRul.getForegroundColor("" + value, -16777216)));
+		}
 
-        //Maps the number of rows to every collection of a table.
-        private void initCollectionMap(TableProperties tp) {
-        	Control c = new Control(context);
-        	collectionMap = new HashMap<Integer, Integer>();
-        	String colName = primeColumns.get(0).substring(1);			//Assumes that the first col is the main, indexed col
-        	for(String col : colMap.keySet()) {
-        		if(col.equalsIgnoreCase(colName)) {
-        			colName = col;
-        		}
-        	}
+		//Maps the number of rows to every collection of a table.
+		private void initCollectionMap(TableProperties tp) {
+			Control c = new Control(context);
+			collectionMap = new HashMap<Integer, Integer>();
+			String colName = primeColumns.get(0).substring(1);			//Assumes that the first col is the main, indexed col
+			for(String col : colMap.keySet()) {
+				if(col.equalsIgnoreCase(colName)) {
+					colName = col;
+				}
+			}
+			//Queries the original table for the rows in every collection and stores the number of resulting rows for each.
+			for(int i = 0; i < getCount(); i++) {	            	
+				String tableName = tp.getDisplayName();
+				String searchText = colName + ":" + getData(i, colName);
+				TableData data = c.query(tableName, searchText);
+				collectionMap.put(i, data.getCount());
+			}
+		}
 
-        	//Queries the original table for the rows in every collection and stores the number of resulting rows for each.
-        	for(int i = 0; i < getCount(); i++) {
-            	String tableName = tp.getDisplayName();
-            	String searchText = colName + ":" + getData(i, colName);
-            	TableData data = c.query(tableName, searchText);
-            	collectionMap.put(i, data.getCount());
-        	}
-    	}
+		//Returns the number of rows in the collection at the given row index.
+		public int getCollectionSize(int rowNum) {
+			return collectionMap.get(rowNum);
+		}
 
-        //Returns the number of rows in the collection at the given row index.
-        public int getCollectionSize(int rowNum) {
-        	return collectionMap.get(rowNum);
-        }
+		//Returns whether the table is indexed.
+		public boolean isIndexed() {
+			return (!primeColumns.isEmpty());
+		}
 
-        //Returns whether the table is indexed.
-        public boolean isIndexed() {
-        	return (!primeColumns.isEmpty());
-	    }
-
-        //Returns the cell data at the given offset into the table.
+		//Returns the cell data at the given offset into the table. 
 
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
@@ -290,7 +298,7 @@ public abstract class CustomView extends LinearLayout {
 
 	protected class Control {
 
-	  private static final String TAG = "Control";
+		private static final String TAG = "Control";
 
 		protected Context context;
 		private TableProperties[] allTps;

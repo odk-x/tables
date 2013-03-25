@@ -1045,11 +1045,11 @@ public class Controller {
 //      break;
 //    case TableViewSettings.Type.BAR_GRAPH:
     case Graph:
-      intent = new Intent(context, BarGraphDisplayActivity.class);
+      intent = new Intent(context, GraphDisplayActivity.class);
       break;
 //    case TableViewSettings.Type.MAP:
     case Map:
-      intent = new Intent(context, MapDisplayActivity.class);
+      intent = new Intent(context, TableActivity.class);
       break;
     case Spreadsheet:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);

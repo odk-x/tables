@@ -1806,9 +1806,9 @@ public class TableProperties {
 //    }
     // Not adding this b/c it's not working atm.
 //    list.add(Type.BAR_GRAPH);
-//    if (locationColCount >= 1) {
-//      list.add(Type.MAP);
-//    }
+    if (locationColCount >= 1) {
+      list.add(TableViewType.Map);
+    }
 //    int[] arr = new int[list.size()];
 //    for (int i = 0; i < list.size(); i++) {
 //      arr[i] = list.get(i);

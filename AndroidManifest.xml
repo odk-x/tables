@@ -17,6 +17,15 @@
     <uses-permission android:name="android.permission.READ_SYNC_STATS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    
+    <permission
+          android:name="org.opendatakit.tables.permission.MAPS_RECEIVE"
+          android:protectionLevel="signature" />
+    <uses-permission android:name="org.opendatakit.tables.permission.MAPS_RECEIVE" />
+    
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <supports-screens
         android:anyDensity="true"
@@ -27,10 +36,14 @@
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="16"/>
 
+
     <application
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/InvertTables" >
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyBB42o9vDeGIRfCdjyTOpQi0LtpmS9Cerw"/>
         <activity
             android:name=".Activity.util.Launcher"
             android:label="@string/app_name" >
@@ -80,13 +93,15 @@
         </activity>
         <activity android:name=".activities.ListDisplayActivity" >
         </activity>
+        <activity android:name=".activities.GraphDisplayActivity" >
+        </activity>
         <activity android:name=".activities.LineGraphDisplayActivity" >
         </activity>
         <activity android:name=".activities.BoxStemGraphDisplayActivity" >
         </activity>
         <activity android:name=".activities.BarGraphDisplayActivity" >
         </activity>
-        <activity android:name=".activities.MapDisplayActivity" >
+        <activity android:name=".activities.TableActivity" >
         </activity>
         <activity android:name=".Activity.DisplayPrefsActivity" >
         </activity>
@@ -94,6 +109,8 @@
         </activity>
         <activity android:name=".activities.ConflictResolutionActivity" >
         </activity>
+        <activity android:name=".Activity.ListViewManager"></activity>
+        <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
 
         <uses-library android:name="com.google.android.maps" />
         <!--
@@ -132,8 +149,6 @@
             android:name="sync.files.FilesContentProvider"
             android:authorities="org.opendatakit.tables.android.provider.files" />
 
-        <activity android:name=".Activity.ListViewManager"></activity>
-        <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
     </application>
 
 </manifest>
