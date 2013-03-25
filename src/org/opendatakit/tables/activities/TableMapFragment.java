@@ -2,15 +2,16 @@ package org.opendatakit.tables.activities;
 
 import java.util.HashMap;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.util.TableFileUtils;
 import org.opendatakit.tables.view.custom.CustomTableView;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,51 +34,51 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
  * A TableMapFragment displays map information about a specific table.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class TableMapFragment extends Fragment {
-	
+
 	public static final String KVS_PARTITION = "TableMapFragment";
 	public static final String KEY_MAP_LABEL_COL = "keyMapLabelCol";
     public static final String KEY_MAP_LOC_COL = "keyMapLocCol";
     public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
     public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
     public static final String KEY_FILENAME = "keyFilename";
-    
+
     public static final String KEY_TABLE = "keyTable";
     public static final String KEY_TABLE_PROPERTIES = "keyTableProperties";
-	
+
 	/** Table that represents all of the data in the query. */
 	private UserTable mTable;
 	/** The properties that pertain to the table. */
 	private TableProperties mTableProperties;
-	
+
 	private ListFragment mList;
 	private InnerTableMapFragment mMap;
-	
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		// Create the map fragment.
         mMap = new InnerTableMapFragment();
         mMap.setTable(mTable, mTableProperties);
-        
+
         // Create the list fragment.
         mList = new ListFragment();
         mList.setTable(mTable, mTableProperties);
-		
+
 		// Add both the list and the map at the same time.
 		getChildFragmentManager().beginTransaction()
 				.add(R.id.list, mList).add(R.id.map, mMap).commit();
 	}
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.map_fragment, container, false);
 	}
-	
+
 	/**
 	 * Sets the table and table properties to this fragment.
 	 */
@@ -85,30 +86,30 @@ public class TableMapFragment extends Fragment {
 		mTable = table;
 		mTableProperties = properties;
 	}
-	
+
 	/**
-	 * A ListFragment displays data in a table in a list format. The format is 
+	 * A ListFragment displays data in a table in a list format. The format is
 	 * specified by a html file in the TablePropertiesManager Activity.
-	 * This ListFragment is special: it only displays one row, which is the data 
+	 * This ListFragment is special: it only displays one row, which is the data
 	 * from the selected map marker.
-	 * 
+	 *
 	 * @author Chris Gelon (cgelon)
 	 */
 	public static class ListFragment extends SherlockFragment {
 		/** The key for the arguments bundle that holds which row is currently selected. */
 		public static final String KEY_ROW_INDEX = "keyRowIndex";
-		
+
 		/** Table that represents all of the data in the query. */
 		private UserTable mTable;
 		/** The properties that pertain to the table. */
 		private TableProperties mTableProperties;
-		
+
 		/** The container that holds this fragment's views. */
 		private ViewGroup mContainer;
-		
+
 		/** The index in the UserTable of the currently selected row. */
 		private int mIndex;
-		
+
 		/**
 		 * Sets the table and table properties to this fragment.
 		 */
@@ -116,42 +117,43 @@ public class TableMapFragment extends Fragment {
 			mTable = table;
 			mTableProperties = properties;
 		}
-		
+
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
 			mIndex = 0;
 		}
-		
+
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			mContainer = container;
 			return null;
 		}
-		
+
 		@Override
 		public void onResume() {
 	        super.onResume();
 	        mContainer.setVisibility(View.GONE);
 	    }
-		
+
 		private void resetView() {
 			// Grab the key value store helper from the map fragment.
 	    	//final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
 	    	// Find which file stores the html information for displaying the list.
-			String filename = Environment.getExternalStorageDirectory().getPath() + "/odk/tables/facilities_list_chunked.html"; //kvsHelper.getString(TableMapFragment.KEY_FILENAME);
+			String filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + "/facilities_list_chunked.html";
+			//kvsHelper.getString(TableMapFragment.KEY_FILENAME);
 			// Create the custom view and set it.
-	        CustomTableView view = CustomTableView.get(getActivity(), mTableProperties, mTable, filename, mIndex);
+	      CustomTableView view = CustomTableView.get(getActivity(), mTableProperties, mTable, filename, mIndex);
 			view.display();
 			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
 			        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
 			mContainer.removeAllViews();
 	        mContainer.addView(view, params);
-	        
+
 	        WebViewClient client = new WebViewClient() {
         	   public void onPageFinished(WebView view, String url) {
-        		   LinearLayout.LayoutParams containerParams = 
+        		   LinearLayout.LayoutParams containerParams =
         				   new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, view.getMeasuredHeight());
    		           if (containerParams.height > 0) {
    		        	   //mContainer.setLayoutParams(containerParams);
@@ -161,45 +163,45 @@ public class TableMapFragment extends Fragment {
 	        };
 	        view.setOnFinishedLoaded(client);
 		}
-		
+
 		/** Sets the index of the list view, which will be the row of the data wanting to be displayed. */
 		public void setIndex(int index) {
 			mIndex = index;
 			resetView();
 		}
-		
+
 		/**
 		 * @return The current index of the item being displayed.
 		 */
 		public int getIndex() {
 			return mIndex;
 		}
-		
+
 		public boolean isListVisible() {
 			return mContainer.getVisibility() == View.VISIBLE;
 		}
 	}
-	
+
 	/**
 	 * The InnerMapFragment has the capability of showing a map.
 	 * It displays markers based off of location column set in the TableProperitiesManager Activity.
-	 * 
+	 *
 	 * @author Chris Gelon (cgelon)
 	 */
 	public static class InnerTableMapFragment extends SherlockMapFragment {
 		private static String TAG = "InnerMapFragment";
-		
+
 		/** Table that represents all of the data in the query. */
 		private UserTable mTable;
 		/** The properties that pertain to the table. */
 		private TableProperties mTableProperties;
-		
+
 		/** A mapping of all markers to index to determine which marker is selected. */
 		private HashMap<Marker, Integer> mMarkerIds;
-		
+
 		/** The currently selected marker. */
 		private Marker mCurrentMarker;
-		
+
 		/**
 		 * Sets the table and table properties to this fragment.
 		 */
@@ -207,7 +209,7 @@ public class TableMapFragment extends Fragment {
 			mTable = table;
 			mTableProperties = properties;
 		}
-		
+
 		@Override
 		public void onStart() {
 			super.onStart();
@@ -228,7 +230,7 @@ public class TableMapFragment extends Fragment {
 	    		}
 	    		mMarkerIds.clear();
 	    	}
-	    	
+
 	    	// Grab the key value store helper from the table activity.
 	    	final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(KVS_PARTITION);
 	    	// Try to find the map columns in the store.
@@ -236,7 +238,7 @@ public class TableMapFragment extends Fragment {
 	    	ColumnProperties locationColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LOC_COL));
 	    	ColumnProperties latitudeColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LAT_COL));
 	    	ColumnProperties longitudeColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LONG_COL));
-	    	
+
 	    	// Find the locations from entries in the table.
 			int labelColumnIndex = mTableProperties.getColumnIndex(labelColumn.getElementKey());
 			int locationColumnIndex = mTableProperties.getColumnIndex(locationColumn.getElementKey());
@@ -250,7 +252,7 @@ public class TableMapFragment extends Fragment {
 				String longitudeString = mTable.getData(i, longitudeColumnIndex);
 				if (latitudeString == null || longitudeString == null || latitudeString.length() == 0 || longitudeString.length() == 0) continue;
 				//if (locationString == null || locationString.length() == 0) continue;
-				
+
 				// Add the location as an overlay.
 				LatLng location = parseLocationFromString(latitudeString + "," + longitudeString);
 				if (location == null) continue;
@@ -266,7 +268,7 @@ public class TableMapFragment extends Fragment {
 				getMap().setOnMarkerClickListener(getOnMarkerClickListener());
 			}
 	    }
-	    
+
 	    /**
 	     * Parses the location string and creates a LatLng.
 	     * The format of the string should be:
@@ -281,7 +283,7 @@ public class TableMapFragment extends Fragment {
 	    	}
 	    	return null;
 	    }
-	    
+
 	    /**
 	     * If a marker is selected, deselect it.
 	     */
@@ -295,7 +297,7 @@ public class TableMapFragment extends Fragment {
 				}
 			};
 		}
-	    
+
 	    private OnMapLongClickListener getOnMapLongClickListener() {
 			return new OnMapLongClickListener() {
 				@Override
@@ -307,7 +309,7 @@ public class TableMapFragment extends Fragment {
 				}
 			};
 		}
-	    
+
 	    /**
 	     * When a marker is clicked, set the index of the list fragment, and then show it.
 	     * If that index is already selected, then hide it.
@@ -318,7 +320,7 @@ public class TableMapFragment extends Fragment {
 				@Override
 				public boolean onMarkerClick(Marker arg0) {
 					int currentIndex = getListFragment().getIndex();
-					
+
 					// Make the marker visible if it is either invisible or a new marker.
 					// Make the marker invisible if clicking on the already selected marker.
 					if (currentIndex != mMarkerIds.get(arg0) || !getListFragment().isListVisible()) {
@@ -331,12 +333,12 @@ public class TableMapFragment extends Fragment {
 					} else {
 						deselectCurrentMarker();
 					}
-					
+
 					return true;
 				}
 			};
 		}
-	    
+
 	    /**
 	     * Selects a marker, updating the marker list, and changing the marker's color to green.
 	     * Makes the marker the currently selected marker.
@@ -353,14 +355,14 @@ public class TableMapFragment extends Fragment {
 	    	mMarkerIds.put(newMarker, index);
 	    	mCurrentMarker = newMarker;
 	    }
-	    
+
 	    /**
-	     * Deselects the currently selected marker, updating the marker list, and changing the marker 
+	     * Deselects the currently selected marker, updating the marker list, and changing the marker
 	     * back to a default color.
 	     */
 	    private void deselectCurrentMarker() {
 	    	if (mCurrentMarker == null) return;
-	    	
+
 	    	int index = mMarkerIds.get(mCurrentMarker);
 			Marker newMarker = getMap().addMarker(new MarkerOptions()
 				.position(mCurrentMarker.getPosition())
@@ -371,7 +373,7 @@ public class TableMapFragment extends Fragment {
 			mCurrentMarker = null;
 			getListFragment().mContainer.setVisibility(View.GONE);
 	    }
-	    
+
 	    public ListFragment getListFragment() {
 	    	return ((TableMapFragment)getParentFragment()).mList;
 	    }
