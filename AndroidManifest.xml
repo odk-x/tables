@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.ACCOUNT_MANAGER" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
@@ -18,6 +17,15 @@
     <uses-permission android:name="android.permission.READ_SYNC_STATS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:resizeable="true"
+        android:smallScreens="true" />
+
+    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="16"/>
 
     <application
         android:icon="@drawable/icon"
@@ -82,9 +90,9 @@
         </activity>
         <activity android:name=".Activity.DisplayPrefsActivity" >
         </activity>
-        <activity android:name="org.opendatakit.tables.activities.DetailDisplayActivity" >
+        <activity android:name=".activities.DetailDisplayActivity" >
         </activity>
-        <activity android:name="org.opendatakit.tables.activities.ConflictResolutionActivity" >
+        <activity android:name=".activities.ConflictResolutionActivity" >
         </activity>
 
         <uses-library android:name="com.google.android.maps" />
@@ -103,7 +111,7 @@
         <! service for syncing files
         -->
         <service
-            android:name="org.opendatakit.tables.sync.files.FileSyncService"
+            android:name=".sync.files.FileSyncService"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
@@ -114,25 +122,18 @@
                 android:resource="@xml/filesyncadapter" />
         </service>
 
+        <!--  dummy ContentProvider for syncing tables -->
         <provider
             android:name=".sync.TablesContentProvider"
-            android:authorities="org.opendatakit.tables.tablescontentprovider" />
+            android:authorities="org.opendatakit.tables.android.provider.content" />
 
         <!-- dummy ContentProvider for syncing files -->
         <provider
-            android:name="org.opendatakit.tables.sync.files.FilesContentProvider"
-            android:authorities="org.opendatakit.tables.tablefilesauthority" />
+            android:name="sync.files.FilesContentProvider"
+            android:authorities="org.opendatakit.tables.android.provider.files" />
+
         <activity android:name=".Activity.ListViewManager"></activity>
         <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
     </application>
-
-    <supports-screens
-        android:anyDensity="true"
-        android:largeScreens="true"
-        android:normalScreens="true"
-        android:resizeable="true"
-        android:smallScreens="true" />
-
-    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="16"/>
 
 </manifest>

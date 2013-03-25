@@ -15,23 +15,28 @@
  */
 package org.opendatakit.tables.sync.files;
 
+import org.opendatakit.tables.util.TableFileUtils;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 
 /**
- * Empty implementation of the content provider for using FileSyncAdapter. 
- * Apparently you need a content provider, but since we are interacting with 
- * files directly, we're just going to make it empty. Is this the best way to 
+ * Empty implementation of the content provider for using FileSyncAdapter.
+ * Apparently you need a content provider, but since we are interacting with
+ * files directly, we're just going to make it empty. Is this the best way to
  * do it? One wonders...
  * @author sudar.sam@gmail.com
  *
  */
 public class FilesContentProvider extends ContentProvider {
-  
+
+  public static final String AUTHORITY = "org.opendatakit.tables.android.provider.files";
+  public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + TableFileUtils.ODK_TABLES_APP_NAME);
+
   // not including a URI. should there be one?
-  public static final String MESSAGE = FilesContentProvider.class.getName() 
+  public static final String MESSAGE = FilesContentProvider.class.getName()
       + " is an empty implementation of ContentProvider not for real use.";
 
   @Override

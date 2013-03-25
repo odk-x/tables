@@ -15,26 +15,26 @@
  */
 package org.opendatakit.tables.DataStructure;
 
+import java.io.File;
+
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.util.TableFileUtils;
+
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
  * This class is being cleaned up and refactored, but the refactoring is not
- * yet complete. I (sudar.sam) am putting my name on it just because I've 
+ * yet complete. I (sudar.sam) am putting my name on it just because I've
  * changed it, but I did not write it.
  * @author sudar.sam@gmail.com
  *
  */
 public class DisplayPrefsDBManager extends SQLiteOpenHelper {
-    
-    //private static final String DB_LOC = "display_prefs.sql";
-  // trying to see if i can find it.
-  private static final String DB_LOC = 
-      "/sdcard/odk/tables/display_prefs.sql";
-  
+
   public static final String DB_NAME = "colors";
-  
+
   public static final String TABLE_ID_COL = "tableId";
   public static final String COL_NAME_COL = "colName";
   public static final String COMP_COL = "comp";
@@ -42,20 +42,20 @@ public class DisplayPrefsDBManager extends SQLiteOpenHelper {
   public static final String FOREGROUND_COL = "foreground";
   public static final String BACKGROUND_COL = "background";
   public static final String ID_COL = "id";
-  
+
   private static DisplayPrefsDBManager singleton = null;
-    
+
     private DisplayPrefsDBManager(Context context) {
-        super(context, DB_LOC, null, 1);
+        super(context, ODKFileUtils.getMetadataFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "display_prefs.db", null, 1);
     }
-    
+
     public static DisplayPrefsDBManager getManager(Context context) {
       if (singleton == null) {
         singleton = new DisplayPrefsDBManager(context);
       }
       return singleton;
     }
-    
+
     public static String[] getColumns() {
       return new String[] {
           TABLE_ID_COL,
@@ -67,7 +67,7 @@ public class DisplayPrefsDBManager extends SQLiteOpenHelper {
           ID_COL
       };
     }
-    
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         String colorSql;
@@ -82,10 +82,10 @@ public class DisplayPrefsDBManager extends SQLiteOpenHelper {
                 ");";
         db.execSQL(colorSql);
     }
-    
+
     @Override
     public void onUpgrade(SQLiteDatabase db, int v1, int v2) {
         // TODO Auto-generated method stub
     }
-    
+
 }

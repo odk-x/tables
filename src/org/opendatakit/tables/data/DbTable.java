@@ -80,6 +80,7 @@ public class DbTable {
       ADMIN_COLUMNS.add(DataTableColumns.TRANSACTIONING);
       ADMIN_COLUMNS.add(DataTableColumns.TIMESTAMP);
       ADMIN_COLUMNS.add(DataTableColumns.SAVED);
+      ADMIN_COLUMNS.add(DataTableColumns.FORM_ID);
       ADMIN_COLUMNS.add(DataTableColumns.INSTANCE_NAME);
       ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
       // put the columns in to the to-sync map.
@@ -106,8 +107,8 @@ public class DbTable {
     public static final String DB_CSV_COLUMN_LIST =
         DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER + ", " + DataTableColumns.LAST_MODIFIED_TIME +
         ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE + ", " + DataTableColumns.TRANSACTIONING +
-        ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.INSTANCE_NAME +
-        ", " + DataTableColumns.LOCALE;
+        ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
+        ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
 
     private final DataUtil du;
     private final DbHelper dbh;
@@ -154,6 +155,7 @@ public class DbTable {
      ", " + DataTableColumns.TRANSACTIONING + " INTEGER NOT NULL" +
      ", " + DataTableColumns.TIMESTAMP + " INTEGER NOT NULL" +
      ", " + DataTableColumns.SAVED + " TEXT NULL" +
+     ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
      ", " + DataTableColumns.INSTANCE_NAME + " TEXT NOT NULL" +
      ", " + DataTableColumns.LOCALE + " TEXT NULL" +
      colListBuilder.toString() +

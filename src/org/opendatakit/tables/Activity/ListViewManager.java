@@ -37,7 +37,6 @@ import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
@@ -56,17 +55,17 @@ import com.actionbarsherlock.app.SherlockListActivity;
  * <p>
  * It's general structure is modeled on the ColumnManager class, so that we keep
  * a standard feel throughout the app.
- * 
+ *
  * @author sudar.sam@gmail.com
- * 
+ *
  */
 public class ListViewManager extends SherlockListActivity {
-  
+
   public static final String TAG = ListViewManager.class.getName();
-  
+
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   private static final String ACTIVITY_TITLE = "List View Manager";
-  
+
   /**
    * Menu ID for adding a new list view.
    */
@@ -75,7 +74,7 @@ public class ListViewManager extends SherlockListActivity {
    * The char sequence for the add new list view item.
    */
   public static final String ADD_NEW_LIST_VIEW_TEXT = "Add New List View";
-  
+
   /**
    * Menu ID for deleting an entry.
    */
@@ -97,53 +96,53 @@ public class ListViewManager extends SherlockListActivity {
    * This will be the names of all the possible list views.
    */
   private List<String> listViewNames;
-  
+
   /**
    * This will be the adapter that handles displaying the actual rows as well
    * as presenting the menu to edit the entry.
    */
   private ListViewAdapter adapter;
-  
+
   /**
    * The id of the table for which we are displaying the list views.
    */
   private String tableId;
-  
+
   /**
    * The TableProperties of the table for which we are displaying the possible
    * list views
    */
   private TableProperties tp;
-  
+
   /**
    * The KVS helper through which we will be getting the list view information.
    */
   private KeyValueStoreHelper kvsh;
-  
+
   /**
    * This is the name of the list view that is currently set to the default.
    */
   private String defaultListViewName;
-  
+
   /**
    * This is the aspect helper for the general list view partition. This stands
    * opposed to the partition where the named views themselves reside.
    */
   private KeyValueStoreHelper listViewKvsh;
-  
+
   /*
-   * Get the fields up and running. 
+   * Get the fields up and running.
    */
   private void init() {
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     DbHelper dbh = DbHelper.getDbHelper(this);
-    this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, 
+    this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
-    this.kvsh = 
+    this.kvsh =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
-    this.listViewKvsh = 
+    this.listViewKvsh =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-    this.defaultListViewName = 
+    this.defaultListViewName =
         listViewKvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
     this.listViewNames = kvsh.getAspectsForPartition();
     Log.d(TAG, "listViewNames: " + listViewNames);
@@ -151,32 +150,32 @@ public class ListViewManager extends SherlockListActivity {
     this.adapter = new ListViewAdapter();
     setListAdapter(adapter);
   }
-  
+
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     // Since at the moment we are counting on the Controller class to
-    // do the changing, we don't use the intent directly. If someone 
+    // do the changing, we don't use the intent directly. If someone
     // clicks on this view, that means they want to display the list
     // view using this activity. Further, it means that they want to
     // see the list view. To get this to work, we need to set the view
     // type to list view
     tp.setCurrentViewType(TableViewType.List);
-    // This will help us access keys for the general partition. (We 
-    // need this to set this view as the default list view for the 
+    // This will help us access keys for the general partition. (We
+    // need this to set this view as the default list view for the
     // table.)
-    KeyValueStoreHelper kvshListViewPartition = 
+    KeyValueStoreHelper kvshListViewPartition =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
     // We need this to get the filename of the current list view.
-    KeyValueHelper aspectHelper = 
-        kvsh.getAspectHelper((String) 
+    KeyValueHelper aspectHelper =
+        kvsh.getAspectHelper((String)
             getListView().getItemAtPosition(position));
-    String filenameOfSelectedView = 
+    String filenameOfSelectedView =
         aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
     // Check if there are prime columns. If there are, then we're using
     // the collection view? This needs to be sorted out.
     // TODO: launch if something is a collection view correctly.
-    // For example, right now there is an issue where you might be 
-    // selecting a collection list view but you're not viewing the 
+    // For example, right now there is an issue where you might be
+    // selecting a collection list view but you're not viewing the
     // table with a prime column, or vice versa, and this could create
     // an issue.
     ArrayList<String> primeColumns = tp.getPrimeColumns();
@@ -186,10 +185,10 @@ public class ListViewManager extends SherlockListActivity {
     } else {
       isOverview = true;
     }
-    Controller.launchTableActivityWithFilename(ListViewManager.this, tp, 
+    Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
         null, isOverview, filenameOfSelectedView);
   }
-  
+
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
@@ -200,30 +199,30 @@ public class ListViewManager extends SherlockListActivity {
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
     init();
   }
-  
+
   @Override
   public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
-    com.actionbarsherlock.view.MenuItem addItem = menu.add(0, 
+    com.actionbarsherlock.view.MenuItem addItem = menu.add(0,
         ADD_NEW_LIST_VIEW, 0, ADD_NEW_LIST_VIEW_TEXT);
     addItem.setIcon(org.opendatakit.tables.R.drawable.content_new);
     addItem.setShowAsAction(
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
   }
-  
-  @Override 
-  public boolean onMenuItemSelected(int featureId, 
+
+  @Override
+  public boolean onMenuItemSelected(int featureId,
       com.actionbarsherlock.view.MenuItem item) {
     switch (item.getItemId()) {
     case ADD_NEW_LIST_VIEW:
-      // If this is the case we need to launch the edit activity. 
+      // If this is the case we need to launch the edit activity.
       // The default name will just be some constant that changes when you
       // add new information.
       String baseName = "List View ";
@@ -234,12 +233,12 @@ public class ListViewManager extends SherlockListActivity {
         suffix++;
         potentialName = baseName + suffix;
       }
-      Intent newListViewIntent = 
+      Intent newListViewIntent =
           new Intent(this, EditSavedListViewEntryActivity.class);
       newListViewIntent.putExtra(
           EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
       newListViewIntent.putExtra(
-          EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME, 
+          EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME,
           potentialName);
       startActivity(newListViewIntent);
       return true;
@@ -247,16 +246,16 @@ public class ListViewManager extends SherlockListActivity {
       startActivity(new Intent(this, TableManager.class));
       return true;
     }
-    return false;    
+    return false;
   }
-  
+
   @Override
   public boolean onContextItemSelected(android.view.MenuItem item) {
     // We need this so we can get the position of the thing that was clicked.
-    AdapterContextMenuInfo menuInfo = 
+    AdapterContextMenuInfo menuInfo =
         (AdapterContextMenuInfo) item.getMenuInfo();
     final int position = menuInfo.position;
-    final String entryName = 
+    final String entryName =
         (String) getListView().getItemAtPosition(position);
     switch(item.getItemId()) {
     case MENU_DELETE_ENTRY:
@@ -267,15 +266,15 @@ public class ListViewManager extends SherlockListActivity {
       builder.setTitle("Delete " + entryName + "?");
       // For the OK action we want to actually delete this list view.
       builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-        
+
         @Override
         public void onClick(DialogInterface dialog, int which) {
-          // We need to delete the entry. First delete it in the key value 
+          // We need to delete the entry. First delete it in the key value
           // store.
           AspectHelper aspectHelper = kvsh.getAspectHelper(entryName);
           aspectHelper.deleteAllEntriesInThisAspect();
           if (entryName.equals(defaultListViewName)) {
-            KeyValueStoreHelper generalViewHelper = 
+            KeyValueStoreHelper generalViewHelper =
                 tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
             generalViewHelper.removeKey(
                 ListDisplayActivity.KEY_LIST_VIEW_NAME);
@@ -286,9 +285,9 @@ public class ListViewManager extends SherlockListActivity {
           adapter.notifyDataSetChanged();
         }
       });
-      
+
       builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-        
+
         @Override
         public void onClick(DialogInterface dialog, int which) {
           // Canceled. Do nothing.
@@ -312,9 +311,9 @@ public class ListViewManager extends SherlockListActivity {
       return false;
     }
   }
-  
+
   @Override
-  public void onCreateContextMenu(ContextMenu menu, View v, 
+  public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
     menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
     menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
@@ -327,17 +326,17 @@ public class ListViewManager extends SherlockListActivity {
    * <p>
    * The general idea is that this class gives the icon necessary for viewing
    * the adapter and adding settings.
-   * 
+   *
    * @author sudar.sam@gmail.com
-   * 
+   *
    */
   class ListViewAdapter extends ArrayAdapter<String> {
-    
+
     /**
      * Set this adapter to use the @listViewNames as its backing object.
      */
     ListViewAdapter() {
-      super(ListViewManager.this, 
+      super(ListViewManager.this,
           org.opendatakit.tables.R.layout.touchlistview_row2,
           listViewNames);
     }
@@ -364,15 +363,15 @@ public class ListViewManager extends SherlockListActivity {
       final int currentPosition = position;
       final String listViewName = listViewNames.get(currentPosition);
       // Set the label of this row.
-      TextView label = 
+      TextView label =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
       label.setText(listViewName);
       // We can ignore the "ext" TextView, as there's not at this point any
       // other information we wish to be displaying.
-      TextView extraString = 
+      TextView extraString =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
       AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
-      String filename = 
+      String filename =
           aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
       extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
@@ -394,21 +393,21 @@ public class ListViewManager extends SherlockListActivity {
           } else {
             setToDefault(listViewName);
             radioButton.setChecked(true);
-            Toast.makeText(getContext(), 
-                listViewName + " has been set to default." , 
+            Toast.makeText(getContext(),
+                listViewName + " has been set to default." ,
                 Toast.LENGTH_SHORT).show();
           }
         }
-        
+
       });
       // And now prepare the listener for the settings icon.
-      final ImageView editView = (ImageView) 
+      final ImageView editView = (ImageView)
           row.findViewById(org.opendatakit.tables.R.id.row_options);
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          // Open the context menu of the view, because that's where we're 
+          // Open the context menu of the view, because that's where we're
           // doing the logistics.
           holderView.showContextMenu();
         }
@@ -416,7 +415,7 @@ public class ListViewManager extends SherlockListActivity {
       // And now we're set, so just kick it on back.
       return row;
     }
-    
+
     /**
      * Return true if the passed in name is defined as the default list view
      * for this table.
@@ -436,20 +435,20 @@ public class ListViewManager extends SherlockListActivity {
         return false;
       }
     }
-    
+
     /**
      * Set the list view with name nameOfListView to be the default for this
      * table. Updates the KVS as well as the global field in the activity.
      * @param nameOfListView
      */
     private void setToDefault(String nameOfListView) {
-      listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME, 
+      listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME,
           nameOfListView);
       defaultListViewName = nameOfListView;
       adapter.notifyDataSetChanged();
     }
-    
-    
+
+
   }
 
 }

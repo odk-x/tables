@@ -94,7 +94,7 @@ public class ImportCSVActivity extends IETabActivity {
 		v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the table spinner
 		TextView etn = new TextView(this);
 		etn.setText("Import to new table or add to existing table:");
@@ -134,7 +134,7 @@ public class ImportCSVActivity extends IETabActivity {
 		v.addView(newTableViews);
 		// Horizontal divider
 		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the import button
 		Button importB = new Button(this);
 		importB.setId(IMPORTBUTTON_ID);

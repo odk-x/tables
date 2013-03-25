@@ -17,12 +17,12 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.util.CsvUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
-import android.R;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -41,12 +41,12 @@ import android.widget.TextView;
 
 
 /**
- * This class is responsible for exporting a table to CSV from the phone. 
+ * This class is responsible for exporting a table to CSV from the phone.
  * <p>
- * There appear to me to be two possible reasons for doing this. The first is 
+ * There appear to me to be two possible reasons for doing this. The first is
  * to o present the
- * data to a user or admin so that they can view it and use it in a 
- * spreadsheet application. 
+ * data to a user or admin so that they can view it and use it in a
+ * spreadsheet application.
  * <p>
  * The second is to create a CSV that Tables can import to create the table as
  * it existed on the phone at the time of the export.
@@ -56,23 +56,23 @@ import android.widget.TextView;
  * include the table settings. This checkbox includes the table settings as a
  * metadata string, and it also includes all the metadata columns of each row
  * for which the saved status is complete. In other words, it exports the table
- * that the user is able to see (the saved == complete rows) and all the 
+ * that the user is able to see (the saved == complete rows) and all the
  * metadata for those rows at the time of the export.
- * 
- * 
+ *
+ *
  * @author unknown
  * @author sudar.sam@gmail.com
  *
  */
 public class ExportCSVActivity extends IETabActivity {
-	
+
 	/** view IDs (for use in testing) */
 	public static final int TABLESPIN_ID = 1;
 	public static final int FILENAMEVAL_ID = 2;
 	public static final int EXPORTBUTTON_ID = 3;
-	
+
 	private DbHelper dbh;
-	
+
 	/* the list of table names */
 	private String[] tableNames;
 	/* the list of TableProperties */
@@ -89,13 +89,13 @@ public class ExportCSVActivity extends IETabActivity {
 	private CheckBox incTSCheck;
 	/* the pick file button */
 	private Button pickFileButton;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		dbh = DbHelper.getDbHelper(this);
 		setContentView(getView());
 	}
-	
+
 	/**
 	 * @return the view
 	 */
@@ -110,7 +110,7 @@ public class ExportCSVActivity extends IETabActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(dbh, 
+		tps = TableProperties.getTablePropertiesForAll(dbh,
 		    KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
@@ -125,7 +125,7 @@ public class ExportCSVActivity extends IETabActivity {
 		v.addView(tableSpin);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// options
 		TextView opt = new TextView(this);
 		opt.setText("Options:");
@@ -163,7 +163,7 @@ public class ExportCSVActivity extends IETabActivity {
 		v.addView(incTS);
 		// Horizontal divider
 		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the filename field
 		LinearLayout fn = new LinearLayout(this);
 		fn.setOrientation(LinearLayout.VERTICAL);
@@ -181,7 +181,7 @@ public class ExportCSVActivity extends IETabActivity {
         v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the export button
 		Button button = new Button(this);
 		button.setId(EXPORTBUTTON_ID);
@@ -193,7 +193,7 @@ public class ExportCSVActivity extends IETabActivity {
 		scroll.addView(v);
 		return scroll;
 	}
-	
+
 	/**
 	 * Attempts to export a table.
 	 */
@@ -207,7 +207,7 @@ public class ExportCSVActivity extends IETabActivity {
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
         task.execute(new ExportRequest(tp, file, incProps, incTs, incPn));
 	}
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
@@ -216,21 +216,21 @@ public class ExportCSVActivity extends IETabActivity {
         String filepath = fileUri.getPath();
         filenameValField.setText(filepath);
     }
-	
+
 	private class ButtonListener implements OnClickListener {
 		@Override
 		public void onClick(View v) {
 			exportSubmission();
 		}
 	}
-    
+
     public class ExportTask
             extends AsyncTask<ExportRequest, Integer, Boolean> {
-      
+
       // This says whether or not the secondary entries in the key value store
-      // were written successfully. 
+      // were written successfully.
       public boolean keyValueStoreSuccessful = true;
-        
+
         protected Boolean doInBackground(ExportRequest... exportRequests) {
             ExportRequest request = exportRequests[0];
             CsvUtil cu = new CsvUtil(ExportCSVActivity.this);
@@ -246,11 +246,11 @@ public class ExportCSVActivity extends IETabActivity {
                         request.getIncludePhoneNums());
             }
         }
-        
+
         protected void onProgressUpdate(Integer... progress) {
             // do nothing
         }
-        
+
         protected void onPostExecute(Boolean result) {
             dismissDialog(EXPORT_IN_PROGRESS_DIALOG);
             if (result) {
@@ -264,15 +264,15 @@ public class ExportCSVActivity extends IETabActivity {
             }
         }
     }
-	
+
 	private class ExportRequest {
-	    
+
 	    private final TableProperties tp;
 	    private final File file;
 	    private final boolean includeProperties;
 	    private final boolean includeTimestamps;
 	    private final boolean includePhoneNums;
-	    
+
 	    public ExportRequest(TableProperties tp, File file,
 	            boolean includeProperties, boolean includeTimestamps,
 	            boolean includePhoneNums) {
@@ -282,23 +282,23 @@ public class ExportCSVActivity extends IETabActivity {
 	        this.includeTimestamps = includeTimestamps;
 	        this.includePhoneNums = includePhoneNums;
 	    }
-	    
+
 	    public TableProperties getTableProperties() {
 	        return tp;
 	    }
-	    
+
 	    public File getFile() {
 	        return file;
 	    }
-	    
+
 	    public boolean getIncludeProperties() {
 	        return includeProperties;
 	    }
-	    
+
 	    public boolean getIncludeTimestamps() {
 	        return includeTimestamps;
 	    }
-	    
+
 	    public boolean getIncludePhoneNums() {
 	        return includePhoneNums;
 	    }

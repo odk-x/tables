@@ -15,15 +15,14 @@
  */
 package org.opendatakit.tables.data;
 
-import java.io.File;
-
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.WebDbDefinition;
 import org.opendatakit.common.android.database.WebSqlDatabaseHelper;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.util.TableFileUtils;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 
 /**
  * A helper class for the database.
@@ -35,21 +34,13 @@ public class DbHelperImpl {
 
     private static DbHelperImpl dbh = null;
 
-    private WebSqlDatabaseHelper h;
     private DataModelDatabaseHelper mDbHelper;
 
     private DbHelperImpl(Context context) {
-      String ODK_ROOT = Environment.getExternalStorageDirectory()
-          + File.separator
-          + "odk"
-          + File.separator + "app";
+      // TODO: make this app-centric
+      String path = ODKFileUtils.getWebDbFolder(TableFileUtils.ODK_TABLES_APP_NAME);
 
-      String METADATA_PATH = ODK_ROOT + File.separator
-          + "metadata";
-      String WEBDB_PATH = METADATA_PATH + File.separator
-          + "webDb";
-
-      h = new WebSqlDatabaseHelper(WEBDB_PATH);
+      WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(path);
       WebDbDefinition defn = h.getWebKitDatabaseInfoHelper();
       if (defn != null) {
          defn.dbFile.getParentFile().mkdirs();

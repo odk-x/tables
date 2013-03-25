@@ -158,7 +158,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       builder.setPositiveButton("Yes",
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
-          SQLiteDatabase db = dbh.getWritableDatabase();
           KeyValueStoreManager kvsm =
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore activeKVS =
@@ -183,7 +182,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       builder.setPositiveButton("Yes",
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
-          SQLiteDatabase db = dbh.getWritableDatabase();
           KeyValueStoreManager kvsm =
               KeyValueStoreManager.getKVSManager(dbh);
           KeyValueStore activeKVS =
@@ -208,7 +206,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       builder.setPositiveButton("Yes",
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
-          SQLiteDatabase db = dbh.getWritableDatabase();
           try {
 	          KeyValueStoreManager kvsm =
 	              KeyValueStoreManager.getKVSManager(dbh);
@@ -589,16 +586,16 @@ public class TablePropertiesManager extends PreferenceActivity {
 
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                  Intent selectListViewIntent = 
-                      new Intent(TablePropertiesManager.this, 
+                  Intent selectListViewIntent =
+                      new Intent(TablePropertiesManager.this,
                           ListViewManager.class);
                   selectListViewIntent.putExtra(
-                      ListViewManager.INTENT_KEY_TABLE_ID, 
+                      ListViewManager.INTENT_KEY_TABLE_ID,
                       tp.getTableId());
                   startActivity(selectListViewIntent);
                   return true;
                 }
-                
+
               });
               prefCat.addPreference(listViewPrefs);
               }
@@ -725,7 +722,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         case RC_LIST_VIEW_FILE:
         	Uri fileUri2 = data.getData();
             String filename2 = fileUri2.getPath();
-// This set it in the main partition. We actually want to set it in the 
+// This set it in the main partition. We actually want to set it in the
             // other partition for now.
 //            kvsh =
 //                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
@@ -738,9 +735,9 @@ public class TablePropertiesManager extends PreferenceActivity {
             // Set the name here statically, just to test. Later will want to
             // allow custom naming, checking for redundancy, etc.
             KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-            aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, 
+            aspectHelper.setString(ListDisplayActivity.KEY_FILENAME,
                 filename2);
-            
+
 //            TableViewSettings settings = tp.getOverviewViewSettings();
 //            settings.setCustomListFilename(filename2);
             init();

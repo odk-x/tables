@@ -1,13 +1,17 @@
 package org.opendatakit.tables.view.custom;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.util.TableFileUtils;
+
 import android.content.Context;
-import android.os.Environment;
 import android.util.Log;
 
 public class CustomGraphView extends CustomView {
@@ -27,7 +31,7 @@ public class CustomGraphView extends CustomView {
 	private CustomGraphView(Context context, String filename) {
 		super(context);
 		this.context = context;
-		this.filename = Environment.getExternalStorageDirectory().getPath() + "/odk/tables/optionspane.html"; 
+		this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "optionspane.html";
 		Log.i("CustomGraphView", "IDDD: " + filename);
 		colIndexTable = new HashMap<String, Integer>();
 	}
@@ -52,7 +56,7 @@ public class CustomGraphView extends CustomView {
 			}
 		}
 	}
-	
+
 	public void display() {
 		webView.addJavascriptInterface(new TableControl(context), "control");
 		webView.addJavascriptInterface(new TableData(tp, table), "data");
