@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="lib/kxml2-2.3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/gson-1.7.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/joda-time-2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/opencsv-2.2.jar"/>
@@ -11,10 +10,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/simple-xml-2.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-android-core-1.0.0.RC1.jar"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry exported="true" kind="lib" path="lib/jackson-core-asl-1.8.8.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jackson-mapper-asl-1.8.8.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/httpclientandroidlib-4.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/fileManifestObjects.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="output" path="bin/classes"/>
