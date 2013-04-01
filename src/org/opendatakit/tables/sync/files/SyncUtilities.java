@@ -33,13 +33,14 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
-import org.opendatakit.httpclientandroidlib.conn.params.ConnManagerParams;
 import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
+import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManager;
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
@@ -60,15 +61,15 @@ import android.util.Log;
  * <p>
  * All the files are stored in the same directory. This is the directory
  * specified in {@link TableFileUtils} and is relative to the external storage
- * device. These files are compared to the manifest from the server and 
+ * device. These files are compared to the manifest from the server and
  * necessary download are made.
  * @author sudar.sam@gmail.com
  *
  */
 public class SyncUtilities {
-  
+
   public static final String TAG = "SyncUtilities";
-  
+
   /**
    * Pull the key value entries for a particular table from the server.
    * <p>
@@ -79,10 +80,10 @@ public class SyncUtilities {
    * @param authToken
    * @param tp the tableProperties you should be modifying
    */
-  public static void pullKeyValueEntriesForTable(Context context, 
+  public static void pullKeyValueEntriesForTable(Context context,
       String aggregateUri, String authToken, TableProperties tp) {
     String tableId = tp.getTableId();
-    List<OdkTablesKeyValueStoreEntry> allEntries = 
+    List<OdkTablesKeyValueStoreEntry> allEntries =
         getKeyValueEntries(aggregateUri, authToken, tableId);
 
     // so now allEntries should have had their file entries updated.
@@ -96,7 +97,7 @@ public class SyncUtilities {
 	    // been asserted?
 	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	    db.beginTransaction();
-	    try { 
+	    try {
 	      // TODO fix the order here. here you can download new files
 	      // but not get the values in the d.b. set. this is wrong.
 	      // I need to figure out the correct way to fail here.
@@ -105,14 +106,14 @@ public class SyncUtilities {
 	      // the key value store changed. You will still have downloaded the
 	      // files though.
 	      downloadFilesAndUpdateValues(context, allEntries);
-//	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId, 
+//	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId,
 //	          KeyValueStore.Type.SERVER);
 	      KeyValueStore backingKVS = kvsm.getStoreForTable(tableId,
 	          tp.getBackingStoreType());
 	      // When the table properties are passed down from the server in the key
 	      // value store, we will want to clear the original entries and overwrite
 	      // them with the current state of the server. For now, however, we aren't
-	      // going to do that, b/c the properties aren't coming down from the 
+	      // going to do that, b/c the properties aren't coming down from the
 	      // server via the manifest.
 	      //kvs.clearKeyValuePairs(db);
 	      backingKVS.addEntriesToStore(db, allEntries);
@@ -128,7 +129,7 @@ public class SyncUtilities {
 //    	db.close();
     }
   }
-  
+
   /**
    * Get the manifest from the server. Based on NetworkUtilities syncContacts
    * method from the SyncAdapter example code.
@@ -139,14 +140,14 @@ public class SyncUtilities {
    */
   public static String getManifest(String aggregateUri, String authToken,
       String tableId) {
-    // We're going to navigate to the site and get the manifest for the 
+    // We're going to navigate to the site and get the manifest for the
     // particular table. First add the argument and the table name.
     // make the URI using a builder.
     Builder builder = new Builder();
     builder.encodedPath(aggregateUri + TableFileUtils.MANIFEST_ADDR_URI);
     builder.appendQueryParameter(TableFileUtils.TABLE_ID_PARAM, tableId);
     //UrlQuerySanitizer sanitizer = new UrlQuerySanitizer();
-    //ParameterValuePair params = 
+    //ParameterValuePair params =
       //  sanitizer.new ParameterValuePair(TableFileUtils.TABLE_ID_PARAM, tableId);
     //builder.encodedQuery(params.mValue);
     HttpGet get = new HttpGet(builder.build().toString());
@@ -168,23 +169,21 @@ public class SyncUtilities {
       throw new IllegalStateException("the httpresponse failed");
     }
   }
-  
+
   /**
    * Get an HttpClient.
    * @return HttpClient
    */
   public static HttpClient getHttpClient() {
-    HttpClient httpClient = new DefaultHttpClient();
+    HttpClient httpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = httpClient.getParams();
-    HttpConnectionParams.setConnectionTimeout(params,  
+    HttpConnectionParams.setConnectionTimeout(params,
         TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
-    HttpConnectionParams.setSoTimeout(params, 
-        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
-    ConnManagerParams.setTimeout(params, 
+    HttpConnectionParams.setSoTimeout(params,
         TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
     return httpClient;
   }
-  
+
   /**
    * Gets the key value entries from the store on the server for a particular
    * table.
@@ -198,10 +197,10 @@ public class SyncUtilities {
     // Get and parse the manifest, which is a JSON string.
     String manifest = getManifest(aggregateUri, authToken, tableId);
     ObjectMapper mapper = new ObjectMapper();
-    TypeReference<ArrayList<OdkTablesKeyValueStoreEntry>> typeRef = 
+    TypeReference<ArrayList<OdkTablesKeyValueStoreEntry>> typeRef =
         new TypeReference<ArrayList<OdkTablesKeyValueStoreEntry>>() {};
     try {
-      ArrayList<OdkTablesKeyValueStoreEntry> entries = 
+      ArrayList<OdkTablesKeyValueStoreEntry> entries =
           mapper.readValue(manifest, typeRef);
       return entries;
     //TODO--throw the correct errors here! these are hacks.
@@ -213,13 +212,13 @@ public class SyncUtilities {
       throw new IllegalStateException("io trouble in getKeyValueEntries");
     }
   }
-  
+
   public static void downloadFilesAndUpdateValues(Context context,
       List<OdkTablesKeyValueStoreEntry> allEntries) {
     // If the entry is a file, we see if we need to download it and update
     // the value with the path to the file. Otherwise, we leave the entry.
     ObjectMapper mapper = new ObjectMapper();
-    TypeReference<OdkTablesFileManifestEntry> typeRef = 
+    TypeReference<OdkTablesFileManifestEntry> typeRef =
         new TypeReference<OdkTablesFileManifestEntry>() {};
     for (OdkTablesKeyValueStoreEntry entry : allEntries) {
       String entryType = entry.type;
@@ -231,8 +230,8 @@ public class SyncUtilities {
           OdkTablesFileManifestEntry fileEntry = mapper.readValue(
               fileString, typeRef);
           if (compareAndDownloadFile(context, tableId, entry.key, fileEntry)) {
-            String basePath = context.getExternalFilesDir(null).getAbsolutePath();
-            String path = basePath + "/" + tableId + "/" + fileEntry.filename;
+            String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+            String path = basePath + File.separator + tableId + File.separator + fileEntry.filename;
             entry.value = path;
           } else {
             // TODO:
@@ -240,7 +239,7 @@ public class SyncUtilities {
             // IS THIS A SAFE WAY TO DO IT?
             allEntries.remove(entry);
           }
-        //TODO--throw the correct errors here! these are hacks.          
+        //TODO--throw the correct errors here! these are hacks.
         } catch (JsonMappingException e) {
           throw new IllegalStateException("problem mapping in getFileEntries");
         } catch (JsonParseException e) {
@@ -251,7 +250,7 @@ public class SyncUtilities {
       }
     }
   }
-  
+
   /**
    * Get only the file entries, leaving out the other entries.
    * @param allEntries List of all the entries on the manifest
@@ -260,10 +259,10 @@ public class SyncUtilities {
   public static List<OdkTablesFileManifestEntry> getFileEntries(
       List<OdkTablesKeyValueStoreEntry> allEntries) {
     // first get all the entries, and retain only the file entries.
-    List<OdkTablesFileManifestEntry> fileEntries = 
+    List<OdkTablesFileManifestEntry> fileEntries =
         new ArrayList<OdkTablesFileManifestEntry>();
     ObjectMapper mapper = new ObjectMapper();
-    TypeReference<OdkTablesFileManifestEntry> typeRef = 
+    TypeReference<OdkTablesFileManifestEntry> typeRef =
         new TypeReference<OdkTablesFileManifestEntry>() {};
     for (OdkTablesKeyValueStoreEntry entry : allEntries) {
       String entryType = entry.type;
@@ -273,7 +272,7 @@ public class SyncUtilities {
         try {
           fileEntries.add((OdkTablesFileManifestEntry) mapper.readValue(
               fileString, typeRef));
-        //TODO--throw the correct errors here! these are hacks.          
+        //TODO--throw the correct errors here! these are hacks.
         } catch (JsonMappingException e) {
           throw new IllegalStateException("problem mapping in getFileEntries");
         } catch (JsonParseException e) {
@@ -281,16 +280,16 @@ public class SyncUtilities {
         } catch (IOException e) {
           throw new IllegalStateException("io trouble in getFileEntries");
         }
-        
+
       }
     }
     return fileEntries;
   }
-  
+
   /**
-   * Compares a single file to the information contained in an 
+   * Compares a single file to the information contained in an
    * OdkTablesFileManifestEntry and downloads the new file if necessary.
-   * Returns true if the file was successfully downloaded and there were no 
+   * Returns true if the file was successfully downloaded and there were no
    * errors, or if the current version of the file already exists at the
    * given path externalFilesDir/tableId/filename.
    * @param context
@@ -299,11 +298,11 @@ public class SyncUtilities {
    * @param fileEntry
    * @return
    */
-  public static boolean compareAndDownloadFile(Context context, String tableId, 
+  public static boolean compareAndDownloadFile(Context context, String tableId,
       String key, OdkTablesFileManifestEntry fileEntry) {
     Log.d(TAG, "in compareAndDownloadFile");
     // the path for the base of where the app can save its files.
-    String basePath = context.getExternalFilesDir(null).getAbsolutePath();
+    String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
       // make sure you don't return a bad string.
@@ -313,14 +312,15 @@ public class SyncUtilities {
      } else {
       // filename is the unrooted path of the file, so append the tableId
       // and the basepath.
-      String path = basePath + "/" + tableId + "/" + fileEntry.filename;
-      // Before we try dl'ing the file, we have to make the folder, 
+      String path = basePath + File.separator + tableId +
+          File.separator + fileEntry.filename;
+      // Before we try dl'ing the file, we have to make the folder,
       // b/c otherwise if the folders down to the path have too many non-
       // existent folders, we'll get a FileNotFoundException when we open
       // the FileOutputStream.
-      int lastSlash = path.lastIndexOf("/");
+      int lastSlash = path.lastIndexOf(File.separator);
       String folderPath = path.substring(0, lastSlash);
-      FileUtils.createFolder(folderPath);      
+      FileUtils.createFolder(folderPath);
       File newFile = new File(path);
       if (!newFile.exists()) {
         // the file doesn't exist on the system
@@ -337,7 +337,7 @@ public class SyncUtilities {
         // file exists, see if it's up to date
         String md5hash = FileUtils.getMd5Hash(newFile);
         md5hash = "md5:" + md5hash;
-        // so as it comes down from the manifest, the md5 hash includes a 
+        // so as it comes down from the manifest, the md5 hash includes a
         // "md5:" prefix. Add taht and then check.
         if (!md5hash.equals(fileEntry.md5hash)) {
           // it's not up to date, we need to download it.
@@ -354,21 +354,25 @@ public class SyncUtilities {
           return true;
         }
       }
-    }    
-  }  
-  
+    }
+  }
+
   /**
    * Make sure the files on the phone are up to date. Downloads the files
-   * to the directory getExternalFilesDir()/tableId/filename.
+   * to the directory:
+   *
+   *  ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
+   *    File.separator + tableId + File.separator + fileEntry.filename
+   *
    * @param context
    * @param manFiles
    * @return a List of files that need to be downloaded.
    */
-  public static void compareAndDownloadFiles(Context context, String tableId, 
+  public static void compareAndDownloadFiles(Context context, String tableId,
       List<OdkTablesFileManifestEntry> manFiles) {
     Log.d(TAG, "in compareAndDownloadFiles");
     // the path for the base of where the app can save its files.
-    String basePath = context.getExternalFilesDir(null).getAbsolutePath();
+    String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
     for (OdkTablesFileManifestEntry fileEntry : manFiles) {
@@ -378,7 +382,8 @@ public class SyncUtilities {
       } else {
         // filename is the unrooted path of the file, so append the tableId
         // and the basepath.
-        String path = basePath + "/" + tableId + "/" + fileEntry.filename;
+        String path = basePath + File.separator + tableId +
+            File.separator + fileEntry.filename;
         File newFile = new File(path);
         if (!newFile.exists()) {
           // the file doesn't exist on the system
@@ -393,7 +398,7 @@ public class SyncUtilities {
           // file exists, see if it's up to date
           String md5hash = FileUtils.getMd5Hash(newFile);
           md5hash = "md5:" + md5hash;
-          // so as it comes down from the manifest, the md5 hash inclues a 
+          // so as it comes down from the manifest, the md5 hash inclues a
           // "md5:" prefix. Add taht and then check.
           if (!md5hash.equals(fileEntry.md5hash)) {
             // it's not up to date, we need to download it.
@@ -410,14 +415,14 @@ public class SyncUtilities {
       }
     }
   }
-  
+
   /**
    * sudar.sam@gmail.com: Took from Collect and purged xform stuff.
    * <p>
    * Common routine to download a document from the downloadUrl and save the
    * contents in the file 'f'. Shared by media file download and form file
    * download.
-   * 
+   *
    * @param f
    * @param downloadUrl
    * @throws Exception
@@ -506,8 +511,8 @@ public class SyncUtilities {
         }
       }
     }
-  } 
-  
+  }
+
   // TODO: remove this??? Only used for FILE type.
   // TODO: Make ColumnType consistent impl between Aggregate and Tables
   /**
@@ -517,9 +522,9 @@ public class SyncUtilities {
    * These are the types that are currently supported in the datastore. They are
    * important for knowing how to generate the manifest of what needs to be
    * pushed to the phone.
-   * 
+   *
    * @author sudars
-   * 
+   *
    */
   public enum Type {
     STRING("string"), INTEGER("integer"), FILE("file");
@@ -529,16 +534,16 @@ public class SyncUtilities {
     Type(String title) {
       this.title = title;
     }
-    
+
     public String getTitle() {
       return this.title;
     }
 
   }
-  
+
   /**
    * Utility to ensure that the entity stream of a response is drained of bytes.
-   * 
+   *
    * @param response
    */
   public static final void discardEntityBytes(HttpResponse response) {
@@ -560,7 +565,7 @@ public class SyncUtilities {
       }
     }
   }
-  
-  
+
+
 
 }

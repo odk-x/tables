@@ -26,6 +26,7 @@ import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Interval;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -45,24 +46,24 @@ import android.util.Log;
  * A class for handling incoming messages.
  */
 public class MsgHandler {
-    
+
     private enum Type {ADD, QUERY}
-    
+
     private static final int DEFAULT_LIMIT = 25;
-    
+
     private DataUtil du;
     private DataManager dm;
     private TableProperties[] tps;
     private TableProperties[] dataTps;
     private TableProperties[] scTps;
     private SMSSender smsSender;
-    
+
     public MsgHandler(DataManager dm, SMSSender smsSender) {
         this.du = DataUtil.getDefaultDataUtil();
         this.dm = dm;
         this.smsSender = smsSender;
     }
-    
+
     public boolean handleMessage(String msg, String phoneNum) {
         Log.d("MSGH", "handling message: " + msg);
         if (!checkIsMessage(msg)) {
@@ -93,7 +94,7 @@ public class MsgHandler {
             return false;
         }
     }
-    
+
     private void init() {
         tps = dm.getAllTableProperties(KeyValueStore.Type.ACTIVE);
         dataTps = dm.getTablePropertiesForDataTables(
@@ -101,11 +102,11 @@ public class MsgHandler {
         scTps = dm.getShortcutTableProperties(KeyValueStore.Type.ACTIVE);
         Log.d("MSGH", "scTps:" + Arrays.toString(scTps));
     }
-    
+
     private boolean checkIsMessage(String msg) {
         return msg.startsWith("@") && (msg.lastIndexOf(' ') > 0);
     }
-    
+
     private String standardize(String msg) {
         msg = msg.trim();
         List<String> scNames = new ArrayList<String>();
@@ -146,7 +147,7 @@ public class MsgHandler {
         }
         return msg;
     }
-    
+
     private String convertByShortcut(String msg, String input, String output) {
         msg = msg.substring(msg.indexOf(' ') + 1);
         Map<String, String> values = new HashMap<String, String>();
@@ -181,7 +182,7 @@ public class MsgHandler {
         }
         return sb.toString();
     }
-    
+
     private TableProperties findTable(String msg) {
         String target = msg.split(" ")[0].substring(1);
         for (TableProperties tp : dataTps) {
@@ -191,7 +192,7 @@ public class MsgHandler {
         }
         return null;
     }
-    
+
     private Type determineType(String msg) {
         String[] split = msg.split(" ");
         if (split.length < 2) {
@@ -203,12 +204,12 @@ public class MsgHandler {
             return Type.QUERY;
         }
     }
-    
+
     private boolean checkSecurity(String msg, String phoneNum,
             TableProperties tp, Type type) {
         String secTableId;
         secTableId = tp.getAccessControls();
-        // TODO fix this 
+        // TODO fix this
 //        if (type == Type.ADD) {
 //            secTableId = tp.getWriteSecurityTableId();
 //        } else {
@@ -228,7 +229,7 @@ public class MsgHandler {
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         Table table = sDbt.getRaw(
         		columns,
-        		new String[] {DbTable.DB_SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
+        		new String[] {DataTableColumns.SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
         for (int i = 0; i < table.getHeight(); i++) {
             if (password.equals(table.getData(i, 0))) {
@@ -237,7 +238,7 @@ public class MsgHandler {
         }
         return false;
     }
-    
+
     private String stripPassword(String msg) {
         int lastSpaceIndex = msg.lastIndexOf(' ');
         if ((msg.length() > lastSpaceIndex + 1) &&
@@ -246,7 +247,7 @@ public class MsgHandler {
         }
         return msg;
     }
-    
+
     private boolean handleAdd(TableProperties tp, String msg,
             String phoneNum) {
         Map<String, String> values = new HashMap<String, String>();
@@ -294,7 +295,7 @@ public class MsgHandler {
         dbt.addRow(rowValues, du.formatNowForDb(), phoneNum);
         return true;
     }
-    
+
     private boolean handleQuery(TableProperties tp, String msg,
             String phoneNum) {
         List<Integer> indices = new ArrayList<Integer>();
@@ -360,7 +361,7 @@ public class MsgHandler {
                     drSlotDuration);
         }
     }
-    
+
     private boolean addConstraint(Query query, ColumnProperties cp,
             char comparator, String value) {
     	// TODO: do Time and DateTime get processed the same as Date???
@@ -453,15 +454,24 @@ public class MsgHandler {
         }
         return true;
     }
-    
+
     private boolean respondToSimpleQuery(String phoneNum, TableProperties tp,
             List<ColumnProperties> cols, Query query) {
         if (cols.isEmpty()) {
             return false;
         }
-        String[] colNames = new String[cols.size()];
-        for (int i = 0; i < cols.size(); i++) {
-            colNames[i] = cols.get(i).getElementKey();
+        int count = 0;
+        for ( ColumnProperties cp : cols ) {
+          if ( cp.isPersisted() ) {
+            ++count;
+          }
+        }
+        String[] colNames = new String[count];
+        count = -1;
+        for ( ColumnProperties cp : cols ) {
+          if ( cp.isPersisted() ) {
+            colNames[++count] = cp.getElementKey();
+          }
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
         Table table = dbt.getRaw(query, colNames);
@@ -492,7 +502,7 @@ public class MsgHandler {
         smsSender.sendSMSWithCutoff(phoneNum, resp);
         return true;
     }
-    
+
     private boolean respondToDrSlotQuery(String phoneNum, TableProperties tp,
             Query query, ColumnProperties drSlotColumn, int drSlotDuration) {
         Set<Constraint> constraints = new HashSet<Constraint>();
@@ -603,7 +613,7 @@ public class MsgHandler {
         smsSender.sendSMSWithCutoff(phoneNum, resp);
         return true;
     }
-    
+
     private int minNonNegative(int...vals) {
         int min = -1;
         for (int val : vals) {

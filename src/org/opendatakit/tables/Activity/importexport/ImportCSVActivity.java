@@ -23,7 +23,6 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
-import android.R;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,13 +42,13 @@ import android.widget.TextView;
  * An activity for importing CSV files to a table.
  */
 public class ImportCSVActivity extends IETabActivity {
-	
+
 	/** view IDs (for use in testing) */
 	public static int NTNVAL_ID = 1;
 	public static int TABLESPIN_ID = 2;
 	public static int FILENAMEVAL_ID = 3;
 	public static int IMPORTBUTTON_ID = 4;
-	
+
 	/* the list of table properties */
 	private TableProperties[] tps;
 	/* the list of table names */
@@ -64,12 +63,12 @@ public class ImportCSVActivity extends IETabActivity {
 	private EditText filenameValField;
 	/* the button for selecting a file */
 	private Button pickFileButton;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(getView());
 	}
-	
+
 	/**
 	 * @return the view
 	 */
@@ -93,7 +92,7 @@ public class ImportCSVActivity extends IETabActivity {
 		v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the table spinner
 		TextView etn = new TextView(this);
 		etn.setText("Import to new table or add to existing table:");
@@ -133,7 +132,7 @@ public class ImportCSVActivity extends IETabActivity {
 		v.addView(newTableViews);
 		// Horizontal divider
 		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 2));
+		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the import button
 		Button importB = new Button(this);
 		importB.setId(IMPORTBUTTON_ID);
@@ -145,7 +144,7 @@ public class ImportCSVActivity extends IETabActivity {
 		scroll.addView(v);
 		return scroll;
 	}
-	
+
 	/**
 	 * Attempts to import a CSV file.
 	 */
@@ -172,7 +171,7 @@ public class ImportCSVActivity extends IETabActivity {
 		iThread.start();
 		**/
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 	        Intent data) {
@@ -181,7 +180,7 @@ public class ImportCSVActivity extends IETabActivity {
 	    String filepath = fileUri.getPath();
 	    filenameValField.setText(filepath);
 	}
-	
+
 	/**
 	 * A listener for the table name spinner. Adds or removes the "New Table"
 	 * name field as necessary.
@@ -201,7 +200,7 @@ public class ImportCSVActivity extends IETabActivity {
 		public void onNothingSelected(AdapterView<?> parent) {
 		}
 	}
-	
+
 	/**
 	 * A listener for the import button. Calls importSubmission() on click.
 	 */
@@ -211,4 +210,5 @@ public class ImportCSVActivity extends IETabActivity {
 			importSubmission();
 		}
 	}
+
 }

@@ -10,3 +10,6 @@ syntax: glob
 db\.sql
 perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
 perftests/project\.properties
+.settings/com.google.appengine.eclipse.core.prefs
+.settings/com.google.gdt.eclipse.core.prefs
+.settings/com.google.gwt.eclipse.core.prefs

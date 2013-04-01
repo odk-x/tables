@@ -52,10 +52,10 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
 /*
- * Activity that allows users to change table properties 
+ * Activity that allows users to change table properties
  * such as colum orders, prime, and sort by. Also, users
  * can create new columns and remove columns.
- * 
+ *
  * @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
 public class ColumnManager extends SherlockListActivity {
@@ -114,7 +114,7 @@ public class ColumnManager extends SherlockListActivity {
 		actionBar.setDisplayHomeAsUpEnabled(true);
 	}
 
-	@Override 
+	@Override
 	public void onResume() {
 		super.onResume();
 
@@ -163,9 +163,9 @@ public class ColumnManager extends SherlockListActivity {
 		tlv.setRemoveListener(onRemove);
 
 		// Item clicked in the Drag & Drop list
-		tlv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+		tlv.setOnItemClickListener(new TouchListView.OnItemClickListener() {
 			@Override
-			public void onItemClick(AdapterView adView, View view,
+			public void onItemClick(AdapterView<?> adView, View view,
 					int position, long id) {
 				// Load Column Property Manger with this column name
 				loadColumnPropertyManager(cps[position].getElementKey());
@@ -207,7 +207,7 @@ public class ColumnManager extends SherlockListActivity {
 				anewPrimes.add(aoldPrimes.get(i));
 			}
 			anewPrimes.add(currentCol);
-			tp.setPrimeColumns(anewPrimes); 
+			tp.setPrimeColumns(anewPrimes);
 			onResume();
 			return true;
 		case SET_AS_NONPRIME:
@@ -219,13 +219,13 @@ public class ColumnManager extends SherlockListActivity {
 				}
 				rnewPrimes.add(roldPrimes.get(i));
 			}
-			tp.setPrimeColumns(rnewPrimes); 
+			tp.setPrimeColumns(rnewPrimes);
 			onResume();
 			return true;
 		case SET_AS_ORDER_BY:
-			tp.setSortColumn(currentCol); 
+			tp.setSortColumn(currentCol);
 			onResume();
-			return true;	
+			return true;
 		case REMOVE_THIS_COLUMN:
 			// Drop the column from 'data' table
 			tp.deleteColumn(currentCol);
@@ -258,7 +258,7 @@ public class ColumnManager extends SherlockListActivity {
 		alert.setTitle("Name of New Column");
 
 
-		// Set an EditText view to get user input 
+		// Set an EditText view to get user input
 		final EditText input = new EditText(this);
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
@@ -267,7 +267,7 @@ public class ColumnManager extends SherlockListActivity {
 		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
 		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
 		alert.setView(input);
-		if (givenColName != null) 
+		if (givenColName != null)
 			input.setText(givenColName);
 
 		// OK Action => Create new Column
@@ -284,9 +284,9 @@ public class ColumnManager extends SherlockListActivity {
 					} else if (colName.contains(" ")) {
 						toastColumnNameError("Column name cannot contain spaces!");
 						alertForNewColumnName(colName.replace(' ', '_'));
-					} else if (ColumnProperties.displayNameConflict(tableId, 
+					} else if (ColumnProperties.displayNameConflict(tableId,
 					    colName, DbHelper.getDbHelper(ColumnManager.this))){
-					  toastColumnNameError("\"" + colName + 
+					  toastColumnNameError("\"" + colName +
 					      "\" is already in use!");
 					  alertForNewColumnName(null);
 					} else {
@@ -297,7 +297,7 @@ public class ColumnManager extends SherlockListActivity {
 						for ( String s : tp.getColumnOrder() ) {
 							columnOrder.add(s);
 						}
-						adapter.notifyDataSetChanged();						
+						adapter.notifyDataSetChanged();
 						// Load Column Property Manger
 					    loadColumnPropertyManager(cp.getElementKey());
 					}
@@ -333,10 +333,10 @@ public class ColumnManager extends SherlockListActivity {
 		finish();
 	}
 
-	// Drag & Drop 
+	// Drag & Drop
 	private TouchListView.DropListener onDrop=new TouchListView.DropListener() {
 		@Override
-		public void drop(int from, int to) {	
+		public void drop(int from, int to) {
 			String item = columnOrder.get(from);
 			columnOrder.remove(from);
 			columnOrder.add(to, item);
@@ -379,7 +379,7 @@ public class ColumnManager extends SherlockListActivity {
 				ViewGroup parent) {
 			View row = convertView;
 
-			if (row == null) {													
+			if (row == null) {
 				LayoutInflater inflater=getLayoutInflater();
 
 				row = inflater.inflate(R.layout.touchlistview_row2, parent, false);
@@ -390,7 +390,7 @@ public class ColumnManager extends SherlockListActivity {
 			String currentColName = columnOrder.get(position);
 
 			// Register name of colunm at each row in the list view
-			TextView label = (TextView)row.findViewById(R.id.row_label);		
+			TextView label = (TextView)row.findViewById(R.id.row_label);
 			label.setText(cps[position].getDisplayName());
 
 			// Register ext info for columns
@@ -403,11 +403,11 @@ public class ColumnManager extends SherlockListActivity {
 			}
 			ext.setText(extStr);
 
-			// clicking this image button opens a contextual menu 
+			// clicking this image button opens a contextual menu
 			// to edit column properties
 			final ImageView edit = (ImageView)row.findViewById(R.id.row_options);
 
-			edit.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {	
+			edit.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
 				@Override
 				public void onCreateContextMenu(ContextMenu menu, View v,
 						ContextMenuInfo menuInfo) {

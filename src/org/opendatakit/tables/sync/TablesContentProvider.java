@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.sync;
 
+import org.opendatakit.tables.util.TableFileUtils;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -22,15 +24,15 @@ import android.net.Uri;
 
 /**
  * Empty implementation of content provider for using the SyncAdapter.
- * 
+ *
  * @author the.dylan.price@gmail.com
- * 
+ *
  */
 public class TablesContentProvider extends ContentProvider {
 
-	public static final String AUTHORITY = "yoonsung.odk.spreadsheet.sync.tablescontentprovider";
-	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
-			+ "/tables");
+	public static final String AUTHORITY = "org.opendatakit.tables.android.provider.content";
+	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + TableFileUtils.ODK_TABLES_APP_NAME);
+
 	public static final String MESSAGE = TablesContentProvider.class.getName()
 			+ " is an empty implementation of ContentProvider. It is not meant for actual use.";
 

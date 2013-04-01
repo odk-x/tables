@@ -15,14 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -30,17 +24,10 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.view.graphs.BoxStemChart;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockActivity;
@@ -50,34 +37,34 @@ import com.actionbarsherlock.view.MenuItem;
 /**
  * An activity for display box-stem graphs.
  * <p>
- * THIS CLASS IS CURRENTLY SERIOUSLY CRIPPLED--It is being migrated away from 
+ * THIS CLASS IS CURRENTLY SERIOUSLY CRIPPLED--It is being migrated away from
  * using the TableViewSettings object. References to that object are commented
  * out but the methods remain. It is also being displaced by the D3 graphing
  * library, but this is remaining for now, just in case.
  */
 public class BoxStemGraphDisplayActivity extends SherlockActivity
         implements DisplayActivity, BoxStemChart.ClickListener {
-  
+
   private static final String TAG = "BoxStemGraphDisplayActivity";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
-    
+
     private Controller c;
     private Query query;
     private UserTable table;
     private List<String> xValues;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         DataManager dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE), 
+        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         init();
     }
-    
+
     @Override
     public void init() {
       Log.e(TAG, "disabled boxstemgraph activity should not be used!");
@@ -96,7 +83,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 //        c.setDisplayView(view);
 //        setContentView(c.getContainerView());
     }
-    
+
 //    private View buildView() {
 //        if (table.getHeight() == 0) {
 //            return buildNoDataView();
@@ -151,7 +138,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 //        return new BoxStemChart(this, data, this);
 //        //return gFactory.getBoxStemGraph(data, "", "", "");
 //    }
-    
+
     private double findMid(List<Double> list, int startIndex, int endIndex) {
         int range = endIndex - startIndex;
         if (range == 0) {
@@ -164,22 +151,22 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
             return list.get((range / 2) + startIndex + 1);
         }
     }
-    
+
     private View buildNoDataView() {
         TextView tv = new TextView(this);
         tv.setText("No data.");
         return tv;
     }
-    
+
 //    private void handleInvalidSettings() {
 //        (new SettingsDialog(this)).show();
 //    }
-//    
+//
     @Override
     public void onBackPressed() {
         c.onBackPressed();
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
@@ -196,24 +183,24 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu);
         return true;
     }
-    
+
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
         return c.handleMenuItemSelection(item);
     }
-    
+
     @Override
     public void onSearch() {
         c.recordSearch();
         init();
     }
-    
+
     @Override
     public void onClick(int index) {
         if (!c.getIsOverview()) {
@@ -224,11 +211,11 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 //        Controller.launchTableActivity(this, c.getTableProperties(),
 //                searchText, false);
     }
-    
+
 //    private class SettingsDialog extends AlertDialog {
-//        
+//
 //        private List<ColumnProperties> numberCols;
-//        
+//
 //        public SettingsDialog(Context context) {
 ////            super(context);
 ////            numberCols = new ArrayList<ColumnProperties>();
@@ -244,7 +231,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 ////                buildView(context);
 ////            }
 //        }
-//        
+//
 //        private void buildImpossibleSettingsView() {
 ////            setMessage(getResources().getString(R.string.impossible_box_stem));
 ////            setButton(getResources().getString(R.string.ok),
@@ -255,7 +242,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 ////                }
 ////            });
 ////        }
-////        
+////
 ////        private void buildView(Context context) {
 ////            setTitle(getResources().getString(
 ////                    R.string.box_stem_settings_title));

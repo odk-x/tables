@@ -76,7 +76,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param aspect
    * @return
    */
-  public KeyValueHelper getAspectHelper(String aspect) {
+  public AspectHelper getAspectHelper(String aspect) {
     return new AspectHelper(aspect);
   }
   
@@ -86,6 +86,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   public String getPartition() {
     return this.partition;
+  }
+  
+  /**
+   * Get all the aspects residing in this partition. No checking is done to 
+   * avoid default or null aspects.
+   * @return
+   */
+  public List<String> getAspectsForPartition() {
+    SQLiteDatabase db = dbh.getReadableDatabase();
+    List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
+    // TODO: sort out and handle closing of the database.
+    return aspects;
   }
 
   @Override
@@ -463,6 +475,17 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     @Override
     public OdkTablesKeyValueStoreEntry getEntry(String key) {
       return KeyValueStoreHelper.this.getEntry(aspect, key);
+    }
+    
+    /**
+     * Delete all the entries in the given aspect. 
+     * @return
+     */
+    public int deleteAllEntriesInThisAspect() {
+      SQLiteDatabase db = dbh.getWritableDatabase();
+      int numDeleted = kvs.clearEntries(partition, aspect, db);
+      // TODO: handle the correct closing of the database.
+      return numDeleted;
     }
     
   }

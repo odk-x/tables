@@ -17,6 +17,7 @@ package org.opendatakit.tables.Activity.util;
 
 import java.util.ArrayList;
 
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.Table;
@@ -74,9 +75,9 @@ public class SecurityUtil {
         DbHelper dbh = DbHelper.getDbHelper(context);
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
         ArrayList<String> columns = new ArrayList<String>();
-        columns.add(DbTable.DB_ROW_ID);
+        columns.add(DataTableColumns.ROW_ID);
         Table table = dbt.getRaw(columns,
-                new String[] {DbTable.DB_SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {DataTableColumns.SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
         return (table.getHeight() > 0);
     }

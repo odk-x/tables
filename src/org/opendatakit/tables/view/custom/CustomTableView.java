@@ -18,42 +18,42 @@ package org.opendatakit.tables.view.custom;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+
 import android.content.Context;
-import android.util.Log;
+import android.webkit.WebViewClient;
 
 
 public class CustomTableView extends CustomView {
-    
+
     private static final String DEFAULT_HTML =
         "<html><body>" +
         "<p>No filename has been specified.</p>" +
         "</body></html>";
-    
+
     private Context context;
     private Map<String, Integer> colIndexTable;
     private TableProperties tp;
     private UserTable table;
     private String filename;
-    
+
     private CustomTableView(Context context, String filename) {
         super(context);
         this.context = context;
         this.filename = filename;
         colIndexTable = new HashMap<String, Integer>();
     }
-    
+
     public static CustomTableView get(Context context, TableProperties tp,
             UserTable table, String filename) {
         CustomTableView ctv = new CustomTableView(context, filename);
         ctv.set(tp, table);
         return ctv;
     }
-    
+
     private void set(TableProperties tp, UserTable table) {
         this.tp = tp;
         this.table = table;
@@ -68,8 +68,37 @@ public class CustomTableView extends CustomView {
         }
     }
     
+    ////////////////////////////// TEST ///////////////////////////////
+    
+    public static CustomTableView get(Context context, TableProperties tp, UserTable table, String filename, int index) {
+    	CustomTableView ctv = new CustomTableView(context, filename);
+    	// Create a new table with only the row specified at index.
+    	// Create all of the arrays necessary to create a UserTable.
+    	String[] rowIds = new String[1];
+    	String[] headers = new String[table.getWidth()];
+    	String[][] data = new String[1][table.getWidth()];
+    	String[] footers = new String[table.getWidth()];
+    	// Set all the data for the table.
+    	rowIds[0] = table.getRowId(index);
+    	for (int i = 0; i < table.getWidth(); i++) {
+    		headers[i] = table.getHeader(i);
+    		data[0][i] = table.getData(index, i);
+    		footers[i] = table.getFooter(i);
+    	}
+    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
+    	
+    	ctv.set(tp, singleRowTable);
+    	return ctv;
+    }
+    
+    public void setOnFinishedLoaded(WebViewClient client) {
+    	webView.setWebViewClient(client);
+    }
+    
+    //////////////////////////// END TEST /////////////////////////////
+
     public void display() {
-      // Load a basic screen as you're getting the other stuff ready to 
+      // Load a basic screen as you're getting the other stuff ready to
       // clear the old data.
       //load("file:////sdcard/odk/tables/loadingHtml.html");
         webView.addJavascriptInterface(new TableControl(context), "control");
@@ -81,13 +110,13 @@ public class CustomTableView extends CustomView {
         }
         initView();
     }
-    
+
     private class TableControl extends Control {
-        
+
         public TableControl(Context context) {
             super(context);
         }
-        
+
         @SuppressWarnings("unused")
         public boolean openItem(int index) {
             Controller.launchDetailActivity(context, tp, table, index);

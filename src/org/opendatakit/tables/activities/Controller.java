@@ -28,6 +28,7 @@ import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.ColumnManager;
 import org.opendatakit.tables.Activity.DisplayPrefsActivity;
+import org.opendatakit.tables.Activity.ListViewManager;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.Activity.TablePropertiesManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
@@ -106,13 +107,15 @@ public class Controller {
 	public static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
 	private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
     private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
-    static final int FIRST_FREE_MENU_ITEM_ID = 7;
+   private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
+    static final int FIRST_FREE_MENU_ITEM_ID = 8;
         
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
     private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
-    static final int FIRST_FREE_RCODE = 4;
+    private static final int RCODE_LIST_VIEW_MANAGER = 4;
+    static final int FIRST_FREE_RCODE = 5;
     
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -451,9 +454,18 @@ public class Controller {
     case RCODE_ODKCOLLECT_EDIT_ROW:
       handleOdkCollectEditReturn(returnCode, data);
       return true;
+    case RCODE_LIST_VIEW_MANAGER:
+      handleListViewManagerReturn();
+      return true;
     default:
       return false;
     }
+  }
+
+  private void handleListViewManagerReturn() {
+    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
+    dbt = dm.getDbTable(tp.getTableId());
+    da.init();
   }
 
   private void handleTablePropertiesManagerReturn() {
@@ -515,18 +527,20 @@ public class Controller {
         // 	  -determine the possible view types
         final TableViewType[] viewTypes = tp.getPossibleViewTypes();
         // 	  -build a checkable submenu to select the view type
-        SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE, "ViewType");
+        SubMenu viewTypeSubMenu = 
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+                Menu.NONE, "ViewType");
         MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
         viewType.setEnabled(enabled);
         viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         MenuItem item;
-        // This will be the list filename, which we need to have here so we 
-        // know whether or not it's specified.
+        // This will be the name of the default list view, which if exists
+        // means we should display the list view as an option.
         KeyValueStoreHelper kvsh = 
             tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-        String listViewFilename = kvsh.getString( 
-            ListDisplayActivity.KEY_FILENAME);
+        String nameOfView = kvsh.getString( 
+            ListDisplayActivity.KEY_LIST_VIEW_NAME);
         for(int i = 0; i < viewTypes.length; i++) {
         	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
         	    viewTypes[i].getId(), i, 
@@ -537,7 +551,7 @@ public class Controller {
           	}
             // disable list view if no file is specified
             if (viewTypes[i] == TableViewType.List &&
-                listViewFilename == null) {
+                nameOfView == null) {
                item.setEnabled(false);
             }
         }
@@ -547,20 +561,23 @@ public class Controller {
             true, true);
         
         // Add Row
-        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE,
+        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, 
+            Menu.NONE,
               "Add Row").setEnabled(enabled);
         addItem.setIcon(R.drawable.content_new);
         addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         
         // Settings submenu
-        SubMenu settings = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, Menu.NONE, "Settings");
+        SubMenu settings = 
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, 
+                Menu.NONE, "Settings");
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS); 
         
-        // TODO: change so that Is manually changed to enabled in 
-        // SpreadsheetDisplayActivity.onCreateOptionsMenu
-        MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE, 
+        MenuItem display = 
+            settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, 
+                Menu.NONE, 
         		"Display Preferences").setEnabled(enabled);
         // always disable DisplayPreferences if it is currently in list view
         if (tp.getCurrentViewType() == TableViewType.List)
@@ -569,6 +586,10 @@ public class Controller {
     			"Table Properties").setEnabled(enabled);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
               "Column Manager").setEnabled(enabled);
+        // Now an option for editing list views.
+        MenuItem manageListViews = 
+            settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER, 
+                Menu.NONE, "List View Manager").setEnabled(true);
     }
 
     /**
@@ -643,6 +664,15 @@ public class Controller {
 	            activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
 	            }
 	            return true;
+	        case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
+	          {
+	          Intent intent = 
+	              new Intent(activity, ListViewManager.class);
+	          intent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID, 
+	              tp.getTableId());
+	          activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
+	          }
+	          return true;
 	        case android.R.id.home:
 	          Intent tableManagerIntent = new Intent(activity, 
 	              TableManager.class);
@@ -952,24 +982,46 @@ public class Controller {
     (new CellEditDialog(rowId, value, colIndex)).show();
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview);
+  public static void launchTableActivity(Context context, TableProperties tp, 
+      boolean isOverview) {
+    Controller.launchTableActivity(context, tp, null, null, isOverview, null);
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, String searchText,
-      boolean isOverview) {
-    Controller.launchTableActivity(context, tp, searchText, null, isOverview);
+  public static void launchTableActivity(Context context, TableProperties tp, 
+      String searchText, boolean isOverview) {
+    Controller.launchTableActivity(context, tp, searchText, null, isOverview,
+        null);
   }
 
   private static void launchTableActivity(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, searchStack, isOverview);
+    Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
+        null);
      context.finish();
+  }
+  
+  /**
+   * This is based on the other launch table activity methods. This one, 
+   * however, allows a filename to be passed to the launching activity. This is
+   * intended to be used to launch things like list view activities with a file
+   * other than the default.
+   * @param context
+   * @param tp
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   */
+  public static void launchTableActivityWithFilename(Activity context, 
+      TableProperties tp, Stack<String> searchStack, boolean isOverview,
+      String filename) {
+    Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
+        filename);
+    context.finish();
   }
 
   private static void launchTableActivity(Context context, TableProperties tp, 
       String searchText,
-      Stack<String> searchStack, boolean isOverview) {
+      Stack<String> searchStack, boolean isOverview, String filename) {
     //TODO: need to figure out how CollectionViewSettings should work. 
     // make them work.
 //    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
@@ -982,6 +1034,9 @@ public class Controller {
     //TODO: figure out which of these graph was originally and update it.
     case List:
       intent = new Intent(context, ListDisplayActivity.class);
+      if (filename != null) {
+        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      }
       break;
 //    case TableViewSettings.Type.LINE_GRAPH:
 //      intent = new Intent(context, LineGraphDisplayActivity.class);
@@ -991,11 +1046,11 @@ public class Controller {
 //      break;
 //    case TableViewSettings.Type.BAR_GRAPH:
     case Graph:
-      intent = new Intent(context, BarGraphDisplayActivity.class);
+      intent = new Intent(context, GraphDisplayActivity.class);
       break;
 //    case TableViewSettings.Type.MAP:
     case Map:
-      intent = new Intent(context, MapDisplayActivity.class);
+      intent = new Intent(context, TableActivity.class);
       break;
     case Spreadsheet:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
