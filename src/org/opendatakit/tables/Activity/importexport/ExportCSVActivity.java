@@ -17,6 +17,7 @@ package org.opendatakit.tables.Activity.importexport;
 
 import java.io.File;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.Task.ExportRequest;
 import org.opendatakit.tables.Task.ExportTask;
 import org.opendatakit.tables.data.DbHelper;
