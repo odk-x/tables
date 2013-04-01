@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -33,6 +34,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.Task.ExportTask;
 import org.opendatakit.tables.Task.ImportTask;
+import org.opendatakit.tables.Task.InitializeTask;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -46,6 +48,7 @@ import org.opendatakit.tables.exception.TableAlreadyExistsException;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.os.Environment;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -61,10 +64,14 @@ public class CsvUtil {
     private static final String LAST_MOD_TIME_LABEL = 
         DbTable.DB_LAST_MODIFIED_TIME;
     private static final String SRC_PHONE_LABEL = DbTable.DB_URI_USER;
+    private final String root = Environment.getExternalStorageDirectory().getPath();
     
     private static final char DELIMITING_CHAR = ",".charAt(0);
     private static final char QUOTE_CHAR = "\"".charAt(0);
     private static final char ESCAPE_CHAR = "\\".charAt(0);
+    
+    // reference to the InitializeTask that called CsvUtil
+    private InitializeTask it = null;
     
     private final DataUtil du;
     private final DbHelper dbh;
@@ -91,6 +98,7 @@ public class CsvUtil {
     public boolean importNewTable(ImportTask importTask, File file, 
         String tableName) throws 
       TableAlreadyExistsException {
+    	
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
         TableProperties tp;
         try {
@@ -108,7 +116,7 @@ public class CsvUtil {
             }
             // adding columns
             if (row[0].startsWith("{")) {
-              // then it has been exported with properties.
+              // has been exported with properties.
               includesProperties = true;
               String jsonProperties = row[0];
               // now we need the tableId. It is tempting to just scan the 
@@ -181,7 +189,7 @@ public class CsvUtil {
             boolean includePn = (!includeTs || (row.length > 1)) &&
                     row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
             return importTable(reader, tp.getTableId(), columns,
-                    includeTs, includePn, includesProperties);
+                  includeTs, includePn, includesProperties);
         } catch(FileNotFoundException e) {
             return false;
         } catch(IOException e) {
@@ -220,8 +228,8 @@ public class CsvUtil {
                 String dbName = tp.getColumnByDisplayName(displayName);
                 columns.add(dbName);
             }
-            return importTable(reader, tableId, columns, includeTs, includePn,
-                includesProperties);
+            return importTable(reader, tp.getTableId(), columns,
+                    includeTs, includePn, includesProperties);
         } catch(FileNotFoundException e) {
             return false;
         } catch(IOException e) {
@@ -229,45 +237,140 @@ public class CsvUtil {
         }
     }
     
-    private boolean importTable(CSVReader reader, String tableId,
-            List<String> columns, boolean includeTs, boolean includePn,
-            boolean exportedWithProperties) {
-        int tsIndex = includeTs ? 0 : -1;
-        int pnIndex = includePn ? (includeTs ? 1 : 0) : -1;
-        int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
-        DbTable dbt = DbTable.getDbTable(dbh, tableId);
-        try {
-            String[] row = reader.readNext();
-            while (row != null) {
-              if (!exportedWithProperties) {
-                Map<String, String> values = new HashMap<String, String>();
-                for (int i = 0; i < columns.size(); i++) {
-                    values.put(columns.get(i), row[startIndex + i]);
-                }
-                String lastModTime = tsIndex == -1 ?
-                        du.formatNowForDb() : row[tsIndex];
-                String srcPhone = pnIndex == -1 ? null : row[pnIndex];
-                 dbt.addRow(values, lastModTime, srcPhone);
-                values.clear();
-              } else {
-                // it was exported with properties, and we need to include ALL
-                // the columns.
-                ContentValues values = new ContentValues();
-                for (int i = 0; i < columns.size(); i++) {
-                  values.put(columns.get(i), row[i]);
-                }
-                dbt.actualAddRow(values);
-                values.clear();
-              }
-              row = reader.readNext();
-            }
-            reader.close();
-            return true;
-        } catch(IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+    /**
+     * Used by InitializeTask 
+     * @param InitializeTask calling this method
+     * @param File .csv file
+     * @param String tablename
+     * @return boolean true if successful
+     */
+    public boolean importConfigTables(InitializeTask it, File file, 
+    		String filename, String tablename) {
+    	
+    	this.it = it;
+    	
+    	// split on ".csv" to get the filename without extension
+    	if (filename.endsWith(".csv")) {
+    		
+    		// create the file name/path of a .properties.csv file
+    		// and check if it exits
+    		String[] tokens = filename.split(".csv");
+    		StringBuffer s = new StringBuffer();
+        	for (int i = 0; i < tokens.length; i++) {
+        		s.append(tokens[i]);
+        	}
+        	String propFilename = s.append(".properties.csv").toString();
+        	String filepath = root + "/odk/tables/" + propFilename;
+        	
+    		File csvProp = new File(filepath);
+
+    		if (csvProp.exists()) {
+    			try {
+					File temp = joinCSVs(csvProp, file);
+					boolean success = this.importNewTable(null, temp, tablename);
+					// delete temporary file
+					temp.delete();
+					return success;
+				} catch (IOException e) {
+					e.printStackTrace();
+					return false;
+				} catch (TableAlreadyExistsException e) {
+					e.printStackTrace();
+					
+					return false;
+				}
+    		} else {
+    			try {
+					return this.importNewTable(null, file, tablename);
+				} catch (TableAlreadyExistsException e) {
+					e.printStackTrace();
+					return false;
+				}
+    		}
+    	} else {
+    		System.out.println("bad filename");
+    		return false;
+    	}
     }
+    
+    private File joinCSVs(File prop, File data) throws IOException {
+    	File temp = new File(root + "/odk/tables/temp.csv");
+
+    	BufferedReader brp = new BufferedReader(new FileReader(prop));
+    	BufferedReader brd = new BufferedReader(new FileReader(data));
+    	FileWriter output = new FileWriter(temp);
+    	
+    	// read in each line and add to the temp file
+    	String line;
+    	while ((line = brp.readLine()) != null) {
+    		output.write(line);
+    		output.write("\n");
+    	}
+    	while ((line = brd.readLine()) != null) {
+    		output.write(line);
+    		output.write("\n");
+    	}
+    	
+    	brp.close();
+    	brd.close();
+    	output.close();
+    	
+    	System.out.println("Temp file made");
+    	return temp;
+    }
+    
+    private boolean importTable(CSVReader reader, String tableId,
+    		List<String> columns, boolean includeTs, boolean includePn,
+    		boolean exportedWithProperties) {
+
+    	int tsIndex = includeTs ? 0 : -1;
+    	int pnIndex = includePn ? (includeTs ? 1 : 0) : -1;
+    	int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
+    	DbTable dbt = DbTable.getDbTable(dbh, tableId);
+
+    	try {
+    		String[] row = reader.readNext();
+    		int rowCount = 0;
+    		while (row != null) {
+    			if (!exportedWithProperties) {
+    				Map<String, String> values = new HashMap<String, String>();
+    				for (int i = 0; i < columns.size(); i++) {
+    					values.put(columns.get(i), row[startIndex + i]);
+    					if (rowCount % 30 == 0 && it != null)
+    						it.updateLineCount("loading line: " + rowCount);
+    				}
+    				String lastModTime = tsIndex == -1 ?
+    						du.formatNowForDb() : row[tsIndex];
+    						String srcPhone = pnIndex == -1 ? null : row[pnIndex];
+    						dbt.addRow(values, lastModTime, srcPhone);
+    						values.clear();
+    			} else {
+    				// it was exported with properties, and we need to include ALL
+    				// the columns.
+    				ContentValues values = new ContentValues();
+    				for (int i = 0; i < columns.size(); i++) {
+    					values.put(columns.get(i), row[i]);
+    					if (rowCount % 30 == 0 && it != null)
+    						it.updateLineCount("loading line: " + rowCount);
+    				}
+    				dbt.actualAddRow(values);
+    				values.clear();
+    			}
+    			rowCount++;
+    			row = reader.readNext();
+    		}
+    		reader.close();
+    		return true;
+    	} catch(IOException e) {
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+
+    
+// ===========================================================================================
+//                                          EXPORT 
+// ===========================================================================================
     
     /**
      * Export a table to CSV without the properties.

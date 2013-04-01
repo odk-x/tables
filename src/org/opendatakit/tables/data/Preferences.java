@@ -32,6 +32,7 @@ public class Preferences {
 	private static final String SERVER_URI_KEY = "serverUri";
 	private static final String ACCOUNT_KEY = "account";
 	private static final String AUTH_KEY = "auth";
+	private static final String TIME_LAST_CONFIG = "timeLastConfig";
 	
 	private static final int DEFAULT_FONT_SIZE = 16;
 
@@ -77,6 +78,23 @@ public class Preferences {
 	public void setFontSize(int fontSize) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(FONT_SIZE, fontSize);
+        editor.commit();
+	}
+	
+	/**
+	 * Return the last time Tables was configured
+	 */
+	public long getTimeLastConfig() {
+		return prefs.getLong(TIME_LAST_CONFIG, 0);
+	}
+	
+	/**
+	 * Updates lastTimeConfig
+	 * @param long timeLastConfig
+	 */
+	public void setLastTimeConfig(long timeLastConfig) {
+		SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong(TIME_LAST_CONFIG, timeLastConfig);
         editor.commit();
 	}
 

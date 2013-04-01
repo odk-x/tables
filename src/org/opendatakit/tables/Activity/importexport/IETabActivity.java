@@ -15,7 +15,8 @@
  */
 package org.opendatakit.tables.Activity.importexport;
 
-import android.app.Activity;
+import com.actionbarsherlock.app.SherlockActivity;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -31,7 +32,7 @@ import android.view.View.OnClickListener;
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public abstract class IETabActivity extends Activity {
+public abstract class IETabActivity extends SherlockActivity {
 	
 	/** dialog IDs */
 	public static final int CSVEXPORT_SUCCESS_DIALOG = 1;
