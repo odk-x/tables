@@ -1018,6 +1018,14 @@ public class Controller {
         filename);
     context.finish();
   }
+  
+  /**
+   * This method should launch the custom app view that is a generic user-
+   * customizable home screen or html page for the app.
+   */
+  public static void launchAppViewActivity(Context context) {
+    
+  }
 
   private static void launchTableActivity(Context context, TableProperties tp, 
       String searchText,

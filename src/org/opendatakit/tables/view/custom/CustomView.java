@@ -16,16 +16,17 @@
 package org.opendatakit.tables.view.custom;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -33,6 +34,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+
 import android.content.Context;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -298,7 +300,7 @@ public abstract class CustomView extends LinearLayout {
 
 	protected class Control {
 
-		private static final String TAG = "Control";
+		private static final String TAG = "CustomView.Control";
 
 		protected Context context;
 		private TableProperties[] allTps;
@@ -344,6 +346,18 @@ public abstract class CustomView extends LinearLayout {
 					tp.getTableId());
 			ArrayList<String> columnOrder = tp.getColumnOrder();
 			return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
+		}
+		
+		/**
+		 * Return a list of the display names for all the tables in the database
+		 * sorted in case insensitive order.
+		 * @return
+		 */
+		public List<String> getTableDisplayNames() {
+		  List<String> allNames = 
+		      Arrays.asList(tpMap.keySet().toArray(new String[0]));
+		  Collections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
+		  return allNames;
 		}
 	}
 }

@@ -25,6 +25,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.util.TableFileUtils;
+import org.opendatakit.tables.view.custom.CustomAppView;
 import org.opendatakit.tables.view.custom.CustomView;
 
 import android.app.Activity;
@@ -45,15 +46,25 @@ public class Launcher extends Activity {
         }
         // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
-        String tableId = (new Preferences(this)).getDefaultTableId();
-        if (tableId == null) {
-            Intent i = new Intent(this, TableManager.class);
-            startActivity(i);
+        // The first thing we'll do is check to see if a custom app file 
+        // exists. If it does, we'll launch it. Otherwise we'll use the 
+        // TableManager.
+        File homescreenFile = new File(dir + CustomAppView.CUSTOM_FILE_NAME);
+        if (homescreenFile.exists()) {
+          // Launch it.
+          
         } else {
-            TableProperties tp = TableProperties.getTablePropertiesForTable(
-                    DbHelper.getDbHelper(this), tableId,
-                    KeyValueStore.Type.ACTIVE);
-            Controller.launchTableActivity(this, tp, true);
+          // Launch the TableManager.
+          String tableId = (new Preferences(this)).getDefaultTableId();
+          if (tableId == null) {
+              Intent i = new Intent(this, TableManager.class);
+              startActivity(i);
+          } else {
+              TableProperties tp = TableProperties.getTablePropertiesForTable(
+                      DbHelper.getDbHelper(this), tableId,
+                      KeyValueStore.Type.ACTIVE);
+              Controller.launchTableActivity(this, tp, true);
+          }
         }
         finish();
     }
