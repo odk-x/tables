@@ -1,31 +1,21 @@
 package org.opendatakit.tables.view.custom;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.BarGraphDisplayActivity;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Table;
+import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.util.TableFileUtils;
-import org.opendatakit.tables.view.custom.CustomView.Control;
-import org.opendatakit.tables.view.custom.CustomView.TableData;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.util.Log;
 
 public class CustomGraphView extends CustomView {
@@ -109,7 +99,7 @@ public class CustomGraphView extends CustomView {
 	public boolean hasGraph(String graph) {
 		return graphData.hasGraph(graph);
 	}
-	
+
 	public boolean graphIsModified() {
 		return graphData.isModified();
 	}
@@ -139,7 +129,7 @@ public class CustomGraphView extends CustomView {
 			this.aspectHelper = kvsh.getAspectHelper(this.graphString);
 			this.aspectHelper = saveGraphToName(potentialGraphName);
 		}
-		
+
 		/*if(graphString.equals(BarGraphDisplayActivity.DEFAULT_GRAPH)) {
 			aspectHelper.deleteAllEntriesInThisAspect();
 			aspectHelper = newAspectHelper;
@@ -164,7 +154,7 @@ public class CustomGraphView extends CustomView {
 				if(getGraphType().equals("Bar Graph") || getGraphType().equals("Scatter Plot")) {
 					newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
 					newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
-				} 
+				}
 				if(getGraphType().equals("Scatter Plot")) {
 					newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
 				}

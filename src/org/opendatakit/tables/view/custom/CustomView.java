@@ -21,11 +21,9 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.Activity.util.CustomViewUtil;
 import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -33,6 +31,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+
 import android.content.Context;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -58,7 +57,7 @@ public abstract class CustomView extends LinearLayout {
 		if (webView != null) {
 			// do this every time to try and clear the old data.
 			//webView.clearView();
-			//webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html", 
+			//webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE, "text/html",
 			//    null);
 			return;
 		}
@@ -76,7 +75,7 @@ public abstract class CustomView extends LinearLayout {
 
 			@Override
 			public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-				Log.i("CustomView", "onConsoleMessage " + 
+				Log.i("CustomView", "onConsoleMessage " +
 						consoleMessage.messageLevel().name() + consoleMessage.message());
 
 				return super.onConsoleMessage(consoleMessage);
@@ -240,10 +239,10 @@ public abstract class CustomView extends LinearLayout {
 				String dBName = tp.getColumnByDisplayName(column);
 				String label = tp.getColumnByElementKey(dBName).getColumnType().label();
 				colInfo.put(column, label);
-			}			
+			}
 			return new JSONObject(colInfo).toString();
 		}
-		
+
 		//get color rules for colName
 		public String getColumnColorRules(String colName, int value) {
 			String elementKey = tp.getColumnByDisplayName(colName);
@@ -262,7 +261,7 @@ public abstract class CustomView extends LinearLayout {
 				}
 			}
 			//Queries the original table for the rows in every collection and stores the number of resulting rows for each.
-			for(int i = 0; i < getCount(); i++) {	            	
+			for(int i = 0; i < getCount(); i++) {
 				String tableName = tp.getDisplayName();
 				String searchText = colName + ":" + getData(i, colName);
 				TableData data = c.query(tableName, searchText);
@@ -280,7 +279,7 @@ public abstract class CustomView extends LinearLayout {
 			return (!primeColumns.isEmpty());
 		}
 
-		//Returns the cell data at the given offset into the table. 
+		//Returns the cell data at the given offset into the table.
 
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
