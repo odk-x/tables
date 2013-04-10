@@ -17,4 +17,5 @@
 	<string name="no_list_view_message">Use + submenu to add a new list view</string>
 	<string name="user_defined_graphview_name_label">Name</string>
 	<string name="app_defined_graphtype_label">Graph Type</string>
+	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
 </resources>

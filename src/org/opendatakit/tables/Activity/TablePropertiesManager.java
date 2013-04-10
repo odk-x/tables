@@ -18,6 +18,8 @@ package org.opendatakit.tables.Activity;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.Activity.importexport.IETabActivity;
 import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
@@ -36,6 +38,7 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.view.custom.CustomDetailView;
 
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -53,6 +56,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
@@ -622,7 +626,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             	locCol = locationCols.get(0);
                 kvsHelper.setString(TableMapFragment.KEY_MAP_LOC_COL, locCol.getElementKey());
             }
-            
+
             // Try to find the location column in the store.
             ColumnProperties latCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL));
             // If there is none, take the first of the location columns and set it.
@@ -630,7 +634,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             	latCol = tp.getColumns()[0];
                 kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latCol.getElementKey());
             }
-            
+
             // Try to find the location column in the store.
             ColumnProperties longCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL));
             // If there is none, take the first of the location columns and set it.
@@ -638,7 +642,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             	longCol = tp.getColumns()[0];
                 kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
             }
-            
+
             // Go through each of the columns and add it as an option.
             ColumnProperties[] cps = tp.getColumns();
             String[] colDisplayNames = new String[cps.length];
@@ -654,7 +658,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 locColDisplayNames[i] = locationCols.get(i).getDisplayName();
                 locColElementKeys[i] = locationCols.get(i).getElementKey();
             }
-            
+
             // Label Preference!
             ListPreference mapLabelPref = new ListPreference(this);
             mapLabelPref.setTitle(label + " Label Column");
@@ -673,7 +677,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(mapLabelPref);
-            
+
             // Lat Preference!
             ListPreference mapLatPref = new ListPreference(this);
             mapLatPref.setTitle(label + " Latitude Column");
@@ -692,7 +696,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(mapLatPref);
-            
+
             // Long Preference!
             ListPreference mapLongPref = new ListPreference(this);
             mapLongPref.setTitle(label + " Longitude Column");
@@ -711,7 +715,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(mapLongPref);
-            
+
             // Location Preference!
             ListPreference mapLocPref = new ListPreference(this);
             mapLocPref.setTitle(label + " Location Column");
@@ -730,7 +734,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(mapLocPref);
-            
+
             // ListView Preference!
             ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
             listFilePref.setTitle(label + " List View File");
@@ -747,7 +751,7 @@ public class TablePropertiesManager extends PreferenceActivity {
                 }
             });
             prefCat.addPreference(listFilePref);
-        
+
             /**String[] mapColorLabels = new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
             for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length; i++) {
                 mapColorLabels[i] = LanguageUtil.getMapColorLabel(TableViewSettings.MAP_COLOR_OPTIONS[i]);
@@ -756,7 +760,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             for (ColumnProperties cp : tp.getColumns()) {
                 colorRulers.put(cp, settings.getMapColorRuler(cp));
             }
-            ConditionalRulerDialogPreference ccPref = 
+            ConditionalRulerDialogPreference ccPref =
             		new ConditionalRulerDialogPreference(TableViewSettings.MAP_COLOR_OPTIONS, mapColorLabels, colorRulers);
             ccPref.setTitle(label + " Map Color Options");
             prefCat.addPreference(ccPref);*/
@@ -834,9 +838,15 @@ public class TablePropertiesManager extends PreferenceActivity {
                 if (getText() != null) {
                     intent.setData(Uri.parse("file:///" + getText()));
                 }
-                startActivityForResult(intent, RC_DETAIL_VIEW_FILE);
+                try {
+                  startActivityForResult(intent, RC_DETAIL_VIEW_FILE);
+                } catch ( ActivityNotFoundException e ) {
+                  e.printStackTrace();
+                  Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
+                }
             } else {
                 super.onClick();
+                Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
             }
         }
 
@@ -862,9 +872,15 @@ private class ListViewFileSelectorPreference extends EditTextPreference {
                 if (getText() != null) {
                     intent.setData(Uri.parse("file:///" + getText()));
                 }
-                startActivityForResult(intent, RC_LIST_VIEW_FILE);
+                try {
+                  startActivityForResult(intent, RC_LIST_VIEW_FILE);
+                } catch ( ActivityNotFoundException e ) {
+                  e.printStackTrace();
+                  Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
+                }
             } else {
                 super.onClick();
+                Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
             }
         }
 
