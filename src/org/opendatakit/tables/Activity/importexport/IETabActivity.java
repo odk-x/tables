@@ -18,17 +18,20 @@ package org.opendatakit.tables.Activity.importexport;
 import com.actionbarsherlock.app.SherlockActivity;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.util.TableFileUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Toast;
 
 /**
  * An abstract parent class for import/export activities.
@@ -47,9 +50,9 @@ public abstract class IETabActivity extends SherlockActivity {
 	public static final int CSVEXPORT_FAIL_DIALOG = 6;
 	// This is intended to say that "your csv exported successfully, but there
 	// was a problem with the key value store setting mapping.
-	public static final int 
+	public static final int
 	  CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 7;
-	public static final int 
+	public static final int
 	  CSVIMPORT_FAIL_DUPLICATE_TABLE = 8;
 	protected static final int
 	  CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG = 9;
@@ -93,7 +96,12 @@ public abstract class IETabActivity extends SherlockActivity {
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
             intent.setData(Uri.parse("file://" + ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME)));
             intent.putExtra("org.openintents.extra.TITLE", "Please select a file");
-            startActivityForResult(intent, 1);
+            try {
+              startActivityForResult(intent, 1);
+            } catch ( ActivityNotFoundException e ) {
+              e.printStackTrace();
+              Toast.makeText(IETabActivity.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
