@@ -91,6 +91,8 @@
         </activity>
         <activity android:name=".activities.SpreadsheetDisplayActivity" >
         </activity>
+        <activity android:name=".activities.CustomHomeScreenActivity">
+        </activity>
         <activity android:name=".activities.ListDisplayActivity" >
         </activity>
         <activity android:name=".activities.GraphDisplayActivity" >

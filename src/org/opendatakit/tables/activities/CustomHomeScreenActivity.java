@@ -18,6 +18,9 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.view.custom.CustomAppView;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.actionbarsherlock.app.SherlockActivity;
 
@@ -30,35 +33,67 @@ import com.actionbarsherlock.app.SherlockActivity;
 public class CustomHomeScreenActivity extends SherlockActivity implements
     DisplayActivity {
   
-  private Controller mController;
+  private static final String TAG = CustomHomeScreenActivity.class.getName();
+  
+ // private Controller mController;
   /** 
    * This is the main view that is responsible for showing the custom app html 
    * page. It is the core of this Activity.
    */
   private CustomAppView mView;
+  private LinearLayout mContainerView;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d(TAG, "in onCreate()");
     setTitle("");
-    mController = new Controller(this, this, getIntent().getExtras());
+    mContainerView = new LinearLayout(this);
+    mContainerView.setLayoutParams(new ViewGroup.LayoutParams(
+        LinearLayout.LayoutParams.FILL_PARENT,
+        LinearLayout.LayoutParams.FILL_PARENT));
+    mContainerView.setOrientation(LinearLayout.VERTICAL);
+    setContentView(mContainerView);
+    Bundle extras = getIntent().getExtras();
+    //mController = new Controller(this, this, extras);
   }
   
   @Override
   protected void onResume() {
     super.onResume();
+    Log.d(TAG, "in onResume()");
     init();
   }
 
   @Override
   public void init() {
-    // TODO Auto-generated method stub
+    Log.d(TAG, "in init()");
+    // First we have to remove all the views--otherwise you end up with 
+    // multiple views and none seem to display.
+    mContainerView.removeAllViews();
+    mView = new CustomAppView(this);
+    mContainerView.addView(mView);
+    mView.display();
+    //mController.setDisplayView(mView);
+    //setContentView(mController.getContainerView());
   }
 
   @Override
   public void onSearch() {
-    // TODO Auto-generated method stub
+    Log.e(TAG, "called onSearch, which is unimplemented");
     
   }
+  
+//  @Override
+//  public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+//      mController.buildOptionsMenu(menu);
+//    return true;
+//  }
+  
+//  @Override
+//  public boolean onMenuItemSelected(int featureId, 
+//      com.actionbarsherlock.view.MenuItem item) {
+//    return mController.handleMenuItemSelection(item);
+//  }
 
 }

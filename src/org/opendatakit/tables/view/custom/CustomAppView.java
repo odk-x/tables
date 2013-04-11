@@ -15,11 +15,12 @@
  */
 package org.opendatakit.tables.view.custom;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.util.TableFileUtils;
 
 import android.content.Context;
+import android.view.ViewGroup;
 
 /**
  * The view that supports a custom home screen for an app. It will support html
@@ -38,6 +39,11 @@ public class CustomAppView extends CustomView {
    */
   public static final String CUSTOM_FILE_NAME = "homescreen.html";
   
+  private static final String DEFAULT_HTML =
+      "<html><body>" +
+      "<p>No filename has been specified.</p>" +
+      "</body></html>";
+  
   private Context mContext;
   private DbHelper mDbHelper;
   
@@ -49,6 +55,17 @@ public class CustomAppView extends CustomView {
     super(context);
     this.mContext = context;
     this.mDbHelper = DbHelper.getDbHelper(context);
+    this.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.FILL_PARENT, 
+        LayoutParams.FILL_PARENT));
+  }
+  
+  public void display() {
+    webView.addJavascriptInterface(new Control(mContext), "control");
+    // We're going to assume this is only being called if homescreen.html has
+    // been found, so we're just going to use that, not do any checking.
+    String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    load("file:///" + dir + "/" + CUSTOM_FILE_NAME);
+    initView();
   }
   
 }
