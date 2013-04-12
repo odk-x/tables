@@ -54,7 +54,7 @@ public class Launcher extends Activity {
         // exists. If it does, we'll launch it. Otherwise we'll use the 
         // TableManager.
         File homescreenFile = new File(dir + "/" + 
-            CustomAppView.CUSTOM_FILE_NAME);
+            CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME);
         Log.d(TAG, "looking for homescreen file: " 
             + homescreenFile.toString());
         if (homescreenFile.exists()) {

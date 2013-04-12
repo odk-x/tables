@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.view.custom;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,14 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.DataStructure.ColumnColorRuler;
 import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -45,6 +42,7 @@ import org.opendatakit.tables.data.UserTable;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -382,6 +380,18 @@ public abstract class CustomView extends LinearLayout {
 		
 		public void testVoid() {
 		  Log.e(TAG, "testVoid() reporting!");
+		}
+		
+		/**
+		 * Launch the {@link CustomHomeScreenActivity} with the custom filename
+		 * to display.
+		 * @param filename
+		 */
+		public void launchHTML(String filename) {
+		  Log.d(TAG, "in launchHTML with filename: " + filename);
+		  Intent i = new Intent(context, CustomHomeScreenActivity.class);
+		  i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
+		  context.startActivity(i);
 		}
 		
 		/**

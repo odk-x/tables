@@ -37,7 +37,7 @@ public class CustomAppView extends CustomView {
   /**
    * The filename of the html that defines the custom homescreen of the app.
    */
-  public static final String CUSTOM_FILE_NAME = "homescreen.html";
+  public static final String CUSTOM_HOMESCREEN_FILE_NAME = "homescreen.html";
   
   private static final String DEFAULT_HTML =
       "<html><body>" +
@@ -46,14 +46,21 @@ public class CustomAppView extends CustomView {
   
   private Context mContext;
   private DbHelper mDbHelper;
+  // The filename of the HTML you'll be displaying. Not the full path, just 
+  // the relative name.
+  private String mFilename;
   
   /**
-   * Create the view. 
+   * Create the view. The filename is the filename of the HTML you want to 
+   * display with the view. Not the whole path, which is assumed to be in the 
+   * app's directory.
    * @param context
+   * @param filename cannot be null
    */
-  public CustomAppView(Context context) {
+  public CustomAppView(Context context, String filename) {
     super(context);
     this.mContext = context;
+    this.mFilename = filename;
     this.mDbHelper = DbHelper.getDbHelper(context);
     this.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.FILL_PARENT, 
         LayoutParams.FILL_PARENT));
@@ -64,7 +71,10 @@ public class CustomAppView extends CustomView {
     // We're going to assume this is only being called if homescreen.html has
     // been found, so we're just going to use that, not do any checking.
     String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    load("file:///" + dir + "/" + CUSTOM_FILE_NAME);
+    // First we want to see if we're supposed to display a custom HTML, or if 
+    // we want to display just the homescreen.html file. We'll check for the
+    // key.
+    load("file:///" + dir + "/" + mFilename);
     initView();
   }
   
