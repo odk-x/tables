@@ -85,6 +85,10 @@
         <activity android:name=".Activity.AggregateDownloadTableActivity" />
         <activity android:name=".Activity.settings.ListDisplaySettings" >
         </activity>
+        <activity android:name=".Activity.ColorRuleManagerActivity">
+        </activity>
+        <activity android:name=".Activity.EditSavedColorRuleActivity">
+        </activity>
         <activity android:name=".Activity.settings.MainDisplaySettings" >
         </activity>
         <activity android:name=".Activity.TablePropertiesManager" >

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.Activity.ColorRuleManagerActivity;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
@@ -81,14 +82,19 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     // This should allow for the opening of a joined table.
     private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE =
         Controller.FIRST_FREE_MENU_ITEM_ID + 11;
+    private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 
+        Controller.FIRST_FREE_MENU_ITEM_ID + 12;
     private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
         "Open Join Table";
+    private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
+        "Edit Column Color Rules";
 
     private DataManager dm;
     private Controller c;
     private Query query;
     private UserTable table;
     private int indexedCol;
+    private TableProperties mTp;
 
     private int lastDataCellMenued;
     private int lastHeaderCellMenued;
@@ -116,11 +122,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      TableProperties tp = c.getTableProperties();
+      this.mTp = c.getTableProperties();
       c.refreshDbTable();
 //      tp.refreshColumns();
         query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-            tp);
+            mTp);
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
@@ -130,7 +136,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         indexedCol =
             c.getTableProperties().getColumnIndex(indexedColElementKey);
         // setting up the view
-        c.setDisplayView(buildView(tp));
+        c.setDisplayView(buildView(mTp));
         setContentView(c.getContainerView());
     }
 
@@ -300,6 +306,15 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          openColumnPropertiesManager(c.getTableProperties()
                  .getColumns()[lastHeaderCellMenued]);
          return true;
+     case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
+       Intent i = new Intent(this, ColorRuleManagerActivity.class);
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, 
+           mTp.getColumns()[lastHeaderCellMenued].getElementKey());
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
+           this.mTp.getTableId());
+//       dialog.onCreate(null); // so we don't save state.
+//       dialog.show();
+       startActivity(i);
      default:
        Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
          return false;
@@ -480,8 +495,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
                     ContextMenu.NONE, "Freeze Column");
         }
+        
+        menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES,
+            ContextMenu.NONE, MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES);
+        
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER,
                 ContextMenu.NONE, "Manage Column Properties");
+        
     }
 
     @Override

@@ -44,7 +44,7 @@
 
         <TextView
             android:id="@+id/row_ext"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignLeft="@+id/row_label"
             android:layout_below="@+id/row_label"

@@ -19,4 +19,9 @@
 	<string name="app_defined_graphtype_label">Graph Type</string>
 	<!-- For various TableManager things -->
 	<string name="name_of_new_table">Name of New Table</string>
+	<!-- For color rule things -->
+	<string name="comparison_type">Comparison Type</string>
+	<string name="value">Value</string>
+	<string name="text_color">Text Color</string>
+	<string name="background_color">Background Color</string>
 </resources>

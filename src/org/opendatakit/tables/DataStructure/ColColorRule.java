@@ -103,6 +103,16 @@ public class ColColorRule {
     return foreground;
   }
   
+  /**
+   * Return symbol space value.
+   */
+  @Override
+  public String toString() {
+    String symbol = operator.getSymbol();
+    String value = val;
+    return symbol + " " + value;
+  }
+  
   public void setForeground(int newForeground) {
     this.foreground = newForeground;
   }
@@ -124,6 +134,7 @@ public class ColColorRule {
   }
   
   public static enum RuleType {
+        
     LESS_THAN("<"),
     LESS_THAN_OR_EQUAL("<="),
     EQUAL("="),
@@ -131,11 +142,33 @@ public class ColColorRule {
     GREATER_THAN(">"),
     NO_OP("operation value");
     
+    private static final String STR_LESS_THAN = "<";
+    private static final String STR_LESS_OR_EQUAL = "<=";
+    private static final String STR_EQUAL = "=";
+    private static final String STR_GREATER_OR_EQUAL = ">=";
+    private static final String STR_GREATER_THAN = ">";
+    private static final int NUM_VALUES_FOR_SPINNER = 5;
+
+    
     // This is the string that represents this operation.
     private String symbol;
     
     private RuleType(String symbol) {
       this.symbol = symbol;
+    }
+    
+    /**
+     * Return the possible values. Intended for a preference screen.
+     * @return
+     */
+    public static CharSequence[] getValues() {
+      CharSequence[] result = new CharSequence[NUM_VALUES_FOR_SPINNER];
+      result[0] = STR_LESS_THAN;
+      result[1] = STR_LESS_OR_EQUAL;
+      result[2] = STR_EQUAL;
+      result[3] = STR_GREATER_OR_EQUAL;
+      result[4] = STR_GREATER_THAN;
+      return result;
     }
     
     public String getSymbol() {
