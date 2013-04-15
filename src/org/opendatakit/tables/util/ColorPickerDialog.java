@@ -395,7 +395,6 @@ public class ColorPickerDialog extends Dialog {
                 super.onCreate(savedInstanceState);
                 OnColorChangedListener l = new OnColorChangedListener() {
                         public void colorChanged(String key, int color) {
-                          Log.d(TAG, "mListener: " + mListener);
                                 mListener.colorChanged(mKey, color);
                                 dismiss();
                         }

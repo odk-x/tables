@@ -60,7 +60,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
-  private static final String ACTIVITY_TITLE = "Color Rule Manager";
+  private static final String ACTIVITY_TITLE_SUFFIX = " Color Rules";
   private static final String EXAMPLE_STRING = "Rule Preview";
 
   /**
@@ -109,7 +109,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     setContentView(org.opendatakit.tables.R.layout.color_rule_manager);
-    setTitle(ACTIVITY_TITLE);
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
@@ -240,6 +239,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     this.mColorRules = mColorRuler.getColorRules();
     this.mColorRuleAdapter = new ColorRuleAdapter();
     setListAdapter(mColorRuleAdapter);
+    this.setTitle(mCp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
   }
   
   @Override

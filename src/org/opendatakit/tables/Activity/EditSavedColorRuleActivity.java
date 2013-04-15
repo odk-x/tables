@@ -52,6 +52,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   private static final String TARGET_VALUE_STRING = "target value";
   private static final String TITLE_TEXT_COLOR = "Text Color";
   private static final String TITLE_BACKGROUND_COLOR = "Background Color";
+  private static final String TITLE_ACTIVITY = "Edit Rule";
   
   private String mTableId;
   private String mElementKey;
@@ -83,6 +84,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
         org.opendatakit.tables.R.xml.preference_color_rule_entry);
     this.mHumanValues = ColColorRule.RuleType.getValues();
     this.mEntryVales = ColColorRule.RuleType.getValues();
+    this.setTitle(TITLE_ACTIVITY);
   }
   
   @Override

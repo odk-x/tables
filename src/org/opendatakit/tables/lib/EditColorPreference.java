@@ -34,7 +34,14 @@ public class EditColorPreference extends Preference {
   }
   
   /**
-   * Set the listener so that the color picker is created.
+   * Set the onPreferenceClickListener so that the color picker is created when
+   * the preference is clicked.
+   * @param onColorChangedListener the interface that will receive the call 
+   * back when the dialog receives input--likely the calling activity.
+   * @param key the String key that will be passed back via the callback so you
+   * know which color preference has been edited
+   * @param title the title of the dialog
+   * @param initialColor the initial color the dialog should be set to
    */
   public void initColorPickerListener(final OnColorChangedListener listener,
       final String key, final String title, final int initialColor) {
