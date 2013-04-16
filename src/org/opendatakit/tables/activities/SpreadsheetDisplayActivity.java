@@ -50,7 +50,6 @@ import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
 
 public class SpreadsheetDisplayActivity extends SherlockActivity
         implements DisplayActivity, SpreadsheetView.Controller {
@@ -230,7 +229,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu);
-        // TODO: 
+        // TODO:
 //        MenuItem displayPref = menu.getItem(Controller.MENU_ITEM_ID_DISPLAY_PREFERENCES);
 //        if (displayPref != null)
 //        	displayPref.setEnabled(true);

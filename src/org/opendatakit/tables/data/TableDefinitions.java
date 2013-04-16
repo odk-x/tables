@@ -286,5 +286,28 @@ public class TableDefinitions {
     c.close();
     return tableIds;
   }
+  
+  /**
+   * Remove the given tableId from the TableDefinitions table. This does NOT
+   * handle any of the necessary deletion of the table's information in other
+   * tables. 
+   * <p>
+   * Does not close the database.
+   * @param tableId
+   * @param db
+   * @return
+   */
+  public static int deleteTableFromTableDefinitions(String tableId, 
+      SQLiteDatabase db) {
+    int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_TABLE, 
+        new String[] {tableId});
+    if (count != 1) {
+      Log.e(TAG, "deleteTable() for tableId [" + tableId + "] deleted " + 
+          " rows");
+    } else {
+      Log.d(TAG, "deleted table with id: " + tableId);
+    }
+    return count;
+  }
 
 }

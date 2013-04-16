@@ -893,6 +893,7 @@ public class TableProperties {
 	      for (ColumnProperties cp : columns) {
 	        cp.deleteColumn(db);
 	      }
+	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
 	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
 	          this.backingStore);
