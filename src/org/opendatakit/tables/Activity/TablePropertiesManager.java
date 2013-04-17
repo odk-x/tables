@@ -352,6 +352,26 @@ public class TablePropertiesManager extends PreferenceActivity {
         displayCat.addPreference(formPref);
         formPref.setTitle(TITLE_EDIT_FORM);
         formPref.setDialogTitle(TITLE_EDIT_FORM);
+        
+        Preference rowColorRulePrefs = new Preference(this);
+        rowColorRulePrefs.setTitle("Edit Table Color Rules");
+        rowColorRulePrefs.setOnPreferenceClickListener(
+            new OnPreferenceClickListener() {
+
+          @Override
+          public boolean onPreferenceClick(Preference preference) {
+            Intent rowColorRuleManagerIntent =
+                new Intent(TablePropertiesManager.this,
+                    RowColorRuleManagerActivity.class);
+            rowColorRuleManagerIntent.putExtra(
+                ListViewManager.INTENT_KEY_TABLE_ID,
+                tp.getTableId());
+            startActivity(rowColorRuleManagerIntent);
+            return true;
+          }
+
+        });
+        displayCat.addPreference(rowColorRulePrefs);
 
         // security category
 

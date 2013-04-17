@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <ListPreference
+        android:key="pref_element_key"
+        android:title="@string/column" />
+    
+    <!-- Would rather be doing an include or merge, but can't get it to work. -->
+        <ListPreference
+        android:key="pref_comp_type"
+        android:title="@string/comparison_type" />
+    <!-- Display and select a file for that list view. -->
+    <!-- Display and change the user-defined name of the list view. -->
+    <org.opendatakit.tables.lib.EditNameDialogPreference
+        android:key="pref_value"
+        android:title="@string/value"
+        android:dialogLayout="@layout/edit_listview_name_dialog"
+        android:positiveButtonText="@string/ok"
+        android:negativeButtonText="@string/cancel" />
+    <org.opendatakit.tables.lib.EditColorPreference
+        android:key="pref_text_color"
+        android:title="@string/text_color" />
+    <org.opendatakit.tables.lib.EditColorPreference
+        android:key="pref_background_color"
+        android:title="@string/background_color" />
+    
+</PreferenceScreen>

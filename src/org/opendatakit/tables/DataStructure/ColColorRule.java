@@ -56,12 +56,8 @@ public class ColColorRule {
     // generate a UUID for the color rule. We can't let it autoincrement ints
     // as was happening before, as this would become corrupted when rules were
     // imported from other dbs.
-    this.id = UUID.randomUUID().toString();
-    this.columnElementKey = colElementKey;
-    this.operator = compType;
-    this.val = val;
-    this.foreground = foreground;
-    this.background = background;
+    this(UUID.randomUUID().toString(), colElementKey, compType, val, 
+        foreground, background);
   }
   
   /**
@@ -131,6 +127,15 @@ public class ColColorRule {
   
   public void setOperator(RuleType newOperator) {
     this.operator = newOperator;
+  }
+  
+  /**
+   * This should be meaningless for a column rule, and only matter for 
+   * a row rule. Will be cleaned up in refactoring.
+   * @param elementKey
+   */
+  public void setColumnElementKey(String elementKey) {
+    this.columnElementKey = elementKey;
   }
   
   public static enum RuleType {

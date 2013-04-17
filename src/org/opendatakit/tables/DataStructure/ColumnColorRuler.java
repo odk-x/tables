@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.DataStructure;
 
 import java.io.IOException;
@@ -101,13 +116,13 @@ public class ColumnColorRuler {
                 typeFactory.constructCollectionType(ArrayList.class, 
                     ColColorRule.class));
       } catch (JsonParseException e) {
-        Log.e(TAG, "problem parsing json to colocolorrule");
+        Log.e(TAG, "problem parsing json to colcolorrule");
         e.printStackTrace();
       } catch (JsonMappingException e) {
-        Log.e(TAG, "problem mapping json to colocolorrule");
+        Log.e(TAG, "problem mapping json to colcolorrule");
         e.printStackTrace();
       } catch (IOException e) {
-        Log.e(TAG, "i/o problem with json to colocolorrule");
+        Log.e(TAG, "i/o problem with json to colcolorrule");
         e.printStackTrace();
       }
       return reclaimedRules;
@@ -256,9 +271,9 @@ public class ColumnColorRuler {
           } else {
               compVal = val.compareTo(ruleVal);
           }
-          Log.d("DP", "ruleVal:" + ruleVal);
-          Log.d("DP", "val:" + val);
-          Log.d("DP", "compVal:" + compVal);
+          Log.d(TAG, "ruleVal:" + ruleVal);
+          Log.d(TAG, "val:" + val);
+          Log.d(TAG, "compVal:" + compVal);
           switch(ruleList.get(index).getOperator()) {
           case LESS_THAN:
             return (compVal < 0);

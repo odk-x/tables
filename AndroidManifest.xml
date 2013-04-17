@@ -90,6 +90,10 @@
         </activity>
         <activity android:name=".Activity.EditSavedColorRuleActivity">
         </activity>
+        <activity android:name=".Activity.RowColorRuleManagerActivity">
+        </activity>
+        <activity android:name=".Activity.EditSavedRowColorRuleActivity">
+        </activity>
         <activity android:name=".Activity.settings.MainDisplaySettings" >
         </activity>
         <activity android:name=".Activity.TablePropertiesManager" >

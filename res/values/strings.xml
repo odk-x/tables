@@ -24,5 +24,7 @@
 	<string name="value">Value</string>
 	<string name="text_color">Text Color</string>
 	<string name="background_color">Background Color</string>
+	<string name="column">Column</string>
 	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
+	
 </resources>
