@@ -1789,6 +1789,9 @@ public class TableProperties {
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
+      } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
+				|| cp.getDisplayName().equalsIgnoreCase("longitude")) {
+    	  locationColCount++;
       }
     }
     List<TableViewType> list = new ArrayList<TableViewType>();

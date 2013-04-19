@@ -73,6 +73,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     // these ints are used when selecting/changing the view files
     private static final int RC_DETAIL_VIEW_FILE = 0;
     private static final int RC_LIST_VIEW_FILE = 1;
+    private static final int RC_MAP_LIST_VIEW_FILE = 2;
 
     private enum ViewPreferenceType {
         OVERVIEW_VIEW,
@@ -317,8 +318,8 @@ public class TablePropertiesManager extends PreferenceActivity {
 //        addViewPreferences(ViewPreferenceType.COLLECTION_VIEW, displayCat);
         addViewPreferences(ViewPreferenceType.AUTO_GENERATED, displayCat);
 
-        DetailViewFileSelectorPreference detailViewPref =
-                new DetailViewFileSelectorPreference(this);
+        FileSelectorPreference detailViewPref =
+                new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
         detailViewPref.setTitle("Detail View File");
         detailViewPref.setDialogTitle("Change Detail View File");
         final KeyValueStoreHelper kvsh =
@@ -538,6 +539,9 @@ public class TablePropertiesManager extends PreferenceActivity {
                 cp.getColumnType() ==
                 ColumnType.TIME) {
                 dateCols.add(cp);
+            } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
+    				|| cp.getDisplayName().equalsIgnoreCase("longitude")) {
+            	locationCols.add(cp);
             }
         }
 
@@ -612,46 +616,40 @@ public class TablePropertiesManager extends PreferenceActivity {
         case Map:
         	// Grab the key value store helper from the table activity.
         	final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-        	// Try to find the map label column in the store.
-        	ColumnProperties labelCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LABEL_COL));
-        	// If there is none, take the first of the table columns and set it.
-            if (labelCol == null) {
-                labelCol = tp.getColumns()[0];
-                kvsHelper.setString(TableMapFragment.KEY_MAP_LABEL_COL, labelCol.getElementKey());
-            }
-            // Try to find the location column in the store.
-            ColumnProperties locCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LOC_COL));
-            // If there is none, take the first of the location columns and set it.
-            if (locCol == null) {
-            	locCol = locationCols.get(0);
-                kvsHelper.setString(TableMapFragment.KEY_MAP_LOC_COL, locCol.getElementKey());
-            }
 
-            // Try to find the location column in the store.
+            // Try to find the latitude column in the store.
             ColumnProperties latCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL));
             // If there is none, take the first of the location columns and set it.
             if (latCol == null) {
-            	latCol = tp.getColumns()[0];
-                kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latCol.getElementKey());
+        		for(ColumnProperties column : locationCols) {
+        			if (column.getDisplayName().equalsIgnoreCase("latitude")) {
+        				latCol = column;
+        				break;
+        			}
+        		}
+        		if (latCol == null) {
+        			latCol = locationCols.get(0);
+        		}
+            	kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latCol.getElementKey());
             }
 
-            // Try to find the location column in the store.
+            // Try to find the longitude column in the store.
             ColumnProperties longCol = tp.getColumnByElementKey(kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL));
             // If there is none, take the first of the location columns and set it.
             if (longCol == null) {
-            	longCol = tp.getColumns()[0];
-                kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
+        		for(ColumnProperties column : locationCols) {
+        			if (column.getDisplayName().equalsIgnoreCase("longitude")) {
+        				longCol = column;
+        				break;
+        			}
+        		}
+        		if (longCol == null) {
+        			longCol = locationCols.get(0);
+        		}
+            	kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
             }
-
-            // Go through each of the columns and add it as an option.
-            ColumnProperties[] cps = tp.getColumns();
-            String[] colDisplayNames = new String[cps.length];
-            String[] colElementKeys = new String[cps.length];
-            for (int i = 0; i < cps.length; i++) {
-                colDisplayNames[i] = cps[i].getDisplayName();
-                colElementKeys[i] = cps[i].getElementKey();
-            }
-            // Go through every location column and add it as an option.
+            
+            // Add every location column to the list.
             String[] locColDisplayNames = new String[locationCols.size()];
             String[] locColElementKeys = new String[locationCols.size()];
             for (int i = 0; i < locationCols.size(); i++) {
@@ -659,31 +657,12 @@ public class TablePropertiesManager extends PreferenceActivity {
                 locColElementKeys[i] = locationCols.get(i).getElementKey();
             }
 
-            // Label Preference!
-            ListPreference mapLabelPref = new ListPreference(this);
-            mapLabelPref.setTitle(label + " Label Column");
-            mapLabelPref.setDialogTitle("Change " + label + " Label Column");
-            mapLabelPref.setEntryValues(colElementKeys);
-            mapLabelPref.setEntries(colDisplayNames);
-            mapLabelPref.setValue(labelCol.getElementKey());
-            mapLabelPref.setSummary(labelCol.getDisplayName());
-            mapLabelPref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                	kvsHelper.setString(TableMapFragment.KEY_MAP_LABEL_COL, (String) newValue);
-                    init();
-                    return false;
-                }
-            });
-            prefCat.addPreference(mapLabelPref);
-
             // Lat Preference!
             ListPreference mapLatPref = new ListPreference(this);
             mapLatPref.setTitle(label + " Latitude Column");
             mapLatPref.setDialogTitle("Change " + label + " Latitude Column");
-            mapLatPref.setEntryValues(colElementKeys);
-            mapLatPref.setEntries(colDisplayNames);
+            mapLatPref.setEntryValues(locColElementKeys);
+            mapLatPref.setEntries(locColDisplayNames);
             mapLatPref.setValue(latCol.getElementKey());
             mapLatPref.setSummary(latCol.getDisplayName());
             mapLatPref.setOnPreferenceChangeListener(
@@ -701,8 +680,8 @@ public class TablePropertiesManager extends PreferenceActivity {
             ListPreference mapLongPref = new ListPreference(this);
             mapLongPref.setTitle(label + " Longitude Column");
             mapLongPref.setDialogTitle("Change " + label + " Longitude Column");
-            mapLongPref.setEntryValues(colElementKeys);
-            mapLongPref.setEntries(colDisplayNames);
+            mapLongPref.setEntryValues(locColElementKeys);
+            mapLongPref.setEntries(locColDisplayNames);
             mapLongPref.setValue(longCol.getElementKey());
             mapLongPref.setSummary(longCol.getDisplayName());
             mapLongPref.setOnPreferenceChangeListener(
@@ -716,40 +695,12 @@ public class TablePropertiesManager extends PreferenceActivity {
             });
             prefCat.addPreference(mapLongPref);
 
-            // Location Preference!
-            ListPreference mapLocPref = new ListPreference(this);
-            mapLocPref.setTitle(label + " Location Column");
-            mapLocPref.setDialogTitle("Change " + label + " Location Column");
-            mapLocPref.setEntryValues(locColElementKeys);
-            mapLocPref.setEntries(locColDisplayNames);
-            mapLocPref.setValue(locCol.getElementKey());
-            mapLocPref.setSummary(locCol.getDisplayName());
-            mapLocPref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                	kvsHelper.setString(TableMapFragment.KEY_MAP_LOC_COL, (String) newValue);
-                    init();
-                    return false;
-                }
-            });
-            prefCat.addPreference(mapLocPref);
-
             // ListView Preference!
-            ListViewFileSelectorPreference listFilePref = new ListViewFileSelectorPreference(this);
+            FileSelectorPreference listFilePref = new FileSelectorPreference(this, RC_MAP_LIST_VIEW_FILE);
             listFilePref.setTitle(label + " List View File");
             listFilePref.setDialogTitle("Change " + label + " List View File");
             String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
             listFilePref.setText(currentFilename);
-            listFilePref.setOnPreferenceChangeListener(
-                    new OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                	kvsHelper.setString(TableMapFragment.KEY_FILENAME, (String) newValue);
-                    init();
-                    return false;
-                }
-            });
             prefCat.addPreference(listFilePref);
 
             /**String[] mapColorLabels = new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
@@ -780,10 +731,12 @@ public class TablePropertiesManager extends PreferenceActivity {
             return;
         }
         KeyValueStoreHelper kvsh;
+        Uri uri;
+        String filename;
         switch (requestCode) {
         case RC_DETAIL_VIEW_FILE:
-            Uri fileUri = data.getData();
-            String filename = fileUri.getPath();
+        	uri = data.getData();
+            filename = uri.getPath();
             kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
             kvsh.setString(
                 CustomDetailView.KEY_FILENAME,
@@ -792,8 +745,8 @@ public class TablePropertiesManager extends PreferenceActivity {
             init();
             break;
         case RC_LIST_VIEW_FILE:
-        	Uri fileUri2 = data.getData();
-            String filename2 = fileUri2.getPath();
+        	uri = data.getData();
+            filename = uri.getPath();
 // This set it in the main partition. We actually want to set it in the
             // other partition for now.
 //            kvsh =
@@ -808,12 +761,16 @@ public class TablePropertiesManager extends PreferenceActivity {
             // allow custom naming, checking for redundancy, etc.
             KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
             aspectHelper.setString(ListDisplayActivity.KEY_FILENAME,
-                filename2);
+            		filename);
 
 //            TableViewSettings settings = tp.getOverviewViewSettings();
 //            settings.setCustomListFilename(filename2);
             init();
             break;
+        case RC_MAP_LIST_VIEW_FILE:
+        	tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION)
+        			.setString(TableMapFragment.KEY_FILENAME, data.getData().getPath());
+        	init();
         default:
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -824,74 +781,53 @@ public class TablePropertiesManager extends PreferenceActivity {
         setResult(RESULT_OK);
         finish();
     }
-
-    private class DetailViewFileSelectorPreference extends EditTextPreference {
-
-        DetailViewFileSelectorPreference(Context context) {
-            super(context);
-        }
-
-        @Override
-        protected void onClick() {
-            if (hasFilePicker()) {
-                Intent intent = new Intent("org.openintents.action.PICK_FILE");
-                if (getText() != null) {
-                    intent.setData(Uri.parse("file:///" + getText()));
-                }
-                try {
-                  startActivityForResult(intent, RC_DETAIL_VIEW_FILE);
-                } catch ( ActivityNotFoundException e ) {
-                  e.printStackTrace();
-                  Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
-                }
-            } else {
-                super.onClick();
-                Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
-            }
-        }
-
-        private boolean hasFilePicker() {
+    
+    /**
+     * This preference allows the user to select a file from their SD card.
+     * If the user does not have a file picker installed on their phone, then a toast 
+     * will indicate so.
+     * 
+     * @author Chris Gelon (cgelon)
+     */
+    private class FileSelectorPreference extends EditTextPreference {
+    	/** Indicates which preference we are using the selector for. */
+    	private int mRequestCode;
+    	
+		public FileSelectorPreference(Context context, int requestCode) {
+			super(context);
+			mRequestCode = requestCode;
+		}
+		
+		@Override
+		protected void onClick() {
+			if (hasFilePicker()) {
+				Intent intent = new Intent("org.openintents.action.PICK_FILE");
+				if (getText() != null) {
+					intent.setData(Uri.parse("File:///" + getText()));
+				}
+				try {
+					startActivityForResult(intent, mRequestCode);
+				} catch (ActivityNotFoundException e) {
+					e.printStackTrace();
+					Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
+				}
+			} else {
+				super.onClick();
+				Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		/**
+		 * @return	True if the phone has a file picker installed, false otherwise.
+		 */
+		private boolean hasFilePicker() {
             PackageManager packageManager = getPackageManager();
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
             List<ResolveInfo> list = packageManager.queryIntentActivities(
                     intent, PackageManager.MATCH_DEFAULT_ONLY);
             return (list.size() > 0);
         }
-    }
-
-private class ListViewFileSelectorPreference extends EditTextPreference {
-
-        ListViewFileSelectorPreference(Context context) {
-            super(context);
-        }
-
-        @Override
-        protected void onClick() {
-            if (hasFilePicker()) {
-                Intent intent = new Intent("org.openintents.action.PICK_FILE");
-                if (getText() != null) {
-                    intent.setData(Uri.parse("file:///" + getText()));
-                }
-                try {
-                  startActivityForResult(intent, RC_LIST_VIEW_FILE);
-                } catch ( ActivityNotFoundException e ) {
-                  e.printStackTrace();
-                  Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
-                }
-            } else {
-                super.onClick();
-                Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
-            }
-        }
-
-        private boolean hasFilePicker() {
-            PackageManager packageManager = getPackageManager();
-            Intent intent = new Intent("org.openintents.action.PICK_FILE");
-            List<ResolveInfo> list = packageManager.queryIntentActivities(
-                    intent, PackageManager.MATCH_DEFAULT_ONLY);
-            return (list.size() > 0);
-        }
-    }
+	}
 
 //    private class ConditionalRulerDialogPreference extends Preference {
 //

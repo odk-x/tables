@@ -2,13 +2,11 @@ package org.opendatakit.tables.activities;
 
 import java.util.HashMap;
 
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.util.TableFileUtils;
 import org.opendatakit.tables.view.custom.CustomTableView;
 
 import android.os.Bundle;
@@ -20,6 +18,7 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.app.SherlockMapFragment;
@@ -40,8 +39,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class TableMapFragment extends Fragment {
 
 	public static final String KVS_PARTITION = "TableMapFragment";
-	public static final String KEY_MAP_LABEL_COL = "keyMapLabelCol";
-    public static final String KEY_MAP_LOC_COL = "keyMapLocCol";
     public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
     public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
     public static final String KEY_FILENAME = "keyFilename";
@@ -121,47 +118,53 @@ public class TableMapFragment extends Fragment {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			mIndex = 0;
+			mIndex = -1;
 		}
 
 		@Override
 		public View onCreateView(LayoutInflater inflater, ViewGroup container,
 				Bundle savedInstanceState) {
 			mContainer = container;
+			mContainer.setVisibility(View.GONE);
 			return null;
 		}
 
 		@Override
 		public void onResume() {
 	        super.onResume();
-	        mContainer.setVisibility(View.GONE);
+	        resetView();
 	    }
 
 		private void resetView() {
-			// Grab the key value store helper from the map fragment.
-	    	//final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-	    	// Find which file stores the html information for displaying the list.
-			String filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + "/facilities_list_chunked.html";
-			//kvsHelper.getString(TableMapFragment.KEY_FILENAME);
-			// Create the custom view and set it.
-	      CustomTableView view = CustomTableView.get(getActivity(), mTableProperties, mTable, filename, mIndex);
-			view.display();
-			LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-			        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-			mContainer.removeAllViews();
-	        mContainer.addView(view, params);
+			if (mIndex != -1) {
+				// Grab the key value store helper from the map fragment.
+		    	final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+		    	// Find which file stores the html information for displaying the list.
+				String filename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
+				if (filename == null) {
+					Toast.makeText(getActivity(), "List view file is not set!", Toast.LENGTH_LONG).show();
+		    		return;
+				}
+				// Create the custom view and set it.
+				CustomTableView view = CustomTableView.get(getActivity(), mTableProperties, mTable, filename, mIndex);
+				view.display();
+				LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+				        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+				mContainer.removeAllViews();
+		        mContainer.addView(view, params);
 
-	        WebViewClient client = new WebViewClient() {
-        	   public void onPageFinished(WebView view, String url) {
-        		   LinearLayout.LayoutParams containerParams =
-        				   new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, view.getMeasuredHeight());
-   		           if (containerParams.height > 0) {
-   		        	   //mContainer.setLayoutParams(containerParams);
-   		           }
-   		           mContainer.setVisibility(View.VISIBLE);
-        	    }
-	        };
-	        view.setOnFinishedLoaded(client);
+		        WebViewClient client = new WebViewClient() {
+	        	   public void onPageFinished(WebView view, String url) {
+	        		   LinearLayout.LayoutParams containerParams =
+	        				   new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, view.getMeasuredHeight());
+	   		           if (containerParams.height > 0) {
+	   		        	   //mContainer.setLayoutParams(containerParams);
+	   		           }
+	   		           mContainer.setVisibility(View.VISIBLE);
+	        	    }
+		        };
+		        view.setOnFinishedLoaded(client);
+			}
 		}
 
 		/** Sets the index of the list view, which will be the row of the data wanting to be displayed. */
@@ -214,7 +217,7 @@ public class TableMapFragment extends Fragment {
 		public void onStart() {
 			super.onStart();
 			setMarkers();
-			getMap().setOnMapLongClickListener(getOnMapLongClickListener());
+			//getMap().setOnMapLongClickListener(getOnMapLongClickListener());
 			getMap().setOnMapClickListener(getOnMapClickListener());
 		}
 
@@ -222,36 +225,55 @@ public class TableMapFragment extends Fragment {
 		 * Sets the location markers based off of the columns set in the table properties.
 		 */
 	    private void setMarkers() {
-	    	if (mMarkerIds == null) {
-	    		mMarkerIds = new HashMap<Marker, Integer>();
-	    	} else {
-	    		for(Marker marker : mMarkerIds.keySet()) {
-	    			marker.remove();
-	    		}
-	    		mMarkerIds.clear();
+	    	if (mMarkerIds != null) {
+	    		return;
 	    	}
+	    	mMarkerIds = new HashMap<Marker, Integer>();
 
 	    	// Grab the key value store helper from the table activity.
 	    	final KeyValueStoreHelper kvsHelper = mTableProperties.getKeyValueStoreHelper(KVS_PARTITION);
+	    	String latitudeElementKey = kvsHelper.getString(KEY_MAP_LAT_COL);
+	    	String longitudeElementKey = kvsHelper.getString(KEY_MAP_LONG_COL);
+	    	if (latitudeElementKey == null || longitudeElementKey == null) {
+	    		// Go through each of the columns and check to see if there are any columns labeled 
+	            // latitude or longitude.
+	            ColumnProperties[] cps = mTableProperties.getColumns();
+	            if (latitudeElementKey == null) {
+	            	for (int i = 0; i < cps.length; i++) {
+		                if (cps[i].getDisplayName().equalsIgnoreCase("latitude")) {
+		                	latitudeElementKey = cps[i].getElementKey();
+		                	kvsHelper.setString(KEY_MAP_LAT_COL, latitudeElementKey);
+		                	break;
+		                }
+		            }
+	            }
+	            if (longitudeElementKey == null) {
+		            for (int i = 0; i < cps.length; i++) {
+		                if (cps[i].getDisplayName().equalsIgnoreCase("longitude")) {
+		                	longitudeElementKey = cps[i].getElementKey();
+		                	kvsHelper.setString(KEY_MAP_LONG_COL, longitudeElementKey);
+		                	break;
+		                }
+		            }
+	            }
+	    	}
+	    	if (latitudeElementKey == null || longitudeElementKey == null) {
+	    		Toast.makeText(getActivity(), "Latitude or longitude columns are not set!", Toast.LENGTH_LONG).show();
+	    		return;
+	    	}
+	    	
 	    	// Try to find the map columns in the store.
-	    	ColumnProperties labelColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LABEL_COL));
-	    	ColumnProperties locationColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LOC_COL));
-	    	ColumnProperties latitudeColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LAT_COL));
-	    	ColumnProperties longitudeColumn = mTableProperties.getColumnByElementKey(kvsHelper.getString(KEY_MAP_LONG_COL));
+	    	ColumnProperties latitudeColumn = mTableProperties.getColumnByElementKey(latitudeElementKey);
+	    	ColumnProperties longitudeColumn = mTableProperties.getColumnByElementKey(longitudeElementKey);
 
 	    	// Find the locations from entries in the table.
-			int labelColumnIndex = mTableProperties.getColumnIndex(labelColumn.getElementKey());
-			int locationColumnIndex = mTableProperties.getColumnIndex(locationColumn.getElementKey());
 			int latitudeColumnIndex = mTableProperties.getColumnIndex(latitudeColumn.getElementKey());
 			int longitudeColumnIndex = mTableProperties.getColumnIndex(longitudeColumn.getElementKey());
 			LatLng firstLocation = null;
 			for (int i = 0; i < mTable.getHeight(); i++) {
-				String labelString = mTable.getData(i, labelColumnIndex);
-				String locationString = mTable.getData(i, locationColumnIndex);
 				String latitudeString = mTable.getData(i, latitudeColumnIndex);
 				String longitudeString = mTable.getData(i, longitudeColumnIndex);
 				if (latitudeString == null || longitudeString == null || latitudeString.length() == 0 || longitudeString.length() == 0) continue;
-				//if (locationString == null || locationString.length() == 0) continue;
 
 				// Add the location as an overlay.
 				LatLng location = parseLocationFromString(latitudeString + "," + longitudeString);
@@ -259,8 +281,7 @@ public class TableMapFragment extends Fragment {
 				if (firstLocation == null) firstLocation = location;
 				Marker marker = getMap().addMarker(new MarkerOptions()
 						.position(location)
-						.draggable(false)
-						.title(labelString));
+						.draggable(false));
 				mMarkerIds.put(marker, i);
 	        }
 			if (firstLocation != null) {
@@ -293,6 +314,7 @@ public class TableMapFragment extends Fragment {
 				public void onMapClick(LatLng point) {
 					if (getListFragment().isListVisible()) {
 						deselectCurrentMarker();
+						getListFragment().mContainer.setVisibility(View.GONE);
 					}
 				}
 			};
@@ -332,6 +354,7 @@ public class TableMapFragment extends Fragment {
 						selectMarker(arg0);
 					} else {
 						deselectCurrentMarker();
+						getListFragment().mContainer.setVisibility(View.GONE);
 					}
 
 					return true;
@@ -371,7 +394,7 @@ public class TableMapFragment extends Fragment {
 			mMarkerIds.remove(mCurrentMarker);
 			mMarkerIds.put(newMarker, index);
 			mCurrentMarker = null;
-			getListFragment().mContainer.setVisibility(View.GONE);
+			getListFragment().setIndex(-1);
 	    }
 
 	    public ListFragment getListFragment() {
