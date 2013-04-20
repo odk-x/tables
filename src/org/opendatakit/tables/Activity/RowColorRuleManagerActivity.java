@@ -20,10 +20,9 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
-import org.opendatakit.tables.DataStructure.RowColorRule;
+import org.opendatakit.tables.DataStructure.ColorRule;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.DataStructure.RowColorRuler;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -102,8 +101,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
    */
   public static final String MENU_TEXT_EDIT_ENTRY = "Edit this Color Rule";
   
-  private List<RowColorRule> mColorRules;
-  private RowColorRuler mColorRuler;
+  private List<ColorRule> mColorRules;
+  private ColorRuleGroup mColorRuleGroup;
   private ColorRuleAdapter mColorRuleAdapter;
   private String mTableId;
   private KeyValueStoreHelper mColorRuleKvsh;
@@ -182,8 +181,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
           // store.
           Log.d(TAG, "trying to delete rule at position: " + position);
           mColorRules.remove(position);
-          mColorRuler.replaceColorRuleList(mColorRules);
-          mColorRuler.saveRuleList();
+          mColorRuleGroup.replaceColorRuleList(mColorRules);
+          mColorRuleGroup.saveRuleList();
           mColorRuleAdapter.notifyDataSetChanged();
         }
       });
@@ -235,8 +234,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
         mMapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
     mMapper.setVisibilityChecker(
         mMapper.getVisibilityChecker().withCreatorVisibility(Visibility.ANY));
-    this.mColorRuler = RowColorRuler.getRowColorRuler(mTp);
-    this.mColorRules = mColorRuler.getColorRules();
+    this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTp);
+    this.mColorRules = mColorRuleGroup.getColorRules();
     this.mColorRuleAdapter = new ColorRuleAdapter();
     setListAdapter(mColorRuleAdapter);
     this.setTitle(mTp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
@@ -254,7 +253,7 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
     startActivity(editColorRuleIntent);
   }
 
-  class ColorRuleAdapter extends ArrayAdapter<RowColorRule> {
+  class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     
     ColorRuleAdapter() {
       super(RowColorRuleManagerActivity.this,
@@ -275,7 +274,11 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
       // The user-friendly string rep of the rule.
       TextView label = 
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
-      label.setText(ruleString);
+      // We'll want the element key.
+      String columnDisplayName = 
+          mTp.getColumnByElementKey(mColorRules.get(currentPosition)
+              .getColumnElementKey()).getDisplayName();
+      label.setText(columnDisplayName + " " + ruleString);
       final int backgroundColor = 
           mColorRules.get(currentPosition).getBackground();
       final int textColor = 

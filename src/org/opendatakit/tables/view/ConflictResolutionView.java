@@ -15,6 +15,10 @@
  */
 package org.opendatakit.tables.view;
 
+import java.util.Map;
+
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
+import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
@@ -90,8 +94,8 @@ public class ConflictResolutionView extends HorizontalScrollView
         for (int i = 0; i < table.getWidth(); i++) {
             header[i] = table.getHeader(i);
         }
-        TabularView headerView = new TabularView(context, this, header,
-                FOREGROUND_COLOR, null, HEADER_BACKGROUND_COLOR, null,
+        TabularView headerView = new TabularView(context, this, tp, header,
+                FOREGROUND_COLOR, HEADER_BACKGROUND_COLOR,
                 BORDER_COLOR, SpreadsheetView.getColumnWidths(tp), 
                 TableType.MAIN_HEADER,
                 fontSize);
@@ -127,8 +131,8 @@ public class ConflictResolutionView extends HorizontalScrollView
             data[index][1][i] = table.getValue(index, 1, i);
         }
         RowItem ri = new RowItem(context, index);
-        TabularView tv = new TabularView(context, this, data[index],
-                FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
+        TabularView tv = new TabularView(context, this, tp, data[index],
+                FOREGROUND_COLOR, BACKGROUND_COLOR,
                 BORDER_COLOR, SpreadsheetView.getColumnWidths(tp),
                 TableType.MAIN_DATA,
                 fontSize);
@@ -168,8 +172,8 @@ public class ConflictResolutionView extends HorizontalScrollView
     
     public void setDatum(int index, int rowNum, int colNum, String value) {
         data[index][rowNum][colNum] = value;
-        TabularView tv = new TabularView(context, this, data[index],
-                FOREGROUND_COLOR, null, BACKGROUND_COLOR, colorDeciders[index],
+        TabularView tv = new TabularView(context, this, tp, data[index],
+                FOREGROUND_COLOR, BACKGROUND_COLOR,
                 BORDER_COLOR, SpreadsheetView.getColumnWidths(tp), 
                 TableType.MAIN_DATA,
                 fontSize);
@@ -239,6 +243,13 @@ public class ConflictResolutionView extends HorizontalScrollView
             } else {
                 return shadedColor;
             }
+        }
+
+        @Override
+        public ColorGuide getColor(int index, String[] rowData, Map<String, Integer> columnMapping,
+            Map<String, ColumnProperties> propertiesMapping) {
+          // TODO Auto-generated method stub
+          return null;
         }
     }
     

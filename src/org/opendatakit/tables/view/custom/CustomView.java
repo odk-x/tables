@@ -26,7 +26,7 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.tables.Activity.TableManager;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -257,11 +257,12 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		//get color rules for colName
-		public String getColumnColorRules(String colName, int value) {
-			String elementKey = tp.getColumnByDisplayName(colName);
-			ColumnColorRuler colRul = new ColumnColorRuler(tp, elementKey);
-			return String.format("#%06X", (0xFFFFFF & colRul.getForegroundColor("" + value, -16777216)));
-		}
+//TODO: update this for the new ColorRule system
+//		public String getColumnColorRules(String colName, int value) {
+//			String elementKey = tp.getColumnByDisplayName(colName);
+//			ColorRuleGroup colRul = new ColorRuleGroup(tp, elementKey);
+//			return String.format("#%06X", (0xFFFFFF & colRul.getForegroundColor("" + value, -16777216)));
+//		}
 
 		//Maps the number of rows to every collection of a table.
 		private void initCollectionMap(TableProperties tp) {

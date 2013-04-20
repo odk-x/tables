@@ -18,9 +18,9 @@ package org.opendatakit.tables.Activity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.tables.DataStructure.ColColorRule;
-import org.opendatakit.tables.DataStructure.ColColorRule.RuleType;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRule;
+import org.opendatakit.tables.DataStructure.ColorRule.RuleType;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.lib.ColorPickerDialog;
 
 import android.app.AlertDialog;
@@ -53,19 +53,19 @@ public class ColorRulesDialog extends Dialog {
 
   private Context c;
   private String colName;
-  private ColumnColorRuler colorRuler;
+  private ColorRuleGroup colorRuler;
   // SS: going to set this as null and ONLY refresh from the db once. Otherwise
   // we overwrite our new rules. What we really want is the rules from the db
   // and then the new ones we add. and then those only committed to the db
   // if they are valid rules.
-  private List<ColColorRule> colRules = null;
+  private List<ColorRule> colRules = null;
   // the number of original rules. this is so we know if we need to call
   // update or add.
   int numOriginalRules;
   private List<EditText> ruleInputFields;
   int lastFocusedRow;
 
-  ColorRulesDialog(Context c, ColumnColorRuler ruler, String colName,
+  ColorRulesDialog(Context c, ColorRuleGroup ruler, String colName,
       String displayName) {
     super(c);
     this.c = c;
@@ -167,13 +167,13 @@ public class ColorRulesDialog extends Dialog {
    * database.
    */
   private TableRow getEditRow(final int index) {
-    final ColColorRule rule;
+    final ColorRule rule;
     if (index != -1) {
       rule = colRules.get(index);
     } else {
       // hmm, so i think the id is just the column in the db where the tableid
       // is located, or something? not clear to me.
-      rule = new ColColorRule(colName, RuleType.NO_OP, "", Color.BLACK, 
+      rule = new ColorRule(colName, RuleType.NO_OP, "", Color.BLACK, 
           Color.WHITE);
       // and now I think we need to add this rule to the list...
       colRules.add(rule);
@@ -301,9 +301,9 @@ public class ColorRulesDialog extends Dialog {
    * to catch the no op case.
    */
   private void persistRows() {
-    List<ColColorRule> rulesToPersist = new ArrayList<ColColorRule>();
+    List<ColorRule> rulesToPersist = new ArrayList<ColorRule>();
     for (int i = 0; i < colRules.size(); i++) {
-      if (colRules.get(i).getOperator() != ColColorRule.RuleType.NO_OP) {
+      if (colRules.get(i).getOperator() != ColorRule.RuleType.NO_OP) {
         rulesToPersist.add(colRules.get(i));
       }
     }
@@ -329,14 +329,14 @@ public class ColorRulesDialog extends Dialog {
     //if (input.equals("")) {
     //  return;
     //}
-    ColColorRule rule = colRules.get(lastFocusedRow);
-    ColColorRule.RuleType newType;
+    ColorRule rule = colRules.get(lastFocusedRow);
+    ColorRule.RuleType newType;
     try {
       // The input should be in the format "op val". So split it and get it.
       String[] opVal = input.split(" ");
       if (opVal.length != 2)
         throw new IllegalArgumentException("not: op val");
-      newType = ColColorRule.RuleType.getEnumFromString(opVal[0]);
+      newType = ColorRule.RuleType.getEnumFromString(opVal[0]);
       rule.setOperator(newType);
       rule.setVal(opVal[1]);
       // we shouldn't be updating until they hit ok

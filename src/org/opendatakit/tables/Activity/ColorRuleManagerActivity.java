@@ -20,8 +20,8 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
-import org.opendatakit.tables.DataStructure.ColColorRule;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRule;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
@@ -92,14 +92,12 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
    */
   public static final String MENU_TEXT_EDIT_ENTRY = "Edit this Color Rule";
   
-  private List<ColColorRule> mColorRules;
-  private ColumnColorRuler mColorRuler;
+  private List<ColorRule> mColorRules;
+  private ColorRuleGroup mColorRuler;
   private ColorRuleAdapter mColorRuleAdapter;
   private String mTableId;
   // The element key of the column for which you're displaying the rules.
   private String mElementKey;
-  private KeyValueStoreHelper mColorRuleKvsh;
-  private KeyValueHelper mAspectHelper;
   private TableProperties mTp;
   private ColumnProperties mCp;
   private ObjectMapper mMapper;
@@ -225,9 +223,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId, 
         KeyValueStore.Type.ACTIVE);
-    this.mColorRuleKvsh = 
-        mTp.getKeyValueStoreHelper(ColumnColorRuler.KVS_PARTITION);
-    this.mAspectHelper = mColorRuleKvsh.getAspectHelper(mElementKey);
     this.mMapper = new ObjectMapper();
     this.mTypeFactory = mMapper.getTypeFactory();
     mMapper.setVisibilityChecker(
@@ -235,7 +230,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     mMapper.setVisibilityChecker(
         mMapper.getVisibilityChecker().withCreatorVisibility(Visibility.ANY));
     this.mCp = mTp.getColumnByElementKey(mElementKey);
-    this.mColorRuler = ColumnColorRuler.getColumnColorRuler(mTp, mElementKey);
+    this.mColorRuler = ColorRuleGroup.getColumnColorRuler(mTp, mElementKey);
     this.mColorRules = mColorRuler.getColorRules();
     this.mColorRuleAdapter = new ColorRuleAdapter();
     setListAdapter(mColorRuleAdapter);
@@ -256,7 +251,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     startActivity(editColorRuleIntent);
   }
 
-  class ColorRuleAdapter extends ArrayAdapter<ColColorRule> {
+  class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
     
     ColorRuleAdapter() {
       super(ColorRuleManagerActivity.this,

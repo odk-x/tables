@@ -15,8 +15,11 @@
  */
 package org.opendatakit.tables.view;
 
+import java.util.Map;
+
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
@@ -420,7 +423,7 @@ public class SpreadsheetView extends LinearLayout
         String[][] header;
         String[][] data;
         String[][] footer;
-        ColumnColorRuler[] colorRulers;
+        ColorRuleGroup[] colorRulers;
         int[] colWidths;
 //        int[] completeColWidths = tvs.getTableColWidths();
         int[] completeColWidths = getColumnWidths();
@@ -433,8 +436,8 @@ public class SpreadsheetView extends LinearLayout
             }
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
-            colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = ColumnColorRuler.getColumnColorRuler(tp, 
+            colorRulers = new ColorRuleGroup[1];
+            colorRulers[0] = ColorRuleGroup.getColumnColorRuler(tp, 
                 tp.getColumnByDisplayName(table.getHeader(indexedCol)));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
@@ -444,7 +447,7 @@ public class SpreadsheetView extends LinearLayout
             header = new String[1][width];
             data = new String[table.getHeight()][width];
             footer = new String[1][width];
-            colorRulers = new ColumnColorRuler[width];
+            colorRulers = new ColorRuleGroup[width];
             colWidths = new int[width];
             int addIndex = 0;
             for (int i = 0; i < table.getWidth(); i++) {
@@ -457,7 +460,7 @@ public class SpreadsheetView extends LinearLayout
                 }
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                   ColumnColorRuler.getColumnColorRuler(tp,
+                   ColorRuleGroup.getColumnColorRuler(tp,
                        tp.getColumnByDisplayName(header[0][addIndex]));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
@@ -470,12 +473,8 @@ public class SpreadsheetView extends LinearLayout
         int footerIndex = getResources().getColor(R.color.footer_index);
 //        LockableScrollView dataScroll = new LockableScrollView(context);
         dataScroll = new LockableScrollView(context);
-        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
-                Color.BLACK, false);
-        ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
-                Color.WHITE, true);
-        TabularView dataTable = new TabularView(context, this, data,
-                Color.BLACK, fgColorDecider, Color.WHITE, bgColorDecider,
+        TabularView dataTable = new TabularView(context, this, tp, data,
+                Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA),
                 fontSize);
@@ -483,12 +482,12 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataScroll.setVerticalFadingEdgeEnabled(true);
         dataScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = new TabularView(context, this, header,
-                Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
+        TabularView headerTable = new TabularView(context, this, tp, header,
+                Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, footer,
-                Color.BLACK, null, Color.GRAY, null, Color.GRAY, colWidths,
+        TabularView footerTable = new TabularView(context, this, tp, footer,
+                Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER),
                 fontSize);
         if (isIndexed) {
@@ -638,21 +637,34 @@ public class SpreadsheetView extends LinearLayout
     
     private class ColorRulerColorDecider implements ColorDecider {
         
-        private final ColumnColorRuler[] rulers;
+        private final ColorRuleGroup[] rulers;
         private final int defaultColor;
         private final boolean isBackground;
         
-        public ColorRulerColorDecider(ColumnColorRuler[] rulers,
+        public ColorRulerColorDecider(ColorRuleGroup[] rulers,
                 int defaultColor, boolean isBackground) {
             this.rulers = rulers;
             this.defaultColor = defaultColor;
             this.isBackground = isBackground;
         }
         
-        public int getColor(int rowNum, int colNum, String value) {
-            return isBackground ?
-                    rulers[colNum].getBackgroundColor(value, defaultColor) :
-                        rulers[colNum].getForegroundColor(value, defaultColor);
+        /**
+         * Get an {@link ColorGuide} to determine how to color the row. 
+         * @param rowData 
+         * @param columnMapping mapping from elementKey to the index in rowData
+         * @param propertiesMapping mapping from the elementKey to the 
+         * {@link ColumnProperties} for the row. Necessary for determining
+         * type information of the rowData.
+         * @return
+         */
+        /*
+         * index might end up changing as the refactor continues.
+         */
+        public ColorGuide getColor(int index, String[] rowData, 
+            Map<String, Integer> columnMapping,
+            Map<String, ColumnProperties> propertiesMapping) {
+          return rulers[index].getColorGuide(rowData, columnMapping, 
+              propertiesMapping);
         }
     }
     

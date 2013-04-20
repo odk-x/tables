@@ -15,7 +15,12 @@
  */
 package org.opendatakit.tables.DataStructure;
 
+import java.util.Map;
 import java.util.UUID;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 
 import android.util.Log;
 
@@ -24,21 +29,23 @@ import android.util.Log;
  * @author sudar.sam@gmail.com
  *
  */
-public class ColColorRule {
+public class ColorRule {
   
   public static final String TAG = "ColColorRule";
   
-  // this is the primary key of the column, so basically an int UUID.
-  // changing to be a uuid.
-  private String id;
-  private String columnElementKey;
-  private RuleType operator;
-  private String val;
-  private int foreground;
-  private int background;
+  // The UUID of the rule.
+  private String mId;
+  /**
+   * Element key of the column this rule queries on.
+   */
+  private String mElementKey;
+  private RuleType mOperator;
+  private String mValue;
+  private int mForeground;
+  private int mBackground;
   
   // ONLY FOR SERIALIZATION
-  private ColColorRule() {
+  private ColorRule() {
     // not implemented, used only for serialization
   }
   
@@ -47,16 +54,16 @@ public class ColColorRule {
    * a UUID for the column id.
    * @param colName
    * @param compType
-   * @param val
+   * @param value
    * @param foreground
    * @param background
    */
-  public ColColorRule(String colElementKey, RuleType compType, String val, 
+  public ColorRule(String colElementKey, RuleType compType, String value, 
       int foreground, int background) {
     // generate a UUID for the color rule. We can't let it autoincrement ints
     // as was happening before, as this would become corrupted when rules were
     // imported from other dbs.
-    this(UUID.randomUUID().toString(), colElementKey, compType, val, 
+    this(UUID.randomUUID().toString(), colElementKey, compType, value, 
         foreground, background);
   }
   
@@ -65,38 +72,58 @@ public class ColColorRule {
    * @param id
    * @param colName
    * @param compType
-   * @param val
+   * @param value
    * @param foreground
    * @param background
    */
-  public ColColorRule(String id, String colName, RuleType compType, String val,
-      int foreground, int background) {
-    this.id = id;
-    this.columnElementKey = colName;
-    this.operator = compType;
-    this.val = val;
-    this.foreground = foreground;
-    this.background = background;   
+  public ColorRule(String id, String colName, RuleType compType, 
+      String value, int foreground, int background) {
+    this.mId = id;
+    this.mElementKey = colName;
+    this.mOperator = compType;
+    this.mValue = value;
+    this.mForeground = foreground;
+    this.mBackground = background;   
   }
   
-  public String getId() {
-    return id;
+  /**
+   * Get the UUID of the rule.
+   * @return
+   */
+  @JsonIgnore
+  public String getRuleId() {
+    return mId;
   }
   
+  /**
+   * Get the element key of the column to which this rule applies.
+   * @return
+   */
+  @JsonIgnore
   public String getColumnElementKey() {
-    return columnElementKey;
+    return mElementKey;
   }
   
+  /**
+   * Get the target value to which the rule is being compared.
+   * @return
+   */
+  @JsonIgnore
   public String getVal() {
-    return val;
+    return mValue;
   }
   
   public void setVal(String newVal) {
-    this.val = newVal;
+    this.mValue = newVal;
   }
   
+  /**
+   * Get the foreground color of this rule.
+   * @return
+   */
+  @JsonIgnore
   public int getForeground() {
-    return foreground;
+    return mForeground;
   }
   
   /**
@@ -104,38 +131,93 @@ public class ColColorRule {
    */
   @Override
   public String toString() {
-    String symbol = operator.getSymbol();
-    String value = val;
+    String symbol = mOperator.getSymbol();
+    String value = mValue;
     return symbol + " " + value;
   }
   
   public void setForeground(int newForeground) {
-    this.foreground = newForeground;
-  }
-  
-  public int getBackground() {
-    return background;
-  }
-  
-  public void setBackground(int newBackground) {
-    this.background = newBackground;
-  }
-  
-  public RuleType getOperator() {
-    return operator;
-  }
-  
-  public void setOperator(RuleType newOperator) {
-    this.operator = newOperator;
+    this.mForeground = newForeground;
   }
   
   /**
-   * This should be meaningless for a column rule, and only matter for 
-   * a row rule. Will be cleaned up in refactoring.
+   * Get the background color of this rule.
+   * @return
+   */
+  @JsonIgnore
+  public int getBackground() {
+    return mBackground;
+  }
+  
+  public void setBackground(int newBackground) {
+    this.mBackground = newBackground;
+  }
+  
+  @JsonIgnore
+  public RuleType getOperator() {
+    return mOperator;
+  }
+  
+  public void setOperator(RuleType newOperator) {
+    this.mOperator = newOperator;
+  }
+  
+  /**
+   * Set the element key of the column to which this rule will apply.
    * @param elementKey
    */
   public void setColumnElementKey(String elementKey) {
-    this.columnElementKey = elementKey;
+    this.mElementKey = elementKey;
+  }
+  
+  public boolean checkMatch(String[] rowData, 
+      Map<String, Integer> columnMapping, 
+      Map<String, ColumnProperties> propertiesMapping) {
+    try {
+      // First get the data abou the column.
+      ColumnProperties cp = propertiesMapping.get(mElementKey);
+      // Get the value we're testing against.
+      String testValue = rowData[columnMapping.get(mElementKey)];
+      if (testValue == null) {
+        testValue = "";
+      }
+      int compVal;
+        if((cp.getColumnType() == ColumnType.NUMBER ||
+           cp.getColumnType() == ColumnType.INTEGER)){
+          if (testValue.equals("")) {
+            return false;
+          }
+            double doubleValue = Double.parseDouble(testValue);
+            double doubleRule = Double.parseDouble(mValue);
+            compVal = (Double.valueOf(doubleValue))
+                .compareTo(Double.valueOf(doubleRule));
+        } else {
+            compVal = testValue.compareTo(mValue);
+        }
+        switch(mOperator) {
+        case LESS_THAN:
+          return (compVal < 0);
+        case LESS_THAN_OR_EQUAL:
+          return (compVal <= 0);
+        case EQUAL:
+            return (compVal == 0);
+        case GREATER_THAN_OR_EQUAL:
+            return (compVal >= 0);
+        case GREATER_THAN:
+            return (compVal > 0);
+        default:
+            Log.e(TAG, "unrecongized op passed to checkMatch: " + mOperator);
+            throw new IllegalArgumentException("unrecognized op passed " +
+                "to checkMatch: " + mOperator);
+        }
+    } catch (NumberFormatException e) {
+      // Here we should maybe throw an exception that a rule is offending,
+      // and then catch and delete it in the decider.
+      e.printStackTrace();
+      Log.e(TAG, "was an error parsing value to a number, removing the " +
+          "offending rule");
+    }
+    return false;
   }
   
   public static enum RuleType {
