@@ -131,7 +131,7 @@ public class ConflictResolutionView extends HorizontalScrollView
             data[index][1][i] = table.getValue(index, 1, i);
         }
         RowItem ri = new RowItem(context, index);
-        TabularView tv = new TabularView(context, this, tp, data[index],
+        TabularView tv = new TabularView(context, this, tp, data[index], null,
                 FOREGROUND_COLOR, BACKGROUND_COLOR,
                 BORDER_COLOR, SpreadsheetView.getColumnWidths(tp),
                 TableType.MAIN_DATA,
@@ -172,7 +172,7 @@ public class ConflictResolutionView extends HorizontalScrollView
     
     public void setDatum(int index, int rowNum, int colNum, String value) {
         data[index][rowNum][colNum] = value;
-        TabularView tv = new TabularView(context, this, tp, data[index],
+        TabularView tv = new TabularView(context, this, tp, data[index], null,
                 FOREGROUND_COLOR, BACKGROUND_COLOR,
                 BORDER_COLOR, SpreadsheetView.getColumnWidths(tp), 
                 TableType.MAIN_DATA,

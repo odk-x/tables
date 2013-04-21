@@ -82,6 +82,9 @@ public class SpreadsheetView extends LinearLayout
     private final UserTable table;
     private final int indexedCol;
     private final int fontSize;
+    // This will be the ENTIRE DATA from the table. Necessary for evaluating
+    // color rules in the TabularView objects.
+    private final String[][] wholeData;
     
     private final TableProperties tp;
     
@@ -119,6 +122,15 @@ public class SpreadsheetView extends LinearLayout
         this.tp = tp;
         this.table = table;
         this.indexedCol = indexedCol;
+        
+        wholeData = new String[table.getHeight()][table.getWidth()];
+        int addIndex = 0;
+        for (int i = 0; i < table.getWidth(); i++) {
+            for (int j = 0; j < table.getHeight(); j++) {
+                wholeData[j][addIndex] = table.getData(j, i);
+            }
+            addIndex++;
+        }
         
         // if a custom font size is defined in the KeyValueStore, use that
         // if not, use the general font size defined in preferences
@@ -488,7 +500,8 @@ public class SpreadsheetView extends LinearLayout
         int footerIndex = getResources().getColor(R.color.footer_index);
 //        LockableScrollView dataScroll = new LockableScrollView(context);
         dataScroll = new LockableScrollView(context);
-        TabularView dataTable = new TabularView(context, this, tp, data,
+        TabularView dataTable = new TabularView(context, this, tp, data, 
+            wholeData,
                 Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA),
@@ -497,11 +510,11 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataScroll.setVerticalFadingEdgeEnabled(true);
         dataScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = new TabularView(context, this, tp, header,
+        TabularView headerTable = new TabularView(context, this, tp, header, null,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, tp, footer,
+        TabularView footerTable = new TabularView(context, this, tp, footer, null,
                 Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER),
                 fontSize);
@@ -558,18 +571,19 @@ public class SpreadsheetView extends LinearLayout
         LockableScrollView dataScroll = new LockableScrollView(context);
 //        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
 //                Color.BLACK, false);
-        TabularView dataTable = new TabularView(context, this, tp, data,
+        TabularView dataTable = new TabularView(context, this, tp, data, 
+            wholeData,
                 Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 TableType.INDEX_DATA,
                 fontSize);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
-        TabularView headerTable = new TabularView(context, this, tp, header,
+        TabularView headerTable = new TabularView(context, this, tp, header, null,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                TableType.INDEX_HEADER,
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, tp, footer,
+        TabularView footerTable = new TabularView(context, this, tp, footer, null,
                 Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 TableType.INDEX_FOOTER,
                 fontSize);

@@ -54,6 +54,12 @@ class TabularView extends View {
 
   private final Controller controller;
   private final String[][] data;
+  // This will be the ENTIRE data from the table. This is necessary for 
+  // evluating color rules. For instance the frozen ("index") column will have
+  // only data for itself. But if it is to be colored correctly it must contain
+  // all the data. This seems like a WILDLY inefficient thing to do, but for 
+  // now am going to do it.
+  private final String[][] wholeData;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
   private final int[] columnWidths;
@@ -101,7 +107,7 @@ class TabularView extends View {
   private int[] spans;
 
   public TabularView(Context context, Controller controller, 
-      TableProperties tp, String[][] data,
+      TableProperties tp, String[][] data, String[][] wholeData,
       int defaultForegroundColor,
       int defaultBackgroundColor, int borderColor,
       int[] columnWidths, TableType type, int fontSize) {
@@ -109,6 +115,7 @@ class TabularView extends View {
     this.controller = controller;
     this.mTp = tp;
     this.data = data;
+    this.wholeData = wholeData;
     this.defaultBackgroundColor = defaultBackgroundColor;
     this.defaultForegroundColor = defaultForegroundColor;
     this.columnWidths = columnWidths;
@@ -178,9 +185,10 @@ class TabularView extends View {
       int defaultForegroundColor,
       int defaultBackgroundColor, 
       int borderColor, int[] columnWidths, TableType type, int fontSize) {
-    this(context, controller, tp, new String[][] { data }, 
+    this(context, controller, tp, new String[][] { data }, null,
         defaultForegroundColor, defaultBackgroundColor,
         borderColor, columnWidths, type, fontSize);
+    Log.e(TAG, "wholeData param for this TabularView constructor not implemented! Use with extreme caution");
   }
 
   public int getTableHeight() {
@@ -465,26 +473,23 @@ class TabularView extends View {
         }
         int foregroundColor = this.defaultForegroundColor;
         int backgroundColor = this.defaultBackgroundColor;
-        // We can't check to color the frozen column, because the String[][] 
-        // array is only ever n by 1, so we don't have access to all the data.
-        if (type != TableType.INDEX_DATA &&
-            type != TableType.INDEX_FOOTER &&
-            type != TableType.INDEX_HEADER) {
+        if (type == TableType.INDEX_DATA ||
+            type == TableType.MAIN_DATA) {
+          // We can't check to color the frozen column, because the String[][] 
+          // array is only ever n by 1, so we don't have access to all the data.
           ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-              data[i], mColumnIndexMap, mColumnPropertiesMap);
+              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
           ColorGuide columnGuide = mColumnColorRules.get(j)
-              .getColorGuide(data[i], mColumnIndexMap, mColumnPropertiesMap);
-          if (type == TableType.MAIN_DATA) {
+              .getColorGuide(wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
           // First we check for a row rule.
-            if (rowGuide.didMatch()) {
-              foregroundColor = rowGuide.getForeground();
-              backgroundColor = rowGuide.getBackground();
-            }
-            // Override the role rule if a column rule matched.
-            if (columnGuide.didMatch()) {
-              foregroundColor = columnGuide.getForeground();
-              backgroundColor = columnGuide.getBackground();
-            }
+          if (rowGuide.didMatch()) {
+            foregroundColor = rowGuide.getForeground();
+            backgroundColor = rowGuide.getBackground();
+          }
+          // Override the role rule if a column rule matched.
+          if (columnGuide.didMatch()) {
+            foregroundColor = columnGuide.getForeground();
+            backgroundColor = columnGuide.getBackground();
           }
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor,
