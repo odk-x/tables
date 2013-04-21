@@ -25,7 +25,7 @@ import org.opendatakit.tables.data.ColumnType;
 import android.util.Log;
 
 /**
- * As far as I can tell this is a rule that is applied to color column cells.
+ * This is a single rule specifying a color for a given datum. 
  * @author sudar.sam@gmail.com
  *
  */
@@ -52,11 +52,12 @@ public class ColorRule {
   /**
    * Construct a new color rule to dictate the coloring of cells. Constructs
    * a UUID for the column id.
-   * @param colName
-   * @param compType
-   * @param value
-   * @param foreground
-   * @param background
+   * @param colElementKey the element key of the column against which this rule
+   * will be checking values
+   * @param compType the comparison type of the rule
+   * @param value the target value of the rule
+   * @param foreground the foreground color of the rule
+   * @param background the background color of the rule
    */
   public ColorRule(String colElementKey, RuleType compType, String value, 
       int foreground, int background) {
@@ -68,7 +69,7 @@ public class ColorRule {
   }
   
   /**
-   * Construct a new color rule. Presumes that the passed in id is a UUID.
+   * Construct a new color rule.
    * @param id
    * @param colName
    * @param compType
@@ -171,13 +172,13 @@ public class ColorRule {
   }
   
   public boolean checkMatch(String[] rowData, 
-      Map<String, Integer> columnMapping, 
+      Map<String, Integer> indexMapping, 
       Map<String, ColumnProperties> propertiesMapping) {
     try {
       // First get the data abou the column.
       ColumnProperties cp = propertiesMapping.get(mElementKey);
       // Get the value we're testing against.
-      String testValue = rowData[columnMapping.get(mElementKey)];
+      String testValue = rowData[indexMapping.get(mElementKey)];
       if (testValue == null) {
         testValue = "";
       }

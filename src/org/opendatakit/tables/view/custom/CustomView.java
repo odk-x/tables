@@ -27,6 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -256,13 +257,37 @@ public abstract class CustomView extends LinearLayout {
 			return new JSONObject(colInfo).toString();
 		}
 
-		//get color rules for colName
-//TODO: update this for the new ColorRule system
-//		public String getColumnColorRules(String colName, int value) {
-//			String elementKey = tp.getColumnByDisplayName(colName);
-//			ColorRuleGroup colRul = new ColorRuleGroup(tp, elementKey);
-//			return String.format("#%06X", (0xFFFFFF & colRul.getForegroundColor("" + value, -16777216)));
-//		}
+		/**
+		 * Get the foreground color for the given value according to the color
+		 * rules for the column specified by colName. The default is -16777216.
+		 * @param colName the display name of the column
+		 * @param value the string value of the datum
+		 * @return
+		 */
+		public String getForegroundColor(String colName, String value) {
+			String elementKey = tp.getColumnByDisplayName(colName);
+			ColorRuleGroup colRul = 
+			    ColorRuleGroup.getColumnColorRuler(tp, elementKey);
+			// Rather than hand off the whole row data, we'll just dummy up the
+			// info requested, as this will be easier for the html programmer 
+			// to use than to have to give in the whole row.
+			Map<String, Integer> indexMap = new HashMap<String, Integer>();
+			indexMap.put(elementKey, 0);
+			Map<String, ColumnProperties> propertiesMap = 
+			    new HashMap<String, ColumnProperties>();
+			propertiesMap.put(elementKey, tp.getColumnByElementKey(elementKey));
+			String[] rowData = new String[] {value};
+			ColorGuide guide = colRul.getColorGuide(rowData, indexMap, 
+			    propertiesMap);
+			int foregroundColor;
+			if (guide.didMatch()) {
+			  foregroundColor = guide.getForeground();
+			} else {
+			  foregroundColor = -16777216; // this crazy value was found here
+			}
+			// I think this formatting needs to take place for javascript
+			return String.format("#%06X", (0xFFFFFF & foregroundColor));
+		}
 
 		//Maps the number of rows to every collection of a table.
 		private void initCollectionMap(TableProperties tp) {

@@ -489,7 +489,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         }
         if (cellId == indexedCol) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_AS_INDEXED_COL,
-                    ContextMenu.NONE, "Unreeze Column");
+                    ContextMenu.NONE, "Unfreeze Column");
         } else {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
                     ContextMenu.NONE, "Freeze Column");
@@ -562,7 +562,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         }
         if (cellId == indexedCol) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_AS_INDEXED_COL,
-                    ContextMenu.NONE, "Unreeze Column");
+                    ContextMenu.NONE, "Unfreeze Column");
         } else {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
                     ContextMenu.NONE, "Freeze Column");

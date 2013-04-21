@@ -463,22 +463,28 @@ class TabularView extends View {
         if (datum == null) {
           datum = "";
         }
-        ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-            data[i], mColumnIndexMap, mColumnPropertiesMap);
-        ColorGuide columnGuide = mColumnColorRules.get(j)
-            .getColorGuide(data[i], mColumnIndexMap, mColumnPropertiesMap);
         int foregroundColor = this.defaultForegroundColor;
         int backgroundColor = this.defaultBackgroundColor;
-        if (type == TableType.MAIN_DATA) {
-        // First we check for a row rule.
-          if (rowGuide.didMatch()) {
-            foregroundColor = rowGuide.getForeground();
-            backgroundColor = rowGuide.getBackground();
-          }
-          // Override the role rule if a column rule matched.
-          if (columnGuide.didMatch()) {
-            foregroundColor = columnGuide.getForeground();
-            backgroundColor = columnGuide.getBackground();
+        // We can't check to color the frozen column, because the String[][] 
+        // array is only ever n by 1, so we don't have access to all the data.
+        if (type != TableType.INDEX_DATA &&
+            type != TableType.INDEX_FOOTER &&
+            type != TableType.INDEX_HEADER) {
+          ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
+              data[i], mColumnIndexMap, mColumnPropertiesMap);
+          ColorGuide columnGuide = mColumnColorRules.get(j)
+              .getColorGuide(data[i], mColumnIndexMap, mColumnPropertiesMap);
+          if (type == TableType.MAIN_DATA) {
+          // First we check for a row rule.
+            if (rowGuide.didMatch()) {
+              foregroundColor = rowGuide.getForeground();
+              backgroundColor = rowGuide.getBackground();
+            }
+            // Override the role rule if a column rule matched.
+            if (columnGuide.didMatch()) {
+              foregroundColor = columnGuide.getForeground();
+              backgroundColor = columnGuide.getBackground();
+            }
           }
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor,

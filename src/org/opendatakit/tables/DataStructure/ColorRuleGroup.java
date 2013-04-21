@@ -35,18 +35,15 @@ import org.opendatakit.tables.util.Constants;
 import android.util.Log;
 
 /**
- * From what I can tell, a ColumnColorRuler is essentially what is used to
- * determine the correct conditional coloring of a column. A ruler is 
- * composed of zero or more {@link ColorRule} objects. 
- * <p>
- * The ColumnColorRuler is the access point for these rules.
+ * A ColorRuleGroup aggregates a collection of {@link ColorRule} objects and is
+ * responsible for looking through the list of rules to determine the color
+ * dictated by the collection.
  * @author sudar.sam@gmail.com
- * @author uknown
  *
  */
 public class ColorRuleGroup {
   
-  private static final String TAG = "ColumnColorRuler";
+  private static final String TAG = ColorRuleGroup.class.getName();
   
   /*****************************
    * Things needed for the key value store.
@@ -263,7 +260,7 @@ public class ColorRuleGroup {
     /**
      * Use the rule group to determine if it applies to the given data. 
      * @param rowData an array of data from the row
-     * @param columnMapping a mapping of element key to index in the rowData
+     * @param indexMapping a mapping of element key to index in the rowData
      * array
      * @param propertiesMapping a mapping of element key to 
      * {@link ColumnProperties}. Necessary for knowing how to interpret the 
@@ -276,10 +273,10 @@ public class ColorRuleGroup {
      * 
      */
     public ColorGuide getColorGuide(String[] rowData, 
-        Map<String, Integer> columnMapping, 
+        Map<String, Integer> indexMapping, 
         Map<String, ColumnProperties> propertiesMapping) {
       for (int i = 0; i < ruleList.size(); i++) {
-        if (ruleList.get(i).checkMatch(rowData, columnMapping, 
+        if (ruleList.get(i).checkMatch(rowData, indexMapping, 
             propertiesMapping)) {
           return new ColorGuide(true, ruleList.get(i).getForeground(),
               ruleList.get(i).getBackground());

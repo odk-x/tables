@@ -133,12 +133,14 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
     case ADD_NEW_LIST_VIEW:
       // If this is the case we need to launch the edit activity.
       Intent newColorRuleIntent =
-          new Intent(this, EditSavedRowColorRuleActivity.class);
+          new Intent(this, EditSavedColorRuleActivity.class);
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, 
           EditSavedColorRuleActivity.INTENT_FLAG_NEW_RULE);
+      newColorRuleIntent.putExtra(
+          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
       startActivity(newColorRuleIntent);
       return true;
     case android.R.id.home:
@@ -206,6 +208,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
+      editColorRuleIntent.putExtra(
+          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
       startActivity(editColorRuleIntent);
       return true;
     default:
@@ -245,11 +249,13 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.d(TAG, "list item clicked");
     Intent editColorRuleIntent = new Intent(RowColorRuleManagerActivity.this,
-        EditSavedRowColorRuleActivity.class);
+        EditSavedColorRuleActivity.class);
     editColorRuleIntent.putExtra(
-        EditSavedRowColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
+        EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
     editColorRuleIntent.putExtra(
-        EditSavedRowColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
+        EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
+    editColorRuleIntent.putExtra(
+        EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
     startActivity(editColorRuleIntent);
   }
 
