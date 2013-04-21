@@ -355,7 +355,7 @@ public class SpreadsheetView extends LinearLayout
 		
 		LinearLayout completeWrapper = new LinearLayout(context);
 		View statusWrapper = buildStatusTable();
-		completeWrapper.addView(statusWrapper);
+		//completeWrapper.addView(statusWrapper);
 		completeWrapper.addView(wrapScroll);
 		
 		addView(completeWrapper, wrapLp);
@@ -371,7 +371,14 @@ public class SpreadsheetView extends LinearLayout
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.addView(indexWrapper);
         wrapper.addView(wrapScroll);
-        addView(wrapper);
+
+        LinearLayout completeWrapper = new LinearLayout(context);
+		View statusWrapper = buildStatusTable();
+		//completeWrapper.addView(statusWrapper);
+		completeWrapper.addView(wrapper);
+
+		addView(completeWrapper);
+		
         indexScroll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {

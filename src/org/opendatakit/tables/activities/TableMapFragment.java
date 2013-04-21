@@ -162,6 +162,7 @@ public class TableMapFragment extends Fragment {
 	   		           }
 	   		           mContainer.setVisibility(View.VISIBLE);
 	        	    }
+	        	   
 		        };
 		        view.setOnFinishedLoaded(client);
 			}

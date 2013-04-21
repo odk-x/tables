@@ -803,7 +803,7 @@ public class TablePropertiesManager extends PreferenceActivity {
 			if (hasFilePicker()) {
 				Intent intent = new Intent("org.openintents.action.PICK_FILE");
 				if (getText() != null) {
-					intent.setData(Uri.parse("File:///" + getText()));
+					intent.setData(Uri.parse("file:///" + getText()));
 				}
 				try {
 					startActivityForResult(intent, mRequestCode);
