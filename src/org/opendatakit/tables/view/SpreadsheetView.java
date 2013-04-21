@@ -93,12 +93,13 @@ public class SpreadsheetView extends LinearLayout
 //    private LockableHorizontalScrollView wrapScroll;
     /** trying to fix slow draw **/
     private LockableScrollView dataScroll;
+    private LockableScrollView dataStatusScroll;
     private View wrapper;
     private HorizontalScrollView wrapScroll;
     
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
-    private LockableScrollView statusScroll;
+//    private LockableScrollView statusScroll;
     private TabularView indexData;
     private TabularView indexHeader;
     private TabularView indexFooter;
@@ -368,14 +369,18 @@ public class SpreadsheetView extends LinearLayout
 				
 		LinearLayout completeWrapper = new LinearLayout(context);
 		View statusWrapper = buildStatusTable();
+		statusWrapper.setHorizontalFadingEdgeEnabled(true);
+		statusWrapper.setVerticalFadingEdgeEnabled(true);
 		completeWrapper.addView(statusWrapper);
 		completeWrapper.addView(wrapScroll);
+		completeWrapper.setHorizontalFadingEdgeEnabled(true);
+		completeWrapper.setVerticalFadingEdgeEnabled(true);
 		
 		addView(completeWrapper, wrapLp);
       mainScroll.setOnTouchListener(new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent event) {
-            statusScroll.scrollTo(statusScroll.getScrollX(), 
+            dataStatusScroll.scrollTo(dataStatusScroll.getScrollX(), 
                 view.getScrollY());
             if (event.getAction() == MotionEvent.ACTION_UP) {
               mainScroll.startScrollerTask();
@@ -408,7 +413,7 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 mainScroll.scrollTo(mainScroll.getScrollX(),
                         view.getScrollY());
-                statusScroll.scrollTo(mainScroll.getScrollX(), 
+                dataStatusScroll.scrollTo(mainScroll.getScrollX(), 
                     view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
@@ -439,7 +444,7 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 indexScroll.scrollTo(indexScroll.getScrollX(),
                         view.getScrollY());
-                statusScroll.scrollTo(indexScroll.getScrollX(), 
+                dataStatusScroll.scrollTo(indexScroll.getScrollX(), 
                     view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
@@ -581,7 +586,7 @@ public class SpreadsheetView extends LinearLayout
         colWidths = new int[1];
         colWidths[0] = 10;
         
-        LockableScrollView dataScroll = new LockableScrollView(context);
+        dataStatusScroll = new LockableScrollView(context);
 //        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
 //                Color.BLACK, false);
         TabularView dataTable = new TabularView(context, this, tp, data, 
@@ -590,8 +595,12 @@ public class SpreadsheetView extends LinearLayout
                 Color.GRAY, colWidths,
                 TableType.INDEX_DATA,
                 fontSize);
-        dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
+        dataTable.setVerticalFadingEdgeEnabled(true);
+        dataTable.setVerticalScrollBarEnabled(false);
+        dataStatusScroll.addView(dataTable, new ViewGroup.LayoutParams(
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
+        dataStatusScroll.setVerticalFadingEdgeEnabled(true);
+        dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = new TabularView(context, this, tp, header, null,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                TableType.INDEX_HEADER,
@@ -608,13 +617,12 @@ public class SpreadsheetView extends LinearLayout
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
         dataLp.weight = 1;
-        wrapper.addView(dataScroll, dataLp);
+        wrapper.addView(dataStatusScroll, dataLp);
         wrapper.addView(footerTable, footerTable.getTableWidth(),
                 footerTable.getTableHeight());
-        statusScroll = new LockableScrollView(context);
-        statusScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        return statusScroll;
+        wrapper.setVerticalFadingEdgeEnabled(true);
+        wrapper.setHorizontalFadingEdgeEnabled(true);
+        return wrapper;
     }
     
     /**
