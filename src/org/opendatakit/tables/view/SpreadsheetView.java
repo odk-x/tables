@@ -98,6 +98,7 @@ public class SpreadsheetView extends LinearLayout
     
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
+    private LockableScrollView statusScroll;
     private TabularView indexData;
     private TabularView indexHeader;
     private TabularView indexFooter;
@@ -356,8 +357,6 @@ public class SpreadsheetView extends LinearLayout
     
     private void buildNonIndexedTable() {
 		wrapper = buildTable(-1, false);
-		// Keeping this for now in case someone relied on this.
-		// HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
 		wrapScroll = new HorizontalScrollView(context);
 		wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
 		    LinearLayout.LayoutParams.MATCH_PARENT);
@@ -366,13 +365,24 @@ public class SpreadsheetView extends LinearLayout
 		    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
 		wrapLp.weight = 1;
 		wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
-		
+				
 		LinearLayout completeWrapper = new LinearLayout(context);
 		View statusWrapper = buildStatusTable();
 		completeWrapper.addView(statusWrapper);
 		completeWrapper.addView(wrapScroll);
 		
 		addView(completeWrapper, wrapLp);
+      mainScroll.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent event) {
+            statusScroll.scrollTo(statusScroll.getScrollX(), 
+                view.getScrollY());
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+              mainScroll.startScrollerTask();
+            }
+            return false;
+        }
+    });
     }
     
     private void buildIndexedTable(int indexedCol) {
@@ -398,6 +408,8 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 mainScroll.scrollTo(mainScroll.getScrollX(),
                         view.getScrollY());
+                statusScroll.scrollTo(mainScroll.getScrollX(), 
+                    view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
                   mainScroll.startScrollerTask();
@@ -427,6 +439,8 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 indexScroll.scrollTo(indexScroll.getScrollX(),
                         view.getScrollY());
+                statusScroll.scrollTo(indexScroll.getScrollX(), 
+                    view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
                   mainScroll.startScrollerTask();
@@ -452,7 +466,6 @@ public class SpreadsheetView extends LinearLayout
         String[][] footer;
         ColorRuleGroup[] colorRulers;
         int[] colWidths;
-//        int[] completeColWidths = tvs.getTableColWidths();
         int[] completeColWidths = getColumnWidths();
         if (isIndexed) {
             header = new String[1][1];
@@ -598,7 +611,10 @@ public class SpreadsheetView extends LinearLayout
         wrapper.addView(dataScroll, dataLp);
         wrapper.addView(footerTable, footerTable.getTableWidth(),
                 footerTable.getTableHeight());
-        return wrapper;
+        statusScroll = new LockableScrollView(context);
+        statusScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        return statusScroll;
     }
     
     /**
