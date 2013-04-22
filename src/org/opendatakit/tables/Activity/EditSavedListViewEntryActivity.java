@@ -103,6 +103,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(listViewName);
+    if (kvsh.getAspectsForPartition().size() == 0) {
+      setToDefault(listViewName);
+    }
     this.listViewFilename = aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
     addPreferencesFromResource(org.opendatakit.tables.R.xml.preference_listview_entry);
   }
@@ -187,7 +190,6 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     // If a filename exists, set it.
     if (listViewFilename != null && !listViewFilename.equals("")) {
       aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, listViewFilename);
-
     }
     namePreference.setSummary(listViewName);
   }
@@ -202,6 +204,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       Uri newFileUri = data.getData();
       String newFilename = newFileUri.getPath();
       if (newFilename != null && !newFilename.equals("")) {
+        if (kvsh.getAspectsForPartition().size() == 0) {
+          setToDefault(listViewName);
+        }
         aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, newFilename);
         listViewFilename = newFilename;
       } else {
@@ -211,6 +216,13 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
+  }
+  
+  private void setToDefault(String nameOfListView) {
+    KeyValueStoreHelper listViewKvsh = 
+        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+    listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME,
+        nameOfListView);
   }
 
   @Override
