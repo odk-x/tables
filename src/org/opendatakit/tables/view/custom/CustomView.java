@@ -267,7 +267,7 @@ public abstract class CustomView extends LinearLayout {
 		public String getForegroundColor(String colName, String value) {
 			String elementKey = tp.getColumnByDisplayName(colName);
 			ColorRuleGroup colRul = 
-			    ColorRuleGroup.getColumnColorRuler(tp, elementKey);
+			    ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
 			// Rather than hand off the whole row data, we'll just dummy up the
 			// info requested, as this will be easier for the html programmer 
 			// to use than to have to give in the whole row.

@@ -54,11 +54,9 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
   /**
-   * If this is set to true, then the ability to edit the column to which the
-   * rule applies will also be displayed. If it is not set or is set to false,
-   * it will not be displayed.
+   * The type of the color rule group you're editing.
    */
-  public static final String INTENT_KEY_EDIT_COLUMN = "editColumn";
+  public static final String INTENT_KEY_RULE_GROUP_TYPE = "ruleGroupType";
   
   /**
    * The position of the rule to be edited. {@link INTENT_FLAG_NEW_RULE} 
@@ -94,7 +92,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   private ColorRuleGroup mColorRuleGroup;
   private List<ColorRule> mColorRules;
   private EditNameDialogPreference mValuePreference;
-  private boolean mColumnIsEditable;
+  private ColorRuleGroup.Type mType;
   
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -103,8 +101,8 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mRulePosition = getIntent().getIntExtra(INTENT_KEY_RULE_POSITION,
         INTENT_FLAG_NEW_RULE);
-    this.mColumnIsEditable = 
-        getIntent().getBooleanExtra(INTENT_KEY_EDIT_COLUMN, false);
+    this.mType = ColorRuleGroup.Type.valueOf(
+        getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
     this.dbh = DbHelper.getDbHelper(this);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId, 
         KeyValueStore.Type.ACTIVE);
@@ -134,15 +132,24 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   private void init() {
     // Which rule group we call depends on the column of interest. If the
     // column is editable, then we want to get it from the row.
-    if (mColumnIsEditable) {
-      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTp);
-    } else {
+    switch (mType) {
+    case COLUMN:
       this.mColorRuleGroup = 
-          ColorRuleGroup.getColumnColorRuler(mTp, mElementKey);
+        ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
+      break;
+    case TABLE:
+      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTp);      
+      break;
+    case STATUS_COLUMN:
+      this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
+      break;
+    default: 
+      Log.e(TAG, "unrecognized type in init: " + mType);
     }
     this.mColorRules = mColorRuleGroup.getColorRules();
     
-    if (mColumnIsEditable) {
+    if (mType == ColorRuleGroup.Type.TABLE ||
+        mType == ColorRuleGroup.Type.STATUS_COLUMN) {
       final ListPreference columnPreference = 
           (ListPreference) findPreference(PREFERENCE_KEY_ELEMENT_KEY);
       columnPreference.setEntries(mColumnDisplayNames);

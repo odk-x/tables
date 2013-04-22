@@ -23,6 +23,7 @@ import org.opendatakit.tables.Activity.importexport.IETabActivity;
 import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.activities.TableMapFragment;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -363,16 +364,42 @@ public class TablePropertiesManager extends PreferenceActivity {
           public boolean onPreferenceClick(Preference preference) {
             Intent rowColorRuleManagerIntent =
                 new Intent(TablePropertiesManager.this,
-                    RowColorRuleManagerActivity.class);
+                    ColorRuleManagerActivity.class);
             rowColorRuleManagerIntent.putExtra(
-                ListViewManager.INTENT_KEY_TABLE_ID,
+                ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
                 tp.getTableId());
+            rowColorRuleManagerIntent.putExtra(
+                ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+                ColorRuleGroup.Type.TABLE.name());
             startActivity(rowColorRuleManagerIntent);
             return true;
           }
 
         });
         displayCat.addPreference(rowColorRulePrefs);
+        
+        Preference statusColumnColorRulePref = new Preference(this);
+        statusColumnColorRulePref.setTitle("Edit Status Column Color Rules");
+        statusColumnColorRulePref.setOnPreferenceClickListener(
+            new OnPreferenceClickListener() {
+
+          @Override
+          public boolean onPreferenceClick(Preference preference) {
+            Intent rowColorRuleManagerIntent =
+                new Intent(TablePropertiesManager.this,
+                    ColorRuleManagerActivity.class);
+            rowColorRuleManagerIntent.putExtra(
+                ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+                tp.getTableId());
+            rowColorRuleManagerIntent.putExtra(
+                ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+                ColorRuleGroup.Type.STATUS_COLUMN.name());
+            startActivity(rowColorRuleManagerIntent);
+            return true;
+          }
+
+        });
+        displayCat.addPreference(statusColumnColorRulePref);
 
         // security category
 

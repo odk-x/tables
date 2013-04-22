@@ -139,8 +139,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, 
           EditSavedColorRuleActivity.INTENT_FLAG_NEW_RULE);
-      newColorRuleIntent.putExtra(
-          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
+//      newColorRuleIntent.putExtra(
+//          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
       startActivity(newColorRuleIntent);
       return true;
     case android.R.id.home:
@@ -208,8 +208,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
-      editColorRuleIntent.putExtra(
-          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
+//      editColorRuleIntent.putExtra(
+//          EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
       startActivity(editColorRuleIntent);
       return true;
     default:
@@ -252,8 +252,8 @@ public class RowColorRuleManagerActivity extends SherlockListActivity {
         EditSavedColorRuleActivity.class);
     editColorRuleIntent.putExtra(
         EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
-    editColorRuleIntent.putExtra(
-        EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
+//    editColorRuleIntent.putExtra(
+//        EditSavedColorRuleActivity.INTENT_KEY_EDIT_COLUMN, true);
     editColorRuleIntent.putExtra(
         EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
     startActivity(editColorRuleIntent);

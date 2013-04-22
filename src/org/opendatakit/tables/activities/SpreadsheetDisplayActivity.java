@@ -23,6 +23,7 @@ import org.opendatakit.tables.Activity.ColorRuleManagerActivity;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -311,8 +312,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
            mTp.getColumns()[lastHeaderCellMenued].getElementKey());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
            this.mTp.getTableId());
-//       dialog.onCreate(null); // so we don't save state.
-//       dialog.show();
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE, 
+           ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);
      default:
        Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());

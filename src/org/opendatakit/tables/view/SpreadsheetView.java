@@ -482,7 +482,7 @@ public class SpreadsheetView extends LinearLayout
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
             colorRulers = new ColorRuleGroup[1];
-            colorRulers[0] = ColorRuleGroup.getColumnColorRuler(tp, 
+            colorRulers[0] = ColorRuleGroup.getColumnColorRuleGroup(tp, 
                 tp.getColumnByDisplayName(table.getHeader(indexedCol)));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
@@ -505,7 +505,7 @@ public class SpreadsheetView extends LinearLayout
                 }
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                   ColorRuleGroup.getColumnColorRuler(tp,
+                   ColorRuleGroup.getColumnColorRuleGroup(tp,
                        tp.getColumnByDisplayName(header[0][addIndex]));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
@@ -593,7 +593,7 @@ public class SpreadsheetView extends LinearLayout
             wholeData,
                 Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
-                TableType.INDEX_DATA,
+                TableType.STATUS_DATA,
                 fontSize);
         dataTable.setVerticalFadingEdgeEnabled(true);
         dataTable.setVerticalScrollBarEnabled(false);
@@ -603,11 +603,11 @@ public class SpreadsheetView extends LinearLayout
         dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = new TabularView(context, this, tp, header, null,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
-               TableType.INDEX_HEADER,
+               TableType.STATUS_HEADER,
                 fontSize);
         TabularView footerTable = new TabularView(context, this, tp, footer, null,
                 Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
-                TableType.INDEX_FOOTER,
+                TableType.STATUS_FOOTER,
                 fontSize);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);

@@ -60,8 +60,10 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
+  public static final String INTENT_KEY_RULE_GROUP_TYPE = "ruleGroupType";
   private static final String ACTIVITY_TITLE_SUFFIX = " Color Rules";
   private static final String EXAMPLE_STRING = "Rule Preview";
+  private static final String STATUS_COLUMN_TITLE = "Status Column";
 
   /**
    * Menu ID for adding a new list view.
@@ -102,6 +104,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   private ColumnProperties mCp;
   private ObjectMapper mMapper;
   private TypeFactory mTypeFactory;
+  private ColorRuleGroup.Type mType;
   
   @Override
   public void onCreate(Bundle icicle) {
@@ -130,6 +133,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_ELEMENT_KEY, mElementKey);
+      newColorRuleIntent.putExtra(
+          EditSavedColorRuleActivity.INTENT_KEY_RULE_GROUP_TYPE, mType.name());
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, 
           EditSavedColorRuleActivity.INTENT_FLAG_NEW_RULE);
@@ -202,6 +207,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
           EditSavedColorRuleActivity.INTENT_KEY_ELEMENT_KEY, mElementKey);
       editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
+      editColorRuleIntent.putExtra(
+          EditSavedColorRuleActivity.INTENT_KEY_RULE_GROUP_TYPE, mType.name());
       startActivity(editColorRuleIntent);
       return true;
     default:
@@ -220,6 +227,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   private void init() {
     this.mTableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
+    this.mType = ColorRuleGroup.Type.valueOf(
+        getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
     DbHelper dbh = DbHelper.getDbHelper(this);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId, 
         KeyValueStore.Type.ACTIVE);
@@ -229,12 +238,30 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         mMapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
     mMapper.setVisibilityChecker(
         mMapper.getVisibilityChecker().withCreatorVisibility(Visibility.ANY));
-    this.mCp = mTp.getColumnByElementKey(mElementKey);
-    this.mColorRuler = ColorRuleGroup.getColumnColorRuler(mTp, mElementKey);
+    switch (mType) {
+    case COLUMN:
+      this.mCp = mTp.getColumnByElementKey(mElementKey);
+      this.mColorRuler = 
+          ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
+      this.setTitle(mCp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
+      break;
+    case TABLE:
+      this.mCp = null;
+      this.mColorRuler = ColorRuleGroup.getTableColorRuleGroup(mTp);
+      this.setTitle(mTp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
+      break;
+    case STATUS_COLUMN:
+      this.mCp = null;
+      this.mColorRuler = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
+      this.setTitle(STATUS_COLUMN_TITLE + ACTIVITY_TITLE_SUFFIX);
+      break;
+    default:
+      Log.e(TAG, "uncrecognized type: " + mType);
+    }
     this.mColorRules = mColorRuler.getColorRules();
     this.mColorRuleAdapter = new ColorRuleAdapter();
     setListAdapter(mColorRuleAdapter);
-    this.setTitle(mCp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
+    
   }
   
   @Override
@@ -248,6 +275,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         EditSavedColorRuleActivity.INTENT_KEY_ELEMENT_KEY, mElementKey);
     editColorRuleIntent.putExtra(
         EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, position);
+    editColorRuleIntent.putExtra(
+        EditSavedColorRuleActivity.INTENT_KEY_RULE_GROUP_TYPE, mType.name());
     startActivity(editColorRuleIntent);
   }
 
@@ -270,9 +299,18 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       final int currentPosition = position;
       final String ruleString = mColorRules.get(currentPosition).toString();
       // The user-friendly string rep of the rule.
+      // We'll need to display the display name if this is an editable field.
+      // (ie if a status column or table rule)
+      String columnDisplayName = "";
+      if (mType == ColorRuleGroup.Type.STATUS_COLUMN || 
+          mType == ColorRuleGroup.Type.TABLE) {
+        columnDisplayName = 
+            mTp.getColumnByElementKey(mColorRules.get(currentPosition)
+                .getColumnElementKey()).getDisplayName() + " ";        
+      }
       TextView label = 
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
-      label.setText(ruleString);
+      label.setText(columnDisplayName + ruleString);
       final int backgroundColor = 
           mColorRules.get(currentPosition).getBackground();
       final int textColor = 

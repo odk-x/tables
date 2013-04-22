@@ -54,6 +54,8 @@ public class ColorRuleGroup {
   public static final String KVS_PARTITION_TABLE = "TableColorRuleGroup";
   public static final String KEY_COLOR_RULES_TABLE = 
       "TableColorRuleGroup.ruleList";
+  public static final String KEY_COLOR_RULES_STATUS_COLUMN = 
+      "StatusColumn.ruleList";
   public static final String DEFAULT_KEY_COLOR_RULES = "[]";
   
   private final TableProperties tp;
@@ -68,67 +70,64 @@ public class ColorRuleGroup {
   private final KeyValueHelper aspectHelper;
   // This is the list of actual rules that make up the ruler.
   private List<ColorRule> ruleList;
+  private Type mType;
   
   /**
    * Construct the rule group for the given column. 
    * @param tp
    * @param elementKey
    */
-  private ColorRuleGroup(TableProperties tp, String elementKey) {
+  private ColorRuleGroup(TableProperties tp, String elementKey, Type type) {
     this.tp = tp;
-    this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_COLUMN);
-    this.aspectHelper = kvsh.getAspectHelper(elementKey);
+    this.mType = type;
+    this.mapper = new ObjectMapper();
+    this.typeFactory = mapper.getTypeFactory();
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker()
+        .withCreatorVisibility(Visibility.ANY));
     this.elementKey = elementKey;
-    this.mapper = new ObjectMapper();
-    this.typeFactory = mapper.getTypeFactory();
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker()
-        .withCreatorVisibility(Visibility.ANY));
-    if (elementKey == null) {
-      this.cp = null;
-    } else {
+    String jsonRulesString = DEFAULT_KEY_COLOR_RULES;
+    switch (type) {
+    case COLUMN:
+      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_COLUMN);
+      this.aspectHelper = kvsh.getAspectHelper(elementKey);
+      jsonRulesString = aspectHelper.getObject(KEY_COLOR_RULES_COLUMN);
       this.cp = tp.getColumnByElementKey(elementKey);
-    }
-    String jsonRulesString = 
-        aspectHelper.getObject(KEY_COLOR_RULES_COLUMN);
-    this.ruleList = parseJsonString(jsonRulesString);
-  }
-  
-  /**
-   * Construct the rule group for the given table.
-   * @param tp
-   */
-  private ColorRuleGroup(TableProperties tp) {
-    this.tp = tp;
-    this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
-    this.aspectHelper = null;
-    this.elementKey = null;
-    this.mapper = new ObjectMapper();
-    this.typeFactory = mapper.getTypeFactory();
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker()
-        .withCreatorVisibility(Visibility.ANY));
-    if (elementKey == null) {
+      break;
+    case TABLE:
+      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
+      this.aspectHelper = null;
+      jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_TABLE);
       this.cp = null;
-    } else {
-      this.cp = tp.getColumnByElementKey(elementKey);
+      break;
+    case STATUS_COLUMN:
+      this.kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION_TABLE);
+      this.aspectHelper = null;
+      jsonRulesString = kvsh.getObject(KEY_COLOR_RULES_STATUS_COLUMN);
+      this.cp = null;
+      break;
+    default:
+      Log.e(TAG, "unrecognized ColorRuleGroup type: " + type);
+      this.kvsh = null;
+      this.cp = null;
+      this.aspectHelper = null;
     }
-    String jsonRulesString = 
-        kvsh.getObject(KEY_COLOR_RULES_TABLE);
     this.ruleList = parseJsonString(jsonRulesString);
   }
     
-    public static ColorRuleGroup getColumnColorRuler(TableProperties tp,
+    public static ColorRuleGroup getColumnColorRuleGroup(TableProperties tp,
         String elementKey) {
-      return new ColorRuleGroup(tp, elementKey);
+      return new ColorRuleGroup(tp, elementKey, Type.COLUMN);
     }
     
     public static ColorRuleGroup getTableColorRuleGroup(TableProperties tp) {
-      return new ColorRuleGroup(tp);
+      return new ColorRuleGroup(tp, null, Type.TABLE);
+    }
+    
+    public static ColorRuleGroup getStatusColumnRuleGroup(TableProperties tp) {
+      return new ColorRuleGroup(tp, null, Type.STATUS_COLUMN);
     }
     
     /**
@@ -178,6 +177,14 @@ public class ColorRuleGroup {
     }
     
     /**
+     * Get the type of the rule group.
+     * @return
+     */
+    public Type getType() {
+      return mType;
+    }
+    
+    /**
      * Persist the rule list into the key value store. Does nothing if there are
      * no rules, so will not pollute the key value store unless something has
      * been added.
@@ -185,13 +192,20 @@ public class ColorRuleGroup {
     public void saveRuleList() {
       // if there are no rules, we want to remove the key from the kvs.
       if (ruleList.size() == 0) {
-        if (elementKey != null) {
+        switch (this.mType) {
+        case COLUMN:
           aspectHelper.removeKey(KEY_COLOR_RULES_COLUMN);
-        } else {
-          // We know that it's actually a table rule.
+          return;
+        case TABLE:
           kvsh.removeKey(KEY_COLOR_RULES_TABLE);
+          return;
+        case STATUS_COLUMN:
+          kvsh.removeKey(KEY_COLOR_RULES_STATUS_COLUMN);
+          return;
+        default:
+          Log.e(TAG, "unrecognized type: " + mType);
+          return;
         }
-        return;
       }
       // set it to this default just in case something goes wrong and it is 
       // somehow set. this way if you manage to set the object you will have
@@ -201,12 +215,19 @@ public class ColorRuleGroup {
       String ruleListJson = DEFAULT_KEY_COLOR_RULES;
       try {
         ruleListJson = mapper.writeValueAsString(ruleList);
-        // The elementKey here is kind of standing in as a flag for whether 
-        // it's a table or a column rule.
-        if (elementKey != null) {
+        switch (mType) {
+        case COLUMN:
           aspectHelper.setObject(KEY_COLOR_RULES_COLUMN, ruleListJson);
-        } else {
+          return;
+        case TABLE:
           kvsh.setObject(KEY_COLOR_RULES_TABLE, ruleListJson);
+          return;
+        case STATUS_COLUMN:
+          kvsh.setObject(KEY_COLOR_RULES_STATUS_COLUMN, ruleListJson);
+          return;
+        default:
+          Log.e(TAG, "unrecognized type: " + mType);
+          return;
         }
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing list of color rules");
@@ -316,6 +337,10 @@ public class ColorRuleGroup {
       public int getBackground() {
         return mBackground;
       }
+    }
+    
+    public enum Type {
+      COLUMN, TABLE, STATUS_COLUMN;
     }
     
 }

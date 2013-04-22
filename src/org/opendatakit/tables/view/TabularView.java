@@ -44,7 +44,8 @@ class TabularView extends View {
   public static final String TAG = "TabularView";
 
   enum TableType {
-    MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER, INDEX_FOOTER
+    MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER,
+    INDEX_FOOTER, STATUS_DATA, STATUS_HEADER, STATUS_FOOTER;
   }
 
   private static final int ROW_HEIGHT_PADDING = 14;
@@ -130,12 +131,16 @@ class TabularView extends View {
     for (int i = 0; i < columnOrder.size(); i++) {
       indexMap.put(columnOrder.get(i), i);
       propertiesMap.put(columnOrder.get(i), mTp.getColumnByIndex(i));
-      mColumnColorRules.add(ColorRuleGroup.getColumnColorRuler(mTp, 
+      mColumnColorRules.add(ColorRuleGroup.getColumnColorRuleGroup(mTp, 
           columnOrder.get(i)));
     }
     this.mColumnIndexMap = indexMap;
     this.mColumnPropertiesMap = propertiesMap;
-    this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+    if (this.type != TableType.STATUS_DATA) {
+      this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+    } else {
+      this.mRowColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+    }
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
     highlightedCellNum = -1;
     textPaint = new Paint();
@@ -188,7 +193,8 @@ class TabularView extends View {
     this(context, controller, tp, new String[][] { data }, null,
         defaultForegroundColor, defaultBackgroundColor,
         borderColor, columnWidths, type, fontSize);
-    Log.e(TAG, "wholeData param for this TabularView constructor not implemented! Use with extreme caution");
+    Log.e(TAG, "wholeData param for this TabularView constructor not " +
+    		"implemented! Use with extreme caution");
   }
 
   public int getTableHeight() {
@@ -406,7 +412,9 @@ class TabularView extends View {
     if (this.type == TableType.INDEX_HEADER ||
         this.type == TableType.MAIN_HEADER ||
         this.type == TableType.INDEX_FOOTER ||
-        this.type == TableType.MAIN_FOOTER) {
+        this.type == TableType.MAIN_FOOTER ||
+        this.type == TableType.STATUS_HEADER ||
+        this.type == TableType.STATUS_FOOTER) {
       topmost = 0;
       bottommost = 0;
     } else {
@@ -475,12 +483,10 @@ class TabularView extends View {
         int backgroundColor = this.defaultBackgroundColor;
         if (type == TableType.INDEX_DATA ||
             type == TableType.MAIN_DATA) {
-          // We can't check to color the frozen column, because the String[][] 
-          // array is only ever n by 1, so we don't have access to all the data.
           ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
               wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
           ColorGuide columnGuide = mColumnColorRules.get(j)
-              .getColorGuide(wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+              .getColorGuide(data[i], mColumnIndexMap, mColumnPropertiesMap);
           // First we check for a row rule.
           if (rowGuide.didMatch()) {
             foregroundColor = rowGuide.getForeground();
@@ -490,6 +496,14 @@ class TabularView extends View {
           if (columnGuide.didMatch()) {
             foregroundColor = columnGuide.getForeground();
             backgroundColor = columnGuide.getBackground();
+          }
+        }
+        if (type == TableType.STATUS_DATA) {
+          ColorGuide statusGuide = mRowColorRuleGroup.getColorGuide(
+              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+          if (statusGuide.didMatch()) {
+            foregroundColor = statusGuide.getForeground();
+            backgroundColor = statusGuide.getBackground();
           }
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor,
