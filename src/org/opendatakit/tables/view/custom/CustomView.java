@@ -187,6 +187,23 @@ public abstract class CustomView extends LinearLayout {
 			this.tp = tp;
 			initMaps(tp);
 		}
+		
+		public boolean inCollectionMode() {
+		   if(!isIndexed()) {
+		      return false; 
+		   }
+		   
+		   //Test 1: Check that every cell value under the indexed column are equal (characteristic of a collection)
+		   String test = getData(0, primeColumns.get(0).substring(1));
+		   for(int i = 1; i < getCount(); i++) {
+		      if(!getData(i, primeColumns.get(0).substring(1)).equals(test)) {
+		         return false;
+		      }
+		   }
+		   
+		   //Test 2: The number of rows in the table equal the number of rows in the (corresponding) collection
+		   return (getCount() == collectionMap.get(0));
+		}
 
 		public TableData(TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with UserTable");
@@ -403,11 +420,7 @@ public abstract class CustomView extends LinearLayout {
 		  JSONArray result = new JSONArray((Collection<String>) allNames);
 		  return result;
 		}
-		
-		public void testVoid() {
-		  Log.e(TAG, "testVoid() reporting!");
-		}
-		
+
 		/**
 		 * Launch the {@link CustomHomeScreenActivity} with the custom filename
 		 * to display.

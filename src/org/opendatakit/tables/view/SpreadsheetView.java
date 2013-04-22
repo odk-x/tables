@@ -626,38 +626,6 @@ public class SpreadsheetView extends LinearLayout
     }
     
     /**
-     * Picks a random color!
-     * 
-     * @author Chris Gelon (cgelon)
-     */
-//    private class RandomColorDecider implements ColorDecider {
-//    	/** The default color to show. */
-//        private final int color;
-//        
-//        public RandomColorDecider(int color) {
-//            this.color = color;
-//        }
-//        
-//        public int getColor(int rowNum, int colNum, String value) {
-//        	Random random = new Random();
-//        	return Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256));
-//        }
-//    }
-
-    
-    // This method was never called, and in order to make scrolling more 
-    // efficient I had to change the type. I am leaving it for now b/c other
-    // people are working on this code and I don't want make them rollback
-    // if they need to use it.
-//    public void setScrollEnabled(boolean enabled) {
-//        wrapScroll.setScrollable(enabled);
-//        if (indexScroll != null) {
-//            indexScroll.setScrollable(enabled);
-//        }
-//        mainScroll.setScrollable(enabled);
-//    }
-    
-    /**
      * Gets the x translation of the scroll. This is in particular how far 
      * you have scrolled to look at columns that do not begin onscreen.
      * @return
