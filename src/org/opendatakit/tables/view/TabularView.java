@@ -127,12 +127,25 @@ class TabularView extends View {
     Map<String, ColumnProperties> propertiesMap = 
         new HashMap<String, ColumnProperties>();
     List<String> columnOrder = mTp.getColumnOrder();
+    String frozenColumn = mTp.getIndexColumn();
+    // We need to do some checking here. 
     this.mColumnColorRules = new ArrayList<ColorRuleGroup>();
-    for (int i = 0; i < columnOrder.size(); i++) {
-      indexMap.put(columnOrder.get(i), i);
-      propertiesMap.put(columnOrder.get(i), mTp.getColumnByIndex(i));
+    if (frozenColumn != null && this.type == TableType.INDEX_DATA) {
       mColumnColorRules.add(ColorRuleGroup.getColumnColorRuleGroup(mTp, 
-          columnOrder.get(i)));
+          frozenColumn));
+    } else {
+      for (int i = 0; i < columnOrder.size(); i++) {
+        // This check is to avoid the rule if it's we've already accounted for
+        // its color rules in the index column.
+        if (!columnOrder.get(i).equals(frozenColumn)) {
+          mColumnColorRules.add(ColorRuleGroup.getColumnColorRuleGroup(mTp, 
+              columnOrder.get(i)));
+        }
+      }
+    }
+    for (int i = 0; i < columnOrder.size(); i++) {
+      propertiesMap.put(columnOrder.get(i), mTp.getColumnByIndex(i));
+      indexMap.put(columnOrder.get(i), i);
     }
     this.mColumnIndexMap = indexMap;
     this.mColumnPropertiesMap = propertiesMap;
@@ -486,7 +499,7 @@ class TabularView extends View {
           ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
               wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
           ColorGuide columnGuide = mColumnColorRules.get(j)
-              .getColorGuide(data[i], mColumnIndexMap, mColumnPropertiesMap);
+              .getColorGuide(wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
           // First we check for a row rule.
           if (rowGuide.didMatch()) {
             foregroundColor = rowGuide.getForeground();

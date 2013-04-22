@@ -1401,8 +1401,7 @@ public class TableProperties {
   }
 
   /**
-   * Return the display name of the index column.
-   * TODO: make this work with element key
+   * Return the element key of the indexed (frozen) column.
    * @return
    */
   public String getIndexColumn() {
