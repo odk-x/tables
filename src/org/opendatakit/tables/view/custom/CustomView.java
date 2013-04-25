@@ -16,13 +16,20 @@
 package org.opendatakit.tables.view.custom;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.Activity.TableManager;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -30,17 +37,24 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebStorage.QuotaUpdater;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 
 public abstract class CustomView extends LinearLayout {
@@ -173,6 +187,23 @@ public abstract class CustomView extends LinearLayout {
 			this.tp = tp;
 			initMaps(tp);
 		}
+		
+		public boolean inCollectionMode() {
+		   if(!isIndexed()) {
+		      return false; 
+		   }
+		   
+		   //Test 1: Check that every cell value under the indexed column are equal (characteristic of a collection)
+		   String test = getData(0, primeColumns.get(0).substring(1));
+		   for(int i = 1; i < getCount(); i++) {
+		      if(!getData(i, primeColumns.get(0).substring(1)).equals(test)) {
+		         return false;
+		      }
+		   }
+		   
+		   //Test 2: The number of rows in the table equal the number of rows in the (corresponding) collection
+		   return (getCount() == collectionMap.get(0));
+		}
 
 		public TableData(TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with UserTable");
@@ -243,11 +274,36 @@ public abstract class CustomView extends LinearLayout {
 			return new JSONObject(colInfo).toString();
 		}
 
-		//get color rules for colName
-		public String getColumnColorRules(String colName, int value) {
+		/**
+		 * Get the foreground color for the given value according to the color
+		 * rules for the column specified by colName. The default is -16777216.
+		 * @param colName the display name of the column
+		 * @param value the string value of the datum
+		 * @return
+		 */
+		public String getForegroundColor(String colName, String value) {
 			String elementKey = tp.getColumnByDisplayName(colName);
-			ColumnColorRuler colRul = new ColumnColorRuler(tp, elementKey);
-			return String.format("#%06X", (0xFFFFFF & colRul.getForegroundColor("" + value, -16777216)));
+			ColorRuleGroup colRul = 
+			    ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+			// Rather than hand off the whole row data, we'll just dummy up the
+			// info requested, as this will be easier for the html programmer 
+			// to use than to have to give in the whole row.
+			Map<String, Integer> indexMap = new HashMap<String, Integer>();
+			indexMap.put(elementKey, 0);
+			Map<String, ColumnProperties> propertiesMap = 
+			    new HashMap<String, ColumnProperties>();
+			propertiesMap.put(elementKey, tp.getColumnByElementKey(elementKey));
+			String[] rowData = new String[] {value};
+			ColorGuide guide = colRul.getColorGuide(rowData, indexMap, 
+			    propertiesMap);
+			int foregroundColor;
+			if (guide.didMatch()) {
+			  foregroundColor = guide.getForeground();
+			} else {
+			  foregroundColor = -16777216; // this crazy value was found here
+			}
+			// I think this formatting needs to take place for javascript
+			return String.format("#%06X", (0xFFFFFF & foregroundColor));
 		}
 
 		//Maps the number of rows to every collection of a table.
@@ -297,14 +353,16 @@ public abstract class CustomView extends LinearLayout {
 
 	protected class Control {
 
-		private static final String TAG = "Control";
+		private static final String TAG = "CustomView.Control";
 
 		protected Context context;
 		private TableProperties[] allTps;
 		private Map<String, TableProperties> tpMap;
+		private DbHelper dbh;
 
 		public Control(Context context) {
 			this.context = context;
+			dbh = DbHelper.getDbHelper(context);
 			Log.d(TAG, "calling Control Constructor");
 		}
 
@@ -322,10 +380,13 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		public boolean openTable(String tableName, String query) {
+		  Log.d(TAG, "in openTable for table: " + tableName);
 			initTpInfo();
 			if (!tpMap.containsKey(tableName)) {
+			  Log.e(TAG, "tableName [" + tableName + "] not in map");
 				return false;
 			}
+			Log.e(TAG, "launching table activity for " + tableName);
 			Controller.launchTableActivity(context, tpMap.get(tableName),
 					query, false);
 			return true;
@@ -344,5 +405,112 @@ public abstract class CustomView extends LinearLayout {
 			ArrayList<String> columnOrder = tp.getColumnOrder();
 			return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
 		}
+		
+		/**
+		 * Return a list of the display names for all the tables in the database
+		 * sorted in case insensitive order.
+		 * @return
+		 */
+		public JSONArray getTableDisplayNames() {
+		  Log.d(TAG, "called getTableDisplayNames()");
+		  initTpInfo();
+		  List<String> allNames = 
+		      Arrays.asList(tpMap.keySet().toArray(new String[0]));
+		  Collections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
+		  JSONArray result = new JSONArray((Collection<String>) allNames);
+		  return result;
+		}
+
+		/**
+		 * Launch the {@link CustomHomeScreenActivity} with the custom filename
+		 * to display.
+		 * @param filename
+		 */
+		public void launchHTML(String filename) {
+		  Log.d(TAG, "in launchHTML with filename: " + filename);
+		  Intent i = new Intent(context, CustomHomeScreenActivity.class);
+		  i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
+		  context.startActivity(i);
+		}
+		
+		/**
+		 * Create an alert that will allow for a new table name. This might be
+		 * to rename an existing table, if isNewTable false, or it could be a new
+		 * table, if isNewTable is true.
+		 * <p>
+		 * This method is based on {@link TableManager.alertForNewTableName}.
+		 * The parameters are the same for the sake of consistency.
+		 * <p>
+		 * As this method does not access the javascript, the caller is 
+		 * responsible for refreshing the displayed information.
+		 * @param isNewTable
+		 * @param tableType this is the string representation of TableType. It 
+		 * must construct the correct value for {@link TableType.valueOf}.
+		 * @param tp
+		 * @param givenTableName
+		 */
+		public void alertForNewTableName(final boolean isNewTable,
+		    final String tableTypeStr, final TableProperties tp,
+		    String givenTableName) {
+		  Log.d(TAG, "alertForNewTableName called");
+		  Log.d(TAG, "isNewTable: " + Boolean.toString(isNewTable));
+		  Log.d(TAG, "finalTableTypeStr: " + tableTypeStr);
+		  Log.d(TAG, "tp: " + tp);
+		  Log.d(TAG, "givenTableName: " + givenTableName);
+		  final TableType tableType = TableType.valueOf(tableTypeStr);
+		  AlertDialog newTableAlert;
+		  AlertDialog.Builder alert = new AlertDialog.Builder(context);
+		  alert.setTitle(context.getString(
+		      org.opendatakit.tables.R.string.name_of_new_table));
+		  // An edit text for getting user input.
+		  final EditText input = new EditText(context);
+		  alert.setView(input);
+		  if (givenTableName != null) {
+		    input.setText(givenTableName);
+		  }
+		  // OK Action: create a new table.
+		  alert.setPositiveButton(
+		      context.getString(org.opendatakit.tables.R.string.ok),
+		      new DialogInterface.OnClickListener() {
+              
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                String newTableName = input.getText().toString().trim();
+                if (newTableName == null || newTableName.equals("")) {
+                  Toast toast = Toast.makeText(context, 
+                      "Table name cannot be empty!", 
+                      Toast.LENGTH_LONG);
+                  toast.show();
+                } else {
+                  if (isNewTable) {
+                    addTable(newTableName, tableType);
+                  } else {
+                    tp.setDisplayName(newTableName);
+                  }
+                }
+              }
+            });
+		   
+		  alert.setNegativeButton(org.opendatakit.tables.R.string.cancel, 
+		      new DialogInterface.OnClickListener() {
+              
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                // Cancel it, do nothing.
+              }
+            });
+		  newTableAlert = alert.create();
+		  newTableAlert.getWindow().setSoftInputMode(WindowManager.
+		      LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		  newTableAlert.show();
+		}
+		
+		private void addTable(String tableName, TableType tableType) {
+		  String dbTableName =
+		      TableProperties.createDbTableName(dbh, tableName);
+		  TableProperties tp = TableProperties.addTable(dbh, dbTableName, 
+		      tableName, tableType, KeyValueStore.Type.ACTIVE);
+		}
 	}
+	
 }

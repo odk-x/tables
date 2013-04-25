@@ -16,7 +16,7 @@
 package org.opendatakit.tables.Activity;
 
 import org.opendatakit.tables.Activity.util.SliderPreference;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.view.SpreadsheetView;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -419,21 +420,21 @@ public class PropertyManager extends PreferenceActivity {
 
   private class DisplayPreferencesDialogPreference extends Preference {
 
-    private final ColorRulesDialog dialog;
-
     public DisplayPreferencesDialogPreference(Context context) {
       super(context);
-      // is colname element key or the display name? should be el key..
-      dialog = new ColorRulesDialog(PropertyManager.this,
-          ColumnColorRuler.getColumnColorRuler(tp, elementKey), elementKey,
-          cp.getDisplayName());
-      setTitle("Display Preferences");
+      setTitle("Edit Column Color Rules");
     }
 
     @Override
     protected void onClick() {
-      dialog.onCreate(null); // so we don't save state.
-      dialog.show();
+      Intent i = new Intent(PropertyManager.this, 
+          ColorRuleManagerActivity.class);
+      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, elementKey);
+      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
+          tp.getTableId());
+      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE, 
+          ColorRuleGroup.Type.COLUMN.name());
+      startActivity(i);
     }
   }
 

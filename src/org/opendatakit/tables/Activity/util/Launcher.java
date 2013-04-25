@@ -20,19 +20,24 @@ import java.io.File;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.util.TableFileUtils;
+import org.opendatakit.tables.view.custom.CustomAppView;
 import org.opendatakit.tables.view.custom.CustomView;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 
 public class Launcher extends Activity {
+  
+  private static final String TAG = Launcher.class.getName();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -45,15 +50,32 @@ public class Launcher extends Activity {
         }
         // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
-        String tableId = (new Preferences(this)).getDefaultTableId();
-        if (tableId == null) {
-            Intent i = new Intent(this, TableManager.class);
-            startActivity(i);
+        // The first thing we'll do is check to see if a custom app file 
+        // exists. If it does, we'll launch it. Otherwise we'll use the 
+        // TableManager.
+        File homescreenFile = new File(dir + "/" + 
+            CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME);
+        Log.d(TAG, "looking for homescreen file: " 
+            + homescreenFile.toString());
+        if (homescreenFile.exists()) {
+          // launch it.
+          Log.d(TAG, "homescreen file exists.");
+          Intent i = new Intent(this, CustomHomeScreenActivity.class);
+          i.putExtra("trial", "trial");
+          startActivity(i);
         } else {
-            TableProperties tp = TableProperties.getTablePropertiesForTable(
-                    DbHelper.getDbHelper(this), tableId,
-                    KeyValueStore.Type.ACTIVE);
-            Controller.launchTableActivity(this, tp, true);
+          Log.d(TAG, "no homescreen file found, launching TableManager");
+          // Launch the TableManager.
+          String tableId = (new Preferences(this)).getDefaultTableId();
+          if (tableId == null) {
+              Intent i = new Intent(this, TableManager.class);
+              startActivity(i);
+          } else {
+              TableProperties tp = TableProperties.getTablePropertiesForTable(
+                      DbHelper.getDbHelper(this), tableId,
+                      KeyValueStore.Type.ACTIVE);
+              Controller.launchTableActivity(this, tp, true);
+          }
         }
         finish();
     }

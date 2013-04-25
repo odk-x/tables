@@ -7,15 +7,20 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.SubMenu;
 
 /**
  * Base activity for all fragments that display information about a database.
@@ -25,20 +30,15 @@ import com.actionbarsherlock.app.SherlockFragmentActivity;
  */
 public class TableActivity extends SherlockFragmentActivity {
 	private static final String INTENT_KEY_TABLE_ID = "tableId";
-	private static final String INTENT_KEY_SEARCH = "search";
 	private static final String INTENT_KEY_SEARCH_STACK = "searchStack";
 	private static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
     public static final String KVS_PARTITION = "TableActivity";
     public static final String MAP_COLUMN_KEY = "MapColumnKey";
     public static final String MAP_LABEL_KEY = "MapLabelKey";
-
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-            Controller.FIRST_FREE_RCODE;
-
-    private static final String COLLECT_INSTANCES_URI_STRING =
-        "content://org.odk.collect.android.provider.odk.instances/instances";
-    private static final Uri COLLECT_INSTANCES_CONTENT_URI =
-            Uri.parse(COLLECT_INSTANCES_URI_STRING);
+    
+    
+    private static final int MENU_ITEM_ID_VIEW_TYPE_SUBMENU = 1;
+    
 
 	/** The current fragment being displayed. */
 	private Fragment mCurrentFragment;
@@ -109,80 +109,61 @@ public class TableActivity extends SherlockFragmentActivity {
         }
         return searchText;
     }
-
-	/**@Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //if (handleActivityReturn(requestCode, resultCode, data)) {
-        //    return;
-        //}
-        switch (requestCode) {
-        	case RCODE_ODKCOLLECT_ADD_ROW:
-        		addRowFromOdkCollectForm(Integer.valueOf(data.getData().getLastPathSegment()));
-        		init();
-        		break;
-        	default:
-        		super.onActivityResult(requestCode, resultCode, data);
+	
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+		// Set the app icon as an action to go home.
+    	ActionBar actionBar = this.getSupportActionBar();
+    	actionBar.setDisplayHomeAsUpEnabled(true);
+    	// Set the actionbar title to nothing.
+    	actionBar.setTitle("");
+		
+		// View type submenu.
+        // Determine the possible view types.
+        final TableViewType[] viewTypes = mTableProperties.getPossibleViewTypes();
+        // Build a checkable submenu to select the view type.
+        SubMenu viewTypeSubMenu = 
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+                Menu.NONE, "ViewType");
+        MenuItem viewType = viewTypeSubMenu.getItem();
+        viewType.setIcon(R.drawable.view);
+        viewType.setEnabled(true);
+        viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        MenuItem item;
+        // This will be the name of the default list view, which if exists
+        // means we should display the list view as an option.
+        KeyValueStoreHelper kvsh = 
+            mTableProperties.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+        String nameOfView = kvsh.getString( 
+            ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        for(int i = 0; i < viewTypes.length; i++) {
+        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+        	    viewTypes[i].getId(), i, 
+        	    viewTypes[i].name());
+        	// mark the current viewType as selected
+          	if (mTableProperties.getCurrentViewType() == viewTypes[i]) {
+          	  item.setChecked(true);
+          	}
+            // disable list view if no file is specified
+            if (viewTypes[i] == TableViewType.List && nameOfView == null) {
+            	item.setEnabled(false);
+            }
         }
+
+
+        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+            true, true);
+        
+        return true;
     }
-
-	boolean addRowFromOdkCollectForm(int instanceId) {
-		Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-		if (formValues == null) {
-			return false;
+	
+	@Override
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		if(item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
+			mTableProperties.setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
+			Controller.launchTableActivity(this, mTableProperties, false);
+			return true;
 		}
-
-		Map<String, String> values = new HashMap<String, String>();
-		for (String key : formValues.keySet()) {
-			ColumnProperties cp = mTableProperties.getColumnByElementKey(key);
-			if (cp == null) {
-				continue;
-			}
-			String value = du.validifyValue(cp, formValues.get(key));
-			if (value != null) {
-				values.put(key, value);
-			}
-		}
-		Map<String, String> prepopulatedValues = getMapFromLimitedQuery();
-		if (prepopulatedValues.equals(values)) {
-			return false;
-		}
-		dbt.addRow(values);
-		return true;
-	}
-
-	protected Map<String, String> getOdkCollectFormValues(int instanceId) {
-		String[] projection = { "instanceFilePath" };
-		String selection = "_id = ?";
-		String[] selectionArgs = { (instanceId + "") };
-		Cursor c = managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection, selection,
-				selectionArgs, null);
-		if (c.getCount() != 1) {
-			return null;
-		}
-		c.moveToFirst();
-		String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
-		Document xmlDoc = new Document();
-		KXmlParser xmlParser = new KXmlParser();
-		try {
-			xmlParser.setInput(new FileReader(instancepath));
-			xmlDoc.parse(xmlParser);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		} catch (XmlPullParserException e) {
-			e.printStackTrace();
-			return null;
-		}
-		Element rootEl = xmlDoc.getRootElement();
-		Node rootNode = rootEl.getRoot();
-		Element dataEl = rootNode.getElement(0);
-		Map<String, String> values = new HashMap<String, String>();
-		for (int i = 0; i < dataEl.getChildCount(); i++) {
-			Element child = dataEl.getElement(i);
-			String key = child.getName();
-			String value = child.getChildCount() > 0 ? child.getText(0) : null;
-			values.put(key, value);
-		}
-		return values;
-	}*/
+		return false;
+    }
 }

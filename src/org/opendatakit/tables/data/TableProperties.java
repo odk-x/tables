@@ -893,6 +893,7 @@ public class TableProperties {
 	      for (ColumnProperties cp : columns) {
 	        cp.deleteColumn(db);
 	      }
+	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
 	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
 	          this.backingStore);
@@ -1400,8 +1401,7 @@ public class TableProperties {
   }
 
   /**
-   * Return the display name of the index column.
-   * TODO: make this work with element key
+   * Return the element key of the indexed (frozen) column.
    * @return
    */
   public String getIndexColumn() {
@@ -1789,6 +1789,9 @@ public class TableProperties {
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
+      } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
+				|| cp.getDisplayName().equalsIgnoreCase("longitude")) {
+    	  locationColCount++;
       }
     }
     List<TableViewType> list = new ArrayList<TableViewType>();

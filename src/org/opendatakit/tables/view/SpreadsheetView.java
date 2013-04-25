@@ -15,14 +15,19 @@
  */
 package org.opendatakit.tables.view;
 
+import java.util.Map;
+import java.util.Random;
+
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.sync.SyncUtil.State;
 import org.opendatakit.tables.view.TabularView.ColorDecider;
 import org.opendatakit.tables.view.TabularView.TableType;
 import org.opendatakit.tables.view.util.LockableHorizontalScrollView;
@@ -77,6 +82,9 @@ public class SpreadsheetView extends LinearLayout
     private final UserTable table;
     private final int indexedCol;
     private final int fontSize;
+    // This will be the ENTIRE DATA from the table. Necessary for evaluating
+    // color rules in the TabularView objects.
+    private final String[][] wholeData;
     
     private final TableProperties tp;
     
@@ -85,11 +93,13 @@ public class SpreadsheetView extends LinearLayout
 //    private LockableHorizontalScrollView wrapScroll;
     /** trying to fix slow draw **/
     private LockableScrollView dataScroll;
+    private LockableScrollView dataStatusScroll;
     private View wrapper;
     private HorizontalScrollView wrapScroll;
     
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
+//    private LockableScrollView statusScroll;
     private TabularView indexData;
     private TabularView indexHeader;
     private TabularView indexFooter;
@@ -114,6 +124,15 @@ public class SpreadsheetView extends LinearLayout
         this.tp = tp;
         this.table = table;
         this.indexedCol = indexedCol;
+        
+        wholeData = new String[table.getHeight()][table.getWidth()];
+        int addIndex = 0;
+        for (int i = 0; i < table.getWidth(); i++) {
+            for (int j = 0; j < table.getHeight(); j++) {
+                wholeData[j][addIndex] = table.getData(j, i);
+            }
+            addIndex++;
+        }
         
         // if a custom font size is defined in the KeyValueStore, use that
         // if not, use the general font size defined in preferences
@@ -337,20 +356,39 @@ public class SpreadsheetView extends LinearLayout
         };
     }
     
-  private void buildNonIndexedTable() {
-    wrapper = buildTable(-1, false);
-    // Keeping this for now in case someone relied on this.
-    // HorizontalScrollView wrapScroll = new HorizontalScrollView(context);
-    wrapScroll = new HorizontalScrollView(context);
-    wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
-        LinearLayout.LayoutParams.MATCH_PARENT);
-    /*** this was all here before ***/
-    LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
-    wrapLp.weight = 1;
-    wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
-    addView(wrapScroll, wrapLp);
-  }
+    private void buildNonIndexedTable() {
+		wrapper = buildTable(-1, false);
+		wrapScroll = new HorizontalScrollView(context);
+		wrapScroll.addView(wrapper, LinearLayout.LayoutParams.WRAP_CONTENT,
+		    LinearLayout.LayoutParams.MATCH_PARENT);
+		/*** this was all here before ***/
+		LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
+		    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT);
+		wrapLp.weight = 1;
+		wrapScroll.setHorizontalFadingEdgeEnabled(true); // works
+				
+		LinearLayout completeWrapper = new LinearLayout(context);
+		View statusWrapper = buildStatusTable();
+		statusWrapper.setHorizontalFadingEdgeEnabled(true);
+		statusWrapper.setVerticalFadingEdgeEnabled(true);
+		completeWrapper.addView(statusWrapper);
+		completeWrapper.addView(wrapScroll);
+		completeWrapper.setHorizontalFadingEdgeEnabled(true);
+		completeWrapper.setVerticalFadingEdgeEnabled(true);
+		
+		addView(completeWrapper, wrapLp);
+      mainScroll.setOnTouchListener(new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent event) {
+            dataStatusScroll.scrollTo(dataStatusScroll.getScrollX(), 
+                view.getScrollY());
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+              mainScroll.startScrollerTask();
+            }
+            return false;
+        }
+    });
+    }
     
     private void buildIndexedTable(int indexedCol) {
         View mainWrapper = buildTable(indexedCol, false);
@@ -362,12 +400,21 @@ public class SpreadsheetView extends LinearLayout
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.addView(indexWrapper);
         wrapper.addView(wrapScroll);
-        addView(wrapper);
+
+        LinearLayout completeWrapper = new LinearLayout(context);
+		View statusWrapper = buildStatusTable();
+		completeWrapper.addView(statusWrapper);
+		completeWrapper.addView(wrapper);
+
+		addView(completeWrapper);
+		
         indexScroll.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 mainScroll.scrollTo(mainScroll.getScrollX(),
                         view.getScrollY());
+                dataStatusScroll.scrollTo(mainScroll.getScrollX(), 
+                    view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
                   mainScroll.startScrollerTask();
@@ -397,6 +444,8 @@ public class SpreadsheetView extends LinearLayout
             public boolean onTouch(View view, MotionEvent event) {
                 indexScroll.scrollTo(indexScroll.getScrollX(),
                         view.getScrollY());
+                dataStatusScroll.scrollTo(indexScroll.getScrollX(), 
+                    view.getScrollY());
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                   indexScroll.startScrollerTask();
                   mainScroll.startScrollerTask();
@@ -420,9 +469,8 @@ public class SpreadsheetView extends LinearLayout
         String[][] header;
         String[][] data;
         String[][] footer;
-        ColumnColorRuler[] colorRulers;
+        ColorRuleGroup[] colorRulers;
         int[] colWidths;
-//        int[] completeColWidths = tvs.getTableColWidths();
         int[] completeColWidths = getColumnWidths();
         if (isIndexed) {
             header = new String[1][1];
@@ -433,8 +481,8 @@ public class SpreadsheetView extends LinearLayout
             }
             footer = new String[1][1];
             footer[0][0] = table.getFooter(indexedCol);
-            colorRulers = new ColumnColorRuler[1];
-            colorRulers[0] = ColumnColorRuler.getColumnColorRuler(tp, 
+            colorRulers = new ColorRuleGroup[1];
+            colorRulers[0] = ColorRuleGroup.getColumnColorRuleGroup(tp, 
                 tp.getColumnByDisplayName(table.getHeader(indexedCol)));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
@@ -444,7 +492,7 @@ public class SpreadsheetView extends LinearLayout
             header = new String[1][width];
             data = new String[table.getHeight()][width];
             footer = new String[1][width];
-            colorRulers = new ColumnColorRuler[width];
+            colorRulers = new ColorRuleGroup[width];
             colWidths = new int[width];
             int addIndex = 0;
             for (int i = 0; i < table.getWidth(); i++) {
@@ -457,7 +505,7 @@ public class SpreadsheetView extends LinearLayout
                 }
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
-                   ColumnColorRuler.getColumnColorRuler(tp,
+                   ColorRuleGroup.getColumnColorRuleGroup(tp,
                        tp.getColumnByDisplayName(header[0][addIndex]));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
@@ -470,12 +518,9 @@ public class SpreadsheetView extends LinearLayout
         int footerIndex = getResources().getColor(R.color.footer_index);
 //        LockableScrollView dataScroll = new LockableScrollView(context);
         dataScroll = new LockableScrollView(context);
-        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
-                Color.BLACK, false);
-        ColorDecider bgColorDecider = new ColorRulerColorDecider(colorRulers,
-                Color.WHITE, true);
-        TabularView dataTable = new TabularView(context, this, data,
-                Color.BLACK, fgColorDecider, Color.WHITE, bgColorDecider,
+        TabularView dataTable = new TabularView(context, this, tp, data, 
+            wholeData,
+                Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA),
                 fontSize);
@@ -483,12 +528,12 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataScroll.setVerticalFadingEdgeEnabled(true);
         dataScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = new TabularView(context, this, header,
-                Color.BLACK, null, Color.CYAN, null, Color.GRAY, colWidths,
+        TabularView headerTable = new TabularView(context, this, tp, header, null,
+                Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, footer,
-                Color.BLACK, null, Color.GRAY, null, Color.GRAY, colWidths,
+        TabularView footerTable = new TabularView(context, this, tp, footer, null,
+                Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER),
                 fontSize);
         if (isIndexed) {
@@ -516,17 +561,69 @@ public class SpreadsheetView extends LinearLayout
         return wrapper;
     }
     
-    // This method was never called, and in order to make scrolling more 
-    // efficient I had to change the type. I am leaving it for now b/c other
-    // people are working on this code and I don't want make them rollback
-    // if they need to use it.
-//    public void setScrollEnabled(boolean enabled) {
-//        wrapScroll.setScrollable(enabled);
-//        if (indexScroll != null) {
-//            indexScroll.setScrollable(enabled);
-//        }
-//        mainScroll.setScrollable(enabled);
-//    }
+
+    private View buildStatusTable() {
+      Log.e(TAG, "building status table");
+    	String[][] header;
+        String[][] data;
+        String[][] footer;
+        ColorRuleGroup[] colorRulers;
+        int[] colWidths;
+        
+        header = new String[1][1];
+        header[0][0] = "header";
+        data = new String[table.getHeight()][1];
+        for (int i = 0; i < table.getHeight(); i++) {
+        	data[i][0] = " ";
+        }
+        footer = new String[1][1];
+        footer[0][0] = "footer";
+        colorRulers = new ColorRuleGroup[1];
+        // For now let's just use the row color rule.
+//        colorRulers[0] = ColorRuleGroup.getColumnColorRuler(tp, 
+//                tp.getColumnByDisplayName(table.getHeader(0)));
+        colorRulers[0] = ColorRuleGroup.getTableColorRuleGroup(tp);
+        colWidths = new int[1];
+        colWidths[0] = 10;
+        
+        dataStatusScroll = new LockableScrollView(context);
+//        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
+//                Color.BLACK, false);
+        TabularView dataTable = new TabularView(context, this, tp, data, 
+            wholeData,
+                Color.BLACK, Color.WHITE,
+                Color.GRAY, colWidths,
+                TableType.STATUS_DATA,
+                fontSize);
+        dataTable.setVerticalFadingEdgeEnabled(true);
+        dataTable.setVerticalScrollBarEnabled(false);
+        dataStatusScroll.addView(dataTable, new ViewGroup.LayoutParams(
+                dataTable.getTableWidth(), dataTable.getTableHeight()));
+        dataStatusScroll.setVerticalFadingEdgeEnabled(true);
+        dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
+        TabularView headerTable = new TabularView(context, this, tp, header, null,
+                Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
+               TableType.STATUS_HEADER,
+                fontSize);
+        TabularView footerTable = new TabularView(context, this, tp, footer, null,
+                Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
+                TableType.STATUS_FOOTER,
+                fontSize);
+        LinearLayout wrapper = new LinearLayout(context);
+        wrapper.setOrientation(LinearLayout.VERTICAL);
+        wrapper.addView(headerTable, headerTable.getTableWidth(),
+                headerTable.getTableHeight());
+        LinearLayout.LayoutParams dataLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        dataLp.weight = 1;
+        wrapper.addView(dataStatusScroll, dataLp);
+        wrapper.addView(footerTable, footerTable.getTableWidth(),
+                footerTable.getTableHeight());
+        wrapper.setVerticalFadingEdgeEnabled(true);
+        wrapper.setHorizontalFadingEdgeEnabled(true);
+        return wrapper;
+    }
     
     /**
      * Gets the x translation of the scroll. This is in particular how far 
@@ -638,21 +735,34 @@ public class SpreadsheetView extends LinearLayout
     
     private class ColorRulerColorDecider implements ColorDecider {
         
-        private final ColumnColorRuler[] rulers;
+        private final ColorRuleGroup[] rulers;
         private final int defaultColor;
         private final boolean isBackground;
         
-        public ColorRulerColorDecider(ColumnColorRuler[] rulers,
+        public ColorRulerColorDecider(ColorRuleGroup[] rulers,
                 int defaultColor, boolean isBackground) {
             this.rulers = rulers;
             this.defaultColor = defaultColor;
             this.isBackground = isBackground;
         }
         
-        public int getColor(int rowNum, int colNum, String value) {
-            return isBackground ?
-                    rulers[colNum].getBackgroundColor(value, defaultColor) :
-                        rulers[colNum].getForegroundColor(value, defaultColor);
+        /**
+         * Get an {@link ColorGuide} to determine how to color the row. 
+         * @param rowData 
+         * @param columnMapping mapping from elementKey to the index in rowData
+         * @param propertiesMapping mapping from the elementKey to the 
+         * {@link ColumnProperties} for the row. Necessary for determining
+         * type information of the rowData.
+         * @return
+         */
+        /*
+         * index might end up changing as the refactor continues.
+         */
+        public ColorGuide getColor(int index, String[] rowData, 
+            Map<String, Integer> columnMapping,
+            Map<String, ColumnProperties> propertiesMapping) {
+          return rulers[index].getColorGuide(rowData, columnMapping, 
+              propertiesMapping);
         }
     }
     

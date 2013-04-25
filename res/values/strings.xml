@@ -17,5 +17,14 @@
 	<string name="no_list_view_message">Use + submenu to add a new list view</string>
 	<string name="user_defined_graphview_name_label">Name</string>
 	<string name="app_defined_graphtype_label">Graph Type</string>
+	<!-- For various TableManager things -->
+	<string name="name_of_new_table">Name of New Table</string>
+	<!-- For color rule things -->
+	<string name="comparison_type">Comparison Type</string>
+	<string name="value">Value</string>
+	<string name="text_color">Text Color</string>
+	<string name="background_color">Background Color</string>
+	<string name="column">Column</string>
 	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
+	
 </resources>

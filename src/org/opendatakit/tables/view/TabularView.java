@@ -15,7 +15,17 @@
  */
 package org.opendatakit.tables.view;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup.ColorGuide;
+import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.util.Constants;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -34,7 +44,8 @@ class TabularView extends View {
   public static final String TAG = "TabularView";
 
   enum TableType {
-    MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER, INDEX_FOOTER
+    MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER,
+    INDEX_FOOTER, STATUS_DATA, STATUS_HEADER, STATUS_FOOTER;
   }
 
   private static final int ROW_HEIGHT_PADDING = 14;
@@ -44,9 +55,14 @@ class TabularView extends View {
 
   private final Controller controller;
   private final String[][] data;
-  private final ColorDecider foregroundColorDecider;
+  // This will be the ENTIRE data from the table. This is necessary for 
+  // evluating color rules. For instance the frozen ("index") column will have
+  // only data for itself. But if it is to be colored correctly it must contain
+  // all the data. This seems like a WILDLY inefficient thing to do, but for 
+  // now am going to do it.
+  private final String[][] wholeData;
   private final int defaultBackgroundColor;
-  private final ColorDecider backgroundColorDecider;
+  private final int defaultForegroundColor;
   private final int[] columnWidths;
   private final TableType type;
   private final int fontSize;
@@ -60,6 +76,26 @@ class TabularView extends View {
   private final Paint bgPaint;
   private final Paint borderPaint;
   private final Paint highlightPaint;
+  
+  /**
+   * The list of {@link ColorRuleGroup} objects for the columns of the table.
+   * This will be responsible for coloring the cells of a column.
+   */
+  private List<ColorRuleGroup> mColumnColorRules;
+  /**
+   * The {@link ColorRuleGroup} object for the table. This will be responsible
+   * for things like determining row color.
+   */
+  private ColorRuleGroup mRowColorRuleGroup;
+  /**
+   * Maps elementKey to column index.
+   */
+  private Map<String, Integer> mColumnIndexMap;
+  /**
+   * Maps elementKey to {@link ColumnProperties}.
+   */
+  private Map<String, ColumnProperties> mColumnPropertiesMap;
+  private TableProperties mTp;
 
   // trying to get the dimensions of the screen
   private final DisplayMetrics metrics;
@@ -71,24 +107,53 @@ class TabularView extends View {
   // same as xs, except that the first position should be 0.
   private int[] spans;
 
-  public TabularView(Context context, Controller controller, String[][] data,
-      int defaultForegroundColor, ColorDecider foregroundColorDecider,
-      int defaultBackgroundColor,
-      ColorDecider backgroundColorDecider, int borderColor,
+  public TabularView(Context context, Controller controller, 
+      TableProperties tp, String[][] data, String[][] wholeData,
+      int defaultForegroundColor,
+      int defaultBackgroundColor, int borderColor,
       int[] columnWidths, TableType type, int fontSize) {
     super(context);
     this.controller = controller;
+    this.mTp = tp;
     this.data = data;
-    this.foregroundColorDecider =
-        (foregroundColorDecider == null) ? new DefaultColorDecider(
-            defaultForegroundColor) : foregroundColorDecider;
+    this.wholeData = wholeData;
     this.defaultBackgroundColor = defaultBackgroundColor;
-    this.backgroundColorDecider =
-        (backgroundColorDecider == null) ? new DefaultColorDecider(
-            defaultBackgroundColor) : backgroundColorDecider;
+    this.defaultForegroundColor = defaultForegroundColor;
     this.columnWidths = columnWidths;
     this.type = type;
     this.fontSize = fontSize;
+    // Now let's set up the color rule things.
+    Map<String, Integer> indexMap = new HashMap<String, Integer>();
+    Map<String, ColumnProperties> propertiesMap = 
+        new HashMap<String, ColumnProperties>();
+    List<String> columnOrder = mTp.getColumnOrder();
+    String frozenColumn = mTp.getIndexColumn();
+    // We need to do some checking here. 
+    this.mColumnColorRules = new ArrayList<ColorRuleGroup>();
+    if (frozenColumn != null && this.type == TableType.INDEX_DATA) {
+      mColumnColorRules.add(ColorRuleGroup.getColumnColorRuleGroup(mTp, 
+          frozenColumn));
+    } else {
+      for (int i = 0; i < columnOrder.size(); i++) {
+        // This check is to avoid the rule if it's we've already accounted for
+        // its color rules in the index column.
+        if (!columnOrder.get(i).equals(frozenColumn)) {
+          mColumnColorRules.add(ColorRuleGroup.getColumnColorRuleGroup(mTp, 
+              columnOrder.get(i)));
+        }
+      }
+    }
+    for (int i = 0; i < columnOrder.size(); i++) {
+      propertiesMap.put(columnOrder.get(i), mTp.getColumnByIndex(i));
+      indexMap.put(columnOrder.get(i), i);
+    }
+    this.mColumnIndexMap = indexMap;
+    this.mColumnPropertiesMap = propertiesMap;
+    if (this.type != TableType.STATUS_DATA) {
+      this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+    } else {
+      this.mRowColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+    }
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
     highlightedCellNum = -1;
     textPaint = new Paint();
@@ -133,13 +198,16 @@ class TabularView extends View {
     }
   }
 
-  public TabularView(Context context, Controller controller, String[] data,
-      int defaultForegroundColor, ColorDecider foregroundColorDecider,
-      int defaultBackgroundColor, ColorDecider backgroundColorDecider,
+  public TabularView(Context context, Controller controller, 
+      TableProperties tp, String[] data,
+      int defaultForegroundColor,
+      int defaultBackgroundColor, 
       int borderColor, int[] columnWidths, TableType type, int fontSize) {
-    this(context, controller, new String[][] { data }, defaultForegroundColor,
-        foregroundColorDecider, defaultBackgroundColor, backgroundColorDecider,
+    this(context, controller, tp, new String[][] { data }, null,
+        defaultForegroundColor, defaultBackgroundColor,
         borderColor, columnWidths, type, fontSize);
+    Log.e(TAG, "wholeData param for this TabularView constructor not " +
+    		"implemented! Use with extreme caution");
   }
 
   public int getTableHeight() {
@@ -168,7 +236,6 @@ class TabularView extends View {
   @Override
   public void onDraw(Canvas canvas) {
     // Logging when this is called to see why it is so slow to view a table.
-    Log.d(TAG, "onDraw called for type: " + this.type);
     if (data.length == 0) {
       return;
     }
@@ -358,7 +425,9 @@ class TabularView extends View {
     if (this.type == TableType.INDEX_HEADER ||
         this.type == TableType.MAIN_HEADER ||
         this.type == TableType.INDEX_FOOTER ||
-        this.type == TableType.MAIN_FOOTER) {
+        this.type == TableType.MAIN_FOOTER ||
+        this.type == TableType.STATUS_HEADER ||
+        this.type == TableType.STATUS_FOOTER) {
       topmost = 0;
       bottommost = 0;
     } else {
@@ -423,8 +492,33 @@ class TabularView extends View {
         if (datum == null) {
           datum = "";
         }
-        int foregroundColor = foregroundColorDecider.getColor(i, j, datum);
-        int backgroundColor = backgroundColorDecider.getColor(i, j, datum);
+        int foregroundColor = this.defaultForegroundColor;
+        int backgroundColor = this.defaultBackgroundColor;
+        if (type == TableType.INDEX_DATA ||
+            type == TableType.MAIN_DATA) {
+          ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
+              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+          ColorGuide columnGuide = mColumnColorRules.get(j)
+              .getColorGuide(wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+          // First we check for a row rule.
+          if (rowGuide.didMatch()) {
+            foregroundColor = rowGuide.getForeground();
+            backgroundColor = rowGuide.getBackground();
+          }
+          // Override the role rule if a column rule matched.
+          if (columnGuide.didMatch()) {
+            foregroundColor = columnGuide.getForeground();
+            backgroundColor = columnGuide.getBackground();
+          }
+        }
+        if (type == TableType.STATUS_DATA) {
+          ColorGuide statusGuide = mRowColorRuleGroup.getColorGuide(
+              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+          if (statusGuide.didMatch()) {
+            foregroundColor = statusGuide.getForeground();
+            backgroundColor = statusGuide.getBackground();
+          }
+        }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor,
             columnWidths[j]);
       }
@@ -521,20 +615,9 @@ class TabularView extends View {
   }
 
   interface ColorDecider {
-    public int getColor(int rowNum, int colNum, String value);
-  }
-
-  private class DefaultColorDecider implements ColorDecider {
-
-    private final int color;
-
-    public DefaultColorDecider(int color) {
-      this.color = color;
-    }
-
-    public int getColor(int rowNum, int colNum, String value) {
-      return color;
-    }
+    public ColorGuide getColor(int index, String[] rowData, 
+        Map<String, Integer> columnMapping,
+        Map<String, ColumnProperties> propertiesMapping);
   }
 
   interface Controller {

@@ -72,6 +72,7 @@ public class EditNameDialogPreference extends DialogPreference {
   @Override
   protected void onBindDialogView(View view) {
 	int viewName = org.opendatakit.tables.R.id.edit_view_name;
+	mText = callingActivity.getCurrentViewName();
     mEditText = (EditText) 
         view.findViewById(viewName);
     mEditText.setText(mText);

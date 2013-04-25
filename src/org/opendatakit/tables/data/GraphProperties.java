@@ -28,7 +28,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
-import org.opendatakit.tables.DataStructure.ColumnColorRuler;
+import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
@@ -762,7 +762,7 @@ public class GraphProperties {
     // have old color rules build up, and worse still, if you deleted this
     // column and then added a new column whose element key ended up being the
     // same, you would have rules suddenly applying to them.
-    kvs.clearEntries(ColumnColorRuler.KVS_PARTITION, elementKey, db);
+    kvs.clearEntries(ColorRuleGroup.KVS_PARTITION_COLUMN, elementKey, db);
   }
 
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId,
