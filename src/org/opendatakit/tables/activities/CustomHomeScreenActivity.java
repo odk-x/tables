@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
 import android.content.Intent;

@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.activities.BarGraphDisplayActivity;
 import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.graphs.BarGraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;

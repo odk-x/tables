@@ -19,11 +19,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.util.CollectUtil;
-import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.content.Intent;

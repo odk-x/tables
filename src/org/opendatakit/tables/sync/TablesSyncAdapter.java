@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.sync;
 
-import org.opendatakit.tables.Activity.Aggregate;
+import org.opendatakit.tables.activities.Aggregate;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;

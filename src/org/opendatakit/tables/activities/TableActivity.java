@@ -12,6 +12,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.fragments.TableMapFragment;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

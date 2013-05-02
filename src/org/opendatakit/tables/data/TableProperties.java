@@ -33,10 +33,10 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.tables.Activity.util.SecurityUtil;
-import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.utils.SecurityUtil;
+import org.opendatakit.tables.utils.ShortcutUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;

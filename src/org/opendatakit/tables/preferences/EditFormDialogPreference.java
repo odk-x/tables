@@ -3,9 +3,9 @@ package org.opendatakit.tables.preferences;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
 import android.content.Context;
 import android.preference.DialogPreference;

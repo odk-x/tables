@@ -13,12 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.activities;
+package org.opendatakit.tables.utils;
 
+public class CustomViewUtil {
+  
+  /**
+   * The HTML to be displayed when loading a screen.
+   */
+  public static final String LOADING_HTML_MESSAGE = 
+      "<html><body><p>Loading, please wait...</p></body></html>";
 
-public interface DisplayActivity {
-
-    void init();
-
-    void onSearch();
 }

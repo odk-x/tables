@@ -27,7 +27,7 @@ import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
-import org.opendatakit.tables.Activity.util.UTMConverter;
+import org.opendatakit.tables.utils.UTMConverter;
 
 
 public class DataUtil {

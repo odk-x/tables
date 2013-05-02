@@ -26,13 +26,7 @@ import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.ColumnManager;
-import org.opendatakit.tables.Activity.DisplayPrefsActivity;
-import org.opendatakit.tables.Activity.ListViewManager;
-import org.opendatakit.tables.Activity.TableManager;
-import org.opendatakit.tables.Activity.TablePropertiesManager;
-import org.opendatakit.tables.Activity.util.CollectUtil;
-import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
@@ -45,6 +39,9 @@ import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -115,7 +112,7 @@ public class Controller {
     private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
     private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
     private static final int RCODE_LIST_VIEW_MANAGER = 4;
-    static final int FIRST_FREE_RCODE = 5;
+    public static final int FIRST_FREE_RCODE = 5;
 
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -144,7 +141,7 @@ public class Controller {
     private String rowId = null;
 
 
-    Controller(SherlockActivity activity, final DisplayActivity da,
+    public Controller(SherlockActivity activity, final DisplayActivity da,
             Bundle intentBundle) {
         du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
@@ -259,7 +256,7 @@ public class Controller {
     /**
      * @return TableProperties properties of this table
      */
-  TableProperties getTableProperties() {
+  public TableProperties getTableProperties() {
     return tp;
   }
 
@@ -273,14 +270,14 @@ public class Controller {
    * a messy way of doing things, and a refactor should probably end up fixing
    * this.
    */
-  void refreshDbTable() {
+  public void refreshDbTable() {
     this.dbt = dm.getDbTable(tp.getTableId());
   }
 
   /**
    * @return DbTable this data table
    */
-  DbTable getDbTable() {
+  public DbTable getDbTable() {
     tp.refreshColumns();
     return dbt;
   }
@@ -289,25 +286,25 @@ public class Controller {
    * @return True if this is an overview type, false if this is
    *         collection view type
    */
-  boolean getIsOverview() {
+  public boolean getIsOverview() {
       return isOverview;
   }
 
   /**
    * @return String text currently in the search bar
    */
-  String getSearchText() {
+  public String getSearchText() {
     return searchText.peek();
   }
 
   /**
    * @return the view generated for this
    */
-  View getContainerView() {
+  public View getContainerView() {
     return container;
   }
 
-  void setDisplayView(View dv) {
+  public void setDisplayView(View dv) {
     displayWrap.removeAllViews();
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
@@ -388,11 +385,11 @@ public class Controller {
         searchField.getEditText().getText() + text).trim());
   }
 
-  void recordSearch() {
+  public void recordSearch() {
     searchText.add(searchField.getEditText().getText().toString());
   }
 
-  void onBackPressed() {
+  public void onBackPressed() {
     if (searchText.size() == 1) {
       activity.finish();
     } else {
@@ -440,7 +437,7 @@ public class Controller {
     }
   }
 
-  boolean handleActivityReturn(int requestCode, int returnCode, Intent data) {
+  public boolean handleActivityReturn(int requestCode, int returnCode, Intent data) {
     switch (requestCode) {
     case RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
@@ -500,7 +497,7 @@ public class Controller {
      * with menu items enabled
      * @param menu Menu
      */
-    void buildOptionsMenu(Menu menu) {
+    public void buildOptionsMenu(Menu menu) {
     	this.buildOptionsMenu(menu, true);
     }
 
@@ -597,7 +594,7 @@ public class Controller {
      * @param selectedItem MenuItem
      * @return true if selectedItem was handled
      */
-	boolean handleMenuItemSelection(MenuItem selectedItem) {
+	public boolean handleMenuItemSelection(MenuItem selectedItem) {
 		int itemId = selectedItem.getItemId();
 		// if the item is part of the sub-menu for view type, set the view type with its itemId
 	    // else, handle accordingly
@@ -854,7 +851,7 @@ public class Controller {
     return elementNameToValue;
   }
 
-  boolean addRowFromOdkCollectForm(int instanceId) {
+  public boolean addRowFromOdkCollectForm(int instanceId) {
     Map<String, String> formValues = getOdkCollectFormValues(instanceId);
     if (formValues == null) {
       return false;

@@ -25,9 +25,9 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.Activity.TableManager;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
+import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;

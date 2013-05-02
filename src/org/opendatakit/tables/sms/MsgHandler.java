@@ -27,8 +27,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Interval;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.Activity.util.SecurityUtil;
-import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -39,6 +37,9 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.SecurityUtil;
+import org.opendatakit.tables.utils.ShortcutUtil;
+
 import android.util.Log;
 
 

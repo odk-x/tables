@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.opendatakit.tables.Activity.TableManager;
+import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 

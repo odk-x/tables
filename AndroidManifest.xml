@@ -29,6 +29,7 @@
 
     <supports-screens
         android:anyDensity="true"
+        android:xlargeScreens="true"
         android:largeScreens="true"
         android:normalScreens="true"
         android:resizeable="true"
@@ -45,84 +46,54 @@
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyBB42o9vDeGIRfCdjyTOpQi0LtpmS9Cerw"/>
+
         <activity
-            android:name=".Activity.util.Launcher"
+            android:name=".activities.util.Launcher"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activities.AccountInfoActivity" />
+        <activity android:name=".activities.Aggregate" />
+        <activity android:name=".activities.AggregateChooseTablesActivity" />
+        <activity android:name=".activities.AggregateDownloadTableActivity" />
+        <activity android:name=".activities.ColorRuleManagerActivity"/>
+        <activity android:name=".activities.ColumnManager"/>
+        <activity android:name=".activities.ConflictResolutionManager"/>
+        <activity android:name=".activities.CustomHomeScreenActivity"/>
+        <activity android:name=".activities.DetailDisplayActivity"/>
+        <activity android:name=".activities.DisplayPrefsActivity"/>
+        <activity android:name=".activities.EditSavedColorRuleActivity"/>
+        <activity android:name=".activities.EditSavedListViewEntryActivity"/>
+        <activity android:name=".activities.ListDisplayActivity"/>
+        <activity android:name=".activities.ListViewManager"/>
+        <activity android:name=".activities.MapDisplayActivity"/>
+        <activity android:name=".activities.PropertyManager"/>
+        <activity android:name=".activities.SecurityManager"/>
+        <activity android:name=".activities.ShortcutsManager"/>
+        <activity android:name=".activities.SpreadsheetDisplayActivity"
+            android:hardwareAccelerated="false" />
+        <activity android:name=".activities.TableActivity"/>
+        <activity android:name=".activities.TableManager"/>
+        <activity android:name=".activities.TablePropertiesManager"/>
 
-        <receiver android:name=".SMS.SmsReceiver" >
+        <activity android:name=".activities.graphs.BarGraphDisplayActivity" />
+        <activity android:name=".activities.graphs.BoxStemGraphDisplayActivity" />
+        <activity android:name=".activities.graphs.GraphDisplayActivity"/>
+        <activity android:name=".activities.graphs.LineGraphDisplayActivity"/>
+        <activity android:name=".activities.importexport.ImportExportActivity"/>
+        <activity android:name=".activities.importexport.ImportCSVActivity"/>
+        <activity android:name=".activities.importexport.ExportCSVActivity"/>
+        <activity android:name=".activities.settings.ListDisplaySettings"/>
+        <activity android:name=".activities.settings.MainDisplaySettings"/>
+
+        <receiver android:name=".sms.SmsReceiver" >
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
-
-        <activity android:name=".Activity.ColumnManager" >
-        </activity>
-        <activity android:name=".Activity.PropertyManager" >
-        </activity>
-        <activity android:name=".Activity.TableManager"/>
-        <activity android:name=".Activity.importexport.ImportExportActivity" >
-        </activity>
-        <activity android:name=".Activity.importexport.ImportCSVActivity" >
-        </activity>
-        <activity android:name=".Activity.importexport.ExportCSVActivity" >
-        </activity>
-        <activity android:name=".Activity.SecurityManager" >
-        </activity>
-        <activity android:name=".Activity.SecurityTableActivity" >
-        </activity>
-        <activity android:name=".Activity.ShortcutsManager" >
-        </activity>
-        <activity android:name=".Activity.ShortcutTableActivity" >
-        </activity>
-        <activity android:name=".Activity.AccountInfoActivity" />
-        <activity android:name=".Activity.Aggregate" />
-        <activity android:name=".Activity.AggregateChooseTablesActivity" />
-        <activity android:name=".Activity.AggregateDownloadTableActivity" />
-        <activity android:name=".Activity.settings.ListDisplaySettings" >
-        </activity>
-        <activity android:name=".Activity.ColorRuleManagerActivity">
-        </activity>
-        <activity android:name=".Activity.EditSavedColorRuleActivity">
-        </activity>
-        <activity android:name=".Activity.RowColorRuleManagerActivity">
-        </activity>
-        <activity android:name=".Activity.EditSavedRowColorRuleActivity">
-        </activity>
-        <activity android:name=".Activity.settings.MainDisplaySettings" >
-        </activity>
-        <activity android:name=".Activity.TablePropertiesManager" >
-        </activity>
-        <activity android:name=".activities.SpreadsheetDisplayActivity"
-            		android:hardwareAccelerated="false" >
-        </activity>
-        <activity android:name=".activities.CustomHomeScreenActivity">
-        </activity>
-        <activity android:name=".activities.ListDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.GraphDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.LineGraphDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.BoxStemGraphDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.BarGraphDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.TableActivity" >
-        </activity>
-        <activity android:name=".Activity.DisplayPrefsActivity" >
-        </activity>
-        <activity android:name=".activities.DetailDisplayActivity" >
-        </activity>
-        <activity android:name=".activities.ConflictResolutionActivity" >
-        </activity>
-        <activity android:name=".Activity.ListViewManager"></activity>
-        <activity android:name=".Activity.EditSavedListViewEntryActivity"></activity>
 
         <uses-library android:name="com.google.android.maps" />
         <!--

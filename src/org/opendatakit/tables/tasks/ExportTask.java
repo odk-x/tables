@@ -1,6 +1,6 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.Activity.importexport.ExportCSVActivity;
+import org.opendatakit.tables.activities.importexport.ExportCSVActivity;
 import org.opendatakit.tables.utils.CsvUtil;
 
 import android.os.AsyncTask;

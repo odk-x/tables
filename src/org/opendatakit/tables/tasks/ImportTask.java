@@ -1,6 +1,6 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.Activity.importexport.ImportCSVActivity;
+import org.opendatakit.tables.activities.importexport.ImportCSVActivity;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.utils.CsvUtil;
 
