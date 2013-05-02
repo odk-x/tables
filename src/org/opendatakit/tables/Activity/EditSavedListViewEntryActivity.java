@@ -24,8 +24,8 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.lib.EditNameDialogPreference;
-import org.opendatakit.tables.lib.EditSavedViewEntryActivity;
+import org.opendatakit.tables.preferences.EditNameDialogPreference;
+import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -52,7 +52,7 @@ import android.widget.Toast;
  * so that we won't be able to inject into the underlying SQL db, etc.
  */
 public class EditSavedListViewEntryActivity extends PreferenceActivity implements
-    EditSavedViewEntryActivity {
+    EditSavedViewEntryHandler {
 
   private static final String TAG = EditSavedListViewEntryActivity.class.getName();
 

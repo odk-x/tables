@@ -25,7 +25,8 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.view.ConflictResolutionView;
+import org.opendatakit.tables.views.ConflictResolutionView;
+
 import android.content.Intent;
 import android.os.Bundle;
 

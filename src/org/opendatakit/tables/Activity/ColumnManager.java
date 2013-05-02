@@ -20,11 +20,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Library.TouchListView;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.views.TouchListView;
 
 import android.app.AlertDialog;
 import android.content.Context;

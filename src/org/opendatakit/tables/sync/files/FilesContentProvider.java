@@ -15,7 +15,7 @@
  */
 package org.opendatakit.tables.sync.files;
 
-import org.opendatakit.tables.util.TableFileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;

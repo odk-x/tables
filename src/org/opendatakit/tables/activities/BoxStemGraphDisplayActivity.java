@@ -22,7 +22,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.graphs.BoxStemChart;
+import org.opendatakit.tables.views.graphs.BoxStemChart;
 
 import android.content.Intent;
 import android.os.Bundle;

@@ -23,7 +23,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.custom.CustomTableView;
+import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.content.Intent;
 import android.os.Bundle;

@@ -15,9 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.Activity.TableManager;
-import org.opendatakit.tables.view.custom.CustomAppView;
+import org.opendatakit.tables.views.webkits.CustomAppView;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,32 +27,31 @@ import android.widget.LinearLayout;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
 
 /**
  * The Activity that will house the {@link CustomAppView} view for displaying
- * a custom html homescreen. 
+ * a custom html homescreen.
  * @author sudar.sam@gmail.com
  *
  */
 public class CustomHomeScreenActivity extends SherlockActivity implements
     DisplayActivity {
-  
+
   private static final String TAG = CustomHomeScreenActivity.class.getName();
-  
+
   public static final int MENU_ITEM_TABLE_MANAGER = 1;
-  
+
   public static final String INTENT_KEY_FILENAME = "filename";
-  
+
  // private Controller mController;
-  /** 
-   * This is the main view that is responsible for showing the custom app html 
+  /**
+   * This is the main view that is responsible for showing the custom app html
    * page. It is the core of this Activity.
    */
   private CustomAppView mView;
   private LinearLayout mContainerView;
   private String mFilename;
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -61,8 +59,8 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     setTitle("");
     mContainerView = new LinearLayout(this);
     mContainerView.setLayoutParams(new ViewGroup.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT,
-        LinearLayout.LayoutParams.FILL_PARENT));
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.MATCH_PARENT));
     mContainerView.setOrientation(LinearLayout.VERTICAL);
     setContentView(mContainerView);
     Bundle extras = getIntent().getExtras();
@@ -73,7 +71,7 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     }
     //mController = new Controller(this, this, extras);
   }
-  
+
   @Override
   protected void onResume() {
     super.onResume();
@@ -84,7 +82,7 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   @Override
   public void init() {
     Log.d(TAG, "in init()");
-    // First we have to remove all the views--otherwise you end up with 
+    // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
     mView = new CustomAppView(this, mFilename);
@@ -97,14 +95,14 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   @Override
   public void onSearch() {
     Log.e(TAG, "called onSearch, which is unimplemented");
-    
+
   }
-  
+
   // CREATE OPTION MENU
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
      super.onCreateOptionsMenu(menu);
-     
+
      // We'll start with something to take us to the TableManager, which will
      // mean much greater flexibility.
      MenuItem item;
@@ -114,9 +112,9 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
 
      return true;
   }
-  
+
   @Override
-  public boolean onMenuItemSelected(int featureId, 
+  public boolean onMenuItemSelected(int featureId,
       com.actionbarsherlock.view.MenuItem item) {
     switch (item.getItemId()) {
     case MENU_ITEM_TABLE_MANAGER:
@@ -127,6 +125,6 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
       Log.e(TAG, "unrecognized MenuItem id: " + item.getItemId());
       return false;
     }
-  } 
+  }
 
 }

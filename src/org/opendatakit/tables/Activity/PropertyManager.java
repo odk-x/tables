@@ -16,7 +16,7 @@
 package org.opendatakit.tables.Activity;
 
 import org.opendatakit.tables.Activity.util.SliderPreference;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
@@ -26,7 +26,7 @@ import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.view.SpreadsheetView;
+import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
 import android.content.Intent;

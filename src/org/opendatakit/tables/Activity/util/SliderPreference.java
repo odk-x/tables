@@ -28,10 +28,10 @@ import android.widget.TextView;
 
 
 public class SliderPreference extends Preference {
-    
+
     private final SliderDialog dialog;
     private int defaultValue;
-    
+
     public SliderPreference(Context context) {
     	this(context, 0);
     }
@@ -40,66 +40,66 @@ public class SliderPreference extends Preference {
         dialog = new SliderDialog(context);
         defaultValue = value;
     }
-    
+
     @Override
     protected void onClick() {
         dialog.show();
     }
-    
+
     public void setDialogTitle(String title) {
         dialog.setTitle(title);
     }
-    
+
     public void setMaxValue(int maxValue) {
         dialog.setMaxSliderValue(maxValue);
     }
-    
+
     public void setValue(int value) {
         dialog.setSliderValue(value);
     }
-    
+
     /** adds an option to use default */
     public void addDefaultOption(boolean useDefault) {
     	dialog.addDefaultCheckbox();
     }
-    
+
     /** checks the checkBox **/
     public void checkCheckBox(boolean check) {
     	dialog.checkCheckBox(check);
     }
-    
+
     /** true if checked */
     public boolean isChecked() {
     	return dialog.isChecked();
     }
-    
+
     /** enables the slider */
     public void setSliderEnabled(boolean enable) {
     	dialog.setSliderEnabled(enable);
     }
-    
+
     private class SliderDialog extends Dialog {
-        
+
         int value = 0;
         private TextView seekLabel;
         private SeekBar seekBar;
         private CheckBox checkBox;
         private LinearLayout checkBoxWrap;
-        
+
         public SliderDialog(Context context) {
             super(context);
             prepareView(context);
         }
-        
+
         private void prepareView(Context context) {
             seekLabel = new TextView(context);
-            
+
             // checkBox to use default fontSize (relevant only when DisplayPref is
             // called through Controller)
             checkBox = new CheckBox(context);
             checkBox.setText("Use Default");
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-				
+
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					dialog.setSliderEnabled(!isChecked);
@@ -109,7 +109,7 @@ public class SliderPreference extends Preference {
             checkBoxWrap = new LinearLayout(context);
             checkBoxWrap.addView(checkBox);
             checkBoxWrap.setVisibility(View.GONE);
-            
+
             seekBar = new SeekBar(context);
             seekBar.setOnSeekBarChangeListener(
                     new SeekBar.OnSeekBarChangeListener() {
@@ -145,7 +145,7 @@ public class SliderPreference extends Preference {
             seekWrap.addView(seekLabel);
             LinearLayout.LayoutParams seekBarLp =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.FILL_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
             seekBarLp.weight = 1;
             seekWrap.addView(seekBar, seekBarLp);
@@ -156,7 +156,7 @@ public class SliderPreference extends Preference {
             wrapper.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams seekWrapLp =
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.FILL_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
             seekWrapLp.weight = 1;
             wrapper.addView(seekWrap, seekWrapLp);
@@ -164,33 +164,33 @@ public class SliderPreference extends Preference {
             wrapper.addView(controlWrap);
             setContentView(wrapper);
         }
-        
+
         public void setMaxSliderValue(int maxValue) {
             seekBar.setMax(maxValue);
         }
-        
+
         public void setSliderValue(int value) {
             this.value = value;
             seekLabel.setText((new Integer(value)).toString());
             seekBar.setProgress(value);
         }
-        
+
         // adds the checkbox to use default font size
         public void addDefaultCheckbox() {
         	checkBoxWrap.setVisibility(View.VISIBLE);
         	setSliderEnabled(false);
         }
-        
+
         // enables seekBar if a custom font size is going to be set
         public void setSliderEnabled(boolean enabled) {
         	seekBar.setEnabled(enabled);
         }
-        
+
         // checks the checkbox
         public void checkCheckBox(boolean check) {
         	checkBox.setChecked(check);
         }
-        
+
         // true if checked
         public boolean isChecked() {
         	return checkBox.isChecked();

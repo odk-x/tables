@@ -21,7 +21,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.custom.CustomGraphView;
+import org.opendatakit.tables.views.webkits.CustomGraphView;
 
 import android.app.AlertDialog;
 import android.content.Context;

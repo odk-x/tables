@@ -20,13 +20,11 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
-import org.opendatakit.tables.DataStructure.ColorRule;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.data.ColorRule;
+import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.app.AlertDialog;
@@ -55,9 +53,9 @@ import com.actionbarsherlock.app.SherlockListActivity;
  *
  */
 public class ColorRuleManagerActivity extends SherlockListActivity {
-  
+
   private static final String TAG = ColorRuleManagerActivity.class.getName();
-  
+
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
   public static final String INTENT_KEY_RULE_GROUP_TYPE = "ruleGroupType";
@@ -69,22 +67,22 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
    * Menu ID for adding a new list view.
    */
   public static final int ADD_NEW_LIST_VIEW = 0;
-  
+
   /**
    * The char sequence for the add new list view item.
    */
   public static final String ADD_NEW_LIST_VIEW_TEXT = "Add New Color Rule";
-  
+
   /**
    * Menu ID for deleting an entry.
    */
   public static final int MENU_DELETE_ENTRY = 1;
-  
+
   /**
    * Text for the entry deletion.
    */
   public static final String MENU_TEXT_DELETE_ENTRY = "Delete this Rule";
-  
+
   /**
    * Menu ID for opening the edit rule activity.
    */
@@ -93,7 +91,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
    * Text for the rule editing.
    */
   public static final String MENU_TEXT_EDIT_ENTRY = "Edit this Color Rule";
-  
+
   private List<ColorRule> mColorRules;
   private ColorRuleGroup mColorRuler;
   private ColorRuleAdapter mColorRuleAdapter;
@@ -105,7 +103,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   private ObjectMapper mMapper;
   private TypeFactory mTypeFactory;
   private ColorRuleGroup.Type mType;
-  
+
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
@@ -114,13 +112,13 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
     init();
   }
-  
+
   @Override
   public boolean onMenuItemSelected(int featureId,
       com.actionbarsherlock.view.MenuItem item) {
@@ -136,7 +134,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_RULE_GROUP_TYPE, mType.name());
       newColorRuleIntent.putExtra(
-          EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION, 
+          EditSavedColorRuleActivity.INTENT_KEY_RULE_POSITION,
           EditSavedColorRuleActivity.INTENT_FLAG_NEW_RULE);
       startActivity(newColorRuleIntent);
       return true;
@@ -146,8 +144,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     }
     return false;
   }
-  
-  @Override 
+
+  @Override
   public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
     com.actionbarsherlock.view.MenuItem addItem = menu.add(
@@ -157,7 +155,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
   }
-  
+
   @Override
   public boolean onContextItemSelected(android.view.MenuItem item) {
     // We need this so we can get the position of the thing that was clicked.
@@ -216,21 +214,21 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       return false;
     }
   }
-  
+
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
     menu.add(0, MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
     menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
   }
-  
+
   private void init() {
     this.mTableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
     DbHelper dbh = DbHelper.getDbHelper(this);
-    this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId, 
+    this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
     this.mMapper = new ObjectMapper();
     this.mTypeFactory = mMapper.getTypeFactory();
@@ -241,7 +239,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     switch (mType) {
     case COLUMN:
       this.mCp = mTp.getColumnByElementKey(mElementKey);
-      this.mColorRuler = 
+      this.mColorRuler =
           ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
       this.setTitle(mCp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
       break;
@@ -261,9 +259,9 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     this.mColorRules = mColorRuler.getColorRules();
     this.mColorRuleAdapter = new ColorRuleAdapter();
     setListAdapter(mColorRuleAdapter);
-    
+
   }
-  
+
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.d(TAG, "list item clicked");
@@ -281,19 +279,19 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   }
 
   class ColorRuleAdapter extends ArrayAdapter<ColorRule> {
-    
+
     ColorRuleAdapter() {
       super(ColorRuleManagerActivity.this,
           org.opendatakit.tables.R.layout.touchlistview_row2,
           mColorRules);
     }
-    
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
       View row = convertView;
       if (row == null) {
         row = getLayoutInflater().inflate(
-            org.opendatakit.tables.R.layout.row_for_edit_view_entry, 
+            org.opendatakit.tables.R.layout.row_for_edit_view_entry,
             parent, false);
       }
       final int currentPosition = position;
@@ -302,36 +300,36 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       // We'll need to display the display name if this is an editable field.
       // (ie if a status column or table rule)
       String columnDisplayName = "";
-      if (mType == ColorRuleGroup.Type.STATUS_COLUMN || 
+      if (mType == ColorRuleGroup.Type.STATUS_COLUMN ||
           mType == ColorRuleGroup.Type.TABLE) {
-        columnDisplayName = 
+        columnDisplayName =
             mTp.getColumnByElementKey(mColorRules.get(currentPosition)
-                .getColumnElementKey()).getDisplayName() + " ";        
+                .getColumnElementKey()).getDisplayName() + " ";
       }
-      TextView label = 
+      TextView label =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
       label.setText(columnDisplayName + ruleString);
-      final int backgroundColor = 
+      final int backgroundColor =
           mColorRules.get(currentPosition).getBackground();
-      final int textColor = 
+      final int textColor =
           mColorRules.get(currentPosition).getForeground();
       // Will demo the color rule.
-      TextView exampleView = 
+      TextView exampleView =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
       exampleView.setText(EXAMPLE_STRING);
       exampleView.setTextColor(textColor);
       exampleView.setBackgroundColor(backgroundColor);
       exampleView.setVisibility(View.VISIBLE);
       // The radio button is meaningless here, so get it off the screen.
-      final RadioButton radioButton = (RadioButton) 
+      final RadioButton radioButton = (RadioButton)
           row.findViewById(org.opendatakit.tables.R.id.radio_button);
       radioButton.setVisibility(View.GONE);
       // And now the settings icon.
-      final ImageView editView = (ImageView) 
+      final ImageView editView = (ImageView)
           row.findViewById(org.opendatakit.tables.R.id.row_options);
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
-        
+
         @Override
         public void onClick(View v) {
           holderView.showContextMenu();

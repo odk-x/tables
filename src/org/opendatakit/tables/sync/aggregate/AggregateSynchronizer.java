@@ -38,7 +38,7 @@ import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.Synchronizer;
-import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.simpleframework.xml.Serializer;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

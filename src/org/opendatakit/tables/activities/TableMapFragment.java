@@ -7,7 +7,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.custom.CustomTableView;
+import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

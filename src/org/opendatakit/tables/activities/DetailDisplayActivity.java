@@ -24,7 +24,7 @@ import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.custom.CustomDetailView;
+import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.content.Intent;
 import android.os.Bundle;

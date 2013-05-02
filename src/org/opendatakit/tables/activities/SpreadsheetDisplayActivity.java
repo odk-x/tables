@@ -23,7 +23,7 @@ import org.opendatakit.tables.Activity.ColorRuleManagerActivity;
 import org.opendatakit.tables.Activity.PropertyManager;
 import org.opendatakit.tables.Activity.util.CollectUtil;
 import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -33,7 +33,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.view.SpreadsheetView;
+import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;
 import android.content.Context;

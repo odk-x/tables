@@ -17,19 +17,19 @@ package org.opendatakit.tables.Activity;
 
 import java.util.List;
 
-import org.opendatakit.tables.DataStructure.ColorRule;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
+import org.opendatakit.tables.data.ColorRule;
+import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.lib.EditColorPreference;
-import org.opendatakit.tables.lib.EditNameDialogPreference;
-import org.opendatakit.tables.lib.EditSavedViewEntryActivity;
-import org.opendatakit.tables.util.ColorPickerDialog.OnColorChangedListener;
-import org.opendatakit.tables.util.Constants;
+import org.opendatakit.tables.preferences.EditColorPreference;
+import org.opendatakit.tables.preferences.EditNameDialogPreference;
+import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -39,7 +39,7 @@ import android.preference.PreferenceActivity;
 import android.util.Log;
 
 public class EditSavedColorRuleActivity extends PreferenceActivity 
-    implements EditSavedViewEntryActivity, OnColorChangedListener {
+    implements EditSavedViewEntryHandler, OnColorChangedListener {
   
   private static final String TAG =
       EditSavedListViewEntryActivity.class.getName();

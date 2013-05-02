@@ -20,7 +20,7 @@ import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
