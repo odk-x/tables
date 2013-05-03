@@ -17,6 +17,7 @@ package org.opendatakit.tables.views;
 
 import java.util.Map;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
@@ -85,7 +86,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		// no-conflict message
 		if (table.getCount() == 0) {
 			TextView tv = new TextView(context);
-			tv.setText("No conflicts.");
+			tv.setText(context.getString(R.string.no_conflicts));
 			addView(tv);
 			return;
 		}
@@ -194,7 +195,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 					controller.onSet(index);
 				}
 			});
-			setButton.setText("Set");
+			setButton.setText(context.getString(R.string.set));
 			Button undoButton = new Button(context);
 			undoButton.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -202,7 +203,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 					controller.onUndo(index);
 				}
 			});
-			undoButton.setText("Undo");
+			undoButton.setText(context.getString(R.string.undo));
 			controlWrap = new LinearLayout(context);
 			controlWrap.addView(setButton);
 			controlWrap.addView(undoButton);

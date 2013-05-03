@@ -72,7 +72,7 @@ public class CustomDetailView extends CustomView {
         webView.addJavascriptInterface(jsData, "data");
         String filename = detailKVSH.getString(CustomDetailView.KEY_FILENAME);
         if (filename != null) {
-            load(FileProvider.getAsUrl(new File(filename)));
+            load(FileProvider.getAsUrl(context, new File(filename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }

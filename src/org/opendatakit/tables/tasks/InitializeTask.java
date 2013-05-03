@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
@@ -33,7 +34,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	public boolean caughtDuplicateTableException = false;
 	public boolean problemImportingKVSEntries = false;
-	private boolean poorlyFormatedConfigFile = false;	
+	private boolean poorlyFormatedConfigFile = false;
 
 	public InitializeTask(TableManager tm) {
 		this.tm = tm;
@@ -43,14 +44,14 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	@Override
 	protected void onPreExecute() {
-		dialog.setTitle("Configuring ODK Tables");
+		dialog.setTitle(tm.getString(R.string.configuring_tables));
 		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 		dialog.setCancelable(false);
 		dialog.show();
 	}
 
 	@Override
-	protected synchronized Boolean doInBackground(Void... params) {		
+	protected synchronized Boolean doInBackground(Void... params) {
 		if (ConfigurationUtil.isChanged(tm.getPrefs())) {
 			Properties prop = new Properties();
 			try {
@@ -76,12 +77,12 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 					String filepath;
 					File file;
 					for (String key : keys) {
-						lineCount = "processing file...";
+						lineCount = tm.getString(R.string.processing_file);
 						curFileCount++;
 						tablename = prop.getProperty(key + ".tablename");
 						filename = prop.getProperty(key + ".filename");
 						filepath = root + "/odk/tables/" +
-								prop.getProperty(key + ".filename");						
+								prop.getProperty(key + ".filename");
 						file = new File(filepath);
 
 						// update dialog message with current filename
@@ -93,7 +94,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 							CsvUtil cu = new CsvUtil(this.tm);
 
-							boolean success = cu.importConfigTables(this, request.getFile(), 
+							boolean success = cu.importConfigTables(this, request.getFile(),
 									filename, request.getTableName());
 							importStatus.put(filename, success);
 							if (success) {
@@ -115,9 +116,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	// refresh TableManager after each successful import
 	protected void onProgressUpdate(Void... progress) {
-		dialog.setMessage("Importing file (" + curFileCount + " of " + 
-				fileCount + "): " + filename + "\n" 
-				+ "(" + lineCount + ")");
+		dialog.setMessage(tm.getString(R.string.importing_file,
+				curFileCount, fileCount, filename, lineCount ));
 	}
 
 	public void updateLineCount(String lineCount) {
@@ -125,10 +125,10 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 		publishProgress();
 	}
 
-	// dismiss ProgressDialog and create an AlertDialog with one 
+	// dismiss ProgressDialog and create an AlertDialog with one
 	// button to confirm that the user read the postExecute message
 	@Override
-	protected void onPostExecute(Boolean result) {		
+	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
 		tm.refreshList();
 
@@ -138,7 +138,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 		// build AlertDialog displaying the status of the initialization
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(tm);
 		alertDialogBuilder.setCancelable(true);
-		alertDialogBuilder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+		alertDialogBuilder.setNeutralButton(tm.getString(R.string.ok), new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
@@ -147,22 +147,19 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 		if (!result) {
 			if (poorlyFormatedConfigFile)
-				alertDialogBuilder.setTitle("bad config.properties file");
+				alertDialogBuilder.setTitle(tm.getString(R.string.bad_config_properties_file));
 			else
-				alertDialogBuilder.setTitle("error");
+				alertDialogBuilder.setTitle(tm.getString(R.string.error));
 		} else {
 			// update the lastModifiedTime of Tables in Preferences
 			ConfigurationUtil.updateTimeChanged(tm.getPrefs(), fileModifiedTime);
 
 			// Build summary message
-			alertDialogBuilder.setTitle("Configuration Summary:");
+			alertDialogBuilder.setTitle(tm.getString(R.string.config_summary));
 			StringBuffer msg = new StringBuffer();
 			for (String filename : importStatus.keySet()) {
-				msg.append("- " + filename);
-				if (importStatus.get(filename))
-					msg.append(" imported successfully\n\n");
-				else
-					msg.append(" imported with errors\n\n");
+				msg.append(tm.getString((importStatus.get(filename) ?
+						R.string.imported_successfully : R.string.imported_with_errors), filename));
 			}
 			alertDialogBuilder.setMessage(msg);
 		}

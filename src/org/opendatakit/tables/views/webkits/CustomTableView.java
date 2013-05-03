@@ -106,7 +106,7 @@ public class CustomTableView extends CustomView {
         webView.addJavascriptInterface(new TableControl(context), "control");
         webView.addJavascriptInterface(new TableData(tp, table), "data");
         if (filename != null) {
-            load(FileProvider.getAsUrl(new File(filename)));
+            load(FileProvider.getAsUrl(getContext(), new File(filename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }

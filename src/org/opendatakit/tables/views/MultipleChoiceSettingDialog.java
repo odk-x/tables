@@ -18,6 +18,7 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 
 import android.app.Dialog;
@@ -47,7 +48,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         super(context);
         this.context = context;
         this.cp = cp;
-        setTitle("Multiple Choice Options");
+        setTitle(context.getString(R.string.multiple_choice_options));
         layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
         setContentView(layout);
@@ -96,7 +97,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         optionList.setColumnStretchable(0, true);
         layout.addView(optionList);
         Button addButton = new Button(context);
-        addButton.setText("Add Choice");
+        addButton.setText(context.getString(R.string.add_choice));
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -106,7 +107,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
             }
         });
         Button saveButton = new Button(context);
-        saveButton.setText("Save");
+        saveButton.setText(context.getString(R.string.save));
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

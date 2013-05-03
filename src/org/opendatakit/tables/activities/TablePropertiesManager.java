@@ -70,8 +70,6 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     public static final String INTENT_KEY_TABLE_ID = "tableId";
 
-    private static final String TITLE_EDIT_FORM = "Edit Default Form";
-
     // these ints are used when selecting/changing the view files
     private static final int RC_DETAIL_VIEW_FILE = 0;
     private static final int RC_LIST_VIEW_FILE = 1;
@@ -109,7 +107,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         dbh = DbHelper.getDbHelper(this);
         tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
             KeyValueStore.Type.ACTIVE);
-        setTitle("Table Manager > " + tp.getDisplayName());
+        setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
         init();
     }
 
@@ -118,11 +116,9 @@ public class TablePropertiesManager extends PreferenceActivity {
       // TODO move this into the actual preference somehow.
       AlertDialog.Builder builder = new AlertDialog.Builder(
           TablePropertiesManager.this);
-      builder.setMessage(
-          "Revert to default settings? Any modifications" +
-          " you have made will be lost.");
+      builder.setMessage(getString(R.string.revert_warning));
       builder.setCancelable(true);
-      builder.setPositiveButton("Yes",
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           SQLiteDatabase db = dbh.getWritableDatabase();
@@ -348,8 +344,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         EditFormDialogPreference formPref =
             new EditFormDialogPreference(this, tp);
         displayCat.addPreference(formPref);
-        formPref.setTitle(TITLE_EDIT_FORM);
-        formPref.setDialogTitle(TITLE_EDIT_FORM);
+        formPref.setTitle(getString(R.string.edit_default_form));
+        formPref.setDialogTitle(getString(R.string.edit_default_form));
 
         Preference rowColorRulePrefs = new Preference(this);
         rowColorRulePrefs.setTitle("Edit Table Color Rules");

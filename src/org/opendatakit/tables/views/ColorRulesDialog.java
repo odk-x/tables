@@ -18,6 +18,7 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRule.RuleType;
 import org.opendatakit.tables.data.ColorRuleGroup;
@@ -72,7 +73,7 @@ public class ColorRulesDialog extends Dialog {
     this.colName = colName;
     // get rid of the leading underscore, as this will probably confuse the
     // user. the underscore is just for us.
-    setTitle("Conditional Colors: " + displayName);
+    setTitle(c.getString(R.string.conditional_colors,displayName));
   }
 
 
@@ -125,7 +126,7 @@ public class ColorRulesDialog extends Dialog {
     }
     ll.addView(tl);
     Button addRuleButton = new Button(c);
-    addRuleButton.setText("Add Rule");
+    addRuleButton.setText(getContext().getString(R.string.add_rule));
     addRuleButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -141,7 +142,7 @@ public class ColorRulesDialog extends Dialog {
     });
     ll.addView(addRuleButton);
     Button closeButton = new Button(c);
-    closeButton.setText("OK");
+    closeButton.setText(getContext().getString(R.string.ok));
     closeButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -256,7 +257,7 @@ public class ColorRulesDialog extends Dialog {
 			}
         };
         ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
-            "", rule.getForeground(), rule.getForeground(), "Pick a Foreground Color");
+            "", rule.getForeground(), rule.getForeground(), c.getString(R.string.pick_foreground_color));
         cpd.show();
       }
     });
@@ -278,7 +279,7 @@ public class ColorRulesDialog extends Dialog {
 			}
         };
         ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
-            "", rule.getBackground(), rule.getBackground(), "Pick a Background Color");
+            "", rule.getBackground(), rule.getBackground(), c.getString(R.string.pick_background_color));
         cpd.show();
       }
     });
@@ -343,8 +344,8 @@ public class ColorRulesDialog extends Dialog {
     } catch (IllegalArgumentException e) {
       Log.e(TAG, "illegal rule type: " + input);
       AlertDialog.Builder badRule = new AlertDialog.Builder(this.c);
-      badRule.setTitle("Unrecognized Rule");
-      badRule.setMessage("The accepted operators are: <, <=, =, >, >=");
+      badRule.setTitle(getContext().getString(R.string.unrecognized_rule));
+      badRule.setMessage(getContext().getString(R.string.accepted_rule_ops));
       badRule.show();
     }
   }

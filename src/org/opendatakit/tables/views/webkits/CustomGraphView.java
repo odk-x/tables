@@ -88,7 +88,7 @@ public class CustomGraphView extends CustomView {
 		webView.addJavascriptInterface(new TableData(tp, table), "data");
 		webView.addJavascriptInterface(graphData, "graph_data");
 		if (filename != null) {
-			load(FileProvider.getAsUrl(new File(filename)));
+			load(FileProvider.getAsUrl(getContext(), new File(filename)));
 		} else {
 			loadData(DEFAULT_HTML, "text/html", null);
 		}

@@ -142,7 +142,7 @@ public class TableMapFragment extends Fragment {
 		    	// Find which file stores the html information for displaying the list.
 				String filename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
 				if (filename == null) {
-					Toast.makeText(getActivity(), "List view file is not set!", Toast.LENGTH_LONG).show();
+					Toast.makeText(getActivity(), getActivity().getString(R.string.list_view_file_not_set), Toast.LENGTH_LONG).show();
 		    		return;
 				}
 				// Create the custom view and set it.
@@ -162,7 +162,7 @@ public class TableMapFragment extends Fragment {
 	   		           }
 	   		           mContainer.setVisibility(View.VISIBLE);
 	        	    }
-	        	   
+
 		        };
 		        view.setOnFinishedLoaded(client);
 			}
@@ -236,7 +236,7 @@ public class TableMapFragment extends Fragment {
 	    	String latitudeElementKey = kvsHelper.getString(KEY_MAP_LAT_COL);
 	    	String longitudeElementKey = kvsHelper.getString(KEY_MAP_LONG_COL);
 	    	if (latitudeElementKey == null || longitudeElementKey == null) {
-	    		// Go through each of the columns and check to see if there are any columns labeled 
+	    		// Go through each of the columns and check to see if there are any columns labeled
 	            // latitude or longitude.
 	            ColumnProperties[] cps = mTableProperties.getColumns();
 	            if (latitudeElementKey == null) {
@@ -259,10 +259,10 @@ public class TableMapFragment extends Fragment {
 	            }
 	    	}
 	    	if (latitudeElementKey == null || longitudeElementKey == null) {
-	    		Toast.makeText(getActivity(), "Latitude or longitude columns are not set!", Toast.LENGTH_LONG).show();
+	    		Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set), Toast.LENGTH_LONG).show();
 	    		return;
 	    	}
-	    	
+
 	    	// Try to find the map columns in the store.
 	    	ColumnProperties latitudeColumn = mTableProperties.getColumnByElementKey(latitudeElementKey);
 	    	ColumnProperties longitudeColumn = mTableProperties.getColumnByElementKey(longitudeElementKey);
