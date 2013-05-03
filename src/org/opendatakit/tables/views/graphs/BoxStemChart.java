@@ -23,14 +23,14 @@ import android.view.View;
 
 
 public class BoxStemChart extends AbstractChart {
-    
+
     private static final double PADDING = 0.05;
     private static final double BAR_HALF_WIDTH = 0.15;
-    
+
     private final DataPoint[] data;
     private final Paint paint;
     private final ClickListener listener;
-    
+
     public BoxStemChart(Context context, DataPoint[] data,
             ClickListener listener) {
         super(context);
@@ -68,7 +68,7 @@ public class BoxStemChart extends AbstractChart {
         yLabels = getLabels(minY, maxY, yTickSep, LabelAxis.Y,
                 LabelOrientation.HORIZONTAL);
     }
-    
+
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
@@ -78,7 +78,7 @@ public class BoxStemChart extends AbstractChart {
         drawYLabels(canvas, true);
         drawData(canvas);
     }
-    
+
     protected void drawData(Canvas canvas) {
         for (int i = 0; i < data.length; i++) {
             int[] loPt = getScreenPoint(i, data[i].getLow());
@@ -99,15 +99,15 @@ public class BoxStemChart extends AbstractChart {
             canvas.drawLine(leftSide, hiPt[1], rightSide, hiPt[1], paint);
         }
     }
-    
+
     public static class DataPoint {
-        
+
         private final String x;
         private final double low;
         private final double midLow;
         private final double midHigh;
         private final double high;
-        
+
         public DataPoint(String x, double low, double midLow, double midHigh,
                 double high) {
             this.x = x;
@@ -116,35 +116,35 @@ public class BoxStemChart extends AbstractChart {
             this.midHigh = midHigh;
             this.high = high;
         }
-        
+
         public String getX() {
             return x;
         }
-        
+
         public double getLow() {
             return low;
         }
-        
+
         public double getMidLow() {
             return midLow;
         }
-        
+
         public double getMidHigh() {
             return midHigh;
         }
-        
+
         public double getHigh() {
             return high;
         }
-        
+
         @Override
         public String toString() {
             return low + "/" + midLow + "/" + midHigh + "/" + high;
         }
     }
-    
+
     private class BoxStemChartTouchListener implements View.OnTouchListener {
-        
+
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -152,10 +152,10 @@ public class BoxStemChart extends AbstractChart {
             } else if (event.getAction() != MotionEvent.ACTION_UP) {
                 return false;
             }
-            int x = (new Float(event.getX())).intValue();
-            int y = (new Float(event.getY())).intValue();
+            int x = (Float.valueOf(event.getX())).intValue();
+            int y = (Float.valueOf(event.getY())).intValue();
             double[] value = getDataPoint(x, y);
-            int index = (new Double(value[0])).intValue();
+            int index = (Double.valueOf(value[0])).intValue();
             if ((index < 0) || (index >= data.length)) {
                 return false;
             } else if ((value[1] < data[index].getLow()) ||
@@ -167,9 +167,9 @@ public class BoxStemChart extends AbstractChart {
             }
         }
     }
-    
+
     public interface ClickListener {
-        
+
         public void onClick(int index);
     }
 }

@@ -120,7 +120,7 @@ public class SliderPreference extends Preference {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress,
                         boolean fromUser) {
-                    seekLabel.setText((new Integer(progress)).toString());
+                    seekLabel.setText((Integer.valueOf(progress)).toString());
                     value = progress;
                 }
             });
@@ -171,7 +171,7 @@ public class SliderPreference extends Preference {
 
         public void setSliderValue(int value) {
             this.value = value;
-            seekLabel.setText((new Integer(value)).toString());
+            seekLabel.setText((Integer.valueOf(value)).toString());
             seekBar.setProgress(value);
         }
 

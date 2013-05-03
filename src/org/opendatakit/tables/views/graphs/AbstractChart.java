@@ -28,39 +28,39 @@ import android.view.View;
 
 
 abstract class AbstractChart extends View {
-    
+
     public enum LabelAxis {X, Y}
     public enum LabelOrientation { VERTICAL, HORIZONTAL }
-    
+
     protected int[] DEFAULT_A_FACTORS = {1, 2, 5};
     protected int[] DEFAULT_B_FACTORS = {1};
     protected int[] DATE_TIME_B_FACTORS = {1, 30, 60, 3600};
-    
+
     private static final int PADDING = 10;
     private static final int TICK_LENGTH = 6;
     private static final int TICK_SPACING = 4;
-    
+
     private Paint paint;
-    
+
     protected double minX;
     protected double maxX;
     protected double minY;
     protected double maxY;
-    
+
     protected Label[] xLabels;
     protected Label[] yLabels;
-    
+
     private int minScreenX;
     private double xDiffMultiplier;
     private int maxScreenY;
     private double yDiffMultiplier;
-    
+
     protected AbstractChart(Context context) {
         super(context);
         setBackgroundColor(Color.WHITE);
         paint = new Paint();
     }
-    
+
     protected double[] getRange(List<Double> values) {
         double[] range = new double[] {values.get(0), values.get(0)};
         for (int i = 1; i < values.size(); i++) {
@@ -69,7 +69,7 @@ abstract class AbstractChart extends View {
         }
         return range;
     }
-    
+
     protected Label[] getLabels(double min, double max, double tickSep,
             LabelAxis axis, LabelOrientation orientation) {
         List<Label> yLabelList = new ArrayList<Label>();
@@ -80,7 +80,7 @@ abstract class AbstractChart extends View {
         }
         return yLabelList.toArray(new Label[0]);
     }
-    
+
     protected double[] getLabelValues(double min, double max, double tickSep) {
         if (tickSep == 0) {
             return new double[0];
@@ -99,7 +99,7 @@ abstract class AbstractChart extends View {
         }
         return arr;
     }
-    
+
     protected void setScreenValues() {
         minScreenX = 0;
         for (Label label : yLabels) {
@@ -119,7 +119,7 @@ abstract class AbstractChart extends View {
                 TICK_SPACING - maxXLabelHeight;
         yDiffMultiplier = yScreenRange / (maxY - minY);
     }
-    
+
     protected double getTickSeparation(double rangeStart, double rangeEnd,
             double goalCount, int[] aFactors, int[] bFactors) {
         double range = rangeEnd - rangeStart;
@@ -157,52 +157,52 @@ abstract class AbstractChart extends View {
         }
         return bestSeparation;
     }
-    
+
     protected void drawXAxis(Canvas canvas, double y) {
         int[] start = getScreenPoint(minX, y);
         int[] end = getScreenPoint(maxX, y);
         canvas.drawLine(start[0], start[1], end[0], end[1], paint);
     }
-    
+
     protected void drawYAxis(Canvas canvas, double x) {
         int[] start = getScreenPoint(x, minY);
         int[] end = getScreenPoint(x, maxY);
         canvas.drawLine(start[0], start[1], end[0], end[1], paint);
     }
-    
+
     protected void drawXLabels(Canvas canvas, boolean drawTicks) {
         for (Label label : xLabels) {
             label.draw(canvas, paint, drawTicks);
         }
     }
-    
+
     protected void drawYLabels(Canvas canvas, boolean drawTicks) {
         for (Label label : yLabels) {
             label.draw(canvas, paint, drawTicks);
         }
     }
-    
+
     protected int[] getScreenPoint(double x, double y) {
         int screenX = minScreenX +
-                (new Double(xDiffMultiplier * (x - minX))).intValue();
+                (Double.valueOf(xDiffMultiplier * (x - minX))).intValue();
         int screenY = maxScreenY +
-                (new Double(yDiffMultiplier * (maxY - y))).intValue();
+                (Double.valueOf(yDiffMultiplier * (maxY - y))).intValue();
         return new int[] {screenX, screenY};
     }
-    
+
     protected double[] getDataPoint(int x, int y) {
         double dataX = ((x - minScreenX) / xDiffMultiplier) + minX;
         double dataY = maxY - ((y - maxScreenY) / yDiffMultiplier);
         return new double[] {dataX, dataY};
     }
-    
+
     protected class Label {
-        
+
         private LabelAxis axis;
         private LabelOrientation orientation;
         private double value;
         private String label;
-        
+
         public Label(LabelAxis axis, LabelOrientation orientation,
                 double value, String label) {
             this.axis = axis;
@@ -210,7 +210,7 @@ abstract class AbstractChart extends View {
             this.value = value;
             this.label = label;
         }
-        
+
         void draw(Canvas canvas, Paint paint, boolean drawTick) {
             int[] pt;
             int[] tickStart;
@@ -243,7 +243,7 @@ abstract class AbstractChart extends View {
                         tickEnd[1], paint);
             }
         }
-        
+
         int[] getLabelSize(Paint paint) {
             Rect r = new Rect();
             paint.getTextBounds(label, 0, label.length(), r);

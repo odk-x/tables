@@ -25,11 +25,11 @@ import android.view.View;
 
 
 public class BarChart extends AbstractChart {
-    
+
     private final List<Double> values;
     private final Paint paint;
     private final ClickListener listener;
-    
+
     public BarChart(Context context, List<String> labels, List<Double> values,
             ClickListener listener) {
         super(context);
@@ -60,7 +60,7 @@ public class BarChart extends AbstractChart {
         yLabels = getLabels(minY, maxY, tickSep, LabelAxis.Y,
                 LabelOrientation.HORIZONTAL);
     }
-    
+
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
@@ -70,7 +70,7 @@ public class BarChart extends AbstractChart {
         drawYLabels(canvas, true);
         drawData(canvas);
     }
-    
+
     private void drawData(Canvas canvas) {
         for (int i = 0; i < values.size(); i++) {
             int[] bl = getScreenPoint(i, Math.min(0, values.get(i)));
@@ -78,15 +78,15 @@ public class BarChart extends AbstractChart {
             canvas.drawRect(bl[0] + 2, tr[1], tr[0] - 2, bl[1], paint);
         }
     }
-    
+
     private class BarChartTouchListener implements View.OnTouchListener {
-        
+
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            int x = (new Float(event.getX())).intValue();
-            int y = (new Float(event.getY())).intValue();
+            int x = (Float.valueOf(event.getX())).intValue();
+            int y = (Float.valueOf(event.getY())).intValue();
             double[] value = getDataPoint(x, y);
-            int index = (new Double(value[0])).intValue();
+            int index = (Double.valueOf(value[0])).intValue();
             if ((value[1] >= Math.min(0, values.get(index))) &&
                     (value[1] <= Math.max(0, values.get(index)))) {
                 listener.onClick(index);
@@ -96,9 +96,9 @@ public class BarChart extends AbstractChart {
             }
         }
     }
-    
+
     public interface ClickListener {
-        
+
         public void onClick(int index);
     }
 }

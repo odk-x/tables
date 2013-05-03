@@ -7,7 +7,7 @@
 	<TextView
 	  android:layout_width="fill_parent"
 	  android:layout_height="wrap_content"
-	  android:text="Shortcut Name"/>
+	  android:text="@+string/sms_shortcut_name"/>
 	<EditText
 	  android:id="@+id/scedit_dialog_name"
 	  android:layout_width="fill_parent"
@@ -15,7 +15,7 @@
 	<TextView
 	  android:layout_width="fill_parent"
 	  android:layout_height="wrap_content"
-	  android:text="Shortcut Input"/>
+	  android:text="@+string/sms_shortcut_input"/>
 	<EditText
 	  android:id="@+id/scedit_dialog_input"
 	  android:layout_width="fill_parent"
@@ -23,7 +23,7 @@
 	<TextView
 	  android:layout_width="fill_parent"
 	  android:layout_height="wrap_content"
-	  android:text="Shortcut Output"/>
+	  android:text="@+string/sms_shortcut_output"/>
 	<EditText
 	  android:id="@+id/scedit_dialog_output"
 	  android:layout_width="fill_parent"
@@ -35,11 +35,11 @@
 		  android:id="@+id/scedit_dialog_savebutton"
 		  android:layout_width="wrap_content"
 		  android:layout_height="wrap_content"
-		  android:text="Save"/>
+		  android:text="@+string/save"/>
 		<Button
 		  android:id="@+id/scedit_dialog_cancelbutton"
 		  android:layout_width="wrap_content"
 		  android:layout_height="wrap_content"
-		  android:text="Cancel"/>
+		  android:text="@+string/cancel"/>
 	</LinearLayout>
 </LinearLayout>

@@ -42,10 +42,15 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/InvertTables"
+        android:allowBackup="false"
         android:hardwareAccelerated="true"	>
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyBB42o9vDeGIRfCdjyTOpQi0LtpmS9Cerw"/>
+
+        <uses-library
+            android:name="com.google.android.maps"
+            android:required="false" />
 
         <activity
             android:name=".activities.util.Launcher"
@@ -61,7 +66,7 @@
         <activity android:name=".activities.AggregateDownloadTableActivity" />
         <activity android:name=".activities.ColorRuleManagerActivity"/>
         <activity android:name=".activities.ColumnManager"/>
-        <activity android:name=".activities.ConflictResolutionManager"/>
+        <activity android:name=".activities.ConflictResolutionActivity"/>
         <activity android:name=".activities.CustomHomeScreenActivity"/>
         <activity android:name=".activities.DetailDisplayActivity"/>
         <activity android:name=".activities.DisplayPrefsActivity"/>
@@ -95,7 +100,6 @@
             </intent-filter>
         </receiver>
 
-        <uses-library android:name="com.google.android.maps" />
         <!--
         <service
             android:name=".sync.SyncService"
@@ -122,6 +126,11 @@
                 android:resource="@xml/filesyncadapter" />
         </service>
 
+		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
+	    <provider
+	        android:name="org.opendatakit.common.android.provider.FileProvider"
+	        android:authorities="org.opendatakit.common.android.provider.file" />
+
         <!--  dummy ContentProvider for syncing tables -->
         <provider
             android:name=".sync.TablesContentProvider"
@@ -130,7 +139,8 @@
         <!-- dummy ContentProvider for syncing files -->
         <provider
             android:name=".sync.files.FilesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.files" />
+            android:authorities="org.opendatakit.tables.android.provider.files"
+            android:exported="true" />
 
     </application>
 

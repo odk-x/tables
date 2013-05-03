@@ -25,18 +25,18 @@ import android.graphics.Paint;
 
 
 public abstract class PointPlot extends AbstractChart {
-    
+
     protected enum DataType { NUMBER, DATE }
-    
+
     private static final double PADDING = 0.05;
     protected static final int POINT_RADIUS = 2;
-    
+
     protected final List<Double> xValues;
     protected final List<Double> yValues;
     protected final DataType dataType;
     protected final DataUtil du;
     private final Paint paint;
-    
+
     public PointPlot(Context context, List<Double> xValues,
             List<Double> yValues, DataType dataType) {
         super(context);
@@ -70,7 +70,7 @@ public abstract class PointPlot extends AbstractChart {
             xLabels = new Label[values.length];
             for (int i = 0; i < values.length; i++) {
                 DateTime dt = new DateTime(
-                        new Double(values[i] * 1000.0).longValue());
+                		Double.valueOf(values[i] * 1000.0).longValue());
                 xLabels[i] = new Label(LabelAxis.X, LabelOrientation.VERTICAL,
                         values[i], du.formatShortDateTimeForUser(dt));
             }
@@ -80,7 +80,7 @@ public abstract class PointPlot extends AbstractChart {
         yLabels = getLabels(minY, maxY, yTickSep, LabelAxis.Y,
                 LabelOrientation.HORIZONTAL);
     }
-    
+
     @Override
     public void onDraw(Canvas canvas) {
         setScreenValues();
@@ -90,7 +90,7 @@ public abstract class PointPlot extends AbstractChart {
         drawYLabels(canvas, true);
         drawData(canvas);
     }
-    
+
     protected void drawData(Canvas canvas) {
         for (int i = 0; i < xValues.size(); i++) {
             int[] pt = getScreenPoint(xValues.get(i), yValues.get(i));

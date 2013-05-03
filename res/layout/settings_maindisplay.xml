@@ -7,7 +7,7 @@
   <TextView
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"
-  	android:text="Preferred View Type"/>
+  	android:text="@+string/preferred_view_type"/>
   <Spinner
   	android:id="@+id/settings_maindisplay_viewtype"
   	android:layout_width="fill_parent"
@@ -19,11 +19,11 @@
  	  android:id="@+id/settings_maindisplay_save"
   	  android:layout_width="wrap_content"
   	  android:layout_height="wrap_content"
-  	  android:text="Save"/>
+  	  android:text="@+string/save"/>
   	<Button
   	  android:id="@+id/settings_maindisplay_cancel"
   	  android:layout_width="wrap_content"
   	  android:layout_height="wrap_content"
-  	  android:text="Cancel"/>
+  	  android:text="@+string/cancel"/>
   </LinearLayout>
 </LinearLayout>

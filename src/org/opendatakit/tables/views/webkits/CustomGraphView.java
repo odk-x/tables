@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.graphs.BarGraphDisplayActivity;
@@ -87,7 +88,7 @@ public class CustomGraphView extends CustomView {
 		webView.addJavascriptInterface(new TableData(tp, table), "data");
 		webView.addJavascriptInterface(graphData, "graph_data");
 		if (filename != null) {
-			load("file:///" + filename);
+			load(FileProvider.getAsUrl(new File(filename)));
 		} else {
 			loadData(DEFAULT_HTML, "text/html", null);
 		}

@@ -15,6 +15,9 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
+
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -74,7 +77,7 @@ public class CustomAppView extends CustomView {
     // First we want to see if we're supposed to display a custom HTML, or if
     // we want to display just the homescreen.html file. We'll check for the
     // key.
-    load("file:///" + dir + "/" + mFilename);
+    load(FileProvider.getAsUrl(new File(dir + "/" + mFilename)));
     initView();
   }
 

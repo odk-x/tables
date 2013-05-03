@@ -199,8 +199,8 @@ public class MapDisplayActivity extends SherlockActivity
     }
 
     private GeoPoint getGeoPointFromLatLon(double[] latLon) {
-        int latE6Dbl = (new Double(latLon[0] * 1000000)).intValue();
-        int lonE6Dbl = (new Double(latLon[1] * 1000000)).intValue();
+        int latE6Dbl = (Double.valueOf(latLon[0] * 1000000)).intValue();
+        int lonE6Dbl = (Double.valueOf(latLon[1] * 1000000)).intValue();
         return new GeoPoint(latE6Dbl, lonE6Dbl);
     }
 
@@ -275,8 +275,8 @@ public class MapDisplayActivity extends SherlockActivity
             if (event.getAction() != MotionEvent.ACTION_UP) {
                 return false;
             }
-            int x = (new Float(event.getX())).intValue();
-            int y = (new Float(event.getY())).intValue();
+            int x = (Float.valueOf(event.getX())).intValue();
+            int y = (Float.valueOf(event.getY())).intValue();
             if (infoWindow != null) {
                 int[] rp = getIwRelativePoint(x, y);
                 if (isOnIw(rp)) {

@@ -690,8 +690,8 @@ public class SpreadsheetView extends LinearLayout
 
         @Override
         public boolean onTouch(View view, MotionEvent event) {
-            int x = (new Float(event.getX())).intValue();
-            int y = (new Float(event.getY())).intValue();
+            int x = (Float.valueOf(event.getX())).intValue();
+            int y = (Float.valueOf(event.getY())).intValue();
             int cellId = figureCellId(x, y);
             long duration = event.getEventTime() - event.getDownTime();
             if (event.getAction() == MotionEvent.ACTION_UP &&
@@ -699,13 +699,13 @@ public class SpreadsheetView extends LinearLayout
                 if (event.getEventTime() - lastDownTime <
                         MAX_DOUBLE_CLICK_TIME) {
                     takeDoubleClickAction(cellId,
-                        (new Float(event.getRawX())).intValue(),
-                        (new Float(event.getRawY())).intValue());
+                        (Float.valueOf(event.getRawX())).intValue(),
+                        (Float.valueOf(event.getRawY())).intValue());
                 } else if (duration < MIN_LONG_CLICK_DURATION) {
                     takeClickAction(cellId);
                 } else {
-                    int rawX = (new Float(event.getRawX())).intValue();
-                    int rawY = (new Float(event.getRawY())).intValue();
+                    int rawX = (Float.valueOf(event.getRawX())).intValue();
+                    int rawY = (Float.valueOf(event.getRawY())).intValue();
                     takeLongClickAction(cellId, rawX, rawY);
                 }
                 lastDownTime = event.getDownTime();

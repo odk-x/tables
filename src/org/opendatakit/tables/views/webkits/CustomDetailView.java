@@ -15,8 +15,10 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
 import java.util.Map;
 
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -24,53 +26,53 @@ import android.content.Context;
 
 /**
  * A view for displaying a customizable detail view of a row of data.
- * 
+ *
  * @author hkworden
  * @author sudar.sam@gmail.com
  */
 public class CustomDetailView extends CustomView {
-  
+
   private static final String TAG = "CustomDetailView";
-  
+
   /**************************
    * Strings necessary for the key value store.
    **************************/
   public static final String KVS_PARTITION = "CustomDetailView";
-  
+
   /**
-   * This is the default aspect for the list view. This should be all that is 
+   * This is the default aspect for the list view. This should be all that is
    * used until we allow multiple list views for a single file.
    */
   public static final String KVS_ASPECT_DEFAULT = "default";
-  
-  public static final String KEY_FILENAME = "filename"; 
-    
+
+  public static final String KEY_FILENAME = "filename";
+
     private static final String DEFAULT_HTML =
         "<html><body>" +
         "<p>No detail view has been specified.</p>" +
         "</body></html>";
-    
+
     private Context context;
     private TableProperties tp;
     private RowData jsData;
     private KeyValueStoreHelper detailKVSH;
-    
+
     public CustomDetailView(Context context, TableProperties tp) {
         super(context);
         this.context = context;
         this.tp = tp;
-        this.detailKVSH = 
+        this.detailKVSH =
             tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
         jsData = new RowData(tp);
     }
-    
+
     public void display(String rowId, Map<String, String> data) {
         jsData.set(data);
         webView.addJavascriptInterface(new Control(context), "control");
         webView.addJavascriptInterface(jsData, "data");
         String filename = detailKVSH.getString(CustomDetailView.KEY_FILENAME);
         if (filename != null) {
-            load("file:///" + filename);
+            load(FileProvider.getAsUrl(new File(filename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }

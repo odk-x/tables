@@ -2,10 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/security_activity_layout"
 	android:layout_width="fill_parent"
-	android:layout_height="fill_parent" 
-	android:orientation="vertical" 
-	android:background="#FFFFFF">
-	
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
+
 	<TextView
 		android:id="@+id/security_activity_table_name"
 		android:layout_width="fill_parent"
@@ -14,29 +13,29 @@
 		android:textSize="20sp"
 		android:textStyle="bold"
 		android:textColor="#000000" />
-	
-	
+
+
 	<TextView
-		android:layout_width="fill_parent" 
+		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#000000"
-		android:text="Read Access Control Group:" />
-	
-	<Spinner 
+		android:text="@+string/read_access_control_group" />
+
+	<Spinner
         android:id="@+id/security_activity_read_spinner"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
-	
-		
+
+
 	<TextView
-		android:layout_width="fill_parent" 
+		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:textColor="#000000"
-		android:text="Write Access Control Group:" />
-	
-	<Spinner 
+		android:text="@+string/write_access_control_group" />
+
+	<Spinner
         android:id="@+id/security_activity_write_spinner"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
-        
+
 </LinearLayout>

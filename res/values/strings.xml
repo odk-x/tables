@@ -26,5 +26,32 @@
 	<string name="background_color">Background Color</string>
 	<string name="column">Column</string>
 	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
-	
+	<string name="no_shortcuts">No Shortcuts Defined</string>
+	<string name="account">Account:</string>
+	<string name="save_settings">Save settings</string>
+	<string name="auth_account">Authorize account</string>
+	<string name="choose_sync_set">Choose set of tables to sync</string>
+	<string name="download_table">Download table from server</string>
+	<string name="sync_now">Sync now</string>
+	<string name="sync_files_now">Sync files now</string>
+	<string name="server_url">Aggregate URL:</string>
+	<string name="default_server_url">http://opendatakit-2.appspot.com</string>
+	<string name="save_all">Save All</string>
+	<string name="next">Next</string>
+	<string name="previous">Previous</string>
+	<string name="save">Save</string>
+	<string name="list_format">List Format</string>
+	<string name="sync_no_tables_ready">There are no tables ready to be synched with the server.</string>
+	<string name="press_to_add_color_rule">Press + to add a color rule</string>
+	<string name="press_to_add_graph">Press + to add a graph.</string>
+	<string name="press_to_add_list_view">Press + to add a list view.</string>
+	<string name="open_new_spreadsheet">Open New Spreadsheet File</string>
+	<string name="no_data">No data</string>
+	<string name="edit">Edit</string>
+	<string name="write_access_control_group">Write Access Control Group:</string>
+	<string name="read_access_control_group">Read Access Control Group:</string>
+	<string name="preferred_view_type">Preferred View Type</string>
+	<string name="sms_shortcut_name">Shortcut Name</string>
+	<string name="sms_shortcut_input">Shortcut Input</string>
+	<string name="sms_shortcut_output">Shortcut Output</string>
 </resources>

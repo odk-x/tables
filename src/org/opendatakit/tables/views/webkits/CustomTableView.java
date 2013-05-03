@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
@@ -67,9 +69,9 @@ public class CustomTableView extends CustomView {
             }
         }
     }
-    
+
     ////////////////////////////// TEST ///////////////////////////////
-    
+
     public static CustomTableView get(Context context, TableProperties tp, UserTable table, String filename, int index) {
     	CustomTableView ctv = new CustomTableView(context, filename);
     	// Create a new table with only the row specified at index.
@@ -86,15 +88,15 @@ public class CustomTableView extends CustomView {
     		footers[i] = table.getFooter(i);
     	}
     	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
-    	
+
     	ctv.set(tp, singleRowTable);
     	return ctv;
     }
-    
+
     public void setOnFinishedLoaded(WebViewClient client) {
     	webView.setWebViewClient(client);
     }
-    
+
     //////////////////////////// END TEST /////////////////////////////
 
     public void display() {
@@ -104,7 +106,7 @@ public class CustomTableView extends CustomView {
         webView.addJavascriptInterface(new TableControl(context), "control");
         webView.addJavascriptInterface(new TableData(tp, table), "data");
         if (filename != null) {
-            load("file:///" + filename);
+            load(FileProvider.getAsUrl(new File(filename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }
