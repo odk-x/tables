@@ -895,9 +895,9 @@ public class TableProperties {
 	      }
 	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
 	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
-	          this.backingStore);
-	      activeKVS.clearKeyValuePairs(db);
+	      kvsm.getStoreForTable(tableId, KeyValueStore.Type.ACTIVE).clearKeyValuePairs(db);
+         kvsm.getStoreForTable(tableId, KeyValueStore.Type.DEFAULT).clearKeyValuePairs(db);
+         kvsm.getStoreForTable(tableId, KeyValueStore.Type.SERVER).clearKeyValuePairs(db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();
