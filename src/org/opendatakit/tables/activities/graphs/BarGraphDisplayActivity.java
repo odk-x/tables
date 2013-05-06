@@ -228,15 +228,15 @@ implements DisplayActivity {
 		// Prompt an alert box
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-	    View view = getLayoutInflater().inflate(R.layout.message_with_text_edit_field_dialog, null);
-	    alert.setView(view)
+	    View aview = getLayoutInflater().inflate(R.layout.message_with_text_edit_field_dialog, null);
+	    alert.setView(aview)
 		.setTitle(R.string.save_graph_as);
 
-	    final TextView msg = (TextView) view.findViewById(R.id.message);
+	    final TextView msg = (TextView) aview.findViewById(R.id.message);
 	    msg.setText(getString(R.string.enter_new_graph_name));
 
 		// Set an EditText view to get user input
-		final EditText input = (EditText) view.findViewById(R.id.edit_field);
+		final EditText input = (EditText) aview.findViewById(R.id.edit_field);
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
 		input.requestFocus();
