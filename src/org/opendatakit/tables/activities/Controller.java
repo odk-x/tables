@@ -215,7 +215,7 @@ public class Controller {
 
         // info bar currently displays just the name of the table
         infoBar = new TextView(activity);
-        infoBar.setText("Table: " + tp.getDisplayName());
+        setSimpleInfoBarText();
         infoBar.setBackgroundColor(Color.parseColor("#B0B0B0"));
         infoBar.setTextColor(Color.BLACK);
 
@@ -238,12 +238,20 @@ public class Controller {
                 ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-    /**
-     *  Set the text in the info bar
-     * @param text String to display in info bar
-     */
-    public void setInfoBarText(String text) {
-    	infoBar.setText(text);
+    public void setSimpleInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_plain_title, tp.getDisplayName()));
+    }
+
+    public void setListViewInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_list_title, tp.getDisplayName()));
+    }
+
+    public void setDetailViewInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_detail_title, tp.getDisplayName()));
+    }
+
+    public void setGraphViewInfoBarText(String graphName) {
+        infoBar.setText(activity.getString(R.string.info_bar_graph_title, tp.getDisplayName(), graphName));
     }
 
     /**
@@ -514,7 +522,7 @@ public class Controller {
 
         // search
         MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
-                "Search");
+                activity.getString(R.string.search));
         searchItem.setIcon(R.drawable.ic_action_search);
         searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         searchItem.setEnabled(enabled);
@@ -526,7 +534,7 @@ public class Controller {
         // 	  -build a checkable submenu to select the view type
         SubMenu viewTypeSubMenu =
             menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
-                Menu.NONE, "ViewType");
+                Menu.NONE, activity.getString(R.string.view_type));
         MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
         viewType.setEnabled(enabled);
@@ -560,14 +568,14 @@ public class Controller {
         // Add Row
         MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON,
             Menu.NONE,
-              "Add Row").setEnabled(enabled);
+              activity.getString(R.string.add_row)).setEnabled(enabled);
         addItem.setIcon(R.drawable.content_new);
         addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         // Settings submenu
         SubMenu settings =
             menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU,
-                Menu.NONE, "Settings");
+                Menu.NONE, activity.getString(R.string.settings));
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -575,18 +583,18 @@ public class Controller {
         MenuItem display =
             settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES,
                 Menu.NONE,
-        		"Display Preferences").setEnabled(enabled);
+        		activity.getString(R.string.display_prefs)).setEnabled(enabled);
         // always disable DisplayPreferences if it is currently in list view
         if (tp.getCurrentViewType() == TableViewType.List)
         	display.setEnabled(false);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
-    			"Table Properties").setEnabled(enabled);
+    			activity.getString(R.string.table_props)).setEnabled(enabled);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
-              "Column Manager").setEnabled(enabled);
+              activity.getString(R.string.column_manager)).setEnabled(enabled);
         // Now an option for editing list views.
         MenuItem manageListViews =
             settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
-                Menu.NONE, "List View Manager").setEnabled(true);
+                Menu.NONE, activity.getString(R.string.list_view_manager)).setEnabled(true);
     }
 
     /**

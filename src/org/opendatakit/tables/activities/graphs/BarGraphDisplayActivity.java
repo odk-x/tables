@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.activities.graphs;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DataManager;
@@ -31,8 +32,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
@@ -129,11 +132,7 @@ implements DisplayActivity {
 					c.getDbTable().getUserTable(query);
 
 				view = CustomGraphView.get(this, c.getTableProperties(), table, graphName, potentialGraphName);
-
-				// change the info bar text IF necessary
-				if (!c.getInfoBarText().endsWith(" (Graph: " + graphName + ")")) {
-					c.setInfoBarText(c.getInfoBarText() + " (Graph: " + graphName + ")");
-				}
+				c.setGraphViewInfoBarText(graphName);
 				displayView();
 	}
 
@@ -179,8 +178,10 @@ implements DisplayActivity {
 			}
 		};
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("Do you want to save the graph?").setPositiveButton("Yes", dialogClickListener)
-		.setNegativeButton("No", dialogClickListener).show();
+		builder.setTitle(getString(R.string.confirm_save_graph))
+		.setMessage(getString(R.string.are_you_sure_save_graph))
+		.setPositiveButton(getString(R.string.yes), dialogClickListener)
+		.setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
 
 		//view.handleBackButtonCall();
 		// c.onBackPressed();
@@ -226,31 +227,35 @@ implements DisplayActivity {
 		AlertDialog newColumnAlert;
 		// Prompt an alert box
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		alert.setTitle("Name of New Graph");
 
+	    View view = getLayoutInflater().inflate(R.layout.message_with_text_edit_field_dialog, null);
+	    alert.setView(view)
+		.setTitle(R.string.save_graph_as);
+
+	    final TextView msg = (TextView) view.findViewById(R.id.message);
+	    msg.setText(getString(R.string.enter_new_graph_name));
 
 		// Set an EditText view to get user input
-		final EditText input = new EditText(this);
+		final EditText input = (EditText) view.findViewById(R.id.edit_field);
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
 		input.requestFocus();
 		// adding the following line
 		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
 		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
-		alert.setView(input);
 		if (givenGraphName != null)
 			input.setText(givenGraphName);
 
 		// OK Action => Create new Column
-		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+		alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				String graphName = input.getText().toString();
 				graphName = graphName.trim();
 				if (graphName == null || graphName.equals("")) {
-					toastGraphNameError("Column name cannot be empty!");
+					toastGraphNameError(getString(R.string.error_graph_name_empty));
 					alertForNewGraphName(null);
 				} else if (graphName.contains(" ")) {
-					toastGraphNameError("Column name cannot contain spaces!");
+					toastGraphNameError(getString(R.string.error_graph_name_spaces));
 					alertForNewGraphName(graphName.replace(' ', '_'));
 				} else if (view.hasGraph(graphName)) {
 					Log.d("stufftotest", "" + graphName);
@@ -267,7 +272,8 @@ implements DisplayActivity {
 
 
 		// Cancel Action
-		alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+		alert.setNegativeButton(getString(R.string.cancel),
+				new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				// Canceled.
 			}
@@ -303,8 +309,10 @@ implements DisplayActivity {
 			}
 		};
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("Are you sure you want to overwrite this graph?").setPositiveButton("Yes", dialogClickListener)
-		.setNegativeButton("No", dialogClickListener).show();
+		builder.setTitle(getString(R.string.confirm_overwrite_graph))
+		.setMessage(getString(R.string.are_you_sure_overwrite_graph, givenGraphName))
+		.setPositiveButton(getString(R.string.yes), dialogClickListener)
+		.setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
 	}
 	/*
 

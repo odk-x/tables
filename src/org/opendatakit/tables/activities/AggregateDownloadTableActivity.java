@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -77,10 +78,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     Map<String, String> tables = getTables();
 
     if (tables == null) {
-      finishDialog.setMessage("Unable to contact server. Please try again later...");
+      finishDialog.setMessage(getString(R.string.error_contacting_server));
       finishDialog.show();
     } else if (tables.isEmpty()) {
-      finishDialog.setMessage("No tables on server which have not already been downloaded.");
+      finishDialog.setMessage(getString(R.string.all_tables_downloaded));
       finishDialog.show();
     } else {
       tableIds = new ArrayList<String>();
@@ -96,7 +97,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   private void initializeDialogs() {
     finishDialog = new AlertDialog.Builder(AggregateDownloadTableActivity.this);
     finishDialog.setCancelable(false);
-    finishDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+    finishDialog.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         AggregateDownloadTableActivity.this.finish();
@@ -130,10 +131,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       task.get();
     } catch (Exception e) {
       Log.i(TAG, "Exception downloading table " + tableName, e);
-      finishDialog.setMessage("Unable to download table. Please try again later...");
+      finishDialog.setMessage(getString(R.string.error_downloading_table));
       finishDialog.show();
     }
-    finishDialog.setMessage("Downloaded " + tableName);
+    finishDialog.setMessage(getString(R.string.downloaded_table, tableName));
     finishDialog.show();
   }
 
@@ -149,8 +150,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, "Please Wait",
-          "Getting tables. Please wait...");
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, getString(R.string.please_wait),
+          getString(R.string.fetching_tables));
     }
 
     @Override
@@ -178,9 +179,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         DataManager dm = new DataManager(DbHelper.getDbHelper(AggregateDownloadTableActivity.this));
         // we're going to check for downloaded tables ONLY in the server store,
         // b/c there will only be UUID collisions if the tables have been
-        // downloaded, which means they must be in the server KVS. The 
+        // downloaded, which means they must be in the server KVS. The
         // probability of a user defined table, which would NOT have entries
-        // in the server KVS, having the same UUID as another table is 
+        // in the server KVS, having the same UUID as another table is
         // virtually zero.
         TableProperties[] props = dm.getTablePropertiesForDataTables(
             KeyValueStore.Type.SERVER);
@@ -217,15 +218,15 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, "Please Wait",
-          "Downloading table " + tableName + ". Please wait...");
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, getString(R.string.please_wait),
+          getString(R.string.fetching_this_table, tableName));
     }
 
     @Override
     protected Void doInBackground(Void... params) {
       DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
 //TODO the order of synching should probably be re-arranged so that you first
-// get the table properties and column entries (ie the table definition) and 
+// get the table properties and column entries (ie the table definition) and
 // THEN get the row data. This would make it more resilient to network failures
 // during the process. along those lines, the same process should exist in the
 // table creation on the phone. or rather, THAT should try and follow the same
@@ -258,7 +259,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       processor.synchronizeTable(tp);
       // Aggregate.requestSync(accountName);
       //SS: and now at this point the table is up to date in the active store.
-      // however, it is exceedingly important that the properties also be 
+      // however, it is exceedingly important that the properties also be
       // copied into the server and default store, or else several invariants
       // are broken.
       kvsm.setCurrentAsDefaultPropertiesForTable(tableId);

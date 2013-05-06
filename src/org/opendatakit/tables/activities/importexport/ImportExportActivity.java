@@ -37,13 +37,13 @@ public class ImportExportActivity extends TabActivity {
 		// the import CSV option
 		intent = new Intent().setClass(this, ImportCSVActivity.class);
 		spec = th.newTabSpec("importcsv");
-		spec.setIndicator("Import CSV");
+		spec.setIndicator(getString(R.string.import_csv));
 		spec.setContent(intent);
 		th.addTab(spec);
 		// the export CSV option
 		intent = new Intent().setClass(this, ExportCSVActivity.class);
 		spec = th.newTabSpec("exportcsv");
-		spec.setIndicator("Export CSV");
+		spec.setIndicator(getString(R.string.export_csv));
 		spec.setContent(intent);
 		th.addTab(spec);
 	}

@@ -15,8 +15,11 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
 import java.util.List;
 
+import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -25,6 +28,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -145,7 +149,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
         Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
         // Set the current filename.
         if (listViewFilename != null) {
-          filePickerIntent.setData(Uri.parse("file:///" + listViewFilename));
+          File adjustedFile = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
+        		  	ODKFileUtils.toAppPath(listViewFilename));
+          filePickerIntent.setData(Uri.parse("file:///" + adjustedFile.getAbsolutePath()));
         }
         try {
           startActivityForResult(filePickerIntent, RETURN_CODE_NEW_FILE);
@@ -173,7 +179,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     for (String name : existingListNames) {
       if (newName.equals(name)) {
         // Duplicate name, don't allow it.
-        Toast.makeText(this, "The name \"" + newName + "\" is already in use!", Toast.LENGTH_LONG)
+        Toast.makeText(this, getString(R.string.error_in_use_list_view_name, newName), Toast.LENGTH_LONG)
             .show();
         return;
       }
@@ -216,9 +222,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       super.onActivityResult(requestCode, resultCode, data);
     }
   }
-  
+
   private void setToDefault(String nameOfListView) {
-    KeyValueStoreHelper listViewKvsh = 
+    KeyValueStoreHelper listViewKvsh =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
     listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME,
         nameOfListView);

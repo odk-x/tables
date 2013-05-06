@@ -65,7 +65,6 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	public static final String TAG = GraphDisplayActivity.class.getName();
 
 	public static final String INTENT_KEY_TABLE_ID = "tableId";
-	private static final String ACTIVITY_TITLE = "Graph Manager";
 	public static final String INTENT_KEY_GRAPHVIEW_NAME = "graphViewName";
 
 
@@ -75,27 +74,15 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	public static final int MENU_ITEM_ID_SEARCH_BUTTON = 1;
 
 	public static final int ADD_NEW_GRAPH_VIEW = 0;
-	/**
-	 * The char sequence for the add new list view item.
-	 */
-	public static final String ADD_NEW_GRAPH_VIEW_TEXT = "Add New Graph";
 
 	/**
 	 * Menu ID for deleting an entry.
 	 */
 	public static final int MENU_DELETE_ENTRY = 1;
 	/**
-	 * Text for the entry deletion.
-	 */
-	public static final String MENU_TEXT_DELETE_ENTRY = "Delete this Graph";
-	/**
 	 * Menu ID for opening the edit entry activity.
 	 */
 	public static final int MENU_EDIT_ENTRY = 2;
-	/**
-	 * Text for the entry editing.
-	 */
-	public static final String MENU_TEXT_EDIT_ENTRY = "Edit this Graph";
 
 	/**
 	 * This will be the names of all the possible list views.
@@ -195,7 +182,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		setContentView(org.opendatakit.tables.R.layout.graph_view_manager);
-		setTitle(ACTIVITY_TITLE);
+		setTitle(getString(R.string.graph_manager));
 		// Set the app icon as an action to go home.
 		ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
@@ -216,7 +203,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		// 	  -build a checkable submenu to select the view type
 		SubMenu viewTypeSubMenu =
 				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON,
-						Menu.NONE, "ViewType");
+						Menu.NONE, getString(R.string.view_type));
 		MenuItem viewType = viewTypeSubMenu.getItem();
 		viewType.setIcon(R.drawable.view);
 		viewType.setEnabled(true);
@@ -249,7 +236,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 
 		MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW,
 				Menu.NONE,
-				"Add Row").setEnabled(true);
+				getString(R.string.add_new_graph)).setEnabled(true);
 		addItem.setIcon(R.drawable.content_new);
 		addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
@@ -291,9 +278,10 @@ public class GraphDisplayActivity extends SherlockListActivity {
 			// cancel.
 			AlertDialog confirmDeleteAlert;
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle("Delete " + entryName + "?");
+			builder.setTitle(getString(R.string.confirm_delete_graph));
+			builder.setMessage(getString(R.string.are_you_sure_delete_graph, entryName));
 			// For the OK action we want to actually delete this list view.
-			builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
@@ -314,7 +302,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 				}
 			});
 
-			builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
@@ -344,8 +332,8 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
-		menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
-		menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
+		menu.add(0,MENU_DELETE_ENTRY, 0, getString(R.string.delete_graph));
+		menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_graph));
 	}
 
 	/**
@@ -430,13 +418,12 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	}
 
 	private String getPotentialGraphName() {
-	      String baseName = "unnamedGraph ";
 	      List<String> existingListViewNames = kvsh.getAspectsForPartition();
 	      int suffix = existingListViewNames.size();
-	      String potentialName = baseName + suffix;
+	      String potentialName = getString(R.string.generated_graph_name, suffix);
 	      while (existingListViewNames.contains(potentialName)) {
 	        suffix++;
-	        potentialName = baseName + suffix;
+	        potentialName = getString(R.string.generated_graph_name, suffix);
 	      }
 	      return potentialName;
 	}

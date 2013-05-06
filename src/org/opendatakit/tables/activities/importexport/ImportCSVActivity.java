@@ -88,22 +88,22 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		fn.addView(filenameValField);
 		v.addView(fn);
 		pickFileButton = new Button(this);
-		pickFileButton.setText("Pick File");
-		pickFileButton.setOnClickListener(new PickFileButtonListener());
+		pickFileButton.setText(getString(R.string.import_choose_csv_file));
+		pickFileButton.setOnClickListener(new PickFileButtonListener(getString(R.string.import_choose_csv_file)));
 		v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler1,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the table spinner
 		TextView etn = new TextView(this);
-		etn.setText("Import to new table or add to existing table:");
+		etn.setText(getString(R.string.import_disposition_label));
 		etn.setTextColor(getResources().getColor(R.color.black));
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		tps = TableProperties.getTablePropertiesForAll(
 		        DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length + 1];
-		tableNames[0] = "New Table";
+		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
 		for (TableProperties tp : tps) {
 		    tableNames[counter] = tp.getDisplayName();
@@ -127,7 +127,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		ntn.addView(ntnLabel);
 		ntnValField = new EditText(this);
 		ntnValField.setId(NTNVAL_ID);
-		ntnValField.setText("New Table");
+		ntnValField.setText(getString(R.string.import_new_table));
 		ntn.addView(ntnValField);
 		newTableViews = ntn;
 		v.addView(newTableViews);
@@ -137,7 +137,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		// adding the import button
 		Button importB = new Button(this);
 		importB.setId(IMPORTBUTTON_ID);
-		importB.setText("Add to Table");
+		importB.setText(getString(R.string.import_append_table));
 		importB.setOnClickListener(new ImportButtonListener());
 		v.addView(importB);
 		// wrapping in a scroll view

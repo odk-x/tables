@@ -103,7 +103,7 @@ public class CollectUtil {
    * @return
    */
   private static File getAddRowFormFile() {
-    return new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "addrowform.xml");
+    return new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME), "addrowform.xml");
   }
 
   /**
@@ -114,7 +114,7 @@ public class CollectUtil {
    * @return
    */
   private static File getEditRowFormFile() {
-    return new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "editRowData.xml");
+    return new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME), "editRowData.xml");
   }
 
   /**

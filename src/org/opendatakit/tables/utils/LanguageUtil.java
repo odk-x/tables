@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ConditionalRuler;
 import org.opendatakit.tables.data.TableType;
 
+import android.content.Context;
 import android.graphics.Color;
 
 
@@ -25,14 +27,14 @@ public class LanguageUtil {
 
   private static final String TAG = "LanguageUtil";
 
-    public static String getTableTypeLabel(TableType tableType) {
+    public static String getTableTypeLabel(Context c, TableType tableType) {
         switch (tableType) {
         case data:
-            return "Data";
+            return c.getString(R.string.table_type_data);
         case security:
-            return "Access Control";
+            return c.getString(R.string.table_type_access_control);
         case shortcut:
-            return "Shortcut";
+            return c.getString(R.string.table_type_sms_shortcuts);
         default:
             throw new RuntimeException("Invalid table type (" + tableType +
                     ").");
@@ -77,18 +79,18 @@ public class LanguageUtil {
         }
     }
 
-    public static String getMapColorLabel(int color) {
+    public static String getMapColorLabel(Context c, int color) {
         switch (color) {
         case Color.BLACK:
-            return "Black";
+            return c.getString(R.string.black);
         case Color.BLUE:
-            return "Blue";
+            return c.getString(R.string.blue);
         case Color.GREEN:
-            return "Green";
+            return c.getString(R.string.green);
         case Color.RED:
-            return "Red";
+            return c.getString(R.string.red);
         case Color.YELLOW:
-            return "Yellow";
+            return c.getString(R.string.yellow);
         default:
             throw new RuntimeException();
         }

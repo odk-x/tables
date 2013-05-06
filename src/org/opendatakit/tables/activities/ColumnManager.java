@@ -60,6 +60,13 @@ import com.actionbarsherlock.view.MenuItem;
  */
 public class ColumnManager extends SherlockListActivity {
 
+	private static final char UNDERSCORE_CHAR = '_';
+	private static final char SPACE_CHAR = ' ';
+
+	private static final String SPACE = " ";
+
+	private static final String EMPTY_STRING = "";
+
 	public static final String INTENT_KEY_TABLE_ID = "tableId";
 
 	// Menu IDs
@@ -108,7 +115,7 @@ public class ColumnManager extends SherlockListActivity {
 		super.onCreate(icicle);
 		setContentView(R.layout.col_manager);
 		// Set title of activity
-		setTitle("Column Manager");
+		setTitle(getString(R.string.column_manager));
 		// set the app icon as an action to go home
 		ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
@@ -176,7 +183,7 @@ public class ColumnManager extends SherlockListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		MenuItem addItem = menu.add(0, ADD_NEW_COL, 0, "Add New Column");
+		MenuItem addItem = menu.add(0, ADD_NEW_COL, 0, getString(R.string.add_column));
 		addItem.setIcon(R.drawable.content_new);
 		addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		return true;
@@ -255,39 +262,41 @@ public class ColumnManager extends SherlockListActivity {
 
 		// Prompt an alert box
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		alert.setTitle("Name of New Column");
+	    View view = getLayoutInflater().inflate(R.layout.message_with_text_edit_field_dialog, null);
+	    alert.setView(view)
+		.setTitle(R.string.add_column);
 
+	    final TextView msg = (TextView) view.findViewById(R.id.message);
+	    msg.setText(getString(R.string.name_of_new_column));
 
 		// Set an EditText view to get user input
-		final EditText input = new EditText(this);
+		final EditText input = (EditText) view.findViewById(R.id.edit_field);
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
 		input.requestFocus();
 		// adding the following line
 		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
 		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
-		alert.setView(input);
 		if (givenColName != null)
 			input.setText(givenColName);
 
 		// OK Action => Create new Column
-		alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+		alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				String colName = input.getText().toString();
 				colName = colName.trim();
 
 				// if not, add a new column
 				if (tp.getColumnIndex(colName) < 0) {
-					if (colName == null || colName.equals("")) {
-						toastColumnNameError("Column name cannot be empty!");
+					if (colName == null || colName.equals(EMPTY_STRING)) {
+						toastColumnNameError(getString(R.string.error_empty_column_name));
 						alertForNewColumnName(null);
-					} else if (colName.contains(" ")) {
-						toastColumnNameError("Column name cannot contain spaces!");
-						alertForNewColumnName(colName.replace(' ', '_'));
+					} else if (colName.contains(SPACE)) {
+						toastColumnNameError(getString(R.string.error_spaces_column_name));
+						alertForNewColumnName(colName.replace(SPACE_CHAR, UNDERSCORE_CHAR));
 					} else if (ColumnProperties.displayNameConflict(tableId,
 					    colName, DbHelper.getDbHelper(ColumnManager.this))){
-					  toastColumnNameError("\"" + colName +
-					      "\" is already in use!");
+					  toastColumnNameError(getString(R.string.error_display_name_in_use_column_name, colName));
 					  alertForNewColumnName(null);
 					} else {
 						// Create new column
@@ -302,13 +311,13 @@ public class ColumnManager extends SherlockListActivity {
 					    loadColumnPropertyManager(cp.getElementKey());
 					}
 				} else {
-					toastColumnNameError(colName + " is already existing column!");
+					toastColumnNameError(getString(R.string.error_in_use_column_name, colName));
 				}
 			}
 		});
 
 		// Cancel Action
-		alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+		alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				// Canceled.
 			}
@@ -395,11 +404,11 @@ public class ColumnManager extends SherlockListActivity {
 
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);
-			String extStr = "";
+			String extStr = EMPTY_STRING;
 			if (tp.isColumnPrime(currentColName)) {
-				extStr += "Collection Column";
+				extStr += getString(R.string.collection_column);
 			} else if (currentColName.equals(tp.getSortColumn())) {
-				extStr += "Sort Column";
+				extStr += getString(R.string.sort_column);
 			}
 			ext.setText(extStr);
 
@@ -418,12 +427,12 @@ public class ColumnManager extends SherlockListActivity {
 					// Options for each item on the list
 					if(tp.isColumnPrime(currentCol)) {
 						menu.add(0, SET_AS_NONPRIME, 0,
-								"Unset as Collection View Based on This");
+								getString(R.string.unset_collection_view_column));
 					} else {
-						menu.add(0, SET_AS_PRIME, 0, "Set as Collection View Based on This");
+						menu.add(0, SET_AS_PRIME, 0, getString(R.string.set_collection_view_column));
 					}
-					menu.add(0, SET_AS_ORDER_BY, 0, "Set as Sort Column");
-					menu.add(0, REMOVE_THIS_COLUMN, 0, "Delete this Column");
+					menu.add(0, SET_AS_ORDER_BY, 0, getString(R.string.set_sort_column));
+					menu.add(0, REMOVE_THIS_COLUMN, 0, getString(R.string.delete_column));
 				}
 			});
 

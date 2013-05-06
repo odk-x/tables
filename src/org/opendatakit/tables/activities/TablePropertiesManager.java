@@ -130,22 +130,15 @@ public class TablePropertiesManager extends PreferenceActivity {
           if (!defaultKVS.entriesExist(db)) {
             AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
                 TablePropertiesManager.this);
-            noDefaultsDialog.setMessage("There are no default settings! " +
-            		"No changes have been made.");
-            noDefaultsDialog.setNeutralButton("OK", null);
+            noDefaultsDialog.setMessage(getString(R.string.no_default_no_changes));
+            noDefaultsDialog.setNeutralButton(getString(R.string.ok), null);
             noDefaultsDialog.show();
-
-            /*
-            Toast.makeText(TablePropertiesManager.this,
-                "No default settings!",
-                Toast.LENGTH_SHORT).show();
-                */
           } else {
             kvsm.revertToDefaultPropertiesForTable(tp.getTableId());
           }
         }
       });
-      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           dialog.cancel();
         }
@@ -154,12 +147,9 @@ public class TablePropertiesManager extends PreferenceActivity {
 
       builder = new AlertDialog.Builder(
           TablePropertiesManager.this);
-      builder.setMessage(
-          "Save settings as default? Any modifications" +
-          " old default settings will be lost, and these settings will be " +
-          "pushed to the server at next synch.");
+      builder.setMessage(getString(R.string.are_you_sure_save_default_settings));
       builder.setCancelable(true);
-      builder.setPositiveButton("Yes",
+      builder.setPositiveButton(getString(R.string.ok),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           KeyValueStoreManager kvsm =
@@ -171,7 +161,7 @@ public class TablePropertiesManager extends PreferenceActivity {
           kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
         }
       });
-      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           dialog.cancel();
         }
@@ -180,10 +170,9 @@ public class TablePropertiesManager extends PreferenceActivity {
 
       builder = new AlertDialog.Builder(
           TablePropertiesManager.this);
-      builder.setMessage(
-          "Copy default to server store?");
+      builder.setMessage(getString(R.string.are_you_sure_copy_default_settings_to_server_settings));
       builder.setCancelable(true);
-      builder.setPositiveButton("Yes",
+      builder.setPositiveButton(getString(R.string.ok),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           KeyValueStoreManager kvsm =
@@ -195,7 +184,7 @@ public class TablePropertiesManager extends PreferenceActivity {
           kvsm.copyDefaultToServerForTable(tp.getTableId());
         }
       });
-      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           dialog.cancel();
         }
@@ -204,10 +193,9 @@ public class TablePropertiesManager extends PreferenceActivity {
 
       builder = new AlertDialog.Builder(
           TablePropertiesManager.this);
-      builder.setMessage(
-          "Merge server settings to default settings?");
+      builder.setMessage(getString(R.string.are_you_sure_merge_server_settings_into_default_settings));
       builder.setCancelable(true);
-      builder.setPositiveButton("Yes",
+      builder.setPositiveButton(getString(R.string.ok),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           try {
@@ -226,7 +214,7 @@ public class TablePropertiesManager extends PreferenceActivity {
           }
         }
       });
-      builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           dialog.cancel();
         }
@@ -241,11 +229,11 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         PreferenceCategory genCat = new PreferenceCategory(this);
         root.addPreference(genCat);
-        genCat.setTitle("General");
+        genCat.setTitle(getString(R.string.general_settings));
 
         EditTextPreference dnPref = new EditTextPreference(this);
-        dnPref.setTitle("Display Name");
-        dnPref.setDialogTitle("Change Display Name");
+        dnPref.setTitle(getString(R.string.table_display_name));
+        dnPref.setDialogTitle(getString(R.string.change_table_display_name));
         dnPref.setText(tp.getDisplayName());
         dnPref.setSummary(tp.getDisplayName());
         dnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -253,7 +241,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             public boolean onPreferenceChange(Preference preference,
                     Object newValue) {
                 tp.setDisplayName((String) newValue);
-                setTitle("Table Manager > " + tp.getDisplayName());
+                setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
                 init();
                 return false;
             }
@@ -269,28 +257,28 @@ public class TablePropertiesManager extends PreferenceActivity {
         String[] tableTypeIds = new String[tableTypeCount];
         String[] tableTypeNames = new String[tableTypeCount];
         tableTypeIds[0] = String.valueOf(TableType.data);
-        tableTypeNames[0] = LanguageUtil.getTableTypeLabel(
+        tableTypeNames[0] = LanguageUtil.getTableTypeLabel(this,
                 TableType.data);
         if (canBeAccessTable) {
             tableTypeIds[1] = String.valueOf(
                     TableType.security);
-            tableTypeNames[1] = LanguageUtil.getTableTypeLabel(
+            tableTypeNames[1] = LanguageUtil.getTableTypeLabel(this,
                     TableType.security);
         }
         if (canBeShortcutTable) {
             int index = canBeAccessTable ? 2 : 1;
             tableTypeIds[index] = String.valueOf(
                     TableType.shortcut);
-            tableTypeNames[index] = LanguageUtil.getTableTypeLabel(
+            tableTypeNames[index] = LanguageUtil.getTableTypeLabel(this,
                     TableType.shortcut);
         }
         ListPreference tableTypePref = new ListPreference(this);
-        tableTypePref.setTitle("Table Type");
-        tableTypePref.setDialogTitle("Change Table Type");
+        tableTypePref.setTitle(getString(R.string.table_type));
+        tableTypePref.setDialogTitle(getString(R.string.change_table_type));
         tableTypePref.setEntryValues(tableTypeIds);
         tableTypePref.setEntries(tableTypeNames);
         tableTypePref.setValue(String.valueOf(tp.getTableType()));
-        tableTypePref.setSummary(LanguageUtil.getTableTypeLabel(
+        tableTypePref.setSummary(LanguageUtil.getTableTypeLabel(this,
                 tp.getTableType()));
         tableTypePref.setOnPreferenceChangeListener(
                 new OnPreferenceChangeListener() {
@@ -308,18 +296,13 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         PreferenceCategory displayCat = new PreferenceCategory(this);
         root.addPreference(displayCat);
-        displayCat.setTitle("Display");
-// this was hilary's original code to always display options to set individual
-// files for collection and overview views. we are not allowing that, so I am
-// removing this.
-//        addViewPreferences(ViewPreferenceType.OVERVIEW_VIEW, displayCat);
-//        addViewPreferences(ViewPreferenceType.COLLECTION_VIEW, displayCat);
-        addViewPreferences(ViewPreferenceType.AUTO_GENERATED, displayCat);
+        displayCat.setTitle(getString(R.string.display_settings));
+        addViewPreferences(displayCat);
 
         FileSelectorPreference detailViewPref =
                 new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
-        detailViewPref.setTitle("Detail View File");
-        detailViewPref.setDialogTitle("Change Detail View File");
+        detailViewPref.setTitle(getString(R.string.detail_view_file));
+        detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
         final KeyValueStoreHelper kvsh =
             tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
         String detailViewFilename =
@@ -348,7 +331,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         formPref.setDialogTitle(getString(R.string.edit_default_form));
 
         Preference rowColorRulePrefs = new Preference(this);
-        rowColorRulePrefs.setTitle("Edit Table Color Rules");
+        rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
         rowColorRulePrefs.setOnPreferenceClickListener(
             new OnPreferenceClickListener() {
 
@@ -371,7 +354,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         displayCat.addPreference(rowColorRulePrefs);
 
         Preference statusColumnColorRulePref = new Preference(this);
-        statusColumnColorRulePref.setTitle("Edit Status Column Color Rules");
+        statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
         statusColumnColorRulePref.setOnPreferenceClickListener(
             new OnPreferenceClickListener() {
 
@@ -397,8 +380,29 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         PreferenceCategory securityCat = new PreferenceCategory(this);
         root.addPreference(securityCat);
-        securityCat.setTitle("Access Control");
+        securityCat.setTitle(getString(R.string.access_control_settings));
 
+        /*
+         * TODO: fix this -- there should probably be three access control
+         * tables for an entire 'application' (i.e., shared across all
+         * tables so as to centralize access control management).
+         *
+         * The schema for the 2 tables should probably be:
+         *
+         * User Access Control Table:
+         *    target_table_id    null -- table for which access control applies
+         *    access_control_type not null -- create, read, modify, delete access
+         *    user_id   null -- e-mail or phone number (sms) (or null for everyone)
+         *
+         * Group Access Control Table:
+         *    target_table_id    null -- table for which access control applies
+         *    access_control_type not null -- create, read, modify, delete access
+         *    group_id   not null -- group id from assignment table
+         *
+         * User-to-Group Assignment Table:
+         *    user_id   not null  -- e-mail or phone number (sms)
+         * 	  group_id  not null  -- group id, as referenced in Group Access Control Table.
+         */
         TableProperties[] accessTps =
             TableProperties.getTablePropertiesForSecurityTables(dbh,
                 KeyValueStore.Type.ACTIVE);
@@ -410,7 +414,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         String[] accessTableIds = new String[accessTableCount];
         accessTableIds[0] = "-1";
         String[] accessTableNames = new String[accessTableCount];
-        accessTableNames[0] = "None";
+        accessTableNames[0] = getString(R.string.none);
         int index = 1;
         for (TableProperties accessTp : accessTps) {
             if (accessTp.getTableId().equals(tp.getTableId())) {
@@ -440,7 +444,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         readTablePref.setEntries(accessTableNames);
         if (readTp == null) {
             readTablePref.setValue("-1");
-            readTablePref.setSummary("None");
+            readTablePref.setSummary(getString(R.string.none));
         } else {
             readTablePref.setValue(String.valueOf(readTp.getTableId()));
             readTablePref.setSummary(readTp.getDisplayName());
@@ -466,7 +470,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         writeTablePref.setEntries(accessTableNames);
         if (writeTp == null) {
             writeTablePref.setValue("-1");
-            writeTablePref.setSummary("None");
+            writeTablePref.setSummary(getString(R.string.none));
         } else {
             writeTablePref.setValue(String.valueOf(writeTp.getTableId()));
             writeTablePref.setSummary(writeTp.getDisplayName());
@@ -490,11 +494,11 @@ public class TablePropertiesManager extends PreferenceActivity {
         // under development!
         PreferenceCategory defaultsCat = new PreferenceCategory(this);
         root.addPreference(defaultsCat);
-        defaultsCat.setTitle("Manage Default Properties");
+        defaultsCat.setTitle(getString(R.string.manage_table_property_sets));
 
         // the actual entry that has the option above.
         Preference revertPref = new Preference(this);
-        revertPref.setTitle("active<--default");
+        revertPref.setTitle(getString(R.string.restore_defaults));
         revertPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
 
@@ -507,7 +511,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         defaultsCat.addPreference(revertPref);
 
         Preference saveAsDefaultPref = new Preference(this);
-        saveAsDefaultPref.setTitle("active-->default");
+        saveAsDefaultPref.setTitle(getString(R.string.save_to_defaults));
         saveAsDefaultPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
 
@@ -520,7 +524,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         defaultsCat.addPreference(saveAsDefaultPref);
 
         Preference defaultToServerPref = new Preference(this);
-        defaultToServerPref.setTitle("default-->server");
+        defaultToServerPref.setTitle(getString(R.string.copy_defaults_to_server));
         defaultToServerPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
 
@@ -533,7 +537,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         defaultsCat.addPreference(defaultToServerPref);
 
         Preference serverToDefaultPref = new Preference(this);
-        serverToDefaultPref.setTitle("default<--MERGE--server");
+        serverToDefaultPref.setTitle(getString(R.string.merge_server_into_defaults));
         serverToDefaultPref.setOnPreferenceClickListener(
             new Preference.OnPreferenceClickListener() {
 
@@ -548,27 +552,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         setPreferenceScreen(root);
     }
 
-    private void addViewPreferences(final ViewPreferenceType type,
-            PreferenceCategory prefCat) {
-//        final TableViewSettings settings;
-        String label;
-        switch (type) {
-        case OVERVIEW_VIEW:
-//            settings = tp.getOverviewViewSettings();
-            label = "Overview View";
-            break;
-        case COLLECTION_VIEW:
-//            settings = tp.getCollectionViewSettings();
-            label = "Collection View";
-            break;
-        case AUTO_GENERATED:
-            label = "View";
-          break;
-        default:
-          Log.e(TAG, "the view type (collection vs overview vs auto) was not" +
-          		"recognized.");
-          label = "Unrecognized View, check log";
-        }
+    private void addViewPreferences(PreferenceCategory prefCat) {
 
         final List<ColumnProperties> numberCols =
             new ArrayList<ColumnProperties>();
@@ -612,8 +596,8 @@ public class TablePropertiesManager extends PreferenceActivity {
           viewTypeNames[i] = viewTypes[i].name();
         }
         ListPreference viewTypePref = new ListPreference(this);
-        viewTypePref.setTitle(label + " Type");
-        viewTypePref.setDialogTitle("Change " + label + " Type");
+        viewTypePref.setTitle(getString(R.string.view_type));
+        viewTypePref.setDialogTitle(getString(R.string.change_view_type));
         viewTypePref.setEntryValues(viewTypeIds);
         viewTypePref.setEntries(viewTypeNames);
 //        viewTypePref.setValue(String.valueOf(settings.getViewType()));
@@ -640,7 +624,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         case List:
             {
               Preference listViewPrefs = new Preference(this);
-              listViewPrefs.setTitle("List View Manager");
+              listViewPrefs.setTitle(getString(R.string.list_view_manager));
               listViewPrefs.setOnPreferenceClickListener(
                   new OnPreferenceClickListener() {
 
@@ -710,8 +694,8 @@ public class TablePropertiesManager extends PreferenceActivity {
 
             // Lat Preference!
             ListPreference mapLatPref = new ListPreference(this);
-            mapLatPref.setTitle(label + " Latitude Column");
-            mapLatPref.setDialogTitle("Change " + label + " Latitude Column");
+            mapLatPref.setTitle(getString(R.string.map_view_latitude_column));
+            mapLatPref.setDialogTitle(getString(R.string.change_map_view_latitude_column));
             mapLatPref.setEntryValues(locColElementKeys);
             mapLatPref.setEntries(locColDisplayNames);
             mapLatPref.setValue(latCol.getElementKey());
@@ -729,8 +713,8 @@ public class TablePropertiesManager extends PreferenceActivity {
 
             // Long Preference!
             ListPreference mapLongPref = new ListPreference(this);
-            mapLongPref.setTitle(label + " Longitude Column");
-            mapLongPref.setDialogTitle("Change " + label + " Longitude Column");
+            mapLongPref.setTitle(getString(R.string.map_view_longitude_column));
+            mapLongPref.setDialogTitle(getString(R.string.change_map_view_longitude_column));
             mapLongPref.setEntryValues(locColElementKeys);
             mapLongPref.setEntries(locColDisplayNames);
             mapLongPref.setValue(longCol.getElementKey());
@@ -748,15 +732,15 @@ public class TablePropertiesManager extends PreferenceActivity {
 
             // ListView Preference!
             FileSelectorPreference listFilePref = new FileSelectorPreference(this, RC_MAP_LIST_VIEW_FILE);
-            listFilePref.setTitle(label + " List View File");
-            listFilePref.setDialogTitle("Change " + label + " List View File");
+            listFilePref.setTitle(getString(R.string.list_view_file));
+            listFilePref.setDialogTitle(getString(R.string.change_map_view_list_view_file));
             String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
             listFilePref.setText(currentFilename);
             prefCat.addPreference(listFilePref);
 
             /**String[] mapColorLabels = new String[TableViewSettings.MAP_COLOR_OPTIONS.length];
             for (int i = 0; i < TableViewSettings.MAP_COLOR_OPTIONS.length; i++) {
-                mapColorLabels[i] = LanguageUtil.getMapColorLabel(TableViewSettings.MAP_COLOR_OPTIONS[i]);
+                mapColorLabels[i] = LanguageUtil.getMapColorLabel(this,TableViewSettings.MAP_COLOR_OPTIONS[i]);
             }
             Map<ColumnProperties, ConditionalRuler> colorRulers = new HashMap<ColumnProperties, ConditionalRuler>();
             for (ColumnProperties cp : tp.getColumns()) {

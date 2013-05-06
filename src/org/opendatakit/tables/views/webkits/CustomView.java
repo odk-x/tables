@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
@@ -460,8 +461,7 @@ public abstract class CustomView extends LinearLayout {
 		  final TableType tableType = TableType.valueOf(tableTypeStr);
 		  AlertDialog newTableAlert;
 		  AlertDialog.Builder alert = new AlertDialog.Builder(context);
-		  alert.setTitle(context.getString(
-		      org.opendatakit.tables.R.string.name_of_new_table));
+		  alert.setTitle(context.getString(R.string.name_of_new_table));
 		  // An edit text for getting user input.
 		  final EditText input = new EditText(context);
 		  alert.setView(input);
@@ -470,7 +470,7 @@ public abstract class CustomView extends LinearLayout {
 		  }
 		  // OK Action: create a new table.
 		  alert.setPositiveButton(
-		      context.getString(org.opendatakit.tables.R.string.ok),
+		      context.getString(R.string.ok),
 		      new DialogInterface.OnClickListener() {
 
               @Override
@@ -491,7 +491,7 @@ public abstract class CustomView extends LinearLayout {
               }
             });
 
-		  alert.setNegativeButton(org.opendatakit.tables.R.string.cancel,
+		  alert.setNegativeButton(R.string.cancel,
 		      new DialogInterface.OnClickListener() {
 
               @Override

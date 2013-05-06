@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities.graphs;
 
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DataManager;
@@ -156,7 +157,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 
     private View buildNoDataView() {
         TextView tv = new TextView(this);
-        tv.setText("No data.");
+        tv.setText(getString(R.string.no_data));
         return tv;
     }
 

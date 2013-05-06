@@ -33,6 +33,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -50,40 +52,49 @@ import org.opendatakit.tables.tasks.InitializeTask;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.Environment;
+import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Various utilities for importing/exporting tables from/to CSV.
- * 
+ *
  * @author sudar.sam@gmail.com
  * @author unknown
  *
  */
 public class CsvUtil {
+	private static final String NEW_LINE = "\n";
 
-    private static final String LAST_MOD_TIME_LABEL = 
+	private static final String OPEN_CURLY_BRACKET = "{";
+
+	private static final String PROPERTIES_CSV_FILE_EXTENSION = ".properties.csv";
+
+	private static final String CSV_FILE_EXTENSION = ".csv";
+
+	private static final String t = "CsvUtil";
+
+    private static final String LAST_MOD_TIME_LABEL =
         DataTableColumns.LAST_MODIFIED_TIME;
     private static final String SRC_PHONE_LABEL = DataTableColumns.URI_USER;
-    private final String root = Environment.getExternalStorageDirectory().getPath();
-    
-    private static final char DELIMITING_CHAR = ",".charAt(0);
-    private static final char QUOTE_CHAR = "\"".charAt(0);
-    private static final char ESCAPE_CHAR = "\\".charAt(0);
-    
+
+    private static final char DELIMITING_CHAR = ',';
+    private static final char QUOTE_CHAR = '\"';
+    private static final char ESCAPE_CHAR = '\\';
+
     // reference to the InitializeTask that called CsvUtil
     private InitializeTask it = null;
-    
+
     private final DataUtil du;
     private final DbHelper dbh;
-    
+
     public CsvUtil(Context context) {
         du = DataUtil.getDefaultDataUtil();
         dbh = DbHelper.getDbHelper(context);
     }
-    
+
     /**
-     * Import a table to the database. 
+     * Import a table to the database.
      * <p>
      * Tables imported through this function are added to the active key value
      * store. Doing it another way would give users a workaround to add tables
@@ -93,19 +104,19 @@ public class CsvUtil {
      * @param file
      * @param tableName
      * @return
-     * @throws TableAlreadyExistsException if settings are included and a 
-     * table already exists with the matching tableId or dbTableName 
+     * @throws TableAlreadyExistsException if settings are included and a
+     * table already exists with the matching tableId or dbTableName
      */
-    public boolean importNewTable(ImportTask importTask, File file, 
-        String tableName) throws 
+    public boolean importNewTable(Context c, ImportTask importTask, File file,
+        String tableName) throws
       TableAlreadyExistsException {
-    	
+
         String dbTableName = TableProperties.createDbTableName(dbh, tableName);
         TableProperties tp;
         try {
           boolean includesProperties = false;
           // these columns will either be just those present in TablePropeties,
-          // if it was not exported with properties, or it will be all the 
+          // if it was not exported with properties, or it will be all the
           // columns in heading row, which will be user and admin columns.
           List<String> columns;
             CSVReader reader = new CSVReader(new FileReader(file),
@@ -116,34 +127,34 @@ public class CsvUtil {
                 return true;
             }
             // adding columns
-            if (row[0].startsWith("{")) {
+            if (row[0].startsWith(OPEN_CURLY_BRACKET)) {
               // has been exported with properties.
               includesProperties = true;
               String jsonProperties = row[0];
-              // now we need the tableId. It is tempting to just scan the 
+              // now we need the tableId. It is tempting to just scan the
               // string until we find it, but if there are other occurrences
               // of the tableId json key we will get into trouble. So, we must
               // deserialize it.
-              tp = TableProperties.addTableFromJson(dbh, jsonProperties, 
+              tp = TableProperties.addTableFromJson(dbh, jsonProperties,
                   KeyValueStore.Type.ACTIVE);
               // we need to check if we need to import all the key value store
               // things as well.
               if (row.length > 1) {
-                // This is, by convention, the key value store entries in list 
+                // This is, by convention, the key value store entries in list
                 // form.
                 try {
                   ObjectMapper mapper = new ObjectMapper();
                   mapper.setVisibilityChecker(mapper.getVisibilityChecker()
                       .withFieldVisibility(Visibility.ANY));
                   List<OdkTablesKeyValueStoreEntry> recoveredEntries =
-                      mapper.readValue(row[1], 
-                          new 
+                      mapper.readValue(row[1],
+                          new
                           TypeReference<List<OdkTablesKeyValueStoreEntry>>(){});
-                  KeyValueStoreManager kvsm = 
+                  KeyValueStoreManager kvsm =
                       KeyValueStoreManager.getKVSManager(dbh);
-                  KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), 
+                  KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(),
                       tp.getBackingStoreType());
-                  kvs.addEntriesToStore(dbh.getWritableDatabase(), 
+                  kvs.addEntriesToStore(dbh.getWritableDatabase(),
                       recoveredEntries);
                   // TODO: sort out closing database appropriately.
                 } catch (JsonGenerationException e) {
@@ -171,7 +182,7 @@ public class CsvUtil {
               }
             } else {
               tp = TableProperties.addTable(dbh, dbTableName,
-                  tableName, TableType.data, 
+                  tableName, TableType.data,
                   KeyValueStore.Type.ACTIVE);
                 int startIndex = 0;
                 if (row[startIndex].equals(LAST_MOD_TIME_LABEL)) {
@@ -189,7 +200,7 @@ public class CsvUtil {
             boolean includeTs = row[0].equals(LAST_MOD_TIME_LABEL);
             boolean includePn = (!includeTs || (row.length > 1)) &&
                     row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
-            return importTable(reader, tp.getTableId(), columns,
+            return importTable(c, reader, tp.getTableId(), columns,
                   includeTs, includePn, includesProperties);
         } catch(FileNotFoundException e) {
             return false;
@@ -197,8 +208,8 @@ public class CsvUtil {
             return false;
         }
     }
-    
-    public boolean importAddToTable(File file, String tableId) {
+
+    public boolean importAddToTable(Context c, File file, String tableId) {
       //TODO is this the correct KVS to get the properties from?
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
                 tableId, KeyValueStore.Type.ACTIVE);
@@ -212,7 +223,7 @@ public class CsvUtil {
                 reader.close();
                 return true;
             }
-            if ((row.length == 1) && row[0].startsWith("{")) {
+            if ((row.length == 1) && row[0].startsWith(OPEN_CURLY_BRACKET)) {
               includesProperties = true;
               //TODO: it might be that we do NOT want to overwrite an existing
               // table's properties, in which case we shouldn't set from json.
@@ -229,7 +240,7 @@ public class CsvUtil {
                 String dbName = tp.getColumnByDisplayName(displayName);
                 columns.add(dbName);
             }
-            return importTable(reader, tp.getTableId(), columns,
+            return importTable(c, reader, tp.getTableId(), columns,
                     includeTs, includePn, includesProperties);
         } catch(FileNotFoundException e) {
             return false;
@@ -237,38 +248,37 @@ public class CsvUtil {
             return false;
         }
     }
-    
+
     /**
-     * Used by InitializeTask 
+     * Used by InitializeTask
      * @param InitializeTask calling this method
      * @param File .csv file
      * @param String tablename
      * @return boolean true if successful
      */
-    public boolean importConfigTables(InitializeTask it, File file, 
+    public boolean importConfigTables(Context c, InitializeTask it, File file,
     		String filename, String tablename) {
-    	
+
     	this.it = it;
-    	
+
     	// split on ".csv" to get the filename without extension
-    	if (filename.endsWith(".csv")) {
-    		
+    	if (filename.endsWith(CSV_FILE_EXTENSION)) {
+
     		// create the file name/path of a .properties.csv file
     		// and check if it exits
-    		String[] tokens = filename.split(".csv");
+    		String[] tokens = filename.split(CSV_FILE_EXTENSION);
     		StringBuffer s = new StringBuffer();
         	for (int i = 0; i < tokens.length; i++) {
         		s.append(tokens[i]);
         	}
-        	String propFilename = s.append(".properties.csv").toString();
-        	String filepath = root + "/odk/tables/" + propFilename;
-        	
-    		File csvProp = new File(filepath);
+        	String propFilename = s.append(PROPERTIES_CSV_FILE_EXTENSION).toString();
+
+    		File csvProp = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME), propFilename);
 
     		if (csvProp.exists()) {
     			try {
 					File temp = joinCSVs(csvProp, file);
-					boolean success = this.importNewTable(null, temp, tablename);
+					boolean success = this.importNewTable(c, null, temp, tablename);
 					// delete temporary file
 					temp.delete();
 					return success;
@@ -277,50 +287,51 @@ public class CsvUtil {
 					return false;
 				} catch (TableAlreadyExistsException e) {
 					e.printStackTrace();
-					
+
 					return false;
 				}
     		} else {
     			try {
-					return this.importNewTable(null, file, tablename);
+					return this.importNewTable(c, null, file, tablename);
 				} catch (TableAlreadyExistsException e) {
 					e.printStackTrace();
 					return false;
 				}
     		}
     	} else {
-    		System.out.println("bad filename");
+    		Log.e(t, "bad filename");
     		return false;
     	}
     }
-    
+
     private File joinCSVs(File prop, File data) throws IOException {
-    	File temp = new File(root + "/odk/tables/temp.csv");
+    	File temp = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
+    			TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
 
     	BufferedReader brp = new BufferedReader(new FileReader(prop));
     	BufferedReader brd = new BufferedReader(new FileReader(data));
     	FileWriter output = new FileWriter(temp);
-    	
+
     	// read in each line and add to the temp file
     	String line;
     	while ((line = brp.readLine()) != null) {
     		output.write(line);
-    		output.write("\n");
+    		output.write(NEW_LINE);
     	}
     	while ((line = brd.readLine()) != null) {
     		output.write(line);
-    		output.write("\n");
+    		output.write(NEW_LINE);
     	}
-    	
+
     	brp.close();
     	brd.close();
     	output.close();
-    	
-    	System.out.println("Temp file made");
+
+    	Log.i(t, "Temp file made");
     	return temp;
     }
-    
-    private boolean importTable(CSVReader reader, String tableId,
+
+    private boolean importTable(Context c, CSVReader reader, String tableId,
     		List<String> columns, boolean includeTs, boolean includePn,
     		boolean exportedWithProperties) {
 
@@ -338,7 +349,7 @@ public class CsvUtil {
     				for (int i = 0; i < columns.size(); i++) {
     					values.put(columns.get(i), row[startIndex + i]);
     					if (rowCount % 30 == 0 && it != null)
-    						it.updateLineCount("loading line: " + rowCount);
+    						it.updateLineCount(c.getString(R.string.import_thru_row, 1+rowCount));
     				}
     				String lastModTime = tsIndex == -1 ?
     						du.formatNowForDb() : row[tsIndex];
@@ -352,7 +363,7 @@ public class CsvUtil {
     				for (int i = 0; i < columns.size(); i++) {
     					values.put(columns.get(i), row[i]);
     					if (rowCount % 30 == 0 && it != null)
-    						it.updateLineCount("loading line: " + rowCount);
+    						it.updateLineCount(c.getString(R.string.import_thru_row, 1+rowCount));
     				}
     				dbt.actualAddRow(values);
     				values.clear();
@@ -368,11 +379,11 @@ public class CsvUtil {
     	}
     }
 
-    
+
 // ===========================================================================================
-//                                          EXPORT 
+//                                          EXPORT
 // ===========================================================================================
-    
+
     /**
      * Export a table to CSV without the properties.
      * @param file
@@ -381,23 +392,23 @@ public class CsvUtil {
      * @param includePn
      * @return
      */
-    public boolean export(ExportTask exportTask, File file, String tableId, 
+    public boolean export(ExportTask exportTask, File file, String tableId,
         boolean includeTs,
             boolean includePn) {
         return export(exportTask, file, tableId, includeTs, includePn, true);
     }
-    
-    public boolean exportWithProperties(ExportTask exportTask, File file, 
+
+    public boolean exportWithProperties(ExportTask exportTask, File file,
         String tableId,
             boolean includeTs, boolean includePn) {
         return export(exportTask, file, tableId, includeTs, includePn, false);
     }
-    
+
     /**
      * Export the file.
      * <p>
      * If raw is false, it means that you DO export the settings. In this case
-     * the first row is: 
+     * the first row is:
      * [json representation of table properties, json of list of kvs entries],
      * and all the column headings are the column element keys or the names of
      * the admin columns in the table.
@@ -410,7 +421,7 @@ public class CsvUtil {
      * @param raw
      * @return
      */
-    private boolean export(ExportTask exportTask, File file, String tableId, 
+    private boolean export(ExportTask exportTask, File file, String tableId,
         boolean includeTs,
             boolean includePn, boolean raw) {
       //TODO test that this is the correct KVS to get the export from.
@@ -422,7 +433,7 @@ public class CsvUtil {
           // then we are including all the metadata columns.
           columnCount += DbTable.getAdminColumns().size();
         } else {
-          // we're only including the user columns and the optional phone 
+          // we're only including the user columns and the optional phone
           // number and time stamp.
           if (includeTs) columnCount++;
           if (includePn) columnCount++;
@@ -431,8 +442,8 @@ public class CsvUtil {
         ArrayList<String> headerRow = new ArrayList<String>();
         int index = 0;
         // TODO: here we'll want to actually include instance name as well...
-        // I think we'll be trying to include every column that also goes to 
-        // the server. I'm not sure how this works, so I am leaving it for 
+        // I think we'll be trying to include every column that also goes to
+        // the server. I'm not sure how this works, so I am leaving it for
         // now.
         if (includeTs) {
             columns.add(DataTableColumns.LAST_MODIFIED_TIME);
@@ -451,7 +462,7 @@ public class CsvUtil {
                 index++;
             }
         } else {
-          // Here there are two sets of things we want to export: 
+          // Here there are two sets of things we want to export:
           // 1. The elementKeys of the user columns.
           // 2. ALL the metadata columns.
           // confusingly, raw == false means use the elementKey.
@@ -486,19 +497,19 @@ public class CsvUtil {
                 QUOTE_CHAR, ESCAPE_CHAR);
             if (!raw) {
               // The first row must be [tableProperties, secondaryKVSEntries]
-              // The tableProperties json is easily had, 
+              // The tableProperties json is easily had,
               // so first we must get the secondary entries.
-              KeyValueStoreManager kvsm = 
+              KeyValueStoreManager kvsm =
                   KeyValueStoreManager.getKVSManager(dbh);
-              KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), 
+              KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(),
                   tp.getBackingStoreType());
-              List<String> partitions = 
+              List<String> partitions =
                   kvs.getAllPartitions(dbh.getReadableDatabase());
               // TODO sort out and handle appropriate closing of database
               // We do NOT want to include the table or column partitions.
               partitions.remove(TableProperties.KVS_PARTITION);
               partitions.remove(ColumnProperties.KVS_PARTITION);
-              List<OdkTablesKeyValueStoreEntry> kvsEntries = 
+              List<OdkTablesKeyValueStoreEntry> kvsEntries =
                   kvs.getEntriesForPartitions(dbh.getReadableDatabase(),
                       partitions);
               // TODO sort out and handle appropriate closing of database
@@ -506,7 +517,7 @@ public class CsvUtil {
               mapper.setVisibilityChecker(mapper.getVisibilityChecker()
                   .withFieldVisibility(Visibility.ANY));
               String[] settingsRow;
-              String strKvsEntries = null;              
+              String strKvsEntries = null;
               try {
                 strKvsEntries = mapper.writeValueAsString(kvsEntries);
               } catch (JsonGenerationException e) {
@@ -548,5 +559,5 @@ public class CsvUtil {
             return false;
         }
     }
-  
+
 }

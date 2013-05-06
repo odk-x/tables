@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
 import android.content.Intent;
@@ -105,7 +106,7 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
      // We'll start with something to take us to the TableManager, which will
      // mean much greater flexibility.
      MenuItem item;
-     item = menu.add(0, MENU_ITEM_TABLE_MANAGER, 0, "Launch Table Manager");
+     item = menu.add(0, MENU_ITEM_TABLE_MANAGER, 0, getString(R.string.launch_table_manager));
      item.setIcon(android.R.drawable.ic_menu_sort_by_size);
      item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 

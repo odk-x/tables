@@ -104,7 +104,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.setOrientation(LinearLayout.VERTICAL);
 		// selecting table
 		TextView est = new TextView(this);
-		est.setText("Exporting Table:");
+		est.setText(getString(R.string.export_csv));
 		est.setTextColor(getResources().getColor(R.color.white));
 		v.addView(est);
 		// adding the table spinner
@@ -128,7 +128,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// options
 		TextView opt = new TextView(this);
-		opt.setText("Options:");
+		opt.setText(getString(R.string.export_options));
 		opt.setTextColor(getResources().getColor(R.color.white));
 		v.addView(opt);
 		// adding the include properties checkbox
@@ -138,7 +138,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		incProps.addView(incPropsCheck);
 		TextView incPropsLabel = new TextView(this);
         incPropsLabel.setTextColor(getResources().getColor(R.color.white));
-		incPropsLabel.setText("Include Metadata to Allow for Import");
+		incPropsLabel.setText(getString(R.string.export_opt_include_metadata));
 		incProps.addView(incPropsLabel);
 		v.addView(incProps);
 		// adding the include source phone numbers checkbox
@@ -147,7 +147,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		incPNCheck.setChecked(true);
 		incPN.addView(incPNCheck);
 		TextView incPNLabel = new TextView(this);
-		incPNLabel.setText("Include Phone Number for Incoming Rows");
+		incPNLabel.setText(getString(R.string.export_opt_include_phone));
 		incPNLabel.setTextColor(getResources().getColor(R.color.white));
 		incPN.addView(incPNLabel);
 		v.addView(incPN);
@@ -157,7 +157,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		incTSCheck.setChecked(true);
 		incTS.addView(incTSCheck);
 		TextView incTSLabel = new TextView(this);
-		incTSLabel.setText("Include Last Modification Timestamp");
+		incTSLabel.setText(getString(R.string.export_opt_include_modification_datetime));
 		incTSLabel.setTextColor(getResources().getColor(R.color.white));
 		incTS.addView(incTSLabel);
 		v.addView(incTS);
@@ -168,7 +168,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		LinearLayout fn = new LinearLayout(this);
 		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
-		fnLabel.setText("Filename:");
+		fnLabel.setText(getString(R.string.export_csv_file));
 		fnLabel.setTextColor(getResources().getColor(R.color.white));
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
@@ -176,8 +176,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		fn.addView(filenameValField);
 		v.addView(fn);
         pickFileButton = new Button(this);
-        pickFileButton.setText("Pick File");
-        pickFileButton.setOnClickListener(new PickFileButtonListener());
+        pickFileButton.setText(getString(R.string.export_choose_csv_file));
+        pickFileButton.setOnClickListener(new PickFileButtonListener(getString(R.string.export_choose_csv_file)));
         v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
@@ -185,7 +185,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the export button
 		Button button = new Button(this);
 		button.setId(EXPORTBUTTON_ID);
-		button.setText("Export");
+		button.setText(getString(R.string.export_button));
 		button.setOnClickListener(new ButtonListener());
 		v.addView(button);
 		// wrapping in a scroll view
