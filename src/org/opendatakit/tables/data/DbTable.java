@@ -364,6 +364,7 @@ public class DbTable {
         String[] rowIds = new String[rowCount];
         String[][] data = new String[rowCount][arrayList.size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+        // TODO: it is currently always throwing here.
         int timestampIndex = c.getColumnIndexOrThrow(DataTableColumns.TIMESTAMP);
         for (int i = 0; i < arrayList.size(); i++) {
             colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
