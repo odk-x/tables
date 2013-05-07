@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.joda.time.DateTime;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -41,13 +42,15 @@ import android.util.Log;
 
 /**
  * SyncProcessor implements the cloud synchronization logic for Tables.
- * 
+ *
  * @author the.dylan.price@gmail.com
- * 
+ *
  */
 public class SyncProcessor {
 
   private static final String TAG = SyncProcessor.class.getSimpleName();
+
+  private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
 
   private final DataUtil du;
   private final DataManager dm;
@@ -82,7 +85,7 @@ public class SyncProcessor {
    * cloud. (The following old statement is no longer true. It now only looks
    * at the tables that have synchronized set to true:
    * "If tp.isSynchronized() == false, returns without doing anything".)
-   * 
+   *
    * @param tp
    *          the table to synchronize
    */
@@ -190,7 +193,7 @@ public class SyncProcessor {
   }
 
   /*
-   * I think this is the method that's called when the table is dl'd for the 
+   * I think this is the method that's called when the table is dl'd for the
    * first time from the server? SS
    */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table) {
@@ -277,7 +280,7 @@ public class SyncProcessor {
     columns.add(DataTableColumns.SYNC_STATE);
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
-    Table allRowIds = table.getRaw(columns, 
+    Table allRowIds = table.getRaw(columns,
     		new String[] {DataTableColumns.SAVED},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
@@ -333,15 +336,23 @@ public class SyncProcessor {
       String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.DELETING),
           String.valueOf(SyncUtil.boolToInt(true)) };
       table.deleteRowActual(whereClause, whereArgs);
-      
+
       // update existing row
       values.put(DataTableColumns.ROW_ID, row.getRowId());
       values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
       values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
       table.actualUpdateRowByRowId(row.getRowId(), values);
 
-      for (Entry<String, String> entry : row.getValues().entrySet())
-        values.put(entry.getKey(), entry.getValue());
+      for (Entry<String, String> entry : row.getValues().entrySet()) {
+      	String colName = entry.getKey();
+      	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
+      		String lastModTime = entry.getValue();
+      		DateTime dt = du.parseDateTimeFromDb(lastModTime);
+      		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+      	} else {
+      		values.put(colName, entry.getValue());
+      	}
+      }
 
       // insert conflicting row
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
@@ -362,8 +373,16 @@ public class SyncProcessor {
       values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.REST);
       values.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
 
-      for (Entry<String, String> entry : row.getValues().entrySet())
-        values.put(entry.getKey(), entry.getValue());
+      for (Entry<String, String> entry : row.getValues().entrySet()) {
+      	String colName = entry.getKey();
+      	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
+      		String lastModTime = entry.getValue();
+      		DateTime dt = du.parseDateTimeFromDb(lastModTime);
+      		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+      	} else {
+      		values.put(colName, entry.getValue());
+      	}
+      }
 
       table.actualAddRow(values);
       syncResult.stats.numInserts++;
@@ -379,8 +398,16 @@ public class SyncProcessor {
       values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.REST));
       values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
 
-      for (Entry<String, String> entry : row.getValues().entrySet())
-        values.put(entry.getKey(), entry.getValue());
+      for (Entry<String, String> entry : row.getValues().entrySet()) {
+    	String colName = entry.getKey();
+    	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
+    		String lastModTime = entry.getValue();
+    		DateTime dt = du.parseDateTimeFromDb(lastModTime);
+    		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+    	} else {
+    		values.put(colName, entry.getValue());
+    	}
+      }
 
       table.actualUpdateRowByRowId(row.getRowId(), values);
       syncResult.stats.numUpdates++;
@@ -425,9 +452,9 @@ public class SyncProcessor {
     	columnNames.add(s);
     }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
-    Table rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED, 
+    Table rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED,
     			DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING },
-        new String[] { DbTable.SavedStatus.COMPLETE.name(), 
+        new String[] { DbTable.SavedStatus.COMPLETE.name(),
     			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
@@ -441,6 +468,11 @@ public class SyncProcessor {
         String colName = rows.getHeader(j);
         if (colName.equals(DataTableColumns.SYNC_TAG)) {
           syncTag = rows.getData(i, j);
+        } else if (colName.equals(DataTableColumns.TIMESTAMP)) {
+          Long timestamp = Long.valueOf(rows.getData(i, j));
+          DateTime dt = new DateTime(timestamp);
+          String lastModTime = du.formatDateTimeForDb(dt);
+          values.put(LAST_MOD_TIME_LABEL, lastModTime);
         } else {
           values.put(colName, rows.getData(i, j));
         }

@@ -881,7 +881,13 @@ public class Controller {
     if (prepopulatedValues.equals(values)) {
       return false;
     }
-    dbt.addRow(values);
+    // TODO: get these values from the form...
+    Long timestamp = null; // should be endTime in form?
+    String uriUser = null; // should be this user
+    String formId = null; // collect formId
+    String instanceName = null; // if exists, meta/instanceName value
+    String locale = null; // current locale string
+    dbt.addRow(values, timestamp, uriUser, instanceName, formId, locale);
     return true;
   }
 
@@ -920,7 +926,14 @@ public class Controller {
 //              values.put(elementName,value);
 //          }
 //      }
-      dbt.updateRow(rowId, values);
+      String uriUser = null; // user on phone
+      Long timestamp = null; // current time
+      String instanceName = null; // meta/instanceName if present in form
+      String formId = null; // formId used by ODK Collect
+      String locale = null; // current locale
+
+      dbt.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
+
       rowId = null;
       return true;
   }
@@ -1209,7 +1222,15 @@ public class Controller {
                   Map<String, String> values = new HashMap<String, String>();
                   values.put(tp.getColumns()[colIndex].getElementKey(),
                           value);
-                  dbt.updateRow(rowId, values);
+
+                  // TODO: supply reasonable values for these...
+                  String uriUser = null; // user on phone
+                  Long timestamp = null; // current time
+                  String instanceName = null; // meta/instanceName if present in form
+                  String formId = null; // formId used by ODK Collect
+                  String locale = null; // current locale
+
+                  dbt.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
                   da.init();
                   dismiss();
               }
