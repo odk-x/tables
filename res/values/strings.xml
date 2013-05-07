@@ -223,7 +223,7 @@
 	<string name="export_to_csv">Exporting table:</string>
 	<string name="export_options">Export Options:</string>
 	<string name="export_opt_include_metadata">Include Metadata to Allow for Import</string>
-	<string name="export_opt_include_phone">Include Phone Number for Incoming Rows</string>
+	<string name="export_opt_include_user_id">Include UserId of Last Modifying User</string>
 	<string name="export_opt_include_modification_datetime">Include Last Modification Timestamp</string>
 	<string name="export_opt_include_instance_name">Include Instance Name</string>
 	<string name="export_opt_include_form_id">Include Form Id</string>

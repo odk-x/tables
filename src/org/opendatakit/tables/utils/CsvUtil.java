@@ -76,7 +76,7 @@ public class CsvUtil {
 	private static final String t = "CsvUtil";
 
     private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
-    private static final String SRC_PHONE_LABEL = DataTableColumns.URI_USER;
+    private static final String URI_USER_LABEL = DataTableColumns.URI_USER;
     private static final String INSTANCE_NAME_LABEL = DataTableColumns.INSTANCE_NAME;
     private static final String FORM_ID_LABEL = DataTableColumns.FORM_ID;
     private static final String LOCALE_LABEL = DataTableColumns.LOCALE;
@@ -187,7 +187,7 @@ public class CsvUtil {
             	if ( colName.equals(LAST_MOD_TIME_LABEL) ) {
               		idxTimestamp = i;
               	}
-              	if ( colName.equals(SRC_PHONE_LABEL)) {
+              	if ( colName.equals(URI_USER_LABEL)) {
               		idxUriUser = i;
               	}
               	if ( colName.equals(INSTANCE_NAME_LABEL)) {
@@ -216,7 +216,7 @@ public class CsvUtil {
               		idxTimestamp = i;
               		dbName = DataTableColumns.TIMESTAMP;
               	}
-              	else if ( colName.equals(SRC_PHONE_LABEL)) {
+              	else if ( colName.equals(URI_USER_LABEL)) {
               		idxUriUser = i;
               		dbName = DataTableColumns.URI_USER;
               	}
@@ -288,7 +288,7 @@ public class CsvUtil {
             		idxTimestamp = i;
             		dbName = DataTableColumns.TIMESTAMP;
             	}
-            	else if ( colName.equals(SRC_PHONE_LABEL)) {
+            	else if ( colName.equals(URI_USER_LABEL)) {
             		idxUriUser = i;
             		dbName = DataTableColumns.URI_USER;
             	}
@@ -495,8 +495,6 @@ public class CsvUtil {
           // then we are including all the metadata columns.
           columnCount += DbTable.getAdminColumns().size();
         } else {
-          // we're only including the user columns and the optional phone
-          // number and time stamp.
           if (includeTimestamp) columnCount++;
           if (includeUriUser) columnCount++;
           if (includeInstanceName) columnCount++;
@@ -513,6 +511,42 @@ public class CsvUtil {
 
         int index = 0;
         if (exportProperties) {
+        	// put the user-relevant metadata columns in leftmost columns
+        	{
+	            columns.add(DataTableColumns.TIMESTAMP);
+	            headerRow.add(LAST_MOD_TIME_LABEL);
+	            idxTimestamp = index;
+	            index++;
+        	}
+
+        	{
+	            columns.add(DataTableColumns.URI_USER);
+	            headerRow.add(URI_USER_LABEL);
+	            idxUriUser = index;
+	            index++;
+	        }
+
+            {
+                columns.add(DataTableColumns.INSTANCE_NAME);
+                headerRow.add(INSTANCE_NAME_LABEL);
+                idxInstanceName = index;
+                index++;
+            }
+
+            {
+                columns.add(DataTableColumns.FORM_ID);
+                headerRow.add(FORM_ID_LABEL);
+                idxFormId = index;
+                index++;
+            }
+
+            {
+                columns.add(DataTableColumns.LOCALE);
+                headerRow.add(LOCALE_LABEL);
+                idxLocale = index;
+                index++;
+            }
+
         	ColumnProperties[] colProps = tp.getColumns();
         	for ( int i = 0 ; i < colProps.length ; ++i ) {
         		ColumnProperties cp = colProps[i];
@@ -521,32 +555,13 @@ public class CsvUtil {
                 headerRow.add(displayName);
                 index++;
             }
-            // And now add all the metadata columns
+
+            // And now add all remaining metadata columns
             for (String colName : DbTable.getAdminColumns()) {
-            	String displayName = null;
-            	if ( colName.equals(DataTableColumns.TIMESTAMP) ) {
-            		idxTimestamp = index;
-            		displayName = LAST_MOD_TIME_LABEL;
+            	if ( columns.contains(colName) ) {
+            		continue;
             	}
-            	else if ( colName.equals(DataTableColumns.URI_USER)) {
-            		idxUriUser = index;
-            		displayName = SRC_PHONE_LABEL;
-            	}
-            	else if ( colName.equals(DataTableColumns.INSTANCE_NAME)) {
-            		idxInstanceName = index;
-            		displayName = INSTANCE_NAME_LABEL;
-            	}
-            	else if ( colName.equals(DataTableColumns.FORM_ID)) {
-            		idxFormId = index;
-            		displayName = FORM_ID_LABEL;
-            	}
-            	else if ( colName.equals(DataTableColumns.LOCALE)) {
-            		idxLocale = index;
-            		displayName = LOCALE_LABEL;
-            	}
-            	else {
-            		displayName = colName;
-            	}
+            	String displayName = colName;
         		columns.add(colName);
                 headerRow.add(displayName);
                 index++;
@@ -560,7 +575,7 @@ public class CsvUtil {
             }
             if (includeUriUser) {
                 columns.add(DataTableColumns.URI_USER);
-                headerRow.add(SRC_PHONE_LABEL);
+                headerRow.add(URI_USER_LABEL);
                 idxUriUser = index;
                 index++;
             }
