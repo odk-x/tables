@@ -80,7 +80,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		LinearLayout fn = new LinearLayout(this);
 		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
-		fnLabel.setText("Filename:");
+		fnLabel.setText(getString(R.string.import_csv_filename));
 		fnLabel.setTextColor(getResources().getColor(R.color.black));
 		fn.addView(fnLabel);
 		filenameValField = new EditText(this);
@@ -122,7 +122,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		LinearLayout ntn = new LinearLayout(this);
 		ntn.setOrientation(LinearLayout.VERTICAL);
 		TextView ntnLabel = new TextView(this);
-		ntnLabel.setText("New Table Name:");
+		ntnLabel.setText(getString(R.string.enter_new_table_name));
 		ntnLabel.setTextColor(getResources().getColor(R.color.black));
 		ntn.addView(ntnLabel);
 		ntnValField = new EditText(this);

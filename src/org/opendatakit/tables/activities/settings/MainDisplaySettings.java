@@ -27,22 +27,25 @@ import android.widget.Spinner;
 
 /**
  * An activity for setting display options.
- * 
+ *
  * @author hkworden
  */
 public class MainDisplaySettings extends Activity {
-    
+
     public static final String TABLE_ID_INTENT_KEY = "tableId";
-    
-    private static final String[] spinnerTexts = { "Table", "List", "Line Graph" };
-    
+
     private Preferences prefs;
     private String tableId;
     private Spinner viewTypeSpinner;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        final String[] spinnerTexts = { getString(R.string.view_type_table),
+        								getString(R.string.view_type_list),
+        								getString(R.string.view_type_graph) };
+
         prefs = new Preferences(this);
         tableId = getIntent().getStringExtra(TABLE_ID_INTENT_KEY);
         setContentView(R.layout.settings_maindisplay);
@@ -72,7 +75,7 @@ public class MainDisplaySettings extends Activity {
             }
         });
     }
-    
+
     private void saveSettings() {
         prefs.setPreferredViewType(tableId,
                 viewTypeSpinner.getSelectedItemPosition());

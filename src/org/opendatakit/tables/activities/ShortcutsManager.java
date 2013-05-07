@@ -34,9 +34,9 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 public class ShortcutsManager extends ListActivity {
-    
+
     private List<MessageShortcut> dataList;
-    
+
     /**
      * Called when the activity is first created.
      * @param savedInstanceState the data most recently saved if the activity
@@ -48,7 +48,7 @@ public class ShortcutsManager extends ListActivity {
         dataList = getShortcutInfo();
         init();
     }
-    
+
     private void init() {
         List<Map<String, String>> adapterList =
             new ArrayList<Map<String, String>>();
@@ -65,13 +65,14 @@ public class ShortcutsManager extends ListActivity {
         setContentView(R.layout.shortcut_list);
         setListAdapter(adapter);
     }
-    
+
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         (new ShortcutEditDialog(dataList.get(position))).show();
     }
-    
+
     private List<MessageShortcut> getShortcutInfo() {
+    	// TODO: this needs to be retrieved from the key-value store (?)
         List<MessageShortcut> l = new ArrayList<MessageShortcut>();
         l.add(new MessageShortcut("fish", "price of %type% at %loc%",
                 "@fish ?price =type %type% =location %loc%"));
@@ -79,9 +80,9 @@ public class ShortcutsManager extends ListActivity {
                 "@weather ?forecast =location %loc%"));
         return l;
     }
-    
+
     private class ShortcutEditDialog extends Dialog {
-        
+
         ShortcutEditDialog(final MessageShortcut ms) {
             super(ShortcutsManager.this);
             requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -118,7 +119,7 @@ public class ShortcutsManager extends ListActivity {
                 }
             });
         }
-        
+
     }
-    
+
 }

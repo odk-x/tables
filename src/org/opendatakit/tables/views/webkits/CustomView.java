@@ -478,7 +478,7 @@ public abstract class CustomView extends LinearLayout {
                 String newTableName = input.getText().toString().trim();
                 if (newTableName == null || newTableName.equals("")) {
                   Toast toast = Toast.makeText(context,
-                      "Table name cannot be empty!",
+                      context.getString(R.string.error_table_name_empty),
                       Toast.LENGTH_LONG);
                   toast.show();
                 } else {

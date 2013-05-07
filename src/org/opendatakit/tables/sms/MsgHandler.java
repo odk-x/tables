@@ -48,7 +48,37 @@ import android.util.Log;
  */
 public class MsgHandler {
 
-    private enum Type {ADD, QUERY}
+    private static final String SPACE_QUESTION_MARK_SYMBOL = " ?";
+
+	private static final String SPACE_TILDE_SYMBOL = " ~";
+
+	private static final String SPACE_SLASH_SYMBOL = " /";
+
+	private static final String SPACE_BANG_SYMBOL = " !";
+
+	private static final String SPACE_GREATER_THAN_SYMBOL = " >";
+
+	private static final String SPACE_LESS_THAN_SYMBOL = " <";
+
+	private static final String SPACE_EQUALS_SYMBOL = " =";
+
+	private static final String SPACE_PLUS_SYMBOL = " +";
+
+	private static final String EMPTY_STRING = "";
+
+	private static final String AT_SYMBOL = "@";
+
+	private static final char SPACE_CHAR = ' ';
+
+	private static final char HASH_SYMBOL_CHAR = '#';
+
+	private static final String PLUS_SYMBOL = "+";
+
+	private static final String PERCENT_SYMBOL = "%";
+
+	private static final String SPACE = " ";
+
+	private enum Type {ADD, QUERY}
 
     private static final int DEFAULT_LIMIT = 25;
 
@@ -105,7 +135,7 @@ public class MsgHandler {
     }
 
     private boolean checkIsMessage(String msg) {
-        return msg.startsWith("@") && (msg.lastIndexOf(' ') > 0);
+        return msg.startsWith(AT_SYMBOL) && (msg.lastIndexOf(SPACE_CHAR) > 0);
     }
 
     private String standardize(String msg) {
@@ -131,7 +161,7 @@ public class MsgHandler {
         }
         int iterCount = 0;
         while (iterCount < scNames.size()) {
-            String[] split = msg.split(" ");
+            String[] split = msg.split(SPACE);
             String target = split[0].substring(1);
             for (int j = 0; j < scNames.size(); j++) {
                 if (!target.equals(scNames.get(j))) {
@@ -150,9 +180,9 @@ public class MsgHandler {
     }
 
     private String convertByShortcut(String msg, String input, String output) {
-        msg = msg.substring(msg.indexOf(' ') + 1);
+        msg = msg.substring(msg.indexOf(SPACE_CHAR) + 1);
         Map<String, String> values = new HashMap<String, String>();
-        String[] inSplit = input.split("%");
+        String[] inSplit = input.split(PERCENT_SYMBOL);
         if (!msg.startsWith(inSplit[0])) {
             return null;
         }
@@ -168,8 +198,8 @@ public class MsgHandler {
         if (index != msg.length()) {
             values.put(inSplit[inSplit.length - 1], msg.substring(index));
         }
-        String[] outSplit = output.split("%");
-        int start = output.startsWith("%") ? 0 : 1;
+        String[] outSplit = output.split(PERCENT_SYMBOL);
+        int start = output.startsWith(PERCENT_SYMBOL) ? 0 : 1;
         for (int i = start; i < outSplit.length; i += 2) {
             String key = outSplit[i];
             if (!values.containsKey(key)) {
@@ -185,7 +215,7 @@ public class MsgHandler {
     }
 
     private TableProperties findTable(String msg) {
-        String target = msg.split(" ")[0].substring(1);
+        String target = msg.split(SPACE)[0].substring(1);
         for (TableProperties tp : dataTps) {
             if (tp.getDisplayName().equals(target)) {
                 return tp;
@@ -195,11 +225,11 @@ public class MsgHandler {
     }
 
     private Type determineType(String msg) {
-        String[] split = msg.split(" ");
+        String[] split = msg.split(SPACE);
         if (split.length < 2) {
             return null;
         }
-        if (split[1].startsWith("+")) {
+        if (split[1].startsWith(PLUS_SYMBOL)) {
             return Type.ADD;
         } else {
             return Type.QUERY;
@@ -219,10 +249,10 @@ public class MsgHandler {
         if (secTableId == null) {
             return true;
         }
-        String password = "";
-        int lastHashIndex = msg.lastIndexOf('#');
+        String password = EMPTY_STRING;
+        int lastHashIndex = msg.lastIndexOf(HASH_SYMBOL_CHAR);
         if ((lastHashIndex > 0) && (msg.length() > lastHashIndex + 2) &&
-                (msg.charAt(lastHashIndex - 1) == ' ')) {
+                (msg.charAt(lastHashIndex - 1) == SPACE_CHAR)) {
             password = msg.substring(lastHashIndex + 1);
         }
         DbTable sDbt = dm.getDbTable(secTableId);
@@ -241,9 +271,9 @@ public class MsgHandler {
     }
 
     private String stripPassword(String msg) {
-        int lastSpaceIndex = msg.lastIndexOf(' ');
+        int lastSpaceIndex = msg.lastIndexOf(SPACE_CHAR);
         if ((msg.length() > lastSpaceIndex + 1) &&
-                (msg.charAt(lastSpaceIndex + 1) == '#')) {
+                (msg.charAt(lastSpaceIndex + 1) == HASH_SYMBOL_CHAR)) {
             return msg.substring(0, lastSpaceIndex).trim();
         }
         return msg;
@@ -252,16 +282,16 @@ public class MsgHandler {
     private boolean handleAdd(TableProperties tp, String msg,
             String phoneNum) {
         Map<String, String> values = new HashMap<String, String>();
-        int plusIndex = msg.indexOf(" +") + 1;
+        int plusIndex = msg.indexOf(SPACE_PLUS_SYMBOL) + 1;
         while (plusIndex > 0) {
             // finding index of space between column and value
-            int spaceIndex = msg.indexOf(' ', plusIndex + 2);
+            int spaceIndex = msg.indexOf(SPACE_CHAR, plusIndex + 2);
             if (spaceIndex < 0) {
                 return false;
             }
             // getting the column name
             String key = msg.substring(plusIndex + 1, spaceIndex).trim();
-            int secondSpaceIndex = msg.indexOf(' ', spaceIndex + 1);
+            int secondSpaceIndex = msg.indexOf(SPACE_CHAR, spaceIndex + 1);
             if (secondSpaceIndex < 0) {
                 // we've gotten to the end of the message; the remainder must
                 // be the value
@@ -269,7 +299,7 @@ public class MsgHandler {
                 values.put(key, value);
                 break;
             }
-            plusIndex = msg.indexOf(" +", secondSpaceIndex) + 1;
+            plusIndex = msg.indexOf(SPACE_PLUS_SYMBOL, secondSpaceIndex) + 1;
             if (plusIndex < 1) {
                 // we got to the end of the message
                 String value = msg.substring(spaceIndex).trim();
@@ -300,18 +330,24 @@ public class MsgHandler {
     private boolean handleQuery(TableProperties tp, String msg,
             String phoneNum) {
         List<Integer> indices = new ArrayList<Integer>();
-        int spaceIndex = msg.indexOf(' ');
-        int charIndex = minNonNegative(msg.indexOf(" =", spaceIndex),
-                msg.indexOf(" <", spaceIndex), msg.indexOf(" >", spaceIndex),
-                msg.indexOf(" !", spaceIndex), msg.indexOf(" /", spaceIndex),
-                msg.indexOf(" ~", spaceIndex), msg.indexOf(" ?", spaceIndex));
+        int spaceIndex = msg.indexOf(SPACE_CHAR);
+        int charIndex = minNonNegative(msg.indexOf(SPACE_EQUALS_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_LESS_THAN_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_GREATER_THAN_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_BANG_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_SLASH_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_TILDE_SYMBOL, spaceIndex),
+                msg.indexOf(SPACE_QUESTION_MARK_SYMBOL, spaceIndex));
         while (charIndex > 0) {
             indices.add(charIndex + 1);
             int index = charIndex + 2;
-            charIndex = minNonNegative(msg.indexOf(" =", index),
-                    msg.indexOf(" <", index), msg.indexOf(" >", index),
-                    msg.indexOf(" !", index), msg.indexOf(" /", index),
-                    msg.indexOf(" ~", index), msg.indexOf(" ?", index));
+            charIndex = minNonNegative(msg.indexOf(SPACE_EQUALS_SYMBOL, index),
+                    msg.indexOf(SPACE_LESS_THAN_SYMBOL, index),
+                    msg.indexOf(SPACE_GREATER_THAN_SYMBOL, index),
+                    msg.indexOf(SPACE_BANG_SYMBOL, index),
+                    msg.indexOf(SPACE_SLASH_SYMBOL, index),
+                    msg.indexOf(SPACE_TILDE_SYMBOL, index),
+                    msg.indexOf(SPACE_QUESTION_MARK_SYMBOL, index));
         }
         indices.add(msg.length());
         List<ColumnProperties> cols = new ArrayList<ColumnProperties>();
@@ -321,7 +357,7 @@ public class MsgHandler {
         for (int i = 0; i < indices.size() - 1; i++) {
             String token = msg.substring(indices.get(i), indices.get(i + 1));
             char c = token.charAt(0);
-            spaceIndex = token.indexOf(' ', 2);
+            spaceIndex = token.indexOf(SPACE_CHAR, 2);
             String value = (spaceIndex < 0) ? null :
                     token.substring(spaceIndex).trim();
             String colName = (spaceIndex < 0) ? token.substring(1).trim() :
