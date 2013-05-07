@@ -15,10 +15,14 @@
  */
 package org.opendatakit.tables.sync;
 
+import android.util.Log;
+
 /**
  * A utility class for common synchronization methods and definitions.
  */
 public class SyncUtil {
+  
+  public static final String TAG = SyncUtil.class.getSimpleName();
 
   /**
    * <p>
@@ -74,6 +78,49 @@ public class SyncUtil {
   
   public static boolean stringToBool(String bool) {
     return bool.equalsIgnoreCase("true");
+  }
+  
+  public static org.opendatakit.tables.data.TableType transformServerTableType(
+      org.opendatakit.aggregate.odktables.entity.api.TableType serverType) {
+    org.opendatakit.tables.data.TableType phoneType = 
+        org.opendatakit.tables.data.TableType.data;
+    switch (serverType) {
+    case DATA:
+      phoneType = org.opendatakit.tables.data.TableType.data;
+      break;
+    case SHORTCUT:
+      phoneType = org.opendatakit.tables.data.TableType.shortcut;
+      break;
+    case SECURITY:
+      phoneType = org.opendatakit.tables.data.TableType.security;
+      break;
+    default:
+      Log.e(TAG, "unrecognized serverType: " + serverType);
+    }
+    return phoneType;
+  }
+  
+  public static org.opendatakit.aggregate.odktables.entity.api.TableType 
+  transformClientTableType(org.opendatakit.tables.data.TableType clientType) {
+    org.opendatakit.aggregate.odktables.entity.api.TableType serverType = 
+        org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
+    switch (clientType) {
+    case data:
+      serverType = 
+        org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
+      break;
+    case shortcut:
+      serverType = 
+        org.opendatakit.aggregate.odktables.entity.api.TableType.SHORTCUT;
+      break;
+    case security:
+      serverType = 
+        org.opendatakit.aggregate.odktables.entity.api.TableType.SECURITY;
+      break;
+    default:
+      Log.e(TAG, "unrecognized clientType: " + clientType);
+    }
+    return serverType;
   }
   
 }

@@ -670,11 +670,12 @@ public class TableProperties {
    * @param intendedStore type of the store to which you're adding.
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String dbTableName,
-      String displayName, TableType tableType, KeyValueStore.Type intendedStore) {
+  public static TableProperties addTable(DbHelper dbh, String tableKey,
+      String dbTableName, String displayName, TableType tableType, 
+      KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, dbTableName, displayName, tableType,
-        id, intendedStore);
+    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName, 
+        tableType, id, intendedStore);
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
@@ -778,7 +779,8 @@ public class TableProperties {
       		" dbTableName: " +  dbTableName + " or with the tableId: "
           + tableId);
     }
-    TableProperties tp = addTable(dbh, dbTableName, displayName,
+    Log.e(TAG, "shouldn't be adding table from json!");
+    TableProperties tp = addTable(dbh, dbTableName, dbTableName, displayName,
         TableType.valueOf(dbTableType), tableId, typeOfStore);
     tp.setFromJson(json);
     return tp;
@@ -801,8 +803,8 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String dbTableName,
-      String displayName, TableType tableType, String id,
+  public static TableProperties addTable(DbHelper dbh, String tableKey, 
+      String dbTableName, String displayName, TableType tableType, String id,
       KeyValueStore.Type typeOfStore) {
     // First we will add the entry in TableDefinitions.
     //  TODO: this should check for duplicate names.
@@ -829,8 +831,8 @@ public class TableProperties {
 	    db.beginTransaction();
 	    try {
 	      Map<String, String> tableDefProps =
-	          TableDefinitions.addTable(db, id, dbTableName, dbTableName,
-	          tableType);
+	          TableDefinitions.addTable(db, id, tableKey, dbTableName,
+	              tableType);
 //	      KeyValueStore typedStore = kvms.getStoreForTable(id,
 //	          typeOfStore);
 //	        typedStore.addEntriesToStore(db, values);
@@ -1383,6 +1385,16 @@ public class TableProperties {
    */
   public String getSortColumn() {
     return sortColumn;
+  }
+  
+  /**
+   * This is the user-friendly-ish string that for the short term (May 6) 
+   * is the 
+   * display name on the server.
+   * @return
+   */
+  public String getTableKey() {
+    return this.tableKey;
   }
 
   /**

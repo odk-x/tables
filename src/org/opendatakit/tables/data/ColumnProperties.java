@@ -676,7 +676,7 @@ public class ColumnProperties {
    * @param displayVisible
    * @return
    */
-  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
+  public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
       String tableId,
       String displayName,
       String elementKey,

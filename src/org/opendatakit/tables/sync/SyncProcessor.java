@@ -24,16 +24,30 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.entity.Column;
+import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.entity.api.PropertiesResource;
+import org.opendatakit.aggregate.odktables.entity.api.TableDefinitionResource;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.tables.data.ColumnDefinitions;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
+import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreSync;
+import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.SyncState;
+import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -53,12 +67,19 @@ public class SyncProcessor {
   private final DataManager dm;
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
+  private final DbHelper dbh;
+  private final ObjectMapper mMapper;
 
-  public SyncProcessor(Synchronizer synchronizer, DataManager dm, SyncResult syncResult) {
+  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, DataManager dm, 
+      SyncResult syncResult) {
+    this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
     this.dm = dm;
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
+    this.mMapper = new ObjectMapper();
+    mMapper.setVisibilityChecker(mMapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
   }
 
   /**
@@ -73,25 +94,23 @@ public class SyncProcessor {
         KeyValueStore.Type.SERVER);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
-      synchronizeTable(tp);
+      synchronizeTable(tp, false);
     }
   }
 
   /**
    * Synchronize the table represented by the given TableProperties with the
-   * cloud. (The following old statement is no longer true. It now only looks
-   * at the tables that have synchronized set to true:
-   * "If tp.isSynchronized() == false, returns without doing anything".)
+   * cloud.
    * 
    * @param tp
    *          the table to synchronize
+   * @param downloadingTable
+   *          flag saying whether or not the table is being downloaded for the
+   *          first time. Only applies to tables have their sync state set to
+   *          {@link SyncState#rest}.
    */
-  public void synchronizeTable(TableProperties tp) {
-    //if (!tp.isSynchronized())
-     // return;
-
+  public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
     DbTable table = dm.getDbTable(tp.getTableId());
-
     boolean success = false;
     beginTableTransaction(tp);
     try {
@@ -105,10 +124,10 @@ public class SyncProcessor {
       case updating:
         success = synchronizeTableUpdating(tp, table);
         if (success)
-          success = synchronizeTableRest(tp, table);
+          success = synchronizeTableRest(tp, table, false);
         break;
       case rest:
-        success = synchronizeTableRest(tp, table);
+        success = synchronizeTableRest(tp, table, downloadingTable);
         break;
       default:
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
@@ -126,9 +145,10 @@ public class SyncProcessor {
 
     boolean success = false;
     try {
-      updateDbFromServer(tp, table);
-      String syncTag = synchronizer.setTableProperties(tableId, tp.getSyncTag(),
-          tp.getDisplayName(), tp.toJson());
+      updateDbFromServer(tp, table, false);
+      String syncTag = synchronizer.setTableProperties(tableId, 
+          tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId, 
+              KeyValueStore.Type.SERVER));
       tp.setSyncTag(syncTag);
       success = true;
     } catch (IOException e) {
@@ -142,16 +162,21 @@ public class SyncProcessor {
     return success;
   }
 
-  private boolean synchronizeTableInserting(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableInserting(TableProperties tp, 
+      DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
     Map<String, ColumnType> columns = getColumns(tp);
-    List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
+    List<SyncRow> rowsToInsert = getRows(table, columns, 
+        SyncUtil.State.INSERTING);
 
     boolean success = false;
     beginRowsTransaction(table, getRowIdsAsArray(rowsToInsert));
     try {
-      String syncTag = synchronizer.createTable(tableId, tp.getDisplayName(), columns, tp.toJson());
+      String syncTag = synchronizer.createTable(tableId, 
+          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(), 
+          SyncUtil.transformClientTableType(tp.getTableType()), 
+          tp.getAccessControls());
       tp.setSyncTag(syncTag);
       Modification modification = synchronizer.insertRows(tableId, tp.getSyncTag(), rowsToInsert);
       updateDbFromModification(modification, table, tp);
@@ -193,7 +218,8 @@ public class SyncProcessor {
    * I think this is the method that's called when the table is dl'd for the 
    * first time from the server? SS
    */
-  private boolean synchronizeTableRest(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableRest(TableProperties tp, DbTable table,
+      boolean downloadingTable) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
     Map<String, ColumnType> columns = getColumns(tp);
@@ -204,7 +230,7 @@ public class SyncProcessor {
     // in the db when we query for them in the next step, e.g. turn an INSERTING
     // row into CONFLICTING)
     try {
-      updateDbFromServer(tp, table);
+      updateDbFromServer(tp, table, downloadingTable);
     } catch (IOException e) {
       ioException("synchronizeTableRest", tp, e);
       return false;
@@ -267,10 +293,20 @@ public class SyncProcessor {
         String.format("Unexpected exception in %s on table: %s", method, tp.getDisplayName()), e);
   }
 
-  private void updateDbFromServer(TableProperties tp, DbTable table) throws IOException {
+  /**
+   * Update the database based on the server. 
+   * @param tp modified in place if the table properties are changed
+   * @param table
+   * @param downloadingTable whether or not the table is being downloaded for
+   * the first time.
+   * @throws IOException
+   */
+  private void updateDbFromServer(TableProperties tp, DbTable table,
+      boolean downloadingTable) throws IOException {
 
     // retrieve updates
-    IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
+    IncomingModification modification = synchronizer.getUpdates(
+        tp.getTableId(), tp.getSyncTag());
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
     ArrayList<String> columns = new ArrayList<String>();
@@ -283,8 +319,32 @@ public class SyncProcessor {
 
     // update properties if necessary
     // do this before updating data in case columns have changed
-    if (modification.hasTablePropertiesChanged())
-      tp.setFromJson(modification.getTableProperties());
+    if (modification.hasTablePropertiesChanged()) {
+      // We have two things to worry about. One is if the table definition 
+      // (i.e. the table datastructure or the table's columns' datastructure)
+      // has changed. The other is if the key value store has changed.
+      TableDefinitionResource definitionResource = 
+          modification.getTableDefinitionResource();
+      PropertiesResource propertiesResource = 
+          modification.getTableProperties();
+      if (downloadingTable) {
+        // The table is being downloaded for the first time. We first must
+        // delete the dummy table we'd created and then add the new table.
+        Log.w(TAG, "table: " + tp.getDisplayName() + " is being downloaded " +
+            "for the first time. deleting place holder table.");
+        tp.deleteTableActual();
+        // update the tp
+        tp = addTableFromDefinitionResource(definitionResource);
+      } else {
+        Log.w(TAG, "database properties have changed. " +
+            "structural modifications are not allowed. if structure needs" +
+            " to be updated, it is not happening.");
+        resetKVSForPropertiesResource(tp, propertiesResource);
+        // update the tp
+        tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+            KeyValueStore.Type.SERVER);
+      }
+    }
 
     // sort data changes into types
     List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
@@ -502,5 +562,114 @@ public class SyncProcessor {
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
     }
+  }
+  
+  /**
+   * Update the database to reflect the new structure. 
+   * TODO: pass the db around rather than dbh so we can do this transactionally
+   * @param definitionResource
+   * @return the new {@link TableProperties} for the table.
+   */
+  private TableProperties addTableFromDefinitionResource(
+      TableDefinitionResource definitionResource) {
+    KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
+    TableProperties tp = TableProperties.addTable(dbh, 
+        definitionResource.getTableKey(),
+        definitionResource.getDbTableName(), 
+        definitionResource.getTableKey(),
+        SyncUtil.transformServerTableType(definitionResource.getType()), 
+        definitionResource.getTableId(),
+        kvsType);
+    for (Column col : definitionResource.getColumns()) {
+      // TODO: We aren't handling types correctly here. Need to have a mapping
+      // on the server as well so that you can pull down the right thing.
+      ColumnDefinitions.addColumn(dbh.getWritableDatabase(), col.getTableId(), 
+          col.getElementKey(), col.getElementName(), ColumnType.NONE, 
+          col.getListChildElementKeys(), 
+          SyncUtil.intToBool(col.getIsPersisted()), col.getJoins());
+    }
+    // Refresh the table properties to get the columns.
+    tp = TableProperties.getTablePropertiesForTable(dbh, 
+        definitionResource.getTableId(), kvsType);
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(
+        definitionResource.getTableId());
+    syncKVS.setIsSetToSync(true);
+    tp.setSyncState(SyncState.rest);
+    tp.setSyncTag(null);
+    return tp;
+  }
+  
+  /**
+   * Wipe all of the existing key value entries in the server kvs and replace
+   * them with the entries in the {@link PropertiesResource}.
+   * @param tp
+   * @param propertiesResource
+   */
+  private void resetKVSForPropertiesResource(TableProperties tp,
+      PropertiesResource propertiesResource) {
+    KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), kvsType);
+    kvs.clearKeyValuePairs(dbh.getWritableDatabase());
+    kvs.addEntriesToStore(dbh.getWritableDatabase(), 
+        propertiesResource.getKeyValueStoreEntries());
+  }
+  
+  /**
+   * Return a list of all the entries in the key value store for the given 
+   * table and type.
+   * @param tableId
+   * @param typeOfStore
+   * @return
+   */
+  private List<OdkTablesKeyValueStoreEntry> getAllKVSEntries(String tableId,
+      KeyValueStore.Type typeOfStore) {
+    KeyValueStore kvs = KeyValueStoreManager.getKVSManager(dbh)
+        .getStoreForTable(tableId, typeOfStore);
+    List<OdkTablesKeyValueStoreEntry> allEntries = 
+        kvs.getEntries(dbh.getReadableDatabase());
+    return allEntries;
+  }
+  
+  /**
+   * Return a list of {@link Column} objects (representing the column 
+   * definition) for each of the columns associated with this table.
+   * @param tp
+   * @return
+   */
+  private List<Column> getColumnsForTable(TableProperties tp) {
+    List<Column> columns = new ArrayList<Column>();
+    ColumnProperties[] colProps = tp.getColumns();
+    for (int i = 0; i < colProps.length; i++) {
+      String elementKey = colProps[i].getElementKey();
+      String elementName = colProps[i].getElementName();
+      ColumnType colType = colProps[i].getColumnType();
+      List<String> listChildrenElements = 
+          colProps[i].getListChildElementKeys();
+      int isPersisted = SyncUtil.boolToInt(colProps[i].isPersisted());
+      JoinColumn joins = colProps[i].getJoins();
+      String listChildElementKeysStr = null;
+      String joinsStr = null;
+      try {
+        listChildElementKeysStr = 
+            mMapper.writeValueAsString(listChildrenElements);
+        joinsStr = mMapper.writeValueAsString(joins);
+      } catch (JsonGenerationException e) {
+        Log.e(TAG, "problem parsing json list entry during sync");
+        e.printStackTrace();
+      } catch (JsonMappingException e) {
+        Log.e(TAG, "problem mapping json list entry during sync");
+        e.printStackTrace();
+      } catch (IOException e) {
+        Log.e(TAG, "i/o exception with json list entry during sync");
+        e.printStackTrace();
+      }
+      Column c = new Column(tp.getTableId(), elementKey, elementName, 
+          AggregateSynchronizer.types.get(colType), listChildElementKeysStr, 
+          isPersisted, joinsStr);
+      columns.add(c);
+    }
+    return columns;
   }
 }

@@ -509,7 +509,7 @@ public abstract class CustomView extends LinearLayout {
 		  String dbTableName =
 		      TableProperties.createDbTableName(dbh, tableName);
 		  TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-		      tableName, tableType, KeyValueStore.Type.ACTIVE);
+		      dbTableName, tableName, tableType, KeyValueStore.Type.ACTIVE);
 		}
 	}
 

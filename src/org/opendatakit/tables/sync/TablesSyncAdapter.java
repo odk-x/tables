@@ -59,7 +59,8 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
         syncResult.stats.numAuthExceptions++;
         return;
       }
-      SyncProcessor processor = new SyncProcessor(synchronizer, dm, syncResult);
+      SyncProcessor processor = new SyncProcessor(helper, synchronizer, dm, 
+          syncResult);
       processor.synchronize();
     }
   }

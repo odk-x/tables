@@ -237,13 +237,11 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       // we in fact first add the properties to the active store and allow the
       // table to be created, then copy the properties through to the default
       // and server stores.
-      TableProperties tp = TableProperties.addTable(dbh,
-          TableProperties.createDbTableName(dbh, tableName), tableName,
-          TableType.data, tableId, KeyValueStore.Type.ACTIVE);
+      TableProperties tp = TableProperties.addTable(dbh, tableName, tableName,
+          tableName, TableType.data, tableId, KeyValueStore.Type.ACTIVE);
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
       syncKVS.setIsSetToSync(true);
-      // hilary's original--tp.setSynchronized(true);
       tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
 
@@ -251,12 +249,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       try {
         synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e) {
-        Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this);
+        Aggregate.invalidateAuthToken(authToken, 
+            AggregateDownloadTableActivity.this);
         return null;
       }
-      SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
-          new SyncResult());
-      processor.synchronizeTable(tp);
+      SyncProcessor processor = new SyncProcessor(dbh, synchronizer, 
+          new DataManager(dbh), new SyncResult());
+      processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
       //SS: and now at this point the table is up to date in the active store.
       // however, it is exceedingly important that the properties also be 

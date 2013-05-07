@@ -170,7 +170,7 @@ public class CsvUtil {
                 columns.add(columnHeading);
               }
             } else {
-              tp = TableProperties.addTable(dbh, dbTableName,
+              tp = TableProperties.addTable(dbh, dbTableName, dbTableName,
                   tableName, TableType.data, 
                   KeyValueStore.Type.ACTIVE);
                 int startIndex = 0;

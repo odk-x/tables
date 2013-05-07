@@ -301,8 +301,8 @@ public class Aggregate extends SherlockActivity {
         DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
         Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
             prefs.getAuthToken());
-        SyncProcessor processor = new SyncProcessor(synchronizer, new DataManager(dbh),
-            new SyncResult());
+        SyncProcessor processor = new SyncProcessor(dbh, 
+            synchronizer, new DataManager(dbh), new SyncResult());
         processor.synchronize();
         success = true;
       } catch (InvalidAuthTokenException e) {
