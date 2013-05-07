@@ -1,5 +1,6 @@
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
@@ -27,7 +28,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		prefs = new Preferences(this);
-		// check if this activity was called from Controller, in which case it 
+		// check if this activity was called from Controller, in which case it
 		// would have an extra string "tableId" bundled in
         String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
         if (tableId == null) {
@@ -50,11 +51,11 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 
 		PreferenceCategory genCat = new PreferenceCategory(this);
 		root.addPreference(genCat);
-		genCat.setTitle("General Display Preferences");
+		genCat.setTitle(getString(R.string.general_display_preferences));
 
 		SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
-		fontSizePref.setTitle("Font Size");
-		fontSizePref.setDialogTitle("Change Font Size");
+		fontSizePref.setTitle(getString(R.string.font_size));
+		fontSizePref.setDialogTitle(getString(R.string.change_font_size));
 		fontSizePref.setMaxValue(48);
 		fontSizePref.setValue(prefs.getFontSize());
 		fontSizePref.setOnPreferenceChangeListener(
@@ -78,14 +79,14 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 
 		PreferenceCategory genCat = new PreferenceCategory(this);
 		root.addPreference(genCat);
-		genCat.setTitle("Display Preferences for: " + tp.getDbTableName());
+		genCat.setTitle(getString(R.string.display_prefs_for, tp.getDbTableName()));
 
 		final SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
 		fontSizePref.addDefaultOption(true);
-		fontSizePref.setTitle("Font Size");
-		fontSizePref.setDialogTitle("Change Font Size");
+		fontSizePref.setTitle(getString(R.string.font_size));
+		fontSizePref.setDialogTitle(getString(R.string.change_font_size));
 		fontSizePref.setMaxValue(48);
-		
+
 		// if a custom font size hasn't been set, set to general font size
 		// and check "use default" checkbox
 		if (kvsh.getInteger("fontSize") == null) {
@@ -98,7 +99,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 			fontSizePref.checkCheckBox(false);
 			fontSizePref.setSliderEnabled(true);
 		}
-		
+
 		fontSizePref.setOnPreferenceChangeListener(
 				new OnPreferenceChangeListener() {
 					@Override
@@ -106,7 +107,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 							Object newValue) {
 						if (fontSizePref.isChecked())
 							kvsh.removeKey("fontSize");
-						else 
+						else
 							kvsh.setInteger("fontSize",(Integer) newValue);
 						return true;
 					}

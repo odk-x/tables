@@ -16,6 +16,7 @@ package org.opendatakit.tables.activities;
 
 import java.io.IOException;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
 
 import android.accounts.Account;
@@ -135,7 +136,7 @@ public class AccountInfoActivity extends SherlockActivity {
     switch (id) {
     case WAITING_ID:
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setMessage("Waiting on authentication").setCancelable(false);
+      builder.setMessage(getString(R.string.waiting_auth)).setCancelable(false);
       AlertDialog alert = builder.create();
       dialog = alert;
       break;

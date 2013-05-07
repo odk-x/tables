@@ -37,20 +37,20 @@ import com.actionbarsherlock.view.MenuItem;
 
 public class DetailDisplayActivity extends SherlockActivity
         implements DisplayActivity {
-  
+
   private static final String TAG = "DetaiDisplayActivity";
-    
+
     public static final String INTENT_KEY_ROW_ID = "rowId";
     public static final String INTENT_KEY_ROW_KEYS = "rowKeys";
     public static final String INTENT_KEY_ROW_VALUES = "rowValues";
-    
+
     private String rowId;
     private Controller c;
     private String[] keys;
     private String[] values;
     private Map<String, String> data;
     private CustomDetailView view;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,13 +61,13 @@ public class DetailDisplayActivity extends SherlockActivity
         values = getIntent().getStringArrayExtra(INTENT_KEY_ROW_VALUES);
         init();
     }
-    
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
         Intent data) {
       if (c.handleActivityReturn(requestCode, resultCode, data)) {
         // If we're here, we also need to update the displayed data, which
-        // may have been changed. 
+        // may have been changed.
         Query query = new Query(new TableProperties[] {c.getTableProperties()},
             c.getTableProperties());
         query.loadFromUserQuery("");
@@ -82,19 +82,17 @@ public class DetailDisplayActivity extends SherlockActivity
       }
       super.onActivityResult(requestCode, resultCode, data);
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
         displayView();
     }
-    
+
     @Override
     public void init() {
         // change the info bar text IF necessary
-      if (!c.getInfoBarText().endsWith(" (Detailed)")) {
-          c.setInfoBarText(c.getInfoBarText() + " (Detailed)");
-      }
+        c.setDetailViewInfoBarText();
         data = new HashMap<String, String>();
         for (int i = 0; i < keys.length; i++) {
             data.put(keys[i], values[i]);
@@ -102,19 +100,19 @@ public class DetailDisplayActivity extends SherlockActivity
         view = new CustomDetailView(this, c.getTableProperties());
         displayView();
     }
-    
+
     private void displayView() {
         view.display(rowId, data);
         c.setDisplayView(view);
         setContentView(c.getContainerView());
     }
-    
+
     @Override
     public void onSearch() {
         Controller.launchTableActivity(this, c.getTableProperties(),
                 c.getSearchText(), c.getIsOverview());
     }
-    
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         c.buildOptionsMenu(menu, false);
@@ -126,13 +124,13 @@ public class DetailDisplayActivity extends SherlockActivity
         addRow.setEnabled(true);
         return true;
     }
-    
+
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
       // If they've selected the edit button, we need to handle it here.
       // Otherwise, we let controller handle it.
       if (item.getItemId() == Controller.MENU_ITEM_ID_ADD_ROW_BUTTON) {
-        CollectFormParameters params = 
+        CollectFormParameters params =
             CollectUtil.CollectFormParameters
               .constructCollectFormParameters(c.getTableProperties());
         // now we have to do a bit of work to get the UserTable.
@@ -150,8 +148,8 @@ public class DetailDisplayActivity extends SherlockActivity
         int rowNum = table.getRowNumFromId(rowId);
         // handle the case that it wasn't found, and do nothing
         if (rowNum == -1) {
-          Toast.makeText(this.getApplicationContext(), "Row ID not found, " +
-          		"please edit via Spreadsheet View", Toast.LENGTH_SHORT).show();
+          Toast.makeText(this.getApplicationContext(),
+        		  getString(R.string.error_row_not_found), Toast.LENGTH_SHORT).show();
           return true;
         }
         c.editRow(table, rowNum, params);

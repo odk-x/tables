@@ -52,12 +52,12 @@ import android.widget.Toast;
 
 /**
  * An activity for downloading from and uploading to an ODK Aggregate instance.
- * 
+ *
  * @author hkworden@gmail.com
  * @author the.dylan.price@gmail.com
  */
 public class Aggregate extends SherlockActivity {
-  
+
   public static final String TAG = "Aggregate--Activity";
 
   private static final String ACCOUNT_TYPE_G = "com.google";
@@ -82,13 +82,13 @@ public class Aggregate extends SherlockActivity {
     initializeData();
     updateButtonsEnabled();
   }
-  
+
   @Override
   protected void onStart() {
     super.onStart();
     updateButtonsEnabled();
   }
-  
+
   @Override
   protected void onResume() {
     super.onResume();
@@ -169,7 +169,7 @@ public class Aggregate extends SherlockActivity {
   private AlertDialog.Builder buildOkMessage(String title, String message) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setCancelable(false);
-    builder.setPositiveButton("OK", null);
+    builder.setPositiveButton(getString(R.string.ok), null);
     builder.setTitle(title);
     builder.setMessage(message);
     return builder;
@@ -180,11 +180,10 @@ public class Aggregate extends SherlockActivity {
    */
   public void onClickSaveSettings(View v) {
     // show warning message
-    AlertDialog.Builder msg = buildOkMessage("Are you sure?",
-        "If you change your settings, tables you have synched now "
-            + "may no longer be able to be synched.");
+    AlertDialog.Builder msg = buildOkMessage(getString(R.string.confirm_change_settings),
+        getString(R.string.change_settings_warning));
 
-    msg.setPositiveButton("Save", new OnClickListener() {
+    msg.setPositiveButton(getString(R.string.save), new OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         saveSettings();
@@ -196,7 +195,7 @@ public class Aggregate extends SherlockActivity {
       }
     });
 
-    msg.setNegativeButton("Cancel", null);
+    msg.setNegativeButton(getString(R.string.cancel), null);
     msg.show();
   }
 
@@ -237,14 +236,14 @@ public class Aggregate extends SherlockActivity {
     String accountName = prefs.getAccount();
 
     if (accountName == null) {
-      Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
       SyncNowTask syncTask = new SyncNowTask();
       syncTask.execute();
     }
     updateButtonsEnabled();
   }
-  
+
   /**
    * Hooked to syncFilesNowButton's onClick in aggregate_activity.xml
    * @param accountName
@@ -254,7 +253,7 @@ public class Aggregate extends SherlockActivity {
     String accountName = prefs.getAccount();
     //Intent i = new Intent()
     if (accountName == null) {
-      Toast.makeText(this, "Please choose an account", Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
       Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
       for (Account account : accounts) {
@@ -263,7 +262,7 @@ public class Aggregate extends SherlockActivity {
           ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 1);
           ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", true);
           ContentResolver.requestSync(account,
-              "org.opendatakit.tables.tablefilesauthority", extras);         
+              "org.opendatakit.tables.tablefilesauthority", extras);
         }
       }
 
@@ -290,7 +289,7 @@ public class Aggregate extends SherlockActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(Aggregate.this, "Please Wait", "Synchronizing...");
+      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait), getString(R.string.synchronizing));
       success = false;
       message = null;
     }
@@ -308,7 +307,7 @@ public class Aggregate extends SherlockActivity {
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         success = false;
-        message = "Authorization expired. Please re-authorize account.";
+        message = getString(R.string.auth_expired);
       } catch (Exception e) {
         success = false;
         message = e.getMessage();
@@ -320,13 +319,13 @@ public class Aggregate extends SherlockActivity {
     protected void onPostExecute(Void result) {
       pd.dismiss();
       if (!success && message != null) {
-        buildOkMessage("Sync Error", message).show();
+        buildOkMessage(getString(R.string.sync_error), message).show();
       }
       updateButtonsEnabled();
     }
 
   }
-  
+
   /*
    * Hopefully the task for syncing files. Modeled on SyncNowTask.
    */
@@ -334,29 +333,29 @@ public class Aggregate extends SherlockActivity {
     private ProgressDialog pd;
     private boolean success;
     private String message;
-    
+
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(Aggregate.this, "Please Wait", 
-          "Synchonizing files...");
+      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait),
+          getString(R.string.synchronizing_files));
       success = false;
       message = null;
     }
-    
+
     @Override
     protected Void doInBackground(Void... params) {
       try {
         // first see if the server is null. For a while this was a bug in the
         // above code.
         if (prefs.getServerUri() == null) {
-          message = "Please save settings first.";
+          message = getString(R.string.save_settings_first);
           return null;
-        } 
+        }
         FileSyncAdapter syncAdapter = new FileSyncAdapter(
             getApplicationContext(), true);
         return null;
       }  finally{
-        
+
       }
     }
   }

@@ -80,7 +80,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     // This should allow for the opening of a joined table.
     private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE =
         Controller.FIRST_FREE_MENU_ITEM_ID + 11;
-    private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 
+    private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES =
         Controller.FIRST_FREE_MENU_ITEM_ID + 12;
     private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
         "Open Join Table";
@@ -306,11 +306,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          return true;
      case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
        Intent i = new Intent(this, ColorRuleManagerActivity.class);
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, 
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
            mTp.getColumns()[lastHeaderCellMenued].getElementKey());
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
            this.mTp.getTableId());
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE, 
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
            ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);
      default:
@@ -493,13 +493,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
                     ContextMenu.NONE, "Freeze Column");
         }
-        
+
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES,
             ContextMenu.NONE, MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES);
-        
+
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER,
                 ContextMenu.NONE, "Manage Column Properties");
-        
+
     }
 
     @Override
@@ -672,20 +672,22 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
+	                  final String rowId = table.getRowId(cellId / table.getWidth());
 	                  AlertDialog.Builder alert =
 	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);
-	                  alert.setTitle("Delete this row?");
+	                  alert.setTitle(getString(R.string.confirm_delete_row))
+	                  .setMessage(getString(R.string.are_you_sure_delete_row, rowId));
 	                  // OK Action => delete the row
-	                  alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+	                  alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 	                     public void onClick(DialogInterface dialog, int whichButton) {
-	                       c.deleteRow(table.getRowId(cellId / table.getWidth()));
+	                       c.deleteRow(rowId);
 	                       c.removeOverlay();
 	                       init();
 	                     }
 	                  });
 
 	                  // Cancel Action
-	                  alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+	                  alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 	                     public void onClick(DialogInterface dialog, int whichButton) {
 	                      // Canceled.
 	                       c.removeOverlay();

@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.preferences;
 
+import org.opendatakit.tables.R;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.preference.Preference;
@@ -97,7 +99,7 @@ public class SliderPreference extends Preference {
             // checkBox to use default fontSize (relevant only when DisplayPref is
             // called through Controller)
             checkBox = new CheckBox(context);
-            checkBox.setText("Use Default");
+            checkBox.setText(context.getString(R.string.use_default));
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
 				@Override
@@ -125,7 +127,7 @@ public class SliderPreference extends Preference {
                 }
             });
             Button okButton = new Button(context);
-            okButton.setText("OK");
+            okButton.setText(context.getString(R.string.ok));
             okButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -134,7 +136,7 @@ public class SliderPreference extends Preference {
                 }
             });
             Button cancelButton = new Button(context);
-            cancelButton.setText("Cancel");
+            cancelButton.setText(context.getString(R.string.cancel));
             cancelButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

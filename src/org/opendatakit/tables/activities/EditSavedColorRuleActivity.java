@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -38,44 +39,39 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.util.Log;
 
-public class EditSavedColorRuleActivity extends PreferenceActivity 
+public class EditSavedColorRuleActivity extends PreferenceActivity
     implements EditSavedViewEntryHandler, OnColorChangedListener {
-  
+
   private static final String TAG =
       EditSavedListViewEntryActivity.class.getName();
-  
+
   private static final String PREFERENCE_KEY_COMP_TYPE = "pref_comp_type";
   private static final String PREFERENCE_KEY_VALUE = "pref_value";
   private static final String PREFERENCE_KEY_TEXT_COLOR = "pref_text_color";
   private static final String PREFERENCE_KEY_ELEMENT_KEY = "pref_element_key";
-  private static final String PREFERENCE_KEY_BACKGROUND_COLOR = 
+  private static final String PREFERENCE_KEY_BACKGROUND_COLOR =
       "pref_background_color";
-  
+
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
   /**
    * The type of the color rule group you're editing.
    */
   public static final String INTENT_KEY_RULE_GROUP_TYPE = "ruleGroupType";
-  
+
   /**
-   * The position of the rule to be edited. {@link INTENT_FLAG_NEW_RULE} 
+   * The position of the rule to be edited. {@link INTENT_FLAG_NEW_RULE}
    * indicates that it is in fact a new rule being added.
    */
   public static final String INTENT_KEY_RULE_POSITION = "rulePosition";
   public static final int INTENT_FLAG_NEW_RULE = -1;
-  
+
   /*
    * The keys for communicating with EditColorPreference.
    */
   public static final String COLOR_PREF_KEY_TEXT = "textKey";
   public static final String COLOR_PREF_KEY_BACKGROUND = "backgroundKey";
-  
-  private static final String TARGET_VALUE_STRING = "target value";
-  private static final String TITLE_TEXT_COLOR = "Text Color";
-  private static final String TITLE_BACKGROUND_COLOR = "Background Color";
-  private static final String TITLE_ACTIVITY = "Edit Rule";
-  
+
   private String mTableId;
   private String mElementKey;
   private int mRulePosition;
@@ -93,7 +89,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   private List<ColorRule> mColorRules;
   private EditNameDialogPreference mValuePreference;
   private ColorRuleGroup.Type mType;
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -104,9 +100,9 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
     this.dbh = DbHelper.getDbHelper(this);
-    this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId, 
+    this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
-    this.mKvsh = 
+    this.mKvsh =
         mTp.getKeyValueStoreHelper(ColorRuleGroup.KVS_PARTITION_COLUMN);
     this.mAspectHelper = mKvsh.getAspectHelper(mElementKey);
     addPreferencesFromResource(
@@ -120,37 +116,37 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       mColumnDisplayNames[i] = cps[i].getDisplayName();
       mColumnElementKeys[i] = cps[i].getElementKey();
     }
-    this.setTitle(TITLE_ACTIVITY);
+    this.setTitle(getString(R.string.edit_rule));
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
     init();
   }
-  
+
   private void init() {
     // Which rule group we call depends on the column of interest. If the
     // column is editable, then we want to get it from the row.
     switch (mType) {
     case COLUMN:
-      this.mColorRuleGroup = 
+      this.mColorRuleGroup =
         ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
       break;
     case TABLE:
-      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTp);      
+      this.mColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTp);
       break;
     case STATUS_COLUMN:
       this.mColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
       break;
-    default: 
+    default:
       Log.e(TAG, "unrecognized type in init: " + mType);
     }
     this.mColorRules = mColorRuleGroup.getColorRules();
-    
+
     if (mType == ColorRuleGroup.Type.TABLE ||
         mType == ColorRuleGroup.Type.STATUS_COLUMN) {
-      final ListPreference columnPreference = 
+      final ListPreference columnPreference =
           (ListPreference) findPreference(PREFERENCE_KEY_ELEMENT_KEY);
       columnPreference.setEntries(mColumnDisplayNames);
       columnPreference.setEntryValues(mColumnElementKeys);
@@ -162,16 +158,16 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       }
       columnPreference.setOnPreferenceChangeListener(
           new OnPreferenceChangeListener() {
-        
+
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
-          Log.d(TAG, "onPreferenceChance callback invoked for value: " 
+          Log.d(TAG, "onPreferenceChance callback invoked for value: "
               + newValue);
           String elementKey = (String) newValue;
           if (mRulePosition == INTENT_FLAG_NEW_RULE) {
-            ColorRule newRule = new ColorRule(elementKey, 
+            ColorRule newRule = new ColorRule(elementKey,
                 ColorRule.RuleType.EQUAL,
-                TARGET_VALUE_STRING, 
+                getString(R.string.compared_to_value),
                 Constants.DEFAULT_TEXT_COLOR,
                 Constants.DEFAULT_BACKGROUND_COLOR);
             mColorRules.add(newRule);
@@ -179,7 +175,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
           } else {
             mColorRules.get(mRulePosition).setColumnElementKey(elementKey);
           }
-          String displayName = 
+          String displayName =
               mTp.getColumnByElementKey(elementKey).getDisplayName();
           columnPreference.setSummary(displayName);
           mColorRuleGroup.replaceColorRuleList(mColorRules);
@@ -191,25 +187,27 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       getPreferenceScreen().removePreference(
           (ListPreference) findPreference(PREFERENCE_KEY_ELEMENT_KEY));
     }
-    
-    ListPreference operatorPreference = 
+
+    ListPreference operatorPreference =
         (ListPreference) findPreference(PREFERENCE_KEY_COMP_TYPE);
     operatorPreference.setEntries(mHumanValues);
     operatorPreference.setEntryValues(mEntryVales);
     operatorPreference.setOnPreferenceChangeListener(
         new OnPreferenceChangeListener() {
-      
+
       @Override
-      public boolean onPreferenceChange(Preference preference, 
+      public boolean onPreferenceChange(Preference preference,
           Object newValue) {
         // Here we want to update the rule and also persist it.
-        Log.d(TAG, "onPreferenceChange callback invoked for value: " + 
+        Log.d(TAG, "onPreferenceChange callback invoked for value: " +
             (String) newValue);
-        ColorRule.RuleType newOperator = 
+        ColorRule.RuleType newOperator =
             ColorRule.RuleType.getEnumFromString((String) newValue);
         if (mRulePosition == INTENT_FLAG_NEW_RULE) {
           ColorRule newRule = new ColorRule(mElementKey,
-              newOperator, TARGET_VALUE_STRING, Constants.DEFAULT_TEXT_COLOR, 
+              newOperator,
+              getString(R.string.compared_to_value),
+              Constants.DEFAULT_TEXT_COLOR,
               Constants.DEFAULT_BACKGROUND_COLOR);
           mColorRules.add(newRule);
           mRulePosition = mColorRules.size() - 1;
@@ -226,17 +224,17 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       operatorPreference.setSummary(mColorRules.get(mRulePosition)
           .getOperator().getSymbol());
     }
-    
-    this.mValuePreference = 
+
+    this.mValuePreference =
         (EditNameDialogPreference) findPreference(PREFERENCE_KEY_VALUE);
     mValuePreference.setCallingActivity(this);
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
-      mValuePreference.setSummary(TARGET_VALUE_STRING);
+      mValuePreference.setSummary(getString(R.string.compared_to_value));
     } else {
       mValuePreference.setSummary(mColorRules.get(mRulePosition).getVal());
     }
-    
-    EditColorPreference textColorPref = 
+
+    EditColorPreference textColorPref =
         (EditColorPreference) findPreference(PREFERENCE_KEY_TEXT_COLOR);
     textColorPref.setCallingActivity(this);
     int textColor;
@@ -246,9 +244,9 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       textColor = mColorRules.get(mRulePosition).getForeground();
     }
     textColorPref.initColorPickerListener(this, COLOR_PREF_KEY_TEXT,
-        TITLE_TEXT_COLOR, textColor);
-    
-    EditColorPreference backgroundColorPref = 
+        getString(R.string.text_color), textColor);
+
+    EditColorPreference backgroundColorPref =
         (EditColorPreference) findPreference(PREFERENCE_KEY_BACKGROUND_COLOR);
     backgroundColorPref.setCallingActivity(this);
     int backgroundColor;
@@ -258,14 +256,14 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       backgroundColor = mColorRules.get(mRulePosition).getBackground();
     }
     backgroundColorPref.initColorPickerListener(this, COLOR_PREF_KEY_BACKGROUND,
-        TITLE_BACKGROUND_COLOR, backgroundColor);
+        getString(R.string.background_color), backgroundColor);
   }
 
   @Override
   public void tryToSaveNewName(String value) {
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
       ColorRule newRule = new ColorRule(mElementKey,
-          ColorRule.RuleType.LESS_THAN, value, Constants.DEFAULT_TEXT_COLOR, 
+          ColorRule.RuleType.LESS_THAN, value, Constants.DEFAULT_TEXT_COLOR,
           Constants.DEFAULT_BACKGROUND_COLOR);
       mColorRules.add(newRule);
       mRulePosition = mColorRules.size() - 1; // b/c it's now the last
@@ -284,7 +282,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   @Override
   public String getCurrentViewName() {
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
-      return TARGET_VALUE_STRING;
+      return getString(R.string.compared_to_value);
     } else {
       return mColorRules.get(mRulePosition).getVal();
     }
@@ -295,8 +293,10 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     ColorRule rule;
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
       rule = new ColorRule(mElementKey,
-          ColorRule.RuleType.LESS_THAN, TARGET_VALUE_STRING, 
-          Constants.DEFAULT_TEXT_COLOR, Constants.DEFAULT_BACKGROUND_COLOR);
+          ColorRule.RuleType.LESS_THAN,
+          getString(R.string.compared_to_value),
+          Constants.DEFAULT_TEXT_COLOR,
+          Constants.DEFAULT_BACKGROUND_COLOR);
     } else {
       rule = mColorRules.get(mRulePosition);
     }
@@ -309,11 +309,11 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     }
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
       mColorRules.add(rule);
-      mRulePosition = mColorRules.size() - 1; // b/c it's now the last     
+      mRulePosition = mColorRules.size() - 1; // b/c it's now the last
     }
     mColorRuleGroup.replaceColorRuleList(mColorRules);
     mColorRuleGroup.saveRuleList();
   }
-  
+
 
 }

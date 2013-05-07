@@ -20,6 +20,7 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -59,19 +60,11 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
   public static final String INTENT_KEY_RULE_GROUP_TYPE = "ruleGroupType";
-  private static final String ACTIVITY_TITLE_SUFFIX = " Color Rules";
-  private static final String EXAMPLE_STRING = "Rule Preview";
-  private static final String STATUS_COLUMN_TITLE = "Status Column";
 
   /**
    * Menu ID for adding a new list view.
    */
-  public static final int ADD_NEW_LIST_VIEW = 0;
-
-  /**
-   * The char sequence for the add new list view item.
-   */
-  public static final String ADD_NEW_LIST_VIEW_TEXT = "Add New Color Rule";
+  public static final int ADD_NEW_COLOR_RULE = 0;
 
   /**
    * Menu ID for deleting an entry.
@@ -79,18 +72,9 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   public static final int MENU_DELETE_ENTRY = 1;
 
   /**
-   * Text for the entry deletion.
-   */
-  public static final String MENU_TEXT_DELETE_ENTRY = "Delete this Rule";
-
-  /**
    * Menu ID for opening the edit rule activity.
    */
   public static final int MENU_EDIT_ENTRY = 2;
-  /**
-   * Text for the rule editing.
-   */
-  public static final String MENU_TEXT_EDIT_ENTRY = "Edit this Color Rule";
 
   private List<ColorRule> mColorRules;
   private ColorRuleGroup mColorRuler;
@@ -123,7 +107,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   public boolean onMenuItemSelected(int featureId,
       com.actionbarsherlock.view.MenuItem item) {
     switch (item.getItemId()) {
-    case ADD_NEW_LIST_VIEW:
+    case ADD_NEW_COLOR_RULE:
       // If this is the case we need to launch the edit activity.
       Intent newColorRuleIntent =
           new Intent(this, EditSavedColorRuleActivity.class);
@@ -149,8 +133,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
     com.actionbarsherlock.view.MenuItem addItem = menu.add(
-        0, ADD_NEW_LIST_VIEW, 0, ADD_NEW_LIST_VIEW_TEXT);
-    addItem.setIcon(org.opendatakit.tables.R.drawable.content_new);
+        0, ADD_NEW_COLOR_RULE, 0, getString(R.string.add_new_color_rule));
+    addItem.setIcon(R.drawable.content_new);
     addItem.setShowAsAction(
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
@@ -168,9 +152,11 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       // cancel.
       AlertDialog confirmDeleteAlert;
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setTitle("Delete this rule?");
+      builder.setTitle(R.string.confirm_delete_color_rule);
+      builder.setMessage(getString(R.string.are_you_sure_delete_color_rule, mColorRules.get(position).toString() ));
+
       // For the OK action we want to actually delete this list view.
-      builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+      builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -184,7 +170,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         }
       });
 
-      builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -218,8 +204,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
-    menu.add(0, MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
-    menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
+    menu.add(0, MENU_DELETE_ENTRY, 0, getString(R.string.delete_color_rule));
+    menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));
   }
 
   private void init() {
@@ -241,17 +227,17 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       this.mCp = mTp.getColumnByElementKey(mElementKey);
       this.mColorRuler =
           ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
-      this.setTitle(mCp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
+      this.setTitle(getString(R.string.color_rule_title_for, mCp.getDisplayName()));
       break;
     case TABLE:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getTableColorRuleGroup(mTp);
-      this.setTitle(mTp.getDisplayName() + ACTIVITY_TITLE_SUFFIX);
+      this.setTitle(getString(R.string.row_color_rule_title_for, mTp.getDisplayName()));
       break;
     case STATUS_COLUMN:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
-      this.setTitle(STATUS_COLUMN_TITLE + ACTIVITY_TITLE_SUFFIX);
+      this.setTitle(getString(R.string.color_rule_title_for, getString(R.string.status_column)));
       break;
     default:
       Log.e(TAG, "uncrecognized type: " + mType);
@@ -316,7 +302,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       // Will demo the color rule.
       TextView exampleView =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
-      exampleView.setText(EXAMPLE_STRING);
+      exampleView.setText(getString(R.string.status_column));
       exampleView.setTextColor(textColor);
       exampleView.setBackgroundColor(backgroundColor);
       exampleView.setVisibility(View.VISIBLE);

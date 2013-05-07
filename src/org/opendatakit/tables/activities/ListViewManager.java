@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -62,33 +63,20 @@ public class ListViewManager extends SherlockListActivity {
   public static final String TAG = ListViewManager.class.getName();
 
   public static final String INTENT_KEY_TABLE_ID = "tableId";
-  private static final String ACTIVITY_TITLE = "List View Manager";
 
   /**
    * Menu ID for adding a new list view.
    */
   public static final int ADD_NEW_LIST_VIEW = 0;
-  /**
-   * The char sequence for the add new list view item.
-   */
-  public static final String ADD_NEW_LIST_VIEW_TEXT = "Add New List View";
 
   /**
    * Menu ID for deleting an entry.
    */
   public static final int MENU_DELETE_ENTRY = 1;
   /**
-   * Text for the entry deletion.
-   */
-  public static final String MENU_TEXT_DELETE_ENTRY = "Delete this List View";
-  /**
    * Menu ID for opening the edit entry activity.
    */
   public static final int MENU_EDIT_ENTRY = 2;
-  /**
-   * Text for the entry editing.
-   */
-  public static final String MENU_TEXT_EDIT_ENTRY = "Edit this List View";
 
   /**
    * This will be the names of all the possible list views.
@@ -191,7 +179,7 @@ public class ListViewManager extends SherlockListActivity {
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     setContentView(org.opendatakit.tables.R.layout.list_view_manager);
-    setTitle(ACTIVITY_TITLE);
+    setTitle(getString(R.string.list_view_manager));
     // Set the app icon as an action to go home.
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
@@ -208,7 +196,7 @@ public class ListViewManager extends SherlockListActivity {
   public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
     com.actionbarsherlock.view.MenuItem addItem = menu.add(0,
-        ADD_NEW_LIST_VIEW, 0, ADD_NEW_LIST_VIEW_TEXT);
+        ADD_NEW_LIST_VIEW, 0, getString(R.string.add_list_view));
     addItem.setIcon(org.opendatakit.tables.R.drawable.content_new);
     addItem.setShowAsAction(
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -223,13 +211,12 @@ public class ListViewManager extends SherlockListActivity {
       // If this is the case we need to launch the edit activity.
       // The default name will just be some constant that changes when you
       // add new information.
-      String baseName = "List View ";
       List<String> existingListViewNames = kvsh.getAspectsForPartition();
       int suffix = existingListViewNames.size();
-      String potentialName = baseName + suffix;
+      String potentialName = getString(R.string.nth_list_view_title, suffix);
       while (existingListViewNames.contains(potentialName)) {
         suffix++;
-        potentialName = baseName + suffix;
+        potentialName = getString(R.string.nth_list_view_title, suffix);
       }
       Intent newListViewIntent =
           new Intent(this, EditSavedListViewEntryActivity.class);
@@ -261,9 +248,10 @@ public class ListViewManager extends SherlockListActivity {
       // cancel.
       AlertDialog confirmDeleteAlert;
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setTitle("Delete " + entryName + "?");
+      builder.setTitle(getString(R.string.confirm_delete_view_title));
+      builder.setMessage(getString(R.string.are_you_sure_delete_view, entryName));
       // For the OK action we want to actually delete this list view.
-      builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+      builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -284,7 +272,7 @@ public class ListViewManager extends SherlockListActivity {
         }
       });
 
-      builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+      builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -313,8 +301,8 @@ public class ListViewManager extends SherlockListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
-    menu.add(0,MENU_DELETE_ENTRY, 0, MENU_TEXT_DELETE_ENTRY);
-    menu.add(0, MENU_EDIT_ENTRY, 0, MENU_TEXT_EDIT_ENTRY);
+    menu.add(0,MENU_DELETE_ENTRY, 0, getString(R.string.delete_list_view));
+    menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_list_view));
   }
 
   /**
@@ -392,7 +380,7 @@ public class ListViewManager extends SherlockListActivity {
             setToDefault(listViewName);
             radioButton.setChecked(true);
             Toast.makeText(getContext(),
-                listViewName + " has been set to default." ,
+            	getString(R.string.set_as_default_list_view, listViewName),
                 Toast.LENGTH_SHORT).show();
           }
         }

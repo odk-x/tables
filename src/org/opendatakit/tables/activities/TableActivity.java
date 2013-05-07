@@ -36,10 +36,10 @@ public class TableActivity extends SherlockFragmentActivity {
     public static final String KVS_PARTITION = "TableActivity";
     public static final String MAP_COLUMN_KEY = "MapColumnKey";
     public static final String MAP_LABEL_KEY = "MapLabelKey";
-    
-    
+
+
     private static final int MENU_ITEM_ID_VIEW_TYPE_SUBMENU = 1;
-    
+
 
 	/** The current fragment being displayed. */
 	private Fragment mCurrentFragment;
@@ -110,7 +110,7 @@ public class TableActivity extends SherlockFragmentActivity {
         }
         return searchText;
     }
-	
+
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
 		// Set the app icon as an action to go home.
@@ -118,14 +118,14 @@ public class TableActivity extends SherlockFragmentActivity {
     	actionBar.setDisplayHomeAsUpEnabled(true);
     	// Set the actionbar title to nothing.
     	actionBar.setTitle("");
-		
+
 		// View type submenu.
         // Determine the possible view types.
         final TableViewType[] viewTypes = mTableProperties.getPossibleViewTypes();
         // Build a checkable submenu to select the view type.
-        SubMenu viewTypeSubMenu = 
-            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
-                Menu.NONE, "ViewType");
+        SubMenu viewTypeSubMenu =
+            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
+                Menu.NONE, getString(R.string.view_type));
         MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
         viewType.setEnabled(true);
@@ -133,13 +133,13 @@ public class TableActivity extends SherlockFragmentActivity {
         MenuItem item;
         // This will be the name of the default list view, which if exists
         // means we should display the list view as an option.
-        KeyValueStoreHelper kvsh = 
+        KeyValueStoreHelper kvsh =
             mTableProperties.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-        String nameOfView = kvsh.getString( 
+        String nameOfView = kvsh.getString(
             ListDisplayActivity.KEY_LIST_VIEW_NAME);
         for(int i = 0; i < viewTypes.length; i++) {
-        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
-        	    viewTypes[i].getId(), i, 
+        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
+        	    viewTypes[i].getId(), i,
         	    viewTypes[i].name());
         	// mark the current viewType as selected
           	if (mTableProperties.getCurrentViewType() == viewTypes[i]) {
@@ -152,12 +152,12 @@ public class TableActivity extends SherlockFragmentActivity {
         }
 
 
-        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, 
+        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
             true, true);
-        
+
         return true;
     }
-	
+
 	@Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		if(item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {

@@ -40,7 +40,7 @@ public class DbHelperImpl {
       // TODO: make this app-centric
       String path = ODKFileUtils.getWebDbFolder(TableFileUtils.ODK_TABLES_APP_NAME);
 
-      WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(path);
+      WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(context, path);
       WebDbDefinition defn = h.getWebKitDatabaseInfoHelper();
       if (defn != null) {
          defn.dbFile.getParentFile().mkdirs();

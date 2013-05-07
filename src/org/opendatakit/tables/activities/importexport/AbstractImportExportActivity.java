@@ -60,41 +60,44 @@ public abstract class AbstractImportExportActivity extends SherlockActivity {
 	protected Dialog onCreateDialog(int id) {
 		switch(id) {
 		case CSVEXPORT_SUCCESS_DIALOG:
-			return getDialog("File exported.");
+			return getDialog(getString(R.string.export_success));
 		case CSVIMPORT_SUCCESS_DIALOG:
-			return getDialog("File imported.");
+			return getDialog(getString(R.string.import_success));
 		case EXPORT_IN_PROGRESS_DIALOG:
 			ProgressDialog epd = new ProgressDialog(this);
-			epd.setMessage("exporting...");
+			epd.setMessage(getString(R.string.export_in_progress));
 			return epd;
 		case IMPORT_IN_PROGRESS_DIALOG:
 			ProgressDialog ipd = new ProgressDialog(this);
-			ipd.setMessage("importing...");
+			ipd.setMessage(getString(R.string.import_in_progress));
 			return ipd;
 		case CSVIMPORT_FAIL_DIALOG:
-			return getDialog("Failed to import.");
+			return getDialog(getString(R.string.import_failure));
 		case CSVEXPORT_FAIL_DIALOG:
-			return getDialog("Failed to export.");
+			return getDialog(getString(R.string.export_failure));
 		case CSVEXPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
-		  return getDialog("Data exported, but some customized settings were " +
-		  		"not able to exported.");
+		  return getDialog(getString(R.string.export_partial_success));
 		case CSVIMPORT_FAIL_DUPLICATE_TABLE:
-		  return getDialog("Failed to import. A table already exists with the " +
-		  		"given table id or database name.");
+		  return getDialog(getString(R.string.import_failure_existing_table));
 		case CSVIMPORT_SUCCESS_SECONDARY_KVS_ENTRIES_FAIL_DIALOG:
-		  return getDialog("Imported file, but was not able to recover all " +
-		  		"customized settings.");
+		  return getDialog(getString(R.string.import_partial_success));
 		default:
 			throw new IllegalArgumentException();
 		}
 	}
 
     protected class PickFileButtonListener implements OnClickListener {
+    	String title;
+
+    	public PickFileButtonListener(String title) {
+    		this.title = title;
+    	}
+
         @Override
         public void onClick(View v) {
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
             intent.setData(Uri.parse("file://" + ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME)));
-            intent.putExtra("org.openintents.extra.TITLE", "Please select a file");
+            intent.putExtra("org.openintents.extra.TITLE", title);
             try {
               startActivityForResult(intent, 1);
             } catch ( ActivityNotFoundException e ) {
@@ -112,7 +115,7 @@ public abstract class AbstractImportExportActivity extends SherlockActivity {
 	private AlertDialog getDialog(String message) {
 		AlertDialog.Builder adBuilder = new AlertDialog.Builder(this);
 		adBuilder = adBuilder.setMessage(message);
-		adBuilder = adBuilder.setNeutralButton("OK",
+		adBuilder = adBuilder.setNeutralButton(getString(R.string.ok),
 				new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int id) {

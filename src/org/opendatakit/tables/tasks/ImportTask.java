@@ -29,14 +29,14 @@ extends AsyncTask<ImportRequest, Integer, Boolean> {
 		CsvUtil cu = new CsvUtil(this.importCSVActivity);
 		if (request.getCreateTable()) {
 			try {
-				return cu.importNewTable(this, request.getFile(),
+				return cu.importNewTable(importCSVActivity, this, request.getFile(),
 						request.getTableName());
 			} catch (TableAlreadyExistsException e) {
 				caughtDuplicateTableException = true;
 				return false;
 			}
 		} else {
-			return cu.importAddToTable(request.getFile(),
+			return cu.importAddToTable(importCSVActivity, request.getFile(),
 					request.getTableProperties().getTableId());
 		}
 	}

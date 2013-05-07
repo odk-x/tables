@@ -155,9 +155,7 @@ public class ListDisplayActivity extends SherlockActivity
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);
         // change the info bar text IF necessary
-        if (!c.getInfoBarText().endsWith(" (List)")) {
-          c.setInfoBarText(c.getInfoBarText() + " (List)");
-        }
+        c.setListViewInfoBarText();
         displayView();
     }
 

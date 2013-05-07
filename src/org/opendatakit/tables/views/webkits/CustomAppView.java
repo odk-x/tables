@@ -77,7 +77,7 @@ public class CustomAppView extends CustomView {
     // First we want to see if we're supposed to display a custom HTML, or if
     // we want to display just the homescreen.html file. We'll check for the
     // key.
-    load(FileProvider.getAsUrl(new File(dir + "/" + mFilename)));
+    load(FileProvider.getAsUrl(mContext, new File(dir + "/" + mFilename)));
     initView();
   }
 
