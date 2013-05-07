@@ -9,7 +9,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/simple-xml-2.6.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/spring-android-core-1.0.0.RC1.jar"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry exported="true" kind="lib" path="lib/fileManifestObjects.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="lib" path="/Users/sudars/Dropbox/Gaetano/aggregateSansDbPropertiesMay6.jar">
 		<attributes>

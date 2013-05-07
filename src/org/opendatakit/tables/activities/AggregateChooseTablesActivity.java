@@ -83,6 +83,12 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tp.getTableId());
-    syncKVS.setIsSetToSync(listView.isItemChecked(position));
+    boolean wantToSync;
+    if (syncKVS.isSetToSync()) {
+      wantToSync = false;
+    } else {
+      wantToSync = true;
+    }
+    syncKVS.setIsSetToSync(wantToSync);
   }
 }

@@ -55,11 +55,12 @@ public class KeyValueStoreSync extends KeyValueStore {
 	    isSetToSyncKey.add(SyncPropertiesKeys.IS_SET_TO_SYNC.getKey());
 	    List<OdkTablesKeyValueStoreEntry> isSetToSyncEntry =
 	        this.getEntriesForKeys(db, KeyValueStoreSync.KVS_PARTITION,
-	            KeyValueStoreSync.KVS_PARTITION, isSetToSyncKey);
+	            KeyValueStoreSync.KVS_ASPECT, isSetToSyncKey);
 	    if (isSetToSyncEntry.size() == 0)
 	      return false;
 	    // otherwise there is a single entry and it is the one we want.
-	    if (isSetToSyncEntry.get(0).value.equals("1")) {
+	    if (SyncUtil.intToBool(
+	          Integer.parseInt(isSetToSyncEntry.get(0).value))) {
 	      return true;
 	    } else {
 	      return false;
