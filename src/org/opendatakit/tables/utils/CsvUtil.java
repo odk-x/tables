@@ -23,14 +23,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
+import org.joda.time.DateTime;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -49,9 +52,7 @@ import org.opendatakit.tables.tasks.ExportTask;
 import org.opendatakit.tables.tasks.ImportTask;
 import org.opendatakit.tables.tasks.InitializeTask;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.os.Environment;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
@@ -74,9 +75,11 @@ public class CsvUtil {
 
 	private static final String t = "CsvUtil";
 
-    private static final String LAST_MOD_TIME_LABEL =
-        DataTableColumns.LAST_MODIFIED_TIME;
+    private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
     private static final String SRC_PHONE_LABEL = DataTableColumns.URI_USER;
+    private static final String INSTANCE_NAME_LABEL = DataTableColumns.INSTANCE_NAME;
+    private static final String FORM_ID_LABEL = DataTableColumns.FORM_ID;
+    private static final String LOCALE_LABEL = DataTableColumns.LOCALE;
 
     private static final char DELIMITING_CHAR = ',';
     private static final char QUOTE_CHAR = '\"';
@@ -115,10 +118,13 @@ public class CsvUtil {
         TableProperties tp;
         try {
           boolean includesProperties = false;
-          // these columns will either be just those present in TablePropeties,
-          // if it was not exported with properties, or it will be all the
-          // columns in heading row, which will be user and admin columns.
-          List<String> columns;
+          // columns contains all columns in the csv file...
+          List<String> columns = new ArrayList<String>();
+          int idxTimestamp = -1;
+          int idxUriUser = -1;
+          int idxInstanceName = -1;
+          int idxFormId = -1;
+          int idxLocale = -1;
             CSVReader reader = new CSVReader(new FileReader(file),
                 DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
             String[] row = reader.readNext();
@@ -176,32 +182,69 @@ public class CsvUtil {
               }
               row = reader.readNext();
               // now collect all the headings.
-              columns = new ArrayList<String>();
-              for (String columnHeading : row) {
-                columns.add(columnHeading);
+              for ( int i = 0 ; i < row.length ; ++i ) {
+               	String colName = row[i];
+            	if ( colName.equals(LAST_MOD_TIME_LABEL) ) {
+              		idxTimestamp = i;
+              	}
+              	if ( colName.equals(SRC_PHONE_LABEL)) {
+              		idxUriUser = i;
+              	}
+              	if ( colName.equals(INSTANCE_NAME_LABEL)) {
+              		idxInstanceName = i;
+              	}
+              	if ( colName.equals(FORM_ID_LABEL)) {
+              		idxFormId = i;
+              	}
+              	if ( colName.equals(LOCALE_LABEL)) {
+              		idxLocale = i;
+              	}
+	            String dbName = tp.getColumnByDisplayName(colName);
+	            columns.add(dbName);
               }
             } else {
               tp = TableProperties.addTable(dbh, dbTableName,
                   tableName, TableType.data,
                   KeyValueStore.Type.ACTIVE);
-                int startIndex = 0;
-                if (row[startIndex].equals(LAST_MOD_TIME_LABEL)) {
-                    startIndex++;
-                }
-                if ((row.length > startIndex) &&
-                        row[startIndex].equals(SRC_PHONE_LABEL)) {
-                    startIndex++;
-                }
-                for (int i = startIndex; i < row.length; i++) {
-                    tp.addColumn(row[i], null, null);
-                }
-                columns = tp.getColumnOrder();
+
+              columns = new ArrayList<String>();
+              for ( int i = 0 ; i < row.length ; ++i ) {
+              	String colName = row[i];
+              	String dbName = null;
+              	// detect and process all the metadata columns
+              	if ( colName.equals(LAST_MOD_TIME_LABEL) ) {
+              		idxTimestamp = i;
+              		dbName = DataTableColumns.TIMESTAMP;
+              	}
+              	else if ( colName.equals(SRC_PHONE_LABEL)) {
+              		idxUriUser = i;
+              		dbName = DataTableColumns.URI_USER;
+              	}
+              	else if ( colName.equals(INSTANCE_NAME_LABEL)) {
+              		idxInstanceName = i;
+              		dbName = DataTableColumns.INSTANCE_NAME;
+              	}
+              	else if ( colName.equals(FORM_ID_LABEL)) {
+              		idxFormId = i;
+              		dbName = DataTableColumns.FORM_ID;
+              	}
+              	else if ( colName.equals(LOCALE_LABEL)) {
+              		idxLocale = i;
+              		dbName = DataTableColumns.LOCALE;
+              	}
+              	else {
+	                dbName = tp.getColumnByDisplayName(colName);
+	                if ( dbName == null ) {
+	                	tp.addColumn(colName, null, null);
+	                	dbName = tp.getColumnByDisplayName(colName);
+	                }
+              	}
+                columns.add(dbName);
+              }
             }
-            boolean includeTs = row[0].equals(LAST_MOD_TIME_LABEL);
-            boolean includePn = (!includeTs || (row.length > 1)) &&
-                    row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
             return importTable(c, reader, tp.getTableId(), columns,
-                  includeTs, includePn, includesProperties);
+            		idxTimestamp, idxUriUser, idxInstanceName, idxFormId, idxLocale,
+            		includesProperties);
         } catch(FileNotFoundException e) {
             return false;
         } catch(IOException e) {
@@ -230,18 +273,51 @@ public class CsvUtil {
                 tp.setFromJson(row[0]);
                 row = reader.readNext();
             }
-            boolean includeTs = row[0].equals(LAST_MOD_TIME_LABEL);
-            boolean includePn = (row.length > (includeTs ? 1 : 0)) &&
-                    row[includeTs ? 1 : 0].equals(SRC_PHONE_LABEL);
-            int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
+
             ArrayList<String> columns = new ArrayList<String>();
-            for (int i = 0; i < columns.size(); i++) {
-                String displayName = row[startIndex + i];
-                String dbName = tp.getColumnByDisplayName(displayName);
+
+            int idxTimestamp = -1;
+            int idxUriUser = -1;
+            int idxInstanceName = -1;
+            int idxFormId = -1;
+            int idxLocale = -1;
+            for ( int i = 0 ; i < row.length ; ++i ) {
+            	String colName = row[i];
+            	String dbName = null;
+            	if ( colName.equals(LAST_MOD_TIME_LABEL) ) {
+            		idxTimestamp = i;
+            		dbName = DataTableColumns.TIMESTAMP;
+            	}
+            	else if ( colName.equals(SRC_PHONE_LABEL)) {
+            		idxUriUser = i;
+            		dbName = DataTableColumns.URI_USER;
+            	}
+            	else if ( colName.equals(INSTANCE_NAME_LABEL)) {
+            		idxInstanceName = i;
+            		dbName = DataTableColumns.INSTANCE_NAME;
+            	}
+            	else if ( colName.equals(FORM_ID_LABEL)) {
+            		idxFormId = i;
+            		dbName = DataTableColumns.FORM_ID;
+            	}
+            	else if ( colName.equals(LOCALE_LABEL)) {
+            		idxLocale = i;
+            		dbName = DataTableColumns.LOCALE;
+            	}
+            	else {
+            		dbName = tp.getColumnByDisplayName(colName);
+            		// CHANGE: support adding columns via the import feature...
+	                if ( dbName == null ) {
+	                	tp.addColumn(colName, null, null);
+	                	dbName = tp.getColumnByDisplayName(colName);
+	                }
+            	}
                 columns.add(dbName);
             }
+
             return importTable(c, reader, tp.getTableId(), columns,
-                    includeTs, includePn, includesProperties);
+            		idxTimestamp, idxUriUser, idxInstanceName, idxFormId, idxLocale,
+                    includesProperties);
         } catch(FileNotFoundException e) {
             return false;
         } catch(IOException e) {
@@ -332,42 +408,41 @@ public class CsvUtil {
     }
 
     private boolean importTable(Context c, CSVReader reader, String tableId,
-    		List<String> columns, boolean includeTs, boolean includePn,
-    		boolean exportedWithProperties) {
+    		List<String> columns,
+    		int idxTimestamp, int idxUriUser, int idxInstanceName, int idxFormId, int idxLocale,
+            boolean exportedWithProperties) {
 
-    	int tsIndex = includeTs ? 0 : -1;
-    	int pnIndex = includePn ? (includeTs ? 1 : 0) : -1;
-    	int startIndex = (includeTs ? 1 : 0) + (includePn ? 1 : 0);
     	DbTable dbt = DbTable.getDbTable(dbh, tableId);
 
     	try {
+    		Set<Integer> idxMetadata = new HashSet<Integer>();
+			idxMetadata.add(idxTimestamp);
+			idxMetadata.add(idxUriUser);
+			idxMetadata.add(idxInstanceName);
+			idxMetadata.add(idxFormId);
+			idxMetadata.add(idxLocale);
     		String[] row = reader.readNext();
     		int rowCount = 0;
     		while (row != null) {
-    			if (!exportedWithProperties) {
-    				Map<String, String> values = new HashMap<String, String>();
-    				for (int i = 0; i < columns.size(); i++) {
-    					values.put(columns.get(i), row[startIndex + i]);
-    					if (rowCount % 30 == 0 && it != null)
-    						it.updateLineCount(c.getString(R.string.import_thru_row, 1+rowCount));
-    				}
-    				String lastModTime = tsIndex == -1 ?
-    						du.formatNowForDb() : row[tsIndex];
-    						String srcPhone = pnIndex == -1 ? null : row[pnIndex];
-    						dbt.addRow(values, lastModTime, srcPhone);
-    						values.clear();
-    			} else {
-    				// it was exported with properties, and we need to include ALL
-    				// the columns.
-    				ContentValues values = new ContentValues();
-    				for (int i = 0; i < columns.size(); i++) {
+				Map<String, String> values = new HashMap<String, String>();
+				for (int i = 0; i < columns.size(); i++) {
+					if ( !idxMetadata.contains(i) ) {
     					values.put(columns.get(i), row[i]);
-    					if (rowCount % 30 == 0 && it != null)
-    						it.updateLineCount(c.getString(R.string.import_thru_row, 1+rowCount));
-    				}
-    				dbt.actualAddRow(values);
-    				values.clear();
-    			}
+					}
+				}
+				String lastModTime = idxTimestamp == -1 ?
+						du.formatNowForDb() : row[idxTimestamp];
+				DateTime t = du.parseDateTimeFromDb(lastModTime);
+				String uriUser = idxUriUser == -1 ? null : row[idxUriUser];
+				String instanceName = idxInstanceName == -1 ? null : row[idxInstanceName];
+				String formId = idxFormId == -1 ? null : row[idxFormId];
+				String locale = idxLocale == -1 ? null : row[idxLocale];
+				dbt.addRow(values, t.getMillis(), uriUser, instanceName, formId, locale);
+
+				if (rowCount % 30 == 0 && it != null) {
+					it.updateLineCount(c.getString(R.string.import_thru_row, 1+rowCount));
+				}
+				values.clear();
     			rowCount++;
     			row = reader.readNext();
     		}
@@ -385,26 +460,6 @@ public class CsvUtil {
 // ===========================================================================================
 
     /**
-     * Export a table to CSV without the properties.
-     * @param file
-     * @param tableId
-     * @param includeTs
-     * @param includePn
-     * @return
-     */
-    public boolean export(ExportTask exportTask, File file, String tableId,
-        boolean includeTs,
-            boolean includePn) {
-        return export(exportTask, file, tableId, includeTs, includePn, true);
-    }
-
-    public boolean exportWithProperties(ExportTask exportTask, File file,
-        String tableId,
-            boolean includeTs, boolean includePn) {
-        return export(exportTask, file, tableId, includeTs, includePn, false);
-    }
-
-    /**
      * Export the file.
      * <p>
      * If raw is false, it means that you DO export the settings. In this case
@@ -416,74 +471,123 @@ public class CsvUtil {
      * key value store settings fails. null safe.
      * @param file
      * @param tableId
-     * @param includeTs
-     * @param includePn
-     * @param raw
+     * @param includeTimestamp
+     * @param includeUriUser
+     * @param includeInstanceName
+     * @param includeFormId
+     * @param includeLocale
+     * @param exportProperties (automatically includes all the above fields)
      * @return
      */
-    private boolean export(ExportTask exportTask, File file, String tableId,
-        boolean includeTs,
-            boolean includePn, boolean raw) {
+    public boolean export(ExportTask exportTask, File file, String tableId,
+    		boolean includeTimestamp,
+            boolean includeUriUser,
+            boolean includeInstanceName,
+            boolean includeFormId,
+            boolean includeLocale,
+            boolean exportProperties) {
       //TODO test that this is the correct KVS to get the export from.
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
                 tableId, KeyValueStore.Type.ACTIVE);
         // building array of columns to select and header row for output file
         int columnCount = tp.getColumns().length;
-        if (!raw) {
+        if (exportProperties) {
           // then we are including all the metadata columns.
           columnCount += DbTable.getAdminColumns().size();
         } else {
           // we're only including the user columns and the optional phone
           // number and time stamp.
-          if (includeTs) columnCount++;
-          if (includePn) columnCount++;
+          if (includeTimestamp) columnCount++;
+          if (includeUriUser) columnCount++;
+          if (includeInstanceName) columnCount++;
+          if (includeFormId) columnCount++;
+          if (includeLocale) columnCount++;
         }
         ArrayList<String> columns = new ArrayList<String>();
         ArrayList<String> headerRow = new ArrayList<String>();
+        int idxTimestamp = -1;
+        int idxUriUser = -1;
+        int idxInstanceName = -1;
+        int idxFormId = -1;
+        int idxLocale = -1;
+
         int index = 0;
-        // TODO: here we'll want to actually include instance name as well...
-        // I think we'll be trying to include every column that also goes to
-        // the server. I'm not sure how this works, so I am leaving it for
-        // now.
-        if (includeTs) {
-            columns.add(DataTableColumns.LAST_MODIFIED_TIME);
-            headerRow.add(LAST_MOD_TIME_LABEL);
-            index++;
-        }
-        if (includePn) {
-            columns.add(DataTableColumns.URI_USER);
-            headerRow.add(SRC_PHONE_LABEL);
-            index++;
-        }
-        if (raw) {
-            for (ColumnProperties cp : tp.getColumns()) {
+        if (exportProperties) {
+        	ColumnProperties[] colProps = tp.getColumns();
+        	for ( int i = 0 ; i < colProps.length ; ++i ) {
+        		ColumnProperties cp = colProps[i];
+            	String displayName = cp.getDisplayName();
                 columns.add(cp.getElementKey());
-                headerRow.add(cp.getDisplayName());
+                headerRow.add(displayName);
+                index++;
+            }
+            // And now add all the metadata columns
+            for (String colName : DbTable.getAdminColumns()) {
+            	String displayName = null;
+            	if ( colName.equals(DataTableColumns.TIMESTAMP) ) {
+            		idxTimestamp = index;
+            		displayName = LAST_MOD_TIME_LABEL;
+            	}
+            	else if ( colName.equals(DataTableColumns.URI_USER)) {
+            		idxUriUser = index;
+            		displayName = SRC_PHONE_LABEL;
+            	}
+            	else if ( colName.equals(DataTableColumns.INSTANCE_NAME)) {
+            		idxInstanceName = index;
+            		displayName = INSTANCE_NAME_LABEL;
+            	}
+            	else if ( colName.equals(DataTableColumns.FORM_ID)) {
+            		idxFormId = index;
+            		displayName = FORM_ID_LABEL;
+            	}
+            	else if ( colName.equals(DataTableColumns.LOCALE)) {
+            		idxLocale = index;
+            		displayName = LOCALE_LABEL;
+            	}
+            	else {
+            		displayName = colName;
+            	}
+        		columns.add(colName);
+                headerRow.add(displayName);
                 index++;
             }
         } else {
-          // Here there are two sets of things we want to export:
-          // 1. The elementKeys of the user columns.
-          // 2. ALL the metadata columns.
-          // confusingly, raw == false means use the elementKey.
+            if (includeTimestamp) {
+                columns.add(DataTableColumns.TIMESTAMP);
+                headerRow.add(LAST_MOD_TIME_LABEL);
+                idxTimestamp = index;
+                index++;
+            }
+            if (includeUriUser) {
+                columns.add(DataTableColumns.URI_USER);
+                headerRow.add(SRC_PHONE_LABEL);
+                idxUriUser = index;
+                index++;
+            }
+            if (includeInstanceName) {
+                columns.add(DataTableColumns.INSTANCE_NAME);
+                headerRow.add(INSTANCE_NAME_LABEL);
+                idxInstanceName = index;
+                index++;
+            }
+            if (includeFormId) {
+                columns.add(DataTableColumns.FORM_ID);
+                headerRow.add(FORM_ID_LABEL);
+                idxFormId = index;
+                index++;
+            }
+            if (includeLocale) {
+                columns.add(DataTableColumns.LOCALE);
+                headerRow.add(LOCALE_LABEL);
+                idxLocale = index;
+                index++;
+            }
+
+            // export everything in the user columns
             for (ColumnProperties cp : tp.getColumns()) {
                 columns.add(cp.getElementKey());
                 headerRow.add(cp.getElementKey());
                 index++;
-            }
-            // And now add all the metadata columns EXCEPT the two we've added
-            // up above iff we've already added them.
-            for (String metadataHeading : DbTable.getAdminColumns()) {
-              if (includeTs && metadataHeading.equals(LAST_MOD_TIME_LABEL)) {
-                // we've already added it.
-                continue;
-              }
-              if (includePn && metadataHeading.equals(SRC_PHONE_LABEL)) {
-                continue;
-              }
-              columns.add(metadataHeading);
-              headerRow.add(metadataHeading);
-              index++;
             }
         }
         // getting data
@@ -495,7 +599,7 @@ public class CsvUtil {
         try {
             CSVWriter cw = new CSVWriter(new FileWriter(file), DELIMITING_CHAR,
                 QUOTE_CHAR, ESCAPE_CHAR);
-            if (!raw) {
+            if (exportProperties) {
               // The first row must be [tableProperties, secondaryKVSEntries]
               // The tableProperties json is easily had,
               // so first we must get the secondary entries.
@@ -550,6 +654,12 @@ public class CsvUtil {
             for (int i = 0; i < table.getHeight(); i++) {
                 for (int j = 0; j < table.getWidth(); j++) {
                     row[j] = table.getData(i, j);
+                }
+                if ( idxTimestamp != -1 ) {
+                	// reformat the timestamp to be a nice string
+                	Long timestamp = Long.valueOf(row[idxTimestamp]);
+                	DateTime dt = new DateTime(timestamp);
+                	row[idxTimestamp] = du.formatDateTimeForDb(dt);
                 }
                 cw.writeNext(row);
             }

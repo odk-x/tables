@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.List;
 
-import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;

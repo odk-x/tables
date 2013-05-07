@@ -18,7 +18,6 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
-import android.os.Environment;
 
 public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	private static final String EMPTY_STRING = "";

@@ -323,7 +323,7 @@ public class MsgHandler {
             }
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
-        dbt.addRow(rowValues, du.formatNowForDb(), phoneNum);
+        dbt.addRow(rowValues, null, phoneNum, null /* instanceName */, null /* formId */, null /* locale */);
         return true;
     }
 

@@ -82,11 +82,17 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	/* the text field for getting the filename */
 	private EditText filenameValField;
 	/* the checkbox for including properties */
-	private CheckBox incPropsCheck;
+	private CheckBox incAllPropertiesCheck;
 	/* the checkbox for including source phone numbers */
-	private CheckBox incPNCheck;
+	private CheckBox incUriUsersCheck;
 	/* the checkbox for including timestamps */
-	private CheckBox incTSCheck;
+	private CheckBox incTimestampsCheck;
+	/* the checkbox for including instance names */
+	private CheckBox incInstanceNamesCheck;
+	/* the checkbox for including form ids */
+	private CheckBox incFormIdsCheck;
+	/* the checkbox for including locales */
+	private CheckBox incLocalesCheck;
 	/* the pick file button */
 	private Button pickFileButton;
 
@@ -133,34 +139,74 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.addView(opt);
 		// adding the include properties checkbox
 		LinearLayout incProps = new LinearLayout(this);
-		incPropsCheck = new CheckBox(this);
-		incPropsCheck.setChecked(true);
-		incProps.addView(incPropsCheck);
+		incAllPropertiesCheck = new CheckBox(this);
+		incAllPropertiesCheck.setChecked(true);
+		incProps.addView(incAllPropertiesCheck);
 		TextView incPropsLabel = new TextView(this);
         incPropsLabel.setTextColor(getResources().getColor(R.color.white));
 		incPropsLabel.setText(getString(R.string.export_opt_include_metadata));
 		incProps.addView(incPropsLabel);
 		v.addView(incProps);
-		// adding the include source phone numbers checkbox
-		LinearLayout incPN = new LinearLayout(this);
-		incPNCheck = new CheckBox(this);
-		incPNCheck.setChecked(true);
-		incPN.addView(incPNCheck);
-		TextView incPNLabel = new TextView(this);
-		incPNLabel.setText(getString(R.string.export_opt_include_phone));
-		incPNLabel.setTextColor(getResources().getColor(R.color.white));
-		incPN.addView(incPNLabel);
-		v.addView(incPN);
+		// adding the include user id checkbox
+		{
+			LinearLayout incPN = new LinearLayout(this);
+			incUriUsersCheck = new CheckBox(this);
+			incUriUsersCheck.setChecked(true);
+			incPN.addView(incUriUsersCheck);
+			TextView incPNLabel = new TextView(this);
+			incPNLabel.setText(getString(R.string.export_opt_include_phone));
+			incPNLabel.setTextColor(getResources().getColor(R.color.white));
+			incPN.addView(incPNLabel);
+			v.addView(incPN);
+		}
 		// adding the include timestamps checkbox
-		LinearLayout incTS = new LinearLayout(this);
-		incTSCheck = new CheckBox(this);
-		incTSCheck.setChecked(true);
-		incTS.addView(incTSCheck);
-		TextView incTSLabel = new TextView(this);
-		incTSLabel.setText(getString(R.string.export_opt_include_modification_datetime));
-		incTSLabel.setTextColor(getResources().getColor(R.color.white));
-		incTS.addView(incTSLabel);
-		v.addView(incTS);
+		{
+			LinearLayout incTS = new LinearLayout(this);
+			incTimestampsCheck = new CheckBox(this);
+			incTimestampsCheck.setChecked(true);
+			incTS.addView(incTimestampsCheck);
+			TextView incTSLabel = new TextView(this);
+			incTSLabel.setText(getString(R.string.export_opt_include_modification_datetime));
+			incTSLabel.setTextColor(getResources().getColor(R.color.white));
+			incTS.addView(incTSLabel);
+			v.addView(incTS);
+		}
+		// adding the include instance names checkbox
+		{
+			LinearLayout incIN = new LinearLayout(this);
+			incInstanceNamesCheck = new CheckBox(this);
+			incInstanceNamesCheck.setChecked(true);
+			incIN.addView(incInstanceNamesCheck);
+			TextView incINLabel = new TextView(this);
+			incINLabel.setText(getString(R.string.export_opt_include_instance_name));
+			incINLabel.setTextColor(getResources().getColor(R.color.white));
+			incIN.addView(incINLabel);
+			v.addView(incIN);
+		}
+		// adding the include form id checkbox
+		{
+			LinearLayout incFI = new LinearLayout(this);
+			incFormIdsCheck = new CheckBox(this);
+			incFormIdsCheck.setChecked(true);
+			incFI.addView(incFormIdsCheck);
+			TextView incFILabel = new TextView(this);
+			incFILabel.setText(getString(R.string.export_opt_include_form_id));
+			incFILabel.setTextColor(getResources().getColor(R.color.white));
+			incFI.addView(incFILabel);
+			v.addView(incFI);
+		}
+		// adding the include locale checkbox
+		{
+			LinearLayout incLO = new LinearLayout(this);
+			incLocalesCheck = new CheckBox(this);
+			incLocalesCheck.setChecked(true);
+			incLO.addView(incLocalesCheck);
+			TextView incLOLabel = new TextView(this);
+			incLOLabel.setText(getString(R.string.export_opt_include_locale));
+			incLOLabel.setTextColor(getResources().getColor(R.color.white));
+			incLO.addView(incLOLabel);
+			v.addView(incLO);
+		}
 		// Horizontal divider
 		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
@@ -200,15 +246,18 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	private void exportSubmission() {
         File file = new File(filenameValField.getText().toString());
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
-        boolean incProps = incPropsCheck.isChecked();
-        boolean incTs = incTSCheck.isChecked();
-        boolean incPn = incPNCheck.isChecked();
+        boolean incProps = incAllPropertiesCheck.isChecked();
+        boolean incTs = incTimestampsCheck.isChecked();
+        boolean incPn = incUriUsersCheck.isChecked();
+        boolean incIN = incInstanceNamesCheck.isChecked();
+        boolean incFI = incFormIdsCheck.isChecked();
+        boolean incLo = incLocalesCheck.isChecked();
         ExportTask task = new ExportTask(this);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(tp, file, incProps, incTs, incPn));
+        task.execute(new ExportRequest(tp, file, incTs, incPn, incIN, incFI, incLo, incProps));
 	}
 
-    @Override
+	@Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
         if(resultCode == RESULT_CANCELED) {return;}

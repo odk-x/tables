@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.Query.SqlData;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -74,7 +76,6 @@ public class DbTable {
       ADMIN_COLUMNS = new ArrayList<String>();
       ADMIN_COLUMNS.add(DataTableColumns.ROW_ID);
       ADMIN_COLUMNS.add(DataTableColumns.URI_USER);
-      ADMIN_COLUMNS.add(DataTableColumns.LAST_MODIFIED_TIME);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
       ADMIN_COLUMNS.add(DataTableColumns.TRANSACTIONING);
@@ -86,7 +87,7 @@ public class DbTable {
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
       COLUMNS_TO_SYNC.put(DataTableColumns.URI_USER, ColumnType.PHONE_NUMBER);
-      COLUMNS_TO_SYNC.put(DataTableColumns.LAST_MODIFIED_TIME, ColumnType.DATETIME);
+      COLUMNS_TO_SYNC.put(DataTableColumns.TIMESTAMP, ColumnType.DATETIME);
       COLUMNS_TO_SYNC.put(DataTableColumns.INSTANCE_NAME, ColumnType.TEXT);
     }
 
@@ -105,7 +106,7 @@ public class DbTable {
     };
 
     public static final String DB_CSV_COLUMN_LIST =
-        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER + ", " + DataTableColumns.LAST_MODIFIED_TIME +
+        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER +
         ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE + ", " + DataTableColumns.TRANSACTIONING +
         ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
         ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
@@ -149,7 +150,6 @@ public class DbTable {
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DataTableColumns.ROW_ID + " TEXT NOT NULL" +
      ", " + DataTableColumns.URI_USER + " TEXT NULL" +
-     ", " + DataTableColumns.LAST_MODIFIED_TIME + " TEXT NOT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DataTableColumns.TRANSACTIONING + " INTEGER NOT NULL" +
@@ -364,9 +364,13 @@ public class DbTable {
         String[] rowIds = new String[rowCount];
         String[][] data = new String[rowCount][arrayList.size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+        int timestampIndex = c.getColumnIndexOrThrow(DataTableColumns.TIMESTAMP);
         for (int i = 0; i < arrayList.size(); i++) {
             colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
         }
+
+        DataUtil du = DataUtil.getDefaultDataUtil();
+
         c.moveToFirst();
         for (int i = 0; i < rowCount; i++) {
 //          Log.i(TAG, "i (row): " + i);
@@ -378,12 +382,24 @@ public class DbTable {
                 value = c.getString(colIndices[j]);
               } catch (Exception e) {
                 try {
-                  value = String.valueOf(c.getInt(colIndices[j]));
+                  value = String.valueOf(c.getLong(colIndices[j]));
                 } catch (Exception f) {
-                  value = String.valueOf(c.getDouble(colIndices[j]));
+                  try {
+                    value = String.valueOf(c.getInt(colIndices[j]));
+                  } catch (Exception g) {
+	                value = String.valueOf(c.getDouble(colIndices[j]));
+	              }
                 }
               }
-              data[i][j] = value;
+              if ( colIndices[j] == timestampIndex ) {
+            	  // return this as a formatted dateTime string.
+            	  Long l = Long.valueOf(value);
+            	  DateTime t = new DateTime(l, DateTimeZone.UTC);
+            	  value = du.formatDateTimeForDb(t);
+            	  data[i][j] = value;
+              } else {
+            	  data[i][j] = value;
+              }
             }
             c.moveToNext();
         }
@@ -467,39 +483,35 @@ public class DbTable {
     }
 
     /**
-     * Adds a row to the table with the given values, no source phone number,
-     * the current time as the last modification time, and an inserting
-     * synchronization state.
-     */
-    public void addRow(Map<String, String> values) {
-        addRow(values, null, null);
-    }
-
-    /**
      * Adds a row to the table with an inserting synchronization state and the
      * transactioning status set to false.
      * <p>
      * I don't think this is called when downloading table data from the
      * server. I think it is only called when creating on the phone...
      */
-    public void addRow(Map<String, String> values, String lastModTime,
-            String srcPhone) {
+    public void addRow(Map<String, String> values, Long timestamp,
+    		String uriUser, String instanceName, String formId, String locale ) {
         Log.d(TAG, values.toString());
-        if (lastModTime == null) {
-            lastModTime = du.formatNowForDb();
+        if (timestamp == null) {
+        	timestamp = System.currentTimeMillis();
+        }
+        if (instanceName == null) {
+        	instanceName = Long.toString(System.currentTimeMillis());
         }
         ContentValues cv = new ContentValues();
         for (String column : values.keySet()) {
-            cv.put(column, values.get(column));
+        	if ( column != null ) {
+        		cv.put(column, values.get(column));
+        	}
         }
         // The admin columns get added here and also in actualAddRow
-        cv.put(DataTableColumns.LAST_MODIFIED_TIME, lastModTime);
-        cv.put(DataTableColumns.URI_USER, srcPhone);
+        cv.put(DataTableColumns.TIMESTAMP, timestamp);
+        cv.put(DataTableColumns.URI_USER, uriUser);
         cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
         cv.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
-        cv.put(DataTableColumns.INSTANCE_NAME,
-            Long.toString(System.currentTimeMillis()));
-        cv.put(DataTableColumns.LOCALE, (String) null);
+        cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
+        cv.put(DataTableColumns.FORM_ID, formId);
+        cv.put(DataTableColumns.LOCALE, locale);
         actualAddRow(cv);
     }
 
@@ -515,9 +527,11 @@ public class DbTable {
           String id = UUID.randomUUID().toString();
           values.put(DataTableColumns.ROW_ID, id);
         }
+        if (!values.containsKey(DataTableColumns.TIMESTAMP)) {
+        	values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
+        }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
-	        values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
 	        values.put(DataTableColumns.SAVED, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
 	        Log.d(TAG, "insert, id=" + result);
@@ -528,23 +542,15 @@ public class DbTable {
     }
 
     /**
-     * Updates a row in the table with the given values, no source phone
-     * number, and the current time as the last modification time.
-     */
-    public void updateRow(String rowId, Map<String, String> values) {
-        updateRow(rowId, values, null, du.formatNowForDb());
-    }
-
-    /**
      * Updates a row in the table and marks its synchronization state as
      * updating.
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
-     * @param srcPhone the source phone number to put in the row
-     * @param lastModTime the last modification time to put in the row
+     * @param uriUser the source phone number to put in the row
+     * @param timestamp the last modification time to put in the row
      */
     public void updateRow(String rowId, Map<String, String> values,
-            String srcPhone, String lastModTime) {
+            String uriUser, Long timestamp, String instanceName, String formId, String locale) {
         ContentValues cv = new ContentValues();
         // TODO is this a race condition of sorts? isSynchronized(), which
         // formerly returned isSynched, may kind of be doing double duty,
@@ -566,6 +572,21 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
+        if ( uriUser != null ) {
+        	cv.put(DataTableColumns.URI_USER, uriUser);
+        }
+        if ( timestamp != null ) {
+        	cv.put(DataTableColumns.TIMESTAMP, timestamp);
+        }
+        if ( instanceName != null ) {
+        	cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
+        }
+        if ( formId != null ) {
+        	cv.put(DataTableColumns.FORM_ID, formId);
+        }
+        if ( locale != null ) {
+        	cv.put(DataTableColumns.LOCALE, locale);
+        }
         actualUpdateRowByRowId(rowId, cv);
     }
 
@@ -582,8 +603,10 @@ public class DbTable {
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        try {
+        if ( !values.containsKey(DataTableColumns.TIMESTAMP) ) {
 	        values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
+        }
+        try {
 	        values.put(DataTableColumns.SAVED, DbTable.SavedStatus.COMPLETE.name());
 	        db.update(tp.getDbTableName(), values, where, whereArgs);
         } finally {

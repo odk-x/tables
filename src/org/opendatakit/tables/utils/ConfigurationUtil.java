@@ -5,8 +5,6 @@ import java.io.File;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.Preferences;
 
-import android.os.Environment;
-
 /**
  * Various utilities for initial configuration of tables
  * @author June

@@ -225,6 +225,9 @@
 	<string name="export_opt_include_metadata">Include Metadata to Allow for Import</string>
 	<string name="export_opt_include_phone">Include Phone Number for Incoming Rows</string>
 	<string name="export_opt_include_modification_datetime">Include Last Modification Timestamp</string>
+	<string name="export_opt_include_instance_name">Include Instance Name</string>
+	<string name="export_opt_include_form_id">Include Form Id</string>
+	<string name="export_opt_include_locale">Include Locale</string>
 	<string name="export_csv_file">Exported CSV Filename</string>
 	<string name="export_choose_csv_file">Select CSV File to Export</string>
 	<string name="export_button">Export</string>
