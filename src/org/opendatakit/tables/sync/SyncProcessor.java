@@ -621,6 +621,8 @@ public class SyncProcessor {
     for (Column col : definitionResource.getColumns()) {
       // TODO: We aren't handling types correctly here. Need to have a mapping
       // on the server as well so that you can pull down the right thing.
+      // TODO: We should also probably be adding it via column properties so 
+      // that necessary boilerplate is included in case we lose the connection.
       ColumnDefinitions.addColumn(dbh.getWritableDatabase(), col.getTableId(), 
           col.getElementKey(), col.getElementName(), ColumnType.NONE, 
           col.getListChildElementKeys(), 
