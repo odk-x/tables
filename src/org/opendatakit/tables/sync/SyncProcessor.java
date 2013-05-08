@@ -176,11 +176,17 @@ public class SyncProcessor {
     boolean success = false;
     beginRowsTransaction(table, getRowIdsAsArray(rowsToInsert));
     try {
+      // First create the table definition on the server.
       String syncTag = synchronizer.createTable(tableId, 
           getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(), 
           SyncUtil.transformClientTableType(tp.getTableType()), 
           tp.getAccessControls());
-      tp.setSyncTag(syncTag);
+      // now create the TableProperties on the server.
+      List<OdkTablesKeyValueStoreEntry> kvsEntries = 
+          getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
+      String syncTagProperties = synchronizer.setTableProperties(
+          tp.getTableId(), syncTag, tp.getTableKey(), kvsEntries);
+      tp.setSyncTag(syncTagProperties);
       Modification modification = synchronizer.insertRows(tableId, tp.getSyncTag(), rowsToInsert);
       updateDbFromModification(modification, table, tp);
       success = true;
