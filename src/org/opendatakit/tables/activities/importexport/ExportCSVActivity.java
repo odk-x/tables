@@ -149,15 +149,15 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.addView(incProps);
 		// adding the include user id checkbox
 		{
-			LinearLayout incPN = new LinearLayout(this);
+			LinearLayout incUI = new LinearLayout(this);
 			incUriUsersCheck = new CheckBox(this);
 			incUriUsersCheck.setChecked(true);
-			incPN.addView(incUriUsersCheck);
-			TextView incPNLabel = new TextView(this);
-			incPNLabel.setText(getString(R.string.export_opt_include_phone));
-			incPNLabel.setTextColor(getResources().getColor(R.color.white));
-			incPN.addView(incPNLabel);
-			v.addView(incPN);
+			incUI.addView(incUriUsersCheck);
+			TextView incUILabel = new TextView(this);
+			incUILabel.setText(getString(R.string.export_opt_include_user_id));
+			incUILabel.setTextColor(getResources().getColor(R.color.white));
+			incUI.addView(incUILabel);
+			v.addView(incUI);
 		}
 		// adding the include timestamps checkbox
 		{
