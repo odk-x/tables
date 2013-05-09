@@ -156,6 +156,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected Map<String, String> doInBackground(Void... args) {
+      //android.os.Debug.waitForDebugger();
       Synchronizer sync;
       try {
         sync = new AggregateSynchronizer(aggregateUrl, authToken);
@@ -224,7 +225,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected Void doInBackground(Void... params) {
-      android.os.Debug.waitForDebugger();
+      //android.os.Debug.waitForDebugger();
       DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
 //TODO the order of synching should probably be re-arranged so that you first
 // get the table properties and column entries (ie the table definition) and

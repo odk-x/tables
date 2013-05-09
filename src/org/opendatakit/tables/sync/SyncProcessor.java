@@ -558,10 +558,10 @@ public class SyncProcessor {
         if (colName.equals(DataTableColumns.SYNC_TAG)) {
           syncTag = rows.getData(i, j);
         } else if (colName.equals(DataTableColumns.TIMESTAMP)) {
-//          Long timestamp = Long.valueOf(rows.getData(i, j));
-//          DateTime dt = new DateTime(timestamp);
-//          String lastModTime = du.formatDateTimeForDb(dt);
-//          values.put(LAST_MOD_TIME_LABEL, lastModTime);
+          Long timestamp = Long.valueOf(rows.getData(i, j));
+          DateTime dt = new DateTime(timestamp);
+          String lastModTime = du.formatDateTimeForDb(dt);
+          values.put(LAST_MOD_TIME_LABEL, lastModTime);
         } else {
           values.put(colName, rows.getData(i, j));
         }
