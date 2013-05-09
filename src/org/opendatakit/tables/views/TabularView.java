@@ -55,10 +55,11 @@ class TabularView extends View {
   private final Controller controller;
   private final String[][] data;
   // This will be the ENTIRE data from the table. This is necessary for
-  // evluating color rules. For instance the frozen ("index") column will have
+  // evaluating color rules. For instance the frozen ("index") column will have
   // only data for itself. But if it is to be colored correctly it must contain
   // all the data. This seems like a WILDLY inefficient thing to do, but for
   // now am going to do it.
+  // TODO: fix the above atrocity.
   private final String[][] wholeData;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
@@ -234,7 +235,6 @@ class TabularView extends View {
 
   @Override
   public void onDraw(Canvas canvas) {
-    // Logging when this is called to see why it is so slow to view a table.
     if (data.length == 0) {
       return;
     }
@@ -395,11 +395,9 @@ class TabularView extends View {
     int yScroll = sv.getMainScrollY();
     if (xScroll < 0) {
       xScroll = 0;
-      Log.d(TAG, "xScroll was negative, reset to 0");
     }
     if (yScroll < 0) {
       yScroll = 0;
-      Log.d(TAG, "yScroll was negative, reset to 0");
     }
     int leftmost;
     int rightmost;
@@ -436,17 +434,9 @@ class TabularView extends View {
       bottommost = (yScroll + metrics.heightPixels) /
           (BORDER_WIDTH + rowHeight);
       if (bottommost >= data.length) {
-        Log.d("TAG", "in if to catch, bottommost: " + bottommost);
         bottommost = data.length - 1; // don't want to go beyond the last row
-        Log.d("TAG", "reset bottommost to: " + bottommost);
       }
     }
-    // For a while I was getting an error where it looked like this was not
-    // getting appropriately reset. However, it now seems like for whatever
-    // reason it is indeed working...possibly didn't push the new code to the
-    // phone? Going to leave the logs in here for now in case I stumble across
-    // it again.
-    Log.d(TAG, "bottom most after else is: " + bottommost);
     topmostBorder = topmost * (BORDER_WIDTH + rowHeight);
     topTopmost = topmostBorder + BORDER_WIDTH;
     topBottommostBorder = bottommost * (BORDER_WIDTH + rowHeight);
@@ -454,19 +444,9 @@ class TabularView extends View {
     // And now let's get the correct column. The math here can't be as simple,
     // b/c unlike rowHeight, columnWidth is not a fixed unit.
     leftmost = getLeftmostColumnBasedOnXScroll(xScroll);
-    if (leftmost < 0) {
-      Log.e(TAG, "leftmost was < 0 from getLeftmostColumnBasedOnXScroll " +
-            "for xScroll: " + xScroll + ", type is: " + this.type);
-    }
     leftLeftmost = xs[leftmost];
     leftmostBorder = leftLeftmost - BORDER_WIDTH;
     rightmost = getLeftmostColumnBasedOnXScroll(xScroll + metrics.widthPixels);
-    if (rightmost < 0) {
-      Log.e(TAG, "rightMost was < 0 from getLeftmostColumnBasedOnXScroll " +
-      		"for xScroll + metrics.widthPixels: " + xScroll + " + "
-          + metrics.widthPixels + " = " + xScroll + metrics.widthPixels +
-          ", type is: " + this.type);
-    }
     leftRightmost = xs[rightmost];
     rightRightmostBorder = leftRightmost + columnWidths[rightmost]
         + BORDER_WIDTH; // i believe at the end, then, this should be total
@@ -564,7 +544,6 @@ class TabularView extends View {
 
   private void drawCell(Canvas canvas, int x, int y, String datum,
       int backgroundColor, int foregroundColor, int columnWidth) {
-//    Log.d(TAG, "drawCell called");
     // have to do this check to reset to the default, otherwise it uses the
     // old object which was previously saved and paints all the columns the
     // wrong color.
@@ -577,7 +556,6 @@ class TabularView extends View {
     canvas.save(Canvas.ALL_SAVE_FLAG);
     canvas.clipRect(x + HORIZONTAL_CELL_PADDING, y,
         x + columnWidth - (2 * HORIZONTAL_CELL_PADDING), y + rowHeight);
-//        Region.Op.REPLACE);
     textPaint.setColor(foregroundColor);
     canvas.drawText(datum, x + HORIZONTAL_CELL_PADDING, (y + rowHeight
         - VERTICAL_CELL_PADDING), textPaint);

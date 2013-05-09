@@ -88,8 +88,6 @@ public class SpreadsheetView extends LinearLayout
 
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
-//    private LockableHorizontalScrollView wrapScroll;
-    /** trying to fix slow draw **/
     private LockableScrollView dataScroll;
     private LockableScrollView dataStatusScroll;
     private View wrapper;
@@ -97,7 +95,6 @@ public class SpreadsheetView extends LinearLayout
 
     private LockableScrollView indexScroll;
     private LockableScrollView mainScroll;
-//    private LockableScrollView statusScroll;
     private TabularView indexData;
     private TabularView indexHeader;
     private TabularView indexFooter;
@@ -167,9 +164,6 @@ public class SpreadsheetView extends LinearLayout
                     return cellNum;
                 } else {
                   return cellNum;
-//                    int colNum = cellNum % (table.getWidth() - 1);
-//                    int rowNum = cellNum / (table.getWidth() - 1);
-//                    return cellNum + rowNum + ((colNum < indexedCol) ? 0 : 1);
                 }
             }
             @Override
@@ -271,7 +265,6 @@ public class SpreadsheetView extends LinearLayout
                 int cellNum = indexData.getCellNumber(x, y);
                 Log.d(TAG, "indexDataCellClickListener cellNum: " + cellNum);
                 return cellNum;
-//                return (cellNum * table.getWidth()) + indexedCol;
             }
             @Override
             protected void takeDownAction(int cellId) {
@@ -286,8 +279,6 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected void takeLongClickAction(int cellId, int rawX,
                     int rawY) {
-//                lastLongClickedCellId = cellId;
-//                controller.openContextMenu(indexData);
               // TODO: THIS IS STORING THE WRONG CELLID
                 lastLongClickedCellId = cellId;
                 controller.indexedColCellLongClicked(cellId, rawX, rawY);
@@ -509,12 +500,6 @@ public class SpreadsheetView extends LinearLayout
                 addIndex++;
             }
         }
-        Log.i(TAG, "out of the else / for loop in buildTable");
-        int avanda = getResources().getColor(R.color.Avanda);
-        int headerData = getResources().getColor(R.color.header_data);
-        int headerIndex = getResources().getColor(R.color.header_index);
-        int footerIndex = getResources().getColor(R.color.footer_index);
-//        LockableScrollView dataScroll = new LockableScrollView(context);
         dataScroll = new LockableScrollView(context);
         TabularView dataTable = new TabularView(context, this, tp, data,
             wholeData,
@@ -561,7 +546,6 @@ public class SpreadsheetView extends LinearLayout
 
 
     private View buildStatusTable() {
-      Log.e(TAG, "building status table");
     	String[][] header;
         String[][] data;
         String[][] footer;
@@ -577,16 +561,11 @@ public class SpreadsheetView extends LinearLayout
         footer = new String[1][1];
         footer[0][0] = "footer";
         colorRulers = new ColorRuleGroup[1];
-        // For now let's just use the row color rule.
-//        colorRulers[0] = ColorRuleGroup.getColumnColorRuler(tp,
-//                tp.getColumnByDisplayName(table.getHeader(0)));
         colorRulers[0] = ColorRuleGroup.getTableColorRuleGroup(tp);
         colWidths = new int[1];
         colWidths[0] = 10;
 
         dataStatusScroll = new LockableScrollView(context);
-//        ColorDecider fgColorDecider = new ColorRulerColorDecider(colorRulers,
-//                Color.BLACK, false);
         TabularView dataTable = new TabularView(context, this, tp, data,
             wholeData,
                 Color.BLACK, Color.WHITE,
