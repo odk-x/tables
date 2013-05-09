@@ -134,7 +134,7 @@ public class TablePropertiesManager extends PreferenceActivity {
             noDefaultsDialog.setNeutralButton(getString(R.string.ok), null);
             noDefaultsDialog.show();
           } else {
-            kvsm.revertToDefaultPropertiesForTable(tp.getTableId());
+            kvsm.copyDefaultToActiveForTable(tp.getTableId());
           }
         }
       });

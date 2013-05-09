@@ -266,6 +266,7 @@ public class AggregateSynchronizer implements Synchronizer {
       currentTag = SyncTag.valueOf(currentSyncTag);
     else
       currentTag = new SyncTag("", "");
+    // This tag is ultimately returned. May8--make sure it works.
     SyncTag newTag = new SyncTag(resource.getDataEtag(), 
         resource.getPropertiesEtag());
 

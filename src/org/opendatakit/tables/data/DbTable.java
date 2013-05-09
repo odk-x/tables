@@ -511,6 +511,12 @@ public class DbTable {
      * <p>
      * I think this gets called when you download a table from the server,
      * whereas I don't think that addRow() does.
+     * <p>
+     * Checks to ensure that all of the columns in {@link DataTableColumns} 
+     * that have non-null constraints are present. If not, it adds their 
+     * default value. This is NOT true of {@link DataTableColumns#SYNC_STATE},
+     * which varies depending on who is calling this method. It is up to the 
+     * caller to set it appropriately. 
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
@@ -520,6 +526,30 @@ public class DbTable {
         }
         if (!values.containsKey(DataTableColumns.TIMESTAMP)) {
         	values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
+        }
+        // There is the possibility here that for whatever reason some of the
+        // values from the server will be null or non-existent. This will cause
+        // problems if there are NON NULL constraints on the tables. Check and
+        // add default values as appropriate.
+        if (!values.containsKey(DataTableColumns.INSTANCE_NAME) ||
+            values.get(DataTableColumns.INSTANCE_NAME) == null) {
+          values.put(DataTableColumns.INSTANCE_NAME, 
+              DataTableColumns.DEFAULT_INSTANCE_NAME);
+        }
+        if (!values.containsKey(DataTableColumns.LOCALE) ||
+            values.get(DataTableColumns.LOCALE) == null) {
+          values.put(DataTableColumns.LOCALE, 
+              DataTableColumns.DEFAULT_LOCALE);
+        }
+        if (!values.containsKey(DataTableColumns.URI_USER) ||
+            values.get(DataTableColumns.DEFAULT_URI_USER) == null) {
+          values.put(DataTableColumns.URI_USER, 
+              DataTableColumns.DEFAULT_URI_USER);
+        }
+        if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
+            values.get(DataTableColumns.SYNC_TAG) == null) {
+          values.put(DataTableColumns.SYNC_TAG, 
+              DataTableColumns.DEFAULT_SYNC_TAG);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {

@@ -26,6 +26,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.entity.Column;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -662,6 +663,35 @@ public class ColumnProperties {
 //    // }
     }
   }
+  
+  /**
+   * Add a column to the datastore. 
+   * <p>
+   * Convenience methods. Calls the other {@link #addColumn} method with more
+   * paremeters, setting defaults.
+   * @param dbh
+   * @param db
+   * @param tableId
+   * @param displayName
+   * @param elementKey
+   * @param elementName
+   * @param columnType
+   * @param displayVisible
+   * @param listChildElementKeys
+   * @param isPersisted
+   * @param joins
+   * @param typeOfStore
+   * @return
+   */
+  public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
+      String tableId, String displayName, String elementKey, 
+      String elementName, boolean isVisible, KeyValueStore.Type typeOfStore) {
+    return addColumn(dbh, db, tableId, displayName, elementKey, elementName, 
+        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, 
+        ColumnDefinitions.DEFAULT_DB_JOINS, 
+        ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
+        ColumnDefinitions.DEFAULT_DB_JOINS, isVisible, typeOfStore);
+  }
 
   /**
    * Add a column to the datastore. elementKey and elementName should be
@@ -673,15 +703,18 @@ public class ColumnProperties {
    * @param displayName
    * @param elementKey
    * @param elementName
+   * @param columnType
+   * @param listChildElementKeys
+   * @param isPersisted
+   * @param joins
    * @param displayVisible
+   * @param typeOfStore
    * @return
    */
   public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
-      String tableId,
-      String displayName,
-      String elementKey,
-      String elementName,
-      boolean displayVisible,
+      String tableId, String displayName, String elementKey,
+      String elementName, ColumnType columnType, String listChildElementKeys,
+      boolean isPersisted, String joins, boolean displayVisible,
       KeyValueStore.Type typeOfStore) {
     // We're going to do this just by calling the corresponding methods on the
     // ColumnDefinitions and the key value store.
@@ -724,10 +757,7 @@ public class ColumnProperties {
       try {
         Map<String, String> columnDefProps = ColumnDefinitions.addColumn(db,
             tableId, elementKey, elementName,
-            ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE,
-            DEFAULT_KEY_DISPLAY_CHOICES_MAP,
-            ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
-            ColumnDefinitions.DEFAULT_DB_JOINS);
+            columnType, listChildElementKeys, isPersisted, joins);
         KeyValueStore kvs = kvsm.getStoreForTable(tableId, typeOfStore);
         kvs.addEntriesToStore(db, values);
         mapProps.putAll(columnDefProps);

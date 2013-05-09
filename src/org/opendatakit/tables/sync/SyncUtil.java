@@ -15,6 +15,9 @@
  */
 package org.opendatakit.tables.sync;
 
+import org.opendatakit.aggregate.odktables.entity.Column;
+import org.opendatakit.tables.data.ColumnType;
+
 import android.util.Log;
 
 /**
@@ -122,5 +125,22 @@ public class SyncUtil {
     }
     return serverType;
   }
+  
+  /**
+   * This should eventually map the the column type
+   * on the server to the phone-side column type. It currently just returns
+   * type none, losing any sort of type information from the server. 
+   * TODO: make this method work once it's been updated from the server.
+   * @param strColumn
+   * @return
+   */
+  public static ColumnType getTablesColumnTypeFromServerColumnType(
+      Column.ColumnType serverColumnType) {
+    // TODO: Sort out the way column types are going to go back and forth b/w
+    // the server and the device.
+    return ColumnType.NONE;
+  }
+  
+  
   
 }

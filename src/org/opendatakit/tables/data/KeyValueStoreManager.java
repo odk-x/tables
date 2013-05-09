@@ -351,7 +351,7 @@ public class KeyValueStoreManager {
    * active<--default
    * @param tableId
    */
-  public void revertToDefaultPropertiesForTable(String tableId) {
+  public void copyDefaultToActiveForTable(String tableId) {
     // There is some weirdness here. Elsewhere "properties" have been
     // considered to be ONLY those keys that exist in the init columns of
     // TableProperties. ATM the file pointers for list and box views, etc,
@@ -394,15 +394,8 @@ public class KeyValueStoreManager {
    * @param tableId
    */
   public void mergeServerToDefaultForTable(String tableId) {
-    /*
-     * We're just going to go ahead and implement this with a map.
-     * We'll add the default entries first. Any that are present also
-     * in the server table will overwrite them. In the future, instead of
-     * just adding, logic for checking "user-resolvable" conflicts should be
-     * added here.
-     */
-    Map<String, OdkTablesKeyValueStoreEntry> newDefault =
-        new HashMap<String, OdkTablesKeyValueStoreEntry>();
+    Set<OdkTablesKeyValueStoreEntry> newDefault =
+        new HashSet<OdkTablesKeyValueStoreEntry>();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
@@ -413,15 +406,18 @@ public class KeyValueStoreManager {
 	        defaultKVS.getEntries(db);
 	    List<OdkTablesKeyValueStoreEntry> serverEntries =
 	        serverKVS.getEntries(db);
-	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
-	      newDefault.put(entry.key, entry);
-	    }
+	    // First we get all the server entries as a set. We'll then add all the
+	    // default values. A set is unchanged if the entry is already there, so 
+	    // the default entries that already have entries will simply be gone.
 	    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
-	      newDefault.put(entry.key, entry);
+	      newDefault.add(entry);
+	    }
+	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
+	      newDefault.add(entry);
 	    }
 	    List<OdkTablesKeyValueStoreEntry> defaultList =
 	        new ArrayList<OdkTablesKeyValueStoreEntry>();
-	    for (OdkTablesKeyValueStoreEntry entry : newDefault.values()) {
+	    for (OdkTablesKeyValueStoreEntry entry : newDefault) {
 	      defaultList.add(entry);
 	    }
 	    // TA-DA! And now we have the merged entries. put them in the store.

@@ -1126,12 +1126,34 @@ public class TableProperties {
     }
     return false;
   }
+  
+  /**
+   * Adds a column to the table.
+   * <p>
+   * The column is set to the default visibility. The column is added to the
+   * backing store.
+   * <p>
+   * The elementKey and elementName must be unique to a given table. If you
+   * are not ensuring this yourself, you should pass in null values and it will
+   * generate names based on the displayName via
+   * {@link ColumnProperties#createDbElementKey} and
+   * {@link ColumnProperties#createDbElementName}.
+   */
+  public ColumnProperties addColumn(String displayName, String elementKey,
+      String elementName) {
+    return addColumn(displayName,elementKey, elementName, 
+        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE,
+        // TODO: this should be a default list of its own
+        ColumnDefinitions.DEFAULT_LIST_CHILD_ELEMENT_KEYS,
+        ColumnDefinitions.DEFAULT_DB_IS_PERSISTED, 
+        ColumnDefinitions.DEFAULT_DB_JOINS);
+  }
 
   /**
    * Adds a column to the table.
    * <p>
    * The column is set to the default visibility. The column is added to the
-   * active column store.
+   * backing store.
    * <p>
    * The elementKey and elementName must be unique to a given table. If you
    * are not ensuring this yourself, you should pass in null values and it will
@@ -1147,7 +1169,8 @@ public class TableProperties {
    * @return ColumnProperties for the new table
    */
   public ColumnProperties addColumn(String displayName, String elementKey,
-      String elementName) {
+      String elementName, ColumnType columnType, String listChildElementKeys,
+      boolean isPersisted, String joins) {
     // ensuring columns is initialized
     getColumns();
     // preparing column order
@@ -1172,11 +1195,9 @@ public class TableProperties {
 	    db.beginTransaction();
 	    try {
 	      cp = ColumnProperties.addColumn(dbh, db, tableId,
-	          displayName,
-	          elementKey,
-	          elementName,
+	          displayName, elementKey, elementName, columnType, 
+	          listChildElementKeys, isPersisted, joins,
 	          ColumnProperties.DEFAULT_KEY_VISIBLE,
-//	          KeyValueStore.Type.COLUMN_ACTIVE);
 	          this.getBackingStoreType());
 	      db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \""
 	          + cp.getElementKey() + "\"");

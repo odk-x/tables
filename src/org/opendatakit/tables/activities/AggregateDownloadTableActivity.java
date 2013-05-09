@@ -232,17 +232,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 // during the process. along those lines, the same process should exist in the
 // table creation on the phone. or rather, THAT should try and follow the same
 // order.
-      // There is some weirdness here. Downloaded tables should be added to the
-      // server KVS, so you would think this should create it there. However,
-      // in order to keep the flow of table creation the same in all cases,
-      // we in fact first add the properties to the active store and allow the
-      // table to be created, then copy the properties through to the default
-      // and server stores.
       TableProperties tp = TableProperties.addTable(dbh, tableName, tableName,
-          tableName, TableType.data, tableId, KeyValueStore.Type.ACTIVE);
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tableId);
-      syncKVS.setIsSetToSync(true);
+          tableName, TableType.data, tableId, KeyValueStore.Type.SERVER);
       tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
 
@@ -258,12 +249,11 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           new DataManager(dbh), new SyncResult());
       processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
-      //SS: and now at this point the table is up to date in the active store.
-      // however, it is exceedingly important that the properties also be
-      // copied into the server and default store, or else several invariants
-      // are broken.
-      kvsm.setCurrentAsDefaultPropertiesForTable(tableId);
-      kvsm.copyDefaultToServerForTable(tableId);
+      // Now copy the properties from the server to the default to the active.
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      // TODO: this code not working. these two methods gone wrong. 
+      kvsm.mergeServerToDefaultForTable(tableId);
+      kvsm.copyDefaultToActiveForTable(tableId);
 
       return null;
     }

@@ -52,6 +52,7 @@ public class ColumnDefinitions {
   public static final ColumnType DEFAULT_DB_ELEMENT_TYPE =
       ColumnType.NONE;
   public static final String DEFAULT_DB_JOINS = null;
+  public static final String DEFAULT_LIST_CHILD_ELEMENT_KEYS = null;
 
   // A set of all the column names in this table.
   public static final Set<String> columnNames;

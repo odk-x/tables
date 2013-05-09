@@ -104,6 +104,10 @@ public class SyncProcessor {
   /**
    * Synchronize the table represented by the given TableProperties with the
    * cloud.
+   * <p>
+   * Note that if the db changes under you when calling this method, the tp 
+   * parameter will become out of date. It should be refreshed after calling 
+   * this method.
    * 
    * @param tp
    *          the table to synchronize
@@ -135,7 +139,10 @@ public class SyncProcessor {
       default:
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
-      if (success)
+      // It is possible the table properties changed. Refresh just in case.
+      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+          tp.getBackingStoreType());
+      if (success && tp != null) // null in case we deleted the tp.
         tp.setLastSyncTime(du.formatNowForDb());
     } finally {
       endTableTransaction(tp, success);
@@ -223,9 +230,18 @@ public class SyncProcessor {
     return success;
   }
 
-  /*
-   * I think this is the method that's called when the table is dl'd for the
-   * first time from the server? SS
+  /**
+   * This method is eventually called when a table is first downloaded from the
+   * server.
+   * <p>
+   * Note that WHENEVER this method is called, if updates to the key value 
+   * store or TableDefinition have been made, the tp parameter will become
+   * out of date. Therefore after calling this method, the caller should 
+   * refresh their TableProperties.
+   * @param tp
+   * @param table
+   * @param downloadingTable
+   * @return
    */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table,
       boolean downloadingTable) {
@@ -247,6 +263,9 @@ public class SyncProcessor {
       exception("synchronizeTableRest", tp, e);
       return false;
     }
+    // refresh the tp
+    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+        tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
     List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
@@ -263,9 +282,11 @@ public class SyncProcessor {
     boolean success = false;
     beginRowsTransaction(table, rowIds);
     try {
-      Modification modification = synchronizer.insertRows(tableId, tp.getSyncTag(), rowsToInsert);
+      Modification modification = synchronizer.insertRows(tableId, 
+          tp.getSyncTag(), rowsToInsert);
       updateDbFromModification(modification, table, tp);
-      modification = synchronizer.updateRows(tableId, tp.getSyncTag(), rowsToUpdate);
+      modification = synchronizer.updateRows(tableId, tp.getSyncTag(), 
+          rowsToUpdate);
       updateDbFromModification(modification, table, tp);
       String syncTag = synchronizer.deleteRows(tableId, tp.getSyncTag(),
           getRowIdsAsList(rowsToDelete));
@@ -343,16 +364,18 @@ public class SyncProcessor {
             "for the first time. deleting place holder table.");
         tp.deleteTableActual();
         // update the tp
-        tp = addTableFromDefinitionResource(definitionResource);
+        // SHOULD THIS METHOD ACTUALLY SET THE SYNC TAG?!? IT SHOWS SETS
+        // AT THE END OF THIS METHOD.
+        tp = addTableFromDefinitionResource(definitionResource, newSyncTag);
       } else {
         Log.w(TAG, "database properties have changed. " +
             "structural modifications are not allowed. if structure needs" +
             " to be updated, it is not happening.");
-        resetKVSForPropertiesResource(tp, propertiesResource);
-        // update the tp
-        tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
-            KeyValueStore.Type.SERVER);
       }
+      resetKVSForPropertiesResource(tp, propertiesResource);
+      // update the tp
+      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+          KeyValueStore.Type.SERVER);
     }
 
     // sort data changes into types
@@ -571,7 +594,7 @@ public class SyncProcessor {
   }
 
   private void endTableTransaction(TableProperties tp, boolean success) {
-    if (success)
+    if (success && tp != null) // might be null if table was deleted.
       tp.setSyncState(SyncState.rest);
     tp.setTransactioning(false);
   }
@@ -604,12 +627,17 @@ public class SyncProcessor {
   
   /**
    * Update the database to reflect the new structure. 
+   * <p>
+   * This should be called when downloading a table from the server, which is
+   * why the syncTag is separate.
    * TODO: pass the db around rather than dbh so we can do this transactionally
    * @param definitionResource
+   * @param syncTag the syncTag belonging to the modification from which you
+   * acquired the {@link TableDefinitionResource}.
    * @return the new {@link TableProperties} for the table.
    */
   private TableProperties addTableFromDefinitionResource(
-      TableDefinitionResource definitionResource) {
+      TableDefinitionResource definitionResource, String syncTag) {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
     TableProperties tp = TableProperties.addTable(dbh, 
         definitionResource.getTableKey(),
@@ -621,10 +649,11 @@ public class SyncProcessor {
     for (Column col : definitionResource.getColumns()) {
       // TODO: We aren't handling types correctly here. Need to have a mapping
       // on the server as well so that you can pull down the right thing.
-      // TODO: We should also probably be adding it via column properties so 
-      // that necessary boilerplate is included in case we lose the connection.
-      ColumnDefinitions.addColumn(dbh.getWritableDatabase(), col.getTableId(), 
-          col.getElementKey(), col.getElementName(), ColumnType.NONE, 
+      // TODO: add an addcolumn method to allow setting all of the dbdefinition
+      // fields.
+      tp.addColumn(col.getElementKey(), col.getElementKey(), 
+          col.getElementName(), SyncUtil.
+          getTablesColumnTypeFromServerColumnType(col.getElementType()), 
           col.getListChildElementKeys(), 
           SyncUtil.intToBool(col.getIsPersisted()), col.getJoins());
     }
@@ -636,7 +665,7 @@ public class SyncProcessor {
         definitionResource.getTableId());
     syncKVS.setIsSetToSync(true);
     tp.setSyncState(SyncState.rest);
-    tp.setSyncTag(null);
+    tp.setSyncTag(syncTag);
     return tp;
   }
   
