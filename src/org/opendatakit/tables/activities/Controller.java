@@ -887,7 +887,7 @@ public class Controller {
     String formId = null; // collect formId
     String instanceName = null; // if exists, meta/instanceName value
     String locale = null; // current locale string
-    dbt.addRow(values, timestamp, uriUser, instanceName, formId, locale);
+    dbt.addRow(values, null, timestamp, uriUser, instanceName, formId, locale);
     return true;
   }
 

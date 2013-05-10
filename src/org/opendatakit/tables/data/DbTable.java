@@ -477,11 +477,14 @@ public class DbTable {
      * Adds a row to the table with an inserting synchronization state and the
      * transactioning status set to false.
      * <p>
+     * If the rowId is null it is not added.
+     * <p>
      * I don't think this is called when downloading table data from the
      * server. I think it is only called when creating on the phone...
      */
-    public void addRow(Map<String, String> values, Long timestamp,
-    		String uriUser, String instanceName, String formId, String locale ) {
+    public void addRow(Map<String, String> values, String rowId, 
+          Long timestamp, String uriUser, String instanceName, String formId, 
+          String locale ) {
         Log.d(TAG, values.toString());
         if (timestamp == null) {
         	timestamp = System.currentTimeMillis();
@@ -490,6 +493,9 @@ public class DbTable {
         	instanceName = Long.toString(System.currentTimeMillis());
         }
         ContentValues cv = new ContentValues();
+        if (rowId != null) {
+          cv.put(DataTableColumns.ROW_ID, rowId);
+        }
         for (String column : values.keySet()) {
         	if ( column != null ) {
         		cv.put(column, values.get(column));
