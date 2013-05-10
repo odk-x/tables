@@ -125,14 +125,45 @@ public class ColorRule {
     return mForeground;
   }
   
-  /**
-   * Return symbol space value.
-   */
   @Override
   public String toString() {
-    String symbol = mOperator.getSymbol();
-    String value = mValue;
-    return symbol + " " + value;
+    return "[id=" + getRuleId()
+    	  + ", elementKey=" + getColumnElementKey()
+        + ", operator=" + getOperator()
+        + ", value=" + getVal()
+        + ", background=" + getBackground()
+        + ", foreground=" + getForeground()
+        + "]";
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ColorRule)) {
+      return false;
+    }
+    ColorRule other = (ColorRule) o;
+    return mId == null ? other.mId == null : mId.equals(other.mId)
+        && mElementKey == null ? other.mElementKey == null : mElementKey.equals(other.mElementKey)
+        && mOperator == null ? other.mOperator == null : mOperator == other.mOperator
+        && mValue == null ? other.mValue == null : mValue == other.mValue
+        && mBackground == other.mBackground
+        && mForeground == other.mForeground;
+  }
+  
+  /**
+   * Returns true if the given rule equals this one in all fields except for
+   * id.
+   * @param other
+   * @return
+   */
+  public boolean equalsWithoutId(ColorRule other) {
+    boolean sameElKey = mElementKey == null ? other.mElementKey == null : mElementKey.equals(other.mElementKey);
+    boolean sameOp =  mOperator == null ? other.mOperator == null : mOperator == other.mOperator;
+    boolean sameVal = mValue == null ? other.mValue == null : mValue == other.mValue;
+    boolean sameBackground = mBackground == other.mBackground;
+    boolean sameForeground = mForeground == other.mForeground;
+    return sameElKey && sameOp && sameVal && sameBackground && sameForeground;
+    
   }
   
   public void setForeground(int newForeground) {

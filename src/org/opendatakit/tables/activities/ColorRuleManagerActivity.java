@@ -153,7 +153,9 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       AlertDialog confirmDeleteAlert;
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
       builder.setTitle(R.string.confirm_delete_color_rule);
-      builder.setMessage(getString(R.string.are_you_sure_delete_color_rule, mColorRules.get(position).toString() ));
+      builder.setMessage(getString(R.string.are_you_sure_delete_color_rule, 
+          " " + mColorRules.get(position).getOperator().getSymbol() + " " +
+          mColorRules.get(position).getVal()));
 
       // For the OK action we want to actually delete this list view.
       builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
@@ -281,8 +283,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
             parent, false);
       }
       final int currentPosition = position;
-      final String ruleString = mColorRules.get(currentPosition).toString();
-      // The user-friendly string rep of the rule.
       // We'll need to display the display name if this is an editable field.
       // (ie if a status column or table rule)
       String columnDisplayName = "";
@@ -294,7 +294,9 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       }
       TextView label =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
-      label.setText(columnDisplayName + ruleString);
+      label.setText(columnDisplayName + " " + 
+          mColorRules.get(currentPosition).getOperator().getSymbol() + " " +
+          mColorRules.get(currentPosition).getVal());
       final int backgroundColor =
           mColorRules.get(currentPosition).getBackground();
       final int textColor =
