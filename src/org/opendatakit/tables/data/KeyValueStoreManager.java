@@ -16,15 +16,14 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -473,6 +472,9 @@ public class KeyValueStoreManager {
    * key value store that does NOT use this method, you must be sure to also
    * add the isSetToSync key to the sync KVS.
    * <p>
+   * Also increments the properties tag for the dataproperties and sets the 
+   * table state to updating--both only if it has 
+   * already been synched.
    * default-->server
    * @param tableId
    */
@@ -490,6 +492,19 @@ public class KeyValueStoreManager {
 	    serverKVS.addEntriesToStore(db, defaultEntries);
 	    // and now add an entry to the sync KVS.
 	    addIsSetToSyncToSyncKVSForTable(tableId);
+	    // Now try to update the properties tag.
+	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, 
+	        tableId, KeyValueStore.Type.SERVER);
+	    String syncTagStr = tp.getSyncTag();
+	    if (syncTagStr == null) {
+	      // Then it's not been synched and we can rely on it to first be inited
+	      // during the sync.
+	    } else {
+	      SyncTag syncTag = SyncTag.valueOf(syncTagStr);
+	      syncTag.incrementPropertiesEtag();
+	      tp.setSyncTag(syncTag.toString());
+	      tp.setSyncState(SyncState.updating);
+	    }
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
