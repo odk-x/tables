@@ -49,6 +49,7 @@ import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -152,10 +153,22 @@ public class SyncProcessor {
   private boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "UPDATING " + tp.getDisplayName());
-
+//    // We want to remember the state we were at before the update. If the 
+//    // properties etag is different it means we had changes of our own to give
+//    // to the server, so we'll have to send after we receive. If you don't do 
+//    // this you get into the situation where your synctag is overwritten with 
+//    String syncTagStr = tp.getSyncTag();
+//    SyncTag syncTagBeforeUpdate = null;
+//    if (syncTagStr != null) {
+//      syncTagBeforeUpdate = SyncTag.valueOf(syncTagStr);
+//    }
+    
     boolean success = false;
     try {
       updateDbFromServer(tp, table, false);
+      // update the tp.
+      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+          KeyValueStore.Type.SERVER);
       String syncTag = synchronizer.setTableProperties(tableId, 
           tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId, 
               KeyValueStore.Type.SERVER));
@@ -372,10 +385,24 @@ public class SyncProcessor {
             "structural modifications are not allowed. if structure needs" +
             " to be updated, it is not happening.");
       }
-      resetKVSForPropertiesResource(tp, propertiesResource);
-      // update the tp
-      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
-          KeyValueStore.Type.SERVER);
+      // We only want to update the properties if we haven't made local 
+      // changes. Otherwise we'd overwrite our local ones and would never be
+      // able to put new ones on the server. We'll do this based on the long.
+      // If the server was udated more recently in time, we'll take theirs. 
+      // Otherwise, we'll give the server ours. This isn't a perfect system.
+      long serverPropertiesTagTime = 
+          Long.parseLong(SyncTag.valueOf(newSyncTag).getPropertiesEtag());
+      long localPropertiesTagTime = 
+          Long.parseLong(SyncTag.valueOf(tp.getSyncTag()).getPropertiesEtag());
+      if (serverPropertiesTagTime > localPropertiesTagTime 
+          || downloadingTable) {
+        resetKVSForPropertiesResource(tp, propertiesResource);
+      } else {
+        // We do nothing.
+        Log.i(TAG, "the local properties etag was greater than the server's, " 
+        		+ "so the properties are not being pulled from the server.");
+      }
+      
     }
 
     // sort data changes into types
@@ -410,7 +437,9 @@ public class SyncProcessor {
     updateRowsInDb(table, rowsToUpdate);
     insertRowsInDb(table, rowsToInsert);
     deleteRowsInDb(table, rowsToDelete);
-
+    
+    // We have to set this synctag here so that the server knows we saw its 
+    // changes. Otherwise it won't let us put up new information.
     tp.setSyncTag(newSyncTag);
   }
 

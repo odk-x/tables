@@ -496,7 +496,7 @@ public class KeyValueStoreManager {
 	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, 
 	        tableId, KeyValueStore.Type.SERVER);
 	    String syncTagStr = tp.getSyncTag();
-	    if (syncTagStr == null) {
+	    if (syncTagStr == null || syncTagStr.equals("")) {
 	      // Then it's not been synched and we can rely on it to first be inited
 	      // during the sync.
 	    } else {

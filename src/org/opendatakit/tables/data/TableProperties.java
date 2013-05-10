@@ -1510,7 +1510,7 @@ public class TableProperties {
 //  }
 
   /**
-   * @return the sync tag (or null if the table has never been synchronized)
+   * @return the sync tag. Unsynched tables return the empty string.
    */
   public String getSyncTag() {
     return syncTag;
