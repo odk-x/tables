@@ -1353,18 +1353,13 @@ public class ColumnProperties {
     jo.put(JSON_KEY_ELEMENT_TYPE, elType);
     jo.put(JSON_KEY_FOOTER_MODE, footMode);
     jo.put(JSON_KEY_JOINS, joinCol);
-//    jo.put(JSON_KEY_FOOTER_MODE, footerMode);
+    
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-
-    // jo.put(JSON_KEY_JOIN_TABLE_ID, joinTableId);
-    // jo.put(JSON_KEY_JOIN_ELEMENT_KEY, joinElementKey);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
-
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
     jo.put(JSON_KEY_DISPLAY_CHOICES_MAP, displayChoicesMap);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
-
     jo.put(JSON_KEY_SMS_IN, smsIn);
     jo.put(JSON_KEY_SMS_OUT, smsOut);
     jo.put(JSON_KEY_SMS_LABEL, smsLabel);

@@ -153,7 +153,6 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     this.mColorRules = mColorRuleGroup.getColorRules();
     // Set the appropriate state backing this rule.
     if (mRulePosition == INTENT_FLAG_NEW_RULE) {
-      mElementKey = null;
       mRuleValue = getString(R.string.compared_to_value);
       mRuleOperator = null;
       mForegroundColor = Constants.DEFAULT_TEXT_COLOR;

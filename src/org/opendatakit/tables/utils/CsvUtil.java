@@ -656,8 +656,8 @@ public class CsvUtil {
                   kvs.getAllPartitions(dbh.getReadableDatabase());
               // TODO sort out and handle appropriate closing of database
               // We do NOT want to include the table or column partitions.
-              partitions.remove(TableProperties.KVS_PARTITION);
-              partitions.remove(ColumnProperties.KVS_PARTITION);
+              //partitions.remove(TableProperties.KVS_PARTITION);
+              //partitions.remove(ColumnProperties.KVS_PARTITION);
               List<OdkTablesKeyValueStoreEntry> kvsEntries =
                   kvs.getEntriesForPartitions(dbh.getReadableDatabase(),
                       partitions);
