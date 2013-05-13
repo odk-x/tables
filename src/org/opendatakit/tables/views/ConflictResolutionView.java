@@ -59,6 +59,8 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 	private int lastRowClicked;
 	private int lastCellClicked;
 	private long lastDownTime;
+	// moving to a field
+	private ScrollView dataScroll;
 
 	public ConflictResolutionView(Controller controller, Context context,
 			TableProperties tp, ConflictTable table) {
@@ -111,7 +113,8 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		wrap.setOrientation(LinearLayout.VERTICAL);
 		wrap.addView(headerView, headerView.getTableWidth(),
 				headerView.getTableHeight());
-		ScrollView dataScroll = new ScrollView(context);
+//--		ScrollView dataScroll = new ScrollView(context);
+		dataScroll = new ScrollView(context);
 		dataScroll.setFillViewport(true);
 		dataScroll.addView(dataWrap);
 		LinearLayout.LayoutParams dsLp = new LinearLayout.LayoutParams(
@@ -131,7 +134,9 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 			data[index][1][i] = table.getValue(index, 1, i);
 		}
 		RowItem ri = new RowItem(context, index);
-		TabularView tv = new TabularView(context, this, tp, data[index], null,
+		// The wholeData param here is confusing. I'm not sure exactly what the 
+		// conflict table is holding.
+		TabularView tv = new TabularView(context, this, tp, data[index], data[index],
 				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,
 				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_DATA,
 				fontSize);
@@ -273,4 +278,14 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 	@Override
 	public void onCreateFooterContextMenu(ContextMenu menu) {
 	}
+
+  @Override
+  public int getMainScrollX() {
+    return dataScroll.getScrollX();
+  }
+
+  @Override
+  public int getMainScrollY() {
+    return dataScroll.getScrollY();
+  }
 }

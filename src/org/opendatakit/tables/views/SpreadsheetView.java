@@ -607,6 +607,7 @@ public class SpreadsheetView extends LinearLayout
      * you have scrolled to look at columns that do not begin onscreen.
      * @return
      */
+    @Override
     public int getMainScrollX() {
       // this is getting the correct x
       int result = this.wrapScroll.getScrollX();
@@ -631,6 +632,7 @@ public class SpreadsheetView extends LinearLayout
      * offset will indicate that you have scrolled to some non-zero row.
      * @return
      */
+    @Override
     public int getMainScrollY() {
       // this is getting the correct y
       int result = this.mainScroll.getScrollY();

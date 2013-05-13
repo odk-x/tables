@@ -239,13 +239,13 @@ class TabularView extends View {
       return;
     }
     /** trying to fix the slow draw **/
-    SpreadsheetView sv = null;
-    if (controller instanceof SpreadsheetView) {
-      sv = (SpreadsheetView) controller;
-    } else {
-      Log.e(TAG, "controller was not instance of spreadsheet view, " +
-            "cannot cast, will have null pointers");
-    }
+//    SpreadsheetView sv = null;
+//    if (controller instanceof SpreadsheetView) {
+//      sv = (SpreadsheetView) controller;
+//    } else {
+//      Log.e(TAG, "controller was not instance of spreadsheet view, " +
+//            "cannot cast, will have null pointers");
+//    }
     // drawing the background--so you're redrawing the background every time...
     canvas.drawRect(0, 0, totalWidth, totalHeight, bgPaint);
 
@@ -391,8 +391,8 @@ class TabularView extends View {
      * |       |     |      |       |
      */
 
-    int xScroll = sv.getMainScrollX();
-    int yScroll = sv.getMainScrollY();
+    int xScroll = controller.getMainScrollX();
+    int yScroll = controller.getMainScrollY();
     if (xScroll < 0) {
       xScroll = 0;
     }
@@ -605,5 +605,20 @@ class TabularView extends View {
     void onCreateHeaderContextMenu(ContextMenu menu);
 
     void onCreateFooterContextMenu(ContextMenu menu);
+    
+    /**
+     * Gets the x translation of the scroll. This is in particular how far
+     * you have scrolled to look at columns that do not begin onscreen.
+     * @return
+     */
+    int getMainScrollX();
+    
+    /**
+     * Gets the y translation of the scroll. This is in particular the y
+     * offset for the actual scrolling of the rows, so that a positive
+     * offset will indicate that you have scrolled to some non-zero row.
+     * @return
+     */
+    int getMainScrollY();
   }
 }
