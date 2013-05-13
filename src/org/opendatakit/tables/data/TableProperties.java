@@ -1546,8 +1546,11 @@ public class TableProperties {
    *          {@link DataUtil#getNowInDbFormat()}).
    */
   public void setLastSyncTime(String time) {
-    tableKVSH.setString(TableDefinitionsColumns.LAST_SYNC_TIME, time);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.LAST_SYNC_TIME,
+        time, db);
     this.lastSyncTime = time;
+    // TODO: figure out how to handle closing the db
   }
 
   public KeyValueStore.Type getBackingStoreType() {
