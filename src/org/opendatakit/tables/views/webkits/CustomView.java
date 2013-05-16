@@ -40,6 +40,8 @@ import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -378,6 +380,34 @@ public abstract class CustomView extends LinearLayout {
 			for (TableProperties tp : allTps) {
 				tpMap.put(tp.getDisplayName(), tp);
 			}
+		}
+		
+		/**
+		 * Add a row using Collect. This is the hook into the javascript. The 
+		 * activity holding this view must have implemented the onActivityReturn
+		 * method appropriately to handle the result.
+		 */
+		public void addRow(String tableName, String formId, String formVersion,
+		    String formRootElement) {
+		  initTpInfo();
+		  if (!tpMap.containsKey(tableName)) {
+		    Log.e(TAG, "tableName [" + tableName + "] not in map");
+		  }
+		  TableProperties tp = tpMap.get(tableName);
+		  CollectFormParameters formParameters = 
+		      CollectFormParameters.constructCollectFormParameters(tp);
+		  if (formId != null && !formId.equals("")) {
+		    formParameters.setFormId(formId);
+		  }
+		  if (formVersion != null && !formVersion.equals("")) {
+		    formParameters.setFormVersion(formVersion);
+		  }
+		  if (formRootElement != null && !formRootElement.equals("")) {
+		    formParameters.setRootElement(formRootElement);
+		  }
+		  Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(context, 
+		      tp, formParameters, null);
+		  //context.start;
 		}
 
 		public boolean openTable(String tableName, String query) {

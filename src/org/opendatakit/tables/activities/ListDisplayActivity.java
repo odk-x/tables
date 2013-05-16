@@ -94,7 +94,9 @@ public class ListDisplayActivity extends SherlockActivity
   public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
+        Controller.RCODE_ODKCOLLECT_ADD_ROW;
+    private static final int RCODE_ODKCOLLECT_EDIT_ROW = 
+        Controller.RCODE_ODKCOLLECT_EDIT_ROW;
 
     private DataManager dm;
     private Controller c;
@@ -182,6 +184,10 @@ public class ListDisplayActivity extends SherlockActivity
                     Integer.valueOf(data.getData().getLastPathSegment()));
             init();
             break;
+        case RCODE_ODKCOLLECT_EDIT_ROW:
+          c.handleActivityReturn(requestCode, resultCode, data);
+          init();
+          break;
         default:
             super.onActivityResult(requestCode, resultCode, data);
         }

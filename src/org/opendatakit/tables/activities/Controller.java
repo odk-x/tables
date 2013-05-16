@@ -109,8 +109,8 @@ public class Controller {
 
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
-    private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
+    public static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
+    public static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
     private static final int RCODE_LIST_VIEW_MANAGER = 4;
     public static final int FIRST_FREE_RCODE = 5;
 
@@ -743,37 +743,8 @@ public class Controller {
 	   */
 	  public Intent getIntentForOdkCollectEditRow(UserTable table,
 	      int rowNum, CollectFormParameters params) {
-	    // Check if there is a custom form. If there is not, we want to delete
-	    // the old form and write the new form.
-	    if (!params.isCustom()) {
-	      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-	          activity.getContentResolver(), params, tp);
-	      if (!formIsReady) {
-	        Log.e(TAG, "could not delete, write, or insert a generated form");
-	        return null;
-	      }
-	    }
-	    Map<String, String> elementNameToValue = new HashMap<String, String>();
-	    for (ColumnProperties cp : tp.getColumns()) {
-	      String value = table.getData(rowNum,
-	          tp.getColumnIndex(cp.getElementName()));
-	      elementNameToValue.put(cp.getElementName(), value);
-	    }
-	    boolean writeDataSuccessful =
-	        CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
-	    if (!writeDataSuccessful) {
-	      Log.e(TAG, "could not write instance file successfully!");
-	    }
-	    Uri insertUri =
-	        CollectUtil.getUriForInsertedData(params, rowNum,
-	            activity.getContentResolver());
-	    // Copied the below from getIntentForOdkCollectEditRow().
-	    Intent intent = new Intent();
-	    intent.setComponent(new ComponentName("org.odk.collect.android",
-	            "org.odk.collect.android.activities.FormEntryActivity"));
-	    intent.setAction(Intent.ACTION_EDIT);
-	    intent.setData(insertUri);
-	    return intent;
+	    return CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
+	        rowNum, params);
 	  }
 
 	/**
@@ -786,52 +757,8 @@ public class Controller {
 	 */
   public Intent getIntentForOdkCollectAddRow(CollectFormParameters params,
       Map<String, String> elementNameToValue) {
-    /*
-     * So, there are several things to check here. The first thing we want to
-     * do is see if a custom form has been defined for this table. If there is
-     * not, then we will need to write a custom one. When we do this, we will
-     * then have to call delete on Collect to remove the old form, which will
-     * have used the same id. This will not fail if a form has not been already
-     * been written--delete will simply return 0.
-     */
-    // Check if there is a custom form. If there is not, we want to delete
-    // the old form and write the new form.
-    if (!params.isCustom()) {
-      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-          activity.getContentResolver(), params, tp);
-      if (!formIsReady) {
-        Log.e(TAG, "could not delete, write, or insert a generated form");
-        return null;
-      }
-    }
-    Uri formToLaunch;
-    if (elementNameToValue == null) {
-      formToLaunch = CollectUtil.getUriOfForm(activity.getContentResolver(),
-          params.getFormId());
-      if (formToLaunch == null) {
-        Log.e(TAG, "URI of the form to pass to Collect and launch was null");
-        return null;
-      }
-    } else {
-      // we've received some values to prepopulate the add row with.
-      boolean writeDataSuccessful =
-          CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
-      if (!writeDataSuccessful) {
-        Log.e(TAG, "could not write instance file successfully!");
-      }
-      // Here we'll just act as if we're inserting 0, which
-      // really doesn't matter?
-      formToLaunch =
-          CollectUtil.getUriForInsertedData(params, 0,
-              activity.getContentResolver());
-    }
-    // And now finally create the intent.
-    Intent intent = new Intent();
-    intent.setComponent(new ComponentName("org.odk.collect.android",
-        "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(formToLaunch);
-    return intent;
+    return CollectUtil.getIntentForOdkCollectAddRow(activity, tp, params, 
+        elementNameToValue);
   }
 
   private Map<String, String> getMapFromLimitedQuery() {
