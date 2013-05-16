@@ -25,6 +25,7 @@ import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.views.TabularView.ColorDecider;
 import org.opendatakit.tables.views.TabularView.TableType;
+import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -60,7 +61,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 	private int lastCellClicked;
 	private long lastDownTime;
 	// moving to a field
-	private ScrollView dataScroll;
+	private LockableScrollView dataScroll;
 
 	public ConflictResolutionView(Controller controller, Context context,
 			TableProperties tp, ConflictTable table) {
@@ -114,7 +115,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		wrap.addView(headerView, headerView.getTableWidth(),
 				headerView.getTableHeight());
 //--		ScrollView dataScroll = new ScrollView(context);
-		dataScroll = new ScrollView(context);
+		dataScroll = new LockableScrollView(context);
 		dataScroll.setFillViewport(true);
 		dataScroll.addView(dataWrap);
 		LinearLayout.LayoutParams dsLp = new LinearLayout.LayoutParams(
