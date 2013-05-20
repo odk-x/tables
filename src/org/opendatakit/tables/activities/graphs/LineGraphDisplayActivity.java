@@ -104,14 +104,7 @@ public class LineGraphDisplayActivity extends SherlockActivity
             Intent data) {
         if (c.handleActivityReturn(requestCode, resultCode, data)) {
             return;
-        }
-        switch (requestCode) {
-        case RCODE_ODKCOLLECT_ADD_ROW:
-            c.addRowFromOdkCollectForm(
-                    Integer.valueOf(data.getData().getLastPathSegment()));
-            init();
-            break;
-        default:
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }

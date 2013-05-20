@@ -40,8 +40,10 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.data.Query.Constraint;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -631,8 +633,13 @@ public class CollectUtil {
     
     /**
      * This gets a map of values for insertion into a row after returning from
-     * a Collect form. It handles validating the values, removing nulls, etc.
-     * @param formValues the values from Collect return
+     * a Collect form. It handles validating the values, replacing nulls with
+     * empty strings, etc.
+     * <p>
+     * NB: Nulls are replaced with empty strings. This is because the user-
+     * defined columns otherwise plop "undefined" all over their webviews.
+     * TODO: check that this change doesn't break the validifyValue 
+     * preconditions.
      * @return
      */
     public static Map<String, String> getMapForInsertion(TableProperties tp,
@@ -643,10 +650,15 @@ public class CollectUtil {
         // we want to use element name here, b/c that is what Collect should be
         // using to access all of the columns/elements.
           String elementName = cp.getElementName();
-          String value = du.validifyValue(cp, formValues.get(elementName));
-          if (value != null) {
-              values.put(elementName,value);
-          }
+          // If you return from collect and have nulls in unset values, then
+          // you throw NPEs in the validify value method. So first replace it
+          // if it's null.
+          String value = formValues.get(elementName) == null ?
+              "" : formValues.get(elementName);
+          value = du.validifyValue(cp, formValues.get(elementName));
+          // reset b/c validifyValue can return null.
+          value = value == null ? "" : value;
+          values.put(elementName,value);
       }
       return values;
     }
@@ -723,6 +735,38 @@ public class CollectUtil {
       }
       int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
       return updateRowFromOdkCollectInstance(context, tp, instanceId);
+    }
+    
+    public static boolean handleOdkCollectAddReturn(Context context,
+        TableProperties tp, int returnCode, Intent data) {
+      if (returnCode != SherlockActivity.RESULT_OK) {
+        Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
+        return false;
+      }
+      int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+      return addRowFromOdkCollectInstance(context, tp, instanceId);
+    }
+    
+    public static boolean addRowFromOdkCollectInstance(Context context,
+        TableProperties tp, int instanceId) {
+      Map<String, String> formValues = 
+          CollectUtil.getOdkCollectFormValuesFromInstanceId(context, 
+              instanceId);
+      if (formValues == null) {
+        return false;
+      }
+      Map<String, String> values = getMapForInsertion(tp, formValues);
+      // TODO: get these values from the form...
+      Long timestamp = null; // should be endTime in form?
+      String uriUser = null; // should be this user
+      String formId = null; // collect formId
+      String instanceName = null; // if exists, meta/instanceName value
+      String locale = null; // current locale string
+      DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), 
+          tp.getTableId());
+      dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId, 
+          locale);
+      return true;
     }
     
     /**
@@ -851,6 +895,44 @@ public class CollectUtil {
         }
       }
       return fields;
+    }
+    
+    /**
+     * Construct a map based on the query string. The idea is that you can pass
+     * in the current query and get back a map of values that will represent
+     * the values that should prepopulate to the add row form.
+     * <p>
+     * If the user has searched for facility_code: 12345, for example, then if 
+     * they choose to add a row, the facility_code should perhaps be pre-
+     * populated with 12345. This method provides the map of elementName to
+     * value for the given query.
+     * @param query
+     * @return
+     */
+    public static Map<String, String> getMapFromQuery(TableProperties tp,
+        String queryString) {
+      Map<String, String> elementNameToValue = 
+          new HashMap<String, String>();
+      // First add all empty strings. We will overwrite the ones that are queried
+      // for in the search box. We need this so that if an add is canceled, we
+      // can check for equality and know not to add it. If we didn't do this,
+      // but we've prepopulated an add with a query, when we return and don't do
+      // a check, we'll add a blank row b/c there are values in the key value
+      // pairs, even though they were our prepopulated values.
+      for (ColumnProperties cp : tp.getColumns()) {
+        elementNameToValue.put(cp.getElementName(), "");
+      }
+      Query currentQuery = new Query(null, tp);
+      currentQuery.loadFromUserQuery(queryString);
+      for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
+        Constraint constraint = currentQuery.getConstraint(i);
+        // NB: This is predicated on their only ever being a single
+       // search value. I'm not sure how additional values could be
+       // added.
+        elementNameToValue.put(constraint.getColumnDbName(),
+            constraint.getValue(0));
+      }
+      return elementNameToValue;
     }
 
     /**

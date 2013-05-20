@@ -405,18 +405,6 @@ public class Controller {
     }
   }
 
-
-  /*
-   * Original method.
-   */
-//  void editRow(UserTable table, int rowNum) {
-//    Intent intent = getIntentForOdkCollectEditRow(table, rowNum);
-//    if (intent != null) {
-//      this.rowId = table.getRowId(rowNum);
-//      activity.startActivityForResult(intent, RCODE_ODKCOLLECT_EDIT_ROW);
-//    }
-//  }
-
   /**
    * This should launch Collect to edit the data for the row. If there is a
    * custom form defined for the table, its info should be loaded in params.
@@ -434,14 +422,6 @@ public class Controller {
    */
   void editRow(UserTable table, int rowNum, CollectFormParameters params) {
     Intent intent = null;
-//    if (params.getFormId() == null) {
-//      intent = getIntentForOdkCollectEditRow(table, rowNum);
-//    } else {
-//      // a custom form has been assigned to the table.
-//      // So, we need to write the data file and then insert it and launch
-//      // the intent.
-//      intent = getIntentForOdkCollectEditRowRevised(table, rowNum, params);
-//    }
     intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
         rowNum, params);
     if (intent != null) {
@@ -482,7 +462,6 @@ public class Controller {
   }
 
   private void handleTablePropertiesManagerReturn() {
-//    int oldViewType = tvs.getViewType();
     // so for now I think that the boolean of whether or not the current view
     // is an overview of a collection view is stored here in Controller.
     // This should eventually move, if we decide to keep this architecture. but
@@ -490,7 +469,6 @@ public class Controller {
     TableViewType oldViewType = tp.getCurrentViewType();
     tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
     dbt = dm.getDbTable(tp.getTableId());
-//    if (oldViewType == tvs.getViewType()) {
     if (oldViewType == tp.getCurrentViewType()) {
       da.init();
     } else {
@@ -641,12 +619,12 @@ public class Controller {
 	          Intent intentAddRow;
 	          if (getSearchText().equals("")) {
 	            intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-	                activity, tp, params, null);;
+	                activity, tp, params, null);
 	          } else {
     	          Map<String, String> elementNameToValue =
-    	              getMapFromLimitedQuery();
+    	              CollectUtil.getMapFromQuery(tp, getSearchText());
     	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-    	             activity, tp, params, elementNameToValue);;
+    	             activity, tp, params, elementNameToValue);
 	          }
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
@@ -701,72 +679,14 @@ public class Controller {
         }
   }
 
-  private Map<String, String> getMapFromLimitedQuery() {
-    Map<String, String> elementNameToValue =
-        new HashMap<String, String>();
-    // First add all empty strings. We will overwrite the ones that are queried
-    // for in the search box. We need this so that if an add is canceled, we
-    // can check for equality and know not to add it. If we didn't do this,
-    // but we've prepopulated an add with a query, when we return and don't do
-    // a check, we'll add a blank row b/c there are values in the key value
-    // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : tp.getColumns()) {
-      elementNameToValue.put(cp.getElementName(), "");
-    }
-    Query currentQuery = new Query(null, tp);
-    currentQuery.loadFromUserQuery(getSearchText());
-    for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
-      Constraint constraint = currentQuery.getConstraint(i);
-      // NB: This is predicated on their only ever being a single
-     // search value. I'm not sure how additional values could be
-     // added.
-      elementNameToValue.put(constraint.getColumnDbName(),
-          constraint.getValue(0));
-    }
-    return elementNameToValue;
-  }
-
-  public boolean addRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = 
-        CollectUtil.getOdkCollectFormValuesFromInstanceId(activity, 
-            instanceId);
-    if (formValues == null) {
-      return false;
-    }
-    Map<String, String> values = new HashMap<String, String>();
-    for (String key : formValues.keySet()) {
-        ColumnProperties cp = tp.getColumnByElementKey(key);
-        if (cp == null) {
-            continue;
-        }
-        String value = du.validifyValue(cp, formValues.get(key));
-        if (value != null) {
-            values.put(key, value);
-        }
-    }
-    // Now we want to check for equality of this and the query map. If they
-    // are the same, we know we hit ignore and didn't save anything.
-    Map<String, String> prepopulatedValues = getMapFromLimitedQuery();
-    if (prepopulatedValues.equals(values)) {
-      return false;
-    }
-    // TODO: get these values from the form...
-    Long timestamp = null; // should be endTime in form?
-    String uriUser = null; // should be this user
-    String formId = null; // collect formId
-    String instanceName = null; // if exists, meta/instanceName value
-    String locale = null; // current locale string
-    dbt.addRow(values, null, timestamp, uriUser, instanceName, formId, locale);
-    return true;
-  }
-
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (returnCode != SherlockActivity.RESULT_OK) {
-            return;
+        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode, 
+            data)) {
+          return;
+        } else {
+          // the add succeeded.
+          da.init();
         }
-        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        addRowFromOdkCollectForm(instanceId);
-        da.init();
     }
 
     private void handleOdkCollectEditReturn(int returnCode, Intent data) {
@@ -831,33 +751,18 @@ public class Controller {
   private static void launchTableActivity(Context context, TableProperties tp,
       String searchText,
       Stack<String> searchStack, boolean isOverview, String filename) {
-    //TODO: need to figure out how CollectionViewSettings should work.
-    // make them work.
-//    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
-//        .getCollectionViewSettings();
     TableViewType viewType = tp.getCurrentViewType();
     Intent intent;
-//    switch (tvs.getViewType()) {
     switch (viewType) {
-//    case TableViewSettings.Type.LIST:
-    //TODO: figure out which of these graph was originally and update it.
     case List:
       intent = new Intent(context, ListDisplayActivity.class);
       if (filename != null) {
         intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
       }
       break;
-//    case TableViewSettings.Type.LINE_GRAPH:
-//      intent = new Intent(context, LineGraphDisplayActivity.class);
-//      break;
-//    case TableViewSettings.Type.BOX_STEM:
-//      intent = new Intent(context, BoxStemGraphDisplayActivity.class);
-//      break;
-//    case TableViewSettings.Type.BAR_GRAPH:
     case Graph:
       intent = new Intent(context, GraphDisplayActivity.class);
       break;
-//    case TableViewSettings.Type.MAP:
     case Map:
       intent = new Intent(context, TableActivity.class);
       break;
@@ -905,76 +810,6 @@ public class Controller {
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
     context.startActivity(intent);
   }
-
-
-//    public class SearchActionProvider extends ActionProvider implements OnDragListener {
-//        Context mContext;
-//        public SearchActionProvider(Context context) {
-//            super(context);
-//            mContext = context;
-//        }
-//
-//        @Override
-//        public View onCreateActionView() {
-//    		controlWrap = new LinearLayout(mContext);
-//            searchField = new EditText(mContext);
-//            searchField.setId(VIEW_ID_SEARCH_FIELD);
-//            searchField.setText(searchText.peek());
-//            ImageButton searchButton = new ImageButton(mContext);
-//            searchButton.setId(VIEW_ID_SEARCH_BUTTON);
-//            searchButton.setImageResource(R.drawable.ic_action_search);
-//            searchButton.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    da.onSearch();
-//                }
-//            });
-//
-//            LinearLayout.LayoutParams searchFieldParams =
-//                    new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.MATCH_PARENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT);
-//            searchFieldParams.weight = 1;
-//            controlWrap.addView(searchField, searchFieldParams);
-//
-////            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-////                    LinearLayout.LayoutParams.WRAP_CONTENT,
-////                    LinearLayout.LayoutParams.WRAP_CONTENT);
-////            buttonParams.weight = 0;
-////            controlWrap.addView(searchButton, buttonParams);
-//            return controlWrap;
-//        }
-//
-//        @Override
-//        public boolean onDrag(View v, DragEvent event) {
-//        	int action = event.getAction();
-//        	switch (event.getAction()) {
-//        	case DragEvent.ACTION_DRAG_STARTED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DRAG_ENTERED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DRAG_EXITED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DROP:
-//        		// Dropped, reassign View to ViewGroup
-//        		View view = (View) event.getLocalState();
-//        		ViewGroup owner = (ViewGroup) view.getParent();
-//        		owner.removeView(view);
-//        		LinearLayout container = (LinearLayout) v;
-//        		container.addView(view);
-//        		view.setVisibility(View.VISIBLE);
-//        		break;
-//        	case DragEvent.ACTION_DRAG_ENDED:
-//        		// Do nothing
-//        	default:
-//        		break;
-//        	}
-//        	return true;
-//        }
-//    }
 
     private class CellEditDialog extends AlertDialog {
 
