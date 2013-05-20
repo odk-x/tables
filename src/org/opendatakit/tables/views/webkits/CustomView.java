@@ -222,12 +222,26 @@ public abstract class CustomView extends LinearLayout {
 	          CustomView.this.getContainerActivity(), editRowIntent, mRowId);
 		}
 
+		/**
+		 * Takes the user label for the column and returns the value in that 
+		 * column. Any null values are replaced by the empty string.
+		 * <p>
+		 * Returns null if the column matching the passed in user label could
+		 * not be found.
+		 * @param key
+		 * @return
+		 */
 		public String get(String key) {
 			ColumnProperties cp = tp.getColumnByUserLabel(key);
 			if (cp == null) {
 				return null;
 			}
-			return data.get(cp.getElementKey());
+			String result = data.get(cp.getElementKey());
+			if (result == null) {
+			  return "";
+			} else {
+			  return result;
+			}
 		}
 		
 	}
@@ -404,14 +418,27 @@ public abstract class CustomView extends LinearLayout {
 			return (!primeColumns.isEmpty());
 		}
 
-		//Returns the cell data at the given offset into the table.
-
+		/**
+		 * Returns the value of the column with the given user-label at the given
+		 * row number. Null values are returned as the empty string.
+		 * <p>
+		 * Null is returned if the column could not be found.
+		 * @param rowNum
+		 * @param colName
+		 * @return
+		 */
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
+			  String result;
 				if (rawTable == null) {
-					return userTable.getData(rowNum, colMap.get(colName));
+					result = userTable.getData(rowNum, colMap.get(colName));
 				} else {
-					return rawTable.getData(rowNum, colMap.get(colName));
+					result = rawTable.getData(rowNum, colMap.get(colName));
+				}
+				if (result == null) {
+				  return "";
+				} else {
+				  return result;
 				}
 			} else {
 				return null;

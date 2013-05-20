@@ -246,6 +246,9 @@ public class DataUtil {
     }
     
     private String validifyLocationValue(String input) {
+      if (input == null) {
+        return null;
+      }
         Matcher matcher = USER_LOCATION_LAT_LON_FORMAT.matcher(input);
         if (matcher.matches()) {
             return matcher.group(1) + "," + matcher.group(3);

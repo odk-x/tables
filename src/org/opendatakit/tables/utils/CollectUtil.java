@@ -336,6 +336,8 @@ public class CollectUtil {
      * If the display name is not defined in the {@code params} parameter then
      * the string resource is used.
      * <p>
+     * The inserted row is marked as INCOMPLETE.
+     * <p>
      * PRECONDITION: in order to be populated with data, the data file
      * containing the row's data must have been written, most likely by calling
      * writeRowDataToBeEdited().
@@ -359,7 +361,7 @@ public class CollectUtil {
       ContentValues values = new ContentValues();
       // First we need to fill the values with various little things.
       values.put(COLLECT_KEY_DISPLAY_NAME, params.getRowDisplayName());
-      values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_COMPLETE);
+      values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_INCOMPLETE);
       values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
       values.put(COLLECT_KEY_INSTANCE_FILE_PATH, getEditRowFormFile().getAbsolutePath());
       values.put(COLLECT_KEY_JR_FORM_ID, params.getFormId());
@@ -633,13 +635,8 @@ public class CollectUtil {
     
     /**
      * This gets a map of values for insertion into a row after returning from
-     * a Collect form. It handles validating the values, replacing nulls with
-     * empty strings, etc.
-     * <p>
-     * NB: Nulls are replaced with empty strings. This is because the user-
-     * defined columns otherwise plop "undefined" all over their webviews.
-     * TODO: check that this change doesn't break the validifyValue 
-     * preconditions.
+     * a Collect form. It handles validating the values and removes nulls from
+     * the map.
      * @return
      */
     public static Map<String, String> getMapForInsertion(TableProperties tp,
@@ -650,17 +647,43 @@ public class CollectUtil {
         // we want to use element name here, b/c that is what Collect should be
         // using to access all of the columns/elements.
           String elementName = cp.getElementName();
-          // If you return from collect and have nulls in unset values, then
-          // you throw NPEs in the validify value method. So first replace it
-          // if it's null.
-          String value = formValues.get(elementName) == null ?
-              "" : formValues.get(elementName);
+          String value = formValues.get(elementName);
           value = du.validifyValue(cp, formValues.get(elementName));
           // reset b/c validifyValue can return null.
-          value = value == null ? "" : value;
-          values.put(elementName,value);
+          if (value != null) {
+            values.put(elementName, value);
+          }
       }
       return values;
+    }
+    
+    /**
+     * Returns true if the instance has been marked as complete/finalized.
+     * If the instance cannot be found or is not marked as complete, returns
+     * false.
+     * @param context
+     * @param instanceId
+     * @return
+     */
+    public static boolean instanceIsFinalized(Context context, 
+        int instanceId) {
+      String[] projection = { COLLECT_KEY_STATUS };
+      String selection = "_id = ?";
+      String[] selectionArgs = { instanceId + "" };
+      CursorLoader cursorLoader = new CursorLoader(context, 
+          COLLECT_INSTANCES_CONTENT_URI, projection, selection, selectionArgs,
+          null);
+      Cursor c = cursorLoader.loadInBackground();
+      if (c.getCount() != 1) {
+        return false;
+      }
+      c.moveToFirst();
+      String status = c.getString(c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
+      if (status != null && status.equals(COLLECT_KEY_STATUS_COMPLETE)) {
+        return true;
+      } else {
+        return false;
+      }
     }
     
     /**
@@ -726,6 +749,18 @@ public class CollectUtil {
       return true;
     }
     
+    /**
+     * Returns false if the returnCode is not ok or if the instance pointed to
+     * by the intent was not marked as finalized.
+     * <p>
+     * Otherwise returns the result of 
+     * {@link #updateRowFromOdkCollectInstance(Context, TableProperties, int)}.
+     * @param context
+     * @param tp
+     * @param returnCode
+     * @param data
+     * @return
+     */
     public static boolean handleOdkCollectEditReturn(Context context, 
         TableProperties tp, int returnCode, Intent data) {
       if (returnCode != SherlockActivity.RESULT_OK) {
@@ -734,16 +769,36 @@ public class CollectUtil {
         return false;
       }
       int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+      if (!instanceIsFinalized(context, instanceId)) {
+        Log.i(TAG, "instance wasn't marked as finalized--not updating");
+        return false;
+      }
       return updateRowFromOdkCollectInstance(context, tp, instanceId);
     }
     
+    /**
+     * Returns false if the returnCode is not ok or if the instance pointed to
+     * by the intent was not marked as finalized. 
+     * <p>
+     * Otherwise returns the result of 
+     * {@link #addRowFromOdkCollectInstance(Context, TableProperties, int)}.
+     * @param context
+     * @param tp
+     * @param returnCode
+     * @param data
+     * @return
+     */
     public static boolean handleOdkCollectAddReturn(Context context,
         TableProperties tp, int returnCode, Intent data) {
       if (returnCode != SherlockActivity.RESULT_OK) {
         Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
         return false;
-      }
+      } 
       int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
+      if (!instanceIsFinalized(context, instanceId)) {
+        Log.i(TAG, "instance wasn't finalized--not adding");
+        return false;
+      }
       return addRowFromOdkCollectInstance(context, tp, instanceId);
     }
     
@@ -775,6 +830,7 @@ public class CollectUtil {
      * @param tp
      * @param params
      * @param elementNameToValue
+     *   values with which you want to prepopulate the add row form.
      * @return
      */
     public static Intent getIntentForOdkCollectAddRow(Context context,
