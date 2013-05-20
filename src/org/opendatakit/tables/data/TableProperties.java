@@ -278,7 +278,8 @@ public class TableProperties {
    */
   public static TableProperties getTablePropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
-    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, 
+        typeOfStore);
     return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
   }
 
@@ -365,7 +366,8 @@ public class TableProperties {
         db = dbh.getReadableDatabase();
 	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
-	    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+	    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, 
+	        typeOfStore);
     } finally {
       // TODO: fix the when to close problem
 //    	if ( db != null ) {
@@ -413,7 +415,8 @@ public class TableProperties {
         db = dbh.getReadableDatabase();
 	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
-	    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+	    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, 
+	        typeOfStore);
     } finally {
       // TODO: fix the when to close problem
 //    	if ( db != null ) {
@@ -436,7 +439,8 @@ public class TableProperties {
     	db = dbh.getReadableDatabase();
 	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
-	    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+	    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, 
+	        typeOfStore);
     } finally {
       // TODO: fix the when to close problem
 //    	if ( db != null ) {
@@ -456,7 +460,8 @@ public class TableProperties {
     TableType tableType = TableType.valueOf(tableTypeStr);
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
     SyncState syncState = SyncState.valueOf(syncStateStr);
-    String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
+    String transactioningStr = 
+        props.get(TableDefinitionsColumns.TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
@@ -817,14 +822,6 @@ public class TableProperties {
     mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
     mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
     mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-
-// don't know why we did it this way...instead just call it through the map
-// so we don't have as much redundant code.
-//    TableProperties tp = new TableProperties(dbh, id, dbTableName, displayName,
-//        tableType, new ArrayList<String>(), new ArrayList<String>(), null, null, null, null, null,
-//        null, null, null, null, SyncUtil.State.INSERTING, false, typeOfStore);
-//    TableProperties tp = getTablePropertiesForTable(dbh, id, typeOfStore);
-//    tp.getColumns(); // ensuring columns are already initialized
     TableProperties tp = null;
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     try {
@@ -833,9 +830,6 @@ public class TableProperties {
 	      Map<String, String> tableDefProps =
 	          TableDefinitions.addTable(db, id, tableKey, dbTableName,
 	              tableType);
-//	      KeyValueStore typedStore = kvms.getStoreForTable(id,
-//	          typeOfStore);
-//	        typedStore.addEntriesToStore(db, values);
 	      mapProps.putAll(tableDefProps);
 	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
 	        tp.getColumns();
@@ -870,7 +864,8 @@ public class TableProperties {
     KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVSM.isSetToSync();
     // hilary's original
-    //if (isSynched && (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING))
+    //if (isSynched && (syncState == SyncUtil.State.REST 
+    //    || syncState == SyncUtil.State.UPDATING))
       if (isSetToSync && (syncState == SyncState.rest
                            || syncState == SyncState.updating))
       setSyncState(SyncState.deleting);
@@ -897,9 +892,12 @@ public class TableProperties {
 	      }
 	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
 	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	      kvsm.getStoreForTable(tableId, KeyValueStore.Type.ACTIVE).clearKeyValuePairs(db);
-         kvsm.getStoreForTable(tableId, KeyValueStore.Type.DEFAULT).clearKeyValuePairs(db);
-         kvsm.getStoreForTable(tableId, KeyValueStore.Type.SERVER).clearKeyValuePairs(db);
+	      kvsm.getStoreForTable(tableId, KeyValueStore.Type.ACTIVE)
+	        .clearKeyValuePairs(db);
+         kvsm.getStoreForTable(tableId, KeyValueStore.Type.DEFAULT)
+           .clearKeyValuePairs(db);
+         kvsm.getStoreForTable(tableId, KeyValueStore.Type.SERVER)
+           .clearKeyValuePairs(db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();
@@ -982,7 +980,8 @@ public class TableProperties {
   }
 
   /**
-   * Static method for retrieving columns used to recreate the columnOrder list if
+   * Static method for retrieving columns used to recreate the columnOrder list
+   *  if
    * the list is somehow empty.
    *
    * @param dbh
@@ -990,9 +989,10 @@ public class TableProperties {
    * @param backingStore
    * @return array of columns
    */
-  private static ColumnProperties[] getColumns(DbHelper dbh, String tableId, KeyValueStore.Type backingStore ) {
-    ColumnProperties[] columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
-          backingStore);
+  private static ColumnProperties[] getColumns(DbHelper dbh, String tableId, 
+      KeyValueStore.Type backingStore ) {
+    ColumnProperties[] columns = ColumnProperties.getColumnPropertiesForTable(
+        dbh, tableId, backingStore);
     return columns;
  }
 
@@ -1308,7 +1308,8 @@ public class TableProperties {
     db.execSQL("INSERT INTO backup_ SELECT " + csv + " FROM " + dbTableName);
     db.execSQL("DROP TABLE " + dbTableName);
     DbTable.createDbTable(db, this);
-    db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv + " FROM backup_");
+    db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv +
+        " FROM backup_");
     db.execSQL("DROP TABLE backup_");
   }
 
@@ -1335,7 +1336,8 @@ public class TableProperties {
     }
   }
 
-  private void setColumnOrder(ArrayList<String> columnOrder, SQLiteDatabase db) {
+  private void setColumnOrder(ArrayList<String> columnOrder, 
+      SQLiteDatabase db) {
 	String colOrderList = null;
 	try {
 		colOrderList = mapper.writeValueAsString(columnOrder);
@@ -1376,13 +1378,6 @@ public class TableProperties {
    *          an array of the database names of the table's prime columns
    */
   public void setPrimeColumns(ArrayList<String> primes) {
-//    String str = "";
-//    for (String cdb : primes) {
-//      str += cdb + "/";
-//    }
-//    if (str.length() > 0) {
-//      str = str.substring(0, str.length() - 1);
-//    }
     String primesStr;
     try {
       primesStr = mapper.writeValueAsString(primes);
@@ -1524,8 +1519,8 @@ public class TableProperties {
    */
   public void setSyncTag(String syncTag) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag,
-        db);
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, 
+        syncTag, db);
     this.syncTag = syncTag;
     // TODO: figure out how to handle closing the database
   }
@@ -1556,26 +1551,6 @@ public class TableProperties {
   public KeyValueStore.Type getBackingStoreType() {
     return this.backingStore;
   }
-
-//  /**
-//   * @return the detail view filename
-//   */
-//  public String getDetailViewFilename() {
-//    return detailViewFilename;
-//
-//  }
-
-  /**
-   * Sets the table's detail view filename.
-   *
-   * @param filename
-   *          the new filename
-   */
-//  public void setDetailViewFilename(String filename) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, filename);
-//    this.detailViewFilename = filename;
-//  }
 
   /**
    * @return the format for summary displays
@@ -1638,23 +1613,6 @@ public class TableProperties {
     this.transactioning = transactioning;
   }
 
-  /**
-   * Whether or not the table is set to be synched with the server.
-   * @return
-   */
-  //public boolean isSynchronized() {
-  //  return isSynched;
-  //}
-
-  /**
-   * Set whether or not the table is due to be synced with the server.
-   * @param isSynchronized
-   */
-  //public void setSynchronized(boolean isSynchronized) {
-  //  setIntProperty(DB_IS_SYNCHED, SyncUtil.boolToInt(isSynchronized));
-  //  this.isSynched = isSynchronized;
-  //}
-
   public String toJson() {
     getColumns(); // ensuring columns is initialized
     // I think this removes exceptions from not having getters/setters...
@@ -1682,14 +1640,7 @@ public class TableProperties {
 	  jo.put(JSON_KEY_PRIME_COLUMNS, primes);
 	  jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
 	  jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
-	  // TODO
-	  // TODO
 	  jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
-//	  jo.put(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//	      currentOverviewViewType.name());
-//	  jo.put(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//	      currentCollectionViewType.name());
-//	  jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
 	  jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
 
 	  String toReturn = null;
@@ -1740,19 +1691,8 @@ public class TableProperties {
 	  setIndexColumn((String)jo.get(JSON_KEY_INDEX_COLUMN));
 	  setAccessControls(
 	      (String) jo.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS));
-//	  if (jo.containsKey(JSON_KEY_OV_VIEW_SETTINGS)) {
-//	    // TODO
-//	  }
-//	  if (jo.containsKey(JSON_KEY_CO_VIEW_SETTINGS)) {
-//	    // TODO
-//	  }
 	  setCurrentViewType(TableViewType.valueOf(
 	      (String)jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
-//	  setCurrentOverviewViewType(TableViewType.valueOf(
-//	      (String)jo.get(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE)));
-//	  setCurrentOverviewViewType(TableViewType.valueOf(
-//	      (String)jo.get(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE)));
-//	  setDetailViewFilename((String) jo.get(JSON_KEY_DETAIL_VIEW_FILE));
 	  setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
 	  Set<String> columnsToDelete = new HashSet<String>();
 	  for (String cdn : columnOrder) {
@@ -1760,7 +1700,6 @@ public class TableProperties {
 	  }
 	  ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
 	  for (int i = 0; i < colOrder.size(); i++) {
-	    //Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
 	    Map<String, Object> colJo = null;
       try {
         colJo = mapper.readValue((String) colJArr.get(i), Map.class);
@@ -1778,7 +1717,6 @@ public class TableProperties {
         throw new IllegalStateException("problem reclaiming column from json" +
         		" in TableProperties.setFromJson");
       }
-	    //String colJo = (String) colJArr.get(i);
 		  ColumnProperties cp = getColumnByElementKey(colOrder.get(i));
           if (cp == null) {
             // then we need to create the bolumn.
@@ -1788,14 +1726,9 @@ public class TableProperties {
                 (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_KEY);
             String coElName =
                 (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_NAME);
-//            cp = ColumnProperties.constructColumnPropertiesFromJson(dbh,
-//                colJo);
-//            cp = addColumn(colOrder.get(i));
             cp = addColumn(coDispName, coElKey, coElName);
-//            addColumnFromProperties(cp);
             cp.setFromJson((String) colJArr.get(i));
           }
-          //cp.setFromJson(colJo);
           columnsToDelete.remove(colOrder.get(i));
       }
       for (String columnToDelete : columnsToDelete) {
@@ -1818,11 +1751,13 @@ public class TableProperties {
     int dateColCount = 0;
     ColumnProperties[] columnProperties = this.getColumns();
     for (ColumnProperties cp : columnProperties) {
-      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() 
+          == ColumnType.INTEGER) {
         numericColCount++;
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
         locationColCount++;
-      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
+      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() 
+          == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
       } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
@@ -1834,24 +1769,9 @@ public class TableProperties {
     list.add(TableViewType.Spreadsheet);
     list.add(TableViewType.List);
     list.add(TableViewType.Graph);
-//    List<Integer> list = new ArrayList<Integer>();
-//    list.add(Type.SPREADSHEET);
-//    list.add(Type.LIST);
-//    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
-//      list.add(Type.LINE_GRAPH);
-//    }
-//    if (numericColCount >= 1) {
-//      list.add(Type.BOX_STEM);
-//    }
-    // Not adding this b/c it's not working atm.
-//    list.add(Type.BAR_GRAPH);
     if (locationColCount >= 1) {
       list.add(TableViewType.Map);
     }
-//    int[] arr = new int[list.size()];
-//    for (int i = 0; i < list.size(); i++) {
-//      arr[i] = list.get(i);
-//    }
     TableViewType[] arr = new TableViewType[list.size()];
     for (int i = 0; i < list.size(); i++) {
       arr[i] = list.get(i);
