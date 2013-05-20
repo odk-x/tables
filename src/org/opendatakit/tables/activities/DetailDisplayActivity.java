@@ -71,16 +71,15 @@ public class DetailDisplayActivity extends SherlockActivity
         Query query = new Query(new TableProperties[] {c.getTableProperties()},
             c.getTableProperties());
         query.loadFromUserQuery("");
-        UserTable table = c.getIsOverview() ?
-            c.getDbTable().getUserOverviewTable(query) :
-              c.getDbTable().getUserTable(query);
-        // now we need to get the row num.
-        int rowNum = table.getRowNumFromId(rowId);
         int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        Map<String, String> formValues = c.getOdkCollectFormValues(instanceId);
-        this.data = c.getMapForInsertion(formValues);
+        Map<String, String> formValues = 
+            CollectUtil.getOdkCollectFormValuesFromInstanceId(this, 
+                instanceId);
+        this.data = CollectUtil.getMapForInsertion(c.getTableProperties(), 
+            formValues);
+      } else {
+        super.onActivityResult(requestCode, resultCode, data);
       }
-      super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

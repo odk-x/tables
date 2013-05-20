@@ -22,6 +22,7 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 
+import android.app.Activity;
 import android.content.Context;
 
 /**
@@ -52,14 +53,14 @@ public class CustomDetailView extends CustomView {
         "<p>No detail view has been specified.</p>" +
         "</body></html>";
 
-    private Context context;
+    private Activity mActivity;
     private TableProperties tp;
     private RowData jsData;
     private KeyValueStoreHelper detailKVSH;
 
-    public CustomDetailView(Context context, TableProperties tp) {
-        super(context);
-        this.context = context;
+    public CustomDetailView(Activity activity, TableProperties tp) {
+        super(activity);
+        this.mActivity = activity;
         this.tp = tp;
         this.detailKVSH =
             tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
@@ -67,12 +68,12 @@ public class CustomDetailView extends CustomView {
     }
 
     public void display(String rowId, Map<String, String> data) {
-        jsData.set(data);
-        webView.addJavascriptInterface(new Control(context), "control");
+        jsData.set(rowId, data);
+        webView.addJavascriptInterface(new Control(mActivity), "control");
         webView.addJavascriptInterface(jsData, "data");
         String filename = detailKVSH.getString(CustomDetailView.KEY_FILENAME);
         if (filename != null) {
-            load(FileProvider.getAsUrl(context, new File(filename)));
+            load(FileProvider.getAsUrl(mActivity, new File(filename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }

@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,7 +23,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.tables.R;
@@ -43,6 +48,7 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -64,10 +70,12 @@ public abstract class CustomView extends LinearLayout {
 
 	protected static WebView webView;
 	private static ViewGroup lastParent;
+	private Activity mParentActivity;
 
-	protected CustomView(Context context) {
-		super(context);
-		initCommonWebView(context);
+	protected CustomView(Activity activity) {
+		super(activity);
+		initCommonWebView(activity);
+		this.mParentActivity = activity;
 	}
 
 	public static void initCommonWebView(Context context) {
@@ -135,15 +143,26 @@ public abstract class CustomView extends LinearLayout {
 		webView.clearView();
 		webView.loadData(data, mimeType, encoding);
 	}
+	
+	/**
+	 * Get the activity that contains the view.
+	 * @return
+	 */
+	protected Activity getContainerActivity() {
+	  return this.mParentActivity;
+	}
 
 	/**
 	 * "Unused" warnings are suppressed because the public methods of this
 	 * class are meant to be called through the JavaScript interface.
 	 */
 	protected class RowData {
+	  
+	  public final String TAG = RowData.class.getSimpleName();
 
 		private final TableProperties tp;
 		private Map<String, String> data;
+		private String mRowId;
 
 		RowData(TableProperties tp) {
 			this.tp = tp;
@@ -154,8 +173,53 @@ public abstract class CustomView extends LinearLayout {
 			this.data = data;
 		}
 
-		void set(Map<String, String> data) {
+		void set(String rowId, Map<String, String> data) {
 			this.data = data;
+			this.mRowId = rowId;
+		}
+		
+		/**
+		 * Edit the row with collect. Uses the form specified in the table 
+		 * properties or else the ODKTables-generated default form.
+		 */
+		public void editRowWithCollect() {
+	     CollectFormParameters formParameters = 
+	          CollectFormParameters.constructCollectFormParameters(tp);
+	     Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+	         CustomView.this.getContainerActivity(), tp, data, formParameters);
+	     CollectUtil.launchCollectToEditRow(
+	         CustomView.this.getContainerActivity(), editRowIntent, mRowId);
+		}
+		
+		/**
+		 * Edit the row with collect.
+		 * <p>
+		 * Similar to {@link #editRowWithCollect()}, except that it allows you to
+		 * edit the row with a specific form.
+		 * @param tableName
+		 * @param formId
+		 * @param formVersion
+		 * @param formRootElement
+		 */
+		public void editRowWithCollectAndSpecificForm(String formId, 
+		    String formVersion, String formRootElement) {
+	      CollectFormParameters formParameters = 
+	          CollectFormParameters.constructCollectFormParameters(tp);
+	      if (formId != null && !formId.equals("")) {
+	        formParameters.setFormId(formId);
+	      }
+	      if (formVersion != null && !formVersion.equals("")) {
+	        formParameters.setFormVersion(formVersion);
+	      }
+	      if (formRootElement != null && !formRootElement.equals("")) {
+	        formParameters.setRootElement(formRootElement);
+	      }
+	      Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+	          CustomView.this.getContainerActivity(), tp, data, formParameters);
+	      // We have to launch it through this method so that the rowId is 
+	      // persisted in the SharedPreferences.
+	      CollectUtil.launchCollectToEditRow(
+	          CustomView.this.getContainerActivity(), editRowIntent, mRowId);
 		}
 
 		public String get(String key) {
@@ -165,6 +229,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 			return data.get(cp.getElementKey());
 		}
+		
 	}
 
 	/**
@@ -180,11 +245,12 @@ public abstract class CustomView extends LinearLayout {
 		private Map<String, Integer> colMap;			//Maps the column names with an index number
 		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
 		private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
-		protected Context context;
+		protected Activity mActivity;
 		private TableProperties tp;
 
-		public TableData(TableProperties tp, Table table) {
+		public TableData(Activity activity, TableProperties tp, Table table) {
 			Log.d(TAG, "calling TableData constructor with Table");
+			this.mActivity = activity;
 			rawTable = table;
 			userTable = null;
 			this.tp = tp;
@@ -311,7 +377,7 @@ public abstract class CustomView extends LinearLayout {
 
 		//Maps the number of rows to every collection of a table.
 		private void initCollectionMap(TableProperties tp) {
-			Control c = new Control(context);
+			Control c = new Control(mActivity);
 			collectionMap = new HashMap<Integer, Integer>();
 			String colName = primeColumns.get(0).substring(1);			//Assumes that the first col is the main, indexed col
 			for(String col : colMap.keySet()) {
@@ -351,6 +417,79 @@ public abstract class CustomView extends LinearLayout {
 				return null;
 			}
 		}
+		
+	    /**
+       * Edit the row with collect. Uses the form specified in the table 
+       * properties or else the ODKTables-generated default form.
+       * @param rowNumber the number of the row to edit. 
+       */
+      public void editRowWithCollect(int rowNumber) {
+        String rowId = rawTable == null ? 
+            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+        Map<String, String> elementKeyToValue = 
+            getElementKeyToValueMapForRow(rowNumber);
+        CollectFormParameters formParameters = 
+             CollectFormParameters.constructCollectFormParameters(tp);
+        Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+            CustomView.this.getContainerActivity(), tp, elementKeyToValue, 
+            formParameters);
+        CollectUtil.launchCollectToEditRow(
+            CustomView.this.getContainerActivity(), editRowIntent, rowId);
+      }
+      
+      /**
+       * Edit the row with collect.
+       * <p>
+       * Similar to {@link #editRowWithCollect()}, except that it allows you to
+       * edit the row with a specific form.
+       * @param rowNumber the number of the row to be edited
+       * @param tableName
+       * @param formId
+       * @param formVersion
+       * @param formRootElement
+       */
+      public void editRowWithCollectAndSpecificForm(int rowNumber, 
+          String formId, String formVersion, String formRootElement) {
+        String rowId = rawTable == null ? 
+            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+         CollectFormParameters formParameters = 
+             CollectFormParameters.constructCollectFormParameters(tp);
+         if (formId != null && !formId.equals("")) {
+           formParameters.setFormId(formId);
+         }
+         if (formVersion != null && !formVersion.equals("")) {
+           formParameters.setFormVersion(formVersion);
+         }
+         if (formRootElement != null && !formRootElement.equals("")) {
+           formParameters.setRootElement(formRootElement);
+         }
+         Map<String, String> elementKeyToValue =
+             getElementKeyToValueMapForRow(rowNumber);
+         Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+             CustomView.this.getContainerActivity(), tp, elementKeyToValue, 
+             formParameters);
+         CollectUtil.launchCollectToEditRow(
+             CustomView.this.getContainerActivity(), editRowIntent, rowId);
+      }
+
+		
+		
+		/**
+		 * Get a map of elementKey to value for the given row number.
+		 * @param rowNum
+		 * @return
+		 */
+		private Map<String, String> getElementKeyToValueMapForRow(int rowNum) {
+		  Map<String, String> elementKeyToValue = new HashMap<String, String>();
+		  for (Entry<String, Integer> entry : colMap.entrySet()) {
+		    String elementKey = tp.getColumnByDisplayName(entry.getKey());
+		    String value = rawTable == null ? 
+		        userTable.getData(rowNum, entry.getValue()) :
+		        rawTable.getData(rowNum, entry.getValue());
+		    elementKeyToValue.put(elementKey, value);
+		  }
+		  return elementKeyToValue;
+		}
 
 	}
 
@@ -358,14 +497,20 @@ public abstract class CustomView extends LinearLayout {
 
 		private static final String TAG = "CustomView.Control";
 
-		protected Context context;
+		protected Activity mActivity;
 		private TableProperties[] allTps;
 		private Map<String, TableProperties> tpMap;
 		private DbHelper dbh;
 
-		public Control(Context context) {
-			this.context = context;
-			dbh = DbHelper.getDbHelper(context);
+		/**
+		 * This construct requires an activity rather than a context because we 
+		 * want to be able to launch intents for result rather than merely launch
+		 * them on their own.
+		 * @param activity the activity that will be holding the view
+		 */
+		public Control(Activity activity) {
+			this.mActivity = activity;
+			dbh = DbHelper.getDbHelper(mActivity);
 			Log.d(TAG, "calling Control Constructor");
 		}
 
@@ -375,7 +520,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 			tpMap = new HashMap<String, TableProperties>();
 			allTps = TableProperties.getTablePropertiesForAll(
-					DbHelper.getDbHelper(context),
+					DbHelper.getDbHelper(mActivity),
 					KeyValueStore.Type.ACTIVE);
 			for (TableProperties tp : allTps) {
 				tpMap.put(tp.getDisplayName(), tp);
@@ -386,9 +531,15 @@ public abstract class CustomView extends LinearLayout {
 		 * Add a row using Collect. This is the hook into the javascript. The 
 		 * activity holding this view must have implemented the onActivityReturn
 		 * method appropriately to handle the result.
+		 * <p>
+		 * It allows you to specify a form other than that which may be the 
+		 * default for the table. It differs in {@link #addRow(String)} in that
+		 * it lets you add the row using an arbitrary form.
 		 */
-		public void addRow(String tableName, String formId, String formVersion,
-		    String formRootElement) {
+		public void addRowWithCollectAndSpecificForm(String tableName, 
+		    String formId, String formVersion, String formRootElement) {
+		  // TODO: should these add methods be moved to the TableData and RowData
+		  // objects?
 		  initTpInfo();
 		  if (!tpMap.containsKey(tableName)) {
 		    Log.e(TAG, "tableName [" + tableName + "] not in map");
@@ -405,9 +556,30 @@ public abstract class CustomView extends LinearLayout {
 		  if (formRootElement != null && !formRootElement.equals("")) {
 		    formParameters.setRootElement(formRootElement);
 		  }
-		  Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(context, 
-		      tp, formParameters, null);
-		  //context.start;
+		  Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
+		      CustomView.this.getContainerActivity(), tp, formParameters, null);
+		  CustomView.this.getContainerActivity().startActivityForResult(
+		      addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
+		}
+		
+		/**
+		 * Add a row using Collect. The default form for the table is used. This
+		 * will either be the custom defined form for the table, or the default
+		 * ODKTables-generated form. 
+		 * @param tableName
+		 */
+		public void addRowWithCollect(String tableName) {
+		  initTpInfo();
+        if (!tpMap.containsKey(tableName)) {
+          Log.e(TAG, "tableName [" + tableName + "] not in map");
+        }
+        TableProperties tp = tpMap.get(tableName);
+        CollectFormParameters formParameters = 
+            CollectFormParameters.constructCollectFormParameters(tp);
+        Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
+            CustomView.this.getContainerActivity(), tp, formParameters, null);
+        CustomView.this.getContainerActivity().startActivityForResult(
+            addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
 		}
 
 		public boolean openTable(String tableName, String query) {
@@ -418,7 +590,7 @@ public abstract class CustomView extends LinearLayout {
 				return false;
 			}
 			Log.e(TAG, "launching table activity for " + tableName);
-			Controller.launchTableActivity(context, tpMap.get(tableName),
+			Controller.launchTableActivity(mActivity, tpMap.get(tableName),
 					query, false);
 			return true;
 		}
@@ -431,10 +603,12 @@ public abstract class CustomView extends LinearLayout {
 			TableProperties tp = tpMap.get(tableName);
 			Query query = new Query(allTps, tp);
 			query.loadFromUserQuery(searchText);
-			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(context),
+			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mActivity),
 					tp.getTableId());
 			ArrayList<String> columnOrder = tp.getColumnOrder();
-			return new TableData(tp, dbt.getRaw(query, columnOrder.toArray(new String[columnOrder.size()])));
+			return new TableData(mActivity, tp, 
+			    dbt.getRaw(query, columnOrder.toArray(
+			        new String[columnOrder.size()])));
 		}
 
 		/**
@@ -459,9 +633,9 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public void launchHTML(String filename) {
 		  Log.d(TAG, "in launchHTML with filename: " + filename);
-		  Intent i = new Intent(context, CustomHomeScreenActivity.class);
+		  Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
 		  i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
-		  context.startActivity(i);
+		  mActivity.startActivity(i);
 		}
 
 		/**
@@ -490,25 +664,25 @@ public abstract class CustomView extends LinearLayout {
 		  Log.d(TAG, "givenTableName: " + givenTableName);
 		  final TableType tableType = TableType.valueOf(tableTypeStr);
 		  AlertDialog newTableAlert;
-		  AlertDialog.Builder alert = new AlertDialog.Builder(context);
-		  alert.setTitle(context.getString(R.string.name_of_new_table));
+		  AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+		  alert.setTitle(mActivity.getString(R.string.name_of_new_table));
 		  // An edit text for getting user input.
-		  final EditText input = new EditText(context);
+		  final EditText input = new EditText(mActivity);
 		  alert.setView(input);
 		  if (givenTableName != null) {
 		    input.setText(givenTableName);
 		  }
 		  // OK Action: create a new table.
 		  alert.setPositiveButton(
-		      context.getString(R.string.ok),
+		      mActivity.getString(R.string.ok),
 		      new DialogInterface.OnClickListener() {
 
               @Override
               public void onClick(DialogInterface dialog, int which) {
                 String newTableName = input.getText().toString().trim();
                 if (newTableName == null || newTableName.equals("")) {
-                  Toast toast = Toast.makeText(context,
-                      context.getString(R.string.error_table_name_empty),
+                  Toast toast = Toast.makeText(mActivity,
+                      mActivity.getString(R.string.error_table_name_empty),
                       Toast.LENGTH_LONG);
                   toast.show();
                 } else {

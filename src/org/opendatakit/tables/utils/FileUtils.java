@@ -20,27 +20,37 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.kxml2.io.KXmlParser;
+import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
 /**
- * sudar.sam@gmail.com: pilfered from Collect. 
+ * sudar.sam@gmail.com: pilfered from Collect and modified occasionally. 
  * 
  * Static methods used for common file operations.
  * 
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class FileUtils {
-    private final static String t = "FileUtils";
+    private final static String t = FileUtils.class.getSimpleName();
+    
+    public static final String UTF8 = "UTF-8";
 
     // Used to validate and display valid form names.
     public static final String VALID_FILENAME = "[ _\\-A-Za-z0-9]*.x[ht]*ml";
@@ -243,4 +253,5 @@ public class FileUtils {
         }
         return e;
     }
+   
 }

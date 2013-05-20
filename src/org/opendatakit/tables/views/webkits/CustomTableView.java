@@ -25,6 +25,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
+import android.app.Activity;
 import android.content.Context;
 import android.webkit.WebViewClient;
 
@@ -36,22 +37,22 @@ public class CustomTableView extends CustomView {
         "<p>No filename has been specified.</p>" +
         "</body></html>";
 
-    private Context context;
+    private Activity mActivity;
     private Map<String, Integer> colIndexTable;
     private TableProperties tp;
     private UserTable table;
     private String filename;
 
-    private CustomTableView(Context context, String filename) {
-        super(context);
-        this.context = context;
+    private CustomTableView(Activity activity, String filename) {
+        super(activity);
+        this.mActivity = activity;
         this.filename = filename;
         colIndexTable = new HashMap<String, Integer>();
     }
 
-    public static CustomTableView get(Context context, TableProperties tp,
+    public static CustomTableView get(Activity activity, TableProperties tp,
             UserTable table, String filename) {
-        CustomTableView ctv = new CustomTableView(context, filename);
+        CustomTableView ctv = new CustomTableView(activity, filename);
         ctv.set(tp, table);
         return ctv;
     }
@@ -72,8 +73,9 @@ public class CustomTableView extends CustomView {
 
     ////////////////////////////// TEST ///////////////////////////////
 
-    public static CustomTableView get(Context context, TableProperties tp, UserTable table, String filename, int index) {
-    	CustomTableView ctv = new CustomTableView(context, filename);
+    public static CustomTableView get(Activity activity, TableProperties tp, 
+        UserTable table, String filename, int index) {
+    	CustomTableView ctv = new CustomTableView(activity, filename);
     	// Create a new table with only the row specified at index.
     	// Create all of the arrays necessary to create a UserTable.
     	String[] rowIds = new String[1];
@@ -102,7 +104,7 @@ public class CustomTableView extends CustomView {
     public void display() {
       // Load a basic screen as you're getting the other stuff ready to
       // clear the old data.
-        webView.addJavascriptInterface(new TableControl(context), "control");
+        webView.addJavascriptInterface(new TableControl(mActivity), "control");
         webView.addJavascriptInterface(new TableData(tp, table), "data");
         if (filename != null) {
             load(FileProvider.getAsUrl(getContext(), new File(filename)));
@@ -114,13 +116,13 @@ public class CustomTableView extends CustomView {
 
     private class TableControl extends Control {
 
-        public TableControl(Context context) {
-            super(context);
+        public TableControl(Activity activity) {
+            super(activity);
         }
 
         @SuppressWarnings("unused")
         public boolean openItem(int index) {
-            Controller.launchDetailActivity(context, tp, table, index);
+            Controller.launchDetailActivity(mActivity, tp, table, index);
             return true;
         }
     }

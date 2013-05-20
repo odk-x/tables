@@ -138,8 +138,6 @@ public class Controller {
     private final ViewGroup displayWrap;
     private View overlay;
     private RelativeLayout.LayoutParams overlayLp;
-    private String rowId = null;
-
 
     public Controller(SherlockActivity activity, final DisplayActivity da,
             Bundle intentBundle) {
@@ -428,6 +426,12 @@ public class Controller {
    * @param rowNum
    * @param params
    */
+  /*
+   * Examples for how this is done elsewhere can be found in:
+   * Examples for how this is done in Collect can be found in the Collect code
+   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
+   * updateInstanceDatabase() method.
+   */
   void editRow(UserTable table, int rowNum, CollectFormParameters params) {
     Intent intent = null;
 //    if (params.getFormId() == null) {
@@ -438,14 +442,18 @@ public class Controller {
 //      // the intent.
 //      intent = getIntentForOdkCollectEditRowRevised(table, rowNum, params);
 //    }
-    intent = getIntentForOdkCollectEditRow(table, rowNum, params);
+    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
+        rowNum, params);
     if (intent != null) {
-      this.rowId = table.getRowId(rowNum);
-      activity.startActivityForResult(intent, RCODE_ODKCOLLECT_EDIT_ROW);
+      CollectUtil.launchCollectToEditRow(activity, intent, 
+          table.getRowId(rowNum));
+    } else {
+      Log.e(TAG, "intent null when trying to create for edit row.");
     }
   }
 
-  public boolean handleActivityReturn(int requestCode, int returnCode, Intent data) {
+  public boolean handleActivityReturn(int requestCode, int returnCode, 
+      Intent data) {
     switch (requestCode) {
     case RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
@@ -632,12 +640,13 @@ public class Controller {
 	          // So be careful.
 	          Intent intentAddRow;
 	          if (getSearchText().equals("")) {
-	            intentAddRow = getIntentForOdkCollectAddRow(params, null);
+	            intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
+	                activity, tp, params, null);;
 	          } else {
     	          Map<String, String> elementNameToValue =
     	              getMapFromLimitedQuery();
-    	         intentAddRow = getIntentForOdkCollectAddRow(params,
-    	             elementNameToValue);
+    	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
+    	             activity, tp, params, elementNameToValue);;
 	          }
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
@@ -692,75 +701,6 @@ public class Controller {
         }
   }
 
-	  /**
-	   * The idea here is that we might want to edit a row of the table using a
-	   * pre-set Collect form. This form would be user-defined and would be a more
-	   * user-friendly thing that would display only the pertinent information for
-	   * a particular user.
-	   * @param table
-	   * @param rowNum
-	   * @return
-	   */
-	  /*
-	   * This is a move away from the general "odk add row" usage that is going on
-	   * when no row is defined. As I understand it, the new case will work as
-	   * follows.
-	   *
-	   * There exits an "tableEditRow" form for a particular table. This form, as I
-	   * understand it, must exist both in the tables directory, as well as in
-	   * Collect so that Collect can launch it with an Intent.
-	   *
-	   * You then also construct a "values" sort of file, that is the data from the
-	   * database that will pre-populate the fields. Mitch referred to something
-	   * like this as the "instance" file.
-	   *
-	   * Once you have both of these files, the form and the data, you insert the
-	   * data into the form. When you launch the form, it is then pre-populated
-	   * with data from the database.
-	   *
-	   * In order to make this work, the form must exist both within the places
-	   * Collect knows to look, as well as in the Tables folder. You also must know
-	   * the:
-	   *
-	   * collectFormVersion
-	   * collectFormId
-	   * collectXFormRootElement (default to "data")
-	   *
-	   * These will most likely exist as keys in the key value store. They must
-	   * match the form.
-	   *
-	   * Other things needed will be:
-	   *
-	   * instanceFilePath  // I think the filepath with all the values
-	   * displayName       // just text, eg a row ID
-	   * formId            // the same thing as collectFormId?
-	   * formVersion
-	   * status            // either INCOMPLETE or COMPLETE
-	   *
-	   * Examples for how this is done in Collect can be found in the Collect code
-	   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
-	   * updateInstanceDatabase() method.
-	   */
-	  public Intent getIntentForOdkCollectEditRow(UserTable table,
-	      int rowNum, CollectFormParameters params) {
-	    return CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
-	        rowNum, params);
-	  }
-
-	/**
-	 * Generate the Intent to add a row using Collect. For safety, the params
-	 * object, particularly it's isCustom field, determines exactly which action
-	 * is taken. If a custom form is defined, it launches that form. If there
-	 * is not, it writes a new form, inserts it into collect, and launches it.
-	 * @param params
-	 * @return
-	 */
-  public Intent getIntentForOdkCollectAddRow(CollectFormParameters params,
-      Map<String, String> elementNameToValue) {
-    return CollectUtil.getIntentForOdkCollectAddRow(activity, tp, params, 
-        elementNameToValue);
-  }
-
   private Map<String, String> getMapFromLimitedQuery() {
     Map<String, String> elementNameToValue =
         new HashMap<String, String>();
@@ -787,7 +727,9 @@ public class Controller {
   }
 
   public boolean addRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = getOdkCollectFormValues(instanceId);
+    Map<String, String> formValues = 
+        CollectUtil.getOdkCollectFormValuesFromInstanceId(activity, 
+            instanceId);
     if (formValues == null) {
       return false;
     }
@@ -828,100 +770,14 @@ public class Controller {
     }
 
     private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-        if (returnCode != SherlockActivity.RESULT_OK) {
-            return;
-        }
-        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        updateRowFromOdkCollectForm(instanceId);
+      if (!CollectUtil.handleOdkCollectEditReturn(activity, tp, returnCode,
+          data)) {
+        return;
+      } else {
+        // The update succeeded.
         da.init();
-    }
-
-    boolean updateRowFromOdkCollectForm(int instanceId) {
-      Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-      if (formValues == null) {
-          return false;
       }
-      Map<String, String> values = getMapForInsertion(formValues);
-//      Map<String, String> values = new HashMap<String, String>();
-//
-//      for (ColumnProperties cp : tp.getColumns()) {
-//        // we want to use element name here, b/c that is what Collect should be
-//        // using to access all of the columns/elements.
-//          String elementName = cp.getElementName();
-//          String value = du.validifyValue(cp, formValues.get(elementName));
-//          if (value != null) {
-//              values.put(elementName,value);
-//          }
-//      }
-      String uriUser = null; // user on phone
-      Long timestamp = null; // current time
-      String instanceName = null; // meta/instanceName if present in form
-      String formId = null; // formId used by ODK Collect
-      String locale = null; // current locale
-
-      dbt.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
-
-      rowId = null;
-      return true;
-  }
-
-  /**
-   * This gets a map of values for insertion into a row after returning from
-   * a Collect form.
-   * @param formValues
-   * @return
-   */
-  Map<String, String> getMapForInsertion(
-      Map<String, String> formValues) {
-    Map<String, String> values = new HashMap<String, String>();
-
-    for (ColumnProperties cp : tp.getColumns()) {
-      // we want to use element name here, b/c that is what Collect should be
-      // using to access all of the columns/elements.
-        String elementName = cp.getElementName();
-        String value = du.validifyValue(cp, formValues.get(elementName));
-        if (value != null) {
-            values.put(elementName,value);
-        }
     }
-    return values;
-  }
-
-  protected Map<String, String> getOdkCollectFormValues(int instanceId) {
-    String[] projection = { "instanceFilePath" };
-    String selection = "_id = ?";
-    String[] selectionArgs = { (instanceId + "") };
-    Cursor c = activity.managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection, selection,
-        selectionArgs, null);
-    if (c.getCount() != 1) {
-      return null;
-    }
-    c.moveToFirst();
-    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
-    Document xmlDoc = new Document();
-    KXmlParser xmlParser = new KXmlParser();
-    try {
-      xmlParser.setInput(new FileReader(instancepath));
-      xmlDoc.parse(xmlParser);
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    } catch (XmlPullParserException e) {
-      e.printStackTrace();
-      return null;
-    }
-    Element rootEl = xmlDoc.getRootElement();
-    Node rootNode = rootEl.getRoot();
-    Element dataEl = rootNode.getElement(0);
-    Map<String, String> values = new HashMap<String, String>();
-    for (int i = 0; i < dataEl.getChildCount(); i++) {
-      Element child = dataEl.getElement(i);
-      String key = child.getName();
-      String value = child.getChildCount() > 0 ? child.getText(0) : null;
-      values.put(key, value);
-    }
-    return values;
-  }
 
   void openCellEditDialog(String rowId, String value, int colIndex) {
     (new CellEditDialog(rowId, value, colIndex)).show();

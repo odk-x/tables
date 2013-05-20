@@ -31,6 +31,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
@@ -42,7 +43,7 @@ public class CustomGraphView extends CustomView {
 					"<p>No filename has been specified.</p>" +
 					"</body></html>";
 
-	private Context context;
+	private Activity mActivity;
 	private Map<String, Integer> colIndexTable;
 	private TableProperties tp;
 	private UserTable table;
@@ -51,9 +52,10 @@ public class CustomGraphView extends CustomView {
 	private String potentialGraphName;
 	private GraphData graphData;
 
-	private CustomGraphView(Context context, String graphName, String potentialGraphName) {
-		super(context);
-		this.context = context;
+	private CustomGraphView(Activity activity, String graphName, 
+	    String potentialGraphName) {
+		super(activity);
+		this.mActivity = activity;
 		this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "optionspane.html";
 		this.graphName = graphName;
 		this.potentialGraphName = potentialGraphName;
@@ -61,9 +63,10 @@ public class CustomGraphView extends CustomView {
 		colIndexTable = new HashMap<String, Integer>();
 	}
 
-	public static CustomGraphView get(Context context, TableProperties tp,
+	public static CustomGraphView get(Activity activity, TableProperties tp,
 			UserTable table, String graphName, String potentialGraphName) {
-		CustomGraphView ctv = new CustomGraphView(context, graphName, potentialGraphName);
+		CustomGraphView ctv = new CustomGraphView(activity, graphName, 
+		    potentialGraphName);
 		ctv.set(tp, table);
 		return ctv;
 	}
@@ -84,7 +87,7 @@ public class CustomGraphView extends CustomView {
 	}
 
 	public void display() {
-		webView.addJavascriptInterface(new TableControl(context), "control");
+		webView.addJavascriptInterface(new TableControl(mActivity), "control");
 		webView.addJavascriptInterface(new TableData(tp, table), "data");
 		webView.addJavascriptInterface(graphData, "graph_data");
 		if (filename != null) {
@@ -97,13 +100,13 @@ public class CustomGraphView extends CustomView {
 
 	private class TableControl extends Control {
 
-		public TableControl(Context context) {
-			super(context);
+		public TableControl(Activity activity) {
+			super(activity);
 		}
 
 		@SuppressWarnings("unused")
 		public boolean openItem(int index) {
-			Controller.launchDetailActivity(context, tp, table, index);
+			Controller.launchDetailActivity(mActivity, tp, table, index);
 			return true;
 		}
 	}
