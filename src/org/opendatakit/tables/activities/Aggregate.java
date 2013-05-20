@@ -289,7 +289,8 @@ public class Aggregate extends SherlockActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait), getString(R.string.synchronizing));
+      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait), 
+          getString(R.string.synchronizing));
       success = false;
       message = null;
     }

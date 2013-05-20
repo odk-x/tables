@@ -75,22 +75,27 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     aggregateUrl = prefs.getServerUri();
     authToken = prefs.getAuthToken();
 
-    Map<String, String> tables = getTables();
+    GetTablesTask task = new GetTablesTask(aggregateUrl, authToken);
+    task.execute();
 
-    if (tables == null) {
+  }
+  
+  private void respondToTablesQuery(Map<String, String> tablesFromServer) {
+    if (tablesFromServer == null) {
       finishDialog.setMessage(getString(R.string.error_contacting_server));
       finishDialog.show();
-    } else if (tables.isEmpty()) {
+    } else if (tablesFromServer.isEmpty()) {
       finishDialog.setMessage(getString(R.string.all_tables_downloaded));
       finishDialog.show();
     } else {
       tableIds = new ArrayList<String>();
       tableNames = new ArrayList<String>();
-      for (String tableId : tables.keySet()) {
+      for (String tableId : tablesFromServer.keySet()) {
         tableIds.add(tableId);
-        tableNames.add(tables.get(tableId));
+        tableNames.add(tablesFromServer.get(tableId));
       }
-      setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, tableNames));
+      setListAdapter(new ArrayAdapter<String>(this, 
+          android.R.layout.simple_list_item_1, tableNames));
     }
   }
 
@@ -105,37 +110,12 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     });
   }
 
-  private Map<String, String> getTables() {
-    GetTablesTask task = new GetTablesTask(aggregateUrl, authToken);
-    task.execute();
-    Map<String, String> tables = null;
-    try {
-      tables = task.get();
-    } catch (ExecutionException e) {
-      Log.i(TAG, "ExecutionException in getTables()", e);
-    } catch (InterruptedException e) {
-      Log.i(TAG, "InterrruptedException in getTables()", e);
-    } catch (Exception e) {
-      Log.e(TAG, "Exception in getTables()", e);
-    }
-    return tables;
-  }
-
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     String tableName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
     DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, tableName);
-    try {
-      task.execute();
-      task.get();
-    } catch (Exception e) {
-      Log.i(TAG, "Exception downloading table " + tableName, e);
-      finishDialog.setMessage(getString(R.string.error_downloading_table));
-      finishDialog.show();
-    }
-    finishDialog.setMessage(getString(R.string.downloaded_table, tableName));
-    finishDialog.show();
+    task.execute();
   }
 
   private class GetTablesTask extends AsyncTask<Void, Void, Map<String, String>> {
@@ -150,7 +130,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, getString(R.string.please_wait),
+      super.onPreExecute();
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, 
+          getString(R.string.please_wait),
           getString(R.string.fetching_tables));
     }
 
@@ -200,7 +182,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPostExecute(Map<String, String> result) {
-      pd.dismiss();
+      pd.dismiss(); 
+      AggregateDownloadTableActivity.this.respondToTablesQuery(result);
     }
   }
 
@@ -219,7 +202,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, getString(R.string.please_wait),
+      super.onPreExecute();
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, 
+          getString(R.string.please_wait),
           getString(R.string.fetching_this_table, tableName));
     }
 
@@ -262,6 +247,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected void onPostExecute(Void result) {
       pd.dismiss();
+      finishDialog.setMessage(getString(R.string.downloaded_table, tableName));
+      finishDialog.show();
     }
 
   }
