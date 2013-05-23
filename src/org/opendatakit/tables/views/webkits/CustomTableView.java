@@ -17,6 +17,7 @@ package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
@@ -93,6 +94,46 @@ public class CustomTableView extends CustomView {
 
     	ctv.set(tp, singleRowTable);
     	return ctv;
+    }
+    
+    /**
+     * Returns a custom view based on the list of indexes. The rows will be
+     * ordered by the order of the list of indexes.
+     * 
+     * @param context
+     *          The context that wants to display this custom view.
+     * @param tp
+     *          The table properties of the table being displayed.
+     * @param table
+     *          The full table that we want to display a portion of.
+     * @param filename
+     *          The filename of the view we want to create.
+     * @param indexes
+     *          The indexes, of what rows, and in what order, we want to show
+     *          them.
+     * @return The custom view that represents the indexes in the table.
+     */
+    public static CustomTableView get(Activity activity, TableProperties tp, UserTable table,
+        String filename, List<Integer> indexes) {
+      CustomTableView ctv = new CustomTableView(activity, filename);
+      // Create all of the arrays necessary to create a UserTable.
+      String[] rowIds = new String[indexes.size()];
+      String[] headers = new String[table.getWidth()];
+      String[][] data = new String[indexes.size()][table.getWidth()];
+      String[] footers = new String[table.getWidth()];
+      // Set all the data for the table.
+      for (int i = 0; i < table.getWidth(); i++) {
+        headers[i] = table.getHeader(i);
+        for (int j = 0; j < indexes.size(); j++) {
+          rowIds[j] = table.getRowId(indexes.get(j));
+          data[j][i] = table.getData(indexes.get(j), i);
+        }
+        footers[i] = table.getFooter(i);
+      }
+      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
+
+      ctv.set(tp, multiRowTable);
+      return ctv;
     }
 
     public void setOnFinishedLoaded(WebViewClient client) {
