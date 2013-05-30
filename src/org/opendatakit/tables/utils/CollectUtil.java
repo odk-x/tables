@@ -1085,20 +1085,40 @@ public class CollectUtil {
             rootElement, tp.getDisplayName());
       }
 
+      /**
+       * Sets the form id and marks the form as custom.
+       * @param formId
+       */
       public void setFormId(String formId) {
         this.mFormId = formId;
+        this.mIsCustom = true;
       }
 
+      /**
+       * Sets the form version and marks the form as custom.
+       * @param formVersion
+       */
       public void setFormVersion(String formVersion) {
         this.mFormVersion = formVersion;
+        this.mIsCustom = true;
       }
 
+      /**
+       * Sets the root element and marks the form as custom.
+       * @param rootElement
+       */
       public void setRootElement(String rootElement) {
         this.mFormXMLRootElement = rootElement;
+        this.mIsCustom = true;
       }
 
+      /**
+       * Sets the row display name and marks the form as custom.
+       * @param name
+       */
       public void setRowDisplayName(String name) {
         this.mRowDisplayName = name;
+        this.mIsCustom = true;
       }
 
       public void setIsCustom(boolean isCustom) {
