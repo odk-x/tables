@@ -151,6 +151,69 @@ public abstract class CustomView extends LinearLayout {
 	protected Activity getContainerActivity() {
 	  return this.mParentActivity;
 	}
+	
+	/**
+	 * Add a row using collect and the default form. 
+	 * @param tableName
+	 * @param tp
+	 */
+   private void addRowWithCollect(String tableName, TableProperties tp) {
+     CollectFormParameters formParameters = 
+         CollectFormParameters.constructCollectFormParameters(tp);
+     prepopulateRowAndLaunchCollect(formParameters, tp);
+   }
+   
+   /**
+    * Add a row using Collect. This is the hook into the javascript. The 
+    * activity holding this view must have implemented the onActivityReturn
+    * method appropriately to handle the result.
+    * <p>
+    * It allows you to specify a form other than that which may be the 
+    * default for the table. It differs in {@link #addRow(String)} in that
+    * it lets you add the row using an arbitrary form.
+    */
+   private void addRowWithCollectAndSpecificForm(String tableName, 
+       String formId, String formVersion, String formRootElement, 
+       TableProperties tp) {
+     // TODO: should these add methods be moved to the TableData and RowData
+     // objects?
+     CollectFormParameters formParameters = 
+         CollectFormParameters.constructCollectFormParameters(tp);
+     if (formId != null && !formId.equals("")) {
+       formParameters.setFormId(formId);
+     }
+     if (formVersion != null && !formVersion.equals("")) {
+       formParameters.setFormVersion(formVersion);
+     }
+     if (formRootElement != null && !formRootElement.equals("")) {
+       formParameters.setRootElement(formRootElement);
+     }
+     prepopulateRowAndLaunchCollect(formParameters, tp);
+   }
+
+	
+	/**
+	 * This is called by the internal data classes. It prepopulates the form as 
+	 * it needs based on the query and launches the form.
+	 * @param params
+	 * @param tp
+	 */
+   private void prepopulateRowAndLaunchCollect(CollectFormParameters params,
+       TableProperties tp) {
+     String currentQueryString = tp.getKeyValueStoreHelper(
+         TableProperties.KVS_PARTITION).getString(
+             TableProperties.KEY_CURRENT_QUERY);
+     Map<String, String> prepopulatedValues = null;
+     if (currentQueryString != null && !currentQueryString.equals("")) {
+       prepopulatedValues = CollectUtil.getMapFromQuery(tp, 
+           currentQueryString);
+     }
+     Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
+         CustomView.this.getContainerActivity(), tp, params, 
+         prepopulatedValues);
+     CustomView.this.getContainerActivity().startActivityForResult(
+         addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
+   }
 
 	/**
 	 * "Unused" warnings are suppressed because the public methods of this
@@ -221,6 +284,29 @@ public abstract class CustomView extends LinearLayout {
 	      CollectUtil.launchCollectToEditRow(
 	          CustomView.this.getContainerActivity(), editRowIntent, mRowId);
 		}
+		
+      /**
+       * Add a row using collect and the default form.
+       * @param tableName
+       */
+      public void addRowWithCollect(String tableName) {
+        CustomView.this.addRowWithCollect(tableName, tp);
+      }
+      
+      /**
+       * Add a row using Collect. This is the hook into the javascript. The 
+       * activity holding this view must have implemented the onActivityReturn
+       * method appropriately to handle the result.
+       * <p>
+       * It allows you to specify a form other than that which may be the 
+       * default for the table. It differs in {@link #addRow(String)} in that
+       * it lets you add the row using an arbitrary form.
+       */
+      public void addRowWithCollectAndSpecificForm(String tableName, 
+          String formId, String formVersion, String formRootElement) {
+        CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+            formVersion, formRootElement, tp);
+      }
 
 		/**
 		 * Takes the user label for the column and returns the value in that 
@@ -498,6 +584,29 @@ public abstract class CustomView extends LinearLayout {
          CollectUtil.launchCollectToEditRow(
              CustomView.this.getContainerActivity(), editRowIntent, rowId);
       }
+      
+      /**
+       * Add a row using collect and the default form.
+       * @param tableName
+       */
+      public void addRowWithCollect(String tableName) {
+        CustomView.this.addRowWithCollect(tableName, tp);
+      }
+      
+      /**
+       * Add a row using Collect. This is the hook into the javascript. The 
+       * activity holding this view must have implemented the onActivityReturn
+       * method appropriately to handle the result.
+       * <p>
+       * It allows you to specify a form other than that which may be the 
+       * default for the table. It differs in {@link #addRow(String)} in that
+       * it lets you add the row using an arbitrary form.
+       */
+      public void addRowWithCollectAndSpecificForm(String tableName, 
+          String formId, String formVersion, String formRootElement) {
+        CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+            formVersion, formRootElement, tp);
+      }
 
 		
 		
@@ -552,72 +661,6 @@ public abstract class CustomView extends LinearLayout {
 			for (TableProperties tp : allTps) {
 				tpMap.put(tp.getDisplayName(), tp);
 			}
-		}
-		
-		/**
-		 * Add a row using Collect. This is the hook into the javascript. The 
-		 * activity holding this view must have implemented the onActivityReturn
-		 * method appropriately to handle the result.
-		 * <p>
-		 * It allows you to specify a form other than that which may be the 
-		 * default for the table. It differs in {@link #addRow(String)} in that
-		 * it lets you add the row using an arbitrary form.
-		 */
-		public void addRowWithCollectAndSpecificForm(String tableName, 
-		    String formId, String formVersion, String formRootElement) {
-		  // TODO: should these add methods be moved to the TableData and RowData
-		  // objects?
-		  initTpInfo();
-		  if (!tpMap.containsKey(tableName)) {
-		    Log.e(TAG, "tableName [" + tableName + "] not in map");
-		  }
-		  TableProperties tp = tpMap.get(tableName);
-		  CollectFormParameters formParameters = 
-		      CollectFormParameters.constructCollectFormParameters(tp);
-		  if (formId != null && !formId.equals("")) {
-		    formParameters.setFormId(formId);
-		  }
-		  if (formVersion != null && !formVersion.equals("")) {
-		    formParameters.setFormVersion(formVersion);
-		  }
-		  if (formRootElement != null && !formRootElement.equals("")) {
-		    formParameters.setRootElement(formRootElement);
-		  }
-		  prepopulateRowAndLaunchCollect(formParameters, tp);
-		}
-		
-		/**
-		 * Add a row using Collect. The default form for the table is used. This
-		 * will either be the custom defined form for the table, or the default
-		 * ODKTables-generated form. 
-		 * @param tableName
-		 */
-		public void addRowWithCollect(String tableName) {
-		  initTpInfo();
-        if (!tpMap.containsKey(tableName)) {
-          Log.e(TAG, "tableName [" + tableName + "] not in map");
-        }
-        TableProperties tp = tpMap.get(tableName);
-        CollectFormParameters formParameters = 
-            CollectFormParameters.constructCollectFormParameters(tp);
-        prepopulateRowAndLaunchCollect(formParameters, tp);
-		}
-		
-		private void prepopulateRowAndLaunchCollect(CollectFormParameters params,
-		    TableProperties tp) {
-		  String currentQueryString = tp.getKeyValueStoreHelper(
-		      TableProperties.KVS_PARTITION).getString(
-		          TableProperties.KEY_CURRENT_QUERY);
-		  Map<String, String> prepopulatedValues = null;
-		  if (currentQueryString != null && !currentQueryString.equals("")) {
-		    prepopulatedValues = CollectUtil.getMapFromQuery(tp, 
-		        currentQueryString);
-		  }
-		  Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
-		      CustomView.this.getContainerActivity(), tp, params, 
-		      prepopulatedValues);
-		  CustomView.this.getContainerActivity().startActivityForResult(
-		      addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
 		}
 
 		public boolean openTable(String tableName, String query) {
