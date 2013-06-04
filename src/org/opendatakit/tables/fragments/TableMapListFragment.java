@@ -29,6 +29,7 @@ import com.actionbarsherlock.app.SherlockFragment;
  * @author Chris Gelon (cgelon)
  */
 public class TableMapListFragment extends SherlockFragment {
+  /** The key for saving the indexes that are currently being displayed. */
   private static final String SAVED_KEY_INDEXES = "savedKeyIndexes";
 
   /** The container that holds this fragment's views. */
@@ -40,12 +41,12 @@ public class TableMapListFragment extends SherlockFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+
     if (savedInstanceState != null) {
       mIndexes = savedInstanceState.getIntegerArrayList(SAVED_KEY_INDEXES);
     }
   }
-  
+
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     mContainer = container;
@@ -58,14 +59,17 @@ public class TableMapListFragment extends SherlockFragment {
     super.onResume();
     resetView();
   }
-  
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    
+
     outState.putIntegerArrayList(SAVED_KEY_INDEXES, mIndexes);
   }
 
+  /**
+   * Resets the webview (the list), and sets the visibility to visible.
+   */
   private void resetView() {
     if (mIndexes != null && mIndexes.size() > 0) {
       TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
@@ -82,21 +86,16 @@ public class TableMapListFragment extends SherlockFragment {
         return;
       }
       // Create the custom view and set it.
-      CustomTableView view = CustomTableView.get(getActivity(), tp, table, filename,
-          mIndexes);
+      CustomTableView view = CustomTableView.get(getActivity(), tp, table, filename, mIndexes,
+          getFragmentManager().findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP));
       view.display();
+
       LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
       mContainer.removeAllViews();
       mContainer.addView(view, params);
-
       WebViewClient client = new WebViewClient() {
         public void onPageFinished(WebView view, String url) {
-          LinearLayout.LayoutParams containerParams = new LinearLayout.LayoutParams(
-              LinearLayout.LayoutParams.WRAP_CONTENT, view.getMeasuredHeight());
-          if (containerParams.height > 0) {
-            // mContainer.setLayoutParams(containerParams);
-          }
           mContainer.setVisibility(View.VISIBLE);
         }
       };
@@ -119,14 +118,30 @@ public class TableMapListFragment extends SherlockFragment {
     }
     resetView();
   }
+  
+  /**
+   * Sets the indexes of the list view, which will be the rows of data wanting 
+   * to be displayed.
+   */
+  public void setIndexes(ArrayList<Integer> indexes) {
+    if (mIndexes != null) {
+      mIndexes.clear();
+    }
+    mIndexes = indexes;
+    resetView();
+  }
 
   /**
    * Sets the visibility of this fragment (will set the container's visibility).
+   * Will only change the visibility if it isn't a tablet (this container is
+   * always visible when run by a tablet).
    * 
    * @param visibility
    *          The new visibility of the fragment (constants found in View).
    */
   public void setVisibility(int visibility) {
-    mContainer.setVisibility(visibility);
+    if (!TableMapFragment.isTabletDevice(getActivity())) {
+      mContainer.setVisibility(visibility);
+    }
   }
 }
