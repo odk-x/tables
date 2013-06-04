@@ -51,6 +51,10 @@ public class UserTable {
         return data[rowNum][colNum];
     }
     
+    public String[] getRowData(int rowNum) {
+      return data[rowNum];
+    }
+    
     public String getData(int cellNum) {
         int rowNum = cellNum / getWidth();
         int colNum = cellNum % getWidth();

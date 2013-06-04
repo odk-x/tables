@@ -538,22 +538,22 @@ public class DbTable {
         if (!values.containsKey(DataTableColumns.INSTANCE_NAME) ||
             values.get(DataTableColumns.INSTANCE_NAME) == null) {
           values.put(DataTableColumns.INSTANCE_NAME,
-              DataTableColumns.DEFAULT_INSTANCE_NAME);
+              DataTableColumns.INSTANCE_NAME);
         }
         if (!values.containsKey(DataTableColumns.LOCALE) ||
             values.get(DataTableColumns.LOCALE) == null) {
           values.put(DataTableColumns.LOCALE,
-              DataTableColumns.DEFAULT_LOCALE);
+              DataTableColumns.LOCALE);
         }
         if (!values.containsKey(DataTableColumns.URI_USER) ||
-            values.get(DataTableColumns.DEFAULT_URI_USER) == null) {
+            values.get(DataTableColumns.URI_USER) == null) {
           values.put(DataTableColumns.URI_USER,
-              DataTableColumns.DEFAULT_URI_USER);
+              DataTableColumns.URI_USER);
         }
         if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
             values.get(DataTableColumns.SYNC_TAG) == null) {
           values.put(DataTableColumns.SYNC_TAG,
-              DataTableColumns.DEFAULT_SYNC_TAG);
+              DataTableColumns.SYNC_TAG);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
