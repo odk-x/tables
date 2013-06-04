@@ -621,10 +621,10 @@ public class Controller {
 	            intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
 	                activity, tp, params, null);
 	          } else {
-    	          Map<String, String> elementNameToValue =
+    	          Map<String, String> elementKeyToValue =
     	              CollectUtil.getMapFromQuery(tp, getSearchText());
     	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-    	             activity, tp, params, elementNameToValue);
+    	             activity, tp, params, elementKeyToValue);
 	          }
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,

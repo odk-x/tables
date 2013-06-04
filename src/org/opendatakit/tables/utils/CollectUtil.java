@@ -185,7 +185,7 @@ public class CollectUtil {
       writer.write("<" + DEFAULT_ROOT_ELEMENT + " ");
       writer.write("id=\"" + formId + "\">");
       for (ColumnProperties cp : columns) {
-        writer.write("<" + cp.getElementName() + "/>");
+        writer.write("<" + cp.getElementKey() + "/>");
       }
       writer.write("</" + DEFAULT_ROOT_ELEMENT + ">");
       writer.write("</instance>");
@@ -193,7 +193,7 @@ public class CollectUtil {
       writer.write("<translation lang=\"eng\">");
       for (ColumnProperties cp : columns) {
         writer.write("<text id=\"/" + DEFAULT_ROOT_ELEMENT + "/" +
-          cp.getElementName() + ":label\">");
+          cp.getElementKey() + ":label\">");
         writer.write("<value>" + cp.getDisplayName() + "</value>");
         writer.write("</text>");
       }
@@ -204,9 +204,9 @@ public class CollectUtil {
       writer.write("<h:body>");
       for (ColumnProperties cp : columns) {
         writer.write("<input ref=\"/" + DEFAULT_ROOT_ELEMENT + "/" +
-          cp.getElementName() + "\">");
+          cp.getElementKey() + "\">");
         writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" +
-          cp.getElementName() + ":label')\"/>");
+          cp.getElementKey() + ":label')\"/>");
         writer.write("</input>");
       }
       writer.write("</h:body>");
@@ -296,27 +296,16 @@ public class CollectUtil {
         writer.write(params.getFormId());
         writer.write("\">");
         for (ColumnProperties cp : tp.getColumns()) {
-          String value = values.get(cp.getElementName());
+          String value = values.get(cp.getElementKey());
           if (value == null) {
-            writer.write("<" + cp.getElementName() + "/>");
+            writer.write("<" + cp.getElementKey() + "/>");
           } else {
             writer
-                .write("<" + cp.getElementName() + ">" + value + "</" +
-                    cp.getElementName() + ">");
+                .write("<" + cp.getElementKey() + ">" + value + "</" +
+                    cp.getElementKey() + ">");
 
           }
         }
-//      for (Map.Entry<String, String> entry : values.entrySet()) {
-//      String value = entry.getValue();
-//      if (value == null) {
-//        writer.write("<" + entry.getKey() + "/>");
-//      } else {
-//        writer
-//            .write("<" + entry.getKey() + ">" + value + "</" +
-//                entry.getKey() + ">");
-//
-//      }
-//    }
         writer.write("</");
         writer.write(params.getRootElement());
         writer.write(">");
@@ -506,7 +495,7 @@ public class CollectUtil {
     /**
      * Identical to {@link #getIntentForOdkCollectEditRow(Context, 
      * TableProperties, Map, CollectFormParameters)}, except this method
-     * constructs the map of elementName to value for you.
+     * constructs the map of elementKey to value for you.
      */
     /*
      * This is a move away from the general "odk add row" usage that is going on
@@ -551,13 +540,13 @@ public class CollectUtil {
     public static Intent getIntentForOdkCollectEditRow(Context context, 
         TableProperties tp, UserTable table, int rowNum, 
         CollectFormParameters params) {
-      Map<String, String> elementNameToValue = new HashMap<String, String>();
+      Map<String, String> elementKeyToValue = new HashMap<String, String>();
       for (ColumnProperties cp : tp.getColumns()) {
         String value = table.getData(rowNum,
-            tp.getColumnIndex(cp.getElementName()));
-        elementNameToValue.put(cp.getElementName(), value);
+            tp.getColumnIndex(cp.getElementKey()));
+        elementKeyToValue.put(cp.getElementKey(), value);
       }
-      return getIntentForOdkCollectEditRow(context, tp, elementNameToValue, 
+      return getIntentForOdkCollectEditRow(context, tp, elementKeyToValue, 
           params);
     }
     
@@ -570,12 +559,12 @@ public class CollectUtil {
      * information for a particular user.
      * @param context
      * @param tp
-     * @param elementNameToValue
+     * @param elementKeyToValue
      * @param params
      * @return
      */
     public static Intent getIntentForOdkCollectEditRow(Context context, 
-        TableProperties tp, Map<String, String> elementNameToValue, 
+        TableProperties tp, Map<String, String> elementKeyToValue, 
         CollectFormParameters params) {
       // Check if there is a custom form. If there is not, we want to delete
       // the old form and write the new form.
@@ -588,7 +577,7 @@ public class CollectUtil {
         }
       }
       boolean writeDataSuccessful =
-          CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
+          CollectUtil.writeRowDataToBeEdited(elementKeyToValue, tp, params);
       if (!writeDataSuccessful) {
         Log.e(TAG, "could not write instance file successfully!");
       }
@@ -644,14 +633,13 @@ public class CollectUtil {
       DataUtil du = DataUtil.getDefaultDataUtil();
       Map<String, String> values = new HashMap<String, String>();
       for (ColumnProperties cp : tp.getColumns()) {
-        // we want to use element name here, b/c that is what Collect should be
-        // using to access all of the columns/elements.
-          String elementName = cp.getElementName();
-          String value = formValues.get(elementName);
-          value = du.validifyValue(cp, formValues.get(elementName));
+        // we want to use element key here
+          String elementKey = cp.getElementKey();
+          String value = formValues.get(elementKey);
+          value = du.validifyValue(cp, formValues.get(elementKey));
           // reset b/c validifyValue can return null.
           if (value != null) {
-            values.put(elementName, value);
+            values.put(elementKey, value);
           }
       }
       return values;
@@ -715,6 +703,8 @@ public class CollectUtil {
         TableProperties tp, int instanceId) {
       // First we need to check to make sure the row id is in the shared 
       // preferences. If it's not, something has gone wrong.
+      // TODO: This should be migrated to use metadata/instanceID in the 
+      // instance xpath.
       SharedPreferences sharedPreferences = context.getSharedPreferences(
           SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
       String rowId = sharedPreferences.getString(PREFERENCE_KEY_EDITED_ROW_ID,
@@ -829,13 +819,13 @@ public class CollectUtil {
      * @param context
      * @param tp
      * @param params
-     * @param elementNameToValue
+     * @param elementKeyToValue
      *   values with which you want to prepopulate the add row form.
      * @return
      */
     public static Intent getIntentForOdkCollectAddRow(Context context,
         TableProperties tp, CollectFormParameters params,
-        Map<String, String> elementNameToValue) {
+        Map<String, String> elementKeyToValue) {
       /*
        * So, there are several things to check here. The first thing we want to
        * do is see if a custom form has been defined for this table. If there is
@@ -855,7 +845,7 @@ public class CollectUtil {
         }
       }
       Uri formToLaunch;
-      if (elementNameToValue == null) {
+      if (elementKeyToValue == null) {
         formToLaunch = CollectUtil.getUriOfForm(context.getContentResolver(),
             params.getFormId());
         if (formToLaunch == null) {
@@ -865,7 +855,7 @@ public class CollectUtil {
       } else {
         // we've received some values to prepopulate the add row with.
         boolean writeDataSuccessful =
-            CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
+            CollectUtil.writeRowDataToBeEdited(elementKeyToValue, tp, params);
         if (!writeDataSuccessful) {
           Log.e(TAG, "could not write instance file successfully!");
         }
@@ -960,14 +950,14 @@ public class CollectUtil {
      * <p>
      * If the user has searched for facility_code: 12345, for example, then if 
      * they choose to add a row, the facility_code should perhaps be pre-
-     * populated with 12345. This method provides the map of elementName to
+     * populated with 12345. This method provides the map of elementKey to
      * value for the given query.
      * @param query
      * @return
      */
     public static Map<String, String> getMapFromQuery(TableProperties tp,
         String queryString) {
-      Map<String, String> elementNameToValue = 
+      Map<String, String> elementKeyToValue = 
           new HashMap<String, String>();
       // First add all empty strings. We will overwrite the ones that are queried
       // for in the search box. We need this so that if an add is canceled, we
@@ -976,7 +966,7 @@ public class CollectUtil {
       // a check, we'll add a blank row b/c there are values in the key value
       // pairs, even though they were our prepopulated values.
       for (ColumnProperties cp : tp.getColumns()) {
-        elementNameToValue.put(cp.getElementName(), "");
+        elementKeyToValue.put(cp.getElementKey(), "");
       }
       Query currentQuery = new Query(null, tp);
       currentQuery.loadFromUserQuery(queryString);
@@ -985,10 +975,10 @@ public class CollectUtil {
         // NB: This is predicated on their only ever being a single
        // search value. I'm not sure how additional values could be
        // added.
-        elementNameToValue.put(constraint.getColumnDbName(),
+        elementKeyToValue.put(constraint.getColumnDbName(),
             constraint.getValue(0));
       }
-      return elementNameToValue;
+      return elementKeyToValue;
     }
 
     /**

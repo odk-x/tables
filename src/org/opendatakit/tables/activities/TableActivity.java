@@ -615,13 +615,14 @@ public class TableActivity extends SherlockFragmentActivity {
         return null;
       }
     }
-    Map<String, String> elementNameToValue = new HashMap<String, String>();
+    Map<String, String> elementKeyToValue = new HashMap<String, String>();
     for (ColumnProperties cp : mTableProperties.getColumns()) {
-      String value = table.getData(rowNum, mTableProperties.getColumnIndex(cp.getElementName()));
-      elementNameToValue.put(cp.getElementName(), value);
+      String value = table.getData(rowNum, mTableProperties.getColumnIndex(
+          cp.getElementKey()));
+      elementKeyToValue.put(cp.getElementKey(), value);
     }
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(elementNameToValue,
-        mTableProperties, params);
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(
+        elementKeyToValue, mTableProperties, params);
     if (!writeDataSuccessful) {
       Log.e(/* TODO: TAG! */"Activity", "could not write instance file successfully!");
     }
@@ -692,7 +693,7 @@ public class TableActivity extends SherlockFragmentActivity {
   }
 
   private Map<String, String> getMapFromLimitedQuery() {
-    Map<String, String> elementNameToValue = new HashMap<String, String>();
+    Map<String, String> elementKeyToValue = new HashMap<String, String>();
     // First add all empty strings. We will overwrite the ones that are
     // queried
     // for in the search box. We need this so that if an add is canceled, we
@@ -702,7 +703,7 @@ public class TableActivity extends SherlockFragmentActivity {
     // a check, we'll add a blank row b/c there are values in the key value
     // pairs, even though they were our prepopulated values.
     for (ColumnProperties cp : mTableProperties.getColumns()) {
-      elementNameToValue.put(cp.getElementName(), "");
+      elementKeyToValue.put(cp.getElementKey(), "");
     }
     Query currentQuery = new Query(null, mTableProperties);
     currentQuery.loadFromUserQuery(getSearchText());
@@ -711,9 +712,9 @@ public class TableActivity extends SherlockFragmentActivity {
       // NB: This is predicated on their only ever being a single
       // search value. I'm not sure how additional values could be
       // added.
-      elementNameToValue.put(constraint.getColumnDbName(), constraint.getValue(0));
+      elementKeyToValue.put(constraint.getColumnDbName(), constraint.getValue(0));
     }
-    return elementNameToValue;
+    return elementKeyToValue;
   }
 
   boolean addRowFromOdkCollectForm(int instanceId) {
@@ -789,13 +790,12 @@ public class TableActivity extends SherlockFragmentActivity {
   Map<String, String> getMapForInsertion(Map<String, String> formValues) {
     Map<String, String> values = new HashMap<String, String>();
     for (ColumnProperties cp : mTableProperties.getColumns()) {
-      // we want to use element name here, b/c that is what Collect should
-      // be
-      // using to access all of the columns/elements.
-      String elementName = cp.getElementName();
-      String value = mDataUtil.validifyValue(cp, formValues.get(elementName));
+      // we want to use element key here, b/c that is what collect should be 
+      // using to access things. 
+      String elementKey = cp.getElementKey();
+      String value = mDataUtil.validifyValue(cp, formValues.get(elementKey));
       if (value != null) {
-        values.put(elementName, value);
+        values.put(elementKey, value);
       }
     }
     return values;
