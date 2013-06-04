@@ -336,6 +336,8 @@ public class DbTable {
         Cursor c = null;
         try {
         	db = dbh.getReadableDatabase();
+        	String sqlStr = sd.getSql();
+        	String[] selArgs = sd.getArgs();
         	c = db.rawQuery(sd.getSql(), sd.getArgs());
         	Table table = buildTable(c, tp.getColumnOrder());
             return table;
@@ -364,8 +366,10 @@ public class DbTable {
         String[] rowIds = new String[rowCount];
         String[][] data = new String[rowCount][arrayList.size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+        Map<String, Integer> dataKeyToIndex = new HashMap<String, Integer>();
         for (int i = 0; i < arrayList.size(); i++) {
-            colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
+          dataKeyToIndex.put(arrayList.get(i), i);
+          colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
         }
 
         DataUtil du = DataUtil.getDefaultDataUtil();

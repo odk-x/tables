@@ -1314,14 +1314,14 @@ public class TableProperties {
   }
 
   /**
-   * @return an ordered array of the database names of the table's columns
+   * @return an ordered array of the element keys of the table's columns
    */
   public ArrayList<String> getColumnOrder() {
     return columnOrder;
   }
 
   /**
-   * Sets the column order.
+   * Sets the column order. Must be element keys.
    *
    * @param colOrder
    *          an ordered array of the database names of the table's columns
