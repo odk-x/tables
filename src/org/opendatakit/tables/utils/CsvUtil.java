@@ -44,9 +44,9 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
+import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.tasks.ExportTask;
 import org.opendatakit.tables.tasks.ImportTask;
@@ -638,7 +638,7 @@ public class CsvUtil {
         DbTable dbt = DbTable.getDbTable(dbh, tableId);
         String[] selectionKeys = { DataTableColumns.SAVED };
         String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
-        Table table = dbt.getRaw(columns, selectionKeys, selectionArgs, null);
+        UserTable table = dbt.getRaw(columns, selectionKeys, selectionArgs, null);
         // writing data
         try {
             CSVWriter cw = new CSVWriter(new FileWriter(file), DELIMITING_CHAR,

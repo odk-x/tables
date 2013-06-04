@@ -24,17 +24,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.joda.time.DateTime;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.joda.time.DateTime;
 import org.opendatakit.aggregate.odktables.entity.Column;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.entity.api.PropertiesResource;
 import org.opendatakit.aggregate.odktables.entity.api.TableDefinitionResource;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.data.ColumnDefinitions;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
@@ -48,6 +47,7 @@ import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 
@@ -356,7 +356,7 @@ public class SyncProcessor {
     columns.add(DataTableColumns.SYNC_STATE);
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
-    Table allRowIds = table.getRaw(columns,
+    UserTable allRowIds = table.getRaw(columns,
     		new String[] {DataTableColumns.SAVED},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
@@ -570,7 +570,7 @@ public class SyncProcessor {
     	columnNames.add(s);
     }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
-    Table rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED,
+    UserTable rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED,
     			DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING },
         new String[] { DbTable.SavedStatus.COMPLETE.name(),
     			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);

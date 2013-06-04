@@ -37,6 +37,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 
@@ -152,7 +153,7 @@ public class MsgHandler {
                     scTp.getColumnByDisplayName(
                             ShortcutUtil.OUTPUT_COLUMN_NAME)};
             DbTable dbt = dm.getDbTable(scTp.getTableId());
-            Table table = dbt.getRaw(new Query(tps, scTp), scCols);
+            UserTable table = dbt.getRaw(new Query(tps, scTp), scCols);
             for (int i = 0; i < table.getHeight(); i++) {
                 scNames.add(table.getData(i, 0));
                 scInputs.add(table.getData(i, 1));
@@ -258,7 +259,7 @@ public class MsgHandler {
         DbTable sDbt = dm.getDbTable(secTableId);
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
-        Table table = sDbt.getRaw(
+        UserTable table = sDbt.getRaw(
         		columns,
         		new String[] {DataTableColumns.SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
@@ -512,7 +513,7 @@ public class MsgHandler {
           }
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
-        Table table = dbt.getRaw(query, colNames);
+        UserTable table = dbt.getRaw(query, colNames);
         String resp;
         if (table.getHeight() == 0) {
             resp = "No rows found.";
@@ -553,7 +554,7 @@ public class MsgHandler {
         }
         query.setOrderBy(Query.SortOrder.ASCENDING, drSlotColumn);
         DbTable dbt = dm.getDbTable(tp.getTableId());
-        Table table = dbt.getRaw(query,
+        UserTable table = dbt.getRaw(query,
                 new String[] {drSlotColumn.getElementKey()});
         // TODO: range should not be slash-separated but stored as two columns OR json in db...
         List<String[]> rawRanges = new ArrayList<String[]>();

@@ -32,7 +32,7 @@ public class UserTable {
     private final String[] header;
     //private final String[][] data;
     //private final String[][] userData;
-    private final String[] footer;
+    private String[] footer;
     private final ArrayList<Row> mRows;
     /**
      * Maps the element key of user-defined columns to the corresponding index 
@@ -45,17 +45,19 @@ public class UserTable {
      */
     private final Map<String, Integer> mMetadataKeyToIndex;
     
-    public UserTable(String[] rowIds, String[] header, String[][] data,
-            String[] footer) {
+    public UserTable(String[] rowIds, String[] header, 
+        String[][] userDefinedData, Map<String, Integer> dataElementKeyToIndex,
+        String[][] odkTablesMetadata, 
+        Map<String, Integer> metadataElementKeyToIndex, String[] footer) {
         //this.rowIds = rowIds;
         this.header = header;
         //this.data = data;
-        int columnCount = data.length > 0 ? data[0].length : 0;
-        String[][] userData = new String[data.length][columnCount];
-        mRows = new ArrayList<Row>();
-        for (int i = 0; i < data.length; i++) {
+        int columnCount = userDefinedData.length > 0 ? userDefinedData[0].length : 0;
+        String[][] userData = new String[userDefinedData.length][columnCount];
+        mRows = new ArrayList<Row>(userDefinedData.length);
+        for (int i = 0; i < userDefinedData.length; i++) {
             for (int j = 0; j < columnCount; j++) {
-                userData[i][j] = data[i][j];
+                userData[i][j] = userDefinedData[i][j];
             }
             Row nextRow = new Row(rowIds[i], userData[i], null);
             mRows.add(nextRow);
@@ -101,8 +103,24 @@ public class UserTable {
         return footer[colNum];
     }
     
+    public void setFooter(String[] footer) {
+      this.footer = footer;
+    }
+    
     public int getWidth() {
         return header.length;
+    }
+    
+    /**
+     * Get the number of metadata columns.
+     * @return
+     */
+    public int getMetadataWidth() {
+      return mMetadataKeyToIndex.size();
+    }
+    
+    public String[] getMetadataForRow(int rowNum) {
+      return mRows.get(rowNum).getAllMetadata();
     }
     
     public int getHeight() {
@@ -200,6 +218,10 @@ public class UserTable {
        */
       public String[] getAllData() {
         return mData;
+      }
+      
+      public String[] getAllMetadata() {
+        return mMetadata;
       }
       
     }
