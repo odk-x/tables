@@ -420,7 +420,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);
-        dialog.show(getChildFragmentManager(), "LocationDialogFragment");
+        dialog.show(getFragmentManager(), "LocationDialogFragment");
       }
     };
   }
@@ -491,9 +491,16 @@ public class TableMapInnerFragment extends SherlockMapFragment {
       distanceToMarker.put(distance, marker);
     }
 
+    // Always put the selected marker first.
+    if (mCurrentMarker != null) {
+      orderedMarkers.add(mCurrentMarker);
+    }
+
     // After getting all the distances, add them to the orderedMarkers.
     for (Marker marker : distanceToMarker.values()) {
-      orderedMarkers.add(marker);
+      if (marker != mCurrentMarker) {
+        orderedMarkers.add(marker);
+      }
     }
     return orderedMarkers;
   }

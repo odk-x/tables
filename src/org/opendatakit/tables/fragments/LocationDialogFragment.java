@@ -37,7 +37,6 @@ public class LocationDialogFragment extends DialogFragment {
 
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState) {
-    setRetainInstance(true);
     Bundle bundle = getArguments();
     String location = bundle.getString(LOCATION_KEY);
     final Map<String, String> mapping = getElementNameToValueMap(bundle.getStringArrayList(ELEMENT_NAME_TO_VALUE_KEY));
