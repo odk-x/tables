@@ -32,7 +32,6 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
-import android.content.Context;
 import android.util.Log;
 
 public class CustomGraphView extends CustomView {
@@ -52,7 +51,7 @@ public class CustomGraphView extends CustomView {
 	private String potentialGraphName;
 	private GraphData graphData;
 
-	private CustomGraphView(Activity activity, String graphName, 
+	private CustomGraphView(Activity activity, String graphName,
 	    String potentialGraphName) {
 		super(activity);
 		this.mActivity = activity;
@@ -65,7 +64,7 @@ public class CustomGraphView extends CustomView {
 
 	public static CustomGraphView get(Activity activity, TableProperties tp,
 			UserTable table, String graphName, String potentialGraphName) {
-		CustomGraphView ctv = new CustomGraphView(activity, graphName, 
+		CustomGraphView ctv = new CustomGraphView(activity, graphName,
 		    potentialGraphName);
 		ctv.set(tp, table);
 		return ctv;

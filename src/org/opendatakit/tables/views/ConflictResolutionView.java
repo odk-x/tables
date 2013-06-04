@@ -35,7 +35,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 public class ConflictResolutionView extends HorizontalScrollView implements
@@ -135,7 +134,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 			data[index][1][i] = table.getValue(index, 1, i);
 		}
 		RowItem ri = new RowItem(context, index);
-		// The wholeData param here is confusing. I'm not sure exactly what the 
+		// The wholeData param here is confusing. I'm not sure exactly what the
 		// conflict table is holding.
 		TabularView tv = new TabularView(context, this, tp, data[index], data[index],
 				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,

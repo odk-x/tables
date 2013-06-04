@@ -1,11 +1,11 @@
 /*
  * Copyright (C) 2009 University of Washington
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -20,36 +20,28 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.kxml2.io.KXmlParser;
-import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
 /**
- * sudar.sam@gmail.com: pilfered from Collect and modified occasionally. 
- * 
+ * sudar.sam@gmail.com: pilfered from Collect and modified occasionally.
+ *
  * Static methods used for common file operations.
- * 
+ *
  * @author Carl Hartung (carlhartung@gmail.com)
  */
 public class FileUtils {
     private final static String t = FileUtils.class.getSimpleName();
-    
+
     public static final String UTF8 = "UTF-8";
 
     // Used to validate and display valid form names.
@@ -61,7 +53,7 @@ public class FileUtils {
     public static final String SUBMISSIONURI = "submission";
     public static final String BASE64_RSA_PUBLIC_KEY = "base64RsaPublicKey";
 
-    
+
     public static boolean createFolder(String path) {
         boolean made = true;
         File dir = new File(path);
@@ -237,7 +229,7 @@ public class FileUtils {
         }
 
     }
-    
+
 
     // needed because element.getelement fails when there are attributes
     private static Element getChildElement(Element parent, String childName) {
@@ -253,5 +245,5 @@ public class FileUtils {
         }
         return e;
     }
-   
+
 }

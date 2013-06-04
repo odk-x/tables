@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.Query.SqlData;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -482,8 +480,8 @@ public class DbTable {
      * I don't think this is called when downloading table data from the
      * server. I think it is only called when creating on the phone...
      */
-    public void addRow(Map<String, String> values, String rowId, 
-          Long timestamp, String uriUser, String instanceName, String formId, 
+    public void addRow(Map<String, String> values, String rowId,
+          Long timestamp, String uriUser, String instanceName, String formId,
           String locale ) {
         Log.d(TAG, values.toString());
         if (timestamp == null) {
@@ -518,11 +516,11 @@ public class DbTable {
      * I think this gets called when you download a table from the server,
      * whereas I don't think that addRow() does.
      * <p>
-     * Checks to ensure that all of the columns in {@link DataTableColumns} 
-     * that have non-null constraints are present. If not, it adds their 
+     * Checks to ensure that all of the columns in {@link DataTableColumns}
+     * that have non-null constraints are present. If not, it adds their
      * default value. This is NOT true of {@link DataTableColumns#SYNC_STATE},
-     * which varies depending on who is calling this method. It is up to the 
-     * caller to set it appropriately. 
+     * which varies depending on who is calling this method. It is up to the
+     * caller to set it appropriately.
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
@@ -539,22 +537,22 @@ public class DbTable {
         // add default values as appropriate.
         if (!values.containsKey(DataTableColumns.INSTANCE_NAME) ||
             values.get(DataTableColumns.INSTANCE_NAME) == null) {
-          values.put(DataTableColumns.INSTANCE_NAME, 
+          values.put(DataTableColumns.INSTANCE_NAME,
               DataTableColumns.DEFAULT_INSTANCE_NAME);
         }
         if (!values.containsKey(DataTableColumns.LOCALE) ||
             values.get(DataTableColumns.LOCALE) == null) {
-          values.put(DataTableColumns.LOCALE, 
+          values.put(DataTableColumns.LOCALE,
               DataTableColumns.DEFAULT_LOCALE);
         }
         if (!values.containsKey(DataTableColumns.URI_USER) ||
             values.get(DataTableColumns.DEFAULT_URI_USER) == null) {
-          values.put(DataTableColumns.URI_USER, 
+          values.put(DataTableColumns.URI_USER,
               DataTableColumns.DEFAULT_URI_USER);
         }
         if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
             values.get(DataTableColumns.SYNC_TAG) == null) {
-          values.put(DataTableColumns.SYNC_TAG, 
+          values.put(DataTableColumns.SYNC_TAG,
               DataTableColumns.DEFAULT_SYNC_TAG);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();

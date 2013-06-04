@@ -17,7 +17,6 @@ package org.opendatakit.tables.views;
 
 import java.util.Map;
 
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;

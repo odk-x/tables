@@ -15,27 +15,18 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import org.kxml2.io.KXmlParser;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
@@ -43,14 +34,11 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -422,17 +410,17 @@ public class Controller {
    */
   void editRow(UserTable table, int rowNum, CollectFormParameters params) {
     Intent intent = null;
-    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
+    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table,
         rowNum, params);
     if (intent != null) {
-      CollectUtil.launchCollectToEditRow(activity, intent, 
+      CollectUtil.launchCollectToEditRow(activity, intent,
           table.getRowId(rowNum));
     } else {
       Log.e(TAG, "intent null when trying to create for edit row.");
     }
   }
 
-  public boolean handleActivityReturn(int requestCode, int returnCode, 
+  public boolean handleActivityReturn(int requestCode, int returnCode,
       Intent data) {
     switch (requestCode) {
     case RCODE_TABLE_PROPERTIES_MANAGER:
@@ -680,7 +668,7 @@ public class Controller {
   }
 
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode, 
+        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode,
             data)) {
           return;
         } else {

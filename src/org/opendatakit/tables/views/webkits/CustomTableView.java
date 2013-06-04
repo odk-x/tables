@@ -26,7 +26,6 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.app.Activity;
-import android.content.Context;
 import android.webkit.WebViewClient;
 
 
@@ -73,7 +72,7 @@ public class CustomTableView extends CustomView {
 
     ////////////////////////////// TEST ///////////////////////////////
 
-    public static CustomTableView get(Activity activity, TableProperties tp, 
+    public static CustomTableView get(Activity activity, TableProperties tp,
         UserTable table, String filename, int index) {
     	CustomTableView ctv = new CustomTableView(activity, filename);
     	// Create a new table with only the row specified at index.
