@@ -15,32 +15,60 @@
  */
 package org.opendatakit.tables.data;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * This class represents the data in a table that is presented to a user. 
+ * 
+ * @author unknown
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class UserTable {
     
-    private final String[] rowIds;
+    //private final String[] rowIds;
     private final String[] header;
-    private final String[][] data;
-    private final String[][] userData;
+    //private final String[][] data;
+    //private final String[][] userData;
     private final String[] footer;
+    private final ArrayList<Row> mRows;
+    /**
+     * Maps the element key of user-defined columns to the corresponding index 
+     * in the Row objects.
+     */
+    private final Map<String, Integer> mDataKeyToIndex;
+    /**
+     * Maps the element key of ODKTables-specified metadata columns to the
+     * corresponding indices in the Row objects.
+     */
+    private final Map<String, Integer> mMetadataKeyToIndex;
     
     public UserTable(String[] rowIds, String[] header, String[][] data,
             String[] footer) {
-        this.rowIds = rowIds;
+        //this.rowIds = rowIds;
         this.header = header;
-        this.data = data;
+        //this.data = data;
         int columnCount = data.length > 0 ? data[0].length : 0;
-        userData = new String[data.length][columnCount];
+        String[][] userData = new String[data.length][columnCount];
+        mRows = new ArrayList<Row>();
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < columnCount; j++) {
                 userData[i][j] = data[i][j];
             }
+            Row nextRow = new Row(rowIds[i], userData[i], null);
+            mRows.add(nextRow);
         }
         this.footer = footer;
+        // Initialize the column maps.
+        mDataKeyToIndex = new HashMap<String, Integer>();
+        mMetadataKeyToIndex = new HashMap<String, Integer>();
     }
     
     public String getRowId(int rowNum) {
-        return rowIds[rowNum];
+//        return rowIds[rowNum];
+      return this.mRows.get(rowNum).mRowId;
     }
     
     public String getHeader(int colNum) {
@@ -48,21 +76,25 @@ public class UserTable {
     }
     
     public String getData(int rowNum, int colNum) {
-        return data[rowNum][colNum];
+      return mRows.get(rowNum).getDataAtIndex(colNum);
+//      return data[rowNum][colNum];
     }
     
     public String[] getRowData(int rowNum) {
-      return data[rowNum];
+      return mRows.get(rowNum).getAllData();
+//      return data[rowNum];
     }
     
     public String getData(int cellNum) {
         int rowNum = cellNum / getWidth();
         int colNum = cellNum % getWidth();
-        return getData(rowNum, colNum);
+        return mRows.get(rowNum).getDataAtIndex(colNum);
+//        return getData(rowNum, colNum);
     }
     
     public String getUserData(int rowNum, int colNum) {
-        return userData[rowNum][colNum];
+      return mRows.get(rowNum).getDataAtIndex(colNum);
+//        return userData[rowNum][colNum];
     }
     
     public String getFooter(int colNum) {
@@ -74,18 +106,19 @@ public class UserTable {
     }
     
     public int getHeight() {
-        return data.length;
+//        return data.length;
+      return this.mRows.size();
     }
     
-    public void setData(int rowNum, int colNum, String value) {
-        data[rowNum][colNum] = value;
-    }
-    
-    public void setData(int cellNum, String value) {
-        int rowNum = cellNum / getWidth();
-        int colNum = cellNum % getWidth();
-        setData(rowNum, colNum, value);
-    }
+//    public void setData(int rowNum, int colNum, String value) {
+//        data[rowNum][colNum] = value;
+//    }
+//    
+//    public void setData(int cellNum, String value) {
+//        int rowNum = cellNum / getWidth();
+//        int colNum = cellNum % getWidth();
+//        setData(rowNum, colNum, value);
+//    }
     
     /**
      * Scan the rowIds to get the row number. As the rowIds are not sorted,
@@ -98,11 +131,76 @@ public class UserTable {
      * @return
      */
     public int getRowNumFromId(String rowId) {
-      for (int i = 0; i < rowIds.length; i++) {
-        if (rowIds[i].equals(rowId)) {
+//      for (int i = 0; i < rowIds.length; i++) {
+//        if (rowIds[i].equals(rowId)) {
+//          return i;
+//        }
+//      }
+      for (int i = 0; i < this.mRows.size(); i++) {
+        if (this.mRows.get(i).mRowId.equals(rowId)) {
           return i;
         }
       }
       return -1;
+    }
+    
+    /**
+     * This represents a single row of data in a table. 
+     * @author sudar.sam@gmail.com
+     *
+     */
+    /*
+     * This class is final to try and reduce overhead. As final there is no
+     * extended-class pointer. Not positive this is really a thing, need to 
+     * investigate. Nothing harmed by finalizing, though.
+     */
+    public final class Row {
+      
+      /**
+       * The id of the row.
+       */
+      private final String mRowId;
+      
+      /**
+       * Holds the actual data in the row. To index into the array correctly,
+       * must use the information contained in UserTable.
+       */
+      private final String[] mData;
+      
+      /**
+       * Holds the metadata for the row. to index into the array correctly,
+       * must use the information contained in UserTable.
+       */
+      private final String[] mMetadata;
+      
+      /**
+       * Construct the row.
+       * @param rowId
+       * @param data the user-defined data of the row
+       * @param metadata the ODKTables-specified metadata for the row.
+       */
+      public Row(String rowId, String[] data, String[] metadata) {
+        this.mRowId = rowId;
+        this.mData = data;
+        this.mMetadata = metadata;
+      }
+      
+      /**
+       * Return the value of the row at the given index.
+       * @param index
+       * @return
+       */
+      public String getDataAtIndex(int index) {
+        return mData[index];
+      }
+      
+      /**
+       * Get the array backing the entire row.
+       * @return
+       */
+      public String[] getAllData() {
+        return mData;
+      }
+      
     }
 }
