@@ -20,7 +20,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class represents the data in a table that is presented to a user. 
+ * This class represents the data in a table. This can be conceptualized as a 
+ * list of rows. Each row comprises the user-defined columns, or data, as well
+ * as the ODKTables-specified metadata. 
+ * <p>
+ * This should be considered an immutable class, with the exception of the 
+ * footer. The footer is only important to the user when viewing a table in 
+ * certain conditions, and many other uses where the contents of a table need
+ * to be accessed do not require the footer. For this reason it alone is
+ * mutable.
  * 
  * @author unknown
  * @author sudar.sam@gmail.com
@@ -107,6 +115,34 @@ public class UserTable {
       this.footer = footer;
     }
     
+    /**
+     * Return a map containing the mapping of the element keys for the user-
+     * defined columns to their index in array returned by 
+     * {@link Row#getAllData()}.
+     * @return
+     */
+    public Map<String, Integer> getMapOfUserDataToIndex() {
+      Map<String, Integer> copy = new HashMap<String, Integer>();
+      for (Map.Entry<String, Integer> entry : mDataKeyToIndex.entrySet()) {
+        copy.put(entry.getKey(), entry.getValue());
+      }
+      return copy;
+    }
+    
+    /**
+     * Return a map containing the mapping of the element keys for the 
+     * ODKTables-specified metadata columns to their index in the array
+     * returned by {@link Row#getAllMetadata()}.
+     * @return
+     */
+    public Map<String, Integer> getMapOfMetadataToIndex() {
+      Map<String, Integer> copy = new HashMap<String, Integer>();
+      for (Map.Entry<String, Integer> entry : mMetadataKeyToIndex.entrySet()) {
+        copy.put(entry.getKey(), entry.getValue());
+      }
+      return copy;
+    }
+    
     public int getWidth() {
         return header.length;
     }
@@ -115,11 +151,11 @@ public class UserTable {
      * Get the number of metadata columns.
      * @return
      */
-    public int getMetadataWidth() {
+    public int getNumberOfMetadataColumns() {
       return mMetadataKeyToIndex.size();
     }
     
-    public String[] getMetadataForRow(int rowNum) {
+    public String[] getAllMetadataForRow(int rowNum) {
       return mRows.get(rowNum).getAllMetadata();
     }
     

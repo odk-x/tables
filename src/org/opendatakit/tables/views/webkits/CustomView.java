@@ -340,19 +340,17 @@ public abstract class CustomView extends LinearLayout {
 
 		private static final String TAG = "TableData";
 
-		private final Table rawTable;
-		private final UserTable userTable;
+		private final UserTable mTable;
 		private Map<String, Integer> colMap;			//Maps the column names with an index number
 		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
 		private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
 		protected Context mContext;
 		private TableProperties tp;
 
-		public TableData(Context context, TableProperties tp, Table table) {
+		public TableData(Context context, TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with Table");
 			this.mContext = context;
-			rawTable = table;
-			userTable = null;
+			this.mTable = table;
 			this.tp = tp;
 			initMaps(tp);
 		}
@@ -376,8 +374,7 @@ public abstract class CustomView extends LinearLayout {
 
 		public TableData(TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with UserTable");
-			rawTable = null;
-			userTable = table;
+			this.mTable = table;
 			this.tp = tp;
 			initMaps(tp);
 
@@ -405,12 +402,9 @@ public abstract class CustomView extends LinearLayout {
 
 		//Returns the number of rows in the table being viewed.
 		public int getCount() {
-			if (rawTable == null) {
-				return userTable.getHeight();
-			} else {
-				return rawTable.getHeight();
-			}
+		  return this.mTable.getHeight();
 		}
+		
 		/*
 		 * @param: colName, column name in the userTable/rawTable
 		 * @return: returns a String in JSONArray format containing all
@@ -421,11 +415,7 @@ public abstract class CustomView extends LinearLayout {
 			ArrayList<String> arr = new ArrayList<String>();
 			for(int i = 0; i < getCount(); i++) {
 				if (colMap.containsKey(colName)) {
-					if (rawTable == null) {
-						arr.add(i, userTable.getData(i, colMap.get(colName)));
-					} else {
-						arr.add(i, rawTable.getData(i, colMap.get(colName)));
-					}
+				  arr.add(i, mTable.getData(i, colMap.get(colName)));
 				} else {
 					arr.add(i, "");
 				}
@@ -515,12 +505,7 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
-			  String result;
-				if (rawTable == null) {
-					result = userTable.getData(rowNum, colMap.get(colName));
-				} else {
-					result = rawTable.getData(rowNum, colMap.get(colName));
-				}
+			  String result = mTable.getData(rowNum, colMap.get(colName));
 				if (result == null) {
 				  return "";
 				} else {
@@ -537,8 +522,7 @@ public abstract class CustomView extends LinearLayout {
        * @param rowNumber the number of the row to edit. 
        */
       public void editRowWithCollect(int rowNumber) {
-        String rowId = rawTable == null ? 
-            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+        String rowId = this.mTable.getRowId(rowNumber);
         Map<String, String> elementKeyToValue = 
             getElementKeyToValueMapForRow(rowNumber);
         CollectFormParameters formParameters = 
@@ -563,8 +547,7 @@ public abstract class CustomView extends LinearLayout {
        */
       public void editRowWithCollectAndSpecificForm(int rowNumber, 
           String formId, String formVersion, String formRootElement) {
-        String rowId = rawTable == null ? 
-            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+        String rowId = this.mTable.getRowId(rowNumber);
          CollectFormParameters formParameters = 
              CollectFormParameters.constructCollectFormParameters(tp);
          if (formId != null && !formId.equals("")) {
@@ -619,9 +602,7 @@ public abstract class CustomView extends LinearLayout {
 		  Map<String, String> elementKeyToValue = new HashMap<String, String>();
 		  for (Entry<String, Integer> entry : colMap.entrySet()) {
 		    String elementKey = tp.getColumnByDisplayName(entry.getKey());
-		    String value = rawTable == null ? 
-		        userTable.getData(rowNum, entry.getValue()) :
-		        rawTable.getData(rowNum, entry.getValue());
+		    String value = this.mTable.getData(rowNum, entry.getValue());
 		    elementKeyToValue.put(elementKey, value);
 		  }
 		  return elementKeyToValue;

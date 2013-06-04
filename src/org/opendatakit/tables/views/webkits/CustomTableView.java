@@ -82,6 +82,7 @@ public class CustomTableView extends CustomView {
     	String[] rowIds = new String[1];
     	String[] headers = new String[table.getWidth()];
     	String[][] data = new String[1][table.getWidth()];
+    	String[][] metadata = new String[1][table.getNumberOfMetadataColumns()];
     	String[] footers = new String[table.getWidth()];
     	// Set all the data for the table.
     	rowIds[0] = table.getRowId(index);
@@ -89,8 +90,12 @@ public class CustomTableView extends CustomView {
     		headers[i] = table.getHeader(i);
     		data[0][i] = table.getData(index, i);
     		footers[i] = table.getFooter(i);
+    		metadata[0] = table.getAllMetadataForRow(i);
     	}
-    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
+    	UserTable singleRowTable = new UserTable(rowIds, headers, data,
+    	    table.getMapOfUserDataToIndex(), metadata,
+    	    table.getMapOfMetadataToIndex(), footers);
+//    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
 
     	ctv.set(tp, singleRowTable);
     	return ctv;
@@ -121,7 +126,7 @@ public class CustomTableView extends CustomView {
       String[] headers = new String[table.getWidth()];
       String[][] data = new String[indexes.size()][table.getWidth()];
       String[][] metadata = 
-          new String[indexes.size()][table.getMetadataWidth()];
+          new String[indexes.size()][table.getNumberOfMetadataColumns()];
       String[] footers = new String[table.getWidth()];
       // Set all the data for the table.
       for (int i = 0; i < table.getWidth(); i++) {
@@ -129,11 +134,14 @@ public class CustomTableView extends CustomView {
         for (int j = 0; j < indexes.size(); j++) {
           rowIds[j] = table.getRowId(indexes.get(j));
           data[j][i] = table.getData(indexes.get(j), i);
-          metadata[j] = table.getMetadataForRow(indexes.get(j));
+          metadata[j] = table.getAllMetadataForRow(indexes.get(j));
         }
         footers[i] = table.getFooter(i);
       }
-      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
+      UserTable multiRowTable = new UserTable(rowIds, headers, data,
+          table.getMapOfUserDataToIndex(), metadata, 
+          table.getMapOfMetadataToIndex(), footers);
+//      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
 
       ctv.set(tp, multiRowTable);
       return ctv;
