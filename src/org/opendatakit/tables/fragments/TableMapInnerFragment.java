@@ -1,12 +1,12 @@
 package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
@@ -47,20 +48,39 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
   /** The default hue for markers if no color rules are applied. */
   private static float DEFAULT_MARKER_HUE = BitmapDescriptorFactory.HUE_AZURE;
-  
+  /** The default hue for markers if no color rules are applied. */
+  private static float DEFAULT_SELECTED_MARKER_HUE = BitmapDescriptorFactory.HUE_GREEN;
+
   /**
-   * The index of the currently selected marker.  Used when saving the instance.
+   * The index of the currently selected marker. Used when saving the instance.
    */
-  public static final String SAVE_KEY_INDEX = "saveKeyIndex";
+  private static final String SAVE_KEY_INDEX = "saveKeyIndex";
+  /**
+   * The latitude of the center position where the camera is looking. Used when
+   * saving the instance.
+   */
+  private static final String SAVE_TARGET_LAT = "saveTargetLat";
+  /**
+   * The longitude of the center position where the camera is looking. Used when
+   * saving the instance.
+   */
+  private static final String SAVE_TARGET_LONG = "saveTargetLong";
+  /** The zoom level of the camera. Used when saving the instance. */
+  private static final String SAVE_ZOOM = "saveZoom";
 
   /**
    * Interface for listening to different events that may be triggered by this
    * inner fragment.
    */
   public interface TableMapInnerFragmentListener {
+    /** Called when the list view should disappear. */
     void onHideList();
 
+    /** Called when we want to set the index of the list view. */
     void onSetIndex(int i);
+
+    /** Called when we want to set the indexes of the list view. */
+    void onSetIndexes(ArrayList<Integer> indexes);
   }
 
   /** The object that is listening in on events. */
@@ -74,15 +94,20 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
   /** The currently selected marker. */
   private Marker mCurrentMarker;
-  
-  /** 
-   * This value is only set after the activity was saved and then reinstated.
-   * It is used to figure out which marker was selected before the activity was 
+
+  /** Used for coloring markers. */
+  private ColorRuleGroup mColorGroup;
+
+  /**
+   * This value is only set after the activity was saved and then reinstated. It
+   * is used to figure out which marker was selected before the activity was
    * previously destroyed. It will be set to -1 if no index was selected.
    */
   private int mCurrentIndex;
 
+  /** Used for color rules. */
   private Map<String, Integer> mColumnIndexMap;
+  /** Used for color rules. */
   private Map<String, ColumnProperties> mColumnPropertiesMap;
 
   @Override
@@ -91,32 +116,44 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
     mCurrentIndex = (savedInstanceState != null) ? savedInstanceState.getInt(SAVE_KEY_INDEX) : -1;
     init();
+    if (savedInstanceState != null) {
+      savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
+      getMap().moveCamera(
+          CameraUpdateFactory.newLatLngZoom(
+              new LatLng(savedInstanceState.getDouble(SAVE_TARGET_LAT), savedInstanceState
+                  .getDouble(SAVE_TARGET_LONG)), savedInstanceState.getFloat(SAVE_ZOOM)));
+    }
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
-    // getMap().setOnCameraChangeListener(getCameraChangeListener());
+    if (TableMapFragment.isTabletDevice(getActivity())) {
+      getMap().setOnCameraChangeListener(getCameraChangeListener());
+    }
   }
-  
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
 
     outState.putInt(SAVE_KEY_INDEX, (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1);
+    CameraPosition pos = getMap().getCameraPosition();
+    outState.putFloat(SAVE_ZOOM, pos.zoom);
+    outState.putDouble(SAVE_TARGET_LAT, pos.target.latitude);
+    outState.putDouble(SAVE_TARGET_LONG, pos.target.longitude);
   }
 
   /** Re-initializes the map, including the markers. */
   public void init() {
     getMap().clear();
     resetColorProperties();
-    Log.d(TAG, "Start creating markers.");
     setMarkers();
-    Log.d(TAG, "End creating markers.");
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
 
-    // Clear up any memory references.
+    // Clear up any memory references. When destroyed, there cannot be any
+    // references to the markers, otherwise leaks will happen.
     mMarkerIds.clear();
     mVisibleMarkers.clear();
     mCurrentMarker = null;
@@ -137,6 +174,38 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     }
     mColumnIndexMap = indexMap;
     mColumnPropertiesMap = propertiesMap;
+    findColorGroup();
+  }
+
+  /**
+   * Finds the color group that will be needed when making color rules.
+   */
+  private void findColorGroup() {
+    // Grab the color group
+    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+
+    // Grab the key value store helper from the map fragment.
+    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+    String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
+    if (colorType == null) {
+      kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
+      colorType = TableMapFragment.COLOR_TYPE_NONE;
+    }
+
+    // Create a guide depending on what type of color rule is selected.
+    mColorGroup = null;
+    if (colorType.equals(TableMapFragment.COLOR_TYPE_TABLE)) {
+      mColorGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+    }
+    if (colorType.equals(TableMapFragment.COLOR_TYPE_STATUS)) {
+      mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+    }
+    if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
+      String colorColumnKey = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_COLUMN);
+      if (colorColumnKey != null) {
+        mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
+      }
+    }
   }
 
   /**
@@ -214,36 +283,19 @@ public class TableMapInnerFragment extends SherlockMapFragment {
    *         marker color if no rules apply to the row.
    */
   private float getHueForRow(int index) {
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
     UserTable table = ((TableActivity) getActivity()).getTable();
-
-    // Grab the key value store helper from the map fragment.
-    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-    String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
-    // Create a guide depending on what type of color rule is selected.
-    ColorGuide guide = null;
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_TABLE)) {
-      guide = ColorRuleGroup.getTableColorRuleGroup(tp).getColorGuide(table.getRowData(index),
-          mColumnIndexMap, this.mColumnPropertiesMap);
-    }
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_TABLE)) {
-      guide = ColorRuleGroup.getStatusColumnRuleGroup(tp).getColorGuide(table.getRowData(index),
-          mColumnIndexMap, this.mColumnPropertiesMap);
-    }
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-      String colorColumnKey = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_COLUMN);
-      if (colorColumnKey != null) {
-        guide = ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey).getColorGuide(
-            table.getRowData(index), mColumnIndexMap, this.mColumnPropertiesMap);
+    // Create a guide depending on the color group.
+    if (mColorGroup != null) {
+      ColorGuide guide = mColorGroup.getColorGuide(table.getRowData(index), mColumnIndexMap,
+          mColumnPropertiesMap);
+      // Based on if the guide matched or not, grab the hue.
+      if (guide != null && guide.didMatch()) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(guide.getBackground(), hsv);
+        return hsv[0];
       }
     }
 
-    // Based on if the guide matched or not, grab the hue.
-    if (guide != null && guide.didMatch()) {
-      float[] hsv = new float[3];
-      Color.colorToHSV(guide.getBackground(), hsv);
-      return hsv[0];
-    }
     return DEFAULT_MARKER_HUE;
   }
 
@@ -298,6 +350,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
    * Parses the location string and creates a LatLng. The format of the string
    * should be: lat,lng
    */
+  @SuppressWarnings("unused")
   private LatLng parseLocationFromString(String location) {
     String[] split = location.split(",");
     try {
@@ -315,8 +368,9 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     try {
       return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
     } catch (Exception e) {
-      Log.e(TAG, "The following location is not in the proper lat,lng form: " + latitude + ","
-          + longitude);
+      // Log.e(TAG, "The following location is not in the proper lat,lng form: "
+      // + latitude + ","
+      // + longitude);
     }
     return null;
   }
@@ -334,6 +388,9 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     };
   }
 
+  /**
+   * On a long click, add a row to the data table at the position clicked.
+   */
   private OnMapLongClickListener getOnMapLongClickListener() {
     return new OnMapLongClickListener() {
       @Override
@@ -363,20 +420,31 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);
-        dialog.show(getChildFragmentManager(), "LocationDialogFragment");
+        dialog.show(getFragmentManager(), "LocationDialogFragment");
       }
     };
   }
 
+  /**
+   * When the camera is changed, check to see the visible markers on the map,
+   * organize them by distance from the center, and then display them on the
+   * list view.
+   */
   public OnCameraChangeListener getCameraChangeListener() {
     return new OnCameraChangeListener() {
       @Override
       public void onCameraChange(CameraPosition position) {
         checkMarkersOnMap();
+        List<Marker> markers = organizeMarkersByDistance(mVisibleMarkers);
+        ArrayList<Integer> indexes = getListOfIndexes(markers);
+        listener.onSetIndexes(indexes);
       }
     };
   }
 
+  /**
+   * Adds or removes markers that are currently visible on the screen.
+   */
   private void checkMarkersOnMap() {
     if (getMap() != null) {
       LatLngBounds bounds = getMap().getProjection().getVisibleRegion().latLngBounds;
@@ -396,40 +464,61 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     }
   }
 
+  /**
+   * From the set of markers, return a list organized by distance from the
+   * center of the screen.
+   */
   private List<Marker> organizeMarkersByDistance(Set<Marker> markers) {
     List<Marker> orderedMarkers = new ArrayList<Marker>();
-    Map<Double, Marker> distanceToMarker = new HashMap<Double, Marker>();
+    Map<Double, Marker> distanceToMarker = new TreeMap<Double, Marker>();
     // Find the distances from the center to each marker.
-    LatLng center = getMap().getCameraPosition().target;
+    LatLng center = null;
+    try {
+      GoogleMap map = getMap();
+      CameraPosition pos = map.getCameraPosition();
+      center = pos.target;
+    } catch (NullPointerException e) {
+      e.printStackTrace();
+    }
+
     for (Marker marker : markers) {
       double distance = distance(center, marker.getPosition());
       // If there are multiple markers with the same distance,
-      // slightly
-      // distance
-      // them so there are no overlapping keys.
+      // slightly distance them so there are no overlapping keys.
       while (distanceToMarker.containsKey(distance)) {
         distance += 0.00000001;
       }
       distanceToMarker.put(distance, marker);
     }
-    // After getting all the distances, sort them, and then add them to
-    // the orderedMarkers.
-    Double[] distances = (Double[]) distanceToMarker.keySet().toArray();
-    Arrays.sort(distances);
-    for (Double distance : distances) {
-      orderedMarkers.add(distanceToMarker.get(distance));
+
+    // Always put the selected marker first.
+    if (mCurrentMarker != null) {
+      orderedMarkers.add(mCurrentMarker);
+    }
+
+    // After getting all the distances, add them to the orderedMarkers.
+    for (Marker marker : distanceToMarker.values()) {
+      if (marker != mCurrentMarker) {
+        orderedMarkers.add(marker);
+      }
     }
     return orderedMarkers;
   }
 
-  private List<Integer> getListOfIndexes(List<Marker> markers) {
-    List<Integer> indexes = new ArrayList<Integer>();
+  /**
+   * From the list of markers, create a list of indexes of those markers.
+   */
+  private ArrayList<Integer> getListOfIndexes(List<Marker> markers) {
+    ArrayList<Integer> indexes = new ArrayList<Integer>();
     for (Marker marker : markers) {
       indexes.add(mMarkerIds.get(marker));
     }
     return indexes;
   }
 
+  /**
+   * Returns the distance between the two LatLng points.
+   */
   private double distance(LatLng StartP, LatLng EndP) {
     double lat1 = StartP.latitude;
     double lat2 = EndP.latitude;
@@ -460,8 +549,12 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         if (index != mMarkerIds.get(arg0)) {
           deselectCurrentMarker();
           int newIndex = mMarkerIds.get(arg0);
+          if (TableMapFragment.isTabletDevice(getActivity())) {
+            focusOnMarker(arg0);
+          } else {
+            selectMarker(arg0);
+          }
           listener.onSetIndex(newIndex);
-          selectMarker(arg0);
         } else {
           deselectCurrentMarker();
           listener.onHideList();
@@ -473,6 +566,39 @@ public class TableMapInnerFragment extends SherlockMapFragment {
   }
 
   /**
+   * Focuses the camera on the marker associated with the row id.
+   */
+  public void focusOnMarker(String rowId) {
+    UserTable table = ((TableActivity) getActivity()).getTable();
+    int index = table.getRowNumFromId(rowId);
+    for (final Marker marker : mMarkerIds.keySet()) {
+      if (index == mMarkerIds.get(marker)) {
+        getActivity().runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            focusOnMarker(marker);
+          }
+        });
+        break;
+      }
+    }
+  }
+
+  /**
+   * Focuses the map on the specified marker, and selects it.
+   */
+  public void focusOnMarker(Marker marker) {
+    if (mCurrentMarker != marker) {
+      listener.onSetIndex(mMarkerIds.get(marker));
+      deselectCurrentMarker();
+      selectMarker(marker);
+    }
+    getMap().animateCamera(
+        CameraUpdateFactory.newLatLngZoom(mCurrentMarker.getPosition(), getMap()
+            .getCameraPosition().zoom));
+  }
+
+  /**
    * Selects a marker, updating the marker list, and changing the marker's color
    * to green. Makes the marker the currently selected marker.
    * 
@@ -480,14 +606,11 @@ public class TableMapInnerFragment extends SherlockMapFragment {
    *          The marker to be selected.
    */
   private void selectMarker(Marker marker) {
-    int index = mMarkerIds.get(marker);
-    Marker newMarker = getMap().addMarker(
-        new MarkerOptions().position(marker.getPosition()).draggable(false)
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-    marker.remove();
-    mMarkerIds.remove(marker);
-    mMarkerIds.put(newMarker, index);
-    mCurrentMarker = newMarker;
+    if (mCurrentMarker == marker)
+      return;
+
+    marker.setIcon(BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
+    mCurrentMarker = marker;
   }
 
   /**
@@ -500,12 +623,8 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     }
 
     int index = mMarkerIds.get(mCurrentMarker);
-    Marker newMarker = getMap().addMarker(
-        new MarkerOptions().position(mCurrentMarker.getPosition()).draggable(false)
-            .icon(BitmapDescriptorFactory.defaultMarker(getHueForRow(index))));
-    mCurrentMarker.remove();
-    mMarkerIds.remove(mCurrentMarker);
-    mMarkerIds.put(newMarker, index);
+    mCurrentMarker.setIcon(BitmapDescriptorFactory.defaultMarker(getHueForRow(index)));
+
     mCurrentMarker = null;
     listener.onSetIndex(-1);
   }
