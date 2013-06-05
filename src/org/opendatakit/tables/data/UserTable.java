@@ -37,10 +37,7 @@ import java.util.Map;
  */
 public class UserTable {
     
-    //private final String[] rowIds;
     private final String[] header;
-    //private final String[][] data;
-    //private final String[][] userData;
     private String[] footer;
     private final ArrayList<Row> mRows;
     /**
@@ -61,27 +58,19 @@ public class UserTable {
         String[][] userDefinedData, Map<String, Integer> dataElementKeyToIndex,
         String[][] odkTablesMetadata, 
         Map<String, Integer> metadataElementKeyToIndex, String[] footer) {
-        //this.rowIds = rowIds;
         this.header = header;
-        //this.data = data;
-        int columnCount = userDefinedData.length > 0 ? userDefinedData[0].length : 0;
-        String[][] userData = new String[userDefinedData.length][columnCount];
         mRows = new ArrayList<Row>(userDefinedData.length);
         for (int i = 0; i < userDefinedData.length; i++) {
-            for (int j = 0; j < columnCount; j++) {
-                userData[i][j] = userDefinedData[i][j];
-            }
-            Row nextRow = new Row(rowIds[i], userData[i], null);
+            Row nextRow = new Row(rowIds[i], userDefinedData[i], 
+                odkTablesMetadata[i]);
             mRows.add(nextRow);
         }
         this.footer = footer;
-        // Initialize the column maps.
         mDataKeyToIndex = dataElementKeyToIndex;
         mMetadataKeyToIndex = metadataElementKeyToIndex;
     }
     
     public String getRowId(int rowNum) {
-//        return rowIds[rowNum];
       return this.mRows.get(rowNum).mRowId;
     }
     
@@ -104,24 +93,20 @@ public class UserTable {
     
     public String getData(int rowNum, int colNum) {
       return mRows.get(rowNum).getDataAtIndex(colNum);
-//      return data[rowNum][colNum];
     }
     
     public String[] getRowData(int rowNum) {
       return mRows.get(rowNum).getAllData();
-//      return data[rowNum];
     }
     
     public String getData(int cellNum) {
         int rowNum = cellNum / getWidth();
         int colNum = cellNum % getWidth();
         return mRows.get(rowNum).getDataAtIndex(colNum);
-//        return getData(rowNum, colNum);
     }
     
     public String getUserData(int rowNum, int colNum) {
       return mRows.get(rowNum).getDataAtIndex(colNum);
-//        return userData[rowNum][colNum];
     }
     
     /**
@@ -188,19 +173,8 @@ public class UserTable {
     }
     
     public int getHeight() {
-//        return data.length;
       return this.mRows.size();
     }
-    
-//    public void setData(int rowNum, int colNum, String value) {
-//        data[rowNum][colNum] = value;
-//    }
-//    
-//    public void setData(int cellNum, String value) {
-//        int rowNum = cellNum / getWidth();
-//        int colNum = cellNum % getWidth();
-//        setData(rowNum, colNum, value);
-//    }
     
     /**
      * Scan the rowIds to get the row number. As the rowIds are not sorted,
@@ -213,11 +187,6 @@ public class UserTable {
      * @return
      */
     public int getRowNumFromId(String rowId) {
-//      for (int i = 0; i < rowIds.length; i++) {
-//        if (rowIds[i].equals(rowId)) {
-//          return i;
-//        }
-//      }
       for (int i = 0; i < this.mRows.size(); i++) {
         if (this.mRows.get(i).mRowId.equals(rowId)) {
           return i;
