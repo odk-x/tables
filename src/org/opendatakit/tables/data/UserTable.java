@@ -16,6 +16,7 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +53,9 @@ public class UserTable {
      * corresponding indices in the Row objects.
      */
     private final Map<String, Integer> mMetadataKeyToIndex;
+    
+    private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
+    private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
     
     public UserTable(String[] rowIds, String[] header, 
         String[][] userDefinedData, Map<String, Integer> dataElementKeyToIndex,
@@ -146,11 +150,11 @@ public class UserTable {
      * @return
      */
     public Map<String, Integer> getMapOfUserDataToIndex() {
-      Map<String, Integer> copy = new HashMap<String, Integer>();
-      for (Map.Entry<String, Integer> entry : mDataKeyToIndex.entrySet()) {
-        copy.put(entry.getKey(), entry.getValue());
+      if (this.mUnmodifiableCachedDataKeyToIndex == null) {
+        this.mUnmodifiableCachedDataKeyToIndex = 
+            Collections.unmodifiableMap(this.mDataKeyToIndex);
       }
-      return copy;
+      return this.mUnmodifiableCachedDataKeyToIndex;
     }
     
     /**
@@ -160,11 +164,11 @@ public class UserTable {
      * @return
      */
     public Map<String, Integer> getMapOfMetadataToIndex() {
-      Map<String, Integer> copy = new HashMap<String, Integer>();
-      for (Map.Entry<String, Integer> entry : mMetadataKeyToIndex.entrySet()) {
-        copy.put(entry.getKey(), entry.getValue());
+      if (this.mUnmodifiableCachedMetadataKeyToIndex == null) {
+        this.mUnmodifiableCachedMetadataKeyToIndex =
+            Collections.unmodifiableMap(this.mMetadataKeyToIndex);
       }
-      return copy;
+      return this.mUnmodifiableCachedMetadataKeyToIndex;
     }
     
     public int getWidth() {
