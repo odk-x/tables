@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class represents the data in a table. This can be conceptualized as a 
+ * This class represents a table. This can be conceptualized as a 
  * list of rows. Each row comprises the user-defined columns, or data, as well
  * as the ODKTables-specified metadata. 
  * <p>
@@ -72,8 +72,8 @@ public class UserTable {
         }
         this.footer = footer;
         // Initialize the column maps.
-        mDataKeyToIndex = new HashMap<String, Integer>();
-        mMetadataKeyToIndex = new HashMap<String, Integer>();
+        mDataKeyToIndex = dataElementKeyToIndex;
+        mMetadataKeyToIndex = metadataElementKeyToIndex;
     }
     
     public String getRowId(int rowNum) {
@@ -83,6 +83,19 @@ public class UserTable {
     
     public String getHeader(int colNum) {
         return header[colNum];
+    }
+    
+    public String getHeaderByElementKey(String elementKey) {
+      return header[mDataKeyToIndex.get(elementKey)];
+    }
+    
+    /**
+     * Does not check that footer is not null. The caller's responsibility.
+     * @param elementKey
+     * @return
+     */
+    public String getFooterByElementKey(String elementKey) {
+      return footer[mDataKeyToIndex.get(elementKey)];
     }
     
     public String getData(int rowNum, int colNum) {
@@ -105,6 +118,17 @@ public class UserTable {
     public String getUserData(int rowNum, int colNum) {
       return mRows.get(rowNum).getDataAtIndex(colNum);
 //        return userData[rowNum][colNum];
+    }
+    
+    /**
+     * Retrieve the datum at the given row number for the column specified
+     * by the given element key.
+     * @param rowNum
+     * @param elementKey
+     * @return
+     */
+    public String getUserDataByElementKey(int rowNum, String elementKey) {
+      return mRows.get(rowNum).getDataAtIndex(mDataKeyToIndex.get(elementKey));
     }
     
     public String getFooter(int colNum) {

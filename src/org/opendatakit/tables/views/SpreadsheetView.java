@@ -15,9 +15,10 @@
  */
 package org.opendatakit.tables.views;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -459,11 +460,14 @@ public class SpreadsheetView extends LinearLayout
         String[][] data;
         String[][] footer;
         ColorRuleGroup[] colorRulers;
+        List<String> elementKeysToDisplay = 
+            new ArrayList<String>(tp.getColumnOrder().size());
         int[] colWidths;
         int[] completeColWidths = getColumnWidths();
         if (isIndexed) {
             header = new String[1][1];
             header[0][0] = table.getHeader(indexedCol);
+            elementKeysToDisplay.add(tp.getColumnOrder().get(indexedCol));
             data = new String[table.getHeight()][1];
             for (int i = 0; i < table.getHeight(); i++) {
                 data[i][0] = table.getData(i, indexedCol);
@@ -492,6 +496,7 @@ public class SpreadsheetView extends LinearLayout
                 for (int j = 0; j < table.getHeight(); j++) {
                     data[j][addIndex] = table.getData(j, i);
                 }
+                elementKeysToDisplay.add(tp.getColumnOrder().get(i));
                 footer[0][addIndex] = table.getFooter(i);
                 colorRulers[addIndex] =
                    ColorRuleGroup.getColumnColorRuleGroup(tp,
@@ -501,8 +506,8 @@ public class SpreadsheetView extends LinearLayout
             }
         }
         dataScroll = new LockableScrollView(context);
-        TabularView dataTable = new TabularView(context, this, tp, data,
-            wholeData,
+        TabularView dataTable = new TabularView(context, this, tp, table,
+            elementKeysToDisplay,
                 Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_DATA : TableType.MAIN_DATA),
@@ -511,11 +516,13 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataScroll.setVerticalFadingEdgeEnabled(true);
         dataScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = new TabularView(context, this, tp, header, null,
+        TabularView headerTable = new TabularView(context, this, tp, table, 
+            elementKeysToDisplay,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_HEADER : TableType.MAIN_HEADER),
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, tp, footer, null,
+        TabularView footerTable = new TabularView(context, this, tp, table, 
+            elementKeysToDisplay,
                 Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 (isIndexed ? TableType.INDEX_FOOTER : TableType.MAIN_FOOTER),
                 fontSize);
@@ -554,20 +561,26 @@ public class SpreadsheetView extends LinearLayout
 
         header = new String[1][1];
         header[0][0] = "header";
+        List<String> dummyHeaderElementKeys = new ArrayList<String>();
+        dummyHeaderElementKeys.add("header");
+        List<String> dummyDataElementKeys = new ArrayList<String>();
+        dummyDataElementKeys.add("data");
         data = new String[table.getHeight()][1];
         for (int i = 0; i < table.getHeight(); i++) {
         	data[i][0] = " ";
         }
         footer = new String[1][1];
         footer[0][0] = "footer";
+        List<String> dummyFooterElementKeys = new ArrayList<String>();
+        dummyFooterElementKeys.add("footer");
         colorRulers = new ColorRuleGroup[1];
         colorRulers[0] = ColorRuleGroup.getTableColorRuleGroup(tp);
         colWidths = new int[1];
-        colWidths[0] = 10;
+        colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
         dataStatusScroll = new LockableScrollView(context);
-        TabularView dataTable = new TabularView(context, this, tp, data,
-            wholeData,
+        TabularView dataTable = new TabularView(context, this, tp, this.table,
+            dummyDataElementKeys,
                 Color.BLACK, Color.WHITE,
                 Color.GRAY, colWidths,
                 TableType.STATUS_DATA,
@@ -578,11 +591,13 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataStatusScroll.setVerticalFadingEdgeEnabled(true);
         dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = new TabularView(context, this, tp, header, null,
+        TabularView headerTable = new TabularView(context, this, tp, table, 
+            dummyHeaderElementKeys,
                 Color.BLACK, Color.CYAN, Color.GRAY, colWidths,
                TableType.STATUS_HEADER,
                 fontSize);
-        TabularView footerTable = new TabularView(context, this, tp, footer, null,
+        TabularView footerTable = new TabularView(context, this, tp, table, 
+            dummyFooterElementKeys,
                 Color.BLACK, Color.GRAY, Color.GRAY, colWidths,
                 TableType.STATUS_FOOTER,
                 fontSize);

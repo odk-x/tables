@@ -25,6 +25,7 @@ import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.UserTable;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -46,6 +47,12 @@ class TabularView extends View {
     MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER,
     INDEX_FOOTER, STATUS_DATA, STATUS_HEADER, STATUS_FOOTER;
   }
+  
+  /**
+   *  The value that appears in the spreadsheet of the status column.
+   */
+  private static final String DEFAULT_STATUS_COLUMN_VALUE = " ";
+  public static final int DEFAULT_STATUS_COLUMN_WIDTH = 10;
 
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
@@ -53,14 +60,14 @@ class TabularView extends View {
   private static final int BORDER_WIDTH = 1;
 
   private final Controller controller;
-  private final String[][] data;
-  // This will be the ENTIRE data from the table. This is necessary for
-  // evaluating color rules. For instance the frozen ("index") column will have
-  // only data for itself. But if it is to be colored correctly it must contain
-  // all the data. This seems like a WILDLY inefficient thing to do, but for
-  // now am going to do it.
-  // TODO: fix the above atrocity.
-  private final String[][] wholeData;
+//  private final String[][] data;
+//  // This will be the ENTIRE data from the table. This is necessary for
+//  // evaluating color rules. For instance the frozen ("index") column will have
+//  // only data for itself. But if it is to be colored correctly it must contain
+//  // all the data. This seems like a WILDLY inefficient thing to do, but for
+//  // now am going to do it.
+//  // TODO: fix the above atrocity.
+//  private final String[][] wholeData;
   private final int defaultBackgroundColor;
   private final int defaultForegroundColor;
   private final int[] columnWidths;
@@ -76,6 +83,17 @@ class TabularView extends View {
   private final Paint bgPaint;
   private final Paint borderPaint;
   private final Paint highlightPaint;
+  
+  /**
+   * The abstraction of the table onto which this {@link TabularView} is 
+   * providing a view.
+   */
+  private final UserTable mTable; 
+  /**
+   * The list of element keys which this {@link TabularView} is responsible
+   * for displaying. It is a (not strict) subset. 
+   */
+  private final List<String> mElementKeys;
 
   /**
    * The list of {@link ColorRuleGroup} objects for the columns of the table.
@@ -106,22 +124,65 @@ class TabularView extends View {
   // this array should hold the column displacement. i think it should be the
   // same as xs, except that the first position should be 0.
   private int[] spans;
-
+  // This is the number of rows represented by this TabularView. This will 
+  // change based on the TableType. For instance, data objects will be all the
+  // data rows of the table, header and footer will be one, etc.
+  private int mNumberOfRows;
+  
+  /**
+   * NOTES TO MYSELF WHILE TRANSITIONING THIS OBJECT:
+   * This should be an easy thing to make. It should take simply a UserTable
+   * object. This UserTable should represent everything in a table, and should
+   * be shared between all the TabularView which present views into the data.
+   * 
+   * Exactly what component of the data should be displayed in a TabularView
+   * ought to be referenced by a list of elementKeys. The UserTable and the 
+   * list of elementKeys for which this TabularView is responsible for 
+   * displaying should be enough to define this TabularView.
+   * @param context
+   * @param controller
+   * @param tp
+   * @param data
+   * @param wholeData
+   * @param defaultForegroundColor
+   * @param defaultBackgroundColor
+   * @param borderColor
+   * @param columnWidths
+   * @param type
+   * @param fontSize
+   */
   public TabularView(Context context, Controller controller,
-      TableProperties tp, String[][] data, String[][] wholeData,
+      TableProperties tp, UserTable table, List<String> elementKeys,
       int defaultForegroundColor,
       int defaultBackgroundColor, int borderColor,
       int[] columnWidths, TableType type, int fontSize) {
     super(context);
     this.controller = controller;
     this.mTp = tp;
-    this.data = data;
-    this.wholeData = wholeData;
+//    this.data = data;
+//    this.wholeData = wholeData;
+    this.mTable = table;
+    this.mElementKeys = elementKeys;
     this.defaultBackgroundColor = defaultBackgroundColor;
     this.defaultForegroundColor = defaultForegroundColor;
     this.columnWidths = columnWidths;
     this.type = type;
     this.fontSize = fontSize;
+    if (this.type == TableType.INDEX_DATA || 
+        this.type == TableType.MAIN_DATA ||
+        this.type == TableType.STATUS_DATA) {
+      this.mNumberOfRows = this.mTable.getHeight();
+    } else if (this.type == TableType.INDEX_FOOTER ||
+        this.type == TableType.MAIN_FOOTER || 
+        this.type == TableType.STATUS_FOOTER ||
+        this.type == TableType.INDEX_HEADER ||
+        this.type == TableType.MAIN_HEADER ||
+        this.type == TableType.STATUS_HEADER) {
+      this.mNumberOfRows = 1;
+    } else {
+      Log.e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
+      this.mNumberOfRows = this.mTable.getHeight();
+    }
     // Now let's set up the color rule things.
     Map<String, Integer> indexMap = new HashMap<String, Integer>();
     Map<String, ColumnProperties> propertiesMap =
@@ -166,7 +227,8 @@ class TabularView extends View {
     highlightPaint = new Paint();
     highlightPaint.setColor(Color.CYAN);
     highlightPaint.setStrokeWidth(3);
-    totalHeight = (rowHeight + BORDER_WIDTH) * data.length + BORDER_WIDTH;
+    totalHeight = (rowHeight + BORDER_WIDTH) * 
+        this.mNumberOfRows + BORDER_WIDTH;
     totalWidth = BORDER_WIDTH;
     for (int i = 0; i < columnWidths.length; i++) {
       totalWidth += columnWidths[i] + BORDER_WIDTH;
@@ -179,10 +241,11 @@ class TabularView extends View {
     setClickable(true);
     this.metrics = getResources().getDisplayMetrics();
     // check to make sure you don't get out of bounds exceptions.
-    if (data.length > 0) {
-      this.xs = new int[data[0].length];
+    // TODO: HANDLE STATUS TABLE WIDTHS
+    if (this.mNumberOfRows > 0) {
+      this.xs = new int[this.mElementKeys.size()];
       xs[0] = BORDER_WIDTH;
-      for (int i = 0; i < data[0].length - 1; i++) {
+      for (int i = 0; i < this.mElementKeys.size() - 1; i++) {
         xs[i + 1] = xs[i] + columnWidths[i] + BORDER_WIDTH;
       }
     } else {
@@ -195,20 +258,20 @@ class TabularView extends View {
         spans[i] = total;
         total += BORDER_WIDTH + columnWidths[i];
       }
-    }
+    } 
   }
-
-  public TabularView(Context context, Controller controller,
-      TableProperties tp, String[] data,
-      int defaultForegroundColor,
-      int defaultBackgroundColor,
-      int borderColor, int[] columnWidths, TableType type, int fontSize) {
-    this(context, controller, tp, new String[][] { data }, null,
-        defaultForegroundColor, defaultBackgroundColor,
-        borderColor, columnWidths, type, fontSize);
-    Log.e(TAG, "wholeData param for this TabularView constructor not " +
-    		"implemented! Use with extreme caution");
-  }
+  
+//  public TabularView(Context context, Controller controller,
+//      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+//      int defaultForegroundColor,
+//      int defaultBackgroundColor,
+//      int borderColor, int[] columnWidths, TableType type, int fontSize) {
+//    this(context, controller, tp, new String[][] { data }, null,
+//        defaultForegroundColor, defaultBackgroundColor,
+//        borderColor, columnWidths, type, fontSize);
+//    Log.e(TAG, "wholeData param for this TabularView constructor not " +
+//    		"implemented! Use with extreme caution");
+//  }
 
   public int getTableHeight() {
     return totalHeight;
@@ -235,7 +298,12 @@ class TabularView extends View {
 
   @Override
   public void onDraw(Canvas canvas) {
-    if (data.length == 0) {
+    // We don't want to do anything if we're not responsible for drawing any
+    // of the columns.
+    if (this.mElementKeys.size() == 0 && 
+        this.type != TableType.STATUS_DATA &&
+        this.type != TableType.STATUS_HEADER &&
+        this.type != TableType.STATUS_FOOTER) {
       return;
     }
     /** trying to fix the slow draw **/
@@ -399,8 +467,12 @@ class TabularView extends View {
     if (yScroll < 0) {
       yScroll = 0;
     }
-    int leftmost;
-    int rightmost;
+    // The element key of the leftmost column of which to display anything, as 
+    // determined by the scroll location. It is the leftmost given that 
+    // mElementKeys contains the correct order.
+    String leftmostElementKey;
+    // The element of the rightmost column of which to display anything.
+    String rightmostElementKey;
     int topmost;
     int topmostBorder;
     int leftmostBorder;
@@ -433,8 +505,8 @@ class TabularView extends View {
       topmost = yScroll / (BORDER_WIDTH + rowHeight);
       bottommost = (yScroll + metrics.heightPixels) /
           (BORDER_WIDTH + rowHeight);
-      if (bottommost >= data.length) {
-        bottommost = data.length - 1; // don't want to go beyond the last row
+      if (bottommost >= this.mNumberOfRows) {
+        bottommost = this.mNumberOfRows - 1; // don't want to go beyond the last row
       }
     }
     topmostBorder = topmost * (BORDER_WIDTH + rowHeight);
@@ -443,12 +515,15 @@ class TabularView extends View {
     bottomBottommost = topBottommostBorder + BORDER_WIDTH + rowHeight;
     // And now let's get the correct column. The math here can't be as simple,
     // b/c unlike rowHeight, columnWidth is not a fixed unit.
-    leftmost = getLeftmostColumnBasedOnXScroll(xScroll);
-    leftLeftmost = xs[leftmost];
+    int indexOfLeftmostColumn = getLeftmostColumnBasedOnXScroll(xScroll);
+    leftmostElementKey = this.mElementKeys.get(indexOfLeftmostColumn);
+    leftLeftmost = xs[indexOfLeftmostColumn];
     leftmostBorder = leftLeftmost - BORDER_WIDTH;
-    rightmost = getLeftmostColumnBasedOnXScroll(xScroll + metrics.widthPixels);
-    leftRightmost = xs[rightmost];
-    rightRightmostBorder = leftRightmost + columnWidths[rightmost]
+    int indexOfRightmostColumn = 
+        getLeftmostColumnBasedOnXScroll(xScroll + metrics.widthPixels);
+    rightmostElementKey = this.mElementKeys.get(indexOfRightmostColumn);
+    leftRightmost = xs[indexOfRightmostColumn];
+    rightRightmostBorder = leftRightmost + columnWidths[indexOfRightmostColumn]
         + BORDER_WIDTH; // i believe at the end, then, this should be total
                         // width, once it is all on the column?
     int yCoord = topmostBorder;
@@ -458,16 +533,35 @@ class TabularView extends View {
       yCoord += rowHeight + BORDER_WIDTH;
     }
     int xCoord = leftmostBorder;
-    for (int i = leftmost; i < rightmost + 1; i++) {
+    for (int i = indexOfLeftmostColumn; i < indexOfRightmostColumn + 1; i++) {
     canvas.drawRect(xCoord, topmostBorder, xCoord + BORDER_WIDTH,
         bottomBottommost, borderPaint);
-      xCoord += (i == data[0].length) ? 0 : columnWidths[i] + BORDER_WIDTH;
+      xCoord += (i == this.mElementKeys.size()) ? 0 : columnWidths[i] + BORDER_WIDTH;
     }
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
-      for (int j = leftmost; j < rightmost + 1; j++) {
-        String datum = data[i][j];
+      for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
+        String datum;
+        if (this.type == TableType.STATUS_DATA || 
+            this.type == TableType.STATUS_HEADER || 
+            this.type == TableType.STATUS_FOOTER) {
+          datum = DEFAULT_STATUS_COLUMN_VALUE;
+        } else if (this.type == TableType.INDEX_HEADER || 
+                   this.type == TableType.MAIN_HEADER) {
+          datum = 
+            this.mTable.getHeaderByElementKey(this.mElementKeys.get(j));
+        } else if (this.type == TableType.INDEX_FOOTER || 
+                   this.type == TableType.MAIN_FOOTER) {
+          datum = this.mTable.getFooterByElementKey(this.mElementKeys.get(j));
+        } else if (this.type == TableType.INDEX_DATA ||
+                   this.type == TableType.MAIN_DATA) {
+          datum = 
+              this.mTable.getUserDataByElementKey(i, this.mElementKeys.get(j));
+        } else {
+          Log.e(TAG, "unrecognized table type: " + this.type.name());
+          datum = null;
+        }
         if (datum == null) {
           datum = "";
         }
@@ -476,9 +570,10 @@ class TabularView extends View {
         if (type == TableType.INDEX_DATA ||
             type == TableType.MAIN_DATA) {
           ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+              this.mTable.getRowData(i), mColumnIndexMap, mColumnPropertiesMap);
           ColorGuide columnGuide = mColumnColorRules.get(j)
-              .getColorGuide(wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+              .getColorGuide(this.mTable.getRowData(i), mColumnIndexMap, 
+                  mColumnPropertiesMap);
           // First we check for a row rule.
           if (rowGuide.didMatch()) {
             foregroundColor = rowGuide.getForeground();
@@ -492,7 +587,7 @@ class TabularView extends View {
         }
         if (type == TableType.STATUS_DATA) {
           ColorGuide statusGuide = mRowColorRuleGroup.getColorGuide(
-              wholeData[i], mColumnIndexMap, mColumnPropertiesMap);
+              this.mTable.getRowData(i), mColumnIndexMap, mColumnPropertiesMap);
           if (statusGuide.didMatch()) {
             foregroundColor = statusGuide.getForeground();
             backgroundColor = statusGuide.getBackground();
@@ -506,19 +601,17 @@ class TabularView extends View {
     }
     // highlighting cell (if necessary)
     if (highlightedCellNum != -1) {
-      int x = highlightedCellNum % data[0].length;
-      int rowNum = highlightedCellNum / data[0].length;
+      int x = highlightedCellNum % this.mElementKeys.size();
+      int rowNum = highlightedCellNum / this.mElementKeys.size();
       highlightCell(canvas, xs[x], ((rowNum + 1) * BORDER_WIDTH) +
           (rowNum * rowHeight), columnWidths[x]);
     }
   }
 
-  /*
+  /**
    * This should return the leftmost column of which anything should be
    * displayed on the screen, where the screen position is specified by the
    * xScroll int.
-   *
-   * This will be given by
    */
   private int getLeftmostColumnBasedOnXScroll(int xScroll) {
     int bsResult; // will hold the binary search result.

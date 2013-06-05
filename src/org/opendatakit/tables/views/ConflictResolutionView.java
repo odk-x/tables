@@ -29,17 +29,19 @@ import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
 public class ConflictResolutionView extends HorizontalScrollView implements
 		TabularView.Controller {
+  
+  private static final String TAG = 
+      ConflictResolutionView.class.getSimpleName();
 
 	private static final int DOUBLE_CLICK_TIME = 500;
 	private static final int FOREGROUND_COLOR = Color.BLACK;
@@ -87,49 +89,52 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 
 	private void buildView() {
 		// no-conflict message
-		if (table.getCount() == 0) {
-			TextView tv = new TextView(context);
-			tv.setText(context.getString(R.string.no_conflicts));
-			addView(tv);
-			return;
-		}
-		// creating header view
-		String[] header = new String[table.getWidth()];
-		for (int i = 0; i < table.getWidth(); i++) {
-			header[i] = table.getHeader(i);
-		}
-		TabularView headerView = new TabularView(context, this, tp, header,
-				FOREGROUND_COLOR, HEADER_BACKGROUND_COLOR, BORDER_COLOR,
-				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_HEADER,
-				fontSize);
-		// creating data views
-		dataWrap = new LinearLayout(context);
-		dataWrap.setOrientation(LinearLayout.VERTICAL);
-		for (int i = 0; i < table.getCount(); i++) {
-			rowItems[i] = getRowView(i);
-			dataWrap.addView(rowItems[i]);
-		}
-		// wrapping views up
-		LinearLayout wrap = new LinearLayout(context);
-		wrap.setOrientation(LinearLayout.VERTICAL);
-		wrap.addView(headerView, headerView.getTableWidth(),
-				headerView.getTableHeight());
-//--		ScrollView dataScroll = new ScrollView(context);
-		dataScroll = new LockableScrollView(context);
-		dataScroll.setFillViewport(true);
-		dataScroll.addView(dataWrap);
-		LinearLayout.LayoutParams dsLp = new LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.WRAP_CONTENT,
-				LinearLayout.LayoutParams.MATCH_PARENT);
-		dsLp.weight = 1;
-		wrap.addView(dataScroll, dsLp);
-		LinearLayout.LayoutParams wLp = new LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.WRAP_CONTENT,
-				LinearLayout.LayoutParams.MATCH_PARENT);
-		addView(wrap, wLp);
+	  Log.e(TAG, "ConflictResolutionView#buildView() is unimplemented!");
+//		if (table.getCount() == 0) {
+//			TextView tv = new TextView(context);
+//			tv.setText(context.getString(R.string.no_conflicts));
+//			addView(tv);
+//			return;
+//		}
+//		// creating header view
+//		String[] header = new String[table.getWidth()];
+//		for (int i = 0; i < table.getWidth(); i++) {
+//			header[i] = table.getHeader(i);
+//		}
+//		TabularView headerView = new TabularView(context, this, tp, table,
+//		    tp.getColumnOrder(),
+//				FOREGROUND_COLOR, HEADER_BACKGROUND_COLOR, BORDER_COLOR,
+//				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_HEADER,
+//				fontSize);
+//		// creating data views
+//		dataWrap = new LinearLayout(context);
+//		dataWrap.setOrientation(LinearLayout.VERTICAL);
+//		for (int i = 0; i < table.getCount(); i++) {
+//			rowItems[i] = getRowView(i);
+//			dataWrap.addView(rowItems[i]);
+//		}
+//		// wrapping views up
+//		LinearLayout wrap = new LinearLayout(context);
+//		wrap.setOrientation(LinearLayout.VERTICAL);
+//		wrap.addView(headerView, headerView.getTableWidth(),
+//				headerView.getTableHeight());
+////--		ScrollView dataScroll = new ScrollView(context);
+//		dataScroll = new LockableScrollView(context);
+//		dataScroll.setFillViewport(true);
+//		dataScroll.addView(dataWrap);
+//		LinearLayout.LayoutParams dsLp = new LinearLayout.LayoutParams(
+//				LinearLayout.LayoutParams.WRAP_CONTENT,
+//				LinearLayout.LayoutParams.MATCH_PARENT);
+//		dsLp.weight = 1;
+//		wrap.addView(dataScroll, dsLp);
+//		LinearLayout.LayoutParams wLp = new LinearLayout.LayoutParams(
+//				LinearLayout.LayoutParams.WRAP_CONTENT,
+//				LinearLayout.LayoutParams.MATCH_PARENT);
+//		addView(wrap, wLp);
 	}
-
+	
 	private RowItem getRowView(int index) {
+	  Log.e(TAG, "ConflictResolutionView#getRowView is unimplemented!");
 		for (int i = 0; i < table.getWidth(); i++) {
 			data[index][0][i] = table.getValue(index, 0, i);
 			data[index][1][i] = table.getValue(index, 1, i);
@@ -137,10 +142,11 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		RowItem ri = new RowItem(context, index);
 		// The wholeData param here is confusing. I'm not sure exactly what the 
 		// conflict table is holding.
-		TabularView tv = new TabularView(context, this, tp, data[index], data[index],
-				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,
-				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_DATA,
-				fontSize);
+		TabularView tv = null;
+//		TabularView tv = new TabularView(context, this, tp, data[index], data[index],
+//				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,
+//				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_DATA,
+//				fontSize);
 		setTabularViewTouchListener(index, tv);
 		ri.setTabularView(tv);
 		return ri;
@@ -174,11 +180,13 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 	}
 
 	public void setDatum(int index, int rowNum, int colNum, String value) {
+	  Log.e(TAG, "ConflictResolutionView#setDatum is unimplemented!");
 		data[index][rowNum][colNum] = value;
-		TabularView tv = new TabularView(context, this, tp, data[index], null,
-				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,
-				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_DATA,
-				fontSize);
+		TabularView tv = null;
+//		TabularView tv = new TabularView(context, this, tp, data[index], null,
+//				FOREGROUND_COLOR, BACKGROUND_COLOR, BORDER_COLOR,
+//				SpreadsheetView.getColumnWidths(tp), TableType.MAIN_DATA,
+//				fontSize);
 		setTabularViewTouchListener(index, tv);
 		rowItems[index].setTabularView(tv);
 	}
