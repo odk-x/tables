@@ -9,6 +9,7 @@
     android:layout_height="wrap_content">
     <EditText
       android:id="@+id/dvw_search_field"
+      android:inputType="text"
       android:layout_width="fill_parent"
       android:layout_height="wrap_content">
       </EditText>

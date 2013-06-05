@@ -10,6 +10,7 @@
   	android:text="@+string/list_format"/>
   <EditText
   	android:id="@+id/settings_listdisplay_listformat"
+    android:inputType="text"
   	android:layout_width="fill_parent"
   	android:layout_height="wrap_content"/>
   <LinearLayout

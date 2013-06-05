@@ -59,11 +59,9 @@
 	<string name="multiple_choice_options">Multiple Choice Options</string>
 	<string name="add_choice">Add Choice</string>
 	<string name="no_conflicts">No conflicts.</string>
-	<string name="set">Set</string>
 	<string name="undo">Undo</string>
 	<string name="add_rule">Add Rule</string>
 	<string name="conditional_colors">Conditional Colors: %1$s</string>
-	<string name="ok">OK</string>
 	<string name="pick_foreground_color">Pick a Foreground Color</string>
 	<string name="pick_background_color">Pick a Background Color</string>
 	<string name="unrecognized_rule">Unrecognized Rule</string>
@@ -146,8 +144,6 @@
 	<string name="font_size">Font Size</string>
 	<string name="change_font_size">Change Font Size</string>
 	<string name="display_prefs_for">Display Preferences for: %1$s</string>
-	<string name="text_color">Text Color</string>
-	<string name="background_color">Background Color</string>
 	<string name="sort_column">Sort Column</string>
 	<string name="collection_column">Collection Column</string>
 	<string name="edit_rule">Edit Rule</string>
@@ -167,7 +163,6 @@
 	<string name="general_settings">General Settings</string>
 	<string name="table_display_name">Display Name</string>
 	<string name="change_table_display_name">Change Table Display Name</string>
-	<string name="table_manager_title">Table Manager > %1$s</string>
 	<string name="table_type">Table Type</string>
 	<string name="table_type_data">Data Table</string>
 	<string name="table_type_access_control">Access Control Table</string>
