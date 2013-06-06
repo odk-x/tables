@@ -235,7 +235,9 @@ public class DbTable {
     }
 
     public UserTable getRaw(Query query, String[] columns) {
-        UserTable table = dataQuery(query.toSql(columns));
+      ArrayList<String> desiredColumns = tp.getColumnOrder();
+      desiredColumns.addAll(getAdminColumns());
+        UserTable table = dataQuery(query.toSql(desiredColumns));
         table.setFooter(footerQuery(query));
         return table;
     }
@@ -363,6 +365,10 @@ public class DbTable {
         	c = db.rawQuery(sd.getSql(), sd.getArgs());
         	UserTable table = buildTable(c, tp.getColumnOrder());
          return table;
+        } catch (Exception e) {
+          Log.e(TAG, "error in dataQuery");
+          e.printStackTrace();
+          return null;
         } finally {
         	try {
         		if ( c != null && !c.isClosed() ) {
