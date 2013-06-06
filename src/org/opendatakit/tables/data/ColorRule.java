@@ -204,16 +204,33 @@ public class ColorRule {
       Map<String, Integer> indexMapping, 
       Map<String, ColumnProperties> propertiesMapping) {
     try {
-      // First get the data abou the column.
+      // First get the data about the column. It is possible that we are trying
+      // to match a metadata column, in which case there will be no 
+      // ColumnProperties object. At this point all such metadata elementKeys
+      // must not begin with an underscore, whereas all user defined columns 
+      // will, so we'll also try to do a helpful check in case this invariant
+      // changes in the future.
       ColumnProperties cp = propertiesMapping.get(mElementKey);
+      ColumnType columnType;
+      if (cp == null) {
+        // Was likely a metadata column.
+        if (mElementKey.startsWith("_")) {
+          throw new IllegalArgumentException("element key passed to " +
+          		"ColorRule#checkMatch didn't have a mapping and was likely " +
+          		"not a metadata elementKey: " + mElementKey);
+        }
+        columnType = ColumnType.NONE;
+      } else {
+        columnType = cp.getColumnType();
+      }
       // Get the value we're testing against.
       String testValue = rowData[indexMapping.get(mElementKey)];
       if (testValue == null) {
         testValue = "";
       }
       int compVal;
-        if((cp.getColumnType() == ColumnType.NUMBER ||
-           cp.getColumnType() == ColumnType.INTEGER)){
+        if((columnType == ColumnType.NUMBER ||
+            columnType == ColumnType.INTEGER)){
           if (testValue.equals("")) {
             return false;
           }

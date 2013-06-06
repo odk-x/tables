@@ -17,8 +17,9 @@ package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+
+import android.util.Log;
 
 /**
  * This class represents a table. This can be conceptualized as a 
@@ -36,6 +37,8 @@ import java.util.Map;
  *
  */
 public class UserTable {
+  
+  private static final String TAG = UserTable.class.getSimpleName();
     
     private final String[] header;
     private String[] footer;
@@ -243,6 +246,36 @@ public class UserTable {
        */
       public String getDataAtIndex(int index) {
         return mData[index];
+      }
+      
+      /**
+       * Return the String representing the contents of the column represented
+       * by the passed in elementKey. This can be either the element key of
+       * a user-defined column or a ODKTabes-specified metadata column. 
+       * <p>
+       * Null values are returned as an empty string. Null is returned if the 
+       * elementKey is not found in the table.
+       * @param elementKey elementKey of data or metadata column
+       * @return String representation of contents of column. Null values are 
+       * converted to an empty string. If the elementKey is not contained in
+       * the table, returns null.
+       */
+      public String getDataOrMetadataByElementKey(String elementKey) {
+        String result;
+        if (UserTable.this.mDataKeyToIndex.containsKey(elementKey)) {
+          result = this.mData[UserTable.this.mDataKeyToIndex.get(elementKey)];
+        } else if (UserTable.this.mMetadataKeyToIndex.containsKey(elementKey)) {
+          result = this.mMetadata[
+                       UserTable.this.mMetadataKeyToIndex.get(elementKey)];
+        } else {
+          // The elementKey was not in the table. Probable error or misuse.
+          Log.e(TAG, "elementKey [" + elementKey + "] was not found in table");
+          return null;
+        }
+        if (result == null) {
+          result = "";
+        }
+        return result;
       }
       
       /**
