@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
@@ -43,8 +45,10 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
 import android.app.Activity;
@@ -645,6 +649,15 @@ public abstract class CustomView extends LinearLayout {
 			}
 		}
 
+		/**
+		 * Opens the table specified by the tableName and searches this table
+		 * with the given query. Uses the default view specified on the table.
+		 * E.g. if it has been set to map view, the table will be opened to the
+		 * map view.
+		 * @param tableName
+		 * @param query
+		 * @return
+		 */
 		public boolean openTable(String tableName, String query) {
 		  Log.d(TAG, "in openTable for table: " + tableName);
 			initTpInfo();
@@ -656,6 +669,30 @@ public abstract class CustomView extends LinearLayout {
 			Controller.launchTableActivity(mContext, tpMap.get(tableName),
 					query, false);
 			return true;
+		}
+		
+		/**
+		 * Open the table specified by tableName as a list view with the filename
+		 * specified by filename. The filename is relative to the odk
+		 * @param tableName
+		 * @param filename
+		 * @return false if the table properties cannot be found, true if it 
+		 * opens.
+		 */
+		public boolean openTableToListViewWithFile(String tableName, 
+		    String searchText, String filename) {
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(tableName);
+		  if (tp == null) {
+          Log.e(TAG, "tableName [" + tableName + "] not in map");
+          return false;
+		  }
+		  String pathToTablesFolder = 
+		      ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+		  String pathToFile = pathToTablesFolder + File.separator + filename;
+		  Controller.launchListViewWithFileName(mContext, tp, searchText, null, 
+		      false, pathToFile);
+		  return true;
 		}
 
 		public TableData query(String tableName, String searchText) {

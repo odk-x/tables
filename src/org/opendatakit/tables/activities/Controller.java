@@ -736,6 +736,54 @@ public class Controller {
   public static void launchAppViewActivity(Context context) {
 
   }
+  
+  /**
+   * Launches the Table pointed to by tp as a list view with the specified
+   * filename.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   */
+  public static void launchListViewWithFileName(Context context, 
+      TableProperties tp, String searchText, Stack<String> searchStack,
+      boolean isOverview, String filename) {
+    Intent intent = new Intent(context, ListDisplayActivity.class);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
+    context.startActivity(intent);
+  }
+  
+  /*
+   * A helper method that was introduced just to eliminate redundant code.
+   * Adds the appropriate extras to the intent.
+   */
+  private static void prepareIntentForLaunch(Intent intent, TableProperties tp,
+      Stack<String> searchStack, String searchText, boolean isOverview) {
+    if (searchStack != null) {
+      String[] stackValues = new String[searchStack.size()];
+      for (int i = 0; i < searchStack.size(); i++) {
+        stackValues[i] = searchStack.get(i);
+      }
+      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
+    } else if (searchText != null) {
+      intent.putExtra(INTENT_KEY_SEARCH, searchText);
+    } else if (searchText == null) {
+      KeyValueStoreHelper kvsh =
+          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
+      if (savedQuery == null) {
+        savedQuery = "";
+      }
+      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
+    }
+    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+  }
 
   private static void launchTableActivity(Context context, TableProperties tp,
       String searchText,
@@ -762,27 +810,28 @@ public class Controller {
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (searchStack != null) {
-      String[] stackValues = new String[searchStack.size()];
-      for (int i = 0; i < searchStack.size(); i++) {
-        stackValues[i] = searchStack.get(i);
-      }
-      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
-    } else if (searchText != null) {
-      intent.putExtra(INTENT_KEY_SEARCH, searchText);
-    } else if (searchText == null) {
-      KeyValueStoreHelper kvsh =
-          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
-      if (savedQuery == null) {
-        savedQuery = "";
-      }
-      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
-    }
-    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
+//    if (searchStack != null) {
+//      String[] stackValues = new String[searchStack.size()];
+//      for (int i = 0; i < searchStack.size(); i++) {
+//        stackValues[i] = searchStack.get(i);
+//      }
+//      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
+//    } else if (searchText != null) {
+//      intent.putExtra(INTENT_KEY_SEARCH, searchText);
+//    } else if (searchText == null) {
+//      KeyValueStoreHelper kvsh =
+//          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+//      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
+//      if (savedQuery == null) {
+//        savedQuery = "";
+//      }
+//      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
+//    }
+//    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
     context.startActivity(intent);
   }
-
+  
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table,
       int rowNum) {
