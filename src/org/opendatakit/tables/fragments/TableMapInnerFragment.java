@@ -287,8 +287,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     UserTable table = ((TableActivity) getActivity()).getTable();
     // Create a guide depending on the color group.
     if (mColorGroup != null) {
-      ColorGuide guide = mColorGroup.getColorGuide(table.getRowData(index), mColumnIndexMap,
-          mColumnPropertiesMap);
+      ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
       // Based on if the guide matched or not, grab the hue.
       if (guide != null && guide.didMatch()) {
         float[] hsv = new float[3];

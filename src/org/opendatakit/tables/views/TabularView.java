@@ -821,11 +821,10 @@ class TabularView extends View {
         if (type == TableType.INDEX_DATA ||
             type == TableType.MAIN_DATA) {
           ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-              this.mTable.getRowData(i), mColumnIndexMap, mColumnPropertiesMap);
+              this.mTable.getRowAtIndex(i));
           ColorGuide columnGuide = mColumnColorRules.get(
               this.mElementKeys.get(j)).getColorGuide(
-                  this.mTable.getRowData(i), mColumnIndexMap, 
-                  mColumnPropertiesMap);
+                  this.mTable.getRowAtIndex(i));
           // First we check for a row rule.
           if (rowGuide.didMatch()) {
             foregroundColor = rowGuide.getForeground();
@@ -839,7 +838,7 @@ class TabularView extends View {
         }
         if (type == TableType.STATUS_DATA) {
           ColorGuide statusGuide = mRowColorRuleGroup.getColorGuide(
-              this.mTable.getRowData(i), mColumnIndexMap, mColumnPropertiesMap);
+              this.mTable.getRowAtIndex(i));
           if (statusGuide.didMatch()) {
             foregroundColor = statusGuide.getForeground();
             backgroundColor = statusGuide.getBackground();

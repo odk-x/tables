@@ -347,6 +347,12 @@ public abstract class CustomView extends LinearLayout {
 		private Map<String, Integer> colMap;			//Maps the column names with an index number
 		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
 		private List<String> primeColumns;			//Holds the db names of indexed columns
+		/**
+		 * A simple cache of color rules so they're not recreated unnecessarily
+		 * each time. Maps the column display name to {@link ColorRuleGroup} for 
+		 * that column.
+		 */
+		private Map<String, ColorRuleGroup> mColumnDisplayNameToColorRuleGroup;
 		protected Context mContext;
 		private TableProperties tp;
 
@@ -389,6 +395,8 @@ public abstract class CustomView extends LinearLayout {
 
 		//Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
 		private void initMaps(TableProperties tp) {
+        mColumnDisplayNameToColorRuleGroup = 
+            new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
 		    Map<String, ColumnProperties> elementKeyToColumnProperties = 
 		        tp.getColumns();
@@ -446,20 +454,34 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public String getForegroundColor(String colName, String value) {
+		  Log.e(TAG, "calling get color");
 			String elementKey = tp.getColumnByDisplayName(colName);
-			ColorRuleGroup colRul =
-			    ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+			ColorRuleGroup colRul = 
+			    this.mColumnDisplayNameToColorRuleGroup.get(colName);
+			if (colRul == null) {
+			  // If it's not already there, cache it for future use.
+			  colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+			  this.mColumnDisplayNameToColorRuleGroup.put(colName, colRul);
+			}
 			// Rather than hand off the whole row data, we'll just dummy up the
 			// info requested, as this will be easier for the html programmer
 			// to use than to have to give in the whole row.
-			Map<String, Integer> indexMap = new HashMap<String, Integer>();
-			indexMap.put(elementKey, 0);
-			Map<String, ColumnProperties> propertiesMap =
-			    new HashMap<String, ColumnProperties>();
-			propertiesMap.put(elementKey, tp.getColumnByElementKey(elementKey));
-			String[] rowData = new String[] {value};
-			ColorGuide guide = colRul.getColorGuide(rowData, indexMap,
-			    propertiesMap);
+			Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
+			indexOfDataMap.put(elementKey, 0);
+			Map<String, Integer> indexOfMetadataMap =
+			    new HashMap<String, Integer>();
+			indexOfMetadataMap.put(elementKey, 0);
+			// We need to construct a dummy UserTable for the ColorRule to 
+			// interpret.
+			String[] header = new String[] {colName};
+			String[] rowId = new String[] {"dummyRowId"};
+			String[][] data = new String[1][1];
+			String[][] metadata = new String[1][1];
+			data[0][0] = value;
+			metadata[0][0] = "dummyMetadata";
+			UserTable table = new UserTable(tp, rowId, header, data, 
+			    indexOfDataMap, metadata, indexOfMetadataMap, null);
+			ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
 			int foregroundColor;
 			if (guide.didMatch()) {
 			  foregroundColor = guide.getForeground();

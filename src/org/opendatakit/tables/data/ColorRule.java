@@ -15,10 +15,10 @@
  */
 package org.opendatakit.tables.data;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.opendatakit.tables.data.UserTable.Row;
 
 import android.util.Log;
 
@@ -200,9 +200,7 @@ public class ColorRule {
     this.mElementKey = elementKey;
   }
   
-  public boolean checkMatch(String[] rowData, 
-      Map<String, Integer> indexMapping, 
-      Map<String, ColumnProperties> propertiesMapping) {
+  public boolean checkMatch(TableProperties tp, Row row) {
     try {
       // First get the data about the column. It is possible that we are trying
       // to match a metadata column, in which case there will be no 
@@ -210,7 +208,7 @@ public class ColorRule {
       // must not begin with an underscore, whereas all user defined columns 
       // will, so we'll also try to do a helpful check in case this invariant
       // changes in the future.
-      ColumnProperties cp = propertiesMapping.get(mElementKey);
+      ColumnProperties cp = tp.getColumnByElementKey(mElementKey);
       ColumnType columnType;
       if (cp == null) {
         // Was likely a metadata column.
@@ -224,7 +222,7 @@ public class ColorRule {
         columnType = cp.getColumnType();
       }
       // Get the value we're testing against.
-      String testValue = rowData[indexMapping.get(mElementKey)];
+      String testValue = row.getDataOrMetadataByElementKey(mElementKey);
       if (testValue == null) {
         testValue = "";
       }

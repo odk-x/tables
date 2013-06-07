@@ -698,39 +698,6 @@ public class SpreadsheetView extends LinearLayout
             int rawY);
     }
 
-    private class ColorRulerColorDecider implements ColorDecider {
-
-        private final ColorRuleGroup[] rulers;
-        private final int defaultColor;
-        private final boolean isBackground;
-
-        public ColorRulerColorDecider(ColorRuleGroup[] rulers,
-                int defaultColor, boolean isBackground) {
-            this.rulers = rulers;
-            this.defaultColor = defaultColor;
-            this.isBackground = isBackground;
-        }
-
-        /**
-         * Get an {@link ColorGuide} to determine how to color the row.
-         * @param rowData
-         * @param columnMapping mapping from elementKey to the index in rowData
-         * @param propertiesMapping mapping from the elementKey to the
-         * {@link ColumnProperties} for the row. Necessary for determining
-         * type information of the rowData.
-         * @return
-         */
-        /*
-         * index might end up changing as the refactor continues.
-         */
-        public ColorGuide getColor(int index, String[] rowData,
-            Map<String, Integer> columnMapping,
-            Map<String, ColumnProperties> propertiesMapping) {
-          return rulers[index].getColorGuide(rowData, columnMapping,
-              propertiesMapping);
-        }
-    }
-
     public interface Controller {
 
         public void regularCellClicked(int cellId);

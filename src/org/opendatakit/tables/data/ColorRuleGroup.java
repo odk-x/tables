@@ -18,7 +18,6 @@ package org.opendatakit.tables.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -26,6 +25,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
+import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.utils.Constants;
 
 import android.util.Log;
@@ -289,12 +289,9 @@ public class ColorRuleGroup {
      * foreground and background colors.
      * 
      */
-    public ColorGuide getColorGuide(String[] rowData, 
-        Map<String, Integer> indexMapping, 
-        Map<String, ColumnProperties> propertiesMapping) {
+    public ColorGuide getColorGuide(Row row) {
       for (int i = 0; i < ruleList.size(); i++) {
-        if (ruleList.get(i).checkMatch(rowData, indexMapping, 
-            propertiesMapping)) {
+        if (ruleList.get(i).checkMatch(tp, row)) {
           return new ColorGuide(true, ruleList.get(i).getForeground(),
               ruleList.get(i).getBackground());
         }

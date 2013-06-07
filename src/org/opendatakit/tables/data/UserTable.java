@@ -44,6 +44,12 @@ public class UserTable {
     private String[] footer;
     private final ArrayList<Row> mRows;
     /**
+     * The {@link TableProperties} associated with this table. Included so that
+     * more intelligent things can be done with regards to interpretation of
+     * type.
+     */
+    private final TableProperties mTp;
+    /**
      * Maps the element key of user-defined columns to the corresponding index 
      * in the Row objects.
      */
@@ -57,7 +63,7 @@ public class UserTable {
     private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
     private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
     
-    public UserTable(String[] rowIds, String[] header, 
+    public UserTable(TableProperties tp, String[] rowIds, String[] header, 
         String[][] userDefinedData, Map<String, Integer> dataElementKeyToIndex,
         String[][] odkTablesMetadata, 
         Map<String, Integer> metadataElementKeyToIndex, String[] footer) {
@@ -68,6 +74,7 @@ public class UserTable {
                 odkTablesMetadata[i]);
             mRows.add(nextRow);
         }
+        this.mTp = tp;
         this.footer = footer;
         mDataKeyToIndex = dataElementKeyToIndex;
         mMetadataKeyToIndex = metadataElementKeyToIndex;
@@ -75,6 +82,10 @@ public class UserTable {
     
     public String getRowId(int rowNum) {
       return this.mRows.get(rowNum).mRowId;
+    }
+    
+    public Row getRowAtIndex(int index) {
+      return this.mRows.get(index);
     }
     
     public String getHeader(int colNum) {

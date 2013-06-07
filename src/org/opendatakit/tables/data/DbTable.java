@@ -218,7 +218,7 @@ public class DbTable {
 	        c = db.query(tp.getDbTableName(), colArr,
 	                buildSelectionSql(selectionKeys),
 	                selectionArgs, null, null, orderBy);
-	        UserTable table = buildTable(c, columns);
+	        UserTable table = buildTable(c, tp, columns);
 	        return table;
 	    } finally {
 	    	try {
@@ -364,7 +364,7 @@ public class DbTable {
         	String sqlStr = sd.getSql();
         	String[] selArgs = sd.getArgs();
         	c = db.rawQuery(sd.getSql(), sd.getArgs());
-        	UserTable table = buildTable(c, tp.getColumnOrder());
+        	UserTable table = buildTable(c, tp, tp.getColumnOrder());
          return table;
         } catch (Exception e) {
           Log.e(TAG, "error in dataQuery");
@@ -393,7 +393,8 @@ public class DbTable {
      * @param c Cursor meeting the requirements above
      * @param userColumnOrder the user-specified column order
      */
-    private UserTable buildTable(Cursor c, List<String> userColumnOrder) {
+    private UserTable buildTable(Cursor c, TableProperties tp,
+        List<String> userColumnOrder) {
       // This map will store the mapping of a column's element key to the index
       // of that column in the cursor.
       Map<String, Integer> keyToCursorIndex = new HashMap<String, Integer>();
@@ -450,7 +451,7 @@ public class DbTable {
         }
         // TODO: check that getUserHeader is actually returning the header
         // in the right order.
-        return new UserTable(rowIds, getUserHeader(), data, dataKeyToIndex,
+        return new UserTable(tp, rowIds, getUserHeader(), data, dataKeyToIndex,
             metadata, metadataKeyToIndex, null);
 //        return new Table(rowIds, userColumnOrder, data);
     }

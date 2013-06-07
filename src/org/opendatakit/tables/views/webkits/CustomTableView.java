@@ -94,7 +94,7 @@ public class CustomTableView extends CustomView {
     		footers[i] = table.getFooter(i);
     		metadata[0] = table.getAllMetadataForRow(i);
     	}
-    	UserTable singleRowTable = new UserTable(rowIds, headers, data,
+    	UserTable singleRowTable = new UserTable(tp, rowIds, headers, data,
     	    table.getMapOfUserDataToIndex(), metadata,
     	    table.getMapOfMetadataToIndex(), footers);
 //    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
@@ -140,7 +140,7 @@ public class CustomTableView extends CustomView {
         }
         footers[i] = table.getFooter(i);
       }
-      UserTable multiRowTable = new UserTable(rowIds, headers, data,
+      UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
           table.getMapOfUserDataToIndex(), metadata, 
           table.getMapOfMetadataToIndex(), footers);
 //      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
@@ -187,7 +187,7 @@ public class CustomTableView extends CustomView {
       }
       footers[i] = table.getFooter(i);
     }
-    UserTable multiRowTable = new UserTable(rowIds, headers, data,
+    UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
         table.getMapOfUserDataToIndex(), metadata, 
         table.getMapOfMetadataToIndex(), footers);
 
