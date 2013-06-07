@@ -75,7 +75,6 @@
         <activity android:name=".activities.EditSavedListViewEntryActivity"/>
         <activity android:name=".activities.ListDisplayActivity"/>
         <activity android:name=".activities.ListViewManager"/>
-        <activity android:name=".activities.MapDisplayActivity"/>
         <activity android:name=".activities.PropertyManager"/>
         <activity android:name=".activities.SecurityManager"/>
         <activity android:name=".activities.ShortcutsManager"/>
