@@ -36,6 +36,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.utils.ColorRuleUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 
@@ -864,6 +865,12 @@ public class TableProperties {
 	        kvsh.setString(KEY_CURRENT_QUERY, "");
 	      Log.d(TAG, "adding table: " + dbTableName);
          DbTable.createDbTable(db, tp);
+         // And now set the default color rules.
+         ColorRuleGroup ruleGroup = 
+             ColorRuleGroup.getStatusColumnRuleGroup(tp);
+         ruleGroup.replaceColorRuleList(
+             ColorRuleUtil.getDefaultSyncStateColorRules());
+         ruleGroup.saveRuleList();
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();

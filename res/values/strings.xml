@@ -26,6 +26,11 @@
 	<string name="text_color">Text Color</string>
 	<string name="background_color">Background Color</string>
 	<string name="column">Column</string>
+	<string name="sync_state_equals_rest_message">Was up to date after last sync.</string>
+	<string name="sync_state_equals_inserting_message">Has never been synched.</string>
+	<string name="sync_state_equals_deleting_message">Will be deleted during sync.</string>
+	<string name="sync_state_equals_conflicting_message">Conflicts with server version.</string>
+	<string name="sync_state_equals_updating_message">New changes will be uploaded.</string>
 	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
 	<string name="no_shortcuts">No Shortcuts Defined</string>
 	<string name="account">Account:</string>
