@@ -865,7 +865,7 @@ public class GraphProperties {
     DataManager dm = new DataManager(dbh);
     TableProperties tp = dm.getTableProperties(tableId,
         KeyValueStore.Type.ACTIVE);
-    for (ColumnProperties cp : tp.getColumns()) {
+    for (ColumnProperties cp : tp.getColumns().values()) {
       if (cp.getDisplayName().equals(displayName)) {
         return true;
       }
@@ -908,7 +908,7 @@ public class GraphProperties {
   private boolean displayNameConflict(String proposedDisplayName) {
     DataManager dm = new DataManager(dbh);
     TableProperties tp = dm.getTableProperties(tableId, backingStore);
-    for (ColumnProperties cp : tp.getColumns()) {
+    for (ColumnProperties cp : tp.getColumns().values()) {
       if (cp.getDisplayName().equalsIgnoreCase(proposedDisplayName)
           && !cp.getElementKey().equals(elementKey)) {
         return true;
@@ -992,7 +992,7 @@ public class GraphProperties {
   public void setColumnType(ColumnType columnType) {
     TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
         tableId, backingStore);
-    ArrayList<String> colOrder = tp.getColumnOrder();
+    List<String> colOrder = tp.getColumnOrder();
     tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {

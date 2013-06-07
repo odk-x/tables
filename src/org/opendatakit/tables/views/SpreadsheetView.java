@@ -87,6 +87,8 @@ public class SpreadsheetView extends LinearLayout
     private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
     private final TableProperties tp;
+    // cached b/c is defensively copied in tp.
+    private final List<String> mColumnOrder;
 
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
@@ -120,6 +122,7 @@ public class SpreadsheetView extends LinearLayout
         this.controller = controller;
         this.tp = tp;
         this.table = table;
+        this.mColumnOrder = this.tp.getColumnOrder();
         this.indexedCol = indexedCol;
 
         // We have to initialize the items that will be shared across the
@@ -128,12 +131,12 @@ public class SpreadsheetView extends LinearLayout
             new HashMap<String, ColorRuleGroup>();
         this.mElementKeyToProperties = 
             new HashMap<String, ColumnProperties>();
-        List<String> columnOrder = tp.getColumnOrder();
-        for (int i = 0; i < columnOrder.size(); i++) {
-          mElementKeyToColorRuleGroup.put(columnOrder.get(i),
-              ColorRuleGroup.getColumnColorRuleGroup(tp, columnOrder.get(i)));
-          mElementKeyToProperties.put(columnOrder.get(i), 
-              tp.getColumnByElementKey(columnOrder.get(i)));
+        for (int i = 0; i < this.mColumnOrder.size(); i++) {
+          mElementKeyToColorRuleGroup.put(this.mColumnOrder.get(i),
+              ColorRuleGroup.getColumnColorRuleGroup(tp, 
+                  this.mColumnOrder.get(i)));
+          mElementKeyToProperties.put(this.mColumnOrder.get(i), 
+              tp.getColumnByElementKey(this.mColumnOrder.get(i)));
         }
         
         // if a custom font size is defined in the KeyValueStore, use that
@@ -166,7 +169,7 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = mainData.getCellNumber(x, y);
-                Log.d(TAG, "mainDataCellClickListener cellId: " + cellNum);
+//                Log.d(TAG, "mainDataCellClickListener cellId: " + cellNum);
                 if (indexedCol < 0) {
                     return cellNum;
                 } else {
@@ -270,7 +273,7 @@ public class SpreadsheetView extends LinearLayout
             @Override
             protected int figureCellId(int x, int y) {
                 int cellNum = indexData.getCellNumber(x, y);
-                Log.d(TAG, "indexDataCellClickListener cellNum: " + cellNum);
+//                Log.d(TAG, "indexDataCellClickListener cellNum: " + cellNum);
                 return cellNum;
             }
             @Override
@@ -423,7 +426,7 @@ public class SpreadsheetView extends LinearLayout
 
               @Override
               public void onScrollStopped() {
-                Log.i(TAG, "stopped in onStopped of indexScroll");
+//                Log.i(TAG, "stopped in onStopped of indexScroll");
               }
             });
         mainScroll.setOnScrollStoppedListener(new
@@ -431,7 +434,7 @@ public class SpreadsheetView extends LinearLayout
 
               @Override
               public void onScrollStopped() {
-                Log.i(TAG, "stopped in onStopped of mainScroll");
+//                Log.i(TAG, "stopped in onStopped of mainScroll");
 
               }
             });
@@ -460,17 +463,17 @@ public class SpreadsheetView extends LinearLayout
      * @return a view including the header, body, and footer of the table
      */
     private View buildTable(int indexedCol, boolean isIndexed) {
-      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
-          "isIndexed: " + isIndexed);
+//      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
+//          "isIndexed: " + isIndexed);
         List<String> elementKeysToDisplay = 
-            new ArrayList<String>(tp.getColumnOrder().size());
+            new ArrayList<String>(this.mColumnOrder.size());
         int[] colWidths;
         int[] completeColWidths = getColumnWidths();
         TabularView dataTable;
         TabularView headerTable;
         TabularView footerTable;
         if (isIndexed) {
-            elementKeysToDisplay.add(tp.getColumnOrder().get(indexedCol));
+            elementKeysToDisplay.add(this.mColumnOrder.get(indexedCol));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
             dataTable = TabularView.getIndexDataTable(context, this, 
@@ -494,7 +497,7 @@ public class SpreadsheetView extends LinearLayout
                 if (i == indexedCol) {
                     continue;
                 }
-                elementKeysToDisplay.add(tp.getColumnOrder().get(i));
+                elementKeysToDisplay.add(this.mColumnOrder.get(i));
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }
@@ -773,12 +776,12 @@ public class SpreadsheetView extends LinearLayout
       // So what we want to do is go through and get the column widths for each
       // column. A problem here is that there is no caching, and if you have a
       // lot of columns you're really working the gut of the database.
-      ColumnProperties[] colProps = tp.getColumns();
-      int[] columnWidths = new int[colProps.length];
+      List<String> columnOrder = tp.getColumnOrder();
+      int[] columnWidths = new int[columnOrder.size()];
       KeyValueStoreHelper columnKVSH =
           tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
-      for (int i = 0; i < columnWidths.length; i++) {
-        String elementKey = colProps[i].getElementKey();
+      for (int i = 0; i < columnOrder.size(); i++) {
+        String elementKey = columnOrder.get(i);
         KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
         Integer value =
             aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);

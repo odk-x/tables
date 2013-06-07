@@ -15,27 +15,19 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import org.kxml2.io.KXmlParser;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
@@ -43,14 +35,11 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -797,10 +786,11 @@ public class Controller {
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table,
       int rowNum) {
+    List<String> columnOrder = tp.getColumnOrder();
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumns()[i].getElementKey();
+      keys[i] = columnOrder.get(i);
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
@@ -815,14 +805,16 @@ public class Controller {
 
         private final String rowId;
         private final int colIndex;
+        private final String elementKey;
         private final CellValueView.CellEditView cev;
 
         public CellEditDialog(String rowId, String value, int colIndex) {
             super(activity);
             this.rowId = rowId;
             this.colIndex = colIndex;
+            this.elementKey = tp.getColumnOrder().get(colIndex);
             cev = CellValueView.getCellEditView(activity,
-                    tp.getColumns()[colIndex], value);
+                    tp.getColumnByElementKey(this.elementKey), value);
             buildView(activity);
         }
         private void buildView(Context context) {
@@ -831,14 +823,15 @@ public class Controller {
           setButton.setOnClickListener(new View.OnClickListener() {
               @Override
               public void onClick(View v) {
-                  String value = du.validifyValue(tp.getColumns()[colIndex],
+                  String value = du.validifyValue(
+                      tp.getColumnByElementKey(CellEditDialog.this.elementKey),
                           cev.getValue());
                   if (value == null) {
                       // TODO: alert the user
                       return;
                   }
                   Map<String, String> values = new HashMap<String, String>();
-                  values.put(tp.getColumns()[colIndex].getElementKey(),
+                  values.put(CellEditDialog.this.elementKey,
                           value);
 
                   // TODO: supply reasonable values for these...
@@ -848,7 +841,8 @@ public class Controller {
                   String formId = null; // formId used by ODK Collect
                   String locale = null; // current locale
 
-                  dbt.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
+                  dbt.updateRow(rowId, values, uriUser, timestamp, 
+                      instanceName, formId, locale);
                   da.init();
                   dismiss();
               }

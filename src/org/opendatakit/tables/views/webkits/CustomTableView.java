@@ -61,12 +61,15 @@ public class CustomTableView extends CustomView {
     this.tp = tp;
     this.table = table;
     colIndexTable.clear();
-    ColumnProperties[] cps = tp.getColumns();
-    for (int i = 0; i < cps.length; i++) {
-      colIndexTable.put(cps[i].getDisplayName(), i);
-      String smsLabel = cps[i].getSmsLabel();
+    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+        tp.getColumns();
+    colIndexTable = table.getMapOfUserDataToIndex();
+    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
+      String smsLabel = cp.getSmsLabel();
       if (smsLabel != null) {
-        colIndexTable.put(smsLabel, i);
+        // TODO: this doesn't look to ever be used, and ignores the possibility
+        // of conflicting element keys and sms labels.
+        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
       }
     }
   }

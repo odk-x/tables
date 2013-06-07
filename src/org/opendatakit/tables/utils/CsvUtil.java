@@ -511,7 +511,7 @@ public class CsvUtil {
         TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
                 tableId, KeyValueStore.Type.ACTIVE);
         // building array of columns to select and header row for output file
-        int columnCount = tp.getColumns().length;
+        int columnCount = tp.getColumns().size();
         if (exportProperties) {
           // then we are including all the metadata columns.
           columnCount += DbTable.getAdminColumns().size();
@@ -576,14 +576,14 @@ public class CsvUtil {
                 index++;
             }
 
-        	ColumnProperties[] colProps = tp.getColumns();
-        	for ( int i = 0 ; i < colProps.length ; ++i ) {
-        		ColumnProperties cp = colProps[i];
+        	List<String> columnOrder = tp.getColumnOrder();
+        	for ( int i = 0 ; i < columnOrder.size() ; ++i ) {
+        		ColumnProperties cp = tp.getColumnByElementKey(columnOrder.get(i));
             	String displayName = cp.getDisplayName();
                 columns.add(cp.getElementKey());
                 headerRow.add(displayName);
                 index++;
-            }
+         }
 
             // And now add all remaining metadata columns
             for (String colName : DbTable.getAdminColumns()) {
@@ -628,7 +628,7 @@ public class CsvUtil {
             }
 
             // export everything in the user columns
-            for (ColumnProperties cp : tp.getColumns()) {
+            for (ColumnProperties cp : tp.getColumns().values()) {
                 columns.add(cp.getElementKey());
                 headerRow.add(cp.getElementKey());
                 index++;

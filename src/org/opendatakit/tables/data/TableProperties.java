@@ -18,6 +18,7 @@ package org.opendatakit.tables.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -206,9 +207,23 @@ public class TableProperties {
    * The fields that are in the key value store.
    */
   private String displayName;
-  private ColumnProperties[] columns;
-  private ArrayList<String> columnOrder;
-  private ArrayList<String> primeColumns;
+  //private ColumnProperties[] columns;
+  /**
+   * Maps the elementKey of a column to its ColumnProperties object.
+   */
+  private Map<String, ColumnProperties> mElementKeyToColumnProperties;
+  /**
+   * For some reason columns currently need to be accessible by their display
+   * name. This seems dangerous but is currently allowed and requires this 
+   * datastructure.
+   */
+  private Map<String, String> mColumnDisplayNameToElementKey;
+  /**
+   * Mapping of abbreviation to elementKey.
+   */
+  private Map<String, String> mColumnAbbreviationToElementKey;
+  private List<String> columnOrder;
+  private List<String> primeColumns;
   private String sortColumn;
   private String indexColumn;
 //  private String readSecurityTableId;
@@ -249,7 +264,10 @@ public class TableProperties {
     this.displayName = displayName;
     this.tableType = tableType;
     this.accessControls = accessControls;
-    columns = null;
+//    columns = null;
+    this.mElementKeyToColumnProperties = null;
+    this.mColumnDisplayNameToElementKey = null;
+    this.mColumnAbbreviationToElementKey = null;
     this.columnOrder = columnOrder;
     this.primeColumns = primeColumns;
     this.sortColumn = sortColumn;
@@ -508,9 +526,9 @@ public class TableProperties {
     }
     if ( columnOrder.size() == 0 ) {
       // restore all the columns to the columnOrder list...
-      ColumnProperties[] columnProperties = getColumns(dbh,
+      Map<String, ColumnProperties> columnProperties = getColumns(dbh,
           props.get(TableDefinitionsColumns.TABLE_ID), backingStore);
-      for ( ColumnProperties cp : columnProperties ) {
+      for ( ColumnProperties cp : columnProperties.values() ) {
         columnOrder.add(cp.getElementKey());
       }
       Collections.sort(columnOrder, new Comparator<String>(){
@@ -881,13 +899,13 @@ public class TableProperties {
   public void deleteTableActual() {
     // Two things must be done: delete all the key value pairs from the active
     // key value store and drop the table holding the data from the database.
-    ColumnProperties[] columns = getColumns();
+    Map<String, ColumnProperties> columns = getColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    db.beginTransaction();
 	    try {
 	      db.execSQL("DROP TABLE " + dbTableName);
-	      for (ColumnProperties cp : columns) {
+	      for (ColumnProperties cp : columns.values()) {
 	        cp.deleteColumn(db);
 	      }
 	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
@@ -989,79 +1007,64 @@ public class TableProperties {
    * @param backingStore
    * @return array of columns
    */
-  private static ColumnProperties[] getColumns(DbHelper dbh, String tableId, 
-      KeyValueStore.Type backingStore ) {
-    ColumnProperties[] columns = ColumnProperties.getColumnPropertiesForTable(
-        dbh, tableId, backingStore);
-    return columns;
+  private static Map<String, ColumnProperties> getColumns(DbHelper dbh, 
+      String tableId, KeyValueStore.Type backingStoreType) {
+    return ColumnProperties.getColumnPropertiesForTable(
+        dbh, tableId, backingStoreType);
  }
 
   /**
-   * Return an unordered array of a table's columns. If something has happened
+   * Return a map of elementKey to columns as represented by their
+   * {@link ColumnProperties}. If something has happened
    * to a column that did not go through TableProperties, update row also needs
    * to be called.
-   * @return an unordered array of the table's columns
+   * @return an unordered array of the table's columns as represented by their
+   * {@link ColumnProperties}.
    */
-  public ColumnProperties[] getColumns() {
-    if (columns == null) {
-      columns = getColumns(dbh, tableId, backingStore);
-      orderColumns();
+  public Map<String, ColumnProperties> getColumns() {
+    if (mElementKeyToColumnProperties == null) {
+      refreshColumns();
     }
-    return columns;
+    return this.mElementKeyToColumnProperties;
  }
 
   /**
-   * Pulls the columns from the database into this TableProperties and orders
-   * them according to the column order. This is an optimization and should
-   * only be done if necessary.
+   * Pulls the columns from the database into this TableProperties. Also
+   * updates the maps of display name and sms label.
    */
   public void refreshColumns() {
-    columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
-        backingStore);
-    orderColumns();
+    this.mElementKeyToColumnProperties = 
+        ColumnProperties.getColumnPropertiesForTable(dbh, tableId, 
+            backingStore);
+    this.mColumnDisplayNameToElementKey = new HashMap<String, String>();
+    this.mColumnAbbreviationToElementKey = new HashMap<String, String>();
+    for (Map.Entry<String, ColumnProperties> entry : 
+           mElementKeyToColumnProperties.entrySet()) {
+      mColumnDisplayNameToElementKey.put(entry.getValue().getDisplayName(), 
+          entry.getValue().getElementKey());
+      mColumnAbbreviationToElementKey.put(entry.getValue().getSmsLabel(),
+          entry.getValue().getElementKey());
+    }
   }
 
-  private void orderColumns() {
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length];
-    for (int i = 0; i < columnOrder.size(); i++) {
-      for (int j = 0; j < columns.length; j++) {
-        if (columns[j].getElementKey().equals(columnOrder.get(i))) {
-          newColumns[i] = columns[j];
-          break;
-        }
-      }
-    }
-    columns = newColumns;
-  }
 
   public ColumnProperties getColumnByElementKey(String colElementKey) {
-    int colIndex = getColumnIndex(colElementKey);
-    if (colIndex < 0) {
-      return null;
+    if (this.mElementKeyToColumnProperties == null) {
+      getColumns();
     }
-    return getColumns()[colIndex];
+    return this.mElementKeyToColumnProperties.get(colElementKey);
   }
+
 
   /**
-   * Return a column properties object for the column at the given index.
-   * @param index
+   * Return the index of the elementKey in the columnOrder, or -1 if it is not
+   * present.
+   * @param elementKey
    * @return
    */
-  public ColumnProperties getColumnByIndex(int index) {
-    if (index < 0) {
-      return null;
-    }
-    return getColumns()[index];
-  }
-
-  public int getColumnIndex(String colDbName) {
-    ArrayList<String> colOrder = getColumnOrder();
-    for (int i = 0; i < colOrder.size(); i++) {
-      if (colOrder.get(i).equals(colDbName)) {
-        return i;
-      }
-    }
-    return -1;
+  public int getColumnIndex(String elementKey) {
+    List<String> colOrder = getColumnOrder();
+    return colOrder.indexOf(elementKey);
   }
 
   /**
@@ -1074,29 +1077,39 @@ public class TableProperties {
    * @return
    */
   public String getColumnByDisplayName(String displayName) {
-    ColumnProperties[] cps = getColumns();
-    for (ColumnProperties cp : cps) {
-      String cdn = cp.getDisplayName();
-      if ((cdn != null) && (cdn.equalsIgnoreCase(displayName))) {
-        return cp.getElementKey();
-      }
+    if (this.mColumnDisplayNameToElementKey == null) {
+      getColumns();
     }
-    return null;
+    return this.mColumnDisplayNameToElementKey.get(displayName);
   }
 
+  /**
+   * Return the element key based upon the abbreviation/sms label.
+   * <p>
+   * NB: This is currently not fully conceptualized, and should be used with
+   * caution.
+   * @param abbreviation
+   * @return
+   */
   public String getColumnByAbbreviation(String abbreviation) {
-    ColumnProperties[] cps = getColumns();
-    for (ColumnProperties cp : cps) {
-      String ca = cp.getSmsLabel();
-      if ((ca != null) && (ca.equalsIgnoreCase(abbreviation))) {
-        return cp.getElementKey();
-      }
+    if (this.mColumnAbbreviationToElementKey == null) {
+      getColumns();
     }
-    return null;
+    return this.mColumnAbbreviationToElementKey.get(abbreviation);
   }
 
+  /**
+   * Get the {@link ColumnProperties} for the column as specified by either
+   * the case-insensitive display name or the case insensitive sms label.
+   * @param name
+   * @return
+   */
+  /*
+   * Allowing the weird ignorecase thing because this is used by query, which
+   * at the moment is all legacy code.
+   */
   public ColumnProperties getColumnByUserLabel(String name) {
-    ColumnProperties[] cps = getColumns();
+    Collection<ColumnProperties> cps = getColumns().values();
     for (ColumnProperties cp : cps) {
       String cdn = cp.getDisplayName();
       if (cdn.equalsIgnoreCase(name)) {
@@ -1119,8 +1132,8 @@ public class TableProperties {
    * @return
    */
   private boolean columnNameConflict(String name) {
-    for (ColumnProperties cp : columns) {
-      if (cp.getElementKey().equals(name)) {
+    for (String elementKey : getColumns().keySet()) {
+      if (elementKey.equals(name)) {
         return true;
       }
     }
@@ -1172,14 +1185,14 @@ public class TableProperties {
       String elementName, ColumnType columnType, String listChildElementKeys,
       boolean isPersisted, String joins) {
     // ensuring columns is initialized
-    getColumns();
-    // preparing column order
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length + 1];
-    ArrayList<String> newColumnOrder = new ArrayList<String>();
-    for (int i = 0; i < columns.length; i++) {
-      newColumns[i] = columns[i];
-      newColumnOrder.add(columnOrder.get(i));
-    }
+//    Map<String, ColumnProperties> newColumns = getColumns();
+//    // preparing column order
+//    ColumnProperties[] newColumns = new ColumnProperties[columns.length + 1];
+//    ArrayList<String> newColumnOrder = new ArrayList<String>();
+//    for (int i = 0; i < columns.length; i++) {
+//      newColumns[i] = columns[i];
+//      newColumnOrder.add(columnOrder.get(i));
+//    }
     // adding column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
@@ -1201,6 +1214,7 @@ public class TableProperties {
 	          this.getBackingStoreType());
 	      db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \""
 	          + cp.getElementKey() + "\"");
+	      List<String> newColumnOrder = this.getColumnOrder();
 	      newColumnOrder.add(cp.getElementKey());
 	      setColumnOrder(newColumnOrder, db);
 	      Log.d("TP", "here we are");
@@ -1211,9 +1225,10 @@ public class TableProperties {
 	    } finally {
 	      db.endTransaction();
 	    }
-	    // updating TableProperties
-	    newColumns[columns.length] = cp;
-	    columns = newColumns;
+	    // update this object.
+	    refreshColumns();
+//	    newColumns[columns.length] = cp;
+//	    columns = newColumns;
 	    // returning new ColumnProperties
 	    return cp;
     } finally {
@@ -1230,51 +1245,74 @@ public class TableProperties {
    */
   public void deleteColumn(String elementKey) {
     // ensuring columns is initialized
-    getColumns();
+    Map<String, ColumnProperties> columns = getColumns();
     // finding the index of the column in columns
-    int colIndex = 0;
-    for (ColumnProperties cp : columns) {
-      if (cp.getElementKey().equals(elementKey)) {
-        break;
-      } else {
-        colIndex++;
-      }
-    }
-    if (colIndex == columns.length) {
-      Log.e(TableProperties.class.getName(),
-          "deleteColumn() did not find the column");
-      return;
-    }
+//    int colIndex = 0;
+//    for (ColumnProperties cp : columns.values()) {
+//      if (cp.getElementKey().equals(elementKey)) {
+//        break;
+//      } else {
+//        colIndex++;
+//      }
+//    }
+//    if (colIndex == columns.length) {
+//      Log.e(TableProperties.class.getName(),
+//          "deleteColumn() did not find the column");
+//      return;
+//    }
     // forming a comma-separated list of columns to keep
     String csv = DbTable.DB_CSV_COLUMN_LIST;
-    for (int i = 0; i < columns.length; i++) {
-      if (i == colIndex) {
-        continue;
+    Map<String, ColumnProperties> newColumnMap = 
+        new HashMap<String, ColumnProperties>();
+    ColumnProperties colToDelete = null;
+    for (ColumnProperties cp : columns.values()) {
+      if (cp.getElementKey().equals(elementKey)) {
+        colToDelete = cp;
+      } else {
+        csv += ", " + cp.getElementKey();
+        newColumnMap.put(cp.getElementKey(), cp);
       }
-      csv += ", " + columns[i].getElementKey();
     }
+    if (colToDelete == null) {
+      Log.e(TAG, "could not find column to delete with element key: " 
+          + elementKey);
+      return;
+    }
+//    for (int i = 0; i < columns.length; i++) {
+//      if (i == colIndex) {
+//        continue;
+//      }
+//      csv += ", " + columns[i].getElementKey();
+//    }
     // updating TableProperties
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length - 1];
-    int index = 0;
-    for (int i = 0; i < columns.length; i++) {
-      if (i == colIndex) {
-        continue;
-      }
-      newColumns[index] = columns[i];
-      index++;
-    }
-    ColumnProperties colToDelete = columns[colIndex];
-    columns = newColumns;
-    ArrayList<String> newColumnOrder = new ArrayList<String>();
-    index = 0;
-    for (String col : columnOrder) {
-      if (col.equals(elementKey)) {
-        continue;
-      }
-      newColumnOrder.add(col);
-      index++;
-    }
-    setColumnOrder(newColumnOrder);
+//    Map<String, ColumnProperties> newColumnMap = 
+//        new HashMap<String, ColumnProperties>();
+//    ColumnProperties[] newColumns = new ColumnProperties[columns.length - 1];
+//    int index = 0;
+//    for (int i = 0; i < columns.length; i++) {
+//      if (i == colIndex) {
+//        continue;
+//      }
+//      newColumns[index] = columns[i];
+//      index++;
+//    }
+//    ColumnProperties colToDelete = columns[colIndex];
+//    columns = newColumns;
+    // Update the column order.
+    List<String> newColumnOrder = this.getColumnOrder();
+    newColumnOrder.remove(elementKey);
+    this.setColumnOrder(newColumnOrder);
+    refreshColumns();
+//    ArrayList<String> newColumnOrder = new ArrayList<String>();
+//    index = 0;
+//    for (String col : columnOrder) {
+//      if (col.equals(elementKey)) {
+//        continue;
+//      }
+//      newColumnOrder.add(col);
+//      index++;
+//    }
+//    setColumnOrder(newColumnOrder);
     // deleting the column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
@@ -1298,7 +1336,7 @@ public class TableProperties {
   /**
    * Reforms the table.
    */
-  public void reformTable(SQLiteDatabase db, ArrayList<String> columnOrder2) {
+  public void reformTable(SQLiteDatabase db, List<String> columnOrder2) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
     for (String col : columnOrder2) {
       csvBuilder.append(", " + col);
@@ -1314,10 +1352,14 @@ public class TableProperties {
   }
 
   /**
-   * @return an ordered array of the element keys of the table's columns
+   * The column order is specified by an ordered list of element keys.
+   * @return a copy of the columnOrder. Since it is a copy, should cache when
+   * possible.
    */
-  public ArrayList<String> getColumnOrder() {
-    return columnOrder;
+  public List<String> getColumnOrder() {
+    List<String> defensiveCopy = new ArrayList<String>();
+    defensiveCopy.addAll(columnOrder);
+    return defensiveCopy;
   }
 
   /**
@@ -1326,7 +1368,7 @@ public class TableProperties {
    * @param colOrder
    *          an ordered array of the database names of the table's columns
    */
-  public void setColumnOrder(ArrayList<String> colOrder) {
+  public void setColumnOrder(List<String> colOrder) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
     	setColumnOrder(colOrder, db);
@@ -1336,7 +1378,7 @@ public class TableProperties {
     }
   }
 
-  private void setColumnOrder(ArrayList<String> columnOrder, 
+  private void setColumnOrder(List<String> columnOrder, 
       SQLiteDatabase db) {
 	String colOrderList = null;
 	try {
@@ -1352,18 +1394,21 @@ public class TableProperties {
 		Log.e(t, "illegal json ignored");
 	}
 	tableKVSH.setString(KEY_COLUMN_ORDER, colOrderList);
-    this.columnOrder = columnOrder;
+   this.columnOrder = columnOrder;
   }
 
   /**
-   * @return an array of the database names of the prime columns
+   * @return a copy of the element names of the prime columns. Since
+   * is a copy, should cache when possible.
    */
-  public ArrayList<String> getPrimeColumns() {
-    return primeColumns;
+  public List<String> getPrimeColumns() {
+    List<String> defensiveCopy = new ArrayList<String>();
+    defensiveCopy.addAll(this.primeColumns);
+    return defensiveCopy;
   }
 
   public boolean isColumnPrime(String colDbName) {
-    for (String prime : primeColumns) {
+    for (String prime : getPrimeColumns()) {
       if (prime.equals(colDbName)) {
         return true;
       }
@@ -1377,7 +1422,7 @@ public class TableProperties {
    * @param primes
    *          an array of the database names of the table's prime columns
    */
-  public void setPrimeColumns(ArrayList<String> primes) {
+  public void setPrimeColumns(List<String> primes) {
     String primesStr;
     try {
       primesStr = mapper.writeValueAsString(primes);
@@ -1620,7 +1665,7 @@ public class TableProperties {
         .withFieldVisibility(Visibility.ANY));
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
-    for (ColumnProperties cp : columns) {
+    for (ColumnProperties cp : getColumns().values()) {
       colOrder.add(cp.getElementKey());
       cols.add(cp.toJson());
     }
@@ -1735,7 +1780,7 @@ public class TableProperties {
         deleteColumn(columnToDelete);
       }
       setColumnOrder(colOrder);
-      orderColumns();
+//      orderColumns();
   }
 
   /**
@@ -1749,8 +1794,8 @@ public class TableProperties {
     int numericColCount = 0;
     int locationColCount = 0;
     int dateColCount = 0;
-    ColumnProperties[] columnProperties = this.getColumns();
-    for (ColumnProperties cp : columnProperties) {
+    Map<String, ColumnProperties> columnProperties = this.getColumns();
+    for (ColumnProperties cp : columnProperties.values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() 
           == ColumnType.INTEGER) {
         numericColCount++;

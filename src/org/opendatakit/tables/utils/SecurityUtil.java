@@ -16,6 +16,7 @@
 package org.opendatakit.tables.utils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.DbHelper;
@@ -35,11 +36,11 @@ public class SecurityUtil {
     public static final String PHONENUM_COLUMN_NAME = "phone";
     public static final String PASSWORD_COLUMN_NAME = "pass";
     
-    public static boolean couldBeSecurityTable(ArrayList<String> arrayList) {
+    public static boolean couldBeSecurityTable(List<String> arrayList) {
         return (getSecurityIndices(arrayList) != null);
     }
     
-    private static int[] getSecurityIndices(ArrayList<String> arrayList) {
+    private static int[] getSecurityIndices(List<String> arrayList) {
         int[] indices = {-1, -1, -1};
         for (int i = 0; i < arrayList.size(); i++) {
             String column = arrayList.get(i);

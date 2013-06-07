@@ -342,7 +342,7 @@ public abstract class CustomView extends LinearLayout {
 		private final UserTable mTable;
 		private Map<String, Integer> colMap;			//Maps the column names with an index number
 		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
-		private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
+		private List<String> primeColumns;			//Holds the db names of indexed columns
 		protected Context mContext;
 		private TableProperties tp;
 
@@ -385,18 +385,20 @@ public abstract class CustomView extends LinearLayout {
 
 		//Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
 		private void initMaps(TableProperties tp) {
-			colMap = new HashMap<String, Integer>();
-
-			ColumnProperties[] cps = tp.getColumns();
 			primeColumns = tp.getPrimeColumns();
-
-			for (int i = 0; i < cps.length; i++) {
-				colMap.put(cps[i].getDisplayName(), i);
-				String abbr = cps[i].getSmsLabel();
-				if (abbr != null) {
-					colMap.put(abbr, i);
-				}
-			}
+		    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+		        tp.getColumns();
+		    Map<String, Integer> ekToIndex = mTable.getMapOfUserDataToIndex();
+		    colMap = new HashMap<String, Integer>();
+		    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
+		      String smsLabel = cp.getSmsLabel();
+            colMap.put(cp.getDisplayName(), ekToIndex.get(cp.getElementKey()));
+		      if (smsLabel != null) {
+		        // TODO: this doesn't look to ever be used, and ignores the possibility
+		        // of conflicting element keys and sms labels.
+		        colMap.put(smsLabel, colMap.get(cp.getElementKey()));
+		      }
+		    }
 		}
 
 		//Returns the number of rows in the table being viewed.
@@ -666,7 +668,7 @@ public abstract class CustomView extends LinearLayout {
 			query.loadFromUserQuery(searchText);
 			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mContext),
 					tp.getTableId());
-			ArrayList<String> columnOrder = tp.getColumnOrder();
+			List<String> columnOrder = tp.getColumnOrder();
 			return new TableData(mContext, tp, 
 			    dbt.getRaw(query, columnOrder.toArray(
 			        new String[columnOrder.size()])));

@@ -550,8 +550,7 @@ public class SyncProcessor {
 
   private Map<String, ColumnType> getColumns(TableProperties tp) {
     Map<String, ColumnType> columns = new HashMap<String, ColumnType>();
-    ColumnProperties[] userColumns = tp.getColumns();
-    for (ColumnProperties colProp : userColumns) {
+    for (ColumnProperties colProp : tp.getColumns().values()) {
       columns.put(colProp.getElementKey(), colProp.getColumnType());
     }
 //    columns.put(DbTable.DB_URI_USER, ColumnType.PHONE_NUMBER);
@@ -737,15 +736,14 @@ public class SyncProcessor {
    */
   private List<Column> getColumnsForTable(TableProperties tp) {
     List<Column> columns = new ArrayList<Column>();
-    ColumnProperties[] colProps = tp.getColumns();
-    for (int i = 0; i < colProps.length; i++) {
-      String elementKey = colProps[i].getElementKey();
-      String elementName = colProps[i].getElementName();
-      ColumnType colType = colProps[i].getColumnType();
+    for (ColumnProperties cp : tp.getColumns().values()) {
+      String elementKey = cp.getElementKey();
+      String elementName = cp.getElementName();
+      ColumnType colType = cp.getColumnType();
       List<String> listChildrenElements = 
-          colProps[i].getListChildElementKeys();
-      int isPersisted = SyncUtil.boolToInt(colProps[i].isPersisted());
-      JoinColumn joins = colProps[i].getJoins();
+          cp.getListChildElementKeys();
+      int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
+      JoinColumn joins = cp.getJoins();
       String listChildElementKeysStr = null;
       String joinsStr = null;
       try {

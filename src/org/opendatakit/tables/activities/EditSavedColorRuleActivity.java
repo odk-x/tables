@@ -117,12 +117,13 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
         org.opendatakit.tables.R.xml.preference_row_color_rule_entry);
     this.mHumanValues = ColorRule.RuleType.getValues();
     this.mEntryVales = ColorRule.RuleType.getValues();
-    ColumnProperties[] cps = mTp.getColumns();
-    this.mColumnDisplayNames = new CharSequence[cps.length];
-    this.mColumnElementKeys = new CharSequence[cps.length];
-    for (int i = 0; i < cps.length; i++) {
-      mColumnDisplayNames[i] = cps[i].getDisplayName();
-      mColumnElementKeys[i] = cps[i].getElementKey();
+    List<String> columnOrder = mTp.getColumnOrder();
+    this.mColumnDisplayNames = new CharSequence[columnOrder.size()];
+    this.mColumnElementKeys = new CharSequence[columnOrder.size()];
+    for (int i = 0; i < columnOrder.size(); i++) {
+      ColumnProperties cp = mTp.getColumnByElementKey(columnOrder.get(i));
+      mColumnDisplayNames[i] = cp.getDisplayName();
+      mColumnElementKeys[i] = cp.getElementKey();
     }
     this.setTitle(getString(R.string.edit_rule));
   }

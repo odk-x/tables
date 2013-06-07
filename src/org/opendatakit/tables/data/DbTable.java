@@ -145,7 +145,7 @@ public class DbTable {
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
       boolean testOpen = db.isOpen();
         StringBuilder colListBuilder = new StringBuilder();
-        for (ColumnProperties cp : tp.getColumns()) {
+        for (ColumnProperties cp : tp.getColumns().values()) {
             colListBuilder.append(", " + cp.getElementKey());
             if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");
@@ -191,7 +191,8 @@ public class DbTable {
     public UserTable getRaw(ArrayList<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
         if (columns == null) {
-            ColumnProperties[] cps = tp.getColumns();
+            Map<String, ColumnProperties> cps = tp.getColumns();
+//            ColumnProperties[] cps = tp.getColumns();
              columns = new ArrayList<String>();
              columns.addAll(ADMIN_COLUMNS);
 //            columns = new ArrayList<String>();
@@ -201,8 +202,8 @@ public class DbTable {
 //            columns.add(DB_SYNC_STATE);
 //            columns.add(DB_TRANSACTIONING);
 //            need to add this stuff now;
-            for (int i = 0; i < cps.length; i++) {
-            	columns.add(cps[i].getElementKey());
+            for (ColumnProperties cp : cps.values()) {
+            	columns.add(cp.getElementKey());
             }
         }
         String[] colArr = new String[columns.size() + 1];
@@ -235,7 +236,7 @@ public class DbTable {
     }
 
     public UserTable getRaw(Query query, String[] columns) {
-      ArrayList<String> desiredColumns = tp.getColumnOrder();
+      List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toSql(desiredColumns));
         table.setFooter(footerQuery(query));
@@ -243,7 +244,7 @@ public class DbTable {
     }
 
     public UserTable getUserTable(Query query) {
-      ArrayList<String> desiredColumns = tp.getColumnOrder();
+      List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toSql(desiredColumns));
         table.setFooter(footerQuery(query));
@@ -256,7 +257,7 @@ public class DbTable {
       // The element keys of the columns we want. We want to select both the
       // user-defined and the admin columns--both the user-defined and 
       // ODKTables-specified information, in other words.
-      ArrayList<String> desiredColumns = tp.getColumnOrder();
+      List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
         table.setFooter(footerQuery(query));
@@ -308,34 +309,34 @@ public class DbTable {
 	        db = dbh.getReadableDatabase();
 	        SqlData sd = query.toConflictSql();
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        Log.d(TAG, sd.getSql());
 	        int count = c.getCount() / 2;
-	        Log.d(TAG, "cursor count: " + c.getCount());
-	        String[] header = new String[tp.getColumns().length];
+	        String[] header = new String[tp.getColumns().size()];
 	        String[] rowIds = new String[count];
 	        String[][] syncTags = new String[count][2];
-	        String[][][] values = new String[count][2][tp.getColumns().length];
+	        String[][][] values = new String[count][2][tp.getColumns().size()];
 	        if (count == 0) {
 	            return new ConflictTable(header, rowIds, syncTags, values);
 	        }
 	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
 	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
-	        int[] colIndices = new int[tp.getColumns().length];
-	        for (int i = 0; i < tp.getColumns().length; i++) {
+	        int[] colIndices = new int[tp.getColumns().size()];
+	        List<String> columnOrder = tp.getColumnOrder();
+	        for (int i = 0; i < columnOrder.size(); i++) {
 	            colIndices[i] = c.getColumnIndexOrThrow(
-	                    tp.getColumns()[i].getElementKey());
-	            header[i] = tp.getColumns()[i].getDisplayName();
+	                    columnOrder.get(i));
+	            header[i] = tp.getColumnByElementKey(
+	                columnOrder.get(i)).getDisplayName();
 	        }
 	        c.moveToFirst();
 	        for (int i = 0; i < count; i++) {
 	            rowIds[i] = c.getString(idColIndex);
 	            syncTags[i][0] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().length; j++) {
+	            for (int j = 0; j < tp.getColumns().size(); j++) {
 	                values[i][0][j] = c.getString(colIndices[j]);
 	            }
 	            c.moveToNext();
 	            syncTags[i][1] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().length; j++) {
+	            for (int j = 0; j < tp.getColumns().size(); j++) {
 	                values[i][1][j] = c.getString(colIndices[j]);
 	            }
 	            c.moveToNext();
@@ -392,7 +393,7 @@ public class DbTable {
      * @param c Cursor meeting the requirements above
      * @param userColumnOrder the user-specified column order
      */
-    private UserTable buildTable(Cursor c, ArrayList<String> userColumnOrder) {
+    private UserTable buildTable(Cursor c, List<String> userColumnOrder) {
       // This map will store the mapping of a column's element key to the index
       // of that column in the cursor.
       Map<String, Integer> keyToCursorIndex = new HashMap<String, Integer>();
@@ -483,38 +484,46 @@ public class DbTable {
       return value;
     }
 
+    /**
+     * Return an array of display names for the columns in the user-defined 
+     * order.
+     * @return
+     */
     private String[] getUserHeader() {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] header = new String[cps.length];
-        for (int i = 0; i < header.length; i++) {
-            header[i] = cps[i].getDisplayName();
-        }
-        return header;
+      List<String> columnOrder = tp.getColumnOrder();
+      String[] header = new String[columnOrder.size()];
+      for (int i = 0; i < header.length; i++) {
+          header[i] = 
+              tp.getColumnByElementKey(columnOrder.get(i)).getDisplayName();
+      }
+      return header;
     }
 
     private String[] footerQuery(Query query) {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] footer = new String[cps.length];
-        for (int i = 0; i < cps.length; i++) {
-            switch (cps[i].getFooterMode()) {
+      List<String> columnOrder = tp.getColumnOrder();
+        String[] footer = new String[columnOrder.size()];
+        for (int i = 0; i < columnOrder.size(); i++) {
+          ColumnProperties cp = 
+              tp.getColumnByElementKey(columnOrder.get(i));
+            switch (cp.getFooterMode()) {
             case count:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.COUNT);
                 break;
             case maximum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.MAXIMUM);
                 break;
             case minimum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.MINIMUM);
                 break;
             case sum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.SUM);
                 break;
             case mean:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.AVERAGE);
                 break;
             case none:
@@ -522,7 +531,7 @@ public class DbTable {
               break;
             default:
               Log.e(TAG, "unrecognized footer mode: " +
-                  cps[i].getFooterMode().name());
+                  cp.getFooterMode().name());
             }
         }
         return footer;
@@ -570,7 +579,6 @@ public class DbTable {
     public void addRow(Map<String, String> values, String rowId, 
           Long timestamp, String uriUser, String instanceName, String formId, 
           String locale ) {
-        Log.d(TAG, values.toString());
         if (timestamp == null) {
         	timestamp = System.currentTimeMillis();
         }
@@ -646,7 +654,6 @@ public class DbTable {
         try {
 	        values.put(DataTableColumns.SAVED, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
-	        Log.d(TAG, "insert, id=" + result);
         } finally {
           // TODO: fix the when to close problem
 //        	db.close();

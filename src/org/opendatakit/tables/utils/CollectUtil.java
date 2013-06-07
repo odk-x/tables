@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,9 +42,9 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -170,7 +171,7 @@ public class CollectUtil {
    * @return true if the file was successfully written
    */
   public static boolean buildBlankForm(File file,
-      ColumnProperties[] columns, String title, String formId) {
+      Collection<ColumnProperties> columns, String title, String formId) {
     try {
       FileWriter writer = new FileWriter(file);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
@@ -295,7 +296,7 @@ public class CollectUtil {
         writer.write(" id=\"");
         writer.write(params.getFormId());
         writer.write("\">");
-        for (ColumnProperties cp : tp.getColumns()) {
+        for (ColumnProperties cp : tp.getColumns().values()) {
           String value = values.get(cp.getElementKey());
           if (value == null) {
             writer.write("<" + cp.getElementKey() + "/>");
@@ -476,7 +477,8 @@ public class CollectUtil {
       // First we want to write the file.
       boolean writeSuccessful =
           CollectUtil.buildBlankForm(getAddRowFormFile(),
-              tp.getColumns(), tp.getDisplayName(), params.getFormId());
+              tp.getColumns().values(), tp.getDisplayName(), 
+              params.getFormId());
       if (!writeSuccessful) {
         Log.e(TAG, "problem writing file for add row");
         return false;
@@ -541,7 +543,7 @@ public class CollectUtil {
         TableProperties tp, UserTable table, int rowNum, 
         CollectFormParameters params) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      for (ColumnProperties cp : tp.getColumns()) {
+      for (ColumnProperties cp : tp.getColumns().values()) {
         String value = table.getData(rowNum,
             tp.getColumnIndex(cp.getElementKey()));
         elementKeyToValue.put(cp.getElementKey(), value);
@@ -632,7 +634,7 @@ public class CollectUtil {
         Map<String, String> formValues) {
       DataUtil du = DataUtil.getDefaultDataUtil();
       Map<String, String> values = new HashMap<String, String>();
-      for (ColumnProperties cp : tp.getColumns()) {
+      for (ColumnProperties cp : tp.getColumns().values()) {
         // we want to use element key here
           String elementKey = cp.getElementKey();
           String value = formValues.get(elementKey);
@@ -965,7 +967,7 @@ public class CollectUtil {
       // but we've prepopulated an add with a query, when we return and don't do
       // a check, we'll add a blank row b/c there are values in the key value
       // pairs, even though they were our prepopulated values.
-      for (ColumnProperties cp : tp.getColumns()) {
+      for (ColumnProperties cp : tp.getColumns().values()) {
         elementKeyToValue.put(cp.getElementKey(), "");
       }
       Query currentQuery = new Query(null, tp);

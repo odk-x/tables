@@ -3,6 +3,7 @@ package org.opendatakit.tables.activities;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -616,7 +617,7 @@ public class TableActivity extends SherlockFragmentActivity {
       }
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getColumns()) {
+    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
       String value = table.getData(rowNum, mTableProperties.getColumnIndex(
           cp.getElementKey()));
       elementKeyToValue.put(cp.getElementKey(), value);
@@ -702,7 +703,7 @@ public class TableActivity extends SherlockFragmentActivity {
     // do
     // a check, we'll add a blank row b/c there are values in the key value
     // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : mTableProperties.getColumns()) {
+    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
     Query currentQuery = new Query(null, mTableProperties);
@@ -789,7 +790,7 @@ public class TableActivity extends SherlockFragmentActivity {
    */
   Map<String, String> getMapForInsertion(Map<String, String> formValues) {
     Map<String, String> values = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getColumns()) {
+    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
       // we want to use element key here, b/c that is what collect should be 
       // using to access things. 
       String elementKey = cp.getElementKey();
@@ -937,12 +938,13 @@ public class TableActivity extends SherlockFragmentActivity {
     context.startActivity(intent);
   }
 
-  public static void launchDetailActivity(Context context, TableProperties tp, UserTable table,
-      int rowNum) {
+  public static void launchDetailActivity(Context context, TableProperties tp, 
+      UserTable table, int rowNum) {
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
+    List<String> columnOrder = tp.getColumnOrder();
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumns()[i].getElementKey();
+      keys[i] = columnOrder.get(i);
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
@@ -956,6 +958,7 @@ public class TableActivity extends SherlockFragmentActivity {
   private class CellEditDialog extends AlertDialog {
     private final String rowId;
     private final int colIndex;
+    private final String mColumnElementKey;
     private final CellValueView.CellEditView cev;
 
     public CellEditDialog(String rowId, String value, int colIndex) {
@@ -963,8 +966,11 @@ public class TableActivity extends SherlockFragmentActivity {
 
       this.rowId = rowId;
       this.colIndex = colIndex;
+      this.mColumnElementKey = mTableProperties.getColumnOrder().get(colIndex);
       cev = CellValueView
-          .getCellEditView(mActivity, mTableProperties.getColumns()[colIndex], value);
+          .getCellEditView(mActivity, 
+              mTableProperties.getColumnByElementKey(mColumnElementKey), 
+              value);
       buildView(mActivity);
     }
 
@@ -974,14 +980,15 @@ public class TableActivity extends SherlockFragmentActivity {
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          String value = mDataUtil.validifyValue(mTableProperties.getColumns()[colIndex],
+          String value = mDataUtil.validifyValue(
+              mTableProperties.getColumnByElementKey(mColumnElementKey),
               cev.getValue());
           if (value == null) {
             // TODO: alert the user
             return;
           }
           Map<String, String> values = new HashMap<String, String>();
-          values.put(mTableProperties.getColumns()[colIndex].getElementKey(), value);
+          values.put(mColumnElementKey, value);
           // TODO: Update these nulls.
           mDbTable.updateRow(rowId, values, null, null, null, null, null);
           dismiss();

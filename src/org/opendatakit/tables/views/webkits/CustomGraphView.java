@@ -74,15 +74,18 @@ public class CustomGraphView extends CustomView {
 	private void set(TableProperties tp, UserTable table) {
 		this.tp = tp;
 		this.table = table;
-		colIndexTable.clear();
-		ColumnProperties[] cps = tp.getColumns();
-		for (int i = 0; i < cps.length; i++) {
-			colIndexTable.put(cps[i].getDisplayName(), i);
-			String abbr = cps[i].getSmsLabel();
-			if (abbr != null) {
-				colIndexTable.put(abbr, i);
-			}
-		}
+	    colIndexTable.clear();
+	    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+	        tp.getColumns();
+	    colIndexTable = table.getMapOfUserDataToIndex();
+	    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
+	      String smsLabel = cp.getSmsLabel();
+	      if (smsLabel != null) {
+	        // TODO: this doesn't look to ever be used, and ignores the possibility
+	        // of conflicting element keys and sms labels.
+	        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
+	      }
+	    }
 		graphData = new GraphData(graphName);
 	}
 

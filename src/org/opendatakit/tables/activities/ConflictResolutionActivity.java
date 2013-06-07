@@ -108,7 +108,7 @@ public class ConflictResolutionActivity extends SherlockActivity
     @Override
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
-        ArrayList<String> colDbNames = c.getTableProperties().getColumnOrder();
+        List<String> colDbNames = c.getTableProperties().getColumnOrder();
         Map<String, String> values = new HashMap<String, String>();
         while (!changes.isEmpty()) {
             RowChange rc = changes.pop();

@@ -639,22 +639,23 @@ public class ColumnProperties {
    * juncture.
    * @param dbh
    * @param tableId
-   * @return
+   * @return a map of elementKey to ColumnProperties for each persisted column.
    */
-  static ColumnProperties[] getColumnPropertiesForTable(DbHelper dbh,
+  static Map<String, ColumnProperties> getColumnPropertiesForTable(DbHelper dbh,
       String tableId, KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
       List<String> elementKeys =
           ColumnDefinitions.getPersistedElementKeysForTable(tableId, db);
-      ColumnProperties[] cps = new ColumnProperties[elementKeys.size()];
+      Map<String, ColumnProperties> elementKeyToColumnProperties = 
+          new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId,
             elementKeys.get(i), typeOfStore);
-        cps[i] = cp;
+        elementKeyToColumnProperties.put(elementKeys.get(i), cp);
       }
-      return cps;
+      return elementKeyToColumnProperties;
     } finally {
 //    // TODO: we need to resolve how we are going to prevent closing the
 //    // db on callers. Removing this here, far far from ideal.
@@ -910,11 +911,14 @@ public class ColumnProperties {
     DataManager dm = new DataManager(dbh);
     TableProperties tp = dm.getTableProperties(tableId,
         KeyValueStore.Type.ACTIVE);
-    for (ColumnProperties cp : tp.getColumns()) {
-      if (cp.getDisplayName().equals(displayName)) {
-        return true;
-      }
+    if (tp.getColumnByDisplayName(displayName) != null) {
+      return true;
     }
+//    for (ColumnProperties cp : tp.getColumns().values()) {
+//      if (cp.getDisplayName().equals(displayName)) {
+//        return true;
+//      }
+//    }
     return false;
   }
 
@@ -953,7 +957,7 @@ public class ColumnProperties {
   private boolean displayNameConflict(String proposedDisplayName) {
     DataManager dm = new DataManager(dbh);
     TableProperties tp = dm.getTableProperties(tableId, backingStore);
-    for (ColumnProperties cp : tp.getColumns()) {
+    for (ColumnProperties cp : tp.getColumns().values()) {
       if (cp.getDisplayName().equalsIgnoreCase(proposedDisplayName)
           && !cp.getElementKey().equals(elementKey)) {
         return true;
@@ -1037,7 +1041,7 @@ public class ColumnProperties {
   public void setColumnType(ColumnType columnType) {
     TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
         tableId, backingStore);
-    ArrayList<String> colOrder = tp.getColumnOrder();
+    List<String> colOrder = tp.getColumnOrder();
     tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
