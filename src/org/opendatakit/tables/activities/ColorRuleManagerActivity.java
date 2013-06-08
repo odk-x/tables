@@ -25,8 +25,11 @@ import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.utils.ColorRuleUtil;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -38,6 +41,7 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -206,6 +210,12 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
+    AdapterView.AdapterContextMenuInfo info = 
+        (AdapterView.AdapterContextMenuInfo) menuInfo;
+    if (info.position <= 
+        ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
+      return;
+    }
     menu.add(0, MENU_DELETE_ENTRY, 0, getString(R.string.delete_color_rule));
     menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));
   }
@@ -239,6 +249,31 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     case STATUS_COLUMN:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
+      // We need to do a check to make sure the first rules are the default
+      // rules. Later will be a reset to default or something, but for now we
+      // just do a check.
+      if (this.mColorRuler.getColorRules().size() != 
+          ColorRuleUtil.getDefaultSyncStateColorRules().size()) {
+        // Something's gone wrong, b/c these should be fixed. 
+        // Wipe and start afresh.
+        this.mColorRuler.replaceColorRuleList(
+            ColorRuleUtil.getDefaultSyncStateColorRules());
+        this.mColorRuler.saveRuleList();
+      } else {
+        // They might be correct, or something could have gone wrong. Test.
+        for (int i = 0; i < this.mColorRuler.getColorRules().size(); i++) {
+          ColorRule defaultRule = 
+              ColorRuleUtil.getDefaultSyncStateColorRules().get(i);
+          ColorRule unknownRule = this.mColorRuler.getColorRules().get(i);
+          if (!defaultRule.equalsWithoutId(unknownRule)) {
+            // Not a match. Wipe them out and start afresh.
+            this.mColorRuler.replaceColorRuleList(
+                ColorRuleUtil.getDefaultSyncStateColorRules());
+            this.mColorRuler.saveRuleList();
+            break;
+          }
+        }
+      }
       this.setTitle(getString(R.string.color_rule_title_for, getString(R.string.status_column)));
       break;
     default:
@@ -253,6 +288,11 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.d(TAG, "list item clicked");
+    if (position <= ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
+      // We don't want to do anything, b/c we assume these rules are at the top
+      // and that they cannot be edited.
+      return;
+    }
     Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
         EditSavedColorRuleActivity.class);
     editColorRuleIntent.putExtra(
@@ -285,18 +325,49 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       final int currentPosition = position;
       // We'll need to display the display name if this is an editable field.
       // (ie if a status column or table rule)
-      String columnDisplayName = "";
+      String description = "";
+      boolean isMetadataRule = false;
       if (mType == ColorRuleGroup.Type.STATUS_COLUMN ||
           mType == ColorRuleGroup.Type.TABLE) {
-        columnDisplayName =
-            mTp.getColumnByElementKey(mColorRules.get(currentPosition)
-                .getColumnElementKey()).getDisplayName() + " ";
+        ColorRule colorRule = mColorRules.get(currentPosition);
+        String elementKey = colorRule.getColumnElementKey();
+        if (DbTable.getAdminColumns().contains(elementKey)) {
+          isMetadataRule = true;
+          // We know it must be a String rep of an int.
+          int targetState = Integer.parseInt(colorRule.getVal());
+          // For now we need to handle the special cases of the sync state.
+          if (targetState == SyncUtil.State.INSERTING) {
+            description = 
+                getString(R.string.sync_state_equals_inserting_message);
+          } else if (targetState == SyncUtil.State.UPDATING) {
+            description = 
+                getString(R.string.sync_state_equals_updating_message);
+          } else if (targetState == SyncUtil.State.REST) {
+            description = 
+                getString(R.string.sync_state_equals_rest_message);
+          } else if (targetState == SyncUtil.State.DELETING) {
+            description = 
+                getString(R.string.sync_state_equals_deleting_message);
+          } else if (targetState == SyncUtil.State.CONFLICTING) {
+            description = 
+                getString(R.string.sync_state_equals_conflicting_message);
+          } else {
+            Log.e(TAG, "unrecognized sync state: " + targetState);
+            description = "unknown";
+          }
+        } else {
+          description =
+              mTp.getColumnByElementKey(elementKey).getDisplayName();
+        }
+      }
+      if (!isMetadataRule) {
+        description += " " + 
+            mColorRules.get(currentPosition).getOperator().getSymbol() + " " +
+            mColorRules.get(currentPosition).getVal();
       }
       TextView label =
           (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
-      label.setText(columnDisplayName + " " + 
-          mColorRules.get(currentPosition).getOperator().getSymbol() + " " +
-          mColorRules.get(currentPosition).getVal());
+      label.setText(description);
       final int backgroundColor =
           mColorRules.get(currentPosition).getBackground();
       final int textColor =
@@ -315,6 +386,11 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       // And now the settings icon.
       final ImageView editView = (ImageView)
           row.findViewById(org.opendatakit.tables.R.id.row_options);
+      if (position <= 
+          ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
+        // -1 b/c zero indexed.
+        editView.setVisibility(View.GONE);
+      }
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
 

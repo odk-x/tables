@@ -16,6 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -609,10 +610,10 @@ public class Controller {
 	            intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
 	                activity, tp, params, null);
 	          } else {
-    	          Map<String, String> elementNameToValue =
+    	          Map<String, String> elementKeyToValue =
     	              CollectUtil.getMapFromQuery(tp, getSearchText());
     	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-    	             activity, tp, params, elementNameToValue);
+    	             activity, tp, params, elementKeyToValue);
 	          }
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
@@ -735,6 +736,54 @@ public class Controller {
   public static void launchAppViewActivity(Context context) {
 
   }
+  
+  /**
+   * Launches the Table pointed to by tp as a list view with the specified
+   * filename.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   */
+  public static void launchListViewWithFileName(Context context, 
+      TableProperties tp, String searchText, Stack<String> searchStack,
+      boolean isOverview, String filename) {
+    Intent intent = new Intent(context, ListDisplayActivity.class);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
+    context.startActivity(intent);
+  }
+  
+  /*
+   * A helper method that was introduced just to eliminate redundant code.
+   * Adds the appropriate extras to the intent.
+   */
+  private static void prepareIntentForLaunch(Intent intent, TableProperties tp,
+      Stack<String> searchStack, String searchText, boolean isOverview) {
+    if (searchStack != null) {
+      String[] stackValues = new String[searchStack.size()];
+      for (int i = 0; i < searchStack.size(); i++) {
+        stackValues[i] = searchStack.get(i);
+      }
+      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
+    } else if (searchText != null) {
+      intent.putExtra(INTENT_KEY_SEARCH, searchText);
+    } else if (searchText == null) {
+      KeyValueStoreHelper kvsh =
+          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
+      if (savedQuery == null) {
+        savedQuery = "";
+      }
+      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
+    }
+    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+  }
 
   private static void launchTableActivity(Context context, TableProperties tp,
       String searchText,
@@ -761,34 +810,36 @@ public class Controller {
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (searchStack != null) {
-      String[] stackValues = new String[searchStack.size()];
-      for (int i = 0; i < searchStack.size(); i++) {
-        stackValues[i] = searchStack.get(i);
-      }
-      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
-    } else if (searchText != null) {
-      intent.putExtra(INTENT_KEY_SEARCH, searchText);
-    } else if (searchText == null) {
-      KeyValueStoreHelper kvsh =
-          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
-      if (savedQuery == null) {
-        savedQuery = "";
-      }
-      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
-    }
-    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
+//    if (searchStack != null) {
+//      String[] stackValues = new String[searchStack.size()];
+//      for (int i = 0; i < searchStack.size(); i++) {
+//        stackValues[i] = searchStack.get(i);
+//      }
+//      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
+//    } else if (searchText != null) {
+//      intent.putExtra(INTENT_KEY_SEARCH, searchText);
+//    } else if (searchText == null) {
+//      KeyValueStoreHelper kvsh =
+//          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+//      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
+//      if (savedQuery == null) {
+//        savedQuery = "";
+//      }
+//      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
+//    }
+//    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
     context.startActivity(intent);
   }
-
+  
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table,
       int rowNum) {
+    List<String> columnOrder = tp.getColumnOrder();
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumns()[i].getElementKey();
+      keys[i] = columnOrder.get(i);
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
@@ -803,14 +854,16 @@ public class Controller {
 
         private final String rowId;
         private final int colIndex;
+        private final String elementKey;
         private final CellValueView.CellEditView cev;
 
         public CellEditDialog(String rowId, String value, int colIndex) {
             super(activity);
             this.rowId = rowId;
             this.colIndex = colIndex;
+            this.elementKey = tp.getColumnOrder().get(colIndex);
             cev = CellValueView.getCellEditView(activity,
-                    tp.getColumns()[colIndex], value);
+                    tp.getColumnByElementKey(this.elementKey), value);
             buildView(activity);
         }
         private void buildView(Context context) {
@@ -819,14 +872,15 @@ public class Controller {
           setButton.setOnClickListener(new View.OnClickListener() {
               @Override
               public void onClick(View v) {
-                  String value = du.validifyValue(tp.getColumns()[colIndex],
+                  String value = du.validifyValue(
+                      tp.getColumnByElementKey(CellEditDialog.this.elementKey),
                           cev.getValue());
                   if (value == null) {
                       // TODO: alert the user
                       return;
                   }
                   Map<String, String> values = new HashMap<String, String>();
-                  values.put(tp.getColumns()[colIndex].getElementKey(),
+                  values.put(CellEditDialog.this.elementKey,
                           value);
 
                   // TODO: supply reasonable values for these...
@@ -836,7 +890,8 @@ public class Controller {
                   String formId = null; // formId used by ODK Collect
                   String locale = null; // current locale
 
-                  dbt.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
+                  dbt.updateRow(rowId, values, uriUser, timestamp, 
+                      instanceName, formId, locale);
                   da.init();
                   dismiss();
               }

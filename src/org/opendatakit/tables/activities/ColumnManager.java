@@ -93,10 +93,15 @@ public class ColumnManager extends SherlockListActivity {
 		DbHelper dbh = DbHelper.getDbHelper(this);
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
-		cps = tp.getColumns();
+		// We need to order the ColumnProperties appropriately
+		List<String> tpColumnOrder = tp.getColumnOrder();
+		this.cps = new ColumnProperties[tpColumnOrder.size()];
 		columnOrder.clear();
-		for ( String s : tp.getColumnOrder() ) {
+		int addIndex = 0;
+		for ( String s : tpColumnOrder ) {
 			columnOrder.add(s);
+			cps[addIndex] = tp.getColumnByElementKey(s);
+			addIndex++;
 		}
 	}
 
@@ -208,8 +213,8 @@ public class ColumnManager extends SherlockListActivity {
 	public boolean onContextItemSelected(android.view.MenuItem item) {
 		switch(item.getItemId()) {
 		case SET_AS_PRIME:
-			ArrayList<String> aoldPrimes = tp.getPrimeColumns();
-			ArrayList<String> anewPrimes = new ArrayList<String>();
+			List<String> aoldPrimes = tp.getPrimeColumns();
+			List<String> anewPrimes = new ArrayList<String>();
 			for (int i = 0; i < aoldPrimes.size(); i++) {
 				anewPrimes.add(aoldPrimes.get(i));
 			}
@@ -218,8 +223,8 @@ public class ColumnManager extends SherlockListActivity {
 			onResume();
 			return true;
 		case SET_AS_NONPRIME:
-			ArrayList<String> roldPrimes = tp.getPrimeColumns();
-			ArrayList<String> rnewPrimes = new ArrayList<String>();
+			List<String> roldPrimes = tp.getPrimeColumns();
+			List<String> rnewPrimes = new ArrayList<String>();
 			for (int i = 0; i < roldPrimes.size(); i++) {
 				if (roldPrimes.get(i).equals(currentCol)) {
 					continue;
@@ -300,11 +305,17 @@ public class ColumnManager extends SherlockListActivity {
 					  alertForNewColumnName(null);
 					} else {
 						// Create new column
-						ColumnProperties cp = tp.addColumn(colName, null, null);
-						cps = tp.getColumns();
-						columnOrder.clear();
-						for ( String s : tp.getColumnOrder() ) {
+					  ColumnProperties cp = tp.addColumn(colName, null, null);
+	              List<String> tpColumnOrder = tp.getColumnOrder();
+					  ColumnManager.this.cps = 
+						    new ColumnProperties[tpColumnOrder.size()];
+					  columnOrder.clear();
+					  int addIndex = 0;
+					  for ( String s : tpColumnOrder ) {
 							columnOrder.add(s);
+							ColumnManager.this.cps[addIndex] = 
+							    tp.getColumnByElementKey(s);
+							addIndex++;
 						}
 						adapter.notifyDataSetChanged();
 						// Load Column Property Manger
@@ -355,14 +366,19 @@ public class ColumnManager extends SherlockListActivity {
 			}
 			tp.setColumnOrder(newOrder);
 			columnOrder.clear();
-			for (String s : tp.getColumnOrder()) {
+			List<String> tpColumnOrder = tp.getColumnOrder();
+			ColumnManager.this.cps = 
+			    new ColumnProperties[tpColumnOrder.size()];
+			int addIndex = 0;
+			for (String s : tpColumnOrder) {
 				columnOrder.add(s);
+				ColumnManager.this.cps[addIndex] = tp.getColumnByElementKey(s);
+				addIndex++;
 			}
 			// have to call this so that displayName refers to the correct column
 			DbHelper dbh = DbHelper.getDbHelper(ColumnManager.this);
 			tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 					KeyValueStore.Type.ACTIVE);
-			cps = tp.getColumns();
 			adapter.notifyDataSetChanged();
 		}
 	};

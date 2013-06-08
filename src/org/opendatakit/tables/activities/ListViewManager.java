@@ -164,7 +164,7 @@ public class ListViewManager extends SherlockListActivity {
     // selecting a collection list view but you're not viewing the
     // table with a prime column, or vice versa, and this could create
     // an issue.
-    ArrayList<String> primeColumns = tp.getPrimeColumns();
+    List<String> primeColumns = tp.getPrimeColumns();
     boolean isOverview;
     if (primeColumns == null || primeColumns.size() == 0) {
       isOverview = false;

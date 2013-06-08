@@ -225,9 +225,12 @@ public class TablePropertiesManager extends PreferenceActivity {
     });
     genCat.addPreference(dnPref);
 
-    boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(tp.getColumnOrder());
-    boolean canBeShortcutTable = ShortcutUtil.couldBeShortcutTable(tp.getColumnOrder());
-    int tableTypeCount = 1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
+    List<String> columnOrder = tp.getColumnOrder();
+    boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(columnOrder);
+    boolean canBeShortcutTable = 
+        ShortcutUtil.couldBeShortcutTable(columnOrder);
+    int tableTypeCount = 
+        1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
     String[] tableTypeIds = new String[tableTypeCount];
     String[] tableTypeNames = new String[tableTypeCount];
     tableTypeIds[0] = String.valueOf(TableType.data);
@@ -496,7 +499,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
-    for (ColumnProperties cp : tp.getColumns()) {
+    for (ColumnProperties cp : tp.getColumns().values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numberCols.add(cp);
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
@@ -692,19 +695,21 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If the color rule type is columns, add the preference to select the
       // column.
       if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-        ColumnProperties[] columns = tp.getColumns();
-        String[] colorColDisplayNames = new String[columns.length];
-        String[] colorColElementKeys = new String[columns.length];
-        for (int i = 0; i < columns.length; i++) {
-          colorColDisplayNames[i] = columns[i].getDisplayName();
-          colorColElementKeys[i] = columns[i].getElementKey();
+        List<String> columnOrder = tp.getColumnOrder();
+        String[] colorColDisplayNames = new String[columnOrder.size()];
+        String[] colorColElementKeys = new String[columnOrder.size()];
+        for (int i = 0; i < columnOrder.size(); i++) {
+          colorColDisplayNames[i] = 
+              tp.getColumnByElementKey(columnOrder.get(i)).getDisplayName();
+          colorColElementKeys[i] = columnOrder.get(i);
         }
 
         ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
             .getString(TableMapFragment.KEY_COLOR_RULE_COLUMN));
         if (colorColumn == null) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, columns[0].getElementKey());
-          colorColumn = columns[0];
+          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, 
+              tp.getColumnByElementKey(columnOrder.get(0)).getElementKey());
+          colorColumn = tp.getColumnByElementKey(columnOrder.get(0));
         }
 
         ListPreference colorColumnPref = new ListPreference(this);

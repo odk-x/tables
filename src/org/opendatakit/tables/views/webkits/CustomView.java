@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
@@ -37,11 +39,12 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
 import android.app.Activity;
@@ -336,19 +339,23 @@ public abstract class CustomView extends LinearLayout {
 
 		private static final String TAG = "TableData";
 
-		private final Table rawTable;
-		private final UserTable userTable;
+		private final UserTable mTable;
 		private Map<String, Integer> colMap;			//Maps the column names with an index number
 		private Map<Integer, Integer> collectionMap;	//Maps each collection with the number of rows under it
-		private ArrayList<String> primeColumns;			//Holds the db names of indexed columns
+		private List<String> primeColumns;			//Holds the db names of indexed columns
+		/**
+		 * A simple cache of color rules so they're not recreated unnecessarily
+		 * each time. Maps the column display name to {@link ColorRuleGroup} for 
+		 * that column.
+		 */
+		private Map<String, ColorRuleGroup> mColumnDisplayNameToColorRuleGroup;
 		protected Context mContext;
 		private TableProperties tp;
 
-		public TableData(Context context, TableProperties tp, Table table) {
+		public TableData(Context context, TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with Table");
 			this.mContext = context;
-			rawTable = table;
-			userTable = null;
+			this.mTable = table;
 			this.tp = tp;
 			initMaps(tp);
 		}
@@ -372,8 +379,7 @@ public abstract class CustomView extends LinearLayout {
 
 		public TableData(TableProperties tp, UserTable table) {
 			Log.d(TAG, "calling TableData constructor with UserTable");
-			rawTable = null;
-			userTable = table;
+			this.mTable = table;
 			this.tp = tp;
 			initMaps(tp);
 
@@ -385,28 +391,29 @@ public abstract class CustomView extends LinearLayout {
 
 		//Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
 		private void initMaps(TableProperties tp) {
-			colMap = new HashMap<String, Integer>();
-
-			ColumnProperties[] cps = tp.getColumns();
+        mColumnDisplayNameToColorRuleGroup = 
+            new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
-
-			for (int i = 0; i < cps.length; i++) {
-				colMap.put(cps[i].getDisplayName(), i);
-				String abbr = cps[i].getSmsLabel();
-				if (abbr != null) {
-					colMap.put(abbr, i);
-				}
-			}
+		    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+		        tp.getColumns();
+		    Map<String, Integer> ekToIndex = mTable.getMapOfUserDataToIndex();
+		    colMap = new HashMap<String, Integer>();
+		    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
+		      String smsLabel = cp.getSmsLabel();
+            colMap.put(cp.getDisplayName(), ekToIndex.get(cp.getElementKey()));
+		      if (smsLabel != null) {
+		        // TODO: this doesn't look to ever be used, and ignores the possibility
+		        // of conflicting element keys and sms labels.
+		        colMap.put(smsLabel, colMap.get(cp.getElementKey()));
+		      }
+		    }
 		}
 
 		//Returns the number of rows in the table being viewed.
 		public int getCount() {
-			if (rawTable == null) {
-				return userTable.getHeight();
-			} else {
-				return rawTable.getHeight();
-			}
+		  return this.mTable.getHeight();
 		}
+		
 		/*
 		 * @param: colName, column name in the userTable/rawTable
 		 * @return: returns a String in JSONArray format containing all
@@ -417,11 +424,7 @@ public abstract class CustomView extends LinearLayout {
 			ArrayList<String> arr = new ArrayList<String>();
 			for(int i = 0; i < getCount(); i++) {
 				if (colMap.containsKey(colName)) {
-					if (rawTable == null) {
-						arr.add(i, userTable.getData(i, colMap.get(colName)));
-					} else {
-						arr.add(i, rawTable.getData(i, colMap.get(colName)));
-					}
+				  arr.add(i, mTable.getData(i, colMap.get(colName)));
 				} else {
 					arr.add(i, "");
 				}
@@ -447,20 +450,34 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public String getForegroundColor(String colName, String value) {
+		  Log.e(TAG, "calling get color");
 			String elementKey = tp.getColumnByDisplayName(colName);
-			ColorRuleGroup colRul =
-			    ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+			ColorRuleGroup colRul = 
+			    this.mColumnDisplayNameToColorRuleGroup.get(colName);
+			if (colRul == null) {
+			  // If it's not already there, cache it for future use.
+			  colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
+			  this.mColumnDisplayNameToColorRuleGroup.put(colName, colRul);
+			}
 			// Rather than hand off the whole row data, we'll just dummy up the
 			// info requested, as this will be easier for the html programmer
 			// to use than to have to give in the whole row.
-			Map<String, Integer> indexMap = new HashMap<String, Integer>();
-			indexMap.put(elementKey, 0);
-			Map<String, ColumnProperties> propertiesMap =
-			    new HashMap<String, ColumnProperties>();
-			propertiesMap.put(elementKey, tp.getColumnByElementKey(elementKey));
-			String[] rowData = new String[] {value};
-			ColorGuide guide = colRul.getColorGuide(rowData, indexMap,
-			    propertiesMap);
+			Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
+			indexOfDataMap.put(elementKey, 0);
+			Map<String, Integer> indexOfMetadataMap =
+			    new HashMap<String, Integer>();
+			indexOfMetadataMap.put(elementKey, 0);
+			// We need to construct a dummy UserTable for the ColorRule to 
+			// interpret.
+			String[] header = new String[] {colName};
+			String[] rowId = new String[] {"dummyRowId"};
+			String[][] data = new String[1][1];
+			String[][] metadata = new String[1][1];
+			data[0][0] = value;
+			metadata[0][0] = "dummyMetadata";
+			UserTable table = new UserTable(tp, rowId, header, data, 
+			    indexOfDataMap, metadata, indexOfMetadataMap, null);
+			ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
 			int foregroundColor;
 			if (guide.didMatch()) {
 			  foregroundColor = guide.getForeground();
@@ -511,12 +528,7 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
-			  String result;
-				if (rawTable == null) {
-					result = userTable.getData(rowNum, colMap.get(colName));
-				} else {
-					result = rawTable.getData(rowNum, colMap.get(colName));
-				}
+			  String result = mTable.getData(rowNum, colMap.get(colName));
 				if (result == null) {
 				  return "";
 				} else {
@@ -533,8 +545,7 @@ public abstract class CustomView extends LinearLayout {
        * @param rowNumber the number of the row to edit.
        */
       public void editRowWithCollect(int rowNumber) {
-        String rowId = rawTable == null ?
-            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+        String rowId = this.mTable.getRowId(rowNumber);
         Map<String, String> elementKeyToValue =
             getElementKeyToValueMapForRow(rowNumber);
         CollectFormParameters formParameters =
@@ -559,8 +570,7 @@ public abstract class CustomView extends LinearLayout {
        */
       public void editRowWithCollectAndSpecificForm(int rowNumber,
           String formId, String formVersion, String formRootElement) {
-        String rowId = rawTable == null ?
-            userTable.getRowId(rowNumber) : rawTable.getRowId(rowNumber);
+        String rowId = this.mTable.getRowId(rowNumber);
          CollectFormParameters formParameters =
              CollectFormParameters.constructCollectFormParameters(tp);
          if (formId != null && !formId.equals("")) {
@@ -615,9 +625,7 @@ public abstract class CustomView extends LinearLayout {
 		  Map<String, String> elementKeyToValue = new HashMap<String, String>();
 		  for (Entry<String, Integer> entry : colMap.entrySet()) {
 		    String elementKey = tp.getColumnByDisplayName(entry.getKey());
-		    String value = rawTable == null ?
-		        userTable.getData(rowNum, entry.getValue()) :
-		        rawTable.getData(rowNum, entry.getValue());
+		    String value = this.mTable.getData(rowNum, entry.getValue());
 		    elementKeyToValue.put(elementKey, value);
 		  }
 		  return elementKeyToValue;
@@ -659,6 +667,15 @@ public abstract class CustomView extends LinearLayout {
 			}
 		}
 
+		/**
+		 * Opens the table specified by the tableName and searches this table
+		 * with the given query. Uses the default view specified on the table.
+		 * E.g. if it has been set to map view, the table will be opened to the
+		 * map view.
+		 * @param tableName
+		 * @param query
+		 * @return
+		 */
 		public boolean openTable(String tableName, String query) {
 		  Log.d(TAG, "in openTable for table: " + tableName);
 			initTpInfo();
@@ -671,6 +688,30 @@ public abstract class CustomView extends LinearLayout {
 					query, false);
 			return true;
 		}
+		
+		/**
+		 * Open the table specified by tableName as a list view with the filename
+		 * specified by filename. The filename is relative to the odk
+		 * @param tableName
+		 * @param filename
+		 * @return false if the table properties cannot be found, true if it 
+		 * opens.
+		 */
+		public boolean openTableToListViewWithFile(String tableName, 
+		    String searchText, String filename) {
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(tableName);
+		  if (tp == null) {
+          Log.e(TAG, "tableName [" + tableName + "] not in map");
+          return false;
+		  }
+		  String pathToTablesFolder = 
+		      ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+		  String pathToFile = pathToTablesFolder + File.separator + filename;
+		  Controller.launchListViewWithFileName(mContext, tp, searchText, null, 
+		      false, pathToFile);
+		  return true;
+		}
 
 		public TableData query(String tableName, String searchText) {
 			initTpInfo();
@@ -682,7 +723,7 @@ public abstract class CustomView extends LinearLayout {
 			query.loadFromUserQuery(searchText);
 			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mContext),
 					tp.getTableId());
-			ArrayList<String> columnOrder = tp.getColumnOrder();
+			List<String> columnOrder = tp.getColumnOrder();
 			return new TableData(mContext, tp,
 			    dbt.getRaw(query, columnOrder.toArray(
 			        new String[columnOrder.size()])));

@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.util.List;
+
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -133,11 +135,8 @@ public class PropertyManager extends PreferenceActivity {
     colWidthPref.setTitle("Column Width");
     colWidthPref.setDialogTitle("Change Column Width");
     colWidthPref.setMaxValue(500);
-//    colWidthPref.setValue(tp.getOverviewViewSettings()
-//        .getTableColWidths()[colIndex]);
     final KeyValueHelper aspectHelper = 
-        columnKVSH.getAspectHelper(
-            tp.getColumnByIndex(colIndex).getElementKey());
+        columnKVSH.getAspectHelper(elementKey);
     Integer savedColumnWidth = 
         aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
     if (savedColumnWidth == null) {
@@ -203,19 +202,21 @@ public class PropertyManager extends PreferenceActivity {
         // TODO: resolve how joins work
 //        String joinColName = cp.getJoinColumnName();
         String joinColName = cp.getJoins().getElementKey();
-        ColumnProperties[] cps = selectedTp.getColumns();
-        String[] colDbNames = new String[cps.length + 1];
+        List<String> columnOrder = tp.getColumnOrder();
+        String[] colDbNames = new String[columnOrder.size() + 1];
         String selectedDbName = colDbNames[0] = null;
-        String[] colDisplayNames = new String[cps.length + 1];
+        String[] colDisplayNames = new String[columnOrder.size() + 1];
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
-        for (int i = 0; i < cps.length; i++) {
-          String colDbName = cps[i].getElementKey();
-          colDbNames[i + 1] = colDbName;
-          colDisplayNames[i + 1] = cps[i].getDisplayName();
-          if ((joinColName != null) && colDbName.equals(joinColName)) {
+        for (int i = 0; i < columnOrder.size(); i++) {
+          String elementKey = columnOrder.get(i);
+          String colDisplayName = 
+              tp.getColumnByElementKey(elementKey).getDisplayName();
+          colDbNames[i + 1] = elementKey;
+          colDisplayNames[i + 1] = colDisplayName;
+          if ((joinColName != null) && elementKey.equals(joinColName)) {
 //          if ((joins != null) && colDbName.equals(joins)) {
-            selectedDbName = colDbName;
-            selectedColDisplayName = cps[i].getDisplayName();
+            selectedDbName = elementKey;
+            selectedColDisplayName = colDisplayName;
           }
         }
         category.addPreference(createListPreference("JOIN_COLUMN", "Join Column",

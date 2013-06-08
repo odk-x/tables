@@ -417,7 +417,7 @@ public class Query {
      * @param arrayList the columns to select
      * @return a SqlData object, with the SQL string and an array of arguments
      */
-    public SqlData toOverviewSql(ArrayList<String> arrayList) {
+    public SqlData toOverviewSql(List<String> arrayList) {
         if (tp.getPrimeColumns().size() == 0) {
             return toSql(arrayList);
         }
@@ -443,7 +443,7 @@ public class Query {
             sd.appendSql("SELECT MAX(" + DataTableColumns.ROW_ID + ") AS " +
                     DataTableColumns.ROW_ID + " FROM ");
 
-            ArrayList<String> primes = tp.getPrimeColumns();
+            List<String> primes = tp.getPrimeColumns();
             String[] xCols = new String[primes.size()];
             String[] yCols = new String[primes.size() + 1];
             for (int i = 0; i < primes.size(); i++) {
@@ -569,7 +569,7 @@ public class Query {
                 DataTableColumns.ROW_ID + " AS " + DataTableColumns.ROW_ID + ", " +
                 tp.getDbTableName() + "." + DataTableColumns.SYNC_TAG + " AS " +
                 DataTableColumns.SYNC_TAG);
-        for (ColumnProperties cp : tp.getColumns()) {
+        for (ColumnProperties cp : tp.getColumns().values()) {
           if ( cp.isPersisted() ) {
             sd.appendSql(", " + tp.getDbTableName() + "." +
                     cp.getElementKey() + " AS " + cp.getElementKey());

@@ -169,7 +169,8 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     Map<String, ColumnProperties> propertiesMap = new HashMap<String, ColumnProperties>();
     List<String> columnOrder = tp.getColumnOrder();
     for (int i = 0; i < columnOrder.size(); i++) {
-      propertiesMap.put(columnOrder.get(i), tp.getColumnByIndex(i));
+      propertiesMap.put(columnOrder.get(i), 
+          tp.getColumnByElementKey(columnOrder.get(i)));
       indexMap.put(columnOrder.get(i), i);
     }
     mColumnIndexMap = indexMap;
@@ -286,8 +287,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     UserTable table = ((TableActivity) getActivity()).getTable();
     // Create a guide depending on the color group.
     if (mColorGroup != null) {
-      ColorGuide guide = mColorGroup.getColorGuide(table.getRowData(index), mColumnIndexMap,
-          mColumnPropertiesMap);
+      ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
       // Based on if the guide matched or not, grab the hue.
       if (guide != null && guide.didMatch()) {
         float[] hsv = new float[3];
@@ -308,11 +308,10 @@ public class TableMapInnerFragment extends SherlockMapFragment {
       // Go through each of the columns and check to see if there are
       // any columns labeled
       // latitude or longitude.
-      ColumnProperties[] cps = tp.getColumns();
       if (latitudeElementKey == null) {
-        for (int i = 0; i < cps.length; i++) {
-          if (cps[i].getDisplayName().equalsIgnoreCase("latitude")) {
-            latitudeElementKey = cps[i].getElementKey();
+        for (ColumnProperties cp : tp.getColumns().values()) {
+          if (cp.getDisplayName().equalsIgnoreCase("latitude")) {
+            latitudeElementKey = cp.getElementKey();
             kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
             break;
           }
@@ -331,11 +330,10 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      ColumnProperties[] cps = tp.getColumns();
       if (longitudeElementKey == null) {
-        for (int i = 0; i < cps.length; i++) {
-          if (cps[i].getDisplayName().equalsIgnoreCase("longitude")) {
-            longitudeElementKey = cps[i].getElementKey();
+        for (ColumnProperties cp : tp.getColumns().values()) {
+          if (cp.getDisplayName().equalsIgnoreCase("longitude")) {
+            longitudeElementKey = cp.getElementKey();
             kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
             break;
           }
@@ -399,7 +397,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         // values in the location.
         TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
         Map<String, String> elementNameToValue = new HashMap<String, String>();
-        for (ColumnProperties cp : tp.getColumns()) {
+        for (ColumnProperties cp : tp.getColumns().values()) {
           elementNameToValue.put(cp.getElementName(), "");
         }
         final KeyValueStoreHelper kvsHelper = tp
