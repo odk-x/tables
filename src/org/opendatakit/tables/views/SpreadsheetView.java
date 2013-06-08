@@ -21,21 +21,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.views.TabularView.ColorDecider;
-import org.opendatakit.tables.views.TabularView.TableType;
 import org.opendatakit.tables.views.components.LockableHorizontalScrollView;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -82,7 +77,7 @@ public class SpreadsheetView extends LinearLayout
     private final UserTable table;
     private final int indexedCol;
     private final int fontSize;
-    
+
     private final Map<String, ColumnProperties> mElementKeyToProperties;
     private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
@@ -126,19 +121,19 @@ public class SpreadsheetView extends LinearLayout
         this.indexedCol = indexedCol;
 
         // We have to initialize the items that will be shared across the
-        // TabularView objects. 
-        this.mElementKeyToColorRuleGroup = 
+        // TabularView objects.
+        this.mElementKeyToColorRuleGroup =
             new HashMap<String, ColorRuleGroup>();
-        this.mElementKeyToProperties = 
+        this.mElementKeyToProperties =
             new HashMap<String, ColumnProperties>();
         for (int i = 0; i < this.mColumnOrder.size(); i++) {
           mElementKeyToColorRuleGroup.put(this.mColumnOrder.get(i),
-              ColorRuleGroup.getColumnColorRuleGroup(tp, 
+              ColorRuleGroup.getColumnColorRuleGroup(tp,
                   this.mColumnOrder.get(i)));
-          mElementKeyToProperties.put(this.mColumnOrder.get(i), 
+          mElementKeyToProperties.put(this.mColumnOrder.get(i),
               tp.getColumnByElementKey(this.mColumnOrder.get(i)));
         }
-        
+
         // if a custom font size is defined in the KeyValueStore, use that
         // if not, use the general font size defined in preferences
         KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
@@ -465,7 +460,7 @@ public class SpreadsheetView extends LinearLayout
     private View buildTable(int indexedCol, boolean isIndexed) {
 //      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
 //          "isIndexed: " + isIndexed);
-        List<String> elementKeysToDisplay = 
+        List<String> elementKeysToDisplay =
             new ArrayList<String>(this.mColumnOrder.size());
         int[] colWidths;
         int[] completeColWidths = getColumnWidths();
@@ -476,17 +471,17 @@ public class SpreadsheetView extends LinearLayout
             elementKeysToDisplay.add(this.mColumnOrder.get(indexedCol));
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
-            dataTable = TabularView.getIndexDataTable(context, this, 
-                tp, table, elementKeysToDisplay, colWidths, fontSize, 
-                this.mElementKeyToProperties, 
+            dataTable = TabularView.getIndexDataTable(context, this,
+                tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
-            headerTable = TabularView.getIndexHeaderTable(context, 
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize, 
-                this.mElementKeyToProperties, 
-                this.mElementKeyToColorRuleGroup);
-            footerTable = TabularView.getIndexFooterTable(context, 
+            headerTable = TabularView.getIndexHeaderTable(context,
                 this, tp, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties, 
+                this.mElementKeyToProperties,
+                this.mElementKeyToColorRuleGroup);
+            footerTable = TabularView.getIndexFooterTable(context,
+                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
         } else {
             int width = (indexedCol < 0) ? table.getWidth() :
@@ -501,17 +496,17 @@ public class SpreadsheetView extends LinearLayout
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }
-            dataTable = TabularView.getMainDataTable(context, this, 
-                tp, table, elementKeysToDisplay, colWidths, fontSize, 
-                this.mElementKeyToProperties, 
+            dataTable = TabularView.getMainDataTable(context, this,
+                tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
-            headerTable = TabularView.getMainHeaderTable(context, 
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize, 
-                this.mElementKeyToProperties, 
-                this.mElementKeyToColorRuleGroup);
-            footerTable = TabularView.getMainFooterTable(context, 
+            headerTable = TabularView.getMainHeaderTable(context,
                 this, tp, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties, 
+                this.mElementKeyToProperties,
+                this.mElementKeyToColorRuleGroup);
+            footerTable = TabularView.getMainFooterTable(context,
+                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
         }
         dataScroll = new LockableScrollView(context);
@@ -557,8 +552,8 @@ public class SpreadsheetView extends LinearLayout
         colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
         dataStatusScroll = new LockableScrollView(context);
-        TabularView dataTable = TabularView.getStatusDataTable(context, 
-            this, tp, table, colWidths, fontSize, 
+        TabularView dataTable = TabularView.getStatusDataTable(context,
+            this, tp, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         dataTable.setVerticalFadingEdgeEnabled(true);
         dataTable.setVerticalScrollBarEnabled(false);
@@ -566,11 +561,11 @@ public class SpreadsheetView extends LinearLayout
                 dataTable.getTableWidth(), dataTable.getTableHeight()));
         dataStatusScroll.setVerticalFadingEdgeEnabled(true);
         dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
-        TabularView headerTable = TabularView.getStatusHeaderTable(context, 
-            this, tp, table, colWidths, fontSize, 
+        TabularView headerTable = TabularView.getStatusHeaderTable(context,
+            this, tp, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
-        TabularView footerTable = TabularView.getStatusFooterTable(context, 
-            this, tp, table, colWidths, fontSize, 
+        TabularView footerTable = TabularView.getStatusFooterTable(context,
+            this, tp, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);

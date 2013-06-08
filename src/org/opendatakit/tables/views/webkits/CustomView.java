@@ -41,11 +41,10 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
-import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -345,7 +344,7 @@ public abstract class CustomView extends LinearLayout {
 		private List<String> primeColumns;			//Holds the db names of indexed columns
 		/**
 		 * A simple cache of color rules so they're not recreated unnecessarily
-		 * each time. Maps the column display name to {@link ColorRuleGroup} for 
+		 * each time. Maps the column display name to {@link ColorRuleGroup} for
 		 * that column.
 		 */
 		private Map<String, ColorRuleGroup> mColumnDisplayNameToColorRuleGroup;
@@ -391,10 +390,10 @@ public abstract class CustomView extends LinearLayout {
 
 		//Initializes the colMap and primeColumns that provide methods quick access to the current table's state.
 		private void initMaps(TableProperties tp) {
-        mColumnDisplayNameToColorRuleGroup = 
+        mColumnDisplayNameToColorRuleGroup =
             new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
-		    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+		    Map<String, ColumnProperties> elementKeyToColumnProperties =
 		        tp.getColumns();
 		    Map<String, Integer> ekToIndex = mTable.getMapOfUserDataToIndex();
 		    colMap = new HashMap<String, Integer>();
@@ -413,7 +412,7 @@ public abstract class CustomView extends LinearLayout {
 		public int getCount() {
 		  return this.mTable.getHeight();
 		}
-		
+
 		/*
 		 * @param: colName, column name in the userTable/rawTable
 		 * @return: returns a String in JSONArray format containing all
@@ -452,7 +451,7 @@ public abstract class CustomView extends LinearLayout {
 		public String getForegroundColor(String colName, String value) {
 		  Log.e(TAG, "calling get color");
 			String elementKey = tp.getColumnByDisplayName(colName);
-			ColorRuleGroup colRul = 
+			ColorRuleGroup colRul =
 			    this.mColumnDisplayNameToColorRuleGroup.get(colName);
 			if (colRul == null) {
 			  // If it's not already there, cache it for future use.
@@ -467,7 +466,7 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, Integer> indexOfMetadataMap =
 			    new HashMap<String, Integer>();
 			indexOfMetadataMap.put(elementKey, 0);
-			// We need to construct a dummy UserTable for the ColorRule to 
+			// We need to construct a dummy UserTable for the ColorRule to
 			// interpret.
 			String[] header = new String[] {colName};
 			String[] rowId = new String[] {"dummyRowId"};
@@ -475,7 +474,7 @@ public abstract class CustomView extends LinearLayout {
 			String[][] metadata = new String[1][1];
 			data[0][0] = value;
 			metadata[0][0] = "dummyMetadata";
-			UserTable table = new UserTable(tp, rowId, header, data, 
+			UserTable table = new UserTable(tp, rowId, header, data,
 			    indexOfDataMap, metadata, indexOfMetadataMap, null);
 			ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
 			int foregroundColor;
@@ -688,16 +687,16 @@ public abstract class CustomView extends LinearLayout {
 					query, false);
 			return true;
 		}
-		
+
 		/**
 		 * Open the table specified by tableName as a list view with the filename
 		 * specified by filename. The filename is relative to the odk
 		 * @param tableName
 		 * @param filename
-		 * @return false if the table properties cannot be found, true if it 
+		 * @return false if the table properties cannot be found, true if it
 		 * opens.
 		 */
-		public boolean openTableToListViewWithFile(String tableName, 
+		public boolean openTableToListViewWithFile(String tableName,
 		    String searchText, String filename) {
 		  initTpInfo();
 		  TableProperties tp = tpMap.get(tableName);
@@ -705,10 +704,10 @@ public abstract class CustomView extends LinearLayout {
           Log.e(TAG, "tableName [" + tableName + "] not in map");
           return false;
 		  }
-		  String pathToTablesFolder = 
+		  String pathToTablesFolder =
 		      ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
 		  String pathToFile = pathToTablesFolder + File.separator + filename;
-		  Controller.launchListViewWithFileName(mContext, tp, searchText, null, 
+		  Controller.launchListViewWithFileName(mContext, tp, searchText, null,
 		      false, pathToFile);
 		  return true;
 		}
