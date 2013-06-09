@@ -1025,14 +1025,19 @@ public class TableProperties {
    * {@link ColumnProperties}. If something has happened
    * to a column that did not go through TableProperties, update row also needs
    * to be called.
-   * @return an unordered array of the table's columns as represented by their
+   * <p>
+   * If used repeatedly, this value should be cached by the caller.
+   * @return a map of the table's columns as represented by their
    * {@link ColumnProperties}.
    */
   public Map<String, ColumnProperties> getColumns() {
     if (mElementKeyToColumnProperties == null) {
       refreshColumns();
     }
-    return this.mElementKeyToColumnProperties;
+    Map<String, ColumnProperties> defensiveCopy = 
+        new HashMap<String, ColumnProperties>();
+    defensiveCopy.putAll(this.mElementKeyToColumnProperties);
+    return defensiveCopy;
  }
 
   /**
