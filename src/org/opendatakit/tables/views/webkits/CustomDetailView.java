@@ -23,7 +23,6 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.app.Activity;
-import android.content.Context;
 
 /**
  * A view for displaying a customizable detail view of a row of data.

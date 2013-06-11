@@ -20,14 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
@@ -79,7 +77,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     task.execute();
 
   }
-  
+
   private void respondToTablesQuery(Map<String, String> tablesFromServer) {
     if (tablesFromServer == null) {
       finishDialog.setMessage(getString(R.string.error_contacting_server));
@@ -94,7 +92,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         tableIds.add(tableId);
         tableNames.add(tablesFromServer.get(tableId));
       }
-      setListAdapter(new ArrayAdapter<String>(this, 
+      setListAdapter(new ArrayAdapter<String>(this,
           android.R.layout.simple_list_item_1, tableNames));
     }
   }
@@ -131,7 +129,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected void onPreExecute() {
       super.onPreExecute();
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, 
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this,
           getString(R.string.please_wait),
           getString(R.string.fetching_tables));
     }
@@ -182,7 +180,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPostExecute(Map<String, String> result) {
-      pd.dismiss(); 
+      pd.dismiss();
       AggregateDownloadTableActivity.this.respondToTablesQuery(result);
     }
   }
@@ -203,7 +201,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected void onPreExecute() {
       super.onPreExecute();
-      pd = ProgressDialog.show(AggregateDownloadTableActivity.this, 
+      pd = ProgressDialog.show(AggregateDownloadTableActivity.this,
           getString(R.string.please_wait),
           getString(R.string.fetching_this_table, tableName));
     }
@@ -227,17 +225,17 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       try {
         synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e) {
-        Aggregate.invalidateAuthToken(authToken, 
+        Aggregate.invalidateAuthToken(authToken,
             AggregateDownloadTableActivity.this);
         return null;
       }
-      SyncProcessor processor = new SyncProcessor(dbh, synchronizer, 
+      SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
           new DataManager(dbh), new SyncResult());
       processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      // TODO: this code not working. these two methods gone wrong. 
+      // TODO: this code not working. these two methods gone wrong.
       kvsm.mergeServerToDefaultForTable(tableId);
       kvsm.copyDefaultToActiveForTable(tableId);
 

@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;

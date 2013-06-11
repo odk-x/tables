@@ -26,7 +26,6 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.opendatakit.aggregate.odktables.entity.Column;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -664,9 +663,9 @@ public class ColumnProperties {
 //    // }
     }
   }
-  
+
   /**
-   * Add a column to the datastore. 
+   * Add a column to the datastore.
    * <p>
    * Convenience methods. Calls the other {@link #addColumn} method with more
    * paremeters, setting defaults.
@@ -685,11 +684,11 @@ public class ColumnProperties {
    * @return
    */
   public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
-      String tableId, String displayName, String elementKey, 
+      String tableId, String displayName, String elementKey,
       String elementName, boolean isVisible, KeyValueStore.Type typeOfStore) {
-    return addColumn(dbh, db, tableId, displayName, elementKey, elementName, 
-        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, 
-        ColumnDefinitions.DEFAULT_DB_JOINS, 
+    return addColumn(dbh, db, tableId, displayName, elementKey, elementName,
+        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE,
+        ColumnDefinitions.DEFAULT_DB_JOINS,
         ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
         ColumnDefinitions.DEFAULT_DB_JOINS, isVisible, typeOfStore);
   }
@@ -1357,7 +1356,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_ELEMENT_TYPE, elType);
     jo.put(JSON_KEY_FOOTER_MODE, footMode);
     jo.put(JSON_KEY_JOINS, joinCol);
-    
+
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);

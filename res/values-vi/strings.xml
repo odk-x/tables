@@ -186,7 +186,6 @@
 	<string name="edit_table_color_rules">Edit Table Color Rules</string>
 	<string name="edit_status_column_color_rules">Edit Status Column Color Rules</string>
 	<string name="add_new_color_rule">Add New Color Rule</string>
-	<string name="color_rule_revert_to_default_status_rules">Revert to default status rules</string>
 	<string name="color_rule_preview">Color Rule Preview</string>
 	<string name="status_column">Status Column</string>
 	<string name="color_rule_title_for">Color Rules for %1$s</string>
@@ -195,8 +194,6 @@
 	<string name="are_you_sure_delete_color_rule">Please confirm deletion of color rule: %1$s</string>
 	<string name="delete_color_rule">Delete this Color Rule</string>
 	<string name="edit_color_rule">Edit this Color Rule</string>
-	<string name="color_rule_confirm_revert_status_column">Confirm Revert To Defaults</string>
-	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="access_control_settings">Access Control Settings</string>
 	<string name="none">None</string>
 	<string name="manage_table_property_sets">Manage Table Property Sets</string>

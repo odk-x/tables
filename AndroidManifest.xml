@@ -75,7 +75,6 @@
         <activity android:name=".activities.EditSavedListViewEntryActivity"/>
         <activity android:name=".activities.ListDisplayActivity"/>
         <activity android:name=".activities.ListViewManager"/>
-        <activity android:name=".activities.MapDisplayActivity"/>
         <activity android:name=".activities.PropertyManager"/>
         <activity android:name=".activities.SecurityManager"/>
         <activity android:name=".activities.ShortcutsManager"/>
@@ -129,7 +128,7 @@
 
 		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
 	    <provider
-	        android:name="org.opendatakit.common.android.provider.FileProvider"
+	        android:name="org.opendatakit.tables.provider.FileProvider"
 	        android:authorities="org.opendatakit.tables.android.provider.file" />
 
         <!--  dummy ContentProvider for syncing tables -->

@@ -23,7 +23,6 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.ViewGroup;
 
 /**

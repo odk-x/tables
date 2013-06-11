@@ -411,17 +411,17 @@ public class Controller {
    */
   void editRow(UserTable table, int rowNum, CollectFormParameters params) {
     Intent intent = null;
-    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table, 
+    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table,
         rowNum, params);
     if (intent != null) {
-      CollectUtil.launchCollectToEditRow(activity, intent, 
+      CollectUtil.launchCollectToEditRow(activity, intent,
           table.getRowId(rowNum));
     } else {
       Log.e(TAG, "intent null when trying to create for edit row.");
     }
   }
 
-  public boolean handleActivityReturn(int requestCode, int returnCode, 
+  public boolean handleActivityReturn(int requestCode, int returnCode,
       Intent data) {
     switch (requestCode) {
     case RCODE_TABLE_PROPERTIES_MANAGER:
@@ -669,7 +669,7 @@ public class Controller {
   }
 
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode, 
+        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode,
             data)) {
           return;
         } else {

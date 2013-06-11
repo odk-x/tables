@@ -22,6 +22,7 @@ android:orientation="vertical"
 		android:src="@drawable/refreshicon" />
 		<EditText
 		android:id="@+id/edit_box"
+        android:inputType="text"
 		android:layout_width="0dip"
 		android:layout_height="wrap_content"
 		android:layout_weight="0.35"  />
@@ -48,6 +49,7 @@ android:orientation="vertical"
 		android:id="@+id/tableWrapper"
 		android:layout_width="fill_parent"
 		android:layout_height="0dip"
-		android:layout_weight = "1" >
+		android:layout_weight = "1"
+		android:orientation="horizontal" >
 	</LinearLayout>
 </LinearLayout>

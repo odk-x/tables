@@ -24,7 +24,6 @@ import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.views.TabularView.ColorDecider;
-import org.opendatakit.tables.views.TabularView.TableType;
 import org.opendatakit.tables.views.components.LockableScrollView;
 
 import android.content.Context;
@@ -39,8 +38,8 @@ import android.widget.LinearLayout;
 
 public class ConflictResolutionView extends HorizontalScrollView implements
 		TabularView.Controller {
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       ConflictResolutionView.class.getSimpleName();
 
 	private static final int DOUBLE_CLICK_TIME = 500;
@@ -132,7 +131,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 //				LinearLayout.LayoutParams.MATCH_PARENT);
 //		addView(wrap, wLp);
 	}
-	
+
 	private RowItem getRowView(int index) {
 	  Log.e(TAG, "ConflictResolutionView#getRowView is unimplemented!");
 		for (int i = 0; i < table.getWidth(); i++) {
@@ -140,7 +139,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 			data[index][1][i] = table.getValue(index, 1, i);
 		}
 		RowItem ri = new RowItem(context, index);
-		// The wholeData param here is confusing. I'm not sure exactly what the 
+		// The wholeData param here is confusing. I'm not sure exactly what the
 		// conflict table is holding.
 		TabularView tv = null;
 //		TabularView tv = new TabularView(context, this, tp, data[index], data[index],

@@ -58,7 +58,7 @@ import com.actionbarsherlock.view.SubMenu;
 /**
  * Base activity for all fragments that display information about a database.
  * Deals with maintaining the data and the actionbar.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class TableActivity extends SherlockFragmentActivity {
@@ -197,7 +197,7 @@ public class TableActivity extends SherlockFragmentActivity {
     mCurrentFragment.init();
   }
 
-  private void onSearchButtonClick(View v) {
+  public void onSearchButtonClick(View v) {
     // when you click the search button, save that query.
     KeyValueStoreHelper kvsh = mTableProperties
         .getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
@@ -293,7 +293,7 @@ public class TableActivity extends SherlockFragmentActivity {
    * The inversion values are not tied to any particular theme, but are set
    * using the ActionBarSherlock themes. These need to change if the app themes
    * are changed.
-   * 
+   *
    * @param invert
    */
   void invertSearchBoxColor(boolean invert) {
@@ -329,7 +329,7 @@ public class TableActivity extends SherlockFragmentActivity {
    * custom form defined for the table, its info should be loaded in params. If
    * the formId in params is null, then the default form is generated, which is
    * just every column with its own entry field on a single screen.
-   * 
+   *
    * @param table
    * @param rowNum
    * @param params
@@ -535,7 +535,7 @@ public class TableActivity extends SherlockFragmentActivity {
 
   /**
    * Adds a row to the table.
-   * 
+   *
    * @param elementNameToValue
    *          Element names to values to prepopulate the row with before
    *          launching the activity.
@@ -571,35 +571,35 @@ public class TableActivity extends SherlockFragmentActivity {
    * This is a move away from the general "odk add row" usage that is going on
    * when no row is defined. As I understand it, the new case will work as
    * follows.
-   * 
+   *
    * There exits an "tableEditRow" form for a particular table. This form, as I
    * understand it, must exist both in the tables directory, as well as in
    * Collect so that Collect can launch it with an Intent.
-   * 
+   *
    * You then also construct a "values" sort of file, that is the data from the
    * database that will pre-populate the fields. Mitch referred to something
    * like this as the "instance" file.
-   * 
+   *
    * Once you have both of these files, the form and the data, you insert the
    * data into the form. When you launch the form, it is then pre-populated with
    * data from the database.
-   * 
+   *
    * In order to make this work, the form must exist both within the places
    * Collect knows to look, as well as in the Tables folder. You also must know
    * the:
-   * 
+   *
    * collectFormVersion collectFormId collectXFormRootElement (default to
    * "data")
-   * 
+   *
    * These will most likely exist as keys in the key value store. They must
    * match the form.
-   * 
+   *
    * Other things needed will be:
-   * 
+   *
    * instanceFilePath // I think the filepath with all the values displayName //
    * just text, eg a row ID formId // the same thing as collectFormId?
    * formVersion status // either INCOMPLETE or COMPLETE
-   * 
+   *
    * Examples for how this is done in Collect can be found in the Collect code
    * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
    * updateInstanceDatabase() method.
@@ -642,7 +642,7 @@ public class TableActivity extends SherlockFragmentActivity {
    * object, particularly it's isCustom field, determines exactly which action
    * is taken. If a custom form is defined, it launches that form. If there is
    * not, it writes a new form, inserts it into collect, and launches it.
-   * 
+   *
    * @param params
    * @return
    */
@@ -746,9 +746,9 @@ public class TableActivity extends SherlockFragmentActivity {
     String formId = null; // collect formId
     String instanceName = null; // if exists, meta/instanceName value
     String locale = null; // current locale string
-    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
+    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this),
         mTableProperties.getTableId());
-    dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId, 
+    dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId,
         locale);
     return true;
   }
@@ -784,7 +784,7 @@ public class TableActivity extends SherlockFragmentActivity {
   /**
    * This gets a map of values for insertion into a row after returning from a
    * Collect form.
-   * 
+   *
    * @param formValues
    * @return
    */

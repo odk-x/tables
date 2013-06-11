@@ -73,7 +73,7 @@ public class SyncProcessor {
   private final DbHelper dbh;
   private final ObjectMapper mMapper;
 
-  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, DataManager dm, 
+  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, DataManager dm,
       SyncResult syncResult) {
     this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
@@ -105,10 +105,10 @@ public class SyncProcessor {
    * Synchronize the table represented by the given TableProperties with the
    * cloud.
    * <p>
-   * Note that if the db changes under you when calling this method, the tp 
-   * parameter will become out of date. It should be refreshed after calling 
+   * Note that if the db changes under you when calling this method, the tp
+   * parameter will become out of date. It should be refreshed after calling
    * this method.
-   * 
+   *
    * @param tp
    *          the table to synchronize
    * @param downloadingTable
@@ -140,7 +140,7 @@ public class SyncProcessor {
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
       // It is possible the table properties changed. Refresh just in case.
-      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
           tp.getBackingStoreType());
       if (success && tp != null) // null in case we deleted the tp.
         tp.setLastSyncTime(du.formatNowForDb());
@@ -152,24 +152,24 @@ public class SyncProcessor {
   private boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "UPDATING " + tp.getDisplayName());
-//    // We want to remember the state we were at before the update. If the 
+//    // We want to remember the state we were at before the update. If the
 //    // properties etag is different it means we had changes of our own to give
-//    // to the server, so we'll have to send after we receive. If you don't do 
-//    // this you get into the situation where your synctag is overwritten with 
+//    // to the server, so we'll have to send after we receive. If you don't do
+//    // this you get into the situation where your synctag is overwritten with
 //    String syncTagStr = tp.getSyncTag();
 //    SyncTag syncTagBeforeUpdate = null;
 //    if (syncTagStr != null) {
 //      syncTagBeforeUpdate = SyncTag.valueOf(syncTagStr);
 //    }
-    
+
     boolean success = false;
     try {
       updateDbFromServer(tp, table, false);
       // update the tp.
-      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
           KeyValueStore.Type.SERVER);
-      String syncTag = synchronizer.setTableProperties(tableId, 
-          tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId, 
+      String syncTag = synchronizer.setTableProperties(tableId,
+          tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId,
               KeyValueStore.Type.SERVER));
       tp.setSyncTag(syncTag);
       success = true;
@@ -184,7 +184,7 @@ public class SyncProcessor {
     return success;
   }
 
-  private boolean synchronizeTableInserting(TableProperties tp, 
+  private boolean synchronizeTableInserting(TableProperties tp,
       DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
@@ -197,12 +197,12 @@ public class SyncProcessor {
     beginRowsTransaction(table, getRowIdsAsArray(rowsToInsert));
     try {
       // First create the table definition on the server.
-      String syncTag = synchronizer.createTable(tableId, 
-          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(), 
-          SyncUtil.transformClientTableType(tp.getTableType()), 
+      String syncTag = synchronizer.createTable(tableId,
+          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(),
+          SyncUtil.transformClientTableType(tp.getTableType()),
           tp.getAccessControls());
       // now create the TableProperties on the server.
-      List<OdkTablesKeyValueStoreEntry> kvsEntries = 
+      List<OdkTablesKeyValueStoreEntry> kvsEntries =
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
       String syncTagProperties = synchronizer.setTableProperties(
           tp.getTableId(), syncTag, tp.getTableKey(), kvsEntries);
@@ -247,9 +247,9 @@ public class SyncProcessor {
    * This method is eventually called when a table is first downloaded from the
    * server.
    * <p>
-   * Note that WHENEVER this method is called, if updates to the key value 
+   * Note that WHENEVER this method is called, if updates to the key value
    * store or TableDefinition have been made, the tp parameter will become
-   * out of date. Therefore after calling this method, the caller should 
+   * out of date. Therefore after calling this method, the caller should
    * refresh their TableProperties.
    * @param tp
    * @param table
@@ -278,7 +278,7 @@ public class SyncProcessor {
       return false;
     }
     // refresh the tp
-    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
@@ -296,10 +296,10 @@ public class SyncProcessor {
     boolean success = false;
     beginRowsTransaction(table, rowIds);
     try {
-      Modification modification = synchronizer.insertRows(tableId, 
+      Modification modification = synchronizer.insertRows(tableId,
           tp.getSyncTag(), rowsToInsert);
       updateDbFromModification(modification, table, tp);
-      modification = synchronizer.updateRows(tableId, tp.getSyncTag(), 
+      modification = synchronizer.updateRows(tableId, tp.getSyncTag(),
           rowsToUpdate);
       updateDbFromModification(modification, table, tp);
       String syncTag = synchronizer.deleteRows(tableId, tp.getSyncTag(),
@@ -338,7 +338,7 @@ public class SyncProcessor {
   }
 
   /**
-   * Update the database based on the server. 
+   * Update the database based on the server.
    * @param tp modified in place if the table properties are changed
    * @param table
    * @param downloadingTable whether or not the table is being downloaded for
@@ -364,12 +364,12 @@ public class SyncProcessor {
     // update properties if necessary
     // do this before updating data in case columns have changed
     if (modification.hasTablePropertiesChanged()) {
-      // We have two things to worry about. One is if the table definition 
+      // We have two things to worry about. One is if the table definition
       // (i.e. the table datastructure or the table's columns' datastructure)
       // has changed. The other is if the key value store has changed.
-      TableDefinitionResource definitionResource = 
+      TableDefinitionResource definitionResource =
           modification.getTableDefinitionResource();
-      PropertiesResource propertiesResource = 
+      PropertiesResource propertiesResource =
           modification.getTableProperties();
       if (downloadingTable) {
         // The table is being downloaded for the first time. We first must
@@ -386,24 +386,24 @@ public class SyncProcessor {
             "structural modifications are not allowed. if structure needs" +
             " to be updated, it is not happening.");
       }
-      // We only want to update the properties if we haven't made local 
+      // We only want to update the properties if we haven't made local
       // changes. Otherwise we'd overwrite our local ones and would never be
       // able to put new ones on the server. We'll do this based on the long.
-      // If the server was udated more recently in time, we'll take theirs. 
+      // If the server was udated more recently in time, we'll take theirs.
       // Otherwise, we'll give the server ours. This isn't a perfect system.
-      long serverPropertiesTagTime = 
+      long serverPropertiesTagTime =
           Long.parseLong(SyncTag.valueOf(newSyncTag).getPropertiesEtag());
-      long localPropertiesTagTime = 
+      long localPropertiesTagTime =
           Long.parseLong(SyncTag.valueOf(tp.getSyncTag()).getPropertiesEtag());
-      if (serverPropertiesTagTime > localPropertiesTagTime 
+      if (serverPropertiesTagTime > localPropertiesTagTime
           || downloadingTable) {
         resetKVSForPropertiesResource(tp, propertiesResource);
       } else {
         // We do nothing.
-        Log.i(TAG, "the local properties etag was greater than the server's, " 
+        Log.i(TAG, "the local properties etag was greater than the server's, "
         		+ "so the properties are not being pulled from the server.");
       }
-      
+
     }
 
     // sort data changes into types
@@ -438,8 +438,8 @@ public class SyncProcessor {
     updateRowsInDb(table, rowsToUpdate);
     insertRowsInDb(table, rowsToInsert);
     deleteRowsInDb(table, rowsToDelete);
-    
-    // We have to set this synctag here so that the server knows we saw its 
+
+    // We have to set this synctag here so that the server knows we saw its
     // changes. Otherwise it won't let us put up new information.
     tp.setSyncTag(newSyncTag);
   }
@@ -690,9 +690,9 @@ public class SyncProcessor {
       table.actualUpdateRowByRowId(rowId, values);
     }
   }
-  
+
   /**
-   * Update the database to reflect the new structure. 
+   * Update the database to reflect the new structure.
    * <p>
    * This should be called when downloading a table from the server, which is
    * why the syncTag is separate.
@@ -705,11 +705,11 @@ public class SyncProcessor {
   private TableProperties addTableFromDefinitionResource(
       TableDefinitionResource definitionResource, String syncTag) {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
-    TableProperties tp = TableProperties.addTable(dbh, 
+    TableProperties tp = TableProperties.addTable(dbh,
         definitionResource.getTableKey(),
-        definitionResource.getDbTableName(), 
+        definitionResource.getDbTableName(),
         definitionResource.getTableKey(),
-        SyncUtil.transformServerTableType(definitionResource.getType()), 
+        SyncUtil.transformServerTableType(definitionResource.getType()),
         definitionResource.getTableId(),
         kvsType);
     for (Column col : definitionResource.getColumns()) {
@@ -717,14 +717,14 @@ public class SyncProcessor {
       // on the server as well so that you can pull down the right thing.
       // TODO: add an addcolumn method to allow setting all of the dbdefinition
       // fields.
-      tp.addColumn(col.getElementKey(), col.getElementKey(), 
+      tp.addColumn(col.getElementKey(), col.getElementKey(),
           col.getElementName(), SyncUtil.
-          getTablesColumnTypeFromServerColumnType(col.getElementType()), 
-          col.getListChildElementKeys(), 
+          getTablesColumnTypeFromServerColumnType(col.getElementType()),
+          col.getListChildElementKeys(),
           SyncUtil.intToBool(col.getIsPersisted()), col.getJoins());
     }
     // Refresh the table properties to get the columns.
-    tp = TableProperties.getTablePropertiesForTable(dbh, 
+    tp = TableProperties.getTablePropertiesForTable(dbh,
         definitionResource.getTableId(), kvsType);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(
@@ -734,7 +734,7 @@ public class SyncProcessor {
     tp.setSyncTag(syncTag);
     return tp;
   }
-  
+
   /**
    * Wipe all of the existing key value entries in the server kvs and replace
    * them with the entries in the {@link PropertiesResource}.
@@ -747,12 +747,12 @@ public class SyncProcessor {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), kvsType);
     kvs.clearKeyValuePairs(dbh.getWritableDatabase());
-    kvs.addEntriesToStore(dbh.getWritableDatabase(), 
+    kvs.addEntriesToStore(dbh.getWritableDatabase(),
         propertiesResource.getKeyValueStoreEntries());
   }
-  
+
   /**
-   * Return a list of all the entries in the key value store for the given 
+   * Return a list of all the entries in the key value store for the given
    * table and type.
    * @param tableId
    * @param typeOfStore
@@ -762,13 +762,13 @@ public class SyncProcessor {
       KeyValueStore.Type typeOfStore) {
     KeyValueStore kvs = KeyValueStoreManager.getKVSManager(dbh)
         .getStoreForTable(tableId, typeOfStore);
-    List<OdkTablesKeyValueStoreEntry> allEntries = 
+    List<OdkTablesKeyValueStoreEntry> allEntries =
         kvs.getEntries(dbh.getReadableDatabase());
     return allEntries;
   }
-  
+
   /**
-   * Return a list of {@link Column} objects (representing the column 
+   * Return a list of {@link Column} objects (representing the column
    * definition) for each of the columns associated with this table.
    * @param tp
    * @return
@@ -779,14 +779,14 @@ public class SyncProcessor {
       String elementKey = cp.getElementKey();
       String elementName = cp.getElementName();
       ColumnType colType = cp.getColumnType();
-      List<String> listChildrenElements = 
+      List<String> listChildrenElements =
           cp.getListChildElementKeys();
       int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
       JoinColumn joins = cp.getJoins();
       String listChildElementKeysStr = null;
       String joinsStr = null;
       try {
-        listChildElementKeysStr = 
+        listChildElementKeysStr =
             mMapper.writeValueAsString(listChildrenElements);
         joinsStr = mMapper.writeValueAsString(joins);
       } catch (JsonGenerationException e) {
@@ -799,8 +799,8 @@ public class SyncProcessor {
         Log.e(TAG, "i/o exception with json list entry during sync");
         e.printStackTrace();
       }
-      Column c = new Column(tp.getTableId(), elementKey, elementName, 
-          AggregateSynchronizer.types.get(colType), listChildElementKeysStr, 
+      Column c = new Column(tp.getTableId(), elementKey, elementName,
+          AggregateSynchronizer.types.get(colType), listChildElementKeysStr,
           isPersisted, joinsStr);
       columns.add(c);
     }
