@@ -22,6 +22,7 @@ import java.util.Stack;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
+import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -409,11 +410,18 @@ public class Controller {
    * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
    * updateInstanceDatabase() method.
    */
-  void editRow(UserTable table, int rowNum, CollectFormParameters params) {
-    Intent intent = null;
-    intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, table,
-        rowNum, params);
-    if (intent != null) {
+  void editRow(UserTable table, int rowNum) {
+	Map<String, String> elementKeyToValue = new HashMap<String, String>();
+	for (ColumnProperties cp : tp.getColumns().values()) {
+	  String value = table.getData(rowNum,
+	      tp.getColumnIndex(cp.getElementKey()));
+	  elementKeyToValue.put(cp.getElementKey(), value);
+	}
+
+	Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
+          null, null, null);
+
+	if (intent != null) {
       CollectUtil.launchCollectToEditRow(activity, intent,
           table.getRowId(rowNum));
     } else {
@@ -605,16 +613,9 @@ public class Controller {
 	          // prepopulate with the form. We're going to ignore joins. This
 	          // means that if there IS a join column, we'll throw an error!!!
 	          // So be careful.
-	          Intent intentAddRow;
-	          if (getSearchText().equals("")) {
-	            intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-	                activity, tp, params, null);
-	          } else {
-    	          Map<String, String> elementKeyToValue =
-    	              CollectUtil.getMapFromQuery(tp, getSearchText());
-    	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
-    	             activity, tp, params, elementKeyToValue);
-	          }
+	          Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRowByQuery(
+	        		  activity, tp, params, getSearchText());
+
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
 	                      RCODE_ODKCOLLECT_ADD_ROW);
@@ -736,7 +737,7 @@ public class Controller {
   public static void launchAppViewActivity(Context context) {
 
   }
-  
+
   /**
    * Launches the Table pointed to by tp as a list view with the specified
    * filename.
@@ -747,7 +748,7 @@ public class Controller {
    * @param isOverview
    * @param filename
    */
-  public static void launchListViewWithFileName(Context context, 
+  public static void launchListViewWithFileName(Context context,
       TableProperties tp, String searchText, Stack<String> searchStack,
       boolean isOverview, String filename) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
@@ -758,7 +759,7 @@ public class Controller {
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
     context.startActivity(intent);
   }
-  
+
   /*
    * A helper method that was introduced just to eliminate redundant code.
    * Adds the appropriate extras to the intent.
@@ -831,7 +832,7 @@ public class Controller {
 //    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
     context.startActivity(intent);
   }
-  
+
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table,
       int rowNum) {
@@ -890,7 +891,7 @@ public class Controller {
                   String formId = null; // formId used by ODK Collect
                   String locale = null; // current locale
 
-                  dbt.updateRow(rowId, values, uriUser, timestamp, 
+                  dbt.updateRow(rowId, values, uriUser, timestamp,
                       instanceName, formId, locale);
                   da.init();
                   dismiss();

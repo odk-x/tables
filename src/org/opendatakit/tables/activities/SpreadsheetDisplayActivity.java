@@ -29,8 +29,6 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;
@@ -267,10 +265,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      case MENU_ITEM_ID_EDIT_ROW:
        // It is possible that a custom form has been defined for this table.
        // We will get the strings we need, and then set the parameter object.
-       CollectFormParameters params =
-           CollectUtil.CollectFormParameters
-             .constructCollectFormParameters(c.getTableProperties());
-       c.editRow(table, (lastDataCellMenued / table.getWidth()), params);
+       c.editRow(table, (lastDataCellMenued / table.getWidth()));
        // launch ODK Collect
        return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
@@ -642,7 +637,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        // the on click method down there), does it mean that if you have a
 	        // table open and edit the join you will get the wrong information?
 	        TableProperties tp = c.getTableProperties();
-	        final ColumnProperties cp = 
+	        final ColumnProperties cp =
 	            tp.getColumnByElementKey(mCachedColumnOrder.get(
 	                cellId % table.getWidth()));
 	        // First we want to check if we need to add a join item for this
@@ -705,18 +700,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_EDIT_ROW:
 	                  // It is possible that a custom form has been defined for this table.
 	                  // We will get the strings we need, and then set the parameter object.
-//	                  String formId = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_ID);
-//	                  String formVersion = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_VERSION);
-//	                  String rootElement = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_ROOT_ELEMENT);
-	                  CollectFormParameters params =
-//	                      new CollectFormParameters(formId, formVersion, rootElement);
-	                    CollectUtil.CollectFormParameters
-	                      .constructCollectFormParameters(
-	                        c.getTableProperties());
-	                    c.editRow(table, cellId / table.getWidth(), params);
+	                    c.editRow(table, cellId / table.getWidth());
 	                    c.removeOverlay();
 	                    init();
 	                    break;

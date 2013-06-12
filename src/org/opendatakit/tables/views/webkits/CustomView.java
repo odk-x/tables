@@ -201,14 +201,11 @@ public abstract class CustomView extends LinearLayout {
      String currentQueryString = tp.getKeyValueStoreHelper(
          TableProperties.KVS_PARTITION).getString(
              TableProperties.KEY_CURRENT_QUERY);
-     Map<String, String> prepopulatedValues = null;
-     if (currentQueryString != null && !currentQueryString.equals("")) {
-       prepopulatedValues = CollectUtil.getMapFromQuery(tp,
-           currentQueryString);
-     }
-     Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
-         CustomView.this.getContainerActivity(), tp, params,
-         prepopulatedValues);
+
+     Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
+    		 CustomView.this.getContainerActivity(), tp, params,
+    		 currentQueryString);
+
      CustomView.this.getContainerActivity().startActivityForResult(
          addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
    }
@@ -244,10 +241,8 @@ public abstract class CustomView extends LinearLayout {
 		 * properties or else the ODKTables-generated default form.
 		 */
 		public void editRowWithCollect() {
-	     CollectFormParameters formParameters =
-	          CollectFormParameters.constructCollectFormParameters(tp);
 	     Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-	         CustomView.this.getContainerActivity(), tp, data, formParameters);
+	         CustomView.this.getContainerActivity(), tp, data, null, null, null);
 	     CollectUtil.launchCollectToEditRow(
 	         CustomView.this.getContainerActivity(), editRowIntent, mRowId);
 		}
@@ -264,19 +259,8 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public void editRowWithCollectAndSpecificForm(String formId,
 		    String formVersion, String formRootElement) {
-	      CollectFormParameters formParameters =
-	          CollectFormParameters.constructCollectFormParameters(tp);
-	      if (formId != null && !formId.equals("")) {
-	        formParameters.setFormId(formId);
-	      }
-	      if (formVersion != null && !formVersion.equals("")) {
-	        formParameters.setFormVersion(formVersion);
-	      }
-	      if (formRootElement != null && !formRootElement.equals("")) {
-	        formParameters.setRootElement(formRootElement);
-	      }
 	      Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-	          CustomView.this.getContainerActivity(), tp, data, formParameters);
+	          CustomView.this.getContainerActivity(), tp, data, formId, formVersion, formRootElement);
 	      // We have to launch it through this method so that the rowId is
 	      // persisted in the SharedPreferences.
 	      CollectUtil.launchCollectToEditRow(
@@ -547,11 +531,9 @@ public abstract class CustomView extends LinearLayout {
         String rowId = this.mTable.getRowId(rowNumber);
         Map<String, String> elementKeyToValue =
             getElementKeyToValueMapForRow(rowNumber);
-        CollectFormParameters formParameters =
-             CollectFormParameters.constructCollectFormParameters(tp);
         Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
             CustomView.this.getContainerActivity(), tp, elementKeyToValue,
-            formParameters);
+            null, null, null);
         CollectUtil.launchCollectToEditRow(
             CustomView.this.getContainerActivity(), editRowIntent, rowId);
       }
@@ -570,24 +552,13 @@ public abstract class CustomView extends LinearLayout {
       public void editRowWithCollectAndSpecificForm(int rowNumber,
           String formId, String formVersion, String formRootElement) {
         String rowId = this.mTable.getRowId(rowNumber);
-         CollectFormParameters formParameters =
-             CollectFormParameters.constructCollectFormParameters(tp);
-         if (formId != null && !formId.equals("")) {
-           formParameters.setFormId(formId);
-         }
-         if (formVersion != null && !formVersion.equals("")) {
-           formParameters.setFormVersion(formVersion);
-         }
-         if (formRootElement != null && !formRootElement.equals("")) {
-           formParameters.setRootElement(formRootElement);
-         }
-         Map<String, String> elementKeyToValue =
-             getElementKeyToValueMapForRow(rowNumber);
-         Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-             CustomView.this.getContainerActivity(), tp, elementKeyToValue,
-             formParameters);
-         CollectUtil.launchCollectToEditRow(
-             CustomView.this.getContainerActivity(), editRowIntent, rowId);
+        Map<String, String> elementKeyToValue =
+            getElementKeyToValueMapForRow(rowNumber);
+        Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+            CustomView.this.getContainerActivity(), tp, elementKeyToValue,
+            formId, formVersion, formRootElement);
+        CollectUtil.launchCollectToEditRow(
+            CustomView.this.getContainerActivity(), editRowIntent, rowId);
       }
 
       /**

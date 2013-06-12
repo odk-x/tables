@@ -23,7 +23,6 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.content.Intent;
@@ -72,10 +71,10 @@ public class DetailDisplayActivity extends SherlockActivity
             c.getTableProperties());
         query.loadFromUserQuery("");
         int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        Map<String, String> formValues = 
-            CollectUtil.getOdkCollectFormValuesFromInstanceId(this, 
+        Map<String, String> formValues =
+            CollectUtil.getOdkCollectFormValuesFromInstanceId(this,
                 instanceId);
-        this.data = CollectUtil.getMapForInsertion(c.getTableProperties(), 
+        this.data = CollectUtil.getMapForInsertion(c.getTableProperties(),
             formValues);
       } else {
         super.onActivityResult(requestCode, resultCode, data);
@@ -129,9 +128,6 @@ public class DetailDisplayActivity extends SherlockActivity
       // If they've selected the edit button, we need to handle it here.
       // Otherwise, we let controller handle it.
       if (item.getItemId() == Controller.MENU_ITEM_ID_ADD_ROW_BUTTON) {
-        CollectFormParameters params =
-            CollectUtil.CollectFormParameters
-              .constructCollectFormParameters(c.getTableProperties());
         // now we have to do a bit of work to get the UserTable.
         // Since a query doesn't matter, we don't need to do anything
         // difficult to  get all the TableProperties, which is an expensive
@@ -151,7 +147,7 @@ public class DetailDisplayActivity extends SherlockActivity
         		  getString(R.string.error_row_not_found), Toast.LENGTH_SHORT).show();
           return true;
         }
-        c.editRow(table, rowNum, params);
+        c.editRow(table, rowNum);
 //        Log.d(TAG, "clicked add row button");
         return true;
       }

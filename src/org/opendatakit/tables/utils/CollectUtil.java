@@ -45,6 +45,7 @@ import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.views.webkits.CustomView;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -73,13 +74,13 @@ public class CollectUtil {
 
   public static final String KVS_PARTITION = "CollectUtil";
   public static final String KVS_ASPECT = "default";
-  
+
   /**
    * This is the name of the shared preference to which collect util will save
    * the things it must persist. At the moment this is only the row id that is
    * being edited. The vast majority of state should not be saved here.
    */
-  private static final String SHARED_PREFERENCE_NAME = 
+  private static final String SHARED_PREFERENCE_NAME =
       "CollectUtil_Preference";
   /**
    * This is the key name of the preference whose value will be the row id that
@@ -170,7 +171,7 @@ public class CollectUtil {
    * @param formId the id of the form
    * @return true if the file was successfully written
    */
-  public static boolean buildBlankForm(File file,
+  private static boolean buildBlankForm(File file,
       Collection<ColumnProperties> columns, String title, String formId) {
     try {
       FileWriter writer = new FileWriter(file);
@@ -221,7 +222,7 @@ public class CollectUtil {
     }
   }
 
-    public static String getJrFormId(String filepath) {
+    private static String getJrFormId(String filepath) {
         Document formDoc = parseForm(filepath);
         String namespace = formDoc.getRootElement().getNamespace();
         Element hhtmlEl = formDoc.getElement(namespace, "h:html");
@@ -371,7 +372,7 @@ public class CollectUtil {
      * @param formId the id of the form to be deleted
      * @return the result of the the delete call
      */
-    public static int deleteForm(ContentResolver resolver, String formId) {
+    private static int deleteForm(ContentResolver resolver, String formId) {
       try {
         return resolver.delete(CONTENT_FORM_URI, COLLECT_KEY_JR_FORM_ID + "=?",
             new String[] {formId});
@@ -397,7 +398,7 @@ public class CollectUtil {
      * @return the result of the insert call, likely the URI of the resulting
      *   form. If the form was not first deleted there could be a problem
      */
-    public static Uri insertFormIntoCollect(ContentResolver resolver,
+    private static Uri insertFormIntoCollect(ContentResolver resolver,
         String formFilePath, String displayName, String formId) {
       ContentValues insertValues = new ContentValues();
       insertValues.put(COLLECT_KEY_FORM_FILE_PATH, formFilePath);
@@ -477,7 +478,7 @@ public class CollectUtil {
       // First we want to write the file.
       boolean writeSuccessful =
           CollectUtil.buildBlankForm(getAddRowFormFile(),
-              tp.getColumns().values(), tp.getDisplayName(), 
+              tp.getColumns().values(), tp.getDisplayName(),
               params.getFormId());
       if (!writeSuccessful) {
         Log.e(TAG, "problem writing file for add row");
@@ -493,9 +494,9 @@ public class CollectUtil {
       }
       return true;
     }
-    
+
     /**
-     * Identical to {@link #getIntentForOdkCollectEditRow(Context, 
+     * Identical to {@link #getIntentForOdkCollectEditRow(Context,
      * TableProperties, Map, CollectFormParameters)}, except this method
      * constructs the map of elementKey to value for you.
      */
@@ -504,12 +505,12 @@ public class CollectUtil {
      * when no row is defined. As I understand it, the new case will work as
      * follows.
      *
-     * There exits an "tableEditRow" form for a particular table. This form, 
-     * as I understand it, must exist both in the tables directory, as well as 
+     * There exits an "tableEditRow" form for a particular table. This form,
+     * as I understand it, must exist both in the tables directory, as well as
      * in Collect so that Collect can launch it with an Intent.
      *
-     * You then also construct a "values" sort of file, that is the data from 
-     * the database that will pre-populate the fields. Mitch referred to 
+     * You then also construct a "values" sort of file, that is the data from
+     * the database that will pre-populate the fields. Mitch referred to
      * something like this as the "instance" file.
      *
      * Once you have both of these files, the form and the data, you insert the
@@ -517,7 +518,7 @@ public class CollectUtil {
      * with data from the database.
      *
      * In order to make this work, the form must exist both within the places
-     * Collect knows to look, as well as in the Tables folder. You also must 
+     * Collect knows to look, as well as in the Tables folder. You also must
      * know the:
      *
      * collectFormVersion
@@ -535,29 +536,49 @@ public class CollectUtil {
      * formVersion
      * status            // either INCOMPLETE or COMPLETE
      *
-     * Examples for how this is done in Collect can be found in the Collect 
+     * Examples for how this is done in Collect can be found in the Collect
      * code in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
      * updateInstanceDatabase() method.
+     *
+     * The functionality to construct the elementKeyToValue array from
+     * the rowNum and table has been elevated. Now only the
+     * CollectUtil.getIntentForOdkCollectEditRow(...) method is exposed.
+     *
+     * public static Intent getIntentForOdkCollectEditRow(Context context,
+     *         TableProperties tp, UserTable table, int rowNum,
+     *         CollectFormParameters params) {
+     * }
      */
-    public static Intent getIntentForOdkCollectEditRow(Context context, 
-        TableProperties tp, UserTable table, int rowNum, 
-        CollectFormParameters params) {
-      Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      for (ColumnProperties cp : tp.getColumns().values()) {
-        String value = table.getData(rowNum,
-            tp.getColumnIndex(cp.getElementKey()));
-        elementKeyToValue.put(cp.getElementKey(), value);
+
+
+    public static Intent getIntentForOdkCollectEditRow(Context context,
+            TableProperties tp, Map<String, String> elementKeyToValue,
+            String formId, String formVersion, String formRootElement) {
+
+	  CollectFormParameters formParameters =
+	      CollectFormParameters.constructCollectFormParameters(tp);
+
+      if (formId != null && !formId.equals("")) {
+        formParameters.setFormId(formId);
       }
-      return getIntentForOdkCollectEditRow(context, tp, elementKeyToValue, 
-          params);
+      if (formVersion != null && !formVersion.equals("")) {
+        formParameters.setFormVersion(formVersion);
+      }
+      if (formRootElement != null && !formRootElement.equals("")) {
+        formParameters.setRootElement(formRootElement);
+      }
+      Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+    		  context, tp, elementKeyToValue, formParameters);
+
+      return editRowIntent;
     }
-    
+
     /**
      * Return an intent that can be used to edit a row.
      * <p>
      * The idea here is that we might want to edit a row of the table using a
-     * pre-set Collect form. This form would be user-defined and would be a 
-     * more user-friendly thing that would display only the pertinent 
+     * pre-set Collect form. This form would be user-defined and would be a
+     * more user-friendly thing that would display only the pertinent
      * information for a particular user.
      * @param context
      * @param tp
@@ -565,8 +586,8 @@ public class CollectUtil {
      * @param params
      * @return
      */
-    public static Intent getIntentForOdkCollectEditRow(Context context, 
-        TableProperties tp, Map<String, String> elementKeyToValue, 
+    private static Intent getIntentForOdkCollectEditRow(Context context,
+        TableProperties tp, Map<String, String> elementKeyToValue,
         CollectFormParameters params) {
       // Check if there is a custom form. If there is not, we want to delete
       // the old form and write the new form.
@@ -594,10 +615,10 @@ public class CollectUtil {
       intent.setData(insertUri);
       return intent;
     }
-    
+
     /**
      * Launch collect with the given intent. This method should be used rather
-     * than launching the activity yourself because the rowId needs to be 
+     * than launching the activity yourself because the rowId needs to be
      * retained in order to update the database.
      * @param activityToAwaitReturn
      * @param collectEditIntent
@@ -605,25 +626,25 @@ public class CollectUtil {
      */
     public static void launchCollectToEditRow(Activity activityToAwaitReturn,
         Intent collectEditIntent, String rowId) {
-      // We want to be able to launch an edit row action from a variety of 
+      // We want to be able to launch an edit row action from a variety of
       // different activities, such as the spreadsheet and the webviews. In
       // order to update the database, we must know what the row id of the row
-      // was which we are editing. There appears to be no way to pass this 
-      // information to collect and have it return it to us, so we're going to 
-      // store it in a shared preference. 
-      // 
+      // was which we are editing. There appears to be no way to pass this
+      // information to collect and have it return it to us, so we're going to
+      // store it in a shared preference.
+      //
       // Note that we aren't storing this in the key value store because it is
       // a very temporary bit of state that would be meaningless if the call
       // and return to/from collect was interrupted.
-      SharedPreferences preferences = 
-          activityToAwaitReturn.getSharedPreferences(SHARED_PREFERENCE_NAME, 
+      SharedPreferences preferences =
+          activityToAwaitReturn.getSharedPreferences(SHARED_PREFERENCE_NAME,
          Context.MODE_PRIVATE);
       preferences.edit().putString(
           PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
-      activityToAwaitReturn.startActivityForResult(collectEditIntent, 
+      activityToAwaitReturn.startActivityForResult(collectEditIntent,
           Controller.RCODE_ODKCOLLECT_EDIT_ROW);
     }
-    
+
     /**
      * This gets a map of values for insertion into a row after returning from
      * a Collect form. It handles validating the values and removes nulls from
@@ -646,7 +667,7 @@ public class CollectUtil {
       }
       return values;
     }
-    
+
     /**
      * Returns true if the instance has been marked as complete/finalized.
      * If the instance cannot be found or is not marked as complete, returns
@@ -655,12 +676,12 @@ public class CollectUtil {
      * @param instanceId
      * @return
      */
-    public static boolean instanceIsFinalized(Context context, 
+    private static boolean instanceIsFinalized(Context context,
         int instanceId) {
       String[] projection = { COLLECT_KEY_STATUS };
       String selection = "_id = ?";
       String[] selectionArgs = { instanceId + "" };
-      CursorLoader cursorLoader = new CursorLoader(context, 
+      CursorLoader cursorLoader = new CursorLoader(context,
           COLLECT_INSTANCES_CONTENT_URI, projection, selection, selectionArgs,
           null);
       Cursor c = cursorLoader.loadInBackground();
@@ -675,7 +696,7 @@ public class CollectUtil {
         return false;
       }
     }
-    
+
     /**
      * Return the Collect form values from the given instance id.
      * @param context
@@ -687,7 +708,7 @@ public class CollectUtil {
       String[] projection = { "instanceFilePath" };
       String selection = "_id = ?";
       String[] selectionArgs = { (instanceId + "") };
-      CursorLoader cursorLoader = new CursorLoader(context, 
+      CursorLoader cursorLoader = new CursorLoader(context,
           COLLECT_INSTANCES_CONTENT_URI, projection, selection, selectionArgs,
           null);
       Cursor c = cursorLoader.loadInBackground();
@@ -700,12 +721,12 @@ public class CollectUtil {
       Map<String, String> fields = parseXML(instanceFile);
       return fields;
     }
-    
-    public static boolean updateRowFromOdkCollectInstance(Context context,
+
+    private static boolean updateRowFromOdkCollectInstance(Context context,
         TableProperties tp, int instanceId) {
-      // First we need to check to make sure the row id is in the shared 
+      // First we need to check to make sure the row id is in the shared
       // preferences. If it's not, something has gone wrong.
-      // TODO: This should be migrated to use metadata/instanceID in the 
+      // TODO: This should be migrated to use metadata/instanceID in the
       // instance xpath.
       SharedPreferences sharedPreferences = context.getSharedPreferences(
           SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
@@ -716,13 +737,13 @@ public class CollectUtil {
         Log.e(TAG, "rowId retrieved from shared preferences was null.");
         return false;
       }
-      Map<String, String> formValues = 
-          CollectUtil.getOdkCollectFormValuesFromInstanceId(context, 
+      Map<String, String> formValues =
+          CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
               instanceId);
       if (formValues == null) {
           return false;
       }
-      Map<String, String> values = CollectUtil.getMapForInsertion(tp, 
+      Map<String, String> values = CollectUtil.getMapForInsertion(tp,
           formValues);
       String uriUser = null; // user on phone
       Long timestamp = null; // current time
@@ -731,21 +752,21 @@ public class CollectUtil {
       String locale = null; // current locale
       DbHelper dbh = DbHelper.getDbHelper(context);
       DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
-      dbTable.updateRow(rowId, values, uriUser, timestamp, instanceName, 
+      dbTable.updateRow(rowId, values, uriUser, timestamp, instanceName,
           formId, locale);
       // If we made it here and there were no errors, then clear the row id
-      // from the shared preferences. This is just a bit of housekeeping that 
+      // from the shared preferences. This is just a bit of housekeeping that
       // will mean there's no you could accidentally wind up overwriting the
       // wrong row.
       sharedPreferences.edit().remove(PREFERENCE_KEY_EDITED_ROW_ID).commit();
       return true;
     }
-    
+
     /**
      * Returns false if the returnCode is not ok or if the instance pointed to
      * by the intent was not marked as finalized.
      * <p>
-     * Otherwise returns the result of 
+     * Otherwise returns the result of
      * {@link #updateRowFromOdkCollectInstance(Context, TableProperties, int)}.
      * @param context
      * @param tp
@@ -753,7 +774,7 @@ public class CollectUtil {
      * @param data
      * @return
      */
-    public static boolean handleOdkCollectEditReturn(Context context, 
+    public static boolean handleOdkCollectEditReturn(Context context,
         TableProperties tp, int returnCode, Intent data) {
       if (returnCode != SherlockActivity.RESULT_OK) {
         Log.i(TAG, "return code wasn't sherlock_ok, not inserting " +
@@ -767,12 +788,12 @@ public class CollectUtil {
       }
       return updateRowFromOdkCollectInstance(context, tp, instanceId);
     }
-    
+
     /**
      * Returns false if the returnCode is not ok or if the instance pointed to
-     * by the intent was not marked as finalized. 
+     * by the intent was not marked as finalized.
      * <p>
-     * Otherwise returns the result of 
+     * Otherwise returns the result of
      * {@link #addRowFromOdkCollectInstance(Context, TableProperties, int)}.
      * @param context
      * @param tp
@@ -785,7 +806,7 @@ public class CollectUtil {
       if (returnCode != SherlockActivity.RESULT_OK) {
         Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
         return false;
-      } 
+      }
       int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
       if (!instanceIsFinalized(context, instanceId)) {
         Log.i(TAG, "instance wasn't finalized--not adding");
@@ -793,11 +814,11 @@ public class CollectUtil {
       }
       return addRowFromOdkCollectInstance(context, tp, instanceId);
     }
-    
-    public static boolean addRowFromOdkCollectInstance(Context context,
+
+    private static boolean addRowFromOdkCollectInstance(Context context,
         TableProperties tp, int instanceId) {
-      Map<String, String> formValues = 
-          CollectUtil.getOdkCollectFormValuesFromInstanceId(context, 
+      Map<String, String> formValues =
+          CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
               instanceId);
       if (formValues == null) {
         return false;
@@ -809,13 +830,28 @@ public class CollectUtil {
       String formId = null; // collect formId
       String instanceName = null; // if exists, meta/instanceName value
       String locale = null; // current locale string
-      DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), 
+      DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context),
           tp.getTableId());
-      dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId, 
+      dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId,
           locale);
       return true;
     }
-    
+
+    public static Intent getIntentForOdkCollectAddRowByQuery(Context context,
+    	TableProperties tp, CollectFormParameters params, String queryString) {
+        Intent intentAddRow;
+        if (queryString == null || queryString.length() == 0) {
+          intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
+        		  context, tp, params, null);
+        } else {
+	          Map<String, String> elementKeyToValue =
+	              CollectUtil.getMapFromQuery(tp, queryString);
+	         intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(
+	        		 context, tp, params, elementKeyToValue);
+        }
+        return intentAddRow;
+    }
+
     /**
      * Return an intent that can be launched to add a row.
      * @param context
@@ -825,7 +861,7 @@ public class CollectUtil {
      *   values with which you want to prepopulate the add row form.
      * @return
      */
-    public static Intent getIntentForOdkCollectAddRow(Context context,
+    private static Intent getIntentForOdkCollectAddRow(Context context,
         TableProperties tp, CollectFormParameters params,
         Map<String, String> elementKeyToValue) {
       /*
@@ -875,15 +911,15 @@ public class CollectUtil {
       intent.setData(formToLaunch);
       return intent;
     }
-    
+
     /**
-     * Parse the given xml file and return a map of element to value. 
+     * Parse the given xml file and return a map of element to value.
      * <p>
      * Based on Collect's {@code parseXML} in {@code FileUtils}.
      * @param xmlFile
      * @return
      */
-    public static Map<String, String> parseXML(File xmlFile) {
+    private static Map<String, String> parseXML(File xmlFile) {
       Map<String, String> fields = new HashMap<String, String>();
       InputStream is;
       try {
@@ -913,7 +949,7 @@ public class CollectUtil {
           } catch (IOException e) {
             Log.e(TAG, "io exception when parsing");
             e.printStackTrace();
-          } 
+          }
         } finally {
           try {
             isr.close();
@@ -944,22 +980,22 @@ public class CollectUtil {
       }
       return fields;
     }
-    
+
     /**
      * Construct a map based on the query string. The idea is that you can pass
      * in the current query and get back a map of values that will represent
      * the values that should prepopulate to the add row form.
      * <p>
-     * If the user has searched for facility_code: 12345, for example, then if 
+     * If the user has searched for facility_code: 12345, for example, then if
      * they choose to add a row, the facility_code should perhaps be pre-
      * populated with 12345. This method provides the map of elementKey to
      * value for the given query.
      * @param query
      * @return
      */
-    public static Map<String, String> getMapFromQuery(TableProperties tp,
+    private static Map<String, String> getMapFromQuery(TableProperties tp,
         String queryString) {
-      Map<String, String> elementKeyToValue = 
+      Map<String, String> elementKeyToValue =
           new HashMap<String, String>();
       // First add all empty strings. We will overwrite the ones that are queried
       // for in the search box. We need this so that if an add is canceled, we
@@ -1028,7 +1064,7 @@ public class CollectUtil {
        * @param formXMLRootElement
        */
       private CollectFormParameters(boolean isCustom, String formId,
-          String formVersion, String formXMLRootElement, 
+          String formVersion, String formXMLRootElement,
           String rowDisplayName) {
         this.mIsCustom = isCustom;
         this.mFormId = formId;
