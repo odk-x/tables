@@ -299,21 +299,20 @@ public class ColumnManager extends SherlockListActivity {
 					} else if (colName.contains(SPACE)) {
 						toastColumnNameError(getString(R.string.error_spaces_column_name));
 						alertForNewColumnName(colName.replace(SPACE_CHAR, UNDERSCORE_CHAR));
-					} else if (ColumnProperties.displayNameConflict(tableId,
-					    colName, DbHelper.getDbHelper(ColumnManager.this))){
+					} else if (tp.getColumnByDisplayName(colName) != null) {
 					  toastColumnNameError(getString(R.string.error_display_name_in_use_column_name, colName));
 					  alertForNewColumnName(null);
 					} else {
 						// Create new column
 					  ColumnProperties cp = tp.addColumn(colName, null, null);
 	              List<String> tpColumnOrder = tp.getColumnOrder();
-					  ColumnManager.this.cps = 
+					  ColumnManager.this.cps =
 						    new ColumnProperties[tpColumnOrder.size()];
 					  columnOrder.clear();
 					  int addIndex = 0;
 					  for ( String s : tpColumnOrder ) {
 							columnOrder.add(s);
-							ColumnManager.this.cps[addIndex] = 
+							ColumnManager.this.cps[addIndex] =
 							    tp.getColumnByElementKey(s);
 							addIndex++;
 						}
@@ -367,7 +366,7 @@ public class ColumnManager extends SherlockListActivity {
 			tp.setColumnOrder(newOrder);
 			columnOrder.clear();
 			List<String> tpColumnOrder = tp.getColumnOrder();
-			ColumnManager.this.cps = 
+			ColumnManager.this.cps =
 			    new ColumnProperties[tpColumnOrder.size()];
 			int addIndex = 0;
 			for (String s : tpColumnOrder) {

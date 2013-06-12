@@ -138,39 +138,6 @@ public class ColumnDefinitions {
   }
 
   /**
-   * Return all the element keys for the given table. Element keys are
-   * the unique identifiers for the columns, so this gets ALL the element keys.
-   * <p>
-   * Does not close the passed in database.
-   * @param tableId
-   * @param db
-   * @return
-   */
-  public static List<String> getAllElementKeysForTable(TableProperties tp) {
-    List<String> elementKeys = new ArrayList<String>();
-	for ( ColumnProperties p : tp.getColumns().values()) {
-		elementKeys.add(p.getElementKey());
-	}
-	return elementKeys;
-  }
-
-  /**
-   * Return all the element names for the given table.
-   * <p>
-   * Does not close the passed in database.
-   * @param tableId
-   * @param db
-   * @return
-   */
-  public static List<String> getAllElementNamesForTable(TableProperties tp) {
-    List<String> elementNames = new ArrayList<String>();
-    for ( ColumnProperties c : tp.getColumns().values() ) {
-    	elementNames.add(c.getElementName());
-    }
-    return elementNames;
-  }
-
-  /**
    * Return a map of columnName->Value for the row with the given table id and
    * elementKey.
    * TODO: perhaps this should become columnName->TypevValuePair like the rest

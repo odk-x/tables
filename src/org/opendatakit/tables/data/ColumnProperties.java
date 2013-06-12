@@ -522,15 +522,13 @@ public class ColumnProperties {
           ColumnDefinitions.getFields(tableId, elementKey, db);
       Map<String, String> kvsMap = intendedKVS.getKeyValues(
           ColumnProperties.KVS_PARTITION, elementKey, db);
-      Map<String, String> mapProps = new HashMap<String, String>();
       // make sure that the values in the columnDefinitions are always
       // respected, even if the kvsMap somehow has a colliding key.
-      mapProps.putAll(kvsMap);
-      mapProps.putAll(columnDefinitionsMap);
+      kvsMap.putAll(columnDefinitionsMap);
       // TODO: fix the when to close problem
 //    db.close();
 //    db = null;
-      return mapProps;
+      return kvsMap;
     } finally {
       // TODO: fix the when to close problem
 //      if ( db != null ) {
@@ -666,7 +664,7 @@ public class ColumnProperties {
 
   /**
    * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
-   * 
+   *
    * Add a column to the datastore. elementKey and elementName should be
    * made via createDbElementKey and createDbElementName to avoid conflicts.
    * A possible idea would be to pass them display name.
@@ -807,154 +805,6 @@ public class ColumnProperties {
   }
 
   /**
-   * Create an element key based on the proposedKey parameter. The first
-   * attempt will be the proposedKey prepended with an underscore and with
-   * non-word characters (as defined by java's "\\W") replaced by an
-   * underscore.
-   * If that elementKey is already used for this table, an integer suffix,
-   * beginning with 1, is tried to be added to key until a conflict no longer
-   * exists.
-   * @param tableId
-   * @param proposedKey
-   * @param db
-   * @return
-   */
-  public static String createDbElementKey(TableProperties tp, String proposedKey) {
-    String baseName = "_" + proposedKey.replace("\\W", "_");
-    if (!keyConflict(tp, baseName)) {
-      return baseName;
-    }
-    // otherwise we need to create a non-conflicting key.
-    int suffix = 1;
-    while (true) {
-      String nextName = baseName + suffix;
-      if (!keyConflict(tp, nextName)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  /**
-   * Create an element name based on the proposedName parameter. The first
-   * attempt will be the proposedName prepended with an underscore with
-   * whitespace (as defined by java's "\\W") replaced by an underscore.
-   * If that elementName is already used for this table, an integer suffix,
-   * beginning with 1, is tried to be added to key until a conflict no longer
-   * exists.
-   * @param tableId
-   * @param proposedName
-   * @param db
-   * @return
-   */
-  public static String createDbElementName(TableProperties tp, String proposedName) {
-    String baseName = "_" + proposedName.replace("\\W", "_");
-    if (!nameConflict(tp, baseName)) {
-      return baseName;
-    }
-    // otherwise we need to create a non-conflicting key.
-    int suffix = 1;
-    while (true) {
-      String nextName = baseName + suffix;
-      if (!nameConflict(tp, nextName)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  /**
-   * Return true if a column already exists with the display name for the
-   * given table.
-   * <p>
-   * This should only be called when adding a column or doing a
-   * check without reference to a given column. For instance, if it was used to
-   * check a display name for an existing column and no changes had been made
-   * to that column, it would return an error.
-   * @param tableId
-   * @param displayName
-   * @param db
-   * @return
-   */
-  public static boolean displayNameConflict(String tableId, String displayName,
-      DbHelper dbh) {
-    DataManager dm = new DataManager(dbh);
-    TableProperties tp = dm.getTableProperties(tableId,
-        KeyValueStore.Type.ACTIVE);
-    if (tp.getColumnByDisplayName(displayName) != null) {
-      return true;
-    }
-//    for (ColumnProperties cp : tp.getColumns().values()) {
-//      if (cp.getDisplayName().equals(displayName)) {
-//        return true;
-//      }
-//    }
-    return false;
-  }
-
-  private static boolean keyConflict(TableProperties tp, String elementKey) {
-    List<String> existingKeys = ColumnDefinitions.getAllElementKeysForTable(tp);
-    for (String existingKey : existingKeys) {
-      if (existingKey.equals(elementKey)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean nameConflict(TableProperties tp, String elementName) {
-    List<String> existingNames = ColumnDefinitions.getAllElementNamesForTable(tp);
-    for (String existingName : existingNames) {
-      if (existingName.equals(elementName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Return true if the proposed display name is in use for a column that is
-   * NOT the column of which this method is a member. In other words, check for
-   * name conflicts, but if the name conflicts with itself, do not throw an
-   * error.
-   * @param proposedDisplayName
-   * @return
-   */
-  private boolean displayNameConflict(String proposedDisplayName) {
-    DataManager dm = new DataManager(dbh);
-    TableProperties tp = dm.getTableProperties(tableId, backingStore);
-    for (ColumnProperties cp : tp.getColumns().values()) {
-      if (cp.getDisplayName().equalsIgnoreCase(proposedDisplayName)
-          && !cp.getElementKey().equals(elementKey)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Take the proposed display name and return a display name that has no
-   * conflicts with other display names in the table. If there is a conflict,
-   * integers are appended to the proposed name until there are no conflicts.
-   * @param proposedDisplayName
-   * @return
-   */
-  private String createDisplayName(String proposedDisplayName) {
-    if (!displayNameConflict(proposedDisplayName)) {
-      return proposedDisplayName;
-    }
-    // otherwise we need to create a non-conflicting key.
-    int suffix = 1;
-    while (true) {
-      String nextName = proposedDisplayName + suffix;
-      if (!displayNameConflict(nextName)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  /**
    * DB_ELEMENT_KEY, DB_ELEMENT_NAME, DB_ELEMENT_TYPE,
    * DB_LIST_CHILD_ELEMENT_KEYS, DB_JOIN_TABLE_ID, DB_JOIN_ELEMENT_KEY,
    * DB_IS_PERSISTED,
@@ -1004,9 +854,7 @@ public class ColumnProperties {
    * @param columnType
    *          the new type
    */
-  public void setColumnType(ColumnType columnType) {
-    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-        tableId, backingStore);
+  public void setColumnType(TableProperties tp, ColumnType columnType) {
     List<String> colOrder = tp.getColumnOrder();
     tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
@@ -1018,6 +866,7 @@ public class ColumnProperties {
       db.setTransactionSuccessful();
       db.endTransaction();
       this.elementType = columnType;
+      tp.refreshColumns();
     } finally {
       // TODO: fix the when to close problem
       // if ( db != null ) {
@@ -1069,20 +918,19 @@ public class ColumnProperties {
   }
 
   /**
-   * Sets the column's display name. The name will first be checked against all
-   * other column display names in this table. If there are no conflicts then
-   * the name will be set as proposed. If there is a conflict, integers will be
-   * appended to the display name parameter until there are no conflicts (this
-   * depends on the behavior of createDisplayName).
+   * Sets the column's display name.
+   *
+   * NOTE: The caller is responsible for confirming that the name will not be
+   * in conflict with any other column display names in use within the table.
+   * Use TableProperties.createDisplayName(proposedName) to do this.
    *
    * @param displayName
    *          the new display name
    * @return the
    */
   public void setDisplayName(String displayName) {
-    String safeName = createDisplayName(displayName);
-    setStringProperty(KEY_DISPLAY_NAME, safeName);
-    this.displayName = safeName;
+    setStringProperty(KEY_DISPLAY_NAME, displayName);
+    this.displayName = displayName;
   }
 
   /**

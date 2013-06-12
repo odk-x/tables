@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.views;
 
+import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
@@ -29,15 +30,15 @@ import android.widget.ScrollView;
 
 /**
  * A class for displaying data in list form.
- * 
+ *
  * @author hkworden
  */
 public class ListDisplayView extends LinearLayout {
-    
+
     private int BACKGROUND_COLOR = Color.WHITE;
     private int TEXT_COLOR = Color.BLACK;
     private int BORDER_COLOR = Color.BLACK;
-    
+
     private Controller controller; // the table activity to call back to
     private UserTable table; // the table to display
     private TableProperties tp;
@@ -46,13 +47,13 @@ public class ListDisplayView extends LinearLayout {
     private int[][] lineColSpecs;
     private Paint[] colPaints;
     private Paint borderPaint;
-    
+
     public static ListDisplayView buildView(Context context,
             TableProperties tp, Controller controller,
             UserTable table) {
         return new ListDisplayView(context, tp, controller, table);
     }
-    
+
     private ListDisplayView(Context context, TableProperties tp,
             Controller controller, UserTable table) {
         super(context);
@@ -67,7 +68,7 @@ public class ListDisplayView extends LinearLayout {
         setBackgroundColor(BACKGROUND_COLOR);
         buildList(context);
     }
-    
+
     private void setFormatInfo() {
 // removed this when TableViewSettings was removed.
 //        String format = tvs.getListFormat();
@@ -112,17 +113,22 @@ public class ListDisplayView extends LinearLayout {
             for (int j = 1; j < lineSplit.length; j += 2) {
                 int colIndex = tp.getColumnIndex(lineSplit[j]);
                 if (colIndex < 0) {
-                    String colDbName = tp.getColumnByDisplayName(lineSplit[j]);
-                    if (colDbName == null) {
-                        colDbName = tp.getColumnByAbbreviation(lineSplit[j]);
+                    ColumnProperties cp = tp.getColumnByDisplayName(lineSplit[j]);
+                    if (cp == null) {
+                    	cp = tp.getColumnByAbbreviation(lineSplit[j]);
                     }
-                    colIndex = tp.getColumnIndex(colDbName);
+                    if (cp == null) {
+                    	colIndex = -1;
+                    } else {
+	                    String colDbName = cp.getElementKey();
+	                    colIndex = tp.getColumnIndex(colDbName);
+                    }
                 }
                 lineColSpecs[i][j / 2] = colIndex;
             }
         }
     }
-    
+
     private void buildList(Context context) {
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
@@ -146,7 +152,7 @@ public class ListDisplayView extends LinearLayout {
         scroll.addView(wrapper);
         addView(scroll);
     }
-    
+
     private String getDefaultFormat() {
         StringBuilder builder = new StringBuilder();
         if (table.getWidth() > 0) {
@@ -157,11 +163,11 @@ public class ListDisplayView extends LinearLayout {
         }
         return builder.toString();
     }
-    
+
     private class ItemView extends View {
-        
+
         private int rowNum;
-        
+
         public ItemView(Context context, int rowNum) {
             super(context);
             this.rowNum = rowNum;
@@ -171,7 +177,7 @@ public class ListDisplayView extends LinearLayout {
             }
             setMinimumHeight(height);
         }
-        
+
         @Override
         public void onDraw(Canvas canvas) {
             int y = 0;
@@ -182,7 +188,7 @@ public class ListDisplayView extends LinearLayout {
             canvas.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1,
                     borderPaint);
         }
-        
+
         private String getText(int lineNum) {
             StringBuilder builder = new StringBuilder();
             int i;
@@ -197,9 +203,9 @@ public class ListDisplayView extends LinearLayout {
             return builder.toString();
         }
     }
-    
+
     public interface Controller {
-        
+
         public void onListItemClick(int rowNum);
     }
 }

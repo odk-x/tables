@@ -130,6 +130,7 @@ public class MsgHandler {
         tps = dm.getAllTableProperties(KeyValueStore.Type.ACTIVE);
         dataTps = dm.getTablePropertiesForDataTables(
             KeyValueStore.Type.ACTIVE);
+        // TODO: verify that the tables returned are still valid (that columns haven't been removed or renamed)
         scTps = dm.getShortcutTableProperties(KeyValueStore.Type.ACTIVE);
         Log.d("MSGH", "scTps:" + Arrays.toString(scTps));
     }
@@ -144,13 +145,13 @@ public class MsgHandler {
         List<String> scInputs = new ArrayList<String>();
         List<String> scOutputs = new ArrayList<String>();
         for (TableProperties scTp : scTps) {
+        	ColumnProperties cpLabel = scTp.getColumnByDisplayName(ShortcutUtil.LABEL_COLUMN_NAME);
+        	ColumnProperties cpInput = scTp.getColumnByDisplayName(ShortcutUtil.INPUT_COLUMN_NAME);
+        	ColumnProperties cpOutput = scTp.getColumnByDisplayName(ShortcutUtil.OUTPUT_COLUMN_NAME);
             String[] scCols = new String[] {
-                    scTp.getColumnByDisplayName(
-                            ShortcutUtil.LABEL_COLUMN_NAME),
-                    scTp.getColumnByDisplayName(
-                            ShortcutUtil.INPUT_COLUMN_NAME),
-                    scTp.getColumnByDisplayName(
-                            ShortcutUtil.OUTPUT_COLUMN_NAME)};
+            		cpLabel.getElementKey(),
+            		cpInput.getElementKey(),
+            		cpOutput.getElementKey()};
             DbTable dbt = dm.getDbTable(scTp.getTableId());
             UserTable table = dbt.getRaw(new Query(tps, scTp), scCols);
             for (int i = 0; i < table.getHeight(); i++) {
@@ -323,7 +324,7 @@ public class MsgHandler {
             }
         }
         DbTable dbt = dm.getDbTable(tp.getTableId());
-        dbt.addRow(rowValues, null, null, phoneNum, null /* instanceName */, 
+        dbt.addRow(rowValues, null, null, phoneNum, null /* instanceName */,
             null /* formId */, null /* locale */);
         return true;
     }

@@ -45,9 +45,9 @@ import android.preference.PreferenceScreen;
 /*
  * Activity that allows users to change column property.
  * Column properties includes abreviations for the column
- * names, SMS-IN, SMS-OUT. Please see ColumnProperty.java 
+ * names, SMS-IN, SMS-OUT. Please see ColumnProperty.java
  * for more information about the column property.
- * 
+ *
  *  @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
 public class PropertyManager extends PreferenceActivity {
@@ -56,10 +56,10 @@ public class PropertyManager extends PreferenceActivity {
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
 
   public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number",
-    "Date", "Date Range", "Phone Number", "File", "Collect Form", 
+    "Date", "Date Range", "Phone Number", "File", "Collect Form",
     "Multiple Choice", "Join", "Location" };
 
-  public static final String[] FOOTER_MODE_LABELS = { "none", "count", 
+  public static final String[] FOOTER_MODE_LABELS = { "none", "count",
     "minimum", "maximum",
       "mean", "sum" };
 
@@ -85,7 +85,7 @@ public class PropertyManager extends PreferenceActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
-    this.columnKVSH = 
+    this.columnKVSH =
         tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
     cp = tp.getColumnByElementKey(elementKey);
     colIndex = tp.getColumnIndex(elementKey);
@@ -102,9 +102,9 @@ public class PropertyManager extends PreferenceActivity {
     PreferenceCategory category = new PreferenceCategory(this);
     category.setTitle(cp.getDisplayName());
     root.addPreference(category);
-    
+
     String displayName = cp.getDisplayName();
-    category.addPreference(createEditTextPreference("DISPLAY_NAME", 
+    category.addPreference(createEditTextPreference("DISPLAY_NAME",
         "Display Name", "Change display name of column", displayName,
         displayName));
 
@@ -135,9 +135,9 @@ public class PropertyManager extends PreferenceActivity {
     colWidthPref.setTitle("Column Width");
     colWidthPref.setDialogTitle("Change Column Width");
     colWidthPref.setMaxValue(500);
-    final KeyValueHelper aspectHelper = 
+    final KeyValueHelper aspectHelper =
         columnKVSH.getAspectHelper(elementKey);
-    Integer savedColumnWidth = 
+    Integer savedColumnWidth =
         aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);
     if (savedColumnWidth == null) {
       savedColumnWidth = SpreadsheetView.DEFAULT_COL_WIDTH;
@@ -146,7 +146,7 @@ public class PropertyManager extends PreferenceActivity {
     colWidthPref.setOnPreferenceChangeListener(
         new Preference.OnPreferenceChangeListener() {
       @Override
-      public boolean onPreferenceChange(Preference preference, 
+      public boolean onPreferenceChange(Preference preference,
           Object newValue) {
         int width = (Integer) newValue;
         aspectHelper.setInteger(SpreadsheetView.KEY_COLUMN_WIDTH, width);
@@ -209,7 +209,7 @@ public class PropertyManager extends PreferenceActivity {
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
         for (int i = 0; i < columnOrder.size(); i++) {
           String elementKey = columnOrder.get(i);
-          String colDisplayName = 
+          String colDisplayName =
               tp.getColumnByElementKey(elementKey).getDisplayName();
           colDbNames[i + 1] = elementKey;
           colDisplayNames[i + 1] = colDisplayName;
@@ -273,7 +273,7 @@ public class PropertyManager extends PreferenceActivity {
     } else if (key.equals("TYPE")) {
       for (ColumnType t : ColumnType.getAllColumnTypes()) {
         if (t.label().equals(newVal)) {
-          cp.setColumnType(t);
+          cp.setColumnType(tp, t);
           if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
             loadPreferenceScreen();
           } else if (t == ColumnType.TABLE_JOIN) {
@@ -306,18 +306,18 @@ public class PropertyManager extends PreferenceActivity {
       oldJoins.setElementKey(newVal);
       cp.setJoins(oldJoins);
     } else if (key.equals("DISPLAY_NAME")) {
-      cp.setDisplayName(newVal);
+      cp.setDisplayName(tp.createDisplayName(newVal));
     }
 
     // Refresh
     getPreferenceScreen().removeAll();
     loadPreferenceScreen();
   }
-  
+
 
   @Override
   public void onBackPressed() {
-    // do this here to save your column changes into the tp. This is esp 
+    // do this here to save your column changes into the tp. This is esp
     // important for things like displayName.
     tp.refreshColumns();
     super.onBackPressed();
@@ -429,12 +429,12 @@ public class PropertyManager extends PreferenceActivity {
 
     @Override
     protected void onClick() {
-      Intent i = new Intent(PropertyManager.this, 
+      Intent i = new Intent(PropertyManager.this,
           ColorRuleManagerActivity.class);
       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, elementKey);
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
+      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
           tp.getTableId());
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE, 
+      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
           ColorRuleGroup.Type.COLUMN.name());
       startActivity(i);
     }

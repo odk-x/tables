@@ -213,16 +213,6 @@ public class TableProperties {
    * Maps the elementKey of a column to its ColumnProperties object.
    */
   private Map<String, ColumnProperties> mElementKeyToColumnProperties;
-  /**
-   * For some reason columns currently need to be accessible by their display
-   * name. This seems dangerous but is currently allowed and requires this
-   * datastructure.
-   */
-  private Map<String, String> mColumnDisplayNameToElementKey;
-  /**
-   * Mapping of abbreviation to elementKey.
-   */
-  private Map<String, String> mColumnAbbreviationToElementKey;
   private List<String> columnOrder;
   private List<String> primeColumns;
   private String sortColumn;
@@ -267,8 +257,6 @@ public class TableProperties {
     this.accessControls = accessControls;
 //    columns = null;
     this.mElementKeyToColumnProperties = null;
-    this.mColumnDisplayNameToElementKey = null;
-    this.mColumnAbbreviationToElementKey = null;
     this.primeColumns = primeColumns;
     this.sortColumn = sortColumn;
     this.indexColumn = indexColumn;
@@ -702,27 +690,27 @@ public class TableProperties {
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, ShortcutUtil.LABEL_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, ShortcutUtil.LABEL_COLUMN_NAME));
+          tp.createDbElementKey(ShortcutUtil.LABEL_COLUMN_NAME),
+          tp.createDbElementName(ShortcutUtil.LABEL_COLUMN_NAME));
       tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, ShortcutUtil.INPUT_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, ShortcutUtil.INPUT_COLUMN_NAME));
+		  tp.createDbElementKey(ShortcutUtil.INPUT_COLUMN_NAME),
+		  tp.createDbElementName(ShortcutUtil.INPUT_COLUMN_NAME));
       tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, ShortcutUtil.OUTPUT_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, ShortcutUtil.OUTPUT_COLUMN_NAME));
+		  tp.createDbElementKey(ShortcutUtil.OUTPUT_COLUMN_NAME),
+		  tp.createDbElementName(ShortcutUtil.OUTPUT_COLUMN_NAME));
 //      tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
 //      tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
 //      tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
     } else if (tableType == TableType.security) {
       tp.addColumn(SecurityUtil.USER_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, SecurityUtil.USER_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, SecurityUtil.USER_COLUMN_NAME));
+		  tp.createDbElementKey(SecurityUtil.USER_COLUMN_NAME),
+		  tp.createDbElementName(SecurityUtil.USER_COLUMN_NAME));
       tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, SecurityUtil.PHONENUM_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, SecurityUtil.PHONENUM_COLUMN_NAME));
+		  tp.createDbElementKey(SecurityUtil.PHONENUM_COLUMN_NAME),
+		  tp.createDbElementName(SecurityUtil.PHONENUM_COLUMN_NAME));
       tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(tp, SecurityUtil.PASSWORD_COLUMN_NAME),
-          ColumnProperties.createDbElementName(tp, SecurityUtil.PASSWORD_COLUMN_NAME));
+		  tp.createDbElementKey(SecurityUtil.PASSWORD_COLUMN_NAME),
+		  tp.createDbElementName(SecurityUtil.PASSWORD_COLUMN_NAME));
 //      tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
 //      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
 //      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
@@ -1019,25 +1007,7 @@ public class TableProperties {
     this.mElementKeyToColumnProperties =
         ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
             backingStore);
-    this.mColumnDisplayNameToElementKey = new HashMap<String, String>();
-    this.mColumnAbbreviationToElementKey = new HashMap<String, String>();
-    for (Map.Entry<String, ColumnProperties> entry :
-           mElementKeyToColumnProperties.entrySet()) {
-      mColumnDisplayNameToElementKey.put(entry.getValue().getDisplayName(),
-          entry.getValue().getElementKey());
-      mColumnAbbreviationToElementKey.put(entry.getValue().getSmsLabel(),
-          entry.getValue().getElementKey());
-    }
   }
-
-
-  public ColumnProperties getColumnByElementKey(String colElementKey) {
-    if (this.mElementKeyToColumnProperties == null) {
-      refreshColumns();
-    }
-    return this.mElementKeyToColumnProperties.get(colElementKey);
-  }
-
 
   /**
    * Return the index of the elementKey in the columnOrder, or -1 if it is not
@@ -1050,6 +1020,13 @@ public class TableProperties {
     return colOrder.indexOf(elementKey);
   }
 
+  public ColumnProperties getColumnByElementKey(String elementKey) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    return mElementKeyToColumnProperties.get(elementKey);
+  }
+
   /**
    * Return the element key of the column with the given display name. This
    * behavior is undefined if there are two columns with the same name. This
@@ -1059,11 +1036,16 @@ public class TableProperties {
    * @param displayName
    * @return
    */
-  public String getColumnByDisplayName(String displayName) {
-    if (this.mColumnDisplayNameToElementKey == null) {
+  public ColumnProperties getColumnByDisplayName(String displayName) {
+    if (this.mElementKeyToColumnProperties == null) {
       refreshColumns();
     }
-    return this.mColumnDisplayNameToElementKey.get(displayName);
+    for ( ColumnProperties cp : this.mElementKeyToColumnProperties.values() ) {
+ 	  if ( cp.getDisplayName().equals(displayName) ) {
+      	return cp;
+      }
+    }
+    return null;
   }
 
   /**
@@ -1074,11 +1056,28 @@ public class TableProperties {
    * @param abbreviation
    * @return
    */
-  public String getColumnByAbbreviation(String abbreviation) {
-    if (this.mColumnAbbreviationToElementKey == null) {
+  public ColumnProperties getColumnByAbbreviation(String abbreviation) {
+    if (this.mElementKeyToColumnProperties == null) {
       refreshColumns();
     }
-    return this.mColumnAbbreviationToElementKey.get(abbreviation);
+    for ( ColumnProperties cp : this.mElementKeyToColumnProperties.values() ) {
+    	if ( cp.getSmsLabel().equals(abbreviation) ) {
+    		return cp;
+    	}
+    }
+    return null;
+  }
+
+  public ColumnProperties getColumnByElementName(String elementName) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    for ( ColumnProperties cp : this.mElementKeyToColumnProperties.values() ) {
+    	if ( cp.getElementName().equals(elementName) ) {
+    		return cp;
+    	}
+    }
+    return null;
   }
 
   /**
@@ -1106,6 +1105,93 @@ public class TableProperties {
       }
     }
     return null;
+  }
+
+  /**
+   * Create an element key based on the proposedKey parameter. The first
+   * attempt will be the proposedKey prepended with an underscore and with
+   * non-word characters (as defined by java's "\\W") replaced by an
+   * underscore.
+   * If that elementKey is already used for this table, an integer suffix,
+   * beginning with 1, is tried to be added to key until a conflict no longer
+   * exists.
+   * @param tableId
+   * @param proposedKey
+   * @param db
+   * @return
+   */
+  private String createDbElementKey(String proposedKey) {
+    String baseName = "_" + proposedKey.replace("\\W", "_");
+    if (!keyConflict(baseName)) {
+      return baseName;
+    }
+    // otherwise we need to create a non-conflicting key.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!keyConflict(nextName)) {
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+
+  private boolean keyConflict(String elementKey) {
+	return (this.getColumnByElementKey(elementKey) != null);
+  }
+
+  /**
+   * Create an element name based on the proposedName parameter. The first
+   * attempt will be the proposedName prepended with an underscore with
+   * whitespace (as defined by java's "\\W") replaced by an underscore.
+   * If that elementName is already used for this table, an integer suffix,
+   * beginning with 1, is tried to be added to key until a conflict no longer
+   * exists.
+   * @param tableId
+   * @param proposedName
+   * @param db
+   * @return
+   */
+  private String createDbElementName(String proposedName) {
+    String baseName = "_" + proposedName.replace("\\W", "_");
+    if (!nameConflict(baseName)) {
+      return baseName;
+    }
+    // otherwise we need to create a non-conflicting key.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!nameConflict(nextName)) {
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+
+  private boolean nameConflict(String elementName) {
+	return (this.getColumnByElementName(elementName) != null);
+  }
+
+  /**
+   * Take the proposed display name and return a display name that has no
+   * conflicts with other display names in the table. If there is a conflict,
+   * integers are appended to the proposed name until there are no conflicts.
+   * @param proposedDisplayName
+   * @return
+   */
+  public String createDisplayName(String proposedDisplayName) {
+    if (getColumnByDisplayName(proposedDisplayName) == null) {
+      return proposedDisplayName;
+    }
+    // otherwise we need to create a non-conflicting name.
+    int suffix = 1;
+    while (true) {
+      String nextName = proposedDisplayName + suffix;
+      if (getColumnByDisplayName(nextName) == null) {
+        return nextName;
+      }
+      suffix++;
+    }
   }
 
   /**
@@ -1158,12 +1244,10 @@ public class TableProperties {
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       if (elementKey == null) {
-        elementKey =
-            ColumnProperties.createDbElementKey(this, displayName);
+        elementKey = createDbElementKey(displayName);
       }
       if (elementName == null) {
-        elementName =
-            ColumnProperties.createDbElementName(this, displayName);
+        elementName =createDbElementName(displayName);
       }
 	    ColumnProperties cp = null;
 	    db.beginTransaction();
