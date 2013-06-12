@@ -43,6 +43,11 @@ public class DetailDisplayActivity extends SherlockActivity
     public static final String INTENT_KEY_ROW_ID = "rowId";
     public static final String INTENT_KEY_ROW_KEYS = "rowKeys";
     public static final String INTENT_KEY_ROW_VALUES = "rowValues";
+    /** Intent key to specify a filename other than that saved in the kvs. Does
+     * not have to be initialized if the caller intends the value in the kvs to
+     * be used.
+     */
+    public static final String INTENT_KEY_FILENAME = "filename";
 
     private String rowId;
     private Controller c;
@@ -96,7 +101,12 @@ public class DetailDisplayActivity extends SherlockActivity
         for (int i = 0; i < keys.length; i++) {
             data.put(keys[i], values[i]);
         }
-        view = new CustomDetailView(this, c.getTableProperties());
+        // See if the caller included a filename that should be used. Will be
+        // null if not found, so we can just pass it right along into the view.
+        String intentFilename = 
+            getIntent().getStringExtra(INTENT_KEY_FILENAME);
+        view = new CustomDetailView(this, c.getTableProperties(), 
+            intentFilename);
         displayView();
     }
 

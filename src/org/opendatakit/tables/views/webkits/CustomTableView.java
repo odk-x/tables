@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.support.v4.app.Fragment;
@@ -223,7 +225,24 @@ public class CustomTableView extends CustomView {
 
     @SuppressWarnings("unused")
     public boolean openItem(int index) {
-      Controller.launchDetailActivity(mActivity, tp, table, index);
+      Controller.launchDetailActivity(mActivity, tp, table, index, null);
+      return true;
+    }
+    
+    /**
+     * Open the item specified by the index to the detail view specified by 
+     * the given filename. The filename is relative to the odk tables 
+     * directory.
+     * @param index
+     * @param filename
+     * @return
+     */
+    @SuppressWarnings("unused")
+    public boolean openDetailViewWithFile(int index, String filename) {
+      String pathToTablesFolder = 
+          ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      String pathToFile = pathToTablesFolder + File.separator + filename;
+      Controller.launchDetailActivity(mActivity, tp, table, index, pathToFile);
       return true;
     }
 

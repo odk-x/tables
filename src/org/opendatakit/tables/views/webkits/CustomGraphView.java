@@ -108,7 +108,7 @@ public class CustomGraphView extends CustomView {
 
 		@SuppressWarnings("unused")
 		public boolean openItem(int index) {
-			Controller.launchDetailActivity(mActivity, tp, table, index);
+			Controller.launchDetailActivity(mActivity, tp, table, index, null);
 			return true;
 		}
 	}

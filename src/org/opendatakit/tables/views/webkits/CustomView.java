@@ -449,7 +449,6 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public String getForegroundColor(String colName, String value) {
-		  Log.e(TAG, "calling get color");
 			String elementKey = tp.getColumnByDisplayName(colName);
 			ColorRuleGroup colRul =
 			    this.mColumnDisplayNameToColorRuleGroup.get(colName);
@@ -690,7 +689,8 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Open the table specified by tableName as a list view with the filename
-		 * specified by filename. The filename is relative to the odk
+		 * specified by filename. The filename is relative to the odk tables 
+		 * path.
 		 * @param tableName
 		 * @param filename
 		 * @return false if the table properties cannot be found, true if it
