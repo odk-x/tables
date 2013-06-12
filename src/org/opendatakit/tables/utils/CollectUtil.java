@@ -44,8 +44,6 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.views.webkits.CustomView;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;

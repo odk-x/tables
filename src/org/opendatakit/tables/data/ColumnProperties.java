@@ -647,7 +647,7 @@ public class ColumnProperties {
       db = dbh.getReadableDatabase();
       List<String> elementKeys =
           ColumnDefinitions.getPersistedElementKeysForTable(tableId, db);
-      Map<String, ColumnProperties> elementKeyToColumnProperties = 
+      Map<String, ColumnProperties> elementKeyToColumnProperties =
           new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId,
@@ -665,35 +665,8 @@ public class ColumnProperties {
   }
 
   /**
-   * Add a column to the datastore.
-   * <p>
-   * Convenience methods. Calls the other {@link #addColumn} method with more
-   * paremeters, setting defaults.
-   * @param dbh
-   * @param db
-   * @param tableId
-   * @param displayName
-   * @param elementKey
-   * @param elementName
-   * @param columnType
-   * @param displayVisible
-   * @param listChildElementKeys
-   * @param isPersisted
-   * @param joins
-   * @param typeOfStore
-   * @return
-   */
-  public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
-      String tableId, String displayName, String elementKey,
-      String elementName, boolean isVisible, KeyValueStore.Type typeOfStore) {
-    return addColumn(dbh, db, tableId, displayName, elementKey, elementName,
-        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE,
-        ColumnDefinitions.DEFAULT_DB_JOINS,
-        ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
-        ColumnDefinitions.DEFAULT_DB_JOINS, isVisible, typeOfStore);
-  }
-
-  /**
+   * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
+   * 
    * Add a column to the datastore. elementKey and elementName should be
    * made via createDbElementKey and createDbElementName to avoid conflicts.
    * A possible idea would be to pass them display name.
@@ -711,7 +684,7 @@ public class ColumnProperties {
    * @param typeOfStore
    * @return
    */
-  public static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
+  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
       String tableId, String displayName, String elementKey,
       String elementName, ColumnType columnType, String listChildElementKeys,
       boolean isPersisted, String joins, boolean displayVisible,
@@ -846,17 +819,16 @@ public class ColumnProperties {
    * @param db
    * @return
    */
-  public static String createDbElementKey(String tableId, String proposedKey,
-      SQLiteDatabase db) {
+  public static String createDbElementKey(TableProperties tp, String proposedKey) {
     String baseName = "_" + proposedKey.replace("\\W", "_");
-    if (!keyConflict(tableId, baseName, db)) {
+    if (!keyConflict(tp, baseName)) {
       return baseName;
     }
     // otherwise we need to create a non-conflicting key.
     int suffix = 1;
     while (true) {
       String nextName = baseName + suffix;
-      if (!keyConflict(tableId, nextName, db)) {
+      if (!keyConflict(tp, nextName)) {
         return nextName;
       }
       suffix++;
@@ -875,17 +847,16 @@ public class ColumnProperties {
    * @param db
    * @return
    */
-  public static String createDbElementName(String tableId, String proposedName,
-      SQLiteDatabase db) {
+  public static String createDbElementName(TableProperties tp, String proposedName) {
     String baseName = "_" + proposedName.replace("\\W", "_");
-    if (!nameConflict(tableId, baseName, db)) {
+    if (!nameConflict(tp, baseName)) {
       return baseName;
     }
     // otherwise we need to create a non-conflicting key.
     int suffix = 1;
     while (true) {
       String nextName = baseName + suffix;
-      if (!nameConflict(tableId, nextName, db)) {
+      if (!nameConflict(tp, nextName)) {
         return nextName;
       }
       suffix++;
@@ -921,10 +892,8 @@ public class ColumnProperties {
     return false;
   }
 
-  private static boolean keyConflict(String tableId, String elementKey,
-      SQLiteDatabase db) {
-    List<String> existingKeys =
-        ColumnDefinitions.getAllElementKeysForTable(tableId, db);
+  private static boolean keyConflict(TableProperties tp, String elementKey) {
+    List<String> existingKeys = ColumnDefinitions.getAllElementKeysForTable(tp);
     for (String existingKey : existingKeys) {
       if (existingKey.equals(elementKey)) {
         return true;
@@ -933,10 +902,8 @@ public class ColumnProperties {
     return false;
   }
 
-  private static boolean nameConflict(String tableId, String elementName,
-      SQLiteDatabase db) {
-    List<String> existingNames =
-        ColumnDefinitions.getAllElementNamesForTable(tableId, db);
+  private static boolean nameConflict(TableProperties tp, String elementName) {
+    List<String> existingNames = ColumnDefinitions.getAllElementNamesForTable(tp);
     for (String existingName : existingNames) {
       if (existingName.equals(elementName)) {
         return true;

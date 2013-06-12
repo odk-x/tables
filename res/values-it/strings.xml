@@ -266,4 +266,7 @@
 	<string name="error_table_name_empty">Table name cannot be empty!</string>
 	<string name="file_import_export_menu_item">File Import/Export</string>
 	<string name="sync_menu_item">Sync with Server</string>
+	<string name="color_rule_revert_to_default_status_rules">Revert to default status rules</string>
+	<string name="color_rule_confirm_revert_status_column">Confirm Revert To Defaults</string>
+	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 </resources>

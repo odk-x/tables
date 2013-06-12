@@ -146,37 +146,12 @@ public class ColumnDefinitions {
    * @param db
    * @return
    */
-  public static List<String> getAllElementKeysForTable(String tableId,
-      SQLiteDatabase db) {
-    Cursor c = null;
+  public static List<String> getAllElementKeysForTable(TableProperties tp) {
     List<String> elementKeys = new ArrayList<String>();
-    try {
-      c = db.query(DB_BACKING_NAME,
-          new String[] {ColumnDefinitionsColumns.ELEMENT_KEY}, // we only want the element key column
-          WHERE_SQL_FOR_TABLE,
-          new String[] {tableId}, null, null, null);
-      int dbElementKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
-      c.moveToFirst();
-      int j = 0;
-      while (j < c.getCount()) {
-        elementKeys.add(c.getString(dbElementKeyIndex));
-        c.moveToNext();
-        j++;
-      }
-    } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
-    }
-    return elementKeys;
+	for ( ColumnProperties p : tp.getColumns().values()) {
+		elementKeys.add(p.getElementKey());
+	}
+	return elementKeys;
   }
 
   /**
@@ -187,37 +162,12 @@ public class ColumnDefinitions {
    * @param db
    * @return
    */
-  public static List<String> getAllElementNamesForTable(String tableId,
-      SQLiteDatabase db) {
-    Cursor c = null;
-    List<String> elementKeys = new ArrayList<String>();
-    try {
-      c = db.query(DB_BACKING_NAME,
-          new String[] {ColumnDefinitionsColumns.ELEMENT_NAME},
-          WHERE_SQL_FOR_TABLE,
-          new String[] {tableId}, null, null, null);
-      int dbElementNameIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_NAME);
-      c.moveToFirst();
-      int j = 0;
-      while (j < c.getCount()) {
-        elementKeys.add(c.getString(dbElementNameIndex));
-        c.moveToNext();
-        j++;
-      }
-    } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
+  public static List<String> getAllElementNamesForTable(TableProperties tp) {
+    List<String> elementNames = new ArrayList<String>();
+    for ( ColumnProperties c : tp.getColumns().values() ) {
+    	elementNames.add(c.getElementName());
     }
-    return elementKeys;
+    return elementNames;
   }
 
   /**
