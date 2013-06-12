@@ -46,7 +46,7 @@ public class CustomDetailView extends CustomView {
   public static final String KVS_ASPECT_DEFAULT = "default";
 
   public static final String KEY_FILENAME = "filename";
-
+  
     private static final String DEFAULT_HTML =
         "<html><body>" +
         "<p>No detail view has been specified.</p>" +
@@ -56,13 +56,36 @@ public class CustomDetailView extends CustomView {
     private TableProperties tp;
     private RowData jsData;
     private KeyValueStoreHelper detailKVSH;
+    /** The filename of the html we are displaying. */
+    private String mFilename;
 
-    public CustomDetailView(Activity activity, TableProperties tp) {
+    /**
+     * Construct the detail view. 
+     * @param activity
+     * @param tp
+     * @param filename the filename to display as the detail view. If null,
+     * tries to receive the value from the key value store.
+     */
+    public CustomDetailView(Activity activity, TableProperties tp, 
+        String filename) {
         super(activity);
         this.mActivity = activity;
         this.tp = tp;
         this.detailKVSH =
             tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+        if (filename == null) {
+          String recoveredFilename =
+              this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
+          if (recoveredFilename == null) {
+            // Then no default has been set.
+            this.mFilename = null;
+          } else {
+            this.mFilename = recoveredFilename;
+          }
+        } else {
+          // The caller has specified a filename.
+          this.mFilename = filename;
+        }
         jsData = new RowData(tp);
     }
 
@@ -70,9 +93,8 @@ public class CustomDetailView extends CustomView {
         jsData.set(rowId, data);
         webView.addJavascriptInterface(new Control(mActivity), "control");
         webView.addJavascriptInterface(jsData, "data");
-        String filename = detailKVSH.getString(CustomDetailView.KEY_FILENAME);
-        if (filename != null) {
-            load(FileProvider.getAsUrl(mActivity, new File(filename)));
+        if (this.mFilename != null) {
+            load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
         } else {
             loadData(DEFAULT_HTML, "text/html", null);
         }

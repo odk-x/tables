@@ -230,8 +230,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + value);    
   }
 
   @Override
@@ -242,9 +240,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   private void setNumericEntry(String aspect, String key, Double value) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
-        KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + value);   
+        KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));  
   }
 
   @Override
@@ -256,8 +252,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + jsonOfObject);   
   }
 
   @Override
@@ -275,9 +269,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
         KeyValueStoreEntryType.BOOLEAN.getLabel(), 
-        Integer.toString(SyncUtil.boolToInt(value)));
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + value);    
+        Integer.toString(SyncUtil.boolToInt(value)));   
   }
 
   @Override
@@ -294,9 +286,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   private void setStringEntry(String aspect, String key, String value) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
-        KeyValueStoreEntryType.TEXT.getLabel(), value);
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + value);    
+        KeyValueStoreEntryType.TEXT.getLabel(), value); 
   }
 
   @Override
@@ -332,9 +322,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key, 
-        KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
-    Log.d(TAG, "updated partition: " + partition + ", aspect: " + 
-        aspect + ", key: " + key + " to " + value);   
+        KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue); 
   }
 
   @Override

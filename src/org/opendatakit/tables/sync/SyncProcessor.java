@@ -188,8 +188,9 @@ public class SyncProcessor {
       DbTable table) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
-    Map<String, ColumnType> columns = getColumns(tp);
-    List<SyncRow> rowsToInsert = getRows(table, columns,
+//    Map<String, ColumnType> columns = getColumns(tp);
+    List<String> userColumns = tp.getColumnOrder();
+    List<SyncRow> rowsToInsert = getRows(table, userColumns, 
         SyncUtil.State.INSERTING);
 
     boolean success = false;
@@ -259,7 +260,8 @@ public class SyncProcessor {
       boolean downloadingTable) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
-    Map<String, ColumnType> columns = getColumns(tp);
+//    Map<String, ColumnType> columns = getColumns(tp);
+    List<String> userColumns = tp.getColumnOrder();
 
     // get updates from server
     // if we fail here we don't try to continue
@@ -280,9 +282,9 @@ public class SyncProcessor {
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
-    List<SyncRow> rowsToInsert = getRows(table, columns, SyncUtil.State.INSERTING);
-    List<SyncRow> rowsToUpdate = getRows(table, columns, SyncUtil.State.UPDATING);
-    List<SyncRow> rowsToDelete = getRows(table, columns, SyncUtil.State.DELETING);
+    List<SyncRow> rowsToInsert = getRows(table, userColumns, SyncUtil.State.INSERTING);
+    List<SyncRow> rowsToUpdate = getRows(table, userColumns, SyncUtil.State.UPDATING);
+    List<SyncRow> rowsToDelete = getRows(table, userColumns, SyncUtil.State.DELETING);
 
     List<SyncRow> allRows = new ArrayList<SyncRow>();
     allRows.addAll(rowsToInsert);
@@ -548,49 +550,86 @@ public class SyncProcessor {
     tp.setSyncTag(modification.getTableSyncTag());
   }
 
+  /**
+   * Returns all the columns that should be synched, including metadata 
+   * columns. Returns as a map of element key to {@link ColumnType}.
+   * @param tp
+   * @return
+   */
   private Map<String, ColumnType> getColumns(TableProperties tp) {
     Map<String, ColumnType> columns = new HashMap<String, ColumnType>();
     for (ColumnProperties colProp : tp.getColumns().values()) {
       columns.put(colProp.getElementKey(), colProp.getColumnType());
     }
-//    columns.put(DbTable.DB_URI_USER, ColumnType.PHONE_NUMBER);
-//    columns.put(DbTable.DB_LAST_MODIFIED_TIME, ColumnType.DATETIME);
     columns.putAll(DbTable.getColumnsToSync());
     return columns;
   }
 
-  private List<SyncRow> getRows(DbTable table, Map<String, ColumnType> columns, int state) {
+  /**
+   * Get the sync rows for the user-defined rows specified by the elementkeys
+   * of columnsToSync. Returns a list of {@link SyncRow} objects. The rows 
+   * returned will be only those whose sync state matches the state parameter.
+   * The metadata columns that should be synched are also included in the 
+   * returned {@link SyncRow}s.
+   * @param table
+   * @param columnsToSync the element keys of the user-defined columns to sync.
+   * Should likely be all of them.
+   * @param state the query of the rows in question. Eg inserting will return
+   * only those rows whose sync state is inserting.
+   * @return
+   */
+  private List<SyncRow> getRows(DbTable table, List<String> columnsToSync, 
+      int state) {
 
-    Set<String> columnSet = new HashSet<String>(columns.keySet());
-    columnSet.add(DataTableColumns.SYNC_TAG);
-    ArrayList<String> columnNames = new ArrayList<String>();
-    for ( String s : columnSet ) {
-    	columnNames.add(s);
-    }
+//    Set<String> columnSet = new HashSet<String>(columns.keySet());
+//    columnSet.add(DataTableColumns.SYNC_TAG);
+//    ArrayList<String> columnNames = new ArrayList<String>();
+//    for ( String s : columnsToSync ) {
+//    	columnNames.add(s);
+//    }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
-    UserTable rows = table.getRaw(columnNames, new String[] {DataTableColumns.SAVED,
+    UserTable rows = table.getRaw(columnsToSync, new String[] 
+        {DataTableColumns.SAVED,
     			DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING },
         new String[] { DbTable.SavedStatus.COMPLETE.name(),
-    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, null);
+    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, 
+    			null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();
     int numCols = rows.getWidth();
+    if (numCols != columnsToSync.size()) {
+      Log.e(TAG, "number of user-defined columns returned in getRows() does " +
+      		"not equal the number of user-defined element keys requested (" +
+      		numCols + " != " + columnsToSync.size() + ")");
+    }
+    // And now for each row we need to add both the user columns AND the 
+    // columns to sync, AND the sync tag for the row.
+    Map<String, ColumnType> cachedColumnsToSync = DbTable.getColumnsToSync();
     for (int i = 0; i < numRows; i++) {
       String rowId = rows.getRowId(i);
-      String syncTag = null;
+      String syncTag = rows.getMetadataByElementKey(i, DataTableColumns.SYNC_TAG);
       Map<String, String> values = new HashMap<String, String>();
       for (int j = 0; j < numCols; j++) {
-        String colName = rows.getHeader(j);
-        if (colName.equals(DataTableColumns.SYNC_TAG)) {
-          syncTag = rows.getData(i, j);
-        } else if (colName.equals(DataTableColumns.TIMESTAMP)) {
-          Long timestamp = Long.valueOf(rows.getData(i, j));
-          DateTime dt = new DateTime(timestamp);
-          String lastModTime = du.formatDateTimeForDb(dt);
-          values.put(LAST_MOD_TIME_LABEL, lastModTime);
-        } else {
-          values.put(colName, rows.getData(i, j));
+        // We know that the columnsToSync should be metadata keys for the user-
+        // defined columns. If they're not present we know there is a problem,
+        String columnElementKey = columnsToSync.get(j);
+        values.put(columnElementKey, 
+            rows.getUserDataByElementKey(i, columnElementKey));
+          // And now add the necessary metadata. This will be based on the 
+          // columns specified as synchable metadata columns in DbTable. 
+        for (String metadataElementKey : cachedColumnsToSync.keySet()) {
+          // Special check for the timestamp to format correctly.
+          if (metadataElementKey.equals(DataTableColumns.TIMESTAMP)) {
+            Long timestamp = Long.valueOf(rows.getMetadataByElementKey(
+                i, DataTableColumns.TIMESTAMP));
+            DateTime dt = new DateTime(timestamp);
+            String lastModTime = du.formatDateTimeForDb(dt);
+            values.put(LAST_MOD_TIME_LABEL, lastModTime);
+          } else {
+            values.put(metadataElementKey, 
+               rows.getMetadataByElementKey(i, metadataElementKey));
+          }
         }
       }
       SyncRow row = new SyncRow(rowId, syncTag, false, values);

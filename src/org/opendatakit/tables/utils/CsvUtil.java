@@ -65,6 +65,9 @@ import au.com.bytecode.opencsv.CSVWriter;
  *
  */
 public class CsvUtil {
+  
+  private static final String TAG = CsvUtil.class.getSimpleName();
+  
 	private static final String NEW_LINE = "\n";
 
 	private static final String OPEN_CURLY_BRACKET = "{";
@@ -241,6 +244,7 @@ public class CsvUtil {
               		dbName = DataTableColumns.LOCALE;
               	}
               	else {
+              	  Log.d(TAG, "processing column: " + colName);
 	                dbName = tp.getColumnByDisplayName(colName);
 	                if ( dbName == null ) {
 	                	tp.addColumn(colName, null, null);

@@ -178,36 +178,36 @@ public class DbTable {
     }
 
     /**
-     * Gets a table of raw data.
-     * @param columns the columns to select (if null, all columns will be
-     * selected)
+     * Gets an {@link UserTable} restricted by the query as necessary. The 
+     * list of columns should be the element keys to select, and should not 
+     * include any metadata columns, which will all be returned in the 
+     * {@link UserTable}.
+     * @param the element keys of the user-defined columns to select (if null,
+     * all columns will be selected)
      * @param selectionKeys the column names for the WHERE clause (can be null)
      * @param selectionArgs the selection arguments (can be null)
      * @param orderBy the column to order by (can be null)
      * @return a Table of the requested data
      */
-    public UserTable getRaw(ArrayList<String> columns, String[] selectionKeys,
+    public UserTable getRaw(List<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
+      // The columns we will pass to the db to select. Must include the 
+      // columns parameter as well as all the metadata columns.
+      List<String> columnsToSelect;
         if (columns == null) {
-            Map<String, ColumnProperties> cps = tp.getColumns();
-//            ColumnProperties[] cps = tp.getColumns();
-             columns = new ArrayList<String>();
-             columns.addAll(ADMIN_COLUMNS);
-//            columns = new ArrayList<String>();
-//            columns.add(DB_URI_USER);
-//            columns.add(DB_LAST_MODIFIED_TIME);
-//            columns.add(DB_SYNC_TAG);
-//            columns.add(DB_SYNC_STATE);
-//            columns.add(DB_TRANSACTIONING);
-//            need to add this stuff now;
-            for (ColumnProperties cp : cps.values()) {
-            	columns.add(cp.getElementKey());
-            }
+          columnsToSelect = tp.getColumnOrder();
+          columnsToSelect.addAll(ADMIN_COLUMNS);
+        } else {
+          // The caller wants just their specified columns, but they'll also
+          // have to get the admin columns.
+          columnsToSelect = new ArrayList<String>();
+          columnsToSelect.addAll(columns);
+          columnsToSelect.addAll(ADMIN_COLUMNS);
         }
-        String[] colArr = new String[columns.size() + 1];
+        String[] colArr = new String[columnsToSelect.size() + 1];
         colArr[0] = DataTableColumns.ROW_ID;
-        for (int i = 0; i < columns.size(); i++) {
-            colArr[i + 1] = columns.get(i);
+        for (int i = 0; i < columnsToSelect.size(); i++) {
+            colArr[i + 1] = columnsToSelect.get(i);
         }
         SQLiteDatabase db = null;
         Cursor c = null;
@@ -419,6 +419,8 @@ public class DbTable {
 //          colIndices[i] = c.getColumnIndexOrThrow(elementKey);
         }
         for (int i = 0; i < getAdminColumns().size(); i++) {
+          // TODO: problem is here. unclear how to best get just the 
+          // metadata in here. hmm.
           String elementKey = getAdminColumns().get(i);
           metadataKeyToIndex.put(elementKey, i);
           keyToCursorIndex.put(elementKey, 

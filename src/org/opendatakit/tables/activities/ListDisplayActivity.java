@@ -133,21 +133,26 @@ public class ListDisplayActivity extends SherlockActivity
                 c.getDbTable().getUserTable(query);
         String nameOfView =
             kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        // The nameOfView can be null in some cases, like if the default list
+        // view has been deleted. If this ever occurs, we should just say no
+        // filename specified and make them choose one.
         String filename =
             getIntent().getExtras().getString(INTENT_KEY_FILENAME);
-        if (filename == null) {
-          KeyValueStoreHelper namedListViewsPartitionKvsh =
-              c.getTableProperties().getKeyValueStoreHelper(
-                  ListDisplayActivity.KVS_PARTITION_VIEWS);
-          AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
-          AspectHelper viewAspectHelper =
-              namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
-          filename =
-              viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-          KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-          KeyValueStore kvs =
-              kvsm.getStoreForTable(c.getTableProperties().getTableId(),
-              c.getTableProperties().getBackingStoreType());
+        if (nameOfView != null) {
+          if (filename == null) {
+            KeyValueStoreHelper namedListViewsPartitionKvsh =
+                c.getTableProperties().getKeyValueStoreHelper(
+                    ListDisplayActivity.KVS_PARTITION_VIEWS);
+            AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+            AspectHelper viewAspectHelper =
+                namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
+            filename =
+                viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+            KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+            KeyValueStore kvs =
+                kvsm.getStoreForTable(c.getTableProperties().getTableId(),
+                c.getTableProperties().getBackingStoreType());
+          }
         }
         view = CustomTableView.get(this, c.getTableProperties(), table,
                 filename);

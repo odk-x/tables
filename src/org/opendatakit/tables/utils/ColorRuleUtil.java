@@ -17,7 +17,9 @@ package org.opendatakit.tables.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ColorRule;
@@ -31,6 +33,16 @@ import android.graphics.Color;
  *
  */
 public class ColorRuleUtil {
+  
+  public static final String ID_REST_RULE = "syncStateRest";
+  public static final String ID_CONFLICTING_RULE = 
+      "defaultRule_syncStateConflicting";
+  public static final String ID_INSERTING_RULE = 
+      "defaultRule_syncStateInserting";
+  public static final String ID_UPDATING_RULE = 
+      "defaultRule_syncStateUpdating";
+  public static final String ID_DELETING_RULE = 
+      "defaultRule_syncStateDeleting";
   
   private static final int DEFAULT_SYNC_STATE_REST_FOREGROUND = Color.BLACK;
   private static final int DEFAULT_SYNC_STATE_REST_BACKGROUND = Color.WHITE;
@@ -55,58 +67,77 @@ public class ColorRuleUtil {
   private static final int DEFAULT_SYNC_STATE_DELETING_BACKGROUND =
       Color.DKGRAY;
   
-  private static List<ColorRule> defaultSyncStateColorRules;
+  private static final List<ColorRule> defaultSyncStateColorRules;
+  private static final Set<String> defaultSyncStateColorRuleIDs;
   
   static {
-    defaultSyncStateColorRules = new ArrayList<ColorRule>();
-    defaultSyncStateColorRules.add(getColorRuleForSyncStateRest());
-    defaultSyncStateColorRules.add(getColorRuleForSyncStateInserting());
-    defaultSyncStateColorRules.add(getColorRuleForSyncStateUpdating());
-    defaultSyncStateColorRules.add(getColorRuleForSyncStateConflict());
-    defaultSyncStateColorRules.add(getColorRuleForSyncStateDeleting());
+    List<ColorRule> ruleList = new ArrayList<ColorRule>();
+    ruleList.add(getColorRuleForSyncStateRest());
+    ruleList.add(getColorRuleForSyncStateInserting());
+    ruleList.add(getColorRuleForSyncStateUpdating());
+    ruleList.add(getColorRuleForSyncStateConflict());
+    ruleList.add(getColorRuleForSyncStateDeleting());
+    defaultSyncStateColorRules = Collections.unmodifiableList(ruleList);
+    // Now the rule ID set.
+    Set<String> idSet = new HashSet<String>();
+    idSet.add(ID_REST_RULE);
+    idSet.add(ID_CONFLICTING_RULE);
+    idSet.add(ID_DELETING_RULE);
+    idSet.add(ID_INSERTING_RULE);
+    idSet.add(ID_UPDATING_RULE);
+    defaultSyncStateColorRuleIDs = Collections.unmodifiableSet(idSet);
   }
   
   public static ColorRule getColorRuleForSyncStateRest() {
-    return new ColorRule(DataTableColumns.SYNC_STATE, 
+    return new ColorRule(ID_REST_RULE, DataTableColumns.SYNC_STATE, 
         ColorRule.RuleType.EQUAL, String.valueOf(SyncUtil.State.REST), 
         DEFAULT_SYNC_STATE_REST_FOREGROUND, 
         DEFAULT_SYNC_STATE_REST_BACKGROUND);
   }
   
   public static ColorRule getColorRuleForSyncStateInserting() {
-    return new ColorRule(DataTableColumns.SYNC_STATE,
+    return new ColorRule(ID_INSERTING_RULE, DataTableColumns.SYNC_STATE,
         ColorRule.RuleType.EQUAL, String.valueOf(SyncUtil.State.INSERTING),
         DEFAULT_SYNC_STATE_INSERTING_FOREGROUND,
         DEFAULT_SYNC_STATE_INSERTING_BACKGROUND);
   }
   
   public static ColorRule getColorRuleForSyncStateUpdating() {
-    return new ColorRule(DataTableColumns.SYNC_STATE,
+    return new ColorRule(ID_UPDATING_RULE, DataTableColumns.SYNC_STATE,
         ColorRule.RuleType.EQUAL, String.valueOf(SyncUtil.State.UPDATING),
         DEFAULT_SYNC_STATE_UPDATING_FOREGROUND,
         DEFAULT_SYNC_STATE_UPDATING_BACKGROUND);  
   }
   
   public static ColorRule getColorRuleForSyncStateDeleting() {
-    return new ColorRule(DataTableColumns.SYNC_STATE,
+    return new ColorRule(ID_DELETING_RULE, DataTableColumns.SYNC_STATE,
         ColorRule.RuleType.EQUAL, String.valueOf(SyncUtil.State.DELETING),
         DEFAULT_SYNC_STATE_DELETING_FOREGROUND,
         DEFAULT_SYNC_STATE_DELETING_BACKGROUND);
   }
   
   public static ColorRule getColorRuleForSyncStateConflict() {
-    return new ColorRule(DataTableColumns.SYNC_STATE,
+    return new ColorRule(ID_CONFLICTING_RULE, DataTableColumns.SYNC_STATE,
         ColorRule.RuleType.EQUAL, String.valueOf(SyncUtil.State.CONFLICTING),
         DEFAULT_SYNC_STATE_CONFLICT_FOREGROUND,
         DEFAULT_SYNC_STATE_CONFLICT_BACKGROUND);
   }
   
   /**
-   * Get a list of the default color rules for the various sync states.
+   * Get an unmodifiable list of the default color rules for the various sync 
+   * states.
    * @return
    */
   public static List<ColorRule> getDefaultSyncStateColorRules() {
-    return Collections.unmodifiableList(defaultSyncStateColorRules);
+    return defaultSyncStateColorRules;
+  }
+  
+  /**
+   * Get an unmodifiable set of the default sync state color rule ids. 
+   * @return
+   */
+  public static Set<String> getDefaultSyncStateColorRuleIds() {
+    return defaultSyncStateColorRuleIDs;
   }
   
 }

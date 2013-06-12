@@ -833,9 +833,18 @@ public class Controller {
     context.startActivity(intent);
   }
 
-  public static void launchDetailActivity(Context context, TableProperties tp,
+  /**
+   * Launch a detail view for the given table showing the given rowNum.
+   * @param context
+   * @param tp
+   * @param table
+   * @param rowNum
+   * @param filename the filename to be used if the filename differs than that
+   * set in the key value store.
+   */
+  public static void launchDetailActivity(Activity activity, TableProperties tp,
       UserTable table,
-      int rowNum) {
+      int rowNum, String filename) {
     List<String> columnOrder = tp.getColumnOrder();
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
@@ -843,12 +852,17 @@ public class Controller {
       keys[i] = columnOrder.get(i);
       values[i] = table.getData(rowNum, i);
     }
-    Intent intent = new Intent(context, DetailDisplayActivity.class);
+    Intent intent = new Intent(activity, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_KEYS, keys);
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
-    context.startActivity(intent);
+    if (filename != null) {
+      // a null value informs the DetailDisplayActivity that the filename in 
+      // the kvs should be used, so only add it if it has been set.
+      intent.putExtra(DetailDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    activity.startActivity(intent);
   }
 
     private class CellEditDialog extends AlertDialog {

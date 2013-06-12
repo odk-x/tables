@@ -134,6 +134,18 @@ public class UserTable {
       return mRows.get(rowNum).getDataAtIndex(mDataKeyToIndex.get(elementKey));
     }
     
+    /**
+     * Retrieve the metadata datum in the column specified by elementKey at the
+     * given row number.
+     * @param rowNum
+     * @param elementKey
+     * @return
+     */
+    public String getMetadataByElementKey(int rowNum, String elementKey) {
+      return mRows.get(rowNum).getMetadataAtIndex(
+          mMetadataKeyToIndex.get(elementKey));
+    }
+    
     public String getFooter(int colNum) {
         return footer[colNum];
     }
@@ -257,6 +269,15 @@ public class UserTable {
        */
       public String getDataAtIndex(int index) {
         return mData[index];
+      }
+      
+      /**
+       * Return the metadata value at the given index.
+       * @param index
+       * @return
+       */
+      public String getMetadataAtIndex(int index) {
+        return mMetadata[index];
       }
       
       /**

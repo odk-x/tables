@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -79,6 +80,11 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
    * Menu ID for opening the edit rule activity.
    */
   public static final int MENU_EDIT_ENTRY = 2;
+  
+  /**
+   * Menu ID for reverting to default color rules.
+   */
+  public static final int MENU_REVERT_TO_DEFAULT = 3;
 
   private List<ColorRule> mColorRules;
   private ColorRuleGroup mColorRuler;
@@ -126,6 +132,36 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
           EditSavedColorRuleActivity.INTENT_FLAG_NEW_RULE);
       startActivity(newColorRuleIntent);
       return true;
+    case MENU_REVERT_TO_DEFAULT:
+      // We need to wipe the color rules and add the default. We'll do this 
+      // with a dialog.
+      AlertDialog confirmRevertAlert;
+      AlertDialog.Builder alert = new AlertDialog.Builder(
+          ColorRuleManagerActivity.this);
+      alert.setTitle(
+          getString(R.string.color_rule_confirm_revert_status_column));
+      alert.setMessage(
+          getString(R.string.color_rule_revert_are_you_sure));
+      // OK action will be to revert to defaults.
+      alert.setPositiveButton(getString(R.string.yes), 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              revertToDefaults();              
+            }
+          });
+      alert.setNegativeButton(R.string.cancel, 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              // canceled, so do nothing!
+            }
+          });
+      confirmRevertAlert = alert.create();
+      confirmRevertAlert.show();
+      return true;
     case android.R.id.home:
       startActivity(new Intent(this, TableManager.class));
       return true;
@@ -141,7 +177,44 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     addItem.setIcon(R.drawable.content_new);
     addItem.setShowAsAction(
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+    // Add the button for reverting to default.
+    com.actionbarsherlock.view.MenuItem revertItem = menu.add(
+        0, MENU_REVERT_TO_DEFAULT, 0, 
+        getString(R.string.color_rule_revert_to_default_status_rules));
+    revertItem.setIcon(android.R.drawable.ic_menu_revert);
+    revertItem.setShowAsAction(
+        com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
     return true;
+  }
+  
+  /**
+   * Wipe the current rules and revert to the defaults for the given type.
+   */
+  private void revertToDefaults() {
+    switch (this.mType) {
+    case STATUS_COLUMN:
+      // replace the rules.
+      List<ColorRule> newList = new ArrayList<ColorRule>();
+      newList.addAll(ColorRuleUtil.getDefaultSyncStateColorRules());
+      this.mColorRuler.replaceColorRuleList(newList);
+      this.mColorRuler.saveRuleList();
+      this.mColorRules.clear();
+      this.mColorRules.addAll(this.mColorRuler.getColorRules());
+      this.mColorRuleAdapter.notifyDataSetChanged();
+      break;
+    case COLUMN:
+    case TABLE:
+      // We want to just wipe all the columns for both of these types.
+      List<ColorRule> emptyList = new ArrayList<ColorRule>();
+      this.mColorRuler.replaceColorRuleList(emptyList);
+      this.mColorRuler.saveRuleList();
+      this.mColorRules.clear();
+      this.mColorRuleAdapter.notifyDataSetChanged();
+      break;
+    default:
+      Log.e(TAG, "unrecognized type of column rule in revert to default: " +
+          this.mType);
+    }
   }
 
   @Override
@@ -212,12 +285,13 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       ContextMenuInfo menuInfo) {
     AdapterView.AdapterContextMenuInfo info = 
         (AdapterView.AdapterContextMenuInfo) menuInfo;
-    if (info.position <= 
-        ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
-      return;
-    }
     menu.add(0, MENU_DELETE_ENTRY, 0, getString(R.string.delete_color_rule));
-    menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));
+    ColorRule rule = this.mColorRules.get(info.position);
+    if (!ColorRuleUtil.getDefaultSyncStateColorRuleIds().contains(
+        rule.getRuleId())) {
+      // We only want to allow editing if it is not one of the default rules.
+      menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));  
+    }
   }
 
   private void init() {
@@ -249,32 +323,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     case STATUS_COLUMN:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
-      // We need to do a check to make sure the first rules are the default
-      // rules. Later will be a reset to default or something, but for now we
-      // just do a check.
-      if (this.mColorRuler.getColorRules().size() != 
-          ColorRuleUtil.getDefaultSyncStateColorRules().size()) {
-        // Something's gone wrong, b/c these should be fixed. 
-        // Wipe and start afresh.
-        this.mColorRuler.replaceColorRuleList(
-            ColorRuleUtil.getDefaultSyncStateColorRules());
-        this.mColorRuler.saveRuleList();
-      } else {
-        // They might be correct, or something could have gone wrong. Test.
-        for (int i = 0; i < this.mColorRuler.getColorRules().size(); i++) {
-          ColorRule defaultRule = 
-              ColorRuleUtil.getDefaultSyncStateColorRules().get(i);
-          ColorRule unknownRule = this.mColorRuler.getColorRules().get(i);
-          if (!defaultRule.equalsWithoutId(unknownRule)) {
-            // Not a match. Wipe them out and start afresh.
-            this.mColorRuler.replaceColorRuleList(
-                ColorRuleUtil.getDefaultSyncStateColorRules());
-            this.mColorRuler.saveRuleList();
-            break;
-          }
-        }
-      }
-      this.setTitle(getString(R.string.color_rule_title_for, getString(R.string.status_column)));
+      this.setTitle(getString(R.string.color_rule_title_for, 
+          getString(R.string.status_column)));
       break;
     default:
       Log.e(TAG, "uncrecognized type: " + mType);
@@ -288,9 +338,13 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.d(TAG, "list item clicked");
-    if (position <= ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
-      // We don't want to do anything, b/c we assume these rules are at the top
-      // and that they cannot be edited.
+    // We don't want to launch the edit activity if it is one of the default
+    // status rules. We will get the rule and check its id.
+    ColorRule colRule = this.mColorRules.get(position);
+    if (ColorRuleUtil.getDefaultSyncStateColorRuleIds().contains(
+        colRule.getRuleId())) {
+      // We don't want to do anything, b/c we don't allow editing of the 
+      // default rules.
       return;
     }
     Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
@@ -386,11 +440,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       // And now the settings icon.
       final ImageView editView = (ImageView)
           row.findViewById(org.opendatakit.tables.R.id.row_options);
-      if (position <= 
-          ColorRuleUtil.getDefaultSyncStateColorRules().size() - 1) {
-        // -1 b/c zero indexed.
-        editView.setVisibility(View.GONE);
-      }
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
 
