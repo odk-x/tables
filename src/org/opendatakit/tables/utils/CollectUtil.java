@@ -85,10 +85,10 @@ public class CollectUtil {
    * is currently being edited.
    */
   private static final String PREFERENCE_KEY_EDITED_ROW_ID = "editedRowId";
-  
-  /** 
+
+  /**
    * This is the table id of the tableId that will be receiving an add row.
-   * This is necessary because javascript views can launch adds for tables 
+   * This is necessary because javascript views can launch adds for tables
    * other than themselves, and this preference will store which table id the
    * row should be added to.
    */
@@ -276,7 +276,7 @@ public class CollectUtil {
      * method in Controller that handles the case for editing every column
      * in a screen by screen fashion, generating the entire form on the fly.
      */
-    public static boolean writeRowDataToBeEdited(//UserTable table, int rowNum,
+    private static boolean writeRowDataToBeEdited(//UserTable table, int rowNum,
         Map<String, String> values,
         TableProperties tp, CollectFormParameters params) {
       /*
@@ -353,7 +353,7 @@ public class CollectUtil {
      * http://code.google.com/p/opendatakit/source/browse/src/org/odk/collect/android/tasks/SaveToDiskTask.java?repo=collect
      * in the method updateInstanceDatabase().
      */
-    public static Uri getUriForInsertedData(CollectFormParameters params,
+    private static Uri getUriForInsertedData(CollectFormParameters params,
         ContentResolver resolver) {
       ContentValues values = new ContentValues();
       // First we need to fill the values with various little things.
@@ -433,7 +433,7 @@ public class CollectUtil {
      *   form has been programmatically generated.
      * @return the uri of the form.
      */
-    public static Uri getUriOfForm(ContentResolver resolver,
+    private static Uri getUriOfForm(ContentResolver resolver,
         String formId) {
       Uri resultUri = null;
       Cursor c = null;
@@ -471,7 +471,7 @@ public class CollectUtil {
      * @param tp
      * @return true if every method returned successfully
      */
-    public static boolean deleteWriteAndInsertFormIntoCollect(
+    private static boolean deleteWriteAndInsertFormIntoCollect(
         ContentResolver resolver, CollectFormParameters params,
         TableProperties tp) {
       if (params.isCustom()) {
@@ -650,7 +650,7 @@ public class CollectUtil {
       activityToAwaitReturn.startActivityForResult(collectEditIntent,
           Controller.RCODE_ODKCOLLECT_EDIT_ROW);
     }
-    
+
     /**
      * Launch Collect with the given Intent. This method should be used rather
      * than launching the Intent yourself if the row is going to be added into
@@ -658,7 +658,7 @@ public class CollectUtil {
      * handles storing the table id of that table so that it can be reclaimed
      * when the activity returns.
      * <p>
-     * Launches with the return code {@link 
+     * Launches with the return code {@link
      * Controller#RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE}.
      * @param activityToAwaitReturn
      * @param collectAddIntent
@@ -668,7 +668,7 @@ public class CollectUtil {
     public static void launchCollectToAddRow(Activity activityToAwaitReturn,
         Intent collectAddIntent, TableProperties tp) {
       // We want to save the id of the table that is going to receive the row
-      // that returns from Collect. We'll store it in a SharedPreference so 
+      // that returns from Collect. We'll store it in a SharedPreference so
       // that we can get at it.
       SharedPreferences preferences =
           activityToAwaitReturn.getSharedPreferences(SHARED_PREFERENCE_NAME,
@@ -755,7 +755,7 @@ public class CollectUtil {
       Map<String, String> fields = parseXML(instanceFile);
       return fields;
     }
-    
+
     /**
      * Retrieves the tableId that was stored during the call to {@link
      * CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}.
@@ -765,10 +765,10 @@ public class CollectUtil {
      * @return the stored tableId, or null if no tableId was found.
      */
     public static String retrieveAndRemoveTableIdForAddRow(Context context) {
-      SharedPreferences sharedPreferences = 
-          context.getSharedPreferences(SHARED_PREFERENCE_NAME, 
+      SharedPreferences sharedPreferences =
+          context.getSharedPreferences(SHARED_PREFERENCE_NAME,
               Context.MODE_PRIVATE);
-      String tableId = sharedPreferences.getString(PREFERENCE_KEY_TABLE_ID_ADD, 
+      String tableId = sharedPreferences.getString(PREFERENCE_KEY_TABLE_ID_ADD,
           null);
       sharedPreferences.edit().remove(PREFERENCE_KEY_TABLE_ID_ADD).commit();
       return tableId;
@@ -913,7 +913,7 @@ public class CollectUtil {
      *   values with which you want to prepopulate the add row form.
      * @return
      */
-    private static Intent getIntentForOdkCollectAddRow(Context context,
+    public static Intent getIntentForOdkCollectAddRow(Context context,
         TableProperties tp, CollectFormParameters params,
         Map<String, String> elementKeyToValue) {
       /*

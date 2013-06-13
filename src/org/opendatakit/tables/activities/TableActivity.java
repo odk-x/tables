@@ -326,20 +326,29 @@ public class TableActivity extends SherlockFragmentActivity {
 
   /**
    * This should launch Collect to edit the data for the row. If there is a
-   * custom form defined for the table, its info should be loaded in params. If
-   * the formId in params is null, then the default form is generated, which is
+   * custom form defined for the table, its info should be passed in. Otherwise,
+   * null values will cause the default form to be generated, which is
    * just every column with its own entry field on a single screen.
    *
    * @param table
    * @param rowNum
-   * @param params
+   * @param formId
+   * @param formVersion
+   * @param formRootElement
    */
-  void editRow(UserTable table, int rowNum, CollectFormParameters params) {
-    Intent intent = null;
-    intent = getIntentForOdkCollectEditRow(table, rowNum, params);
-    if (intent != null) {
+  void editRow(UserTable table, int rowNum,
+          String formId, String formVersion, String formRootElement) {
+    Map<String, String> elementKeyToValue = new HashMap<String, String>();
+    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
+      String value = table.getData(rowNum, mTableProperties.getColumnIndex(
+          cp.getElementKey()));
+      elementKeyToValue.put(cp.getElementKey(), value);
+    }
+    Intent collectEditIntent =
+    	CollectUtil.getIntentForOdkCollectEditRow(this, mTableProperties, elementKeyToValue, formId, formVersion, formRootElement);
+    if (collectEditIntent != null) {
       mRowId = table.getRowId(rowNum);
-      startActivityForResult(intent, RCODE_ODKCOLLECT_EDIT_ROW);
+      CollectUtil.launchCollectToEditRow(this, collectEditIntent, mRowId);
     }
   }
 
@@ -547,9 +556,10 @@ public class TableActivity extends SherlockFragmentActivity {
     // prepopulate with the form. We're going to ignore joins. This
     // means that if there IS a join column, we'll throw an error!!!
     // So be careful.
-    Intent intentAddRow = getIntentForOdkCollectAddRow(params, elementNameToValue);
-    if (intentAddRow != null) {
-      startActivityForResult(intentAddRow, RCODE_ODKCOLLECT_ADD_ROW);
+    Intent collectAddIntent =
+      CollectUtil.getIntentForOdkCollectAddRow(this, mTableProperties, params, elementNameToValue);
+    if (collectAddIntent != null) {
+      CollectUtil.launchCollectToAddRow(this, collectAddIntent, mTableProperties);
     }
   }
 
@@ -559,138 +569,6 @@ public class TableActivity extends SherlockFragmentActivity {
 
   private void setControlWrapVisiblity(int visibility) {
     findViewById(R.id.control_wrap).setVisibility(visibility);
-  }
-
-  /**
-   * The idea here is that we might want to edit a row of the table using a
-   * pre-set Collect form. This form would be user-defined and would be a more
-   * user-friendly thing that would display only the pertinent information for a
-   * particular user.
-   */
-  /*
-   * This is a move away from the general "odk add row" usage that is going on
-   * when no row is defined. As I understand it, the new case will work as
-   * follows.
-   *
-   * There exits an "tableEditRow" form for a particular table. This form, as I
-   * understand it, must exist both in the tables directory, as well as in
-   * Collect so that Collect can launch it with an Intent.
-   *
-   * You then also construct a "values" sort of file, that is the data from the
-   * database that will pre-populate the fields. Mitch referred to something
-   * like this as the "instance" file.
-   *
-   * Once you have both of these files, the form and the data, you insert the
-   * data into the form. When you launch the form, it is then pre-populated with
-   * data from the database.
-   *
-   * In order to make this work, the form must exist both within the places
-   * Collect knows to look, as well as in the Tables folder. You also must know
-   * the:
-   *
-   * collectFormVersion collectFormId collectXFormRootElement (default to
-   * "data")
-   *
-   * These will most likely exist as keys in the key value store. They must
-   * match the form.
-   *
-   * Other things needed will be:
-   *
-   * instanceFilePath // I think the filepath with all the values displayName //
-   * just text, eg a row ID formId // the same thing as collectFormId?
-   * formVersion status // either INCOMPLETE or COMPLETE
-   *
-   * Examples for how this is done in Collect can be found in the Collect code
-   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
-   * updateInstanceDatabase() method.
-   */
-  public Intent getIntentForOdkCollectEditRow(UserTable table, int rowNum,
-      CollectFormParameters params) {
-    // Check if there is a custom form. If there is not, we want to delete
-    // the old form and write the new form.
-    if (!params.isCustom()) {
-      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(getContentResolver(),
-          params, mTableProperties);
-      if (!formIsReady) {
-        Log.e(/* TODO: TAG! */"Activity", "could not delete, write, or insert a generated form");
-        return null;
-      }
-    }
-    Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
-      String value = table.getData(rowNum, mTableProperties.getColumnIndex(
-          cp.getElementKey()));
-      elementKeyToValue.put(cp.getElementKey(), value);
-    }
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(
-        elementKeyToValue, mTableProperties, params);
-    if (!writeDataSuccessful) {
-      Log.e(/* TODO: TAG! */"Activity", "could not write instance file successfully!");
-    }
-    Uri insertUri = CollectUtil.getUriForInsertedData(params, getContentResolver());
-    // Copied the below from getIntentForOdkCollectEditRow().
-    Intent intent = new Intent();
-    intent.setComponent(new ComponentName("org.odk.collect.android",
-        "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(insertUri);
-    return intent;
-  }
-
-  /**
-   * Generate the Intent to add a row using Collect. For safety, the params
-   * object, particularly it's isCustom field, determines exactly which action
-   * is taken. If a custom form is defined, it launches that form. If there is
-   * not, it writes a new form, inserts it into collect, and launches it.
-   *
-   * @param params
-   * @return
-   */
-  /*
-   * So, there are several things to check here. The first thing we want to do
-   * is see if a custom form has been defined for this table. If there is not,
-   * then we will need to write a custom one. When we do this, we will then have
-   * to call delete on Collect to remove the old form, which will have used the
-   * same id. This will not fail if a form has not been already been
-   * written--delete will simply return 0.
-   */
-  public Intent getIntentForOdkCollectAddRow(CollectFormParameters params,
-      Map<String, String> elementNameToValue) {
-    // Check if there is a custom form. If there is not, we want to delete
-    // the old form and write the new form.
-    if (!params.isCustom()) {
-      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(getContentResolver(),
-          params, mTableProperties);
-      if (!formIsReady) {
-        Log.e(/* TODO: TAG! */"Activity", "could not delete, write, or insert a generated form");
-        return null;
-      }
-    }
-    Uri formToLaunch;
-    if (elementNameToValue == null) {
-      formToLaunch = CollectUtil.getUriOfForm(getContentResolver(), params.getFormId());
-      if (formToLaunch == null) {
-        Log.e(/* TODO: TAG! */"Activity", "URI of the form to pass to Collect and launch was null");
-        return null;
-      }
-    } else {
-      // we've received some values to prepopulate the add row with.
-      boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(elementNameToValue,
-          mTableProperties, params);
-      if (!writeDataSuccessful) {
-        Log.e(/* TODO: TAG! */"Activity", "could not write instance file successfully!");
-      }
-      // Here we'll just act as if we're inserting 0, which really doesn't
-      // matter?
-      formToLaunch = CollectUtil.getUriForInsertedData(params, getContentResolver());
-    }
-    // And now finally create the intent.
-    Intent intent = new Intent();
-    intent.setComponent(new ComponentName("org.odk.collect.android",
-        "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(formToLaunch);
-    return intent;
   }
 
   private Map<String, String> getMapFromLimitedQuery() {
@@ -718,124 +596,21 @@ public class TableActivity extends SherlockFragmentActivity {
     return elementKeyToValue;
   }
 
-  boolean addRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-    if (formValues == null) {
-      return false;
-    }
-    Map<String, String> values = new HashMap<String, String>();
-    for (String key : formValues.keySet()) {
-      ColumnProperties cp = mTableProperties.getColumnByElementKey(key);
-      if (cp == null) {
-        continue;
-      }
-      String value = mDataUtil.validifyValue(cp, formValues.get(key));
-      if (value != null) {
-        values.put(key, value);
-      }
-    }
-    // Now we want to check for equality of this and the query map. If they
-    // are the same, we know we hit ignore and didn't save anything.
-    Map<String, String> prepopulatedValues = getMapFromLimitedQuery();
-    if (prepopulatedValues.equals(values)) {
-      return false;
-    }
-    // TODO: get these values from the form...
-    Long timestamp = null; // should be endTime in form?
-    String uriUser = null; // should be this user
-    String formId = null; // collect formId
-    String instanceName = null; // if exists, meta/instanceName value
-    String locale = null; // current locale string
-    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this),
-        mTableProperties.getTableId());
-    dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId,
-        locale);
-    return true;
-  }
-
   private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+	if (!CollectUtil.handleOdkCollectAddReturn(this, mTableProperties, returnCode, data)) {
       return;
     }
-    int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-    addRowFromOdkCollectForm(instanceId);
+	// TODO: refresh display???
+	refreshDbTable();
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (!CollectUtil.handleOdkCollectEditReturn(this, mTableProperties, returnCode, data)) {
       return;
     }
-    int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-    updateRowFromOdkCollectForm(instanceId);
-  }
-
-  boolean updateRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-    if (formValues == null) {
-      return false;
-    }
-    Map<String, String> values = getMapForInsertion(formValues);
-    // TODO Update these nulls
-    mDbTable.updateRow(mRowId, values, null, null, null, null, null);
     mRowId = null;
-    return true;
-  }
-
-  /**
-   * This gets a map of values for insertion into a row after returning from a
-   * Collect form.
-   *
-   * @param formValues
-   * @return
-   */
-  Map<String, String> getMapForInsertion(Map<String, String> formValues) {
-    Map<String, String> values = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
-      // we want to use element key here, b/c that is what collect should be
-      // using to access things.
-      String elementKey = cp.getElementKey();
-      String value = mDataUtil.validifyValue(cp, formValues.get(elementKey));
-      if (value != null) {
-        values.put(elementKey, value);
-      }
-    }
-    return values;
-  }
-
-  protected Map<String, String> getOdkCollectFormValues(int instanceId) {
-    String[] projection = { "instanceFilePath" };
-    String selection = "_id = ?";
-    String[] selectionArgs = { (instanceId + "") };
-    Cursor c = managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection, selection, selectionArgs,
-        null);
-    if (c.getCount() != 1) {
-      return null;
-    }
-    c.moveToFirst();
-    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
-    Document xmlDoc = new Document();
-    KXmlParser xmlParser = new KXmlParser();
-    try {
-      xmlParser.setInput(new FileReader(instancepath));
-      xmlDoc.parse(xmlParser);
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    } catch (XmlPullParserException e) {
-      e.printStackTrace();
-      return null;
-    }
-    Element rootEl = xmlDoc.getRootElement();
-    Node rootNode = rootEl.getRoot();
-    Element dataEl = rootNode.getElement(0);
-    Map<String, String> values = new HashMap<String, String>();
-    for (int i = 0; i < dataEl.getChildCount(); i++) {
-      Element child = dataEl.getElement(i);
-      String key = child.getName();
-      String value = child.getChildCount() > 0 ? child.getText(0) : null;
-      values.put(key, value);
-    }
-    return values;
+    // TODO: refresh display???
+    refreshDbTable();
   }
 
   /** TODO: What does this do? */
