@@ -15,8 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.List;
-
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;

@@ -17,10 +17,16 @@ package org.opendatakit.tables.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,6 +71,8 @@ import au.com.bytecode.opencsv.CSVWriter;
  *
  */
 public class CsvUtil {
+
+	private static final String UTF_8 = "UTF-8";
 
 	private static final String TAG = CsvUtil.class.getSimpleName();
 
@@ -132,8 +140,25 @@ public class CsvUtil {
 			int idxInstanceName = -1;
 			int idxFormId = -1;
 			int idxLocale = -1;
-			CSVReader reader = new CSVReader(new FileReader(file),
-					DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
+
+			InputStream is;
+			try {
+				is = new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			}
+			// Now get the reader.
+			InputStreamReader isr;
+			try {
+				isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+			} catch (UnsupportedCharsetException e) {
+				Log.w(TAG,
+						"UTF-8 wasn't supported--trying with default charset");
+				isr = new InputStreamReader(is);
+			}
+
+			CSVReader reader = new CSVReader(isr, DELIMITING_CHAR, QUOTE_CHAR,
+					ESCAPE_CHAR);
 			String[] row = reader.readNext();
 			if (row.length == 0) {
 				reader.close();
@@ -275,7 +300,25 @@ public class CsvUtil {
 			// properties.
 			// If so, then we know that it includes the admin/metadata columns.
 			boolean includesProperties = false;
-			CSVReader reader = new CSVReader(new FileReader(file));
+
+			InputStream is;
+			try {
+				is = new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				throw new IllegalStateException(e);
+			}
+			// Now get the reader.
+			InputStreamReader isr;
+			try {
+				isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+			} catch (UnsupportedCharsetException e) {
+				Log.w(TAG,
+						"UTF-8 wasn't supported--trying with default charset");
+				isr = new InputStreamReader(is);
+			}
+
+			CSVReader reader = new CSVReader(isr, DELIMITING_CHAR, QUOTE_CHAR,
+					ESCAPE_CHAR);
 			String[] row = reader.readNext();
 			if (row.length == 0) {
 				reader.close();
@@ -410,27 +453,68 @@ public class CsvUtil {
 				ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 				TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
 
-		BufferedReader brp = new BufferedReader(new FileReader(prop));
-		BufferedReader brd = new BufferedReader(new FileReader(data));
-		FileWriter output = new FileWriter(temp);
-
-		// read in each line and add to the temp file
-		String line;
-		while ((line = brp.readLine()) != null) {
-			output.write(line);
-			output.write(NEW_LINE);
+		InputStream isProp = null;
+		InputStreamReader isrProp = null;
+		BufferedReader brProp = null;
+		try {
+			isProp = new FileInputStream(prop);
+			isrProp = new InputStreamReader(isProp, UTF_8);
+			brProp = new BufferedReader(isrProp);
+		} catch (FileNotFoundException e1) {
+			throw new IllegalStateException(e1);
+		} catch (UnsupportedEncodingException uee) {
+			Log.w(t, "UTF 8 encoding unavailable, trying default encoding");
+			isrProp = new InputStreamReader(isProp);
+			brProp = new BufferedReader(isrProp);
 		}
-		while ((line = brd.readLine()) != null) {
-			output.write(line);
-			output.write(NEW_LINE);
+
+		InputStream isData = null;
+		InputStreamReader isrData = null;
+		BufferedReader brData = null;
+		try {
+			isData = new FileInputStream(data);
+			isrData = new InputStreamReader(isData, UTF_8);
+			brData = new BufferedReader(isrData);
+		} catch (FileNotFoundException e1) {
+			throw new IllegalStateException(e1);
+		} catch (UnsupportedEncodingException uee) {
+			Log.w(t, "UTF 8 encoding unavailable, trying default encoding");
+			isrData = new InputStreamReader(isData);
+			brData = new BufferedReader(isrData);
 		}
 
-		brp.close();
-		brd.close();
-		output.close();
+		OutputStreamWriter output = null;
+		try {
+			FileOutputStream out = new FileOutputStream(temp);
+			output = new OutputStreamWriter(out, UTF_8);
 
-		Log.i(t, "Temp file made");
-		return temp;
+			// read in each line and add to the temp file
+			String line;
+			while ((line = brProp.readLine()) != null) {
+				output.write(line);
+				output.write(NEW_LINE);
+			}
+			while ((line = brData.readLine()) != null) {
+				output.write(line);
+				output.write(NEW_LINE);
+			}
+
+			output.flush();
+			output.close();
+			Log.i(t, "Temp file made");
+			return temp;
+		} finally {
+			try {
+				brProp.close();
+				isrProp.close();
+			} catch (IOException e) {
+			}
+			try {
+				brData.close();
+				isrData.close();
+			} catch (IOException e) {
+			}
+		}
 	}
 
 	private boolean importTable(Context c, CSVReader reader, String tableId,
@@ -654,9 +738,12 @@ public class CsvUtil {
 		UserTable table = dbt.getRaw(columns, selectionKeys, selectionArgs,
 				null);
 		// writing data
+		OutputStreamWriter output = null;
 		try {
-			CSVWriter cw = new CSVWriter(new FileWriter(file), DELIMITING_CHAR,
-					QUOTE_CHAR, ESCAPE_CHAR);
+			FileOutputStream out = new FileOutputStream(file);
+			output = new OutputStreamWriter(out, UTF_8);
+			CSVWriter cw = new CSVWriter(output,
+					DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
 			if (exportProperties) {
 				// TODO: INSTEAD USE A TABLE DEFINITION PROBABLY?
 				// The first row must be [tableProperties, secondaryKVSEntries]
@@ -722,10 +809,16 @@ public class CsvUtil {
 				}
 				cw.writeNext(row);
 			}
+			cw.flush();
 			cw.close();
 			return true;
 		} catch (IOException e) {
 			return false;
+		} finally {
+			try {
+				output.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 

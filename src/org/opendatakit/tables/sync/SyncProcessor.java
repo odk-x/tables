@@ -18,11 +18,9 @@ package org.opendatakit.tables.sync;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -190,7 +188,7 @@ public class SyncProcessor {
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
 //    Map<String, ColumnType> columns = getColumns(tp);
     List<String> userColumns = tp.getColumnOrder();
-    List<SyncRow> rowsToInsert = getRows(table, userColumns, 
+    List<SyncRow> rowsToInsert = getRows(table, userColumns,
         SyncUtil.State.INSERTING);
 
     boolean success = false;
@@ -551,7 +549,7 @@ public class SyncProcessor {
   }
 
   /**
-   * Returns all the columns that should be synched, including metadata 
+   * Returns all the columns that should be synched, including metadata
    * columns. Returns as a map of element key to {@link ColumnType}.
    * @param tp
    * @return
@@ -567,9 +565,9 @@ public class SyncProcessor {
 
   /**
    * Get the sync rows for the user-defined rows specified by the elementkeys
-   * of columnsToSync. Returns a list of {@link SyncRow} objects. The rows 
+   * of columnsToSync. Returns a list of {@link SyncRow} objects. The rows
    * returned will be only those whose sync state matches the state parameter.
-   * The metadata columns that should be synched are also included in the 
+   * The metadata columns that should be synched are also included in the
    * returned {@link SyncRow}s.
    * @param table
    * @param columnsToSync the element keys of the user-defined columns to sync.
@@ -578,7 +576,7 @@ public class SyncProcessor {
    * only those rows whose sync state is inserting.
    * @return
    */
-  private List<SyncRow> getRows(DbTable table, List<String> columnsToSync, 
+  private List<SyncRow> getRows(DbTable table, List<String> columnsToSync,
       int state) {
 
 //    Set<String> columnSet = new HashSet<String>(columns.keySet());
@@ -588,11 +586,11 @@ public class SyncProcessor {
 //    	columnNames.add(s);
 //    }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
-    UserTable rows = table.getRaw(columnsToSync, new String[] 
+    UserTable rows = table.getRaw(columnsToSync, new String[]
         {DataTableColumns.SAVED,
     			DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING },
         new String[] { DbTable.SavedStatus.COMPLETE.name(),
-    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) }, 
+    			String.valueOf(state), String.valueOf(SyncUtil.boolToInt(false)) },
     			null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
@@ -603,7 +601,7 @@ public class SyncProcessor {
       		"not equal the number of user-defined element keys requested (" +
       		numCols + " != " + columnsToSync.size() + ")");
     }
-    // And now for each row we need to add both the user columns AND the 
+    // And now for each row we need to add both the user columns AND the
     // columns to sync, AND the sync tag for the row.
     Map<String, ColumnType> cachedColumnsToSync = DbTable.getColumnsToSync();
     for (int i = 0; i < numRows; i++) {
@@ -614,10 +612,10 @@ public class SyncProcessor {
         // We know that the columnsToSync should be metadata keys for the user-
         // defined columns. If they're not present we know there is a problem,
         String columnElementKey = columnsToSync.get(j);
-        values.put(columnElementKey, 
+        values.put(columnElementKey,
             rows.getUserDataByElementKey(i, columnElementKey));
-          // And now add the necessary metadata. This will be based on the 
-          // columns specified as synchable metadata columns in DbTable. 
+          // And now add the necessary metadata. This will be based on the
+          // columns specified as synchable metadata columns in DbTable.
         for (String metadataElementKey : cachedColumnsToSync.keySet()) {
           // Special check for the timestamp to format correctly.
           if (metadataElementKey.equals(DataTableColumns.TIMESTAMP)) {
@@ -627,7 +625,7 @@ public class SyncProcessor {
             String lastModTime = du.formatDateTimeForDb(dt);
             values.put(LAST_MOD_TIME_LABEL, lastModTime);
           } else {
-            values.put(metadataElementKey, 
+            values.put(metadataElementKey,
                rows.getMetadataByElementKey(i, metadataElementKey));
           }
         }

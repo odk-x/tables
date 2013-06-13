@@ -16,7 +16,6 @@
 package org.opendatakit.tables.activities;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -102,15 +101,15 @@ public class Controller {
     public static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
     public static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
     private static final int RCODE_LIST_VIEW_MANAGER = 4;
-    /** 
+    /**
      * This is the return code for when Collect is called to add a row to a
      * table that is not the table held by the activity at the time of the
-     * call. E.g. Controller holds a TableProperties for a table that is 
+     * call. E.g. Controller holds a TableProperties for a table that is
      * currently being displayed. If we are in a list view, and the user wants
-     * to add a row to a table other than the table currently being displayed 
-     * in the list view, this is the return code that should be used. The 
-     * caller also must be sure to launch the intent using 
-     * {@link CollectUtil#launchCollectToAddRow(Activity, Intent, 
+     * to add a row to a table other than the table currently being displayed
+     * in the list view, this is the return code that should be used. The
+     * caller also must be sure to launch the intent using
+     * {@link CollectUtil#launchCollectToAddRow(Activity, Intent,
      * TableProperties)}.
      */
     public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
@@ -703,9 +702,9 @@ public class Controller {
         da.init();
       }
     }
-    
+
     /**
-     * Handle the add return from Collect if the user has specified a table 
+     * Handle the add return from Collect if the user has specified a table
      * other than that which is currently held in the Controller. Note that the
      * Intent to launch Collect must have been launched using {@link
      * CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}.
@@ -720,11 +719,11 @@ public class Controller {
         		"specifying the target of the add row, but was null.");
         return;
       }
-      TableProperties tpToReceiveAdd = 
+      TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(activity), tableId, 
+              DbHelper.getDbHelper(activity), tableId,
               KeyValueStore.Type.ACTIVE);
-      CollectUtil.handleOdkCollectAddReturn(activity, tpToReceiveAdd, 
+      CollectUtil.handleOdkCollectAddReturn(activity, tpToReceiveAdd,
           returnCode, data);
     }
 
