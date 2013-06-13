@@ -94,14 +94,11 @@ public class ColumnManager extends SherlockListActivity {
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
 		// We need to order the ColumnProperties appropriately
-		List<String> tpColumnOrder = tp.getColumnOrder();
-		this.cps = new ColumnProperties[tpColumnOrder.size()];
+		this.cps = new ColumnProperties[tp.getNumberOfDisplayColumns()];
 		columnOrder.clear();
-		int addIndex = 0;
-		for ( String s : tpColumnOrder ) {
-			columnOrder.add(s);
-			cps[addIndex] = tp.getColumnByElementKey(s);
-			addIndex++;
+		for ( int i = 0 ; i < tp.getNumberOfDisplayColumns() ; ++ i) {
+			cps[i] = tp.getColumnByIndex(i);
+			columnOrder.add(cps[i].getElementKey());
 		}
 	}
 
@@ -305,20 +302,15 @@ public class ColumnManager extends SherlockListActivity {
 					} else {
 						// Create new column
 					  ColumnProperties cp = tp.addColumn(colName, null, null);
-	              List<String> tpColumnOrder = tp.getColumnOrder();
-					  ColumnManager.this.cps =
-						    new ColumnProperties[tpColumnOrder.size()];
+					  cps = new ColumnProperties[tp.getNumberOfDisplayColumns()];
 					  columnOrder.clear();
-					  int addIndex = 0;
-					  for ( String s : tpColumnOrder ) {
-							columnOrder.add(s);
-							ColumnManager.this.cps[addIndex] =
-							    tp.getColumnByElementKey(s);
-							addIndex++;
-						}
-						adapter.notifyDataSetChanged();
-						// Load Column Property Manger
-					    loadColumnPropertyManager(cp.getElementKey());
+					  for ( int i = 0 ; i < tp.getNumberOfDisplayColumns() ; ++ i) {
+						cps[i] = tp.getColumnByIndex(i);
+						columnOrder.add(cps[i].getElementKey());
+					  }
+					  adapter.notifyDataSetChanged();
+					  // Load Column Property Manger
+					  loadColumnPropertyManager(cp.getElementKey());
 					}
 				} else {
 					toastColumnNameError(getString(R.string.error_in_use_column_name, colName));
@@ -365,19 +357,10 @@ public class ColumnManager extends SherlockListActivity {
 			}
 			tp.setColumnOrder(newOrder);
 			columnOrder.clear();
-			List<String> tpColumnOrder = tp.getColumnOrder();
-			ColumnManager.this.cps =
-			    new ColumnProperties[tpColumnOrder.size()];
-			int addIndex = 0;
-			for (String s : tpColumnOrder) {
-				columnOrder.add(s);
-				ColumnManager.this.cps[addIndex] = tp.getColumnByElementKey(s);
-				addIndex++;
+			for ( int i = 0 ; i < tp.getNumberOfDisplayColumns() ; ++ i) {
+				cps[i] = tp.getColumnByIndex(i);
+				columnOrder.add(cps[i].getElementKey());
 			}
-			// have to call this so that displayName refers to the correct column
-			DbHelper dbh = DbHelper.getDbHelper(ColumnManager.this);
-			tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-					KeyValueStore.Type.ACTIVE);
 			adapter.notifyDataSetChanged();
 		}
 	};

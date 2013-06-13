@@ -845,11 +845,10 @@ public class Controller {
   public static void launchDetailActivity(Activity activity, TableProperties tp,
       UserTable table,
       int rowNum, String filename) {
-    List<String> columnOrder = tp.getColumnOrder();
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = columnOrder.get(i);
+      keys[i] = tp.getColumnByIndex(i).getElementKey();
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
@@ -858,7 +857,7 @@ public class Controller {
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_KEYS, keys);
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
     if (filename != null) {
-      // a null value informs the DetailDisplayActivity that the filename in 
+      // a null value informs the DetailDisplayActivity that the filename in
       // the kvs should be used, so only add it if it has been set.
       intent.putExtra(DetailDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
@@ -876,9 +875,9 @@ public class Controller {
             super(activity);
             this.rowId = rowId;
             this.colIndex = colIndex;
-            this.elementKey = tp.getColumnOrder().get(colIndex);
-            cev = CellValueView.getCellEditView(activity,
-                    tp.getColumnByElementKey(this.elementKey), value);
+            ColumnProperties cp = tp.getColumnByIndex(colIndex);
+            this.elementKey = cp.getElementKey();
+            cev = CellValueView.getCellEditView(activity, cp, value);
             buildView(activity);
         }
         private void buildView(Context context) {

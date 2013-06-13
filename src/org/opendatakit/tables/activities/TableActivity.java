@@ -791,8 +791,8 @@ public class TableActivity extends SherlockFragmentActivity {
   Map<String, String> getMapForInsertion(Map<String, String> formValues) {
     Map<String, String> values = new HashMap<String, String>();
     for (ColumnProperties cp : mTableProperties.getColumns().values()) {
-      // we want to use element key here, b/c that is what collect should be 
-      // using to access things. 
+      // we want to use element key here, b/c that is what collect should be
+      // using to access things.
       String elementKey = cp.getElementKey();
       String value = mDataUtil.validifyValue(cp, formValues.get(elementKey));
       if (value != null) {
@@ -938,13 +938,12 @@ public class TableActivity extends SherlockFragmentActivity {
     context.startActivity(intent);
   }
 
-  public static void launchDetailActivity(Context context, TableProperties tp, 
+  public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table, int rowNum) {
     String[] keys = new String[table.getWidth()];
     String[] values = new String[table.getWidth()];
-    List<String> columnOrder = tp.getColumnOrder();
     for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = columnOrder.get(i);
+      keys[i] = tp.getColumnByIndex(i).getElementKey();
       values[i] = table.getData(rowNum, i);
     }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
@@ -966,11 +965,9 @@ public class TableActivity extends SherlockFragmentActivity {
 
       this.rowId = rowId;
       this.colIndex = colIndex;
-      this.mColumnElementKey = mTableProperties.getColumnOrder().get(colIndex);
-      cev = CellValueView
-          .getCellEditView(mActivity, 
-              mTableProperties.getColumnByElementKey(mColumnElementKey), 
-              value);
+      ColumnProperties cp = mTableProperties.getColumnByIndex(colIndex);
+      this.mColumnElementKey = cp.getElementKey();
+      cev = CellValueView.getCellEditView(mActivity, cp, value);
       buildView(mActivity);
     }
 

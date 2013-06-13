@@ -90,7 +90,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   private EditNameDialogPreference mValuePreference;
   private ColorRuleGroup.Type mType;
   private Preference mSaveButton;
-  
+
   // These are the fields that define the rule.
   private String mElementKey;
   private String mRuleValue;
@@ -117,11 +117,11 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
         org.opendatakit.tables.R.xml.preference_row_color_rule_entry);
     this.mHumanValues = ColorRule.RuleType.getValues();
     this.mEntryVales = ColorRule.RuleType.getValues();
-    List<String> columnOrder = mTp.getColumnOrder();
-    this.mColumnDisplayNames = new CharSequence[columnOrder.size()];
-    this.mColumnElementKeys = new CharSequence[columnOrder.size()];
-    for (int i = 0; i < columnOrder.size(); i++) {
-      ColumnProperties cp = mTp.getColumnByElementKey(columnOrder.get(i));
+    int numberOfDisplayColumns = mTp.getNumberOfDisplayColumns();
+    this.mColumnDisplayNames = new CharSequence[numberOfDisplayColumns];
+    this.mColumnElementKeys = new CharSequence[numberOfDisplayColumns];
+    for (int i = 0; i < numberOfDisplayColumns; i++) {
+      ColumnProperties cp = mTp.getColumnByIndex(i);
       mColumnDisplayNames[i] = cp.getDisplayName();
       mColumnElementKeys[i] = cp.getElementKey();
     }
@@ -251,12 +251,12 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     backgroundColorPref.setCallingActivity(this);
     backgroundColorPref.initColorPickerListener(this, COLOR_PREF_KEY_BACKGROUND,
         getString(R.string.background_color), mBackgroundColor);
-    
+
     // Set up the save button.
     mSaveButton =  (Preference) findPreference(PREFERENCE_KEY_SAVE_BUTTON);
     mSaveButton.setOnPreferenceClickListener(
         new Preference.OnPreferenceClickListener() {
-      
+
       @Override
       public boolean onPreferenceClick(Preference preference) {
         if (ruleIsValid()) {
@@ -269,7 +269,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   }
 
   /**
-   * Puts the value of the rule into the state of the current object and 
+   * Puts the value of the rule into the state of the current object and
    * updates the preference summary to display this value.
    */
   @Override
@@ -306,7 +306,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     }
     updateStateOfSaveButton();
   }
-  
+
   /**
    * Checks state of the objects backing the color rule activity. Returns true
    * if the constructed rule would be valid (e.g. no null values), otherwise
@@ -314,17 +314,17 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
    * @return
    */
   private boolean ruleIsValid() {
-    return mElementKey != null 
+    return mElementKey != null
         && mRuleValue != null
         && mRuleOperator != null
         && mForegroundColor != null
         && mBackgroundColor != null;
   }
-  
+
   /**
    * Constructs a new rule from the fields and saves the existing rule into the
    *  database. Note that this MUST not be
-   * called unless ruleIsValid returns true. Otherwise you could get null 
+   * called unless ruleIsValid returns true. Otherwise you could get null
    * values in the database that will crash the app.
    */
   private void saveRule() {
@@ -339,21 +339,21 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     mColorRuleGroup.saveRuleList();
     updateStateOfSaveButton();
   }
-  
+
   /**
-   * Return a new color rule based on the state of the activity. If the 
+   * Return a new color rule based on the state of the activity. If the
    * ruleIsValid() currently returns null, null is returned.
    * @return
    */
   private ColorRule constructColorRuleFromState() {
     if (ruleIsValid()) {
-      return new ColorRule(mElementKey, mRuleOperator, mRuleValue, 
+      return new ColorRule(mElementKey, mRuleOperator, mRuleValue,
           mForegroundColor.intValue(), mBackgroundColor.intValue());
     } else {
       return null;
     }
   }
-  
+
   /**
    * If the rule is valid and the intent flag for a new rule is set, then
    * enables the button because you can save a new one. If the rule is valid

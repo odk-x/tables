@@ -202,15 +202,15 @@ public class PropertyManager extends PreferenceActivity {
         // TODO: resolve how joins work
 //        String joinColName = cp.getJoinColumnName();
         String joinColName = cp.getJoins().getElementKey();
-        List<String> columnOrder = tp.getColumnOrder();
-        String[] colDbNames = new String[columnOrder.size() + 1];
+        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        String[] colDbNames = new String[numberOfDisplayColumns + 1];
         String selectedDbName = colDbNames[0] = null;
-        String[] colDisplayNames = new String[columnOrder.size() + 1];
+        String[] colDisplayNames = new String[numberOfDisplayColumns + 1];
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
-        for (int i = 0; i < columnOrder.size(); i++) {
-          String elementKey = columnOrder.get(i);
-          String colDisplayName =
-              tp.getColumnByElementKey(elementKey).getDisplayName();
+        for (int i = 0; i < numberOfDisplayColumns; i++) {
+          ColumnProperties cp = tp.getColumnByIndex(i);
+          String elementKey = cp.getElementKey();
+          String colDisplayName = cp.getDisplayName();
           colDbNames[i + 1] = elementKey;
           colDisplayNames[i + 1] = colDisplayName;
           if ((joinColName != null) && elementKey.equals(joinColName)) {

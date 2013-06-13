@@ -213,6 +213,9 @@ public class TableProperties {
    * Maps the elementKey of a column to its ColumnProperties object.
    */
   private Map<String, ColumnProperties> mElementKeyToColumnProperties;
+  private boolean staleColumnsInOrder = true;
+  private List<ColumnProperties> columnsInOrder = new ArrayList<ColumnProperties>();
+
   private List<String> columnOrder;
   private List<String> primeColumns;
   private String sortColumn;
@@ -273,8 +276,8 @@ public class TableProperties {
     this.backingStore = backingStore;
     this.tableKVSH =
         this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+	refreshColumns();
     if ( columnOrder.size() == 0 ) {
-    	refreshColumns();
 
         for ( ColumnProperties cp : mElementKeyToColumnProperties.values() ) {
           columnOrder.add(cp.getElementKey());
@@ -287,6 +290,7 @@ public class TableProperties {
           }});
     }
     this.columnOrder = columnOrder;
+    this.staleColumnsInOrder = true;
   }
 
   /**
@@ -1016,8 +1020,15 @@ public class TableProperties {
    * @return
    */
   public int getColumnIndex(String elementKey) {
-    List<String> colOrder = getColumnOrder();
-    return colOrder.indexOf(elementKey);
+    return columnOrder.indexOf(elementKey);
+  }
+
+  public int getNumberOfDisplayColumns() {
+	  return columnOrder.size();
+  }
+
+  public ColumnProperties getColumnByIndex(int idx) {
+	return getColumnsInOrder().get(idx);
   }
 
   public ColumnProperties getColumnByElementKey(String elementKey) {
@@ -1259,7 +1270,7 @@ public class TableProperties {
 	          this.getBackingStoreType());
 	      db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \""
 	          + cp.getElementKey() + "\"");
-	      List<String> newColumnOrder = this.getColumnOrder();
+	      List<String> newColumnOrder = columnOrder;
 	      newColumnOrder.add(cp.getElementKey());
 	      setColumnOrder(newColumnOrder, db);
 	      Log.d("TP", "here we are");
@@ -1270,8 +1281,6 @@ public class TableProperties {
 	    } finally {
 	      db.endTransaction();
 	    }
-	    // update this object.
-	    refreshColumns();
 //	    newColumns[columns.length] = cp;
 //	    columns = newColumns;
 	    // returning new ColumnProperties
@@ -1279,6 +1288,8 @@ public class TableProperties {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+	    // update this object.
+	    refreshColumns();
     }
   }
 
@@ -1408,6 +1419,20 @@ public class TableProperties {
   }
 
   /**
+   * Returns an unmodifiable list of the ColumnProperties in columnOrder.
+   * @return
+   */
+  public List<ColumnProperties> getColumnsInOrder() {
+	  if ( staleColumnsInOrder ) {
+		  columnsInOrder.clear();
+		  for ( String elementKey : columnOrder ) {
+			  columnsInOrder.add( getColumnByElementKey(elementKey) );
+		  }
+	  }
+	  return Collections.unmodifiableList(columnsInOrder);
+  }
+
+  /**
    * Sets the column order. Must be element keys.
    *
    * @param colOrder
@@ -1440,6 +1465,7 @@ public class TableProperties {
 	}
 	tableKVSH.setString(KEY_COLUMN_ORDER, colOrderList);
    this.columnOrder = columnOrder;
+   this.staleColumnsInOrder = true;
   }
 
   /**

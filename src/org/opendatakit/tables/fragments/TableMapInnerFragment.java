@@ -39,7 +39,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 /**
  * The InnerMapFragment has the capability of showing a map. It displays markers
  * based off of location column set in the TableProperitiesManager Activity.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class TableMapInnerFragment extends SherlockMapFragment {
@@ -167,11 +167,11 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     // Now let's set up the color rule things.
     Map<String, Integer> indexMap = new HashMap<String, Integer>();
     Map<String, ColumnProperties> propertiesMap = new HashMap<String, ColumnProperties>();
-    List<String> columnOrder = tp.getColumnOrder();
-    for (int i = 0; i < columnOrder.size(); i++) {
-      propertiesMap.put(columnOrder.get(i), 
-          tp.getColumnByElementKey(columnOrder.get(i)));
-      indexMap.put(columnOrder.get(i), i);
+    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+    for (int i = 0; i < numberOfDisplayColumns; i++) {
+      ColumnProperties cp = tp.getColumnByIndex(i);
+      propertiesMap.put(cp.getElementKey(), cp);
+      indexMap.put(cp.getElementKey(), i);
     }
     mColumnIndexMap = indexMap;
     mColumnPropertiesMap = propertiesMap;
@@ -277,7 +277,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
   /**
    * Retrieves the hue of the specified row depending on the current color
    * rules.
-   * 
+   *
    * @param index
    *          The index of the row to search for.
    * @return The hue depending on the color rules for this row, or the default
@@ -599,7 +599,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
   /**
    * Selects a marker, updating the marker list, and changing the marker's color
    * to green. Makes the marker the currently selected marker.
-   * 
+   *
    * @param marker
    *          The marker to be selected.
    */

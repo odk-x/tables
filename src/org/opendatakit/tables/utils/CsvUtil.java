@@ -589,10 +589,9 @@ public class CsvUtil {
 				index++;
 			}
 
-			List<String> columnOrder = tp.getColumnOrder();
-			for (int i = 0; i < columnOrder.size(); ++i) {
-				ColumnProperties cp = tp.getColumnByElementKey(columnOrder
-						.get(i));
+			int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+			for (int i = 0; i < numberOfDisplayColumns; ++i) {
+				ColumnProperties cp = tp.getColumnByIndex(i);
 				String displayName = cp.getDisplayName();
 				columns.add(cp.getElementKey());
 				headerRow.add(displayName);

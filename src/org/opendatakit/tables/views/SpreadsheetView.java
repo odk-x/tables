@@ -82,8 +82,6 @@ public class SpreadsheetView extends LinearLayout
     private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
     private final TableProperties tp;
-    // cached b/c is defensively copied in tp.
-    private final List<String> mColumnOrder;
 
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
@@ -117,7 +115,6 @@ public class SpreadsheetView extends LinearLayout
         this.controller = controller;
         this.tp = tp;
         this.table = table;
-        this.mColumnOrder = this.tp.getColumnOrder();
         this.indexedCol = indexedCol;
 
         // We have to initialize the items that will be shared across the
@@ -126,12 +123,11 @@ public class SpreadsheetView extends LinearLayout
             new HashMap<String, ColorRuleGroup>();
         this.mElementKeyToProperties =
             new HashMap<String, ColumnProperties>();
-        for (int i = 0; i < this.mColumnOrder.size(); i++) {
-          mElementKeyToColorRuleGroup.put(this.mColumnOrder.get(i),
-              ColorRuleGroup.getColumnColorRuleGroup(tp,
-                  this.mColumnOrder.get(i)));
-          mElementKeyToProperties.put(this.mColumnOrder.get(i),
-              tp.getColumnByElementKey(this.mColumnOrder.get(i)));
+        for (int i = 0; i < tp.getNumberOfDisplayColumns(); i++) {
+          ColumnProperties cp = tp.getColumnByIndex(i);
+          mElementKeyToColorRuleGroup.put(cp.getElementKey(),
+              ColorRuleGroup.getColumnColorRuleGroup(tp, cp.getElementKey()));
+          mElementKeyToProperties.put(cp.getElementKey(),cp);
         }
 
         // if a custom font size is defined in the KeyValueStore, use that
@@ -461,14 +457,15 @@ public class SpreadsheetView extends LinearLayout
 //      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
 //          "isIndexed: " + isIndexed);
         List<String> elementKeysToDisplay =
-            new ArrayList<String>(this.mColumnOrder.size());
+            new ArrayList<String>(tp.getNumberOfDisplayColumns());
         int[] colWidths;
         int[] completeColWidths = getColumnWidths();
         TabularView dataTable;
         TabularView headerTable;
         TabularView footerTable;
         if (isIndexed) {
-            elementKeysToDisplay.add(this.mColumnOrder.get(indexedCol));
+        	ColumnProperties cp = tp.getColumnByIndex(indexedCol);
+            elementKeysToDisplay.add(cp.getElementKey());
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
             dataTable = TabularView.getIndexDataTable(context, this,
@@ -492,7 +489,8 @@ public class SpreadsheetView extends LinearLayout
                 if (i == indexedCol) {
                     continue;
                 }
-                elementKeysToDisplay.add(this.mColumnOrder.get(i));
+                ColumnProperties cp = tp.getColumnByIndex(i);
+                elementKeysToDisplay.add(cp.getElementKey());
                 colWidths[addIndex] = completeColWidths[i];
                 addIndex++;
             }
@@ -738,12 +736,13 @@ public class SpreadsheetView extends LinearLayout
       // So what we want to do is go through and get the column widths for each
       // column. A problem here is that there is no caching, and if you have a
       // lot of columns you're really working the gut of the database.
-      List<String> columnOrder = tp.getColumnOrder();
-      int[] columnWidths = new int[columnOrder.size()];
+      int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+      int[] columnWidths = new int[numberOfDisplayColumns];
       KeyValueStoreHelper columnKVSH =
           tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
-      for (int i = 0; i < columnOrder.size(); i++) {
-        String elementKey = columnOrder.get(i);
+      for (int i = 0; i < numberOfDisplayColumns; i++) {
+    	ColumnProperties cp = tp.getColumnByIndex(i);
+        String elementKey = cp.getElementKey();
         KeyValueHelper aspectHelper = columnKVSH.getAspectHelper(elementKey);
         Integer value =
             aspectHelper.getInteger(SpreadsheetView.KEY_COLUMN_WIDTH);

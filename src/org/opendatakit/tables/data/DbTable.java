@@ -59,9 +59,9 @@ public class DbTable {
      * create table statement, which can't be programmatically created easily.
      */
     private static final List<String> ADMIN_COLUMNS;
-    
+
     /**
-     * An unmodifiable list of the admin columns. Lazily cached in 
+     * An unmodifiable list of the admin columns. Lazily cached in
      * {@link #getAdminColumns()}.
      */
     private static List<String> mCachedAdminColumns = null;
@@ -178,9 +178,9 @@ public class DbTable {
     }
 
     /**
-     * Gets an {@link UserTable} restricted by the query as necessary. The 
-     * list of columns should be the element keys to select, and should not 
-     * include any metadata columns, which will all be returned in the 
+     * Gets an {@link UserTable} restricted by the query as necessary. The
+     * list of columns should be the element keys to select, and should not
+     * include any metadata columns, which will all be returned in the
      * {@link UserTable}.
      * @param the element keys of the user-defined columns to select (if null,
      * all columns will be selected)
@@ -191,7 +191,7 @@ public class DbTable {
      */
     public UserTable getRaw(List<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
-      // The columns we will pass to the db to select. Must include the 
+      // The columns we will pass to the db to select. Must include the
       // columns parameter as well as all the metadata columns.
       List<String> columnsToSelect;
         if (columns == null) {
@@ -253,7 +253,7 @@ public class DbTable {
 
     public UserTable getUserOverviewTable(Query query) {
       // The element keys of the columns we want. We want to select both the
-      // user-defined and the admin columns--both the user-defined and 
+      // user-defined and the admin columns--both the user-defined and
       // ODKTables-specified information, in other words.
       List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
@@ -317,13 +317,13 @@ public class DbTable {
 	        }
 	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
 	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
-	        int[] colIndices = new int[tp.getColumns().size()];
-	        List<String> columnOrder = tp.getColumnOrder();
-	        for (int i = 0; i < columnOrder.size(); i++) {
+	        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+	        int[] colIndices = new int[numberOfDisplayColumns];
+	        for (int i = 0; i < numberOfDisplayColumns; i++) {
+	        	ColumnProperties cp = tp.getColumnByIndex(i);
 	            colIndices[i] = c.getColumnIndexOrThrow(
-	                    columnOrder.get(i));
-	            header[i] = tp.getColumnByElementKey(
-	                columnOrder.get(i)).getDisplayName();
+	            		cp.getElementKey());
+	            header[i] = cp.getDisplayName();
 	        }
 	        c.moveToFirst();
 	        for (int i = 0; i < count; i++) {
@@ -387,7 +387,7 @@ public class DbTable {
      * The cursor, but not the columns array, must include the row ID column.
      * <p>
      * The cursor must have queried for both the user-defined columns and the
-     * metadata columns. 
+     * metadata columns.
      * @param c Cursor meeting the requirements above
      * @param userColumnOrder the user-specified column order
      */
@@ -402,28 +402,28 @@ public class DbTable {
         String[][] data = new String[rowCount][userColumnOrder.size()];
         String[][] metadata = new String[rowCount][getAdminColumns().size()];
         int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
-        // These maps will map the element key to the corresponding index in 
+        // These maps will map the element key to the corresponding index in
         // either data or metadata. If the user has defined a column with the
-        // element key _my_data, and this column is at index 5 in the data 
+        // element key _my_data, and this column is at index 5 in the data
         // array, dataKeyToIndex would then have a mapping of _my_data:5.
         // The sync_state column, if present at index 7, would have a mapping
         // in metadataKeyToIndex of sync_state:7.
         Map<String, Integer> dataKeyToIndex = new HashMap<String, Integer>();
-        Map<String, Integer> metadataKeyToIndex = 
+        Map<String, Integer> metadataKeyToIndex =
             new HashMap<String, Integer>();
         for (int i = 0; i < userColumnOrder.size(); i++) {
           String elementKey = userColumnOrder.get(i);
           dataKeyToIndex.put(elementKey, i);
-          keyToCursorIndex.put(elementKey, 
+          keyToCursorIndex.put(elementKey,
               c.getColumnIndexOrThrow(elementKey));
 //          colIndices[i] = c.getColumnIndexOrThrow(elementKey);
         }
         for (int i = 0; i < getAdminColumns().size(); i++) {
-          // TODO: problem is here. unclear how to best get just the 
+          // TODO: problem is here. unclear how to best get just the
           // metadata in here. hmm.
           String elementKey = getAdminColumns().get(i);
           metadataKeyToIndex.put(elementKey, i);
-          keyToCursorIndex.put(elementKey, 
+          keyToCursorIndex.put(elementKey,
               c.getColumnIndexOrThrow(elementKey));
         }
 
@@ -435,7 +435,7 @@ public class DbTable {
             // First get the user-defined data for this row.
             for (int j = 0; j < userColumnOrder.size(); j++) {
               String elementKey = userColumnOrder.get(j);
-              String value = 
+              String value =
                   getIndexAsString(c, keyToCursorIndex.get(elementKey));
 //              String value = getIndexAsString(c, colIndices[j]);
               data[i][j] = value;
@@ -443,7 +443,7 @@ public class DbTable {
         	  // Now get the metadata for this row.
         	  for (int j = 0; j < getAdminColumns().size(); j++) {
         	    String elementKey = getAdminColumns().get(j);
-        	    String value = getIndexAsString(c, 
+        	    String value = getIndexAsString(c,
         	        keyToCursorIndex.get(elementKey));
         	    metadata[i][j] = value;
         	  }
@@ -455,11 +455,11 @@ public class DbTable {
             metadata, metadataKeyToIndex, null);
 //        return new Table(rowIds, userColumnOrder, data);
     }
-    
+
     /**
-     * Return the data stored in the cursor at the given index and given 
-     * position (ie the given row which the cursor is currently on) as a 
-     * String. 
+     * Return the data stored in the cursor at the given index and given
+     * position (ie the given row which the cursor is currently on) as a
+     * String.
      * <p>
      * NB: Currently only checks for Strings, long, int, and double.
      * @param c
@@ -486,26 +486,24 @@ public class DbTable {
     }
 
     /**
-     * Return an array of display names for the columns in the user-defined 
+     * Return an array of display names for the columns in the user-defined
      * order.
      * @return
      */
     private String[] getUserHeader() {
-      List<String> columnOrder = tp.getColumnOrder();
-      String[] header = new String[columnOrder.size()];
+      int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+      String[] header = new String[numberOfDisplayColumns];
       for (int i = 0; i < header.length; i++) {
-          header[i] = 
-              tp.getColumnByElementKey(columnOrder.get(i)).getDisplayName();
+          header[i] = tp.getColumnByIndex(i).getDisplayName();
       }
       return header;
     }
 
     private String[] footerQuery(Query query) {
-      List<String> columnOrder = tp.getColumnOrder();
-        String[] footer = new String[columnOrder.size()];
-        for (int i = 0; i < columnOrder.size(); i++) {
-          ColumnProperties cp = 
-              tp.getColumnByElementKey(columnOrder.get(i));
+    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        String[] footer = new String[numberOfDisplayColumns];
+        for (int i = 0; i < numberOfDisplayColumns; i++) {
+          ColumnProperties cp = tp.getColumnByIndex(i);
             switch (cp.getFooterMode()) {
             case count:
                 footer[i] = getFooterItem(query, cp,

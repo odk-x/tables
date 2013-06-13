@@ -856,7 +856,6 @@ public class ColumnProperties {
    */
   public void setColumnType(TableProperties tp, ColumnType columnType) {
     List<String> colOrder = tp.getColumnOrder();
-    tp.getColumns(); // ensuring columns are initialized
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -866,12 +865,12 @@ public class ColumnProperties {
       db.setTransactionSuccessful();
       db.endTransaction();
       this.elementType = columnType;
-      tp.refreshColumns();
     } finally {
       // TODO: fix the when to close problem
       // if ( db != null ) {
       // db.close();
       // }
+      tp.refreshColumns();
     }
   }
 

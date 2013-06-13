@@ -60,7 +60,7 @@ import android.widget.Toast;
 
 /**
  * An activity for managing a table's properties.
- * 
+ *
  * @author hkworden@gmail.com
  * @author sudar.sam@gmail.com
  */
@@ -227,9 +227,9 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     List<String> columnOrder = tp.getColumnOrder();
     boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(columnOrder);
-    boolean canBeShortcutTable = 
+    boolean canBeShortcutTable =
         ShortcutUtil.couldBeShortcutTable(columnOrder);
-    int tableTypeCount = 
+    int tableTypeCount =
         1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
     String[] tableTypeIds = new String[tableTypeCount];
     String[] tableTypeNames = new String[tableTypeCount];
@@ -339,18 +339,18 @@ public class TablePropertiesManager extends PreferenceActivity {
      * TODO: fix this -- there should probably be three access control tables
      * for an entire 'application' (i.e., shared across all tables so as to
      * centralize access control management).
-     * 
+     *
      * The schema for the 2 tables should probably be:
-     * 
+     *
      * User Access Control Table: target_table_id null -- table for which access
      * control applies access_control_type not null -- create, read, modify,
      * delete access user_id null -- e-mail or phone number (sms) (or null for
      * everyone)
-     * 
+     *
      * Group Access Control Table: target_table_id null -- table for which
      * access control applies access_control_type not null -- create, read,
      * modify, delete access group_id not null -- group id from assignment table
-     * 
+     *
      * User-to-Group Assignment Table: user_id not null -- e-mail or phone
      * number (sms) group_id not null -- group id, as referenced in Group Access
      * Control Table.
@@ -695,21 +695,21 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If the color rule type is columns, add the preference to select the
       // column.
       if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-        List<String> columnOrder = tp.getColumnOrder();
-        String[] colorColDisplayNames = new String[columnOrder.size()];
-        String[] colorColElementKeys = new String[columnOrder.size()];
-        for (int i = 0; i < columnOrder.size(); i++) {
-          colorColDisplayNames[i] = 
-              tp.getColumnByElementKey(columnOrder.get(i)).getDisplayName();
-          colorColElementKeys[i] = columnOrder.get(i);
+    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        String[] colorColDisplayNames = new String[numberOfDisplayColumns];
+        String[] colorColElementKeys = new String[numberOfDisplayColumns];
+        for (int i = 0; i < numberOfDisplayColumns; i++) {
+          ColumnProperties cp = tp.getColumnByIndex(i);
+          colorColDisplayNames[i] = cp.getDisplayName();
+          colorColElementKeys[i] = cp.getElementKey();
         }
 
         ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
             .getString(TableMapFragment.KEY_COLOR_RULE_COLUMN));
         if (colorColumn == null) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, 
-              tp.getColumnByElementKey(columnOrder.get(0)).getElementKey());
-          colorColumn = tp.getColumnByElementKey(columnOrder.get(0));
+          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN,
+              tp.getColumnByIndex(0).getElementKey());
+          colorColumn = tp.getColumnByIndex(0);
         }
 
         ListPreference colorColumnPref = new ListPreference(this);
@@ -795,7 +795,7 @@ public class TablePropertiesManager extends PreferenceActivity {
    * This preference allows the user to select a file from their SD card. If the
    * user does not have a file picker installed on their phone, then a toast
    * will indicate so.
-   * 
+   *
    * @author Chris Gelon (cgelon)
    */
   private class FileSelectorPreference extends EditTextPreference {
