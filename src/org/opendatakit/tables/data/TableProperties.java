@@ -1252,6 +1252,7 @@ public class TableProperties {
 	// ensuring columns is initialized
 	// refreshColumns();
     // adding column
+	boolean failure = false;
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       if (elementKey == null) {
@@ -1273,9 +1274,11 @@ public class TableProperties {
 	      List<String> newColumnOrder = columnOrder;
 	      newColumnOrder.add(cp.getElementKey());
 	      setColumnOrder(db, newColumnOrder);
+	      mElementKeyToColumnProperties.put(cp.getElementKey(), cp);
 	      Log.d("TP", "here we are");
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
+	      failure = true;
 	      e.printStackTrace();
 	      Log.e(TAG, "error adding column: " + displayName);
 	    } finally {
@@ -1289,7 +1292,9 @@ public class TableProperties {
       // TODO: fix the when to close problem
 //    	db.close();
 	    // update this object.
-	    refreshColumns();
+	    if ( failure ) {
+	    	refreshColumns();
+	    }
     }
   }
 
