@@ -479,7 +479,10 @@ public class KeyValueStore {
       String key) {
     int numDeleted = db.delete(this.dbBackingName,
         WHERE_SQL_FOR_PARTITION_ASPECT_KEY,
-        new String[] {this.tableId, partition, aspect, key});
+        new String[] { String.valueOf(this.tableId),
+    				   String.valueOf(partition),
+    				   String.valueOf(aspect),
+    				   String.valueOf(key)});
     if (numDeleted > 1) {
       Log.e(TAG, "deleted > 1 entry from the key value store with name: " +
           this.dbBackingName + " and key: " + key);
