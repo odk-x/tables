@@ -458,7 +458,7 @@ public class ColumnProperties {
       FooterMode footerMode,
       KeyValueStore.Type backingStore) {
     this.dbh = dbh;
-    whereArgs = new String[] { String.valueOf(tableId), elementKey };
+    whereArgs = new String[] { tableId, elementKey };
     this.tableId = tableId;
     this.elementKey = elementKey;
     this.elementName = elementName;
@@ -713,12 +713,12 @@ public class ColumnProperties {
     Map<String, String> mapProps = new HashMap<String, String>();
     // TODO: might have to account for the null values being passed in here,
     // maybe should be putting in empty strings instead?
-    mapProps.put(KEY_DISPLAY_VISIBLE, String.valueOf(displayVisible));
+    mapProps.put(KEY_DISPLAY_VISIBLE, Boolean.toString(displayVisible));
     mapProps.put(KEY_DISPLAY_NAME, displayName);
     mapProps.put(KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_CHOICES_MAP);
     mapProps.put(KEY_DISPLAY_FORMAT, DEFAULT_KEY_DISPLAY_FORMAT);
-    mapProps.put(KEY_SMS_IN, String.valueOf(DEFAULT_KEY_SMS_IN));
-    mapProps.put(KEY_SMS_OUT, String.valueOf(DEFAULT_KEY_SMS_OUT));
+    mapProps.put(KEY_SMS_IN, Boolean.toString(DEFAULT_KEY_SMS_IN));
+    mapProps.put(KEY_SMS_OUT, Boolean.toString(DEFAULT_KEY_SMS_OUT));
     mapProps.put(KEY_SMS_LABEL, DEFAULT_KEY_SMS_LABEL);
     mapProps.put(KEY_FOOTER_MODE, DEFAULT_KEY_FOOTER_MODE.name());
     ColumnProperties cp = null;
@@ -787,7 +787,7 @@ public class ColumnProperties {
     entry.partition = partition;
     entry.aspect = elementKey;
     entry.type = ColumnType.INTEGER.name();
-    entry.value = String.valueOf(value);
+    entry.value = Integer.toString(value);
     entry.key = key;
     return entry;
   }
@@ -799,7 +799,7 @@ public class ColumnProperties {
     entry.partition = partition;
     entry.aspect = elementKey;
     entry.type = ColumnType.BOOLEAN.name();
-    entry.value = String.valueOf(value);
+    entry.value = Boolean.toString(value);
     entry.key = key;
     return entry;
   }

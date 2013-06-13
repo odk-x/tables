@@ -251,7 +251,7 @@ public class TableProperties {
       boolean transactioning,
       KeyValueStore.Type backingStore) {
     this.dbh = dbh;
-    whereArgs = new String[] { String.valueOf(tableId) };
+    whereArgs = new String[] { tableId };
     this.tableId = tableId;
     this.tableKey = tableKey;
     this.dbTableName = dbTableName;
@@ -1272,7 +1272,7 @@ public class TableProperties {
 	          + cp.getElementKey() + "\"");
 	      List<String> newColumnOrder = columnOrder;
 	      newColumnOrder.add(cp.getElementKey());
-	      setColumnOrder(newColumnOrder, db);
+	      setColumnOrder(db, newColumnOrder);
 	      Log.d("TP", "here we are");
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
@@ -1357,7 +1357,6 @@ public class TableProperties {
     // Update the column order.
     List<String> newColumnOrder = this.getColumnOrder();
     newColumnOrder.remove(elementKey);
-    this.setColumnOrder(newColumnOrder);
     refreshColumns();
 //    ArrayList<String> newColumnOrder = new ArrayList<String>();
 //    index = 0;
@@ -1375,6 +1374,7 @@ public class TableProperties {
 	    db.beginTransaction();
 	    try {
 	      colToDelete.deleteColumn(db);
+	      this.setColumnOrder(db, newColumnOrder);
 	      reformTable(db, columnOrder);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
@@ -1443,15 +1443,14 @@ public class TableProperties {
   public void setColumnOrder(List<String> colOrder) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-    	setColumnOrder(colOrder, db);
+    	setColumnOrder(db, colOrder);
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
     }
   }
 
-  private void setColumnOrder(List<String> columnOrder,
-      SQLiteDatabase db) {
+  private void setColumnOrder(SQLiteDatabase db, List<String> columnOrder) {
 	String colOrderList = null;
 	try {
 		colOrderList = mapper.writeValueAsString(columnOrder);
@@ -1465,9 +1464,9 @@ public class TableProperties {
 		e.printStackTrace();
 		Log.e(t, "illegal json ignored");
 	}
-	tableKVSH.setString(KEY_COLUMN_ORDER, colOrderList);
-   this.columnOrder = columnOrder;
-   this.staleColumnsInOrder = true;
+    tableKVSH.setString(db, KEY_COLUMN_ORDER, colOrderList);
+    this.columnOrder = columnOrder;
+    this.staleColumnsInOrder = true;
   }
 
   /**

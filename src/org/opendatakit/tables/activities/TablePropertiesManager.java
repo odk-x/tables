@@ -233,15 +233,15 @@ public class TablePropertiesManager extends PreferenceActivity {
         1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
     String[] tableTypeIds = new String[tableTypeCount];
     String[] tableTypeNames = new String[tableTypeCount];
-    tableTypeIds[0] = String.valueOf(TableType.data);
+    tableTypeIds[0] = TableType.data.name();
     tableTypeNames[0] = LanguageUtil.getTableTypeLabel(this, TableType.data);
     if (canBeAccessTable) {
-      tableTypeIds[1] = String.valueOf(TableType.security);
+      tableTypeIds[1] = TableType.security.name();
       tableTypeNames[1] = LanguageUtil.getTableTypeLabel(this, TableType.security);
     }
     if (canBeShortcutTable) {
       int index = canBeAccessTable ? 2 : 1;
-      tableTypeIds[index] = String.valueOf(TableType.shortcut);
+      tableTypeIds[index] = TableType.shortcut.name();
       tableTypeNames[index] = LanguageUtil.getTableTypeLabel(this, TableType.shortcut);
     }
     ListPreference tableTypePref = new ListPreference(this);
@@ -249,7 +249,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     tableTypePref.setDialogTitle(getString(R.string.change_table_type));
     tableTypePref.setEntryValues(tableTypeIds);
     tableTypePref.setEntries(tableTypeNames);
-    tableTypePref.setValue(String.valueOf(tp.getTableType()));
+    tableTypePref.setValue(tp.getTableType().name());
     tableTypePref.setSummary(LanguageUtil.getTableTypeLabel(this, tp.getTableType()));
     tableTypePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
@@ -382,7 +382,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // tp.getWriteSecurityTableId())) {
       // writeTp = accessTp;
       // }
-      accessTableIds[index] = String.valueOf(accessTp.getTableId());
+      accessTableIds[index] = accessTp.getTableId();
       accessTableNames[index] = accessTp.getDisplayName();
       index++;
     }
@@ -396,7 +396,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       readTablePref.setValue("-1");
       readTablePref.setSummary(getString(R.string.none));
     } else {
-      readTablePref.setValue(String.valueOf(readTp.getTableId()));
+      readTablePref.setValue(readTp.getTableId());
       readTablePref.setSummary(readTp.getDisplayName());
     }
     readTablePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -420,7 +420,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       writeTablePref.setValue("-1");
       writeTablePref.setSummary(getString(R.string.none));
     } else {
-      writeTablePref.setValue(String.valueOf(writeTp.getTableId()));
+      writeTablePref.setValue(writeTp.getTableId());
       writeTablePref.setSummary(writeTp.getDisplayName());
     }
     writeTablePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {

@@ -41,6 +41,8 @@ public class KeyValueStore {
 
   public static final String TAG = "KeyValueStore";
 
+  private static final String STR_NULL = "null";
+
   // The SQL where clause to use for selecting, updating, or deleting the row
   // for a given key.
   protected static final String WHERE_SQL_FOR_PARTITION_ASPECT_KEY =
@@ -83,6 +85,15 @@ public class KeyValueStore {
   protected final String tableId;
   // The name of the database table that backs the key value store
   protected final String dbBackingName;
+
+  /**
+   * Never null...
+   * @param arg
+   * @return
+   */
+  private static String neverNull(String arg) {
+	  return (arg == null) ? STR_NULL : arg;
+  }
 
   /**
    * Construct a key value store object for interacting with a table's key
@@ -151,7 +162,7 @@ public class KeyValueStore {
    */
   public int clearEntries(String partition, String aspect, SQLiteDatabase db) {
     int count = db.delete(dbBackingName, WHERE_SQL_FOR_PARTITION_ASPECT,
-        new String[] {this.tableId, partition, aspect});
+        new String[] {neverNull(this.tableId), neverNull(partition), neverNull(aspect)});
     return count;
   }
 
@@ -479,10 +490,11 @@ public class KeyValueStore {
       String key) {
     int numDeleted = db.delete(this.dbBackingName,
         WHERE_SQL_FOR_PARTITION_ASPECT_KEY,
-        new String[] { String.valueOf(this.tableId),
-    				   String.valueOf(partition),
-    				   String.valueOf(aspect),
-    				   String.valueOf(key)});
+        new String[] {
+    		neverNull(this.tableId),
+    		neverNull(partition),
+    		neverNull(aspect),
+    		neverNull(key)});
     if (numDeleted > 1) {
       Log.e(TAG, "deleted > 1 entry from the key value store with name: " +
           this.dbBackingName + " and key: " + key);
@@ -531,13 +543,12 @@ public class KeyValueStore {
   private void addEntryToStore(SQLiteDatabase db,
       OdkTablesKeyValueStoreEntry entry) {
     ContentValues values = new ContentValues();
-    values.put(KeyValueStoreColumns.TABLE_ID, String.valueOf(entry.tableId));
-    values.put(KeyValueStoreColumns.PARTITION,
-        String.valueOf(entry.partition));
-    values.put(KeyValueStoreColumns.ASPECT, String.valueOf(entry.aspect));
-    values.put(KeyValueStoreColumns.VALUE_TYPE, String.valueOf(entry.type));
-    values.put(KeyValueStoreColumns.VALUE, String.valueOf(entry.value));
-    values.put(KeyValueStoreColumns.KEY, String.valueOf(entry.key));
+    values.put(KeyValueStoreColumns.TABLE_ID, neverNull(entry.tableId));
+    values.put(KeyValueStoreColumns.PARTITION, neverNull(entry.partition));
+    values.put(KeyValueStoreColumns.ASPECT, neverNull(entry.aspect));
+    values.put(KeyValueStoreColumns.VALUE_TYPE, neverNull(entry.type));
+    values.put(KeyValueStoreColumns.VALUE, neverNull(entry.value));
+    values.put(KeyValueStoreColumns.KEY, neverNull(entry.key));
     db.insert(this.dbBackingName, null, values);
   }
 

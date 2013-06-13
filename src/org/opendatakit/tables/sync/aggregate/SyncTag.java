@@ -17,8 +17,10 @@ package org.opendatakit.tables.sync.aggregate;
 
 public class SyncTag {
 
-  private static final String DELIM = "::";
-  
+  private static final String STR_NULL = "null";
+
+private static final String DELIM = "::";
+
   /**
    * This is the value that is replacing -1 as the value of the empty string
    * in the sync tag.
@@ -44,11 +46,11 @@ public class SyncTag {
   }
 
   public String getDataEtag() {
-    return String.valueOf(dataEtag);
+    return (dataEtag == null) ? STR_NULL : dataEtag;
   }
 
   public String getPropertiesEtag() {
-    return String.valueOf(propertiesEtag);
+    return (propertiesEtag == null) ? STR_NULL : propertiesEtag;
   }
 
   /**
@@ -69,7 +71,7 @@ public class SyncTag {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#hashCode()
    */
   @Override
@@ -83,7 +85,7 @@ public class SyncTag {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#equals(java.lang.Object)
    */
   @Override
@@ -94,10 +96,10 @@ public class SyncTag {
     if (!(obj instanceof SyncTag))
       return false;
     SyncTag other = (SyncTag) obj;
-    boolean sameDataTag =  dataEtag == null ? 
+    boolean sameDataTag =  dataEtag == null ?
         other.dataEtag == null : dataEtag.equals(other.dataEtag);
     boolean samePropertiesTag = propertiesEtag == null ?
-        other.propertiesEtag == null : 
+        other.propertiesEtag == null :
           propertiesEtag.equals(other.propertiesEtag);
     return sameDataTag && samePropertiesTag;
   }
