@@ -1424,12 +1424,14 @@ public class TableProperties {
    */
   public List<ColumnProperties> getColumnsInOrder() {
 	  if ( staleColumnsInOrder ) {
-		  columnsInOrder.clear();
+		  ArrayList<ColumnProperties> cio = new ArrayList<ColumnProperties>();
 		  for ( String elementKey : columnOrder ) {
-			  columnsInOrder.add( getColumnByElementKey(elementKey) );
+			  cio.add( getColumnByElementKey(elementKey) );
 		  }
+		  columnsInOrder = Collections.unmodifiableList(cio);
+		  staleColumnsInOrder = false;
 	  }
-	  return Collections.unmodifiableList(columnsInOrder);
+	  return columnsInOrder;
   }
 
   /**
