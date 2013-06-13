@@ -102,7 +102,19 @@ public class Controller {
     public static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
     public static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
     private static final int RCODE_LIST_VIEW_MANAGER = 4;
-    public static final int FIRST_FREE_RCODE = 5;
+    /** 
+     * This is the return code for when Collect is called to add a row to a
+     * table that is not the table held by the activity at the time of the
+     * call. E.g. Controller holds a TableProperties for a table that is 
+     * currently being displayed. If we are in a list view, and the user wants
+     * to add a row to a table other than the table currently being displayed 
+     * in the list view, this is the return code that should be used. The 
+     * caller also must be sure to launch the intent using 
+     * {@link CollectUtil#launchCollectToAddRow(Activity, Intent, 
+     * TableProperties)}.
+     */
+    public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
+    public static final int FIRST_FREE_RCODE = 6;
 
     private static final String COLLECT_FORMS_URI_STRING =
         "content://org.odk.collect.android.provider.odk.forms/forms";
@@ -447,6 +459,9 @@ public class Controller {
     case RCODE_LIST_VIEW_MANAGER:
       handleListViewManagerReturn();
       return true;
+    case RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+      handleOdkCollectAddReturnForSpecificTable(returnCode, data);
+      return true;
     default:
       return false;
     }
@@ -687,6 +702,30 @@ public class Controller {
         // The update succeeded.
         da.init();
       }
+    }
+    
+    /**
+     * Handle the add return from Collect if the user has specified a table 
+     * other than that which is currently held in the Controller. Note that the
+     * Intent to launch Collect must have been launched using {@link
+     * CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}.
+     * @param returnCode
+     * @param data
+     */
+    private void handleOdkCollectAddReturnForSpecificTable(int returnCode,
+        Intent data) {
+      String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(activity);
+      if (tableId == null) {
+        Log.e(TAG, "return from ODK Collect expected to find a tableId " +
+        		"specifying the target of the add row, but was null.");
+        return;
+      }
+      TableProperties tpToReceiveAdd = 
+          TableProperties.getTablePropertiesForTable(
+              DbHelper.getDbHelper(activity), tableId, 
+              KeyValueStore.Type.ACTIVE);
+      CollectUtil.handleOdkCollectAddReturn(activity, tpToReceiveAdd, 
+          returnCode, data);
     }
 
   void openCellEditDialog(String rowId, String value, int colIndex) {

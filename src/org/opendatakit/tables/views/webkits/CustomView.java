@@ -69,6 +69,9 @@ public abstract class CustomView extends LinearLayout {
 	protected static WebView webView;
 	private static ViewGroup lastParent;
 	private Activity mParentActivity;
+	
+	private Map<String, TableProperties> tpMap;
+	private TableProperties[] allTps;
 
 	protected CustomView(Activity parentActivity) {
 		super(parentActivity);
@@ -120,6 +123,19 @@ public abstract class CustomView extends LinearLayout {
 				Log.i("CustomView", "onReachedMaxAppCacheSize " + Long.toString(quota));
 			}});
 	}
+	
+   private void initTpInfo() {
+     if (tpMap != null) {
+        return;
+     }
+     tpMap = new HashMap<String, TableProperties>();
+     allTps = TableProperties.getTablePropertiesForAll(
+           DbHelper.getDbHelper(mParentActivity),
+           KeyValueStore.Type.ACTIVE);
+     for (TableProperties tp : allTps) {
+        tpMap.put(tp.getDisplayName(), tp);
+     }
+  }
 
 	protected void initView() {
 		if (lastParent != null) {
@@ -206,8 +222,8 @@ public abstract class CustomView extends LinearLayout {
     		 CustomView.this.getContainerActivity(), tp, params,
     		 currentQueryString);
 
-     CustomView.this.getContainerActivity().startActivityForResult(
-         addRowIntent, Controller.RCODE_ODKCOLLECT_ADD_ROW);
+     CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent, 
+         tp);
    }
 
 	/**
@@ -272,7 +288,20 @@ public abstract class CustomView extends LinearLayout {
        * @param tableName
        */
       public void addRowWithCollect(String tableName) {
-        CustomView.this.addRowWithCollect(tableName, tp);
+        // The first thing we need to do is get the correct TableProperties.
+        TableProperties tpToReceiveAdd = null;
+        if (tableName == tp.getDisplayName()) {
+          tpToReceiveAdd = tp;
+        } else {
+          initTpInfo();
+          tpToReceiveAdd = tpMap.get(tableName);
+          if (tpToReceiveAdd == null) {
+            Log.e(TAG, "table [" + tableName + "] cannot have a row added" +
+                  " because it could not be found");
+            return;
+          }
+        }
+        CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
       }
 
       /**
@@ -286,8 +315,21 @@ public abstract class CustomView extends LinearLayout {
        */
       public void addRowWithCollectAndSpecificForm(String tableName,
           String formId, String formVersion, String formRootElement) {
+        // The first thing we need to do is get the correct TableProperties.
+        TableProperties tpToReceiveAdd = null;
+        if (tableName == tp.getDisplayName()) {
+          tpToReceiveAdd = tp;
+        } else {
+          initTpInfo();
+          tpToReceiveAdd = tpMap.get(tableName);
+          if (tpToReceiveAdd == null) {
+            Log.e(TAG, "table [" + tableName + "] cannot have a row added" +
+                  " because it could not be found");
+            return;
+          }
+        }
         CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-            formVersion, formRootElement, tp);
+            formVersion, formRootElement, tpToReceiveAdd);
       }
 
 		/**
@@ -565,7 +607,20 @@ public abstract class CustomView extends LinearLayout {
        * @param tableName
        */
       public void addRowWithCollect(String tableName) {
-        CustomView.this.addRowWithCollect(tableName, tp);
+        // The first thing we need to do is get the correct TableProperties.
+        TableProperties tpToReceiveAdd = null;
+        if (tableName == tp.getDisplayName()) {
+          tpToReceiveAdd = tp;
+        } else {
+          initTpInfo();
+          tpToReceiveAdd = tpMap.get(tableName);
+          if (tpToReceiveAdd == null) {
+            Log.e(TAG, "table [" + tableName + "] cannot have a row added" +
+            		" because it could not be found");
+            return;
+          }
+        }
+        CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
       }
 
       /**
@@ -579,8 +634,21 @@ public abstract class CustomView extends LinearLayout {
        */
       public void addRowWithCollectAndSpecificForm(String tableName,
           String formId, String formVersion, String formRootElement) {
+        // The first thing we need to do is get the correct TableProperties.
+        TableProperties tpToReceiveAdd = null;
+        if (tableName == tp.getDisplayName()) {
+          tpToReceiveAdd = tp;
+        } else {
+          initTpInfo();
+          tpToReceiveAdd = tpMap.get(tableName);
+          if (tpToReceiveAdd == null) {
+            Log.e(TAG, "table [" + tableName + "] cannot have a row added" +
+                  " because it could not be found");
+            return;
+          }
+        }
         CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-            formVersion, formRootElement, tp);
+            formVersion, formRootElement, tpToReceiveAdd);
       }
 
 
@@ -607,8 +675,8 @@ public abstract class CustomView extends LinearLayout {
 		private static final String TAG = "CustomView.Control";
 
 		protected Context mContext;
-		private TableProperties[] allTps;
-		private Map<String, TableProperties> tpMap;
+//		private TableProperties[] allTps;
+//		private Map<String, TableProperties> tpMap;
 		private DbHelper dbh;
 
 		/**
