@@ -85,6 +85,14 @@ public class CollectUtil {
    * is currently being edited.
    */
   private static final String PREFERENCE_KEY_EDITED_ROW_ID = "editedRowId";
+  
+  /** 
+   * This is the table id of the tableId that will be receiving an add row.
+   * This is necessary because javascript views can launch adds for tables 
+   * other than themselves, and this preference will store which table id the
+   * row should be added to.
+   */
+  private static final String PREFERENCE_KEY_TABLE_ID_ADD = "tableIdAdd";
 
   /*
    * The names here should match those in the version of collect that is on
@@ -642,6 +650,34 @@ public class CollectUtil {
       activityToAwaitReturn.startActivityForResult(collectEditIntent,
           Controller.RCODE_ODKCOLLECT_EDIT_ROW);
     }
+    
+    /**
+     * Launch Collect with the given Intent. This method should be used rather
+     * than launching the Intent yourself if the row is going to be added into
+     * a table other than that which you are currently displaying. This method
+     * handles storing the table id of that table so that it can be reclaimed
+     * when the activity returns.
+     * <p>
+     * Launches with the return code {@link 
+     * Controller#RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE}.
+     * @param activityToAwaitReturn
+     * @param collectAddIntent
+     * @param tp the TableProperties of the table that will be receiving the
+     * add row from Collect
+     */
+    public static void launchCollectToAddRow(Activity activityToAwaitReturn,
+        Intent collectAddIntent, TableProperties tp) {
+      // We want to save the id of the table that is going to receive the row
+      // that returns from Collect. We'll store it in a SharedPreference so 
+      // that we can get at it.
+      SharedPreferences preferences =
+          activityToAwaitReturn.getSharedPreferences(SHARED_PREFERENCE_NAME,
+         Context.MODE_PRIVATE);
+      preferences.edit().putString(
+          PREFERENCE_KEY_TABLE_ID_ADD, tp.getTableId()).commit();
+      activityToAwaitReturn.startActivityForResult(collectAddIntent,
+          Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE);
+    }
 
     /**
      * This gets a map of values for insertion into a row after returning from
@@ -718,6 +754,24 @@ public class CollectUtil {
       File instanceFile = new File(instancepath);
       Map<String, String> fields = parseXML(instanceFile);
       return fields;
+    }
+    
+    /**
+     * Retrieves the tableId that was stored during the call to {@link
+     * CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}.
+     * Removes the tableId so that future calls to the same method will return
+     * null.
+     * @param context
+     * @return the stored tableId, or null if no tableId was found.
+     */
+    public static String retrieveAndRemoveTableIdForAddRow(Context context) {
+      SharedPreferences sharedPreferences = 
+          context.getSharedPreferences(SHARED_PREFERENCE_NAME, 
+              Context.MODE_PRIVATE);
+      String tableId = sharedPreferences.getString(PREFERENCE_KEY_TABLE_ID_ADD, 
+          null);
+      sharedPreferences.edit().remove(PREFERENCE_KEY_TABLE_ID_ADD).commit();
+      return tableId;
     }
 
     private static boolean updateRowFromOdkCollectInstance(Context context,
