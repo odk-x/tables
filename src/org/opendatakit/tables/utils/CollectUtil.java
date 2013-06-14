@@ -267,7 +267,7 @@ public class CollectUtil {
         String additionalAttributes = "";
         if ( type.equals("binary") ) {
           action = "upload";
-          additionalAttributes = " mediatype=\"image/*\"";
+          additionalAttributes = " mediatype=\"" + cp.getColumnType().name() + "/*\"";
         }
         writer.write("<" + action + additionalAttributes + " ref=\"/" + DEFAULT_ROOT_ELEMENT + "/" + cp.getElementKey() + "\">");
         writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" + cp.getElementKey()
@@ -808,14 +808,34 @@ public class CollectUtil {
       value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.
       if (value != null) {
-        if (cp.getColumnType() == ColumnType.MIMEURI) {
+        if (cp.getColumnType() == ColumnType.AUDIOURI) {
+          String mimeType = "audio/" + value.substring(value.lastIndexOf(".")+1);
+          File filePath = new File(
+              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+                  tp.getTableId(), formValues.instanceID), value);
+          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
+              "\", \"mimeType\":\"" + mimeType + "\"}";
+        } else if (cp.getColumnType() == ColumnType.IMAGEURI) {
           String mimeType = "image/" + value.substring(value.lastIndexOf(".")+1);
           File filePath = new File(
               ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
                   tp.getTableId(), formValues.instanceID), value);
-
           value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
-                    "\", \"mimeType\":\"" + mimeType + "\"}";
+              "\", \"mimeType\":\"" + mimeType + "\"}";
+        } else if (cp.getColumnType() == ColumnType.MIMEURI) {
+          String mimeType = "file/" + value.substring(value.lastIndexOf(".")+1);
+          File filePath = new File(
+              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+                  tp.getTableId(), formValues.instanceID), value);
+          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
+              "\", \"mimeType\":\"" + mimeType + "\"}";
+        } else if (cp.getColumnType() == ColumnType.VIDEOURI) {
+          String mimeType = "video/" + value.substring(value.lastIndexOf(".")+1);
+          File filePath = new File(
+              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+                  tp.getTableId(), formValues.instanceID), value);
+          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
+              "\", \"mimeType\":\"" + mimeType + "\"}";
         }
         values.put(elementKey, value);
       }

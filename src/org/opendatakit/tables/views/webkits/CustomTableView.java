@@ -63,9 +63,9 @@ public class CustomTableView extends CustomView {
     this.tp = tp;
     this.table = table;
     colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+    Map<String, ColumnProperties> elementKeyToColumnProperties =
         tp.getColumns();
-    colIndexTable = table.getMapOfUserDataToIndex();
+    colIndexTable.putAll(table.getMapOfUserDataToIndex());
     for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
       String smsLabel = cp.getSmsLabel();
       if (smsLabel != null) {
@@ -78,7 +78,7 @@ public class CustomTableView extends CustomView {
 
   // //////////////////////////// TEST ///////////////////////////////
 
-    public static CustomTableView get(Activity activity, TableProperties tp, 
+    public static CustomTableView get(Activity activity, TableProperties tp,
         UserTable table, String filename, int index) {
     	CustomTableView ctv = new CustomTableView(activity, filename);
     	// Create a new table with only the row specified at index.
@@ -97,6 +97,7 @@ public class CustomTableView extends CustomView {
     		metadata[0] = table.getAllMetadataForRow(i);
     	}
     	UserTable singleRowTable = new UserTable(tp, rowIds, headers, data,
+    	    table.getElementKeysForIndex(),
     	    table.getMapOfUserDataToIndex(), metadata,
     	    table.getMapOfMetadataToIndex(), footers);
 //    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
@@ -104,11 +105,11 @@ public class CustomTableView extends CustomView {
     	ctv.set(tp, singleRowTable);
     	return ctv;
     }
-    
+
     /**
      * Returns a custom view based on the list of indexes. The rows will be
      * ordered by the order of the list of indexes.
-     * 
+     *
      * @param context
      *          The context that wants to display this custom view.
      * @param tp
@@ -129,7 +130,7 @@ public class CustomTableView extends CustomView {
       String[] rowIds = new String[indexes.size()];
       String[] headers = new String[table.getWidth()];
       String[][] data = new String[indexes.size()][table.getWidth()];
-      String[][] metadata = 
+      String[][] metadata =
           new String[indexes.size()][table.getNumberOfMetadataColumns()];
       String[] footers = new String[table.getWidth()];
       // Set all the data for the table.
@@ -143,7 +144,8 @@ public class CustomTableView extends CustomView {
         footers[i] = table.getFooter(i);
       }
       UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
-          table.getMapOfUserDataToIndex(), metadata, 
+          table.getElementKeysForIndex(),
+          table.getMapOfUserDataToIndex(), metadata,
           table.getMapOfMetadataToIndex(), footers);
 //      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
 
@@ -154,7 +156,7 @@ public class CustomTableView extends CustomView {
   /**
    * Returns a custom view based on the list of indexes. The rows will be
    * ordered by the order of the list of indexes.
-   * 
+   *
    * @param context
    *          The context that wants to display this custom view.
    * @param tp
@@ -168,7 +170,7 @@ public class CustomTableView extends CustomView {
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, TableProperties tp, 
+  public static CustomTableView get(Activity activity, TableProperties tp,
       UserTable table,
       String filename, List<Integer> indexes, Fragment fragment) {
     CustomTableView ctv = new CustomTableView(activity, filename);
@@ -176,7 +178,7 @@ public class CustomTableView extends CustomView {
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];
     String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata = 
+    String[][] metadata =
         new String[indexes.size()][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
@@ -190,7 +192,8 @@ public class CustomTableView extends CustomView {
       footers[i] = table.getFooter(i);
     }
     UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
-        table.getMapOfUserDataToIndex(), metadata, 
+        table.getElementKeysForIndex(),
+        table.getMapOfUserDataToIndex(), metadata,
         table.getMapOfMetadataToIndex(), footers);
 
     ctv.set(tp, multiRowTable);
@@ -228,10 +231,10 @@ public class CustomTableView extends CustomView {
       Controller.launchDetailActivity(mActivity, tp, table, index, null);
       return true;
     }
-    
+
     /**
-     * Open the item specified by the index to the detail view specified by 
-     * the given filename. The filename is relative to the odk tables 
+     * Open the item specified by the index to the detail view specified by
+     * the given filename. The filename is relative to the odk tables
      * directory.
      * @param index
      * @param filename
@@ -239,7 +242,7 @@ public class CustomTableView extends CustomView {
      */
     @SuppressWarnings("unused")
     public boolean openDetailViewWithFile(int index, String filename) {
-      String pathToTablesFolder = 
+      String pathToTablesFolder =
           ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
       String pathToFile = pathToTablesFolder + File.separator + filename;
       Controller.launchDetailActivity(mActivity, tp, table, index, pathToFile);

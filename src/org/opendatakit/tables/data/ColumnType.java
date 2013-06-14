@@ -51,6 +51,9 @@ public class ColumnType {
 	// TODO: need to track image/audio/video mime type,
 	// TODO: need file entry in Aggregate (JSON in Tables)
 	public static ColumnType MIMEURI; // not in Collect
+   public static ColumnType IMAGEURI; // in Collect
+   public static ColumnType AUDIOURI; // in Collect
+   public static ColumnType VIDEOURI; // in Collect
 
 	// TODO: replace MC_OPTIONS usage with this and child element
 	public static ColumnType MULTIPLE_CHOICES; // NEW
@@ -91,6 +94,9 @@ public class ColumnType {
 
 		nameMap.put("boolean", BOOLEAN = new ColumnType("boolean", "Boolean", "string"));
 		nameMap.put("mimeuri", MIMEURI = new ColumnType("file", "File", "binary"));
+      nameMap.put("imageuri", IMAGEURI = new ColumnType("image", "Image", "binary"));
+      nameMap.put("audiouri", AUDIOURI = new ColumnType("audio", "Audio", "binary"));
+      nameMap.put("videouri", VIDEOURI = new ColumnType("video", "Video", "binary"));
 		nameMap.put("multipleChoices", MULTIPLE_CHOICES
 				= new ColumnType("multipleChoices", "Multiple Choices (list)", "string"));
 

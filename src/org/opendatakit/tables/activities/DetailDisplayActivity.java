@@ -92,8 +92,8 @@ public class DetailDisplayActivity extends SherlockActivity
     }
 
     private void displayView() {
-        Query query = new Query(new TableProperties[] {c.getTableProperties()},
-            c.getTableProperties());
+      TableProperties tp = c.getTableProperties();
+        Query query = new Query(new TableProperties[] {tp},tp);
         query.addRowIdConstraint(rowId);
         table = c.getIsOverview() ?
             c.getDbTable().getUserOverviewTable(query) :

@@ -112,14 +112,6 @@ class TabularView extends View {
    * for things like determining row color.
    */
   private ColorRuleGroup mRowColorRuleGroup;
-  /**
-   * Maps elementKey to column index.
-   */
-  private Map<String, Integer> mColumnIndexMap;
-  /**
-   * Maps elementKey to {@link ColumnProperties}.
-   */
-  private Map<String, ColumnProperties> mColumnPropertiesMap;
   private TableProperties mTp;
 
   // trying to get the dimensions of the screen
@@ -469,8 +461,6 @@ class TabularView extends View {
       Log.e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
       this.mNumberOfRows = this.mTable.getHeight();
     }
-    this.mColumnIndexMap = this.mTable.getMapOfUserDataToIndex();
-    this.mColumnPropertiesMap = elementKeyToColumnProperties;
     this.mColumnColorRules = elementKeyToColorRuleGroup;
     if (this.type != TableType.STATUS_DATA) {
       this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
@@ -788,6 +778,15 @@ class TabularView extends View {
         bottomBottommost, borderPaint);
       xCoord += (i == this.mElementKeys.size()) ? 0 : columnWidths[i] + BORDER_WIDTH;
     }
+
+    // precompute the correspondence between the displayed elementKeys and the UserTable userData index
+    int[] userDataIndex = new int[indexOfRightmostColumn+1];
+    for ( int j = indexOfLeftmostColumn ; j < indexOfRightmostColumn+1 ; ++j ) {
+      String elementKey = this.mElementKeys.get(j);
+      Integer idx = this.mTable.getColumnIndexOfElementKey(elementKey);
+      userDataIndex[j] = (idx == null) ? -1 : idx;
+    }
+
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
@@ -800,14 +799,14 @@ class TabularView extends View {
         } else if (this.type == TableType.INDEX_HEADER ||
                    this.type == TableType.MAIN_HEADER) {
           datum =
-            this.mTable.getHeaderByElementKey(this.mElementKeys.get(j));
+            this.mTable.getHeader(userDataIndex[j]);
         } else if (this.type == TableType.INDEX_FOOTER ||
                    this.type == TableType.MAIN_FOOTER) {
-          datum = this.mTable.getFooterByElementKey(this.mElementKeys.get(j));
+          datum = this.mTable.getFooter(userDataIndex[j]);
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
           datum =
-              this.mTable.getUserDataByElementKey(i, this.mElementKeys.get(j));
+              this.mTable.getUserData(i, userDataIndex[j]);
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;

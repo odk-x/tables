@@ -442,17 +442,17 @@ public abstract class CustomView extends LinearLayout {
 			primeColumns = tp.getPrimeColumns();
 			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
 					.getColumns();
-			Map<String, Integer> ekToIndex = mTable.getMapOfUserDataToIndex();
 			colMap = new HashMap<String, Integer>();
 			for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
 				String smsLabel = cp.getSmsLabel();
-				colMap.put(cp.getDisplayName(),
-						ekToIndex.get(cp.getElementKey()));
-				if (smsLabel != null) {
-					// TODO: this doesn't look to ever be used, and ignores the
-					// possibility
-					// of conflicting element keys and sms labels.
-					colMap.put(smsLabel, colMap.get(cp.getElementKey()));
+				Integer idx = mTable.getColumnIndexOfElementKey(cp.getElementKey());
+				if ( idx != null ) {
+    				colMap.put(cp.getDisplayName(), idx);
+    				if (smsLabel != null) {
+    					// TODO: this doesn't look to ever be used, and ignores the
+    					// possibility of conflicting element keys and sms labels.
+    					colMap.put(smsLabel, idx);
+    				}
 				}
 			}
 		}
@@ -517,6 +517,7 @@ public abstract class CustomView extends LinearLayout {
 			// to use than to have to give in the whole row.
 			Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
 			indexOfDataMap.put(elementKey, 0);
+			String[] elementKeyForIndex = new String[] { elementKey };
 			Map<String, Integer> indexOfMetadataMap = new HashMap<String, Integer>();
 			indexOfMetadataMap.put(elementKey, 0);
 			// We need to construct a dummy UserTable for the ColorRule to
@@ -528,7 +529,7 @@ public abstract class CustomView extends LinearLayout {
 			data[0][0] = value;
 			metadata[0][0] = "dummyMetadata";
 			UserTable table = new UserTable(tp, rowId, header, data,
-					indexOfDataMap, metadata, indexOfMetadataMap, null);
+					elementKeyForIndex, indexOfDataMap, metadata, indexOfMetadataMap, null);
 			ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
 			int foregroundColor;
 			if (guide.didMatch()) {

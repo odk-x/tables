@@ -608,12 +608,19 @@ public class SyncProcessor {
       String rowId = rows.getRowId(i);
       String syncTag = rows.getMetadataByElementKey(i, DataTableColumns.SYNC_TAG);
       Map<String, String> values = new HashMap<String, String>();
+
+      // precompute the correspondence between the displayed elementKeys and the UserTable userData index
+      int[] userDataIndex = new int[numCols];
+      for ( int j = 0 ; j < numCols ; ++j ) {
+        Integer idx = rows.getColumnIndexOfElementKey(columnsToSync.get(j));
+        userDataIndex[j] = (idx == null) ? -1 : idx;
+      }
+
       for (int j = 0; j < numCols; j++) {
         // We know that the columnsToSync should be metadata keys for the user-
         // defined columns. If they're not present we know there is a problem,
         String columnElementKey = columnsToSync.get(j);
-        values.put(columnElementKey,
-            rows.getUserDataByElementKey(i, columnElementKey));
+        values.put(columnElementKey, rows.getUserData(i, userDataIndex[j]));
           // And now add the necessary metadata. This will be based on the
           // columns specified as synchable metadata columns in DbTable.
         for (String metadataElementKey : cachedColumnsToSync.keySet()) {

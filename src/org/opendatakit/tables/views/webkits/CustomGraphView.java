@@ -74,9 +74,9 @@ public class CustomGraphView extends CustomView {
 		this.tp = tp;
 		this.table = table;
 	    colIndexTable.clear();
-	    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+	    Map<String, ColumnProperties> elementKeyToColumnProperties =
 	        tp.getColumns();
-	    colIndexTable = table.getMapOfUserDataToIndex();
+	    colIndexTable.putAll(table.getMapOfUserDataToIndex());
 	    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
 	      String smsLabel = cp.getSmsLabel();
 	      if (smsLabel != null) {
@@ -218,7 +218,7 @@ public class CustomGraphView extends CustomView {
 		public String getGraphRAxis() {
 			return loadSelection(R_AXIS);
 		}
-		
+
 		public String getGraphOp() {
 			return loadSelection(AGREG);
 		}

@@ -91,7 +91,7 @@ public class CustomDetailView extends CustomView {
     int rowNum = userTable.getRowNumFromId(rowId);
     HashMap<String, String> tmpData = new HashMap<String, String>();
     for (int i = 0; i < userTable.getWidth(); i++) {
-      tmpData.put(tp.getColumnByIndex(i).getElementKey(), userTable.getData(rowNum, i));
+      tmpData.put(userTable.getElementKey(i), userTable.getData(rowNum, i));
     }
 
     jsData.set(rowId, userTable.getInstanceName(rowNum),
