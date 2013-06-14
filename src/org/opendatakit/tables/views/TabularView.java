@@ -790,6 +790,9 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
+      ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
+          this.mTable.getRowAtIndex(i));
+
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
         String datum;
         if (this.type == TableType.STATUS_DATA ||
@@ -818,16 +821,14 @@ class TabularView extends View {
         int backgroundColor = this.defaultBackgroundColor;
         if (type == TableType.INDEX_DATA ||
             type == TableType.MAIN_DATA) {
-          ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-              this.mTable.getRowAtIndex(i));
-          ColorGuide columnGuide = mColumnColorRules.get(
-              this.mElementKeys.get(j)).getColorGuide(
-                  this.mTable.getRowAtIndex(i));
           // First we check for a row rule.
           if (rowGuide.didMatch()) {
             foregroundColor = rowGuide.getForeground();
             backgroundColor = rowGuide.getBackground();
           }
+          ColorGuide columnGuide = mColumnColorRules.get(
+              this.mElementKeys.get(j)).getColorGuide(
+                  this.mTable.getRowAtIndex(i));
           // Override the role rule if a column rule matched.
           if (columnGuide.didMatch()) {
             foregroundColor = columnGuide.getForeground();
@@ -835,11 +836,9 @@ class TabularView extends View {
           }
         }
         if (type == TableType.STATUS_DATA) {
-          ColorGuide statusGuide = mRowColorRuleGroup.getColorGuide(
-              this.mTable.getRowAtIndex(i));
-          if (statusGuide.didMatch()) {
-            foregroundColor = statusGuide.getForeground();
-            backgroundColor = statusGuide.getBackground();
+          if (rowGuide.didMatch()) {
+            foregroundColor = rowGuide.getForeground();
+            backgroundColor = rowGuide.getBackground();
           }
         }
         drawCell(canvas, xs[j], y, datum, backgroundColor, foregroundColor,
