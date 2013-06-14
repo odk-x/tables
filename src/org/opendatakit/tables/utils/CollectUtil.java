@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,9 +38,11 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -391,7 +394,7 @@ public class CollectUtil {
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
       for (ColumnProperties cp : tp.getColumns().values()) {
-        String value = values.get(cp.getElementKey());
+        String value = (values == null) ? null : values.get(cp.getElementKey());
         writer.write("<");
         writer.write(cp.getElementKey());
         if (value == null) {
@@ -597,8 +600,8 @@ public class CollectUtil {
     }
     CollectUtil.deleteForm(resolver, params.getFormId());
     // First we want to write the file.
-    boolean writeSuccessful = CollectUtil.buildBlankForm(getAddRowFormFile(tp), tp.getColumns()
-        .values(), tp.getDisplayName(), params.getFormId());
+    boolean writeSuccessful = CollectUtil.buildBlankForm(getAddRowFormFile(tp),
+                  tp.getColumnsInOrder(), tp.getDisplayName(), params.getFormId());
     if (!writeSuccessful) {
       Log.e(TAG, "problem writing file for add row");
       return false;
@@ -727,6 +730,7 @@ public class CollectUtil {
         "org.odk.collect.android.activities.FormEntryActivity"));
     intent.setAction(Intent.ACTION_EDIT);
     intent.setData(insertUri);
+    //intent.putExtra("start", true); // jump right into form
     return intent;
   }
 
@@ -793,17 +797,26 @@ public class CollectUtil {
    *
    * @return
    */
-  public static Map<String, String> getMapForInsertion(TableProperties tp,
-      Map<String, String> formValues) {
+  public static Map<String, String> getMapForInsertion(Context context, TableProperties tp,
+      FormValues formValues) {
     DataUtil du = DataUtil.getDefaultDataUtil();
     Map<String, String> values = new HashMap<String, String>();
     for (ColumnProperties cp : tp.getColumns().values()) {
       // we want to use element key here
       String elementKey = cp.getElementKey();
-      String value = formValues.get(elementKey);
-      value = du.validifyValue(cp, formValues.get(elementKey));
+      String value = formValues.formValues.get(elementKey);
+      value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.
       if (value != null) {
+        if (cp.getColumnType() == ColumnType.MIMEURI) {
+          String mimeType = "image/" + value.substring(value.lastIndexOf(".")+1);
+          File filePath = new File(
+              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+                  tp.getTableId(), formValues.instanceID), value);
+
+          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
+                    "\", \"mimeType\":\"" + mimeType + "\"}";
+        }
         values.put(elementKey, value);
       }
     }
@@ -830,12 +843,26 @@ public class CollectUtil {
     }
     c.moveToFirst();
     String status = c.getString(c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
-    if (status != null && status.equals(COLLECT_KEY_STATUS_COMPLETE)) {
+    // potential status values are incomplete, complete, submitted, submission_failed
+    // all but the incomplete status indicate a marked-as-complete record.
+    if (status != null && !status.equals(COLLECT_KEY_STATUS_INCOMPLETE)) {
       return true;
     } else {
       return false;
     }
   }
+
+  private static class FormValues {
+    Map<String,String> formValues = new HashMap<String,String>();
+    Long timestamp; // should be endTime in form?
+    String instanceID;
+    String instanceName;
+    String formId;
+    String locale;
+    String uriUser;
+
+    FormValues() {};
+  };
 
   /**
    * Return the Collect form values from the given instance id.
@@ -844,9 +871,9 @@ public class CollectUtil {
    * @param instanceId
    * @return
    */
-  public static Map<String, String> getOdkCollectFormValuesFromInstanceId(Context context,
+  public static FormValues getOdkCollectFormValuesFromInstanceId(Context context,
       int instanceId) {
-    String[] projection = { "instanceFilePath" };
+    String[] projection = { "date", "instanceFilePath" };
     String selection = "_id = ?";
     String[] selectionArgs = { (instanceId + "") };
     CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
@@ -856,10 +883,12 @@ public class CollectUtil {
       return null;
     }
     c.moveToFirst();
+    FormValues fv = new FormValues();
+    fv.timestamp = c.getLong(c.getColumnIndexOrThrow("date"));
     String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
     File instanceFile = new File(instancepath);
-    Map<String, String> fields = parseXML(instanceFile);
-    return fields;
+    parseXML(fv, instanceFile);
+    return fv;
   }
 
   /**
@@ -893,20 +922,15 @@ public class CollectUtil {
       Log.e(TAG, "rowId retrieved from shared preferences was null.");
       return false;
     }
-    Map<String, String> formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
+    FormValues formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
         instanceId);
     if (formValues == null) {
       return false;
     }
-    Map<String, String> values = CollectUtil.getMapForInsertion(tp, formValues);
-    String uriUser = null; // user on phone
-    Long timestamp = null; // current time
-    String instanceName = null; // meta/instanceName if present in form
-    String formId = null; // formId used by ODK Collect
-    String locale = null; // current locale
+    Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
     DbHelper dbh = DbHelper.getDbHelper(context);
     DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
-    dbTable.updateRow(rowId, values, uriUser, timestamp, instanceName, formId, locale);
+    dbTable.updateRow(rowId, values, formValues.uriUser, formValues.timestamp, formValues.instanceName, formValues.formId, formValues.locale);
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
     // will mean there's no you could accidentally wind up overwriting the
@@ -971,20 +995,15 @@ public class CollectUtil {
 
   private static boolean addRowFromOdkCollectInstance(Context context, TableProperties tp,
       int instanceId) {
-    Map<String, String> formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
+    FormValues formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
         instanceId);
     if (formValues == null) {
       return false;
     }
-    Map<String, String> values = getMapForInsertion(tp, formValues);
-    // TODO: get these values from the form...
-    Long timestamp = null; // should be endTime in form?
-    String uriUser = null; // should be this user
-    String formId = null; // collect formId
-    String instanceName = null; // if exists, meta/instanceName value
-    String locale = null; // current locale string
+    Map<String, String> values = getMapForInsertion(context, tp, formValues);
     DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp.getTableId());
-    dbTable.addRow(values, null, timestamp, uriUser, instanceName, formId, locale);
+    dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.uriUser,
+            formValues.instanceName, formValues.formId, formValues.locale);
     return true;
   }
 
@@ -1054,6 +1073,7 @@ public class CollectUtil {
         "org.odk.collect.android.activities.FormEntryActivity"));
     intent.setAction(Intent.ACTION_EDIT);
     intent.setData(formToLaunch);
+    intent.putExtra("start", true); // jump right into form
     return intent;
   }
 
@@ -1065,8 +1085,7 @@ public class CollectUtil {
    * @param xmlFile
    * @return
    */
-  private static Map<String, String> parseXML(File xmlFile) {
-    Map<String, String> fields = new HashMap<String, String>();
+  private static void parseXML(FormValues fv, File xmlFile) {
 
     InputStream is;
     try {
@@ -1106,27 +1125,28 @@ public class CollectUtil {
         }
       }
       Element rootEl = document.getRootElement();
+      fv.locale = Locale.getDefault().getLanguage();
+      fv.formId = rootEl.getAttributeValue(null, "id");
       Node rootNode = rootEl.getRoot();
       Element dataEl = rootNode.getElement(0);
       for (int i = 0; i < dataEl.getChildCount(); i++) {
         Element child = dataEl.getElement(i);
         String key = child.getName();
-        StringBuffer sb = new StringBuffer();
-        for (int childPos = 0; childPos < child.getChildCount(); childPos++) {
-          // We have to use this for loop b/c the parser is breaking
-          // up the
-          // strings on their unicode characters.
-          if (child.getChild(childPos) == null) {
-            break;
-          } else {
-            sb.append(child.getText(childPos));
+        if ( key.equals("meta") ) {
+          Element e = child.getElement(null, "instanceID");
+          if ( e != null ) {
+            fv.instanceID = ODKFileUtils.getXMLText(e, false);
           }
+          e = child.getElement(null, "instanceName");
+          if ( e != null ) {
+            fv.instanceName = ODKFileUtils.getXMLText(e, false);
+          }
+        } else {
+          String value = ODKFileUtils.getXMLText(child, false);
+          fv.formValues.put(key, value);
         }
-        String value = sb.length() > 0 ? sb.toString() : null;
-        fields.put(key, value);
       }
     }
-    return fields;
   }
 
   /**
