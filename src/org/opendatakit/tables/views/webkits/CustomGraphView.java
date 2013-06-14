@@ -139,6 +139,7 @@ public class CustomGraphView extends CustomView {
 		private static final String GRAPH_TYPE = "graphtype";
 		private static final String X_AXIS = "selectx";
 		private static final String Y_AXIS = "selecty";
+		private static final String AGREG = "operation";
 		private static final String R_AXIS = "selectr";
 
 		private static final String TAG = "GraphData";
@@ -175,6 +176,7 @@ public class CustomGraphView extends CustomView {
 				if(getGraphType().equals("Bar Graph") || getGraphType().equals("Scatter Plot")) {
 					newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
 					newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
+					newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
 				}
 				if(getGraphType().equals("Scatter Plot")) {
 					newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
@@ -215,6 +217,10 @@ public class CustomGraphView extends CustomView {
 
 		public String getGraphRAxis() {
 			return loadSelection(R_AXIS);
+		}
+		
+		public String getGraphOp() {
+			return loadSelection(AGREG);
 		}
 
 		public void saveSelection(String aspect, String value) {
