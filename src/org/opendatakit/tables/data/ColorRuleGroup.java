@@ -54,14 +54,25 @@ public class ColorRuleGroup {
       "StatusColumn.ruleList";
   public static final String DEFAULT_KEY_COLOR_RULES = "[]";
 
+  private static final ObjectMapper mapper;
+  private static final TypeFactory typeFactory;
+
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker()
+        .withCreatorVisibility(Visibility.ANY));
+    typeFactory = mapper.getTypeFactory();
+  }
+
   private final TableProperties tp;
   private final ColumnProperties cp;
   // this remains its own field (which must always match cp.getElementKey())
   // b/c it is easier for the caller to just pass in the elementKey, and the
   // code currently uses null to mean "don't get me a color ruler."
   private final String elementKey;
-  private final ObjectMapper mapper;
-  private final TypeFactory typeFactory;
   private final KeyValueStoreHelper kvsh;
   private final KeyValueHelper aspectHelper;
   // This is the list of actual rules that make up the ruler.
@@ -76,13 +87,6 @@ public class ColorRuleGroup {
   private ColorRuleGroup(TableProperties tp, String elementKey, Type type) {
     this.tp = tp;
     this.mType = type;
-    this.mapper = new ObjectMapper();
-    this.typeFactory = mapper.getTypeFactory();
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker()
-        .withCreatorVisibility(Visibility.ANY));
     this.elementKey = elementKey;
     String jsonRulesString = DEFAULT_KEY_COLOR_RULES;
     switch (type) {

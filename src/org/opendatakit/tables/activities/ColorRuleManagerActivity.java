@@ -18,9 +18,6 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.type.TypeFactory;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
@@ -80,7 +77,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
    * Menu ID for opening the edit rule activity.
    */
   public static final int MENU_EDIT_ENTRY = 2;
-  
+
   /**
    * Menu ID for reverting to default color rules.
    */
@@ -94,8 +91,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   private String mElementKey;
   private TableProperties mTp;
   private ColumnProperties mCp;
-  private ObjectMapper mMapper;
-  private TypeFactory mTypeFactory;
   private ColorRuleGroup.Type mType;
 
   @Override
@@ -133,7 +128,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       startActivity(newColorRuleIntent);
       return true;
     case MENU_REVERT_TO_DEFAULT:
-      // We need to wipe the color rules and add the default. We'll do this 
+      // We need to wipe the color rules and add the default. We'll do this
       // with a dialog.
       AlertDialog confirmRevertAlert;
       AlertDialog.Builder alert = new AlertDialog.Builder(
@@ -143,17 +138,17 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       alert.setMessage(
           getString(R.string.color_rule_revert_are_you_sure));
       // OK action will be to revert to defaults.
-      alert.setPositiveButton(getString(R.string.yes), 
+      alert.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              revertToDefaults();              
+              revertToDefaults();
             }
           });
-      alert.setNegativeButton(R.string.cancel, 
+      alert.setNegativeButton(R.string.cancel,
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               // canceled, so do nothing!
@@ -179,14 +174,14 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
     // Add the button for reverting to default.
     com.actionbarsherlock.view.MenuItem revertItem = menu.add(
-        0, MENU_REVERT_TO_DEFAULT, 0, 
+        0, MENU_REVERT_TO_DEFAULT, 0,
         getString(R.string.color_rule_revert_to_default_status_rules));
     revertItem.setIcon(android.R.drawable.ic_menu_revert);
     revertItem.setShowAsAction(
         com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
     return true;
   }
-  
+
   /**
    * Wipe the current rules and revert to the defaults for the given type.
    */
@@ -230,7 +225,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       AlertDialog confirmDeleteAlert;
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
       builder.setTitle(R.string.confirm_delete_color_rule);
-      builder.setMessage(getString(R.string.are_you_sure_delete_color_rule, 
+      builder.setMessage(getString(R.string.are_you_sure_delete_color_rule,
           " " + mColorRules.get(position).getOperator().getSymbol() + " " +
           mColorRules.get(position).getVal()));
 
@@ -283,14 +278,14 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
-    AdapterView.AdapterContextMenuInfo info = 
+    AdapterView.AdapterContextMenuInfo info =
         (AdapterView.AdapterContextMenuInfo) menuInfo;
     menu.add(0, MENU_DELETE_ENTRY, 0, getString(R.string.delete_color_rule));
     ColorRule rule = this.mColorRules.get(info.position);
     if (!ColorRuleUtil.getDefaultSyncStateColorRuleIds().contains(
         rule.getRuleId())) {
       // We only want to allow editing if it is not one of the default rules.
-      menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));  
+      menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_color_rule));
     }
   }
 
@@ -302,12 +297,6 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     DbHelper dbh = DbHelper.getDbHelper(this);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
-    this.mMapper = new ObjectMapper();
-    this.mTypeFactory = mMapper.getTypeFactory();
-    mMapper.setVisibilityChecker(
-        mMapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-    mMapper.setVisibilityChecker(
-        mMapper.getVisibilityChecker().withCreatorVisibility(Visibility.ANY));
     switch (mType) {
     case COLUMN:
       this.mCp = mTp.getColumnByElementKey(mElementKey);
@@ -323,7 +312,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     case STATUS_COLUMN:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getStatusColumnRuleGroup(mTp);
-      this.setTitle(getString(R.string.color_rule_title_for, 
+      this.setTitle(getString(R.string.color_rule_title_for,
           getString(R.string.status_column)));
       break;
     default:
@@ -343,7 +332,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     ColorRule colRule = this.mColorRules.get(position);
     if (ColorRuleUtil.getDefaultSyncStateColorRuleIds().contains(
         colRule.getRuleId())) {
-      // We don't want to do anything, b/c we don't allow editing of the 
+      // We don't want to do anything, b/c we don't allow editing of the
       // default rules.
       return;
     }
@@ -391,19 +380,19 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
           int targetState = Integer.parseInt(colorRule.getVal());
           // For now we need to handle the special cases of the sync state.
           if (targetState == SyncUtil.State.INSERTING) {
-            description = 
+            description =
                 getString(R.string.sync_state_equals_inserting_message);
           } else if (targetState == SyncUtil.State.UPDATING) {
-            description = 
+            description =
                 getString(R.string.sync_state_equals_updating_message);
           } else if (targetState == SyncUtil.State.REST) {
-            description = 
+            description =
                 getString(R.string.sync_state_equals_rest_message);
           } else if (targetState == SyncUtil.State.DELETING) {
-            description = 
+            description =
                 getString(R.string.sync_state_equals_deleting_message);
           } else if (targetState == SyncUtil.State.CONFLICTING) {
-            description = 
+            description =
                 getString(R.string.sync_state_equals_conflicting_message);
           } else {
             Log.e(TAG, "unrecognized sync state: " + targetState);
@@ -415,7 +404,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         }
       }
       if (!isMetadataRule) {
-        description += " " + 
+        description += " " +
             mColorRules.get(currentPosition).getOperator().getSymbol() + " " +
             mColorRules.get(currentPosition).getVal();
       }

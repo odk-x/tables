@@ -63,7 +63,7 @@ import android.util.Log;
  */
 public class TableProperties {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper;
   private static final String t = "TableProperties";
 
   public static final String TAG = "TableProperties";
@@ -176,7 +176,11 @@ public class TableProperties {
 //      KEY_DETAIL_VIEW_FILE,
       KEY_SUM_DISPLAY_FORMAT, });
 
-
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
+  }
 
   /***********************************
    *  The fields that make up a TableProperties object.
@@ -1738,8 +1742,6 @@ public class TableProperties {
   public String toJson() {
     Map<String, ColumnProperties> columnsMap = getColumns(); // ensuring columns is initialized
     // I think this removes exceptions from not having getters/setters...
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
     for (ColumnProperties cp : columnsMap.values()) {

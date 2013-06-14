@@ -70,6 +70,8 @@ public class SyncUtilities {
 
   public static final String TAG = "SyncUtilities";
 
+  private static final ObjectMapper mapper = new ObjectMapper();
+
   /**
    * Pull the key value entries for a particular table from the server.
    * <p>
@@ -196,7 +198,6 @@ public class SyncUtilities {
       String aggregateUri, String authToken, String tableId) {
     // Get and parse the manifest, which is a JSON string.
     String manifest = getManifest(aggregateUri, authToken, tableId);
-    ObjectMapper mapper = new ObjectMapper();
     TypeReference<ArrayList<OdkTablesKeyValueStoreEntry>> typeRef =
         new TypeReference<ArrayList<OdkTablesKeyValueStoreEntry>>() {};
     try {
@@ -217,7 +218,6 @@ public class SyncUtilities {
       List<OdkTablesKeyValueStoreEntry> allEntries) {
     // If the entry is a file, we see if we need to download it and update
     // the value with the path to the file. Otherwise, we leave the entry.
-    ObjectMapper mapper = new ObjectMapper();
     TypeReference<OdkTablesFileManifestEntry> typeRef =
         new TypeReference<OdkTablesFileManifestEntry>() {};
     for (OdkTablesKeyValueStoreEntry entry : allEntries) {
@@ -261,7 +261,6 @@ public class SyncUtilities {
     // first get all the entries, and retain only the file entries.
     List<OdkTablesFileManifestEntry> fileEntries =
         new ArrayList<OdkTablesFileManifestEntry>();
-    ObjectMapper mapper = new ObjectMapper();
     TypeReference<OdkTablesFileManifestEntry> typeRef =
         new TypeReference<OdkTablesFileManifestEntry>() {};
     for (OdkTablesKeyValueStoreEntry entry : allEntries) {

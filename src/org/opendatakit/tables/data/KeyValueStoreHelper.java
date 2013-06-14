@@ -49,13 +49,18 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   public static final String DEFAULT_ASPECT = "default";
 
+  private static final ObjectMapper mapper;
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
+  }
   /*
    * This is the partition which this helper will be restricted to.
    */
   private final String partition;
   private final KeyValueStore kvs;
   private final DbHelper dbh;
-  private final ObjectMapper mapper;
 
   /**
    * @param kvs
@@ -65,9 +70,6 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     this.partition = partition;
     this.kvs = kvs;
     this.dbh = kvs.getDbHelper();
-    this.mapper = new ObjectMapper();
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
   }
 
   /**

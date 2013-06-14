@@ -64,12 +64,19 @@ public class SyncProcessor {
 
   private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
 
+  private static final ObjectMapper mapper;
+
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
+  }
+
   private final DataUtil du;
   private final DataManager dm;
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
   private final DbHelper dbh;
-  private final ObjectMapper mMapper;
 
   public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, DataManager dm,
       SyncResult syncResult) {
@@ -78,9 +85,6 @@ public class SyncProcessor {
     this.dm = dm;
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
-    this.mMapper = new ObjectMapper();
-    mMapper.setVisibilityChecker(mMapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
   }
 
   /**
@@ -792,8 +796,8 @@ public class SyncProcessor {
       String joinsStr = null;
       try {
         listChildElementKeysStr =
-            mMapper.writeValueAsString(listChildrenElements);
-        joinsStr = mMapper.writeValueAsString(joins);
+            mapper.writeValueAsString(listChildrenElements);
+        joinsStr = mapper.writeValueAsString(joins);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing json list entry during sync");
         e.printStackTrace();

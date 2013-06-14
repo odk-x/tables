@@ -97,6 +97,14 @@ public class CsvUtil {
 	private static final char QUOTE_CHAR = '\"';
 	private static final char ESCAPE_CHAR = '\\';
 
+	private static final ObjectMapper mapper;
+
+	static {
+	  mapper = new ObjectMapper();
+	  mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+	       .withFieldVisibility(Visibility.ANY));
+	}
+
 	// reference to the InitializeTask that called CsvUtil
 	private InitializeTask it = null;
 
@@ -182,10 +190,6 @@ public class CsvUtil {
 					// list
 					// form.
 					try {
-						ObjectMapper mapper = new ObjectMapper();
-						mapper.setVisibilityChecker(mapper
-								.getVisibilityChecker().withFieldVisibility(
-										Visibility.ANY));
 						List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper
 								.readValue(
 										row[1],
@@ -763,9 +767,6 @@ public class CsvUtil {
 						.getEntriesForPartitions(dbh.getReadableDatabase(),
 								partitions);
 				// TODO sort out and handle appropriate closing of database
-				ObjectMapper mapper = new ObjectMapper();
-				mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-						.withFieldVisibility(Visibility.ANY));
 				String[] settingsRow;
 				String strKvsEntries = null;
 				try {

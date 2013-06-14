@@ -87,7 +87,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
     private DataManager dm;
     private Controller c;
-    private Query query;
     private UserTable table;
     private int indexedCol;
     private TableProperties mTp;
@@ -122,7 +121,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       this.mCachedColumnOrder = mTp.getColumnOrder();
       c.refreshDbTable();
 //      tp.refreshColumns();
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
             mTp);
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
@@ -148,7 +147,9 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-        query.clear();
+      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+          mTp);
+      query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
