@@ -134,7 +134,7 @@ public class UserTable {
           String value = getIndexAsString(c, adminColumnCursorIndex[i]);
           rowMetadata[i] = value;
         }
-        Row nextRow = new Row(rowId, rowData, rowMetadata);
+        Row nextRow = new Row(rowId, rowData.clone(), rowMetadata.clone());
         mRows.add(nextRow);
         c.moveToNext();
       } while (c.moveToNext());

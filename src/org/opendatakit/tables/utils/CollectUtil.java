@@ -465,10 +465,10 @@ public class CollectUtil {
    * in the method updateInstanceDatabase().
    */
   private static Uri getUriForInsertedData(TableProperties tp, CollectFormParameters params,
-      String rowId, ContentResolver resolver) {
+      String rowId, String instanceName, ContentResolver resolver) {
     ContentValues values = new ContentValues();
     // First we need to fill the values with various little things.
-    values.put(COLLECT_KEY_DISPLAY_NAME, params.getRowDisplayName());
+    values.put(COLLECT_KEY_DISPLAY_NAME, instanceName);
     values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_INCOMPLETE);
     values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
     values.put(COLLECT_KEY_INSTANCE_FILE_PATH, getEditRowFormFile(tp, rowId).getAbsolutePath());
@@ -721,7 +721,7 @@ public class CollectUtil {
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
-    Uri insertUri = CollectUtil.getUriForInsertedData(tp, params, rowId,
+    Uri insertUri = CollectUtil.getUriForInsertedData(tp, params, rowId, instanceName,
         context.getContentResolver());
 
     // Copied the below from getIntentForOdkCollectEditRow().
@@ -893,7 +893,7 @@ public class CollectUtil {
    */
   public static FormValues getOdkCollectFormValuesFromInstanceId(Context context,
       int instanceId) {
-    String[] projection = { "date", "instanceFilePath" };
+    String[] projection = { "date", "displayName", "instanceFilePath" };
     String selection = "_id = ?";
     String[] selectionArgs = { (instanceId + "") };
     CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
@@ -905,6 +905,7 @@ public class CollectUtil {
     c.moveToFirst();
     FormValues fv = new FormValues();
     fv.timestamp = c.getLong(c.getColumnIndexOrThrow("date"));
+    fv.instanceName = c.getString(c.getColumnIndexOrThrow("displayName"));
     String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
     File instanceFile = new File(instancepath);
     parseXML(fv, instanceFile);
@@ -1084,7 +1085,7 @@ public class CollectUtil {
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForInsertedData(tp, params, rowId,
+    Uri formToLaunch = CollectUtil.getUriForInsertedData(tp, params, rowId, instanceName,
         context.getContentResolver());
 
     // And now finally create the intent.
@@ -1153,13 +1154,14 @@ public class CollectUtil {
         Element child = dataEl.getElement(i);
         String key = child.getName();
         if ( key.equals("meta") ) {
-          Element e = child.getElement(null, "instanceID");
-          if ( e != null ) {
-            fv.instanceID = ODKFileUtils.getXMLText(e, false);
-          }
-          e = child.getElement(null, "instanceName");
-          if ( e != null ) {
-            fv.instanceName = ODKFileUtils.getXMLText(e, false);
+          for ( int j = 0 ; j < child.getChildCount(); j++) {
+            Element e = child.getElement(j);
+            String name = e.getName();
+            if ( name.equals("instanceID") ) {
+              fv.instanceID = ODKFileUtils.getXMLText(e, false);
+            } else if ( name.equals("instanceName") ) {
+              fv.instanceName = ODKFileUtils.getXMLText(e, false);
+            }
           }
         } else {
           String value = ODKFileUtils.getXMLText(child, false);
