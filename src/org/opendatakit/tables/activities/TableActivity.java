@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -328,7 +329,9 @@ public class TableActivity extends SherlockFragmentActivity {
       elementKeyToValue.put(cp.getElementKey(), value);
     }
     Intent collectEditIntent =
-    	CollectUtil.getIntentForOdkCollectEditRow(this, mTableProperties, elementKeyToValue, formId, formVersion, formRootElement);
+    	CollectUtil.getIntentForOdkCollectEditRow(this, mTableProperties,
+    	    elementKeyToValue, formId, formVersion, formRootElement, mRowId,
+    	    table.getInstanceName(rowNum));
     if (collectEditIntent != null) {
       mRowId = table.getRowId(rowNum);
       CollectUtil.launchCollectToEditRow(this, collectEditIntent, mRowId);
@@ -698,17 +701,9 @@ public class TableActivity extends SherlockFragmentActivity {
 
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table, int rowNum) {
-    String[] keys = new String[table.getWidth()];
-    String[] values = new String[table.getWidth()];
-    for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumnByIndex(i).getElementKey();
-      values[i] = table.getData(rowNum, i);
-    }
     Intent intent = new Intent(context, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_KEYS, keys);
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
     context.startActivity(intent);
   }
 

@@ -15,14 +15,10 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.content.Intent;
@@ -40,8 +36,6 @@ public class DetailDisplayActivity extends SherlockActivity
   private static final String TAG = "DetaiDisplayActivity";
 
     public static final String INTENT_KEY_ROW_ID = "rowId";
-    public static final String INTENT_KEY_ROW_KEYS = "rowKeys";
-    public static final String INTENT_KEY_ROW_VALUES = "rowValues";
     /** Intent key to specify a filename other than that saved in the kvs. Does
      * not have to be initialized if the caller intends the value in the kvs to
      * be used.
@@ -50,10 +44,8 @@ public class DetailDisplayActivity extends SherlockActivity
 
     private String rowId;
     private Controller c;
-    private String[] keys;
-    private String[] values;
-    private Map<String, String> data;
     private CustomDetailView view;
+    private UserTable table = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -61,8 +53,6 @@ public class DetailDisplayActivity extends SherlockActivity
         setTitle("");
         rowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
         c = new Controller(this, this, getIntent().getExtras());
-        keys = getIntent().getStringArrayExtra(INTENT_KEY_ROW_KEYS);
-        values = getIntent().getStringArrayExtra(INTENT_KEY_ROW_VALUES);
         init();
     }
 
@@ -72,15 +62,7 @@ public class DetailDisplayActivity extends SherlockActivity
       if (c.handleActivityReturn(requestCode, resultCode, data)) {
         // If we're here, we also need to update the displayed data, which
         // may have been changed.
-        Query query = new Query(new TableProperties[] {c.getTableProperties()},
-            c.getTableProperties());
-        query.loadFromUserQuery("");
-        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        Map<String, String> formValues =
-            CollectUtil.getOdkCollectFormValuesFromInstanceId(this,
-                instanceId);
-        this.data = CollectUtil.getMapForInsertion(c.getTableProperties(),
-            formValues);
+        displayView();
       } else {
         super.onActivityResult(requestCode, resultCode, data);
       }
@@ -90,29 +72,33 @@ public class DetailDisplayActivity extends SherlockActivity
     public void onResume() {
         super.onResume();
         displayView();
+        c.setDisplayView(view);
+        setContentView(c.getContainerView());
     }
 
     @Override
     public void init() {
         // change the info bar text IF necessary
         c.setDetailViewInfoBarText();
-        data = new HashMap<String, String>();
-        for (int i = 0; i < keys.length; i++) {
-            data.put(keys[i], values[i]);
-        }
         // See if the caller included a filename that should be used. Will be
         // null if not found, so we can just pass it right along into the view.
-        String intentFilename = 
+        String intentFilename =
             getIntent().getStringExtra(INTENT_KEY_FILENAME);
-        view = new CustomDetailView(this, c.getTableProperties(), 
+        view = new CustomDetailView(this, c.getTableProperties(),
             intentFilename);
         displayView();
+        c.setDisplayView(view);
+        setContentView(c.getContainerView());
     }
 
     private void displayView() {
-        view.display(rowId, data);
-        c.setDisplayView(view);
-        setContentView(c.getContainerView());
+        Query query = new Query(new TableProperties[] {c.getTableProperties()},
+            c.getTableProperties());
+        query.addRowIdConstraint(rowId);
+        table = c.getIsOverview() ?
+            c.getDbTable().getUserOverviewTable(query) :
+              c.getDbTable().getUserTable(query);
+        view.display(rowId, table, c.getTableProperties());
     }
 
     @Override
@@ -138,18 +124,7 @@ public class DetailDisplayActivity extends SherlockActivity
       // If they've selected the edit button, we need to handle it here.
       // Otherwise, we let controller handle it.
       if (item.getItemId() == Controller.MENU_ITEM_ID_ADD_ROW_BUTTON) {
-        // now we have to do a bit of work to get the UserTable.
-        // Since a query doesn't matter, we don't need to do anything
-        // difficult to  get all the TableProperties, which is an expensive
-        // method. However, it must be noted that this is a potentially
-        // risky way to do it.
-        Query query = new Query(new TableProperties[] {c.getTableProperties()},
-            c.getTableProperties());
-        query.loadFromUserQuery("");
-        UserTable table = c.getIsOverview() ?
-            c.getDbTable().getUserOverviewTable(query) :
-              c.getDbTable().getUserTable(query);
-        // now we need to get the row num.
+        // get the row num.
         int rowNum = table.getRowNumFromId(rowId);
         // handle the case that it wasn't found, and do nothing
         if (rowNum == -1) {

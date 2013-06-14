@@ -16,11 +16,12 @@
 package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
-import java.util.Map;
+import java.util.HashMap;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.UserTable;
 
 import android.app.Activity;
 
@@ -46,58 +47,62 @@ public class CustomDetailView extends CustomView {
   public static final String KVS_ASPECT_DEFAULT = "default";
 
   public static final String KEY_FILENAME = "filename";
-  
-    private static final String DEFAULT_HTML =
-        "<html><body>" +
-        "<p>No detail view has been specified.</p>" +
-        "</body></html>";
 
-    private Activity mActivity;
-    private TableProperties tp;
-    private RowData jsData;
-    private KeyValueStoreHelper detailKVSH;
-    /** The filename of the html we are displaying. */
-    private String mFilename;
+  private static final String DEFAULT_HTML = "<html><body>"
+      + "<p>No detail view has been specified.</p>" + "</body></html>";
 
-    /**
-     * Construct the detail view. 
-     * @param activity
-     * @param tp
-     * @param filename the filename to display as the detail view. If null,
-     * tries to receive the value from the key value store.
-     */
-    public CustomDetailView(Activity activity, TableProperties tp, 
-        String filename) {
-        super(activity);
-        this.mActivity = activity;
-        this.tp = tp;
-        this.detailKVSH =
-            tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-        if (filename == null) {
-          String recoveredFilename =
-              this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
-          if (recoveredFilename == null) {
-            // Then no default has been set.
-            this.mFilename = null;
-          } else {
-            this.mFilename = recoveredFilename;
-          }
-        } else {
-          // The caller has specified a filename.
-          this.mFilename = filename;
-        }
-        jsData = new RowData(tp);
+  private Activity mActivity;
+  private TableProperties tp;
+  private RowData jsData;
+  private KeyValueStoreHelper detailKVSH;
+  /** The filename of the html we are displaying. */
+  private String mFilename;
+
+  /**
+   * Construct the detail view.
+   *
+   * @param activity
+   * @param tp
+   * @param filename
+   *          the filename to display as the detail view. If null, tries to
+   *          receive the value from the key value store.
+   */
+  public CustomDetailView(Activity activity, TableProperties tp, String filename) {
+    super(activity);
+    this.mActivity = activity;
+    this.tp = tp;
+    this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+    if (filename == null) {
+      String recoveredFilename = this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
+      if (recoveredFilename == null) {
+        // Then no default has been set.
+        this.mFilename = null;
+      } else {
+        this.mFilename = recoveredFilename;
+      }
+    } else {
+      // The caller has specified a filename.
+      this.mFilename = filename;
+    }
+    jsData = new RowData(tp);
+  }
+
+  public void display(String rowId, UserTable userTable, TableProperties tp) {
+    int rowNum = userTable.getRowNumFromId(rowId);
+    HashMap<String, String> tmpData = new HashMap<String, String>();
+    for (int i = 0; i < userTable.getWidth(); i++) {
+      tmpData.put(tp.getColumnByIndex(i).getElementKey(), userTable.getData(rowNum, i));
     }
 
-    public void display(String rowId, Map<String, String> data) {
-        jsData.set(rowId, data);
-        webView.addJavascriptInterface(new Control(mActivity), "control");
-        webView.addJavascriptInterface(jsData, "data");
-        if (this.mFilename != null) {
-            load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
-        } else {
-            loadData(DEFAULT_HTML, "text/html", null);
-        }
-        initView();
+    jsData.set(rowId, userTable.getInstanceName(rowNum),
+        tmpData);
+    webView.addJavascriptInterface(new Control(mActivity), "control");
+    webView.addJavascriptInterface(jsData, "data");
+    if (this.mFilename != null) {
+      load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
+    } else {
+      loadData(DEFAULT_HTML, "text/html", null);
     }
+    initView();
+  }
 }

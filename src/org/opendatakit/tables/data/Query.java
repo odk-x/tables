@@ -310,6 +310,10 @@ public class Query {
         return (cp == null) ? null : cp.getElementKey();
     }
 
+    public void addRowIdConstraint(String rowId) {
+      constraints.add(new Constraint(DataTableColumns.ID, Comparator.EQUALS, rowId));
+    }
+
     public void addConstraint(ColumnProperties cp, String value) {
         constraints.add(new Constraint(cp.getElementKey(), Comparator.EQUALS,
                 value));

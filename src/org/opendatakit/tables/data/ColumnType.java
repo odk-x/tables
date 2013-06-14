@@ -26,7 +26,7 @@ import java.util.Map;
  * Act like an enum, in that == comparisons work for comparing two typenames.
  * But allow the enum to grow, so ColumnType.valueOf() will extend the list of
  * ColumnTypes.
- * 
+ *
  * It is OK to add values to this enumeration. The name() of the enumeration is
  * stored in the database, so the order of the names should not be important
  * here.
@@ -47,73 +47,74 @@ public class ColumnType {
 
 	// TODO: confirm this propagates into Aggregate OK?
 	public static ColumnType BOOLEAN; // not in Tables,
-	
+
 	// TODO: need to track image/audio/video mime type,
 	// TODO: need file entry in Aggregate (JSON in Tables)
-	public static ColumnType MIMEURI; // not in Collect 
-	
+	public static ColumnType MIMEURI; // not in Collect
+
 	// TODO: replace MC_OPTIONS usage with this and child element
 	public static ColumnType MULTIPLE_CHOICES; // NEW
-	
+
 	// TODO: goes away; becomes plain old composite type?
 	// TODO: was 'Location' -- was that lat-long, or any cartesian coordinate?
-	public static ColumnType GEOPOINT; 
+	public static ColumnType GEOPOINT;
 
 	 // TODO: not in collect; becomes composite element
 	public static ColumnType DATE_RANGE; // not in Collect, Aggregate
-	
+
 	 // TODO: not in Collect; becomes text specialization element
 	public static ColumnType PHONE_NUMBER; // not in Collect, Aggregate
-	
+
 	// TODO: This is a property of the TABLE not any one COLUMN. Move to TableProperties!!!
 	 // TODO: not in Collect; becomes MIMEURI specialization element
 	public static ColumnType COLLECT_FORM; // not in Collect, Aggregate
-	
+
 	 // TODO: goes away -- replaced by MULTIPLE_CHOICES and child type description
 	public static ColumnType MC_OPTIONS; // select1/select
-	
+
 	// TODO: goes away -- Used in col properties preferences/settings display to enable the showing
 	// of the joinTableId, joinElementKey properties.  Those should be independently configurable...
-	// TODO: this goes away -- it confounds the data type with the ability to use that data type 
+	// TODO: this goes away -- it confounds the data type with the ability to use that data type
 	// to link across to another table. The linking ability is NOT a data type, but a column property
 	// that can modify the way the data is presented (e.g., with click actions to link to that other table.
 	public static ColumnType TABLE_JOIN;
 
 	static {
-		nameMap.put("none", NONE = new ColumnType("none", "None"));
-		nameMap.put("text", TEXT = new ColumnType("text", "Text"));
-		nameMap.put("integer", INTEGER = new ColumnType("integer", "Integer"));
-		nameMap.put("number", NUMBER = new ColumnType("number", "Number"));
-		nameMap.put("date", DATE = new ColumnType("date", "Date"));
-		nameMap.put("datetime", DATETIME 
-				= new ColumnType("datetime", "Date and Time"));
-		nameMap.put("time", TIME = new ColumnType("time", "Time"));
+		nameMap.put("none", NONE = new ColumnType("none", "None", "string"));
+		nameMap.put("text", TEXT = new ColumnType("text", "Text", "string"));
+		nameMap.put("integer", INTEGER = new ColumnType("integer", "Integer", "int"));
+		nameMap.put("number", NUMBER = new ColumnType("number", "Number", "decimal"));
+		nameMap.put("date", DATE = new ColumnType("date", "Date", "date"));
+		nameMap.put("datetime", DATETIME
+				= new ColumnType("datetime", "Date and Time", "dateTime"));
+		nameMap.put("time", TIME = new ColumnType("time", "Time", "time"));
 
-		nameMap.put("boolean", BOOLEAN = new ColumnType("boolean", "Boolean"));
-		nameMap.put("mimeuri", MIMEURI = new ColumnType("file", "File"));
-		nameMap.put("multipleChoices", MULTIPLE_CHOICES 
-				= new ColumnType("multipleChoices", "Multiple Choices (list)"));
-		
-		nameMap.put("geopoint", GEOPOINT = new ColumnType("geopoint", "Location"));
+		nameMap.put("boolean", BOOLEAN = new ColumnType("boolean", "Boolean", "string"));
+		nameMap.put("mimeuri", MIMEURI = new ColumnType("file", "File", "binary"));
+		nameMap.put("multipleChoices", MULTIPLE_CHOICES
+				= new ColumnType("multipleChoices", "Multiple Choices (list)", "string"));
+
+		nameMap.put("geopoint", GEOPOINT = new ColumnType("geopoint", "Location", "geopoint"));
 
 		nameMap.put("dateRange", DATE_RANGE = new ColumnType("dateRange",
-				"Date Range"));
+				"Date Range", "string"));
 		nameMap.put("phoneNumber", PHONE_NUMBER = new ColumnType("phoneNumber",
-				"Phone Number"));
+				"Phone Number", "string"));
 		// TODO: move to TableProperties
 		nameMap.put("collectForm", COLLECT_FORM = new ColumnType("collectForm",
-				"Collect Form"));
+				"Collect Form", "string"));
 		// TODO: GO AWAY!!! this is replaced by MULTIPLE_CHOICES and element item type
 		nameMap.put("mcOptions", MC_OPTIONS = new ColumnType("mcOptions",
-				"Multiple Choices"));
+				"Multiple Choices", "string"));
 		// TODO: GO AWAY!!! this info is captured in Column Properties...
 		nameMap.put("tableJoin", TABLE_JOIN = new ColumnType("tableJoin",
-				"Join")); 
+				"Join", "string"));
 	}
 
 	private final String typename;
 	private final String label;
-	
+	private final String collectType;
+
 	/*
 	 * I think I need this for serialization...
 	 */
@@ -121,11 +122,13 @@ public class ColumnType {
 	  // just for serialization
 	  typename = "";
 	  label = "";
+	  collectType = "string";
 	}
 
-	private ColumnType(String typename, String label) {
+	private ColumnType(String typename, String label, String collectType) {
 		this.typename = typename;
 		this.label = label;
+		this.collectType = collectType;
 	}
 
 	public final String name() {
@@ -136,6 +139,10 @@ public class ColumnType {
 		return label;
 	}
 
+	public final String collectType() {
+	  return collectType;
+	}
+
 	public final String toString() {
 		return typename;
 	}
@@ -144,7 +151,7 @@ public class ColumnType {
 		ColumnType t = nameMap.get(name);
 		if (t != null)
 			return t;
-		t = new ColumnType(name, name);
+		t = new ColumnType(name, name, "string");
 		nameMap.put(name, t);
 		return t;
 	}

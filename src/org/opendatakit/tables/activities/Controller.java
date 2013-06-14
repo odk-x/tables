@@ -42,7 +42,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -114,15 +113,6 @@ public class Controller {
      */
     public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
     public static final int FIRST_FREE_RCODE = 6;
-
-    private static final String COLLECT_FORMS_URI_STRING =
-        "content://org.odk.collect.android.provider.odk.forms/forms";
-    private static final Uri ODKCOLLECT_FORMS_CONTENT_URI =
-        Uri.parse(COLLECT_FORMS_URI_STRING);
-    private static final String COLLECT_INSTANCES_URI_STRING =
-        "content://org.odk.collect.android.provider.odk.instances/instances";
-    private static final Uri COLLECT_INSTANCES_CONTENT_URI =
-        Uri.parse(COLLECT_INSTANCES_URI_STRING);
 
     private final DataUtil du;
     private final SherlockActivity activity;
@@ -430,7 +420,7 @@ public class Controller {
 	}
 
 	Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
-          null, null, null);
+          null, null, null, table.getRowId(rowNum), table.getInstanceName(rowNum));
 
 	if (intent != null) {
       CollectUtil.launchCollectToEditRow(activity, intent,
@@ -883,17 +873,9 @@ public class Controller {
   public static void launchDetailActivity(Activity activity, TableProperties tp,
       UserTable table,
       int rowNum, String filename) {
-    String[] keys = new String[table.getWidth()];
-    String[] values = new String[table.getWidth()];
-    for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumnByIndex(i).getElementKey();
-      values[i] = table.getData(rowNum, i);
-    }
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_KEYS, keys);
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
     if (filename != null) {
       // a null value informs the DetailDisplayActivity that the filename in
       // the kvs should be used, so only add it if it has been set.

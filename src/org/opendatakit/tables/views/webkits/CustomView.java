@@ -68,7 +68,7 @@ public abstract class CustomView extends LinearLayout {
 	protected static WebView webView;
 	private static ViewGroup lastParent;
 	private Activity mParentActivity;
-	
+
 	private Map<String, TableProperties> tpMap;
 	private TableProperties[] allTps;
 
@@ -132,7 +132,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 		});
 	}
-	
+
    private void initTpInfo() {
      if (tpMap != null) {
         return;
@@ -233,7 +233,7 @@ public abstract class CustomView extends LinearLayout {
 				CustomView.this.getContainerActivity(), tp, params,
 				currentQueryString);
 
-     CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent, 
+     CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent,
          tp);
 	}
 
@@ -248,19 +248,16 @@ public abstract class CustomView extends LinearLayout {
 		private final TableProperties tp;
 		private Map<String, String> data;
 		private String mRowId;
+		private String mInstanceName;
 
 		RowData(TableProperties tp) {
 			this.tp = tp;
 		}
 
-		RowData(TableProperties tp, Map<String, String> data) {
-			this.tp = tp;
-			this.data = data;
-		}
-
-		void set(String rowId, Map<String, String> data) {
+		void set(String rowId, String mInstanceName, Map<String, String> data) {
 			this.data = data;
 			this.mRowId = rowId;
+			this.mInstanceName = mInstanceName;
 		}
 
 		/**
@@ -270,7 +267,7 @@ public abstract class CustomView extends LinearLayout {
 		public void editRowWithCollect() {
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp, data, null,
-					null, null);
+					null, null, mRowId, mInstanceName);
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					mRowId);
@@ -291,7 +288,7 @@ public abstract class CustomView extends LinearLayout {
 				String formVersion, String formRootElement) {
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp, data, formId,
-					formVersion, formRootElement);
+					formVersion, formRootElement, mRowId, mInstanceName);
 			// We have to launch it through this method so that the rowId is
 			// persisted in the SharedPreferences.
 			CollectUtil.launchCollectToEditRow(
@@ -611,7 +608,8 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp,
-					elementKeyToValue, null, null, null);
+					elementKeyToValue, null, null, null, rowId,
+					mTable.getInstanceName(rowNumber));
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
@@ -636,7 +634,9 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp,
-					elementKeyToValue, formId, formVersion, formRootElement);
+					elementKeyToValue, formId, formVersion, formRootElement,
+					rowId,
+					mTable.getInstanceName(rowNumber));
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
