@@ -1879,7 +1879,7 @@ public class TableProperties {
           == ColumnType.INTEGER) {
         numericColCount++;
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
-        locationColCount++;
+        locationColCount += 2;// latitude and longitude
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType()
           == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {

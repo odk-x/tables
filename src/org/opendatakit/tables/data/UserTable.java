@@ -154,18 +154,38 @@ public class UserTable {
    */
   private static final String getIndexAsString(Cursor c, int i) {
     // If you add additional return types here be sure to modify the javadoc.
-    switch (c.getType(i)) {
-    case Cursor.FIELD_TYPE_STRING:
-      return c.getString(i);
-    case Cursor.FIELD_TYPE_FLOAT:
-      return Double.toString(c.getDouble(i));
-    case Cursor.FIELD_TYPE_INTEGER:
-      return Long.toString(c.getLong(i));
-    case Cursor.FIELD_TYPE_NULL:
-      return c.getString(i);
-    default:
-    case Cursor.FIELD_TYPE_BLOB:
-      throw new IllegalStateException("Unexpected data type in SQLite table");
+    int version = android.os.Build.VERSION.SDK_INT;
+    if (version < 11) {
+      // getType() is not yet supported.
+      String str = null;
+      try {
+        str = c.getString(i);
+      } catch (Exception e1) {
+        try {
+          str = Long.toString(c.getLong(i));
+        } catch (Exception e2) {
+          try {
+            str = Double.toString(c.getDouble(i));
+          } catch (Exception e3) {
+            throw new IllegalStateException("Unexpected data type in SQLite table");
+          }
+        }
+      }
+      return str;
+    } else {
+      switch (c.getType(i)) {
+      case Cursor.FIELD_TYPE_STRING:
+        return c.getString(i);
+      case Cursor.FIELD_TYPE_FLOAT:
+        return Double.toString(c.getDouble(i));
+      case Cursor.FIELD_TYPE_INTEGER:
+        return Long.toString(c.getLong(i));
+      case Cursor.FIELD_TYPE_NULL:
+        return c.getString(i);
+      default:
+      case Cursor.FIELD_TYPE_BLOB:
+        throw new IllegalStateException("Unexpected data type in SQLite table");
+      }
     }
   }
 

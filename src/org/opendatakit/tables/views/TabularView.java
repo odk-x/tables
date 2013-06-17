@@ -790,8 +790,15 @@ class TabularView extends View {
     // drawing the cells
     int y = topTopmost;
     for (int i = topmost; i < bottommost + 1; i++) {
-      ColorGuide rowGuide = mRowColorRuleGroup.getColorGuide(
-          this.mTable.getRowAtIndex(i));
+      // we only need to fetch this once for a given row...
+      ColorGuide rowGuide = null;
+      if ( this.type == TableType.STATUS_DATA ||
+           this.type == TableType.INDEX_DATA ||
+           this.type == TableType.MAIN_DATA ) {
+        // these are the only cases (below) where this value is used...
+        rowGuide = mRowColorRuleGroup.getColorGuide(
+            this.mTable.getRowAtIndex(i));
+      }
 
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
         String datum;
