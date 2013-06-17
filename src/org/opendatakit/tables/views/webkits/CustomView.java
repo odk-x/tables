@@ -71,11 +71,14 @@ public abstract class CustomView extends LinearLayout {
 
 	private Map<String, TableProperties> tpMap;
 	private TableProperties[] allTps;
+	private CustomViewCallbacks mCallbacks;
 
-	protected CustomView(Activity parentActivity) {
+	protected CustomView(Activity parentActivity, 
+	    CustomViewCallbacks callbacks) {
 		super(parentActivity);
 		initCommonWebView(parentActivity);
 		this.mParentActivity = parentActivity;
+		this.mCallbacks = callbacks;
 	}
 
 	public static void initCommonWebView(Context context) {
@@ -225,9 +228,7 @@ public abstract class CustomView extends LinearLayout {
 	 */
 	private void prepopulateRowAndLaunchCollect(CollectFormParameters params,
 			TableProperties tp) {
-		String currentQueryString = tp.getKeyValueStoreHelper(
-				TableProperties.KVS_PARTITION).getString(
-				TableProperties.KEY_CURRENT_QUERY);
+	  String currentQueryString = mCallbacks.getSearchString();
 
 		Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
 				CustomView.this.getContainerActivity(), tp, params,
@@ -921,6 +922,14 @@ public abstract class CustomView extends LinearLayout {
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);
 		}
+	}
+	
+	public interface CustomViewCallbacks {
+	  /**
+	   * Get the string currently in the searchbox.
+	   * @return
+	   */
+	  public String getSearchString();
 	}
 
 }

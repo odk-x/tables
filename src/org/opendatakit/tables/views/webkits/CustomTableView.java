@@ -45,16 +45,17 @@ public class CustomTableView extends CustomView {
   private String filename;
   private Fragment mFragment;
 
-  private CustomTableView(Activity activity, String filename) {
-    super(activity);
+  private CustomTableView(Activity activity, String filename, 
+      CustomViewCallbacks callbacks) {
+    super(activity, callbacks);
     this.mActivity = activity;
     this.filename = filename;
     colIndexTable = new HashMap<String, Integer>();
   }
 
   public static CustomTableView get(Activity activity, TableProperties tp, UserTable table,
-      String filename) {
-    CustomTableView ctv = new CustomTableView(activity, filename);
+      String filename, CustomViewCallbacks callbacks) {
+    CustomTableView ctv = new CustomTableView(activity, filename, callbacks);
     ctv.set(tp, table);
     return ctv;
   }
@@ -79,8 +80,9 @@ public class CustomTableView extends CustomView {
   // //////////////////////////// TEST ///////////////////////////////
 
     public static CustomTableView get(Activity activity, TableProperties tp,
-        UserTable table, String filename, int index) {
-    	CustomTableView ctv = new CustomTableView(activity, filename);
+        UserTable table, String filename, int index, Controller controller) {
+    	CustomTableView ctv = new CustomTableView(activity, filename, 
+    	    controller);
     	// Create a new table with only the row specified at index.
     	// Create all of the arrays necessary to create a UserTable.
     	String[] rowIds = new String[1];
@@ -124,8 +126,9 @@ public class CustomTableView extends CustomView {
      * @return The custom view that represents the indexes in the table.
      */
     public static CustomTableView get(Activity activity, TableProperties tp, UserTable table,
-        String filename, List<Integer> indexes) {
-      CustomTableView ctv = new CustomTableView(activity, filename);
+        String filename, List<Integer> indexes, Controller controller) {
+      CustomTableView ctv = new CustomTableView(activity, filename, 
+          controller);
       // Create all of the arrays necessary to create a UserTable.
       String[] rowIds = new String[indexes.size()];
       String[] headers = new String[table.getWidth()];
@@ -172,8 +175,9 @@ public class CustomTableView extends CustomView {
    */
   public static CustomTableView get(Activity activity, TableProperties tp,
       UserTable table,
-      String filename, List<Integer> indexes, Fragment fragment) {
-    CustomTableView ctv = new CustomTableView(activity, filename);
+      String filename, List<Integer> indexes, Fragment fragment,
+      CustomViewCallbacks callbacks) {
+    CustomTableView ctv = new CustomTableView(activity, filename, callbacks);
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];

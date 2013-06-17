@@ -85,7 +85,7 @@ public class DetailDisplayActivity extends SherlockActivity
         String intentFilename =
             getIntent().getStringExtra(INTENT_KEY_FILENAME);
         view = new CustomDetailView(this, c.getTableProperties(),
-            intentFilename);
+            intentFilename, c);
         displayView();
         c.setDisplayView(view);
         setContentView(c.getContainerView());

@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -67,8 +68,9 @@ public class CustomDetailView extends CustomView {
    *          the filename to display as the detail view. If null, tries to
    *          receive the value from the key value store.
    */
-  public CustomDetailView(Activity activity, TableProperties tp, String filename) {
-    super(activity);
+  public CustomDetailView(Activity activity, TableProperties tp, 
+      String filename, CustomViewCallbacks callbacks) {
+    super(activity, callbacks);
     this.mActivity = activity;
     this.tp = tp;
     this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
