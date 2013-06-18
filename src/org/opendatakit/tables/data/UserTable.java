@@ -136,7 +136,6 @@ public class UserTable {
         }
         Row nextRow = new Row(rowId, rowData.clone(), rowMetadata.clone());
         mRows.add(nextRow);
-        c.moveToNext();
       } while (c.moveToNext());
     }
     footer = null;
