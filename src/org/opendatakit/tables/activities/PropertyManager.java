@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.util.ArrayList;
+
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -52,14 +54,6 @@ public class PropertyManager extends PreferenceActivity {
 
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
-
-  public static final String[] COLUMN_TYPE_LABELS = { "None", "Text", "Number",
-    "Date", "Date Range", "Phone Number", "File", "Collect Form",
-    "Multiple Choice", "Join", "Location" };
-
-  public static final String[] FOOTER_MODE_LABELS = { "none", "count",
-    "minimum", "maximum",
-      "mean", "sum" };
 
   // Private Fields
   private String tableId;
@@ -103,18 +97,26 @@ public class PropertyManager extends PreferenceActivity {
 
     String displayName = cp.getDisplayName();
     category.addPreference(createEditTextPreference("DISPLAY_NAME",
-        "Display Name", "Change display name of column", displayName,
-        displayName));
+        "Display Name", "Change display name of column", displayName));
 
     // SMS Label<EditText>
-    String smsLabel = getSmsLabel(elementKey);
+    // Get the SMS abbreviation on this column.
+    String smsLabel = cp.getSmsLabel();
     category.addPreference(createEditTextPreference("SMSLABEL", "SMS Label",
-        "Change SMS Label for Column", smsLabel, smsLabel));
+        "Change SMS Label for Column", (smsLabel == null) ? "" : smsLabel));
 
     // Type<List>
-    String type = getColumnTypeLabel(elementKey);
-    category.addPreference(createListPreference("TYPE", "Type", type, type, ColumnType.getAllColumnTypeLabels(),
-    		ColumnType.getAllColumnTypeLabels()));
+    ArrayList<ColumnType> types = ColumnType.getAllColumnTypes();
+    String[] typeLabels = new String[types.size()];
+    String[] typeNames = new String[types.size()];
+    for ( int i = 0 ; i < types.size(); ++i ) {
+      ColumnType t = types.get(i);
+      typeLabels[i] = t.label();
+      typeNames[i] = t.name();
+    }
+    String typeLabel = cp.getColumnType().label();
+    String typeName = cp.getColumnType().name();
+    category.addPreference(createListPreference("TYPE", "Type", typeLabel, typeName, typeLabels, typeNames));
 
     // SMS-IN<CheckBox>
     category
@@ -124,10 +126,19 @@ public class PropertyManager extends PreferenceActivity {
     category
         .addPreference(createCheckBoxPreference("SMSOUT", "Put in Outgoing", getSMSOut(elementKey)));
 
-    // Footer Mode<Lis>
-    String footerMode = getFooterMode(elementKey);
-    category.addPreference(createListPreference("FOOTER", "Footer Mode", footerMode, footerMode,
-        FOOTER_MODE_LABELS, FOOTER_MODE_LABELS));
+    // Footer Mode<List>
+    FooterMode[] footerModes = FooterMode.values();
+    String footerModeLabels[] = new String[footerModes.length];
+    String footerModeNames[] = new String[footerModes.length];
+    for ( int i = 0 ; i < footerModes.length ; ++i ) {
+      footerModeLabels[i] = footerModes[i].toString();
+      footerModeNames[i] = footerModes[i].name();
+    }
+    String footerModeLabel = cp.getFooterMode().toString();
+    String footerModeName = cp.getFooterMode().name();
+
+    category.addPreference(createListPreference("FOOTER", "Footer Mode", footerModeLabel, footerModeName,
+        footerModeLabels, footerModeNames));
 
     SliderPreference colWidthPref = new SliderPreference(this);
     colWidthPref.setTitle("Column Width");
@@ -230,20 +241,6 @@ public class PropertyManager extends PreferenceActivity {
 
   }
 
-  // Get the SMS abbreviation on this column.
-  private String getSmsLabel(String colName) {
-    String result = cp.getSmsLabel();
-    if (result == null) {
-      return "No Sms Abbreviation Defined.";
-    }
-    return result;
-  }
-
-  // Get the type for this column.
-  private String getColumnTypeLabel(String colName) {
-    return cp.getColumnType().label();
-  }
-
   // Check if this is SMS-IN column.
   private boolean getSMSIn(String colName) {
     return cp.getSmsIn();
@@ -254,11 +251,6 @@ public class PropertyManager extends PreferenceActivity {
     return cp.getSmsOut();
   }
 
-  // Get the footer mode for this column.
-  private String getFooterMode(String colName) {
-//    return FOOTER_MODE_LABELS[cp.getFooterMode()];
-    return cp.getFooterMode().name();
-  }
 
   // If any of fields change, direct the request to appropriate actions.
   public void onFieldChangeRouter(String key, String newVal) {
@@ -267,10 +259,13 @@ public class PropertyManager extends PreferenceActivity {
 
     // Routing
     if (key.equals("SMSLABEL")) {
-      cp.setSmsLabel(getEditBoxContent(pref));
+      String boxVal = getEditBoxContent(pref);
+      if ( !boxVal.equals(cp.getSmsLabel()) ) {
+        cp.setSmsLabel(boxVal);
+      }
     } else if (key.equals("TYPE")) {
       for (ColumnType t : ColumnType.getAllColumnTypes()) {
-        if (t.label().equals(newVal)) {
+        if (t.name().equals(newVal)) {
           cp.setColumnType(tp, t);
           if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
             loadPreferenceScreen();
@@ -281,13 +276,22 @@ public class PropertyManager extends PreferenceActivity {
         }
       }
     } else if (key.equals("SMSIN")) {
-      cp.setSmsIn(getCheckBoxContent(pref));
+      boolean checkVal = getCheckBoxContent(pref);
+      if ( cp.getSmsIn() != checkVal ) {
+        cp.setSmsIn(checkVal);
+      }
     } else if (key.equals("SMSOUT")) {
-      cp.setSmsOut(getCheckBoxContent(pref));
+      boolean checkVal = getCheckBoxContent(pref);
+      if ( cp.getSmsOut() != checkVal ) {
+        cp.setSmsOut(checkVal);
+      }
     } else if (key.equals("FOOTER")) {
-      for (int i = 0; i < FOOTER_MODE_LABELS.length; i++) {
-        if (FOOTER_MODE_LABELS[i].equals(newVal)) {
-          cp.setFooterMode(FooterMode.valueOf(FOOTER_MODE_LABELS[i]));
+      FooterMode[] footerModes = FooterMode.values();
+      for (int i = 0; i < footerModes.length; i++) {
+        if (footerModes[i].name().equals(newVal)) {
+          if ( !cp.getFooterMode().equals(footerModes[i]) ) {
+            cp.setFooterMode(footerModes[i]);
+          }
           break;
         }
       }
@@ -304,7 +308,9 @@ public class PropertyManager extends PreferenceActivity {
       oldJoins.setElementKey(newVal);
       cp.setJoins(oldJoins);
     } else if (key.equals("DISPLAY_NAME")) {
-      cp.setDisplayName(tp.createDisplayName(newVal));
+      if ( !newVal.equals(cp.getDisplayName()) ) {
+        cp.setDisplayName(tp.createDisplayName(newVal));
+      }
     }
 
     // Refresh
@@ -366,16 +372,17 @@ public class PropertyManager extends PreferenceActivity {
   }
 
   // Create edit box with the specified specifications.
-  private EditTextPreference createEditTextPreference(String key, String title, String dTitle,
-      String sum, String val) {
+  private EditTextPreference createEditTextPreference(String key,
+      String textPreferenceTitle, String dialogTitle,
+      String valueString) {
     // Create a edit box & configure
     EditTextPreference etp = new EditTextPreference(this);
     etp.setKey(key);
-    etp.setTitle(title);
+    etp.setTitle(textPreferenceTitle);
     etp.setPersistent(false);
-    etp.setDialogTitle(dTitle);
-    etp.setSummary(sum);
-    etp.setText(val);
+    etp.setDialogTitle(dialogTitle);
+    etp.setSummary(valueString);
+    etp.setText(valueString);
 
     // Reaction if the edit box changes
     etp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
@@ -392,17 +399,17 @@ public class PropertyManager extends PreferenceActivity {
     return etp;
   }
 
-  private ListPreference createListPreference(String key, String title, String sum, String val,
-      String[] ent, String[] entV) {
+  private ListPreference createListPreference(String key, String title, String labelText, String nameText,
+      String[] labelsList, String[] namesList) {
     // Create a list preference & configure
     ListPreference lp = new ListPreference(this);
-    lp.setEntries(ent);
-    lp.setEntryValues(entV);
+    lp.setEntries(labelsList);
+    lp.setEntryValues(namesList);
     lp.setKey(key);
     lp.setTitle(title);
     lp.setPersistent(false);
-    lp.setSummary(sum);
-    lp.setValue(val);
+    lp.setSummary(labelText);
+    lp.setValue(nameText);
 
     // When an option chosen by the user
     lp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {

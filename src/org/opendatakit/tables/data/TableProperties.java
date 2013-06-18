@@ -1309,74 +1309,17 @@ public class TableProperties {
    *          the elementKey of the column to delete
    */
   public void deleteColumn(String elementKey) {
-    // ensuring columns is initialized
-    Map<String, ColumnProperties> columns = getColumns();
-    // finding the index of the column in columns
-//    int colIndex = 0;
-//    for (ColumnProperties cp : columns.values()) {
-//      if (cp.getElementKey().equals(elementKey)) {
-//        break;
-//      } else {
-//        colIndex++;
-//      }
-//    }
-//    if (colIndex == columns.length) {
-//      Log.e(TableProperties.class.getName(),
-//          "deleteColumn() did not find the column");
-//      return;
-//    }
     // forming a comma-separated list of columns to keep
-    String csv = DbTable.DB_CSV_COLUMN_LIST;
-    Map<String, ColumnProperties> newColumnMap =
-        new HashMap<String, ColumnProperties>();
-    ColumnProperties colToDelete = null;
-    for (ColumnProperties cp : columns.values()) {
-      if (cp.getElementKey().equals(elementKey)) {
-        colToDelete = cp;
-      } else {
-        csv += ", " + cp.getElementKey();
-        newColumnMap.put(cp.getElementKey(), cp);
-      }
-    }
+    ColumnProperties colToDelete = this.getColumnByElementKey(elementKey);
     if (colToDelete == null) {
       Log.e(TAG, "could not find column to delete with element key: "
           + elementKey);
       return;
     }
-//    for (int i = 0; i < columns.length; i++) {
-//      if (i == colIndex) {
-//        continue;
-//      }
-//      csv += ", " + columns[i].getElementKey();
-//    }
-    // updating TableProperties
-//    Map<String, ColumnProperties> newColumnMap =
-//        new HashMap<String, ColumnProperties>();
-//    ColumnProperties[] newColumns = new ColumnProperties[columns.length - 1];
-//    int index = 0;
-//    for (int i = 0; i < columns.length; i++) {
-//      if (i == colIndex) {
-//        continue;
-//      }
-//      newColumns[index] = columns[i];
-//      index++;
-//    }
-//    ColumnProperties colToDelete = columns[colIndex];
-//    columns = newColumns;
+
     // Update the column order.
     List<String> newColumnOrder = this.getColumnOrder();
     newColumnOrder.remove(elementKey);
-    refreshColumns();
-//    ArrayList<String> newColumnOrder = new ArrayList<String>();
-//    index = 0;
-//    for (String col : columnOrder) {
-//      if (col.equals(elementKey)) {
-//        continue;
-//      }
-//      newColumnOrder.add(col);
-//      index++;
-//    }
-//    setColumnOrder(newColumnOrder);
     // deleting the column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
@@ -1384,7 +1327,7 @@ public class TableProperties {
 	    try {
 	      colToDelete.deleteColumn(db);
 	      this.setColumnOrder(db, newColumnOrder);
-	      reformTable(db, columnOrder);
+	      reformTable(db);
 	      db.setTransactionSuccessful();
 	    } catch (Exception e) {
 	      e.printStackTrace();
@@ -1401,17 +1344,18 @@ public class TableProperties {
   /**
    * Reforms the table.
    */
-  public void reformTable(SQLiteDatabase db, List<String> columnOrder2) {
+  public void reformTable(SQLiteDatabase db) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
+    List<String> columnOrder2 = getColumnOrder();
     for (String col : columnOrder2) {
       csvBuilder.append(", " + col);
     }
     String csv = csvBuilder.toString();
     db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
-    db.execSQL("INSERT INTO backup_ SELECT " + csv + " FROM " + dbTableName);
+    db.execSQL("INSERT INTO backup_(" + csv + ") SELECT " + csv + " FROM " + dbTableName);
     db.execSQL("DROP TABLE " + dbTableName);
     DbTable.createDbTable(db, this);
-    db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv +
+    db.execSQL("INSERT INTO " + dbTableName + "(" + csv + ") SELECT " + csv +
         " FROM backup_");
     db.execSQL("DROP TABLE backup_");
   }

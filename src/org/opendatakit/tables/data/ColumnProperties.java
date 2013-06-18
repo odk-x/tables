@@ -855,13 +855,14 @@ public class ColumnProperties {
    *          the new type
    */
   public void setColumnType(TableProperties tp, ColumnType columnType) {
-    List<String> colOrder = tp.getColumnOrder();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       db.beginTransaction();
       setStringProperty(db, ColumnDefinitionsColumns.ELEMENT_TYPE,
           columnType.name());
-      tp.reformTable(db, colOrder);
+      // TODO: we should run validation rules on the input, converting it to a
+      // form that SQLite will properly convert into the new datatype.
+      tp.reformTable(db);
       db.setTransactionSuccessful();
       db.endTransaction();
       this.elementType = columnType;

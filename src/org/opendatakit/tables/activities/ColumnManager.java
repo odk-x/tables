@@ -293,9 +293,6 @@ public class ColumnManager extends SherlockListActivity {
 					if (colName == null || colName.equals(EMPTY_STRING)) {
 						toastColumnNameError(getString(R.string.error_empty_column_name));
 						alertForNewColumnName(null);
-					} else if (colName.contains(SPACE)) {
-						toastColumnNameError(getString(R.string.error_spaces_column_name));
-						alertForNewColumnName(colName.replace(SPACE_CHAR, UNDERSCORE_CHAR));
 					} else if (tp.getColumnByDisplayName(colName) != null) {
 					  toastColumnNameError(getString(R.string.error_display_name_in_use_column_name, colName));
 					  alertForNewColumnName(null);

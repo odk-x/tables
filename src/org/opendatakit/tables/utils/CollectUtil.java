@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
@@ -267,7 +269,7 @@ public class CollectUtil {
         String additionalAttributes = "";
         if ( type.equals("binary") ) {
           action = "upload";
-          additionalAttributes = " mediatype=\"" + cp.getColumnType().name() + "/*\"";
+          additionalAttributes = " mediatype=\"" + cp.getColumnType().baseContentType() + "/*\"";
         }
         writer.write("<" + action + additionalAttributes + " ref=\"/" + DEFAULT_ROOT_ELEMENT + "/" + cp.getElementKey() + "\">");
         writer.write("<label ref=\"jr:itext('/" + DEFAULT_ROOT_ELEMENT + "/" + cp.getElementKey()
@@ -366,7 +368,7 @@ public class CollectUtil {
    * method in Controller that handles the case for editing every column in a
    * screen by screen fashion, generating the entire form on the fly.
    */
-  private static boolean writeRowDataToBeEdited(
+  private static boolean writeRowDataToBeEdited(Context context,
       // UserTable table, int rowNum,
       Map<String, String> values, TableProperties tp, CollectFormParameters params, String rowId,
       String instanceName) {
@@ -401,7 +403,39 @@ public class CollectUtil {
           writer.write("/>");
         } else {
           writer.write(">");
-          writer.write(StringEscapeUtils.escapeXml(value));
+          ColumnType type = cp.getColumnType();
+          if ( type == ColumnType.IMAGEURI ||
+               type == ColumnType.AUDIOURI ||
+               type == ColumnType.VIDEOURI ||
+               type == ColumnType.MIMEURI ) {
+            @SuppressWarnings("unchecked")
+            Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
+            File f = FileProvider.getAsFile(context, ref.get("uri"));
+            writer.write(StringEscapeUtils.escapeXml(f.getName()));
+          } else if ( type == ColumnType.GEOPOINT ) {
+            String[] parts = value.split(",");
+            String sep = "";
+            StringBuilder b = new StringBuilder();
+            for ( String p : parts ) {
+              b.append(sep);
+              b.append(p.trim());
+              sep = " ";
+            }
+            // and change it to have all for parts -- lat long alt acc
+            for (int count = parts.length; count < 4; ++count ) {
+              b.append(sep);
+              b.append("-999999");
+              sep = " ";
+            }
+            writer.write(StringEscapeUtils.escapeXml(b.toString()));
+          } else if ( type == ColumnType.DATE ) {
+            // TODO: get this in the correct format...
+            writer.write(StringEscapeUtils.escapeXml(value));
+          } else if ( type == ColumnType.DATETIME ) {
+            writer.write(StringEscapeUtils.escapeXml(value));
+          } else if ( type == ColumnType.TIME ) {
+            writer.write(StringEscapeUtils.escapeXml(value));
+          }
           writer.write("</");
           writer.write(cp.getElementKey());
           writer.write(">");
@@ -716,7 +750,7 @@ public class CollectUtil {
       }
     }
 
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(elementKeyToValue, tp, params,
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
         rowId, instanceName);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
@@ -791,6 +825,39 @@ public class CollectUtil {
   }
 
   /**
+   * Helper function to construct the value string for mimeUri types.
+   *
+   * @param context
+   * @param tp
+   * @param formValues
+   * @param mimeTypeBase
+   * @param filename
+   * @return
+   */
+  private static String serializeAsMimeUri(Context context, TableProperties tp,
+      FormValues formValues, String mimeTypeBase, String filename) {
+    String mimeType = mimeTypeBase + "/" + filename.substring(filename.lastIndexOf(".")+1);
+    File filePath = new File(
+        ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+            tp.getTableId(), formValues.instanceID), filename);
+    HashMap<String,String> mimeuri = new HashMap<String,String>();
+    mimeuri.put("uri", FileProvider.getAsUrl(context, filePath));
+    mimeuri.put("contentType", mimeType);
+    try {
+      String serializedValue = ODKFileUtils.mapper.writeValueAsString(mimeuri);
+      return serializedValue;
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("Unable to serialize mimeUri", e);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("Unable to serialize mimeUri", e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("Unable to serialize mimeUri", e);
+    }
+  }
+  /**
    * This gets a map of values for insertion into a row after returning from a
    * Collect form. It handles validating the values and removes nulls from the
    * map.
@@ -808,34 +875,15 @@ public class CollectUtil {
       value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.
       if (value != null) {
-        if (cp.getColumnType() == ColumnType.AUDIOURI) {
-          String mimeType = "audio/" + value.substring(value.lastIndexOf(".")+1);
-          File filePath = new File(
-              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
-                  tp.getTableId(), formValues.instanceID), value);
-          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
-              "\", \"mimeType\":\"" + mimeType + "\"}";
-        } else if (cp.getColumnType() == ColumnType.IMAGEURI) {
-          String mimeType = "image/" + value.substring(value.lastIndexOf(".")+1);
-          File filePath = new File(
-              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
-                  tp.getTableId(), formValues.instanceID), value);
-          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
-              "\", \"mimeType\":\"" + mimeType + "\"}";
-        } else if (cp.getColumnType() == ColumnType.MIMEURI) {
-          String mimeType = "file/" + value.substring(value.lastIndexOf(".")+1);
-          File filePath = new File(
-              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
-                  tp.getTableId(), formValues.instanceID), value);
-          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
-              "\", \"mimeType\":\"" + mimeType + "\"}";
-        } else if (cp.getColumnType() == ColumnType.VIDEOURI) {
-          String mimeType = "video/" + value.substring(value.lastIndexOf(".")+1);
-          File filePath = new File(
-              ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
-                  tp.getTableId(), formValues.instanceID), value);
-          value = "{\"uri\":\"" + FileProvider.getAsUrl(context, filePath) +
-              "\", \"mimeType\":\"" + mimeType + "\"}";
+        ColumnType type = cp.getColumnType();
+        if (type == ColumnType.AUDIOURI) {
+          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
+        } else if (type == ColumnType.IMAGEURI) {
+          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
+        } else if (type == ColumnType.MIMEURI) {
+          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
+        } else if (type == ColumnType.VIDEOURI) {
+          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
         }
         values.put(elementKey, value);
       }
@@ -1078,7 +1126,7 @@ public class CollectUtil {
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(elementKeyToValue, tp, params,
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
         rowId, instanceName);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");

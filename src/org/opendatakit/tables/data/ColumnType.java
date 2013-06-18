@@ -16,7 +16,6 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -93,10 +92,10 @@ public class ColumnType {
 		nameMap.put("time", TIME = new ColumnType("time", "Time", "time"));
 
 		nameMap.put("boolean", BOOLEAN = new ColumnType("boolean", "Boolean", "string"));
-		nameMap.put("mimeuri", MIMEURI = new ColumnType("file", "File", "binary"));
-      nameMap.put("imageuri", IMAGEURI = new ColumnType("image", "Image", "binary"));
-      nameMap.put("audiouri", AUDIOURI = new ColumnType("audio", "Audio", "binary"));
-      nameMap.put("videouri", VIDEOURI = new ColumnType("video", "Video", "binary"));
+		nameMap.put("mimeUri", MIMEURI = new ColumnType("mimeUri", "File", "binary", "file"));
+      nameMap.put("imageUri", IMAGEURI = new ColumnType("imageUri", "Image", "binary", "image"));
+      nameMap.put("audioUri", AUDIOURI = new ColumnType("audioUri", "Audio", "binary", "audio"));
+      nameMap.put("videoUri", VIDEOURI = new ColumnType("videoUri", "Video", "binary", "video"));
 		nameMap.put("multipleChoices", MULTIPLE_CHOICES
 				= new ColumnType("multipleChoices", "Multiple Choices (list)", "string"));
 
@@ -120,6 +119,7 @@ public class ColumnType {
 	private final String typename;
 	private final String label;
 	private final String collectType;
+	private final String baseContentType;
 
 	/*
 	 * I think I need this for serialization...
@@ -129,12 +129,18 @@ public class ColumnType {
 	  typename = "";
 	  label = "";
 	  collectType = "string";
+	  baseContentType = null;
 	}
 
+   private ColumnType(String typename, String label, String collectType, String mediaType) {
+      this.typename = typename;
+      this.label = label;
+      this.collectType = collectType;
+      this.baseContentType = mediaType;
+   }
+
 	private ColumnType(String typename, String label, String collectType) {
-		this.typename = typename;
-		this.label = label;
-		this.collectType = collectType;
+		this(typename, label, collectType, null);
 	}
 
 	public final String name() {
@@ -147,6 +153,10 @@ public class ColumnType {
 
 	public final String collectType() {
 	  return collectType;
+	}
+
+	public final String baseContentType() {
+	  return baseContentType;
 	}
 
 	public final String toString() {
@@ -162,7 +172,7 @@ public class ColumnType {
 		return t;
 	}
 
-	public static final Collection<ColumnType> getAllColumnTypes() {
+	public static final ArrayList<ColumnType> getAllColumnTypes() {
 		ArrayList<ColumnType> sortedList = new ArrayList<ColumnType>(
 				nameMap.values());
 		Collections.sort(sortedList, new Comparator<ColumnType>() {
