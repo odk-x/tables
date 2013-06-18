@@ -786,6 +786,7 @@ class TabularView extends View {
       Integer idx = this.mTable.getColumnIndexOfElementKey(elementKey);
       userDataIndex[j] = (idx == null) ? -1 : idx;
     }
+    this.mTable.reloadCacheOfColumnProperties();
 
     // drawing the cells
     int y = topTopmost;
@@ -816,7 +817,7 @@ class TabularView extends View {
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
           datum =
-              this.mTable.getUserData(i, userDataIndex[j]);
+              this.mTable.getDisplayTextOfData(this.getContext(), i, userDataIndex[j]);
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;

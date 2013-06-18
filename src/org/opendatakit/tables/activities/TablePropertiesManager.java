@@ -507,8 +507,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateCols.add(cp);
-      } else if (cp.getDisplayName().equalsIgnoreCase("latitude")
-          || cp.getDisplayName().equalsIgnoreCase("longitude")) {
+      } else if (TableProperties.isLatitudeColumn(cp) || TableProperties.isLongitudeColumn(cp)) {
         locationCols.add(cp);
       }
     }
@@ -585,7 +584,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If there is none, take the first of the location columns and set it.
       if (latCol == null) {
         for (ColumnProperties column : locationCols) {
-          if (column.getDisplayName().toLowerCase().contains("latitude")) {
+          if (TableProperties.isLatitudeColumn(column)) {
             latCol = column;
             break;
           }
@@ -602,7 +601,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If there is none, take the first of the location columns and set it.
       if (longCol == null) {
         for (ColumnProperties column : locationCols) {
-          if (column.getDisplayName().toLowerCase().contains("longitude")) {
+          if (TableProperties.isLongitudeColumn(column)) {
             longCol = column;
             break;
           }

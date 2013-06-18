@@ -1828,8 +1828,7 @@ public class TableProperties {
           == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
-      } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
-				|| cp.getDisplayName().equalsIgnoreCase("longitude")) {
+      } else if(isLatitudeColumn(cp) || isLongitudeColumn(cp)) {
     	  locationColCount++;
       }
     }
@@ -1845,6 +1844,29 @@ public class TableProperties {
       arr[i] = list.get(i);
     }
     return arr;
+  }
+
+  public static boolean isLatitudeColumn(ColumnProperties cp) {
+    return (cp.getElementType() == ColumnType.GEOPOINT) ||
+        endsWithIgnoreCase(cp.getDisplayName(), "latitude");
+  }
+
+  public static boolean isLongitudeColumn(ColumnProperties cp) {
+    return (cp.getElementType() == ColumnType.GEOPOINT) ||
+        endsWithIgnoreCase(cp.getDisplayName(), "longitude");
+  }
+
+  private static boolean endsWithIgnoreCase(String text, String ending) {
+    if ( text.equalsIgnoreCase(ending) ) {
+      return true;
+    }
+    int spidx = text.lastIndexOf(' ');
+    int usidx = text.lastIndexOf('_');
+    int idx = Math.max(spidx,  usidx);
+    if ( idx == -1 ) {
+      return false;
+    }
+    return text.substring(idx+1).equalsIgnoreCase(ending);
   }
 
   /**

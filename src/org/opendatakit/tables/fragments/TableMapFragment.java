@@ -17,7 +17,7 @@ import android.view.ViewGroup;
 
 /**
  * A TableMapFragment displays map information about a specific table.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class TableMapFragment extends Fragment implements ITableFragment,
@@ -119,12 +119,12 @@ public class TableMapFragment extends Fragment implements ITableFragment,
     // TODO When searching, do something? Not really sure how the search would
     // work on the map yet...
   }
-  
+
   /** The list view fragment. */
   private TableMapListFragment getList() {
     return (TableMapListFragment) getChildFragmentManager().findFragmentByTag(FRAGMENT_TAG_LIST);
   }
-  
+
   /** The map view fragment. */
   private TableMapInnerFragment getMap() {
     return (TableMapInnerFragment) getChildFragmentManager().findFragmentByTag(FRAGMENT_TAG_MAP);
@@ -132,7 +132,7 @@ public class TableMapFragment extends Fragment implements ITableFragment,
 
   /**
    * Checks if the device is a tablet or a phone
-   * 
+   *
    * @param activityContext
    *          The Activity Context.
    * @return Returns true if the device is a Tablet
@@ -140,7 +140,8 @@ public class TableMapFragment extends Fragment implements ITableFragment,
   public static boolean isTabletDevice(Context activityContext) {
     // Verifies if the Generalized Size of the device is XLARGE to be
     // considered a Tablet
-    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
+    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout &
+          Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
 
     // If XLarge, checks if the Generalized Density is at least MDPI
     // (160dpi)

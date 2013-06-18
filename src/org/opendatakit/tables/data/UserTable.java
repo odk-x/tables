@@ -15,14 +15,21 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
@@ -53,6 +60,12 @@ public class UserTable {
    */
   private final TableProperties mTp;
   private final String[] mElementKeyForIndex;
+  // array of ColumnProperties for these element keys
+  // this can go stale when ColumnProperties are changed,
+  // so it must be explicitly recomputed before being used
+  // e.g., reloadCacheOfColumnProperties()
+  private final ArrayList<ColumnProperties> mColumnProperties = new ArrayList<ColumnProperties>();
+
   /**
    * Maps the element key of user-defined columns to the corresponding index in
    * the Row objects.
@@ -213,22 +226,60 @@ public class UserTable {
     return mDataKeyToIndex.get(elementKey);
   }
 
+  public String getData(int cellNum) {
+    int rowNum = cellNum / getWidth();
+    int colNum = cellNum % getWidth();
+    return getData(rowNum, colNum);
+  }
+
   public String getData(int rowNum, int colNum) {
     return mRows.get(rowNum).getDataAtIndex(colNum);
   }
 
-  public String[] getRowData(int rowNum) {
-    return mRows.get(rowNum).getAllData();
-  }
-
-  public String getData(int cellNum) {
+  public String getDisplayTextOfData(Context context, int cellNum) {
     int rowNum = cellNum / getWidth();
     int colNum = cellNum % getWidth();
-    return mRows.get(rowNum).getDataAtIndex(colNum);
+    return getDisplayTextOfData(context, rowNum, colNum);
   }
 
-  public String getUserData(int rowNum, int colNum) {
-    return mRows.get(rowNum).getDataAtIndex(colNum);
+  public String getDisplayTextOfData(Context context, int rowNum, int colNum) {
+    String raw = getData(rowNum,colNum);
+    ColumnProperties cp = mColumnProperties.get(colNum);
+    ColumnType type = cp.getElementType();
+    if ( type == ColumnType.AUDIOURI ||
+         type == ColumnType.IMAGEURI ||
+         type == ColumnType.MIMEURI ||
+         type == ColumnType.VIDEOURI ) {
+      try {
+        @SuppressWarnings("rawtypes")
+        Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
+        String uri = (String) m.get("uri");
+        File f = FileProvider.getAsFile(context, uri);
+        return f.getName();
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return raw;
+    } else {
+      return raw;
+    }
+  }
+
+  /**
+   * The cache should be reloaded before using getDisplayTextOfData
+   * (above) because the column properties could change due to
+   * changes in the property values for those columns.
+   */
+  public void reloadCacheOfColumnProperties() {
+    mColumnProperties.clear();
+    for ( int i = 0 ; i < mElementKeyForIndex.length ; ++i ) {
+      String elementKey = mElementKeyForIndex[i];
+      mColumnProperties.add(mTp.getColumnByElementKey(elementKey));
+    }
   }
 
   /**

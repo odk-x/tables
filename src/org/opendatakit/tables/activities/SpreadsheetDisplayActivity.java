@@ -588,7 +588,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 //	        Context context = SpreadsheetDisplayActivity.this;
 	        context = SpreadsheetDisplayActivity.this;
 	        TextView valueView = new TextView(context);
-	        valueView.setText(table.getData(cellId));
+	        valueView.setText(table.getDisplayTextOfData(SpreadsheetDisplayActivity.this, cellId));
 	        valueView.setTextColor(Color.parseColor("#000000"));
 	        Button menuButton = new Button(context);
 	        menuButton.setText("Menu");

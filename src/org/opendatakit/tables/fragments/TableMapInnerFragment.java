@@ -13,6 +13,7 @@ import org.opendatakit.tables.activities.TableActivity;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -253,7 +254,8 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         continue;
 
       // Create a LatLng from the latitude and longitude strings.
-      LatLng location = parseLocationFromString(latitudeString, longitudeString);
+      LatLng location = parseLocationFromString(latitudeColumn, latitudeString,
+                                                longitudeColumn, longitudeString);
       if (location == null)
         continue;
       if (firstLocation == null)
@@ -306,15 +308,12 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     String latitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
-      // any columns labeled
-      // latitude or longitude.
-      if (latitudeElementKey == null) {
-        for (ColumnProperties cp : tp.getColumns().values()) {
-          if (cp.getDisplayName().equalsIgnoreCase("latitude")) {
-            latitudeElementKey = cp.getElementKey();
-            kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
-            break;
-          }
+      // any columns labeled latitude or longitude.
+      for (ColumnProperties cp : tp.getColumns().values()) {
+        if (TableProperties.isLatitudeColumn(cp)) {
+          latitudeElementKey = cp.getElementKey();
+          kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
+          break;
         }
       }
     }
@@ -330,13 +329,11 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      if (longitudeElementKey == null) {
-        for (ColumnProperties cp : tp.getColumns().values()) {
-          if (cp.getDisplayName().equalsIgnoreCase("longitude")) {
-            longitudeElementKey = cp.getElementKey();
-            kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
-            break;
-          }
+      for (ColumnProperties cp : tp.getColumns().values()) {
+        if (TableProperties.isLongitudeColumn(cp)) {
+          longitudeElementKey = cp.getElementKey();
+          kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
+          break;
         }
       }
     }
@@ -362,8 +359,18 @@ public class TableMapInnerFragment extends SherlockMapFragment {
   /**
    * Parses the latitude and longitude strings and creates a LatLng.
    */
-  private LatLng parseLocationFromString(String latitude, String longitude) {
+  private LatLng parseLocationFromString( ColumnProperties latitudeColumn, String latitude,
+                                          ColumnProperties longitudeColumn, String longitude) {
     try {
+      if ( latitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+        String[] parts = latitude.split(",");
+        latitude = parts[0].trim();
+      }
+
+      if ( longitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+        String[] parts = longitude.split(",");
+        longitude = parts[1].trim();
+      }
       return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
     } catch (Exception e) {
       // Log.e(TAG, "The following location is not in the proper lat,lng form: "
@@ -404,8 +411,25 @@ public class TableMapInnerFragment extends SherlockMapFragment {
             .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
         String latitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
         String longitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
-        elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude));
-        elementNameToValue.put(longitudeElementKey, Double.toString(location.longitude));
+        {
+          ColumnProperties latitudeColumn = tp.getColumnByElementKey(latitudeElementKey);
+          if ( latitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+            elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude) +
+                                      "," + Double.toString(location.longitude));
+          } else {
+            elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude));
+          }
+        }
+
+        {
+          ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
+          if ( longitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+            elementNameToValue.put(longitudeElementKey, Double.toString(location.latitude) +
+                                      "," + Double.toString(location.longitude));
+          } else {
+            elementNameToValue.put(longitudeElementKey, Double.toString(location.longitude));
+          }
+        }
         // To store the mapping in a bundle, we need to put it in string list.
         ArrayList<String> bundleStrings = new ArrayList<String>();
         for (String key : elementNameToValue.keySet()) {

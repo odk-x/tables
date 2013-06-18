@@ -624,7 +624,7 @@ public class SyncProcessor {
         // We know that the columnsToSync should be metadata keys for the user-
         // defined columns. If they're not present we know there is a problem,
         String columnElementKey = columnsToSync.get(j);
-        values.put(columnElementKey, rows.getUserData(i, userDataIndex[j]));
+        values.put(columnElementKey, rows.getData(i, userDataIndex[j]));
           // And now add the necessary metadata. This will be based on the
           // columns specified as synchable metadata columns in DbTable.
         for (String metadataElementKey : cachedColumnsToSync.keySet()) {
