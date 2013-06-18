@@ -155,6 +155,11 @@ public class DataUtil {
     }
 
     public String validifyValue(ColumnProperties cp, String input) {
+        if ( input == null ) {
+          // TODO: should we check for required values?
+          // null values are always accepted (???)
+          return input;
+        }
         if ( cp.getColumnType() == ColumnType.DATE ) {
             return validifyDateValue(input);
         } else if ( cp.getColumnType() == ColumnType.DATETIME ) {

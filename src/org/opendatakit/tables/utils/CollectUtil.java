@@ -435,6 +435,8 @@ public class CollectUtil {
             writer.write(StringEscapeUtils.escapeXml(value));
           } else if ( type == ColumnType.TIME ) {
             writer.write(StringEscapeUtils.escapeXml(value));
+          } else {
+            writer.write(StringEscapeUtils.escapeXml(value));
           }
           writer.write("</");
           writer.write(cp.getElementKey());
