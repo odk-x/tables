@@ -8,6 +8,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.CustomTableView;
+import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -86,8 +87,10 @@ public class TableMapListFragment extends SherlockFragment {
         return;
       }
       // Create the custom view and set it.
-      CustomTableView view = CustomTableView.get(getActivity(), tp, table, filename, mIndexes,
-          getFragmentManager().findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP));
+      CustomTableView view = CustomTableView.get(getActivity(), tp, table, 
+          filename, mIndexes, getFragmentManager()
+          .findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP),
+          (CustomViewCallbacks) getActivity());
       view.display();
 
       LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(

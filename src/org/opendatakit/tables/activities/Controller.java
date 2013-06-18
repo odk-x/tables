@@ -35,6 +35,7 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
+import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -71,7 +72,7 @@ import com.actionbarsherlock.view.SubMenu;
  * class, which seemed undesirable since that would require that all of the
  * display activities be children of MapActivity for no good reason).
  */
-public class Controller {
+public class Controller implements CustomViewCallbacks {
 
   private static final String TAG = "Controller";
 
@@ -948,4 +949,13 @@ public class Controller {
       setView(wrapper);
     }
   }
+
+    /*
+     * (non-Javadoc)
+     * @see org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks#getSearchString()
+     */
+    @Override
+    public String getSearchString() {
+      return this.getSearchText();
+    }
 }

@@ -24,6 +24,7 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
+import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -49,7 +50,8 @@ import com.actionbarsherlock.view.SubMenu;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableActivity extends SherlockFragmentActivity {
+public class TableActivity extends SherlockFragmentActivity 
+    implements CustomViewCallbacks{
 
   // / Static Strings ///
   public static final String INTENT_KEY_TABLE_ID = "tableId";
@@ -760,5 +762,10 @@ public class TableActivity extends SherlockFragmentActivity {
       wrapper.addView(buttonWrapper);
       setView(wrapper);
     }
+  }
+
+  @Override
+  public String getSearchString() {
+    return getSearchFieldText();
   }
 }

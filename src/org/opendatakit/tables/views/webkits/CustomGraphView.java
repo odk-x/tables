@@ -52,8 +52,8 @@ public class CustomGraphView extends CustomView {
 	private GraphData graphData;
 
 	private CustomGraphView(Activity activity, String graphName,
-	    String potentialGraphName) {
-		super(activity);
+	    String potentialGraphName, CustomViewCallbacks callbacks) {
+		super(activity, callbacks);
 		this.mActivity = activity;
 		this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "optionspane.html";
 		this.graphName = graphName;
@@ -63,9 +63,10 @@ public class CustomGraphView extends CustomView {
 	}
 
 	public static CustomGraphView get(Activity activity, TableProperties tp,
-			UserTable table, String graphName, String potentialGraphName) {
+			UserTable table, String graphName, String potentialGraphName,
+			Controller controller) {
 		CustomGraphView ctv = new CustomGraphView(activity, graphName,
-		    potentialGraphName);
+		    potentialGraphName, controller);
 		ctv.set(tp, table);
 		return ctv;
 	}
