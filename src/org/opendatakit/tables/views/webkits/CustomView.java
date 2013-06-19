@@ -759,13 +759,11 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public boolean openTable(String tableName, String query) {
-			Log.d(TAG, "in openTable for table: " + tableName);
 			initTpInfo();
 			if (!tpMap.containsKey(tableName)) {
 				Log.e(TAG, "tableName [" + tableName + "] not in map");
 				return false;
 			}
-			Log.e(TAG, "launching table activity for " + tableName);
 			Controller.launchTableActivity(mContext, tpMap.get(tableName),
 					query, false);
 			return true;
@@ -810,6 +808,61 @@ public abstract class CustomView extends LinearLayout {
 			List<String> columnOrder = tp.getColumnOrder();
 			return new TableData(mContext, tp, dbt.getRaw(query,
 					columnOrder.toArray(new String[columnOrder.size()])));
+		}
+		
+		/**
+		 * Query the database using sql. Only returns the columns for the table 
+		 * specified by the tableName parameter. 
+		 * <p>
+		 * Any arguments in the WHERE statement must be replaced by "?" and 
+		 * contained in order in the selectionArgs array.
+		 * <p>
+		 * For example, if you wanted all the rows where the column foo equaled
+		 * bar, the where clause would be "WHERE foo = ? " and the selection args
+		 * would be ["bar"].
+		 * @param tableName the display name of the table for which you want the
+		 * columns to be returned. 
+		 * @param whereClause the where clause for the selection. Must begin with
+		 * "WHERE", as if it was appended immediately after "SELECT * FROM 
+		 * tableName ". References to other tables, e.g. for joins, in this 
+		 * statement must use the name of the table as returned by {@link 
+		 * getDbNameForTable}.
+		 * @param selectionArgs
+		 * @return
+		 */
+		public TableData queryWithSql(String tableName, String whereClause,
+		    String[] selectionArgs) {
+		  // We're going to handle this by passing it off to the DbTable
+		  // rawSqlQuery(String whereClause, String[] selectionArgs) argument.
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+          Log.e(TAG, "request for table with displayName [" + tableName + 
+              "] cannot be found.");
+          return null;
+        }
+        DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
+        UserTable userTable = dbTable.rawSqlQuery(whereClause, selectionArgs);
+        TableData tableData = new TableData(mContext, tp, userTable);
+        return tableData;
+		}
+		
+		/**
+		 * Return the database name of the table. Important for use in {@link 
+		 * queryWithSql}. Returns null if the table could not be found.
+		 * @param displayName
+		 * @return the database name of the table, or null if it could not be 
+		 * found.
+		 */
+		public String getDbNameForTable(String displayName) {
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(displayName);
+		  if (tp == null) {
+		    Log.e(TAG, "request for table with displayName [" + displayName + 
+		        "] cannot be found.");
+		    return null;
+		  }
+		  return tp.getDbTableName();
 		}
 
 		/**

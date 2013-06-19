@@ -232,6 +232,38 @@ public class DbTable {
 	    	}
 	    }
     }
+    
+    /**
+     * Get a {@link UserTable} for this table based on the given where clause.
+     * All columns from the table are returned.
+     * <p>
+     * It performs SELECT * FROM table whereClause.
+     * @param whereClause the whereClause for the selection, beginning with
+     * "WHERE". Must include "?" instead of actual values, which are instead
+     * passed in the selectionArgs.
+     * @param selectionArgs the selection arguments for the where clause.
+     * @return
+     */
+    public UserTable rawSqlQuery(String whereClause, String[] selectionArgs) {
+      SQLiteDatabase db = null;
+      Cursor c = null;
+      try {
+        String sqlQuery = "SELECT * FROM " + this.tp.getDbTableName() + " " +
+            whereClause;
+        db = dbh.getReadableDatabase();
+        c = db.rawQuery(sqlQuery, selectionArgs);
+        UserTable table = buildTable(c, tp, tp.getColumnOrder());
+        return table;
+      } finally {
+        try {
+          if ( c != null && !c.isClosed() ) {
+            c.close();
+          }
+        } finally {
+          // TODO: fix the db close problem.
+        }
+      }
+    }
 
     public UserTable getRaw(Query query, String[] columns) {
       List<String> desiredColumns = tp.getColumnOrder();
