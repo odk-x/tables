@@ -29,8 +29,8 @@ import org.joda.time.Interval;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
+import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
@@ -83,15 +83,15 @@ public class MsgHandler {
     private static final int DEFAULT_LIMIT = 25;
 
     private DataUtil du;
-    private DataManager dm;
+    private DbHelper dbh;
     private TableProperties[] tps;
     private TableProperties[] dataTps;
     private TableProperties[] scTps;
     private SMSSender smsSender;
 
-    public MsgHandler(DataManager dm, SMSSender smsSender) {
+    public MsgHandler(DbHelper dbh, SMSSender smsSender) {
         this.du = DataUtil.getDefaultDataUtil();
-        this.dm = dm;
+        this.dbh = dbh;
         this.smsSender = smsSender;
     }
 
@@ -127,11 +127,13 @@ public class MsgHandler {
     }
 
     private void init() {
-        tps = dm.getAllTableProperties(KeyValueStore.Type.ACTIVE);
-        dataTps = dm.getTablePropertiesForDataTables(
+        tps = TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE);
+        dataTps = TableProperties.getTablePropertiesForDataTables(dbh,
             KeyValueStore.Type.ACTIVE);
         // TODO: verify that the tables returned are still valid (that columns haven't been removed or renamed)
-        scTps = dm.getShortcutTableProperties(KeyValueStore.Type.ACTIVE);
+        scTps = TableProperties.getTablePropertiesForShortcutTables(dbh,
+            KeyValueStore.Type.ACTIVE);
         Log.d("MSGH", "scTps:" + Arrays.toString(scTps));
     }
 
@@ -152,7 +154,7 @@ public class MsgHandler {
             		cpLabel.getElementKey(),
             		cpInput.getElementKey(),
             		cpOutput.getElementKey()};
-            DbTable dbt = dm.getDbTable(scTp.getTableId());
+            DbTable dbt = DbTable.getDbTable(dbh, scTp);
             UserTable table = dbt.getRaw(new Query(tps, scTp), scCols);
             for (int i = 0; i < table.getHeight(); i++) {
                 scNames.add(table.getData(i, 0));
@@ -256,7 +258,7 @@ public class MsgHandler {
                 (msg.charAt(lastHashIndex - 1) == SPACE_CHAR)) {
             password = msg.substring(lastHashIndex + 1);
         }
-        DbTable sDbt = dm.getDbTable(secTableId);
+        DbTable sDbt = DbTable.getDbTable(dbh, secTableId);
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         UserTable table = sDbt.getRaw(
@@ -323,7 +325,7 @@ public class MsgHandler {
                 rowValues.put(cp.getElementKey(), value);
             }
         }
-        DbTable dbt = dm.getDbTable(tp.getTableId());
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
         dbt.addRow(rowValues, null, null, phoneNum, null /* instanceName */,
             null /* formId */, null /* locale */);
         return true;
@@ -512,7 +514,7 @@ public class MsgHandler {
             colNames[++count] = cp.getElementKey();
           }
         }
-        DbTable dbt = dm.getDbTable(tp.getTableId());
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
         UserTable table = dbt.getRaw(query, colNames);
         String resp;
         if (table.getHeight() == 0) {
@@ -553,7 +555,7 @@ public class MsgHandler {
             }
         }
         query.setOrderBy(Query.SortOrder.ASCENDING, drSlotColumn);
-        DbTable dbt = dm.getDbTable(tp.getTableId());
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
         UserTable table = dbt.getRaw(query,
                 new String[] {drSlotColumn.getElementKey()});
         // TODO: range should not be slash-separated but stored as two columns OR json in db...

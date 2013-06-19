@@ -34,7 +34,6 @@ import org.opendatakit.aggregate.odktables.entity.api.TableDefinitionResource;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -73,16 +72,13 @@ public class SyncProcessor {
   }
 
   private final DataUtil du;
-  private final DataManager dm;
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
   private final DbHelper dbh;
 
-  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, DataManager dm,
-      SyncResult syncResult) {
+  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, SyncResult syncResult) {
     this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
-    this.dm = dm;
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
   }
@@ -95,7 +91,7 @@ public class SyncProcessor {
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = dm.getTablePropertiesForTablesSetToSync(
+    TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
@@ -119,7 +115,7 @@ public class SyncProcessor {
    *          {@link SyncState#rest}.
    */
   public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
-    DbTable table = dm.getDbTable(tp.getTableId());
+    DbTable table = DbTable.getDbTable(dbh, tp.getTableId());
     boolean success = false;
     beginTableTransaction(tp);
     try {

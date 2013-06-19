@@ -22,7 +22,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -85,7 +84,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
         "Edit Column Color Rules";
 
-    private DataManager dm;
+    private DbHelper dbh;
     private Controller c;
     private UserTable table;
     private int indexedCol;
@@ -101,7 +100,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         // remove a title
         setTitle("");
 
-        dm = new DataManager(DbHelper.getDbHelper(this));
+        dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
 //        init();
     }
@@ -120,7 +119,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       this.mCachedColumnOrder = tp.getColumnOrder();
       c.refreshDbTable();
 //      tp.refreshColumns();
-      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+          KeyValueStore.Type.ACTIVE),
           tp);
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
@@ -146,7 +146,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+          KeyValueStore.Type.ACTIVE),
           table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
@@ -735,8 +736,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  String tableId = joinColumn.getTableId();
 	                  String elementKey = joinColumn.getElementKey();
 	                  TableProperties joinedTable =
-	                      dm.getTableProperties(tableId,
-	                          KeyValueStore.Type.ACTIVE);
+                         TableProperties.getTablePropertiesForTable(dbh, tableId,
+                             KeyValueStore.Type.ACTIVE);
 	                  String joinedColDisplayName =
 	                      joinedTable.getColumnByElementKey(elementKey)
 	                      .getDisplayName();
@@ -744,8 +745,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  // object, but alas, it looks like atm it is hardcoded.
 	                  String queryText = joinedColDisplayName + ":" +
 	                      table.getData(cellId);
-	                    c.launchTableActivity(context,
-	                        dm.getTableProperties(tableId,
+	                    Controller.launchTableActivity(context,
+	                        TableProperties.getTablePropertiesForTable(dbh, tableId,
 	                            KeyValueStore.Type.ACTIVE),
 	                        queryText, c.getIsOverview());
 	                    c.removeOverlay();

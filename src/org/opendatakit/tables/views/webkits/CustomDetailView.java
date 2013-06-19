@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;

@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
@@ -157,14 +156,14 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
       // filter tables to remove ones already downloaded
       if (tables != null) {
-        DataManager dm = new DataManager(DbHelper.getDbHelper(AggregateDownloadTableActivity.this));
+        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
         // we're going to check for downloaded tables ONLY in the server store,
         // b/c there will only be UUID collisions if the tables have been
         // downloaded, which means they must be in the server KVS. The
         // probability of a user defined table, which would NOT have entries
         // in the server KVS, having the same UUID as another table is
         // virtually zero.
-        TableProperties[] props = dm.getTablePropertiesForDataTables(
+        TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
             KeyValueStore.Type.SERVER);
         Set<String> tableIds = tables.keySet();
         for (TableProperties tp : props) {
@@ -230,7 +229,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
       SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
-          new DataManager(dbh), new SyncResult());
+          new SyncResult());
       processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.

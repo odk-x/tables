@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import org.opendatakit.tables.data.DataManager;
+
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -39,7 +39,7 @@ import com.actionbarsherlock.view.MenuItem;
 public class ConflictResolutionActivity extends SherlockActivity
         implements DisplayActivity, ConflictResolutionView.Controller {
 
-    private DataManager dm;
+    private DbHelper dbh;
     private Controller c;
     private Query query;
     private ConflictTable table;
@@ -49,14 +49,15 @@ public class ConflictResolutionActivity extends SherlockActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dm = new DataManager(DbHelper.getDbHelper(this));
+        dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
         init();
     }
 
     @Override
     public void init() {
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getDbTable().getConflictTable(query);

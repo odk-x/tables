@@ -7,7 +7,6 @@ import java.util.Stack;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -50,7 +49,7 @@ import com.actionbarsherlock.view.SubMenu;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableActivity extends SherlockFragmentActivity 
+public class TableActivity extends SherlockFragmentActivity
     implements CustomViewCallbacks{
 
   // / Static Strings ///
@@ -108,7 +107,7 @@ public class TableActivity extends SherlockFragmentActivity
   private String mRowId;
 
   private DataUtil mDataUtil;
-  private DataManager mDataManager;
+  private DbHelper mDbh;
   private DbTable mDbTable;
   private Stack<String> mSearchText;
   private boolean mIsOverview;
@@ -145,10 +144,11 @@ public class TableActivity extends SherlockFragmentActivity
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
 
     // Initialize data objects.
-    mDataManager = new DataManager(DbHelper.getDbHelper(this));
-    mTableProperties = mDataManager.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
-    mDbTable = mDataManager.getDbTable(tableId);
-    mQuery = new Query(mDataManager.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+    mDbh = DbHelper.getDbHelper(this);
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh, tableId,
+        KeyValueStore.Type.ACTIVE);
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
         mTableProperties);
 
     // Initialize layout fields.
@@ -174,7 +174,7 @@ public class TableActivity extends SherlockFragmentActivity
 
   public void init() {
     refreshDbTable();
-    mQuery = new Query(mDataManager.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
         mTableProperties);
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
@@ -234,7 +234,7 @@ public class TableActivity extends SherlockFragmentActivity
    * things, and a refactor should probably end up fixing this.
    */
   void refreshDbTable() {
-    mDbTable = mDataManager.getDbTable(mTableProperties.getTableId());
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties.getTableId());
   }
 
   /**
@@ -366,16 +366,18 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleListViewManagerReturn() {
-    mTableProperties = mDataManager.getTableProperties(mTableProperties.getTableId(),
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+        mTableProperties.getTableId(),
         KeyValueStore.Type.ACTIVE);
-    mDbTable = mDataManager.getDbTable(mTableProperties.getTableId());
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
   }
 
   private void handleTablePropertiesManagerReturn() {
     TableViewType oldViewType = mTableProperties.getCurrentViewType();
-    mTableProperties = mDataManager.getTableProperties(mTableProperties.getTableId(),
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+        mTableProperties.getTableId(),
         KeyValueStore.Type.ACTIVE);
-    mDbTable = mDataManager.getDbTable(mTableProperties.getTableId());
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
     if (oldViewType == mTableProperties.getCurrentViewType()) {
       init();
     } else {
@@ -384,9 +386,10 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleColumnManagerReturn() {
-    mTableProperties = mDataManager.getTableProperties(mTableProperties.getTableId(),
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+        mTableProperties.getTableId(),
         KeyValueStore.Type.ACTIVE);
-    mDbTable = mDataManager.getDbTable(mTableProperties.getTableId());
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
   }
 
   void deleteRow(String rowId) {

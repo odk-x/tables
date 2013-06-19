@@ -15,13 +15,13 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
@@ -93,7 +93,6 @@ public class ListDisplayActivity extends SherlockActivity
    */
   public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
-    private DataManager dm;
     private Controller c;
     private Query query;
     private UserTable table;
@@ -108,10 +107,10 @@ public class ListDisplayActivity extends SherlockActivity
         dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
         kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
-        dm = new DataManager(DbHelper.getDbHelper(this));
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
     }
 

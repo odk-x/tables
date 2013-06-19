@@ -18,11 +18,11 @@ package org.opendatakit.tables.activities.graphs;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 
@@ -85,7 +85,6 @@ implements DisplayActivity {
 	private static final int RCODE_ODKCOLLECT_ADD_ROW =
 			Controller.FIRST_FREE_RCODE;
 
-	private DataManager dm;
 	private Controller c;
 	private Query query;
 	private UserTable table;
@@ -107,10 +106,10 @@ implements DisplayActivity {
 		}
 		c = new Controller(this, this, getIntent().getExtras());
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
-		dm = new DataManager(DbHelper.getDbHelper(this));
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
-		query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+		query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+          KeyValueStore.Type.ACTIVE),
 				c.getTableProperties());
 	}
 
@@ -313,7 +312,6 @@ implements DisplayActivity {
     private static final int RCODE_ODKCOLLECT_ADD_ROW =
         Controller.FIRST_FREE_RCODE;
 
-    private DataManager dm;
     private Controller c;
     private Query query;
     private List<String> labels;
@@ -325,8 +323,8 @@ implements DisplayActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
-        dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         init();
     }

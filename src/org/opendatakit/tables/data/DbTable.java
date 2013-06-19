@@ -181,13 +181,6 @@ public class DbTable {
     }
 
     /**
-     * @return a raw table of all the data in the table
-     */
-    public UserTable getRaw() {
-        return getRaw(null, null, null, null);
-    }
-
-    /**
      * Gets an {@link UserTable} restricted by the query as necessary. The
      * list of columns should be the element keys to select, and should not
      * include any metadata columns, which will all be returned in the
@@ -272,42 +265,6 @@ public class DbTable {
         return table;
 //        return new UserTable(table.getRowIds(), getUserHeader(),
 //                table.getData(), footerQuery(query));
-    }
-
-    public GroupTable getGroupTable(Query query, ColumnProperties groupColumn,
-            Query.GroupQueryType type) {
-    	SQLiteDatabase db = null;
-    	Cursor c = null;
-    	try {
-	        SqlData sd = query.toGroupSql(groupColumn.getElementKey(), type);
-	        db = dbh.getReadableDatabase();
-	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        int gcColIndex = c.getColumnIndexOrThrow(
-	                groupColumn.getElementKey());
-	        int countColIndex = c.getColumnIndexOrThrow("g");
-	        int rowCount = c.getCount();
-	        String[] keys = new String[rowCount];
-	        double[] values = new double[rowCount];
-	        c.moveToFirst();
-	        for (int i = 0; i < rowCount; i++) {
-	            keys[i] = c.getString(gcColIndex);
-	            values[i] = c.getDouble(countColIndex);
-	            c.moveToNext();
-	        }
-	        return new GroupTable(keys, values);
-	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
-	    }
     }
 
     public ConflictTable getConflictTable(Query query) {
@@ -765,29 +722,6 @@ public class DbTable {
         }
         selBuilder.delete(0, 5);
         return selBuilder.toString();
-    }
-
-    public class GroupTable {
-
-        private String[] keys;
-        private double[] values;
-
-        GroupTable(String[] keys, double[] values) {
-            this.keys = keys;
-            this.values = values;
-        }
-
-        public int getSize() {
-            return values.length;
-        }
-
-        public String getKey(int index) {
-            return keys[index];
-        }
-
-        public double getValue(int index) {
-            return values[index];
-        }
     }
 
     public class ConflictTable {

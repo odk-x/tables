@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.SyncProcessor;
@@ -28,8 +27,6 @@ import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.files.FileSyncAdapter;
-
-import com.actionbarsherlock.app.SherlockActivity;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -49,6 +46,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import com.actionbarsherlock.app.SherlockActivity;
 
 /**
  * An activity for downloading from and uploading to an ODK Aggregate instance.
@@ -289,7 +288,7 @@ public class Aggregate extends SherlockActivity {
 
     @Override
     protected void onPreExecute() {
-      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait), 
+      pd = ProgressDialog.show(Aggregate.this, getString(R.string.please_wait),
           getString(R.string.synchronizing));
       success = false;
       message = null;
@@ -301,8 +300,8 @@ public class Aggregate extends SherlockActivity {
         DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
         Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
             prefs.getAuthToken());
-        SyncProcessor processor = new SyncProcessor(dbh, 
-            synchronizer, new DataManager(dbh), new SyncResult());
+        SyncProcessor processor = new SyncProcessor(dbh,
+            synchronizer, new SyncResult());
         processor.synchronize();
         success = true;
       } catch (InvalidAuthTokenException e) {
