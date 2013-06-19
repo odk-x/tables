@@ -154,8 +154,7 @@ public class ListDisplayActivity extends SherlockActivity
                 c.getTableProperties().getBackingStoreType());
           }
         }
-        view = CustomTableView.get(this, c.getTableProperties(), table,
-                filename, c);
+        view = CustomTableView.get(this, table, filename, c);
         // change the info bar text IF necessary
         c.setListViewInfoBarText();
         displayView();

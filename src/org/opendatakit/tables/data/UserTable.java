@@ -315,6 +315,10 @@ public class UserTable {
     return this.mUnmodifiableCachedDataKeyToIndex;
   }
 
+  public TableProperties getTableProperties() {
+    return mTp;
+  }
+
   /**
    * Return a map containing the mapping of the element keys for the
    * ODKTables-specified metadata columns to their index in the array returned

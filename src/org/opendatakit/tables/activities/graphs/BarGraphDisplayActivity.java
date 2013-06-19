@@ -131,7 +131,7 @@ implements DisplayActivity {
 				c.getDbTable().getUserOverviewTable(query) :
 					c.getDbTable().getUserTable(query);
 
-				view = CustomGraphView.get(this, c.getTableProperties(), table, 
+				view = CustomGraphView.get(this, table,
 				    graphName, potentialGraphName, c);
 				c.setGraphViewInfoBarText(graphName);
 				displayView();

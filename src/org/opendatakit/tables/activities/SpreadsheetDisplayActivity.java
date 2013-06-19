@@ -89,7 +89,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     private Controller c;
     private UserTable table;
     private int indexedCol;
-    private TableProperties mTp;
     private List<String> mCachedColumnOrder;
 
     private int lastDataCellMenued;
@@ -117,12 +116,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      this.mTp = c.getTableProperties();
-      this.mCachedColumnOrder = mTp.getColumnOrder();
+      TableProperties tp = c.getTableProperties();
+      this.mCachedColumnOrder = tp.getColumnOrder();
       c.refreshDbTable();
 //      tp.refreshColumns();
       Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-            mTp);
+          tp);
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?
                 c.getDbTable().getUserOverviewTable(query) :
@@ -132,7 +131,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         indexedCol =
             c.getTableProperties().getColumnIndex(indexedColElementKey);
         // setting up the view
-        c.setDisplayView(buildView(mTp));
+        c.setDisplayView(buildView(tp));
         setContentView(c.getContainerView());
     }
 
@@ -142,13 +141,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, tp, table, indexedCol);
+            return new SpreadsheetView(this, this, table, indexedCol);
         }
     }
 
     private void openCollectionView(int rowNum) {
       Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-          mTp);
+          table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
@@ -306,7 +305,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
            columnOrder.get(lastHeaderCellMenued));
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-           this.mTp.getTableId());
+           table.getTableProperties().getTableId());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
            ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);

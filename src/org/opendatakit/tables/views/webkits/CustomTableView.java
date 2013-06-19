@@ -40,12 +40,11 @@ public class CustomTableView extends CustomView {
 
   private Activity mActivity;
   private Map<String, Integer> colIndexTable;
-  private TableProperties tp;
   private UserTable table;
   private String filename;
   private Fragment mFragment;
 
-  private CustomTableView(Activity activity, String filename, 
+  private CustomTableView(Activity activity, String filename,
       CustomViewCallbacks callbacks) {
     super(activity, callbacks);
     this.mActivity = activity;
@@ -53,19 +52,18 @@ public class CustomTableView extends CustomView {
     colIndexTable = new HashMap<String, Integer>();
   }
 
-  public static CustomTableView get(Activity activity, TableProperties tp, UserTable table,
+  public static CustomTableView get(Activity activity, UserTable table,
       String filename, CustomViewCallbacks callbacks) {
     CustomTableView ctv = new CustomTableView(activity, filename, callbacks);
-    ctv.set(tp, table);
+    ctv.set(table);
     return ctv;
   }
 
-  private void set(TableProperties tp, UserTable table) {
-    this.tp = tp;
+  private void set(UserTable table) {
     this.table = table;
     colIndexTable.clear();
     Map<String, ColumnProperties> elementKeyToColumnProperties =
-        tp.getColumns();
+        table.getTableProperties().getColumns();
     colIndexTable.putAll(table.getMapOfUserDataToIndex());
     for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
       String smsLabel = cp.getSmsLabel();
@@ -79,9 +77,9 @@ public class CustomTableView extends CustomView {
 
   // //////////////////////////// TEST ///////////////////////////////
 
-    public static CustomTableView get(Activity activity, TableProperties tp,
+    public static CustomTableView get(Activity activity,
         UserTable table, String filename, int index, Controller controller) {
-    	CustomTableView ctv = new CustomTableView(activity, filename, 
+    	CustomTableView ctv = new CustomTableView(activity, filename,
     	    controller);
     	// Create a new table with only the row specified at index.
     	// Create all of the arrays necessary to create a UserTable.
@@ -98,13 +96,14 @@ public class CustomTableView extends CustomView {
     		footers[i] = table.getFooter(i);
     		metadata[0] = table.getAllMetadataForRow(i);
     	}
-    	UserTable singleRowTable = new UserTable(tp, rowIds, headers, data,
+    	UserTable singleRowTable = new UserTable(table.getTableProperties(),
+    	    rowIds, headers, data,
     	    table.getElementKeysForIndex(),
     	    table.getMapOfUserDataToIndex(), metadata,
     	    table.getMapOfMetadataToIndex(), footers);
 //    	UserTable singleRowTable = new UserTable(rowIds, headers, data, footers);
 
-    	ctv.set(tp, singleRowTable);
+    	ctv.set(singleRowTable);
     	return ctv;
     }
 
@@ -125,9 +124,9 @@ public class CustomTableView extends CustomView {
      *          them.
      * @return The custom view that represents the indexes in the table.
      */
-    public static CustomTableView get(Activity activity, TableProperties tp, UserTable table,
+    public static CustomTableView get(Activity activity, UserTable table,
         String filename, List<Integer> indexes, Controller controller) {
-      CustomTableView ctv = new CustomTableView(activity, filename, 
+      CustomTableView ctv = new CustomTableView(activity, filename,
           controller);
       // Create all of the arrays necessary to create a UserTable.
       String[] rowIds = new String[indexes.size()];
@@ -146,13 +145,14 @@ public class CustomTableView extends CustomView {
         }
         footers[i] = table.getFooter(i);
       }
-      UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
+      UserTable multiRowTable = new UserTable(table.getTableProperties(),
+          rowIds, headers, data,
           table.getElementKeysForIndex(),
           table.getMapOfUserDataToIndex(), metadata,
           table.getMapOfMetadataToIndex(), footers);
 //      UserTable multiRowTable = new UserTable(rowIds, headers, data, footers);
 
-    ctv.set(tp, multiRowTable);
+    ctv.set(multiRowTable);
     return ctv;
   }
 
@@ -173,8 +173,7 @@ public class CustomTableView extends CustomView {
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, TableProperties tp,
-      UserTable table,
+  public static CustomTableView get(Activity activity, UserTable table,
       String filename, List<Integer> indexes, Fragment fragment,
       CustomViewCallbacks callbacks) {
     CustomTableView ctv = new CustomTableView(activity, filename, callbacks);
@@ -195,12 +194,13 @@ public class CustomTableView extends CustomView {
       }
       footers[i] = table.getFooter(i);
     }
-    UserTable multiRowTable = new UserTable(tp, rowIds, headers, data,
+    UserTable multiRowTable = new UserTable(table.getTableProperties(),
+        rowIds, headers, data,
         table.getElementKeysForIndex(),
         table.getMapOfUserDataToIndex(), metadata,
         table.getMapOfMetadataToIndex(), footers);
 
-    ctv.set(tp, multiRowTable);
+    ctv.set(multiRowTable);
     ctv.mFragment = fragment;
     return ctv;
   }
@@ -215,7 +215,7 @@ public class CustomTableView extends CustomView {
     // Load a basic screen as you're getting the other stuff ready to
     // clear the old data.
     webView.addJavascriptInterface(new TableControl(mActivity), "control");
-    webView.addJavascriptInterface(new TableData(tp, table), "data");
+    webView.addJavascriptInterface(new TableData(table), "data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
     } else {
@@ -232,7 +232,7 @@ public class CustomTableView extends CustomView {
 
     @SuppressWarnings("unused")
     public boolean openItem(int index) {
-      Controller.launchDetailActivity(mActivity, tp, table, index, null);
+      Controller.launchDetailActivity(mActivity, table, index, null);
       return true;
     }
 
@@ -249,7 +249,7 @@ public class CustomTableView extends CustomView {
       String pathToTablesFolder =
           ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
       String pathToFile = pathToTablesFolder + File.separator + filename;
-      Controller.launchDetailActivity(mActivity, tp, table, index, pathToFile);
+      Controller.launchDetailActivity(mActivity, table, index, pathToFile);
       return true;
     }
 

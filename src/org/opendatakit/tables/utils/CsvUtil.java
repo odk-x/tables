@@ -736,7 +736,7 @@ public class CsvUtil {
 			}
 		}
 		// getting data
-		DbTable dbt = DbTable.getDbTable(dbh, tableId);
+		DbTable dbt = DbTable.getDbTable(dbh, tp);
 		String[] selectionKeys = { DataTableColumns.SAVED };
 		String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
 		UserTable table = dbt.getRaw(columns, selectionKeys, selectionArgs,

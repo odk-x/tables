@@ -126,8 +126,18 @@ public class DbTable {
         return new DbTable(dbh, tableId);
     }
 
+    public static DbTable getDbTable(DbHelper dbh, TableProperties tp) {
+        return new DbTable(dbh, tp);
+    }
+
     public static Map<String, ColumnType> getColumnsToSync() {
       return Collections.unmodifiableMap(COLUMNS_TO_SYNC);
+    }
+
+    private DbTable(DbHelper dbh, TableProperties tp) {
+        this.du = DataUtil.getDefaultDataUtil();
+        this.dbh = dbh;
+        this.tp = tp;
     }
 
     private DbTable(DbHelper dbh, String tableId) {

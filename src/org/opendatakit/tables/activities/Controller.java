@@ -871,9 +871,10 @@ public class Controller implements CustomViewCallbacks {
    * @param filename the filename to be used if the filename differs than that
    * set in the key value store.
    */
-  public static void launchDetailActivity(Activity activity, TableProperties tp,
+  public static void launchDetailActivity(Activity activity,
       UserTable table,
       int rowNum, String filename) {
+    TableProperties tp = table.getTableProperties();
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));

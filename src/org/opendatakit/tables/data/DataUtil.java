@@ -36,6 +36,7 @@ public class DataUtil {
         DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC();
 
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
+        "yyyy-MM-dd'T'HH:mm:ss.SSSZ", // ODK Collect format
         "M/d/yy h:mm:ssa",
         "M/d/yy HH:mm:ss",
         "M/d/yyyy h:mm:ssa",
@@ -45,7 +46,8 @@ public class DataUtil {
         "d h:mm:ssa",
         "d HH:mm:ss",
         "E h:mm:ssa",
-        "E HH:mm:ss"
+        "E HH:mm:ss",
+        "HH:mm:ss.SSSZ" // ODK Collect format for time
     };
     private static final String[][] USER_PARTIAL_DATETIME_PATTERNS = {
         {
@@ -76,6 +78,7 @@ public class DataUtil {
         },
         {
             // day
+            "yyyy-MM-dd", // ODK Collect format for date
             "M/d/yy",
             "M/d/yyyy",
             "M/d",
@@ -89,7 +92,7 @@ public class DataUtil {
         Pattern.compile("(\\d+)(s|m|h|d)");
 
     private static final Pattern USER_NOW_RELATIVE_FORMAT =
-        Pattern.compile("now\\s*(-|\\+)\\s*(\\d+S)");
+        Pattern.compile("^now\\s*(-|\\+)\\s*(\\d+(s|m|h|d))$");
 
     private static final Pattern USER_LOCATION_LAT_LON_FORMAT =
         Pattern.compile("^\\s*\\(?(-?(\\d+|\\.\\d+|\\d+\\.\\d+))," +
@@ -305,27 +308,28 @@ public class DataUtil {
     }
 
     public DateTime tryParseInstant(String input) {
+        input = input.trim();
+        if (input.equalsIgnoreCase("now")) {
+          return new DateTime();
+        }
+        Matcher matcher = USER_NOW_RELATIVE_FORMAT.matcher(input);
+        if (matcher.matches()) {
+          int delta = tryParseDuration(matcher.group(2));
+          if (delta < 0) {
+              return null;
+          } else if (matcher.group(1).equals("-")) {
+              return new DateTime().minusSeconds(delta);
+          } else {
+              return new DateTime().plusSeconds(delta);
+          }
+        }
         try {
             return userFullParser.parseDateTime(input);
         } catch (IllegalArgumentException e) {}
-        if (!locale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
-            return null;
-        }
-        if (input.equalsIgnoreCase("now")) {
-            return new DateTime();
-        }
-        Matcher matcher = USER_NOW_RELATIVE_FORMAT.matcher(input);
-        if (!matcher.matches()) {
-            return null;
-        }
-        int delta = tryParseDuration(matcher.group(2));
-        if (delta < 0) {
-            return null;
-        } else if (matcher.group(1).equals("-")) {
-            return new DateTime().minusSeconds(delta);
-        } else {
-            return new DateTime().plusSeconds(delta);
-        }
+//        if (!locale.getLanguage().equals(Locale.ENGLISH.getLanguage())) {
+//            return null;
+//        }
+        return null;
     }
 
     public Interval tryParseInterval(String input) {
