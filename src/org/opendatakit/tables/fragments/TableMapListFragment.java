@@ -26,7 +26,7 @@ import com.actionbarsherlock.app.SherlockFragment;
  * is specified by a html file in the TablePropertiesManager Activity. This
  * TableMapListFragment is special: it only displays one row, which is the data
  * from the selected map marker.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class TableMapListFragment extends SherlockFragment {
@@ -87,7 +87,7 @@ public class TableMapListFragment extends SherlockFragment {
         return;
       }
       // Create the custom view and set it.
-      CustomTableView view = CustomTableView.get(getActivity(), tp, table, 
+      CustomTableView view = CustomTableView.get(getActivity(), table,
           filename, mIndexes, getFragmentManager()
           .findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP),
           (CustomViewCallbacks) getActivity());
@@ -121,9 +121,9 @@ public class TableMapListFragment extends SherlockFragment {
     }
     resetView();
   }
-  
+
   /**
-   * Sets the indexes of the list view, which will be the rows of data wanting 
+   * Sets the indexes of the list view, which will be the rows of data wanting
    * to be displayed.
    */
   public void setIndexes(ArrayList<Integer> indexes) {
@@ -138,7 +138,7 @@ public class TableMapListFragment extends SherlockFragment {
    * Sets the visibility of this fragment (will set the container's visibility).
    * Will only change the visibility if it isn't a tablet (this container is
    * always visible when run by a tablet).
-   * 
+   *
    * @param visibility
    *          The new visibility of the fragment (constants found in View).
    */

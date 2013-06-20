@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -53,7 +52,6 @@ public class CustomDetailView extends CustomView {
       + "<p>No detail view has been specified.</p>" + "</body></html>";
 
   private Activity mActivity;
-  private TableProperties tp;
   private RowData jsData;
   private KeyValueStoreHelper detailKVSH;
   /** The filename of the html we are displaying. */
@@ -68,11 +66,10 @@ public class CustomDetailView extends CustomView {
    *          the filename to display as the detail view. If null, tries to
    *          receive the value from the key value store.
    */
-  public CustomDetailView(Activity activity, TableProperties tp, 
+  public CustomDetailView(Activity activity, TableProperties tp,
       String filename, CustomViewCallbacks callbacks) {
     super(activity, callbacks);
     this.mActivity = activity;
-    this.tp = tp;
     this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
     if (filename == null) {
       String recoveredFilename = this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
@@ -89,7 +86,7 @@ public class CustomDetailView extends CustomView {
     jsData = new RowData(tp);
   }
 
-  public void display(String rowId, UserTable userTable, TableProperties tp) {
+  public void display(String rowId, UserTable userTable) {
     int rowNum = userTable.getRowNumFromId(rowId);
     HashMap<String, String> tmpData = new HashMap<String, String>();
     for (int i = 0; i < userTable.getWidth(); i++) {

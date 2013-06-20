@@ -81,8 +81,6 @@ public class SpreadsheetView extends LinearLayout
     private final Map<String, ColumnProperties> mElementKeyToProperties;
     private final Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 
-    private final TableProperties tp;
-
     // Keeping this for now in case someone else needs to work with the code
     // and relied on this variable.
     private LockableScrollView dataScroll;
@@ -109,11 +107,10 @@ public class SpreadsheetView extends LinearLayout
     private int lastLongClickedCellId;
 
     public SpreadsheetView(Context context, Controller controller,
-            TableProperties tp, UserTable table, int indexedCol) {
+            UserTable table, int indexedCol) {
         super(context);
         this.context = context;
         this.controller = controller;
-        this.tp = tp;
         this.table = table;
         this.indexedCol = indexedCol;
 
@@ -123,6 +120,7 @@ public class SpreadsheetView extends LinearLayout
             new HashMap<String, ColorRuleGroup>();
         this.mElementKeyToProperties =
             new HashMap<String, ColumnProperties>();
+        TableProperties tp = table.getTableProperties();
         for (int i = 0; i < tp.getNumberOfDisplayColumns(); i++) {
           ColumnProperties cp = tp.getColumnByIndex(i);
           mElementKeyToColorRuleGroup.put(cp.getElementKey(),
@@ -456,6 +454,7 @@ public class SpreadsheetView extends LinearLayout
     private View buildTable(int indexedCol, boolean isIndexed) {
 //      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
 //          "isIndexed: " + isIndexed);
+        TableProperties tp = table.getTableProperties();
         List<String> elementKeysToDisplay =
             new ArrayList<String>(tp.getNumberOfDisplayColumns());
         int[] colWidths;
@@ -469,15 +468,15 @@ public class SpreadsheetView extends LinearLayout
             colWidths = new int[1];
             colWidths[0] = completeColWidths[indexedCol];
             dataTable = TabularView.getIndexDataTable(context, this,
-                tp, table, elementKeysToDisplay, colWidths, fontSize,
+                table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             headerTable = TabularView.getIndexHeaderTable(context,
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             footerTable = TabularView.getIndexFooterTable(context,
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
         } else {
@@ -495,15 +494,15 @@ public class SpreadsheetView extends LinearLayout
                 addIndex++;
             }
             dataTable = TabularView.getMainDataTable(context, this,
-                tp, table, elementKeysToDisplay, colWidths, fontSize,
+                table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             headerTable = TabularView.getMainHeaderTable(context,
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             footerTable = TabularView.getMainFooterTable(context,
-                this, tp, table, elementKeysToDisplay, colWidths, fontSize,
+                this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
         }
@@ -551,7 +550,7 @@ public class SpreadsheetView extends LinearLayout
 
         dataStatusScroll = new LockableScrollView(context);
         TabularView dataTable = TabularView.getStatusDataTable(context,
-            this, tp, table, colWidths, fontSize,
+            this, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         dataTable.setVerticalFadingEdgeEnabled(true);
         dataTable.setVerticalScrollBarEnabled(false);
@@ -560,10 +559,10 @@ public class SpreadsheetView extends LinearLayout
         dataStatusScroll.setVerticalFadingEdgeEnabled(true);
         dataStatusScroll.setHorizontalFadingEdgeEnabled(true);
         TabularView headerTable = TabularView.getStatusHeaderTable(context,
-            this, tp, table, colWidths, fontSize,
+            this, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         TabularView footerTable = TabularView.getStatusFooterTable(context,
-            this, tp, table, colWidths, fontSize,
+            this, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
@@ -602,6 +601,7 @@ public class SpreadsheetView extends LinearLayout
       // So what we want to do is go through and get the column widths for each
       // column. A problem here is that there is no caching, and if you have a
       // lot of columns you're really working the gut of the database.
+      TableProperties tp = table.getTableProperties();
       return SpreadsheetView.getColumnWidths(tp);
     }
 

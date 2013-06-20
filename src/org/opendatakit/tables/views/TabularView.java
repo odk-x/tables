@@ -112,7 +112,6 @@ class TabularView extends View {
    * for things like determining row color.
    */
   private ColorRuleGroup mRowColorRuleGroup;
-  private TableProperties mTp;
 
   // trying to get the dimensions of the screen
   private final DisplayMetrics metrics;
@@ -146,11 +145,11 @@ class TabularView extends View {
    */
   public static TabularView getMainDataTable(Context context,
       Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_DATA, fontSize,
@@ -175,11 +174,11 @@ class TabularView extends View {
    */
   public static TabularView getMainHeaderTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_HEADER, fontSize,
@@ -204,11 +203,11 @@ class TabularView extends View {
    */
   public static TabularView getMainFooterTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_FOOTER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_FOOTER, fontSize,
@@ -233,11 +232,11 @@ class TabularView extends View {
    */
   public static TabularView getIndexDataTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_DATA, fontSize,
@@ -262,11 +261,11 @@ class TabularView extends View {
    */
   public static TabularView getIndexHeaderTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_HEADER, fontSize,
@@ -291,11 +290,11 @@ class TabularView extends View {
    */
   public static TabularView getIndexFooterTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeysToDisplay,
+      UserTable table, List<String> elementKeysToDisplay,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_FOOTER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_FOOTER, fontSize,
@@ -319,7 +318,7 @@ class TabularView extends View {
    */
   public static TabularView getStatusDataTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table,
+      UserTable table,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
@@ -327,7 +326,7 @@ class TabularView extends View {
     // We need to make this a size one so that the status table knows there's
     // something to display.
     dummyElementKeys.add("data");
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_DATA_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_DATA, fontSize,
@@ -351,7 +350,7 @@ class TabularView extends View {
    */
   public static TabularView getStatusHeaderTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table,
+      UserTable table,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
@@ -359,7 +358,7 @@ class TabularView extends View {
     // We need to make this a size one so that the status table knows there's
     // something to display.
     dummyElementKeys.add("header");
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_HEADER, fontSize,
@@ -384,7 +383,7 @@ class TabularView extends View {
    */
   public static TabularView getStatusFooterTable(
       Context context, Controller controller,
-      TableProperties tp, UserTable table,
+      UserTable table,
       int[] columnWidths, int fontSize,
       Map<String, ColumnProperties> elementKeyToColumnProperties,
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
@@ -392,7 +391,7 @@ class TabularView extends View {
     // We need to make this a size one so that the status table knows there's
     // something to display.
     dummyElementKeys.add("footer");
-    return new TabularView(context, controller, tp, table,
+    return new TabularView(context, controller, table,
         dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_FOOTER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_FOOTER, fontSize,
@@ -430,7 +429,7 @@ class TabularView extends View {
    * corresponding {@link ColorRuleGroup} objects.
    */
   private TabularView(Context context, Controller controller,
-      TableProperties tp, UserTable table, List<String> elementKeys,
+      UserTable table, List<String> elementKeys,
       int defaultForegroundColor,
       int defaultBackgroundColor, int borderColor,
       int[] columnWidths, TableType type, int fontSize,
@@ -438,7 +437,6 @@ class TabularView extends View {
       Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
     super(context);
     this.controller = controller;
-    this.mTp = tp;
     this.mTable = table;
     this.mElementKeys = elementKeys;
     this.defaultBackgroundColor = defaultBackgroundColor;
@@ -463,9 +461,9 @@ class TabularView extends View {
     }
     this.mColumnColorRules = elementKeyToColorRuleGroup;
     if (this.type != TableType.STATUS_DATA) {
-      this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
+      this.mRowColorRuleGroup = ColorRuleGroup.getTableColorRuleGroup(mTable.getTableProperties());
     } else {
-      this.mRowColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+      this.mRowColorRuleGroup = ColorRuleGroup.getStatusColumnRuleGroup(mTable.getTableProperties());
     }
     rowHeight = fontSize + ROW_HEIGHT_PADDING;
     highlightedCellNum = -1;

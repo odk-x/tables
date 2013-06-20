@@ -19,7 +19,6 @@ import java.io.File;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -61,7 +60,7 @@ public class CustomAppView extends CustomView {
    * @param context
    * @param filename cannot be null
    */
-  public CustomAppView(Activity activity, String filename, 
+  public CustomAppView(Activity activity, String filename,
       CustomViewCallbacks callbacks) {
     super(activity, callbacks);
     this.mActivity = activity;

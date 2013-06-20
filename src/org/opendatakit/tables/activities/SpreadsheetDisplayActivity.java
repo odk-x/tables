@@ -22,7 +22,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
@@ -86,11 +85,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
         "Edit Column Color Rules";
 
-    private DataManager dm;
+    private DbHelper dbh;
     private Controller c;
     private UserTable table;
     private int indexedCol;
-    private TableProperties mTp;
     private List<String> mCachedColumnOrder;
 
     private int lastDataCellMenued;
@@ -103,7 +101,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         // remove a title
         setTitle("");
 
-        dm = new DataManager(DbHelper.getDbHelper(this));
+        dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
 //        init();
     }
@@ -118,12 +116,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      this.mTp = c.getTableProperties();
-      this.mCachedColumnOrder = mTp.getColumnOrder();
+      TableProperties tp = c.getTableProperties();
+      this.mCachedColumnOrder = tp.getColumnOrder();
       c.refreshDbTable();
 //      tp.refreshColumns();
-      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-            mTp);
+      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+          KeyValueStore.Type.ACTIVE),
+          tp);
         query.loadFromUserQuery(c.getSearchText());
         // There are two options here. The first is that we get the data using 
         // the {@link Query} object. The other is that we use a sql where 
@@ -148,7 +147,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         indexedCol =
             c.getTableProperties().getColumnIndex(indexedColElementKey);
         // setting up the view
-        c.setDisplayView(buildView(mTp));
+        c.setDisplayView(buildView(tp));
         setContentView(c.getContainerView());
     }
 
@@ -158,13 +157,14 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, tp, table, indexedCol);
+            return new SpreadsheetView(this, this, table, indexedCol);
         }
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-          mTp);
+      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+          KeyValueStore.Type.ACTIVE),
+          table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
@@ -322,7 +322,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
            columnOrder.get(lastHeaderCellMenued));
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-           this.mTp.getTableId());
+           table.getTableProperties().getTableId());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
            ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);
@@ -752,8 +752,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  String tableId = joinColumn.getTableId();
 	                  String elementKey = joinColumn.getElementKey();
 	                  TableProperties joinedTable =
-	                      dm.getTableProperties(tableId,
-	                          KeyValueStore.Type.ACTIVE);
+                         TableProperties.getTablePropertiesForTable(dbh, tableId,
+                             KeyValueStore.Type.ACTIVE);
 	                  String joinedColDisplayName =
 	                      joinedTable.getColumnByElementKey(elementKey)
 	                      .getDisplayName();
@@ -762,7 +762,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  String queryText = joinedColDisplayName + ":" +
 	                      table.getData(cellId);
 	                    Controller.launchTableActivity(context,
-	                        dm.getTableProperties(tableId,
+	                        TableProperties.getTablePropertiesForTable(dbh, tableId,
 	                            KeyValueStore.Type.ACTIVE),
 	                        queryText, c.getIsOverview(), null, null);
 	                    c.removeOverlay();

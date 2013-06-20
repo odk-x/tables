@@ -20,7 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.TableProperties;
 
@@ -37,8 +36,8 @@ public class SmsReceiver extends BroadcastReceiver {
 
 	@Override
     public void onReceive(Context context, Intent intent) {
-	    MsgHandler mh = new MsgHandler(new DataManager(
-	            DbHelper.getDbHelper(context)), new SMSSender());
+	    MsgHandler mh = new MsgHandler(
+	            DbHelper.getDbHelper(context), new SMSSender());
 	    String body = getSMSBody(intent.getExtras());
 	    mh.handleMessage(body, getSMSFrom(intent.getExtras()));
 

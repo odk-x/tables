@@ -98,7 +98,7 @@ public class DetailDisplayActivity extends SherlockActivity
         table = c.getIsOverview() ?
             c.getDbTable().getUserOverviewTable(query) :
               c.getDbTable().getUserTable(query);
-        view.display(rowId, table, c.getTableProperties());
+        view.display(rowId, table);
     }
 
     @Override

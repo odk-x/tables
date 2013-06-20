@@ -20,10 +20,10 @@ import java.util.List;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.graphs.BoxStemChart;
 
@@ -62,8 +62,9 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
-        DataManager dm = new DataManager(DbHelper.getDbHelper(this));
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+        DbHelper dbh = DbHelper.getDbHelper(this);
+        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE),
             c.getTableProperties());
         init();
     }

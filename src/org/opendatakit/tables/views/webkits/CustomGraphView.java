@@ -27,7 +27,6 @@ import org.opendatakit.tables.activities.graphs.BarGraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -36,219 +35,214 @@ import android.util.Log;
 
 public class CustomGraphView extends CustomView {
 
+  private static final String DEFAULT_HTML = "<html><body>"
+      + "<p>No filename has been specified.</p>" + "</body></html>";
 
-	private static final String DEFAULT_HTML =
-			"<html><body>" +
-					"<p>No filename has been specified.</p>" +
-					"</body></html>";
+  private Activity mActivity;
+  private Map<String, Integer> colIndexTable;
+  private UserTable table;
+  private String filename;
+  private String graphName;
+  private String potentialGraphName;
+  private GraphData graphData;
 
-	private Activity mActivity;
-	private Map<String, Integer> colIndexTable;
-	private TableProperties tp;
-	private UserTable table;
-	private String filename;
-	private String graphName;
-	private String potentialGraphName;
-	private GraphData graphData;
+  private CustomGraphView(Activity activity, String graphName, String potentialGraphName,
+      CustomViewCallbacks callbacks) {
+    super(activity, callbacks);
+    this.mActivity = activity;
+    this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator
+        + "optionspane.html";
+    this.graphName = graphName;
+    this.potentialGraphName = potentialGraphName;
+    Log.i("CustomGraphView", "IDDD: " + graphName);
+    colIndexTable = new HashMap<String, Integer>();
+  }
 
-	private CustomGraphView(Activity activity, String graphName,
-	    String potentialGraphName, CustomViewCallbacks callbacks) {
-		super(activity, callbacks);
-		this.mActivity = activity;
-		this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + "optionspane.html";
-		this.graphName = graphName;
-		this.potentialGraphName = potentialGraphName;
-		Log.i("CustomGraphView", "IDDD: " + graphName);
-		colIndexTable = new HashMap<String, Integer>();
-	}
+  public static CustomGraphView get(Activity activity, UserTable table, String graphName,
+      String potentialGraphName, Controller controller) {
+    CustomGraphView ctv = new CustomGraphView(activity, graphName, potentialGraphName, controller);
+    ctv.set(table);
+    return ctv;
+  }
 
-	public static CustomGraphView get(Activity activity, TableProperties tp,
-			UserTable table, String graphName, String potentialGraphName,
-			Controller controller) {
-		CustomGraphView ctv = new CustomGraphView(activity, graphName,
-		    potentialGraphName, controller);
-		ctv.set(tp, table);
-		return ctv;
-	}
+  private void set(UserTable table) {
+    this.table = table;
+    colIndexTable.clear();
+    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties().getColumns();
+    colIndexTable.putAll(table.getMapOfUserDataToIndex());
+    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
+      String smsLabel = cp.getSmsLabel();
+      if (smsLabel != null) {
+        // TODO: this doesn't look to ever be used, and ignores the possibility
+        // of conflicting element keys and sms labels.
+        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
+      }
+    }
+    graphData = new GraphData(graphName);
+  }
 
-	private void set(TableProperties tp, UserTable table) {
-		this.tp = tp;
-		this.table = table;
-	    colIndexTable.clear();
-	    Map<String, ColumnProperties> elementKeyToColumnProperties =
-	        tp.getColumns();
-	    colIndexTable.putAll(table.getMapOfUserDataToIndex());
-	    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
-	      String smsLabel = cp.getSmsLabel();
-	      if (smsLabel != null) {
-	        // TODO: this doesn't look to ever be used, and ignores the possibility
-	        // of conflicting element keys and sms labels.
-	        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
-	      }
-	    }
-		graphData = new GraphData(graphName);
-	}
+  public void display() {
+    webView.addJavascriptInterface(new TableControl(mActivity), "control");
+    webView.addJavascriptInterface(new TableData(table), "data");
+    webView.addJavascriptInterface(graphData, "graph_data");
+    if (filename != null) {
+      load(FileProvider.getAsUrl(getContext(), new File(filename)));
+    } else {
+      loadData(DEFAULT_HTML, "text/html", null);
+    }
+    initView();
+  }
 
-	public void display() {
-		webView.addJavascriptInterface(new TableControl(mActivity), "control");
-		webView.addJavascriptInterface(new TableData(tp, table), "data");
-		webView.addJavascriptInterface(graphData, "graph_data");
-		if (filename != null) {
-			load(FileProvider.getAsUrl(getContext(), new File(filename)));
-		} else {
-			loadData(DEFAULT_HTML, "text/html", null);
-		}
-		initView();
-	}
+  private class TableControl extends Control {
 
-	private class TableControl extends Control {
+    public TableControl(Activity activity) {
+      super(activity);
+    }
 
-		public TableControl(Activity activity) {
-			super(activity);
-		}
+    @SuppressWarnings("unused")
+    public boolean openItem(int index) {
+      Controller.launchDetailActivity(mActivity, table, index, null);
+      return true;
+    }
+  }
 
-		@SuppressWarnings("unused")
-		public boolean openItem(int index) {
-			Controller.launchDetailActivity(mActivity, tp, table, index, null);
-			return true;
-		}
-	}
+  public void createNewGraph(String graphName) {
+    graphData.saveGraphToName(graphName);
+  }
 
-	public void createNewGraph(String graphName) {
-		graphData.saveGraphToName(graphName);
-	}
+  public boolean hasGraph(String graph) {
+    return graphData.hasGraph(graph);
+  }
 
-	public boolean hasGraph(String graph) {
-		return graphData.hasGraph(graph);
-	}
+  public boolean graphIsModified() {
+    return graphData.isModified();
+  }
 
-	public boolean graphIsModified() {
-		return graphData.isModified();
-	}
+  /**
+   * "Unused" warnings are suppressed because the public methods of this class
+   * are meant to be called through the JavaScript interface.
+   */
+  protected class GraphData {
 
-	/**
-	 * "Unused" warnings are suppressed because the public methods of this
-	 * class are meant to be called through the JavaScript interface.
-	 */
-	protected class GraphData {
+    // These are the partition and aspect helpers for setting info in the KVS.
+    private KeyValueStoreHelper kvsh;
+    private AspectHelper aspectHelper;
+    private String graphString;
+    boolean isModified;
+    private static final String GRAPH_TYPE = "graphtype";
+    private static final String X_AXIS = "selectx";
+    private static final String Y_AXIS = "selecty";
+    private static final String AGREG = "operation";
+    private static final String R_AXIS = "selectr";
 
-		// These are the partition and aspect helpers for setting info in the KVS.
-		private KeyValueStoreHelper kvsh;
-		private AspectHelper aspectHelper;
-		private String graphString;
-		boolean isModified;
-		private static final String GRAPH_TYPE = "graphtype";
-		private static final String X_AXIS = "selectx";
-		private static final String Y_AXIS = "selecty";
-		private static final String AGREG = "operation";
-		private static final String R_AXIS = "selectr";
+    private static final String TAG = "GraphData";
 
-		private static final String TAG = "GraphData";
+    public GraphData(String graphString) {
+      isModified = false;
+      this.graphString = graphString;
+      this.kvsh = table.getTableProperties().
+          getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
+      this.aspectHelper = kvsh.getAspectHelper(this.graphString);
+      this.aspectHelper = saveGraphToName(potentialGraphName);
+    }
 
-		public GraphData(String graphString) {
-			isModified = false;
-			this.graphString = graphString;
-			this.kvsh = tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
-			this.aspectHelper = kvsh.getAspectHelper(this.graphString);
-			this.aspectHelper = saveGraphToName(potentialGraphName);
-		}
+    /*
+     * if(graphString.equals(BarGraphDisplayActivity.DEFAULT_GRAPH)) {
+     * aspectHelper.deleteAllEntriesInThisAspect(); aspectHelper =
+     * newAspectHelper; graphString = graphName; }
+     */
 
-		/*if(graphString.equals(BarGraphDisplayActivity.DEFAULT_GRAPH)) {
-			aspectHelper.deleteAllEntriesInThisAspect();
-			aspectHelper = newAspectHelper;
-			graphString = graphName;
-		}*/
+    public boolean isModified() {
+      // TODO Auto-generated method stub
+      return isModified;
+    }
 
-		public boolean isModified() {
-			// TODO Auto-generated method stub
-			return isModified;
-		}
+    // If the graph is DEFAULT_GRAPH then the aspectHelper field is replaced
+    // with the new name
+    // and the DEFAULT_GRAPH aspect and contents are deleted
+    public AspectHelper saveGraphToName(String graphName) {
+      AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
+      String graphType = aspectHelper.getString(GRAPH_TYPE);
+      if (graphType != null) {
+        if (hasGraph(graphName)) {
+          newAspectHelper.deleteAllEntriesInThisAspect();
+        }
+        newAspectHelper.setString(GRAPH_TYPE, getGraphType());
+        if (getGraphType().equals("Bar Graph") || getGraphType().equals("Scatter Plot")) {
+          newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
+          newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
+          newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
+        }
+        if (getGraphType().equals("Scatter Plot")) {
+          newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
+        }
+      } else {
+        newAspectHelper.setString(GRAPH_TYPE, "unset type");
+      }
+      return newAspectHelper;
+    }
 
-		//If the graph is DEFAULT_GRAPH then the aspectHelper field is replaced with the new name
-		//and the DEFAULT_GRAPH aspect and contents are deleted
-		public AspectHelper saveGraphToName(String graphName) {
-			AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
-			String graphType = aspectHelper.getString(GRAPH_TYPE);
-			if(graphType != null) {
-				if(hasGraph(graphName)) {
-					newAspectHelper.deleteAllEntriesInThisAspect();
-				}
-				newAspectHelper.setString(GRAPH_TYPE, getGraphType());
-				if(getGraphType().equals("Bar Graph") || getGraphType().equals("Scatter Plot")) {
-					newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
-					newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
-					newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
-				}
-				if(getGraphType().equals("Scatter Plot")) {
-					newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
-				}
-			}
-			else {
-				newAspectHelper.setString(GRAPH_TYPE, "unset type");
-			}
-			return newAspectHelper;
-		}
+    public boolean hasGraph(String graph) {
+      List<String> list = kvsh.getAspectsForPartition();
+      for (String s : list) {
+        Log.d("stufftotest", "in list: " + s);
+        if (graph.equals(s))
+          return true;
+      }
+      return false;
+    }
 
-		public boolean hasGraph(String graph) {
-			List<String> list = kvsh.getAspectsForPartition();
-			for(String s : list) {
-				Log.d("stufftotest", "in list: " + s);
-				if(graph.equals(s))
-					return true;
-			}
-			return false;
-		}
+    public String getGraphType() {
+      String graphType = aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
+      if (graphType == null || graphType.equals("unset type")) {
+        return "";
+      } else {
+        return graphType;
+      }
+    }
 
-		public String getGraphType() {
-			String graphType = aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
-			if(graphType == null || graphType.equals("unset type")) {
-				return "";
-			} else {
-				return graphType;
-			}
-		}
+    public String getGraphXAxis() {
+      return loadSelection(X_AXIS);
+    }
 
-		public String getGraphXAxis() {
-			return loadSelection(X_AXIS);
-		}
+    public String getGraphYAxis() {
+      return loadSelection(Y_AXIS);
+    }
 
-		public String getGraphYAxis() {
-			return loadSelection(Y_AXIS);
-		}
+    public String getGraphRAxis() {
+      return loadSelection(R_AXIS);
+    }
 
-		public String getGraphRAxis() {
-			return loadSelection(R_AXIS);
-		}
+    public String getGraphOp() {
+      return loadSelection(AGREG);
+    }
 
-		public String getGraphOp() {
-			return loadSelection(AGREG);
-		}
+    public void saveSelection(String aspect, String value) {
+      String oldValue = aspectHelper.getString(aspect);
+      if (oldValue == null || !oldValue.equals(value)) {
+        isModified = true;
+      }
+      aspectHelper.setString(aspect, value);
+    }
 
-		public void saveSelection(String aspect, String value) {
-			String oldValue = aspectHelper.getString(aspect);
-			if(oldValue == null || !oldValue.equals(value)) {
-				isModified = true;
-			}
-			aspectHelper.setString(aspect, value);
-		}
+    private String loadSelection(String value) {
+      String result = aspectHelper.getString(value);
+      if (result == null) {
+        return "";
+      } else {
+        return result;
+      }
+    }
 
-		private String loadSelection(String value) {
-			String result =  aspectHelper.getString(value);
-			if(result == null) {
-				return "";
-			} else {
-				return result;
-			}
-		}
+    public void deleteDefaultGraph() {
+      aspectHelper.deleteAllEntriesInThisAspect();
+    }
+  }
 
-		public void deleteDefaultGraph() {
-			aspectHelper.deleteAllEntriesInThisAspect();
-		}
-	}
-
-	//WARNING this destroys the GraphData field object. Use only to prevent saving the default
-	//graph when exiting this class
-	public void deleteDefaultGraph() {
-		graphData.deleteDefaultGraph();
-	}
+  // WARNING this destroys the GraphData field object. Use only to prevent
+  // saving the default
+  // graph when exiting this class
+  public void deleteDefaultGraph() {
+    graphData.deleteDefaultGraph();
+  }
 }

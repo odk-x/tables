@@ -41,7 +41,6 @@ public class ListDisplayView extends LinearLayout {
 
     private Controller controller; // the table activity to call back to
     private UserTable table; // the table to display
-    private TableProperties tp;
     private int[] lineHeights;
     private String[][] lineTextSpecs;
     private int[][] lineColSpecs;
@@ -49,18 +48,17 @@ public class ListDisplayView extends LinearLayout {
     private Paint borderPaint;
 
     public static ListDisplayView buildView(Context context,
-            TableProperties tp, Controller controller,
+            Controller controller,
             UserTable table) {
-        return new ListDisplayView(context, tp, controller, table);
+        return new ListDisplayView(context, controller, table);
     }
 
-    private ListDisplayView(Context context, TableProperties tp,
+    private ListDisplayView(Context context,
             Controller controller, UserTable table) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
         this.controller = controller;
         this.table = table;
-        this.tp = tp;
         setFormatInfo();
         borderPaint = new Paint();
         borderPaint.setColor(BORDER_COLOR);
@@ -110,6 +108,7 @@ public class ListDisplayView extends LinearLayout {
             for (int j = 0; j < lineSplit.length; j += 2) {
                 lineTextSpecs[i][j / 2] = lineSplit[j];
             }
+            TableProperties tp = table.getTableProperties();
             for (int j = 1; j < lineSplit.length; j += 2) {
                 int colIndex = tp.getColumnIndex(lineSplit[j]);
                 if (colIndex < 0) {

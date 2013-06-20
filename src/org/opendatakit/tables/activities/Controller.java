@@ -22,7 +22,6 @@ import java.util.Stack;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -132,7 +131,7 @@ public class Controller implements CustomViewCallbacks {
     private final DataUtil du;
     private final SherlockActivity activity;
     private final DisplayActivity da;
-    private final DataManager dm;
+    private final DbHelper dbh;
     private TableProperties tp;
     private DbTable dbt;
     private final Stack<String> searchText;
@@ -170,9 +169,10 @@ public class Controller implements CustomViewCallbacks {
         }
         isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
         // initializing data objects
-        dm = new DataManager(DbHelper.getDbHelper(activity));
-        tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
-        dbt = dm.getDbTable(tableId);
+        dbh = DbHelper.getDbHelper(activity);
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+            KeyValueStore.Type.ACTIVE);
+        dbt = DbTable.getDbTable(dbh, tp);
 
         // INITIALIZING VIEW OBJECTS
         // controlWrap will hold the search bar and search button
@@ -274,8 +274,7 @@ public class Controller implements CustomViewCallbacks {
 
   /**
    * Update the dbTable that Controller is monitoring. This should be called
-   * only
-   * if there is no way to update the dbTable held by the
+   * only if there is no way to update the dbTable held by the
    * Controller if a change happens outside of the Controller's realm of
    * control. For instance, changing a column display name in PropertyManager
    * does not get updated to the dbTable without calling this method. This is
@@ -283,7 +282,7 @@ public class Controller implements CustomViewCallbacks {
    * this.
    */
   public void refreshDbTable() {
-    this.dbt = dm.getDbTable(tp.getTableId());
+    this.dbt = DbTable.getDbTable(dbh, tp.getTableId());
   }
 
   /**
@@ -472,8 +471,9 @@ public class Controller implements CustomViewCallbacks {
   }
 
   private void handleListViewManagerReturn() {
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
+    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+        KeyValueStore.Type.ACTIVE);
+    dbt = DbTable.getDbTable(dbh, tp);
     da.init();
   }
 
@@ -483,8 +483,9 @@ public class Controller implements CustomViewCallbacks {
     // This should eventually move, if we decide to keep this architecture. but
     // for now I'm going to just hardcode in a solution.
     TableViewType oldViewType = tp.getCurrentViewType();
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
+    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+        KeyValueStore.Type.ACTIVE);
+    dbt = DbTable.getDbTable(dbh, tp);
     if (oldViewType == tp.getCurrentViewType()) {
       da.init();
     } else {
@@ -493,8 +494,9 @@ public class Controller implements CustomViewCallbacks {
   }
 
   private void handleColumnManagerReturn() {
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
+    tp = TableProperties.getTablePropertiesForTable(dbh,
+        tp.getTableId(), KeyValueStore.Type.ACTIVE);
+    dbt = DbTable.getDbTable(dbh, tp);
     da.init();
   }
 
@@ -896,9 +898,10 @@ public class Controller implements CustomViewCallbacks {
    * @param filename the filename to be used if the filename differs than that
    * set in the key value store.
    */
-  public static void launchDetailActivity(Activity activity, TableProperties tp,
+  public static void launchDetailActivity(Activity activity,
       UserTable table,
       int rowNum, String filename) {
+    TableProperties tp = table.getTableProperties();
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));

@@ -16,19 +16,18 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.TableProperties;
 
-import com.actionbarsherlock.app.SherlockListActivity;
-
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.actionbarsherlock.app.SherlockListActivity;
 
 public class AggregateChooseTablesActivity extends SherlockListActivity {
 
@@ -40,7 +39,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     setContentView(R.layout.aggregate_choose_tables_activity);
 
     setListAdapter(new ArrayAdapter<TableProperties>(this,
-        android.R.layout.simple_list_item_multiple_choice, 
+        android.R.layout.simple_list_item_multiple_choice,
         getServerDataTables()));
 
     final ListView listView = getListView();
@@ -68,15 +67,15 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    */
   private TableProperties[] getServerDataTables() {
     DbHelper dbh = DbHelper.getDbHelper(this);
-    DataManager dm = new DataManager(dbh);
     // hilary's original--return dm.getDataTableProperties();
-    return dm.getTablePropertiesForDataTables(KeyValueStore.Type.SERVER);
+    return TableProperties.getTablePropertiesForDataTables(dbh,
+        KeyValueStore.Type.SERVER);
   }
 
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
     ListView listView = getListView();
-    TableProperties tp = 
+    TableProperties tp =
         (TableProperties) listView.getItemAtPosition(position);
     // hilary's original
     //tp.setSynchronized(listView.isItemChecked(position));

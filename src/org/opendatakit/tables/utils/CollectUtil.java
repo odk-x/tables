@@ -1000,7 +1000,7 @@ public class CollectUtil {
     }
     Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
     DbHelper dbh = DbHelper.getDbHelper(context);
-    DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
+    DbTable dbTable = DbTable.getDbTable(dbh, tp);
     dbTable.updateRow(rowId, values, formValues.uriUser, formValues.timestamp, formValues.instanceName, formValues.formId, formValues.locale);
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
@@ -1072,7 +1072,7 @@ public class CollectUtil {
       return false;
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
-    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp.getTableId());
+    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp);
     dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.uriUser,
             formValues.instanceName, formValues.formId, formValues.locale);
     return true;
