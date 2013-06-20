@@ -21,25 +21,27 @@ import java.util.List;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.content.Context;
 
 /**
  * A utility class for functions related to security.
- * 
+ *
  * @author hkworden@gmail.com
  */
 public class SecurityUtil {
-    
+
     public static final String USER_COLUMN_NAME = "user";
     public static final String PHONENUM_COLUMN_NAME = "phone";
     public static final String PASSWORD_COLUMN_NAME = "pass";
-    
+
     public static boolean couldBeSecurityTable(List<String> arrayList) {
         return (getSecurityIndices(arrayList) != null);
     }
-    
+
     private static int[] getSecurityIndices(List<String> arrayList) {
         int[] indices = {-1, -1, -1};
         for (int i = 0; i < arrayList.size(); i++) {
@@ -70,11 +72,11 @@ public class SecurityUtil {
         }
         return indices;
     }
-    
-    public static boolean isValid(Context context, String tableId,
+
+    public static boolean isValid(Context context, TableProperties tp,
             String phoneNum, String password) {
         DbHelper dbh = DbHelper.getDbHelper(context);
-        DbTable dbt = DbTable.getDbTable(dbh, tableId);
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(DataTableColumns.ROW_ID);
         UserTable table = dbt.getRaw(columns,

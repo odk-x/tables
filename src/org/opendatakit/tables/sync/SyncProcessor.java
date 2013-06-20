@@ -115,7 +115,9 @@ public class SyncProcessor {
    *          {@link SyncState#rest}.
    */
   public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
-    DbTable table = DbTable.getDbTable(dbh, tp.getTableId());
+    DbTable table = DbTable.getDbTable(dbh,
+        TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+            KeyValueStore.Type.ACTIVE));// TODO: should this be SERVER or ACTIVE?
     boolean success = false;
     beginTableTransaction(tp);
     try {

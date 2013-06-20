@@ -118,13 +118,8 @@ public class DbTable {
         ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
         ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
 
-    private final DataUtil du;
     private final DbHelper dbh;
     private final TableProperties tp;
-
-    public static DbTable getDbTable(DbHelper dbh, String tableId) {
-        return new DbTable(dbh, tableId);
-    }
 
     public static DbTable getDbTable(DbHelper dbh, TableProperties tp) {
         return new DbTable(dbh, tp);
@@ -135,19 +130,8 @@ public class DbTable {
     }
 
     private DbTable(DbHelper dbh, TableProperties tp) {
-        this.du = DataUtil.getDefaultDataUtil();
         this.dbh = dbh;
         this.tp = tp;
-    }
-
-    private DbTable(DbHelper dbh, String tableId) {
-        this.du = DataUtil.getDefaultDataUtil();
-        this.dbh = dbh;
-        this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-            KeyValueStore.Type.ACTIVE);
-        // so this looks like the problem, needs to somehow know if it should
-        // be drawing the props from the server table (if you'd dl'ing a table)
-        // or if you're creating a table and therefore want the active.
     }
 
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {

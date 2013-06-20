@@ -258,7 +258,9 @@ public class MsgHandler {
                 (msg.charAt(lastHashIndex - 1) == SPACE_CHAR)) {
             password = msg.substring(lastHashIndex + 1);
         }
-        DbTable sDbt = DbTable.getDbTable(dbh, secTableId);
+        DbTable sDbt = DbTable.getDbTable(dbh,
+            TableProperties.getTablePropertiesForTable(dbh, secTableId,
+                KeyValueStore.Type.ACTIVE));
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         UserTable table = sDbt.getRaw(

@@ -124,7 +124,6 @@ public class ListDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      c.refreshDbTable();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
         table = c.getIsOverview() ?

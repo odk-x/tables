@@ -156,9 +156,7 @@ public class Controller implements CustomViewCallbacks {
         isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
         // initializing data objects
         dbh = DbHelper.getDbHelper(activity);
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-            KeyValueStore.Type.ACTIVE);
-        dbt = DbTable.getDbTable(dbh, tp);
+        refreshDbTable(tableId);
 
         // INITIALIZING VIEW OBJECTS
         // controlWrap will hold the search bar and search button
@@ -267,8 +265,10 @@ public class Controller implements CustomViewCallbacks {
    * a messy way of doing things, and a refactor should probably end up fixing
    * this.
    */
-  public void refreshDbTable() {
-    this.dbt = DbTable.getDbTable(dbh, tp.getTableId());
+  public void refreshDbTable(String tableId) {
+    tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+        KeyValueStore.Type.ACTIVE);
+    dbt = DbTable.getDbTable(dbh, tp);
   }
 
   /**
@@ -457,9 +457,7 @@ public class Controller implements CustomViewCallbacks {
   }
 
   private void handleListViewManagerReturn() {
-    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    dbt = DbTable.getDbTable(dbh, tp);
+    refreshDbTable(tp.getTableId());
     da.init();
   }
 
@@ -469,9 +467,7 @@ public class Controller implements CustomViewCallbacks {
     // This should eventually move, if we decide to keep this architecture. but
     // for now I'm going to just hardcode in a solution.
     TableViewType oldViewType = tp.getCurrentViewType();
-    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    dbt = DbTable.getDbTable(dbh, tp);
+    refreshDbTable(tp.getTableId());
     if (oldViewType == tp.getCurrentViewType()) {
       da.init();
     } else {
@@ -480,9 +476,7 @@ public class Controller implements CustomViewCallbacks {
   }
 
   private void handleColumnManagerReturn() {
-    tp = TableProperties.getTablePropertiesForTable(dbh,
-        tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = DbTable.getDbTable(dbh, tp);
+    refreshDbTable(tp.getTableId());
     da.init();
   }
 

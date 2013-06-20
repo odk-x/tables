@@ -145,9 +145,7 @@ public class TableActivity extends SherlockFragmentActivity
 
     // Initialize data objects.
     mDbh = DbHelper.getDbHelper(this);
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh, tableId,
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(tableId);
     mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
         mTableProperties);
 
@@ -173,7 +171,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   public void init() {
-    refreshDbTable();
+    refreshDbTable(mTableProperties.getTableId());
     mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
         mTableProperties);
     mQuery.clear();
@@ -233,8 +231,11 @@ public class TableActivity extends SherlockFragmentActivity
    * the dbTable without calling this method. This is a messy way of doing
    * things, and a refactor should probably end up fixing this.
    */
-  void refreshDbTable() {
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties.getTableId());
+  void refreshDbTable(String tableId) {
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+        tableId,
+        KeyValueStore.Type.ACTIVE);
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
   }
 
   /**
@@ -366,18 +367,12 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleListViewManagerReturn() {
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   private void handleTablePropertiesManagerReturn() {
     TableViewType oldViewType = mTableProperties.getCurrentViewType();
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
     if (oldViewType == mTableProperties.getCurrentViewType()) {
       init();
     } else {
@@ -386,10 +381,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleColumnManagerReturn() {
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   void deleteRow(String rowId) {
@@ -591,7 +583,7 @@ public class TableActivity extends SherlockFragmentActivity
       return;
     }
 	// TODO: refresh display???
-	refreshDbTable();
+	refreshDbTable(mTableProperties.getTableId());
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
@@ -600,7 +592,7 @@ public class TableActivity extends SherlockFragmentActivity
     }
     mRowId = null;
     // TODO: refresh display???
-    refreshDbTable();
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   /** TODO: What does this do? */
