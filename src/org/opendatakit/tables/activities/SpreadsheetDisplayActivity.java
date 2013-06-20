@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
@@ -124,10 +125,25 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       Query query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
             mTp);
         query.loadFromUserQuery(c.getSearchText());
-        table = c.getIsOverview() ?
-                c.getDbTable().getUserOverviewTable(query) :
-                c.getDbTable().getUserTable(query);
-//        indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
+        // There are two options here. The first is that we get the data using 
+        // the {@link Query} object. The other is that we use a sql where 
+        // clause. The two currently don't play nice together, so figure out 
+        // which one. The sql statement gets precedence.
+        String sqlWhereClause = 
+            getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+        if (sqlWhereClause != null) {
+          String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+              Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+          DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
+              c.getTableProperties().getTableId());
+          table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+        } else {
+          // We use the query.
+          table = c.getIsOverview() ?
+              c.getDbTable().getUserOverviewTable(query) :
+              c.getDbTable().getUserTable(query);
+        }
+
         String indexedColElementKey = c.getTableProperties().getIndexColumn();
         indexedCol =
             c.getTableProperties().getColumnIndex(indexedColElementKey);
@@ -158,7 +174,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false);
+                query.toUserQuery(), false, null, null);
     }
 
     void setColumnAsPrime(ColumnProperties cp) {
@@ -745,10 +761,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  // object, but alas, it looks like atm it is hardcoded.
 	                  String queryText = joinedColDisplayName + ":" +
 	                      table.getData(cellId);
-	                    c.launchTableActivity(context,
+	                    Controller.launchTableActivity(context,
 	                        dm.getTableProperties(tableId,
 	                            KeyValueStore.Type.ACTIVE),
-	                        queryText, c.getIsOverview());
+	                        queryText, c.getIsOverview(), null, null);
 	                    c.removeOverlay();
 	                  break;
 	                default:

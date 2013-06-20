@@ -171,7 +171,7 @@ public class ListViewManager extends SherlockListActivity {
       isOverview = true;
     }
     Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
-        null, isOverview, filenameOfSelectedView);
+        null, isOverview, filenameOfSelectedView, null, null);
   }
 
   @Override

@@ -158,7 +158,21 @@ public class TableActivity extends SherlockFragmentActivity
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
 
-    mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : mDbTable.getUserTable(mQuery);
+    // There are two options here. The first is that we get the data using the
+    // {@link Query} object. The other is that we use a sql where clause. The
+    // two currently don't play nice together, so figure out which one. The 
+    // sql statement gets precedence.
+    String sqlWhereClause = 
+        getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+    if (sqlWhereClause != null) {
+      String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+          Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+      mTable = mDbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+    } else {
+      // We use the query.
+      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : 
+        mDbTable.getUserTable(mQuery);
+    }
 
     // Create the map fragment.
     if (savedInstanceState == null) {

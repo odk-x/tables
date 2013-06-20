@@ -759,14 +759,25 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public boolean openTable(String tableName, String query) {
-			initTpInfo();
-			if (!tpMap.containsKey(tableName)) {
-				Log.e(TAG, "tableName [" + tableName + "] not in map");
-				return false;
-			}
-			Controller.launchTableActivity(mContext, tpMap.get(tableName),
-					query, false);
-			return true;
+			return helperOpenTable(tableName, query, null, null);
+		}
+		
+		public boolean openTableWithSqlQuery(String tableName, 
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTable(tableName, null, sqlWhereClause, 
+		      sqlSelectionArgs);
+		}
+		
+		private boolean helperOpenTable(String tableName, String searchText,
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+        initTpInfo();
+        if (!tpMap.containsKey(tableName)) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchTableActivity(mContext, tpMap.get(tableName),
+              searchText, false, sqlWhereClause, sqlSelectionArgs);
+        return true;		  
 		}
 
 		/**
@@ -781,18 +792,32 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public boolean openTableToListViewWithFile(String tableName,
 				String searchText, String filename) {
-			initTpInfo();
-			TableProperties tp = tpMap.get(tableName);
-			if (tp == null) {
-				Log.e(TAG, "tableName [" + tableName + "] not in map");
-				return false;
-			}
-			String pathToTablesFolder = ODKFileUtils
-					.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-			String pathToFile = pathToTablesFolder + File.separator + filename;
-			Controller.launchListViewWithFileName(mContext, tp, searchText,
-					null, false, pathToFile);
-			return true;
+			return helperOpenTableWithFile(tableName, searchText, filename, null, 
+			    null);
+		}
+		
+		public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
+		    String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTableWithFile(tableName, null, filename, 
+		      sqlWhereClause, sqlSelectionArgs);
+		}
+		
+		private boolean helperOpenTableWithFile(String tableName, 
+		    String searchText, String filename, String sqlWhereClause, 
+		    String[] sqlSelectionArgs) {
+        initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        String pathToTablesFolder = ODKFileUtils
+            .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        String pathToFile = pathToTablesFolder + File.separator + filename;
+        Controller.launchListViewWithFilenameAndSqlQuery(mContext, tp, 
+            searchText, null, false, pathToFile, sqlWhereClause, 
+            sqlSelectionArgs);
+        return true;		  
 		}
 
 		public TableData query(String tableName, String searchText) {
@@ -863,6 +888,32 @@ public abstract class CustomView extends LinearLayout {
 		    return null;
 		  }
 		  return tp.getDbTableName();
+		}
+		
+		/**
+		 * Get the element key of the column with the given display name from the
+		 * given table. Both the table and the column are retrieved by their
+		 * display names. If the underlying table or column cannot be found by
+		 * the given display names, returns null.
+		 * @param tableDisplayName
+		 * @param columnDisplayName
+		 * @return
+		 */
+		public String getElementKeyForColumn(String tableDisplayName, 
+		    String columnDisplayName) {
+		  initTpInfo();
+        TableProperties tp = tpMap.get(tableDisplayName);
+        if (tp == null) {
+          Log.e(TAG, "request for table with displayName [" + 
+              tableDisplayName + "] cannot be found.");
+          return null;
+        }
+        ColumnProperties columnProperties = 
+            tp.getColumnByDisplayName(columnDisplayName);
+        if (columnProperties == null) {
+          return null;
+        }
+        return columnProperties.getElementKey();
 		}
 
 		/**

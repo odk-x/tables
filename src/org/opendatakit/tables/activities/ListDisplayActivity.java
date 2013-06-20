@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
@@ -128,9 +129,22 @@ public class ListDisplayActivity extends SherlockActivity
       c.refreshDbTable();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
-        table = c.getIsOverview() ?
-                c.getDbTable().getUserOverviewTable(query) :
-                c.getDbTable().getUserTable(query);
+        // If a sql statement has been passed in the Intent, use that instead 
+        // of the query.
+        String sqlWhereClause = 
+            getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+        if (sqlWhereClause != null) {
+          String[] sqlSelectionArgs = getIntent().getExtras()
+              .getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+          DbTable dbTable = DbTable.getDbTable(dbh, 
+              c.getTableProperties().getTableId());
+          table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+        } else {
+          // we just use the query.
+          table = c.getIsOverview() ?
+                  c.getDbTable().getUserOverviewTable(query) :
+                  c.getDbTable().getUserTable(query);
+        }
         String nameOfView =
             kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
         // The nameOfView can be null in some cases, like if the default list
