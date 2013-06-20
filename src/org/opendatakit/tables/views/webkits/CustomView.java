@@ -763,7 +763,6 @@ public abstract class CustomView extends LinearLayout {
 		 * Open the table specified by tableName as a list view with the
 		 * filename specified by filename. The filename is relative to the odk
 		 * tables path.
-		 *
 		 * @param tableName
 		 * @param filename
 		 * @return false if the table properties cannot be found, true if it
@@ -798,6 +797,31 @@ public abstract class CustomView extends LinearLayout {
             sqlSelectionArgs);
         return true;		  
 		}
+		
+		public boolean openTableToMapViewWithSqlQuery(String tableName,
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTableToMapView(tableName, null, sqlWhereClause,
+		      sqlSelectionArgs);
+		}
+		
+		public boolean openTableToMapView(String tableName, String searchText) {
+		  return helperOpenTableToMapView(tableName, searchText, null, null);
+		}
+		
+		private boolean helperOpenTableToMapView(String tableName, 
+		    String searchText, String sqlWhereClause, 
+		    String[] sqlSelectionArgs) {
+		  initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchMapView(mContext, tp, searchText, null, false, 
+            sqlWhereClause, sqlSelectionArgs);
+        return true;
+		}
+		
 
 		public TableData query(String tableName, String searchText) {
 			initTpInfo();

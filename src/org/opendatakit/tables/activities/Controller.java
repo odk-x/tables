@@ -796,6 +796,7 @@ public class Controller implements CustomViewCallbacks {
    * @param filename
    * @param sqlWhereClause 
    * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
    */
   public static void launchListViewWithFileName(Context context,
       TableProperties tp, String searchText, Stack<String> searchStack,
@@ -811,6 +812,18 @@ public class Controller implements CustomViewCallbacks {
     context.startActivity(intent);
   }
   
+  /**
+   * Open the table to the list view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
   public static void launchListViewWithFilenameAndSqlQuery(Context context,
       TableProperties tp, String searchText, Stack<String> searchStack,
       boolean isOverview, String filename, String sqlWhereClause, 
@@ -819,6 +832,46 @@ public class Controller implements CustomViewCallbacks {
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
+  /**
+   * Open the table to the map view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchMapView(Context context, TableProperties tp, 
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, TableActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
+  /**
+   * Open the table to graph view. 
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchGraphView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, GraphDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
         sqlWhereClause, sqlSelectionArgs);
