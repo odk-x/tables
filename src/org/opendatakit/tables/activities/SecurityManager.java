@@ -31,26 +31,25 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-// TODO: SS: after the major schema rewrite, this class is basicaly useless. 
+// TODO: SS: after the major schema rewrite, this class is basicaly useless.
 // Changed a bunch, need to fix it and make it sensible. This likely includes
 // actually defining the correct access model, which we currently don't have.
 public class SecurityManager extends Activity {
 
     public static final String INTENT_KEY_TABLE_ID = "tableId";
-    
-    private TableProperties tp;
-	private TableProperties[] tps;
+
+   private TableProperties tp;
 	private TableProperties[] securityTps;
-	
+
 	private Spinner accessSpin;
 //	private Spinner readSpin;
 //	private Spinner writeSpin;
-	
+
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		setContentView(R.layout.security_activity);
-		
+
 		// Set title of activity
 		setTitle("ODK Tables > Security");
 
@@ -59,23 +58,21 @@ public class SecurityManager extends Activity {
 		DbHelper dbh = DbHelper.getDbHelper(this);
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 		    KeyValueStore.Type.ACTIVE);
-		tps = TableProperties.getTablePropertiesForAll(dbh,
-		    KeyValueStore.Type.ACTIVE);
 		securityTps = TableProperties.getTablePropertiesForSecurityTables(dbh,
 		    KeyValueStore.Type.ACTIVE);
-    
+
         // Set current table name
         TextView tv = (TextView)findViewById(R.id.security_activity_table_name);
         String currentTableName = tp.getDisplayName();
         tv.setText(currentTableName);
-		
+
 		// Get current read & write security table value
         //TODO: changed this upon big schema update. should verify.
         String accessTable = tp.getAccessControls();
 //		String currentReadT = tp.getReadSecurityTableId();
 //		String currentWriteT = tp.getWriteSecurityTableId();
-        
-		
+
+
 		// Get a list of available security tables
 		String[] secTables = new String[securityTps.length+1];
 		secTables[0] = "";
@@ -97,7 +94,7 @@ public class SecurityManager extends Activity {
 		    secTables[i] = secTp.getDisplayName();
 		    i++;
 		}
-		
+
 	    accessSpin = (Spinner)findViewById(R.id.security_activity_read_spinner);
 	      ArrayAdapter<String> readAdapter = new ArrayAdapter<String>(this,
 	            android.R.layout.simple_spinner_item, secTables);
@@ -106,8 +103,8 @@ public class SecurityManager extends Activity {
 	      accessSpin.setAdapter(readAdapter);
 	      accessSpin.setOnItemSelectedListener(new SpinnerSelectionListener("security"));
 	      accessSpin.setSelection(accessTableIndex);
-		
-		// Create a spinner for readable 
+
+		// Create a spinner for readable
 //		readSpin = (Spinner)findViewById(R.id.security_activity_read_spinner);
 //		ArrayAdapter<String> readAdapter = new ArrayAdapter<String>(this,
 //				android.R.layout.simple_spinner_item, secTables);
@@ -116,7 +113,7 @@ public class SecurityManager extends Activity {
 //		readSpin.setAdapter(readAdapter);
 //		readSpin.setOnItemSelectedListener(new SpinnerSelectionListener("read"));
 //		readSpin.setSelection(readTableIndex);
-//		
+//
 //		// Create a spinner for writable
 //		writeSpin = (Spinner)findViewById(R.id.security_activity_write_spinner);
 //		ArrayAdapter<String> writeAdapter = new ArrayAdapter<String>(this,
@@ -127,17 +124,17 @@ public class SecurityManager extends Activity {
 //		writeSpin.setOnItemSelectedListener(new SpinnerSelectionListener("write"));
 //		writeSpin.setSelection(writeTableIndex);
 	}
-	
+
 	private class SpinnerSelectionListener implements OnItemSelectedListener {
-		
+
 		private TableType type;
-		
+
 		SpinnerSelectionListener(String type) {
 			this.type = TableType.valueOf(type);
 		}
-		
+
 		@Override
-		public void onItemSelected(AdapterView<?> adapter, View view, 
+		public void onItemSelected(AdapterView<?> adapter, View view,
 		    int position, long arg3) {
 			String item = (String)adapter.getItemAtPosition(position);
 			Log.e("readSpinner", ""+item);
@@ -158,5 +155,5 @@ public class SecurityManager extends Activity {
 			;
 		}
 	}
-	
+
 }
