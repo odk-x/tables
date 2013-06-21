@@ -808,6 +808,32 @@ public abstract class CustomView extends LinearLayout {
 		  return helperOpenTableToMapView(tableName, searchText, null, null);
 		}
 		
+		public boolean optnTableToSpreadsheetView(String tableName, 
+		    String searchText) {
+		  return helperOpenTableToSpreadsheetView(tableName, searchText, null,
+		      null);
+		}
+		
+		public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTableToSpreadsheetView(tableName, null,
+		      sqlWhereClause, sqlSelectionArgs);
+		}
+		
+		private boolean helperOpenTableToSpreadsheetView(String tableName,
+		    String searchText, String sqlWhereClause, 
+		    String[] sqlSelectionArgs) {
+		  initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchSpreadsheetView(mContext, tp, searchText, null, false,
+            sqlWhereClause, sqlSelectionArgs);
+        return true;
+		}
+		
 		private boolean helperOpenTableToMapView(String tableName, 
 		    String searchText, String sqlWhereClause, 
 		    String[] sqlSelectionArgs) {

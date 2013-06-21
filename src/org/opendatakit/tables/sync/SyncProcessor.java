@@ -414,7 +414,12 @@ public class SyncProcessor {
       boolean found = false;
       for (int i = 0; i < allRowIds.getHeight(); i++) {
         String rowId = allRowIds.getRowId(i);
-        int state = Integer.parseInt(allRowIds.getData(i, 0));
+        String stateStr = allRowIds.getMetadataByElementKey(i, 
+            DataTableColumns.SYNC_STATE);
+        int state = Integer.parseInt(stateStr);
+// TODO: a parse exception here was throwing an exception and silently
+// failing. Caused by line shown below.
+//        int state = Integer.parseInt(allRowIds.getData(i, 0));
         if (row.getRowId().equals(rowId)) {
           found = true;
           if (state == SyncUtil.State.REST) {

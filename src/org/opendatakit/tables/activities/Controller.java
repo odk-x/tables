@@ -859,6 +859,16 @@ public class Controller implements CustomViewCallbacks {
     context.startActivity(intent);
   }
   
+  public static void launchSpreadsheetView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
   /**
    * Open the table to graph view. 
    * @param context
