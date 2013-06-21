@@ -277,8 +277,7 @@ public class CsvUtil {
 						ColumnProperties cp = tp
 								.getColumnByDisplayName(colName);
 						if (cp == null) {
-							tp.addColumn(colName, null, null);
-							cp = tp.getColumnByDisplayName(colName);
+							cp = tp.addColumn(colName, null, null);
 						}
 						dbName = cp.getElementKey();
 					}

@@ -760,6 +760,7 @@ public abstract class CustomView extends LinearLayout {
           String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
         return Control.this.openTableToListViewWithFileAndSqlQuery(tableName, filename, sqlWhereClause, sqlSelectionArgs);
       }
+
       public boolean openTableToMapViewWithSqlQuery(String tableName,
           String sqlWhereClause, String[] sqlSelectionArgs) {
         return Control.this.openTableToMapViewWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
@@ -768,7 +769,6 @@ public abstract class CustomView extends LinearLayout {
       public boolean openTableToMapView(String tableName, String searchText) {
         return Control.this.openTableToMapView(tableName, searchText);
       }
-
 
       public boolean openTableToSpreadsheetView(String tableName,
           String searchText) {
@@ -874,6 +874,9 @@ public abstract class CustomView extends LinearLayout {
      * @return
      */
     public boolean openDetailViewWithFile(int index, String filename) {
+      if ( mTable == null ) {
+        return false;
+      }
       String pathToTablesFolder =
           ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
       String pathToFile = pathToTablesFolder + File.separator + filename;
