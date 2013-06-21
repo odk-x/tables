@@ -116,6 +116,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
       TableProperties tp = c.getTableProperties();
+      tp.refreshColumns();
       Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
           KeyValueStore.Type.ACTIVE),
           tp);

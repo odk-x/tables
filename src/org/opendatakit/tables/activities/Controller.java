@@ -79,10 +79,10 @@ public class Controller implements CustomViewCallbacks {
     public static final String INTENT_KEY_SEARCH = "search";
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
-    /** 
-     * Key to the where clause if this list view is to be opened with a more 
+    /**
+     * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
-     * to the expectations of {@link DbTable#rawSqlQuery} and 
+     * to the expectations of {@link DbTable#rawSqlQuery} and
      * {@link CustomView$Control#queryWithSql}.
      * @see INTENT_KEY_SQL_SELECTION_ARGS
      */
@@ -91,7 +91,7 @@ public class Controller implements CustomViewCallbacks {
      * An array of strings for restricting the rows displayed in the table.
      * @see INTENT_KEY_SQL_WHERE
      */
-    public static final String INTENT_KEY_SQL_SELECTION_ARGS = 
+    public static final String INTENT_KEY_SQL_SELECTION_ARGS =
         "sqlSelectionArgs";
 
     public static final int VIEW_ID_SEARCH_FIELD = 0;
@@ -289,7 +289,6 @@ public class Controller implements CustomViewCallbacks {
    * @return DbTable this data table
    */
   public DbTable getDbTable() {
-    tp.refreshColumns();
     return dbt;
   }
 
@@ -788,7 +787,7 @@ public class Controller implements CustomViewCallbacks {
    * @param searchStack
    * @param isOverview
    * @param filename
-   * @param sqlWhereClause 
+   * @param sqlWhereClause
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
@@ -805,7 +804,7 @@ public class Controller implements CustomViewCallbacks {
         sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
-  
+
   /**
    * Open the table to the list view.
    * @param context
@@ -820,7 +819,7 @@ public class Controller implements CustomViewCallbacks {
    */
   public static void launchListViewWithFilenameAndSqlQuery(Context context,
       TableProperties tp, String searchText, Stack<String> searchStack,
-      boolean isOverview, String filename, String sqlWhereClause, 
+      boolean isOverview, String filename, String sqlWhereClause,
       String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
     if (filename != null) {
@@ -831,7 +830,7 @@ public class Controller implements CustomViewCallbacks {
         sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
-  
+
   /**
    * Open the table to the map view.
    * @param context
@@ -843,7 +842,7 @@ public class Controller implements CustomViewCallbacks {
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchMapView(Context context, TableProperties tp, 
+  public static void launchMapView(Context context, TableProperties tp,
       String searchText, Stack<String> searchStack, boolean isOverview,
       String sqlWhereClause, String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, TableActivity.class);
@@ -852,9 +851,9 @@ public class Controller implements CustomViewCallbacks {
         sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
-  
+
   /**
-   * Open the table to graph view. 
+   * Open the table to graph view.
    * @param context
    * @param tp
    * @param searchText
