@@ -20,7 +20,6 @@ import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.content.Intent;
