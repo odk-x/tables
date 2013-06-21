@@ -56,8 +56,9 @@ public class ConflictResolutionActivity extends SherlockActivity
 
     @Override
     public void init() {
-        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE),
+      c.getTableProperties().refreshColumns();
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getDbTable().getConflictTable(query);
@@ -111,6 +112,7 @@ public class ConflictResolutionActivity extends SherlockActivity
     public void onSet(int index) {
         Stack<RowChange> changes = rowChanges.get(index);
         TableProperties tp = c.getTableProperties();
+        tp.refreshColumns();
         Map<String, String> values = new HashMap<String, String>();
         while (!changes.isEmpty()) {
             RowChange rc = changes.pop();

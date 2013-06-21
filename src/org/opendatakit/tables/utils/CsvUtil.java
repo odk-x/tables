@@ -285,7 +285,7 @@ public class CsvUtil {
 					columns.add(dbName);
 				}
 			}
-			return importTable(c, reader, tp.getTableId(), columns, idxRowId,
+			return importTable(c, reader, tp, columns, idxRowId,
 					idxTimestamp, idxUriUser, idxInstanceName, idxFormId,
 					idxLocale, includesProperties);
 		} catch (FileNotFoundException e) {
@@ -295,10 +295,7 @@ public class CsvUtil {
 		}
 	}
 
-	public boolean importAddToTable(Context c, File file, String tableId) {
-		// TODO is this the correct KVS to get the properties from?
-		TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-				tableId, KeyValueStore.Type.ACTIVE);
+	public boolean importAddToTable(Context c, File file, TableProperties tp) {
 		try {
 			// This flag indicates if the table was exported with the
 			// properties.
@@ -378,7 +375,7 @@ public class CsvUtil {
 				columns.add(dbName);
 			}
 
-			return importTable(c, reader, tp.getTableId(), columns, idxRowId,
+			return importTable(c, reader, tp, columns, idxRowId,
 					idxTimestamp, idxUriUser, idxInstanceName, idxFormId,
 					idxLocale, includesProperties);
 		} catch (FileNotFoundException e) {
@@ -521,12 +518,12 @@ public class CsvUtil {
 		}
 	}
 
-	private boolean importTable(Context c, CSVReader reader, String tableId,
+	private boolean importTable(Context c, CSVReader reader, TableProperties tableProperties,
 			List<String> columns, int idxRowId, int idxTimestamp,
 			int idxUriUser, int idxInstanceName, int idxFormId, int idxLocale,
 			boolean exportedWithProperties) {
 
-		DbTable dbt = DbTable.getDbTable(dbh, tableId);
+		DbTable dbt = DbTable.getDbTable(dbh, tableProperties);
 
 		try {
 			Set<Integer> idxMetadata = new HashSet<Integer>();
@@ -599,13 +596,11 @@ public class CsvUtil {
 	 *            (automatically includes all the above fields)
 	 * @return
 	 */
-	public boolean export(ExportTask exportTask, File file, String tableId,
+	public boolean export(ExportTask exportTask, File file,
+	      TableProperties tp,
 			boolean includeTimestamp, boolean includeUriUser,
 			boolean includeInstanceName, boolean includeFormId,
 			boolean includeLocale, boolean exportProperties) {
-		// TODO test that this is the correct KVS to get the export from.
-		TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-				tableId, KeyValueStore.Type.ACTIVE);
 		// building array of columns to select and header row for output file
 		int columnCount = tp.getColumns().size();
 		if (exportProperties) {

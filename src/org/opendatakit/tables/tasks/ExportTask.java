@@ -28,7 +28,7 @@ public class ExportTask
         ExportRequest request = exportRequests[0];
         CsvUtil cu = new CsvUtil(this.exportCSVActivity);
         return cu.export(this, request.getFile(),
-                request.getTableProperties().getTableId(),
+                request.getTableProperties(),
                 request.getIncludeTimestamps(),
                 request.getIncludeUriUsers(),
                 request.getIncludeInstanceNames(),

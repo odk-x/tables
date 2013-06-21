@@ -109,9 +109,7 @@ implements DisplayActivity {
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
-		query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-          KeyValueStore.Type.ACTIVE),
-				c.getTableProperties());
+		query = new Query(dbh, KeyValueStore.Type.ACTIVE, c.getTableProperties());
 	}
 
 	@Override
@@ -124,16 +122,15 @@ implements DisplayActivity {
 	public void init() {
 		// I hate having to do these two refreshes here, but with the code the
 		// way it is it seems the only way.
-		c.refreshDbTable();
+		c.refreshDbTable(c.getTableProperties().getTableId());
 		query.clear();
 		query.loadFromUserQuery(c.getSearchText());
-      String sqlWhereClause = 
+      String sqlWhereClause =
           getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
       if (sqlWhereClause != null) {
         String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
             Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-        DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
-            c.getTableProperties().getTableId());
+        DbTable dbTable = DbTable.getDbTable(dbh, c.getTableProperties());
         table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
       } else {
         // We use the query.

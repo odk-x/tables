@@ -70,7 +70,6 @@ public abstract class CustomView extends LinearLayout {
   private Activity mParentActivity;
 
   private Map<String, TableProperties> tpMap;
-  private TableProperties[] allTps;
   private CustomViewCallbacks mCallbacks;
 
   protected CustomView(Activity parentActivity, CustomViewCallbacks callbacks) {
@@ -133,11 +132,26 @@ public abstract class CustomView extends LinearLayout {
       return;
     }
     tpMap = new HashMap<String, TableProperties>();
-    allTps = TableProperties.getTablePropertiesForAll(DbHelper.getDbHelper(mParentActivity),
+    TableProperties[] allTps = TableProperties.getTablePropertiesForAll(DbHelper.getDbHelper(mParentActivity),
         KeyValueStore.Type.ACTIVE);
     for (TableProperties tp : allTps) {
       tpMap.put(tp.getDisplayName(), tp);
     }
+  }
+
+  private List<String> getTableDisplayNames() {
+    initTpInfo();
+    List<String> allNames = Arrays.asList(tpMap.keySet().toArray(new String[0]));
+    Collections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
+    return allNames;
+  }
+
+  private TableProperties getTablePropertiesByDisplayName(TableProperties tp, String tableName) {
+    if (tp == null || !tableName.equals(tp.getDisplayName())) {
+      initTpInfo();
+      tp = tpMap.get(tableName);
+    }
+    return tp;
   }
 
   protected void initView() {
@@ -286,17 +300,11 @@ public abstract class CustomView extends LinearLayout {
      */
     public void addRowWithCollect(String tableName) {
       // The first thing we need to do is get the correct TableProperties.
-      TableProperties tpToReceiveAdd = null;
-      if (tableName == tp.getDisplayName()) {
-        tpToReceiveAdd = tp;
-      } else {
-        initTpInfo();
-        tpToReceiveAdd = tpMap.get(tableName);
-        if (tpToReceiveAdd == null) {
-          Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-              + " because it could not be found");
-          return;
-        }
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
       }
       CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
     }
@@ -313,17 +321,11 @@ public abstract class CustomView extends LinearLayout {
     public void addRowWithCollectAndSpecificForm(String tableName, String formId,
         String formVersion, String formRootElement) {
       // The first thing we need to do is get the correct TableProperties.
-      TableProperties tpToReceiveAdd = null;
-      if (tableName == tp.getDisplayName()) {
-        tpToReceiveAdd = tp;
-      } else {
-        initTpInfo();
-        tpToReceiveAdd = tpMap.get(tableName);
-        if (tpToReceiveAdd == null) {
-          Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-              + " because it could not be found");
-          return;
-        }
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
       }
       CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion,
           formRootElement, tpToReceiveAdd);
@@ -628,17 +630,11 @@ public abstract class CustomView extends LinearLayout {
     public void addRowWithCollect(String tableName) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = null;
-      if (tableName == tp.getDisplayName()) {
-        tpToReceiveAdd = tp;
-      } else {
-        initTpInfo();
-        tpToReceiveAdd = tpMap.get(tableName);
-        if (tpToReceiveAdd == null) {
-          Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-              + " because it could not be found");
-          return;
-        }
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
       }
       CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
     }
@@ -656,17 +652,11 @@ public abstract class CustomView extends LinearLayout {
         String formVersion, String formRootElement) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = null;
-      if (tableName == tp.getDisplayName()) {
-        tpToReceiveAdd = tp;
-      } else {
-        initTpInfo();
-        tpToReceiveAdd = tpMap.get(tableName);
-        if (tpToReceiveAdd == null) {
-          Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-              + " because it could not be found");
-          return;
-        }
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
       }
       CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion,
           formRootElement, tpToReceiveAdd);
@@ -697,8 +687,6 @@ public abstract class CustomView extends LinearLayout {
     private static final String TAG = "CustomView.Control";
 
     protected Context mContext;
-    // private TableProperties[] allTps;
-    // private Map<String, TableProperties> tpMap;
     private DbHelper dbh;
 
     /**
@@ -715,18 +703,6 @@ public abstract class CustomView extends LinearLayout {
       Log.d(TAG, "calling Control Constructor");
     }
 
-    private void initTpInfo() {
-      if (tpMap != null) {
-        return;
-      }
-      tpMap = new HashMap<String, TableProperties>();
-      allTps = TableProperties.getTablePropertiesForAll(DbHelper.getDbHelper(mContext),
-          KeyValueStore.Type.ACTIVE);
-      for (TableProperties tp : allTps) {
-        tpMap.put(tp.getDisplayName(), tp);
-      }
-    }
-
 		/**
 		 * Opens the table specified by the tableName and searches this table
 		 * with the given query. Uses the default view specified on the table.
@@ -740,23 +716,23 @@ public abstract class CustomView extends LinearLayout {
 		public boolean openTable(String tableName, String query) {
 			return helperOpenTable(tableName, query, null, null);
 		}
-		
-		public boolean openTableWithSqlQuery(String tableName, 
+
+		public boolean openTableWithSqlQuery(String tableName,
 		    String sqlWhereClause, String[] sqlSelectionArgs) {
-		  return helperOpenTable(tableName, null, sqlWhereClause, 
+		  return helperOpenTable(tableName, null, sqlWhereClause,
 		      sqlSelectionArgs);
 		}
-		
+
 		private boolean helperOpenTable(String tableName, String searchText,
 		    String sqlWhereClause, String[] sqlSelectionArgs) {
-        initTpInfo();
-        if (!tpMap.containsKey(tableName)) {
+		  TableProperties tpToOpen = getTablePropertiesByDisplayName(null, tableName);
+        if (tpToOpen == null) {
            Log.e(TAG, "tableName [" + tableName + "] not in map");
            return false;
         }
-        Controller.launchTableActivity(mContext, tpMap.get(tableName),
+        Controller.launchTableActivity(mContext, tpToOpen,
               searchText, false, sqlWhereClause, sqlSelectionArgs);
-        return true;		  
+        return true;
 		}
 
 		/**
@@ -770,21 +746,20 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public boolean openTableToListViewWithFile(String tableName,
 				String searchText, String filename) {
-			return helperOpenTableWithFile(tableName, searchText, filename, null, 
+			return helperOpenTableWithFile(tableName, searchText, filename, null,
 			    null);
 		}
-		
+
 		public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
 		    String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
-		  return helperOpenTableWithFile(tableName, null, filename, 
+		  return helperOpenTableWithFile(tableName, null, filename,
 		      sqlWhereClause, sqlSelectionArgs);
 		}
-		
-		private boolean helperOpenTableWithFile(String tableName, 
-		    String searchText, String filename, String sqlWhereClause, 
+
+		private boolean helperOpenTableWithFile(String tableName,
+		    String searchText, String filename, String sqlWhereClause,
 		    String[] sqlSelectionArgs) {
-        initTpInfo();
-        TableProperties tp = tpMap.get(tableName);
+        TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
         if (tp == null) {
            Log.e(TAG, "tableName [" + tableName + "] not in map");
            return false;
@@ -792,18 +767,18 @@ public abstract class CustomView extends LinearLayout {
         String pathToTablesFolder = ODKFileUtils
             .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
         String pathToFile = pathToTablesFolder + File.separator + filename;
-        Controller.launchListViewWithFilenameAndSqlQuery(mContext, tp, 
-            searchText, null, false, pathToFile, sqlWhereClause, 
+        Controller.launchListViewWithFilenameAndSqlQuery(mContext, tp,
+            searchText, null, false, pathToFile, sqlWhereClause,
             sqlSelectionArgs);
-        return true;		  
+        return true;
 		}
-		
+
 		public boolean openTableToMapViewWithSqlQuery(String tableName,
 		    String sqlWhereClause, String[] sqlSelectionArgs) {
 		  return helperOpenTableToMapView(tableName, null, sqlWhereClause,
 		      sqlSelectionArgs);
 		}
-		
+
 		public boolean openTableToMapView(String tableName, String searchText) {
 		  return helperOpenTableToMapView(tableName, searchText, null, null);
 		}
@@ -837,49 +812,46 @@ public abstract class CustomView extends LinearLayout {
 		private boolean helperOpenTableToMapView(String tableName, 
 		    String searchText, String sqlWhereClause, 
 		    String[] sqlSelectionArgs) {
-		  initTpInfo();
-        TableProperties tp = tpMap.get(tableName);
+        TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
         if (tp == null) {
            Log.e(TAG, "tableName [" + tableName + "] not in map");
            return false;
         }
-        Controller.launchMapView(mContext, tp, searchText, null, false, 
+        Controller.launchMapView(mContext, tp, searchText, null, false,
             sqlWhereClause, sqlSelectionArgs);
         return true;
 		}
-		
+
 
 		public TableData query(String tableName, String searchText) {
-			initTpInfo();
-			if (!tpMap.containsKey(tableName)) {
-				return null;
+			TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
+			if ( tp == null ) {
+			  return null;
 			}
-			TableProperties tp = tpMap.get(tableName);
-			Query query = new Query(allTps, tp);
+			Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
 			query.loadFromUserQuery(searchText);
-			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mContext),
-					tp.getTableId());
+			DbTable dbt = DbTable.getDbTable(dbh,tp);
 			List<String> columnOrder = tp.getColumnOrder();
 			return new TableData(mContext, dbt.getRaw(query,
 					columnOrder.toArray(new String[columnOrder.size()])));
 		}
-		
+
 		/**
-		 * Query the database using sql. Only returns the columns for the table 
-		 * specified by the tableName parameter. 
+		 * Query the database using sql. Only returns the columns for the table
+		 * specified by the tableName parameter.
 		 * <p>
-		 * Any arguments in the WHERE statement must be replaced by "?" and 
+		 * Any arguments in the WHERE statement must be replaced by "?" and
 		 * contained in order in the selectionArgs array.
 		 * <p>
 		 * For example, if you wanted all the rows where the column foo equaled
 		 * bar, the where clause would be "WHERE foo = ? " and the selection args
 		 * would be ["bar"].
 		 * @param tableName the display name of the table for which you want the
-		 * columns to be returned. 
+		 * columns to be returned.
 		 * @param whereClause the where clause for the selection. Must begin with
-		 * "WHERE", as if it was appended immediately after "SELECT * FROM 
-		 * tableName ". References to other tables, e.g. for joins, in this 
-		 * statement must use the name of the table as returned by {@link 
+		 * "WHERE", as if it was appended immediately after "SELECT * FROM
+		 * tableName ". References to other tables, e.g. for joins, in this
+		 * statement must use the name of the table as returned by {@link
 		 * getDbNameForTable}.
 		 * @param selectionArgs
 		 * @return
@@ -888,37 +860,35 @@ public abstract class CustomView extends LinearLayout {
 		    String[] selectionArgs) {
 		  // We're going to handle this by passing it off to the DbTable
 		  // rawSqlQuery(String whereClause, String[] selectionArgs) argument.
-		  initTpInfo();
-		  TableProperties tp = tpMap.get(tableName);
+		  TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
         if (tp == null) {
-          Log.e(TAG, "request for table with displayName [" + tableName + 
+          Log.e(TAG, "request for table with displayName [" + tableName +
               "] cannot be found.");
           return null;
         }
-        DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
+        DbTable dbTable = DbTable.getDbTable(dbh, tp);
         UserTable userTable = dbTable.rawSqlQuery(whereClause, selectionArgs);
         TableData tableData = new TableData(mContext, userTable);
         return tableData;
 		}
-		
+
 		/**
-		 * Return the database name of the table. Important for use in {@link 
+		 * Return the database name of the table. Important for use in {@link
 		 * queryWithSql}. Returns null if the table could not be found.
 		 * @param displayName
-		 * @return the database name of the table, or null if it could not be 
+		 * @return the database name of the table, or null if it could not be
 		 * found.
 		 */
 		public String getDbNameForTable(String displayName) {
-		  initTpInfo();
-		  TableProperties tp = tpMap.get(displayName);
+		  TableProperties tp = getTablePropertiesByDisplayName(null, displayName);
 		  if (tp == null) {
-		    Log.e(TAG, "request for table with displayName [" + displayName + 
+		    Log.e(TAG, "request for table with displayName [" + displayName +
 		        "] cannot be found.");
 		    return null;
 		  }
 		  return tp.getDbTableName();
 		}
-		
+
 		/**
 		 * Get the element key of the column with the given display name from the
 		 * given table. Both the table and the column are retrieved by their
@@ -928,16 +898,15 @@ public abstract class CustomView extends LinearLayout {
 		 * @param columnDisplayName
 		 * @return
 		 */
-		public String getElementKeyForColumn(String tableDisplayName, 
+		public String getElementKeyForColumn(String tableDisplayName,
 		    String columnDisplayName) {
-		  initTpInfo();
-        TableProperties tp = tpMap.get(tableDisplayName);
+        TableProperties tp = getTablePropertiesByDisplayName(null, tableDisplayName);
         if (tp == null) {
-          Log.e(TAG, "request for table with displayName [" + 
+          Log.e(TAG, "request for table with displayName [" +
               tableDisplayName + "] cannot be found.");
           return null;
         }
-        ColumnProperties columnProperties = 
+        ColumnProperties columnProperties =
             tp.getColumnByDisplayName(columnDisplayName);
         if (columnProperties == null) {
           return null;
@@ -953,9 +922,7 @@ public abstract class CustomView extends LinearLayout {
      */
     public JSONArray getTableDisplayNames() {
       Log.d(TAG, "called getTableDisplayNames()");
-      initTpInfo();
-      List<String> allNames = Arrays.asList(tpMap.keySet().toArray(new String[0]));
-      Collections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
+      List<String> allNames = CustomView.this.getTableDisplayNames();
       JSONArray result = new JSONArray((Collection<String>) allNames);
       return result;
     }

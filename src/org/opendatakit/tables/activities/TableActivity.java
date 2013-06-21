@@ -145,10 +145,8 @@ public class TableActivity extends SherlockFragmentActivity
 
     // Initialize data objects.
     mDbh = DbHelper.getDbHelper(this);
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh, tableId,
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
-    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
+    refreshDbTable(tableId);
+    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
 
     // Initialize layout fields.
@@ -160,9 +158,9 @@ public class TableActivity extends SherlockFragmentActivity
 
     // There are two options here. The first is that we get the data using the
     // {@link Query} object. The other is that we use a sql where clause. The
-    // two currently don't play nice together, so figure out which one. The 
+    // two currently don't play nice together, so figure out which one. The
     // sql statement gets precedence.
-    String sqlWhereClause = 
+    String sqlWhereClause =
         getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
     if (sqlWhereClause != null) {
       String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
@@ -170,7 +168,7 @@ public class TableActivity extends SherlockFragmentActivity
       mTable = mDbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
     } else {
       // We use the query.
-      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : 
+      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) :
         mDbTable.getUserTable(mQuery);
     }
 
@@ -187,8 +185,8 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   public void init() {
-    refreshDbTable();
-    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
+    refreshDbTable(mTableProperties.getTableId());
+    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
@@ -247,8 +245,11 @@ public class TableActivity extends SherlockFragmentActivity
    * the dbTable without calling this method. This is a messy way of doing
    * things, and a refactor should probably end up fixing this.
    */
-  void refreshDbTable() {
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties.getTableId());
+  void refreshDbTable(String tableId) {
+    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+        tableId,
+        KeyValueStore.Type.ACTIVE);
+    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
   }
 
   /**
@@ -380,18 +381,12 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleListViewManagerReturn() {
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   private void handleTablePropertiesManagerReturn() {
     TableViewType oldViewType = mTableProperties.getCurrentViewType();
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
     if (oldViewType == mTableProperties.getCurrentViewType()) {
       init();
     } else {
@@ -400,10 +395,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleColumnManagerReturn() {
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
-        mTableProperties.getTableId(),
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   void deleteRow(String rowId) {
@@ -588,7 +580,7 @@ public class TableActivity extends SherlockFragmentActivity
     for (ColumnProperties cp : mTableProperties.getColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(null, mTableProperties);
+    Query currentQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE, mTableProperties);
     currentQuery.loadFromUserQuery(getSearchText());
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);
@@ -605,7 +597,7 @@ public class TableActivity extends SherlockFragmentActivity
       return;
     }
 	// TODO: refresh display???
-	refreshDbTable();
+	refreshDbTable(mTableProperties.getTableId());
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
@@ -614,7 +606,7 @@ public class TableActivity extends SherlockFragmentActivity
     }
     mRowId = null;
     // TODO: refresh display???
-    refreshDbTable();
+    refreshDbTable(mTableProperties.getTableId());
   }
 
   /** TODO: What does this do? */

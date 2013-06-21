@@ -110,8 +110,8 @@ public class ListDisplayActivity extends SherlockActivity
         kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
-        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE),
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
     }
 
@@ -125,18 +125,18 @@ public class ListDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      c.refreshDbTable();
+      c.getTableProperties().refreshColumns();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
-        // If a sql statement has been passed in the Intent, use that instead 
+        // If a sql statement has been passed in the Intent, use that instead
         // of the query.
-        String sqlWhereClause = 
+        String sqlWhereClause =
             getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
         if (sqlWhereClause != null) {
           String[] sqlSelectionArgs = getIntent().getExtras()
               .getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-          DbTable dbTable = DbTable.getDbTable(dbh, 
-              c.getTableProperties().getTableId());
+          DbTable dbTable = DbTable.getDbTable(dbh,
+              c.getTableProperties());
           table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
         } else {
           // we just use the query.

@@ -49,6 +49,7 @@ import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
@@ -413,7 +414,7 @@ public class CollectUtil {
             File f = FileProvider.getAsFile(context, ref.get("uri"));
             writer.write(StringEscapeUtils.escapeXml(f.getName()));
           } else if ( type == ColumnType.GEOPOINT ) {
-            // If value is an empty string we don't want to call split, as 
+            // If value is an empty string we don't want to call split, as
             // we'll end up with a one length array of the empty string.
             String[] parts;
             if (value.equals("")) {
@@ -1091,7 +1092,8 @@ public class CollectUtil {
     if (queryString == null || queryString.length() == 0) {
       intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params, null);
     } else {
-      Map<String, String> elementKeyToValue = CollectUtil.getMapFromQuery(tp, queryString);
+      Map<String, String> elementKeyToValue =
+          CollectUtil.getMapFromQuery(context, tp, queryString);
       intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params,
           elementKeyToValue);
     }
@@ -1241,7 +1243,7 @@ public class CollectUtil {
    * @param query
    * @return
    */
-  private static Map<String, String> getMapFromQuery(TableProperties tp, String queryString) {
+  private static Map<String, String> getMapFromQuery(Context context, TableProperties tp, String queryString) {
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     // First add all empty strings. We will overwrite the ones that are
     // queried
@@ -1254,7 +1256,7 @@ public class CollectUtil {
     for (ColumnProperties cp : tp.getColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(null, tp);
+    Query currentQuery = new Query(DbHelper.getDbHelper(context), KeyValueStore.Type.ACTIVE, tp);
     currentQuery.loadFromUserQuery(queryString);
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);
