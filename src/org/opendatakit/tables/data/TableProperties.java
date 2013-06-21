@@ -308,9 +308,14 @@ public class TableProperties {
       String tableId, KeyValueStore.Type typeOfStore) {
     Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId,
         typeOfStore);
-    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+    TableProperties tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+    if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+      activeTableIdMap.put(tp.getTableId(), tp);
+    }
+    return tp;
   }
 
+  private static Map<String,TableProperties> activeTableIdMap = new HashMap<String, TableProperties>();
   /*
    * Return the map of all the properties for the given table. The properties
    * include both the values of this table's row in TableDefinition and the
@@ -370,6 +375,16 @@ public class TableProperties {
         db = dbh.getReadableDatabase();
 	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
 	    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
+	    if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+	      if ( allIds.size() != activeTableIdMap.size() ) {
+    	      activeTableIdMap.clear();
+    	      TableProperties[] tps = constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    	      for ( TableProperties tp : tps ) {
+    	        activeTableIdMap.put(tp.getTableId(), tp);
+    	      }
+	      }
+	      return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
+	    }
 	    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
     } finally {
       // TODO: resolve and fix this
