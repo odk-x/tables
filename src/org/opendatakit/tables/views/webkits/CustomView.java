@@ -769,6 +769,17 @@ public abstract class CustomView extends LinearLayout {
         return Control.this.openTableToMapView(tableName, searchText);
       }
 
+
+      public boolean openTableToSpreadsheetView(String tableName,
+          String searchText) {
+        return Control.this.openTableToSpreadsheetView(tableName, searchText);
+      }
+
+      public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return Control.this.openTableToSpreadsheetViewWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
+      }
+
       public String getDbNameForTable(String displayName) {
         return Control.this.getDbNameForTable(displayName);
       }
@@ -949,35 +960,9 @@ public abstract class CustomView extends LinearLayout {
 		public boolean openTableToMapView(String tableName, String searchText) {
 		  return helperOpenTableToMapView(tableName, searchText, null, null);
 		}
-		
-		public boolean optnTableToSpreadsheetView(String tableName, 
-		    String searchText) {
-		  return helperOpenTableToSpreadsheetView(tableName, searchText, null,
-		      null);
-		}
-		
-		public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
-		    String sqlWhereClause, String[] sqlSelectionArgs) {
-		  return helperOpenTableToSpreadsheetView(tableName, null,
-		      sqlWhereClause, sqlSelectionArgs);
-		}
-		
-		private boolean helperOpenTableToSpreadsheetView(String tableName,
-		    String searchText, String sqlWhereClause, 
-		    String[] sqlSelectionArgs) {
-		  initTpInfo();
-        TableProperties tp = tpMap.get(tableName);
-        if (tp == null) {
-           Log.e(TAG, "tableName [" + tableName + "] not in map");
-           return false;
-        }
-        Controller.launchSpreadsheetView(mContext, tp, searchText, null, false,
-            sqlWhereClause, sqlSelectionArgs);
-        return true;
-		}
-		
-		private boolean helperOpenTableToMapView(String tableName, 
-		    String searchText, String sqlWhereClause, 
+
+		private boolean helperOpenTableToMapView(String tableName,
+		    String searchText, String sqlWhereClause,
 		    String[] sqlSelectionArgs) {
         TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
         if (tp == null) {
@@ -989,6 +974,32 @@ public abstract class CustomView extends LinearLayout {
         return true;
 		}
 
+
+      public boolean openTableToSpreadsheetView(String tableName,
+          String searchText) {
+        return helperOpenTableToSpreadsheetView(tableName, searchText, null,
+            null);
+      }
+
+      public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return helperOpenTableToSpreadsheetView(tableName, null,
+            sqlWhereClause, sqlSelectionArgs);
+      }
+
+      private boolean helperOpenTableToSpreadsheetView(String tableName,
+          String searchText, String sqlWhereClause,
+          String[] sqlSelectionArgs) {
+        initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchSpreadsheetView(mActivity, tp, searchText, null, false,
+            sqlWhereClause, sqlSelectionArgs);
+        return true;
+      }
 
 		public TableData query(String tableName, String searchText) {
 			TableProperties tp = getTablePropertiesByDisplayName(null, tableName);
