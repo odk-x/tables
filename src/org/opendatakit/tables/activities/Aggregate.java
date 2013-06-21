@@ -22,7 +22,11 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.SyncProcessor;
+import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.sync.SynchronizationResult;
 import org.opendatakit.tables.sync.Synchronizer;
+import org.opendatakit.tables.sync.TableResult;
+import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
@@ -173,6 +177,32 @@ public class Aggregate extends SherlockActivity {
     builder.setMessage(message);
     return builder;
   }
+  
+  private AlertDialog.Builder buildResultMessage(String title, 
+      SynchronizationResult result) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setCancelable(false);
+    builder.setPositiveButton(getString(R.string.ok), null);
+    builder.setTitle(title);
+    // Now we'll make the message. This should include the contents of the 
+    // result parameter.
+    StringBuilder stringBuilder = new StringBuilder();
+    for (int i = 0; i < result.getTableResults().size(); i++) {
+      TableResult tableResult = result.getTableResults().get(i);
+      stringBuilder.append(tableResult.getDbTableName() + ": " + 
+        SyncUtil.getLocalizedNameForTableResultStatus(this, 
+            tableResult.getStatus()));
+      if (tableResult.getStatus() == Status.EXCEPTION) {
+        stringBuilder.append(" with message: " + tableResult.getMessage());
+      }
+      if (i < result.getTableResults().size() - 1) {
+        // only append if we have a 
+        stringBuilder.append("\n");
+      }
+    }
+    builder.setMessage(stringBuilder.toString());
+    return builder;
+  }
 
   /**
    * Hooked up to save settings button in aggregate_activity.xml
@@ -281,7 +311,8 @@ public class Aggregate extends SherlockActivity {
     prefs.setAuthToken(null);
   }
 
-  private class SyncNowTask extends AsyncTask<Void, Void, Void> {
+  private class SyncNowTask extends 
+      AsyncTask<Void, Void, SynchronizationResult> {
     private ProgressDialog pd;
     private boolean success;
     private String message;
@@ -295,14 +326,15 @@ public class Aggregate extends SherlockActivity {
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected SynchronizationResult doInBackground(Void... params) {
+      SynchronizationResult result = null;
       try {
         DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
         Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,
             synchronizer, new SyncResult());
-        processor.synchronize();
+        result = processor.synchronize();
         success = true;
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
@@ -312,14 +344,16 @@ public class Aggregate extends SherlockActivity {
         success = false;
         message = e.getMessage();
       }
-      return null;
+      return result;
     }
 
     @Override
-    protected void onPostExecute(Void result) {
+    protected void onPostExecute(SynchronizationResult result) {
       pd.dismiss();
       if (!success && message != null) {
         buildOkMessage(getString(R.string.sync_error), message).show();
+      } else {
+        buildResultMessage(getString(R.string.sync_result), result).show();
       }
       updateButtonsEnabled();
     }

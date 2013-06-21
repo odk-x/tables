@@ -16,8 +16,10 @@
 package org.opendatakit.tables.sync;
 
 import org.opendatakit.aggregate.odktables.entity.Column;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
 
+import android.content.Context;
 import android.util.Log;
 
 /**
@@ -139,6 +141,33 @@ public class SyncUtil {
     // TODO: Sort out the way column types are going to go back and forth b/w
     // the server and the device.
     return ColumnType.NONE;
+  }
+  
+  /**
+   * Gets the name of the {@link TableResult#Status}.
+   * @param context
+   * @param status
+   * @return
+   */
+  public static String getLocalizedNameForTableResultStatus(Context context,
+      TableResult.Status status) {
+    String name;
+    switch (status) {
+    case EXCEPTION:
+      name = context.getString(R.string.sync_table_result_exception);
+      break;
+    case FAILURE:
+      name = context.getString(R.string.sync_table_result_failure);
+      break;
+    case SUCCESS:
+      name = context.getString(R.string.sync_table_result_success);
+      break;
+    default:
+      Log.e(TAG, "unrecognized TableResult status: " + status + ". Setting " +
+      		"to failure.");
+      name = context.getString(R.string.sync_table_result_failure);
+    }
+    return name;
   }
   
   

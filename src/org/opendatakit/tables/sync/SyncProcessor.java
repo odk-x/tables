@@ -44,6 +44,7 @@ import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 
@@ -75,18 +76,25 @@ public class SyncProcessor {
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
   private final DbHelper dbh;
+  /** 
+   * The results of the synchronization that we will pass back to the user. 
+   * Note that this is NOT the same as the {@link SyncResult} object, which is
+   * used to inform the android SyncAdapter how the sync process has gone.
+   */
+  private final SynchronizationResult mUserResult;
 
   public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, SyncResult syncResult) {
     this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
+    this.mUserResult = new SynchronizationResult();
   }
 
   /**
    * Synchronize all synchronized tables with the cloud.
    */
-  public void synchronize() {
+  public SynchronizationResult synchronize() {
     Log.i(TAG, "entered synchronize()");
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
@@ -97,6 +105,7 @@ public class SyncProcessor {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp, false);
     }
+    return mUserResult;
   }
 
   /**
@@ -119,22 +128,27 @@ public class SyncProcessor {
         TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
             KeyValueStore.Type.ACTIVE));// TODO: should this be SERVER or ACTIVE?
     boolean success = false;
+    // Prepare the tableResult. We'll start it as failure, and only update it
+    // if we're successful at the end.
+    TableResult tableResult = new TableResult(tp.getDbTableName(), 
+        TableResult.Status.FAILURE);
     beginTableTransaction(tp);
     try {
       switch (tp.getSyncState()) {
       case inserting:
-        success = synchronizeTableInserting(tp, table);
+        success = synchronizeTableInserting(tp, table, tableResult);
         break;
       case deleting:
-        success = synchronizeTableDeleting(tp, table);
+        success = synchronizeTableDeleting(tp, table, tableResult);
         break;
       case updating:
-        success = synchronizeTableUpdating(tp, table);
+        success = synchronizeTableUpdating(tp, table, tableResult);
         if (success)
-          success = synchronizeTableRest(tp, table, false);
+          success = synchronizeTableRest(tp, table, false, tableResult);
         break;
       case rest:
-        success = synchronizeTableRest(tp, table, downloadingTable);
+        success = synchronizeTableRest(tp, table, downloadingTable, 
+            tableResult);
         break;
       default:
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
@@ -146,10 +160,24 @@ public class SyncProcessor {
         tp.setLastSyncTime(du.formatNowForDb());
     } finally {
       endTableTransaction(tp, success);
+      // Here we also want to add the TableResult to the value.
+      if (success) {
+        // Then we should have updated the db and shouldn't have set the 
+        // TableResult to be exception.
+        if (tableResult.getStatus() == Status.EXCEPTION) {
+          Log.e(TAG, "tableResult status for table: " + tp.getDbTableName() +
+              " was EXCEPTION, and yet success returned true. This shouldn't" +
+              " be possible.");
+        } else {
+          tableResult.setStatus(Status.SUCCESS);
+        }
+      }
+      mUserResult.addTableResult(tableResult);
     }
   }
 
-  private boolean synchronizeTableUpdating(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableUpdating(TableProperties tp, DbTable table,
+      TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "UPDATING " + tp.getDisplayName());
 //    // We want to remember the state we were at before the update. If the
@@ -174,10 +202,10 @@ public class SyncProcessor {
       tp.setSyncTag(syncTag);
       success = true;
     } catch (IOException e) {
-      ioException("synchronizeTableUpdating", tp, e);
+      ioException("synchronizeTableUpdating", tp, e, tableResult);
       success = false;
     } catch (Exception e) {
-      exception("synchronizeTableUpdating", tp, e);
+      exception("synchronizeTableUpdating", tp, e, tableResult);
       success = false;
     }
 
@@ -185,7 +213,7 @@ public class SyncProcessor {
   }
 
   private boolean synchronizeTableInserting(TableProperties tp,
-      DbTable table) {
+      DbTable table, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
 //    Map<String, ColumnType> columns = getColumns(tp);
@@ -211,10 +239,10 @@ public class SyncProcessor {
       updateDbFromModification(modification, table, tp);
       success = true;
     } catch (IOException e) {
-      ioException("synchronizeTableInserting", tp, e);
+      ioException("synchronizeTableInserting", tp, e, tableResult);
       success = false;
     } catch (Exception e) {
-      exception("synchronizeTableInserting", tp, e);
+      exception("synchronizeTableInserting", tp, e, tableResult);
       syncResult.stats.numSkippedEntries += rowsToInsert.size();
       success = false;
     } finally {
@@ -224,7 +252,8 @@ public class SyncProcessor {
     return success;
   }
 
-  private boolean synchronizeTableDeleting(TableProperties tp, DbTable table) {
+  private boolean synchronizeTableDeleting(TableProperties tp, DbTable table,
+      TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "DELETING " + tp.getDisplayName());
     boolean success = false;
@@ -234,10 +263,10 @@ public class SyncProcessor {
       syncResult.stats.numDeletes++;
       syncResult.stats.numEntries++;
     } catch (IOException e) {
-      ioException("synchronizeTableDeleting", tp, e);
+      ioException("synchronizeTableDeleting", tp, e, tableResult);
       success = false;
     } catch (Exception e) {
-      exception("synchronizeTableDeleting", tp, e);
+      exception("synchronizeTableDeleting", tp, e, tableResult);
       success = false;
     }
     return success;
@@ -257,7 +286,7 @@ public class SyncProcessor {
    * @return
    */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table,
-      boolean downloadingTable) {
+      boolean downloadingTable, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
 //    Map<String, ColumnType> columns = getColumns(tp);
@@ -271,10 +300,10 @@ public class SyncProcessor {
     try {
       updateDbFromServer(tp, table, downloadingTable);
     } catch (IOException e) {
-      ioException("synchronizeTableRest", tp, e);
+      ioException("synchronizeTableRest", tp, e, tableResult);
       return false;
     } catch (Exception e) {
-      exception("synchronizeTableRest", tp, e);
+      exception("synchronizeTableRest", tp, e, tableResult);
       return false;
     }
     // refresh the tp
@@ -312,10 +341,10 @@ public class SyncProcessor {
       }
       success = true;
     } catch (IOException e) {
-      ioException("synchronizeTableRest", tp, e);
+      ioException("synchronizeTableRest", tp, e, tableResult);
       success = false;
     } catch (Exception e) {
-      exception("synchronizeTableRest", tp, e);
+      exception("synchronizeTableRest", tp, e, tableResult);
       success = false;
     } finally {
       if (success)
@@ -327,14 +356,22 @@ public class SyncProcessor {
     return success;
   }
 
-  private void ioException(String method, TableProperties tp, IOException e) {
-    Log.e(TAG, String.format("IOException in %s for table: %s", method, tp.getDisplayName()), e);
+  private void ioException(String method, TableProperties tp, IOException e,
+      TableResult tableResult) {
+    Log.e(TAG, String.format("IOException in %s for table: %s", method, 
+        tp.getDisplayName()), e);
+    tableResult.setStatus(Status.EXCEPTION);
+    tableResult.setMessage(e.getMessage());
     syncResult.stats.numIoExceptions++;
   }
 
-  private void exception(String method, TableProperties tp, Exception e) {
+  private void exception(String method, TableProperties tp, Exception e,
+      TableResult tableResult) {
     Log.e(TAG,
-        String.format("Unexpected exception in %s on table: %s", method, tp.getDisplayName()), e);
+        String.format("Unexpected exception in %s on table: %s", method, 
+            tp.getDisplayName()), e);
+    tableResult.setStatus(Status.EXCEPTION);
+    tableResult.setMessage(e.getMessage());
   }
 
   /**
