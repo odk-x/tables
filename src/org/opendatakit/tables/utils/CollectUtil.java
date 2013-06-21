@@ -413,7 +413,14 @@ public class CollectUtil {
             File f = FileProvider.getAsFile(context, ref.get("uri"));
             writer.write(StringEscapeUtils.escapeXml(f.getName()));
           } else if ( type == ColumnType.GEOPOINT ) {
-            String[] parts = value.split(",");
+            // If value is an empty string we don't want to call split, as 
+            // we'll end up with a one length array of the empty string.
+            String[] parts;
+            if (value.equals("")) {
+              parts = new String[0];
+            } else {
+              parts = value.split(",");
+            }
             String sep = "";
             StringBuilder b = new StringBuilder();
             for ( String p : parts ) {

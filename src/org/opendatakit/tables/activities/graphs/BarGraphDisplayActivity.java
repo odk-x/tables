@@ -19,6 +19,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
@@ -126,14 +127,25 @@ implements DisplayActivity {
 		c.refreshDbTable(c.getTableProperties().getTableId());
 		query.clear();
 		query.loadFromUserQuery(c.getSearchText());
-		table = c.getIsOverview() ?
-				c.getDbTable().getUserOverviewTable(query) :
-					c.getDbTable().getUserTable(query);
+      String sqlWhereClause = 
+          getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+      if (sqlWhereClause != null) {
+        String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+            Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+        DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
+            c.getTableProperties().getTableId());
+        table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+      } else {
+        // We use the query.
+        table = c.getIsOverview() ?
+            c.getDbTable().getUserOverviewTable(query) :
+            c.getDbTable().getUserTable(query);
+      }
 
-				view = CustomGraphView.get(this, table,
-				    graphName, potentialGraphName, c);
-				c.setGraphViewInfoBarText(graphName);
-				displayView();
+      view = CustomGraphView.get(this, table,
+	     graphName, potentialGraphName, c);
+      c.setGraphViewInfoBarText(graphName);
+      displayView();
 	}
 
 	private void displayView() {

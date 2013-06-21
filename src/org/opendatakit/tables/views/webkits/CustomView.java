@@ -727,61 +727,197 @@ public abstract class CustomView extends LinearLayout {
       }
     }
 
-    /**
-     * Opens the table specified by the tableName and searches this table with
-     * the given query. Uses the default view specified on the table. E.g. if it
-     * has been set to map view, the table will be opened to the map view.
-     *
-     * @param tableName
-     * @param query
-     * @return
-     */
-    public boolean openTable(String tableName, String query) {
-      Log.d(TAG, "in openTable for table: " + tableName);
-      initTpInfo();
-      if (!tpMap.containsKey(tableName)) {
-        Log.e(TAG, "tableName [" + tableName + "] not in map");
-        return false;
-      }
-      Log.e(TAG, "launching table activity for " + tableName);
-      Controller.launchTableActivity(mContext, tpMap.get(tableName), query, false);
-      return true;
-    }
+		/**
+		 * Opens the table specified by the tableName and searches this table
+		 * with the given query. Uses the default view specified on the table.
+		 * E.g. if it has been set to map view, the table will be opened to the
+		 * map view.
+		 *
+		 * @param tableName
+		 * @param query
+		 * @return
+		 */
+		public boolean openTable(String tableName, String query) {
+			return helperOpenTable(tableName, query, null, null);
+		}
+		
+		public boolean openTableWithSqlQuery(String tableName, 
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTable(tableName, null, sqlWhereClause, 
+		      sqlSelectionArgs);
+		}
+		
+		private boolean helperOpenTable(String tableName, String searchText,
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+        initTpInfo();
+        if (!tpMap.containsKey(tableName)) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchTableActivity(mContext, tpMap.get(tableName),
+              searchText, false, sqlWhereClause, sqlSelectionArgs);
+        return true;		  
+		}
 
-    /**
-     * Open the table specified by tableName as a list view with the filename
-     * specified by filename. The filename is relative to the odk tables path.
-     *
-     * @param tableName
-     * @param filename
-     * @return false if the table properties cannot be found, true if it opens.
-     */
-    public boolean openTableToListViewWithFile(String tableName, String searchText, String filename) {
-      initTpInfo();
-      TableProperties tp = tpMap.get(tableName);
-      if (tp == null) {
-        Log.e(TAG, "tableName [" + tableName + "] not in map");
-        return false;
-      }
-      String pathToTablesFolder = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      String pathToFile = pathToTablesFolder + File.separator + filename;
-      Controller.launchListViewWithFileName(mContext, tp, searchText, null, false, pathToFile);
-      return true;
-    }
+		/**
+		 * Open the table specified by tableName as a list view with the
+		 * filename specified by filename. The filename is relative to the odk
+		 * tables path.
+		 * @param tableName
+		 * @param filename
+		 * @return false if the table properties cannot be found, true if it
+		 *         opens.
+		 */
+		public boolean openTableToListViewWithFile(String tableName,
+				String searchText, String filename) {
+			return helperOpenTableWithFile(tableName, searchText, filename, null, 
+			    null);
+		}
+		
+		public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
+		    String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTableWithFile(tableName, null, filename, 
+		      sqlWhereClause, sqlSelectionArgs);
+		}
+		
+		private boolean helperOpenTableWithFile(String tableName, 
+		    String searchText, String filename, String sqlWhereClause, 
+		    String[] sqlSelectionArgs) {
+        initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        String pathToTablesFolder = ODKFileUtils
+            .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        String pathToFile = pathToTablesFolder + File.separator + filename;
+        Controller.launchListViewWithFilenameAndSqlQuery(mContext, tp, 
+            searchText, null, false, pathToFile, sqlWhereClause, 
+            sqlSelectionArgs);
+        return true;		  
+		}
+		
+		public boolean openTableToMapViewWithSqlQuery(String tableName,
+		    String sqlWhereClause, String[] sqlSelectionArgs) {
+		  return helperOpenTableToMapView(tableName, null, sqlWhereClause,
+		      sqlSelectionArgs);
+		}
+		
+		public boolean openTableToMapView(String tableName, String searchText) {
+		  return helperOpenTableToMapView(tableName, searchText, null, null);
+		}
+		
+		private boolean helperOpenTableToMapView(String tableName, 
+		    String searchText, String sqlWhereClause, 
+		    String[] sqlSelectionArgs) {
+		  initTpInfo();
+        TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+           Log.e(TAG, "tableName [" + tableName + "] not in map");
+           return false;
+        }
+        Controller.launchMapView(mContext, tp, searchText, null, false, 
+            sqlWhereClause, sqlSelectionArgs);
+        return true;
+		}
+		
 
-    public TableData query(String tableName, String searchText) {
-      initTpInfo();
-      if (!tpMap.containsKey(tableName)) {
-        return null;
-      }
-      TableProperties tp = tpMap.get(tableName);
-      Query query = new Query(allTps, tp);
-      query.loadFromUserQuery(searchText);
-      DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mContext), tp);
-      List<String> columnOrder = tp.getColumnOrder();
-      return new TableData(mContext, dbt.getRaw(query,
-          columnOrder.toArray(new String[columnOrder.size()])));
-    }
+		public TableData query(String tableName, String searchText) {
+			initTpInfo();
+			if (!tpMap.containsKey(tableName)) {
+				return null;
+			}
+			TableProperties tp = tpMap.get(tableName);
+			Query query = new Query(allTps, tp);
+			query.loadFromUserQuery(searchText);
+			DbTable dbt = DbTable.getDbTable(DbHelper.getDbHelper(mContext),
+					tp.getTableId());
+			List<String> columnOrder = tp.getColumnOrder();
+			return new TableData(mContext, dbt.getRaw(query,
+					columnOrder.toArray(new String[columnOrder.size()])));
+		}
+		
+		/**
+		 * Query the database using sql. Only returns the columns for the table 
+		 * specified by the tableName parameter. 
+		 * <p>
+		 * Any arguments in the WHERE statement must be replaced by "?" and 
+		 * contained in order in the selectionArgs array.
+		 * <p>
+		 * For example, if you wanted all the rows where the column foo equaled
+		 * bar, the where clause would be "WHERE foo = ? " and the selection args
+		 * would be ["bar"].
+		 * @param tableName the display name of the table for which you want the
+		 * columns to be returned. 
+		 * @param whereClause the where clause for the selection. Must begin with
+		 * "WHERE", as if it was appended immediately after "SELECT * FROM 
+		 * tableName ". References to other tables, e.g. for joins, in this 
+		 * statement must use the name of the table as returned by {@link 
+		 * getDbNameForTable}.
+		 * @param selectionArgs
+		 * @return
+		 */
+		public TableData queryWithSql(String tableName, String whereClause,
+		    String[] selectionArgs) {
+		  // We're going to handle this by passing it off to the DbTable
+		  // rawSqlQuery(String whereClause, String[] selectionArgs) argument.
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(tableName);
+        if (tp == null) {
+          Log.e(TAG, "request for table with displayName [" + tableName + 
+              "] cannot be found.");
+          return null;
+        }
+        DbTable dbTable = DbTable.getDbTable(dbh, tp.getTableId());
+        UserTable userTable = dbTable.rawSqlQuery(whereClause, selectionArgs);
+        TableData tableData = new TableData(mContext, userTable);
+        return tableData;
+		}
+		
+		/**
+		 * Return the database name of the table. Important for use in {@link 
+		 * queryWithSql}. Returns null if the table could not be found.
+		 * @param displayName
+		 * @return the database name of the table, or null if it could not be 
+		 * found.
+		 */
+		public String getDbNameForTable(String displayName) {
+		  initTpInfo();
+		  TableProperties tp = tpMap.get(displayName);
+		  if (tp == null) {
+		    Log.e(TAG, "request for table with displayName [" + displayName + 
+		        "] cannot be found.");
+		    return null;
+		  }
+		  return tp.getDbTableName();
+		}
+		
+		/**
+		 * Get the element key of the column with the given display name from the
+		 * given table. Both the table and the column are retrieved by their
+		 * display names. If the underlying table or column cannot be found by
+		 * the given display names, returns null.
+		 * @param tableDisplayName
+		 * @param columnDisplayName
+		 * @return
+		 */
+		public String getElementKeyForColumn(String tableDisplayName, 
+		    String columnDisplayName) {
+		  initTpInfo();
+        TableProperties tp = tpMap.get(tableDisplayName);
+        if (tp == null) {
+          Log.e(TAG, "request for table with displayName [" + 
+              tableDisplayName + "] cannot be found.");
+          return null;
+        }
+        ColumnProperties columnProperties = 
+            tp.getColumnByDisplayName(columnDisplayName);
+        if (columnProperties == null) {
+          return null;
+        }
+        return columnProperties.getElementKey();
+		}
 
     /**
      * Return a list of the display names for all the tables in the database

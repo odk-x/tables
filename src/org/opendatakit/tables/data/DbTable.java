@@ -219,6 +219,42 @@ public class DbTable {
 	    	}
 	    }
     }
+    
+    /**
+     * Get a {@link UserTable} for this table based on the given where clause.
+     * All columns from the table are returned.
+     * <p>
+     * It performs SELECT * FROM table whereClause.
+     * <p>
+     * Footers are all empty strings.
+     * @param whereClause the whereClause for the selection, beginning with
+     * "WHERE". Must include "?" instead of actual values, which are instead
+     * passed in the selectionArgs.
+     * @param selectionArgs the selection arguments for the where clause.
+     * @return
+     */
+    public UserTable rawSqlQuery(String whereClause, String[] selectionArgs) {
+      SQLiteDatabase db = null;
+      Cursor c = null;
+      try {
+        String sqlQuery = "SELECT * FROM " + this.tp.getDbTableName() + " " +
+            whereClause;
+        db = dbh.getReadableDatabase();
+        c = db.rawQuery(sqlQuery, selectionArgs);
+        UserTable table = buildTable(c, tp, tp.getColumnOrder());
+        String[] emptyFooter = getEmptyFooter();
+        table.setFooter(emptyFooter);
+        return table;
+      } finally {
+        try {
+          if ( c != null && !c.isClosed() ) {
+            c.close();
+          }
+        } finally {
+          // TODO: fix the db close problem.
+        }
+      }
+    }
 
     public UserTable getRaw(Query query, String[] columns) {
       List<String> desiredColumns = tp.getColumnOrder();
@@ -345,6 +381,20 @@ public class DbTable {
     private UserTable buildTable(Cursor c, TableProperties tp,
         List<String> userColumnOrder) {
       return new UserTable(c, tp, userColumnOrder);
+    }
+    
+    /**
+     * Returns an empty footer. Useful for things like {@link rawSqlQuery}, 
+     * which do not pass in the {@link Query} parameter that a footer requires.
+     * @return
+     */
+    private String[] getEmptyFooter() {
+      int numDisplayColumns = tp.getNumberOfDisplayColumns();
+      String[] footer = new String[numDisplayColumns];
+      for (int i = 0; i < footer.length; i++) {
+        footer[i] = "";
+      }
+      return footer;
     }
 
     private String[] footerQuery(Query query) {

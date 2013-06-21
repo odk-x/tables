@@ -79,6 +79,20 @@ public class Controller implements CustomViewCallbacks {
     public static final String INTENT_KEY_SEARCH = "search";
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
+    /** 
+     * Key to the where clause if this list view is to be opened with a more 
+     * complex query than permissible by the simple query object. Must conform
+     * to the expectations of {@link DbTable#rawSqlQuery} and 
+     * {@link CustomView$Control#queryWithSql}.
+     * @see INTENT_KEY_SQL_SELECTION_ARGS
+     */
+    public static final String INTENT_KEY_SQL_WHERE = "sqlWhereClause";
+    /**
+     * An array of strings for restricting the rows displayed in the table.
+     * @see INTENT_KEY_SQL_WHERE
+     */
+    public static final String INTENT_KEY_SQL_SELECTION_ARGS = 
+        "sqlSelectionArgs";
 
     public static final int VIEW_ID_SEARCH_FIELD = 0;
     public static final int VIEW_ID_SEARCH_BUTTON = 1;
@@ -720,19 +734,21 @@ public class Controller implements CustomViewCallbacks {
 
   public static void launchTableActivity(Context context, TableProperties tp,
       boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview, null);
+    Controller.launchTableActivity(context, tp, null, null, isOverview, null,
+        null, null);
   }
 
   public static void launchTableActivity(Context context, TableProperties tp,
-      String searchText, boolean isOverview) {
+      String searchText, boolean isOverview, String sqlWhereClause,
+      String[] sqlSelectionArgs) {
     Controller.launchTableActivity(context, tp, searchText, null, isOverview,
-        null);
+        null, sqlWhereClause, sqlSelectionArgs);
   }
 
   private static void launchTableActivity(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview) {
     Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
-        null);
+        null, null, null);
      context.finish();
   }
 
@@ -749,9 +765,9 @@ public class Controller implements CustomViewCallbacks {
    */
   public static void launchTableActivityWithFilename(Activity context,
       TableProperties tp, Stack<String> searchStack, boolean isOverview,
-      String filename) {
+      String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
     Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
-        filename);
+        filename, sqlWhereClause, sqlSelectionArgs);
     context.finish();
   }
 
@@ -772,16 +788,87 @@ public class Controller implements CustomViewCallbacks {
    * @param searchStack
    * @param isOverview
    * @param filename
+   * @param sqlWhereClause 
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
    */
   public static void launchListViewWithFileName(Context context,
       TableProperties tp, String searchText, Stack<String> searchStack,
-      boolean isOverview, String filename) {
+      boolean isOverview, String filename, String sqlWhereClause,
+      String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
+  /**
+   * Open the table to the list view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchListViewWithFilenameAndSqlQuery(Context context,
+      TableProperties tp, String searchText, Stack<String> searchStack,
+      boolean isOverview, String filename, String sqlWhereClause, 
+      String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, ListDisplayActivity.class);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
+  /**
+   * Open the table to the map view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchMapView(Context context, TableProperties tp, 
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, TableActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+  
+  /**
+   * Open the table to graph view. 
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchGraphView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, GraphDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
 
@@ -790,7 +877,8 @@ public class Controller implements CustomViewCallbacks {
    * Adds the appropriate extras to the intent.
    */
   private static void prepareIntentForLaunch(Intent intent, TableProperties tp,
-      Stack<String> searchStack, String searchText, boolean isOverview) {
+      Stack<String> searchStack, String searchText, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
     if (searchStack != null) {
       String[] stackValues = new String[searchStack.size()];
       for (int i = 0; i < searchStack.size(); i++) {
@@ -809,11 +897,18 @@ public class Controller implements CustomViewCallbacks {
       intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
     }
     intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    if (sqlWhereClause != null) {
+      intent.putExtra(INTENT_KEY_SQL_WHERE, sqlWhereClause);
+    }
+    if (sqlSelectionArgs != null) {
+      intent.putExtra(INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+    }
   }
 
   private static void launchTableActivity(Context context, TableProperties tp,
       String searchText,
-      Stack<String> searchStack, boolean isOverview, String filename) {
+      Stack<String> searchStack, boolean isOverview, String filename,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
     TableViewType viewType = tp.getCurrentViewType();
     Intent intent;
     switch (viewType) {
@@ -836,25 +931,8 @@ public class Controller implements CustomViewCallbacks {
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview);
-//    if (searchStack != null) {
-//      String[] stackValues = new String[searchStack.size()];
-//      for (int i = 0; i < searchStack.size(); i++) {
-//        stackValues[i] = searchStack.get(i);
-//      }
-//      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
-//    } else if (searchText != null) {
-//      intent.putExtra(INTENT_KEY_SEARCH, searchText);
-//    } else if (searchText == null) {
-//      KeyValueStoreHelper kvsh =
-//          tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-//      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
-//      if (savedQuery == null) {
-//        savedQuery = "";
-//      }
-//      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
-//    }
-//    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
 

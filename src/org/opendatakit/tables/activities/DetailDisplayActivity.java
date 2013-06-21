@@ -104,7 +104,7 @@ public class DetailDisplayActivity extends SherlockActivity
     @Override
     public void onSearch() {
         Controller.launchTableActivity(this, c.getTableProperties(),
-                c.getSearchText(), c.getIsOverview());
+                c.getSearchText(), c.getIsOverview(), null, null);
     }
 
     @Override

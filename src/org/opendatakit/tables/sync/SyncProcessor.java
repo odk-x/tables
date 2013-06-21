@@ -353,8 +353,8 @@ public class SyncProcessor {
         tp.getTableId(), tp.getSyncTag());
     List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
-    ArrayList<String> columns = new ArrayList<String>();
-    columns.add(DataTableColumns.SYNC_STATE);
+//    ArrayList<String> columns = new ArrayList<String>();
+    List<String> columns = tp.getColumnOrder();
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
     UserTable allRowIds = table.getRaw(columns,
