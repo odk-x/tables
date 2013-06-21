@@ -120,17 +120,17 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
           KeyValueStore.Type.ACTIVE),
           tp);
         query.loadFromUserQuery(c.getSearchText());
-        // There are two options here. The first is that we get the data using 
-        // the {@link Query} object. The other is that we use a sql where 
-        // clause. The two currently don't play nice together, so figure out 
+        // There are two options here. The first is that we get the data using
+        // the {@link Query} object. The other is that we use a sql where
+        // clause. The two currently don't play nice together, so figure out
         // which one. The sql statement gets precedence.
-        String sqlWhereClause = 
+        String sqlWhereClause =
             getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
         if (sqlWhereClause != null) {
           String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
               Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-          DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
-              c.getTableProperties().getTableId());
+          DbTable dbTable = DbTable.getDbTable(dbh,
+              c.getTableProperties());
           table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
         } else {
           // We use the query.

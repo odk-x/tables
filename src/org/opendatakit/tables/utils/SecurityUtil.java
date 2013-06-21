@@ -21,7 +21,6 @@ import java.util.List;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 

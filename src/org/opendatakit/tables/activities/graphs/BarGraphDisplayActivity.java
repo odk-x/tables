@@ -127,13 +127,12 @@ implements DisplayActivity {
 		c.refreshDbTable(c.getTableProperties().getTableId());
 		query.clear();
 		query.loadFromUserQuery(c.getSearchText());
-      String sqlWhereClause = 
+      String sqlWhereClause =
           getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
       if (sqlWhereClause != null) {
         String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
             Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-        DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(this), 
-            c.getTableProperties().getTableId());
+        DbTable dbTable = DbTable.getDbTable(dbh, c.getTableProperties());
         table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
       } else {
         // We use the query.

@@ -127,15 +127,15 @@ public class ListDisplayActivity extends SherlockActivity
       // way it is it seems the only way.
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
-        // If a sql statement has been passed in the Intent, use that instead 
+        // If a sql statement has been passed in the Intent, use that instead
         // of the query.
-        String sqlWhereClause = 
+        String sqlWhereClause =
             getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
         if (sqlWhereClause != null) {
           String[] sqlSelectionArgs = getIntent().getExtras()
               .getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-          DbTable dbTable = DbTable.getDbTable(dbh, 
-              c.getTableProperties().getTableId());
+          DbTable dbTable = DbTable.getDbTable(dbh,
+              c.getTableProperties());
           table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
         } else {
           // we just use the query.
