@@ -20,13 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.support.v4.app.Fragment;
@@ -213,8 +212,9 @@ public class CustomTableView extends CustomView {
   public void display() {
     // Load a basic screen as you're getting the other stuff ready to
     // clear the old data.
-    webView.addJavascriptInterface(new TableControl(mActivity), "control");
-    webView.addJavascriptInterface(new TableData(table), "data");
+    webView.addJavascriptInterface(new TableControlIf(mActivity, table), "control");
+    TableData d = new TableData(table);
+    webView.addJavascriptInterface(d.getJavascriptInterface(), "data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
     } else {
@@ -223,39 +223,85 @@ public class CustomTableView extends CustomView {
     initView();
   }
 
-  private class TableControl extends Control {
+  private class TableControlIf {
 
-    public TableControl(Activity activity) {
-      super(activity);
+    private Control ref;
+
+    TableControlIf(Activity activity, UserTable table) {
+      this.ref = new Control(mActivity, table);
     }
 
-    @SuppressWarnings("unused")
-    public boolean openItem(int index) {
-      Controller.launchDetailActivity(mActivity, table, index, null);
-      return true;
-    }
+    public boolean openTable(String tableName, String query) {
+        return ref.openTable(tableName, query);
+      }
 
-    /**
-     * Open the item specified by the index to the detail view specified by
-     * the given filename. The filename is relative to the odk tables
-     * directory.
-     * @param index
-     * @param filename
-     * @return
-     */
-    @SuppressWarnings("unused")
-    public boolean openDetailViewWithFile(int index, String filename) {
-      String pathToTablesFolder =
-          ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      String pathToFile = pathToTablesFolder + File.separator + filename;
-      Controller.launchDetailActivity(mActivity, table, index, pathToFile);
-      return true;
-    }
+      public boolean openTableWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return ref.openTableWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
+      }
 
-    @SuppressWarnings("unused")
-    public boolean selectItem(int index) {
-      ((TableMapInnerFragment) mFragment).focusOnMarker(table.getRowId(index));
-      return true;
+      public boolean openTableToListViewWithFile(String tableName,
+          String searchText, String filename) {
+        return ref.openTableToListViewWithFile(tableName, searchText, filename);
+      }
+
+      public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
+          String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
+        return ref.openTableToListViewWithFileAndSqlQuery(tableName, filename, sqlWhereClause, sqlSelectionArgs);
+      }
+      public boolean openTableToMapViewWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return ref.openTableToMapViewWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
+      }
+
+      public boolean openTableToMapView(String tableName, String searchText) {
+        return ref.openTableToMapView(tableName, searchText);
+      }
+
+      public String getDbNameForTable(String displayName) {
+        return ref.getDbNameForTable(displayName);
+      }
+
+      public String getElementKeyForColumn(String tableDisplayName,
+          String columnDisplayName) {
+        return ref.getElementKeyForColumn(tableDisplayName, columnDisplayName);
+      }
+
+      public TableData.TableDataIf query(String tableName, String searchText) {
+        return ref.query(tableName, searchText).getJavascriptInterface();
+      }
+
+      public TableData.TableDataIf queryWithSql(String tableName, String whereClause,
+          String[] selectionArgs) {
+        return ref.queryWithSql(tableName, whereClause, selectionArgs).getJavascriptInterface();
+      }
+
+      public JSONArray getTableDisplayNames() {
+        return ref.getTableDisplayNames();
+      }
+
+      public void launchHTML(String filename) {
+        ref.launchHTML(filename);
+      }
+
+      /**
+       * Only makes sense when we are on a list view.
+       *
+       * @param index
+       * @return
+       */
+      public boolean openItem(int index) {
+        return ref.openItem(index);
+      }
+
+      public boolean openDetailViewWithFile(int index, String filename) {
+        return ref.openDetailViewWithFile(index, filename);
+      }
+
+      public boolean selectItem(int index) {
+        ((TableMapInnerFragment) mFragment).focusOnMarker(table.getRowId(index));
+        return true;
+      }
+
     }
-  }
 }

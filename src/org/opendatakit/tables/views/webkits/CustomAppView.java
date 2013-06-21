@@ -71,7 +71,8 @@ public class CustomAppView extends CustomView {
   }
 
   public void display() {
-    webView.addJavascriptInterface(new Control(mActivity), "control");
+    Control c = new Control(mActivity);
+    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
     // We're going to assume this is only being called if homescreen.html has
     // been found, so we're just going to use that, not do any checking.
     String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);

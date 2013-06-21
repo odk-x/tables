@@ -362,7 +362,64 @@ public abstract class CustomView extends LinearLayout {
    */
   protected class TableData {
 
+    public class TableDataIf {
+      public boolean inCollectionMode() {
+        return TableData.this.inCollectionMode();
+      }
+
+      public int getCount() {
+        return TableData.this.getCount();
+      }
+
+      public String getColumnData(String colName) {
+        return TableData.this.getColumnData(colName);
+      }
+
+      public String getColumns() {
+        return TableData.this.getColumns();
+      }
+
+      public String getForegroundColor(String colName, String value) {
+        return TableData.this.getForegroundColor(colName, value);
+      }
+
+      public int getCollectionSize(int rowNum) {
+        return TableData.this.getCollectionSize(rowNum);
+      }
+
+      public boolean isIndexed() {
+        return TableData.this.isIndexed();
+      }
+
+      public String getData(int rowNum, String colName) {
+        return TableData.this.getData(rowNum, colName);
+      }
+
+      public void editRowWithCollect(int rowNumber) {
+        TableData.this.editRowWithCollect(rowNumber);
+      }
+
+      public void editRowWithCollectAndSpecificForm(int rowNumber, String formId, String formVersion,
+          String formRootElement) {
+        TableData.this.editRowWithCollectAndSpecificForm(rowNumber, formId, formVersion, formRootElement);
+      }
+
+      public void addRowWithCollect(String tableName) {
+        TableData.this.addRowWithCollect(tableName);
+      }
+
+      public void addRowWithCollectAndSpecificForm(String tableName, String formId,
+          String formVersion, String formRootElement) {
+        TableData.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion, formRootElement);
+      }
+
+    }
+
     private static final String TAG = "TableData";
+
+    public TableDataIf getJavascriptInterface() {
+      return new TableDataIf();
+    }
 
     private final UserTable mTable; // contains TableProperties
     private Map<String, Integer> colMap; // Maps the column names with an
@@ -378,16 +435,16 @@ public abstract class CustomView extends LinearLayout {
      * column.
      */
     private Map<String, ColorRuleGroup> mColumnDisplayNameToColorRuleGroup;
-    protected Context mContext;
+    protected Activity mActivity;
 
-    public TableData(Context context, UserTable table) {
+    public TableData(Activity activity, UserTable table) {
       Log.d(TAG, "calling TableData constructor with Table");
-      this.mContext = context;
+      this.mActivity = activity;
       this.mTable = table;
       initMaps();
     }
 
-    public boolean inCollectionMode() {
+    private boolean inCollectionMode() {
       if (!isIndexed()) {
         return false;
       }
@@ -440,7 +497,7 @@ public abstract class CustomView extends LinearLayout {
     }
 
     // Returns the number of rows in the table being viewed.
-    public int getCount() {
+    private int getCount() {
       return this.mTable.getHeight();
     }
 
@@ -450,7 +507,7 @@ public abstract class CustomView extends LinearLayout {
      * @return: returns a String in JSONArray format containing all the row data
      * for the given column name format: [row1, row2, row3, row4]
      */
-    public String getColumnData(String colName) {
+    private String getColumnData(String colName) {
       ArrayList<String> arr = new ArrayList<String>();
       for (int i = 0; i < getCount(); i++) {
         if (colMap.containsKey(colName)) {
@@ -462,7 +519,7 @@ public abstract class CustomView extends LinearLayout {
       return new JSONArray(arr).toString();
     }
 
-    public String getColumns() {
+    private String getColumns() {
       TableProperties tp = mTable.getTableProperties();
       Map<String, String> colInfo = new HashMap<String, String>();
       for (String column : colMap.keySet()) {
@@ -484,7 +541,7 @@ public abstract class CustomView extends LinearLayout {
      *          the string value of the datum
      * @return
      */
-    public String getForegroundColor(String colName, String value) {
+    private String getForegroundColor(String colName, String value) {
       TableProperties tp = mTable.getTableProperties();
       ColumnProperties cp = tp.getColumnByDisplayName(colName);
       String elementKey = cp.getElementKey();
@@ -525,7 +582,7 @@ public abstract class CustomView extends LinearLayout {
 
     // Maps the number of rows to every collection of a table.
     private void initCollectionMap() {
-      Control c = new Control(mContext);
+      Control c = new Control(mActivity);
       collectionMap = new HashMap<Integer, Integer>();
       String colName = primeColumns.get(0).substring(1); // Assumes that
       // the first col
@@ -547,12 +604,12 @@ public abstract class CustomView extends LinearLayout {
     }
 
     // Returns the number of rows in the collection at the given row index.
-    public int getCollectionSize(int rowNum) {
+    private int getCollectionSize(int rowNum) {
       return collectionMap.get(rowNum);
     }
 
     // Returns whether the table is indexed.
-    public boolean isIndexed() {
+    private boolean isIndexed() {
       return (!primeColumns.isEmpty());
     }
 
@@ -566,7 +623,7 @@ public abstract class CustomView extends LinearLayout {
      * @param colName
      * @return
      */
-    public String getData(int rowNum, String colName) {
+    private String getData(int rowNum, String colName) {
       if (colMap.containsKey(colName)) {
         String result = mTable.getData(rowNum, colMap.get(colName));
         if (result == null) {
@@ -586,7 +643,7 @@ public abstract class CustomView extends LinearLayout {
      * @param rowNumber
      *          the number of the row to edit.
      */
-    public void editRowWithCollect(int rowNumber) {
+    private void editRowWithCollect(int rowNumber) {
       TableProperties tp = mTable.getTableProperties();
       String rowId = this.mTable.getRowId(rowNumber);
       Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
@@ -610,7 +667,7 @@ public abstract class CustomView extends LinearLayout {
      * @param formVersion
      * @param formRootElement
      */
-    public void editRowWithCollectAndSpecificForm(int rowNumber, String formId, String formVersion,
+    private void editRowWithCollectAndSpecificForm(int rowNumber, String formId, String formVersion,
         String formRootElement) {
       TableProperties tp = mTable.getTableProperties();
       String rowId = this.mTable.getRowId(rowNumber);
@@ -627,7 +684,7 @@ public abstract class CustomView extends LinearLayout {
      *
      * @param tableName
      */
-    public void addRowWithCollect(String tableName) {
+    private void addRowWithCollect(String tableName) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
       TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
@@ -648,7 +705,7 @@ public abstract class CustomView extends LinearLayout {
      * for the table. It differs in {@link #addRow(String)} in that it lets you
      * add the row using an arbitrary form.
      */
-    public void addRowWithCollectAndSpecificForm(String tableName, String formId,
+    private void addRowWithCollectAndSpecificForm(String tableName, String formId,
         String formVersion, String formRootElement) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
@@ -684,10 +741,85 @@ public abstract class CustomView extends LinearLayout {
 
   protected class Control {
 
+    public class ControlIf {
+      public boolean openTable(String tableName, String query) {
+        return Control.this.openTable(tableName, query);
+      }
+
+      public boolean openTableWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return Control.this.openTableWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
+      }
+
+      public boolean openTableToListViewWithFile(String tableName,
+          String searchText, String filename) {
+        return Control.this.openTableToListViewWithFile(tableName, searchText, filename);
+      }
+
+      public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
+          String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
+        return Control.this.openTableToListViewWithFileAndSqlQuery(tableName, filename, sqlWhereClause, sqlSelectionArgs);
+      }
+      public boolean openTableToMapViewWithSqlQuery(String tableName,
+          String sqlWhereClause, String[] sqlSelectionArgs) {
+        return Control.this.openTableToMapViewWithSqlQuery(tableName, sqlWhereClause, sqlSelectionArgs);
+      }
+
+      public boolean openTableToMapView(String tableName, String searchText) {
+        return Control.this.openTableToMapView(tableName, searchText);
+      }
+
+      public String getDbNameForTable(String displayName) {
+        return Control.this.getDbNameForTable(displayName);
+      }
+
+      public String getElementKeyForColumn(String tableDisplayName,
+          String columnDisplayName) {
+        return Control.this.getElementKeyForColumn(tableDisplayName, columnDisplayName);
+      }
+
+      public TableData.TableDataIf query(String tableName, String searchText) {
+        return Control.this.query(tableName, searchText).getJavascriptInterface();
+      }
+
+      public TableData.TableDataIf queryWithSql(String tableName, String whereClause,
+          String[] selectionArgs) {
+        return Control.this.queryWithSql(tableName, whereClause, selectionArgs).getJavascriptInterface();
+      }
+
+      public JSONArray getTableDisplayNames() {
+        return Control.this.getTableDisplayNames();
+      }
+
+      public void launchHTML(String filename) {
+        Control.this.launchHTML(filename);
+      }
+
+      /**
+       * Only makes sense when we are on a list view.
+       *
+       * @param index
+       * @return
+       */
+      public boolean openItem(int index) {
+        return Control.this.openItem(index);
+      }
+
+      public boolean openDetailViewWithFile(int index, String filename) {
+        return Control.this.openDetailViewWithFile(index, filename);
+      }
+
+    }
+
+    public ControlIf getJavascriptInterface() {
+      return new ControlIf();
+    }
+
     private static final String TAG = "CustomView.Control";
 
-    protected Context mContext;
-    private DbHelper dbh;
+    protected final Activity mActivity;
+    private final DbHelper dbh;
+    private final UserTable mTable;
 
     /**
      * This construct requires an activity rather than a context because we want
@@ -697,10 +829,45 @@ public abstract class CustomView extends LinearLayout {
      * @param activity
      *          the activity that will be holding the view
      */
-    public Control(Context context) {
-      this.mContext = context;
-      dbh = DbHelper.getDbHelper(mContext);
+    public Control(Activity activity) {
+      this(activity, null);
+    }
+
+    public Control(Activity activity, UserTable table) {
+      this.mActivity = activity;
+      this.mTable = table;
+      dbh = DbHelper.getDbHelper(mActivity);
       Log.d(TAG, "calling Control Constructor");
+    }
+
+    /**
+     * This only makes sense when invoked on a list view....
+     *
+     * @param index
+     * @return
+     */
+    public boolean openItem(int index) {
+      if ( mTable == null ) {
+        return false;
+      }
+      Controller.launchDetailActivity(mActivity, mTable, index, null);
+      return true;
+    }
+
+    /**
+     * Open the item specified by the index to the detail view specified by
+     * the given filename. The filename is relative to the odk tables
+     * directory.
+     * @param index
+     * @param filename
+     * @return
+     */
+    public boolean openDetailViewWithFile(int index, String filename) {
+      String pathToTablesFolder =
+          ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      String pathToFile = pathToTablesFolder + File.separator + filename;
+      Controller.launchDetailActivity(mActivity, mTable, index, pathToFile);
+      return true;
     }
 
 		/**
@@ -730,7 +897,7 @@ public abstract class CustomView extends LinearLayout {
            Log.e(TAG, "tableName [" + tableName + "] not in map");
            return false;
         }
-        Controller.launchTableActivity(mContext, tpToOpen,
+        Controller.launchTableActivity(mActivity, tpToOpen,
               searchText, false, sqlWhereClause, sqlSelectionArgs);
         return true;
 		}
@@ -767,7 +934,7 @@ public abstract class CustomView extends LinearLayout {
         String pathToTablesFolder = ODKFileUtils
             .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
         String pathToFile = pathToTablesFolder + File.separator + filename;
-        Controller.launchListViewWithFilenameAndSqlQuery(mContext, tp,
+        Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp,
             searchText, null, false, pathToFile, sqlWhereClause,
             sqlSelectionArgs);
         return true;
@@ -791,7 +958,7 @@ public abstract class CustomView extends LinearLayout {
            Log.e(TAG, "tableName [" + tableName + "] not in map");
            return false;
         }
-        Controller.launchMapView(mContext, tp, searchText, null, false,
+        Controller.launchMapView(mActivity, tp, searchText, null, false,
             sqlWhereClause, sqlSelectionArgs);
         return true;
 		}
@@ -806,7 +973,7 @@ public abstract class CustomView extends LinearLayout {
 			query.loadFromUserQuery(searchText);
 			DbTable dbt = DbTable.getDbTable(dbh,tp);
 			List<String> columnOrder = tp.getColumnOrder();
-			return new TableData(mContext, dbt.getRaw(query,
+			return new TableData(mActivity, dbt.getRaw(query,
 					columnOrder.toArray(new String[columnOrder.size()])));
 		}
 
@@ -842,7 +1009,7 @@ public abstract class CustomView extends LinearLayout {
         }
         DbTable dbTable = DbTable.getDbTable(dbh, tp);
         UserTable userTable = dbTable.rawSqlQuery(whereClause, selectionArgs);
-        TableData tableData = new TableData(mContext, userTable);
+        TableData tableData = new TableData(mActivity, userTable);
         return tableData;
 		}
 
@@ -909,9 +1076,9 @@ public abstract class CustomView extends LinearLayout {
      */
     public void launchHTML(String filename) {
       Log.d(TAG, "in launchHTML with filename: " + filename);
-      Intent i = new Intent(mContext, CustomHomeScreenActivity.class);
+      Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
       i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
-      mContext.startActivity(i);
+      mActivity.startActivity(i);
     }
 
     /**
@@ -941,24 +1108,24 @@ public abstract class CustomView extends LinearLayout {
       Log.d(TAG, "givenTableName: " + givenTableName);
       final TableType tableType = TableType.valueOf(tableTypeStr);
       AlertDialog newTableAlert;
-      AlertDialog.Builder alert = new AlertDialog.Builder(mContext);
-      alert.setTitle(mContext.getString(R.string.name_of_new_table));
+      AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
+      alert.setTitle(mActivity.getString(R.string.name_of_new_table));
       // An edit text for getting user input.
-      final EditText input = new EditText(mContext);
+      final EditText input = new EditText(mActivity);
       alert.setView(input);
       if (givenTableName != null) {
         input.setText(givenTableName);
       }
       // OK Action: create a new table.
-      alert.setPositiveButton(mContext.getString(R.string.ok),
+      alert.setPositiveButton(mActivity.getString(R.string.ok),
           new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
               String newTableName = input.getText().toString().trim();
               if (newTableName == null || newTableName.equals("")) {
-                Toast toast = Toast.makeText(mContext,
-                    mContext.getString(R.string.error_table_name_empty), Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(mActivity,
+                    mActivity.getString(R.string.error_table_name_empty), Toast.LENGTH_LONG);
                 toast.show();
               } else {
                 if (isNewTable) {

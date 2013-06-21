@@ -82,8 +82,10 @@ public class CustomGraphView extends CustomView {
   }
 
   public void display() {
-    webView.addJavascriptInterface(new TableControl(mActivity), "control");
-    webView.addJavascriptInterface(new TableData(table), "data");
+    Control c = new Control(mActivity, table);
+    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
+    TableData d = new TableData(table);
+    webView.addJavascriptInterface(d.getJavascriptInterface(), "data");
     webView.addJavascriptInterface(graphData, "graph_data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
@@ -91,19 +93,6 @@ public class CustomGraphView extends CustomView {
       loadData(DEFAULT_HTML, "text/html", null);
     }
     initView();
-  }
-
-  private class TableControl extends Control {
-
-    public TableControl(Activity activity) {
-      super(activity);
-    }
-
-    @SuppressWarnings("unused")
-    public boolean openItem(int index) {
-      Controller.launchDetailActivity(mActivity, table, index, null);
-      return true;
-    }
   }
 
   public void createNewGraph(String graphName) {
@@ -137,7 +126,7 @@ public class CustomGraphView extends CustomView {
 
     private static final String TAG = "GraphData";
 
-    public GraphData(String graphString) {
+    private GraphData(String graphString) {
       isModified = false;
       this.graphString = graphString;
       this.kvsh = table.getTableProperties().
@@ -160,7 +149,7 @@ public class CustomGraphView extends CustomView {
     // If the graph is DEFAULT_GRAPH then the aspectHelper field is replaced
     // with the new name
     // and the DEFAULT_GRAPH aspect and contents are deleted
-    public AspectHelper saveGraphToName(String graphName) {
+    private AspectHelper saveGraphToName(String graphName) {
       AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
       String graphType = aspectHelper.getString(GRAPH_TYPE);
       if (graphType != null) {

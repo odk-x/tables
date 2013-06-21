@@ -95,7 +95,8 @@ public class CustomDetailView extends CustomView {
 
     jsData.set(rowId, userTable.getInstanceName(rowNum),
         tmpData);
-    webView.addJavascriptInterface(new Control(mActivity), "control");
+    Control c = new Control(mActivity);
+    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
     webView.addJavascriptInterface(jsData, "data");
     if (this.mFilename != null) {
       load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
