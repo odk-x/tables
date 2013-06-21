@@ -829,7 +829,7 @@ public abstract class CustomView extends LinearLayout {
 				return null;
 			}
 			TableProperties tp = tpMap.get(tableName);
-			Query query = new Query(allTps, tp);
+			Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
 			query.loadFromUserQuery(searchText);
 			DbTable dbt = DbTable.getDbTable(dbh,tp);
 			List<String> columnOrder = tp.getColumnOrder();

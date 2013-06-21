@@ -28,6 +28,33 @@ public class Query {
 
   private static final String TAG = "Query";
 
+  /**
+   * Used to lazily fetch the full list of all table definitions in the
+   * very rare cases where we are using a join.
+   *
+   * @author mitchellsundt@gmail.com
+   *
+   */
+  private static class TablePropertiesContainer {
+    private DbHelper dbh;
+    KeyValueStore.Type typeOfStore;
+    private TableProperties tps_global[] = null;
+
+    TablePropertiesContainer(DbHelper dbh, KeyValueStore.Type typeOfStore ) {
+      this.dbh = dbh;
+      this.typeOfStore = typeOfStore;
+    }
+
+    TableProperties[] getTableProperties() {
+      if ( tps_global == null) {
+        tps_global = TableProperties.getTablePropertiesForAll(dbh, typeOfStore);
+      }
+      return tps_global;
+    }
+  };
+
+  private TablePropertiesContainer tpc = null;
+
     public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM, SUM }
 
     private static final String KW_JOIN = "join";
@@ -49,19 +76,22 @@ public class Query {
         private SortOrder() {};
     }
 
-    private TableProperties[] tps;
     private TableProperties tp;
     private List<Constraint> constraints;
     private List<Join> joins;
     private String orderBy;
     private int sortOrder;
 
-    public Query(TableProperties[] tps, TableProperties tp) {
-        this.tps = tps;
-        this.tp = tp;
-        constraints = new ArrayList<Constraint>();
-        joins = new ArrayList<Join>();
-        orderBy = tp.getSortColumn();
+    private Query(TablePropertiesContainer tpc, TableProperties tp) {
+      this.tpc = tpc;
+      this.tp = tp;
+      constraints = new ArrayList<Constraint>();
+      joins = new ArrayList<Join>();
+      orderBy = tp.getSortColumn();
+    }
+
+    public Query(DbHelper dbh, KeyValueStore.Type storeType, TableProperties tp) {
+      this(new TablePropertiesContainer(dbh, storeType), tp);
     }
 
     public int getConstraintCount() {
@@ -249,11 +279,16 @@ public class Query {
                 matchString = value.substring(firstSpaceIndex + 1);
             }
             TableProperties joinTp = null;
-            for (TableProperties tp : tps) {
-                if (tp.getDisplayName().toLowerCase().equals(
-                      tableName.toLowerCase())) {
-                    joinTp = tp;
-                }
+            if ( this.tp.getDisplayName().toLowerCase().equals(tableName.toLowerCase()) ) {
+              joinTp = this.tp;
+            } else {
+              TableProperties[] tps = tpc.getTableProperties();
+              for (TableProperties tp : tps) {
+                  if (tp.getDisplayName().toLowerCase().equals(
+                        tableName.toLowerCase())) {
+                      joinTp = tp;
+                  }
+              }
             }
             if (joinTp == null) {
                 String cdn = getColumnByUserString(key);
@@ -265,7 +300,7 @@ public class Query {
             }
             Query joinQuery = null;
             if (queryString != null) {
-                Query q = new Query(tps, joinTp);
+                Query q = new Query(tpc, joinTp);
                 if (q.loadFromUserQuery(queryString)) {
                     joinQuery = q;
                 }
@@ -835,7 +870,7 @@ public class Query {
                 String[] matchArgs) {
             this.tp = tp;
             if (query == null) {
-                this.query = new Query(tps, tp);
+                this.query = new Query(tpc, tp);
             } else {
                 this.query = query;
             }

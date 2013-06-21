@@ -146,7 +146,7 @@ public class TableActivity extends SherlockFragmentActivity
     // Initialize data objects.
     mDbh = DbHelper.getDbHelper(this);
     refreshDbTable(tableId);
-    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
+    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
 
     // Initialize layout fields.
@@ -158,9 +158,9 @@ public class TableActivity extends SherlockFragmentActivity
 
     // There are two options here. The first is that we get the data using the
     // {@link Query} object. The other is that we use a sql where clause. The
-    // two currently don't play nice together, so figure out which one. The 
+    // two currently don't play nice together, so figure out which one. The
     // sql statement gets precedence.
-    String sqlWhereClause = 
+    String sqlWhereClause =
         getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
     if (sqlWhereClause != null) {
       String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
@@ -168,7 +168,7 @@ public class TableActivity extends SherlockFragmentActivity
       mTable = mDbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
     } else {
       // We use the query.
-      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : 
+      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) :
         mDbTable.getUserTable(mQuery);
     }
 
@@ -186,7 +186,7 @@ public class TableActivity extends SherlockFragmentActivity
 
   public void init() {
     refreshDbTable(mTableProperties.getTableId());
-    mQuery = new Query(TableProperties.getTablePropertiesForAll(mDbh, KeyValueStore.Type.ACTIVE),
+    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
@@ -580,7 +580,7 @@ public class TableActivity extends SherlockFragmentActivity
     for (ColumnProperties cp : mTableProperties.getColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(null, mTableProperties);
+    Query currentQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE, mTableProperties);
     currentQuery.loadFromUserQuery(getSearchText());
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

@@ -84,7 +84,6 @@ public class MsgHandler {
 
     private DataUtil du;
     private DbHelper dbh;
-    private TableProperties[] tps;
     private TableProperties[] dataTps;
     private TableProperties[] scTps;
     private SMSSender smsSender;
@@ -127,8 +126,6 @@ public class MsgHandler {
     }
 
     private void init() {
-        tps = TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE);
         dataTps = TableProperties.getTablePropertiesForDataTables(dbh,
             KeyValueStore.Type.ACTIVE);
         // TODO: verify that the tables returned are still valid (that columns haven't been removed or renamed)
@@ -155,7 +152,7 @@ public class MsgHandler {
             		cpInput.getElementKey(),
             		cpOutput.getElementKey()};
             DbTable dbt = DbTable.getDbTable(dbh, scTp);
-            UserTable table = dbt.getRaw(new Query(tps, scTp), scCols);
+            UserTable table = dbt.getRaw(new Query(dbh, KeyValueStore.Type.ACTIVE, scTp), scCols);
             for (int i = 0; i < table.getHeight(); i++) {
                 scNames.add(table.getData(i, 0));
                 scInputs.add(table.getData(i, 1));
@@ -357,7 +354,7 @@ public class MsgHandler {
         }
         indices.add(msg.length());
         List<ColumnProperties> cols = new ArrayList<ColumnProperties>();
-        Query query = new Query(tps, tp);
+        Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
         ColumnProperties drSlotColumn = null;
         int drSlotDuration = 0;
         for (int i = 0; i < indices.size() - 1; i++) {

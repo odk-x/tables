@@ -110,8 +110,8 @@ public class ListDisplayActivity extends SherlockActivity
         kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
-        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE),
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
     }
 

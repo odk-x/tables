@@ -57,8 +57,8 @@ public class ConflictResolutionActivity extends SherlockActivity
     @Override
     public void init() {
       c.getTableProperties().refreshColumns();
-        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE),
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
         query.loadFromUserQuery(c.getSearchText());
         table = c.getDbTable().getConflictTable(query);

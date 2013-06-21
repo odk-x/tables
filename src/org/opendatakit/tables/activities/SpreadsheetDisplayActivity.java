@@ -117,9 +117,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       // way it is it seems the only way.
       TableProperties tp = c.getTableProperties();
       tp.refreshColumns();
-      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-          KeyValueStore.Type.ACTIVE),
-          tp);
+      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
         query.loadFromUserQuery(c.getSearchText());
         // There are two options here. The first is that we get the data using
         // the {@link Query} object. The other is that we use a sql where
@@ -159,9 +157,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-          KeyValueStore.Type.ACTIVE),
-          table.getTableProperties());
+      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {

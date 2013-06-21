@@ -63,8 +63,8 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
         DbHelper dbh = DbHelper.getDbHelper(this);
-        query = new Query(TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE),
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
         init();
     }

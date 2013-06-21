@@ -16,6 +16,8 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -94,7 +96,7 @@ public class DetailDisplayActivity extends SherlockActivity
     private void displayView() {
       TableProperties tp = c.getTableProperties();
       tp.refreshColumns();
-        Query query = new Query(new TableProperties[] {tp},tp);
+        Query query = new Query(DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE, tp);
         query.addRowIdConstraint(rowId);
         table = c.getIsOverview() ?
             c.getDbTable().getUserOverviewTable(query) :
