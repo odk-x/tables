@@ -617,6 +617,8 @@ public class CsvUtil {
 			if (includeLocale)
 				columnCount++;
 		}
+		int idxFirstUserColumns;
+      ArrayList<String> userColumns = new ArrayList<String>();
 		ArrayList<String> columns = new ArrayList<String>();
 		ArrayList<String> headerRow = new ArrayList<String>();
 		int idxRowId = -1;
@@ -671,10 +673,12 @@ public class CsvUtil {
 				index++;
 			}
 
+			idxFirstUserColumns = index;
 			int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
 			for (int i = 0; i < numberOfDisplayColumns; ++i) {
 				ColumnProperties cp = tp.getColumnByIndex(i);
 				String displayName = cp.getDisplayName();
+            userColumns.add(cp.getElementKey());
 				columns.add(cp.getElementKey());
 				headerRow.add(displayName);
 				index++;
@@ -722,9 +726,11 @@ public class CsvUtil {
 				index++;
 			}
 
-			// export everything in the user columns
+			idxFirstUserColumns = index;
+         // export everything in the user columns
 			for (ColumnProperties cp : tp.getColumns().values()) {
-				columns.add(cp.getElementKey());
+			  userColumns.add(cp.getElementKey());
+           columns.add(cp.getElementKey());
 				headerRow.add(cp.getElementKey());
 				index++;
 			}
@@ -733,7 +739,7 @@ public class CsvUtil {
 		DbTable dbt = DbTable.getDbTable(dbh, tp);
 		String[] selectionKeys = { DataTableColumns.SAVED };
 		String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
-		UserTable table = dbt.getRaw(columns, selectionKeys, selectionArgs,
+		UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs,
 				null);
 		// writing data
 		OutputStreamWriter output = null;
@@ -793,9 +799,14 @@ public class CsvUtil {
 			cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
 			String[] row = new String[columnCount];
 			for (int i = 0; i < table.getHeight(); i++) {
-				for (int j = 0; j < table.getWidth(); j++) {
-					row[j] = table.getData(i, j);
-				}
+			   for (int j = 0 ; j < columns.size() ; ++j ) {
+			     if ( j >= idxFirstUserColumns &&
+			          j < idxFirstUserColumns + userColumns.size() ) {
+			       row[j] = table.getData(i, j-idxFirstUserColumns);
+			     } else {
+			       row[j] = table.getMetadataByElementKey(i, columns.get(j));
+			     }
+			   }
 				if (idxTimestamp != -1) {
 					// reformat the timestamp to be a nice string
 					Long timestamp = Long.valueOf(row[idxTimestamp]);
