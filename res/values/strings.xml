@@ -113,6 +113,8 @@
 	<string name="sync_table_result_success">Success</string>
 	<string name="sync_table_result_failure">Failure</string>
 	<string name="sync_table_result_exception">Exception</string>
+	<string name="sync_action_message_insert">Insert on Server.</string>
+	<string name="sync_action_message_delete">Delete from Server</string>
 	<string name="synchronizing_files">Synchronizing files&#8230;</string>
 	<string name="save_settings_first">Please save settings first.</string>
 	<string name="error_contacting_server">Unable to contact server. Please try again later&#8230;</string>

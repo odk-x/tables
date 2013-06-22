@@ -189,12 +189,14 @@ public class Aggregate extends SherlockActivity {
     StringBuilder stringBuilder = new StringBuilder();
     for (int i = 0; i < result.getTableResults().size(); i++) {
       TableResult tableResult = result.getTableResults().get(i);
-      stringBuilder.append(tableResult.getDbTableName() + ": " + 
-        SyncUtil.getLocalizedNameForTableResultStatus(this, 
-            tableResult.getStatus()));
-      if (tableResult.getStatus() == Status.EXCEPTION) {
-        stringBuilder.append(" with message: " + tableResult.getMessage());
-      }
+      stringBuilder.append(SyncUtil.getMessageForTableResult(this, 
+          tableResult));
+//      stringBuilder.append(tableResult.getTableDisplayName() + ": " + 
+//        SyncUtil.getLocalizedNameForTableResultStatus(this, 
+//            tableResult.getStatus()));
+//      if (tableResult.getStatus() == Status.EXCEPTION) {
+//        stringBuilder.append(" with message: " + tableResult.getMessage());
+//      }
       if (i < result.getTableResults().size() - 1) {
         // only append if we have a 
         stringBuilder.append("\n");
