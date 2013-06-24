@@ -1151,7 +1151,7 @@ public class TableProperties {
    * @return
    */
   private String createDbElementKey(String proposedKey) {
-    String baseName = "_" + proposedKey.replace("\\W", "_");
+    String baseName = "_" + proposedKey.replaceAll("\\W", "_");
     if (!keyConflict(baseName)) {
       return baseName;
     }
@@ -1183,7 +1183,7 @@ public class TableProperties {
    * @return
    */
   private String createDbElementName(String proposedName) {
-    String baseName = "_" + proposedName.replace("\\W", "_");
+    String baseName = "_" + proposedName.replaceAll("\\W", "_");
     if (!nameConflict(baseName)) {
       return baseName;
     }
