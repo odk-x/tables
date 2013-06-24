@@ -86,7 +86,8 @@ public class SyncProcessor {
    */
   private final SynchronizationResult mUserResult;
 
-  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, SyncResult syncResult) {
+  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, 
+      SyncResult syncResult) {
     this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
     this.syncResult = syncResult;
@@ -151,6 +152,10 @@ public class SyncProcessor {
         // server. The subsequent call to synchronizeTableRest will overwrite
         // those calls. So we have to save the values that have been returned.
         if (success) {
+          // First update the tp. We need this so that the sync tag is 
+          // correct.
+          tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+              tp.getBackingStoreType());
           success = synchronizeTableRest(tp, table, false, tableResult);
         }
         break;
@@ -194,16 +199,6 @@ public class SyncProcessor {
     // As far as I can tell, this is only called if the PROPERTIES of the 
     // table have changed--NOT if the data has changed.
     tableResult.setHadLocalPropertiesChanges(true);
-    
-//    // We want to remember the state we were at before the update. If the
-//    // properties etag is different it means we had changes of our own to give
-//    // to the server, so we'll have to send after we receive. If you don't do
-//    // this you get into the situation where your synctag is overwritten with
-//    String syncTagStr = tp.getSyncTag();
-//    SyncTag syncTagBeforeUpdate = null;
-//    if (syncTagStr != null) {
-//      syncTagBeforeUpdate = SyncTag.valueOf(syncTagStr);
-//    }
 
     boolean success = false;
     try {
@@ -363,15 +358,21 @@ public class SyncProcessor {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
     
-    // First set the action so we can report it back to the user. We dont have
+    // First set the action so we can report it back to the user. We don't have
     // to worry about the special case where we are downloading it from the 
     // server of the first time, because that takes place through a separate
     // activity. Therefore we'll know that an action of REST is to be expected.
-    tableResult.setTableAction(SyncState.rest);
-    // We also know that we did not have properties changes, if the 
-    // table was at rest. These values are initialized to false in the 
-    // tableResult constructor, but we'll re-set them here just for clarity.
-    tableResult.setHadLocalPropertiesChanges(false);
+    // We do, however, have to make sure not to overwrite an UPDATING value, 
+    // as this method is called after the call to update.
+    if (tableResult.getTableAction() != SyncState.updating) {
+      tableResult.setTableAction(SyncState.rest);
+    }
+    // It's possible that the call to this method follows a call to 
+    // synchronizeTableUpdating. For that reason we can't assume there are no
+    // properties changes. Thus rely on the fact that the 
+    // hadLocalPropertiesChanges value in TableResult inits to false, and on
+    // the fact that the appropriate method will have updated it to true if 
+    // necessary. And then don't set anything.
     
     List<String> userColumns = tp.getColumnOrder();
 
@@ -394,18 +395,19 @@ public class SyncProcessor {
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
-    List<SyncRow> rowsToInsert = getRows(table, userColumns, SyncUtil.State.INSERTING);
-    List<SyncRow> rowsToUpdate = getRows(table, userColumns, SyncUtil.State.UPDATING);
-    List<SyncRow> rowsToDelete = getRows(table, userColumns, SyncUtil.State.DELETING);
+    List<SyncRow> rowsToInsert = getRows(table, userColumns, 
+        SyncUtil.State.INSERTING);
+    List<SyncRow> rowsToUpdate = getRows(table, userColumns, 
+        SyncUtil.State.UPDATING);
+    List<SyncRow> rowsToDelete = getRows(table, userColumns, 
+        SyncUtil.State.DELETING);
     
-    if (rowsToInsert.size() == 0 && rowsToUpdate.size() == 0 && 
-        rowsToDelete.size() == 0) {
-      tableResult.setHadLocalDataChanges(false);
-    } else {
+    if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 || 
+        rowsToDelete.size() != 0) {
       if (tableResult.hadLocalDataChanges()) {
-        Log.e(TAG, "synchronizeTableRest setHadLocalDataChanges(false). " +
-            "hadLocalDataChanges() returned true, but we're about to set it" +
-            " to false. Error in our logic somewhere.");
+        Log.e(TAG, "synchronizeTableRest hadLocalDataChanges() returned " +
+            "true, and we're about to set it" +
+            " to true again. Odd.");
       }
       tableResult.setHadLocalDataChanges(true);
     }
@@ -492,28 +494,10 @@ public class SyncProcessor {
     if (modification.hasTablePropertiesChanged()) {
       Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanged(true)");
       tableResult.setServerHadPropertiesChanges(true);
-    } else {
-      Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanged(false)");
-      // Should already be false, but we'll set it just in case. If it's 
-      // already true, then we're doing something out of order and have an 
-      // error in our logic somewhere.
-      if (tableResult.serverHadPropertiesChanges()) {
-        Log.e(TAG, "tableResult says the server had properties changes, but " +
-        		"we're about to set to false. Error in our logic somewhere.");
-      }
-      tableResult.setServerHadPropertiesChanges(false);
-    }
+    } 
     // Now check if there were rows.
     if (rows.size() > 0) {
       tableResult.setServerHadDataChanges(true);
-    } else {
-      // Should already be false, but if not we have an error in our logic 
-      // somewhere. Try to catch it.
-      if (tableResult.serverHadDataChanges()) {
-        Log.e(TAG, "tableResult says the server had data changes, but we're" +
-        		" about to set it to false. Error in our logic somewhere.");
-      }
-      tableResult.setServerHadDataChanges(false);
     }
     List<String> columns = tp.getColumnOrder();
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
@@ -522,16 +506,28 @@ public class SyncProcessor {
     		new String[] {DataTableColumns.SAVED},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
-    // update properties if necessary
-    // do this before updating data in case columns have changed
+    /**************************
+     * PART 1: UPDATE THE TABLE ITSELF.
+     * We only do this if necessary. Do this before updating data in case 
+     * columns have changed or something specific applies. 
+     * These updates come in two parts: the table definition, and the table
+     * properties (i.e. the key value store).
+     **************************/
     if (modification.hasTablePropertiesChanged()) {
       // We have two things to worry about. One is if the table definition
       // (i.e. the table datastructure or the table's columns' datastructure)
       // has changed. The other is if the key value store has changed.
+      // We'll get both pieces of information from the properties resource.
       TableDefinitionResource definitionResource =
           modification.getTableDefinitionResource();
       PropertiesResource propertiesResource =
           modification.getTableProperties();
+      /**************************
+       * PART 1A: UPDATE THE DEFINITION. 
+       * If we're downloading the table, we go ahead and update. Otherwise,
+       * we don't allow changes to the definition, so just log an error 
+       * message.
+       **************************/
       if (downloadingTable) {
         // The table is being downloaded for the first time. We first must
         // delete the dummy table we'd created and then add the new table.
@@ -542,30 +538,23 @@ public class SyncProcessor {
         // SHOULD THIS METHOD ACTUALLY SET THE SYNC TAG?!? IT SHOWS SETS
         // AT THE END OF THIS METHOD.
         tp = addTableFromDefinitionResource(definitionResource, newSyncTag);
+        // We've updated the definition, so set this to true. Even though we
+        // might not have the KVS values themselves! So might be a bad idea.
         tableResult.setPulledServerProperties(true);
       } else {
         Log.w(TAG, "database properties have changed. " +
             "structural modifications are not allowed. if structure needs" +
             " to be updated, it is not happening.");
       }
-      // We only want to update the properties if we haven't made local
-      // changes. Otherwise we'd overwrite our local ones and would never be
-      // able to put new ones on the server. We'll do this based on the long.
-      // If the server was udated more recently in time, we'll take theirs.
-      // Otherwise, we'll give the server ours. This isn't a perfect system.
-      long serverPropertiesTagTime =
-          Long.parseLong(SyncTag.valueOf(newSyncTag).getPropertiesEtag());
-      long localPropertiesTagTime =
-          Long.parseLong(SyncTag.valueOf(tp.getSyncTag()).getPropertiesEtag());
-      if (serverPropertiesTagTime > localPropertiesTagTime
-          || downloadingTable) {
-        resetKVSForPropertiesResource(tp, propertiesResource);
-      } else {
-        // We do nothing.
-        Log.i(TAG, "the local properties etag was greater than the server's, "
-        		+ "so the properties are not being pulled from the server.");
-      }
-
+      /**************************
+       * PART 1B: UPDATE THE PROPERTIES/KVS. 
+       * So, the properties had changed on the server. We have them in the 
+       * modification. Note that if we had properties on the server, we'll blow
+       * away our modifications that had been in the server store on the phone.
+       * That's just the cruel way of the world, and is by design.
+       **************************/
+      resetKVSForPropertiesResource(tp, propertiesResource);
+      tableResult.setPulledServerProperties(true);
     }
 
     // sort data changes into types
@@ -581,9 +570,6 @@ public class SyncProcessor {
         String stateStr = allRowIds.getMetadataByElementKey(i, 
             DataTableColumns.SYNC_STATE);
         int state = Integer.parseInt(stateStr);
-// TODO: a parse exception here was throwing an exception and silently
-// failing. Caused by line shown below.
-//        int state = Integer.parseInt(allRowIds.getData(i, 0));
         if (row.getRowId().equals(rowId)) {
           found = true;
           if (state == SyncUtil.State.REST) {
@@ -610,14 +596,7 @@ public class SyncProcessor {
     // data from the server.
     if (rows.size() > 0) {
       tableResult.setPulledServerData(true);
-    } else {
-      if (tableResult.pulledServerData()) {
-        Log.e(TAG, "updateDbFromServer about to setPulledServerData(false)" +
-        		", but had previously been set to true. Something wrong with " +
-        		"our logic somewhere.");
-      }
-      tableResult.setPulledServerData(false);
-    }
+    } 
     
     // We have to set this synctag here so that the server knows we saw its
     // changes. Otherwise it won't let us put up new information.
@@ -626,11 +605,13 @@ public class SyncProcessor {
 
   private void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
-      Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + row.getSyncTag());
+      Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + 
+        row.getSyncTag());
       ContentValues values = new ContentValues();
 
       // delete conflicting row if it already exists
-      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", DataTableColumns.ROW_ID,
+      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", 
+          DataTableColumns.ROW_ID,
           DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING);
       String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.DELETING),
           String.valueOf(SyncUtil.boolToInt(true)) };
@@ -638,8 +619,10 @@ public class SyncProcessor {
 
       // update existing row
       values.put(DataTableColumns.ROW_ID, row.getRowId());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
-      values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
+      values.put(DataTableColumns.SYNC_STATE, 
+          String.valueOf(SyncUtil.State.CONFLICTING));
+      values.put(DataTableColumns.TRANSACTIONING, 
+          String.valueOf(SyncUtil.boolToInt(false)));
       table.actualUpdateRowByRowId(row.getRowId(), values);
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
@@ -647,7 +630,8 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+      		values.put(DataTableColumns.TIMESTAMP, 
+      		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
       	}
@@ -655,7 +639,8 @@ public class SyncProcessor {
 
       // insert conflicting row
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.DELETING));
+      values.put(DataTableColumns.SYNC_STATE, 
+          String.valueOf(SyncUtil.State.DELETING));
       values.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(true));
       table.actualAddRow(values);
       syncResult.stats.numConflictDetectedExceptions++;
@@ -677,7 +662,8 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+      		values.put(DataTableColumns.TIMESTAMP, 
+      		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
       	}
@@ -694,8 +680,10 @@ public class SyncProcessor {
       ContentValues values = new ContentValues();
 
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.REST));
-      values.put(DataTableColumns.TRANSACTIONING, String.valueOf(SyncUtil.boolToInt(false)));
+      values.put(DataTableColumns.SYNC_STATE, 
+          String.valueOf(SyncUtil.State.REST));
+      values.put(DataTableColumns.TRANSACTIONING, 
+          String.valueOf(SyncUtil.boolToInt(false)));
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
     	String colName = entry.getKey();
@@ -789,10 +777,12 @@ public class SyncProcessor {
     Map<String, ColumnType> cachedColumnsToSync = DbTable.getColumnsToSync();
     for (int i = 0; i < numRows; i++) {
       String rowId = rows.getRowId(i);
-      String syncTag = rows.getMetadataByElementKey(i, DataTableColumns.SYNC_TAG);
+      String syncTag = rows.getMetadataByElementKey(i, 
+          DataTableColumns.SYNC_TAG);
       Map<String, String> values = new HashMap<String, String>();
 
-      // precompute the correspondence between the displayed elementKeys and the UserTable userData index
+      // precompute the correspondence between the displayed elementKeys and 
+      // the UserTable userData index
       int[] userDataIndex = new int[numCols];
       for ( int j = 0 ; j < numCols ; ++j ) {
         Integer idx = rows.getColumnIndexOfElementKey(columnsToSync.get(j));
@@ -857,7 +847,8 @@ public class SyncProcessor {
     updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(true));
   }
 
-  private void endRowsTransaction(DbTable table, String[] rowIds, boolean success) {
+  private void endRowsTransaction(DbTable table, String[] rowIds, 
+      boolean success) {
     if (success)
       updateRowsState(table, rowIds, SyncUtil.State.REST);
     updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(false));
@@ -871,9 +862,11 @@ public class SyncProcessor {
     }
   }
 
-  private void updateRowsTransactioning(DbTable table, String[] rowIds, int transactioning) {
+  private void updateRowsTransactioning(DbTable table, String[] rowIds, 
+      int transactioning) {
     ContentValues values = new ContentValues();
-    values.put(DataTableColumns.TRANSACTIONING, String.valueOf(transactioning));
+    values.put(DataTableColumns.TRANSACTIONING, 
+        String.valueOf(transactioning));
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
     }

@@ -500,9 +500,9 @@ public class KeyValueStoreManager {
 	      // Then it's not been synched and we can rely on it to first be inited
 	      // during the sync.
 	    } else {
-	      SyncTag syncTag = SyncTag.valueOf(syncTagStr);
-	      syncTag.incrementPropertiesEtag();
-	      tp.setSyncTag(syncTag.toString());
+	      // We don't update the properties etag, which should only ever be set
+	      // from the server. The SyncState.updating flag is sufficient to mark
+	      // it as dirty.
 	      tp.setSyncState(SyncState.updating);
 	    }
     } finally {
