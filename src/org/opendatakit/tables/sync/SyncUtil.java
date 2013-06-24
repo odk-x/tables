@@ -16,11 +16,14 @@
 package org.opendatakit.tables.sync;
 
 import org.opendatakit.aggregate.odktables.entity.Column;
+import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
 
 import android.content.Context;
 import android.util.Log;
+
+import java.util.Comparator;
 
 /**
  * A utility class for common synchronization methods and definitions.
@@ -246,6 +249,36 @@ public class SyncUtil {
     }
     
     return msg.toString();
+  }
+  
+
+  /**
+   * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
+   * their partition, aspect, and key, in that order. Must be from the same 
+   * table (i.e. have the same tableId) to have any meaning.
+   * @author sudar.sam@gmail.com
+   *
+   */
+  public static class KVSEntryComparator implements 
+      Comparator<OdkTablesKeyValueStoreEntry> {
+
+    @Override
+    public int compare(OdkTablesKeyValueStoreEntry lhs, 
+        OdkTablesKeyValueStoreEntry rhs) {
+      int partitionComparison = lhs.partition.compareTo(rhs.partition);
+      if (partitionComparison != 0) {
+        return partitionComparison;
+      }
+      int aspectComparison = lhs.aspect.compareTo(rhs.aspect);
+      if (aspectComparison != 0) {
+        return aspectComparison;
+      }
+      // Otherwise, we'll just return the value of the key, b/c if the key
+      // is also the same, we're equal.
+      int keyComparison = lhs.key.compareTo(rhs.key);
+      return keyComparison;
+    }
+    
   }
   
   
