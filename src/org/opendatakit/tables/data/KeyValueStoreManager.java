@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.database.Cursor;
@@ -393,8 +395,14 @@ public class KeyValueStoreManager {
    * @param tableId
    */
   public void mergeServerToDefaultForTable(String tableId) {
+    // We're going to use a TreeSet because we need each 
+    // OdkTablesKeyValueStoreEntry object to be dependent only on the 
+    // partition, aspect, and key. The value should be ignored in the merge.
+    // If we didn't do this, then we would end up not overwriting values as
+    // expected.
     Set<OdkTablesKeyValueStoreEntry> newDefault =
-        new HashSet<OdkTablesKeyValueStoreEntry>();
+        new TreeSet<OdkTablesKeyValueStoreEntry>(
+             new SyncUtil.KVSEntryComparator() );
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
@@ -500,9 +508,9 @@ public class KeyValueStoreManager {
 	      // Then it's not been synched and we can rely on it to first be inited
 	      // during the sync.
 	    } else {
-	      SyncTag syncTag = SyncTag.valueOf(syncTagStr);
-	      syncTag.incrementPropertiesEtag();
-	      tp.setSyncTag(syncTag.toString());
+	      // We don't update the properties etag, which should only ever be set
+	      // from the server. The SyncState.updating flag is sufficient to mark
+	      // it as dirty.
 	      tp.setSyncState(SyncState.updating);
 	    }
     } finally {

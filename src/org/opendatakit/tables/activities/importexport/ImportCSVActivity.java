@@ -64,6 +64,8 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	private EditText filenameValField;
 	/* the button for selecting a file */
 	private Button pickFileButton;
+	/** The button to import a table. */
+	private Button mImportButton;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -135,11 +137,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler2,new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the import button
-		Button importB = new Button(this);
-		importB.setId(IMPORTBUTTON_ID);
-		importB.setText(getString(R.string.import_append_table));
-		importB.setOnClickListener(new ImportButtonListener());
-		v.addView(importB);
+		this.mImportButton = new Button(this);
+		this.mImportButton.setId(IMPORTBUTTON_ID);
+		this.mImportButton.setText(getString(R.string.import_import_new_table));
+		this.mImportButton.setOnClickListener(new ImportButtonListener());
+		v.addView(this.mImportButton);
 		// wrapping in a scroll view
 		ScrollView scroll = new ScrollView(this);
 		scroll.addView(v);
@@ -193,8 +195,10 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 				int position, long id) {
 			if(position == 0) {
 				newTableViews.setVisibility(View.VISIBLE);
+				mImportButton.setText(getString(R.string.import_import_new_table));
 			} else {
 				newTableViews.setVisibility(View.GONE);
+				mImportButton.setText(getString(R.string.import_append_table));
 			}
 		}
 		@Override

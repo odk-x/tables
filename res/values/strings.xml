@@ -31,6 +31,7 @@
 	<string name="sync_state_equals_deleting_message">Will be deleted during sync.</string>
 	<string name="sync_state_equals_conflicting_message">Conflicts with server version.</string>
 	<string name="sync_state_equals_updating_message">New changes will be uploaded.</string>
+	<string name="sync_result">Sync Results</string>
 	<string name="file_picker_not_found">OI File Manager is missing.\n\nPlease install the OI File Manager application.</string>
 	<string name="no_shortcuts">No Shortcuts Defined</string>
 	<string name="account">Account:</string>
@@ -109,6 +110,11 @@
 	<string name="synchronizing">Synchronizing&#8230;</string>
 	<string name="auth_expired">Authorization expired. Please re-authorize account.</string>
 	<string name="sync_error">Sync Error</string>
+	<string name="sync_table_result_success">Success</string>
+	<string name="sync_table_result_failure">Failure</string>
+	<string name="sync_table_result_exception">Exception</string>
+	<string name="sync_action_message_insert">Insert on Server.</string>
+	<string name="sync_action_message_delete">Delete from Server</string>
 	<string name="synchronizing_files">Synchronizing files&#8230;</string>
 	<string name="save_settings_first">Please save settings first.</string>
 	<string name="error_contacting_server">Unable to contact server. Please try again later&#8230;</string>
@@ -213,6 +219,7 @@
 	<string name="import_choose_csv_file">Select CSV File to Import</string>
 	<string name="import_disposition_label">Import to new table or append to an existing table?</string>
 	<string name="import_new_table">New Table</string>
+	<string name="import_import_new_table">Import New Table</string>
 	<string name="import_append_table">Append to an Existing Table</string>
 	<string name="import_in_progress">File import in progress&#8230;</string>
 	<string name="import_success">File import was successful.</string>
