@@ -219,6 +219,7 @@
 	<string name="import_choose_csv_file">Select CSV File to Import</string>
 	<string name="import_disposition_label">Import to new table or append to an existing table?</string>
 	<string name="import_new_table">New Table</string>
+	<string name="import_import_new_table">Import New Table</string>
 	<string name="import_append_table">Append to an Existing Table</string>
 	<string name="import_in_progress">File import in progress&#8230;</string>
 	<string name="import_success">File import was successful.</string>
