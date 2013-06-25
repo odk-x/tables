@@ -18,8 +18,10 @@ package org.opendatakit.tables.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -53,7 +55,13 @@ import android.util.Log;
  */
 public class ColumnProperties {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper;
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
+        .withFieldVisibility(Visibility.ANY));
+  }
+
   private static final String TAG = "ColumnProperties";
 
   // the name of the column properties table in the database
@@ -313,7 +321,7 @@ public class ColumnProperties {
   public static final boolean DEFAULT_KEY_SMS_OUT = true;
   public static final String DEFAULT_KEY_SMS_LABEL = null;
   public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
-  public static final String DEFAULT_KEY_DISPLAY_CHOICES_MAP = null;
+  public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
 
 
   /*
@@ -494,73 +502,49 @@ public class ColumnProperties {
    * @return
    */
   public static ColumnProperties getColumnProperties(DbHelper dbh,
-      String tableId, String dbElementKey, KeyValueStore.Type typeOfStore) {
-    Map<String, String> mapProps = getMapForColumn(dbh, tableId, dbElementKey,
-        typeOfStore);
-    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-  }
-
-  /*
-   * Return the map of all the properties for the given column. Atm this is
-   * just key->value. The caller must know the intended value and parse it
-   * correctly.
-   *
-   * This map should eventually become a key->TypeValuePair or something like
-   * that. TODO: make it the above
-   *
-   * This deserves its own method b/c to get the properties you are forced to
-   * go through both the key value store and the column properties table.
-   */
-  private static Map<String, String> getMapForColumn(DbHelper dbh,
       String tableId, String elementKey, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-      db = dbh.getReadableDatabase();
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
-      Map<String, String> columnDefinitionsMap =
-          ColumnDefinitions.getFields(tableId, elementKey, db);
-      Map<String, String> kvsMap = intendedKVS.getKeyValues(
-          ColumnProperties.KVS_PARTITION, elementKey, db);
-      // make sure that the values in the columnDefinitions are always
-      // respected, even if the kvsMap somehow has a colliding key.
-      kvsMap.putAll(columnDefinitionsMap);
-      // TODO: fix the when to close problem
-//    db.close();
-//    db = null;
-      return kvsMap;
-    } finally {
-      // TODO: fix the when to close problem
-//      if ( db != null ) {
-//         db.close();
-//      }
-    }
+
+    SQLiteDatabase db = dbh.getReadableDatabase();
+
+    // Get the KVS values
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
+    Map<String, String> kvsMap = intendedKVS.getKeyValues(
+        ColumnProperties.KVS_PARTITION, elementKey, db);
+
+    // Get the ColumnDefinition entries
+    Map<String, String> columnDefinitionsMap =
+        ColumnDefinitions.getColumnDefinitionFields(tableId, elementKey, db);
+
+    return constructPropertiesFromMap(dbh, tableId, elementKey, columnDefinitionsMap, kvsMap, typeOfStore);
   }
 
   private static ColumnProperties constructPropertiesFromMap(DbHelper dbh,
-      Map<String, String> props, KeyValueStore.Type backingStore) {
+      String tableId, String elementKey,
+      Map<String, String> columnDefinitions, Map<String, String> kvsProps,
+      KeyValueStore.Type backingStore) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_SMS_IN
-    String smsInStr = props.get(KEY_SMS_IN);
+    String smsInStr = kvsProps.get(KEY_SMS_IN);
     boolean smsIn = SyncUtil.stringToBool(smsInStr);
     // KEY_SMS_OUT
-    String smsOutStr = props.get(KEY_SMS_OUT);
+    String smsOutStr = kvsProps.get(KEY_SMS_OUT);
     boolean smsOut = SyncUtil.stringToBool(smsOutStr);
     // KEY_DISPLAY_VISIBLE
-    String displayVisibleStr = props.get(KEY_DISPLAY_VISIBLE);
+    String displayVisibleStr = kvsProps.get(KEY_DISPLAY_VISIBLE);
     boolean displayVisible = SyncUtil.stringToBool(displayVisibleStr);
     // KEY_FOOTER_MODE
-    String footerModeStr = props.get(KEY_FOOTER_MODE);
+    String footerModeStr = kvsProps.get(KEY_FOOTER_MODE);
     // TODO don't forget that all of these value ofs for all these enums
     // should eventually be surrounded with try/catch to support versioning
     // when new values might come down from the server.
-    FooterMode footerMode = FooterMode.valueOf(footerModeStr);
+    FooterMode footerMode = (footerModeStr == null) ? DEFAULT_KEY_FOOTER_MODE : FooterMode.valueOf(footerModeStr);
     // DB_IS_PERSISTED
-    String isPersistedStr = props.get(ColumnDefinitionsColumns.IS_PERSISTED);
+    String isPersistedStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_PERSISTED);
     boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
     // DB_COLUMN_TYPE
-    String columnTypeStr = props.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
+    String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);
 
     // Now we need to reclaim the list values from their db entries.
@@ -569,24 +553,24 @@ public class ColumnProperties {
     ArrayList<String> listChildElementKeys = null;
     JoinColumn joins = null;
     try {
-      if (props.get(KEY_DISPLAY_CHOICES_MAP) != null)  {
-        String displayChoicesMapValue = props.get(KEY_DISPLAY_CHOICES_MAP);
+      if (kvsProps.get(KEY_DISPLAY_CHOICES_MAP) != null)  {
+        String displayChoicesMapValue = kvsProps.get(KEY_DISPLAY_CHOICES_MAP);
         parseValue = displayChoicesMapValue;
         displayChoicesMap =
             mapper.readValue(displayChoicesMapValue, ArrayList.class);
       }
 
-      if (props.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
+      if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
         String listChildElementKeysValue =
-            props.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
+            columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
         parseValue = listChildElementKeysValue;
         listChildElementKeys =
             mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
-      if (props.get(ColumnDefinitionsColumns.JOINS) != null) {
-        String joinsValue = props.get(ColumnDefinitionsColumns.JOINS);
+      if (columnDefinitions.get(ColumnDefinitionsColumns.JOINS) != null) {
+        String joinsValue = columnDefinitions.get(ColumnDefinitionsColumns.JOINS);
         parseValue = joinsValue;
-        joins = mapper.readValue(joinsValue, JoinColumn.class);
+        joins = JoinColumn.fromSerialization(joinsValue);
       }
     } catch (JsonParseException e) {
       e.printStackTrace();
@@ -597,31 +581,22 @@ public class ColumnProperties {
     } catch (IOException e) {
       e.printStackTrace();
       throw new IllegalArgumentException("invalid db value: " + parseValue);
-    } finally {
-      // TODO: fix the when to close problem
-      // if ( db != null ) {
-      // db.close();
-      // }
-    }
-    String displayName = props.get(KEY_DISPLAY_NAME);
-    if ( displayName == null ) {
-      displayName = props.get(ColumnDefinitionsColumns.ELEMENT_KEY);
     }
     return new ColumnProperties(dbh,
-        props.get(ColumnDefinitionsColumns.TABLE_ID),
-        props.get(ColumnDefinitionsColumns.ELEMENT_KEY),
-        props.get(ColumnDefinitionsColumns.ELEMENT_NAME),
+        tableId,
+        elementKey,
+        columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME),
         columnType,
         listChildElementKeys,
         joins,
         isPersisted,
         displayVisible,
-        props.get(KEY_DISPLAY_NAME),
+        kvsProps.get(KEY_DISPLAY_NAME),
         displayChoicesMap,
-        props.get(KEY_DISPLAY_FORMAT),
+        kvsProps.get(KEY_DISPLAY_FORMAT),
         smsIn,
         smsOut,
-        props.get(KEY_SMS_LABEL),
+        kvsProps.get(KEY_SMS_LABEL),
         footerMode,
         backingStore);
   }
@@ -662,6 +637,7 @@ public class ColumnProperties {
     }
   }
 
+
   /**
    * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
    *
@@ -681,15 +657,11 @@ public class ColumnProperties {
    * @param displayVisible
    * @param typeOfStore
    * @return
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonGenerationException
    */
-  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
-      String tableId, String displayName, String elementKey,
-      String elementName, ColumnType columnType, String listChildElementKeys,
-      boolean isPersisted, String joins, boolean displayVisible,
-      KeyValueStore.Type typeOfStore) {
-    // We're going to do this just by calling the corresponding methods on the
-    // ColumnDefinitions and the key value store.
-
+  void persistColumn(SQLiteDatabase db, String tableId) throws JsonGenerationException, JsonMappingException, IOException {
     // First prepare the entries for the key value store.
     List<OdkTablesKeyValueStoreEntry> values =
         new ArrayList<OdkTablesKeyValueStoreEntry>();
@@ -698,52 +670,112 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
         elementKey, KEY_DISPLAY_NAME, displayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_CHOICES_MAP));
+        elementKey, KEY_DISPLAY_CHOICES_MAP, mapper.writeValueAsString(displayChoicesMap)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_DISPLAY_FORMAT, DEFAULT_KEY_DISPLAY_FORMAT));
+        elementKey, KEY_DISPLAY_FORMAT, displayFormat));
     // TODO: both the SMS entries should become booleans?
     values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_SMS_IN, DEFAULT_KEY_SMS_IN));
+        elementKey, KEY_SMS_IN, smsIn));
     values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_SMS_OUT, DEFAULT_KEY_SMS_OUT));
+        elementKey, KEY_SMS_OUT, smsOut));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_SMS_LABEL, DEFAULT_KEY_SMS_LABEL));
+        elementKey, KEY_SMS_LABEL, smsLabel));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION,
-        elementKey, KEY_FOOTER_MODE, DEFAULT_KEY_FOOTER_MODE.name()));
-    Map<String, String> mapProps = new HashMap<String, String>();
-    // TODO: might have to account for the null values being passed in here,
-    // maybe should be putting in empty strings instead?
-    mapProps.put(KEY_DISPLAY_VISIBLE, Boolean.toString(displayVisible));
-    mapProps.put(KEY_DISPLAY_NAME, displayName);
-    mapProps.put(KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_CHOICES_MAP);
-    mapProps.put(KEY_DISPLAY_FORMAT, DEFAULT_KEY_DISPLAY_FORMAT);
-    mapProps.put(KEY_SMS_IN, Boolean.toString(DEFAULT_KEY_SMS_IN));
-    mapProps.put(KEY_SMS_OUT, Boolean.toString(DEFAULT_KEY_SMS_OUT));
-    mapProps.put(KEY_SMS_LABEL, DEFAULT_KEY_SMS_LABEL);
-    mapProps.put(KEY_FOOTER_MODE, DEFAULT_KEY_FOOTER_MODE.name());
-    ColumnProperties cp = null;
+        elementKey, KEY_FOOTER_MODE, footerMode.name()));
+
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    try {
-      db.beginTransaction();
-      try {
-        Map<String, String> columnDefProps = ColumnDefinitions.addColumn(db,
-            tableId, elementKey, elementName,
-            columnType, listChildElementKeys, isPersisted, joins);
-        KeyValueStore kvs = kvsm.getStoreForTable(tableId, typeOfStore);
-        kvs.addEntriesToStore(db, values);
-        mapProps.putAll(columnDefProps);
-        cp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-        db.setTransactionSuccessful();
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
-        db.endTransaction();
-      }
-      return cp;
-    } finally {
-      // TODO: fix the when to close problem
-//    db.close();
+    KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+    kvs.addEntriesToStore(db, values);
+
+    ColumnDefinitions.assertColumnDefinition(db,
+        tableId, elementKey, elementName,
+        elementType, mapper.writeValueAsString(listChildElementKeys),
+        isPersisted, joins);
+  }
+
+  public enum ColumnDefinitionChange {
+    IDENTICAL,
+    CHANGE_ELEMENT_TYPE,
+    CHANGE_ELEMENT_TYPE_AND_JOINS,
+    CHANGE_JOINS,
+    INCOMPATIBLE
+  };
+
+  ColumnDefinitionChange compareColumnDefinitions(ColumnProperties cp) {
+    if ( !this.getElementName().equals(cp.getElementName()) ) {
+      return ColumnDefinitionChange.INCOMPATIBLE;
     }
+    if ( !this.getListChildElementKeys().equals(cp.getListChildElementKeys()) ) {
+      return ColumnDefinitionChange.INCOMPATIBLE;
+    }
+    if ( this.isPersisted() != cp.isPersisted() ) {
+      return ColumnDefinitionChange.INCOMPATIBLE;
+    }
+    if ( this.getElementType() != cp.getElementType() ) {
+      if ( this.getJoins() != cp.getJoins() ) {
+        return ColumnDefinitionChange.CHANGE_ELEMENT_TYPE_AND_JOINS;
+      } else {
+        return ColumnDefinitionChange.CHANGE_ELEMENT_TYPE;
+      }
+    } else /* identical */ {
+      if ( this.getJoins() != cp.getJoins() ) {
+        return ColumnDefinitionChange.CHANGE_JOINS;
+      } else {
+        return ColumnDefinitionChange.IDENTICAL;
+      }
+    }
+  }
+
+
+  /**
+   * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
+   *
+   * Add a column to the datastore. elementKey and elementName should be
+   * made via createDbElementKey and createDbElementName to avoid conflicts.
+   * A possible idea would be to pass them display name.
+   * @param dbh
+   * @param db
+   * @param tableId
+   * @param displayName
+   * @param elementKey
+   * @param elementName
+   * @param columnType
+   * @param listChildElementKeys
+   * @param isPersisted
+   * @param joins
+   * @param displayVisible
+   * @param typeOfStore
+   * @return
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonGenerationException
+   */
+  static ColumnProperties addColumn(DbHelper dbh, SQLiteDatabase db,
+      String tableId, String displayName, String elementKey,
+      String elementName, ColumnType columnType, List<String> listChildElementKeys,
+      boolean isPersisted, JoinColumn joins, boolean displayVisible,
+      KeyValueStore.Type typeOfStore) throws JsonGenerationException, JsonMappingException, IOException {
+
+    ColumnProperties cp = new ColumnProperties(dbh,
+        tableId,
+        elementKey,
+        elementName,
+        columnType,
+        listChildElementKeys,
+        joins,
+        isPersisted,
+        displayVisible,
+        displayName,
+        DEFAULT_KEY_DISPLAY_CHOICES_MAP,
+        DEFAULT_KEY_DISPLAY_FORMAT,
+        DEFAULT_KEY_SMS_IN,
+        DEFAULT_KEY_SMS_OUT,
+        DEFAULT_KEY_SMS_LABEL,
+        DEFAULT_KEY_FOOTER_MODE,
+        typeOfStore);
+
+    cp.persistColumn(db, tableId);
+    return cp;
   }
 
 
@@ -757,7 +789,7 @@ public class ColumnProperties {
    * @param db
    */
   void deleteColumn(SQLiteDatabase db) {
-    ColumnDefinitions.deleteColumn(tableId, elementKey, db);
+    ColumnDefinitions.deleteColumnDefinition(tableId, elementKey, db);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
@@ -1077,8 +1109,6 @@ public class ColumnProperties {
    * @param joins
    */
   public void setJoins(JoinColumn joins) {
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
     String joinsStr = null;
     try {
       joinsStr = mapper.writeValueAsString(joins);
@@ -1131,6 +1161,9 @@ public class ColumnProperties {
    *
    * @param columnName
    *          the join column name
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonGenerationException
    */
   // public void setJoinColumnName(String columnName) {
   // setStringProperty(DB_JOIN_ELEMENT_KEY, columnName);
@@ -1138,40 +1171,15 @@ public class ColumnProperties {
   // }
 
 //  Map<String, Object> toJson() {
-  String toJson() {
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
+  String toJson() throws JsonGenerationException, JsonMappingException, IOException {
     Map<String, Object> jo = new HashMap<String, Object>();
     jo.put(JSON_KEY_VERSION, 1);
     jo.put(JSON_KEY_TABLE_ID, tableId);
-
     jo.put(JSON_KEY_ELEMENT_KEY, elementKey);
     jo.put(JSON_KEY_ELEMENT_NAME, elementName);
-    //jo.put(JSON_KEY_ELEMENT_TYPE, elementType);
-    String elType = null;
-    String footMode = null;
-    String joinCol = null;
-    // Do this to try and avoid null pointer exceptions.
-    if (joins == null) {
-      joinCol = JoinColumn.DEFAULT_NOT_SET_VALUE;
-    }
-    try {
-      if (joinCol == null) {
-        joinCol = mapper.writeValueAsString(joins);
-      }
-      elType = mapper.writeValueAsString(elementType);
-      footMode = mapper.writeValueAsString(footerMode);
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-   } catch (JsonMappingException e) {
-      e.printStackTrace();
-   } catch (IOException e) {
-      e.printStackTrace();
-   }
-    jo.put(JSON_KEY_ELEMENT_TYPE, elType);
-    jo.put(JSON_KEY_FOOTER_MODE, footMode);
-    jo.put(JSON_KEY_JOINS, joinCol);
-
+    jo.put(JSON_KEY_JOINS, JoinColumn.toSerialization(joins));
+    jo.put(JSON_KEY_ELEMENT_TYPE, elementType.name());
+    jo.put(JSON_KEY_FOOTER_MODE, footerMode.name());
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
@@ -1194,53 +1202,11 @@ public class ColumnProperties {
       e.printStackTrace();
    }
     Log.d(TAG, "json: " + toReturn);
-//    return jo;
     return toReturn;
   }
 
-  /**
-   * This should be called when you first are creating a ColumnProperties when
-   * you have a json. Eg when you are downloading a table from the server.
-   * This gives you the object, but persists nothing. You must then add it to
-   * the datastore.
-   * @param json
-   * @return
-   */
-  // TODO it might be best to give options to set the appropriate things to be
-  // unique. Couldn't do it here b/c can't look at schema, just trying to
-  // get it to work.
-  public static ColumnProperties constructColumnPropertiesFromJson(
-      DbHelper dbh, String json, KeyValueStore.Type typeOfStore) {
-    ColumnProperties cp = new ColumnProperties(dbh,
-        "",
-        "",
-        "",
-        ColumnType.NONE,
-        new ArrayList<String>(),
-        null,
-        true,
-        true,
-        "",
-        new ArrayList<String>(),
-        "",
-        true,
-        true,
-        "",
-        FooterMode.none,
-//        KeyValueStore.Type.COLUMN_ACTIVE);
-        typeOfStore);
-    cp.setFromJson(json);
-    return cp;
 
-  }
-
-
-
-
-//  void setFromJsonObject(Map<String, Object> jo) {
-  void setFromJson(String json) {
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
+  public static ColumnProperties constructColumnPropertiesFromJson(DbHelper dbh, String json, KeyValueStore.Type typeOfStore) throws JsonParseException, JsonMappingException, IOException {
     Map<String, Object> jo;
     try {
       jo = mapper.readValue(json, Map.class);
@@ -1255,64 +1221,43 @@ public class ColumnProperties {
       throw new IllegalArgumentException("invalid json: " + json);
    }
 
-    jo.put(JSON_KEY_VERSION, 1);
-    jo.put(JSON_KEY_TABLE_ID, tableId);
-
-    jo.put(JSON_KEY_ELEMENT_KEY, elementKey);
-
 //    setElementName((String) jo.get(JSON_KEY_ELEMENT_NAME));
 //    setElementType(ColumnType.valueOf(
 //        (String) jo.get(JSON_KEY_ELEMENT_TYPE)));
+
     String joElType = (String) jo.get(JSON_KEY_ELEMENT_TYPE);
+    ColumnType elementType = (joElType == null) ? ColumnType.NONE : ColumnType.valueOf(joElType);
+
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
-    String joJoins = (String) jo.get(JSON_KEY_JOINS);
-    // check for null, was a problem earlier. REALLY need to rely on jackson
-    // more heavily, not just piecemeal like this.
-    if (joJoins == null) {
-      joJoins = JoinColumn.DEFAULT_NOT_SET_VALUE;
-    }
-    ColumnType colType = null;
-    FooterMode footMode = null;
-    JoinColumn joins = null;
-    try {
-      colType = mapper.readValue(joElType, ColumnType.class);
-      footMode = mapper.readValue(joFootMode, FooterMode.class);
-      joins = mapper.readValue(joJoins, JoinColumn.class);
-    } catch (JsonParseException e) {
-      e.printStackTrace();
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    // do a check just in case there was an error
-    if (colType == null) {
-      colType = ColumnType.NONE;
-    }
-    if (footMode == null) {
-      footMode = FooterMode.none;
-    }
-    setElementType(colType);
-    setFooterMode(footMode);
-    setJoins(joins);
-    setListChildElementKeys(
-        (ArrayList<String>) jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS));
-    // setJoinTableId((String) jo.get(JSON_KEY_JOIN_TABLE_ID));
-    // setJoinColumnName((String) jo.get(JSON_KEY_JOIN_ELEMENT_KEY));
-    setIsPersisted((Boolean) jo.get(JSON_KEY_IS_PERSISTED));
+    FooterMode footerMode = (joFootMode == null) ? FooterMode.none : FooterMode.valueOf(joFootMode);
 
-    setDisplayVisible((Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE));
-    setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
-    setDisplayChoicesMap(
-        (ArrayList<String>) jo.get(JSON_KEY_DISPLAY_CHOICES_MAP));
-    setDisplayFormat((String) jo.get(JSON_KEY_DISPLAY_FORMAT));
+    JoinColumn joins = JoinColumn.fromSerialization((String)jo.get(JSON_KEY_JOINS));
+    Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
+    ArrayList<String> listChildren = (joListChildren == null) ?
+        new ArrayList<String>() : (ArrayList<String>) joListChildren;
+    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_MAP);
+    ArrayList<String> listChoices = (joListChoices == null) ?
+        new ArrayList<String>() : (ArrayList<String>) joListChoices;
 
-    setSmsIn((Boolean) jo.get(JSON_KEY_SMS_IN));
-    setSmsOut((Boolean) jo.get(JSON_KEY_SMS_OUT));
-    setSmsLabel((String) jo.get(JSON_KEY_SMS_LABEL));
+    ColumnProperties cp = new ColumnProperties(dbh,
+        (String) jo.get(JSON_KEY_TABLE_ID),
+        (String) jo.get(JSON_KEY_ELEMENT_KEY),
+        (String) jo.get(JSON_KEY_ELEMENT_NAME),
+        elementType,
+        listChildren,
+        joins,
+        (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
+        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE),
+        (String) jo.get(JSON_KEY_DISPLAY_NAME),
+        listChoices,
+        (String) jo.get(JSON_KEY_DISPLAY_FORMAT),
+        (Boolean) jo.get(JSON_KEY_SMS_IN),
+        (Boolean) jo.get(JSON_KEY_SMS_OUT),
+        (String) jo.get(JSON_KEY_SMS_LABEL),
+        footerMode,
+        typeOfStore);
 
-//    jo.put(JSON_KEY_FOOTER_MODE, footerMode);
-//    setFooterMode(FooterMode.valueOf((String) jo.get(JSON_KEY_FOOTER_MODE)));
+    return cp;
   }
 
   private void setIntProperty(String property, int value) {

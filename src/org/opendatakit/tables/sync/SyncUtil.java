@@ -24,7 +24,7 @@ import android.util.Log;
  * A utility class for common synchronization methods and definitions.
  */
 public class SyncUtil {
-  
+
   public static final String TAG = SyncUtil.class.getSimpleName();
 
   /**
@@ -34,15 +34,15 @@ public class SyncUtil {
    * <p>
    * Here is a brief overview of the rules for transitions between states on
    * basic write operations:
-   * 
+   *
    * <pre>
-   * insert: 
+   * insert:
    *     state = INSERTING
-   *   
+   *
    * update:
    *     if state == REST:
    *        state = UPDATING
-   *     
+   *
    * delete:
    *     if state == REST or state == UPDATING:
    *        state = DELETING
@@ -50,7 +50,7 @@ public class SyncUtil {
    *     else if state == INSERTING:
    *        actually delete
    * </pre>
-   * 
+   *
    * </p>
    * <p>
    * The {@link SyncProcessor} handles moving resources from the INSERTING,
@@ -58,7 +58,7 @@ public class SyncUtil {
    * special state set by the SyncProcessor to signify conflicts between local
    * and remote updates to the same resource and is handled separately from the
    * basic write operations.
-   * 
+   *
    */
   public class State {
     public static final int REST = 0;
@@ -78,14 +78,14 @@ public class SyncUtil {
   public static int boolToInt(boolean b) {
     return b ? 1 : 0;
   }
-  
+
   public static boolean stringToBool(String bool) {
-    return bool.equalsIgnoreCase("true");
+    return (bool == null) ? true : bool.equalsIgnoreCase("true");
   }
-  
+
   public static org.opendatakit.tables.data.TableType transformServerTableType(
       org.opendatakit.aggregate.odktables.entity.api.TableType serverType) {
-    org.opendatakit.tables.data.TableType phoneType = 
+    org.opendatakit.tables.data.TableType phoneType =
         org.opendatakit.tables.data.TableType.data;
     switch (serverType) {
     case DATA:
@@ -102,22 +102,22 @@ public class SyncUtil {
     }
     return phoneType;
   }
-  
-  public static org.opendatakit.aggregate.odktables.entity.api.TableType 
+
+  public static org.opendatakit.aggregate.odktables.entity.api.TableType
   transformClientTableType(org.opendatakit.tables.data.TableType clientType) {
-    org.opendatakit.aggregate.odktables.entity.api.TableType serverType = 
+    org.opendatakit.aggregate.odktables.entity.api.TableType serverType =
         org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
     switch (clientType) {
     case data:
-      serverType = 
+      serverType =
         org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
       break;
     case shortcut:
-      serverType = 
+      serverType =
         org.opendatakit.aggregate.odktables.entity.api.TableType.SHORTCUT;
       break;
     case security:
-      serverType = 
+      serverType =
         org.opendatakit.aggregate.odktables.entity.api.TableType.SECURITY;
       break;
     default:
@@ -125,11 +125,11 @@ public class SyncUtil {
     }
     return serverType;
   }
-  
+
   /**
    * This should eventually map the the column type
    * on the server to the phone-side column type. It currently just returns
-   * type none, losing any sort of type information from the server. 
+   * type none, losing any sort of type information from the server.
    * TODO: make this method work once it's been updated from the server.
    * @param strColumn
    * @return
@@ -140,7 +140,7 @@ public class SyncUtil {
     // the server and the device.
     return ColumnType.NONE;
   }
-  
-  
-  
+
+
+
 }

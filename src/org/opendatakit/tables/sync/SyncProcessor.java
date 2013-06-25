@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -416,7 +417,7 @@ public class SyncProcessor {
       boolean found = false;
       for (int i = 0; i < allRowIds.getHeight(); i++) {
         String rowId = allRowIds.getRowId(i);
-        String stateStr = allRowIds.getMetadataByElementKey(i, 
+        String stateStr = allRowIds.getMetadataByElementKey(i,
             DataTableColumns.SYNC_STATE);
         int state = Integer.parseInt(stateStr);
 // TODO: a parse exception here was throwing an exception and silently
@@ -713,9 +714,12 @@ public class SyncProcessor {
    * @param syncTag the syncTag belonging to the modification from which you
    * acquired the {@link TableDefinitionResource}.
    * @return the new {@link TableProperties} for the table.
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonParseException
    */
   private TableProperties addTableFromDefinitionResource(
-      TableDefinitionResource definitionResource, String syncTag) {
+      TableDefinitionResource definitionResource, String syncTag) throws JsonParseException, JsonMappingException, IOException {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
     TableProperties tp = TableProperties.addTable(dbh,
         definitionResource.getTableKey(),
@@ -729,11 +733,17 @@ public class SyncProcessor {
       // on the server as well so that you can pull down the right thing.
       // TODO: add an addcolumn method to allow setting all of the dbdefinition
       // fields.
+      List<String> listChildElementKeys = null;
+      String lek = col.getListChildElementKeys();
+      if ( lek != null && lek.length() != 0) {
+        listChildElementKeys = mapper.readValue(lek, List.class);
+      }
       tp.addColumn(col.getElementKey(), col.getElementKey(),
           col.getElementName(), SyncUtil.
           getTablesColumnTypeFromServerColumnType(col.getElementType()),
-          col.getListChildElementKeys(),
-          SyncUtil.intToBool(col.getIsPersisted()), col.getJoins());
+          listChildElementKeys,
+          SyncUtil.intToBool(col.getIsPersisted()),
+          JoinColumn.fromSerialization(col.getJoins()));
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.getTablePropertiesForTable(dbh,
