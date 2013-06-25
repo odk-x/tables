@@ -26,7 +26,6 @@ import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.SynchronizationResult;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TableResult;
-import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
@@ -177,28 +176,28 @@ public class Aggregate extends SherlockActivity {
     builder.setMessage(message);
     return builder;
   }
-  
-  private AlertDialog.Builder buildResultMessage(String title, 
+
+  private AlertDialog.Builder buildResultMessage(String title,
       SynchronizationResult result) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setCancelable(false);
     builder.setPositiveButton(getString(R.string.ok), null);
     builder.setTitle(title);
-    // Now we'll make the message. This should include the contents of the 
+    // Now we'll make the message. This should include the contents of the
     // result parameter.
     StringBuilder stringBuilder = new StringBuilder();
     for (int i = 0; i < result.getTableResults().size(); i++) {
       TableResult tableResult = result.getTableResults().get(i);
-      stringBuilder.append(SyncUtil.getMessageForTableResult(this, 
+      stringBuilder.append(SyncUtil.getMessageForTableResult(this,
           tableResult));
-//      stringBuilder.append(tableResult.getTableDisplayName() + ": " + 
-//        SyncUtil.getLocalizedNameForTableResultStatus(this, 
+//      stringBuilder.append(tableResult.getTableDisplayName() + ": " +
+//        SyncUtil.getLocalizedNameForTableResultStatus(this,
 //            tableResult.getStatus()));
 //      if (tableResult.getStatus() == Status.EXCEPTION) {
 //        stringBuilder.append(" with message: " + tableResult.getMessage());
 //      }
       if (i < result.getTableResults().size() - 1) {
-        // only append if we have a 
+        // only append if we have a
         stringBuilder.append("\n");
       }
     }
@@ -313,7 +312,7 @@ public class Aggregate extends SherlockActivity {
     prefs.setAuthToken(null);
   }
 
-  private class SyncNowTask extends 
+  private class SyncNowTask extends
       AsyncTask<Void, Void, SynchronizationResult> {
     private ProgressDialog pd;
     private boolean success;

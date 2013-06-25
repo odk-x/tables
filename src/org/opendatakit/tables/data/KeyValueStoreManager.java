@@ -25,7 +25,6 @@ import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.tables.sync.SyncUtil;
-import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -395,8 +394,8 @@ public class KeyValueStoreManager {
    * @param tableId
    */
   public void mergeServerToDefaultForTable(String tableId) {
-    // We're going to use a TreeSet because we need each 
-    // OdkTablesKeyValueStoreEntry object to be dependent only on the 
+    // We're going to use a TreeSet because we need each
+    // OdkTablesKeyValueStoreEntry object to be dependent only on the
     // partition, aspect, and key. The value should be ignored in the merge.
     // If we didn't do this, then we would end up not overwriting values as
     // expected.
@@ -414,7 +413,7 @@ public class KeyValueStoreManager {
 	    List<OdkTablesKeyValueStoreEntry> serverEntries =
 	        serverKVS.getEntries(db);
 	    // First we get all the server entries as a set. We'll then add all the
-	    // default values. A set is unchanged if the entry is already there, so 
+	    // default values. A set is unchanged if the entry is already there, so
 	    // the default entries that already have entries will simply be gone.
 	    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
 	      newDefault.add(entry);
@@ -480,8 +479,8 @@ public class KeyValueStoreManager {
    * key value store that does NOT use this method, you must be sure to also
    * add the isSetToSync key to the sync KVS.
    * <p>
-   * Also increments the properties tag for the dataproperties and sets the 
-   * table state to updating--both only if it has 
+   * Also increments the properties tag for the dataproperties and sets the
+   * table state to updating--both only if it has
    * already been synched.
    * default-->server
    * @param tableId
@@ -501,7 +500,7 @@ public class KeyValueStoreManager {
 	    // and now add an entry to the sync KVS.
 	    addIsSetToSyncToSyncKVSForTable(tableId);
 	    // Now try to update the properties tag.
-	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh, 
+	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
 	        tableId, KeyValueStore.Type.SERVER);
 	    String syncTagStr = tp.getSyncTag();
 	    if (syncTagStr == null || syncTagStr.equals("")) {

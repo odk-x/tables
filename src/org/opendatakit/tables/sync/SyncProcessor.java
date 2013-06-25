@@ -47,7 +47,6 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -63,7 +62,7 @@ import android.util.Log;
 public class SyncProcessor {
 
   private static final String TAG = SyncProcessor.class.getSimpleName();
-  
+
   private static final String MSG_DELETED_LOCAL_TABLE = "Deleted Local Table";
 
   private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
@@ -80,14 +79,14 @@ public class SyncProcessor {
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
   private final DbHelper dbh;
-  /** 
-   * The results of the synchronization that we will pass back to the user. 
+  /**
+   * The results of the synchronization that we will pass back to the user.
    * Note that this is NOT the same as the {@link SyncResult} object, which is
    * used to inform the android SyncAdapter how the sync process has gone.
    */
   private final SynchronizationResult mUserResult;
 
-  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, 
+  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer,
       SyncResult syncResult) {
     this.dbh = dbh;
     this.du = DataUtil.getDefaultDataUtil();
@@ -104,7 +103,7 @@ public class SyncProcessor {
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = 
+    TableProperties[] tps =
         TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
     for (TableProperties tp : tps) {
@@ -136,7 +135,7 @@ public class SyncProcessor {
     boolean success = false;
     // Prepare the tableResult. We'll start it as failure, and only update it
     // if we're successful at the end.
-    TableResult tableResult = new TableResult(tp.getDisplayName(), 
+    TableResult tableResult = new TableResult(tp.getDisplayName(),
         tp.getTableId());
     beginTableTransaction(tp);
     try {
@@ -149,19 +148,19 @@ public class SyncProcessor {
         break;
       case updating:
         success = synchronizeTableUpdating(tp, table, tableResult);
-        // IF we were updating, we made updates to the TableProperties on the 
+        // IF we were updating, we made updates to the TableProperties on the
         // server. The subsequent call to synchronizeTableRest will overwrite
         // those calls. So we have to save the values that have been returned.
         if (success) {
-          // First update the tp. We need this so that the sync tag is 
+          // First update the tp. We need this so that the sync tag is
           // correct.
-          tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(), 
+          tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
               tp.getBackingStoreType());
           success = synchronizeTableRest(tp, table, false, tableResult);
         }
         break;
       case rest:
-        success = synchronizeTableRest(tp, table, downloadingTable, 
+        success = synchronizeTableRest(tp, table, downloadingTable,
             tableResult);
         break;
       default:
@@ -176,7 +175,7 @@ public class SyncProcessor {
       endTableTransaction(tp, success);
       // Here we also want to add the TableResult to the value.
       if (success) {
-        // Then we should have updated the db and shouldn't have set the 
+        // Then we should have updated the db and shouldn't have set the
         // TableResult to be exception.
         if (tableResult.getStatus() == Status.EXCEPTION) {
           Log.e(TAG, "tableResult status for table: " + tp.getDbTableName() +
@@ -194,10 +193,10 @@ public class SyncProcessor {
       TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "UPDATING " + tp.getDisplayName());
-    
+
     // First pass set the action, so that we can tell the user what we did.
     tableResult.setTableAction(SyncState.updating);
-    // As far as I can tell, this is only called if the PROPERTIES of the 
+    // As far as I can tell, this is only called if the PROPERTIES of the
     // table have changed--NOT if the data has changed.
     tableResult.setHadLocalPropertiesChanges(true);
 
@@ -206,7 +205,7 @@ public class SyncProcessor {
       // TODO: what happens here? As far as I can tell, we pull the changes
       // and blow our changes away. We then refresh our table properties, which
       // now match the server's? We then try to set them. This set does nothing
-      // and is essentially a no-op, other than that it takes battery, allows 
+      // and is essentially a no-op, other than that it takes battery, allows
       // the possibility for failure, etc. Should we do something smarter about
       // deciding which gets priorities, or a smarter merge, or something?
       updateDbFromServer(tp, table, false, tableResult);
@@ -235,13 +234,13 @@ public class SyncProcessor {
       DbTable table, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
-    
-    // If it was inserting, then we know we had properties changes to add. 
+
+    // If it was inserting, then we know we had properties changes to add.
     tableResult.setHadLocalPropertiesChanges(true);
-    // Set the tableResult action so we can inform the user what we tried to 
+    // Set the tableResult action so we can inform the user what we tried to
     // do.
     tableResult.setTableAction(SyncState.inserting);
-    
+
     List<String> userColumns = tp.getColumnOrder();
     List<SyncRow> rowsToInsert = getRows(table, userColumns,
         SyncUtil.State.INSERTING);
@@ -268,24 +267,24 @@ public class SyncProcessor {
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
       String syncTagProperties = synchronizer.setTableProperties(
           tp.getTableId(), syncTag, tp.getTableKey(), kvsEntries);
-      // If we make it here we've set both the definition and the properties, 
+      // If we make it here we've set both the definition and the properties,
       // so we can say yes we've added the table to the server.
       tableResult.setPushedLocalProperties(true);
       tp.setSyncTag(syncTagProperties);
-      
+
       /**************************
        * PART 2: INSERT THE DATA
        * Now we need to put some data on the server.
        **************************/
-      Modification modification = synchronizer.insertRows(tableId, 
+      Modification modification = synchronizer.insertRows(tableId,
           tp.getSyncTag(), rowsToInsert);
       updateDbFromModification(modification, table, tp);
       // If we made it here, then we know we pushed the data to the server AND
       // updated our db with the synctags appropriately.
-      // TODO: is this the correct place to do this? What if we throw an 
-      // exception modifying the db? We'll have pushed the data but our db 
+      // TODO: is this the correct place to do this? What if we throw an
+      // exception modifying the db? We'll have pushed the data but our db
       // might be in an indeterminate state--depends how the endRowsTransaction
-      // stuff works. 
+      // stuff works.
       tableResult.setPushedLocalData(true);
       success = true;
     } catch (IOException e) {
@@ -305,7 +304,7 @@ public class SyncProcessor {
   private boolean synchronizeTableDeleting(TableProperties tp, DbTable table,
       TableResult tableResult) {
     String tableId = tp.getTableId();
-    // Set the tableResult action so we can inform the user what we tried to 
+    // Set the tableResult action so we can inform the user what we tried to
     // do.
     tableResult.setTableAction(SyncState.deleting);
     // We'll set both the local data and properties changes to true, b/c we're
@@ -324,9 +323,9 @@ public class SyncProcessor {
       tableResult.setPushedLocalProperties(true);
       tp.deleteTableActual();
       // If this worked, then we were successful. No field currently exists for
-      // "updated local db" without there being incoming data changes from the 
-      // server, so we'll rely on an action of deleting and a status of 
-      // success to mean that yes we deleted it. But, we'll also include a 
+      // "updated local db" without there being incoming data changes from the
+      // server, so we'll rely on an action of deleting and a status of
+      // success to mean that yes we deleted it. But, we'll also include a
       // message.
       tableResult.setMessage(MSG_DELETED_LOCAL_TABLE);
       syncResult.stats.numDeletes++;
@@ -358,23 +357,23 @@ public class SyncProcessor {
       boolean downloadingTable, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
-    
+
     // First set the action so we can report it back to the user. We don't have
-    // to worry about the special case where we are downloading it from the 
+    // to worry about the special case where we are downloading it from the
     // server of the first time, because that takes place through a separate
     // activity. Therefore we'll know that an action of REST is to be expected.
-    // We do, however, have to make sure not to overwrite an UPDATING value, 
+    // We do, however, have to make sure not to overwrite an UPDATING value,
     // as this method is called after the call to update.
     if (tableResult.getTableAction() != SyncState.updating) {
       tableResult.setTableAction(SyncState.rest);
     }
-    // It's possible that the call to this method follows a call to 
+    // It's possible that the call to this method follows a call to
     // synchronizeTableUpdating. For that reason we can't assume there are no
-    // properties changes. Thus rely on the fact that the 
+    // properties changes. Thus rely on the fact that the
     // hadLocalPropertiesChanges value in TableResult inits to false, and on
-    // the fact that the appropriate method will have updated it to true if 
+    // the fact that the appropriate method will have updated it to true if
     // necessary. And then don't set anything.
-    
+
     List<String> userColumns = tp.getColumnOrder();
 
     // get updates from server
@@ -396,14 +395,14 @@ public class SyncProcessor {
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
-    List<SyncRow> rowsToInsert = getRows(table, userColumns, 
+    List<SyncRow> rowsToInsert = getRows(table, userColumns,
         SyncUtil.State.INSERTING);
-    List<SyncRow> rowsToUpdate = getRows(table, userColumns, 
+    List<SyncRow> rowsToUpdate = getRows(table, userColumns,
         SyncUtil.State.UPDATING);
-    List<SyncRow> rowsToDelete = getRows(table, userColumns, 
+    List<SyncRow> rowsToDelete = getRows(table, userColumns,
         SyncUtil.State.DELETING);
-    
-    if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 || 
+
+    if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 ||
         rowsToDelete.size() != 0) {
       if (tableResult.hadLocalDataChanges()) {
         Log.e(TAG, "synchronizeTableRest hadLocalDataChanges() returned " +
@@ -458,7 +457,7 @@ public class SyncProcessor {
 
   private void ioException(String method, TableProperties tp, IOException e,
       TableResult tableResult) {
-    Log.e(TAG, String.format("IOException in %s for table: %s", method, 
+    Log.e(TAG, String.format("IOException in %s for table: %s", method,
         tp.getDisplayName()), e);
     tableResult.setStatus(Status.EXCEPTION);
     tableResult.setMessage(e.getMessage());
@@ -468,7 +467,7 @@ public class SyncProcessor {
   private void exception(String method, TableProperties tp, Exception e,
       TableResult tableResult) {
     Log.e(TAG,
-        String.format("Unexpected exception in %s on table: %s", method, 
+        String.format("Unexpected exception in %s on table: %s", method,
             tp.getDisplayName()), e);
     tableResult.setStatus(Status.EXCEPTION);
     tableResult.setMessage(e.getMessage());
@@ -495,7 +494,7 @@ public class SyncProcessor {
     if (modification.hasTablePropertiesChanged()) {
       Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanged(true)");
       tableResult.setServerHadPropertiesChanges(true);
-    } 
+    }
     // Now check if there were rows.
     if (rows.size() > 0) {
       tableResult.setServerHadDataChanges(true);
@@ -509,8 +508,8 @@ public class SyncProcessor {
 
     /**************************
      * PART 1: UPDATE THE TABLE ITSELF.
-     * We only do this if necessary. Do this before updating data in case 
-     * columns have changed or something specific applies. 
+     * We only do this if necessary. Do this before updating data in case
+     * columns have changed or something specific applies.
      * These updates come in two parts: the table definition, and the table
      * properties (i.e. the key value store).
      **************************/
@@ -524,9 +523,9 @@ public class SyncProcessor {
       PropertiesResource propertiesResource =
           modification.getTableProperties();
       /**************************
-       * PART 1A: UPDATE THE DEFINITION. 
+       * PART 1A: UPDATE THE DEFINITION.
        * If we're downloading the table, we go ahead and update. Otherwise,
-       * we don't allow changes to the definition, so just log an error 
+       * we don't allow changes to the definition, so just log an error
        * message.
        **************************/
       if (downloadingTable) {
@@ -548,8 +547,8 @@ public class SyncProcessor {
             " to be updated, it is not happening.");
       }
       /**************************
-       * PART 1B: UPDATE THE PROPERTIES/KVS. 
-       * So, the properties had changed on the server. We have them in the 
+       * PART 1B: UPDATE THE PROPERTIES/KVS.
+       * So, the properties had changed on the server. We have them in the
        * modification. Note that if we had properties on the server, we'll blow
        * away our modifications that had been in the server store on the phone.
        * That's just the cruel way of the world, and is by design.
@@ -592,13 +591,13 @@ public class SyncProcessor {
     updateRowsInDb(table, rowsToUpdate);
     insertRowsInDb(table, rowsToInsert);
     deleteRowsInDb(table, rowsToDelete);
-    
+
     // If we made it here and there was data, then we successfully updated the
     // data from the server.
     if (rows.size() > 0) {
       tableResult.setPulledServerData(true);
-    } 
-    
+    }
+
     // We have to set this synctag here so that the server knows we saw its
     // changes. Otherwise it won't let us put up new information.
     tp.setSyncTag(newSyncTag);
@@ -606,12 +605,12 @@ public class SyncProcessor {
 
   private void conflictRowsInDb(DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
-      Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" + 
+      Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" +
         row.getSyncTag());
       ContentValues values = new ContentValues();
 
       // delete conflicting row if it already exists
-      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?", 
+      String whereClause = String.format("%s = ? AND %s = ? AND %s = ?",
           DataTableColumns.ROW_ID,
           DataTableColumns.SYNC_STATE, DataTableColumns.TRANSACTIONING);
       String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.DELETING),
@@ -620,9 +619,9 @@ public class SyncProcessor {
 
       // update existing row
       values.put(DataTableColumns.ROW_ID, row.getRowId());
-      values.put(DataTableColumns.SYNC_STATE, 
+      values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.CONFLICTING));
-      values.put(DataTableColumns.TRANSACTIONING, 
+      values.put(DataTableColumns.TRANSACTIONING,
           String.valueOf(SyncUtil.boolToInt(false)));
       table.actualUpdateRowByRowId(row.getRowId(), values);
 
@@ -631,7 +630,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP, 
+      		values.put(DataTableColumns.TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -640,7 +639,7 @@ public class SyncProcessor {
 
       // insert conflicting row
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, 
+      values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.DELETING));
       values.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(true));
       table.actualAddRow(values);
@@ -663,7 +662,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP, 
+      		values.put(DataTableColumns.TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -681,9 +680,9 @@ public class SyncProcessor {
       ContentValues values = new ContentValues();
 
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, 
+      values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.REST));
-      values.put(DataTableColumns.TRANSACTIONING, 
+      values.put(DataTableColumns.TRANSACTIONING,
           String.valueOf(SyncUtil.boolToInt(false)));
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
@@ -710,7 +709,7 @@ public class SyncProcessor {
     }
   }
 
-  private void updateDbFromModification(Modification modification, 
+  private void updateDbFromModification(Modification modification,
       DbTable table, TableProperties tp) {
     for (Entry<String, String> entry : modification.getSyncTags().entrySet()) {
       ContentValues values = new ContentValues();
@@ -778,11 +777,11 @@ public class SyncProcessor {
     Map<String, ColumnType> cachedColumnsToSync = DbTable.getColumnsToSync();
     for (int i = 0; i < numRows; i++) {
       String rowId = rows.getRowId(i);
-      String syncTag = rows.getMetadataByElementKey(i, 
+      String syncTag = rows.getMetadataByElementKey(i,
           DataTableColumns.SYNC_TAG);
       Map<String, String> values = new HashMap<String, String>();
 
-      // precompute the correspondence between the displayed elementKeys and 
+      // precompute the correspondence between the displayed elementKeys and
       // the UserTable userData index
       int[] userDataIndex = new int[numCols];
       for ( int j = 0 ; j < numCols ; ++j ) {
@@ -848,7 +847,7 @@ public class SyncProcessor {
     updateRowsTransactioning(table, rowIds, SyncUtil.boolToInt(true));
   }
 
-  private void endRowsTransaction(DbTable table, String[] rowIds, 
+  private void endRowsTransaction(DbTable table, String[] rowIds,
       boolean success) {
     if (success)
       updateRowsState(table, rowIds, SyncUtil.State.REST);
@@ -863,10 +862,10 @@ public class SyncProcessor {
     }
   }
 
-  private void updateRowsTransactioning(DbTable table, String[] rowIds, 
+  private void updateRowsTransactioning(DbTable table, String[] rowIds,
       int transactioning) {
     ContentValues values = new ContentValues();
-    values.put(DataTableColumns.TRANSACTIONING, 
+    values.put(DataTableColumns.TRANSACTIONING,
         String.valueOf(transactioning));
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
