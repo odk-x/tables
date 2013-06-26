@@ -134,8 +134,15 @@ public class DbTable {
         this.tp = tp;
     }
 
+    /**
+     * PreCondition: the TableProperties.mElementKeyToColumnProperties is non-null
+     * or, if null, when fetched from the database, the correct values
+     * will be reported.
+     *
+     * @param db
+     * @param tp
+     */
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
-      boolean testOpen = db.isOpen();
         StringBuilder colListBuilder = new StringBuilder();
         for (ColumnProperties cp : tp.getColumns().values()) {
             colListBuilder.append(", " + cp.getElementKey());
@@ -147,7 +154,6 @@ public class DbTable {
                 colListBuilder.append(" TEXT");
             }
         }
-        testOpen = db.isOpen();
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DataTableColumns.ROW_ID + " TEXT NOT NULL" +
      ", " + DataTableColumns.URI_USER + " TEXT NULL" +
@@ -219,7 +225,7 @@ public class DbTable {
 	    	}
 	    }
     }
-    
+
     /**
      * Get a {@link UserTable} for this table based on the given where clause.
      * All columns from the table are returned.
@@ -382,9 +388,9 @@ public class DbTable {
         List<String> userColumnOrder) {
       return new UserTable(c, tp, userColumnOrder);
     }
-    
+
     /**
-     * Returns an empty footer. Useful for things like {@link rawSqlQuery}, 
+     * Returns an empty footer. Useful for things like {@link rawSqlQuery},
      * which do not pass in the {@link Query} parameter that a footer requires.
      * @return
      */

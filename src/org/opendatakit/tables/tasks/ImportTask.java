@@ -36,8 +36,8 @@ extends AsyncTask<ImportRequest, Integer, Boolean> {
 				return false;
 			}
 		} else {
-			return cu.importAddToTable(importCSVActivity, request.getFile(),
-					request.getTableProperties());
+			return cu.importAddToTable(importCSVActivity, this, request.getFile(),
+					request.getTableId());
 		}
 	}
 

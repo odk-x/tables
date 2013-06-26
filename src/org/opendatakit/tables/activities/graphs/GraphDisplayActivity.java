@@ -121,9 +121,9 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	 * opposed to the partition where the named views themselves reside.
 	 */
 	private KeyValueStoreHelper graphViewKvsh;
-	
-	/** 
-	 * A sql where clause that may have come from an intent. Needs to be 
+
+	/**
+	 * A sql where clause that may have come from an intent. Needs to be
 	 * forwarded to the display activity.
 	 * @see DbTable#rawSqlQuery
 	 */
@@ -140,7 +140,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	 */
 	private void init() {
 		this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		this.mSqlWhereClause = 
+		this.mSqlWhereClause =
 		    getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
 		this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
 		    Controller.INTENT_KEY_SQL_SELECTION_ARGS);
@@ -194,7 +194,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		newGraphViewIntent.putExtra(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME, graphName);
 		// Now put the sql ones if they exist.
 		if (this.mSqlWhereClause != null) {
-		  newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_WHERE, 
+		  newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_WHERE,
 		      mSqlWhereClause);
 		  newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_SELECTION_ARGS,
 		      mSqlSelectionArgs);
