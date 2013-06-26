@@ -130,7 +130,7 @@ public class SyncProcessor {
    */
   public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
     DbTable table = DbTable.getDbTable(dbh,
-        TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+        TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
             KeyValueStore.Type.ACTIVE));// TODO: should this be SERVER or ACTIVE?
     boolean success = false;
     // Prepare the tableResult. We'll start it as failure, and only update it
@@ -154,7 +154,7 @@ public class SyncProcessor {
         if (success) {
           // First update the tp. We need this so that the sync tag is
           // correct.
-          tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+          tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
               tp.getBackingStoreType());
           success = synchronizeTableRest(tp, table, false, tableResult);
         }
@@ -167,7 +167,7 @@ public class SyncProcessor {
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
       // It is possible the table properties changed. Refresh just in case.
-      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+      tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
           tp.getBackingStoreType());
       if (success && tp != null) // null in case we deleted the tp.
         tp.setLastSyncTime(du.formatNowForDb());
@@ -210,7 +210,7 @@ public class SyncProcessor {
       // deciding which gets priorities, or a smarter merge, or something?
       updateDbFromServer(tp, table, false, tableResult);
       // update the tp.
-      tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+      tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
           KeyValueStore.Type.SERVER);
       String syncTag = synchronizer.setTableProperties(tableId,
           tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId,
@@ -391,7 +391,7 @@ public class SyncProcessor {
       return false;
     }
     // refresh the tp
-    tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+    tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
@@ -914,7 +914,7 @@ public class SyncProcessor {
           JoinColumn.fromSerialization(col.getJoins()));
     }
     // Refresh the table properties to get the columns.
-    tp = TableProperties.getTablePropertiesForTable(dbh,
+    tp = TableProperties.refreshTablePropertiesForTable(dbh,
         definitionResource.getTableId(), kvsType);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(

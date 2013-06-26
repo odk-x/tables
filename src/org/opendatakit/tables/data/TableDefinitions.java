@@ -286,23 +286,38 @@ public class TableDefinitions {
     c.close();
     return tableIds;
   }
-  
+
+  public static List<String> getAllTableIds(SQLiteDatabase db) {
+    Cursor c = db.query(true,  DB_BACKING_NAME, new String[] { TableDefinitionsColumns.TABLE_ID },
+        null, null, null, null, null, null);
+    List<String> tableIds = new ArrayList<String>();
+    int dbTableIdIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.TABLE_ID);
+    if ( c.getCount() > 0 ) {
+      c.moveToFirst();
+      do {
+        String tableId = c.getString(dbTableIdIndex);
+        tableIds.add(tableId);
+      } while ( c.moveToNext() );
+    }
+    return tableIds;
+  }
+
   /**
    * Remove the given tableId from the TableDefinitions table. This does NOT
    * handle any of the necessary deletion of the table's information in other
-   * tables. 
+   * tables.
    * <p>
    * Does not close the database.
    * @param tableId
    * @param db
    * @return
    */
-  public static int deleteTableFromTableDefinitions(String tableId, 
+  public static int deleteTableFromTableDefinitions(String tableId,
       SQLiteDatabase db) {
-    int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_TABLE, 
+    int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_TABLE,
         new String[] {tableId});
     if (count != 1) {
-      Log.e(TAG, "deleteTable() for tableId [" + tableId + "] deleted " + 
+      Log.e(TAG, "deleteTable() for tableId [" + tableId + "] deleted " +
           " rows");
     } else {
       Log.d(TAG, "deleted table with id: " + tableId);

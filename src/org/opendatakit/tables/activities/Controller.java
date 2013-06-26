@@ -851,7 +851,7 @@ public class Controller implements CustomViewCallbacks {
         sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
-  
+
   public static void launchSpreadsheetView(Context context, TableProperties tp,
       String searchText, Stack<String> searchStack, boolean isOverview,
       String sqlWhereClause, String[] sqlSelectionArgs) {
@@ -861,7 +861,7 @@ public class Controller implements CustomViewCallbacks {
         sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
-  
+
   /**
    * Open the table to graph view.
    * @param context

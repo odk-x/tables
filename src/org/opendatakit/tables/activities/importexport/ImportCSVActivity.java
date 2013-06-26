@@ -160,11 +160,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
             showDialog(IMPORT_IN_PROGRESS_DIALOG);
-			task.execute(new ImportRequest(tableName, file));
+			task.execute(new ImportRequest(true, null, tableName, file));
 		} else {
 		    tp = tps[pos - 1];
             showDialog(IMPORT_IN_PROGRESS_DIALOG);
-		    task.execute(new ImportRequest(tp, file));
+		    task.execute(new ImportRequest(false, tp.getTableId(), null, file));
 		}
 		/**
 		Handler iHandler = new ImporterHandler();

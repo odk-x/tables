@@ -195,7 +195,7 @@ public class CsvUtil {
             kvs.addEntriesToStore(dbh.getWritableDatabase(), recoveredEntries);
             // Since the KVS has all the display properties for a table, we must
             // re-read everything to get them.
-            tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+            tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
                 tp.getBackingStoreType());
             // TODO: sort out closing database appropriately.
           } catch (JsonGenerationException e) {
@@ -276,7 +276,7 @@ public class CsvUtil {
     }
   }
 
-  public boolean importAddToTable(Context c, File file, TableProperties tp) {
+  public boolean importAddToTable(Context c, ImportTask importTask, File file, String tableId) {
     try {
       // This flag indicates if the table was exported with the
       // properties.
@@ -304,17 +304,61 @@ public class CsvUtil {
         reader.close();
         return true;
       }
-      if ((row.length == 1) && row[0].startsWith(OPEN_CURLY_BRACKET)) {
+      TableProperties tp;
+      boolean discoverColumnNames = true;
+      if (row[0].startsWith(OPEN_CURLY_BRACKET)) {
         includesProperties = true;
         // TODO: it might be that we do NOT want to overwrite an
         // existing
         // table's properties, in which case we shouldn't set from json.
-        tp.setFromJson(row[0]);
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+        if (tp.setFromJson(row[0])) {
+          // OK the metadata is for this tableId, so we can proceed...
+
+          // we need to check if we need to import all the key value store
+          // things as well.
+          if (row.length > 1) {
+            // This is, by convention, the key value store entries in
+            // list
+            // form.
+            try {
+              List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
+                  new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
+                  });
+              KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+              KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), tp.getBackingStoreType());
+              kvs.addEntriesToStore(dbh.getWritableDatabase(), recoveredEntries);
+              // Since the KVS has all the display properties for a table, we must
+              // re-read everything to get them.
+              tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
+                  tp.getBackingStoreType());
+              // TODO: sort out closing database appropriately.
+            } catch (JsonGenerationException e) {
+              e.printStackTrace();
+              if (importTask != null) {
+                importTask.problemImportingKVSEntries = true;
+              }
+            } catch (JsonMappingException e) {
+              e.printStackTrace();
+              if (importTask != null) {
+                importTask.problemImportingKVSEntries = true;
+              }
+            } catch (IOException e) {
+              e.printStackTrace();
+              if (importTask != null) {
+                importTask.problemImportingKVSEntries = true;
+              }
+            }
+          }
+          discoverColumnNames = false;
+        }
         row = reader.readNext();
+      } else {
+        tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+        discoverColumnNames = true;
       }
 
       ArrayList<String> columns = new ArrayList<String>();
-
       int idxRowId = -1;
       int idxTimestamp = -1;
       int idxUriUser = -1;
@@ -343,11 +387,22 @@ public class CsvUtil {
           idxLocale = i;
           dbName = DataTableColumns.LOCALE;
         } else {
+          Log.d(TAG, "processing column: " + colName);
+
           ColumnProperties cp = tp.getColumnByDisplayName(colName);
-          // CHANGE: support adding columns via the import feature...
           if (cp == null) {
-            tp.addColumn(colName, null, null);
-            cp = tp.getColumnByDisplayName(colName);
+            // And now add all remaining metadata columns
+            if ( DbTable.getAdminColumns().contains(colName) ) {
+              dbName = colName;
+            } else if (discoverColumnNames) {
+              cp = tp.addColumn(colName, null, null);
+              dbName = cp.getElementKey();
+            } else {
+              throw new IllegalStateException("column name " + colName
+                  + " should have been defined in metadata");
+            }
+          } else {
+            dbName = cp.getElementKey();
           }
           dbName = cp.getElementKey();
         }

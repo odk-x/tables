@@ -36,7 +36,7 @@ import android.util.Log;
 
 
 public class Launcher extends Activity {
-  
+
   private static final String TAG = Launcher.class.getName();
 
     @Override
@@ -50,12 +50,12 @@ public class Launcher extends Activity {
         }
         // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
-        // The first thing we'll do is check to see if a custom app file 
-        // exists. If it does, we'll launch it. Otherwise we'll use the 
+        // The first thing we'll do is check to see if a custom app file
+        // exists. If it does, we'll launch it. Otherwise we'll use the
         // TableManager.
-        File homescreenFile = new File(dir + "/" + 
+        File homescreenFile = new File(dir + "/" +
             CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME);
-        Log.d(TAG, "looking for homescreen file: " 
+        Log.d(TAG, "looking for homescreen file: "
             + homescreenFile.toString());
         if (homescreenFile.exists()) {
           // launch it.

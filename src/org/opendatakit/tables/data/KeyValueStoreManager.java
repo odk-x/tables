@@ -372,6 +372,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.ACTIVE);
     }
   }
 
@@ -432,6 +433,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -462,6 +464,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -515,6 +518,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     }
   }
 

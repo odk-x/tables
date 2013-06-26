@@ -244,7 +244,7 @@ public class UserTable {
   public String getDisplayTextOfData(Context context, int rowNum, int colNum) {
     String raw = getData(rowNum,colNum);
     ColumnProperties cp = mColumnProperties.get(colNum);
-    ColumnType type = cp.getElementType();
+    ColumnType type = cp.getColumnType();
     if ( type == ColumnType.AUDIOURI ||
          type == ColumnType.IMAGEURI ||
          type == ColumnType.MIMEURI ||

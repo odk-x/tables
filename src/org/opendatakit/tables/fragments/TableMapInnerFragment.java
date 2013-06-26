@@ -362,12 +362,12 @@ public class TableMapInnerFragment extends SherlockMapFragment {
   private LatLng parseLocationFromString( ColumnProperties latitudeColumn, String latitude,
                                           ColumnProperties longitudeColumn, String longitude) {
     try {
-      if ( latitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+      if ( latitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
         String[] parts = latitude.split(",");
         latitude = parts[0].trim();
       }
 
-      if ( longitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+      if ( longitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
         String[] parts = longitude.split(",");
         longitude = parts[1].trim();
       }
@@ -413,7 +413,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         String longitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
         {
           ColumnProperties latitudeColumn = tp.getColumnByElementKey(latitudeElementKey);
-          if ( latitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+          if ( latitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
             elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude) +
                                       "," + Double.toString(location.longitude));
           } else {
@@ -423,7 +423,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
         {
           ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
-          if ( longitudeColumn.getElementType() == ColumnType.GEOPOINT ) {
+          if ( longitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
             elementNameToValue.put(longitudeElementKey, Double.toString(location.latitude) +
                                       "," + Double.toString(location.longitude));
           } else {

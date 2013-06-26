@@ -101,7 +101,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 						// .tablename is defined
 						if (tablename != null) {
-							ImportRequest request = new ImportRequest(tablename, file);
+							ImportRequest request = new ImportRequest(true, null, tablename, file);
 
 							CsvUtil cu = new CsvUtil(this.tm);
 
