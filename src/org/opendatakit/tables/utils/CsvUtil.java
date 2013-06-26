@@ -379,17 +379,21 @@ public class CsvUtil {
 
     this.it = it;
 
-    // split on ".csv" to get the filename without extension
-    if (filename.endsWith(CSV_FILE_EXTENSION)) {
-
+    if (filename != null) {
+      
+      String baseName = null; // the filename without the .csv
+      // split on ".csv" to get the filename without extension
+      if (filename.endsWith(CSV_FILE_EXTENSION)) {
       // create the file name/path of a .properties.csv file
       // and check if it exits
-      String[] tokens = filename.split(CSV_FILE_EXTENSION);
-      StringBuffer s = new StringBuffer();
-      for (int i = 0; i < tokens.length; i++) {
-        s.append(tokens[i]);
+        String[] tokens = filename.split(CSV_FILE_EXTENSION);
+        StringBuffer s = new StringBuffer();
+        for (int i = 0; i < tokens.length; i++) {
+          s.append(tokens[i]);
+        }
+        baseName = s.toString();
       }
-      String propFilename = s.append(PROPERTIES_CSV_FILE_EXTENSION).toString();
+      String propFilename = baseName += PROPERTIES_CSV_FILE_EXTENSION;
 
       File csvProp = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
           propFilename);
