@@ -93,8 +93,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 						lineCount = tm.getString(R.string.processing_file);
 						curFileCount++;
 						tablename = prop.getProperty(key + KEY_SUFFIX_TABLENAME);
+						filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
 						file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
-								prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME));
+								filename);
 
 						// update dialog message with current filename
 						publishProgress();
