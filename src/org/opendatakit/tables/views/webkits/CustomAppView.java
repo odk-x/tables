@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.ViewGroup;
 
 /**
@@ -72,7 +73,7 @@ public class CustomAppView extends CustomView {
 
   public void display() {
     Control c = new Control(mActivity);
-    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
+    addJavascriptInterface(c.getJavascriptInterface(), "control");
     // We're going to assume this is only being called if homescreen.html has
     // been found, so we're just going to use that, not do any checking.
     String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);

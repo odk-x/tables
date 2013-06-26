@@ -31,6 +31,7 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
+import android.os.Build;
 import android.util.Log;
 
 public class CustomGraphView extends CustomView {
@@ -83,10 +84,10 @@ public class CustomGraphView extends CustomView {
 
   public void display() {
     Control c = new Control(mActivity, table);
-    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
     TableData d = new TableData(table);
-    webView.addJavascriptInterface(d.getJavascriptInterface(), "data");
-    webView.addJavascriptInterface(graphData, "graph_data");
+    addJavascriptInterface(c.getJavascriptInterface(), "control");
+    addJavascriptInterface(d.getJavascriptInterface(), "data");
+    addJavascriptInterface(graphData, "graph_data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
     } else {
