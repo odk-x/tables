@@ -75,6 +75,9 @@ public class JoinColumn {
       return null;
     }
     Map<String,String> joJoin = ODKFileUtils.mapper.readValue(str, Map.class);
+    if ( joJoin == null ) {
+      return null;
+    }
     String tableId = joJoin.get(JoinColumn.JSON_KEY_TABLE_ID);
     String elementKey = joJoin.get(JoinColumn.JSON_KEY_ELEMENT_KEY);
     return new JoinColumn(tableId, elementKey);
