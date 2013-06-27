@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.app.Activity;
+import android.os.Build;
 
 /**
  * A view for displaying a customizable detail view of a row of data.
@@ -96,8 +97,8 @@ public class CustomDetailView extends CustomView {
     jsData.set(rowId, userTable.getInstanceName(rowNum),
         tmpData);
     Control c = new Control(mActivity);
-    webView.addJavascriptInterface(c.getJavascriptInterface(), "control");
-    webView.addJavascriptInterface(jsData, "data");
+    addJavascriptInterface(c.getJavascriptInterface(), "control");
+    addJavascriptInterface(jsData, "data");
     if (this.mFilename != null) {
       load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
     } else {

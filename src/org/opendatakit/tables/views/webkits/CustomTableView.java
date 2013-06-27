@@ -28,6 +28,7 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
 import android.app.Activity;
+import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.webkit.WebViewClient;
 
@@ -212,9 +213,10 @@ public class CustomTableView extends CustomView {
   public void display() {
     // Load a basic screen as you're getting the other stuff ready to
     // clear the old data.
-    webView.addJavascriptInterface(new TableControlIf(mActivity, table), "control");
+    TableControlIf c = new TableControlIf(mActivity, table);
     TableData d = new TableData(table);
-    webView.addJavascriptInterface(d.getJavascriptInterface(), "data");
+    addJavascriptInterface(c, "control");
+    addJavascriptInterface(d.getJavascriptInterface(), "data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
     } else {

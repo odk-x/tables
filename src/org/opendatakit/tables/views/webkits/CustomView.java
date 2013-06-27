@@ -21,9 +21,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,6 +53,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -67,6 +70,22 @@ public abstract class CustomView extends LinearLayout {
 
   protected static WebView webView;
   private static ViewGroup lastParent;
+
+  private static Set<String> javascriptInterfaces = new HashSet<String>();
+
+  protected static void addJavascriptInterface(Object o, String name) {
+    javascriptInterfaces.add(name);
+    webView.addJavascriptInterface(o, name);
+  }
+
+  private static void clearInterfaces() {
+    for ( String str : javascriptInterfaces ) {
+      if ( Build.VERSION.SDK_INT >= 11 ) {
+        webView.removeJavascriptInterface(str);
+      }
+    }
+  }
+
   private Activity mParentActivity;
 
   private Map<String, TableProperties> tpMap;
@@ -81,6 +100,7 @@ public abstract class CustomView extends LinearLayout {
 
   public static void initCommonWebView(Context context) {
     if (webView != null) {
+      clearInterfaces();
       // do this every time to try and clear the old data.
       // webView.clearView();
       // webView.loadData(CustomViewUtil.LOADING_HTML_MESSAGE,
