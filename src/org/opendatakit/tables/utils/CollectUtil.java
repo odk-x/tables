@@ -40,6 +40,7 @@ import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -118,6 +119,7 @@ public class CollectUtil {
   public static final String COLLECT_KEY_JR_FORM_ID = "jrFormId";
   public static final String COLLECT_KEY_JR_VERSION = "jrVersion";
   public static final String COLLECT_KEY_DISPLAY_NAME = "displayName";
+  public static final String COLLECT_INSTANCE_ORDER_BY = BaseColumns._ID + " asc";
   public static final String COLLECT_INSTANCE_AUTHORITY = "org.odk.collect.android.provider.odk.instances";
   public static final Uri CONTENT_INSTANCE_URI = Uri.parse("content://"
       + COLLECT_INSTANCE_AUTHORITY + "/instances");
@@ -400,6 +402,7 @@ public class CollectUtil {
         String value = (values == null) ? null : values.get(cp.getElementKey());
         writer.write("<");
         writer.write(cp.getElementKey());
+        // TODO: share processing with UserTable.getDisplayTextOfData()
         ColumnType type = cp.getColumnType();
         if ( value != null &&
             (type == ColumnType.IMAGEURI ||
@@ -410,8 +413,13 @@ public class CollectUtil {
             @SuppressWarnings("unchecked")
             Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
             if ( ref != null ) {
-              File f = FileProvider.getAsFile(context, ref.get("uri"));
-              value = f.getName();
+              try {
+                File f = FileProvider.getAsFile(context, ref.get("uri"));
+                value = f.getName();
+              } catch (IllegalArgumentException e) {
+                // file is not present...
+                value = null;
+              }
             } else {
               value = null;
             }
@@ -492,6 +500,26 @@ public class CollectUtil {
     }
   }
 
+  private static boolean isExistingCollectInstanceForRowData(TableProperties tp,
+      String rowId, ContentResolver resolver) {
+
+    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+    try {
+        Cursor c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+          new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
+        if ( c.getCount() == 0 ) {
+          c.close();
+          return false;
+        }
+        c.close();
+        return true;
+    } catch (Exception e) {
+      Log.w(TAG, "caught an exception while deleting an instance, ignoring and proceeding");
+      return true; // since we don't really know what is going on...
+    }
+  }
+
+
   /**
    * Insert the values existing in the file specified by
    * {@link DATA_FILE_PATH_AND_NAME} into the form specified by params.
@@ -523,20 +551,8 @@ public class CollectUtil {
    * browse/src/org/odk/collect/android/tasks/SaveToDiskTask.java?repo=collect
    * in the method updateInstanceDatabase().
    */
-  private static void removeCollectInstanceForRowData(TableProperties tp,
-      String rowId, ContentResolver resolver) {
-
-    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
-    try {
-        resolver.delete(CONTENT_INSTANCE_URI, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
-            new String[] { instanceFilePath });
-    } catch (Exception e) {
-      Log.d(TAG, "caught an exception while deleting an instance, ignoring and proceeding");
-    }
-  }
-
   private static Uri getUriForCollectInstanceForRowData(TableProperties tp, CollectFormParameters params,
-        String rowId, String instanceName, ContentResolver resolver) {
+        String rowId, String instanceName, boolean shouldUpdate, ContentResolver resolver) {
 
     String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
 
@@ -551,8 +567,35 @@ public class CollectUtil {
     if (params.getFormVersion() != null) {
       values.put(COLLECT_KEY_JR_VERSION, params.getFormVersion());
     }
-    // now we want to get the uri for the insertion.
-    Uri uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values);
+
+    Uri uriOfForm;
+    if ( shouldUpdate ) {
+      int count = resolver.update(CONTENT_INSTANCE_URI, values, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+          new String[] { instanceFilePath });
+      if ( count == 0) {
+        uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values);
+      } else {
+        Cursor c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+            new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
+
+        if ( c.moveToFirst() ) {
+          // we got a result, meaning that the form exists in collect.
+          // so we just need to set the URI.
+          int collectInstanceKey; // this is the primary key of the form in
+          // Collect's
+          // database.
+          collectInstanceKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+          uriOfForm = (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
+          c.close();
+        } else {
+          c.close();
+          throw new IllegalStateException("it was updated we should have found the record!");
+        }
+      }
+    } else {
+      // now we want to get the uri for the insertion.
+        uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values);
+    }
     return uriOfForm;
   }
 
@@ -789,14 +832,14 @@ public class CollectUtil {
         return null;
       }
     }
-    CollectUtil.removeCollectInstanceForRowData( tp, rowId, context.getContentResolver());
+    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData( tp, rowId, context.getContentResolver());
 
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
         rowId, instanceName);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
-    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName,
+    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName, shouldUpdate,
         context.getContentResolver());
 
     // Copied the below from getIntentForOdkCollectEditRow().
@@ -911,9 +954,9 @@ public class CollectUtil {
     String selection = "_id = ?";
     String[] selectionArgs = { instanceId + "" };
     CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
-        projection, selection, selectionArgs, null);
+        projection, selection, selectionArgs, COLLECT_INSTANCE_ORDER_BY);
     Cursor c = cursorLoader.loadInBackground();
-    if (c.getCount() != 1) {
+    if (c.getCount() == 0) {
       return false;
     }
     c.moveToFirst();
@@ -1132,7 +1175,7 @@ public class CollectUtil {
     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     String instanceName = f.format(new Date());
 
-    CollectUtil.removeCollectInstanceForRowData( tp, rowId, context.getContentResolver());
+    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData( tp, rowId, context.getContentResolver());
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
@@ -1143,7 +1186,7 @@ public class CollectUtil {
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName,
+    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName, shouldUpdate,
         context.getContentResolver());
 
     // And now finally create the intent.

@@ -278,4 +278,5 @@
 	<string name="color_rule_revert_to_default_status_rules">Revert to default status rules</string>
 	<string name="color_rule_confirm_revert_status_column">Confirm Revert To Defaults</string>
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
+	<string name="missing_file">&lt;missing file!&gt;</string>
 </resources>

@@ -815,7 +815,7 @@ class TabularView extends View {
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
           datum =
-              this.mTable.getDisplayTextOfData(this.getContext(), i, userDataIndex[j]);
+              this.mTable.getDisplayTextOfData(this.getContext(), i, userDataIndex[j], true);
         } else {
           Log.e(TAG, "unrecognized table type: " + this.type.name());
           datum = null;
