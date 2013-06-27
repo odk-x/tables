@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -45,6 +46,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -435,7 +437,7 @@ public class CsvUtil {
     this.it = it;
 
     if (filename != null) {
-      
+
       String baseName = null; // the filename without the .csv
       // split on ".csv" to get the filename without extension
       if (filename.endsWith(CSV_FILE_EXTENSION)) {
@@ -564,20 +566,41 @@ public class CsvUtil {
       idxMetadata.add(idxInstanceName);
       idxMetadata.add(idxFormId);
       idxMetadata.add(idxLocale);
+      ColumnProperties[] cps = new ColumnProperties[columns.size()];
+      for (int i = 0 ; i < columns.size() ; ++i) {
+        if (!idxMetadata.contains(i)) {
+          cps[i] = tableProperties.getColumnByElementKey(columns.get(i));
+        } else {
+          cps[i] = null;
+        }
+      }
+
       String[] row = reader.readNext();
       int rowCount = 0;
       while (row != null) {
+        String rowId = idxRowId == -1 ? null : row[idxRowId];
+        if ( rowId == null ) {
+          rowId = UUID.randomUUID().toString();
+        }
         Map<String, String> values = new HashMap<String, String>();
         for (int i = 0; i < columns.size(); i++) {
-          if (!idxMetadata.contains(i)) {
-            values.put(columns.get(i), row[i]);
+          if (cps[i] != null) {
+            String value = du.validifyValue(cps[i], row[i]);
+            values.put(columns.get(i), value);
+            ColumnType type = cps[i].getColumnType();
+            if ( type == ColumnType.IMAGEURI ||
+                 type == ColumnType.AUDIOURI ||
+                 type == ColumnType.VIDEOURI ||
+                 type == ColumnType.MIMEURI ) {
+              value = du.serializeAsMimeUri(c, tableProperties,
+                  rowId, type.baseContentType(), value);
+            }
           }
         }
         String lastModTime = idxTimestamp == -1 ? du.formatNowForDb() : row[idxTimestamp];
         DateTime t = du.parseDateTimeFromDb(lastModTime);
         String uriUser = idxUriUser == -1 ? null : row[idxUriUser];
         String instanceName = idxInstanceName == -1 ? null : row[idxInstanceName];
-        String rowId = idxRowId == -1 ? null : row[idxRowId];
         String formId = idxFormId == -1 ? null : row[idxFormId];
         String locale = idxLocale == -1 ? null : row[idxLocale];
         dbt.addRow(values, rowId, t.getMillis(), uriUser, instanceName, formId, locale);

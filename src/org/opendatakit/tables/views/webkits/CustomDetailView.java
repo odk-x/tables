@@ -24,7 +24,6 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 
 import android.app.Activity;
-import android.os.Build;
 
 /**
  * A view for displaying a customizable detail view of a row of data.

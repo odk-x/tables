@@ -16,6 +16,7 @@
 package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +28,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -67,9 +72,15 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public abstract class CustomView extends LinearLayout {
+  
+  private static final String TAG = CustomView.class.getSimpleName();
 
   protected static WebView webView;
   private static ViewGroup lastParent;
+  
+  private static ObjectMapper MAPPER = new ObjectMapper();
+  private static TypeReference<HashMap<String, String>> MAP_REF = 
+      new TypeReference<HashMap<String, String>>() {};
 
   private static Set<String> javascriptInterfaces = new HashSet<String>();
 
@@ -208,10 +219,13 @@ public abstract class CustomView extends LinearLayout {
    *
    * @param tableName
    * @param tp
+   * @param prepopulateValues a map of elementKey to value for the rows with 
+   * which you want to prepopulate the add row.
    */
-  private void addRowWithCollect(String tableName, TableProperties tp) {
+  private void addRowWithCollect(String tableName, TableProperties tp, 
+      Map<String, String> prepopulateValues) {
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(tp);
-    prepopulateRowAndLaunchCollect(formParameters, tp);
+    prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
   }
 
   /**
@@ -222,9 +236,17 @@ public abstract class CustomView extends LinearLayout {
    * It allows you to specify a form other than that which may be the default
    * for the table. It differs in {@link #addRow(String)} in that it lets you
    * add the row using an arbitrary form.
+   * @param tableName
+   * @param formId
+   * @param formVersion
+   * @param formRootElement
+   * @param tp
+   * @param prepopulateValues a map of elementKey to value for the rows with 
+   * which you want to prepopulate the add row.
    */
   private void addRowWithCollectAndSpecificForm(String tableName, String formId,
-      String formVersion, String formRootElement, TableProperties tp) {
+      String formVersion, String formRootElement, TableProperties tp,
+      Map<String, String> prepopulateValues) {
     // TODO: should these add methods be moved to the TableData and RowData
     // objects?
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(tp);
@@ -237,23 +259,60 @@ public abstract class CustomView extends LinearLayout {
     if (formRootElement != null && !formRootElement.equals("")) {
       formParameters.setRootElement(formRootElement);
     }
-    prepopulateRowAndLaunchCollect(formParameters, tp);
+    prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
   }
 
   /**
    * This is called by the internal data classes. It prepopulates the form as it
-   * needs based on the query and launches the form.
+   * needs based on the query (or the elKeyToValueToPrepopulate parameter) and 
+   * launches the form.
    *
    * @param params
    * @param tp
+   * @param elKeyToValueToPrepopulate a map of element key to value that will 
+   * prepopulate the Collect form for the new add row. Must be a map of column
+   * element key to value. If this parameter is null, it prepopulates based on
+   * the searchString, if there is one. If this value is not null, it ignores
+   * the queryString and uses only the map.
    */
-  private void prepopulateRowAndLaunchCollect(CollectFormParameters params, TableProperties tp) {
-    String currentQueryString = mCallbacks.getSearchString();
-
-    Intent addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
-        CustomView.this.getContainerActivity(), tp, params, currentQueryString);
-
-    CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent, tp);
+  private void prepopulateRowAndLaunchCollect(CollectFormParameters params, 
+      TableProperties tp, Map<String, String> elKeyToValueToPrepopulate) {
+    Intent addRowIntent;
+    if (elKeyToValueToPrepopulate == null) {
+      // The prepopulated values we need to get from the query string.
+      String currentQueryString = mCallbacks.getSearchString();
+  
+      addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
+        CustomView.this.getContainerActivity(), tp, params, 
+        currentQueryString);
+    } else {
+      // We've received a map to prepopulate with. 
+      addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
+          CustomView.this.getContainerActivity(), tp, params, 
+          elKeyToValueToPrepopulate);
+    }
+    // Now just launch the intent  to add the row.
+    CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent, 
+        tp);
+  }
+  
+  /**
+   * Retrieve a map from a simple json map that has been stringified.
+   * @param jsonMap
+   * @return null if the mapping fails, else the map
+   */
+  private Map<String, String> getMapFromJson(String jsonMap) {
+    Map<String, String> map = null;
+    try {
+      map = MAPPER.readValue(jsonMap, MAP_REF);
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return map;
   }
 
   /**
@@ -326,8 +385,10 @@ public abstract class CustomView extends LinearLayout {
             + " because it could not be found");
         return;
       }
-      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
     }
+    
+
 
     /**
      * Add a row using Collect. This is the hook into the javascript. The
@@ -348,7 +409,47 @@ public abstract class CustomView extends LinearLayout {
         return;
       }
       CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion,
-          formRootElement, tpToReceiveAdd);
+          formRootElement, tpToReceiveAdd, null);
+    }
+    
+    public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+        String tableName, String formId, String formVersion, 
+        String formRootElement, String jsonMap) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+          formVersion, formRootElement, tpToReceiveAdd, map);
+    }
+    
+    
+    
+    public void addRowWithCollectAndPrepopulatedValues(String tableName,
+        String jsonMap) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
     }
 
     /**
@@ -419,18 +520,33 @@ public abstract class CustomView extends LinearLayout {
         TableData.this.editRowWithCollect(rowNumber);
       }
 
-      public void editRowWithCollectAndSpecificForm(int rowNumber, String formId, String formVersion,
-          String formRootElement) {
-        TableData.this.editRowWithCollectAndSpecificForm(rowNumber, formId, formVersion, formRootElement);
+      public void editRowWithCollectAndSpecificForm(int rowNumber, 
+          String formId, String formVersion, String formRootElement) {
+        TableData.this.editRowWithCollectAndSpecificForm(rowNumber, formId, 
+            formVersion, formRootElement);
       }
 
       public void addRowWithCollect(String tableName) {
         TableData.this.addRowWithCollect(tableName);
       }
 
-      public void addRowWithCollectAndSpecificForm(String tableName, String formId,
-          String formVersion, String formRootElement) {
-        TableData.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion, formRootElement);
+      public void addRowWithCollectAndSpecificForm(String tableName, 
+          String formId, String formVersion, String formRootElement) {
+        TableData.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+            formVersion, formRootElement);
+      }
+      
+      public void addRowWithCollectAndPrepopulatedValues(String tableName,
+          String jsonMap) {
+        TableData.this.addRowWithCollectAndPrepopulatedValues(tableName, 
+            jsonMap);
+      }
+      
+      public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+          String tableName, String formId, String formVersion, 
+          String formRootElement, String jsonMap) {
+        TableData.this.addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+            tableName, formId, formVersion, formRootElement, jsonMap);
       }
 
     }
@@ -713,7 +829,7 @@ public abstract class CustomView extends LinearLayout {
             + " because it could not be found");
         return;
       }
-      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd);
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
     }
 
     /**
@@ -729,14 +845,56 @@ public abstract class CustomView extends LinearLayout {
         String formVersion, String formRootElement) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+          formVersion, formRootElement, tpToReceiveAdd, null);
+    }
+    
+    private void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+        String tableName, String formId, String formVersion, 
+        String formRootElement, String jsonMap) {
+      TableProperties tp = mTable.getTableProperties();
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+          formVersion, formRootElement, tpToReceiveAdd, map);
+    }
+    
+    
+    
+    private void addRowWithCollectAndPrepopulatedValues(String tableName,
+        String jsonMap) {
+      TableProperties tp = mTable.getTableProperties();
+      // The first thing we need to do is get the correct TableProperties.
       TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
       if (tpToReceiveAdd == null) {
         Log.e(TAG, "table [" + tableName + "] cannot have a row added"
             + " because it could not be found");
         return;
       }
-      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion,
-          formRootElement, tpToReceiveAdd);
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
     }
 
     /**

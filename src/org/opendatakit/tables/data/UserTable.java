@@ -209,6 +209,10 @@ public class UserTable {
     return getMetadataByElementKey(rowNum, DataTableColumns.INSTANCE_NAME);
   }
 
+  public Long getTimestamp(int rowNum) {
+    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.TIMESTAMP));
+  }
+
   public Row getRowAtIndex(int index) {
     return this.mRows.get(index);
   }
@@ -243,6 +247,9 @@ public class UserTable {
 
   public String getDisplayTextOfData(Context context, int rowNum, int colNum) {
     String raw = getData(rowNum,colNum);
+    if ( raw == null ) {
+      return null;
+    }
     ColumnProperties cp = mColumnProperties.get(colNum);
     ColumnType type = cp.getColumnType();
     if ( type == ColumnType.AUDIOURI ||
@@ -250,6 +257,9 @@ public class UserTable {
          type == ColumnType.MIMEURI ||
          type == ColumnType.VIDEOURI ) {
       try {
+        if (raw.length() == 0 ) {
+          return raw;
+        }
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
         String uri = (String) m.get("uri");
