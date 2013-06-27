@@ -21,13 +21,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -80,10 +87,24 @@ public class UserTable {
   private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
   private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
 
+  private DateTimeZone tz;
+  private DateTimeFormatter dateFormatter;
+  private DateTimeFormatter dateTimeFormatter;
+  private DateTimeFormatter timeFormatter;
+
+  private void buildFormatters() {
+    Locale l = Locale.getDefault();
+    tz = DateTimeZone.forTimeZone(TimeZone.getDefault());
+    dateFormatter = DateTimeFormat.forPattern(DateTimeFormat.patternForStyle("M-", l)).withZone(tz);
+    dateTimeFormatter = DateTimeFormat.forPattern(DateTimeFormat.patternForStyle("ML", l)).withZone(tz);
+    timeFormatter = DateTimeFormat.forPattern(DateTimeFormat.patternForStyle("-L", l)).withZone(tz);
+  }
+
   public UserTable(TableProperties tp, String[] rowIds, String[] header,
       String[][] userDefinedData, String[] elementKeyForIndex,
       Map<String, Integer> dataElementKeyToIndex, String[][] odkTablesMetadata,
       Map<String, Integer> metadataElementKeyToIndex, String[] footer) {
+    buildFormatters();
     this.header = header;
     mRows = new ArrayList<Row>(userDefinedData.length);
     for (int i = 0; i < userDefinedData.length; i++) {
@@ -98,6 +119,7 @@ public class UserTable {
   }
 
   public UserTable(Cursor c, TableProperties tableProperties, List<String> userColumnOrder) {
+    buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
     int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
@@ -242,10 +264,11 @@ public class UserTable {
   public String getDisplayTextOfData(Context context, int cellNum) {
     int rowNum = cellNum / getWidth();
     int colNum = cellNum % getWidth();
-    return getDisplayTextOfData(context, rowNum, colNum);
+    return getDisplayTextOfData(context, rowNum, colNum, true);
   }
 
-  public String getDisplayTextOfData(Context context, int rowNum, int colNum) {
+  public String getDisplayTextOfData(Context context, int rowNum, int colNum, boolean showErrorText) {
+    // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
     String raw = getData(rowNum,colNum);
     if ( raw == null ) {
       return null;
@@ -263,8 +286,12 @@ public class UserTable {
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
         String uri = (String) m.get("uri");
-        File f = FileProvider.getAsFile(context, uri);
-        return f.getName();
+        try {
+          File f = FileProvider.getAsFile(context, uri);
+          return f.getName();
+        } catch (IllegalArgumentException e) {
+          return context.getString(R.string.missing_file);
+        }
       } catch (JsonParseException e) {
         e.printStackTrace();
       } catch (JsonMappingException e) {
@@ -273,6 +300,18 @@ public class UserTable {
         e.printStackTrace();
       }
       return raw;
+    } else if ( type == ColumnType.DATE ) {
+      DataUtil du = DataUtil.getDefaultDataUtil();
+      DateTime d = du.parseDateTimeFromDb(raw);
+      return dateFormatter.print(d);
+    } else if ( type == ColumnType.DATETIME ) {
+      DataUtil du = DataUtil.getDefaultDataUtil();
+      DateTime d = du.parseDateTimeFromDb(raw);
+      return dateTimeFormatter.print(d);
+    } else if ( type == ColumnType.TIME ) {
+      DataUtil du = DataUtil.getDefaultDataUtil();
+      DateTime d = du.parseDateTimeFromDb(raw);
+      return timeFormatter.print(d);
     } else {
       return raw;
     }
