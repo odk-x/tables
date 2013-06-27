@@ -84,6 +84,11 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   protected void onResume() {
     super.onResume();
     Log.d(TAG, "in onResume()");
+    // Now we'll also try to import any tables based on the configuration
+    // properties file.
+    if (ConfigurationUtil.isChanged(this.mPrefs)) {
+      new InitializeTask(this, this).execute();
+    }
     init();
   }
 
@@ -96,11 +101,6 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     mView = new CustomAppView(this, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
-    // Now we'll also try to import any tables based on the configuration
-    // properties file.
-    if (ConfigurationUtil.isChanged(this.mPrefs)) {
-      new InitializeTask(this, this).execute();
-   }
   }
 
   @Override
