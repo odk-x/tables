@@ -16,6 +16,9 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.tasks.InitializeTask;
+import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
@@ -36,7 +39,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 public class CustomHomeScreenActivity extends SherlockActivity implements
-    DisplayActivity, CustomViewCallbacks {
+    DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
 
@@ -52,12 +55,17 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   private CustomAppView mView;
   private LinearLayout mContainerView;
   private String mFilename;
+  /**
+   * The Preferences for dealing with importing based on a config file.
+   */
+  private Preferences mPrefs;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "in onCreate()");
     setTitle("");
+    this.mPrefs = new Preferences(this);
     mContainerView = new LinearLayout(this);
     mContainerView.setLayoutParams(new ViewGroup.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -70,7 +78,6 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     } else {
       mFilename = CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME;
     }
-    //mController = new Controller(this, this, extras);
   }
 
   @Override
@@ -89,8 +96,11 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     mView = new CustomAppView(this, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
-    //mController.setDisplayView(mView);
-    //setContentView(mController.getContainerView());
+    // Now we'll also try to import any tables based on the configuration
+    // properties file.
+    if (ConfigurationUtil.isChanged(this.mPrefs)) {
+      new InitializeTask(this, this).execute();
+   }
   }
 
   @Override
@@ -133,6 +143,27 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     // "search" makes no sense on the homescreen, so just return an empty
     // string.
     return "";
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.tasks.InitializeTask.Callbacks#getPrefs()
+   */
+  @Override
+  public Preferences getPrefs() {
+    return this.mPrefs;
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.tasks.InitializeTask.Callbacks#updateAfterImports()
+   */
+  @Override
+  public void onImportsComplete() {
+    // Here we essentially just need to reload the display for the user. This
+    // is important as the javascript might be doing something like displaying
+    // the current tables.
+    init();
   }
 
 }
