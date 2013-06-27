@@ -31,7 +31,6 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
-import android.os.Build;
 import android.util.Log;
 
 public class CustomGraphView extends CustomView {

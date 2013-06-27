@@ -28,7 +28,6 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
 import android.app.Activity;
-import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.webkit.WebViewClient;
 

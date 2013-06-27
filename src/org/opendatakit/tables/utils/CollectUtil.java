@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
@@ -77,6 +75,8 @@ import com.actionbarsherlock.app.SherlockActivity;
  * @author:sudar.sam@gmail.com --and somebody else, unknown
  */
 public class CollectUtil {
+
+  private static final String COLLECT_KEY_LAST_STATUS_CHANGE_DATE = "date";
 
   private static final String UTF_8 = "UTF-8";
 
@@ -400,19 +400,34 @@ public class CollectUtil {
         String value = (values == null) ? null : values.get(cp.getElementKey());
         writer.write("<");
         writer.write(cp.getElementKey());
+        ColumnType type = cp.getColumnType();
+        if ( value != null &&
+            (type == ColumnType.IMAGEURI ||
+             type == ColumnType.AUDIOURI ||
+             type == ColumnType.VIDEOURI ||
+             type == ColumnType.MIMEURI )) {
+          if ( value.trim().length() != 0 ) {
+            @SuppressWarnings("unchecked")
+            Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
+            if ( ref != null ) {
+              File f = FileProvider.getAsFile(context, ref.get("uri"));
+              value = f.getName();
+            } else {
+              value = null;
+            }
+          } else {
+            value = null;
+          }
+        }
         if (value == null) {
           writer.write("/>");
         } else {
           writer.write(">");
-          ColumnType type = cp.getColumnType();
           if ( type == ColumnType.IMAGEURI ||
                type == ColumnType.AUDIOURI ||
                type == ColumnType.VIDEOURI ||
                type == ColumnType.MIMEURI ) {
-            @SuppressWarnings("unchecked")
-            Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
-            File f = FileProvider.getAsFile(context, ref.get("uri"));
-            writer.write(StringEscapeUtils.escapeXml(f.getName()));
+            writer.write(StringEscapeUtils.escapeXml(value));
           } else if ( type == ColumnType.GEOPOINT ) {
             // If value is an empty string we don't want to call split, as
             // we'll end up with a one length array of the empty string.
@@ -508,14 +523,29 @@ public class CollectUtil {
    * browse/src/org/odk/collect/android/tasks/SaveToDiskTask.java?repo=collect
    * in the method updateInstanceDatabase().
    */
-  private static Uri getUriForInsertedData(TableProperties tp, CollectFormParameters params,
-      String rowId, String instanceName, ContentResolver resolver) {
+  private static void removeCollectInstanceForRowData(TableProperties tp,
+      String rowId, ContentResolver resolver) {
+
+    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+    try {
+        resolver.delete(CONTENT_INSTANCE_URI, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+            new String[] { instanceFilePath });
+    } catch (Exception e) {
+      Log.d(TAG, "caught an exception while deleting an instance, ignoring and proceeding");
+    }
+  }
+
+  private static Uri getUriForCollectInstanceForRowData(TableProperties tp, CollectFormParameters params,
+        String rowId, String instanceName, ContentResolver resolver) {
+
+    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+
     ContentValues values = new ContentValues();
     // First we need to fill the values with various little things.
     values.put(COLLECT_KEY_DISPLAY_NAME, instanceName);
     values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_INCOMPLETE);
     values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
-    values.put(COLLECT_KEY_INSTANCE_FILE_PATH, getEditRowFormFile(tp, rowId).getAbsolutePath());
+    values.put(COLLECT_KEY_INSTANCE_FILE_PATH, instanceFilePath);
     values.put(COLLECT_KEY_JR_FORM_ID, params.getFormId());
     // only add the version if it exists (ie not null)
     if (params.getFormVersion() != null) {
@@ -541,7 +571,7 @@ public class CollectUtil {
       return resolver.delete(CONTENT_FORM_URI, COLLECT_KEY_JR_FORM_ID + "=?",
           new String[] { formId });
     } catch (Exception e) {
-      Log.d(TAG, "caught an exception while deleting a form, returning" + " 0 and proceeding");
+      Log.d(TAG, "caught an exception while deleting a form, returning 0 and proceeding");
       return 0;
     }
   }
@@ -759,13 +789,14 @@ public class CollectUtil {
         return null;
       }
     }
+    CollectUtil.removeCollectInstanceForRowData( tp, rowId, context.getContentResolver());
 
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
         rowId, instanceName);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
-    Uri insertUri = CollectUtil.getUriForInsertedData(tp, params, rowId, instanceName,
+    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName,
         context.getContentResolver());
 
     // Copied the below from getIntentForOdkCollectEditRow().
@@ -833,40 +864,6 @@ public class CollectUtil {
     activityToAwaitReturn.startActivityForResult(collectAddIntent,
         Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE);
   }
-
-  /**
-   * Helper function to construct the value string for mimeUri types.
-   *
-   * @param context
-   * @param tp
-   * @param formValues
-   * @param mimeTypeBase
-   * @param filename
-   * @return
-   */
-  private static String serializeAsMimeUri(Context context, TableProperties tp,
-      FormValues formValues, String mimeTypeBase, String filename) {
-    String mimeType = mimeTypeBase + "/" + filename.substring(filename.lastIndexOf(".")+1);
-    File filePath = new File(
-        ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
-            tp.getTableId(), formValues.instanceID), filename);
-    HashMap<String,String> mimeuri = new HashMap<String,String>();
-    mimeuri.put("uri", FileProvider.getAsUrl(context, filePath));
-    mimeuri.put("contentType", mimeType);
-    try {
-      String serializedValue = ODKFileUtils.mapper.writeValueAsString(mimeuri);
-      return serializedValue;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalStateException("Unable to serialize mimeUri", e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalStateException("Unable to serialize mimeUri", e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalStateException("Unable to serialize mimeUri", e);
-    }
-  }
   /**
    * This gets a map of values for insertion into a row after returning from a
    * Collect form. It handles validating the values and removes nulls from the
@@ -884,17 +881,17 @@ public class CollectUtil {
       String value = formValues.formValues.get(elementKey);
       value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.
+      ColumnType type = cp.getColumnType();
+      if (type == ColumnType.AUDIOURI) {
+        value = du.serializeAsMimeUri(context, tp, formValues.instanceID, type.baseContentType(), value);
+      } else if (type == ColumnType.IMAGEURI) {
+        value = du.serializeAsMimeUri(context, tp, formValues.instanceID, type.baseContentType(), value);
+      } else if (type == ColumnType.MIMEURI) {
+        value = du.serializeAsMimeUri(context, tp, formValues.instanceID, type.baseContentType(), value);
+      } else if (type == ColumnType.VIDEOURI) {
+        value = du.serializeAsMimeUri(context, tp, formValues.instanceID, type.baseContentType(), value);
+      }
       if (value != null) {
-        ColumnType type = cp.getColumnType();
-        if (type == ColumnType.AUDIOURI) {
-          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
-        } else if (type == ColumnType.IMAGEURI) {
-          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
-        } else if (type == ColumnType.MIMEURI) {
-          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
-        } else if (type == ColumnType.VIDEOURI) {
-          value = serializeAsMimeUri(context, tp, formValues, type.baseContentType(), value);
-        }
         values.put(elementKey, value);
       }
     }
@@ -951,7 +948,7 @@ public class CollectUtil {
    */
   public static FormValues getOdkCollectFormValuesFromInstanceId(Context context,
       int instanceId) {
-    String[] projection = { "date", "displayName", "instanceFilePath" };
+    String[] projection = { COLLECT_KEY_LAST_STATUS_CHANGE_DATE, "displayName", "instanceFilePath" };
     String selection = "_id = ?";
     String[] selectionArgs = { (instanceId + "") };
     CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
@@ -962,7 +959,7 @@ public class CollectUtil {
     }
     c.moveToFirst();
     FormValues fv = new FormValues();
-    fv.timestamp = c.getLong(c.getColumnIndexOrThrow("date"));
+    fv.timestamp = c.getLong(c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
     fv.instanceName = c.getString(c.getColumnIndexOrThrow("displayName"));
     String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
     File instanceFile = new File(instancepath);
@@ -1135,6 +1132,8 @@ public class CollectUtil {
     SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     String instanceName = f.format(new Date());
 
+    CollectUtil.removeCollectInstanceForRowData( tp, rowId, context.getContentResolver());
+
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
@@ -1144,7 +1143,7 @@ public class CollectUtil {
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForInsertedData(tp, params, rowId, instanceName,
+    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName,
         context.getContentResolver());
 
     // And now finally create the intent.
