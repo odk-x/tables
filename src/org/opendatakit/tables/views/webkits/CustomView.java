@@ -997,6 +997,29 @@ public abstract class CustomView extends LinearLayout {
       public boolean openDetailViewWithFile(int index, String filename) {
         return Control.this.openDetailViewWithFile(index, filename);
       }
+      
+      public void addRowWithCollect(String tableName) {
+        Control.this.addRowWithCollect(tableName);
+      }
+
+      public void addRowWithCollectAndSpecificForm(String tableName, 
+          String formId, String formVersion, String formRootElement) {
+        Control.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+            formVersion, formRootElement);
+      }
+      
+      public void addRowWithCollectAndPrepopulatedValues(String tableName,
+          String jsonMap) {
+        Control.this.addRowWithCollectAndPrepopulatedValues(tableName, 
+            jsonMap);
+      }
+      
+      public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+          String tableName, String formId, String formVersion, 
+          String formRootElement, String jsonMap) {
+        Control.this.addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+            tableName, formId, formVersion, formRootElement, jsonMap);
+      }
 
     }
 
@@ -1298,6 +1321,91 @@ public abstract class CustomView extends LinearLayout {
       i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
       mActivity.startActivity(i);
     }
+    
+    /**
+     * Add a row using collect and the default form.
+     *
+     * @param tableName
+     */
+    public void addRowWithCollect(String tableName) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tp = mTable.getTableProperties();
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
+    }
+    
+
+
+    /**
+     * Add a row using Collect. This is the hook into the javascript. The
+     * activity holding this view must have implemented the onActivityReturn
+     * method appropriately to handle the result.
+     * <p>
+     * It allows you to specify a form other than that which may be the default
+     * for the table. It differs in {@link #addRow(String)} in that it lets you
+     * add the row using an arbitrary form.
+     */
+    public void addRowWithCollectAndSpecificForm(String tableName, String formId,
+        String formVersion, String formRootElement) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tp = mTable.getTableProperties();
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, formVersion,
+          formRootElement, tpToReceiveAdd, null);
+    }
+    
+    public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+        String tableName, String formId, String formVersion, 
+        String formRootElement, String jsonMap) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tp = mTable.getTableProperties();
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId, 
+          formVersion, formRootElement, tpToReceiveAdd, map);
+    }
+    
+    
+    
+    public void addRowWithCollectAndPrepopulatedValues(String tableName,
+        String jsonMap) {
+      // The first thing we need to do is get the correct TableProperties.
+      TableProperties tp = mTable.getTableProperties();
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+          tableName);
+      if (tpToReceiveAdd == null) {
+        Log.e(TAG, "table [" + tableName + "] cannot have a row added"
+            + " because it could not be found");
+        return;
+      }
+      Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
+      if (map == null) {
+        Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
+        return;
+      }
+      CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
+    }
+
 
     /**
      * Create an alert that will allow for a new table name. This might be to
