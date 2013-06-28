@@ -1330,7 +1330,7 @@ public abstract class CustomView extends LinearLayout {
     public void addRowWithCollect(String tableName) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(null, tableName);
       if (tpToReceiveAdd == null) {
         Log.e(TAG, "table [" + tableName + "] cannot have a row added"
             + " because it could not be found");
@@ -1353,8 +1353,7 @@ public abstract class CustomView extends LinearLayout {
     public void addRowWithCollectAndSpecificForm(String tableName, String formId,
         String formVersion, String formRootElement) {
       // The first thing we need to do is get the correct TableProperties.
-      TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, tableName);
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(null, tableName);
       if (tpToReceiveAdd == null) {
         Log.e(TAG, "table [" + tableName + "] cannot have a row added"
             + " because it could not be found");
@@ -1368,8 +1367,7 @@ public abstract class CustomView extends LinearLayout {
         String tableName, String formId, String formVersion, 
         String formRootElement, String jsonMap) {
       // The first thing we need to do is get the correct TableProperties.
-      TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(null, 
           tableName);
       if (tpToReceiveAdd == null) {
         Log.e(TAG, "table [" + tableName + "] cannot have a row added"
@@ -1391,7 +1389,7 @@ public abstract class CustomView extends LinearLayout {
         String jsonMap) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tp = mTable.getTableProperties();
-      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(tp, 
+      TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(null, 
           tableName);
       if (tpToReceiveAdd == null) {
         Log.e(TAG, "table [" + tableName + "] cannot have a row added"
