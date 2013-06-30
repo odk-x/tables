@@ -16,8 +16,12 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.InitializeTask;
+import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
@@ -122,6 +126,40 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
      item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
      return true;
+  }
+  
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode,
+        Intent data) {
+    switch (requestCode) {
+    // We are going to handle the add row the same for both cases--an add row
+    // for the original table as well as an add row for another table. This is
+    // because the List and Detail activities maintain a TableProperties object
+    // for the table they were displaying. So when you return, if you were 
+    // adding to the same table that you were displaying you already have the 
+    // TableProperties object. In the case of this Activity, however, we never
+    // have a TableProperties (since we aren't really displaying a specific
+    // table), so you have to handle the return the same in both cases--first
+    // retrieve the tableId for the table that launched Collect, then get the
+    // TableProperties for that table, then add the row.
+    case Controller.RCODE_ODKCOLLECT_ADD_ROW:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+      String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(this);
+      if (tableId == null) {
+        Log.e(TAG, "return from ODK Collect expected to find a tableId " +
+            "specifying the target of the add row, but was null.");
+        return;
+      }
+      TableProperties tpToReceiveAdd =
+          TableProperties.getTablePropertiesForTable(
+              DbHelper.getDbHelper(this), tableId,
+              KeyValueStore.Type.ACTIVE);
+      CollectUtil.handleOdkCollectAddReturn(this, tpToReceiveAdd,
+          resultCode, data);
+      break;
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
+    }
   }
 
   @Override
