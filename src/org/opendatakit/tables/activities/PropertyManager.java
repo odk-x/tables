@@ -159,10 +159,6 @@ public class PropertyManager extends PreferenceActivity {
           Object newValue) {
         int width = (Integer) newValue;
         aspectHelper.setInteger(SpreadsheetView.KEY_COLUMN_WIDTH, width);
-//        int[] widths = tp.getOverviewViewSettings().getTableColWidths();
-//        widths[colIndex] = width;
-//        tp.getOverviewViewSettings().setTableColWidths(widths);
-//        tp.getCollectionViewSettings().setTableColWidths(widths);
         return true;
       }
     });
@@ -182,7 +178,6 @@ public class PropertyManager extends PreferenceActivity {
         cp.setJoins(joins);
       }
       String joinTableId = cp.getJoins().getTableId();
-//      String joins = cp.getJoins();
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
@@ -198,7 +193,6 @@ public class PropertyManager extends PreferenceActivity {
         tableIds[index] = tp.getTableId();
         tableNames[index] = tp.getDbTableName();
         if (tp.getTableId().equals(joinTableId)) {
-//        if (tp.getTableId().equals(joins)) {
           selectedTp = tp;
           selectedTableId = tp.getTableId();
           selectedDisplayName = tp.getDisplayName();
@@ -209,7 +203,6 @@ public class PropertyManager extends PreferenceActivity {
           selectedTableId, tableNames, tableIds));
       if (selectedTp != null) {
         // TODO: resolve how joins work
-//        String joinColName = cp.getJoinColumnName();
         String joinColName = cp.getJoins().getElementKey();
         int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
         String[] colDbNames = new String[numberOfDisplayColumns + 1];
@@ -223,7 +216,6 @@ public class PropertyManager extends PreferenceActivity {
           colDbNames[i + 1] = elementKey;
           colDisplayNames[i + 1] = colDisplayName;
           if ((joinColName != null) && elementKey.equals(joinColName)) {
-//          if ((joins != null) && colDbName.equals(joins)) {
             selectedDbName = elementKey;
             selectedColDisplayName = colDisplayName;
           }
@@ -297,13 +289,10 @@ public class PropertyManager extends PreferenceActivity {
       }
     } else if (key.equals("JOIN_TABLE")) {
       // TODO: resolve the ifs here for joins
-//      cp.setJoinTableId(newVal);
-//      cp.setJoins(newVal);
       JoinColumn oldJoins = cp.getJoins();
       oldJoins.setTableId(newVal);
       cp.setJoins(oldJoins);
     } else if (key.equals("JOIN_COLUMN")) {
-//      cp.setJoinColumnName(newVal);
       JoinColumn oldJoins = cp.getJoins();
       oldJoins.setElementKey(newVal);
       cp.setJoins(oldJoins);

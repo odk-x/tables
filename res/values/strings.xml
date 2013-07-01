@@ -262,6 +262,8 @@
 	<string name="delete_table">Delete this Table</string>
 	<string name="confirm_delete_table">Confirm Delete Table</string>
 	<string name="are_you_sure_delete_table">Please confirm deletion of table: %1$s</string>
+	<string name="confirm_delete_column">Confirm Delete Column</string>
+	<string name="are_you_sure_delete_column">Please confirm deletion of column: %1$s</string>
 	<string name="manage_conflicts">Manage Conflicts</string>
 	<string name="security_manager">Security Manager</string>
 	<string name="add_new_table">Add New Table</string>

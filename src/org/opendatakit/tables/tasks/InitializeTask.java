@@ -9,13 +9,14 @@ import java.util.Properties;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableManager;
+import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 
@@ -34,7 +35,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	private static final String TAG = "InitializeTask";
 
-	private final TableManager tm;
+	private final Callbacks mCallbacks;
+	private final Context mContext;
 	private ProgressDialog dialog;
 	private String filename;
 	private long fileModifiedTime;
@@ -47,15 +49,16 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	public boolean problemImportingKVSEntries = false;
 	private boolean poorlyFormatedConfigFile = false;
 
-	public InitializeTask(TableManager tm) {
-		this.tm = tm;
-		this.dialog = new ProgressDialog(tm);
+	public InitializeTask(Context context, Callbacks callbacks) {
+		this.mCallbacks = callbacks;
+		this.mContext = context;
+		this.dialog = new ProgressDialog(context);
 		this.importStatus = new HashMap<String, Boolean>();
 	}
 
 	@Override
 	protected void onPreExecute() {
-		dialog.setTitle(tm.getString(R.string.configuring_tables));
+		dialog.setTitle(mContext.getString(R.string.configuring_tables));
 		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 		dialog.setCancelable(false);
 		dialog.show();
@@ -63,7 +66,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	@Override
 	protected synchronized Boolean doInBackground(Void... params) {
-		if (ConfigurationUtil.isChanged(tm.getPrefs())) {
+		if (ConfigurationUtil.isChanged(mCallbacks.getPrefs())) {
 			Properties prop = new Properties();
 			try {
 				File config = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
@@ -90,7 +93,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 					String tablename;
 					File file;
 					for (String key : keys) {
-						lineCount = tm.getString(R.string.processing_file);
+						lineCount = mContext.getString(R.string.processing_file);
 						curFileCount++;
 						tablename = prop.getProperty(key + KEY_SUFFIX_TABLENAME);
 						filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
@@ -104,10 +107,10 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 						if (tablename != null) {
 							ImportRequest request = new ImportRequest(true, null, tablename, file);
 
-							CsvUtil cu = new CsvUtil(this.tm);
+							CsvUtil cu = new CsvUtil(this.mContext);
 
-							boolean success = cu.importConfigTables(tm, this, request.getFile(),
-									filename, request.getTableName());
+							boolean success = cu.importConfigTables(mContext, this, 
+							    request.getFile(), filename, request.getTableName());
 							importStatus.put(filename, success);
 							if (success) {
 								publishProgress();
@@ -128,7 +131,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	// refresh TableManager after each successful import
 	protected void onProgressUpdate(Void... progress) {
-		dialog.setMessage(tm.getString(R.string.importing_file,
+		dialog.setMessage(mContext.getString(R.string.importing_file,
 				curFileCount, fileCount, filename, lineCount ));
 	}
 
@@ -142,15 +145,17 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
-		tm.refreshList();
+		mCallbacks.onImportsComplete();
 
 		// dismiss spinning ProgressDialog
 		dialog.dismiss();
 
 		// build AlertDialog displaying the status of the initialization
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(tm);
+		AlertDialog.Builder alertDialogBuilder = 
+		    new AlertDialog.Builder(mContext);
 		alertDialogBuilder.setCancelable(true);
-		alertDialogBuilder.setNeutralButton(tm.getString(R.string.ok), new DialogInterface.OnClickListener() {
+		alertDialogBuilder.setNeutralButton(mContext.getString(R.string.ok), 
+		    new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
@@ -159,18 +164,22 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 		if (!result) {
 			if (poorlyFormatedConfigFile)
-				alertDialogBuilder.setTitle(tm.getString(R.string.bad_config_properties_file));
+				alertDialogBuilder.setTitle(
+				    mContext.getString(R.string.bad_config_properties_file));
 			else
-				alertDialogBuilder.setTitle(tm.getString(R.string.error));
+				alertDialogBuilder.setTitle(
+				    mContext.getString(R.string.error));
 		} else {
 			// update the lastModifiedTime of Tables in Preferences
-			ConfigurationUtil.updateTimeChanged(tm.getPrefs(), fileModifiedTime);
+			ConfigurationUtil.updateTimeChanged(
+			    mCallbacks.getPrefs(), fileModifiedTime);
 
 			// Build summary message
-			alertDialogBuilder.setTitle(tm.getString(R.string.config_summary));
+			alertDialogBuilder.setTitle(
+			    mContext.getString(R.string.config_summary));
 			StringBuffer msg = new StringBuffer();
 			for (String filename : importStatus.keySet()) {
-				msg.append(tm.getString((importStatus.get(filename) ?
+				msg.append(mContext.getString((importStatus.get(filename) ?
 						R.string.imported_successfully : R.string.imported_with_errors), filename));
 			}
 			alertDialogBuilder.setMessage(msg);
@@ -178,5 +187,21 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 		AlertDialog dialog2 = alertDialogBuilder.create();
 		dialog2.show();
+	}
+	
+	public interface Callbacks {
+	  
+	  /**
+	   * Get an {@link Preferences} object for handling information about the 
+	   * time of the last import from a config file, etc. 
+	   * @return
+	   */
+	  public Preferences getPrefs();
+	  
+	  /**
+	   * Update the display to the user after the import is complete.
+	   */
+	  public void onImportsComplete();
+
 	}
 }

@@ -102,16 +102,6 @@ public class ColumnManager extends SherlockListActivity {
 		}
 	}
 
-	/*
-	private void updatePrimeOrderbyInfo() {
-		// Set prime and sort by information
-		//TextView primeTV = (TextView)findViewById(R.id.prime_tv);
-		//primeTV.setText(tp.getPrime());
-		//TextView sortbyTV = (TextView)findViewById(R.id.sortby_tv);
-		//sortbyTV.setText(tp.getSortBy());
-	}
-	 */
-
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
@@ -141,24 +131,6 @@ public class ColumnManager extends SherlockListActivity {
 		}
 		return order;
 	}
-
-	/*
-	// Button that allows user to add a new column.
-	private void createAddNewColumnButton() {
-		// Add column button
-		RelativeLayout addCol = (RelativeLayout)findViewById(R.id.add_column_button);
-		addCol.setClickable(true);
-
-		// Add column button clicked
-		addCol.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				// Ask a new column name
-				alertForNewColumnName();
-			}
-		});
-	}
-	 */
 
 	// Create a Drag & Drop List view.
 	private void createDragAndDropList() {
@@ -237,13 +209,37 @@ public class ColumnManager extends SherlockListActivity {
 			return true;
 		case REMOVE_THIS_COLUMN:
 			// Drop the column from 'data' table
-			tp.deleteColumn(currentCol);
+         AlertDialog confirmDeleteAlert;
+         // Prompt an alert box
+         AlertDialog.Builder alert =
+         new AlertDialog.Builder(ColumnManager.this);
+         alert.setTitle(getString(R.string.confirm_delete_column))
+         .setMessage(getString(R.string.are_you_sure_delete_column, 
+             tp.getColumnByElementKey(currentCol).getDisplayName()));
+         // OK Action => delete the column
+         alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+              tp.deleteColumn(currentCol);
 
-			// Update changes in other tables
-			// To be done
+              // Update changes in other tables
+              // To be done
+              // TODO: the above
 
-			// Resume UI
-			onResume();
+              // Resume UI to refresh the list.
+              onResume();
+            }
+         });
+
+         // Cancel Action
+         alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+               // Canceled.
+            }
+         });
+         // show the dialog
+         confirmDeleteAlert = alert.create();
+         confirmDeleteAlert.show();
+
 			return true;
 		}
 		return false;
