@@ -93,10 +93,9 @@ public abstract class CustomView extends LinearLayout {
 
 	private static void clearInterfaces() {
 		for (String str : javascriptInterfaces) {
+			webView.addJavascriptInterface(null, str);
 			if (Build.VERSION.SDK_INT >= 11) {
 				webView.removeJavascriptInterface(str);
-			} else {
-				webView.addJavascriptInterface(null, str);
 			}
 		}
 	}

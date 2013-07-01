@@ -4,47 +4,57 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.views.webkits.CustomGraphView.GraphData;
 
+import android.webkit.JavascriptInterface;
+
 public class GraphDataIf {
-	  private WeakReference<GraphData> weakGraphData;
+	private WeakReference<GraphData> weakGraphData;
 
-	  GraphDataIf( GraphData graphData ) {
-		  this.weakGraphData = new WeakReference<GraphData>(graphData);
-	  }
+	GraphDataIf(GraphData graphData) {
+		this.weakGraphData = new WeakReference<GraphData>(graphData);
+	}
 
-    public boolean isModified() {
-    	return weakGraphData.get().isModified();
-    }
+	@JavascriptInterface
+	public boolean isModified() {
+		return weakGraphData.get().isModified();
+	}
 
-    public boolean hasGraph(String graph) {
-    	return weakGraphData.get().hasGraph(graph);
-    }
+	@JavascriptInterface
+	public boolean hasGraph(String graph) {
+		return weakGraphData.get().hasGraph(graph);
+	}
 
-    public String getGraphType() {
-    	return weakGraphData.get().getGraphType();
-    }
+	@JavascriptInterface
+	public String getGraphType() {
+		return weakGraphData.get().getGraphType();
+	}
 
-    public String getGraphXAxis() {
-      return weakGraphData.get().getGraphXAxis();
-    }
+	@JavascriptInterface
+	public String getGraphXAxis() {
+		return weakGraphData.get().getGraphXAxis();
+	}
 
-    public String getGraphYAxis() {
-        return weakGraphData.get().getGraphYAxis();
-    }
+	@JavascriptInterface
+	public String getGraphYAxis() {
+		return weakGraphData.get().getGraphYAxis();
+	}
 
-    public String getGraphRAxis() {
-        return weakGraphData.get().getGraphRAxis();
-    }
+	@JavascriptInterface
+	public String getGraphRAxis() {
+		return weakGraphData.get().getGraphRAxis();
+	}
 
-    public String getGraphOp() {
-        return weakGraphData.get().getGraphOp();
-    }
+	@JavascriptInterface
+	public String getGraphOp() {
+		return weakGraphData.get().getGraphOp();
+	}
 
-    public void saveSelection(String aspect, String value) {
-    	weakGraphData.get().saveSelection(aspect, value);
-    }
+	@JavascriptInterface
+	public void saveSelection(String aspect, String value) {
+		weakGraphData.get().saveSelection(aspect, value);
+	}
 
-
-    public void deleteDefaultGraph() {
-    	weakGraphData.get().deleteDefaultGraph();
-    }
-  }
+	@JavascriptInterface
+	public void deleteDefaultGraph() {
+		weakGraphData.get().deleteDefaultGraph();
+	}
+}
