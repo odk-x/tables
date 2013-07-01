@@ -44,6 +44,11 @@ public class CustomGraphView extends CustomView {
   private String filename;
   private String graphName;
   private String potentialGraphName;
+  // IMPORTANT: hold a strong reference to control because Webkit holds a weak reference
+  private Control control;
+  // IMPORTANT: hold a strong reference to tableData because Webkit holds a weak reference
+  private TableData tableData;
+  // IMPORTANT: hold a strong reference to graphData because Webkit holds a weak reference
   private GraphData graphData;
 
   private CustomGraphView(Activity activity, String graphName, String potentialGraphName,
@@ -82,11 +87,11 @@ public class CustomGraphView extends CustomView {
   }
 
   public void display() {
-    Control c = new Control(mActivity, table);
-    TableData d = new TableData(table);
-    addJavascriptInterface(c.getJavascriptInterface(), "control");
-    addJavascriptInterface(d.getJavascriptInterface(), "data");
-    addJavascriptInterface(graphData, "graph_data");
+    control = new Control(mActivity, table);
+    tableData = new TableData(table);
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
+    addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
+    addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(), "graph_data");
     if (filename != null) {
       load(FileProvider.getAsUrl(getContext(), new File(filename)));
     } else {
@@ -117,7 +122,7 @@ public class CustomGraphView extends CustomView {
     private KeyValueStoreHelper kvsh;
     private AspectHelper aspectHelper;
     private String graphString;
-    boolean isModified;
+    private boolean isModified;
     private static final String GRAPH_TYPE = "graphtype";
     private static final String X_AXIS = "selectx";
     private static final String Y_AXIS = "selecty";
@@ -125,6 +130,10 @@ public class CustomGraphView extends CustomView {
     private static final String R_AXIS = "selectr";
 
     private static final String TAG = "GraphData";
+
+    public GraphDataIf getJavascriptInterfaceWithWeakReference() {
+      return new GraphDataIf(this);
+    }
 
     private GraphData(String graphString) {
       isModified = false;

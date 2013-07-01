@@ -52,6 +52,8 @@ public class CustomAppView extends CustomView {
   // The filename of the HTML you'll be displaying. Not the full path, just
   // the relative name.
   private String mFilename;
+  // IMPORTANT: hold a strong reference to control because Webkit holds a weak reference
+  private Control control;
 
   /**
    * Create the view. The filename is the filename of the HTML you want to
@@ -71,8 +73,8 @@ public class CustomAppView extends CustomView {
   }
 
   public void display() {
-    Control c = new Control(mActivity);
-    addJavascriptInterface(c.getJavascriptInterface(), "control");
+    control = new Control(mActivity);
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     // We're going to assume this is only being called if homescreen.html has
     // been found, so we're just going to use that, not do any checking.
     String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);

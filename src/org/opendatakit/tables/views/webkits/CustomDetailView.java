@@ -52,10 +52,14 @@ public class CustomDetailView extends CustomView {
       + "<p>No detail view has been specified.</p>" + "</body></html>";
 
   private Activity mActivity;
-  private RowData jsData;
   private KeyValueStoreHelper detailKVSH;
   /** The filename of the html we are displaying. */
   private String mFilename;
+	// IMPORTANT: hold a strong reference to control because Webkit holds a weak
+	// reference
+  private Control control;
+  // IMPORTANT: hold a strong reference to rowData because Webkit holds a weak reference
+  private RowData rowData;
 
   /**
    * Construct the detail view.
@@ -70,6 +74,7 @@ public class CustomDetailView extends CustomView {
       String filename, CustomViewCallbacks callbacks) {
     super(activity, callbacks);
     this.mActivity = activity;
+    this.control = new Control(mActivity);
     this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
     if (filename == null) {
       String recoveredFilename = this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
@@ -83,7 +88,7 @@ public class CustomDetailView extends CustomView {
       // The caller has specified a filename.
       this.mFilename = filename;
     }
-    jsData = new RowData(tp);
+    rowData = new RowData(tp);
   }
 
   public void display(String rowId, UserTable userTable) {
@@ -93,11 +98,10 @@ public class CustomDetailView extends CustomView {
       tmpData.put(userTable.getElementKey(i), userTable.getData(rowNum, i));
     }
 
-    jsData.set(rowId, userTable.getInstanceName(rowNum),
+    rowData.set(rowId, userTable.getInstanceName(rowNum),
         tmpData);
-    Control c = new Control(mActivity);
-    addJavascriptInterface(c.getJavascriptInterface(), "control");
-    addJavascriptInterface(jsData, "data");
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
+    addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
     if (this.mFilename != null) {
       load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
     } else {
