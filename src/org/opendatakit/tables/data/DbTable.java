@@ -212,17 +212,9 @@ public class DbTable {
 	        UserTable table = buildTable(c, tp, columns);
 	        return table;
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 
@@ -252,12 +244,8 @@ public class DbTable {
         table.setFooter(emptyFooter);
         return table;
       } finally {
-        try {
-          if ( c != null && !c.isClosed() ) {
-            c.close();
-          }
-        } finally {
-          // TODO: fix the db close problem.
+        if ( c != null && !c.isClosed() ) {
+          c.close();
         }
       }
     }
@@ -334,16 +322,9 @@ public class DbTable {
 	        }
 	        return new ConflictTable(header, rowIds, syncTags, values);
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 
@@ -362,16 +343,9 @@ public class DbTable {
           e.printStackTrace();
           return null;
         } finally {
-        	try {
-        		if ( c != null && !c.isClosed() ) {
-        			c.close();
-        		}
-        	} finally {
-           // TODO: fix the when to close problem
-//        		if ( db != null ) {
-//        			db.close();
-//        		}
-        	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
         }
     }
 
@@ -457,16 +431,9 @@ public class DbTable {
 	        	return ""; // TODO: should this return null ???
 	        }
     	} finally {
-			try {
-	    		if ( c != null && !c.isClosed() ) {
-    				c.close();
-	    		}
-			} finally {
-		      // TODO: fix the when to close problem
-//				if ( db != null ) {
-//					db.close();
-//				}
-			}
+    		if ( c != null && !c.isClosed() ) {
+				c.close();
+    		}
     	}
     }
 
@@ -736,16 +703,9 @@ public class DbTable {
 	      }
 	      return syncState;
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	    		if ( db != null ) {
-	    	      // TODO: fix the when to close problem
-//	    			db.close();
-	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 

@@ -209,9 +209,16 @@ public class KeyValueStoreManager {
   public List<String> getAllIdsFromStore(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
     String backingName = getBackingNameForStore(typeOfStore);
-    Cursor c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
-        null, null, null, null, null, null);
-    return getTableIdsFromCursor(c);
+    Cursor c = null;
+    try {
+	    c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
+	        null, null, null, null, null, null);
+	    return getTableIdsFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
 
   /**
@@ -223,9 +230,16 @@ public class KeyValueStoreManager {
   public List<String> getSynchronizedTableIds(SQLiteDatabase db) {
     // We want a query returning the TABLE_UUID where the key is the
     // sync state string and the value is true.
-    Cursor c = getTableIdsWithKeyValue(db, DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME,
-        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
-    return getTableIdsFromCursor(c);
+    Cursor c = null;
+    try {
+	    c = getTableIdsWithKeyValue(db, DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME,
+	        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
+	    return getTableIdsFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
+    }
   }
 
   /**

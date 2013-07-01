@@ -145,11 +145,18 @@ public class KeyValueStore {
    */
   public Map<String, String> getKeyValues(String partition, String aspect,
       SQLiteDatabase db) {
-    Cursor c = db.query(this.dbBackingName,
+    Cursor c = null;
+    try {
+      c = db.query(this.dbBackingName,
         new String[] {KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE},
         WHERE_SQL_FOR_PARTITION_ASPECT,
         new String[] {this.tableId, partition, aspect}, null, null, null);
-    return getKeyValuesFromCursor(c);
+      return getKeyValuesFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
 
   /**
@@ -222,11 +229,18 @@ public class KeyValueStore {
     }
     String whereClause = WHERE_SQL_FOR_PARTITION_ASPECT_KEYS +
         makePlaceHolders(TableProperties.getInitKeys().length) + ")";
-    Cursor c = db.query(this.dbBackingName,
-        new String[] {KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE},
-        whereClause,
-        desiredKeys, null, null, null);
-    return getKeyValuesFromCursor(c);
+    Cursor c = null;
+    try {
+	    c = db.query(this.dbBackingName,
+	        new String[] {KeyValueStoreColumns.KEY, KeyValueStoreColumns.VALUE},
+	        whereClause,
+	        desiredKeys, null, null, null);
+	    return getKeyValuesFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
 
   /*
@@ -342,24 +356,28 @@ public class KeyValueStore {
    * @return
    */
   public List<String> getAllPartitions(SQLiteDatabase db) {
-    Cursor c = db.query(true, this.dbBackingName,
-        new String[] {KeyValueStoreColumns.PARTITION},
-        WHERE_SQL_FOR_TABLE,
-        new String[] {this.tableId}, null, null, null, null);
-    List<String> partitions = new ArrayList<String>();
-    int partitionIndex =
-        c.getColumnIndexOrThrow(KeyValueStoreColumns.PARTITION);
-    int i = 0;
-    c.moveToFirst();
-    while (i < c.getCount()) {
-      partitions.add(c.getString(partitionIndex));
-      i++;
-      c.moveToNext();
+    Cursor c = null;
+    try {
+    	c = db.query(true, this.dbBackingName,
+	        new String[] {KeyValueStoreColumns.PARTITION},
+	        WHERE_SQL_FOR_TABLE,
+	        new String[] {this.tableId}, null, null, null, null);
+	    List<String> partitions = new ArrayList<String>();
+	    int partitionIndex =
+	        c.getColumnIndexOrThrow(KeyValueStoreColumns.PARTITION);
+	    int i = 0;
+	    c.moveToFirst();
+	    while (i < c.getCount()) {
+	      partitions.add(c.getString(partitionIndex));
+	      i++;
+	      c.moveToNext();
+	    }
+	    return partitions;
+    } finally {
+	    if (c != null && !c.isClosed()) {
+	      c.close();
+	    }
     }
-    if (c != null && !c.isClosed()) {
-      c.close();
-    }
-    return partitions;
   }
 
   /**
@@ -379,24 +397,28 @@ public class KeyValueStore {
     targetQuery[1] = partition;
     // We're doing 1 b/c we're only getting a single partition.
     String whereClause = WHERE_SQL_FOR_PARTITIONS + makePlaceHolders(1) + ")";
-    Cursor c = db.query(true, this.dbBackingName,
-        new String[] {KeyValueStoreColumns.ASPECT},
-        whereClause,
-        new String[] {this.tableId, partition}, null, null, null, null);
-    List<String> aspects = new ArrayList<String>();
-    int aspectIndex =
-        c.getColumnIndexOrThrow(KeyValueStoreColumns.ASPECT);
-    int i = 0;
-    c.moveToFirst();
-    while (i < c.getCount()) {
-      aspects.add(c.getString(aspectIndex));
-      c.moveToNext();
-      i++;
+    Cursor c = null;
+    try {
+    	c = db.query(true, this.dbBackingName,
+	        new String[] {KeyValueStoreColumns.ASPECT},
+	        whereClause,
+	        new String[] {this.tableId, partition}, null, null, null, null);
+	    List<String> aspects = new ArrayList<String>();
+	    int aspectIndex =
+	        c.getColumnIndexOrThrow(KeyValueStoreColumns.ASPECT);
+	    int i = 0;
+	    c.moveToFirst();
+	    while (i < c.getCount()) {
+	      aspects.add(c.getString(aspectIndex));
+	      c.moveToNext();
+	      i++;
+	    }
+	    return aspects;
+    } finally {
+	    if (c != null && !c.isClosed()) {
+	      c.close();
+	    }
     }
-    if (c != null && !c.isClosed()) {
-      c.close();
-    }
-    return aspects;
   }
 
 
@@ -421,16 +443,17 @@ public class KeyValueStore {
     }
     String whereClause = WHERE_SQL_FOR_PARTITIONS +
         makePlaceHolders(partitions.size()) + ")";
-    Cursor c = db.query(this.dbBackingName,
-        new String[] {KeyValueStoreColumns.TABLE_ID,
-                      KeyValueStoreColumns.PARTITION,
-                      KeyValueStoreColumns.ASPECT,
-                      KeyValueStoreColumns.KEY,
-                      KeyValueStoreColumns.VALUE_TYPE,
-                      KeyValueStoreColumns.VALUE},
-        whereClause,
-        desiredPartitions, null, null, null);
+    Cursor c = null;
     try {
+      c = db.query(this.dbBackingName,
+	        new String[] {KeyValueStoreColumns.TABLE_ID,
+	                      KeyValueStoreColumns.PARTITION,
+	                      KeyValueStoreColumns.ASPECT,
+	                      KeyValueStoreColumns.KEY,
+	                      KeyValueStoreColumns.VALUE_TYPE,
+	                      KeyValueStoreColumns.VALUE},
+	        whereClause,
+	        desiredPartitions, null, null, null);
       return getEntriesFromCursor(c);
     } finally {
       if (c != null && !c.isClosed()) {

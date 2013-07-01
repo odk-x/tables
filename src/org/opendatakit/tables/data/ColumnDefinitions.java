@@ -125,17 +125,9 @@ public class ColumnDefinitions {
         j++;
       }
     } finally {
-      try {
         if (c != null && !c.isClosed()) {
           c.close();
         }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
     }
     return elementKeys;
   }
@@ -198,17 +190,9 @@ public class ColumnDefinitions {
         j++;
       }
     } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
+      if (c != null && !c.isClosed()) {
+        c.close();
       }
-
     }
     return columnDefMap;
   }
@@ -313,21 +297,30 @@ public class ColumnDefinitions {
     values.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted ? 1 : 0);
     values.put(ColumnDefinitionsColumns.JOINS, JoinColumn.toSerialization(joins));
 
-    Cursor c = db.query(DB_BACKING_NAME, null, WHERE_SQL_FOR_ELEMENT,
-                  new String[] {tableId, elementKey}, null, null, null);
-    if ( c.getCount() == 1 ) {
-      // update...
-      db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
-          new String[] {tableId, elementKey});
-    } else {
-      if ( c.getCount() > 1 ) {
-        // remove and re-insert...
-        deleteColumnDefinition(tableId, elementKey, db);
-      }
-      // insert...
-      values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
-      values.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
-      db.insert(DB_BACKING_NAME, null, values);
+    Cursor c = null;
+    try {
+	    c = db.query(DB_BACKING_NAME, null, WHERE_SQL_FOR_ELEMENT,
+	                  new String[] {tableId, elementKey}, null, null, null);
+	    int count = c.getCount();
+	    c.close();
+	    if ( count == 1 ) {
+	      // update...
+	      db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+	          new String[] {tableId, elementKey});
+	    } else {
+	      if ( count > 1 ) {
+	        // remove and re-insert...
+	        deleteColumnDefinition(tableId, elementKey, db);
+	      }
+	      // insert...
+	      values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
+	      values.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
+	      db.insert(DB_BACKING_NAME, null, values);
+	    }
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
     }
   }
 

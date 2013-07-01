@@ -40,7 +40,6 @@ import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -69,6 +68,7 @@ import android.support.v4.content.CursorLoader;
 import android.util.Log;
 
 import com.actionbarsherlock.app.SherlockActivity;
+import com.google.android.gms.internal.c;
 
 /**
  * Utility methods for using ODK Collect.
@@ -503,9 +503,10 @@ public class CollectUtil {
   private static boolean isExistingCollectInstanceForRowData(TableProperties tp,
       String rowId, ContentResolver resolver) {
 
-    String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+    Cursor c = null;
     try {
-        Cursor c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+        String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
+        c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
           new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
         if ( c.getCount() == 0 ) {
           c.close();
@@ -516,6 +517,10 @@ public class CollectUtil {
     } catch (Exception e) {
       Log.w(TAG, "caught an exception while deleting an instance, ignoring and proceeding");
       return true; // since we don't really know what is going on...
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
     }
   }
 
@@ -575,21 +580,28 @@ public class CollectUtil {
       if ( count == 0) {
         uriOfForm = resolver.insert(CONTENT_INSTANCE_URI, values);
       } else {
-        Cursor c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
-            new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
+        Cursor c = null;
+        try {
+        	c = resolver.query(CONTENT_INSTANCE_URI, null, COLLECT_KEY_INSTANCE_FILE_PATH + "=?",
+	            new String[] { instanceFilePath }, COLLECT_INSTANCE_ORDER_BY);
 
-        if ( c.moveToFirst() ) {
-          // we got a result, meaning that the form exists in collect.
-          // so we just need to set the URI.
-          int collectInstanceKey; // this is the primary key of the form in
-          // Collect's
-          // database.
-          collectInstanceKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
-          uriOfForm = (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
-          c.close();
-        } else {
-          c.close();
-          throw new IllegalStateException("it was updated we should have found the record!");
+	        if ( c.moveToFirst() ) {
+	          // we got a result, meaning that the form exists in collect.
+	          // so we just need to set the URI.
+	          int collectInstanceKey; // this is the primary key of the form in
+	          // Collect's
+	          // database.
+	          collectInstanceKey = c.getInt(c.getColumnIndexOrThrow(BaseColumns._ID));
+	          uriOfForm = (Uri.parse(CONTENT_INSTANCE_URI + "/" + collectInstanceKey));
+	          c.close();
+	        } else {
+	          c.close();
+	          throw new IllegalStateException("it was updated we should have found the record!");
+	        }
+        } finally {
+        	if ( c != null && !c.isClosed() ) {
+        		c.close();
+        	}
         }
       }
     } else {
@@ -953,20 +965,27 @@ public class CollectUtil {
     String[] projection = { COLLECT_KEY_STATUS };
     String selection = "_id = ?";
     String[] selectionArgs = { instanceId + "" };
-    CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
-        projection, selection, selectionArgs, COLLECT_INSTANCE_ORDER_BY);
-    Cursor c = cursorLoader.loadInBackground();
-    if (c.getCount() == 0) {
-      return false;
-    }
-    c.moveToFirst();
-    String status = c.getString(c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
-    // potential status values are incomplete, complete, submitted, submission_failed
-    // all but the incomplete status indicate a marked-as-complete record.
-    if (status != null && !status.equals(COLLECT_KEY_STATUS_INCOMPLETE)) {
-      return true;
-    } else {
-      return false;
+    Cursor c = null;
+    try {
+	    c = context.getContentResolver().query(COLLECT_INSTANCES_CONTENT_URI,
+	    		projection, selection, selectionArgs, COLLECT_INSTANCE_ORDER_BY);
+
+	    if (c.getCount() == 0) {
+	      return false;
+	    }
+	    c.moveToFirst();
+	    String status = c.getString(c.getColumnIndexOrThrow(COLLECT_KEY_STATUS));
+	    // potential status values are incomplete, complete, submitted, submission_failed
+	    // all but the incomplete status indicate a marked-as-complete record.
+	    if (status != null && !status.equals(COLLECT_KEY_STATUS_INCOMPLETE)) {
+	      return true;
+	    } else {
+	      return false;
+	    }
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
     }
   }
 
@@ -994,20 +1013,26 @@ public class CollectUtil {
     String[] projection = { COLLECT_KEY_LAST_STATUS_CHANGE_DATE, "displayName", "instanceFilePath" };
     String selection = "_id = ?";
     String[] selectionArgs = { (instanceId + "") };
-    CursorLoader cursorLoader = new CursorLoader(context, COLLECT_INSTANCES_CONTENT_URI,
-        projection, selection, selectionArgs, null);
-    Cursor c = cursorLoader.loadInBackground();
-    if (c.getCount() != 1) {
-      return null;
+    Cursor c = null;
+    try {
+    	c = context.getContentResolver().query(COLLECT_INSTANCES_CONTENT_URI, projection,
+    			selection, selectionArgs, null);
+	    if (c.getCount() != 1) {
+	      return null;
+	    }
+	    c.moveToFirst();
+	    FormValues fv = new FormValues();
+	    fv.timestamp = c.getLong(c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
+	    fv.instanceName = c.getString(c.getColumnIndexOrThrow("displayName"));
+	    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
+	    File instanceFile = new File(instancepath);
+	    parseXML(fv, instanceFile);
+	    return fv;
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
     }
-    c.moveToFirst();
-    FormValues fv = new FormValues();
-    fv.timestamp = c.getLong(c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
-    fv.instanceName = c.getString(c.getColumnIndexOrThrow("displayName"));
-    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
-    File instanceFile = new File(instancepath);
-    parseXML(fv, instanceFile);
-    return fv;
   }
 
   /**
