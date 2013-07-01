@@ -899,11 +899,7 @@ public abstract class CustomView extends LinearLayout {
 	protected class Control {
 
 		public Object getJavascriptInterfaceWithWeakReference() {
-			if ( Build.VERSION.SDK_INT >= 14 ) {
-				return new ControlIf(this);
-			} else {
-				return new ControlPreSdk14If(this);
-			}
+			return new ControlIf(this);
 		}
 
 		private static final String TAG = "CustomView.Control";

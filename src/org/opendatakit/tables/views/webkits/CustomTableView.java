@@ -27,7 +27,6 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
 import android.app.Activity;
-import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.webkit.WebViewClient;
 
@@ -223,11 +222,7 @@ public class CustomTableView extends CustomView implements
 		control = new Control(mActivity, table);
 		tableData = new TableData(table);
 		Object extendedInterface;
-		if ( Build.VERSION.SDK_INT >= 14 ) {
-			extendedInterface = new ControlWithTableExtensionsIf(this, control);
-		} else {
-			extendedInterface = new ControlWithTableExtensionsPreSdk14If(this, control);
-		}
+		extendedInterface = new ControlWithTableExtensionsIf(this, control);
 		addJavascriptInterface(extendedInterface, "control");
 		addJavascriptInterface(
 				tableData.getJavascriptInterfaceWithWeakReference(), "data");
