@@ -4,8 +4,6 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.views.webkits.CustomGraphView.GraphData;
 
-import android.webkit.JavascriptInterface;
-
 public class GraphDataIf {
 	private WeakReference<GraphData> weakGraphData;
 
@@ -13,47 +11,47 @@ public class GraphDataIf {
 		this.weakGraphData = new WeakReference<GraphData>(graphData);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean isModified() {
 		return weakGraphData.get().isModified();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean hasGraph(String graph) {
 		return weakGraphData.get().hasGraph(graph);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getGraphType() {
 		return weakGraphData.get().getGraphType();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getGraphXAxis() {
 		return weakGraphData.get().getGraphXAxis();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getGraphYAxis() {
 		return weakGraphData.get().getGraphYAxis();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getGraphRAxis() {
 		return weakGraphData.get().getGraphRAxis();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getGraphOp() {
 		return weakGraphData.get().getGraphOp();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void saveSelection(String aspect, String value) {
 		weakGraphData.get().saveSelection(aspect, value);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void deleteDefaultGraph() {
 		weakGraphData.get().deleteDefaultGraph();
 	}

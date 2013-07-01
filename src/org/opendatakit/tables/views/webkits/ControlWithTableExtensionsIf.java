@@ -6,8 +6,6 @@ import org.json.JSONArray;
 import org.opendatakit.tables.views.webkits.CustomView.Control;
 import org.opendatakit.tables.views.webkits.CustomView.TableData;
 
-import android.webkit.JavascriptInterface;
-
 class ControlWithTableExtensionsIf {
 	private WeakReference<ExtendedTableControl> weakExtendedTableControl;
 	private WeakReference<Control> weakControl;
@@ -18,57 +16,57 @@ class ControlWithTableExtensionsIf {
 		this.weakControl = new WeakReference<Control>(ref);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTable(String tableName, String query) {
 		return weakControl.get().openTable(tableName, query);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTableWithSqlQuery(String tableName,
 			String sqlWhereClause, String[] sqlSelectionArgs) {
 		return weakControl.get().openTableWithSqlQuery(tableName,
 				sqlWhereClause, sqlSelectionArgs);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTableToListViewWithFile(String tableName,
 			String searchText, String filename) {
 		return weakControl.get().openTableToListViewWithFile(tableName,
 				searchText, filename);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
 			String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
 		return weakControl.get().openTableToListViewWithFileAndSqlQuery(
 				tableName, filename, sqlWhereClause, sqlSelectionArgs);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTableToMapViewWithSqlQuery(String tableName,
 			String sqlWhereClause, String[] sqlSelectionArgs) {
 		return weakControl.get().openTableToMapViewWithSqlQuery(tableName,
 				sqlWhereClause, sqlSelectionArgs);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openTableToMapView(String tableName, String searchText) {
 		return weakControl.get().openTableToMapView(tableName, searchText);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getDbNameForTable(String displayName) {
 		return weakControl.get().getDbNameForTable(displayName);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String getElementKeyForColumn(String tableDisplayName,
 			String columnDisplayName) {
 		return weakControl.get().getElementKeyForColumn(tableDisplayName,
 				columnDisplayName);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public TableDataIf query(String tableName, String searchText) {
 		TableData td = weakControl.get().query(tableName, searchText);
 		if (td != null) {
@@ -79,7 +77,7 @@ class ControlWithTableExtensionsIf {
 
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public TableDataIf queryWithSql(String tableName, String whereClause,
 			String[] selectionArgs) {
 		TableData td = weakControl.get().queryWithSql(tableName, whereClause,
@@ -91,17 +89,17 @@ class ControlWithTableExtensionsIf {
 		}
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void releaseQueryResources(String tableName) {
 		weakControl.get().releaseQueryResources(tableName);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public JSONArray getTableDisplayNames() {
 		return weakControl.get().getTableDisplayNames();
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void launchHTML(String filename) {
 		weakControl.get().launchHTML(filename);
 	}
@@ -112,17 +110,17 @@ class ControlWithTableExtensionsIf {
 	 * @param index
 	 * @return
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openItem(int index) {
 		return weakControl.get().openItem(index);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean openDetailViewWithFile(int index, String filename) {
 		return weakControl.get().openDetailViewWithFile(index, filename);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public boolean selectItem(int index) {
 		return weakExtendedTableControl.get().selectItem(index);
 	}

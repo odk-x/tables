@@ -4,8 +4,6 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.views.webkits.CustomView.RowData;
 
-import android.webkit.JavascriptInterface;
-
 public class RowDataIf {
 	private WeakReference<RowData> weakRowData;
 
@@ -23,7 +21,7 @@ public class RowDataIf {
 	 * @param key
 	 * @return
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public String get(String key) {
 		return weakRowData.get().get(key);
 	}
@@ -32,7 +30,7 @@ public class RowDataIf {
 	 * Edit the row with collect. Uses the form specified in the table
 	 * properties or else the ODKTables-generated default form.
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void editRowWithCollect() {
 		weakRowData.get().editRowWithCollect();
 	}
@@ -48,7 +46,7 @@ public class RowDataIf {
 	 * @param formVersion
 	 * @param formRootElement
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void editRowWithCollectAndSpecificForm(String formId,
 			String formVersion, String formRootElement) {
 		weakRowData.get().editRowWithCollectAndSpecificForm(formId,
@@ -60,12 +58,12 @@ public class RowDataIf {
 	 *
 	 * @param tableName
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void addRowWithCollect(String tableName) {
 		weakRowData.get().addRowWithCollect(tableName);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void addRowWithCollectAndPrepopulatedValues(String tableName,
 			String jsonMap) {
 		weakRowData.get().addRowWithCollectAndPrepopulatedValues(tableName,
@@ -81,14 +79,14 @@ public class RowDataIf {
 	 * for the table. It differs in {@link #addRow(String)} in that it lets you
 	 * add the row using an arbitrary form.
 	 */
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificForm(String tableName,
 			String formId, String formVersion, String formRootElement) {
 		weakRowData.get().addRowWithCollectAndSpecificForm(tableName, formId,
 				formVersion, formRootElement);
 	}
 
-	@JavascriptInterface
+	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
 			String tableName, String formId, String formVersion,
 			String formRootElement, String jsonMap) {
