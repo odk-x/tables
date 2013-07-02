@@ -1233,8 +1233,11 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public void launchHTML(String filename) {
 			Log.d(TAG, "in launchHTML with filename: " + filename);
+         String pathToTablesFolder = ODKFileUtils
+             .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+         String pathToFile = pathToTablesFolder + File.separator + filename;
 			Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
-			i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, filename);
+			i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
 			mActivity.startActivity(i);
 		}
 
