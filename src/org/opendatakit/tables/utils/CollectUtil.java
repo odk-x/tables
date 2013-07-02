@@ -64,11 +64,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.support.v4.content.CursorLoader;
 import android.util.Log;
 
 import com.actionbarsherlock.app.SherlockActivity;
-import com.google.android.gms.internal.c;
 
 /**
  * Utility methods for using ODK Collect.

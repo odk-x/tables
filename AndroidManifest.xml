@@ -129,19 +129,21 @@
 
 		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
 	    <provider
+	        android:exported="true"
 	        android:name="org.opendatakit.tables.provider.FileProvider"
 	        android:authorities="org.opendatakit.tables.android.provider.file" />
 
         <!--  dummy ContentProvider for syncing tables -->
         <provider
+            android:exported="true"
             android:name=".sync.TablesContentProvider"
             android:authorities="org.opendatakit.tables.android.provider.content" />
 
         <!-- dummy ContentProvider for syncing files -->
         <provider
+            android:exported="true"
             android:name=".sync.files.FilesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.files"
-            android:exported="true" />
+            android:authorities="org.opendatakit.tables.android.provider.files" />
 
     </application>
 

@@ -41,6 +41,7 @@ public class ControlIf {
 	 * of the Spreadsheet view, letting Tables handle the formatting.
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTable(String tableName, String query) {
 		return weakControl.get().openTable(tableName, query);
 	}
@@ -69,10 +70,11 @@ public class ControlIf {
 	 * in sqlWhereClause
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableWithSqlQuery(String tableName,
 			String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableWithSqlQuery(tableName, sqlWhereClause,
-				sqlSelectionArgs);
+		return weakControl.get().openTableWithSqlQuery(tableName,
+				sqlWhereClause, sqlSelectionArgs);
 	}
 
 	/**
@@ -86,10 +88,11 @@ public class ControlIf {
 	 * parameter, where as "/your/path/to/file.html" would not.
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToListViewWithFile(String tableName,
 			String searchText, String filename) {
-		return weakControl.get().openTableToListViewWithFile(tableName, searchText,
-				filename);
+		return weakControl.get().openTableToListViewWithFile(tableName,
+				searchText, filename);
 	}
 
 	/**
@@ -104,10 +107,11 @@ public class ControlIf {
 	 * @param sqlSelectionArgs
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
 			String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableToListViewWithFileAndSqlQuery(tableName,
-				filename, sqlWhereClause, sqlSelectionArgs);
+		return weakControl.get().openTableToListViewWithFileAndSqlQuery(
+				tableName, filename, sqlWhereClause, sqlSelectionArgs);
 	}
 
 	/**
@@ -120,6 +124,7 @@ public class ControlIf {
 	 * @param sqlSelectionArgs
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToMapViewWithSqlQuery(String tableName,
 			String sqlWhereClause, String[] sqlSelectionArgs) {
 		return weakControl.get().openTableToMapViewWithSqlQuery(tableName,
@@ -134,6 +139,7 @@ public class ControlIf {
 	 * @param searchText
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToMapView(String tableName, String searchText) {
 		return weakControl.get().openTableToMapView(tableName, searchText);
 	}
@@ -145,9 +151,11 @@ public class ControlIf {
 	 * @param searchText
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToSpreadsheetView(String tableName,
 			String searchText) {
-		return weakControl.get().openTableToSpreadsheetView(tableName, searchText);
+		return weakControl.get().openTableToSpreadsheetView(tableName,
+				searchText);
 	}
 
 	/**
@@ -160,10 +168,11 @@ public class ControlIf {
 	 * @param sqlSelectionArgs
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
 			String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableToSpreadsheetViewWithSqlQuery(tableName,
-				sqlWhereClause, sqlSelectionArgs);
+		return weakControl.get().openTableToSpreadsheetViewWithSqlQuery(
+				tableName, sqlWhereClause, sqlSelectionArgs);
 	}
 
 	/**
@@ -173,6 +182,7 @@ public class ControlIf {
 	 * @param displayName display name of the table
 	 * @return the database name of the table
 	 */
+	// @JavascriptInterface
 	public String getDbNameForTable(String displayName) {
 		return weakControl.get().getDbNameForTable(displayName);
 	}
@@ -186,6 +196,7 @@ public class ControlIf {
 	 * @return the element key (i.e. the database name) of the column with the
 	 * given display name in the given table.
 	 */
+	// @JavascriptInterface
 	public String getElementKeyForColumn(String tableDisplayName,
 			String columnDisplayName) {
 		return weakControl.get().getElementKeyForColumn(tableDisplayName,
@@ -200,9 +211,10 @@ public class ControlIf {
 	 * {@link #openTable(String, String)}
 	 * @return
 	 */
+	// @JavascriptInterface
 	public TableDataIf query(String tableName, String searchText) {
 		TableData td = weakControl.get().query(tableName, searchText);
-		if ( td != null ) {
+		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
 		} else {
 			return null;
@@ -225,10 +237,12 @@ public class ControlIf {
 	 * specified in {@link #openTableWithSqlQuery(String, String, String[])}.
 	 * @return
 	 */
+	// @JavascriptInterface
 	public TableDataIf queryWithSql(String tableName, String whereClause,
 			String[] selectionArgs) {
-		TableData td = weakControl.get().queryWithSql(tableName, whereClause, selectionArgs);
-		if ( td != null ) {
+		TableData td = weakControl.get().queryWithSql(tableName, whereClause,
+				selectionArgs);
+		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
 		} else {
 			return null;
@@ -241,6 +255,7 @@ public class ControlIf {
 	 *
 	 * @param tableName display name for the table
 	 */
+	// @JavascriptInterface
 	public void releaseQueryResources(String tableName) {
 		weakControl.get().releaseQueryResources(tableName);
 	}
@@ -249,6 +264,7 @@ public class ControlIf {
 	 * Get the display names of all the tables in the database.
 	 * @return an {@link JSONArray} containing the display names
 	 */
+	// @JavascriptInterface
 	public JSONArray getTableDisplayNames() {
 		return weakControl.get().getTableDisplayNames();
 	}
@@ -258,6 +274,7 @@ public class ControlIf {
 	 * @see #openTableToListViewWithFile(String, String, String)
 	 * @param filename file name relative to the ODK Tables folder.
 	 */
+	// @JavascriptInterface
 	public void launchHTML(String filename) {
 		weakControl.get().launchHTML(filename);
 	}
@@ -269,6 +286,7 @@ public class ControlIf {
 	 * @param index
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openItem(int index) {
 		return weakControl.get().openItem(index);
 	}
@@ -282,6 +300,7 @@ public class ControlIf {
 	 * @param filename
 	 * @return
 	 */
+	// @JavascriptInterface
 	public boolean openDetailViewWithFile(int index, String filename) {
 		return weakControl.get().openDetailViewWithFile(index, filename);
 	}
@@ -293,6 +312,7 @@ public class ControlIf {
 	 * form (if it exists) will be prepopulated with the value 12.
 	 * @param tableName the display name of the table to receive the add.
 	 */
+	// @JavascriptInterface
 	public void addRowWithCollect(String tableName) {
 		weakControl.get().addRowWithCollect(tableName);
 	}
@@ -311,6 +331,7 @@ public class ControlIf {
 	 * @param formVersion may be null
 	 * @param formRootElement
 	 */
+	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificForm(String tableName,
 			String formId, String formVersion, String formRootElement) {
 		weakControl.get().addRowWithCollectAndSpecificForm(tableName, formId,
@@ -326,9 +347,11 @@ public class ControlIf {
 	 * {@link #getElementKeyForColumn(String, String)}. The map can then be
 	 * converted to a String using JSON.stringify() and passed to this method.
 	 */
+	// @JavascriptInterface
 	public void addRowWithCollectAndPrepopulatedValues(String tableName,
 			String jsonMap) {
-		weakControl.get().addRowWithCollectAndPrepopulatedValues(tableName, jsonMap);
+		weakControl.get().addRowWithCollectAndPrepopulatedValues(tableName,
+				jsonMap);
 	}
 
 	/**
@@ -342,11 +365,14 @@ public class ControlIf {
 	 * @param formRootElement
 	 * @param jsonMap
 	 */
+	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
 			String tableName, String formId, String formVersion,
 			String formRootElement, String jsonMap) {
-		weakControl.get().addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-				tableName, formId, formVersion, formRootElement, jsonMap);
+		weakControl.get()
+				.addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+						tableName, formId, formVersion, formRootElement,
+						jsonMap);
 	}
 
 }
