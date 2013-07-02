@@ -1,9 +1,35 @@
+/*
+ * Copyright (C) 2013 University of Washington
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.views.webkits.CustomView.RowData;
 
+/**
+ * This class is handed to the javascript as "data" when displaying a Detail
+ * View. It provides a way to get at the data in a row.
+ * <p>
+ * Standard practice is to define a Detail View html file which uses the "data"
+ * javascript interface to get data using {@link #get(String)} and display it
+ * to a user.
+ * @author Mitch Sundt
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class RowDataIf {
 	private WeakReference<RowData> weakRowData;
 
@@ -12,8 +38,8 @@ public class RowDataIf {
 	}
 
 	/**
-	 * Takes the user label for the column and returns the value in that column.
-	 * Any null values are replaced by the empty string.
+	 * Takes the display name for the column and returns the value in that 
+	 * column. Any null values are replaced by the empty string.
 	 * <p>
 	 * Returns null if the column matching the passed in user label could not be
 	 * found.
@@ -27,8 +53,7 @@ public class RowDataIf {
 	}
 
 	/**
-	 * Edit the row with collect. Uses the form specified in the table
-	 * properties or else the ODKTables-generated default form.
+	 * Edit the row with collect. Uses the default form.
 	 */
 	// @JavascriptInterface
 	public void editRowWithCollect() {
@@ -54,8 +79,7 @@ public class RowDataIf {
 	}
 
 	/**
-	 * Add a row using collect and the default form.
-	 *
+	 * @see ControlIf#addRowWithCollect(String)
 	 * @param tableName
 	 */
 	// @JavascriptInterface
@@ -63,6 +87,11 @@ public class RowDataIf {
 		weakRowData.get().addRowWithCollect(tableName);
 	}
 
+	/**
+	 * @see ControlIf#addRowWithCollectAndPrepopulatedValues(String, String)
+	 * @param tableName
+	 * @param jsonMap
+	 */
 	// @JavascriptInterface
 	public void addRowWithCollectAndPrepopulatedValues(String tableName,
 			String jsonMap) {
@@ -71,13 +100,7 @@ public class RowDataIf {
 	}
 
 	/**
-	 * Add a row using Collect. This is the hook into the javascript. The
-	 * activity holding this view must have implemented the onActivityReturn
-	 * method appropriately to handle the result.
-	 * <p>
-	 * It allows you to specify a form other than that which may be the default
-	 * for the table. It differs in {@link #addRow(String)} in that it lets you
-	 * add the row using an arbitrary form.
+	 * @see ControlIf#addRowWithCollectAndSpecificForm(String, String, String, String)
 	 */
 	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificForm(String tableName,
@@ -86,6 +109,14 @@ public class RowDataIf {
 				formVersion, formRootElement);
 	}
 
+	/**
+	 * @see ControlIf#addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)
+	 * @param tableName
+	 * @param formId
+	 * @param formVersion
+	 * @param formRootElement
+	 * @param jsonMap
+	 */
 	// @JavascriptInterface
 	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
 			String tableName, String formId, String formVersion,

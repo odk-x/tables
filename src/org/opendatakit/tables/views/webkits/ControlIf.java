@@ -341,7 +341,7 @@ public class ControlIf {
 	/**
 	 * Add a row using Collect and the default form. Similar to 
 	 * {@link #addRowWithCollect(String)}, except that rather than using the
-	 * query string to prepopulate values, a json map can be used. 
+	 * query string to prepopulate values, a json map is used. 
 	 * @param tableName
 	 * @param jsonMap a JSON map of element key to value, as retrieved by
 	 * {@link #getElementKeyForColumn(String, String)}. The map can then be
