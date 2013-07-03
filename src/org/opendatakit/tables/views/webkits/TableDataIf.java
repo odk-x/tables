@@ -50,7 +50,7 @@ public class TableDataIf {
 	/**
 	 * Returns the number of rows in the table being viewed as restricted by
 	 * the current query, be it SQL or a query string.
-	 * @return
+	 * @return the number of rows in the table
 	 */
 	// @JavascriptInterface
 	public int getCount() {
@@ -60,7 +60,7 @@ public class TableDataIf {
 	/**
 	 * Returns a stringified JSONArray of all the values in the given column.
 	 * @param colName the display name of the column
-	 * @return
+	 * @return JSONArray of all the data in the column
 	 */
 	// @JavascriptInterface
 	public String getColumnData(String colName) {
@@ -69,7 +69,7 @@ public class TableDataIf {
 
 	/**
 	 * Return a stringified JSON object mapping elementKey its column type.
-	 * @return
+	 * @return Stringified JSON map of element key to column type
 	 */
 	// @JavascriptInterface
 	public String getColumns() {
@@ -81,7 +81,7 @@ public class TableDataIf {
 	 * Uses the color rules of the column. The default value is -16777216.
 	 * @param colName the display name of the column
 	 * @param value the string value of the datum
-	 * @return
+	 * @return String representation of the text color
 	 */
 	// @JavascriptInterface
 	public String getForegroundColor(String colName, String value) {
@@ -92,7 +92,7 @@ public class TableDataIf {
 	 * Return the number of rows in the collection at the given row index. Only
 	 * meaningful if {@link #inCollectionMode()} returns true.
 	 * @param rowNum
-	 * @return
+	 * @return number of rows in the collection
 	 */
 	// @JavascriptInterface
 	public int getCollectionSize(int rowNum) {
@@ -101,7 +101,7 @@ public class TableDataIf {
 
 	/**
 	 * Returns true if the table is indexed.
-	 * @return
+	 * @return true if index else false
 	 */
 	// @JavascriptInterface
 	public boolean isIndexed() {
@@ -116,7 +116,8 @@ public class TableDataIf {
 	 * @param rowNum the row number
 	 * @param colName the display name of the column to which you want the 
 	 * data.
-	 * @return
+	 * @return the String representation of the datum at the given row in the
+	 * given column
 	 */
 	// @JavascriptInterface
 	public String getData(int rowNum, String colName) {
@@ -147,7 +148,7 @@ public class TableDataIf {
 	}
 
 	/**
-	 * @see ControlIf#addRowWithCollectAndSpecificForm(String)
+	 * @see ControlIf#addRowWithCollect(String)
 	 * @param tableName
 	 */
 	// @JavascriptInterface

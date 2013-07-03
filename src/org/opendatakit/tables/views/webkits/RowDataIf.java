@@ -44,8 +44,8 @@ public class RowDataIf {
 	 * Returns null if the column matching the passed in user label could not be
 	 * found.
 	 *
-	 * @param key
-	 * @return
+	 * @param key the display name of the column
+	 * @return the datum at the given column name
 	 */
 	// @JavascriptInterface
 	public String get(String key) {
@@ -66,7 +66,6 @@ public class RowDataIf {
 	 * Similar to {@link #editRowWithCollect()}, except that it allows you to
 	 * edit the row with a specific form.
 	 *
-	 * @param tableName
 	 * @param formId
 	 * @param formVersion
 	 * @param formRootElement

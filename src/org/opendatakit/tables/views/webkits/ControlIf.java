@@ -39,7 +39,7 @@ public class ControlIf {
 	 * "displayName:cellContents". The easiest way to get the correct formatting
 	 * of this string would be to drag and drop contents into the searchbox
 	 * of the Spreadsheet view, letting Tables handle the formatting.
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTable(String tableName, String query) {
@@ -65,10 +65,10 @@ public class ControlIf {
 	 * {@link #getDbNameForTable(String)}. The references to the columns
 	 * must be the element key, not the display name of the column. The
 	 * elementKey is fixed and unchanging for each column, and can be retrieved
-	 * using {@link getElementKeyForColumn}.
+	 * using {@link #getElementKeyForColumn(String, String)}.
 	 * @param sqlSelectionArgs an array of selection arguments, one for each "?"
 	 * in sqlWhereClause
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableWithSqlQuery(String tableName,
@@ -86,7 +86,7 @@ public class ControlIf {
 	 * table. Must be relative to the odk tables path and must not start with
 	 * a delimeter. I.e. "your/path/to/file.html" would be an acceptable 
 	 * parameter, where as "/your/path/to/file.html" would not.
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToListViewWithFile(String tableName,
@@ -105,7 +105,7 @@ public class ControlIf {
 	 * @param filename
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
@@ -122,7 +122,7 @@ public class ControlIf {
 	 * @param tableName display name of the table to open.
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToMapViewWithSqlQuery(String tableName,
@@ -137,7 +137,7 @@ public class ControlIf {
 	 * @see #openTable(String, String)
 	 * @param tableName
 	 * @param searchText
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToMapView(String tableName, String searchText) {
@@ -149,7 +149,7 @@ public class ControlIf {
 	 * @see #openTable(String, String)
 	 * @param tableName
 	 * @param searchText
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToSpreadsheetView(String tableName,
@@ -166,7 +166,7 @@ public class ControlIf {
 	 * @param tableName
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
@@ -209,7 +209,9 @@ public class ControlIf {
 	 * @param tableName display name of the table
 	 * @param searchText a search string as defined in 
 	 * {@link #openTable(String, String)}
-	 * @return
+	 * @return a new TableDataIf with the results of the query. Should be
+    * released with {@link #releaseQueryResources(String)} when it is no longer
+    * needed.
 	 */
 	// @JavascriptInterface
 	public TableDataIf query(String tableName, String searchText) {
@@ -235,7 +237,9 @@ public class ControlIf {
 	 * {@link #openTableWithSqlQuery(String, String, String[])}.
 	 * @param selectionArgs selection arguments for the whereClause as 
 	 * specified in {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @return
+	 * @return a new TableDataIf with the results of the query. Should be
+	 * released with {@link #releaseQueryResources(String)} when it is no longer
+	 * needed.
 	 */
 	// @JavascriptInterface
 	public TableDataIf queryWithSql(String tableName, String whereClause,
@@ -251,8 +255,9 @@ public class ControlIf {
 
 	/**
 	 * Releases the results returned from the query() and queryWithSql()
-	 * statements, above.
-	 *
+	 * statements, above. The object will be retained until this method is
+	 * called, so good practice is to release the query when its data is no 
+	 * longer needed to free up resources.
 	 * @param tableName display name for the table
 	 */
 	// @JavascriptInterface
@@ -262,7 +267,7 @@ public class ControlIf {
 
 	/**
 	 * Get the display names of all the tables in the database.
-	 * @return an {@link JSONArray} containing the display names
+	 * @return an JSONArray containing the display names
 	 */
 	// @JavascriptInterface
 	public JSONArray getTableDisplayNames() {
@@ -284,7 +289,7 @@ public class ControlIf {
 	 * <p>
 	 * Only makes sense when we are on a list view. 
 	 * @param index
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openItem(int index) {
@@ -298,7 +303,7 @@ public class ControlIf {
 	 * Only makes sense when we are in a list view.
 	 * @param index
 	 * @param filename
-	 * @return
+	 * @return true if the open suceeded
 	 */
 	// @JavascriptInterface
 	public boolean openDetailViewWithFile(int index, String filename) {
