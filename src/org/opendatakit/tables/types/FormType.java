@@ -77,6 +77,14 @@ public class FormType {
   public String getFormId() {
     return this.mParams.getFormId();
   }
+  
+  /**
+   * Returns true if the form represents a default form.
+   * @return
+   */
+  public boolean isCustom() {
+    return this.mParams.isCustom();
+  }
 
   public String getFormRootElement() {
     return this.mParams.getRootElement();
@@ -89,7 +97,7 @@ public class FormType {
    * element.
    * @return
    */
-  public View getDisplayView(Context context) {
+  public LinearLayout getDisplayView(Context context) {
     // TODO: be sure to save the information in these text views in the
     // appropriate instance state methods.
     LinearLayout ll = new LinearLayout(context);
@@ -141,6 +149,14 @@ public class FormType {
       mAh.setString(CollectUtil.KEY_FORM_ID, newFormId);
       mAh.setString(CollectUtil.KEY_FORM_ROOT_ELEMENT, newRootElement);
     }
+  }
+  
+  /**
+   * Delete the a custom form from the key value store. Note that this 
+   * therefore only has an effect if {@link #isCustom()} returns true.
+   */
+  public void deleteCustomForm() {
+    mAh.deleteAllEntriesInThisAspect();
   }
 
   /**
