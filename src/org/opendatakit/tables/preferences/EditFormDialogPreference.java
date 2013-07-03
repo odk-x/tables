@@ -5,10 +5,8 @@ import java.util.Map;
 
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
-import android.R;
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -87,7 +85,7 @@ public class EditFormDialogPreference extends DialogPreference {
   @Override
   protected View onCreateDialogView() {
     Log.d(TAG, "in onCreateDialogView");
-    LayoutInflater inflater = 
+    LayoutInflater inflater =
         (LayoutInflater) this.mContext.getSystemService(
             Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater.inflate(
@@ -108,12 +106,12 @@ public class EditFormDialogPreference extends DialogPreference {
     super.onDialogClosed(positiveResult);
     if (positiveResult) {
       // If the use default form is checked, then we want to delete the custom
-      // form. 
+      // form.
       if (this.mDefaultCheckBox.isChecked()) {
         if (this.mFormType.isCustom()) {
           this.mFormType.deleteCustomForm();
           Log.i(TAG, "deleting custom form");
-          // And now update this object so that when if the preference is 
+          // And now update this object so that when if the preference is
           // pressed again we'll be sure to have the correct contents.
           CollectFormParameters params =
               CollectFormParameters.constructCollectFormParameters(this.mTp);
@@ -139,7 +137,7 @@ public class EditFormDialogPreference extends DialogPreference {
       }
     }
   }
-  
+
   /**
    * Update the UI for whether or not we are currently using the default form.
    * @param useDefault
@@ -169,18 +167,18 @@ public class EditFormDialogPreference extends DialogPreference {
   public EditText getEditText() {
     return mEditText;
   }
-  
-  
+
+
   private class CheckBoxListener implements OnClickListener {
 
     @Override
     public void onClick(View v) {
-      // We want to update the UI based on the state of the checkbox. 
+      // We want to update the UI based on the state of the checkbox.
       CheckBox checkBox = (CheckBox) v;
       EditFormDialogPreference.this.updateUIForUseDefault(
           checkBox.isChecked());
     }
-    
+
   }
 
 }

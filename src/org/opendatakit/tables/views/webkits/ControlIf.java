@@ -21,8 +21,6 @@ import org.json.JSONArray;
 import org.opendatakit.tables.views.webkits.CustomView.Control;
 import org.opendatakit.tables.views.webkits.CustomView.TableData;
 
-import android.provider.OpenableColumns;
-
 public class ControlIf {
 
 	private WeakReference<Control> weakControl;
@@ -32,10 +30,10 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the table with the given name and searches with the given query. 
+	 * Open the table with the given name and searches with the given query.
 	 * Opens to the current default view of the table.
 	 * @param tableName the display name of the table
-	 * @param query a query string, represented by a space-separated list of 
+	 * @param query a query string, represented by a space-separated list of
 	 * "displayName:cellContents". The easiest way to get the correct formatting
 	 * of this string would be to drag and drop contents into the searchbox
 	 * of the Spreadsheet view, letting Tables handle the formatting.
@@ -49,7 +47,7 @@ public class ControlIf {
 	/**
 	 * Open the table with the given name using a sql query.
 	 * <p>
-	 * Performs a simple "SELECT * FROM" statement with the sqlWhereClause 
+	 * Performs a simple "SELECT * FROM" statement with the sqlWhereClause
 	 * performing a query.
 	 * <p>
 	 * This is useful for doing more complicated joins than are possible with
@@ -59,9 +57,9 @@ public class ControlIf {
 	 * @see #queryWithSql(String, String, String[])
 	 * @param tableName the displayName of the table to open
 	 * @param sqlWhereClause the where clause for the selection, beginning with
-	 * "WHERE". Must include "?" instead of actual values, which are instead 
+	 * "WHERE". Must include "?" instead of actual values, which are instead
 	 * passed in the sqlSelectionArgs parameter. The references to tables must
-	 * use the database table names, as can be retrieved with 
+	 * use the database table names, as can be retrieved with
 	 * {@link #getDbNameForTable(String)}. The references to the columns
 	 * must be the element key, not the display name of the column. The
 	 * elementKey is fixed and unchanging for each column, and can be retrieved
@@ -82,9 +80,9 @@ public class ControlIf {
 	 * filename as a list view. The filename is relative to the odk tables path.
 	 * @param tableName the display name of the table to open
 	 * @param searchText the search string with which to search the table.
-	 * @param filename the filename of the list view with which to open the 
+	 * @param filename the filename of the list view with which to open the
 	 * table. Must be relative to the odk tables path and must not start with
-	 * a delimeter. I.e. "your/path/to/file.html" would be an acceptable 
+	 * a delimeter. I.e. "your/path/to/file.html" would be an acceptable
 	 * parameter, where as "/your/path/to/file.html" would not.
 	 * @return true if the open succeeded
 	 */
@@ -115,7 +113,7 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the given table to the map view, restricted with the given SQL 
+	 * Open the given table to the map view, restricted with the given SQL
 	 * query.
 	 * @see #openTableWithSqlQuery(String, String, String[])
 	 * @see #queryWithSql(String, String, String[])
@@ -132,7 +130,7 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the given table to the map view, restricted with the given query 
+	 * Open the given table to the map view, restricted with the given query
 	 * string. Uses the settings that have last been saved to map view.
 	 * @see #openTable(String, String)
 	 * @param tableName
@@ -176,8 +174,8 @@ public class ControlIf {
 	}
 
 	/**
-	 * Get the database name of the table with the given display name. This is 
-	 * necessary for sophisticated queries like those allowed with 
+	 * Get the database name of the table with the given display name. This is
+	 * necessary for sophisticated queries like those allowed with
 	 * {@link #openTableWithSqlQuery(String, String, String[])}.
 	 * @param displayName display name of the table
 	 * @return the database name of the table
@@ -205,9 +203,9 @@ public class ControlIf {
 
 	/**
 	 * Return a {@link TableDataIf} object for the given table name, queried
-	 * with the given searchText. 
+	 * with the given searchText.
 	 * @param tableName display name of the table
-	 * @param searchText a search string as defined in 
+	 * @param searchText a search string as defined in
 	 * {@link #openTable(String, String)}
 	 * @return a new TableDataIf with the results of the query. Should be
     * released with {@link #releaseQueryResources(String)} when it is no longer
@@ -229,13 +227,13 @@ public class ControlIf {
 	 * <p>
 	 * For example, if you wanted all the rows where the column foo equaled
 	 * bar, the where clause would be "WHERE foo = ? ", and the selection args
-	 * would be ["bar"]. 
+	 * would be ["bar"].
 	 * <p>
 	 * This can be used to do powerful cross-table queries.
 	 * @param tableName display name of the table
-	 * @param whereClause an SQL where clause as specified in 
+	 * @param whereClause an SQL where clause as specified in
 	 * {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @param selectionArgs selection arguments for the whereClause as 
+	 * @param selectionArgs selection arguments for the whereClause as
 	 * specified in {@link #openTableWithSqlQuery(String, String, String[])}.
 	 * @return a new TableDataIf with the results of the query. Should be
 	 * released with {@link #releaseQueryResources(String)} when it is no longer
@@ -256,7 +254,7 @@ public class ControlIf {
 	/**
 	 * Releases the results returned from the query() and queryWithSql()
 	 * statements, above. The object will be retained until this method is
-	 * called, so good practice is to release the query when its data is no 
+	 * called, so good practice is to release the query when its data is no
 	 * longer needed to free up resources.
 	 * @param tableName display name for the table
 	 */
@@ -287,7 +285,7 @@ public class ControlIf {
 	/**
 	 * Opens the detail view for the item at the given index.
 	 * <p>
-	 * Only makes sense when we are on a list view. 
+	 * Only makes sense when we are on a list view.
 	 * @param index
 	 * @return true if the open succeeded
 	 */
@@ -297,7 +295,7 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the detail view for the item at the given index with the given 
+	 * Open the detail view for the item at the given index with the given
 	 * filename.
 	 * <p>
 	 * Only makes sense when we are in a list view.
@@ -311,9 +309,9 @@ public class ControlIf {
 	}
 
 	/**
-	 * Add a row using Collect and the default form. Uses the query string 
-	 * currently restricting the data of the table to prepopulate values in 
-	 * Collect. I.e. if you have searched for id:12, the id field of the Collect 
+	 * Add a row using Collect and the default form. Uses the query string
+	 * currently restricting the data of the table to prepopulate values in
+	 * Collect. I.e. if you have searched for id:12, the id field of the Collect
 	 * form (if it exists) will be prepopulated with the value 12.
 	 * @param tableName the display name of the table to receive the add.
 	 */
@@ -323,16 +321,16 @@ public class ControlIf {
 	}
 
 	/**
-	 * Add a row using Collect and the form specified by the given parameters. 
+	 * Add a row using Collect and the form specified by the given parameters.
 	 * Allows you to specify an arbitrary form depending on the work flow.
 	 * <p>
 	 * The form must have been added to Collect and visible in the "Fill Blank
-	 * Forms" screen. 
+	 * Forms" screen.
 	 * <p>
-	 * Values are prepopulated as described in 
+	 * Values are prepopulated as described in
 	 * {@link #addRowWithCollect(String)}.
 	 * @param tableName the display name of the table to receive the add
-	 * @param formId 
+	 * @param formId
 	 * @param formVersion may be null
 	 * @param formRootElement
 	 */
@@ -344,9 +342,9 @@ public class ControlIf {
 	}
 
 	/**
-	 * Add a row using Collect and the default form. Similar to 
+	 * Add a row using Collect and the default form. Similar to
 	 * {@link #addRowWithCollect(String)}, except that rather than using the
-	 * query string to prepopulate values, a json map is used. 
+	 * query string to prepopulate values, a json map is used.
 	 * @param tableName
 	 * @param jsonMap a JSON map of element key to value, as retrieved by
 	 * {@link #getElementKeyForColumn(String, String)}. The map can then be
@@ -360,7 +358,7 @@ public class ControlIf {
 	}
 
 	/**
-	 * Add a row using Collect, a specific form, and a map of prepopulated 
+	 * Add a row using Collect, a specific form, and a map of prepopulated
 	 * values.
 	 * @see #addRowWithCollectAndSpecificForm(String, String, String, String)
 	 * @see #addRowWithCollectAndPrepopulatedValues(String, String)

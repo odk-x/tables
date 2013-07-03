@@ -27,7 +27,6 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 
 import android.content.Context;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -77,7 +76,7 @@ public class FormType {
   public String getFormId() {
     return this.mParams.getFormId();
   }
-  
+
   /**
    * Returns true if the form represents a default form.
    * @return
@@ -150,9 +149,9 @@ public class FormType {
       mAh.setString(CollectUtil.KEY_FORM_ROOT_ELEMENT, newRootElement);
     }
   }
-  
+
   /**
-   * Delete the a custom form from the key value store. Note that this 
+   * Delete the a custom form from the key value store. Note that this
    * therefore only has an effect if {@link #isCustom()} returns true.
    */
   public void deleteCustomForm() {

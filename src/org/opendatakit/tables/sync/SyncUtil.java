@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.sync;
 
-import org.opendatakit.aggregate.odktables.entity.Column;
-import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
 
@@ -89,7 +89,7 @@ public class SyncUtil {
   }
 
   public static org.opendatakit.tables.data.TableType transformServerTableType(
-      org.opendatakit.aggregate.odktables.entity.api.TableType serverType) {
+      org.opendatakit.aggregate.odktables.rest.entity.TableType serverType) {
     org.opendatakit.tables.data.TableType phoneType =
         org.opendatakit.tables.data.TableType.data;
     switch (serverType) {
@@ -108,22 +108,22 @@ public class SyncUtil {
     return phoneType;
   }
 
-  public static org.opendatakit.aggregate.odktables.entity.api.TableType
+  public static org.opendatakit.aggregate.odktables.rest.entity.TableType
   transformClientTableType(org.opendatakit.tables.data.TableType clientType) {
-    org.opendatakit.aggregate.odktables.entity.api.TableType serverType =
-        org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
+    org.opendatakit.aggregate.odktables.rest.entity.TableType serverType =
+        org.opendatakit.aggregate.odktables.rest.entity.TableType.DATA;
     switch (clientType) {
     case data:
       serverType =
-        org.opendatakit.aggregate.odktables.entity.api.TableType.DATA;
+          org.opendatakit.aggregate.odktables.rest.entity.TableType.DATA;
       break;
     case shortcut:
       serverType =
-        org.opendatakit.aggregate.odktables.entity.api.TableType.SHORTCUT;
+          org.opendatakit.aggregate.odktables.rest.entity.TableType.SHORTCUT;
       break;
     case security:
       serverType =
-        org.opendatakit.aggregate.odktables.entity.api.TableType.SECURITY;
+          org.opendatakit.aggregate.odktables.rest.entity.TableType.SECURITY;
       break;
     default:
       Log.e(TAG, "unrecognized clientType: " + clientType);
@@ -145,7 +145,7 @@ public class SyncUtil {
     // the server and the device.
     return ColumnType.NONE;
   }
-  
+
   /**
    * Gets the name of the {@link TableResult#Status}.
    * @param context
@@ -172,7 +172,7 @@ public class SyncUtil {
     }
     return name;
   }
-  
+
   /**
    * Get a string to display to the user based on the {@link TableResult} after
    * a sync. Handles the logic for generating an appropriate message.
@@ -184,9 +184,9 @@ public class SyncUtil {
    * @param result
    * @return
    */
-  public static String getMessageForTableResult(Context context, 
+  public static String getMessageForTableResult(Context context,
       TableResult result) {
-    StringBuilder msg = new StringBuilder(); 
+    StringBuilder msg = new StringBuilder();
     msg.append(result.getTableDisplayName() + ": ");
     switch (result.getTableAction()) {
     case inserting:
@@ -199,14 +199,14 @@ public class SyncUtil {
       break;
     }
     // Now add the result of the status.
-    msg.append(getLocalizedNameForTableResultStatus(context, 
+    msg.append(getLocalizedNameForTableResultStatus(context,
         result.getStatus()));
     if (result.getStatus() == TableResult.Status.EXCEPTION) {
       // We'll append the message as well.
       msg.append(result.getMessage());
     }
     msg.append("--");
-    // Now we need to add some information about the individual actions that 
+    // Now we need to add some information about the individual actions that
     // should have been performed.
     if (result.hadLocalDataChanges()) {
       if (result.pushedLocalData()) {
@@ -217,7 +217,7 @@ public class SyncUtil {
     } else {
       msg.append("No local data changes. ");
     }
-    
+
     if (result.hadLocalPropertiesChanges()) {
       if (result.pushedLocalProperties()) {
         msg.append("Pushed local properties. ");
@@ -227,7 +227,7 @@ public class SyncUtil {
     } else {
       msg.append("No local properties changes. ");
     }
-    
+
     if (result.serverHadDataChanges()) {
       if (result.pulledServerData()) {
         msg.append("Pulled data from server. ");
@@ -237,7 +237,7 @@ public class SyncUtil {
     } else {
       msg.append("No data to pull from server. ");
     }
-    
+
     if (result.serverHadPropertiesChanges()) {
       if (result.pulledServerProperties()) {
         msg.append("Pulled properties from server. ");
@@ -247,23 +247,23 @@ public class SyncUtil {
     } else {
       msg.append("No properties to pull from server.");
     }
-    
+
     return msg.toString();
   }
-  
+
 
   /**
    * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
-   * their partition, aspect, and key, in that order. Must be from the same 
+   * their partition, aspect, and key, in that order. Must be from the same
    * table (i.e. have the same tableId) to have any meaning.
    * @author sudar.sam@gmail.com
    *
    */
-  public static class KVSEntryComparator implements 
+  public static class KVSEntryComparator implements
       Comparator<OdkTablesKeyValueStoreEntry> {
 
     @Override
-    public int compare(OdkTablesKeyValueStoreEntry lhs, 
+    public int compare(OdkTablesKeyValueStoreEntry lhs,
         OdkTablesKeyValueStoreEntry rhs) {
       int partitionComparison = lhs.partition.compareTo(rhs.partition);
       if (partitionComparison != 0) {
@@ -278,7 +278,7 @@ public class SyncUtil {
       int keyComparison = lhs.key.compareTo(rhs.key);
       return keyComparison;
     }
-    
+
   }
 
 
