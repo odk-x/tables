@@ -28,7 +28,6 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;

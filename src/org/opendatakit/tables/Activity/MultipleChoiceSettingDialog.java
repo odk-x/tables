@@ -32,17 +32,17 @@ import android.widget.TableRow;
 
 /**
  * A dialog for editing the multiple-choice options for a column.
- * 
+ *
  * @author hkworden
  */
 public class MultipleChoiceSettingDialog extends Dialog {
-    
+
     private Context context;
     private ColumnProperties cp;
     private LinearLayout layout;
     private ArrayList<String> optionValues;
     private List<EditText> optionFields;
-    
+
     public MultipleChoiceSettingDialog(Context context, ColumnProperties cp) {
         super(context);
         this.context = context;
@@ -54,7 +54,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         optionValues = new ArrayList<String>();
         optionFields = new ArrayList<EditText>();
     }
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,13 +64,13 @@ public class MultipleChoiceSettingDialog extends Dialog {
         }
         init();
     }
-    
+
     private void init() {
         layout.removeAllViews();
         optionFields.clear();
         TableLayout optionList = new TableLayout(context);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         optionList.setLayoutParams(tlp);
         for (int i = 0; i < optionValues.size(); i++) {
@@ -120,7 +120,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
         buttonWrapper.addView(saveButton);
         layout.addView(buttonWrapper);
     }
-    
+
     private void updateValueList() {
         for (int i = 0; i < optionFields.size(); i++) {
             EditText field = optionFields.get(i);

@@ -35,7 +35,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
-import org.opendatakit.tables.exception.TableAlreadyExistsException;
+import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;

@@ -48,8 +48,8 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.util.FileUtils;
-import org.opendatakit.tables.util.TableFileUtils;
+import org.opendatakit.tables.utils.FileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

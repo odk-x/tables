@@ -34,7 +34,7 @@ import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;

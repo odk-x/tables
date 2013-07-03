@@ -26,7 +26,7 @@ import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.exception.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.files.FileSyncAdapter;
 
 import com.actionbarsherlock.app.SherlockActivity;

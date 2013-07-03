@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.DataStructure.MessageShortcut;
+import org.opendatakit.tables.data.MessageShortcut;
 
 import android.app.Dialog;
 import android.app.ListActivity;

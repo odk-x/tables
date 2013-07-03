@@ -18,11 +18,11 @@ package org.opendatakit.tables.Activity.importexport;
 import java.io.File;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Task.ExportRequest;
-import org.opendatakit.tables.Task.ExportTask;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.tasks.ExportRequest;
+import org.opendatakit.tables.tasks.ExportTask;
 
 import android.content.Intent;
 import android.net.Uri;

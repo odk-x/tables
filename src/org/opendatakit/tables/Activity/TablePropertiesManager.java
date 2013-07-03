@@ -19,13 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.importexport.IETabActivity;
 import org.opendatakit.tables.Activity.util.LanguageUtil;
 import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.activities.TableMapFragment;
+import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
@@ -36,8 +35,8 @@ import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.lib.EditFormDialogPreference;
-import org.opendatakit.tables.view.custom.CustomDetailView;
+import org.opendatakit.tables.preferences.EditFormDialogPreference;
+import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -46,7 +45,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
@@ -58,7 +56,6 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -73,7 +70,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   private static final String TAG = "TablePropertiesManager";
 
     public static final String INTENT_KEY_TABLE_ID = "tableId";
-    
+
     private static final String TITLE_EDIT_FORM = "Edit Default Form";
 
     // these ints are used when selecting/changing the view files
@@ -347,14 +344,14 @@ public class TablePropertiesManager extends PreferenceActivity {
                     }
         });
         displayCat.addPreference(detailViewPref);
-        
+
         // Now let's add the pref for the Form.
-        EditFormDialogPreference formPref = 
+        EditFormDialogPreference formPref =
             new EditFormDialogPreference(this, tp);
         displayCat.addPreference(formPref);
         formPref.setTitle(TITLE_EDIT_FORM);
         formPref.setDialogTitle(TITLE_EDIT_FORM);
-        
+
         Preference rowColorRulePrefs = new Preference(this);
         rowColorRulePrefs.setTitle("Edit Table Color Rules");
         rowColorRulePrefs.setOnPreferenceClickListener(
@@ -377,7 +374,7 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         });
         displayCat.addPreference(rowColorRulePrefs);
-        
+
         Preference statusColumnColorRulePref = new Preference(this);
         statusColumnColorRulePref.setTitle("Edit Status Column Color Rules");
         statusColumnColorRulePref.setOnPreferenceClickListener(
@@ -707,7 +704,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         		}
             	kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
             }
-            
+
             // Add every location column to the list.
             String[] locColDisplayNames = new String[locationCols.size()];
             String[] locColElementKeys = new String[locationCols.size()];
@@ -840,23 +837,23 @@ public class TablePropertiesManager extends PreferenceActivity {
         setResult(RESULT_OK);
         finish();
     }
-    
+
     /**
      * This preference allows the user to select a file from their SD card.
-     * If the user does not have a file picker installed on their phone, then a toast 
+     * If the user does not have a file picker installed on their phone, then a toast
      * will indicate so.
-     * 
+     *
      * @author Chris Gelon (cgelon)
      */
     private class FileSelectorPreference extends EditTextPreference {
     	/** Indicates which preference we are using the selector for. */
     	private int mRequestCode;
-    	
+
 		public FileSelectorPreference(Context context, int requestCode) {
 			super(context);
 			mRequestCode = requestCode;
 		}
-		
+
 		@Override
 		protected void onClick() {
 			if (hasFilePicker()) {
@@ -875,7 +872,7 @@ public class TablePropertiesManager extends PreferenceActivity {
 				Toast.makeText(TablePropertiesManager.this, getString(R.string.file_picker_not_found), Toast.LENGTH_LONG).show();
 			}
 		}
-		
+
 		/**
 		 * @return	True if the phone has a file picker installed, false otherwise.
 		 */

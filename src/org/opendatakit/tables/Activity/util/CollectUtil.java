@@ -30,7 +30,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.util.TableFileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.ContentResolver;

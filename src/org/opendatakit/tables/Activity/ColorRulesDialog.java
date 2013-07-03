@@ -18,10 +18,10 @@ package org.opendatakit.tables.Activity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.tables.DataStructure.ColorRule;
-import org.opendatakit.tables.DataStructure.ColorRule.RuleType;
-import org.opendatakit.tables.DataStructure.ColorRuleGroup;
-import org.opendatakit.tables.lib.ColorPickerDialog;
+import org.opendatakit.tables.data.ColorRule;
+import org.opendatakit.tables.data.ColorRule.RuleType;
+import org.opendatakit.tables.data.ColorRuleGroup;
+import org.opendatakit.tables.views.ColorPickerDialog;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -43,7 +43,7 @@ import android.widget.TextView;
  * SS: reworking it to be functional, but still could be cleaned up. It should
  * probably be using an array adapter or something, but hacked it together
  * based on what code was already here.
- * 
+ *
  * @author sudar.sam@gmail.com
  * @author unknown
  */
@@ -75,19 +75,19 @@ public class ColorRulesDialog extends Dialog {
     // user. the underscore is just for us.
     setTitle("Conditional Colors: " + displayName);
   }
-  
+
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     refreshView();
   }
-  
-  @Override 
+
+  @Override
   public void onRestoreInstanceState(Bundle savedState) {
     refreshView();
   }
-  
+
 
   /**
    * SS: This is a method I've made to clean up the state after they hit the ok
@@ -117,7 +117,7 @@ public class ColorRulesDialog extends Dialog {
     ll.setOrientation(LinearLayout.VERTICAL);
     final TableLayout tl = new TableLayout(c);
     LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.FILL_PARENT, 
+        LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT);
     tl.setLayoutParams(tlp);
     for (int i = 0; i < colRules.size(); i++) {
@@ -173,7 +173,7 @@ public class ColorRulesDialog extends Dialog {
     } else {
       // hmm, so i think the id is just the column in the db where the tableid
       // is located, or something? not clear to me.
-      rule = new ColorRule(colName, RuleType.NO_OP, "", Color.BLACK, 
+      rule = new ColorRule(colName, RuleType.NO_OP, "", Color.BLACK,
           Color.WHITE);
       // and now I think we need to add this rule to the list...
       colRules.add(rule);
@@ -199,7 +199,7 @@ public class ColorRulesDialog extends Dialog {
           // we will want the delete button to remove the current row, I guess.
           // for the logic see the note in the focus change listener.
           int indOfNewRow = colRules.size() - 1;
-          // also move the last touched edit pointer to we don't try and 
+          // also move the last touched edit pointer to we don't try and
           // access an item outside the list. just move to front.
           if (lastFocusedRow == colRules.size() - 1)
             lastFocusedRow = 0;
@@ -212,7 +212,7 @@ public class ColorRulesDialog extends Dialog {
     // preparing the text field
     EditText input = new EditText(c);
     if (index != -1) {
-      input.setText((rule.getOperator().getSymbol() + " " 
+      input.setText((rule.getOperator().getSymbol() + " "
           + rule.getVal()).trim());
     } else {
       input.setText(RuleType.NO_OP.getSymbol());
@@ -249,15 +249,15 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
         updateLastRowVal();
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
-          @Override
-          public void colorChanged(int color) {
-            rule.setForeground(color);
-            colorRuler.updateRule(rule);
-            refreshView();
-          }
+			@Override
+			public void colorChanged(String key, int color) {
+	            rule.setForeground(color);
+	            colorRuler.updateRule(rule);
+	            refreshView();
+			}
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, 
-            rule.getForeground());
+        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
+            "", rule.getForeground(), rule.getForeground(), "Pick a Foreground Color");
         cpd.show();
       }
     });
@@ -271,15 +271,15 @@ public class ColorRulesDialog extends Dialog {
       public void onClick(View v) {
         updateLastRowVal();
         ColorPickerDialog.OnColorChangedListener ccl = new ColorPickerDialog.OnColorChangedListener() {
-          @Override
-          public void colorChanged(int color) {
-            rule.setBackground(color);
-            colorRuler.updateRule(rule);
-            refreshView();
-          }
+			@Override
+			public void colorChanged(String key, int color) {
+	            rule.setBackground(color);
+	            colorRuler.updateRule(rule);
+	            refreshView();
+			}
         };
-        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl, 
-            rule.getBackground());
+        ColorPickerDialog cpd = new ColorPickerDialog(c, ccl,
+            "", rule.getBackground(), rule.getBackground(), "Pick a Background Color");
         cpd.show();
       }
     });
@@ -297,7 +297,7 @@ public class ColorRulesDialog extends Dialog {
    * added and never touched, and therefore is never enforced. Catch this.
    */
   /*
-   * Ok, in the reimagining I'm just replacing the rows, but I do still need 
+   * Ok, in the reimagining I'm just replacing the rows, but I do still need
    * to catch the no op case.
    */
   private void persistRows() {

@@ -25,9 +25,9 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.util.TableFileUtils;
-import org.opendatakit.tables.view.custom.CustomAppView;
-import org.opendatakit.tables.view.custom.CustomView;
+import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.views.webkits.CustomAppView;
+import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Activity;
 import android.content.Intent;
