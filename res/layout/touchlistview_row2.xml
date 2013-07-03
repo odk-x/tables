@@ -23,7 +23,6 @@
         android:src="@drawable/settings_icon" />
 
     <TwoLineListItem
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/twoline_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
