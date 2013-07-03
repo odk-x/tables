@@ -71,8 +71,8 @@ public class EditFormDialogPreference extends DialogPreference {
 
   @Override
   protected void onBindDialogView(View view) {
-   Log.d(TAG, "in onBindDIalogView");
-
+    super.onBindDialogView(view);
+    Log.d(TAG, "in onBindDIalogView");
   }
 
   /**
