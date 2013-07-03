@@ -15,8 +15,7 @@
  */
 package org.opendatakit.tables.sync;
 
-import org.opendatakit.tables.Activity.Aggregate;
-import org.opendatakit.tables.data.DataManager;
+import org.opendatakit.tables.activities.Aggregate;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
@@ -50,7 +49,6 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
     String authToken = prefs.getAuthToken();
     if (aggregateUri != null && authToken != null) {
       DbHelper helper = DbHelper.getDbHelper(context);
-      DataManager dm = new DataManager(helper);
       AggregateSynchronizer synchronizer;
       try {
         synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
@@ -59,7 +57,8 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
         syncResult.stats.numAuthExceptions++;
         return;
       }
-      SyncProcessor processor = new SyncProcessor(synchronizer, dm, syncResult);
+      SyncProcessor processor = new SyncProcessor(helper, synchronizer,
+          syncResult);
       processor.synchronize();
     }
   }

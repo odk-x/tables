@@ -1,6 +1,6 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.Activity.importexport.ImportCSVActivity;
+import org.opendatakit.tables.activities.importexport.ImportCSVActivity;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.utils.CsvUtil;
 
@@ -29,15 +29,15 @@ extends AsyncTask<ImportRequest, Integer, Boolean> {
 		CsvUtil cu = new CsvUtil(this.importCSVActivity);
 		if (request.getCreateTable()) {
 			try {
-				return cu.importNewTable(this, request.getFile(),
+				return cu.importNewTable(importCSVActivity, this, request.getFile(),
 						request.getTableName());
 			} catch (TableAlreadyExistsException e) {
 				caughtDuplicateTableException = true;
 				return false;
 			}
 		} else {
-			return cu.importAddToTable(request.getFile(),
-					request.getTableProperties().getTableId());
+			return cu.importAddToTable(importCSVActivity, this, request.getFile(),
+					request.getTableId());
 		}
 	}
 

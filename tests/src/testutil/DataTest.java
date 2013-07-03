@@ -4,8 +4,9 @@ import org.opendatakit.tables.Activity.util.SecurityUtil;
 import org.opendatakit.tables.Activity.util.ShortcutUtil;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnProperties.ColumnType;
-import org.opendatakit.tables.data.DataManager;
+import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.data.TableProperties;
 import junit.framework.TestCase;
@@ -14,11 +15,11 @@ import static org.mockito.Mockito.when;
 
 
 public abstract class DataTest extends TestCase {
-    
+
     protected static final int DATA_TABLES_INDEX = 0;
     protected static final int SECURITY_TABLES_INDEX = 1;
     protected static final int SHORTCUT_TABLES_INDEX = 2;
-    
+
     protected static final String[][] TABLE_IDS = {
         {"f43jg", "gi4j3gt4", "ogt4", "4ewjg", "utw2t"},
         {"ogjr4t", "o4i3hjtw"},
@@ -158,27 +159,28 @@ public abstract class DataTest extends TestCase {
     };
     protected static final String[] JOBAPP_MC_OPTIONS =
         {"Engineer", "Secretary", "Manager"};
-    
-    protected DataManager dm;
-    protected TableProperties[] allTps;
+
+    protected DbHelper dbh;
+   protected TableProperties[] allTps;
     protected TableProperties[][] tps;
     protected DbTable[][] dbts;
-    
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         tps = new TableProperties[TABLE_IDS.length][];
         dbts = new DbTable[TABLE_IDS.length][];
-        dm = mock(DataManager.class);
+        dbh = new mock(DbHelper.class);
         for (int i = 0; i < tps.length; i++) {
             tps[i] = new TableProperties[TABLE_IDS[i].length];
             dbts[i] = new DbTable[TABLE_IDS[i].length];
             for (int j = 0; j < tps[i].length; j++) {
                 tps[i][j] = buildTp(i, j);
-                when(dm.getTableProperties(TABLE_IDS[i][j])).thenReturn(
+                when(TableProperties.getTablePropertiesForTable(dbh, TABLE_IDS[i][j],
+                    KeyValueStore.Type.ACTIVE)).thenReturn(
                         tps[i][j]);
                 dbts[i][j] = mock(DbTable.class);
-                when(dm.getDbTable(TABLE_IDS[i][j])).thenReturn(dbts[i][j]);
+                when(DbTable.getDbTable(dbh, TABLE_IDS[i][j])).thenReturn(dbts[i][j]);
             }
         }
         int allTpCount = 0;
@@ -195,14 +197,17 @@ public abstract class DataTest extends TestCase {
         }
         when(tps[0][2].getColumns()[1].getMultipleChoiceOptions())
                 .thenReturn(JOBAPP_MC_OPTIONS);
-        when(dm.getAllTableProperties()).thenReturn(allTps);
-        when(dm.getDataTableProperties()).thenReturn(tps[DATA_TABLES_INDEX]);
-        when(dm.getSecurityTableProperties()).thenReturn(
-                tps[SECURITY_TABLES_INDEX]);
-        when(dm.getShortcutTableProperties()).thenReturn(
+        when(TableProperties.getTablePropertiesForAll(dbh,
+            KeyValueStore.Type.ACTIVE)).thenReturn(allTps);
+        when(TableProperties.getTablePropertiesForDataTables(dbh,
+            KeyValueStore.Type.ACTIVE)).thenReturn(tps[DATA_TABLES_INDEX]);
+        when(TableProperties.getTablePropertiesForSecurityTables(dbh,
+            KeyValueStore.Type.ACTIVE)).thenReturn(tps[SECURITY_TABLES_INDEX]);
+        when(TableProperties.getTablePropertiesForShortcutTables(dbh,
+            KeyValueStore.Type.ACTIVE)).thenReturn(
                 tps[SHORTCUT_TABLES_INDEX]);
     }
-    
+
     private TableProperties buildTp(int type, int index) {
         TableProperties tp = mock(TableProperties.class);
         when(tp.getTableId()).thenReturn(TABLE_IDS[type][index]);
@@ -236,7 +241,7 @@ public abstract class DataTest extends TestCase {
         when(tp.getColumnOrder()).thenReturn(colOrder);
         return tp;
     }
-    
+
     protected Table buildTable(int type, int index) {
         String[][] data = DATA[type][index];
         Table allTable = mock(Table.class);

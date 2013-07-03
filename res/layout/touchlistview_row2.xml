@@ -48,7 +48,7 @@
             android:layout_alignLeft="@+id/row_label"
             android:layout_below="@+id/row_label"
             android:layout_centerVertical="true"
-            android:text="Edit"
+            android:text="@+string/edit"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </TwoLineListItem>
 

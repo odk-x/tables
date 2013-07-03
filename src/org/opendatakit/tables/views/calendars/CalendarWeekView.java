@@ -20,6 +20,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.opendatakit.tables.R;
+
 
 import android.content.Context;
 import android.graphics.Color;
@@ -69,7 +71,14 @@ public class CalendarWeekView extends CalendarView {
 		LinearLayout lv = new LinearLayout(c);
 		lv.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
 				LayoutParams.WRAP_CONTENT));
-		String[] dows = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+		String[] dows = {
+				c.getString(R.string.sunday_abbrev),
+				c.getString(R.string.monday_abbrev),
+				c.getString(R.string.tuesday_abbrev),
+				c.getString(R.string.wednesday_abbrev),
+				c.getString(R.string.thursday_abbrev),
+				c.getString(R.string.friday_abbrev),
+				c.getString(R.string.saturday_abbrev)};
 		View gap = new View(c);
 		gap.setLayoutParams(new LayoutParams(timeWidth, 0, 0));
 		lv.addView(gap);

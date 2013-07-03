@@ -15,22 +15,22 @@
  */
 package org.opendatakit.tables.data;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.opendatakit.tables.data.UserTable.Row;
 
 import android.util.Log;
 
 /**
- * This is a single rule specifying a color for a given datum. 
+ * This is a single rule specifying a color for a given datum.
  * @author sudar.sam@gmail.com
  *
  */
 public class ColorRule {
-  
+
   public static final String TAG = "ColColorRule";
-  
+
   // The UUID of the rule.
   private String mId;
   /**
@@ -41,12 +41,12 @@ public class ColorRule {
   private String mValue;
   private int mForeground;
   private int mBackground;
-  
+
   // ONLY FOR SERIALIZATION
   private ColorRule() {
     // not implemented, used only for serialization
   }
-  
+
   /**
    * Construct a new color rule to dictate the coloring of cells. Constructs
    * a UUID for the column id.
@@ -57,15 +57,15 @@ public class ColorRule {
    * @param foreground the foreground color of the rule
    * @param background the background color of the rule
    */
-  public ColorRule(String colElementKey, RuleType compType, String value, 
+  public ColorRule(String colElementKey, RuleType compType, String value,
       int foreground, int background) {
     // generate a UUID for the color rule. We can't let it autoincrement ints
     // as was happening before, as this would become corrupted when rules were
     // imported from other dbs.
-    this(UUID.randomUUID().toString(), colElementKey, compType, value, 
+    this(UUID.randomUUID().toString(), colElementKey, compType, value,
         foreground, background);
   }
-  
+
   /**
    * Construct a new color rule.
    * @param id
@@ -75,16 +75,16 @@ public class ColorRule {
    * @param foreground
    * @param background
    */
-  public ColorRule(String id, String colName, RuleType compType, 
+  public ColorRule(String id, String colName, RuleType compType,
       String value, int foreground, int background) {
     this.mId = id;
     this.mElementKey = colName;
     this.mOperator = compType;
     this.mValue = value;
     this.mForeground = foreground;
-    this.mBackground = background;   
+    this.mBackground = background;
   }
-  
+
   /**
    * Get the UUID of the rule.
    * @return
@@ -93,7 +93,7 @@ public class ColorRule {
   public String getRuleId() {
     return mId;
   }
-  
+
   /**
    * Get the element key of the column to which this rule applies.
    * @return
@@ -102,7 +102,7 @@ public class ColorRule {
   public String getColumnElementKey() {
     return mElementKey;
   }
-  
+
   /**
    * Get the target value to which the rule is being compared.
    * @return
@@ -111,11 +111,11 @@ public class ColorRule {
   public String getVal() {
     return mValue;
   }
-  
+
   public void setVal(String newVal) {
     this.mValue = newVal;
   }
-  
+
   /**
    * Get the foreground color of this rule.
    * @return
@@ -124,21 +124,52 @@ public class ColorRule {
   public int getForeground() {
     return mForeground;
   }
-  
-  /**
-   * Return symbol space value.
-   */
+
   @Override
   public String toString() {
-    String symbol = mOperator.getSymbol();
-    String value = mValue;
-    return symbol + " " + value;
+    return "[id=" + getRuleId()
+    	  + ", elementKey=" + getColumnElementKey()
+        + ", operator=" + getOperator()
+        + ", value=" + getVal()
+        + ", background=" + getBackground()
+        + ", foreground=" + getForeground()
+        + "]";
   }
-  
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ColorRule)) {
+      return false;
+    }
+    ColorRule other = (ColorRule) o;
+    return mId == null ? other.mId == null : mId.equals(other.mId)
+        && mElementKey == null ? other.mElementKey == null : mElementKey.equals(other.mElementKey)
+        && mOperator == null ? other.mOperator == null : mOperator == other.mOperator
+        && mValue == null ? other.mValue == null : mValue == other.mValue
+        && mBackground == other.mBackground
+        && mForeground == other.mForeground;
+  }
+
+  /**
+   * Returns true if the given rule equals this one in all fields except for
+   * id.
+   * @param other
+   * @return
+   */
+  public boolean equalsWithoutId(ColorRule other) {
+    boolean sameElKey = mElementKey == null ? other.mElementKey == null : mElementKey.equals(other.mElementKey);
+    boolean sameOp =  mOperator == null ? other.mOperator == null : mOperator == other.mOperator;
+    boolean sameVal = mValue == null ? other.mValue == null : mValue == other.mValue;
+    boolean sameBackground = mBackground == other.mBackground;
+    boolean sameForeground = mForeground == other.mForeground;
+    return sameElKey && sameOp && sameVal && sameBackground && sameForeground;
+
+  }
+
   public void setForeground(int newForeground) {
     this.mForeground = newForeground;
   }
-  
+
   /**
    * Get the background color of this rule.
    * @return
@@ -147,20 +178,20 @@ public class ColorRule {
   public int getBackground() {
     return mBackground;
   }
-  
+
   public void setBackground(int newBackground) {
     this.mBackground = newBackground;
   }
-  
+
   @JsonIgnore
   public RuleType getOperator() {
     return mOperator;
   }
-  
+
   public void setOperator(RuleType newOperator) {
     this.mOperator = newOperator;
   }
-  
+
   /**
    * Set the element key of the column to which this rule will apply.
    * @param elementKey
@@ -168,21 +199,36 @@ public class ColorRule {
   public void setColumnElementKey(String elementKey) {
     this.mElementKey = elementKey;
   }
-  
-  public boolean checkMatch(String[] rowData, 
-      Map<String, Integer> indexMapping, 
-      Map<String, ColumnProperties> propertiesMapping) {
+
+  public boolean checkMatch(TableProperties tp, Row row) {
     try {
-      // First get the data abou the column.
-      ColumnProperties cp = propertiesMapping.get(mElementKey);
+      // First get the data about the column. It is possible that we are trying
+      // to match a metadata column, in which case there will be no
+      // ColumnProperties object. At this point all such metadata elementKeys
+      // must not begin with an underscore, whereas all user defined columns
+      // will, so we'll also try to do a helpful check in case this invariant
+      // changes in the future.
+      ColumnProperties cp = tp.getColumnByElementKey(mElementKey);
+      ColumnType columnType;
+      if (cp == null) {
+        // Was likely a metadata column.
+        if (mElementKey.startsWith("_")) {
+          throw new IllegalArgumentException("element key passed to " +
+          		"ColorRule#checkMatch didn't have a mapping and was likely " +
+          		"not a metadata elementKey: " + mElementKey);
+        }
+        columnType = ColumnType.NONE;
+      } else {
+        columnType = cp.getColumnType();
+      }
       // Get the value we're testing against.
-      String testValue = rowData[indexMapping.get(mElementKey)];
+      String testValue = row.getDataOrMetadataByElementKey(mElementKey);
       if (testValue == null) {
         testValue = "";
       }
       int compVal;
-        if((cp.getColumnType() == ColumnType.NUMBER ||
-           cp.getColumnType() == ColumnType.INTEGER)){
+        if((columnType == ColumnType.NUMBER ||
+            columnType == ColumnType.INTEGER)){
           if (testValue.equals("")) {
             return false;
           }
@@ -218,31 +264,32 @@ public class ColorRule {
     }
     return false;
   }
-  
+
   public static enum RuleType {
-        
+
     LESS_THAN("<"),
     LESS_THAN_OR_EQUAL("<="),
     EQUAL("="),
     GREATER_THAN_OR_EQUAL(">="),
     GREATER_THAN(">"),
     NO_OP("operation value");
-    
-    private static final String STR_LESS_THAN = "<";
+
+    private static final String STR_NULL = "null";
+	private static final String STR_LESS_THAN = "<";
     private static final String STR_LESS_OR_EQUAL = "<=";
     private static final String STR_EQUAL = "=";
     private static final String STR_GREATER_OR_EQUAL = ">=";
     private static final String STR_GREATER_THAN = ">";
     private static final int NUM_VALUES_FOR_SPINNER = 5;
 
-    
+
     // This is the string that represents this operation.
     private String symbol;
-    
+
     private RuleType(String symbol) {
       this.symbol = symbol;
     }
-    
+
     /**
      * Return the possible values. Intended for a preference screen.
      * @return
@@ -256,11 +303,11 @@ public class ColorRule {
       result[4] = STR_GREATER_THAN;
       return result;
     }
-    
+
     public String getSymbol() {
-      return String.valueOf(symbol);
+      return (symbol == null) ? STR_NULL : symbol;
     }
-    
+
     public static RuleType getEnumFromString(String inputString) {
       if (inputString.equals(LESS_THAN.symbol)) {
         return LESS_THAN;
@@ -273,7 +320,7 @@ public class ColorRule {
       } else if (inputString.equals(GREATER_THAN.symbol)) {
         return GREATER_THAN;
      // this case is just to handle original code's nonsense
-      } else if (inputString.equals("") || inputString.equals(" ")) { 
+      } else if (inputString.equals("") || inputString.equals(" ")) {
         return NO_OP;
       } else {
         Log.e(TAG, "unrecognized rule operator: " + inputString);

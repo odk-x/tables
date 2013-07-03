@@ -15,48 +15,33 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import org.kxml2.io.KXmlParser;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
-import org.kxml2.kdom.Node;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.ColumnManager;
-import org.opendatakit.tables.Activity.DisplayPrefsActivity;
-import org.opendatakit.tables.Activity.ListViewManager;
-import org.opendatakit.tables.Activity.TableManager;
-import org.opendatakit.tables.Activity.TablePropertiesManager;
-import org.opendatakit.tables.Activity.util.CollectUtil;
-import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
-import org.xmlpull.v1.XmlPullParserException;
+import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -86,7 +71,7 @@ import com.actionbarsherlock.view.SubMenu;
  * class, which seemed undesirable since that would require that all of the
  * display activities be children of MapActivity for no good reason).
  */
-public class Controller {
+public class Controller implements CustomViewCallbacks {
 
   private static final String TAG = "Controller";
 
@@ -94,6 +79,20 @@ public class Controller {
     public static final String INTENT_KEY_SEARCH = "search";
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
     public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
+    /**
+     * Key to the where clause if this list view is to be opened with a more
+     * complex query than permissible by the simple query object. Must conform
+     * to the expectations of {@link DbTable#rawSqlQuery} and
+     * {@link CustomView$Control#queryWithSql}.
+     * @see INTENT_KEY_SQL_SELECTION_ARGS
+     */
+    public static final String INTENT_KEY_SQL_WHERE = "sqlWhereClause";
+    /**
+     * An array of strings for restricting the rows displayed in the table.
+     * @see INTENT_KEY_SQL_WHERE
+     */
+    public static final String INTENT_KEY_SQL_SELECTION_ARGS =
+        "sqlSelectionArgs";
 
     public static final int VIEW_ID_SEARCH_FIELD = 0;
     public static final int VIEW_ID_SEARCH_BUTTON = 1;
@@ -112,24 +111,27 @@ public class Controller {
 
     private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
     private static final int RCODE_COLUMN_MANAGER = 1;
-    private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
-    private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
+    public static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
+    public static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
     private static final int RCODE_LIST_VIEW_MANAGER = 4;
-    static final int FIRST_FREE_RCODE = 5;
-
-    private static final String COLLECT_FORMS_URI_STRING =
-        "content://org.odk.collect.android.provider.odk.forms/forms";
-    private static final Uri ODKCOLLECT_FORMS_CONTENT_URI =
-        Uri.parse(COLLECT_FORMS_URI_STRING);
-    private static final String COLLECT_INSTANCES_URI_STRING =
-        "content://org.odk.collect.android.provider.odk.instances/instances";
-    private static final Uri COLLECT_INSTANCES_CONTENT_URI =
-        Uri.parse(COLLECT_INSTANCES_URI_STRING);
+    /**
+     * This is the return code for when Collect is called to add a row to a
+     * table that is not the table held by the activity at the time of the
+     * call. E.g. Controller holds a TableProperties for a table that is
+     * currently being displayed. If we are in a list view, and the user wants
+     * to add a row to a table other than the table currently being displayed
+     * in the list view, this is the return code that should be used. The
+     * caller also must be sure to launch the intent using
+     * {@link CollectUtil#launchCollectToAddRow(Activity, Intent,
+     * TableProperties)}.
+     */
+    public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
+    public static final int FIRST_FREE_RCODE = 6;
 
     private final DataUtil du;
     private final SherlockActivity activity;
     private final DisplayActivity da;
-    private final DataManager dm;
+    private final DbHelper dbh;
     private TableProperties tp;
     private DbTable dbt;
     private final Stack<String> searchText;
@@ -141,10 +143,8 @@ public class Controller {
     private final ViewGroup displayWrap;
     private View overlay;
     private RelativeLayout.LayoutParams overlayLp;
-    private String rowId = null;
 
-
-    Controller(SherlockActivity activity, final DisplayActivity da,
+    public Controller(SherlockActivity activity, final DisplayActivity da,
             Bundle intentBundle) {
         du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
@@ -169,9 +169,8 @@ public class Controller {
         }
         isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
         // initializing data objects
-        dm = new DataManager(DbHelper.getDbHelper(activity));
-        tp = dm.getTableProperties(tableId, KeyValueStore.Type.ACTIVE);
-        dbt = dm.getDbTable(tableId);
+        dbh = DbHelper.getDbHelper(activity);
+        refreshDbTable(tableId);
 
         // INITIALIZING VIEW OBJECTS
         // controlWrap will hold the search bar and search button
@@ -218,7 +217,7 @@ public class Controller {
 
         // info bar currently displays just the name of the table
         infoBar = new TextView(activity);
-        infoBar.setText("Table: " + tp.getDisplayName());
+        setSimpleInfoBarText();
         infoBar.setBackgroundColor(Color.parseColor("#B0B0B0"));
         infoBar.setTextColor(Color.BLACK);
 
@@ -241,12 +240,20 @@ public class Controller {
                 ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-    /**
-     *  Set the text in the info bar
-     * @param text String to display in info bar
-     */
-    public void setInfoBarText(String text) {
-    	infoBar.setText(text);
+    public void setSimpleInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_plain_title, tp.getDisplayName()));
+    }
+
+    public void setListViewInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_list_title, tp.getDisplayName()));
+    }
+
+    public void setDetailViewInfoBarText() {
+        infoBar.setText(activity.getString(R.string.info_bar_detail_title, tp.getDisplayName()));
+    }
+
+    public void setGraphViewInfoBarText(String graphName) {
+        infoBar.setText(activity.getString(R.string.info_bar_graph_title, tp.getDisplayName(), graphName));
     }
 
     /**
@@ -259,29 +266,29 @@ public class Controller {
     /**
      * @return TableProperties properties of this table
      */
-  TableProperties getTableProperties() {
+  public TableProperties getTableProperties() {
     return tp;
   }
 
   /**
    * Update the dbTable that Controller is monitoring. This should be called
-   * only
-   * if there is no way to update the dbTable held by the
+   * only if there is no way to update the dbTable held by the
    * Controller if a change happens outside of the Controller's realm of
    * control. For instance, changing a column display name in PropertyManager
    * does not get updated to the dbTable without calling this method. This is
    * a messy way of doing things, and a refactor should probably end up fixing
    * this.
    */
-  void refreshDbTable() {
-    this.dbt = dm.getDbTable(tp.getTableId());
+  public void refreshDbTable(String tableId) {
+    tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
+        KeyValueStore.Type.ACTIVE);
+    dbt = DbTable.getDbTable(dbh, tp);
   }
 
   /**
    * @return DbTable this data table
    */
-  DbTable getDbTable() {
-    tp.refreshColumns();
+  public DbTable getDbTable() {
     return dbt;
   }
 
@@ -289,25 +296,25 @@ public class Controller {
    * @return True if this is an overview type, false if this is
    *         collection view type
    */
-  boolean getIsOverview() {
+  public boolean getIsOverview() {
       return isOverview;
   }
 
   /**
    * @return String text currently in the search bar
    */
-  String getSearchText() {
+  public String getSearchText() {
     return searchText.peek();
   }
 
   /**
    * @return the view generated for this
    */
-  View getContainerView() {
+  public View getContainerView() {
     return container;
   }
 
-  void setDisplayView(View dv) {
+  public void setDisplayView(View dv) {
     displayWrap.removeAllViews();
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
@@ -388,11 +395,11 @@ public class Controller {
         searchField.getEditText().getText() + text).trim());
   }
 
-  void recordSearch() {
+  public void recordSearch() {
     searchText.add(searchField.getEditText().getText().toString());
   }
 
-  void onBackPressed() {
+  public void onBackPressed() {
     if (searchText.size() == 1) {
       activity.finish();
     } else {
@@ -401,18 +408,6 @@ public class Controller {
       da.init();
     }
   }
-
-
-  /*
-   * Original method.
-   */
-//  void editRow(UserTable table, int rowNum) {
-//    Intent intent = getIntentForOdkCollectEditRow(table, rowNum);
-//    if (intent != null) {
-//      this.rowId = table.getRowId(rowNum);
-//      activity.startActivityForResult(intent, RCODE_ODKCOLLECT_EDIT_ROW);
-//    }
-//  }
 
   /**
    * This should launch Collect to edit the data for the row. If there is a
@@ -423,24 +418,33 @@ public class Controller {
    * @param rowNum
    * @param params
    */
-  void editRow(UserTable table, int rowNum, CollectFormParameters params) {
-    Intent intent = null;
-//    if (params.getFormId() == null) {
-//      intent = getIntentForOdkCollectEditRow(table, rowNum);
-//    } else {
-//      // a custom form has been assigned to the table.
-//      // So, we need to write the data file and then insert it and launch
-//      // the intent.
-//      intent = getIntentForOdkCollectEditRowRevised(table, rowNum, params);
-//    }
-    intent = getIntentForOdkCollectEditRow(table, rowNum, params);
-    if (intent != null) {
-      this.rowId = table.getRowId(rowNum);
-      activity.startActivityForResult(intent, RCODE_ODKCOLLECT_EDIT_ROW);
+  /*
+   * Examples for how this is done elsewhere can be found in:
+   * Examples for how this is done in Collect can be found in the Collect code
+   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
+   * updateInstanceDatabase() method.
+   */
+  void editRow(UserTable table, int rowNum) {
+	Map<String, String> elementKeyToValue = new HashMap<String, String>();
+	for (ColumnProperties cp : tp.getColumns().values()) {
+	  String value = table.getData(rowNum,
+	      tp.getColumnIndex(cp.getElementKey()));
+	  elementKeyToValue.put(cp.getElementKey(), value);
+	}
+
+	Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
+          null, null, null, table.getRowId(rowNum), table.getInstanceName(rowNum));
+
+	if (intent != null) {
+      CollectUtil.launchCollectToEditRow(activity, intent,
+          table.getRowId(rowNum));
+    } else {
+      Log.e(TAG, "intent null when trying to create for edit row.");
     }
   }
 
-  boolean handleActivityReturn(int requestCode, int returnCode, Intent data) {
+  public boolean handleActivityReturn(int requestCode, int returnCode,
+      Intent data) {
     switch (requestCode) {
     case RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
@@ -457,27 +461,26 @@ public class Controller {
     case RCODE_LIST_VIEW_MANAGER:
       handleListViewManagerReturn();
       return true;
+    case RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+      handleOdkCollectAddReturnForSpecificTable(returnCode, data);
+      return true;
     default:
       return false;
     }
   }
 
   private void handleListViewManagerReturn() {
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
+    refreshDbTable(tp.getTableId());
     da.init();
   }
 
   private void handleTablePropertiesManagerReturn() {
-//    int oldViewType = tvs.getViewType();
     // so for now I think that the boolean of whether or not the current view
     // is an overview of a collection view is stored here in Controller.
     // This should eventually move, if we decide to keep this architecture. but
     // for now I'm going to just hardcode in a solution.
     TableViewType oldViewType = tp.getCurrentViewType();
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
-//    if (oldViewType == tvs.getViewType()) {
+    refreshDbTable(tp.getTableId());
     if (oldViewType == tp.getCurrentViewType()) {
       da.init();
     } else {
@@ -486,8 +489,7 @@ public class Controller {
   }
 
   private void handleColumnManagerReturn() {
-    tp = dm.getTableProperties(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-    dbt = dm.getDbTable(tp.getTableId());
+    refreshDbTable(tp.getTableId());
     da.init();
   }
 
@@ -500,7 +502,7 @@ public class Controller {
      * with menu items enabled
      * @param menu Menu
      */
-    void buildOptionsMenu(Menu menu) {
+    public void buildOptionsMenu(Menu menu) {
     	this.buildOptionsMenu(menu, true);
     }
 
@@ -517,7 +519,7 @@ public class Controller {
 
         // search
         MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
-                "Search");
+                activity.getString(R.string.search));
         searchItem.setIcon(R.drawable.ic_action_search);
         searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         searchItem.setEnabled(enabled);
@@ -529,7 +531,7 @@ public class Controller {
         // 	  -build a checkable submenu to select the view type
         SubMenu viewTypeSubMenu =
             menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
-                Menu.NONE, "ViewType");
+                Menu.NONE, activity.getString(R.string.view_type));
         MenuItem viewType = viewTypeSubMenu.getItem();
         viewType.setIcon(R.drawable.view);
         viewType.setEnabled(enabled);
@@ -563,14 +565,14 @@ public class Controller {
         // Add Row
         MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON,
             Menu.NONE,
-              "Add Row").setEnabled(enabled);
+              activity.getString(R.string.add_row)).setEnabled(enabled);
         addItem.setIcon(R.drawable.content_new);
         addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         // Settings submenu
         SubMenu settings =
             menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU,
-                Menu.NONE, "Settings");
+                Menu.NONE, activity.getString(R.string.settings));
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -578,18 +580,18 @@ public class Controller {
         MenuItem display =
             settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES,
                 Menu.NONE,
-        		"Display Preferences").setEnabled(enabled);
+        		activity.getString(R.string.display_prefs)).setEnabled(enabled);
         // always disable DisplayPreferences if it is currently in list view
         if (tp.getCurrentViewType() == TableViewType.List)
         	display.setEnabled(false);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
-    			"Table Properties").setEnabled(enabled);
+    			activity.getString(R.string.table_props)).setEnabled(enabled);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
-              "Column Manager").setEnabled(enabled);
+              activity.getString(R.string.column_manager)).setEnabled(enabled);
         // Now an option for editing list views.
         MenuItem manageListViews =
             settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
-                Menu.NONE, "List View Manager").setEnabled(true);
+                Menu.NONE, activity.getString(R.string.list_view_manager)).setEnabled(true);
     }
 
     /**
@@ -597,7 +599,7 @@ public class Controller {
      * @param selectedItem MenuItem
      * @return true if selectedItem was handled
      */
-	boolean handleMenuItemSelection(MenuItem selectedItem) {
+	public boolean handleMenuItemSelection(MenuItem selectedItem) {
 		int itemId = selectedItem.getItemId();
 		// if the item is part of the sub-menu for view type, set the view type with its itemId
 	    // else, handle accordingly
@@ -625,15 +627,9 @@ public class Controller {
 	          // prepopulate with the form. We're going to ignore joins. This
 	          // means that if there IS a join column, we'll throw an error!!!
 	          // So be careful.
-	          Intent intentAddRow;
-	          if (getSearchText().equals("")) {
-	            intentAddRow = getIntentForOdkCollectAddRow(params, null);
-	          } else {
-    	          Map<String, String> elementNameToValue =
-    	              getMapFromLimitedQuery();
-    	         intentAddRow = getIntentForOdkCollectAddRow(params,
-    	             elementNameToValue);
-	          }
+	          Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRowByQuery(
+	        		  activity, tp, params, getSearchText());
+
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
 	                      RCODE_ODKCOLLECT_ADD_ROW);
@@ -687,296 +683,49 @@ public class Controller {
         }
   }
 
-	  /**
-	   * The idea here is that we might want to edit a row of the table using a
-	   * pre-set Collect form. This form would be user-defined and would be a more
-	   * user-friendly thing that would display only the pertinent information for
-	   * a particular user.
-	   * @param table
-	   * @param rowNum
-	   * @return
-	   */
-	  /*
-	   * This is a move away from the general "odk add row" usage that is going on
-	   * when no row is defined. As I understand it, the new case will work as
-	   * follows.
-	   *
-	   * There exits an "tableEditRow" form for a particular table. This form, as I
-	   * understand it, must exist both in the tables directory, as well as in
-	   * Collect so that Collect can launch it with an Intent.
-	   *
-	   * You then also construct a "values" sort of file, that is the data from the
-	   * database that will pre-populate the fields. Mitch referred to something
-	   * like this as the "instance" file.
-	   *
-	   * Once you have both of these files, the form and the data, you insert the
-	   * data into the form. When you launch the form, it is then pre-populated
-	   * with data from the database.
-	   *
-	   * In order to make this work, the form must exist both within the places
-	   * Collect knows to look, as well as in the Tables folder. You also must know
-	   * the:
-	   *
-	   * collectFormVersion
-	   * collectFormId
-	   * collectXFormRootElement (default to "data")
-	   *
-	   * These will most likely exist as keys in the key value store. They must
-	   * match the form.
-	   *
-	   * Other things needed will be:
-	   *
-	   * instanceFilePath  // I think the filepath with all the values
-	   * displayName       // just text, eg a row ID
-	   * formId            // the same thing as collectFormId?
-	   * formVersion
-	   * status            // either INCOMPLETE or COMPLETE
-	   *
-	   * Examples for how this is done in Collect can be found in the Collect code
-	   * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
-	   * updateInstanceDatabase() method.
-	   */
-	  public Intent getIntentForOdkCollectEditRow(UserTable table,
-	      int rowNum, CollectFormParameters params) {
-	    // Check if there is a custom form. If there is not, we want to delete
-	    // the old form and write the new form.
-	    if (!params.isCustom()) {
-	      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-	          activity.getContentResolver(), params, tp);
-	      if (!formIsReady) {
-	        Log.e(TAG, "could not delete, write, or insert a generated form");
-	        return null;
-	      }
-	    }
-	    Map<String, String> elementNameToValue = new HashMap<String, String>();
-	    for (ColumnProperties cp : tp.getColumns()) {
-	      String value = table.getData(rowNum,
-	          tp.getColumnIndex(cp.getElementName()));
-	      elementNameToValue.put(cp.getElementName(), value);
-	    }
-	    boolean writeDataSuccessful =
-	        CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
-	    if (!writeDataSuccessful) {
-	      Log.e(TAG, "could not write instance file successfully!");
-	    }
-	    Uri insertUri =
-	        CollectUtil.getUriForInsertedData(params, rowNum,
-	            activity.getContentResolver());
-	    // Copied the below from getIntentForOdkCollectEditRow().
-	    Intent intent = new Intent();
-	    intent.setComponent(new ComponentName("org.odk.collect.android",
-	            "org.odk.collect.android.activities.FormEntryActivity"));
-	    intent.setAction(Intent.ACTION_EDIT);
-	    intent.setData(insertUri);
-	    return intent;
-	  }
-
-	/**
-	 * Generate the Intent to add a row using Collect. For safety, the params
-	 * object, particularly it's isCustom field, determines exactly which action
-	 * is taken. If a custom form is defined, it launches that form. If there
-	 * is not, it writes a new form, inserts it into collect, and launches it.
-	 * @param params
-	 * @return
-	 */
-  public Intent getIntentForOdkCollectAddRow(CollectFormParameters params,
-      Map<String, String> elementNameToValue) {
-    /*
-     * So, there are several things to check here. The first thing we want to
-     * do is see if a custom form has been defined for this table. If there is
-     * not, then we will need to write a custom one. When we do this, we will
-     * then have to call delete on Collect to remove the old form, which will
-     * have used the same id. This will not fail if a form has not been already
-     * been written--delete will simply return 0.
-     */
-    // Check if there is a custom form. If there is not, we want to delete
-    // the old form and write the new form.
-    if (!params.isCustom()) {
-      boolean formIsReady = CollectUtil.deleteWriteAndInsertFormIntoCollect(
-          activity.getContentResolver(), params, tp);
-      if (!formIsReady) {
-        Log.e(TAG, "could not delete, write, or insert a generated form");
-        return null;
-      }
-    }
-    Uri formToLaunch;
-    if (elementNameToValue == null) {
-      formToLaunch = CollectUtil.getUriOfForm(activity.getContentResolver(),
-          params.getFormId());
-      if (formToLaunch == null) {
-        Log.e(TAG, "URI of the form to pass to Collect and launch was null");
-        return null;
-      }
-    } else {
-      // we've received some values to prepopulate the add row with.
-      boolean writeDataSuccessful =
-          CollectUtil.writeRowDataToBeEdited(elementNameToValue, tp, params);
-      if (!writeDataSuccessful) {
-        Log.e(TAG, "could not write instance file successfully!");
-      }
-      // Here we'll just act as if we're inserting 0, which
-      // really doesn't matter?
-      formToLaunch =
-          CollectUtil.getUriForInsertedData(params, 0,
-              activity.getContentResolver());
-    }
-    // And now finally create the intent.
-    Intent intent = new Intent();
-    intent.setComponent(new ComponentName("org.odk.collect.android",
-        "org.odk.collect.android.activities.FormEntryActivity"));
-    intent.setAction(Intent.ACTION_EDIT);
-    intent.setData(formToLaunch);
-    return intent;
-  }
-
-  private Map<String, String> getMapFromLimitedQuery() {
-    Map<String, String> elementNameToValue =
-        new HashMap<String, String>();
-    // First add all empty strings. We will overwrite the ones that are queried
-    // for in the search box. We need this so that if an add is canceled, we
-    // can check for equality and know not to add it. If we didn't do this,
-    // but we've prepopulated an add with a query, when we return and don't do
-    // a check, we'll add a blank row b/c there are values in the key value
-    // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : tp.getColumns()) {
-      elementNameToValue.put(cp.getElementName(), "");
-    }
-    Query currentQuery = new Query(null, tp);
-    currentQuery.loadFromUserQuery(getSearchText());
-    for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
-      Constraint constraint = currentQuery.getConstraint(i);
-      // NB: This is predicated on their only ever being a single
-     // search value. I'm not sure how additional values could be
-     // added.
-      elementNameToValue.put(constraint.getColumnDbName(),
-          constraint.getValue(0));
-    }
-    return elementNameToValue;
-  }
-
-  boolean addRowFromOdkCollectForm(int instanceId) {
-    Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-    if (formValues == null) {
-      return false;
-    }
-    Map<String, String> values = new HashMap<String, String>();
-    for (String key : formValues.keySet()) {
-        ColumnProperties cp = tp.getColumnByElementKey(key);
-        if (cp == null) {
-            continue;
-        }
-        String value = du.validifyValue(cp, formValues.get(key));
-        if (value != null) {
-            values.put(key, value);
-        }
-    }
-    // Now we want to check for equality of this and the query map. If they
-    // are the same, we know we hit ignore and didn't save anything.
-    Map<String, String> prepopulatedValues = getMapFromLimitedQuery();
-    if (prepopulatedValues.equals(values)) {
-      return false;
-    }
-    dbt.addRow(values);
-    return true;
-  }
-
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (returnCode != SherlockActivity.RESULT_OK) {
-            return;
+        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode,
+            data)) {
+          return;
+        } else {
+          // the add succeeded.
+          da.init();
         }
-        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        addRowFromOdkCollectForm(instanceId);
-        da.init();
     }
 
     private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-        if (returnCode != SherlockActivity.RESULT_OK) {
-            return;
-        }
-        int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
-        updateRowFromOdkCollectForm(instanceId);
+      if (!CollectUtil.handleOdkCollectEditReturn(activity, tp, returnCode,
+          data)) {
+        return;
+      } else {
+        // The update succeeded.
         da.init();
-    }
-
-    boolean updateRowFromOdkCollectForm(int instanceId) {
-      Map<String, String> formValues = getOdkCollectFormValues(instanceId);
-      if (formValues == null) {
-          return false;
       }
-      Map<String, String> values = getMapForInsertion(formValues);
-//      Map<String, String> values = new HashMap<String, String>();
-//
-//      for (ColumnProperties cp : tp.getColumns()) {
-//        // we want to use element name here, b/c that is what Collect should be
-//        // using to access all of the columns/elements.
-//          String elementName = cp.getElementName();
-//          String value = du.validifyValue(cp, formValues.get(elementName));
-//          if (value != null) {
-//              values.put(elementName,value);
-//          }
-//      }
-      dbt.updateRow(rowId, values);
-      rowId = null;
-      return true;
-  }
+    }
 
-  /**
-   * This gets a map of values for insertion into a row after returning from
-   * a Collect form.
-   * @param formValues
-   * @return
-   */
-  Map<String, String> getMapForInsertion(
-      Map<String, String> formValues) {
-    Map<String, String> values = new HashMap<String, String>();
-
-    for (ColumnProperties cp : tp.getColumns()) {
-      // we want to use element name here, b/c that is what Collect should be
-      // using to access all of the columns/elements.
-        String elementName = cp.getElementName();
-        String value = du.validifyValue(cp, formValues.get(elementName));
-        if (value != null) {
-            values.put(elementName,value);
-        }
+    /**
+     * Handle the add return from Collect if the user has specified a table
+     * other than that which is currently held in the Controller. Note that the
+     * Intent to launch Collect must have been launched using {@link
+     * CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}.
+     * @param returnCode
+     * @param data
+     */
+    private void handleOdkCollectAddReturnForSpecificTable(int returnCode,
+        Intent data) {
+      String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(activity);
+      if (tableId == null) {
+        Log.e(TAG, "return from ODK Collect expected to find a tableId " +
+        		"specifying the target of the add row, but was null.");
+        return;
+      }
+      TableProperties tpToReceiveAdd =
+          TableProperties.getTablePropertiesForTable(
+              DbHelper.getDbHelper(activity), tableId,
+              KeyValueStore.Type.ACTIVE);
+      CollectUtil.handleOdkCollectAddReturn(activity, tpToReceiveAdd,
+          returnCode, data);
     }
-    return values;
-  }
-
-  protected Map<String, String> getOdkCollectFormValues(int instanceId) {
-    String[] projection = { "instanceFilePath" };
-    String selection = "_id = ?";
-    String[] selectionArgs = { (instanceId + "") };
-    Cursor c = activity.managedQuery(COLLECT_INSTANCES_CONTENT_URI, projection, selection,
-        selectionArgs, null);
-    if (c.getCount() != 1) {
-      return null;
-    }
-    c.moveToFirst();
-    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
-    Document xmlDoc = new Document();
-    KXmlParser xmlParser = new KXmlParser();
-    try {
-      xmlParser.setInput(new FileReader(instancepath));
-      xmlDoc.parse(xmlParser);
-    } catch (IOException e) {
-      e.printStackTrace();
-      return null;
-    } catch (XmlPullParserException e) {
-      e.printStackTrace();
-      return null;
-    }
-    Element rootEl = xmlDoc.getRootElement();
-    Node rootNode = rootEl.getRoot();
-    Element dataEl = rootNode.getElement(0);
-    Map<String, String> values = new HashMap<String, String>();
-    for (int i = 0; i < dataEl.getChildCount(); i++) {
-      Element child = dataEl.getElement(i);
-      String key = child.getName();
-      String value = child.getChildCount() > 0 ? child.getText(0) : null;
-      values.put(key, value);
-    }
-    return values;
-  }
 
   void openCellEditDialog(String rowId, String value, int colIndex) {
     (new CellEditDialog(rowId, value, colIndex)).show();
@@ -984,19 +733,21 @@ public class Controller {
 
   public static void launchTableActivity(Context context, TableProperties tp,
       boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview, null);
+    Controller.launchTableActivity(context, tp, null, null, isOverview, null,
+        null, null);
   }
 
   public static void launchTableActivity(Context context, TableProperties tp,
-      String searchText, boolean isOverview) {
+      String searchText, boolean isOverview, String sqlWhereClause,
+      String[] sqlSelectionArgs) {
     Controller.launchTableActivity(context, tp, searchText, null, isOverview,
-        null);
+        null, sqlWhereClause, sqlSelectionArgs);
   }
 
   private static void launchTableActivity(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview) {
     Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
-        null);
+        null, null, null);
      context.finish();
   }
 
@@ -1013,9 +764,9 @@ public class Controller {
    */
   public static void launchTableActivityWithFilename(Activity context,
       TableProperties tp, Stack<String> searchStack, boolean isOverview,
-      String filename) {
+      String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
     Controller.launchTableActivity(context, tp, null, searchStack, isOverview,
-        filename);
+        filename, sqlWhereClause, sqlSelectionArgs);
     context.finish();
   }
 
@@ -1027,46 +778,116 @@ public class Controller {
 
   }
 
-  private static void launchTableActivity(Context context, TableProperties tp,
-      String searchText,
-      Stack<String> searchStack, boolean isOverview, String filename) {
-    //TODO: need to figure out how CollectionViewSettings should work.
-    // make them work.
-//    TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() : tp
-//        .getCollectionViewSettings();
-    TableViewType viewType = tp.getCurrentViewType();
-    Intent intent;
-//    switch (tvs.getViewType()) {
-    switch (viewType) {
-//    case TableViewSettings.Type.LIST:
-    //TODO: figure out which of these graph was originally and update it.
-    case List:
-      intent = new Intent(context, ListDisplayActivity.class);
-      if (filename != null) {
-        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
-      }
-      break;
-//    case TableViewSettings.Type.LINE_GRAPH:
-//      intent = new Intent(context, LineGraphDisplayActivity.class);
-//      break;
-//    case TableViewSettings.Type.BOX_STEM:
-//      intent = new Intent(context, BoxStemGraphDisplayActivity.class);
-//      break;
-//    case TableViewSettings.Type.BAR_GRAPH:
-    case Graph:
-      intent = new Intent(context, GraphDisplayActivity.class);
-      break;
-//    case TableViewSettings.Type.MAP:
-    case Map:
-      intent = new Intent(context, TableActivity.class);
-      break;
-    case Spreadsheet:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
-      break;
-    default:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+  /**
+   * Launches the Table pointed to by tp as a list view with the specified
+   * filename.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchListViewWithFileName(Context context,
+      TableProperties tp, String searchText, Stack<String> searchStack,
+      boolean isOverview, String filename, String sqlWhereClause,
+      String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, ListDisplayActivity.class);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+
+  /**
+   * Open the table to the list view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param filename
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchListViewWithFilenameAndSqlQuery(Context context,
+      TableProperties tp, String searchText, Stack<String> searchStack,
+      boolean isOverview, String filename, String sqlWhereClause,
+      String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, ListDisplayActivity.class);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+
+  /**
+   * Open the table to the map view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @param sqlWhereClause
+   * @param sqlSelectionArgs
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchMapView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, TableActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+
+  public static void launchSpreadsheetView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+
+  /**
+   * Open the table to graph view.
+   * @param context
+   * @param tp
+   * @param searchText
+   * @param searchStack
+   * @param isOverview
+   * @see DbTable#rawSqlQuery(String, String[])
+   */
+  public static void launchGraphView(Context context, TableProperties tp,
+      String searchText, Stack<String> searchStack, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    Intent intent = new Intent(context, GraphDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
+    context.startActivity(intent);
+  }
+
+  /*
+   * A helper method that was introduced just to eliminate redundant code.
+   * Adds the appropriate extras to the intent.
+   */
+  private static void prepareIntentForLaunch(Intent intent, TableProperties tp,
+      Stack<String> searchStack, String searchText, boolean isOverview,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
     if (searchStack != null) {
       String[] stackValues = new String[searchStack.size()];
       for (int i = 0; i < searchStack.size(); i++) {
@@ -1085,108 +906,83 @@ public class Controller {
       intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
     }
     intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    if (sqlWhereClause != null) {
+      intent.putExtra(INTENT_KEY_SQL_WHERE, sqlWhereClause);
+    }
+    if (sqlSelectionArgs != null) {
+      intent.putExtra(INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+    }
+  }
+
+  private static void launchTableActivity(Context context, TableProperties tp,
+      String searchText,
+      Stack<String> searchStack, boolean isOverview, String filename,
+      String sqlWhereClause, String[] sqlSelectionArgs) {
+    TableViewType viewType = tp.getCurrentViewType();
+    Intent intent;
+    switch (viewType) {
+    case List:
+      intent = new Intent(context, ListDisplayActivity.class);
+      if (filename != null) {
+        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      }
+      break;
+    case Graph:
+      intent = new Intent(context, GraphDisplayActivity.class);
+      break;
+    case Map:
+      intent = new Intent(context, TableActivity.class);
+      break;
+    case Spreadsheet:
+      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+      break;
+    default:
+      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+    }
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview,
+        sqlWhereClause, sqlSelectionArgs);
     context.startActivity(intent);
   }
 
-  public static void launchDetailActivity(Context context, TableProperties tp,
+  /**
+   * Launch a detail view for the given table showing the given rowNum.
+   * @param context
+   * @param tp
+   * @param table
+   * @param rowNum
+   * @param filename the filename to be used if the filename differs than that
+   * set in the key value store.
+   */
+  public static void launchDetailActivity(Activity activity,
       UserTable table,
-      int rowNum) {
-    String[] keys = new String[table.getWidth()];
-    String[] values = new String[table.getWidth()];
-    for (int i = 0; i < table.getWidth(); i++) {
-      keys[i] = tp.getColumns()[i].getElementKey();
-      values[i] = table.getData(rowNum, i);
-    }
-    Intent intent = new Intent(context, DetailDisplayActivity.class);
+      int rowNum, String filename) {
+    TableProperties tp = table.getTableProperties();
+    Intent intent = new Intent(activity, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_KEYS, keys);
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_VALUES, values);
-    context.startActivity(intent);
+    if (filename != null) {
+      // a null value informs the DetailDisplayActivity that the filename in
+      // the kvs should be used, so only add it if it has been set.
+      intent.putExtra(DetailDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    activity.startActivity(intent);
   }
-
-
-//    public class SearchActionProvider extends ActionProvider implements OnDragListener {
-//        Context mContext;
-//        public SearchActionProvider(Context context) {
-//            super(context);
-//            mContext = context;
-//        }
-//
-//        @Override
-//        public View onCreateActionView() {
-//    		controlWrap = new LinearLayout(mContext);
-//            searchField = new EditText(mContext);
-//            searchField.setId(VIEW_ID_SEARCH_FIELD);
-//            searchField.setText(searchText.peek());
-//            ImageButton searchButton = new ImageButton(mContext);
-//            searchButton.setId(VIEW_ID_SEARCH_BUTTON);
-//            searchButton.setImageResource(R.drawable.ic_action_search);
-//            searchButton.setOnClickListener(new OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    da.onSearch();
-//                }
-//            });
-//
-//            LinearLayout.LayoutParams searchFieldParams =
-//                    new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.MATCH_PARENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT);
-//            searchFieldParams.weight = 1;
-//            controlWrap.addView(searchField, searchFieldParams);
-//
-////            LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-////                    LinearLayout.LayoutParams.WRAP_CONTENT,
-////                    LinearLayout.LayoutParams.WRAP_CONTENT);
-////            buttonParams.weight = 0;
-////            controlWrap.addView(searchButton, buttonParams);
-//            return controlWrap;
-//        }
-//
-//        @Override
-//        public boolean onDrag(View v, DragEvent event) {
-//        	int action = event.getAction();
-//        	switch (event.getAction()) {
-//        	case DragEvent.ACTION_DRAG_STARTED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DRAG_ENTERED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DRAG_EXITED:
-//        		// Do nothing
-//        		break;
-//        	case DragEvent.ACTION_DROP:
-//        		// Dropped, reassign View to ViewGroup
-//        		View view = (View) event.getLocalState();
-//        		ViewGroup owner = (ViewGroup) view.getParent();
-//        		owner.removeView(view);
-//        		LinearLayout container = (LinearLayout) v;
-//        		container.addView(view);
-//        		view.setVisibility(View.VISIBLE);
-//        		break;
-//        	case DragEvent.ACTION_DRAG_ENDED:
-//        		// Do nothing
-//        	default:
-//        		break;
-//        	}
-//        	return true;
-//        }
-//    }
 
     private class CellEditDialog extends AlertDialog {
 
         private final String rowId;
         private final int colIndex;
+        private final String elementKey;
         private final CellValueView.CellEditView cev;
 
         public CellEditDialog(String rowId, String value, int colIndex) {
             super(activity);
             this.rowId = rowId;
             this.colIndex = colIndex;
-            cev = CellValueView.getCellEditView(activity,
-                    tp.getColumns()[colIndex], value);
+            ColumnProperties cp = tp.getColumnByIndex(colIndex);
+            this.elementKey = cp.getElementKey();
+            cev = CellValueView.getCellEditView(activity, cp, value);
             buildView(activity);
         }
         private void buildView(Context context) {
@@ -1195,16 +991,26 @@ public class Controller {
           setButton.setOnClickListener(new View.OnClickListener() {
               @Override
               public void onClick(View v) {
-                  String value = du.validifyValue(tp.getColumns()[colIndex],
+                  String value = du.validifyValue(
+                      tp.getColumnByElementKey(CellEditDialog.this.elementKey),
                           cev.getValue());
                   if (value == null) {
                       // TODO: alert the user
                       return;
                   }
                   Map<String, String> values = new HashMap<String, String>();
-                  values.put(tp.getColumns()[colIndex].getElementKey(),
+                  values.put(CellEditDialog.this.elementKey,
                           value);
-                  dbt.updateRow(rowId, values);
+
+                  // TODO: supply reasonable values for these...
+                  String uriUser = null; // user on phone
+                  Long timestamp = null; // current time
+                  String instanceName = null; // meta/instanceName if present in form
+                  String formId = null; // formId used by ODK Collect
+                  String locale = null; // current locale
+
+                  dbt.updateRow(rowId, values, uriUser, timestamp,
+                      instanceName, formId, locale);
                   da.init();
                   dismiss();
               }
@@ -1227,4 +1033,13 @@ public class Controller {
       setView(wrapper);
     }
   }
+
+    /*
+     * (non-Javadoc)
+     * @see org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks#getSearchString()
+     */
+    @Override
+    public String getSearchString() {
+      return this.getSearchText();
+    }
 }

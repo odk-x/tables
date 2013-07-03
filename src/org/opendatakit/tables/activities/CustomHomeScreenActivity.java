@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 University of Washington
+ * Copyright (C) 2013 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +15,16 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.Activity.TableManager;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.tasks.InitializeTask;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.views.webkits.CustomAppView;
+import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,7 +43,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 public class CustomHomeScreenActivity extends SherlockActivity implements
-    DisplayActivity {
+    DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
 
@@ -51,12 +59,17 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   private CustomAppView mView;
   private LinearLayout mContainerView;
   private String mFilename;
+  /**
+   * The Preferences for dealing with importing based on a config file.
+   */
+  private Preferences mPrefs;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "in onCreate()");
     setTitle("");
+    this.mPrefs = new Preferences(this);
     mContainerView = new LinearLayout(this);
     mContainerView.setLayoutParams(new ViewGroup.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -69,13 +82,17 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     } else {
       mFilename = CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME;
     }
-    //mController = new Controller(this, this, extras);
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     Log.d(TAG, "in onResume()");
+    // Now we'll also try to import any tables based on the configuration
+    // properties file.
+    if (ConfigurationUtil.isChanged(this.mPrefs)) {
+      new InitializeTask(this, this).execute();
+    }
     init();
   }
 
@@ -85,11 +102,9 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
-    mView = new CustomAppView(this, mFilename);
+    mView = new CustomAppView(this, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
-    //mController.setDisplayView(mView);
-    //setContentView(mController.getContainerView());
   }
 
   @Override
@@ -106,11 +121,45 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
      // We'll start with something to take us to the TableManager, which will
      // mean much greater flexibility.
      MenuItem item;
-     item = menu.add(0, MENU_ITEM_TABLE_MANAGER, 0, "Launch Table Manager");
+     item = menu.add(0, MENU_ITEM_TABLE_MANAGER, 0, getString(R.string.launch_table_manager));
      item.setIcon(android.R.drawable.ic_menu_sort_by_size);
      item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
      return true;
+  }
+  
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode,
+        Intent data) {
+    switch (requestCode) {
+    // We are going to handle the add row the same for both cases--an add row
+    // for the original table as well as an add row for another table. This is
+    // because the List and Detail activities maintain a TableProperties object
+    // for the table they were displaying. So when you return, if you were 
+    // adding to the same table that you were displaying you already have the 
+    // TableProperties object. In the case of this Activity, however, we never
+    // have a TableProperties (since we aren't really displaying a specific
+    // table), so you have to handle the return the same in both cases--first
+    // retrieve the tableId for the table that launched Collect, then get the
+    // TableProperties for that table, then add the row.
+    case Controller.RCODE_ODKCOLLECT_ADD_ROW:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+      String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(this);
+      if (tableId == null) {
+        Log.e(TAG, "return from ODK Collect expected to find a tableId " +
+            "specifying the target of the add row, but was null.");
+        return;
+      }
+      TableProperties tpToReceiveAdd =
+          TableProperties.getTablePropertiesForTable(
+              DbHelper.getDbHelper(this), tableId,
+              KeyValueStore.Type.ACTIVE);
+      CollectUtil.handleOdkCollectAddReturn(this, tpToReceiveAdd,
+          resultCode, data);
+      break;
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
+    }
   }
 
   @Override
@@ -125,6 +174,34 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
       Log.e(TAG, "unrecognized MenuItem id: " + item.getItemId());
       return false;
     }
+  }
+
+  @Override
+  public String getSearchString() {
+    // "search" makes no sense on the homescreen, so just return an empty
+    // string.
+    return "";
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.tasks.InitializeTask.Callbacks#getPrefs()
+   */
+  @Override
+  public Preferences getPrefs() {
+    return this.mPrefs;
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.tasks.InitializeTask.Callbacks#updateAfterImports()
+   */
+  @Override
+  public void onImportsComplete() {
+    // Here we essentially just need to reload the display for the user. This
+    // is important as the javascript might be doing something like displaying
+    // the current tables.
+    init();
   }
 
 }

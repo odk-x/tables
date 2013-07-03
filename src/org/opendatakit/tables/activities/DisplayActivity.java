@@ -16,9 +16,9 @@
 package org.opendatakit.tables.activities;
 
 
-interface DisplayActivity {
-    
+public interface DisplayActivity {
+
     void init();
-    
+
     void onSearch();
 }

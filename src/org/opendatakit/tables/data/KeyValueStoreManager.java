@@ -16,15 +16,15 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
-import org.opendatakit.aggregate.odktables.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -209,9 +209,16 @@ public class KeyValueStoreManager {
   public List<String> getAllIdsFromStore(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
     String backingName = getBackingNameForStore(typeOfStore);
-    Cursor c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
-        null, null, null, null, null, null);
-    return getTableIdsFromCursor(c);
+    Cursor c = null;
+    try {
+	    c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
+	        null, null, null, null, null, null);
+	    return getTableIdsFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed() ) {
+    		c.close();
+    	}
+    }
   }
 
   /**
@@ -223,9 +230,16 @@ public class KeyValueStoreManager {
   public List<String> getSynchronizedTableIds(SQLiteDatabase db) {
     // We want a query returning the TABLE_UUID where the key is the
     // sync state string and the value is true.
-    Cursor c = getTableIdsWithKeyValue(db, DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME,
-        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
-    return getTableIdsFromCursor(c);
+    Cursor c = null;
+    try {
+	    c = getTableIdsWithKeyValue(db, DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME,
+	        KeyValueStoreSync.SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(), "1");
+	    return getTableIdsFromCursor(c);
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
+    }
   }
 
   /**
@@ -351,7 +365,7 @@ public class KeyValueStoreManager {
    * active<--default
    * @param tableId
    */
-  public void revertToDefaultPropertiesForTable(String tableId) {
+  public void copyDefaultToActiveForTable(String tableId) {
     // There is some weirdness here. Elsewhere "properties" have been
     // considered to be ONLY those keys that exist in the init columns of
     // TableProperties. ATM the file pointers for list and box views, etc,
@@ -372,6 +386,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.ACTIVE);
     }
   }
 
@@ -394,15 +409,14 @@ public class KeyValueStoreManager {
    * @param tableId
    */
   public void mergeServerToDefaultForTable(String tableId) {
-    /*
-     * We're just going to go ahead and implement this with a map.
-     * We'll add the default entries first. Any that are present also
-     * in the server table will overwrite them. In the future, instead of
-     * just adding, logic for checking "user-resolvable" conflicts should be
-     * added here.
-     */
-    Map<String, OdkTablesKeyValueStoreEntry> newDefault =
-        new HashMap<String, OdkTablesKeyValueStoreEntry>();
+    // We're going to use a TreeSet because we need each
+    // OdkTablesKeyValueStoreEntry object to be dependent only on the
+    // partition, aspect, and key. The value should be ignored in the merge.
+    // If we didn't do this, then we would end up not overwriting values as
+    // expected.
+    Set<OdkTablesKeyValueStoreEntry> newDefault =
+        new TreeSet<OdkTablesKeyValueStoreEntry>(
+             new SyncUtil.KVSEntryComparator() );
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
@@ -413,15 +427,18 @@ public class KeyValueStoreManager {
 	        defaultKVS.getEntries(db);
 	    List<OdkTablesKeyValueStoreEntry> serverEntries =
 	        serverKVS.getEntries(db);
-	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
-	      newDefault.put(entry.key, entry);
-	    }
+	    // First we get all the server entries as a set. We'll then add all the
+	    // default values. A set is unchanged if the entry is already there, so
+	    // the default entries that already have entries will simply be gone.
 	    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
-	      newDefault.put(entry.key, entry);
+	      newDefault.add(entry);
+	    }
+	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
+	      newDefault.add(entry);
 	    }
 	    List<OdkTablesKeyValueStoreEntry> defaultList =
 	        new ArrayList<OdkTablesKeyValueStoreEntry>();
-	    for (OdkTablesKeyValueStoreEntry entry : newDefault.values()) {
+	    for (OdkTablesKeyValueStoreEntry entry : newDefault) {
 	      defaultList.add(entry);
 	    }
 	    // TA-DA! And now we have the merged entries. put them in the store.
@@ -430,6 +447,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -460,6 +478,7 @@ public class KeyValueStoreManager {
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -477,6 +496,9 @@ public class KeyValueStoreManager {
    * key value store that does NOT use this method, you must be sure to also
    * add the isSetToSync key to the sync KVS.
    * <p>
+   * Also increments the properties tag for the dataproperties and sets the
+   * table state to updating--both only if it has
+   * already been synched.
    * default-->server
    * @param tableId
    */
@@ -494,9 +516,23 @@ public class KeyValueStoreManager {
 	    serverKVS.addEntriesToStore(db, defaultEntries);
 	    // and now add an entry to the sync KVS.
 	    addIsSetToSyncToSyncKVSForTable(tableId);
+	    // Now try to update the properties tag.
+	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
+	        tableId, KeyValueStore.Type.SERVER);
+	    String syncTagStr = tp.getSyncTag();
+	    if (syncTagStr == null || syncTagStr.equals("")) {
+	      // Then it's not been synched and we can rely on it to first be inited
+	      // during the sync.
+	    } else {
+	      // We don't update the properties etag, which should only ever be set
+	      // from the server. The SyncState.updating flag is sufficient to mark
+	      // it as dirty.
+	      tp.setSyncState(SyncState.updating);
+	    }
     } finally {
       // TODO: fix the when to close problem
 //    	db.close();
+      TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     }
   }
 

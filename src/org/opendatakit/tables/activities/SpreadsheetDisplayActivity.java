@@ -19,15 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.Activity.ColorRuleManagerActivity;
-import org.opendatakit.tables.Activity.PropertyManager;
-import org.opendatakit.tables.Activity.util.CollectUtil;
-import org.opendatakit.tables.Activity.util.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
@@ -82,19 +78,17 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     // This should allow for the opening of a joined table.
     private static final int MENU_ITEM_ID_OPEN_JOIN_TABLE =
         Controller.FIRST_FREE_MENU_ITEM_ID + 11;
-    private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES = 
+    private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES =
         Controller.FIRST_FREE_MENU_ITEM_ID + 12;
     private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
         "Open Join Table";
     private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
         "Edit Column Color Rules";
 
-    private DataManager dm;
+    private DbHelper dbh;
     private Controller c;
-    private Query query;
     private UserTable table;
     private int indexedCol;
-    private TableProperties mTp;
 
     private int lastDataCellMenued;
     private int lastHeaderCellMenued;
@@ -106,7 +100,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         // remove a title
         setTitle("");
 
-        dm = new DataManager(DbHelper.getDbHelper(this));
+        dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
 //        init();
     }
@@ -114,7 +108,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void onResume() {
       super.onResume();
-      Log.d(TAG, "on resume, should re-init");
       init();
     }
 
@@ -122,21 +115,34 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      this.mTp = c.getTableProperties();
-      c.refreshDbTable();
-//      tp.refreshColumns();
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
-            mTp);
+      TableProperties tp = c.getTableProperties();
+      tp.refreshColumns();
+      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
         query.loadFromUserQuery(c.getSearchText());
-        table = c.getIsOverview() ?
-                c.getDbTable().getUserOverviewTable(query) :
-                c.getDbTable().getUserTable(query);
-//        indexedCol = c.getTableViewSettings().getTableIndexedColIndex();
+        // There are two options here. The first is that we get the data using
+        // the {@link Query} object. The other is that we use a sql where
+        // clause. The two currently don't play nice together, so figure out
+        // which one. The sql statement gets precedence.
+        String sqlWhereClause =
+            getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+        if (sqlWhereClause != null) {
+          String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+              Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+          DbTable dbTable = DbTable.getDbTable(dbh,
+              c.getTableProperties());
+          table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+        } else {
+          // We use the query.
+          table = c.getIsOverview() ?
+              c.getDbTable().getUserOverviewTable(query) :
+              c.getDbTable().getUserTable(query);
+        }
+
         String indexedColElementKey = c.getTableProperties().getIndexColumn();
         indexedCol =
             c.getTableProperties().getColumnIndex(indexedColElementKey);
         // setting up the view
-        c.setDisplayView(buildView(mTp));
+        c.setDisplayView(buildView(tp));
         setContentView(c.getContainerView());
     }
 
@@ -146,12 +152,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, tp, table, indexedCol);
+            return new SpreadsheetView(this, this, table, indexedCol);
         }
     }
 
     private void openCollectionView(int rowNum) {
-        query.clear();
+      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, table.getTableProperties());
+      query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
             ColumnProperties cp = c.getTableProperties()
@@ -160,12 +167,12 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false);
+                query.toUserQuery(), false, null, null);
     }
 
     void setColumnAsPrime(ColumnProperties cp) {
-    	ArrayList<String> oldPrimes = c.getTableProperties().getPrimeColumns();
-    	ArrayList<String> newPrimes = new ArrayList<String>();
+    	List<String> oldPrimes = c.getTableProperties().getPrimeColumns();
+    	List<String> newPrimes = new ArrayList<String>();
         newPrimes.add(cp.getElementKey());
         for (int i = 0; i < oldPrimes.size(); i++) {
             newPrimes.add(oldPrimes.get(i));
@@ -174,11 +181,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     void unsetColumnAsPrime(ColumnProperties cp) {
-        ArrayList<String> oldPrimes = c.getTableProperties().getPrimeColumns();
+        List<String> oldPrimes = c.getTableProperties().getPrimeColumns();
         if (oldPrimes.size() == 0) {
             return;
         }
-        ArrayList<String> newPrimes = new ArrayList<String>();
+        List<String> newPrimes = new ArrayList<String>();
         for (String prime : oldPrimes) {
             if (prime.equals(cp.getElementKey())) {
                 continue;
@@ -239,7 +246,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
 	@Override
 	public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
-	  Log.d(TAG, "onOptionsItemSelected");
 	  return true;
 	}
 
@@ -250,7 +256,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	 */
 	@Override
 	public boolean onContextItemSelected(android.view.MenuItem item) {
-	  Log.d(TAG, "onContextItemSelected, android MenuItem");
+     TableProperties tp = c.getTableProperties();
+
      switch (item.getItemId()) {
      case MENU_ITEM_ID_HISTORY_IN:
          openCollectionView(lastDataCellMenued / table.getWidth());
@@ -268,25 +275,19 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      case MENU_ITEM_ID_EDIT_ROW:
        // It is possible that a custom form has been defined for this table.
        // We will get the strings we need, and then set the parameter object.
-       CollectFormParameters params =
-           CollectUtil.CollectFormParameters
-             .constructCollectFormParameters(c.getTableProperties());
-       c.editRow(table, (lastDataCellMenued / table.getWidth()), params);
+       c.editRow(table, (lastDataCellMenued / table.getWidth()));
        // launch ODK Collect
        return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
-         setColumnAsPrime(c.getTableProperties()
-                 .getColumns()[lastHeaderCellMenued]);
+         setColumnAsPrime(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
-         unsetColumnAsPrime(c.getTableProperties()
-                 .getColumns()[lastHeaderCellMenued]);
+         unsetColumnAsPrime(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-         setColumnAsSort(c.getTableProperties()
-                 .getColumns()[lastHeaderCellMenued]);
+         setColumnAsSort(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
@@ -294,8 +295,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          init();
          return true;
      case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-         setColumnAsIndexedCol(c.getTableProperties()
-                 .getColumns()[lastHeaderCellMenued]);
+         setColumnAsIndexedCol(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
@@ -303,16 +303,15 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          init();
          return true;
      case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
-         openColumnPropertiesManager(c.getTableProperties()
-                 .getColumns()[lastHeaderCellMenued]);
+         openColumnPropertiesManager(tp.getColumnByIndex(lastHeaderCellMenued));
          return true;
      case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
        Intent i = new Intent(this, ColorRuleManagerActivity.class);
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, 
-           mTp.getColumns()[lastHeaderCellMenued].getElementKey());
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID, 
-           this.mTp.getTableId());
-       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE, 
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
+           tp.getColumnByIndex(lastHeaderCellMenued).getElementKey());
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+           table.getTableProperties().getTableId());
+       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
            ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);
      default:
@@ -401,7 +400,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public boolean onMenuItemSelected(int featureId,
         com.actionbarsherlock.view.MenuItem item) {
-      Log.d(TAG, "entered actionbarsherlock's onMenuItemSelected");
       return c.handleMenuItemSelection(item);
     }
 
@@ -473,7 +471,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
         lastHeaderCellMenued = cellId;
-        ColumnProperties cp = c.getTableProperties().getColumns()[cellId];
+        ColumnProperties cp =
+            c.getTableProperties().getColumnByIndex(lastHeaderCellMenued);
         if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
@@ -495,13 +494,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
                     ContextMenu.NONE, "Freeze Column");
         }
-        
+
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES,
             ContextMenu.NONE, MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES);
-        
+
         menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER,
                 ContextMenu.NONE, "Manage Column Properties");
-        
+
     }
 
     @Override
@@ -546,7 +545,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	@Override
 	public void prepFooterCellOccm(ContextMenu menu, int cellId) {
 		lastHeaderCellMenued = cellId;
-        ColumnProperties cp = c.getTableProperties().getColumns()[cellId];
+		TableProperties tp = c.getTableProperties();
+		ColumnProperties cp = tp.getColumnByIndex(cellId);
         if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
@@ -591,7 +591,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 //	        Context context = SpreadsheetDisplayActivity.this;
 	        context = SpreadsheetDisplayActivity.this;
 	        TextView valueView = new TextView(context);
-	        valueView.setText(table.getData(cellId));
+	        valueView.setText(table.getDisplayTextOfData(SpreadsheetDisplayActivity.this, cellId));
 	        valueView.setTextColor(Color.parseColor("#000000"));
 	        Button menuButton = new Button(context);
 	        menuButton.setText("Menu");
@@ -640,8 +640,9 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        // TODO by declaring this final (which you have to do to use it in
 	        // the on click method down there), does it mean that if you have a
 	        // table open and edit the join you will get the wrong information?
-	        final ColumnProperties cp = c.getTableProperties().getColumnByIndex(
-	            cellId % table.getWidth());
+	        TableProperties tp = c.getTableProperties();
+	        final ColumnProperties
+	            cp = tp.getColumnByIndex(cellId % table.getWidth());
 	        // First we want to check if we need to add a join item for this
 	        // column.
 	        if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
@@ -674,20 +675,22 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
+	                  final String rowId = table.getRowId(cellId / table.getWidth());
 	                  AlertDialog.Builder alert =
 	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);
-	                  alert.setTitle("Delete this row?");
+	                  alert.setTitle(getString(R.string.confirm_delete_row))
+	                  .setMessage(getString(R.string.are_you_sure_delete_row, rowId));
 	                  // OK Action => delete the row
-	                  alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+	                  alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
 	                     public void onClick(DialogInterface dialog, int whichButton) {
-	                       c.deleteRow(table.getRowId(cellId / table.getWidth()));
+	                       c.deleteRow(rowId);
 	                       c.removeOverlay();
 	                       init();
 	                     }
 	                  });
 
 	                  // Cancel Action
-	                  alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+	                  alert.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
 	                     public void onClick(DialogInterface dialog, int whichButton) {
 	                      // Canceled.
 	                       c.removeOverlay();
@@ -700,18 +703,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_EDIT_ROW:
 	                  // It is possible that a custom form has been defined for this table.
 	                  // We will get the strings we need, and then set the parameter object.
-//	                  String formId = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_ID);
-//	                  String formVersion = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_VERSION);
-//	                  String rootElement = c.getTableProperties().getStringEntry(
-//	                      CollectUtil.KEY_FORM_ROOT_ELEMENT);
-	                  CollectFormParameters params =
-//	                      new CollectFormParameters(formId, formVersion, rootElement);
-	                    CollectUtil.CollectFormParameters
-	                      .constructCollectFormParameters(
-	                        c.getTableProperties());
-	                    c.editRow(table, cellId / table.getWidth(), params);
+	                    c.editRow(table, cellId / table.getWidth());
 	                    c.removeOverlay();
 	                    init();
 	                    break;
@@ -746,8 +738,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  String tableId = joinColumn.getTableId();
 	                  String elementKey = joinColumn.getElementKey();
 	                  TableProperties joinedTable =
-	                      dm.getTableProperties(tableId,
-	                          KeyValueStore.Type.ACTIVE);
+                         TableProperties.getTablePropertiesForTable(dbh, tableId,
+                             KeyValueStore.Type.ACTIVE);
 	                  String joinedColDisplayName =
 	                      joinedTable.getColumnByElementKey(elementKey)
 	                      .getDisplayName();
@@ -755,10 +747,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  // object, but alas, it looks like atm it is hardcoded.
 	                  String queryText = joinedColDisplayName + ":" +
 	                      table.getData(cellId);
-	                    c.launchTableActivity(context,
-	                        dm.getTableProperties(tableId,
-	                            KeyValueStore.Type.ACTIVE),
-	                        queryText, c.getIsOverview());
+	                    Controller.launchTableActivity(context, joinedTable,
+	                        queryText, c.getIsOverview(), null, null);
 	                    c.removeOverlay();
 	                  break;
 	                default:
@@ -791,8 +781,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
 	            if (c.isInSearchBox(x, y)) {
-	                String colName = c.getTableProperties().getColumns()
-	                        [cellId % table.getWidth()].getDisplayName();
+	              int columnIndex = cellId % table.getWidth();
+	              TableProperties tp = c.getTableProperties();
+	              ColumnProperties cp = tp.getColumnByIndex(columnIndex);
+	                String colName = cp.getDisplayName();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.invertSearchBoxColor(false);
@@ -839,8 +831,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
 	            if (c.isInSearchBox(x, y)) {
-	                String colName = c.getTableProperties().getColumns()
-	                        [cellId % table.getWidth()].getDisplayName();
+	              int colIndex = cellId % table.getWidth();
+	              TableProperties tp = c.getTableProperties();
+	              ColumnProperties cp = tp.getColumnByIndex(colIndex);
+	                String colName = cp.getDisplayName();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.removeOverlay();

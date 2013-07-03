@@ -18,6 +18,7 @@ package org.opendatakit.tables.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -33,10 +34,12 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
-import org.opendatakit.tables.Activity.util.SecurityUtil;
-import org.opendatakit.tables.Activity.util.ShortcutUtil;
+import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.utils.ColorRuleUtil;
+import org.opendatakit.tables.utils.SecurityUtil;
+import org.opendatakit.tables.utils.ShortcutUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -51,28 +54,26 @@ import android.util.Log;
  * will be in the "default" key value store.
  * <p>
  * NB sudar.sam@gmail.com: The properties of a table exist in two different
- * places in the datastore: the immutable (ish) properties that are part of
- * the table's definition (things like db backing name, type of the table,
- * etc), are stored in the table_definitions table. The ODK Tables-specific
- * properties exist in the key value stores as described above.
+ * places in the datastore: the immutable (ish) properties that are part of the
+ * table's definition (things like db backing name, type of the table, etc), are
+ * stored in the table_definitions table. The ODK Tables-specific properties
+ * exist in the key value stores as described above.
  *
  * @author hkworden@gmail.com (Hilary Worden)
  * @author sudar.sam@gmail.com
  */
 public class TableProperties {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper;
   private static final String t = "TableProperties";
 
-  public static final String TAG = "TableProperties";
-
   /***********************************
-   *  The partition and aspect of table properties in the key value store.
+   * The partition and aspect of table properties in the key value store.
    ***********************************/
   public static final String KVS_PARTITION = "Table";
 
   /***********************************
-   *  The names of keys that are defaulted to exist in the key value store.
+   * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
   public static final String KEY_DISPLAY_NAME = "displayName";
   public static final String KEY_COLUMN_ORDER = "colOrder";
@@ -80,7 +81,7 @@ public class TableProperties {
   public static final String KEY_SORT_COLUMN = "sortCol";
   public static final String KEY_INDEX_COLUMN = "indexCol";
   public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
-//  public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
+  // public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
   public static final String KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
   // this should just be the saved query on a table. it isn't a property, it's
   // just a key. The default is the empty string.
@@ -88,12 +89,11 @@ public class TableProperties {
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
    * can be added her just as a sanity check. Note that they are NOT guaranteed
-   * to be here. The general convention is going to be that these keys should
-   * be defined in the respective classes that rely on them, and should be
+   * to be here. The general convention is going to be that these keys should be
+   * defined in the respective classes that rely on them, and should be
    * formatted as "Class.keyName." Eg "CollectUtil.formId".
    *
-   * Keys are known to exist in:
-   * CollectUtil
+   * Keys are known to exist in: CollectUtil
    */
 
   // TODO atm not sure if we want to keep these things here, or if we should
@@ -108,76 +108,341 @@ public class TableProperties {
   private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
   private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
-  private static final String JSON_KEY_READ_SECURITY_TABLE_ID =
-      "readAccessTid";
-  private static final String JSON_KEY_WRITE_SECURITY_TABLE_ID =
-      "writeAccessTid";
+  private static final String JSON_KEY_READ_SECURITY_TABLE_ID = "readAccessTid";
+  private static final String JSON_KEY_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
   private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
-//  private static final String JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
-//      "currentOverviewViewType";
-//  private static final String JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE =
-//      "currentCollectionViewType";
-//  private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
-  private static final String JSON_KEY_SUM_DISPLAY_FORMAT =
-      "summaryDisplayFormat";
-
+  // private static final String JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
+  // "currentOverviewViewType";
+  // private static final String JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE =
+  // "currentCollectionViewType";
+  // private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
+  private static final String JSON_KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
 
   /***********************************
-   *  Default values for those keys which require them.
-   *  TODO When the keys in the KVS are moved to the respective classes that
-   *  use them, these should go there most likely.
+   * Default values for those keys which require them. TODO When the keys in the
+   * KVS are moved to the respective classes that use them, these should go
+   * there most likely.
    ***********************************/
   public static final String DEFAULT_KEY_PRIME_COLUMNS = "";
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_INDEX_COLUMN = "";
   public static final String DEFAULT_KEY_CO_VIEW_SETTINGS = "";
-  public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE =
-      TableViewType.Spreadsheet.name();
-//  public static final String DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
-//      TableViewType.Spreadsheet.name();
-//  public static final String DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE =
-//      TableViewType.Spreadsheet.name();
-//  public static final String DEFAULT_KEY_DETAIL_VIEW_FILE = "";
+  public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.Spreadsheet.name();
+  // public static final String DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
+  // TableViewType.Spreadsheet.name();
+  // public static final String DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE =
+  // TableViewType.Spreadsheet.name();
+  // public static final String DEFAULT_KEY_DETAIL_VIEW_FILE = "";
   public static final String DEFAULT_KEY_SUM_DISPLAY_FORMAT = "";
   public static final String DEFAULT_KEY_OV_VIEW_SETTINGS = "";
   public static final String DEFAULT_KEY_COLUMN_ORDER = "";
   public static final String DEFAULT_KEY_CURRENT_QUERY = "";
 
   /*
-   * These are the keys that exist in the key value store after the creation
-   * of a table. In other words they should always exist in the key value
-   * store.
+   * These are the keys that exist in the key value store after the creation of
+   * a table. In other words they should always exist in the key value store.
    */
-  private static final String[] INIT_KEYS = {
-    KEY_DISPLAY_NAME,
-    KEY_COLUMN_ORDER,
-    KEY_PRIME_COLUMNS,
-    KEY_SORT_COLUMN,
-    KEY_CURRENT_VIEW_TYPE,
-    KEY_INDEX_COLUMN,
-//    KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//    KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//    KEY_DETAIL_VIEW_FILE,
-    KEY_CURRENT_QUERY,
-    KEY_SUM_DISPLAY_FORMAT};
+  private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
+      KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN,
+      // KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+      // KEY_CURRENT_COLLECTION_VIEW_TYPE,
+      // KEY_DETAIL_VIEW_FILE,
+      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT };
 
   // columns included in json properties
-  private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] {
-      KEY_DISPLAY_NAME,
-      KEY_COLUMN_ORDER,
-      KEY_PRIME_COLUMNS,
-      KEY_SORT_COLUMN,
-      KEY_CURRENT_VIEW_TYPE,
+  private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
+      KEY_COLUMN_ORDER, KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
       KEY_INDEX_COLUMN,
-//      KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//      KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//      KEY_DETAIL_VIEW_FILE,
+      // KEY_CURRENT_OVERVIEW_VIEW_TYPE,
+      // KEY_CURRENT_COLLECTION_VIEW_TYPE,
+      // KEY_DETAIL_VIEW_FILE,
       KEY_SUM_DISPLAY_FORMAT, });
 
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+  }
 
+  private static List<String> allTableIds = new ArrayList<String>();
+
+  private static boolean staleActiveCache = true;
+  private static List<String> idsInActiveKVS = new ArrayList<String>();
+  private static List<String> dataIdsInActiveKVS = new ArrayList<String>();
+  private static List<String> securityIdsInActiveKVS = new ArrayList<String>();
+  private static List<String> shortcutIdsInActiveKVS = new ArrayList<String>();
+  private static Map<String, TableProperties> activeTableIdMap = new HashMap<String, TableProperties>();
+
+  /**
+   * Return the TableProperties for all the tables in the specified KVS. store.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the store
+   * @return
+   */
+  private static synchronized void refreshActiveCache(DbHelper dbh) {
+    SQLiteDatabase db = null;
+    try {
+      KeyValueStore.Type typeOfStore = KeyValueStore.Type.ACTIVE;
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      idsInActiveKVS = kvsm.getAllIdsFromStore(db, typeOfStore);
+      dataIdsInActiveKVS = kvsm.getDataTableIds(db, typeOfStore);
+      securityIdsInActiveKVS = kvsm.getSecurityTableIds(db, typeOfStore);
+      shortcutIdsInActiveKVS = kvsm.getShortcutTableIds(db, typeOfStore);
+
+      activeTableIdMap.clear();
+      for ( String tableId : idsInActiveKVS ) {
+        Map<String, String> propPairs = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+        TableProperties tp = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
+        activeTableIdMap.put(tp.getTableId(), tp);
+      }
+      staleActiveCache = false;
+    } finally {
+      // TODO: resolve and fix this
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
+
+  private static synchronized void ensureActiveTableIdMapLoaded(DbHelper dbh) {
+    // A pre-requisite to having an update cache is to have agreement on
+    // all the known table ids.
+    List<String> allIds = TableDefinitions.getAllTableIds(dbh.getReadableDatabase());
+    if ( staleActiveCache || allTableIds.size() != allIds.size() || !allTableIds.containsAll(allIds) ) {
+      allTableIds = allIds;
+      refreshActiveCache(dbh);
+    }
+  }
+
+  public static synchronized void markStaleCache(DbHelper dbh, KeyValueStore.Type typeOfStore) {
+    if ( typeOfStore == null || typeOfStore == KeyValueStore.Type.ACTIVE ) {
+      staleActiveCache = true;
+    }
+  }
+
+  /**
+   * Return the TableProperties for the given table id.
+   *
+   * @param dbh
+   * @param tableId
+   * @param typeOfStore
+   *          the store from which to get the properties
+   * @param forceRefresh
+   *           do not use the cache; update it with a fresh pull
+   * @return
+   */
+  public static TableProperties getTablePropertiesForTable(DbHelper dbh, String tableId,
+      KeyValueStore.Type typeOfStore) {
+
+    ensureActiveTableIdMapLoaded(dbh);
+    if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+      // just use the cached value...
+      return activeTableIdMap.get(tableId);
+    }
+
+    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+    TableProperties tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+    if (typeOfStore == KeyValueStore.Type.ACTIVE) {
+      // update the cache...
+      activeTableIdMap.put(tp.getTableId(), tp);
+    }
+    return tp;
+  }
+
+  public static TableProperties refreshTablePropertiesForTable(DbHelper dbh, String tableId,
+      KeyValueStore.Type typeOfStore) {
+
+    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+    TableProperties tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+    if (typeOfStore == KeyValueStore.Type.ACTIVE) {
+      // update the cache...
+      activeTableIdMap.put(tp.getTableId(), tp);
+    }
+    return tp;
+  }
+
+  /**
+   * Return the TableProperties for all the tables in the specified KVS. store.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the store
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForAll(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
+    SQLiteDatabase db = null;
+    try {
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      if (typeOfStore == KeyValueStore.Type.ACTIVE) {
+        ensureActiveTableIdMapLoaded(dbh);
+        return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
+      }
+      // don't do caching for other KVS's
+      List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
+      return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+      // TODO: resolve and fix this
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
+
+  /**
+   * Get the TableProperties for all the tables that have synchronized set to
+   * true in the sync KVS. typeOfStore tells you the KVS (active, default, or
+   * server) from which to construct the properties.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the properties
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForSynchronizedTables(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
+
+    if ( typeOfStore != KeyValueStore.Type.SERVER ) {
+      throw new IllegalStateException("getTablePropertiesForSynchronizedTables Expecting SERVER store type");
+    }
+
+    SQLiteDatabase db = null;
+    try {
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      // don't do caching for other KVS's
+      List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
+      return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+    } finally {
+      // TODO: fix the when to close problem
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
+
+  /**
+   * Get the TableProperties for all the tables of all the type data in the
+   * intended store.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the properties
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForDataTables(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
+    SQLiteDatabase db = null;
+    try {
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+        ensureActiveTableIdMapLoaded(dbh);
+        List<TableProperties> properties = new ArrayList<TableProperties>();
+        for ( String tableId : dataIdsInActiveKVS ) {
+          TableProperties tp = activeTableIdMap.get(tableId);
+          if ( tp != null ) {
+            properties.add(tp);
+          } else {
+            Log.w(t, "Unexpectedly did not find data table in active tables map: " + tableId);
+          }
+        }
+        return properties.toArray(new TableProperties[properties.size()]);
+      } else {
+        List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
+        return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
+      }
+    } finally {
+      // TODO: fix the when to close problem
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
+
+  /**
+   * Get the TableProperties for all the tables of all the type security in the
+   * active key value store.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the properties
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForSecurityTables(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
+    SQLiteDatabase db = null;
+    try {
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+        ensureActiveTableIdMapLoaded(dbh);
+        List<TableProperties> properties = new ArrayList<TableProperties>();
+        for ( String tableId : securityIdsInActiveKVS ) {
+          TableProperties tp = activeTableIdMap.get(tableId);
+          if ( tp != null ) {
+            properties.add(tp);
+          } else {
+            Log.w(t, "Unexpectedly did not find security table in active tables map: " + tableId);
+          }
+        }
+        return properties.toArray(new TableProperties[properties.size()]);
+      } else {
+        List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
+        return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
+      }
+    } finally {
+      // TODO: fix the when to close problem
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
+
+  /**
+   * Get the TableProperties for all the tables of all the type shortcut in the
+   * intended store.
+   *
+   * @param dbh
+   * @param typeOfStore
+   *          the KVS from which to get the properties
+   * @return
+   */
+  public static TableProperties[] getTablePropertiesForShortcutTables(DbHelper dbh,
+      KeyValueStore.Type typeOfStore) {
+    SQLiteDatabase db = null;
+    try {
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      if ( typeOfStore == KeyValueStore.Type.ACTIVE ) {
+        ensureActiveTableIdMapLoaded(dbh);
+        List<TableProperties> properties = new ArrayList<TableProperties>();
+        for ( String tableId : shortcutIdsInActiveKVS ) {
+          TableProperties tp = activeTableIdMap.get(tableId);
+          if ( tp != null ) {
+            properties.add(tp);
+          } else {
+            Log.w(t, "Unexpectedly did not find shortcut table in active tables map: " + tableId);
+          }
+        }
+        return properties.toArray(new TableProperties[properties.size()]);
+      } else {
+        List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
+        return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
+      }
+    } finally {
+      // TODO: fix the when to close problem
+      // if ( db != null ) {
+      // db.close();
+      // }
+    }
+  }
 
   /***********************************
-   *  The fields that make up a TableProperties object.
+   * The fields that make up a TableProperties object.
    ***********************************/
   /*
    * The fields that belong only to the object, and are not related to the
@@ -206,51 +471,48 @@ public class TableProperties {
    * The fields that are in the key value store.
    */
   private String displayName;
-  private ColumnProperties[] columns;
-  private ArrayList<String> columnOrder;
-  private ArrayList<String> primeColumns;
+  // private ColumnProperties[] columns;
+  /**
+   * Maps the elementKey of a column to its ColumnProperties object.
+   */
+  private Map<String, ColumnProperties> mElementKeyToColumnProperties;
+  private boolean staleColumnsInOrder = true;
+  private List<ColumnProperties> columnsInOrder = new ArrayList<ColumnProperties>();
+
+  private List<String> columnOrder;
+  private List<String> primeColumns;
   private String sortColumn;
   private String indexColumn;
-//  private String readSecurityTableId;
-//  private String writeSecurityTableId;
+  // private String readSecurityTableId;
+  // private String writeSecurityTableId;
   private TableViewType currentViewType;
-//  private TableViewType currentOverviewViewType;
-//  private TableViewType currentCollectionViewType;
-//  private String detailViewFilename;
+  // private TableViewType currentOverviewViewType;
+  // private TableViewType currentCollectionViewType;
+  // private String detailViewFilename;
   private String sumDisplayFormat;
   private KeyValueStoreHelper tableKVSH;
 
-  private TableProperties(DbHelper dbh,
-      String tableId,
-      String tableKey,
-      String dbTableName,
-      String displayName,
-      TableType tableType,
-      String accessControls,
-      ArrayList<String> columnOrder,
-      ArrayList<String> primeColumns,
-      String sortColumn,
-      String indexColumn,
-      String syncTag,
+  private TableProperties(DbHelper dbh, String tableId, String tableKey, String dbTableName,
+      String displayName, TableType tableType, String accessControls,
+      ArrayList<String> columnOrder, ArrayList<String> primeColumns, String sortColumn,
+      String indexColumn, String syncTag,
       String lastSyncTime,
       TableViewType currentViewType,
-//      TableViewType overviewViewType,
-//      TableViewType collectionViewType,
-//      String detailViewFilename,
-      String sumDisplayFormat,
-      SyncState syncState,
-      boolean transactioning,
+      // TableViewType overviewViewType,
+      // TableViewType collectionViewType,
+      // String detailViewFilename,
+      String sumDisplayFormat, SyncState syncState, boolean transactioning,
       KeyValueStore.Type backingStore) {
     this.dbh = dbh;
-    whereArgs = new String[] { String.valueOf(tableId) };
+    whereArgs = new String[] { tableId };
     this.tableId = tableId;
     this.tableKey = tableKey;
     this.dbTableName = dbTableName;
     this.displayName = displayName;
     this.tableType = tableType;
     this.accessControls = accessControls;
-    columns = null;
-    this.columnOrder = columnOrder;
+    // columns = null;
+    this.mElementKeyToColumnProperties = null;
     this.primeColumns = primeColumns;
     this.sortColumn = sortColumn;
     this.indexColumn = indexColumn;
@@ -258,28 +520,30 @@ public class TableProperties {
     this.syncTag = syncTag;
     this.lastSyncTime = lastSyncTime;
     this.currentViewType = currentViewType;
-//    this.currentOverviewViewType = overviewViewType;
-//    this.currentCollectionViewType = collectionViewType;
-//    this.detailViewFilename = detailViewFilename;
+    // this.currentOverviewViewType = overviewViewType;
+    // this.currentCollectionViewType = collectionViewType;
+    // this.detailViewFilename = detailViewFilename;
     this.sumDisplayFormat = sumDisplayFormat;
     this.syncState = syncState;
     this.transactioning = transactioning;
     this.backingStore = backingStore;
-    this.tableKVSH =
-        this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-  }
+    this.tableKVSH = this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+    refreshColumns();
+    if (columnOrder.size() == 0) {
 
-  /**
-   * Return the TableProperties for the given table id.
-   * @param dbh
-   * @param tableId
-   * @param typeOfStore the store from which to get the properties
-   * @return
-   */
-  public static TableProperties getTablePropertiesForTable(DbHelper dbh,
-      String tableId, KeyValueStore.Type typeOfStore) {
-    Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
-    return constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+      for (ColumnProperties cp : mElementKeyToColumnProperties.values()) {
+        columnOrder.add(cp.getElementKey());
+      }
+      Collections.sort(columnOrder, new Comparator<String>() {
+
+        @Override
+        public int compare(String lhs, String rhs) {
+          return lhs.compareTo(rhs);
+        }
+      });
+    }
+    this.columnOrder = columnOrder;
+    this.staleColumnsInOrder = true;
   }
 
   /*
@@ -287,170 +551,52 @@ public class TableProperties {
    * include both the values of this table's row in TableDefinition and the
    * values in the key value store pointed to by INIT_KEYS.
    *
-   * Atm this is just
-   * key->value. The caller must know the intended type of the value and
-   * parse it correctly. This map should eventually become a key->TypeValuePair
-   * or something like that.
-   * TODO: make it the above
+   * Atm this is just key->value. The caller must know the intended type of the
+   * value and parse it correctly. This map should eventually become a
+   * key->TypeValuePair or something like that. TODO: make it the above
    *
-   * This deserves its own method b/c to get the properties you are forced to
-   * go through both the key value store and the TableDefinitions table.
+   * This deserves its own method b/c to get the properties you are forced to go
+   * through both the key value store and the TableDefinitions table.
+   *
    * @param dbh
+   *
    * @param tableId
+   *
    * @param typeOfStore
+   *
    * @return
    */
-  private static Map<String, String> getMapOfPropertiesForTable(DbHelper dbh,
-      String tableId, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-       db = dbh.getReadableDatabase();
-       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-       KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId,
-           typeOfStore);
-       Map<String, String> tableDefinitionsMap =
-           TableDefinitions.getFields(tableId, db);
-       Map<String, String> kvsMap = intendedKVS.getProperties(db);
-       Map<String, String> mapProps = new HashMap<String, String>();
-       // table definitions wins -- apply it 2nd
-       mapProps.putAll(kvsMap);
-       mapProps.putAll(tableDefinitionsMap);
-       // TODO: fix the when to close problem
-//       db.close();
-//       db = null;
-       return mapProps;
-    } finally {
-      // TODO: fix the when to close problem
-//      if ( db != null ) {
-//         db.close();
-//      }
-    }
-  }
-
-  /**
-   * Return the TableProperties for all the tables in the specified KVS.
-   * store.
-   * @param dbh
-   * @param typeOfStore the KVS from which to get the store
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForAll(DbHelper dbh,
+  private static Map<String, String> getMapOfPropertiesForTable(DbHelper dbh, String tableId,
       KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
-        db = dbh.getReadableDatabase();
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
-	    return constructPropertiesFromIds(allIds, dbh, db, kvsm, typeOfStore);
-    } finally {
-      // TODO: resolve and fix this
-//    	if ( db != null ) {
-//    		db.close();
-//    	}
-    }
-  }
-
-  /**
-   * Get the TableProperties for all the tables that have synchronized set
-   * to true in the sync KVS. typeOfStore tells you the KVS (active, default,
-   * or server) from which to construct the properties.
-   * @param dbh
-   * @param typeOfStore the KVS from which to get the properties
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForSynchronizedTables(
-      DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-        db = dbh.getReadableDatabase();
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
-	    return constructPropertiesFromIds(synchedIds, dbh, db, kvsm, typeOfStore);
+      db = dbh.getReadableDatabase();
+      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
+      Map<String, String> tableDefinitionsMap = TableDefinitions.getFields(tableId, db);
+      Map<String, String> kvsMap = intendedKVS.getProperties(db);
+      Map<String, String> mapProps = new HashMap<String, String>();
+      // table definitions wins -- apply it 2nd
+      mapProps.putAll(kvsMap);
+      mapProps.putAll(tableDefinitionsMap);
+      // TODO: fix the when to close problem
+      // db.close();
+      // db = null;
+      return mapProps;
     } finally {
       // TODO: fix the when to close problem
-//    	if ( db != null ) {
-//    		db.close();
-//    	}
-    }
-  }
-
-
-  /**
-   * Get the TableProperties for all the tables of all the type data
-   * in the intended store.
-   * @param dbh
-   * @param typeOfStore the KVS from which to get the properties
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForDataTables(
-      DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-        db = dbh.getReadableDatabase();
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    List<String> dataIds = kvsm.getDataTableIds(db, typeOfStore);
-	    return constructPropertiesFromIds(dataIds, dbh, db, kvsm, typeOfStore);
-    } finally {
-      // TODO: fix the when to close problem
-//    	if ( db != null ) {
-//    		db.close();
-//    	}
-    }
-  }
-
-
-  /**
-   * Get the TableProperties for all the tables of all the type security
-   * in the active key value store.
-   * @param dbh
-   * @param typeOfStore the KVS from which to get the properties
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForSecurityTables(
-      DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-        db = dbh.getReadableDatabase();
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    List<String> securityIds = kvsm.getSecurityTableIds(db, typeOfStore);
-	    return constructPropertiesFromIds(securityIds, dbh, db, kvsm, typeOfStore);
-    } finally {
-      // TODO: fix the when to close problem
-//    	if ( db != null ) {
-//    		db.close();
-//    	}
-    }
-  }
-
-  /**
-   * Get the TableProperties for all the tables of all the type shortcut
-   * in the intended store.
-   * @param dbh
-   * @param typeOfStore the KVS from which to get the properties
-   * @return
-   */
-  public static TableProperties[] getTablePropertiesForShortcutTables(
-      DbHelper dbh, KeyValueStore.Type typeOfStore) {
-    SQLiteDatabase db = null;
-    try {
-    	db = dbh.getReadableDatabase();
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    List<String> shortcutIds = kvsm.getShortcutTableIds(db, typeOfStore);
-	    return constructPropertiesFromIds(shortcutIds, dbh, db, kvsm, typeOfStore);
-    } finally {
-      // TODO: fix the when to close problem
-//    	if ( db != null ) {
-//    		db.close();
-//    	}
+      // if ( db != null ) {
+      // db.close();
+      // }
     }
   }
 
   /*
-   * Constructs a table properties object based on a map of key values as
-   * would be acquired from the key value store.
+   * Constructs a table properties object based on a map of key values as would
+   * be acquired from the key value store.
    */
   private static TableProperties constructPropertiesFromMap(DbHelper dbh,
-      Map<String,String> props, KeyValueStore.Type backingStore) {
+      Map<String, String> props, KeyValueStore.Type backingStore) {
     // first we have to get the appropriate type for the non-string fields.
     String tableTypeStr = props.get(TableDefinitionsColumns.TYPE);
     TableType tableType = TableType.valueOf(tableTypeStr);
@@ -462,7 +608,7 @@ public class TableProperties {
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
     String currentViewTypeStr = props.get(KEY_CURRENT_VIEW_TYPE);
     TableViewType currentViewType;
-    if ( currentViewTypeStr == null ) {
+    if (currentViewTypeStr == null) {
       currentViewType = TableViewType.Spreadsheet;
       props.put(KEY_CURRENT_VIEW_TYPE, TableViewType.Spreadsheet.name());
     } else {
@@ -473,12 +619,13 @@ public class TableProperties {
         props.put(KEY_CURRENT_VIEW_TYPE, TableViewType.Spreadsheet.name());
       }
     }
-//    String overviewViewTypeStr = props.get(KEY_CURRENT_OVERVIEW_VIEW_TYPE);
-//    TableViewType overviewViewType =
-//        TableViewType.valueOf(overviewViewTypeStr);
-//    String collectionViewTypeStr = props.get(KEY_CURRENT_COLLECTION_VIEW_TYPE);
-//    TableViewType collectionViewType =
-//        TableViewType.valueOf(collectionViewTypeStr);
+    // String overviewViewTypeStr = props.get(KEY_CURRENT_OVERVIEW_VIEW_TYPE);
+    // TableViewType overviewViewType =
+    // TableViewType.valueOf(overviewViewTypeStr);
+    // String collectionViewTypeStr =
+    // props.get(KEY_CURRENT_COLLECTION_VIEW_TYPE);
+    // TableViewType collectionViewType =
+    // TableViewType.valueOf(collectionViewTypeStr);
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
     // DB_PRIME_COLUMN values to be empty strings, not null. However, when
     // retrieving values from the key value store, empty strings are converted
@@ -487,105 +634,76 @@ public class TableProperties {
     if (columnOrderValue == null)
       columnOrderValue = "";
     ArrayList<String> columnOrder = new ArrayList<String>();
-    if ( columnOrderValue.length() != 0) {
-    	try {
-			columnOrder = mapper.readValue(columnOrderValue, ArrayList.class);
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + columnOrderValue);
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + columnOrderValue);
-		} catch (IOException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + columnOrderValue);
-		}
-    }
-    if ( columnOrder.size() == 0 ) {
-      // restore all the columns to the columnOrder list...
-      ColumnProperties[] columnProperties = getColumns(dbh,
-          props.get(TableDefinitionsColumns.TABLE_ID), backingStore);
-      for ( ColumnProperties cp : columnProperties ) {
-        columnOrder.add(cp.getElementKey());
+    if (columnOrderValue.length() != 0) {
+      try {
+        columnOrder = mapper.readValue(columnOrderValue, ArrayList.class);
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + columnOrderValue);
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + columnOrderValue);
+      } catch (IOException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + columnOrderValue);
       }
-      Collections.sort(columnOrder, new Comparator<String>(){
-
-        @Override
-        public int compare(String lhs, String rhs) {
-          return lhs.compareTo(rhs);
-        }});
     }
 
     String primeOrderValue = props.get(KEY_PRIME_COLUMNS);
     if (primeOrderValue == null)
       primeOrderValue = "";
     ArrayList<String> primeList = new ArrayList<String>();
-    if ( primeOrderValue.length() != 0) {
-    	try {
-			primeList = mapper.readValue(primeOrderValue, ArrayList.class);
-		} catch (JsonParseException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + primeList);
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + primeList);
-		} catch (IOException e) {
-			e.printStackTrace();
-			Log.e(t, "ignore invalid json: " + primeList);
-		}
+    if (primeOrderValue.length() != 0) {
+      try {
+        primeList = mapper.readValue(primeOrderValue, ArrayList.class);
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + primeList);
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + primeList);
+      } catch (IOException e) {
+        e.printStackTrace();
+        Log.e(t, "ignore invalid json: " + primeList);
+      }
     }
-    return new TableProperties(dbh,
-        props.get(TableDefinitionsColumns.TABLE_ID),
+    return new TableProperties(dbh, props.get(TableDefinitionsColumns.TABLE_ID),
         props.get(TableDefinitionsColumns.TABLE_KEY),
-        props.get(TableDefinitionsColumns.DB_TABLE_NAME),
-        props.get(KEY_DISPLAY_NAME),
-        tableType,
-        props.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS),
-        columnOrder,
-        primeList,
-        props.get(KEY_SORT_COLUMN),
-        props.get(KEY_INDEX_COLUMN),
+        props.get(TableDefinitionsColumns.DB_TABLE_NAME), props.get(KEY_DISPLAY_NAME), tableType,
+        props.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS), columnOrder, primeList,
+        props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         props.get(TableDefinitionsColumns.SYNC_TAG),
-        props.get(TableDefinitionsColumns.LAST_SYNC_TIME),
-        currentViewType,
-//        overviewViewType,
-//        collectionViewType,
-//        props.get(KEY_DETAIL_VIEW_FILE),
-        props.get(KEY_SUM_DISPLAY_FORMAT),
-        syncState,
-        transactioning,
-        backingStore);
+        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), currentViewType,
+        // overviewViewType,
+        // collectionViewType,
+        // props.get(KEY_DETAIL_VIEW_FILE),
+        props.get(KEY_SUM_DISPLAY_FORMAT), syncState, transactioning, backingStore);
   }
-
 
   /*
    * Construct an array of table properties for the given ids. The properties
    * are collected from the intededStore.
    */
-  private static TableProperties[] constructPropertiesFromIds(
-      List<String> ids, DbHelper dbh, SQLiteDatabase db,
-      KeyValueStoreManager kvsm, KeyValueStore.Type typeOfStore) {
+  private static TableProperties[] constructPropertiesFromIds(List<String> ids, DbHelper dbh,
+      SQLiteDatabase db, KeyValueStoreManager kvsm, KeyValueStore.Type typeOfStore) {
     TableProperties[] allProps = new TableProperties[ids.size()];
     for (int i = 0; i < ids.size(); i++) {
       String tableId = ids.get(i);
-//      KeyValueStore intendedKVS =
-//          kvsm.getStoreForTable(tableId, typeOfStore);
-//      Map<String, String> propPairs = intendedKVS.getProperties(db);
-      Map<String, String> propPairs =
-          getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+      // KeyValueStore intendedKVS =
+      // kvsm.getStoreForTable(tableId, typeOfStore);
+      // Map<String, String> propPairs = intendedKVS.getProperties(db);
+      Map<String, String> propPairs = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
       allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
     }
     return allProps;
   }
 
-
   /**
-   * Returns a legal name for a new table. This method checks all three KVS
-   * for possible conflicts. The name is the displayName prepended with an
-   * underscore, non word
-   * characters (as defined by java's "\\W" replaced by underscores, and a
-   * suffix of an integer if there was a
-   * conflict.
+   * Returns a legal name for a new table. This method checks all three KVS for
+   * possible conflicts. The name is the displayName prepended with an
+   * underscore, non word characters (as defined by java's "\\W" replaced by
+   * underscores, and a suffix of an integer if there was a conflict.
+   *
    * @param dbh
    * @param displayName
    * @return
@@ -597,19 +715,15 @@ public class TableProperties {
     // probably isn't the most efficient way this could be done, as you could
     // end up with triplicate table names. Going to not worry about it, as
     // this is probably just O(3N)?
-    TableProperties[] activeProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.ACTIVE);
-    TableProperties[] defaultProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.DEFAULT);
-    TableProperties[] serverProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.SERVER);
+    TableProperties[] activeProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    TableProperties[] defaultProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    TableProperties[] serverProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
     // this arraylist will hold all the properties.
     ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
     listProps.addAll(Arrays.asList(activeProps));
     listProps.addAll(Arrays.asList(defaultProps));
     listProps.addAll(Arrays.asList(serverProps));
-    TableProperties[] allProps =
-        listProps.toArray(new TableProperties[listProps.size()]);
+    TableProperties[] allProps = listProps.toArray(new TableProperties[listProps.size()]);
     // You cannot start with a digit, and you can only have alphanumerics
     // in SQLite. We are going to thus make the basename the displayName
     // prepended with an underscore, and replace all non-word characters
@@ -630,12 +744,12 @@ public class TableProperties {
 
   /**
    * Return true if a table in allProps has the dbTableName dbTableName.
+   *
    * @param dbTableName
    * @param allProps
    * @return
    */
-  private static boolean nameConflict(String dbTableName,
-      TableProperties[] allProps) {
+  private static boolean nameConflict(String dbTableName, TableProperties[] allProps) {
     for (TableProperties tp : allProps) {
       if (tp.getDbTableName().equals(dbTableName)) {
         return true;
@@ -646,12 +760,12 @@ public class TableProperties {
 
   /**
    * Return true if a table in allProps has the id tableId.
+   *
    * @param tableId
    * @param allProps
    * @return
    */
-  private static boolean tableIdConflict(String tableId,
-      TableProperties[] allProps) {
+  private static boolean tableIdConflict(String tableId, TableProperties[] allProps) {
     for (TableProperties tp : allProps) {
       if (tp.getTableId().equals(tableId)) {
         return true;
@@ -661,59 +775,43 @@ public class TableProperties {
   }
 
   /**
-   * Add a table to the database. The intendedStore type exists to force you
-   * to be specific to which store you are adding the table to.
+   * Add a table to the database. The intendedStore type exists to force you to
+   * be specific to which store you are adding the table to.
+   *
    * @param dbh
    * @param dbTableName
    * @param displayName
    * @param tableType
-   * @param intendedStore type of the store to which you're adding.
+   * @param intendedStore
+   *          type of the store to which you're adding.
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String dbTableName,
+  public static TableProperties addTable(DbHelper dbh, String tableKey, String dbTableName,
       String displayName, TableType tableType, KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, dbTableName, displayName, tableType,
-        id, intendedStore);
+    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName, tableType, id,
+        intendedStore);
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              ShortcutUtil.LABEL_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              ShortcutUtil.LABEL_COLUMN_NAME, db));
+          tp.createDbElementKey(ShortcutUtil.LABEL_COLUMN_NAME),
+          tp.createDbElementName(ShortcutUtil.LABEL_COLUMN_NAME));
       tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              ShortcutUtil.INPUT_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              ShortcutUtil.INPUT_COLUMN_NAME, db));
+          tp.createDbElementKey(ShortcutUtil.INPUT_COLUMN_NAME),
+          tp.createDbElementName(ShortcutUtil.INPUT_COLUMN_NAME));
       tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              ShortcutUtil.OUTPUT_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              ShortcutUtil.OUTPUT_COLUMN_NAME, db));
-//      tp.addColumn("label", ShortcutUtil.LABEL_COLUMN_NAME);
-//      tp.addColumn("input", ShortcutUtil.INPUT_COLUMN_NAME);
-//      tp.addColumn("output", ShortcutUtil.OUTPUT_COLUMN_NAME);
+          tp.createDbElementKey(ShortcutUtil.OUTPUT_COLUMN_NAME),
+          tp.createDbElementName(ShortcutUtil.OUTPUT_COLUMN_NAME));
     } else if (tableType == TableType.security) {
       tp.addColumn(SecurityUtil.USER_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              SecurityUtil.USER_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              SecurityUtil.USER_COLUMN_NAME, db));
+          tp.createDbElementKey(SecurityUtil.USER_COLUMN_NAME),
+          tp.createDbElementName(SecurityUtil.USER_COLUMN_NAME));
       tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              SecurityUtil.PHONENUM_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              SecurityUtil.PHONENUM_COLUMN_NAME, db));
+          tp.createDbElementKey(SecurityUtil.PHONENUM_COLUMN_NAME),
+          tp.createDbElementName(SecurityUtil.PHONENUM_COLUMN_NAME));
       tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME,
-          ColumnProperties.createDbElementKey(id,
-              SecurityUtil.PASSWORD_COLUMN_NAME, db),
-          ColumnProperties.createDbElementName(id,
-              SecurityUtil.PASSWORD_COLUMN_NAME, db));
-//      tp.addColumn("user", SecurityUtil.USER_COLUMN_NAME);
-//      tp.addColumn("phone_number", SecurityUtil.PHONENUM_COLUMN_NAME);
-//      tp.addColumn("password", SecurityUtil.PASSWORD_COLUMN_NAME);
+          tp.createDbElementKey(SecurityUtil.PASSWORD_COLUMN_NAME),
+          tp.createDbElementName(SecurityUtil.PASSWORD_COLUMN_NAME));
     }
     return tp;
   }
@@ -723,17 +821,18 @@ public class TableProperties {
    * set from {@link toJson}. There is currently no control for versioning or
    * anything of that nature.
    * <p>
-   * This method is equivalent to parsing the json object yourself to get the
-   * id and database names, calling the appropriate {@link addTable} method,
-   * and then calling {@link setFromJson}.
+   * This method is equivalent to parsing the json object yourself to get the id
+   * and database names, calling the appropriate {@link addTable} method, and
+   * then calling {@link setFromJson}.
+   *
    * @param dbh
    * @param json
    * @param typeOfStore
    * @return
-   * @throws TableAlreadyExistsException if the dbTableName or tableId
-   * specified
-   * by the json string conflict with any of the properties from the three
-   * key value stores. If so, nothing is done.
+   * @throws TableAlreadyExistsException
+   *           if the dbTableName or tableId specified by the json string
+   *           conflict with any of the properties from the three key value
+   *           stores. If so, nothing is done.
    */
   public static TableProperties addTableFromJson(DbHelper dbh, String json,
       KeyValueStore.Type typeOfStore) throws TableAlreadyExistsException {
@@ -741,58 +840,55 @@ public class TableProperties {
     // methods.
     Map<String, Object> jo;
     try {
-       jo = mapper.readValue(json, Map.class);
+      jo = mapper.readValue(json, Map.class);
     } catch (JsonParseException e) {
-       e.printStackTrace();
-       throw new IllegalArgumentException("invalid json: " + json);
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
     } catch (JsonMappingException e) {
-       e.printStackTrace();
-       throw new IllegalArgumentException("invalid json: " + json);
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
     } catch (IOException e) {
-       e.printStackTrace();
-       throw new IllegalArgumentException("invalid json: " + json);
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
     }
     String tableId = (String) jo.get(JSON_KEY_TABLE_ID);
     String dbTableName = (String) jo.get(JSON_KEY_DB_TABLE_NAME);
     String dbTableType = (String) jo.get(JSON_KEY_TABLE_TYPE);
     String displayName = (String) jo.get(JSON_KEY_DISPLAY_NAME);
     // And now we need to check for conflicts that would mess up the database.
-    TableProperties[] activeProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.ACTIVE);
-    TableProperties[] defaultProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.DEFAULT);
-    TableProperties[] serverProps = getTablePropertiesForAll(dbh,
-        KeyValueStore.Type.SERVER);
+    TableProperties[] activeProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    TableProperties[] defaultProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    TableProperties[] serverProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
     // this arraylist will hold all the properties.
     ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
     listProps.addAll(Arrays.asList(activeProps));
     listProps.addAll(Arrays.asList(defaultProps));
     listProps.addAll(Arrays.asList(serverProps));
-    TableProperties[] allProps =
-        listProps.toArray(new TableProperties[listProps.size()]);
-    if (nameConflict(dbTableName, allProps) ||
-        tableIdConflict(tableId, allProps)) {
-      Log.e(TAG, "a table already exists with the dbTableName: " +
-        dbTableName + " or with the tableId: " + tableId);
-      throw new TableAlreadyExistsException("a table already exists with the" +
-      		" dbTableName: " +  dbTableName + " or with the tableId: "
-          + tableId);
+    TableProperties[] allProps = listProps.toArray(new TableProperties[listProps.size()]);
+    if (nameConflict(dbTableName, allProps) || tableIdConflict(tableId, allProps)) {
+      Log.e(t, "a table already exists with the dbTableName: " + dbTableName
+          + " or with the tableId: " + tableId);
+      throw new TableAlreadyExistsException("a table already exists with the" + " dbTableName: "
+          + dbTableName + " or with the tableId: " + tableId);
     }
-    TableProperties tp = addTable(dbh, dbTableName, displayName,
+    TableProperties tp = addTable(dbh, dbTableName, dbTableName, displayName,
         TableType.valueOf(dbTableType), tableId, typeOfStore);
-    tp.setFromJson(json);
+    if ( !tp.setFromJson(json) ) {
+      throw new IllegalStateException("this should never happen");
+    }
     return tp;
   }
 
   /**
-   * Add a table to the database. The intendedStore type exists to force you
-   * to be specific to which store you are adding the table to.
+   * Add a table to the database. The intendedStore type exists to force you to
+   * be specific to which store you are adding the table to.
    * <p>
    * NB: Currently adds all the keys defined in this class to the key value
    * store as well. This should likely change.
    * <p>
-   * NB: Sets the table_key and db_table_name in TableDefinitions both to
-   * the dbTableName parameter.
+   * NB: Sets the table_key and db_table_name in TableDefinitions both to the
+   * dbTableName parameter.
+   *
    * @param dbh
    * @param dbTableName
    * @param displayName
@@ -801,11 +897,10 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String dbTableName,
-      String displayName, TableType tableType, String id,
-      KeyValueStore.Type typeOfStore) {
+  public static TableProperties addTable(DbHelper dbh, String tableKey, String dbTableName,
+      String displayName, TableType tableType, String id, KeyValueStore.Type typeOfStore) {
     // First we will add the entry in TableDefinitions.
-    //  TODO: this should check for duplicate names.
+    // TODO: this should check for duplicate names.
     SQLiteDatabase db = dbh.getWritableDatabase();
     Map<String, String> mapProps = new HashMap<String, String>();
     mapProps.put(KEY_DISPLAY_NAME, displayName);
@@ -815,51 +910,41 @@ public class TableProperties {
     mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
     mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
     mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-
-// don't know why we did it this way...instead just call it through the map
-// so we don't have as much redundant code.
-//    TableProperties tp = new TableProperties(dbh, id, dbTableName, displayName,
-//        tableType, new ArrayList<String>(), new ArrayList<String>(), null, null, null, null, null,
-//        null, null, null, null, SyncUtil.State.INSERTING, false, typeOfStore);
-//    TableProperties tp = getTablePropertiesForTable(dbh, id, typeOfStore);
-//    tp.getColumns(); // ensuring columns are already initialized
     TableProperties tp = null;
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     try {
-	    db.beginTransaction();
-	    try {
-	      Map<String, String> tableDefProps =
-	          TableDefinitions.addTable(db, id, dbTableName, dbTableName,
-	          tableType);
-//	      KeyValueStore typedStore = kvms.getStoreForTable(id,
-//	          typeOfStore);
-//	        typedStore.addEntriesToStore(db, values);
-	      mapProps.putAll(tableDefProps);
-	        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-	        tp.getColumns();
-	        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
-	        kvsh.setString(KEY_DISPLAY_NAME, displayName);
-	        kvsh.setString(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
-	        kvsh.setString(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
-	        kvsh.setString(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
-	        kvsh.setString(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
-	        kvsh.setString(KEY_CURRENT_VIEW_TYPE,
-	            DEFAULT_KEY_CURRENT_VIEW_TYPE);
-	        kvsh.setString(KEY_SUM_DISPLAY_FORMAT,
-	            DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-	        kvsh.setString(KEY_CURRENT_QUERY, "");
-	      Log.d(TAG, "adding table: " + dbTableName);
-         DbTable.createDbTable(db, tp);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	    } finally {
-	      db.endTransaction();
-	    }
-	    return tp;
+      db.beginTransaction();
+      try {
+        Map<String, String> tableDefProps = TableDefinitions.addTable(db, id, tableKey,
+            dbTableName, tableType);
+        mapProps.putAll(tableDefProps);
+        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+        tp.refreshColumns();
+        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
+        kvsh.setString(KEY_DISPLAY_NAME, displayName);
+        kvsh.setString(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
+        kvsh.setString(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
+        kvsh.setString(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
+        kvsh.setString(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
+        kvsh.setString(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
+        kvsh.setString(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
+        kvsh.setString(KEY_CURRENT_QUERY, "");
+        Log.d(t, "adding table: " + dbTableName);
+        DbTable.createDbTable(db, tp);
+        // And now set the default color rules.
+        ColorRuleGroup ruleGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
+        ruleGroup.replaceColorRuleList(ColorRuleUtil.getDefaultSyncStateColorRules());
+        ruleGroup.saveRuleList();
+        db.setTransactionSuccessful();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+        db.endTransaction();
+      }
+      return tp;
     } finally {
       // TODO: fix the when to close problem
-//    	db.close();
+      // db.close();
     }
   }
 
@@ -868,12 +953,12 @@ public class TableProperties {
     KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVSM.isSetToSync();
     // hilary's original
-    //if (isSynched && (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING))
-      if (isSetToSync && (syncState == SyncState.rest
-                           || syncState == SyncState.updating))
+    // if (isSynched && (syncState == SyncUtil.State.REST
+    // || syncState == SyncUtil.State.UPDATING))
+    if (isSetToSync && (syncState == SyncState.rest || syncState == SyncState.updating))
       setSyncState(SyncState.deleting);
     // hilary's original
-    //else if (!isSynched || syncState == SyncUtil.State.INSERTING)
+    // else if (!isSynched || syncState == SyncUtil.State.INSERTING)
     else if (!isSetToSync || syncState == SyncState.inserting)
       deleteTableActual();
   }
@@ -884,35 +969,48 @@ public class TableProperties {
   public void deleteTableActual() {
     // Two things must be done: delete all the key value pairs from the active
     // key value store and drop the table holding the data from the database.
-    ColumnProperties[] columns = getColumns();
+    Map<String, ColumnProperties> columns = getColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-	    db.beginTransaction();
-	    try {
-	      db.execSQL("DROP TABLE " + dbTableName);
-	      for (ColumnProperties cp : columns) {
-	        cp.deleteColumn(db);
-	      }
-	      TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
-	      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	      KeyValueStore activeKVS = kvsm.getStoreForTable(this.tableId,
-	          this.backingStore);
-	      activeKVS.clearKeyValuePairs(db);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      Log.e(TAG, "error deleting table: " + this.tableId);
-	    } finally{
-	      db.endTransaction();
-	    }
+      db.beginTransaction();
+      try {
+        db.execSQL("DROP TABLE " + dbTableName);
+        for (ColumnProperties cp : columns.values()) {
+          cp.deleteColumn(db);
+        }
+        TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
+        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+        kvsm.getStoreForTable(tableId, KeyValueStore.Type.ACTIVE).clearKeyValuePairs(db);
+        kvsm.getStoreForTable(tableId, KeyValueStore.Type.DEFAULT).clearKeyValuePairs(db);
+        kvsm.getStoreForTable(tableId, KeyValueStore.Type.SERVER).clearKeyValuePairs(db);
+        db.setTransactionSuccessful();
+      } catch (Exception e) {
+        e.printStackTrace();
+        Log.e(t, "error deleting table: " + this.tableId);
+      } finally {
+        db.endTransaction();
+      }
     } finally {
       // TODO: fix the when to close problem
-//    	db.close();
+      // db.close();
+      markStaleCache(dbh, KeyValueStore.Type.ACTIVE);
+      markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
+      markStaleCache(dbh, KeyValueStore.Type.SERVER);
     }
   }
 
   public String getTableId() {
     return tableId;
+  }
+
+  /**
+   * This is the user-friendly-ish string that for the short term (May 6) is the
+   * display name on the server.
+   *
+   * @return
+   */
+  public String getTableKey() {
+    return this.tableKey;
   }
 
   /**
@@ -955,14 +1053,15 @@ public class TableProperties {
    */
   public void setTableType(TableType tableType) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.TYPE,
-        tableType.name(), db);
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.TYPE, tableType.name(), db);
     this.tableType = tableType;
+    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     // TODO: handle closing of the database
   }
 
   /**
    * Get the current view type of the table.
+   *
    * @return
    */
   public TableViewType getCurrentViewType() {
@@ -971,95 +1070,66 @@ public class TableProperties {
 
   /**
    * Set the current view type of the table.
+   *
    * @param viewType
    */
   public void setCurrentViewType(TableViewType viewType) {
-    tableKVSH.setString(TableProperties.KEY_CURRENT_VIEW_TYPE,
-        viewType.name());
+    tableKVSH.setString(TableProperties.KEY_CURRENT_VIEW_TYPE, viewType.name());
     this.currentViewType = viewType;
   }
 
   /**
-   * Static method for retrieving columns used to recreate the columnOrder list if
-   * the list is somehow empty.
+   * Return a map of elementKey to columns as represented by their
+   * {@link ColumnProperties}. If something has happened to a column that did
+   * not go through TableProperties, update row also needs to be called.
+   * <p>
+   * If used repeatedly, this value should be cached by the caller.
    *
-   * @param dbh
-   * @param tableId
-   * @param backingStore
-   * @return array of columns
+   * @return a map of the table's columns as represented by their
+   *         {@link ColumnProperties}.
    */
-  private static ColumnProperties[] getColumns(DbHelper dbh, String tableId, KeyValueStore.Type backingStore ) {
-    ColumnProperties[] columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
-          backingStore);
-    return columns;
- }
-
-  /**
-   * Return an unordered array of a table's columns. If something has happened
-   * to a column that did not go through TableProperties, update row also needs
-   * to be called.
-   * @return an unordered array of the table's columns
-   */
-  public ColumnProperties[] getColumns() {
-    if (columns == null) {
-      columns = getColumns(dbh, tableId, backingStore);
-      orderColumns();
+  public Map<String, ColumnProperties> getColumns() {
+    if (mElementKeyToColumnProperties == null) {
+      refreshColumns();
     }
-    return columns;
- }
+    Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
+    defensiveCopy.putAll(this.mElementKeyToColumnProperties);
+    return defensiveCopy;
+  }
 
   /**
-   * Pulls the columns from the database into this TableProperties and orders
-   * them according to the column order. This is an optimization and should
-   * only be done if necessary.
+   * Pulls the columns from the database into this TableProperties. Also updates
+   * the maps of display name and sms label.
    */
   public void refreshColumns() {
-    columns = ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
+    this.mElementKeyToColumnProperties = ColumnProperties.getColumnPropertiesForTable(dbh, tableId,
         backingStore);
-    orderColumns();
-  }
-
-  private void orderColumns() {
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length];
-    for (int i = 0; i < columnOrder.size(); i++) {
-      for (int j = 0; j < columns.length; j++) {
-        if (columns[j].getElementKey().equals(columnOrder.get(i))) {
-          newColumns[i] = columns[j];
-          break;
-        }
-      }
-    }
-    columns = newColumns;
-  }
-
-  public ColumnProperties getColumnByElementKey(String colElementKey) {
-    int colIndex = getColumnIndex(colElementKey);
-    if (colIndex < 0) {
-      return null;
-    }
-    return getColumns()[colIndex];
   }
 
   /**
-   * Return a column properties object for the column at the given index.
-   * @param index
+   * Return the index of the elementKey in the columnOrder, or -1 if it is not
+   * present.
+   *
+   * @param elementKey
    * @return
    */
-  public ColumnProperties getColumnByIndex(int index) {
-    if (index < 0) {
-      return null;
-    }
-    return getColumns()[index];
+  public int getColumnIndex(String elementKey) {
+    return columnOrder.indexOf(elementKey);
   }
 
-  public int getColumnIndex(String colDbName) {
-    ArrayList<String> colOrder = getColumnOrder();
-    for (int i = 0; i < colOrder.size(); i++) {
-      if (colOrder.get(i).equals(colDbName)) {
-        return i;
-      }
+  public int getNumberOfDisplayColumns() {
+    return columnOrder.size();
+  }
+
+  public ColumnProperties getColumnByIndex(int idx) {
+    return getColumnsInOrder().get(idx);
+  }
+
+  public ColumnProperties getColumnByElementKey(String elementKey) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
     }
-    return -1;
+    return mElementKeyToColumnProperties.get(elementKey);
   }
 
   /**
@@ -1068,33 +1138,68 @@ public class TableProperties {
    * means that all the methods in {@link ColumnProperties} for creating a
    * column must be used for creation and changing of display names to ensure
    * there are no collisions.
+   *
    * @param displayName
    * @return
    */
-  public String getColumnByDisplayName(String displayName) {
-    ColumnProperties[] cps = getColumns();
-    for (ColumnProperties cp : cps) {
-      String cdn = cp.getDisplayName();
-      if ((cdn != null) && (cdn.equalsIgnoreCase(displayName))) {
-        return cp.getElementKey();
+  public ColumnProperties getColumnByDisplayName(String displayName) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
+      if (cp.getDisplayName().equals(displayName)) {
+        return cp;
       }
     }
     return null;
   }
 
-  public String getColumnByAbbreviation(String abbreviation) {
-    ColumnProperties[] cps = getColumns();
-    for (ColumnProperties cp : cps) {
-      String ca = cp.getSmsLabel();
-      if ((ca != null) && (ca.equalsIgnoreCase(abbreviation))) {
-        return cp.getElementKey();
+  /**
+   * Return the element key based upon the abbreviation/sms label.
+   * <p>
+   * NB: This is currently not fully conceptualized, and should be used with
+   * caution.
+   *
+   * @param abbreviation
+   * @return
+   */
+  public ColumnProperties getColumnByAbbreviation(String abbreviation) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
+      if (cp.getSmsLabel().equals(abbreviation)) {
+        return cp;
       }
     }
     return null;
   }
 
+  public ColumnProperties getColumnByElementName(String elementName) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
+      if (cp.getElementName().equals(elementName)) {
+        return cp;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the {@link ColumnProperties} for the column as specified by either the
+   * case-insensitive display name or the case insensitive sms label.
+   *
+   * @param name
+   * @return
+   */
+  /*
+   * Allowing the weird ignorecase thing because this is used by query, which at
+   * the moment is all legacy code.
+   */
   public ColumnProperties getColumnByUserLabel(String name) {
-    ColumnProperties[] cps = getColumns();
+    Collection<ColumnProperties> cps = getColumns().values();
     for (ColumnProperties cp : cps) {
       String cdn = cp.getDisplayName();
       if (cdn.equalsIgnoreCase(name)) {
@@ -1111,28 +1216,118 @@ public class TableProperties {
   }
 
   /**
-   * Check all the columns to see if "name" conflicts with any existing element
-   * keys.
-   * @param name
+   * Create an element key based on the proposedKey parameter. The first attempt
+   * will be the proposedKey prepended with an underscore and with non-word
+   * characters (as defined by java's "\\W") replaced by an underscore. If that
+   * elementKey is already used for this table, an integer suffix, beginning
+   * with 1, is tried to be added to key until a conflict no longer exists.
+   *
+   * @param tableId
+   * @param proposedKey
+   * @param db
    * @return
    */
-  private boolean columnNameConflict(String name) {
-    for (ColumnProperties cp : columns) {
-      if (cp.getElementKey().equals(name)) {
-        return true;
-      }
+  private String createDbElementKey(String proposedKey) {
+    String baseName = "_" + proposedKey.replaceAll("\\W", "_");
+    if (!keyConflict(baseName)) {
+      return baseName;
     }
-    return false;
+    // otherwise we need to create a non-conflicting key.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!keyConflict(nextName)) {
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+
+  private boolean keyConflict(String elementKey) {
+    return (this.getColumnByElementKey(elementKey) != null);
+  }
+
+  /**
+   * Create an element name based on the proposedName parameter. The first
+   * attempt will be the proposedName prepended with an underscore with
+   * whitespace (as defined by java's "\\W") replaced by an underscore. If that
+   * elementName is already used for this table, an integer suffix, beginning
+   * with 1, is tried to be added to key until a conflict no longer exists.
+   *
+   * @param tableId
+   * @param proposedName
+   * @param db
+   * @return
+   */
+  private String createDbElementName(String proposedName) {
+    String baseName = "_" + proposedName.replaceAll("\\W", "_");
+    if (!nameConflict(baseName)) {
+      return baseName;
+    }
+    // otherwise we need to create a non-conflicting key.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!nameConflict(nextName)) {
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+
+  private boolean nameConflict(String elementName) {
+    return (this.getColumnByElementName(elementName) != null);
+  }
+
+  /**
+   * Take the proposed display name and return a display name that has no
+   * conflicts with other display names in the table. If there is a conflict,
+   * integers are appended to the proposed name until there are no conflicts.
+   *
+   * @param proposedDisplayName
+   * @return
+   */
+  public String createDisplayName(String proposedDisplayName) {
+    if (getColumnByDisplayName(proposedDisplayName) == null) {
+      return proposedDisplayName;
+    }
+    // otherwise we need to create a non-conflicting name.
+    int suffix = 1;
+    while (true) {
+      String nextName = proposedDisplayName + suffix;
+      if (getColumnByDisplayName(nextName) == null) {
+        return nextName;
+      }
+      suffix++;
+    }
   }
 
   /**
    * Adds a column to the table.
    * <p>
    * The column is set to the default visibility. The column is added to the
-   * active column store.
+   * backing store.
    * <p>
-   * The elementKey and elementName must be unique to a given table. If you
-   * are not ensuring this yourself, you should pass in null values and it will
+   * The elementKey and elementName must be unique to a given table. If you are
+   * not ensuring this yourself, you should pass in null values and it will
+   * generate names based on the displayName via
+   * {@link ColumnProperties#createDbElementKey} and
+   * {@link ColumnProperties#createDbElementName}.
+   */
+  public ColumnProperties addColumn(String displayName, String elementKey, String elementName) {
+    return addColumn(displayName, elementKey, elementName,
+        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, null, ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
+        null);
+  }
+
+  /**
+   * Adds a column to the table.
+   * <p>
+   * The column is set to the default visibility. The column is added to the
+   * backing store.
+   * <p>
+   * The elementKey and elementName must be unique to a given table. If you are
+   * not ensuring this yourself, you should pass in null values and it will
    * generate names based on the displayName via
    * {@link ColumnProperties.createDbElementKey} and
    * {@link ColumnProperties.createDbElementName}.
@@ -1140,62 +1335,86 @@ public class TableProperties {
    * @param displayName
    *          the column's display name
    * @param elementKey
-   *           should either be received from the server or null
-   * @param elementName should either be received from the server or null
+   *          should either be received from the server or null
+   * @param elementName
+   *          should either be received from the server or null
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName, String elementKey,
-      String elementName) {
-    // ensuring columns is initialized
-    getColumns();
-    // preparing column order
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length + 1];
-    ArrayList<String> newColumnOrder = new ArrayList<String>();
-    for (int i = 0; i < columns.length; i++) {
-      newColumns[i] = columns[i];
-      newColumnOrder.add(columnOrder.get(i));
+  public ColumnProperties addColumn(String displayName, String elementKey, String elementName,
+      ColumnType columnType, List<String> listChildElementKeys, boolean isPersisted,
+      JoinColumn joins) {
+    if (elementKey == null) {
+      elementKey = createDbElementKey(displayName);
     }
+    if (elementName == null) {
+      elementName = createDbElementName(displayName);
+    }
+    ColumnProperties cp = null;
+    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName, elementKey, elementName,
+        columnType, listChildElementKeys, isPersisted, joins, ColumnProperties.DEFAULT_KEY_VISIBLE,
+        this.getBackingStoreType());
+
+    return addColumn(cp);
+  }
+
+  /**
+   * Adds a column to the table.
+   * <p>
+   * The column is set to the default visibility. The column is added to the
+   * backing store.
+   * <p>
+   * The elementKey and elementName must be unique to a given table. If you are
+   * not ensuring this yourself, you should pass in null values and it will
+   * generate names based on the displayName via
+   * {@link ColumnProperties.createDbElementKey} and
+   * {@link ColumnProperties.createDbElementName}.
+   *
+   * @param displayName
+   *          the column's display name
+   * @param elementKey
+   *          should either be received from the server or null
+   * @param elementName
+   *          should either be received from the server or null
+   * @return ColumnProperties for the new table
+   */
+  public ColumnProperties addColumn(ColumnProperties cp) {
+    // ensuring columns is initialized
+    // refreshColumns();
     // adding column
+    boolean failure = false;
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-      if (elementKey == null) {
-        elementKey =
-            ColumnProperties.createDbElementKey(tableId, displayName, db);
+      db.beginTransaction();
+      try {
+        // ensure that we have persisted this column's values
+        cp.persistColumn(db, tableId);
+        db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \"" + cp.getElementKey() + "\"");
+        // use a copy of columnOrder for roll-back purposes
+        List<String> newColumnOrder = this.getColumnOrder();
+        newColumnOrder.add(cp.getElementKey());
+        setColumnOrder(db, newColumnOrder);
+
+        mElementKeyToColumnProperties.put(cp.getElementKey(), cp);
+        Log.d(t, "addColumn successful: " + cp.getElementKey());
+        db.setTransactionSuccessful();
+      } catch (Exception e) {
+        failure = true;
+        e.printStackTrace();
+        Log.e(t, "error adding column: " + displayName);
+      } finally {
+        db.endTransaction();
       }
-      if (elementName == null) {
-        elementName =
-            ColumnProperties.createDbElementName(tableId, displayName, db);
-      }
-	    ColumnProperties cp = null;
-	    db.beginTransaction();
-	    try {
-	      cp = ColumnProperties.addColumn(dbh, db, tableId,
-	          displayName,
-	          elementKey,
-	          elementName,
-	          ColumnProperties.DEFAULT_KEY_VISIBLE,
-//	          KeyValueStore.Type.COLUMN_ACTIVE);
-	          this.getBackingStoreType());
-	      db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \""
-	          + cp.getElementKey() + "\"");
-	      newColumnOrder.add(cp.getElementKey());
-	      setColumnOrder(newColumnOrder, db);
-	      Log.d("TP", "here we are");
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      Log.e(TAG, "error adding column: " + displayName);
-	    } finally {
-	      db.endTransaction();
-	    }
-	    // updating TableProperties
-	    newColumns[columns.length] = cp;
-	    columns = newColumns;
-	    // returning new ColumnProperties
-	    return cp;
+      // newColumns[columns.length] = cp;
+      // columns = newColumns;
+      // returning new ColumnProperties
+      return cp;
     } finally {
       // TODO: fix the when to close problem
-//    	db.close();
+      // db.close();
+      // update this object.
+      if (failure) {
+        refreshColumns();
+      }
     }
   }
 
@@ -1206,139 +1425,155 @@ public class TableProperties {
    *          the elementKey of the column to delete
    */
   public void deleteColumn(String elementKey) {
-    // ensuring columns is initialized
-    getColumns();
-    // finding the index of the column in columns
-    int colIndex = 0;
-    for (ColumnProperties cp : columns) {
-      if (cp.getElementKey().equals(elementKey)) {
-        break;
-      } else {
-        colIndex++;
-      }
-    }
-    if (colIndex == columns.length) {
-      Log.e(TableProperties.class.getName(),
-          "deleteColumn() did not find the column");
+    // forming a comma-separated list of columns to keep
+    ColumnProperties colToDelete = this.getColumnByElementKey(elementKey);
+    if (colToDelete == null) {
+      Log.e(t, "could not find column to delete with element key: " + elementKey);
       return;
     }
-    // forming a comma-separated list of columns to keep
-    String csv = DbTable.DB_CSV_COLUMN_LIST;
-    for (int i = 0; i < columns.length; i++) {
-      if (i == colIndex) {
-        continue;
-      }
-      csv += ", " + columns[i].getElementKey();
-    }
-    // updating TableProperties
-    ColumnProperties[] newColumns = new ColumnProperties[columns.length - 1];
-    int index = 0;
-    for (int i = 0; i < columns.length; i++) {
-      if (i == colIndex) {
-        continue;
-      }
-      newColumns[index] = columns[i];
-      index++;
-    }
-    ColumnProperties colToDelete = columns[colIndex];
-    columns = newColumns;
-    ArrayList<String> newColumnOrder = new ArrayList<String>();
-    index = 0;
-    for (String col : columnOrder) {
-      if (col.equals(elementKey)) {
-        continue;
-      }
-      newColumnOrder.add(col);
-      index++;
-    }
-    setColumnOrder(newColumnOrder);
+
+    boolean failure = false;
+    // use a copy of columnOrder for roll-back purposes
+    List<String> newColumnOrder = this.getColumnOrder();
+    newColumnOrder.remove(elementKey);
+    // THIS IS REQUIRED FOR reformTable to work correctly
+    // THIS IS REQUIRED FOR reformTable to work correctly
+    // THIS IS REQUIRED FOR reformTable to work correctly
+    // THIS IS REQUIRED FOR reformTable to work correctly
+    // THIS IS REQUIRED FOR reformTable to work correctly
+    mElementKeyToColumnProperties.remove(elementKey);
     // deleting the column
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-	    db.beginTransaction();
-	    try {
-	      colToDelete.deleteColumn(db);
-	      reformTable(db, columnOrder);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      Log.e(TAG, "error deleting column: " + elementKey);
-	    } finally {
-	      db.endTransaction();
-	    }
+      db.beginTransaction();
+      try {
+        // NOTE: this assumes mElementKeyToColumnProperties
+        // has been updated; the rest of TableProperties
+        // can have stale values (e.g., ColumnOrder).
+        reformTable(db);
+        // The hard part was done -- now delete the column
+        // definition and update the column order.
+        this.setColumnOrder(db, newColumnOrder);
+        colToDelete.deleteColumn(db);
+        db.setTransactionSuccessful();
+      } catch (Exception e) {
+        failure = true;
+        e.printStackTrace();
+        Log.e(t, "error deleting column: " + elementKey);
+      } finally {
+        db.endTransaction();
+      }
     } finally {
       // TODO: fix the when to close problem
-//    	db.close();
+      // db.close();
+      // update this object.
+      if (failure) {
+        refreshColumns();
+      }
     }
   }
 
   /**
-   * Reforms the table.
+   * Uses mElementKeyToColumnProperties to construct a temporary database table
+   * to save the current table, then creates a new table and copies the data
+   * back in.
+   *
+   * @param db
    */
-  public void reformTable(SQLiteDatabase db, ArrayList<String> columnOrder2) {
+  public void reformTable(SQLiteDatabase db) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
-    for (String col : columnOrder2) {
+    for (String col : getColumns().keySet()) {
       csvBuilder.append(", " + col);
     }
     String csv = csvBuilder.toString();
     db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
-    db.execSQL("INSERT INTO backup_ SELECT " + csv + " FROM " + dbTableName);
+    db.execSQL("INSERT INTO backup_(" + csv + ") SELECT " + csv + " FROM " + dbTableName);
     db.execSQL("DROP TABLE " + dbTableName);
     DbTable.createDbTable(db, this);
-    db.execSQL("INSERT INTO " + dbTableName + " SELECT " + csv + " FROM backup_");
+    db.execSQL("INSERT INTO " + dbTableName + "(" + csv + ") SELECT " + csv + " FROM backup_");
     db.execSQL("DROP TABLE backup_");
   }
 
-  /**
-   * @return an ordered array of the database names of the table's columns
-   */
-  public ArrayList<String> getColumnOrder() {
-    return columnOrder;
+  public KeyValueStore.Type getBackingStoreType() {
+    return this.backingStore;
   }
 
   /**
-   * Sets the column order.
+   * Returns an unmodifiable list of the ColumnProperties in columnOrder.
+   *
+   * @return
+   */
+  public List<ColumnProperties> getColumnsInOrder() {
+    if (staleColumnsInOrder) {
+      ArrayList<ColumnProperties> cio = new ArrayList<ColumnProperties>();
+      for (String elementKey : columnOrder) {
+        cio.add(getColumnByElementKey(elementKey));
+      }
+      columnsInOrder = Collections.unmodifiableList(cio);
+      staleColumnsInOrder = false;
+    }
+    return columnsInOrder;
+  }
+
+  /**
+   * The column order is specified by an ordered list of element keys.
+   *
+   * @return a copy of the columnOrder. Since it is a copy, should cache when
+   *         possible.
+   */
+  public List<String> getColumnOrder() {
+    List<String> defensiveCopy = new ArrayList<String>();
+    defensiveCopy.addAll(columnOrder);
+    return defensiveCopy;
+  }
+
+  /**
+   * Sets the column order. Must be element keys.
    *
    * @param colOrder
    *          an ordered array of the database names of the table's columns
    */
-  public void setColumnOrder(ArrayList<String> colOrder) {
+  public void setColumnOrder(List<String> colOrder) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
-    	setColumnOrder(colOrder, db);
+      setColumnOrder(db, colOrder);
     } finally {
       // TODO: fix the when to close problem
-//    	db.close();
+      // db.close();
     }
   }
 
-  private void setColumnOrder(ArrayList<String> columnOrder, SQLiteDatabase db) {
-	String colOrderList = null;
-	try {
-		colOrderList = mapper.writeValueAsString(columnOrder);
-	} catch (JsonGenerationException e) {
-		e.printStackTrace();
-		Log.e(t, "illegal json ignored");
-	} catch (JsonMappingException e) {
-		e.printStackTrace();
-		Log.e(t, "illegal json ignored");
-	} catch (IOException e) {
-		e.printStackTrace();
-		Log.e(t, "illegal json ignored");
-	}
-	tableKVSH.setString(KEY_COLUMN_ORDER, colOrderList);
+  private void setColumnOrder(SQLiteDatabase db, List<String> columnOrder) {
+    String colOrderList = null;
+    try {
+      colOrderList = mapper.writeValueAsString(columnOrder);
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
+    }
+    tableKVSH.setString(db, KEY_COLUMN_ORDER, colOrderList);
     this.columnOrder = columnOrder;
+    this.staleColumnsInOrder = true;
   }
 
   /**
-   * @return an array of the database names of the prime columns
+   * @return a copy of the element names of the prime columns. Since is a copy,
+   *         should cache when possible.
    */
-  public ArrayList<String> getPrimeColumns() {
-    return primeColumns;
+  public List<String> getPrimeColumns() {
+    List<String> defensiveCopy = new ArrayList<String>();
+    defensiveCopy.addAll(this.primeColumns);
+    return defensiveCopy;
   }
 
   public boolean isColumnPrime(String colDbName) {
-    for (String prime : primeColumns) {
+    for (String prime : getPrimeColumns()) {
       if (prime.equals(colDbName)) {
         return true;
       }
@@ -1352,30 +1587,22 @@ public class TableProperties {
    * @param primes
    *          an array of the database names of the table's prime columns
    */
-  public void setPrimeColumns(ArrayList<String> primes) {
-//    String str = "";
-//    for (String cdb : primes) {
-//      str += cdb + "/";
-//    }
-//    if (str.length() > 0) {
-//      str = str.substring(0, str.length() - 1);
-//    }
+  public void setPrimeColumns(List<String> primes) {
     String primesStr;
     try {
       primesStr = mapper.writeValueAsString(primes);
       tableKVSH.setString(KEY_PRIME_COLUMNS, primesStr);
       this.primeColumns = primes;
-    } catch (JsonGenerationException e) {
+    } catch (JsonParseException e) {
       e.printStackTrace();
-      Log.e(TAG, "problem mapping prime colums");
+      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
     } catch (JsonMappingException e) {
-      Log.e(TAG, "problem mapping prime colums");
       e.printStackTrace();
+      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
     } catch (IOException e) {
-      Log.e(TAG, "problem mapping prime colums");
       e.printStackTrace();
+      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
     }
-
   }
 
   /**
@@ -1402,6 +1629,7 @@ public class TableProperties {
 
   /**
    * Return the element key of the indexed (frozen) column.
+   *
    * @return
    */
   public String getIndexColumn() {
@@ -1411,8 +1639,8 @@ public class TableProperties {
   /**
    * Set the index column for the table. This should be set by the display name
    * of the column. A null value will set the index column back to the default
-   * value.
-   * TODO: make this use the element key
+   * value. TODO: make this use the element key
+   *
    * @param indexColumnElementKey
    */
   public void setIndexColumn(String indexColumnElementKey) {
@@ -1426,9 +1654,9 @@ public class TableProperties {
   /**
    * @return the ID of the read security table, or null if there is none
    */
-//  public String getReadSecurityTableId() {
-//    return readSecurityTableId;
-//  }
+  // public String getReadSecurityTableId() {
+  // return readSecurityTableId;
+  // }
 
   public String getAccessControls() {
     return accessControls;
@@ -1436,33 +1664,34 @@ public class TableProperties {
 
   public void setAccessControls(String accessControls) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId,
-        TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS, accessControls, db);
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS,
+        accessControls, db);
     this.accessControls = accessControls;
+    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     // TODO: figure out how to handle closing the db
   }
 
   // TODO: fix how these security tables are accessed. need to figure this out
   // first.
 
-//  /**
-//   * Sets the table's read security table.
-//   *
-//   * @param tableId
-//   *          the ID of the new read security table (or null to set no read
-//   *          security table)
-//   */
-//  public void setReadSecurityTableId(String tableId) {
-//    setStringProperty(DB_READ_SECURITY_TABLE_ID, tableId);
-//    this.readSecurityTableId = tableId;
-//  }
+  // /**
+  // * Sets the table's read security table.
+  // *
+  // * @param tableId
+  // * the ID of the new read security table (or null to set no read
+  // * security table)
+  // */
+  // public void setReadSecurityTableId(String tableId) {
+  // setStringProperty(DB_READ_SECURITY_TABLE_ID, tableId);
+  // this.readSecurityTableId = tableId;
+  // }
 
-//  /**
-//   * @return the ID of the write security table, or null if there is none
-//   */
-//  public String getWriteSecurityTableId() {
-//    return writeSecurityTableId;
-//  }
+  // /**
+  // * @return the ID of the write security table, or null if there is none
+  // */
+  // public String getWriteSecurityTableId() {
+  // return writeSecurityTableId;
+  // }
 
   /**
    * Sets the table's write security table.
@@ -1471,13 +1700,13 @@ public class TableProperties {
    *          the ID of the new write security table (or null to set no write
    *          security table)
    */
-//  public void setWriteSecurityTableId(String tableId) {
-//    setStringProperty(DB_WRITE_SECURITY_TABLE_ID, tableId);
-//    this.writeSecurityTableId = tableId;
-//  }
+  // public void setWriteSecurityTableId(String tableId) {
+  // setStringProperty(DB_WRITE_SECURITY_TABLE_ID, tableId);
+  // this.writeSecurityTableId = tableId;
+  // }
 
   /**
-   * @return the sync tag (or null if the table has never been synchronized)
+   * @return the sync tag. Unsynched tables return the empty string.
    */
   public String getSyncTag() {
     return syncTag;
@@ -1491,9 +1720,9 @@ public class TableProperties {
    */
   public void setSyncTag(String syncTag) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag,
-        db);
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag, db);
     this.syncTag = syncTag;
+    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     // TODO: figure out how to handle closing the database
   }
 
@@ -1513,33 +1742,12 @@ public class TableProperties {
    *          {@link DataUtil#getNowInDbFormat()}).
    */
   public void setLastSyncTime(String time) {
-    tableKVSH.setString(TableDefinitionsColumns.LAST_SYNC_TIME, time);
+    SQLiteDatabase db = dbh.getWritableDatabase();
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.LAST_SYNC_TIME, time, db);
     this.lastSyncTime = time;
+    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
+    // TODO: figure out how to handle closing the db
   }
-
-  public KeyValueStore.Type getBackingStoreType() {
-    return this.backingStore;
-  }
-
-//  /**
-//   * @return the detail view filename
-//   */
-//  public String getDetailViewFilename() {
-//    return detailViewFilename;
-//
-//  }
-
-  /**
-   * Sets the table's detail view filename.
-   *
-   * @param filename
-   *          the new filename
-   */
-//  public void setDetailViewFilename(String filename) {
-//    setStringProperty(TableProperties.KVS_PARTITION,
-//        TableProperties.KVS_ASPECT, KEY_DETAIL_VIEW_FILE, filename);
-//    this.detailViewFilename = filename;
-//  }
 
   /**
    * @return the format for summary displays
@@ -1576,10 +1784,10 @@ public class TableProperties {
   public void setSyncState(SyncState state) {
     if (state == SyncState.rest || this.syncState == SyncState.rest) {
       SQLiteDatabase db = dbh.getWritableDatabase();
-      TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_STATE,
-          state.name(), db);
+      TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_STATE, state.name(), db);
       this.syncState = state;
       // TODO: figure out how to handle closing the db
+      TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     }
   }
 
@@ -1597,36 +1805,19 @@ public class TableProperties {
    *          the new transactioning status
    */
   public void setTransactioning(boolean transactioning) {
-    tableKVSH.setInteger(TableDefinitionsColumns.TRANSACTIONING,
-        SyncUtil.boolToInt(transactioning));
+    tableKVSH
+        .setInteger(TableDefinitionsColumns.TRANSACTIONING, SyncUtil.boolToInt(transactioning));
     this.transactioning = transactioning;
+    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
   }
 
-  /**
-   * Whether or not the table is set to be synched with the server.
-   * @return
-   */
-  //public boolean isSynchronized() {
-  //  return isSynched;
-  //}
-
-  /**
-   * Set whether or not the table is due to be synced with the server.
-   * @param isSynchronized
-   */
-  //public void setSynchronized(boolean isSynchronized) {
-  //  setIntProperty(DB_IS_SYNCHED, SyncUtil.boolToInt(isSynchronized));
-  //  this.isSynched = isSynchronized;
-  //}
-
-  public String toJson() {
-    getColumns(); // ensuring columns is initialized
+  public String toJson() throws JsonGenerationException, JsonMappingException, IOException {
+    Map<String, ColumnProperties> columnsMap = getColumns(); // ensuring columns
+                                                             // is initialized
     // I think this removes exceptions from not having getters/setters...
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker()
-        .withFieldVisibility(Visibility.ANY));
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
-    for (ColumnProperties cp : columns) {
+    for (ColumnProperties cp : columnsMap.values()) {
       colOrder.add(cp.getElementKey());
       cols.add(cp.toJson());
     }
@@ -1634,39 +1825,23 @@ public class TableProperties {
     for (String prime : primeColumns) {
       primes.add(prime);
     }
-    Map<String,Object> jo = new HashMap<String,Object>();
-	  jo.put(JSON_KEY_VERSION, 1);
-	  jo.put(JSON_KEY_TABLE_ID, tableId);
-	  jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
-	  jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-	  jo.put(JSON_KEY_TABLE_TYPE, tableType);
-	  jo.put(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS, accessControls);
-	  jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
-	  jo.put(JSON_KEY_COLUMNS, cols);
-	  jo.put(JSON_KEY_PRIME_COLUMNS, primes);
-	  jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
-	  jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
-	  // TODO
-	  // TODO
-	  jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
-//	  jo.put(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-//	      currentOverviewViewType.name());
-//	  jo.put(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE,
-//	      currentCollectionViewType.name());
-//	  jo.put(JSON_KEY_DETAIL_VIEW_FILE, detailViewFilename);
-	  jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
+    Map<String, Object> jo = new HashMap<String, Object>();
+    jo.put(JSON_KEY_VERSION, 1);
+    jo.put(JSON_KEY_TABLE_ID, tableId);
+    jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
+    jo.put(JSON_KEY_DISPLAY_NAME, displayName);
+    jo.put(JSON_KEY_TABLE_TYPE, tableType);
+    jo.put(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS, accessControls);
+    jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
+    jo.put(JSON_KEY_COLUMNS, cols);
+    jo.put(JSON_KEY_PRIME_COLUMNS, primes);
+    jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
+    jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
+    jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
+    jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
 
-	  String toReturn = null;
-	try {
-		toReturn = mapper.writeValueAsString(jo);
-	} catch (JsonGenerationException e) {
-		e.printStackTrace();
-	} catch (JsonMappingException e) {
-		e.printStackTrace();
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
-    Log.d("TP", "json: " + toReturn);
+    String toReturn = null;
+    toReturn = mapper.writeValueAsString(jo);
     return toReturn;
   }
 
@@ -1675,98 +1850,81 @@ public class TableProperties {
    *
    * @param json
    */
-  public void setFromJson(String json) {
-    getColumns();
+  public boolean setFromJson(String json) {
     @SuppressWarnings("unchecked")
-	Map<String, Object> jo;
-	try {
-		jo = mapper.readValue(json, Map.class);
-	} catch (JsonParseException e) {
-		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json: " + json);
-	} catch (JsonMappingException e) {
-		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json: " + json);
-	} catch (IOException e) {
-		e.printStackTrace();
-		throw new IllegalArgumentException("invalid json: " + json);
-	}
+    Map<String, Object> jo;
+    try {
+      jo = mapper.readValue(json, Map.class);
 
-    ArrayList<String> colOrder =
-        (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
-    ArrayList<String> primes =
-        (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
+      if ( !((String) jo.get(JSON_KEY_TABLE_ID)).equals(this.getTableId()) ) {
+        return false;
+      }
+      ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
+      ArrayList<String> primes = (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
 
-	  setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
-	  setTableType(TableType.valueOf((String)jo.get(JSON_KEY_TABLE_TYPE)));
-	  setPrimeColumns(primes);
-	  setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
-	  setIndexColumn((String)jo.get(JSON_KEY_INDEX_COLUMN));
-	  setAccessControls(
-	      (String) jo.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS));
-//	  if (jo.containsKey(JSON_KEY_OV_VIEW_SETTINGS)) {
-//	    // TODO
-//	  }
-//	  if (jo.containsKey(JSON_KEY_CO_VIEW_SETTINGS)) {
-//	    // TODO
-//	  }
-	  setCurrentViewType(TableViewType.valueOf(
-	      (String)jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
-//	  setCurrentOverviewViewType(TableViewType.valueOf(
-//	      (String)jo.get(JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE)));
-//	  setCurrentOverviewViewType(TableViewType.valueOf(
-//	      (String)jo.get(JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE)));
-//	  setDetailViewFilename((String) jo.get(JSON_KEY_DETAIL_VIEW_FILE));
-	  setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
-	  Set<String> columnsToDelete = new HashSet<String>();
-	  for (String cdn : columnOrder) {
-	    columnsToDelete.add(cdn);
-	  }
-	  ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
-	  for (int i = 0; i < colOrder.size(); i++) {
-	    //Map<String,Object> colJo = (Map<String, Object>) colJArr.get(i);
-	    Map<String, Object> colJo = null;
-      try {
-        colJo = mapper.readValue((String) colJArr.get(i), Map.class);
-      } catch (JsonParseException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (JsonMappingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      if (colJo == null) {
-        throw new IllegalStateException("problem reclaiming column from json" +
-        		" in TableProperties.setFromJson");
-      }
-	    //String colJo = (String) colJArr.get(i);
-		  ColumnProperties cp = getColumnByElementKey(colOrder.get(i));
-          if (cp == null) {
-            // then we need to create the bolumn.
-            String coDispName =
-                (String) colJo.get(ColumnProperties.KEY_DISPLAY_NAME);
-            String coElKey =
-                (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_KEY);
-            String coElName =
-                (String) colJo.get(ColumnProperties.JSON_KEY_ELEMENT_NAME);
-//            cp = ColumnProperties.constructColumnPropertiesFromJson(dbh,
-//                colJo);
-//            cp = addColumn(colOrder.get(i));
-            cp = addColumn(coDispName, coElKey, coElName);
-//            addColumnFromProperties(cp);
-            cp.setFromJson((String) colJArr.get(i));
+      setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
+      setTableType(TableType.valueOf((String) jo.get(JSON_KEY_TABLE_TYPE)));
+      setPrimeColumns(primes);
+      setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
+      setIndexColumn((String) jo.get(JSON_KEY_INDEX_COLUMN));
+      setAccessControls((String) jo.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS));
+      setCurrentViewType(TableViewType.valueOf((String) jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
+      setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
+
+      Set<String> columnElementKeys = new HashSet<String>();
+      ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
+      for (int i = 0; i < colOrder.size(); i++) {
+        ColumnProperties cp = ColumnProperties.constructColumnPropertiesFromJson(dbh,
+            (String) colJArr.get(i), backingStore);
+
+        columnElementKeys.add(cp.getElementKey());
+        ColumnProperties existing = this.getColumnByElementKey(cp.getElementKey());
+        if (existing != null) {
+          ColumnDefinitionChange change = existing.compareColumnDefinitions(cp);
+          if (change == ColumnDefinitionChange.INCOMPATIBLE) {
+            throw new IllegalArgumentException("incompatible column definitions: "
+                + cp.getElementKey());
           }
-          //cp.setFromJson(colJo);
-          columnsToDelete.remove(colOrder.get(i));
+
+          if (change == ColumnDefinitionChange.CHANGE_ELEMENT_TYPE) {
+            ColumnType now = existing.getColumnType();
+            ColumnType next = cp.getColumnType();
+            existing.setColumnType(this, next);
+          }
+          // persist the incoming definition
+          cp.persistColumn(dbh.getWritableDatabase(), tableId);
+          this.refreshColumns(); // to read in this new definition.
+        } else {
+          this.addColumn(cp);
+        }
       }
+
+      // Collect the columns that are not in the newly defined set
+      Set<String> columnsToDelete = new HashSet<String>();
+      for (String column : this.getColumns().keySet()) {
+        if (!columnElementKeys.contains(column)) {
+          columnsToDelete.add(column);
+        }
+      }
+
+      // Remove them.
       for (String columnToDelete : columnsToDelete) {
         deleteColumn(columnToDelete);
       }
+
       setColumnOrder(colOrder);
-      orderColumns();
+      // orderColumns();
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("invalid json: " + json);
+    }
+    return true;
   }
 
   /**
@@ -1774,48 +1932,33 @@ public class TableProperties {
    * in TableViewSettings. It used to perform checks on column types, but for
    * now it just returns spreadsheet, list, and graph views. It does not return
    * map.
+   *
    * @return
    */
   public TableViewType[] getPossibleViewTypes() {
     int numericColCount = 0;
     int locationColCount = 0;
     int dateColCount = 0;
-    ColumnProperties[] columnProperties = this.getColumns();
-    for (ColumnProperties cp : columnProperties) {
+    Map<String, ColumnProperties> columnProperties = this.getColumns();
+    for (ColumnProperties cp : columnProperties.values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numericColCount++;
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
-        locationColCount++;
+        locationColCount += 2;// latitude and longitude
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
-      } else if(cp.getDisplayName().equalsIgnoreCase("latitude")
-				|| cp.getDisplayName().equalsIgnoreCase("longitude")) {
-    	  locationColCount++;
+      } else if (isLatitudeColumn(cp) || isLongitudeColumn(cp)) {
+        locationColCount++;
       }
     }
     List<TableViewType> list = new ArrayList<TableViewType>();
     list.add(TableViewType.Spreadsheet);
     list.add(TableViewType.List);
     list.add(TableViewType.Graph);
-//    List<Integer> list = new ArrayList<Integer>();
-//    list.add(Type.SPREADSHEET);
-//    list.add(Type.LIST);
-//    if ((numericColCount >= 2) || ((numericColCount >= 1) && (dateColCount >= 1))) {
-//      list.add(Type.LINE_GRAPH);
-//    }
-//    if (numericColCount >= 1) {
-//      list.add(Type.BOX_STEM);
-//    }
-    // Not adding this b/c it's not working atm.
-//    list.add(Type.BAR_GRAPH);
     if (locationColCount >= 1) {
       list.add(TableViewType.Map);
     }
-//    int[] arr = new int[list.size()];
-//    for (int i = 0; i < list.size(); i++) {
-//      arr[i] = list.get(i);
-//    }
     TableViewType[] arr = new TableViewType[list.size()];
     for (int i = 0; i < list.size(); i++) {
       arr[i] = list.get(i);
@@ -1823,21 +1966,45 @@ public class TableProperties {
     return arr;
   }
 
+  public static boolean isLatitudeColumn(ColumnProperties cp) {
+    return (cp.getColumnType() == ColumnType.GEOPOINT)
+        || endsWithIgnoreCase(cp.getDisplayName(), "latitude");
+  }
+
+  public static boolean isLongitudeColumn(ColumnProperties cp) {
+    return (cp.getColumnType() == ColumnType.GEOPOINT)
+        || endsWithIgnoreCase(cp.getDisplayName(), "longitude");
+  }
+
+  private static boolean endsWithIgnoreCase(String text, String ending) {
+    if (text.equalsIgnoreCase(ending)) {
+      return true;
+    }
+    int spidx = text.lastIndexOf(' ');
+    int usidx = text.lastIndexOf('_');
+    int idx = Math.max(spidx, usidx);
+    if (idx == -1) {
+      return false;
+    }
+    return text.substring(idx + 1).equalsIgnoreCase(ending);
+  }
+
   /**
    * Get the accessor object for persisted values in the key value store.
+   *
    * @param partition
    * @return
    */
   public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore backingStore = kvsm.getStoreForTable(this.tableId,
-        this.backingStore);
+    KeyValueStore backingStore = kvsm.getStoreForTable(this.tableId, this.backingStore);
     return new KeyValueStoreHelper(backingStore, partition);
   }
 
   /**
    * Returns an array of the initialized properties. These are the keys that
    * exist in the key value store for any table.
+   *
    * @return
    */
   public static String[] getInitKeys() {

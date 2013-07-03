@@ -1,6 +1,6 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.tables.Activity.importexport.ExportCSVActivity;
+import org.opendatakit.tables.activities.importexport.ExportCSVActivity;
 import org.opendatakit.tables.utils.CsvUtil;
 
 import android.os.AsyncTask;
@@ -9,7 +9,7 @@ public class ExportTask
         extends AsyncTask<ExportRequest, Integer, Boolean> {
 
   /**
-	 * 
+	 *
 	 */
 	private final ExportCSVActivity exportCSVActivity;
 
@@ -21,29 +21,26 @@ public class ExportTask
 	}
 
 // This says whether or not the secondary entries in the key value store
-  // were written successfully. 
+  // were written successfully.
   public boolean keyValueStoreSuccessful = true;
-    
+
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
         CsvUtil cu = new CsvUtil(this.exportCSVActivity);
-        if (request.getIncludeProperties()) {
-            return cu.exportWithProperties(this, request.getFile(),
-                    request.getTableProperties().getTableId(),
-                    request.getIncludeTimestamps(),
-                    request.getIncludePhoneNums());
-        } else {
-            return cu.export(this, request.getFile(),
-                    request.getTableProperties().getTableId(),
-                    request.getIncludeTimestamps(),
-                    request.getIncludePhoneNums());
-        }
+        return cu.export(this, request.getFile(),
+                request.getTableProperties(),
+                request.getIncludeTimestamps(),
+                request.getIncludeUriUsers(),
+                request.getIncludeInstanceNames(),
+                request.getIncludeFormIds(),
+                request.getIncludeLocales(),
+                request.getIncludeProperties());
     }
-    
+
     protected void onProgressUpdate(Integer... progress) {
         // do nothing
     }
-    
+
     protected void onPostExecute(Boolean result) {
         this.exportCSVActivity.dismissDialog(ExportCSVActivity.EXPORT_IN_PROGRESS_DIALOG);
         if (result) {

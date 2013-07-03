@@ -15,11 +15,14 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.io.File;
+
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.content.Context;
+import android.app.Activity;
 import android.view.ViewGroup;
 
 /**
@@ -44,11 +47,13 @@ public class CustomAppView extends CustomView {
       "<p>No filename has been specified.</p>" +
       "</body></html>";
 
-  private Context mContext;
+  private Activity mActivity;
   private DbHelper mDbHelper;
   // The filename of the HTML you'll be displaying. Not the full path, just
   // the relative name.
   private String mFilename;
+  // IMPORTANT: hold a strong reference to control because Webkit holds a weak reference
+  private Control control;
 
   /**
    * Create the view. The filename is the filename of the HTML you want to
@@ -57,24 +62,26 @@ public class CustomAppView extends CustomView {
    * @param context
    * @param filename cannot be null
    */
-  public CustomAppView(Context context, String filename) {
-    super(context);
-    this.mContext = context;
+  public CustomAppView(Activity activity, String filename,
+      CustomViewCallbacks callbacks) {
+    super(activity, callbacks);
+    this.mActivity = activity;
     this.mFilename = filename;
-    this.mDbHelper = DbHelper.getDbHelper(context);
+    this.mDbHelper = DbHelper.getDbHelper(activity);
     this.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
         LayoutParams.MATCH_PARENT));
   }
 
   public void display() {
-    webView.addJavascriptInterface(new Control(mContext), "control");
+    control = new Control(mActivity);
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     // We're going to assume this is only being called if homescreen.html has
     // been found, so we're just going to use that, not do any checking.
     String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     // First we want to see if we're supposed to display a custom HTML, or if
     // we want to display just the homescreen.html file. We'll check for the
     // key.
-    load("file:///" + dir + "/" + mFilename);
+    load(FileProvider.getAsUrl(mActivity, new File(dir + "/" + mFilename)));
     initView();
   }
 

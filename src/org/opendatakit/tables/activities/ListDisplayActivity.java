@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
@@ -93,10 +93,6 @@ public class ListDisplayActivity extends SherlockActivity
    */
   public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
-    private DataManager dm;
     private Controller c;
     private Query query;
     private UserTable table;
@@ -111,10 +107,10 @@ public class ListDisplayActivity extends SherlockActivity
         dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
         kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
-        dm = new DataManager(DbHelper.getDbHelper(this));
         // TODO: why do we get all table properties here? this is an expensive
         // call. I don't think we should do it.
-        query = new Query(dm.getAllTableProperties(KeyValueStore.Type.ACTIVE),
+        query = new Query(dbh,
+            KeyValueStore.Type.ACTIVE,
             c.getTableProperties());
     }
 
@@ -128,36 +124,51 @@ public class ListDisplayActivity extends SherlockActivity
     public void init() {
       // I hate having to do these two refreshes here, but with the code the
       // way it is it seems the only way.
-      c.refreshDbTable();
+      c.getTableProperties().refreshColumns();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
-        table = c.getIsOverview() ?
-                c.getDbTable().getUserOverviewTable(query) :
-                c.getDbTable().getUserTable(query);
+        // If a sql statement has been passed in the Intent, use that instead
+        // of the query.
+        String sqlWhereClause =
+            getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+        if (sqlWhereClause != null) {
+          String[] sqlSelectionArgs = getIntent().getExtras()
+              .getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+          DbTable dbTable = DbTable.getDbTable(dbh,
+              c.getTableProperties());
+          table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+        } else {
+          // we just use the query.
+          table = c.getIsOverview() ?
+                  c.getDbTable().getUserOverviewTable(query) :
+                  c.getDbTable().getUserTable(query);
+        }
         String nameOfView =
             kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        // The nameOfView can be null in some cases, like if the default list
+        // view has been deleted. If this ever occurs, we should just say no
+        // filename specified and make them choose one.
         String filename =
             getIntent().getExtras().getString(INTENT_KEY_FILENAME);
-        if (filename == null) {
-          KeyValueStoreHelper namedListViewsPartitionKvsh =
-              c.getTableProperties().getKeyValueStoreHelper(
-                  ListDisplayActivity.KVS_PARTITION_VIEWS);
-          AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
-          AspectHelper viewAspectHelper =
-              namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
-          filename =
-              viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-          KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-          KeyValueStore kvs =
-              kvsm.getStoreForTable(c.getTableProperties().getTableId(),
-              c.getTableProperties().getBackingStoreType());
+        if (nameOfView != null) {
+          if (filename == null) {
+            KeyValueStoreHelper namedListViewsPartitionKvsh =
+                c.getTableProperties().getKeyValueStoreHelper(
+                    ListDisplayActivity.KVS_PARTITION_VIEWS);
+            AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
+            AspectHelper viewAspectHelper =
+                namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
+            filename =
+                viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+            KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+            KeyValueStore kvs =
+                kvsm.getStoreForTable(c.getTableProperties().getTableId(),
+                c.getTableProperties().getBackingStoreType());
+          }
         }
-        view = CustomTableView.get(this, c.getTableProperties(), table,
-                filename);
+        view = CustomTableView.get(this, table, filename, c);
         // change the info bar text IF necessary
-        if (!c.getInfoBarText().endsWith(" (List)")) {
-          c.setInfoBarText(c.getInfoBarText() + " (List)");
-        }
+        c.setListViewInfoBarText();
         displayView();
     }
 
@@ -177,15 +188,8 @@ public class ListDisplayActivity extends SherlockActivity
             Intent data) {
         if (c.handleActivityReturn(requestCode, resultCode, data)) {
             return;
-        }
-        switch (requestCode) {
-        case RCODE_ODKCOLLECT_ADD_ROW:
-            c.addRowFromOdkCollectForm(
-                    Integer.valueOf(data.getData().getLastPathSegment()));
-            init();
-            break;
-        default:
-            super.onActivityResult(requestCode, resultCode, data);
+        } else {
+          super.onActivityResult(requestCode, resultCode, data);
         }
     }
 

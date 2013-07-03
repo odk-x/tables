@@ -18,7 +18,6 @@ package org.opendatakit.tables.data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -26,6 +25,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
+import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.utils.Constants;
 
 import android.util.Log;
@@ -38,51 +38,55 @@ import android.util.Log;
  *
  */
 public class ColorRuleGroup {
-  
+
   private static final String TAG = ColorRuleGroup.class.getName();
-  
+
   /*****************************
    * Things needed for the key value store.
    *****************************/
   public static final String KVS_PARTITION_COLUMN = "ColumnColorRuleGroup";
-  public static final String KEY_COLOR_RULES_COLUMN = 
+  public static final String KEY_COLOR_RULES_COLUMN =
       "ColumnColorRuleGroup.ruleList";
   public static final String KVS_PARTITION_TABLE = "TableColorRuleGroup";
-  public static final String KEY_COLOR_RULES_TABLE = 
+  public static final String KEY_COLOR_RULES_TABLE =
       "TableColorRuleGroup.ruleList";
-  public static final String KEY_COLOR_RULES_STATUS_COLUMN = 
+  public static final String KEY_COLOR_RULES_STATUS_COLUMN =
       "StatusColumn.ruleList";
   public static final String DEFAULT_KEY_COLOR_RULES = "[]";
-  
+
+  private static final ObjectMapper mapper;
+  private static final TypeFactory typeFactory;
+
+  static {
+    mapper = new ObjectMapper();
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
+    mapper.setVisibilityChecker(
+        mapper.getVisibilityChecker()
+        .withCreatorVisibility(Visibility.ANY));
+    typeFactory = mapper.getTypeFactory();
+  }
+
   private final TableProperties tp;
   private final ColumnProperties cp;
   // this remains its own field (which must always match cp.getElementKey())
-  // b/c it is easier for the caller to just pass in the elementKey, and the 
+  // b/c it is easier for the caller to just pass in the elementKey, and the
   // code currently uses null to mean "don't get me a color ruler."
   private final String elementKey;
-  private final ObjectMapper mapper;
-  private final TypeFactory typeFactory;
   private final KeyValueStoreHelper kvsh;
   private final KeyValueHelper aspectHelper;
   // This is the list of actual rules that make up the ruler.
   private List<ColorRule> ruleList;
   private Type mType;
-  
+
   /**
-   * Construct the rule group for the given column. 
+   * Construct the rule group for the given column.
    * @param tp
    * @param elementKey
    */
   private ColorRuleGroup(TableProperties tp, String elementKey, Type type) {
     this.tp = tp;
     this.mType = type;
-    this.mapper = new ObjectMapper();
-    this.typeFactory = mapper.getTypeFactory();
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-    mapper.setVisibilityChecker(
-        mapper.getVisibilityChecker()
-        .withCreatorVisibility(Visibility.ANY));
     this.elementKey = elementKey;
     String jsonRulesString = DEFAULT_KEY_COLOR_RULES;
     switch (type) {
@@ -112,22 +116,22 @@ public class ColorRuleGroup {
     }
     this.ruleList = parseJsonString(jsonRulesString);
   }
-    
+
     public static ColorRuleGroup getColumnColorRuleGroup(TableProperties tp,
         String elementKey) {
       return new ColorRuleGroup(tp, elementKey, Type.COLUMN);
     }
-    
+
     public static ColorRuleGroup getTableColorRuleGroup(TableProperties tp) {
       return new ColorRuleGroup(tp, null, Type.TABLE);
     }
-    
+
     public static ColorRuleGroup getStatusColumnRuleGroup(TableProperties tp) {
       return new ColorRuleGroup(tp, null, Type.STATUS_COLUMN);
     }
-    
+
     /**
-     * Parse a json String of a list of {@link ColorRule} objects into a 
+     * Parse a json String of a list of {@link ColorRule} objects into a
      * @param json
      * @return
      */
@@ -137,9 +141,9 @@ public class ColorRuleGroup {
       }
       List<ColorRule> reclaimedRules = new ArrayList<ColorRule>();
       try {
-        reclaimedRules = 
-            mapper.readValue(json, 
-                typeFactory.constructCollectionType(ArrayList.class, 
+        reclaimedRules =
+            mapper.readValue(json,
+                typeFactory.constructCollectionType(ArrayList.class,
                     ColorRule.class));
       } catch (JsonParseException e) {
         Log.e(TAG, "problem parsing json to colcolorrule");
@@ -153,7 +157,7 @@ public class ColorRuleGroup {
       }
       return reclaimedRules;
     }
-    
+
     /**
      * Return the list of rules that makes up this column. This should only be
      * used for displaying the rules. Any changes to the list should be made
@@ -163,7 +167,7 @@ public class ColorRuleGroup {
     public List<ColorRule> getColorRules() {
       return ruleList;
     }
-    
+
     /**
      * Replace the list of rules that define this ColumnColorRuler.
      * @param newRules
@@ -171,7 +175,7 @@ public class ColorRuleGroup {
     public void replaceColorRuleList(List<ColorRule> newRules) {
       this.ruleList = newRules;
     }
-    
+
     /**
      * Get the type of the rule group.
      * @return
@@ -179,7 +183,7 @@ public class ColorRuleGroup {
     public Type getType() {
       return mType;
     }
-    
+
     /**
      * Persist the rule list into the key value store. Does nothing if there are
      * no rules, so will not pollute the key value store unless something has
@@ -203,9 +207,9 @@ public class ColorRuleGroup {
           return;
         }
       }
-      // set it to this default just in case something goes wrong and it is 
+      // set it to this default just in case something goes wrong and it is
       // somehow set. this way if you manage to set the object you will have
-      // something that doesn't throw an error when you expect to get back 
+      // something that doesn't throw an error when you expect to get back
       // an array list. it will just be of length 0. not sure if this is a good
       // idea or not.
       String ruleListJson = DEFAULT_KEY_COLOR_RULES;
@@ -236,11 +240,11 @@ public class ColorRuleGroup {
         e.printStackTrace();
       }
     }
-    
+
     private void addRule(ColorRule rule) {
       ruleList.add(rule);
     }
-    
+
     /**
      * Replace the rule matching updatedRule's id with updatedRule.
      * @param updatedRule
@@ -254,7 +258,7 @@ public class ColorRuleGroup {
       }
       Log.e(TAG, "tried to update a rule that matched no saved ids");
     }
-    
+
     /**
      * Remove the given rule from the rule list.
      * @param rule
@@ -269,74 +273,72 @@ public class ColorRuleGroup {
       Log.d(TAG, "a rule was passed to deleteRule that did not match" +
            " the id of any rules in the list");
     }
-    
+
     public int getRuleCount() {
       return ruleList.size();
     }
-    
+
     /**
-     * Use the rule group to determine if it applies to the given data. 
+     * Use the rule group to determine if it applies to the given data.
      * @param rowData an array of data from the row
      * @param indexMapping a mapping of element key to index in the rowData
      * array
-     * @param propertiesMapping a mapping of element key to 
-     * {@link ColumnProperties}. Necessary for knowing how to interpret the 
+     * @param propertiesMapping a mapping of element key to
+     * {@link ColumnProperties}. Necessary for knowing how to interpret the
      * row data (int, number, String, etc).
-     * @return If there was a matching rule in the group, {@link ColorGuide} 
-     * with didMatch set to true and the appropriate foreground and background 
-     * colors set to the row. Otherwise, the {@link ColorGuide} will have 
+     * @return If there was a matching rule in the group, {@link ColorGuide}
+     * with didMatch set to true and the appropriate foreground and background
+     * colors set to the row. Otherwise, the {@link ColorGuide} will have
      * didMatch return false and meaningless default values set to the
      * foreground and background colors.
-     * 
+     *
      */
-    public ColorGuide getColorGuide(String[] rowData, 
-        Map<String, Integer> indexMapping, 
-        Map<String, ColumnProperties> propertiesMapping) {
+    public ColorGuide getColorGuide(Row row) {
       for (int i = 0; i < ruleList.size(); i++) {
-        if (ruleList.get(i).checkMatch(rowData, indexMapping, 
-            propertiesMapping)) {
-          return new ColorGuide(true, ruleList.get(i).getForeground(),
-              ruleList.get(i).getBackground());
+        ColorRule cr = ruleList.get(i);
+        if (cr.checkMatch(tp, row)) {
+          return new ColorGuide(true, cr.getForeground(),
+              cr.getBackground());
         }
       }
       return new ColorGuide(false, Constants.DEFAULT_TEXT_COLOR,
           Constants.DEFAULT_BACKGROUND_COLOR);
     }
-    
+
     /**
      * Class for interpreting the result of a test of the rule group. When this
-     * is returned you are able to distinguish via the {@link didMatch} method 
+     * is returned you are able to distinguish via the {@link didMatch} method
      * whether or not the rule should apply.
      * @author sudar.sam@gmail.com
      *
      */
-    public class ColorGuide {
-      
-      private int mForeground;
-      private int mBackground;
-      private boolean mMatched;
-      
+    public static final class ColorGuide {
+
+      private final int mForeground;
+      private final int mBackground;
+      private final boolean mMatched;
+
       public ColorGuide(boolean matched, int foreground, int background) {
         this.mMatched = matched;
         this.mForeground = foreground;
         this.mBackground = background;
       }
-      
-      public boolean didMatch() {
+
+      public final boolean didMatch() {
         return mMatched;
       }
-      
-      public int getForeground() {
+
+      public final int getForeground() {
         return mForeground;
       }
-      
-      public int getBackground() {
+
+      public final int getBackground() {
         return mBackground;
       }
     }
-    
+
     public enum Type {
       COLUMN, TABLE, STATUS_COLUMN;
     }
-    
+
 }

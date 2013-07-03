@@ -21,18 +21,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.opendatakit.aggregate.odktables.api.client.AggregateRequestInterceptor;
-import org.opendatakit.aggregate.odktables.entity.Column;
-import org.opendatakit.aggregate.odktables.entity.Row;
-import org.opendatakit.aggregate.odktables.entity.TableProperties;
-import org.opendatakit.aggregate.odktables.entity.api.PropertiesResource;
-import org.opendatakit.aggregate.odktables.entity.api.RowResource;
-import org.opendatakit.aggregate.odktables.entity.api.TableDefinition;
-import org.opendatakit.aggregate.odktables.entity.api.TableResource;
-import org.opendatakit.aggregate.odktables.entity.serialization.JsonObjectHttpMessageConverter;
-import org.opendatakit.aggregate.odktables.entity.serialization.SimpleXMLSerializerForAggregate;
+import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.Row;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
+import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
+import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
+import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableType;
+import org.opendatakit.aggregate.odktables.rest.serialization.JsonObjectHttpMessageConverter;
+import org.opendatakit.aggregate.odktables.rest.serialization.SimpleXMLSerializerForAggregate;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.Modification;
@@ -59,9 +61,9 @@ import com.google.gson.JsonParser;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
- * 
+ *
  * @author the.dylan.price@gmail.com
- * 
+ *
  */
 public class AggregateSynchronizer implements Synchronizer {
 
@@ -69,7 +71,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
   // TODO: how do we support new column types without breaking this map???
-  private static final Map<ColumnType, Column.ColumnType> types = 
+  public static final Map<ColumnType, Column.ColumnType> types =
 		  				new HashMap<ColumnType, Column.ColumnType>() {
     {
         put(ColumnType.NONE, Column.ColumnType.STRING);
@@ -79,22 +81,17 @@ public class AggregateSynchronizer implements Synchronizer {
         put(ColumnType.DATE, Column.ColumnType.STRING);
         put(ColumnType.DATETIME, Column.ColumnType.STRING);
         put(ColumnType.TIME, Column.ColumnType.STRING);
-
         put(ColumnType.BOOLEAN, Column.ColumnType.BOOLEAN); // TODO: confirm this propagates OK?
-
         put(ColumnType.MIMEURI, Column.ColumnType.STRING); // TODO: need File + contentType entry in Aggregate (as JSON in Tables)
-
         put(ColumnType.MULTIPLE_CHOICES, Column.ColumnType.STRING); // TODO: should be extra-wide storage or split out in Aggregate???
-
         put(ColumnType.GEOPOINT, Column.ColumnType.STRING); // TODO: can we handle this generically?
-
       put(ColumnType.DATE_RANGE, Column.ColumnType.STRING); // not in Collect, Aggregate
       put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING); // not in Collect, Aggregate
       put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING); // not in Collect, Aggregate
 
       // TODO: goes away -- becomes MULTIPLE_CHOICES + item element type
       put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING); // select1/select - not in Collect, Aggregate
-      
+
       // TODO: what is this for???
       put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
     }
@@ -112,14 +109,16 @@ public class AggregateSynchronizer implements Synchronizer {
     uri = uri.resolve("/odktables/tables/").normalize();
     this.baseUri = uri;
 
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors =
+        new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(accessToken));
 
     this.rt = new RestTemplate();
     this.rt.setInterceptors(interceptors);
 
     Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
-    List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+    List<HttpMessageConverter<?>> converters =
+        new ArrayList<HttpMessageConverter<?>>();
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
     this.rt.setMessageConverters(converters);
@@ -136,19 +135,26 @@ public class AggregateSynchronizer implements Synchronizer {
     checkAccessToken(accessToken);
   }
 
-  private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
+  private void checkAccessToken(String accessToken) throws
+      InvalidAuthTokenException {
     try {
       rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
     } catch (HttpClientErrorException e) {
       Log.e(TAG, "HttpClientErrorException in checkAccessToken");
       JsonParser parser = new JsonParser();
-      JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
-      if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
-        throw new InvalidAuthTokenException("Invalid auth token: " + accessToken, e);
+      JsonObject resp = parser.parse(e.getResponseBodyAsString())
+          .getAsJsonObject();
+      if (resp.has("error") && resp.get("error").getAsString()
+          .equals("invalid_token")) {
+        throw new InvalidAuthTokenException("Invalid auth token: "
+          + accessToken, e);
       }
     }
   }
 
+  /**
+   * Return a map of tableId to tableKey.
+   */
   @SuppressWarnings("unchecked")
   @Override
   public Map<String, String> getTables() throws IOException {
@@ -162,40 +168,37 @@ public class AggregateSynchronizer implements Synchronizer {
     }
 
     for (TableResource tableResource : tableResources)
-      tables.put(tableResource.getTableId(), tableResource.getTableName());
+      tables.put(tableResource.getTableId(), tableResource.getTableKey());
 
     return tables;
   }
 
   /*
    * (non-Javadoc)
-   * 
-   * @see
-   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#createTable(java.lang
-   * .String, java.util.List)
+   * @see org.opendatakit.tables.sync.Synchronizer#createTable(j
+   * ava.lang.String, java.util.List, java.lang.String, java.lang.String,
+   * org.opendatakit.aggregate.odktables.entity.api.TableType,
+   * java.lang.String)
    */
   @Override
-  public String createTable(String tableId, String tableName, Map<String, ColumnType> cols,
-      String tableProperties) throws IOException {
-    // create column objects
-    List<Column> columns = new ArrayList<Column>();
-    for (Entry<String, ColumnType> col : cols.entrySet()) {
-      String name = col.getKey();
-      Column.ColumnType type = types.get(col.getValue());
-      Column column = new Column(name, type);
-      columns.add(column);
-    }
+  public String createTable(String tableId, List<Column> columns,
+      String tableKey, String dbTableName, TableType type,
+      String tableIdAccessControls) throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
-    TableDefinition definition = new TableDefinition(tableName, columns, tableProperties);
-    HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
-        requestHeaders);
+    TableDefinition definition =
+        new TableDefinition(tableId, columns, tableKey, dbTableName,
+            type, tableIdAccessControls);
+    HttpEntity<TableDefinition> requestEntity =
+        new HttpEntity<TableDefinition>(definition, requestHeaders);
 
     // create table
     ResponseEntity<TableResource> resourceEntity;
     try {
-      resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity, TableResource.class);
+      // TODO: we also need to put up the key value store/properties.
+      resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity,
+          TableResource.class);
     } catch (ResourceAccessException e) {
       Log.e(TAG, "ResourceAccessException in createTable");
       throw new IOException(e.getMessage());
@@ -206,7 +209,8 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources.put(resource.getTableId(), resource);
 
     // return sync tag
-    SyncTag syncTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag());
+    SyncTag syncTag = new SyncTag(resource.getDataEtag(),
+        resource.getPropertiesEtag());
     return syncTag.toString();
   }
 
@@ -232,7 +236,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteTable(java.lang
    * .String)
@@ -244,14 +248,15 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#getUpdates(java.lang
    * .String, java.lang.String)
    */
   @SuppressWarnings("unchecked")
   @Override
-  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException {
+  public IncomingModification getUpdates(String tableId, String currentSyncTag)
+      throws IOException {
     IncomingModification modification = new IncomingModification();
 
     // get current and new sync tags
@@ -261,7 +266,9 @@ public class AggregateSynchronizer implements Synchronizer {
       currentTag = SyncTag.valueOf(currentSyncTag);
     else
       currentTag = new SyncTag("", "");
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag());
+    // This tag is ultimately returned. May8--make sure it works.
+    SyncTag newTag = new SyncTag(resource.getDataEtag(),
+        resource.getPropertiesEtag());
 
     // stop now if there are no updates
     if (newTag.equals(currentTag)) {
@@ -277,7 +284,8 @@ public class AggregateSynchronizer implements Synchronizer {
         url = URI.create(resource.getDataUri());
       } else {
         String diffUri = resource.getDiffUri();
-        url = URI.create(diffUri + "?data_etag=" + currentTag.getDataEtag()).normalize();
+        url = URI.create(diffUri + "?data_etag=" +
+            currentTag.getDataEtag()).normalize();
       }
       List<RowResource> rows;
       try {
@@ -288,24 +296,34 @@ public class AggregateSynchronizer implements Synchronizer {
 
       List<SyncRow> syncRows = new ArrayList<SyncRow>();
       for (RowResource row : rows) {
-        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowEtag(), row.isDeleted(),
-            row.getValues());
+        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowEtag(),
+            row.isDeleted(), row.getValues());
         syncRows.add(syncRow);
       }
       modification.setRows(syncRows);
     }
 
-    // get properties updates
+    // get properties updates.
+    // To do this we first check to see if the properties Etag is up to date.
+    // If it is, we can do nothing. If it is out of date, we have to:
+    // 1) get a TableDefinitionResource to see if we need to update the table
+    // data structure of any of the columns.
+    // 2) get a PropertiesResource to get all the key value entries.
     if (!newTag.getPropertiesEtag().equals(currentTag.getPropertiesEtag())) {
-      PropertiesResource properties;
+      TableDefinitionResource definitionRes;
+      PropertiesResource propertiesRes;
       try {
-        properties = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
+        propertiesRes = rt.getForObject(resource.getPropertiesUri(),
+            PropertiesResource.class);
+        definitionRes = rt.getForObject(resource.getDefinitionUri(),
+            TableDefinitionResource.class);
       } catch (ResourceAccessException e) {
         throw new IOException(e.getMessage());
       }
 
       modification.setTablePropertiesChanged(true);
-      modification.setTableProperties(properties.getMetadata());
+      modification.setTableProperties(propertiesRes);
+      modification.setTableDefinitionResource(definitionRes);
     }
 
     modification.setTableSyncTag(newTag.toString());
@@ -314,7 +332,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#insertRows(java.lang
    * .String, java.util.List)
@@ -332,7 +350,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#updateRows(java.lang
    * .String, java.util.List)
@@ -379,7 +397,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#deleteRows(java.lang
    * .String, java.util.List)
@@ -405,26 +423,35 @@ public class AggregateSynchronizer implements Synchronizer {
     return syncTag.toString();
   }
 
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.sync.Synchronizer#setTableProperties(
+   * java.lang.String, java.lang.String, java.lang.String, java.util.List)
+   */
   @Override
-  public String setTableProperties(String tableId, String currentSyncTag, String tableName,
-      String tableProperties) throws IOException {
+  public String setTableProperties(String tableId, String currentSyncTag,
+      String tableKey, List<OdkTablesKeyValueStoreEntry> kvsEntries)
+          throws IOException {
     TableResource resource = getResource(tableId);
     SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
 
     // put new properties
-    TableProperties properties = new TableProperties(currentTag.getPropertiesEtag(), tableName,
-        tableProperties);
-    HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
+    TableProperties properties =
+        new TableProperties(currentTag.getPropertiesEtag(), tableKey,
+            kvsEntries);
+    HttpEntity<TableProperties> entity =
+        new HttpEntity<TableProperties>(properties, requestHeaders);
     ResponseEntity<PropertiesResource> updatedEntity;
     try {
-      updatedEntity = rt.exchange(resource.getPropertiesUri(), HttpMethod.PUT, entity,
-          PropertiesResource.class);
+      updatedEntity = rt.exchange(resource.getPropertiesUri(), HttpMethod.PUT,
+          entity, PropertiesResource.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
     }
     PropertiesResource propsResource = updatedEntity.getBody();
 
-    SyncTag newTag = new SyncTag(currentTag.getDataEtag(), propsResource.getPropertiesEtag());
+    SyncTag newTag = new SyncTag(currentTag.getDataEtag(),
+        propsResource.getPropertiesEtag());
     return newTag.toString();
   }
 }

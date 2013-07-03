@@ -23,8 +23,8 @@ import org.mockito.stubbing.Answer;
 
 import org.opendatakit.tables.Activity.SpreadSheet;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DataManager;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.IncomingModification;
@@ -37,7 +37,6 @@ import android.content.SyncResult;
 
 public class BaseSyncProcessorTest {
   protected DbHelper helper;
-  protected DataManager dm;
   protected SyncProcessor processor;
   @Mock
   protected Synchronizer synchronizer;
@@ -50,21 +49,23 @@ public class BaseSyncProcessorTest {
     MockitoAnnotations.initMocks(this);
     Context context = new SpreadSheet();
     this.helper = DbHelper.getDbHelper(context);
-    this.dm = new DataManager(helper);
     SyncResult syncResult = new SyncResult();
-    this.processor = new SyncProcessor(synchronizer, dm, syncResult);
+    this.processor = new SyncProcessor(helper, synchronizer, syncResult);
 
     setUpSynchronizer();
     createTable();
 
-    this.tp = dm.getTableProperties(tp.getTableId());
-    this.query = new Query(dm.getAllTableProperties(), tp);
+    this.tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+        KeyValueStore.Type.ACTIVE);
+    this.query = new Query(TableProperties.getTablePropertiesForAll(dbh,
+        KeyValueStore.Type.ACTIVE), tp);
   }
 
   @After
   public void tearDown() {
     try {
-      this.tp = dm.getTableProperties(tp.getTableId());
+      this.tp = TableProperties.getTablePropertiesForTable(dbh, tp.getTableId(),
+          KeyValueStore.Type.ACTIVE);
       this.tp.deleteTableActual();
     } catch (ArrayIndexOutOfBoundsException e) {
       // ignore

@@ -19,44 +19,54 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.data.ColumnType;
 
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
- * 
+ *
  * @author the.dylan.price@gmail.com
- * 
+ * @author sudar.sam@gmail.com
+ *
  */
 public interface Synchronizer {
 
   /**
    * Get a list of all tables in the server.
-   * 
-   * @return a map from table ids to table names
+   *
+   * @return a map from table ids to tableKeys
    */
   public Map<String, String> getTables() throws IOException;
 
   /**
    * Create a table with the given id on the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
-   * @param tableName
-   *          a human readable name for the table
    * @param cols
    *          a map from column names to column types, see
    *          {@link ColumnType}
-   * @param tableProperties
-   *          the table's properties, serialized as a string
+   * @param tableKey
+   *          the tableKey (as of May6 is the display name on the server)
+   * @param dbTable name
+   * @param type
+   *           {@link org.opendatakit.aggregate.odktables.entity.api.TableType}
+   *           represetenting the table type
+   * @param tableIdAccessControls
+   *           the tableId of the table holding access control information on
+   *           the table.
    * @return a string which will be stored as the syncTag of the table
    */
-  public String createTable(String tableId, String tableName, Map<String, ColumnType> cols,
-      String tableProperties) throws IOException;
+  public String createTable(String tableId, List<Column> columns,
+      String tableKey, String dbTableName,
+      org.opendatakit.aggregate.odktables.rest.entity.TableType type,
+      String tableIdAccessControls) throws IOException;
 
   /**
    * Delete the table with the given id from the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    */
@@ -64,7 +74,7 @@ public interface Synchronizer {
 
   /**
    * Retrieve changes in the server state since the last synchronization.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
@@ -76,7 +86,7 @@ public interface Synchronizer {
 
   /**
    * Insert the given rows in the table on the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
@@ -90,7 +100,7 @@ public interface Synchronizer {
 
   /**
    * Update the given rows in the table on the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
@@ -104,7 +114,7 @@ public interface Synchronizer {
 
   /**
    * Delete the given row ids from the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
@@ -118,19 +128,21 @@ public interface Synchronizer {
 
   /**
    * Sets the table name and table properties on the server.
-   * 
+   *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
    *          the last value that was stored as the syncTag
-   * @param tableName
-   *          the name of the table
-   * @param tableProperties
-   *          the table properties
+   * @param tableKey
+   *          the tableKey of the table (from the definitions tables)
+   * @param kvsEntries
+   *           all the entries in the key value store for this table. Should
+   *           be of the server kvs, since this is for synchronization.
    * @return a string which will be stored as the syncTag of the table
    * @throws IOException
    */
-  public String setTableProperties(String tableId, String currentSyncTag, String tableName,
-      String tableProperties) throws IOException;
+  public String setTableProperties(String tableId, String currentSyncTag,
+      String tableName, List<OdkTablesKeyValueStoreEntry> kvsEntries)
+          throws IOException;
 
 }

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/list_view_manager" 
-	android:layout_width="fill_parent" 
-	android:layout_height="wrap_content" >	
-		
+	android:id="@+id/list_view_manager"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" >
+
 	<org.opendatakit.tables.views.TouchListView
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		xmlns:tlv="http://schemas.android.com/apk/res/org.opendatakit.tables"
-	
+
 		android:id="@android:id/list"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
@@ -27,5 +27,5 @@
 	    android:layout_marginTop="6dip"
 	    android:layout_marginLeft="6dip"
 	    android:layout_height="wrap_content"
-	    android:text="Press + to add a color rule" />
+	    android:text="@+string/press_to_add_color_rule" />
 </RelativeLayout>

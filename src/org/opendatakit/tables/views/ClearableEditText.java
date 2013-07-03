@@ -5,6 +5,7 @@ import org.opendatakit.tables.R;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +28,12 @@ public class ClearableEditText extends RelativeLayout {
   public ClearableEditText(Context context) {
     super(context);
     initViews();
+  }
+  
+  public ClearableEditText(Context context, AttributeSet set)
+  {
+	  super(context, set);
+	  initViews();
   }
   
   private void initViews() {

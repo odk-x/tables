@@ -27,6 +27,12 @@ public class TableFileUtils {
   /** The default app name for ODK Tables */
   public static final String ODK_TABLES_APP_NAME = "tables";
 
+  /** Filename for the top-level configuration file */
+  public static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = "config.properties";
+
+  /** Filename for a csv file used for joining files (?) */
+  public static final String ODK_TABLES_JOINING_CSV_FILENAME = "temp.csv";
+
   /** Timeout (in ms) we specify for each http request */
   public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 

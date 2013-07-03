@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 
 import android.content.ContentValues;
@@ -52,6 +55,7 @@ public class ColumnDefinitions {
   public static final ColumnType DEFAULT_DB_ELEMENT_TYPE =
       ColumnType.NONE;
   public static final String DEFAULT_DB_JOINS = null;
+  public static final String DEFAULT_LIST_CHILD_ELEMENT_KEYS = null;
 
   // A set of all the column names in this table.
   public static final Set<String> columnNames;
@@ -121,100 +125,9 @@ public class ColumnDefinitions {
         j++;
       }
     } finally {
-      try {
         if (c != null && !c.isClosed()) {
           c.close();
         }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
-    }
-    return elementKeys;
-  }
-
-  /**
-   * Return all the element keys for the given table. Element keys are
-   * the unique identifiers for the columns, so this gets ALL the element keys.
-   * <p>
-   * Does not close the passed in database.
-   * @param tableId
-   * @param db
-   * @return
-   */
-  public static List<String> getAllElementKeysForTable(String tableId,
-      SQLiteDatabase db) {
-    Cursor c = null;
-    List<String> elementKeys = new ArrayList<String>();
-    try {
-      c = db.query(DB_BACKING_NAME,
-          new String[] {ColumnDefinitionsColumns.ELEMENT_KEY}, // we only want the element key column
-          WHERE_SQL_FOR_TABLE,
-          new String[] {tableId}, null, null, null);
-      int dbElementKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
-      c.moveToFirst();
-      int j = 0;
-      while (j < c.getCount()) {
-        elementKeys.add(c.getString(dbElementKeyIndex));
-        c.moveToNext();
-        j++;
-      }
-    } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
-    }
-    return elementKeys;
-  }
-
-  /**
-   * Return all the element names for the given table.
-   * <p>
-   * Does not close the passed in database.
-   * @param tableId
-   * @param db
-   * @return
-   */
-  public static List<String> getAllElementNamesForTable(String tableId,
-      SQLiteDatabase db) {
-    Cursor c = null;
-    List<String> elementKeys = new ArrayList<String>();
-    try {
-      c = db.query(DB_BACKING_NAME,
-          new String[] {ColumnDefinitionsColumns.ELEMENT_NAME},
-          WHERE_SQL_FOR_TABLE,
-          new String[] {tableId}, null, null, null);
-      int dbElementNameIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_NAME);
-      c.moveToFirst();
-      int j = 0;
-      while (j < c.getCount()) {
-        elementKeys.add(c.getString(dbElementNameIndex));
-        c.moveToNext();
-        j++;
-      }
-    } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
-      }
-
     }
     return elementKeys;
   }
@@ -228,7 +141,7 @@ public class ColumnDefinitions {
    * @param db
    * @return
    */
-  public static Map<String, String> getFields(String tableId,
+  public static Map<String, String> getColumnDefinitionFields(String tableId,
       String elementKey, SQLiteDatabase db) {
     Cursor c = null;
     Map<String, String> columnDefMap = new HashMap<String, String>();
@@ -277,17 +190,9 @@ public class ColumnDefinitions {
         j++;
       }
     } finally {
-      try {
-        if (c != null && !c.isClosed()) {
-          c.close();
-        }
-      } finally {
-        if (db != null) {
-          // TODO: fix the when to close problem
-//          db.close();
-        }
+      if (c != null && !c.isClosed()) {
+        c.close();
       }
-
     }
     return columnDefMap;
   }
@@ -377,33 +282,46 @@ public class ColumnDefinitions {
    * @param isPersisted
    * @param joins
    * @return a map of column names to fields for the new table
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonGenerationException
    */
-  public static Map<String, String> addColumn(SQLiteDatabase db,
+  public static void assertColumnDefinition(SQLiteDatabase db,
       String tableId, String elementKey, String elementName,
       ColumnType elementType, String listChild, boolean isPersisted,
-      String joins) {
+      JoinColumn joins) throws JsonGenerationException, JsonMappingException, IOException {
     ContentValues values = new ContentValues();
-    values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
-    values.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
     values.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
-    if (elementType == null) {
-      elementType = DEFAULT_DB_ELEMENT_TYPE;
-    }
     values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
     values.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, listChild);
-    values.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted);
-    values.put(ColumnDefinitionsColumns.JOINS, joins);
-    db.insert(DB_BACKING_NAME, null, values);
-    // Take care of the return.
-    Map<String, String> valueMap = new HashMap<String, String>();
-    valueMap.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
-    valueMap.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
-    valueMap.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
-    valueMap.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
-    valueMap.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, listChild);
-    valueMap.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted ? "1" : "0");
-    valueMap.put(ColumnDefinitionsColumns.JOINS, joins);
-    return valueMap;
+    values.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted ? 1 : 0);
+    values.put(ColumnDefinitionsColumns.JOINS, JoinColumn.toSerialization(joins));
+
+    Cursor c = null;
+    try {
+	    c = db.query(DB_BACKING_NAME, null, WHERE_SQL_FOR_ELEMENT,
+	                  new String[] {tableId, elementKey}, null, null, null);
+	    int count = c.getCount();
+	    c.close();
+	    if ( count == 1 ) {
+	      // update...
+	      db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+	          new String[] {tableId, elementKey});
+	    } else {
+	      if ( count > 1 ) {
+	        // remove and re-insert...
+	        deleteColumnDefinition(tableId, elementKey, db);
+	      }
+	      // insert...
+	      values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
+	      values.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
+	      db.insert(DB_BACKING_NAME, null, values);
+	    }
+    } finally {
+    	if ( c != null && !c.isClosed()) {
+    		c.close();
+    	}
+    }
   }
 
   /**
@@ -414,7 +332,7 @@ public class ColumnDefinitions {
    * @param db
    * @return
    */
-  public static int deleteColumn(String tableId, String elementKey,
+  public static int deleteColumnDefinition(String tableId, String elementKey,
       SQLiteDatabase db) {
     int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_ELEMENT,
         new String[] {tableId, elementKey});

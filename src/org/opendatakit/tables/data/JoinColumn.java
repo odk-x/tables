@@ -15,17 +15,26 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+
 /**
- * This class represents a column that is joined to by another column, in a 
+ * This class represents a column that is joined to by another column, in a
  * separate table, that is of type join. "Join" in this sense is not a strictly
  * database definition of the word, but is more like a link to another column
  * in another table.
  * <p>
  * For instance, say that you had a column that was facility ID. You might like
- * to link that column to a table of all equipment, and have that table 
- * restricted to only those rows that show the equipment for that facility. 
- * In the first table, the column with the facility code would be of type 
- * join. It would join to the "equipment table", and in particular the 
+ * to link that column to a table of all equipment, and have that table
+ * restricted to only those rows that show the equipment for that facility.
+ * In the first table, the column with the facility code would be of type
+ * join. It would join to the "equipment table", and in particular the
  * "facility code" column in the equipment table. When you click on the linked,
  * or joined, cell in the first table, it would push you into that table and
  * restrict the rows to display only the equipment for the facility with the
@@ -42,49 +51,74 @@ package org.opendatakit.tables.data;
  * definitions table.
  */
 public class JoinColumn {
-  
+
   /**
    * This is the message that should be added to the join column upon creation.
    */
   public static final String DEFAULT_NOT_SET_VALUE = "";
-  
+  public static final String JSON_KEY_TABLE_ID = "tableId";
+  public static final String JSON_KEY_ELEMENT_KEY = "elementKey";
+
   /*
    * The table id of the table to which you are joining.
    */
   private String tableId;
-  
+
   /*
-   * The element key (which with the table id forms the unique column 
+   * The element key (which with the table id forms the unique column
    * identifier) for the column to which you are joining.
    */
   private String elementKey;
-  
+
+  public static JoinColumn fromSerialization(String str) throws JsonParseException, JsonMappingException, IOException {
+    if ( str == null || DEFAULT_NOT_SET_VALUE.equals(str) ) {
+      return null;
+    }
+    Map<String,String> joJoin = ODKFileUtils.mapper.readValue(str, Map.class);
+    if ( joJoin == null ) {
+      return null;
+    }
+    String tableId = joJoin.get(JoinColumn.JSON_KEY_TABLE_ID);
+    String elementKey = joJoin.get(JoinColumn.JSON_KEY_ELEMENT_KEY);
+    return new JoinColumn(tableId, elementKey);
+  }
+
+  public static String toSerialization(JoinColumn join) throws JsonGenerationException, JsonMappingException, IOException {
+    if ( join == null ) {
+      return DEFAULT_NOT_SET_VALUE;
+    }
+    Map<String,String> joJoin = new HashMap<String,String>();
+    joJoin.put(JSON_KEY_TABLE_ID, join.getTableId());
+    joJoin.put(JSON_KEY_ELEMENT_KEY, join.getElementKey());
+    return ODKFileUtils.mapper.writeValueAsString(joJoin);
+  }
+
   /*
    * Just in case we need this for serialization.
    */
   private JoinColumn() {
   }
-  
+
   public JoinColumn(String tableId, String elementKey) {
     this.tableId = tableId;
     this.elementKey = elementKey;
   }
-  
+
   public String getTableId() {
     return this.tableId;
   }
-  
+
   public String getElementKey() {
     return this.elementKey;
   }
-  
+
   public void setTableId(String tableId) {
     this.tableId = tableId;
   }
-  
+
   public void setElementKey(String elementKey) {
     this.elementKey = elementKey;
   }
-  
-  
+
+
 }

@@ -60,6 +60,12 @@ public class DbTable {
      */
     private static final List<String> ADMIN_COLUMNS;
 
+    /**
+     * An unmodifiable list of the admin columns. Lazily cached in
+     * {@link #getAdminColumns()}.
+     */
+    private static List<String> mCachedAdminColumns = null;
+
     /*
      * These are the columns that we want to include in sync rows to sync up
      * to the server. This is a work in progress that is being added later, so
@@ -74,7 +80,6 @@ public class DbTable {
       ADMIN_COLUMNS = new ArrayList<String>();
       ADMIN_COLUMNS.add(DataTableColumns.ROW_ID);
       ADMIN_COLUMNS.add(DataTableColumns.URI_USER);
-      ADMIN_COLUMNS.add(DataTableColumns.LAST_MODIFIED_TIME);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
       ADMIN_COLUMNS.add(DataTableColumns.TRANSACTIONING);
@@ -86,7 +91,7 @@ public class DbTable {
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
       COLUMNS_TO_SYNC.put(DataTableColumns.URI_USER, ColumnType.PHONE_NUMBER);
-      COLUMNS_TO_SYNC.put(DataTableColumns.LAST_MODIFIED_TIME, ColumnType.DATETIME);
+      COLUMNS_TO_SYNC.put(DataTableColumns.TIMESTAMP, ColumnType.DATETIME);
       COLUMNS_TO_SYNC.put(DataTableColumns.INSTANCE_NAME, ColumnType.TEXT);
     }
 
@@ -96,7 +101,10 @@ public class DbTable {
      * @return
      */
     public static List<String> getAdminColumns() {
-      return Collections.unmodifiableList(ADMIN_COLUMNS);
+      if (mCachedAdminColumns == null) {
+        mCachedAdminColumns = Collections.unmodifiableList(ADMIN_COLUMNS);
+      }
+      return mCachedAdminColumns;
     }
 
     public enum SavedStatus {
@@ -105,37 +113,38 @@ public class DbTable {
     };
 
     public static final String DB_CSV_COLUMN_LIST =
-        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER + ", " + DataTableColumns.LAST_MODIFIED_TIME +
+        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER +
         ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE + ", " + DataTableColumns.TRANSACTIONING +
         ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
         ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
 
-    private final DataUtil du;
     private final DbHelper dbh;
     private final TableProperties tp;
 
-    public static DbTable getDbTable(DbHelper dbh, String tableId) {
-        return new DbTable(dbh, tableId);
+    public static DbTable getDbTable(DbHelper dbh, TableProperties tp) {
+        return new DbTable(dbh, tp);
     }
 
     public static Map<String, ColumnType> getColumnsToSync() {
       return Collections.unmodifiableMap(COLUMNS_TO_SYNC);
     }
 
-    private DbTable(DbHelper dbh, String tableId) {
-        this.du = DataUtil.getDefaultDataUtil();
+    private DbTable(DbHelper dbh, TableProperties tp) {
         this.dbh = dbh;
-        this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-            KeyValueStore.Type.ACTIVE);
-        // so this looks like the problem, needs to somehow know if it should
-        // be drawing the props from the server table (if you'd dl'ing a table)
-        // or if you're creating a table and therefore want the active.
+        this.tp = tp;
     }
 
+    /**
+     * PreCondition: the TableProperties.mElementKeyToColumnProperties is non-null
+     * or, if null, when fetched from the database, the correct values
+     * will be reported.
+     *
+     * @param db
+     * @param tp
+     */
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
-      boolean testOpen = db.isOpen();
         StringBuilder colListBuilder = new StringBuilder();
-        for (ColumnProperties cp : tp.getColumns()) {
+        for (ColumnProperties cp : tp.getColumns().values()) {
             colListBuilder.append(", " + cp.getElementKey());
             if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");
@@ -145,11 +154,9 @@ public class DbTable {
                 colListBuilder.append(" TEXT");
             }
         }
-        testOpen = db.isOpen();
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DataTableColumns.ROW_ID + " TEXT NOT NULL" +
      ", " + DataTableColumns.URI_USER + " TEXT NULL" +
-     ", " + DataTableColumns.LAST_MODIFIED_TIME + " TEXT NOT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DataTableColumns.TRANSACTIONING + " INTEGER NOT NULL" +
@@ -164,42 +171,36 @@ public class DbTable {
     }
 
     /**
-     * @return a raw table of all the data in the table
-     */
-    public Table getRaw() {
-        return getRaw(null, null, null, null);
-    }
-
-    /**
-     * Gets a table of raw data.
-     * @param columns the columns to select (if null, all columns will be
-     * selected)
+     * Gets an {@link UserTable} restricted by the query as necessary. The
+     * list of columns should be the element keys to select, and should not
+     * include any metadata columns, which will all be returned in the
+     * {@link UserTable}.
+     * @param the element keys of the user-defined columns to select (if null,
+     * all columns will be selected)
      * @param selectionKeys the column names for the WHERE clause (can be null)
      * @param selectionArgs the selection arguments (can be null)
      * @param orderBy the column to order by (can be null)
      * @return a Table of the requested data
      */
-    public Table getRaw(ArrayList<String> columns, String[] selectionKeys,
+    public UserTable getRaw(List<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
+      // The columns we will pass to the db to select. Must include the
+      // columns parameter as well as all the metadata columns.
+      List<String> columnsToSelect;
         if (columns == null) {
-            ColumnProperties[] cps = tp.getColumns();
-             columns = new ArrayList<String>();
-             columns.addAll(ADMIN_COLUMNS);
-//            columns = new ArrayList<String>();
-//            columns.add(DB_URI_USER);
-//            columns.add(DB_LAST_MODIFIED_TIME);
-//            columns.add(DB_SYNC_TAG);
-//            columns.add(DB_SYNC_STATE);
-//            columns.add(DB_TRANSACTIONING);
-//            need to add this stuff now;
-            for (int i = 0; i < cps.length; i++) {
-            	columns.add(cps[i].getElementKey());
-            }
+          columnsToSelect = tp.getColumnOrder();
+          columnsToSelect.addAll(ADMIN_COLUMNS);
+        } else {
+          // The caller wants just their specified columns, but they'll also
+          // have to get the admin columns.
+          columnsToSelect = new ArrayList<String>();
+          columnsToSelect.addAll(columns);
+          columnsToSelect.addAll(ADMIN_COLUMNS);
         }
-        String[] colArr = new String[columns.size() + 1];
+        String[] colArr = new String[columnsToSelect.size() + 1];
         colArr[0] = DataTableColumns.ROW_ID;
-        for (int i = 0; i < columns.size(); i++) {
-            colArr[i + 1] = columns.get(i);
+        for (int i = 0; i < columnsToSelect.size(); i++) {
+            colArr[i + 1] = columnsToSelect.get(i);
         }
         SQLiteDatabase db = null;
         Cursor c = null;
@@ -208,73 +209,76 @@ public class DbTable {
 	        c = db.query(tp.getDbTableName(), colArr,
 	                buildSelectionSql(selectionKeys),
 	                selectionArgs, null, null, orderBy);
-	        Table table = buildTable(c, columns);
+	        UserTable table = buildTable(c, tp, columns);
 	        return table;
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 
-    public Table getRaw(Query query, String[] columns) {
-        return dataQuery(query.toSql(columns));
+    /**
+     * Get a {@link UserTable} for this table based on the given where clause.
+     * All columns from the table are returned.
+     * <p>
+     * It performs SELECT * FROM table whereClause.
+     * <p>
+     * Footers are all empty strings.
+     * @param whereClause the whereClause for the selection, beginning with
+     * "WHERE". Must include "?" instead of actual values, which are instead
+     * passed in the selectionArgs.
+     * @param selectionArgs the selection arguments for the where clause.
+     * @return
+     */
+    public UserTable rawSqlQuery(String whereClause, String[] selectionArgs) {
+      SQLiteDatabase db = null;
+      Cursor c = null;
+      try {
+        String sqlQuery = "SELECT * FROM " + this.tp.getDbTableName() + " " +
+            whereClause;
+        db = dbh.getReadableDatabase();
+        c = db.rawQuery(sqlQuery, selectionArgs);
+        UserTable table = buildTable(c, tp, tp.getColumnOrder());
+        String[] emptyFooter = getEmptyFooter();
+        table.setFooter(emptyFooter);
+        return table;
+      } finally {
+        if ( c != null && !c.isClosed() ) {
+          c.close();
+        }
+      }
+    }
+
+    public UserTable getRaw(Query query, String[] columns) {
+      List<String> desiredColumns = tp.getColumnOrder();
+      desiredColumns.addAll(getAdminColumns());
+        UserTable table = dataQuery(query.toSql(desiredColumns));
+        table.setFooter(footerQuery(query));
+        return table;
     }
 
     public UserTable getUserTable(Query query) {
-        Table table = dataQuery(query.toSql(tp.getColumnOrder()));
-        return new UserTable(table.getRowIds(), getUserHeader(),
-                table.getData(), footerQuery(query));
+      List<String> desiredColumns = tp.getColumnOrder();
+      desiredColumns.addAll(getAdminColumns());
+        UserTable table = dataQuery(query.toSql(desiredColumns));
+        table.setFooter(footerQuery(query));
+        return table;
+//        return new UserTable(table.getRowIds(), getUserHeader(),
+//                table.getData(), footerQuery(query));
     }
 
     public UserTable getUserOverviewTable(Query query) {
-        Table table = dataQuery(query.toOverviewSql(tp.getColumnOrder()));
-        return new UserTable(table.getRowIds(), getUserHeader(),
-                table.getData(), footerQuery(query));
-    }
-
-    public GroupTable getGroupTable(Query query, ColumnProperties groupColumn,
-            Query.GroupQueryType type) {
-    	SQLiteDatabase db = null;
-    	Cursor c = null;
-    	try {
-	        SqlData sd = query.toGroupSql(groupColumn.getElementKey(), type);
-	        db = dbh.getReadableDatabase();
-	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        int gcColIndex = c.getColumnIndexOrThrow(
-	                groupColumn.getElementKey());
-	        int countColIndex = c.getColumnIndexOrThrow("g");
-	        int rowCount = c.getCount();
-	        String[] keys = new String[rowCount];
-	        double[] values = new double[rowCount];
-	        c.moveToFirst();
-	        for (int i = 0; i < rowCount; i++) {
-	            keys[i] = c.getString(gcColIndex);
-	            values[i] = c.getDouble(countColIndex);
-	            c.moveToNext();
-	        }
-	        return new GroupTable(keys, values);
-	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
-	    }
+      // The element keys of the columns we want. We want to select both the
+      // user-defined and the admin columns--both the user-defined and
+      // ODKTables-specified information, in other words.
+      List<String> desiredColumns = tp.getColumnOrder();
+      desiredColumns.addAll(getAdminColumns());
+        UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
+        table.setFooter(footerQuery(query));
+        return table;
+//        return new UserTable(table.getRowIds(), getUserHeader(),
+//                table.getData(), footerQuery(query));
     }
 
     public ConflictTable getConflictTable(Query query) {
@@ -284,145 +288,119 @@ public class DbTable {
 	        db = dbh.getReadableDatabase();
 	        SqlData sd = query.toConflictSql();
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        Log.d(TAG, sd.getSql());
 	        int count = c.getCount() / 2;
-	        Log.d(TAG, "cursor count: " + c.getCount());
-	        String[] header = new String[tp.getColumns().length];
+	        String[] header = new String[tp.getColumns().size()];
 	        String[] rowIds = new String[count];
 	        String[][] syncTags = new String[count][2];
-	        String[][][] values = new String[count][2][tp.getColumns().length];
+	        String[][][] values = new String[count][2][tp.getColumns().size()];
 	        if (count == 0) {
 	            return new ConflictTable(header, rowIds, syncTags, values);
 	        }
 	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
 	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
-	        int[] colIndices = new int[tp.getColumns().length];
-	        for (int i = 0; i < tp.getColumns().length; i++) {
+	        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+	        int[] colIndices = new int[numberOfDisplayColumns];
+	        for (int i = 0; i < numberOfDisplayColumns; i++) {
+	        	ColumnProperties cp = tp.getColumnByIndex(i);
 	            colIndices[i] = c.getColumnIndexOrThrow(
-	                    tp.getColumns()[i].getElementKey());
-	            header[i] = tp.getColumns()[i].getDisplayName();
+	            		cp.getElementKey());
+	            header[i] = cp.getDisplayName();
 	        }
 	        c.moveToFirst();
 	        for (int i = 0; i < count; i++) {
 	            rowIds[i] = c.getString(idColIndex);
 	            syncTags[i][0] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().length; j++) {
+	            for (int j = 0; j < tp.getColumns().size(); j++) {
 	                values[i][0][j] = c.getString(colIndices[j]);
 	            }
 	            c.moveToNext();
 	            syncTags[i][1] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().length; j++) {
+	            for (int j = 0; j < tp.getColumns().size(); j++) {
 	                values[i][1][j] = c.getString(colIndices[j]);
 	            }
 	            c.moveToNext();
 	        }
 	        return new ConflictTable(header, rowIds, syncTags, values);
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	        // TODO: fix the when to close problem
-//	    		if ( db != null ) {
-//	    			db.close();
-//	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 
-    private Table dataQuery(SqlData sd) {
+    private UserTable dataQuery(SqlData sd) {
         SQLiteDatabase db = null;
         Cursor c = null;
         try {
         	db = dbh.getReadableDatabase();
+        	String sqlStr = sd.getSql();
+        	String[] selArgs = sd.getArgs();
         	c = db.rawQuery(sd.getSql(), sd.getArgs());
-        	Table table = buildTable(c, tp.getColumnOrder());
-            return table;
+        	UserTable table = buildTable(c, tp, tp.getColumnOrder());
+         return table;
+        } catch (Exception e) {
+          Log.e(TAG, "error in dataQuery");
+          e.printStackTrace();
+          return null;
         } finally {
-        	try {
-        		if ( c != null && !c.isClosed() ) {
-        			c.close();
-        		}
-        	} finally {
-           // TODO: fix the when to close problem
-//        		if ( db != null ) {
-//        			db.close();
-//        		}
-        	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
         }
     }
 
     /**
-     * Builds a Table with the data from the given cursor.
+     * Builds a UserTable with the data from the given cursor.
      * The cursor, but not the columns array, must include the row ID column.
+     * <p>
+     * The cursor must have queried for both the user-defined columns and the
+     * metadata columns.
+     * @param c Cursor meeting the requirements above
+     * @param userColumnOrder the user-specified column order
      */
-    private Table buildTable(Cursor c, ArrayList<String> arrayList) {
-      //Log.i(TAG, "entered dbTable buildTable");
-        int[] colIndices = new int[arrayList.size()];
-        int rowCount = c.getCount();
-        String[] rowIds = new String[rowCount];
-        String[][] data = new String[rowCount][arrayList.size()];
-        int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
-        for (int i = 0; i < arrayList.size(); i++) {
-            colIndices[i] = c.getColumnIndexOrThrow(arrayList.get(i));
-        }
-        c.moveToFirst();
-        for (int i = 0; i < rowCount; i++) {
-//          Log.i(TAG, "i (row): " + i);
-            rowIds[i] = c.getString(rowIdIndex);
-            for (int j = 0; j < arrayList.size(); j++) {
-//              Log.i(TAG, " j (column): " + j);
-              String value;
-              try {
-                value = c.getString(colIndices[j]);
-              } catch (Exception e) {
-                try {
-                  value = String.valueOf(c.getInt(colIndices[j]));
-                } catch (Exception f) {
-                  value = String.valueOf(c.getDouble(colIndices[j]));
-                }
-              }
-              data[i][j] = value;
-            }
-            c.moveToNext();
-        }
-        //Log.i(TAG, "leaving Table buildTable");
-        return new Table(rowIds, arrayList, data);
+    private UserTable buildTable(Cursor c, TableProperties tp,
+        List<String> userColumnOrder) {
+      return new UserTable(c, tp, userColumnOrder);
     }
 
-    private String[] getUserHeader() {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] header = new String[cps.length];
-        for (int i = 0; i < header.length; i++) {
-            header[i] = cps[i].getDisplayName();
-        }
-        return header;
+    /**
+     * Returns an empty footer. Useful for things like {@link rawSqlQuery},
+     * which do not pass in the {@link Query} parameter that a footer requires.
+     * @return
+     */
+    private String[] getEmptyFooter() {
+      int numDisplayColumns = tp.getNumberOfDisplayColumns();
+      String[] footer = new String[numDisplayColumns];
+      for (int i = 0; i < footer.length; i++) {
+        footer[i] = "";
+      }
+      return footer;
     }
 
     private String[] footerQuery(Query query) {
-        ColumnProperties[] cps = tp.getColumns();
-        String[] footer = new String[cps.length];
-        for (int i = 0; i < cps.length; i++) {
-            switch (cps[i].getFooterMode()) {
+    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        String[] footer = new String[numberOfDisplayColumns];
+        for (int i = 0; i < numberOfDisplayColumns; i++) {
+          ColumnProperties cp = tp.getColumnByIndex(i);
+            switch (cp.getFooterMode()) {
             case count:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.COUNT);
                 break;
             case maximum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.MAXIMUM);
                 break;
             case minimum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.MINIMUM);
                 break;
             case sum:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.SUM);
                 break;
             case mean:
-                footer[i] = getFooterItem(query, cps[i],
+                footer[i] = getFooterItem(query, cp,
                         Query.GroupQueryType.AVERAGE);
                 break;
             case none:
@@ -430,7 +408,7 @@ public class DbTable {
               break;
             default:
               Log.e(TAG, "unrecognized footer mode: " +
-                  cps[i].getFooterMode().name());
+                  cp.getFooterMode().name());
             }
         }
         return footer;
@@ -453,53 +431,47 @@ public class DbTable {
 	        	return ""; // TODO: should this return null ???
 	        }
     	} finally {
-			try {
-	    		if ( c != null && !c.isClosed() ) {
-    				c.close();
-	    		}
-			} finally {
-		      // TODO: fix the when to close problem
-//				if ( db != null ) {
-//					db.close();
-//				}
-			}
+    		if ( c != null && !c.isClosed() ) {
+				c.close();
+    		}
     	}
-    }
-
-    /**
-     * Adds a row to the table with the given values, no source phone number,
-     * the current time as the last modification time, and an inserting
-     * synchronization state.
-     */
-    public void addRow(Map<String, String> values) {
-        addRow(values, null, null);
     }
 
     /**
      * Adds a row to the table with an inserting synchronization state and the
      * transactioning status set to false.
      * <p>
+     * If the rowId is null it is not added.
+     * <p>
      * I don't think this is called when downloading table data from the
      * server. I think it is only called when creating on the phone...
      */
-    public void addRow(Map<String, String> values, String lastModTime,
-            String srcPhone) {
-        Log.d(TAG, values.toString());
-        if (lastModTime == null) {
-            lastModTime = du.formatNowForDb();
+    public void addRow(Map<String, String> values, String rowId,
+          Long timestamp, String uriUser, String instanceName, String formId,
+          String locale ) {
+        if (timestamp == null) {
+        	timestamp = System.currentTimeMillis();
+        }
+        if (instanceName == null) {
+        	instanceName = Long.toString(System.currentTimeMillis());
         }
         ContentValues cv = new ContentValues();
+        if (rowId != null) {
+          cv.put(DataTableColumns.ROW_ID, rowId);
+        }
         for (String column : values.keySet()) {
-            cv.put(column, values.get(column));
+        	if ( column != null ) {
+        		cv.put(column, values.get(column));
+        	}
         }
         // The admin columns get added here and also in actualAddRow
-        cv.put(DataTableColumns.LAST_MODIFIED_TIME, lastModTime);
-        cv.put(DataTableColumns.URI_USER, srcPhone);
+        cv.put(DataTableColumns.TIMESTAMP, timestamp);
+        cv.put(DataTableColumns.URI_USER, uriUser);
         cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
         cv.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
-        cv.put(DataTableColumns.INSTANCE_NAME,
-            Long.toString(System.currentTimeMillis()));
-        cv.put(DataTableColumns.LOCALE, (String) null);
+        cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
+        cv.put(DataTableColumns.FORM_ID, formId);
+        cv.put(DataTableColumns.LOCALE, locale);
         actualAddRow(cv);
     }
 
@@ -508,6 +480,12 @@ public class DbTable {
      * <p>
      * I think this gets called when you download a table from the server,
      * whereas I don't think that addRow() does.
+     * <p>
+     * Checks to ensure that all of the columns in {@link DataTableColumns}
+     * that have non-null constraints are present. If not, it adds their
+     * default value. This is NOT true of {@link DataTableColumns#SYNC_STATE},
+     * which varies depending on who is calling this method. It is up to the
+     * caller to set it appropriately.
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
@@ -515,12 +493,37 @@ public class DbTable {
           String id = UUID.randomUUID().toString();
           values.put(DataTableColumns.ROW_ID, id);
         }
+        if (!values.containsKey(DataTableColumns.TIMESTAMP)) {
+        	values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
+        }
+        // There is the possibility here that for whatever reason some of the
+        // values from the server will be null or non-existent. This will cause
+        // problems if there are NON NULL constraints on the tables. Check and
+        // add default values as appropriate.
+        if (!values.containsKey(DataTableColumns.INSTANCE_NAME) ||
+            values.get(DataTableColumns.INSTANCE_NAME) == null) {
+          values.put(DataTableColumns.INSTANCE_NAME,
+              DataTableColumns.INSTANCE_NAME);
+        }
+        if (!values.containsKey(DataTableColumns.LOCALE) ||
+            values.get(DataTableColumns.LOCALE) == null) {
+          values.put(DataTableColumns.LOCALE,
+              DataTableColumns.LOCALE);
+        }
+        if (!values.containsKey(DataTableColumns.URI_USER) ||
+            values.get(DataTableColumns.URI_USER) == null) {
+          values.put(DataTableColumns.URI_USER,
+              DataTableColumns.URI_USER);
+        }
+        if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
+            values.get(DataTableColumns.SYNC_TAG) == null) {
+          values.put(DataTableColumns.SYNC_TAG,
+              DataTableColumns.SYNC_TAG);
+        }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
-	        values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
 	        values.put(DataTableColumns.SAVED, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
-	        Log.d(TAG, "insert, id=" + result);
         } finally {
           // TODO: fix the when to close problem
 //        	db.close();
@@ -528,23 +531,15 @@ public class DbTable {
     }
 
     /**
-     * Updates a row in the table with the given values, no source phone
-     * number, and the current time as the last modification time.
-     */
-    public void updateRow(String rowId, Map<String, String> values) {
-        updateRow(rowId, values, null, du.formatNowForDb());
-    }
-
-    /**
      * Updates a row in the table and marks its synchronization state as
      * updating.
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
-     * @param srcPhone the source phone number to put in the row
-     * @param lastModTime the last modification time to put in the row
+     * @param uriUser the source phone number to put in the row
+     * @param timestamp the last modification time to put in the row
      */
     public void updateRow(String rowId, Map<String, String> values,
-            String srcPhone, String lastModTime) {
+            String uriUser, Long timestamp, String instanceName, String formId, String locale) {
         ContentValues cv = new ContentValues();
         // TODO is this a race condition of sorts? isSynchronized(), which
         // formerly returned isSynched, may kind of be doing double duty,
@@ -566,6 +561,21 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
+        if ( uriUser != null ) {
+        	cv.put(DataTableColumns.URI_USER, uriUser);
+        }
+        if ( timestamp != null ) {
+        	cv.put(DataTableColumns.TIMESTAMP, timestamp);
+        }
+        if ( instanceName != null ) {
+        	cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
+        }
+        if ( formId != null ) {
+        	cv.put(DataTableColumns.FORM_ID, formId);
+        }
+        if ( locale != null ) {
+        	cv.put(DataTableColumns.LOCALE, locale);
+        }
         actualUpdateRowByRowId(rowId, cv);
     }
 
@@ -582,8 +592,10 @@ public class DbTable {
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
-        try {
+        if ( !values.containsKey(DataTableColumns.TIMESTAMP) ) {
 	        values.put(DataTableColumns.TIMESTAMP, System.currentTimeMillis());
+        }
+        try {
 	        values.put(DataTableColumns.SAVED, DbTable.SavedStatus.COMPLETE.name());
 	        db.update(tp.getDbTableName(), values, where, whereArgs);
         } finally {
@@ -691,16 +703,9 @@ public class DbTable {
 	      }
 	      return syncState;
 	    } finally {
-	    	try {
-	    		if ( c != null && !c.isClosed() ) {
-	    			c.close();
-	    		}
-	    	} finally {
-	    		if ( db != null ) {
-	    	      // TODO: fix the when to close problem
-//	    			db.close();
-	    		}
-	    	}
+    		if ( c != null && !c.isClosed() ) {
+    			c.close();
+    		}
 	    }
     }
 
@@ -717,29 +722,6 @@ public class DbTable {
         }
         selBuilder.delete(0, 5);
         return selBuilder.toString();
-    }
-
-    public class GroupTable {
-
-        private String[] keys;
-        private double[] values;
-
-        GroupTable(String[] keys, double[] values) {
-            this.keys = keys;
-            this.values = values;
-        }
-
-        public int getSize() {
-            return values.length;
-        }
-
-        public String getKey(int index) {
-            return keys[index];
-        }
-
-        public double getValue(int index) {
-            return values[index];
-        }
     }
 
     public class ConflictTable {

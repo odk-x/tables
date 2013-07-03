@@ -28,7 +28,7 @@
             android:layout_alignLeft="@android:id/text1"
             android:layout_below="@android:id/text1"
             android:layout_centerVertical="true"
-            android:text="Edit"
+            android:text="@+string/edit"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </TwoLineListItem>
 
