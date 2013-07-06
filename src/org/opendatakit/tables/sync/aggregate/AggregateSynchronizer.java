@@ -437,7 +437,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     // put new properties
     TableProperties properties =
-        new TableProperties(currentTag.getPropertiesEtag(), tableKey,
+        new TableProperties(currentTag.getPropertiesEtag(), tableId,
             kvsEntries);
     HttpEntity<TableProperties> entity =
         new HttpEntity<TableProperties>(properties, requestHeaders);
