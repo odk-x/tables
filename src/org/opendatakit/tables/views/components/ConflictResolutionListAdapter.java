@@ -74,25 +74,30 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   
   /**
    * Represents a column that is in conflict--i.e. the contents differ between
-   * the server and local versions. In this case two ConflictColumns would 
-   * exist--one for the server and one for the local versions.
+   * the server and local versions. 
    * @author sudar.sam@gmail.com
    *
    */
   public static class ConflictColumn {
     int position;
-    String value;
-    boolean isLocal;
+    String localValue;
+    String serverValue;
     
-    public ConflictColumn(int position, String value, boolean isLocal) {
+    public ConflictColumn(int position, String localValue, 
+        String serverValue) {
       this.position = position;
-      this.value = value;
-      this.isLocal = isLocal;
+      this.localValue = localValue;
+      this.serverValue = serverValue;
     }
     
-    public String getValue() {
-      return this.value;
+    public String getLocalValue() {
+      return this.localValue;
     }
+    
+    public String getServerValue() {
+      return this.serverValue;
+    }
+    
   }
   
   /**
@@ -126,8 +131,6 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     for (ConflictColumn cc : conflictColumns) {
       mConflictColumns.append(cc.position, cc);
     }
-    RadioGroup rg = new RadioGroup(context);
-    rg.findV
   }
   
   public boolean isSectionHeaderPosition(int position) {
@@ -209,6 +212,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   public boolean areAllItemsEnabled() {
     return false;
   }
+  
+  private void setResolution(int position, Resolution decision) {
+    mResolutions.append(position, decision);
+  }
 
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
@@ -222,46 +229,64 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       view.setText(mSections.get(position).title);
       return view;
     } else if (isConflictColumnPosition(position)) {
+      ConflictColumn conflictColumn = this.mConflictColumns.get(position);
       LinearLayout view = (LinearLayout) convertView;
       if (view == null) {
         int layoutId; // the layout to use
-        layoutId = org.opendatakit.tables.R.layout
-            .list_item_conflict_resolution_local_row;
+        layoutId = org.opendatakit.tables.R.layout.list_item_conflict_row;
         view = (LinearLayout) mLayoutInflater.inflate(layoutId, parent, false);
       }
-      TextView textView =
+      // the text view displaying the local value
+      TextView localTextView =
           (TextView) view.findViewById(R.id.list_item_local_text);
-      textView.setText(mConflictColumns.get(position).value);
-      // Here we get the position in the mResolutions array. Since we're 
-      // indexing into that array at the location of the local index, if it's
-      // a server column we're going to go to 1 less than that index. Note that
-      // we're assuming the conflict and concordant rows were passed in 
-      // appropriately.
-      int positionInMResolutions = getPositionInMResolutions(position);
+      localTextView.setText(conflictColumn.localValue);
+      TextView serverTextView =
+          (TextView) view.findViewById(R.id.list_item_server_text);
+      serverTextView.setText(conflictColumn.serverValue);
       // The decision the user has made. May be null if it hasn't been set.
-      Resolution userDecision = mResolutions.get(positionInMResolutions);
-      RadioButton rb = (RadioButton) view.findViewById(
-          R.id.list_item_local_radio_button);
-      if (mConflictColumns.get(position).isLocal) {
+      Resolution userDecision = mResolutions.get(position);
+      RadioButton localButton = 
+          (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
+      RadioButton serverButton = 
+          (RadioButton) view.findViewById(R.id.list_item_server_radio_button);
+      if (userDecision != null) {
         if (userDecision == Resolution.LOCAL) {
-          rb.setChecked(true);
+          localButton.setChecked(true);
+          serverButton.setChecked(false);
         } else {
-          // We'll set it false if it's null (not yet set) OR if it's server.
-          rb.setChecked(false);
+          // they've decided on the server version of the row.
+          localButton.setChecked(false);
+          serverButton.setChecked(true);
         }
       } else {
-        // It's a server row.
-        if (userDecision == Resolution.SERVER) {
-          rb.setChecked(true);
-        } else {
-          // we again set to false if it's null (no decision) or if it's local.
-          rb.setChecked(false);
-        }
+        localButton.setChecked(false);
+        serverButton.setChecked(false);
       }
-      // So we can know the position and thus the resolution in the on click
-      // listener.
-      view.setTag(R.id.list_item_local_radio_button, position);
-      view.setOnClickListener(new ResolutionRadioButtonOnClickListener());
+      // Alright. Now we need to set the click listeners. It's going to be a 
+      // little bit tricky. We want the list item as well as the radio buttons
+      // to register as a choice, and to update the other radiobutton as 
+      // appropriate. In order to do this, we're going to add the entire view
+      // object, including itself, as the view's tag. That way we can get at 
+      // them to update appropriately.
+      LinearLayout localRow = (LinearLayout) 
+          view.findViewById(R.id.list_item_conflict_resolution_local_row);
+      LinearLayout serverRow = (LinearLayout)
+          view.findViewById(R.id.list_item_conflict_resolution_server_row);
+      localRow.setTag(view);
+      serverRow.setTag(view);
+      localButton.setTag(view);
+      serverButton.setTag(view);
+      // We also need to add the position to each of the views, so that when 
+      // it's clicked we'll be able to figure out to which row it was
+      // referring. We'll use the parent id for the key.
+      localRow.setTag(R.id.list_view_conflict_row, position);
+      serverRow.setTag(R.id.list_view_conflict_row, position);
+      localButton.setTag(R.id.list_view_conflict_row, position);
+      serverButton.setTag(R.id.list_view_conflict_row, position);
+      localRow.setOnClickListener(new ResolutionOnClickListener());
+      serverRow.setOnClickListener(new ResolutionOnClickListener());
+      localButton.setOnClickListener(new ResolutionOnClickListener());
+      serverButton.setOnClickListener(new ResolutionOnClickListener());
       return view;
 
     } else if (isConcordantColumnPosition(position)) {
@@ -279,36 +304,42 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     }
   }
   
-  private int getPositionInMResolutions(int positionInAdapter) {
-    if (!isConflictColumnPosition(positionInAdapter)) {
-      return INVALID_POSITION;
-    }
-    return mConflictColumns.get(positionInAdapter).isLocal
-        ? positionInAdapter 
-        : positionInAdapter - 1;
-  }
-  
-  private class ResolutionRadioButtonOnClickListener 
-      implements View.OnClickListener {
+  /**
+   * The class that handles registering a user's choice and updating the view
+   * appropriately. The view that adds this as a click listener must have 
+   * included the whole parent viewgroup as its tag.
+   * @author sudar.sam@gmail.com
+   *
+   */
+  private class ResolutionOnClickListener implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-      // get the position.
-      int position = (Integer) v.getTag(R.id.list_item_local_radio_button);
-      RadioButton rb = 
-          (RadioButton) v.findViewById(R.id.list_item_local_radio_button);
-      Log.e(TAG, "position : " + position);
-      int positionInMResolutions = getPositionInMResolutions(position);
-      if (mConflictColumns.get(position).isLocal) {
-        Log.e(TAG, "setting local");
-        mResolutions.append(positionInMResolutions, Resolution.LOCAL);
-        rb.setChecked(true);
+      // First get the parent view of the whole conflict row, via which we'll
+      // be able to get at the appropriate radio buttons.
+      View conflictRowView = (View) v.getTag();
+      int position = (Integer) v.getTag(R.id.list_view_conflict_row);
+      RadioButton localButton = (RadioButton) conflictRowView.findViewById(
+          R.id.list_item_local_radio_button);
+      RadioButton serverButton = (RadioButton) conflictRowView.findViewById(
+          R.id.list_item_server_radio_button);
+      // Now we need to figure out if this is a server or a local click, which
+      // we'll know by which view the click came in on.
+      int viewId = v.getId();
+      if (viewId == R.id.list_item_conflict_resolution_local_row || 
+          viewId == R.id.list_item_local_radio_button) {
+        // Then we have clicked on a local row.
+        localButton.setChecked(true);
+        serverButton.setChecked(false);
+        setResolution(position, Resolution.LOCAL);
+      } else if (viewId == R.id.list_item_conflict_resolution_server_row || 
+          viewId == R.id.list_item_server_radio_button) {
+        // Then we've clicked on a server row.
+        localButton.setChecked(false);
+        serverButton.setChecked(true);
+        setResolution(position, Resolution.SERVER);
       } else {
-        Log.e(TAG, "setting server");
-        // it's a server row, b/c we would have thrown an error in 
-        //getPositionInMResolutions
-        mResolutions.append(positionInMResolutions, Resolution.SERVER);
-        rb.setChecked(true);
+        Log.e(TAG, "[onClick] wasn't a recognized id, not saving choice!");
       }
     }
     

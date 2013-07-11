@@ -93,14 +93,10 @@ public class ConflictResolutionRowActivity extends SherlockListActivity {
         ++adapterOffset;
       } else {
         // We need to display both the server and local versions.
-        ConflictColumn localConflict = new ConflictColumn(adapterOffset, 
-            localValue, true);
+        ConflictColumn conflictColumn = new ConflictColumn(adapterOffset, 
+            localValue, serverValue);
         ++adapterOffset;
-        ConflictColumn serverConflict = new ConflictColumn(adapterOffset, 
-            serverValue, false);
-        ++adapterOffset;
-        conflictColumns.add(localConflict);
-        conflictColumns.add(serverConflict);
+        conflictColumns.add(conflictColumn);
       }
     }
     // Now that we have the appropriate lists, we need to construct the 
