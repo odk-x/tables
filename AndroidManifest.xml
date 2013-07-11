@@ -84,7 +84,8 @@
         <activity android:name=".activities.TableActivity"/>
         <activity android:name=".activities.TableManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
-
+		<activity android:name=".activities.ConflictResolutionListActivity" />
+		<activity android:name=".activities.ConflictResolutionRowActivity" />
         <activity android:name=".activities.graphs.BarGraphDisplayActivity" />
         <activity android:name=".activities.graphs.BoxStemGraphDisplayActivity" />
         <activity android:name=".activities.graphs.GraphDisplayActivity"/>
