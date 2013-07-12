@@ -280,4 +280,13 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
+	
+	<!-- Conflict Resolution Stuff -->
+	<string name="take_local">Take Local Version</string>
+	<string name="take_server">Take Server Version</string>
+	<string name="mark_resolved">Mark Resolved</string>
+	<string name="take_local_warning">Overwrite all server changes with the local changes?</string>
+	<string name="take_server_warning">Overwrite all local changes with the server changes?</string>
+	<string name="resolve_row_warning">Overwrite local and server changes with the selected values?</string>
+	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
 </resources>

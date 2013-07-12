@@ -20,7 +20,7 @@ import java.util.Map;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DbTable.ConflictTable;
+import org.opendatakit.tables.data.ConflictTable;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.views.TabularView.ColorDecider;
@@ -73,13 +73,15 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		// this.tvs = tvs;
 		fontSize = (new Preferences(context)).getFontSize();
 		this.table = table;
-		data = new String[table.getCount()][2][table.getWidth()];
-		rowItems = new RowItem[table.getCount()];
-		colorDeciders = new ColorDecider[table.getCount()];
-		for (int i = 0; i < table.getCount(); i++) {
-			colorDeciders[i] = new ConflictColorDecider(i, Color.WHITE,
-					Color.GRAY, Color.DKGRAY);
-		}
+		rowItems = null;
+		colorDeciders = null;
+//		data = new String[table.getCount()][2][table.getWidth()];
+//		rowItems = new RowItem[table.getCount()];
+//		colorDeciders = new ColorDecider[table.getCount()];
+//		for (int i = 0; i < table.getCount(); i++) {
+//			colorDeciders[i] = new ConflictColorDecider(i, Color.WHITE,
+//					Color.GRAY, Color.DKGRAY);
+//		}
 		lastRowClicked = -1;
 		lastCellClicked = -1;
 		lastDownTime = -1;
@@ -134,10 +136,10 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 
 	private RowItem getRowView(int index) {
 	  Log.e(TAG, "ConflictResolutionView#getRowView is unimplemented!");
-		for (int i = 0; i < table.getWidth(); i++) {
-			data[index][0][i] = table.getValue(index, 0, i);
-			data[index][1][i] = table.getValue(index, 1, i);
-		}
+//		for (int i = 0; i < table.getWidth(); i++) {
+//			data[index][0][i] = table.getValue(index, 0, i);
+//			data[index][1][i] = table.getValue(index, 1, i);
+//		}
 		RowItem ri = new RowItem(context, index);
 		// The wholeData param here is confusing. I'm not sure exactly what the
 		// conflict table is holding.
@@ -163,11 +165,11 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 				int y = (Float.valueOf(event.getY())).intValue();
 				int cellNum = tv.getCellNumber(x, y);
 				if ((lastRowClicked == index) && (lastCellClicked == cellNum)) {
-					if (event.getDownTime() - lastDownTime <= DOUBLE_CLICK_TIME) {
-						controller.onDoubleClick(index,
-								cellNum / table.getWidth(),
-								cellNum % table.getWidth());
-					}
+//					if (event.getDownTime() - lastDownTime <= DOUBLE_CLICK_TIME) {
+//						controller.onDoubleClick(index,
+//								cellNum / table.getWidth(),
+//								cellNum % table.getWidth());
+//					}
 				} else {
 					lastRowClicked = index;
 					lastCellClicked = cellNum;
@@ -247,8 +249,8 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		public int getColor(int rowNum, int colNum, String value) {
 			if (rowNum == 1) {
 				return serverRowColor;
-			} else if (table.getValue(index, 1, colNum).equals(value)) {
-				return defaultColor;
+//			} else if (table.getValue(index, 1, colNum).equals(value)) {
+//				return defaultColor;
 			} else {
 				return shadedColor;
 			}

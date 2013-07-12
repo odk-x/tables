@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.opendatakit.tables.data.ConflictTable;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.DbTable.ConflictTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
@@ -56,21 +56,21 @@ public class ConflictResolutionActivity extends SherlockActivity
 
     @Override
     public void init() {
-      c.getTableProperties().refreshColumns();
-        query = new Query(dbh,
-            KeyValueStore.Type.ACTIVE,
-            c.getTableProperties());
-        query.loadFromUserQuery(c.getSearchText());
-        table = c.getDbTable().getConflictTable(query);
-        rowChanges = new ArrayList<Stack<RowChange>>(table.getCount());
-        for (int i = 0; i < table.getCount(); i++) {
-            rowChanges.add(new Stack<RowChange>());
-        }
-        // setting up the view
-        crv = new ConflictResolutionView(this, this, c.getTableProperties(),
-                table);
-        c.setDisplayView(crv);
-        setContentView(c.getContainerView());
+//      c.getTableProperties().refreshColumns();
+//        query = new Query(dbh,
+//            KeyValueStore.Type.ACTIVE,
+//            c.getTableProperties());
+//        query.loadFromUserQuery(c.getSearchText());
+////        table = c.getDbTable().getConflictTable(query);
+////        rowChanges = new ArrayList<Stack<RowChange>>(table.getCount());
+////        for (int i = 0; i < table.getCount(); i++) {
+//            rowChanges.add(new Stack<RowChange>());
+//        }
+//        // setting up the view
+////        crv = new ConflictResolutionView(this, this, c.getTableProperties(),
+////                table);
+//        c.setDisplayView(crv);
+//        setContentView(c.getContainerView());
     }
 
     @Override
@@ -118,8 +118,8 @@ public class ConflictResolutionActivity extends SherlockActivity
             RowChange rc = changes.pop();
             values.put(tp.getColumnByIndex(rc.getColNum()).getElementKey(), rc.getNewValue());
         }
-        c.getDbTable().resolveConflict(table.getRowId(index),
-                table.getSyncTag(index, 1), values);
+//        c.getDbTable().resolveConflict(table.getRowId(index),
+//                table.getSyncTag(index, 1), values);
         crv.removeRow(index);
     }
 
@@ -128,9 +128,9 @@ public class ConflictResolutionActivity extends SherlockActivity
         if (rowChanges.get(index).isEmpty()) {
             return;
         }
-        RowChange rc = rowChanges.get(index).pop();
-        crv.setDatum(index, 0, rc.getColNum(),
-                table.getValue(index, 0, rc.getColNum()));
+//        RowChange rc = rowChanges.get(index).pop();
+//        crv.setDatum(index, 0, rc.getColNum(),
+//                table.getValue(index, 0, rc.getColNum()));
     }
 
     @Override
@@ -138,9 +138,9 @@ public class ConflictResolutionActivity extends SherlockActivity
         if (rowNum == 0) {
             return;
         }
-        RowChange rc = new RowChange(colNum, table.getValue(index, 1, colNum));
-        rowChanges.get(index).add(rc);
-        crv.setDatum(index, 0, colNum, table.getValue(index, 1, colNum));
+//        RowChange rc = new RowChange(colNum, table.getValue(index, 1, colNum));
+//        rowChanges.get(index).add(rc);
+//        crv.setDatum(index, 0, colNum, table.getValue(index, 1, colNum));
     }
 
     private class RowChange {
