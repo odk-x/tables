@@ -11,7 +11,8 @@
         android:id="@+id/list_item_conflict_resolution_local_row"
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@drawable/clickable">
         
 	    <RadioButton
 	        android:id="@+id/list_item_local_radio_button" 
@@ -30,7 +31,8 @@
 	 	android:id="@+id/list_item_conflict_resolution_server_row" 
 	 	android:layout_width="fill_parent"
 	 	android:orientation="horizontal"
-	 	android:layout_height="fill_parent" >
+	 	android:layout_height="fill_parent"
+	 	android:background="@drawable/clickable" >
  	
 	    <RadioButton
 	        android:id="@+id/list_item_server_radio_button" 

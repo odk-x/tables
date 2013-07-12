@@ -2,7 +2,9 @@ package org.opendatakit.tables.activities;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ConflictTable;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -14,8 +16,9 @@ import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Con
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConflictColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Section;
 
-import android.R;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 
 import com.actionbarsherlock.app.SherlockListActivity;
 
@@ -25,7 +28,8 @@ import com.actionbarsherlock.app.SherlockListActivity;
  * @author sudar.sam@gmail.com
  *
  */
-public class ConflictResolutionRowActivity extends SherlockListActivity {
+public class ConflictResolutionRowActivity extends SherlockListActivity
+    implements ConflictResolutionListAdapter.UICallbacks {
   
   public static final String INTENT_KEY_ROW_NUM = "rowNumber";
   private static final int INVALID_ROW_NUMBER = -1;
@@ -36,10 +40,22 @@ public class ConflictResolutionRowActivity extends SherlockListActivity {
   private int mRowNumber;
   private UserTable mLocal;
   private UserTable mServer;
+  private Button mButtonTakeLocal;
+  private Button mButtonTakeServer;
+  private Button mButtonResolveRow;
+  private List<ConflictColumn> mConflictColumns;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    this.setContentView(
+        org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
+    this.mButtonTakeLocal = 
+        (Button) findViewById(R.id.conflict_resolution_button_take_local);
+    this.mButtonTakeServer =
+        (Button) findViewById(R.id.conflict_resolution_button_take_server);
+    this.mButtonResolveRow = 
+        (Button) findViewById(R.id.conflict_resolution_button_resolve_row);
     String tableId = 
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
     this.mRowNumber = getIntent().getIntExtra(INTENT_KEY_ROW_NUM, 
@@ -68,7 +84,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity {
     // two, as we'll need to display each one to the user.
     int adapterOffset = 0;
     List<Section> sections = new ArrayList<Section>();
-    List<ConflictColumn> conflictColumns = new ArrayList<ConflictColumn>();
+    this.mConflictColumns = new ArrayList<ConflictColumn>();
     List<ConcordantColumn> noConflictColumns = 
         new ArrayList<ConcordantColumn>();
     for (int i = 0; i < columnOrder.size(); i++) {
@@ -94,17 +110,68 @@ public class ConflictResolutionRowActivity extends SherlockListActivity {
       } else {
         // We need to display both the server and local versions.
         ConflictColumn conflictColumn = new ConflictColumn(adapterOffset, 
-            localValue, serverValue);
+            elementKey, localValue, serverValue);
         ++adapterOffset;
-        conflictColumns.add(conflictColumn);
+        mConflictColumns.add(conflictColumn);
       }
     }
     // Now that we have the appropriate lists, we need to construct the 
     // adapter that will display the information.
     this.mAdapter = new ConflictResolutionListAdapter(
-        this.getSupportActionBar().getThemedContext(), sections, 
-        noConflictColumns, conflictColumns);
+        this.getSupportActionBar().getThemedContext(), this, sections, 
+        noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
+    this.onDecisionMade(); // so the resolve button is disabled on startup.
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.opendatakit.tables.views.components.ConflictResolutionListAdapter.UICallbacks#onDecisionMade(boolean)
+   */
+  @Override
+  public void onDecisionMade() {
+    // We'll check if a decision has been made on every conflict column. If it
+    // has we'll enable the resolution button, otherwise we won't.
+    Map<String, String> currentlyResolvedValues = mAdapter.getResolvedValues();
+    for (ConflictColumn cc : this.mConflictColumns) {
+      if (!currentlyResolvedValues.containsKey(cc.getElementKey())) {
+        this.mButtonResolveRow.setEnabled(false);
+        return;
+      }
+    }
+    // If we made it here then we know the user has chosen a value for every
+    // column that was in conflict.
+    this.mButtonResolveRow.setEnabled(true);
+  }
+  
+  private class TakeLocalClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      // TODO Auto-generated method stub
+      
+    }
+    
+  }
+  
+  private class TakeServerClickListener implements View.OnClickListener {
+ 
+    @Override
+    public void onClick(View v) {
+      // TODO Auto-generated method stub
+      
+    }   
+    
+  }
+  
+  private class ResolveRowClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      // TODO Auto-generated method stub
+      
+    }
+    
   }
 
 }

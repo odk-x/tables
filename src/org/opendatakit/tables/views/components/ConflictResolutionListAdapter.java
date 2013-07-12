@@ -1,6 +1,8 @@
 package org.opendatakit.tables.views.components;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.opendatakit.tables.R;
 
@@ -13,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 /**
@@ -31,6 +32,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   
   private static final int INVALID_POSITION = -1;
   
+  private UICallbacks mCallbacks;
   private LayoutInflater mLayoutInflater;
   private SparseArray<Section> mSections = new SparseArray<Section>();
   private SparseArray<ConflictColumn> mConflictColumns = 
@@ -44,12 +46,23 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
    */
   private SparseArray<Resolution> mResolutions = 
       new SparseArray<Resolution>();
+  /**
+   * A map of element key to the user's chosen value for the column.
+   */
+  private Map<String, String> mResolvedValues;
   
   /**
    * The choice made by the user.
    */
   private enum Resolution {
     LOCAL, SERVER;
+  }
+  
+  public interface UICallbacks {
+    /**
+     * Called when the user has made a decision about which row to use. 
+     */
+    public void onDecisionMade();
   }
   
   /** 
@@ -79,13 +92,15 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
    *
    */
   public static class ConflictColumn {
-    int position;
-    String localValue;
-    String serverValue;
+    final int position;
+    final String localValue;
+    final String serverValue;
+    final String elementKey;
     
-    public ConflictColumn(int position, String localValue, 
+    public ConflictColumn(int position, String elementKey, String localValue, 
         String serverValue) {
       this.position = position;
+      this.elementKey = elementKey;
       this.localValue = localValue;
       this.serverValue = serverValue;
     }
@@ -96,6 +111,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     
     public String getServerValue() {
       return this.serverValue;
+    }
+    
+    public String getElementKey() {
+      return this.elementKey;
     }
     
   }
@@ -116,11 +135,13 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     }
   }
   
-  public ConflictResolutionListAdapter(Context context, List<Section> sections, 
-      List<ConcordantColumn> concordantColumns,
+  public ConflictResolutionListAdapter(Context context, UICallbacks callbacks,
+      List<Section> sections, List<ConcordantColumn> concordantColumns,
       List<ConflictColumn> conflictColumns) {
-    mLayoutInflater = (LayoutInflater) context.getSystemService(
+    this.mLayoutInflater = (LayoutInflater) context.getSystemService(
       Context.LAYOUT_INFLATER_SERVICE);
+    this.mResolvedValues = new HashMap<String, String>();
+    this.mCallbacks = callbacks;
     // First let's set the columns and sections.
     for (Section section : sections) {
       mSections.append(section.firstPosition, section);
@@ -213,8 +234,44 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     return false;
   }
   
+  /**
+   * Return a map of element key to the values chosen by the user. If a value
+   * isn't present, it hasn't been selected by the user. If it the column 
+   * wasn't in conflict, it cannot be selected by the user. When a decision
+   * has been made for every conflict column, the row is resolvable.
+   * @return
+   */
+  public Map<String, String> getResolvedValues() {
+    return this.mResolvedValues;
+  }
+  
+  /**
+   * Update the adapter's internal data structures to reflect the user's 
+   * choices.
+   * @param position
+   * @param decision
+   */
   private void setResolution(int position, Resolution decision) {
-    mResolutions.append(position, decision);
+    this.mResolutions.append(position, decision);
+    String chosenValue;
+    ConflictColumn conflictColumn;
+    if (!isConflictColumnPosition(position)) {
+      Log.e(TAG, "[setResolution] position not a conflict column, not " +
+      		"setting anything. position: " + position);
+      return;
+    }
+    // we didn't return, so we know it's safe.
+    conflictColumn = mConflictColumns.get(position);
+    if (decision == Resolution.LOCAL) {
+      chosenValue = conflictColumn.localValue;
+    } else if (decision == Resolution.SERVER) {
+      chosenValue = conflictColumn.serverValue;
+    } else {
+      Log.e(TAG, "[setResolution] decision didn't match a known resolution" +
+      		" type: " + decision.name() + "! not setting anything");
+      return;
+    }
+    this.mResolvedValues.put(conflictColumn.elementKey, chosenValue);
   }
 
   @Override
@@ -263,8 +320,8 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
         serverButton.setChecked(false);
       }
       // Alright. Now we need to set the click listeners. It's going to be a 
-      // little bit tricky. We want the list item as well as the radio buttons
-      // to register as a choice, and to update the other radiobutton as 
+      // little bit tricky. We want the list item as well to update the other 
+      // radiobutton as 
       // appropriate. In order to do this, we're going to add the entire view
       // object, including itself, as the view's tag. That way we can get at 
       // them to update appropriately.
@@ -274,19 +331,18 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
           view.findViewById(R.id.list_item_conflict_resolution_server_row);
       localRow.setTag(view);
       serverRow.setTag(view);
-      localButton.setTag(view);
-      serverButton.setTag(view);
       // We also need to add the position to each of the views, so that when 
       // it's clicked we'll be able to figure out to which row it was
       // referring. We'll use the parent id for the key.
       localRow.setTag(R.id.list_view_conflict_row, position);
       serverRow.setTag(R.id.list_view_conflict_row, position);
-      localButton.setTag(R.id.list_view_conflict_row, position);
-      serverButton.setTag(R.id.list_view_conflict_row, position);
       localRow.setOnClickListener(new ResolutionOnClickListener());
       serverRow.setOnClickListener(new ResolutionOnClickListener());
-      localButton.setOnClickListener(new ResolutionOnClickListener());
-      serverButton.setOnClickListener(new ResolutionOnClickListener());
+      // We'll want the radio buttons to trigger their whole associated list 
+      // item to keep the UI the same. Otherwise you could press the radio 
+      // button and NOT have the whole row highlighted, which I find annoying.
+      serverButton.setClickable(false);
+      localButton.setClickable(false);
       return view;
 
     } else if (isConcordantColumnPosition(position)) {
@@ -326,18 +382,18 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       // Now we need to figure out if this is a server or a local click, which
       // we'll know by which view the click came in on.
       int viewId = v.getId();
-      if (viewId == R.id.list_item_conflict_resolution_local_row || 
-          viewId == R.id.list_item_local_radio_button) {
+      if (viewId == R.id.list_item_conflict_resolution_local_row) {
         // Then we have clicked on a local row.
         localButton.setChecked(true);
         serverButton.setChecked(false);
         setResolution(position, Resolution.LOCAL);
-      } else if (viewId == R.id.list_item_conflict_resolution_server_row || 
-          viewId == R.id.list_item_server_radio_button) {
+        mCallbacks.onDecisionMade();
+      } else if (viewId == R.id.list_item_conflict_resolution_server_row) {
         // Then we've clicked on a server row.
         localButton.setChecked(false);
         serverButton.setChecked(true);
         setResolution(position, Resolution.SERVER);
+        mCallbacks.onDecisionMade();
       } else {
         Log.e(TAG, "[onClick] wasn't a recognized id, not saving choice!");
       }

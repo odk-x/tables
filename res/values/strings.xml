@@ -280,4 +280,9 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
+	
+	<!-- Conflict Resolution Stuff -->
+	<string name="take_local">Take Local Version</string>
+	<string name="take_server">Take Server Version</string>
+	<string name="mark_resolved">Mark Resolved</string>
 </resources>
