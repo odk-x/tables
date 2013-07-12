@@ -310,9 +310,6 @@ public class PropertyManager extends PreferenceActivity {
 
   @Override
   public void onBackPressed() {
-    // do this here to save your column changes into the tp. This is esp
-    // important for things like displayName.
-    tp.refreshColumns();
     super.onBackPressed();
   }
 

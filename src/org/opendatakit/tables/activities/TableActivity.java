@@ -256,7 +256,6 @@ public class TableActivity extends SherlockFragmentActivity
    * @return DbTable this data table
    */
   DbTable getDbTable() {
-    mTableProperties.refreshColumns();
     return mDbTable;
   }
 

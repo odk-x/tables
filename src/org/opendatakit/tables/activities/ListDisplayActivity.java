@@ -122,9 +122,6 @@ public class ListDisplayActivity extends SherlockActivity
 
     @Override
     public void init() {
-      // I hate having to do these two refreshes here, but with the code the
-      // way it is it seems the only way.
-      c.getTableProperties().refreshColumns();
         query.clear();
         query.loadFromUserQuery(c.getSearchText());
         // If a sql statement has been passed in the Intent, use that instead
