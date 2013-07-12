@@ -40,12 +40,11 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   private SparseArray<ConcordantColumn> mConcordantColumns = 
       new SparseArray<ConcordantColumn>();
   /** 
-   * The decisions the user has made on the resolution of the conflict. Indexes
-   * into the sparse array will be the {@link ConflictColumn#position} of the
-   * local column, which MUST be one less than the server conflict's position.
+   * The decisions the user has made on the resolution of the conflict. Maps
+   * element key to resolution. 
    */
-  private SparseArray<Resolution> mResolutions = 
-      new SparseArray<Resolution>();
+  private Map<String, Resolution> mResolutions = 
+      new HashMap<String, Resolution>();
   /**
    * A map of element key to the user's chosen value for the column.
    */
@@ -54,7 +53,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   /**
    * The choice made by the user.
    */
-  private enum Resolution {
+  public enum Resolution {
     LOCAL, SERVER;
   }
   
@@ -246,22 +245,25 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   }
   
   /**
+   * Return a map of element key to the {@link Resolution} indicating whether 
+   * or not a user has made a decision.
+   * @return
+   */
+  public Map<String, Resolution> getResolutions() {
+    return this.mResolutions;
+  }
+  
+  /**
    * Update the adapter's internal data structures to reflect the user's 
    * choices.
    * @param position
    * @param decision
    */
-  private void setResolution(int position, Resolution decision) {
-    this.mResolutions.append(position, decision);
+  private void setResolution(ConflictColumn conflictColumn, 
+      Resolution decision) {
+    this.mResolutions.put(conflictColumn.elementKey, decision);
     String chosenValue;
-    ConflictColumn conflictColumn;
-    if (!isConflictColumnPosition(position)) {
-      Log.e(TAG, "[setResolution] position not a conflict column, not " +
-      		"setting anything. position: " + position);
-      return;
-    }
     // we didn't return, so we know it's safe.
-    conflictColumn = mConflictColumns.get(position);
     if (decision == Resolution.LOCAL) {
       chosenValue = conflictColumn.localValue;
     } else if (decision == Resolution.SERVER) {
@@ -375,6 +377,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       // be able to get at the appropriate radio buttons.
       View conflictRowView = (View) v.getTag();
       int position = (Integer) v.getTag(R.id.list_view_conflict_row);
+      ConflictColumn conflictColumn = mConflictColumns.get(position);
       RadioButton localButton = (RadioButton) conflictRowView.findViewById(
           R.id.list_item_local_radio_button);
       RadioButton serverButton = (RadioButton) conflictRowView.findViewById(
@@ -386,13 +389,13 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
         // Then we have clicked on a local row.
         localButton.setChecked(true);
         serverButton.setChecked(false);
-        setResolution(position, Resolution.LOCAL);
+        setResolution(conflictColumn, Resolution.LOCAL);
         mCallbacks.onDecisionMade();
       } else if (viewId == R.id.list_item_conflict_resolution_server_row) {
         // Then we've clicked on a server row.
         localButton.setChecked(false);
         serverButton.setChecked(true);
-        setResolution(position, Resolution.SERVER);
+        setResolution(conflictColumn, Resolution.SERVER);
         mCallbacks.onDecisionMade();
       } else {
         Log.e(TAG, "[onClick] wasn't a recognized id, not saving choice!");

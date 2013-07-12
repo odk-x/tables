@@ -26,7 +26,6 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
   private static final String TAG = 
       ConflictResolutionListActivity.class.getSimpleName();
   
-  private ListView mConflictView;
   private ConflictTable mConflictTable;
   private ArrayAdapter<String> mAdapter;
   
