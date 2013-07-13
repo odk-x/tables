@@ -92,6 +92,7 @@
 	<string name="bad_config_properties_file">bad config.properties file</string>
 	<string name="error">error</string>
 	<string name="config_summary">Configuration Summary:</string>
+	<string name="table_already_exists">- %1$s already exists.\n\n</string>
 	<string name="imported_successfully">- %1$s imported successfully\n\n</string>
 	<string name="imported_with_errors">- %1$s imported with errors\n\n</string>
 	<string name="use_default">Use Default</string>

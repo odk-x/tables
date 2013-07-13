@@ -10,6 +10,7 @@ import java.util.Properties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -19,6 +20,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
+import android.util.Log;
 
 public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	private static final String EMPTY_STRING = "";
@@ -44,6 +46,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	private int curFileCount;
 	private String lineCount;
 	private Map<String, Boolean> importStatus;
+	private Map<String, Boolean> mTableAlreadyExistsMap;
 
 	public boolean caughtDuplicateTableException = false;
 	public boolean problemImportingKVSEntries = false;
@@ -54,6 +57,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 		this.mContext = context;
 		this.dialog = new ProgressDialog(context);
 		this.importStatus = new HashMap<String, Boolean>();
+		this.mTableAlreadyExistsMap = new HashMap<String, Boolean>();
 	}
 
 	@Override
@@ -92,6 +96,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 					String tablename;
 					File file;
+               CsvUtil cu = new CsvUtil(this.mContext);
 					for (String key : keys) {
 						lineCount = mContext.getString(R.string.processing_file);
 						curFileCount++;
@@ -107,10 +112,17 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 						if (tablename != null) {
 							ImportRequest request = new ImportRequest(true, null, tablename, file);
 
-							CsvUtil cu = new CsvUtil(this.mContext);
-
-							boolean success = cu.importConfigTables(mContext, this, 
-							    request.getFile(), filename, request.getTableName());
+							boolean success = false;
+							try {
+    							success = cu.importConfigTables(mContext, this, 
+    							    request.getFile(), filename, 
+    							    request.getTableName());
+    							mTableAlreadyExistsMap.put(filename, false);
+							} catch (TableAlreadyExistsException e) {
+							  mTableAlreadyExistsMap.put(filename, true);
+							  Log.e(TAG, "caught able already exists, setting " +
+							  		"success to: " + success);
+							}
 							importStatus.put(filename, success);
 							if (success) {
 								publishProgress();
@@ -179,8 +191,25 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			    mContext.getString(R.string.config_summary));
 			StringBuffer msg = new StringBuffer();
 			for (String filename : importStatus.keySet()) {
-				msg.append(mContext.getString((importStatus.get(filename) ?
-						R.string.imported_successfully : R.string.imported_with_errors), filename));
+			  Log.e(TAG, "filename: " + filename);
+			  if (importStatus.get(filename)) {
+			    Log.e(TAG, "import status from map: " + importStatus.get(filename));
+			    msg.append(mContext.getString(R.string.imported_successfully, 
+			        filename));
+			  } else {
+			    // maybe there was an existing table already, maybe there were 
+			    // just errors.
+			    if (mTableAlreadyExistsMap.get(filename)) {
+			      Log.e(TAG, "table already exists map was true");
+			      msg.append(mContext.getString(R.string.table_already_exists, 
+	                 filename));
+			    } else {
+			      Log.e(TAG, "table already exists map was false");
+	            msg.append(mContext.getString(R.string.imported_with_errors, 
+	                filename));			      
+			    }
+			  }
+
 			}
 			alertDialogBuilder.setMessage(msg);
 		}

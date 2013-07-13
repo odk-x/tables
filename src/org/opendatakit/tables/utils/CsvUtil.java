@@ -430,9 +430,10 @@ public class CsvUtil {
    * @param String
    *          tablename
    * @return boolean true if successful
+   * @throws TableAlreadyExistsException 
    */
-  public boolean importConfigTables(Context c, InitializeTask it, File file, String filename,
-      String tablename) {
+  public boolean importConfigTables(Context c, InitializeTask it, File file, 
+      String filename, String tablename) throws TableAlreadyExistsException {
 
     this.it = it;
 
@@ -465,18 +466,22 @@ public class CsvUtil {
         } catch (IOException e) {
           e.printStackTrace();
           return false;
-        } catch (TableAlreadyExistsException e) {
-          e.printStackTrace();
-
-          return false;
+//        } catch (TableAlreadyExistsException e) {
+//          Log.e(TAG, "[importConfigTables] table already exists when " +
+//          		"importing with properties: " + filename);
+//          e.printStackTrace();
+//
+//          return false;
         }
       } else {
-        try {
+//        try {
           return this.importNewTable(c, null, file, tablename);
-        } catch (TableAlreadyExistsException e) {
-          e.printStackTrace();
-          return false;
-        }
+//        } catch (TableAlreadyExistsException e) {
+//          e.printStackTrace();
+//          Log.e(TAG, "[importConfigTables] table already exists when " +
+//          		"importing without csv properties file: " + filename);
+//          return false;
+//        }
       }
     } else {
       Log.e(t, "bad filename");
