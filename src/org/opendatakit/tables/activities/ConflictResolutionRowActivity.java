@@ -157,7 +157,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         this.getSupportActionBar().getThemedContext(), this, sections, 
         noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
-    this.onDecisionMade(); // so the resolve button is disabled on startup.
+    this.onDecisionMade();
   }
 
   /*
@@ -167,6 +167,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   @Override
   public void onDecisionMade() {
     if (isResolvable()) {
+      Log.e(TAG, "isResolvable returns true!");
       this.mButtonResolveRow.setEnabled(true);
     } else {
       this.mButtonResolveRow.setEnabled(false);
@@ -236,6 +237,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
+    Log.e(TAG, "onRestoreInstanceState");
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
       boolean wasShowingLocal = 
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
@@ -251,6 +253,37 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_RESOLVE_DIALOG);
       if (wasShowingResolve) this.mButtonResolveRow.performClick();
     }
+    String[] valueKeys = 
+        savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
+    String[] chosenValues = 
+        savedInstanceState.getStringArray(BUNDLE_KEY_CHOSEN_VALUES);
+    String[] resolutionKeys = 
+        savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_KEYS);
+    String[] resolutionValues =
+        savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_VALUES);
+    if (valueKeys != null) {
+      // Then we know that we should have the chosenValues as well, or else 
+      // there is trouble. We're not doing a null check here, but if we didn't
+      // get it then we know there is an error. We'll throw a null pointer 
+      // exception, but that is better than restoring bad state.
+      // Same thing goes for the resolution keys. Those and the map should 
+      // always go together.
+      Map<String, String> chosenValuesMap = new HashMap<String, String>();
+      for (int i = 0; i < valueKeys.length; i++) {
+        chosenValuesMap.put(valueKeys[i], chosenValues[i]);
+      }
+      Map<String, Resolution> userResolutions = 
+          new HashMap<String, Resolution>();
+      for (int i = 0; i < resolutionKeys.length; i++) {
+        userResolutions.put(resolutionKeys[i], 
+            Resolution.valueOf(resolutionValues[i]));
+      }
+      mAdapter.setRestoredState(chosenValuesMap, userResolutions);
+    }
+    // And finally, call this to make sure we update the button as appropriate.
+    Log.e(TAG, "going to call onDecisionMade");
+    this.onDecisionMade();
+
   }
   
   private class TakeLocalClickListener implements View.OnClickListener {

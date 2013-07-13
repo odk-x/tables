@@ -157,6 +157,20 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     return mSections.get(position) != null;
   }
   
+  /**
+   * Set the user choices backing this object. Intended to allow restoring of 
+   * state on things like screen rotation. Cannot rely on the framework to do
+   * this for us because are programmatically creating views, and thus reusing
+   * ids.
+   * @param chosenValues
+   * @param chosenResolutions
+   */
+  public void setRestoredState(Map<String, String> chosenValues,
+      Map<String, Resolution> chosenResolutions) {
+    this.mResolvedValues = chosenValues;
+    this.mResolutions = chosenResolutions;
+  }
+  
   public boolean isConflictColumnPosition(int position) {
     return mConflictColumns.get(position) != null;
   }
@@ -303,7 +317,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
           (TextView) view.findViewById(R.id.list_item_server_text);
       serverTextView.setText(conflictColumn.serverValue);
       // The decision the user has made. May be null if it hasn't been set.
-      Resolution userDecision = mResolutions.get(position);
+      Resolution userDecision = mResolutions.get(conflictColumn.elementKey);
       RadioButton localButton = 
           (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
       RadioButton serverButton = 
