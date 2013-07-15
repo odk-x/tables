@@ -66,7 +66,8 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
     i.putExtra(Controller.INTENT_KEY_TABLE_ID, 
         mConflictTable.getLocalTable().getTableProperties().getTableId());
-    i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_NUM, position);
+    String rowId = this.mConflictTable.getLocalTable().getRowId(position);
+    i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, rowId);
     this.startActivity(i);
   }
 

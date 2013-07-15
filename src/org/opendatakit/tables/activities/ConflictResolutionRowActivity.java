@@ -42,8 +42,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private static final String TAG = 
       ConflictResolutionRowActivity.class.getSimpleName();
   
-  public static final String INTENT_KEY_ROW_NUM = "rowNumber";
-  private static final int INVALID_ROW_NUMBER = -1;
+  public static final String INTENT_KEY_ROW_ID = "rowId";
   
   private static final String BUNDLE_KEY_SHOWING_LOCAL_DIALOG = 
       "showingLocalDialog";
@@ -92,8 +91,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     this.mButtonResolveRow.setOnClickListener(new ResolveRowClickListener());
     String tableId = 
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    this.mRowNumber = getIntent().getIntExtra(INTENT_KEY_ROW_NUM, 
-        INVALID_ROW_NUMBER);
+    this.mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
     TableProperties tableProperties = 
         TableProperties.getTablePropertiesForTable(mDbHelper, tableId, 
             KeyValueStore.Type.ACTIVE);
@@ -110,7 +108,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // all the values which are in conflict, as well as those that are not.
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
-    this.mRowId = this.mLocal.getRowId(mRowNumber);
+    this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
     this.mServerRowSyncTag = this.mServer.getMetadataByElementKey(mRowNumber, 
         DataTableColumns.SYNC_TAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();

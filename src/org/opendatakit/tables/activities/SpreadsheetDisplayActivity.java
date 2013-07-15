@@ -102,7 +102,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
         dbh = DbHelper.getDbHelper(this);
         c = new Controller(this, this, getIntent().getExtras());
-//        init();
     }
 
     @Override
@@ -113,8 +112,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
     @Override
     public void init() {
-      // I hate having to do these two refreshes here, but with the code the
-      // way it is it seems the only way.
       TableProperties tp = c.getTableProperties();
       Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
         query.loadFromUserQuery(c.getSearchText());
@@ -319,79 +316,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      }
 	}
 
-
-
-	/**
-	 * NB: To avoid headache and wishing for death, this is the method to handle
-	 * clicks stemming from the View, or from android.view.MenuItem items. The
-	 * one to handle ActionBarSherlock methods is elsewhere.
-	 */
-//    @Override
-//    public boolean onMenuItemSelected(int featureId,
-//        android.view.MenuItem item) {
-//      Log.d(TAG, "entered android's onMenuItemSelected");
-////        if (c.handleMenuItemSelection(item)) {
-////          Log.d(TAG, "item was already handled");
-////            return true;
-////        }
-//      Log.d(TAG, "item instance of sherlock: " +
-//          (item instanceof com.actionbarsherlock.view.MenuItem));
-//        switch (item.getItemId()) {
-//        case MENU_ITEM_ID_HISTORY_IN:
-//            openCollectionView(lastDataCellMenued / table.getWidth());
-//            return true;
-//        case MENU_ITEM_ID_EDIT_CELL:
-//            c.openCellEditDialog(
-//                    table.getRowId(lastDataCellMenued / table.getWidth()),
-//                    table.getData(lastDataCellMenued),
-//                    lastDataCellMenued % table.getWidth());
-//            return true;
-//        case MENU_ITEM_ID_DELETE_ROW:
-//            c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_EDIT_ROW:
-//    		c.editRow(table, (lastDataCellMenued / table.getWidth()));
-//        	// launch ODK Collect
-//        	return true;
-//        case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
-//            setColumnAsPrime(c.getTableProperties()
-//                    .getColumns()[lastHeaderCellMenued]);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
-//            unsetColumnAsPrime(c.getTableProperties()
-//                    .getColumns()[lastHeaderCellMenued]);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-//            setColumnAsSort(c.getTableProperties()
-//                    .getColumns()[lastHeaderCellMenued]);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
-//            setColumnAsSort(null);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-//            setColumnAsIndexedCol(c.getTableProperties()
-//                    .getColumns()[lastHeaderCellMenued]);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
-//            setColumnAsIndexedCol(null);
-//            init();
-//            return true;
-//        case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
-//            openColumnPropertiesManager(c.getTableProperties()
-//                    .getColumns()[lastHeaderCellMenued]);
-//            return true;
-//        default:
-//          Log.e(TAG, "unrecognized menu item selected: " + item.getItemId());
-//            return false;
-//        }
-//    }
-
     /**
      * NB: This is the onMenuItemSelected for the action bar. NOT for context
      * menus.
@@ -417,9 +341,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
     @Override
     public void indexedColCellLongClicked(int cellId, int rawX, int rawY) {
-//      int colNum = cellId % (table.getWidth() - 1);
-//      int rowNum = cellId / (table.getWidth() - 1);
-//      int trueNum = colNum + rowNum;
       // here it's just the row plus the number of the indexed column.
       // So the true cell id is the cellId parameter, which is essentially the
       // row number, * the width of the table, plus the indexed col
@@ -435,8 +356,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       // have to perform a little extra.
       if (!isIndexed) {
         c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
-//        c.openCellEditDialog(table.getRowId(cellId / table.getWidth()),
-//                table.getData(cellId), cellId % table.getWidth());
       } else { // it's indexed
         int colNum = cellId % (table.getWidth() - 1);
         int rowNum = cellId / (table.getWidth() - 1);
@@ -445,8 +364,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         int trueCellId = rowNum * table.getWidth() +
             colNum + ((colNum < indexedCol) ? 0 : 1);
         c.addOverlay(new CellPopout(trueCellId), 100, 100, rawX, rawY);
-//        c.openCellEditDialog(table.getRowId(rowNum), table.getData(trueNum),
-//            colNum);
       }
 
     }
@@ -537,8 +454,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      // also have to be the 5th row.
      int trueNum = cellId * table.getWidth() + indexedCol;
      c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
-//     c.openCellEditDialog(table.getRowId(cellId),
-//         table.getData(cellId, indexedCol), indexedCol);
 	}
 
 	@Override
@@ -587,7 +502,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	    public CellPopout(int cellId) {
 	        super(SpreadsheetDisplayActivity.this);
 	        this.cellId = cellId;
-//	        Context context = SpreadsheetDisplayActivity.this;
 	        context = SpreadsheetDisplayActivity.this;
 	        TextView valueView = new TextView(context);
 	        valueView.setText(table.getDisplayTextOfData(SpreadsheetDisplayActivity.this, cellId));
@@ -606,7 +520,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        lp.setMargins(5, 5, 5, 5);
 	        setLayoutParams(lp);
 	        setBackgroundResource(R.drawable.my_border);
-//	        setBackgroundColor(Color.WHITE);
 	        addView(valueView);
 	        addView(menuButton);
 	        lastDownX = 0;
@@ -768,7 +681,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
-//	            c.setOverlayLocation(x - lastDownX, y - lastDownY);
 	            c.setOverlayLocation(x - lastDownX, y - lastDownY);
 	            if (c.isInSearchBox(x, y)) {
 	              c.invertSearchBoxColor(true);
