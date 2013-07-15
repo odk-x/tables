@@ -543,11 +543,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        // long press on a cell. I don't know what the other menus up above
 	        // that also include these do, nor when they are generated.
 	        itemIds.add(MENU_ITEM_ID_EDIT_CELL);
-	        itemLabels.add("Edit Cell");
+	        itemLabels.add(context.getString(R.string.edit_cell));
 	        itemIds.add(MENU_ITEM_ID_DELETE_ROW);
-	        itemLabels.add("Delete Row");
+	        itemLabels.add(context.getString(R.string.delete_row));
 	        itemIds.add(MENU_ITEM_ID_EDIT_ROW);
-	        itemLabels.add("Edit Row");
+	        itemLabels.add(context.getString(R.string.edit_row));
 	        // Now we need to check to see if we are a row in conflict, in which
 	        // case we want to allow resolution of that row.
 	        final int rowNumber = cellId / table.getWidth();

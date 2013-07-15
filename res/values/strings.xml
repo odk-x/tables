@@ -261,6 +261,9 @@
 	<string name="confirm_delete_row">Confirm Delete Row</string>
 	<string name="are_you_sure_delete_row">Please confirm deletion of row: %1$s</string>
 	<string name="resolve_conflict">Resolve Conflict</string>
+	<string name="edit_cell">Edit Cell</string>
+	<string name="delete_row">Delete Row</string>
+	<string name="edit_row">Edit Row</string>
 	<string name="delete_table">Delete this Table</string>
 	<string name="confirm_delete_table">Confirm Delete Table</string>
 	<string name="are_you_sure_delete_table">Please confirm deletion of table: %1$s</string>
