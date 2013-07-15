@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -27,8 +28,10 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;
@@ -80,6 +83,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         Controller.FIRST_FREE_MENU_ITEM_ID + 11;
     private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES =
         Controller.FIRST_FREE_MENU_ITEM_ID + 12;
+    private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT = 
+        Controller.FIRST_FREE_MENU_ITEM_ID + 13;
     private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
         "Open Join Table";
     private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
@@ -543,6 +548,15 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        itemLabels.add("Delete Row");
 	        itemIds.add(MENU_ITEM_ID_EDIT_ROW);
 	        itemLabels.add("Edit Row");
+	        // Now we need to check to see if we are a row in conflict, in which
+	        // case we want to allow resolution of that row.
+	        final int rowNumber = cellId / table.getWidth();
+	        if (Integer.parseInt(table.getMetadataByElementKey(rowNumber, 
+	            DataTableColumns.SYNC_STATE)) == SyncUtil.State.CONFLICTING) {
+	          // Then huzzah, we need to add an option to resolve.
+	          itemIds.add(MENU_ITEM_ID_RESOLVE_ROW_CONFLICT);
+	          itemLabels.add(context.getString(R.string.resolve_conflict));
+	        }
 	        // now we're going to check for the join column, and add it if
 	        // it is applicable.
 	        // indexed col is the index of the column that is frozen on the
@@ -584,6 +598,18 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                            cellId % table.getWidth());
 	                    c.removeOverlay();
 	                    break;
+	                case MENU_ITEM_ID_RESOLVE_ROW_CONFLICT:
+	                  // We'll just launch the resolve activity.
+	                  Intent i = new Intent(context, 
+	                      ConflictResolutionRowActivity.class);
+	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID, 
+	                      table.getTableProperties().getTableId());
+	                  String conflictRowId = table.getRowId(rowNumber);
+	                  i.putExtra(
+	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, 
+	                      conflictRowId);
+	                  context.startActivity(i);
+	                  break;
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
