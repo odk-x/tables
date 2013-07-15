@@ -63,7 +63,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   /** The row number of the row in conflict within the {@link ConflictTable}.*/
   private int mRowNumber;
   private String mRowId;
-  private String mSyncTag;
+  private String mServerRowSyncTag;
   private UserTable mLocal;
   private UserTable mServer;
   private Button mButtonTakeLocal;
@@ -111,7 +111,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
     this.mRowId = this.mLocal.getRowId(mRowNumber);
-    this.mSyncTag = this.mLocal.getMetadataByElementKey(mRowNumber, 
+    this.mServerRowSyncTag = this.mServer.getMetadataByElementKey(mRowNumber, 
         DataTableColumns.SYNC_TAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getColumnOrder();
@@ -306,7 +306,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getLocalValue());
               }
-              dbTable.resolveConflict(mRowId, mSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });
@@ -353,7 +353,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getServerValue());
               }
-              dbTable.resolveConflict(mRowId, mSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });
@@ -408,7 +408,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
                 return;
               }
               Map<String, String> valuesToUse = mAdapter.getResolvedValues();
-              dbTable.resolveConflict(mRowId, mSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });
