@@ -994,7 +994,9 @@ public class CollectUtil {
     String instanceName;
     String formId;
     String locale;
-    String uriUser;
+    // TODO: clarify whether this is the userId or the uriAccessControl
+    // at this point. It might need to be the userId...
+    String uriAccessControl;
 
     FormValues() {};
   };
@@ -1072,7 +1074,7 @@ public class CollectUtil {
     Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
     DbHelper dbh = DbHelper.getDbHelper(context);
     DbTable dbTable = DbTable.getDbTable(dbh, tp);
-    dbTable.updateRow(rowId, values, formValues.uriUser, formValues.timestamp, formValues.instanceName, formValues.formId, formValues.locale);
+    dbTable.updateRow(rowId, values, formValues.uriAccessControl, formValues.timestamp, formValues.instanceName, formValues.formId, formValues.locale);
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
     // will mean there's no you could accidentally wind up overwriting the
@@ -1144,7 +1146,7 @@ public class CollectUtil {
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
     DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp);
-    dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.uriUser,
+    dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.uriAccessControl,
             formValues.instanceName, formValues.formId, formValues.locale);
     return true;
   }
