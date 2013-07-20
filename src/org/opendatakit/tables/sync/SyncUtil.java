@@ -15,15 +15,25 @@
  */
 package org.opendatakit.tables.sync;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Comparator;
+
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResponseErrorHandler;
+import org.springframework.web.client.RestTemplate;
+
+import com.google.android.gms.internal.a;
 
 import android.content.Context;
 import android.util.Log;
-
-import java.util.Comparator;
 
 /**
  * A utility class for common synchronization methods and definitions.
@@ -249,6 +259,40 @@ public class SyncUtil {
     }
 
     return msg.toString();
+  }
+  
+  /**
+   * Get a {@link RestTemplate} for synchronizing files.
+   * @return
+   */
+  public static RestTemplate getRestTemplateForFiles() {
+    // Thanks to this guy for the snippet:
+    // https://github.com/barryku/SpringCloud/blob/master/BoxApp/BoxNetApp/src/com/barryku/android/boxnet/RestUtil.java
+    RestTemplate rt = new RestTemplate();
+    FormHttpMessageConverter formConverter = new FormHttpMessageConverter();
+    formConverter.setCharset(Charset.forName("UTF8"));
+    rt.getMessageConverters().add(formConverter);
+    rt.setErrorHandler(new ResponseErrorHandler() {
+      
+      @Override
+      public boolean hasError(ClientHttpResponse resp) throws IOException {
+        HttpStatus status = resp.getStatusCode();
+        if (HttpStatus.CREATED.equals(status) 
+            || HttpStatus.OK.equals(status)) {
+         return false; 
+        } else {
+          Log.e(TAG, "[hasError] response: " + resp.getBody());
+          return true;
+        }
+      }
+      
+      @Override
+      public void handleError(ClientHttpResponse resp) throws IOException {
+        Log.e(TAG, "[handleError] response body: " + resp.getBody());
+        throw new HttpClientErrorException(resp.getStatusCode());
+      }
+    });
+    return rt;
   }
 
 

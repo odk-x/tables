@@ -15,9 +15,13 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
+import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
@@ -29,7 +33,12 @@ import org.opendatakit.tables.sync.TableResult;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
-import org.opendatakit.tables.sync.files.FileSyncAdapter;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -285,16 +294,18 @@ public class Aggregate extends SherlockActivity {
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
-      Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
-      for (Account account : accounts) {
-        if (account.name.equals(accountName)) {
-          Bundle extras = new Bundle();
-          ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 1);
-          ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", true);
-          ContentResolver.requestSync(account,
-              "org.opendatakit.tables.tablefilesauthority", extras);
-        }
-      }
+      SyncFilesNowTask syncFilesTask = new SyncFilesNowTask();
+      syncFilesTask.execute();
+//      Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
+//      for (Account account : accounts) {
+//        if (account.name.equals(accountName)) {
+//          Bundle extras = new Bundle();
+//          ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 1);
+//          ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", true);
+//          ContentResolver.requestSync(account,
+//              "org.opendatakit.tables.tablefilesauthority", extras);
+//        }
+//      }
 
     }
   }
@@ -386,8 +397,65 @@ public class Aggregate extends SherlockActivity {
           message = getString(R.string.save_settings_first);
           return null;
         }
-        FileSyncAdapter syncAdapter = new FileSyncAdapter(
-            getApplicationContext(), true);
+        String aggregateUri = prefs.getServerUri(); // uri of our server.
+        URI uri = URI.create(aggregateUri).normalize();
+        uri = uri.resolve("/odktables/files/").normalize();
+        URI fileServletUri = uri;
+        List<ClientHttpRequestInterceptor> interceptors =
+            new ArrayList<ClientHttpRequestInterceptor>();
+        String accessToken = prefs.getAuthToken();
+        
+        interceptors.add(new AggregateRequestInterceptor(accessToken));
+//        ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+//        ClientHttpRequest request = 
+//            factory.createRequest(fileServletUri, HttpMethod.POST);
+        String filePath = "tables/helloServer.txt"; // just a hardcoded dummy
+        File file = new File("/sdcard/odk/" + filePath);
+        URI filePostUri = fileServletUri.resolve(filePath).normalize();
+        // from http://agilesc.barryku.com/?p=243
+        MultiValueMap<String, Object> parts = 
+            new LinkedMultiValueMap<String, Object>();
+        parts.add(filePath, new FileSystemResource(file));
+        RestTemplate rt = SyncUtil.getRestTemplateForFiles();
+        MultiValueMap<String, String> parameters = 
+            new LinkedMultiValueMap<String, String>();
+        String response = rt.postForObject(filePostUri, parts, String.class);
+        int i = 3; // just to trigger the debugger.
+        
+        
+        
+        
+        
+        
+       
+//        Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
+//        List<HttpMessageConverter<?>> converters =
+//            new ArrayList<HttpMessageConverter<?>>();
+//        converters.add(new JsonObjectHttpMessageConverter());
+//        converters.add(new SimpleXmlHttpMessageConverter(serializer));
+//        rt.setMessageConverters(converters);
+//        MultiValueMap<String, Object> map = 
+//            new LinkedMultiValueMap<String, Object>();
+//        map.add("app_id", "tables");
+//        map.add("table_id", "testTableId");
+//        String filePath = "tables/helloServer.txt"; // just a hardcoded dummy
+//        File file = new File("/sdcard/odk/" + filePath);
+//        map.add(filePath, file);
+//        URI totalUrl = fileServletUri.resolve(filePath).normalize();
+//        HttpHeaders headers = new HttpHeaders();
+//        List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
+//        acceptableMediaTypes.add(new MediaType("text", "xml"));
+//        headers.setAccept(acceptableMediaTypes);
+//        headers.setContentType(MediaType.TEXT_XML);
+//        HttpEntity<MultiValueMap<String, Object>> request = 
+//            new HttpEntity<MultiValueMap<String, Object>>(map, headers);
+//        String response = rt.postForObject(totalUrl, request, 
+//            String.class);
+//        Log.e(TAG, "response: " + response);
+// This is an old an no-good way of doing the manifest. Commenting out as I try
+// to get the upload from phone server stuff working.
+//        FileSyncAdapter syncAdapter = new FileSyncAdapter(
+//            getApplicationContext(), true);
         return null;
       }  finally{
 
