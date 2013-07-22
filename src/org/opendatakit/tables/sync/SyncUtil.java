@@ -23,14 +23,14 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
-
-import com.google.android.gms.internal.a;
 
 import android.content.Context;
 import android.util.Log;
@@ -269,29 +269,28 @@ public class SyncUtil {
     // Thanks to this guy for the snippet:
     // https://github.com/barryku/SpringCloud/blob/master/BoxApp/BoxNetApp/src/com/barryku/android/boxnet/RestUtil.java
     RestTemplate rt = new RestTemplate();
-    FormHttpMessageConverter formConverter = new FormHttpMessageConverter();
-    formConverter.setCharset(Charset.forName("UTF8"));
-    rt.getMessageConverters().add(formConverter);
-    rt.setErrorHandler(new ResponseErrorHandler() {
-      
-      @Override
-      public boolean hasError(ClientHttpResponse resp) throws IOException {
-        HttpStatus status = resp.getStatusCode();
-        if (HttpStatus.CREATED.equals(status) 
-            || HttpStatus.OK.equals(status)) {
-         return false; 
-        } else {
-          Log.e(TAG, "[hasError] response: " + resp.getBody());
-          return true;
-        }
-      }
-      
-      @Override
-      public void handleError(ClientHttpResponse resp) throws IOException {
-        Log.e(TAG, "[handleError] response body: " + resp.getBody());
-        throw new HttpClientErrorException(resp.getStatusCode());
-      }
-    });
+    ResourceHttpMessageConverter fileConverter = new ResourceHttpMessageConverter();
+    rt.getMessageConverters().add(fileConverter);
+//    rt.setErrorHandler(new ResponseErrorHandler() {
+//      
+//      @Override
+//      public boolean hasError(ClientHttpResponse resp) throws IOException {
+//        HttpStatus status = resp.getStatusCode();
+//        if (HttpStatus.CREATED.equals(status) 
+//            || HttpStatus.OK.equals(status)) {
+//         return false; 
+//        } else {
+//          Log.e(TAG, "[hasError] response: " + resp.getBody());
+//          return true;
+//        }
+//      }
+//      
+//      @Override
+//      public void handleError(ClientHttpResponse resp) throws IOException {
+//        Log.e(TAG, "[handleError] response body: " + resp.getBody());
+//        throw new HttpClientErrorException(resp.getStatusCode());
+//      }
+//    });
     return rt;
   }
 

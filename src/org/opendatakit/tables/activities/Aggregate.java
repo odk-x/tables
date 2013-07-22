@@ -413,13 +413,11 @@ public class Aggregate extends SherlockActivity {
         File file = new File("/sdcard/odk/" + filePath);
         URI filePostUri = fileServletUri.resolve(filePath).normalize();
         // from http://agilesc.barryku.com/?p=243
-        MultiValueMap<String, Object> parts = 
-            new LinkedMultiValueMap<String, Object>();
-        parts.add(filePath, new FileSystemResource(file));
+//        MultiValueMap<String, Object> parts = 
+//            new LinkedMultiValueMap<String, Object>();
+//        parts.add(filePath, new FileSystemResource(file));
         RestTemplate rt = SyncUtil.getRestTemplateForFiles();
-        MultiValueMap<String, String> parameters = 
-            new LinkedMultiValueMap<String, String>();
-        String response = rt.postForObject(filePostUri, parts, String.class);
+        String response = rt.postForObject(filePostUri, new FileSystemResource(file), String.class);
         int i = 3; // just to trigger the debugger.
         
         
