@@ -85,6 +85,15 @@ public class SyncUtil {
     private State() {
     }
   }
+  
+  /**
+   * Get the path to the file server. Should be appended to the uri of the 
+   * aggregate uri. Begins and ends with "/".
+   * @return
+   */
+  public static String getFileServerPath() {
+    return "/odktables/files/";
+  }
 
   public static boolean intToBool(int i) {
     return i != 0;

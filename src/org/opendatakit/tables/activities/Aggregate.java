@@ -17,11 +17,12 @@ package org.opendatakit.tables.activities;
 
 import java.io.File;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
@@ -33,11 +34,9 @@ import org.opendatakit.tables.sync.TableResult;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.tasks.FileUploaderTask;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.converter.FormHttpMessageConverter;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import android.accounts.Account;
@@ -294,8 +293,55 @@ public class Aggregate extends SherlockActivity {
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
-      SyncFilesNowTask syncFilesTask = new SyncFilesNowTask();
-      syncFilesTask.execute();
+//      SyncFilesNowTask syncFilesTask = new SyncFilesNowTask();
+//      syncFilesTask.execute();
+      
+      
+      String aggregateUri = prefs.getServerUri(); // uri of our server.
+      String accessToken = prefs.getAuthToken();
+      FileUploaderTask fut = new FileUploaderTask(this, "tables", aggregateUri,
+          accessToken);
+      String appFolder = ODKFileUtils.getAppFolder("tables");
+      File appFolderFile = new File(appFolder);
+      LinkedList<File> unexploredDirs = new LinkedList<File>();
+      if (!appFolderFile.isDirectory()) {
+        Log.e(TAG, "[SyncFilesNowTask#doInBackground] appFolder not a directory somehow");
+        // TODO: display an error.
+      }
+      unexploredDirs.add(appFolderFile);
+      List<File> nondirFiles = new ArrayList<File>();
+      while (!unexploredDirs.isEmpty()) {
+        File exploring = unexploredDirs.pop();
+        File[] files = exploring.listFiles();
+        for (File f : files) {
+          if (f.isDirectory()) {
+            // we don't want to sync the metadata folder
+            if (!f.getAbsolutePath().equals(appFolder + "/metadata")) {
+              unexploredDirs.add(f);
+            }
+          } else {
+            nondirFiles.add(f);
+          }
+        }
+      }
+//      for (File f : appFolderFile.listFiles()) {
+//        if (!f.isDirectory() && !f.getAbsolutePath().startsWith(appFolder + "/metadata/")) {
+//          nondirFiles.add(f);
+//        }
+//      }
+      Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files: " + nondirFiles);
+      List<String> relativePaths = new ArrayList<String>();
+      // we want the relative path, so drop the first bits.
+      int appFolderLength = appFolder.length();
+      for (File f : nondirFiles) {
+        relativePaths.add(f.getPath().substring(appFolderLength));
+      }
+      Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files relative: " + relativePaths);
+      
+      fut.execute(relativePaths.toArray(new String[] {}));
+      
+      
+      
 //      Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
 //      for (Account account : accounts) {
 //        if (account.name.equals(accountName)) {
@@ -376,6 +422,9 @@ public class Aggregate extends SherlockActivity {
    * Hopefully the task for syncing files. Modeled on SyncNowTask.
    */
   private class SyncFilesNowTask extends AsyncTask<Void, Void, Void> {
+    
+    private final String TAG = SyncFilesNowTask.class.getSimpleName();
+    
     private ProgressDialog pd;
     private boolean success;
     private String message;
@@ -417,11 +466,44 @@ public class Aggregate extends SherlockActivity {
 //            new LinkedMultiValueMap<String, Object>();
 //        parts.add(filePath, new FileSystemResource(file));
         RestTemplate rt = SyncUtil.getRestTemplateForFiles();
-        String response = rt.postForObject(filePostUri, new FileSystemResource(file), String.class);
+//        URI responseUri = rt.postForLocation(filePostUri, new FileSystemResource(file));
         int i = 3; // just to trigger the debugger.
         
-        
-        
+        FileUploaderTask fut = new FileUploaderTask(Aggregate.this, "tables", aggregateUri,
+            accessToken);
+        String appFolder = ODKFileUtils.getAppFolder("tables");
+        File appFolderFile = new File(appFolder);
+        LinkedList<File> unexploredDirs = new LinkedList<File>();
+        if (!appFolderFile.isDirectory()) {
+          Log.e(TAG, "[SyncFilesNowTask#doInBackground] appFolder not a directory somehow");
+          return null; // b/c that's an error.
+        }
+        unexploredDirs.add(appFolderFile);
+        List<File> nondirFiles = new ArrayList<File>();
+        while (!unexploredDirs.isEmpty()) {
+          File exploring = unexploredDirs.pop();
+          File[] files = exploring.listFiles();
+          for (File f : files) {
+            if (f.isDirectory()) {
+              // we don't want to sync the metadata folder
+              if (!f.getAbsolutePath().equals(appFolder + "/metadata")) {
+                Log.e(TAG, "dir folder: " + f.getAbsolutePath());
+                unexploredDirs.add(f);
+              }
+            } else {
+              Log.e(TAG, "adding nondir file: " + f.getAbsolutePath());
+              nondirFiles.add(f);
+            }
+          }
+        }
+        Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files: " + nondirFiles);
+        List<String> relativePaths = new ArrayList<String>();
+        // we want the relative path, so drop the first bits.
+        int appFolderLength = appFolder.length();
+        for (File f : nondirFiles) {
+          relativePaths.add(f.getPath().substring(appFolderLength));
+        }
+        Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files relative: " + relativePaths);
         
         
         
@@ -459,5 +541,13 @@ public class Aggregate extends SherlockActivity {
 
       }
     }
+    
+    
+    @Override
+    protected void onPostExecute(Void param) {
+      Log.e(TAG, "[onPostExecute]");
+      this.pd.dismiss();
+    }
   }
+
 }
