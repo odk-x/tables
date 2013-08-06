@@ -119,6 +119,11 @@ class ControlWithTableExtensionsIf {
 	public boolean openDetailViewWithFile(int index, String filename) {
 		return weakControl.get().openDetailViewWithFile(index, filename);
 	}
+	
+	// @JavascriptInterface
+	public String getSearchText() {
+	  return weakControl.get().getSearchText();
+	}
 
 	// @JavascriptInterface
 	public boolean selectItem(int index) {

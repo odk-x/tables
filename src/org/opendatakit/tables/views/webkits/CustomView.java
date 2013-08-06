@@ -1319,6 +1319,14 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
 		}
+		
+		/**
+		 * Get the string that is displayed in the search box.
+		 * @return the search text
+		 */
+		public String getSearchText() {
+		  return mCallbacks.getSearchString();
+		}
 
 		/**
 		 * Create an alert that will allow for a new table name. This might be

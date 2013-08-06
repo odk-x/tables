@@ -92,6 +92,7 @@
 	<string name="bad_config_properties_file">bad config.properties file</string>
 	<string name="error">error</string>
 	<string name="config_summary">Configuration Summary:</string>
+	<string name="table_already_exists">- %1$s already exists.\n\n</string>
 	<string name="imported_successfully">- %1$s imported successfully\n\n</string>
 	<string name="imported_with_errors">- %1$s imported with errors\n\n</string>
 	<string name="use_default">Use Default</string>
@@ -280,4 +281,13 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
+	
+	<!-- Conflict Resolution Stuff -->
+	<string name="take_local">Take Local Version</string>
+	<string name="take_server">Take Server Version</string>
+	<string name="mark_resolved">Mark Resolved</string>
+	<string name="take_local_warning">Overwrite all server changes with the local changes?</string>
+	<string name="take_server_warning">Overwrite all local changes with the server changes?</string>
+	<string name="resolve_row_warning">Overwrite local and server changes with the selected values?</string>
+	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
 </resources>

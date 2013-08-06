@@ -377,5 +377,10 @@ public class ControlIf {
 						tableName, formId, formVersion, formRootElement,
 						jsonMap);
 	}
+	
+	// @JavascriptInterface
+	public String getSearchText() {
+	  return weakControl.get().getSearchText();
+	}
 
 }
