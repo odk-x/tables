@@ -35,7 +35,7 @@ import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.tasks.FileUploaderTask;
-import org.springframework.core.io.FileSystemResource;
+import org.opendatakit.tables.tasks.RetrieveFileManifestTask;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
 
@@ -51,6 +51,7 @@ import android.content.Intent;
 import android.content.SyncResult;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Debug;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -296,9 +297,16 @@ public class Aggregate extends SherlockActivity {
 //      SyncFilesNowTask syncFilesTask = new SyncFilesNowTask();
 //      syncFilesTask.execute();
       
-      
       String aggregateUri = prefs.getServerUri(); // uri of our server.
       String accessToken = prefs.getAuthToken();
+      
+      // first we'll just try to get the manifest.
+      RetrieveFileManifestTask manifestTask = new RetrieveFileManifestTask(
+          this, "tables", aggregateUri, accessToken, 
+          RetrieveFileManifestTask.RequestType.ALL_FILES, null);
+      manifestTask.execute();
+      
+
       FileUploaderTask fut = new FileUploaderTask(this, "tables", aggregateUri,
           accessToken);
       String appFolder = ODKFileUtils.getAppFolder("tables");
@@ -324,11 +332,6 @@ public class Aggregate extends SherlockActivity {
           }
         }
       }
-//      for (File f : appFolderFile.listFiles()) {
-//        if (!f.isDirectory() && !f.getAbsolutePath().startsWith(appFolder + "/metadata/")) {
-//          nondirFiles.add(f);
-//        }
-//      }
       Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files: " + nondirFiles);
       List<String> relativePaths = new ArrayList<String>();
       // we want the relative path, so drop the first bits.
@@ -336,22 +339,10 @@ public class Aggregate extends SherlockActivity {
       for (File f : nondirFiles) {
         relativePaths.add(f.getPath().substring(appFolderLength));
       }
+      Debug.waitForDebugger();
       Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files relative: " + relativePaths);
-      
+      // and now format the paths.
       fut.execute(relativePaths.toArray(new String[] {}));
-      
-      
-      
-//      Account[] accounts = accountManager.getAccountsByType(ACCOUNT_TYPE_G);
-//      for (Account account : accounts) {
-//        if (account.name.equals(accountName)) {
-//          Bundle extras = new Bundle();
-//          ContentResolver.setIsSyncable(account, "org.opendatakit.tables.tablefilesauthority", 1);
-//          ContentResolver.setSyncAutomatically(account, "org.opendatakit.tables.tablefilesauthority", true);
-//          ContentResolver.requestSync(account,
-//              "org.opendatakit.tables.tablefilesauthority", extras);
-//        }
-//      }
 
     }
   }

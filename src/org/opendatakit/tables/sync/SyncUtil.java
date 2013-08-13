@@ -15,24 +15,20 @@
  */
 package org.opendatakit.tables.sync;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnType;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResponseErrorHandler;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 /**
@@ -41,6 +37,8 @@ import android.util.Log;
 public class SyncUtil {
 
   public static final String TAG = SyncUtil.class.getSimpleName();
+  
+  private static final String FORWARD_SLASH = "/";
 
   /**
    * <p>
@@ -93,6 +91,37 @@ public class SyncUtil {
    */
   public static String getFileServerPath() {
     return "/odktables/files/";
+  }
+  
+  public static String getFileManifestServerPath() {
+    return "/odktables/filemanifest";
+  }
+  
+  /**
+   * Format a file path to be pushed up to aggregate. Essentially escapes the
+   * string as for an html url, but leaves forward slashes. The path must begin
+   * with a forward slash, as if starting at the root directory.
+   * @return a properly escaped url, with forward slashes remaining.
+   */
+  public static String formatPathForAggregate(String path) {
+    String escaped = Uri.encode(path, "/");
+    return escaped;
+  }
+  
+  /**
+   * Escape a list of paths for aggregate, leaving forward slashes. This 
+   * utility method is equivalent to calling 
+   * {@link SyncUtil#formatPathForAggregate(String)} on every element of the
+   * list.
+   * @param paths
+   * @return
+   */
+  public static List<String> formatPathsForAggregate(List<String> paths) {
+    List<String> escapedPaths = new ArrayList<String>();
+    for (String path : paths) {
+      escapedPaths.add(SyncUtil.formatPathForAggregate(path));
+    }
+    return escapedPaths;
   }
 
   public static boolean intToBool(int i) {
@@ -300,6 +329,12 @@ public class SyncUtil {
 //        throw new HttpClientErrorException(resp.getStatusCode());
 //      }
 //    });
+    return rt;
+  }
+  
+  public static RestTemplate getRestTemplateForString() {
+    RestTemplate rt = new RestTemplate();
+    rt.getMessageConverters().add(new StringHttpMessageConverter());
     return rt;
   }
 
