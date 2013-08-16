@@ -50,6 +50,7 @@ import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
+import android.os.Debug;
 import android.util.Log;
 
 /**
@@ -97,9 +98,44 @@ public class SyncProcessor {
 
   /**
    * Synchronize all synchronized tables with the cloud.
+   * <p>
+   * This becomes more complicated with the ability to synchronize files. The
+   * new order is as follows:
+   * <p>
+   * 1) Synchronize app-level files. (i.e. those files under the appid directory
+   * that are NOT then under the tables, instances, metadata, or logging 
+   * directories.)
+   * This is a multi-part process: 
+   * a) Get the app-level manifest, download any 
+   * files that have changed (differing hashes) or that do not exist.
+   * b) Upload the files that you have that are not on the manifest. Note that
+   * this could be suppressed if the user does not have appropriate 
+   * permissions.
+   * <p>
+   * 2) Synchronize the static table files for those tables that are set to 
+   * sync. (i.e. those files under "appid/tables/tableid"). This follows the
+   * same multi-part steps of 1a and 1b.
+   * 3) Synchronize the table properties/metadata. 
+   * 4) Synchronize the table data. This includes the data in the db as well as
+   * those files under "appid/instances/tableid". This file synchronization 
+   * follows the same multi-part steps of 1a and 1b.
+   * TODO: step four--the synchronization of instances files--should perhaps 
+   * also be allowed to be modular and permit things like ODK Submit to handle
+   * data and files separately.
+   * <p>
+   * TODO: This should also somehow account for zipped files, exploding them or
+   * what have you.
    */
   public SynchronizationResult synchronize() {
     Log.i(TAG, "entered synchronize()");
+    // First we're going to synchronize the app level files.
+    try {
+      synchronizer.syncAppLevelFiles(true);
+    } catch (IOException e) {
+      // TODO: update a synchronization result to report back to them as well.
+      Log.e(TAG, "[synchronize] error trying to synchronize app-level files.");
+      e.printStackTrace();
+    }
     //TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
@@ -234,6 +270,14 @@ public class SyncProcessor {
       DbTable table, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
+    
+    // Here we'll sycnhronize the table files.
+    try {
+      synchronizer.syncTableFiles(tp.getTableId());
+    } catch (IOException e) {
+      // TODO: update table result.
+      Log.e(TAG, "[synchronizeTableInserting] error synching table files");
+    }
 
     // If it was inserting, then we know we had properties changes to add.
     tableResult.setHadLocalPropertiesChanges(true);
@@ -357,7 +401,14 @@ public class SyncProcessor {
       boolean downloadingTable, TableResult tableResult) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
-
+    
+    try {
+      synchronizer.syncTableFiles(tp.getTableId());
+    } catch (IOException e) {
+      // TODO: update table result.
+      Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
+    }
+      
     // First set the action so we can report it back to the user. We don't have
     // to worry about the special case where we are downloading it from the
     // server of the first time, because that takes place through a separate

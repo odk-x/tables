@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -390,6 +391,8 @@ public class Aggregate extends SherlockActivity {
         success = false;
         message = getString(R.string.auth_expired);
       } catch (Exception e) {
+        Log.e(TAG, "[exception during synchronization. stack trace:\n" +
+            Arrays.toString(e.getStackTrace()));
         success = false;
         message = e.getMessage();
       }

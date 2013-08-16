@@ -15,33 +15,59 @@
  */
 package org.opendatakit.tables.sync.aggregate;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.Row;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
-import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
+import org.opendatakit.aggregate.odktables.rest.entity.Row;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableType;
+import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
 import org.opendatakit.aggregate.odktables.rest.serialization.JsonObjectHttpMessageConverter;
 import org.opendatakit.aggregate.odktables.rest.serialization.SimpleXMLSerializerForAggregate;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.httpclientandroidlib.HttpResponse;
+import org.opendatakit.httpclientandroidlib.HttpStatus;
+import org.opendatakit.httpclientandroidlib.client.HttpClient;
+import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
+import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
+import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManager;
+import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
+import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
+import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.files.SyncUtilities;
+import org.opendatakit.tables.utils.FileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.simpleframework.xml.Serializer;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -49,11 +75,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.ResourceHttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import android.net.Uri;
+import android.os.Debug;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
@@ -63,6 +93,7 @@ import com.google.gson.JsonParser;
  * Implementation of {@link Synchronizer} for ODK Aggregate.
  *
  * @author the.dylan.price@gmail.com
+ * @author sudar.sam@gmail.com
  *
  */
 public class AggregateSynchronizer implements Synchronizer {
@@ -70,6 +101,16 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
+  private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
+  private static final String FILES_PATH = "/odktables/files/";
+  
+  private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
+  private static final String FILE_MANIFEST_PARAM_TABLE_ID = "table_id";
+  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES = 
+      "app_level_files";
+  /** Value for {@link #FILE_MANIFEST_PARAM_APP_LEVEL_FILES}. */
+  private static final String VALUE_TRUE = "true";
+    
   // TODO: how do we support new column types without breaking this map???
   public static final Map<ColumnType, Column.ColumnType> types =
 		  				new HashMap<ColumnType, Column.ColumnType>() {
@@ -102,13 +143,38 @@ public class AggregateSynchronizer implements Synchronizer {
   private final HttpHeaders requestHeaders;
   private final URI baseUri;
   private final Map<String, TableResource> resources;
+  /** The uri for the file manifest on aggregate. */
+  private final URI mFileManifestUri;
+  /** The uri for the files on aggregate. */
+  private final URI mFilesUri;
+  
+  /** 
+   * For downloading files. Should eventually probably switch to spring, but
+   * it was idiotically complicated.
+   */
+  private final HttpClient mHttpClient;
 
   public AggregateSynchronizer(String aggregateUri, String accessToken)
       throws InvalidAuthTokenException {
     URI uri = URI.create(aggregateUri).normalize();
     uri = uri.resolve("/odktables/tables/").normalize();
     this.baseUri = uri;
+    
+    this.mHttpClient = 
+        new DefaultHttpClient(new BasicClientConnectionManager());
+    final HttpParams params = mHttpClient.getParams();
+    HttpConnectionParams.setConnectionTimeout(params,
+        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+    HttpConnectionParams.setSoTimeout(params,
+        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
 
+    URI fileManifestUri = URI.create(aggregateUri).normalize();
+    fileManifestUri = fileManifestUri.resolve(FILE_MANIFEST_PATH).normalize();
+    this.mFileManifestUri = fileManifestUri;
+    URI filesUri = URI.create(aggregateUri).normalize();
+    filesUri = filesUri.resolve(FILES_PATH).normalize();
+    this.mFilesUri = filesUri;
+    
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(accessToken));
@@ -121,6 +187,7 @@ public class AggregateSynchronizer implements Synchronizer {
         new ArrayList<HttpMessageConverter<?>>();
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
+
     this.rt.setMessageConverters(converters);
 
     List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
@@ -454,4 +521,340 @@ public class AggregateSynchronizer implements Synchronizer {
         propsResource.getPropertiesEtag());
     return newTag.toString();
   }
+
+  @Override
+  public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException {
+    List<OdkTablesFileManifestEntry> manifest = getAppLevelFileManifest();
+    for (OdkTablesFileManifestEntry entry : manifest) {
+      compareAndDownloadFile(entry);
+    }
+    // And now get the files to upload. We only want those that exist on the 
+    // device but that do not exist on the manifest.
+    Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
+    dirsToExclude.add(TableFileUtils.DIR_TABLES); // no table files.
+    String appFolder = 
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    List<String> relativePathsOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
+    List<String> relativePathsToUpload = 
+        getFilesToBeUploaded(relativePathsOnDevice, manifest);
+    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " 
+        + relativePathsToUpload);
+    // and then upload the files.
+    if (pushLocalFiles) {
+      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+      for (String relativePath : relativePathsToUpload) {
+        String wholePathToFile = appFolder + File.separator + relativePath;
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+            relativePath));
+      }
+    }
+  }
+  
+
+  @Override
+  public void syncAllFiles() throws IOException {
+    List<OdkTablesFileManifestEntry> manifest = getFileManifestForAllFiles();
+    for (OdkTablesFileManifestEntry entry : manifest) {
+      compareAndDownloadFile(entry);
+    }
+    // And now get the files to upload. We only want those that exist on the 
+    // device but that do not exist on the manifest.
+    Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
+    String appFolder = 
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    List<String> relativePathsOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
+    List<String> relativePathsToUpload = 
+        getFilesToBeUploaded(relativePathsOnDevice, manifest);
+    // and then upload the files.
+    Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+    for (String relativePath : relativePathsToUpload) {
+      String wholePathToFile = appFolder + File.separator + relativePath;
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+          relativePath));
+    }
+  }
+
+  @Override
+  public void syncTableFiles(String tableId) throws IOException {
+    List<OdkTablesFileManifestEntry> manifest = 
+        getTableLevelFileManifest(tableId);
+    for (OdkTablesFileManifestEntry entry : manifest) {
+      compareAndDownloadFile(entry);
+    }
+    String appFolder = 
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String relativePathToTableFolder = TableFileUtils.DIR_TABLES + 
+        File.separator + tableId;
+    String tableFolder = appFolder + File.separator + 
+        relativePathToTableFolder;
+    List<String> relativePathsOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(tableFolder, null);
+    List<String> relativePathsToUpload = 
+        getFilesToBeUploaded(relativePathsOnDevice, manifest);
+    // and then upload the files.
+    Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+    for (String relativePath : relativePathsToUpload) {
+      String wholePathToFile = tableFolder + File.separator + relativePath;
+      String pathRelativeToAppFolder = relativePathToTableFolder + 
+          File.separator + relativePath;
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+          pathRelativeToAppFolder));
+    }
+  }
+ 
+  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws 
+      JsonParseException, JsonMappingException, IOException {
+    Debug.waitForDebugger();
+    Uri.Builder uriBuilder = 
+        Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+        TableFileUtils.ODK_TABLES_APP_NAME);
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES,
+        VALUE_TRUE);
+    RestTemplate rt = SyncUtil.getRestTemplateForString();
+    ResponseEntity<String> responseEntity = 
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+            String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(
+        responseEntity.getBody());
+  }
+
+  private List<OdkTablesFileManifestEntry> getTableLevelFileManifest(
+      String tableId) throws JsonParseException, JsonMappingException, 
+      IOException {
+    Uri.Builder uriBuilder = 
+        Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+        TableFileUtils.ODK_TABLES_APP_NAME);
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
+    RestTemplate rt = SyncUtil.getRestTemplateForString();
+    ResponseEntity<String> responseEntity = 
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+            String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(
+        responseEntity.getBody());
+  }
+
+  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws 
+      JsonParseException, JsonMappingException, IOException {
+    Uri.Builder uriBuilder = 
+        Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+        TableFileUtils.ODK_TABLES_APP_NAME);
+    RestTemplate rt = SyncUtil.getRestTemplateForString();
+    ResponseEntity<String> responseEntity = 
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+            String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(
+        responseEntity.getBody());
+  }
+  
+  /**
+   * Get the files that need to be uploaded. i.e. those files that are on the
+   * phone but that do not appear on the manifest. Both the manifest and the
+   * filesOnPhone are assumed to contain relative paths, not including the 
+   * first separator.
+   * @param filesOnPhone
+   * @param manifest
+   * @return
+   */
+  private List<String> getFilesToBeUploaded(List<String> relativePathsOnDevice, 
+      List<OdkTablesFileManifestEntry> manifest) {
+    Set<String> filesToRetain = new HashSet<String>();
+    filesToRetain.addAll(relativePathsOnDevice);
+    for (OdkTablesFileManifestEntry entry: manifest) {
+      filesToRetain.remove(entry.filename);
+    }
+    List<String> fileList = new ArrayList<String>();
+    fileList.addAll(filesToRetain);
+    return fileList;
+  }
+  
+  private boolean uploadFile(String wholePathToFile, 
+      String pathRelativeToAppFolder) {
+    File file = new File(wholePathToFile);
+    FileSystemResource resource = new FileSystemResource(file);
+    String escapedPath = 
+        SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
+    URI filePostUri = URI.create(mFilesUri.toString()).resolve(
+        TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
+          .normalize();
+    Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
+    RestTemplate rt = SyncUtil.getRestTemplateForFiles();
+    URI responseUri = rt.postForLocation(filePostUri, resource);
+    // TODO: verify whether or not this worked.
+    return true;
+  }
+  
+  private boolean compareAndDownloadFile(
+      OdkTablesFileManifestEntry entry) {
+    String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    // now we need to look through the manifest and see where the files are
+    // supposed to be stored.
+      // make sure you don't return a bad string.
+    if (entry.filename.equals("") || entry.filename == null) {
+      Log.i(TAG, "returned a null or empty filename");
+      return false;
+     } else {
+      // filename is the unrooted path of the file, so append the tableId
+      // and the basepath.
+      String path = basePath + File.separator + entry.filename;
+      // Before we try dl'ing the file, we have to make the folder,
+      // b/c otherwise if the folders down to the path have too many non-
+      // existent folders, we'll get a FileNotFoundException when we open
+      // the FileOutputStream.
+      int lastSlash = path.lastIndexOf(File.separator);
+      String folderPath = path.substring(0, lastSlash);
+      FileUtils.createFolder(folderPath);
+      File newFile = new File(path);
+      if (!newFile.exists()) {
+        // the file doesn't exist on the system
+        //filesToDL.add(newFile);
+        try {
+          downloadFile(newFile, entry.downloadUrl);
+          return true;
+        } catch (Exception e) {
+          e.printStackTrace();
+          Log.e(TAG, "trouble downloading file for first time");
+          return false;
+        }
+      } else {
+        // file exists, see if it's up to date
+        String md5hash = FileUtils.getMd5Hash(newFile);
+        md5hash = "md5:" + md5hash;
+        // so as it comes down from the manifest, the md5 hash includes a
+        // "md5:" prefix. Add taht and then check.
+        if (!md5hash.equals(entry.md5hash)) {
+          // it's not up to date, we need to download it.
+          try {
+            downloadFile(newFile, entry.downloadUrl);
+            return true;
+          } catch (Exception e) {
+            e.printStackTrace();
+            // TODO throw correct exception
+            Log.e(TAG, "trouble downloading new version of existing file");
+            return false;
+          }
+        } else {
+          return true;
+        }
+      }
+    }    
+  }
+  
+  private void downloadFile(File f, String downloadUrl) throws Exception {
+    URI uri = null;
+    try {
+      // assume the downloadUrl is escaped properly
+      URL url = new URL(downloadUrl);
+      uri = url.toURI();
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      throw e;
+    }
+
+    // WiFi network connections can be renegotiated during a large form download
+    // sequence.
+    // This will cause intermittent download failures. Silently retry once after
+    // each
+    // failure. Only if there are two consecutive failures, do we abort.
+    boolean success = false;
+    int attemptCount = 0;
+    while (!success && attemptCount++ <= 2) {
+
+      // set up request...
+      HttpGet req = new HttpGet(downloadUrl);
+
+      HttpResponse response = null;
+      try {
+        response = mHttpClient.execute(req);
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        if (statusCode != HttpStatus.SC_OK) {
+          discardEntityBytes(response);
+          if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+            // clear the cookies -- should not be necessary?
+            // ss: might just be a collect thing?
+          }
+          throw new Exception("status wasn't SC_OK when dl'ing file: " 
+              + downloadUrl);
+        }
+
+        // write connection to file
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+          is = response.getEntity().getContent();
+          os = new FileOutputStream(f);
+          byte buf[] = new byte[1024];
+          int len;
+          while ((len = is.read(buf)) > 0) {
+            os.write(buf, 0, len);
+          }
+          os.flush();
+          success = true;
+        } finally {
+          if (os != null) {
+            try {
+              os.close();
+            } catch (Exception e) {
+            }
+          }
+          if (is != null) {
+            try {
+              // ensure stream is consumed...
+              final long count = 1024L;
+              while (is.skip(count) == count)
+                ;
+            } catch (Exception e) {
+              // no-op
+            }
+            try {
+              is.close();
+            } catch (Exception e) {
+            }
+          }
+        }
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        if (attemptCount != 1) {
+          throw e;
+        }
+      }
+    }
+  }
+  
+  /**
+   * Utility to ensure that the entity stream of a response is drained of bytes.
+   *
+   * @param response
+   */
+  private void discardEntityBytes(HttpResponse response) {
+    // may be a server that does not handle
+    org.opendatakit.httpclientandroidlib.HttpEntity entity = 
+        response.getEntity();
+    if (entity != null) {
+      try {
+        // have to read the stream in order to reuse the connection
+        InputStream is = response.getEntity().getContent();
+        // read to end of stream...
+        final long count = 1024L;
+        while (is.skip(count) == count)
+          ;
+        is.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  
 }

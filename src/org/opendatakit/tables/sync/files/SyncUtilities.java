@@ -213,6 +213,22 @@ public class SyncUtilities {
       throw new IllegalStateException("io trouble in getKeyValueEntries");
     }
   }
+  
+  /**
+   * Deserialize the file manifest response from Aggregate.
+   * @param response
+   * @return
+   * @throws IOException 
+   * @throws JsonMappingException 
+   * @throws JsonParseException 
+   */
+  public static List<OdkTablesFileManifestEntry> 
+      getManifestEntriesFromResponse(String response) throws 
+      JsonParseException, JsonMappingException, IOException {
+    TypeReference<ArrayList<OdkTablesFileManifestEntry>> typeRef =
+        new TypeReference<ArrayList<OdkTablesFileManifestEntry>>() {};
+    return mapper.readValue(response, typeRef);
+  }
 
   public static void downloadFilesAndUpdateValues(Context context,
       List<OdkTablesKeyValueStoreEntry> allEntries) {
