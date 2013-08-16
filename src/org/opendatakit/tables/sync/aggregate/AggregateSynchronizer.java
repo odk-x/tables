@@ -135,6 +135,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
       // TODO: what is this for???
       put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
+      
+      put(ColumnType.IMAGEURI, Column.ColumnType.STRING);
     }
     private static final long serialVersionUID = 1L;
   };
@@ -606,7 +608,6 @@ public class AggregateSynchronizer implements Synchronizer {
  
   private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws 
       JsonParseException, JsonMappingException, IOException {
-    Debug.waitForDebugger();
     Uri.Builder uriBuilder = 
         Uri.parse(mFileManifestUri.toString()).buildUpon();
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
