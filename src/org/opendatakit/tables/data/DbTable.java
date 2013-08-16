@@ -79,7 +79,7 @@ public class DbTable {
     static {
       ADMIN_COLUMNS = new ArrayList<String>();
       ADMIN_COLUMNS.add(DataTableColumns.ROW_ID);
-      ADMIN_COLUMNS.add(DataTableColumns.URI_USER);
+      ADMIN_COLUMNS.add(DataTableColumns.URI_ACCESS_CONTROL);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
       ADMIN_COLUMNS.add(DataTableColumns.TRANSACTIONING);
@@ -90,7 +90,7 @@ public class DbTable {
       ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
-      COLUMNS_TO_SYNC.put(DataTableColumns.URI_USER, ColumnType.PHONE_NUMBER);
+      COLUMNS_TO_SYNC.put(DataTableColumns.URI_ACCESS_CONTROL, ColumnType.TEXT);
       COLUMNS_TO_SYNC.put(DataTableColumns.TIMESTAMP, ColumnType.DATETIME);
       COLUMNS_TO_SYNC.put(DataTableColumns.INSTANCE_NAME, ColumnType.TEXT);
     }
@@ -113,7 +113,7 @@ public class DbTable {
     };
 
     public static final String DB_CSV_COLUMN_LIST =
-        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_USER +
+        DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_ACCESS_CONTROL +
         ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE + ", " + DataTableColumns.TRANSACTIONING +
         ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
         ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
@@ -156,7 +156,7 @@ public class DbTable {
         }
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DataTableColumns.ROW_ID + " TEXT NOT NULL" +
-     ", " + DataTableColumns.URI_USER + " TEXT NULL" +
+     ", " + DataTableColumns.URI_ACCESS_CONTROL + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DataTableColumns.TRANSACTIONING + " INTEGER NOT NULL" +
@@ -471,8 +471,11 @@ public class DbTable {
      * server. I think it is only called when creating on the phone...
      */
     public void addRow(Map<String, String> values, String rowId,
-          Long timestamp, String uriUser, String instanceName, String formId,
+          Long timestamp, String phoneNum, String instanceName, String formId,
           String locale ) {
+        // TODO: phoneNum should be mapped to a uriAccessControl
+        String uriAccessControl = phoneNum;
+
         if (timestamp == null) {
         	timestamp = System.currentTimeMillis();
         }
@@ -490,7 +493,7 @@ public class DbTable {
         }
         // The admin columns get added here and also in actualAddRow
         cv.put(DataTableColumns.TIMESTAMP, timestamp);
-        cv.put(DataTableColumns.URI_USER, uriUser);
+        cv.put(DataTableColumns.URI_ACCESS_CONTROL, uriAccessControl);
         cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
         cv.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
         cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
@@ -534,10 +537,10 @@ public class DbTable {
           values.put(DataTableColumns.LOCALE,
               DataTableColumns.LOCALE);
         }
-        if (!values.containsKey(DataTableColumns.URI_USER) ||
-            values.get(DataTableColumns.URI_USER) == null) {
-          values.put(DataTableColumns.URI_USER,
-              DataTableColumns.URI_USER);
+        if (!values.containsKey(DataTableColumns.URI_ACCESS_CONTROL) ||
+            values.get(DataTableColumns.URI_ACCESS_CONTROL) == null) {
+          values.put(DataTableColumns.URI_ACCESS_CONTROL,
+              DataTableColumns.URI_ACCESS_CONTROL);
         }
         if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
             values.get(DataTableColumns.SYNC_TAG) == null) {
@@ -559,11 +562,13 @@ public class DbTable {
      * updating.
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
-     * @param uriUser the source phone number to put in the row
+     * @param phoneNum the source phone number to put in the row
      * @param timestamp the last modification time to put in the row
      */
     public void updateRow(String rowId, Map<String, String> values,
-            String uriUser, Long timestamp, String instanceName, String formId, String locale) {
+            String phoneNum, Long timestamp, String instanceName, String formId, String locale) {
+        // TODO: figure out how to go from phoneNum to uriAccessControl
+        String uriAccessControl = phoneNum;
         ContentValues cv = new ContentValues();
         // TODO is this a race condition of sorts? isSynchronized(), which
         // formerly returned isSynched, may kind of be doing double duty,
@@ -585,8 +590,8 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
-        if ( uriUser != null ) {
-        	cv.put(DataTableColumns.URI_USER, uriUser);
+        if ( uriAccessControl != null ) {
+        	cv.put(DataTableColumns.URI_ACCESS_CONTROL, uriAccessControl);
         }
         if ( timestamp != null ) {
         	cv.put(DataTableColumns.TIMESTAMP, timestamp);
