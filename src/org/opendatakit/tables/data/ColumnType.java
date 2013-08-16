@@ -32,6 +32,11 @@ import java.util.Map;
  */
 public class ColumnType {
 	private static Map<String, ColumnType> nameMap = new HashMap<String, ColumnType>();
+	
+	/*
+	 * NB: All of these files must have an entry in the map in 
+	 * AggregateSynchronizer or else sync won't work correctly.
+	 */
 
 	public static ColumnType NONE;
 	public static ColumnType TEXT;
