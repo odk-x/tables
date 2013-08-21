@@ -151,13 +151,92 @@ public class NameUtil {
           throw new IllegalStateException("[createUniqueDbTableName] " +
           		"invariant violated--about to return: " + nextName 
           		+ " and it is not" +
-                    " a valid user-defined database name.");        }
+                    " a valid user-defined database name.");        
+        }
         return nextName;
       }
       suffix++;
     }
   }
   
+  /**
+   * Return a valid element key for the given table. Ensure to be unique.
+   * The resultant key will return true if passed to 
+   * {@link isValidUserDefinedDatabaseName} and false if passed to
+   * {@link elementKeyAlreadyExists}.
+   * @param proposedDisplayName
+   * @param tp
+   * @return
+   */
+  public static String createUniqueElementKey(String proposedElementKey,
+      TableProperties tp) {
+    String baseName = createValidUserDefinedDatabaseName(proposedElementKey);
+    if (!elementKeyAlreadyExists(proposedElementKey, tp)) {
+      return baseName;
+    }
+    // else we need to make one.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!elementKeyAlreadyExists(nextName, tp)) {
+        if (!isValidUserDefinedDatabaseName(nextName)) {
+            throw new IllegalStateException("[createUniqueDbTableName] " +
+                 "invariant violated--about to return: " + nextName 
+                 + " and it is not" +
+                      " a valid user-defined database name.");   
+        }
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+  
+  public static String createUniqueElementName(String proposedElementName,
+      TableProperties tp) {
+    String baseName = createValidUserDefinedDatabaseName(proposedElementName);
+    if (!elementNameAlreadyExists(baseName, tp)) {
+      return baseName;
+    }
+    // else we need to make one.
+    int suffix = 1;
+    while (true) {
+      String nextName = baseName + suffix;
+      if (!elementNameAlreadyExists(nextName, tp)) {
+        if (!isValidUserDefinedDatabaseName(nextName)) {
+          throw new IllegalStateException("[createUniqueDbTableName] " +
+               "invariant violated--about to return: " + nextName 
+               + " and it is not" +
+                    " a valid user-defined database name.");   
+        }
+        return nextName;
+      }
+      suffix++;
+    }
+  }
+  
+  /**
+   * Returns true if and only if the elementKey already exists in the table
+   * specified by tp.
+   * @param elementKey
+   * @param tp
+   * @return
+   */
+  public static boolean elementKeyAlreadyExists(String elementKey, 
+      TableProperties tp) {
+    return (tp.getColumnByElementKey(elementKey) != null);
+  }
+  
+  /**
+   * Returns true if and only if the elementName already exists in the table 
+   * specified by tp. 
+   * @param elementName
+   * @param tp
+   * @return
+   */
+  public static boolean elementNameAlreadyExists(String elementName, 
+      TableProperties tp) {
+    return (tp.getColumnByElementName(elementName) != null);
+  }
   
   /**
    * Returns true if the proposedTableId exists in the arary of

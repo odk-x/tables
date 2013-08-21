@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 
 import android.content.ContentValues;
@@ -46,7 +47,8 @@ public class ColumnDefinitions {
 
   private static final String TAG = "ColumnDefinitions";
 
-  private static final String DB_BACKING_NAME = "column_definitions";
+  private static final String DB_BACKING_NAME =
+      DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME;
 
   /***********************************
    *  Default values for those columns which require them.

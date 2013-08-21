@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 
 import android.content.ContentValues;
@@ -48,7 +49,8 @@ public class TableDefinitions {
   /*
    * The name of the table in the database.
    */
-  private static final String DB_BACKING_NAME = "table_definitions";
+  private static final String DB_BACKING_NAME = 
+      DataModelDatabaseHelper.TABLE_DEFS_TABLE_NAME;
 
   /***********************************
    *  Default values for those columns which require them.

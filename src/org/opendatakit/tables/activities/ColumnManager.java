@@ -272,9 +272,6 @@ public class ColumnManager extends SherlockListActivity {
 		input.setFocusableInTouchMode(true);
 		input.setFocusable(true);
 		input.requestFocus();
-		// adding the following line
-		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
-		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
 		if (givenColName != null)
 			input.setText(givenColName);
 

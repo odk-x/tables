@@ -720,24 +720,32 @@ public class TableProperties {
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
-          tp.createDbElementKey(ShortcutUtil.LABEL_COLUMN_NAME),
-          tp.createDbElementName(ShortcutUtil.LABEL_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(ShortcutUtil.LABEL_COLUMN_NAME, tp),
+          NameUtil.createUniqueElementName(ShortcutUtil.LABEL_COLUMN_NAME, 
+              tp));
       tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME,
-          tp.createDbElementKey(ShortcutUtil.INPUT_COLUMN_NAME),
-          tp.createDbElementName(ShortcutUtil.INPUT_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(ShortcutUtil.INPUT_COLUMN_NAME, tp),
+          NameUtil.createUniqueElementName(ShortcutUtil.INPUT_COLUMN_NAME, 
+              tp));
       tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME,
-          tp.createDbElementKey(ShortcutUtil.OUTPUT_COLUMN_NAME),
-          tp.createDbElementName(ShortcutUtil.OUTPUT_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(ShortcutUtil.OUTPUT_COLUMN_NAME, tp),
+          NameUtil.createUniqueElementName(ShortcutUtil.OUTPUT_COLUMN_NAME,
+              tp));
     } else if (tableType == TableType.security) {
       tp.addColumn(SecurityUtil.USER_COLUMN_NAME,
-          tp.createDbElementKey(SecurityUtil.USER_COLUMN_NAME),
-          tp.createDbElementName(SecurityUtil.USER_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(SecurityUtil.USER_COLUMN_NAME, tp),
+          NameUtil.createUniqueElementName(SecurityUtil.USER_COLUMN_NAME, 
+              tp));
       tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME,
-          tp.createDbElementKey(SecurityUtil.PHONENUM_COLUMN_NAME),
-          tp.createDbElementName(SecurityUtil.PHONENUM_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(SecurityUtil.PHONENUM_COLUMN_NAME,
+              tp),
+          NameUtil.createUniqueElementName(SecurityUtil.PHONENUM_COLUMN_NAME,
+              tp));
       tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME,
-          tp.createDbElementKey(SecurityUtil.PASSWORD_COLUMN_NAME),
-          tp.createDbElementName(SecurityUtil.PASSWORD_COLUMN_NAME));
+          NameUtil.createUniqueElementKey(SecurityUtil.PASSWORD_COLUMN_NAME, 
+              tp),
+          NameUtil.createUniqueElementName(SecurityUtil.PASSWORD_COLUMN_NAME,
+              tp));
     }
     return tp;
   }
@@ -1144,70 +1152,6 @@ public class TableProperties {
   }
 
   /**
-   * Create an element key based on the proposedKey parameter. The first attempt
-   * will be the proposedKey prepended with an underscore and with non-word
-   * characters (as defined by java's "\\W") replaced by an underscore. If that
-   * elementKey is already used for this table, an integer suffix, beginning
-   * with 1, is tried to be added to key until a conflict no longer exists.
-   *
-   * @param tableId
-   * @param proposedKey
-   * @param db
-   * @return
-   */
-  private String createDbElementKey(String proposedKey) {
-    String baseName = "_" + proposedKey.replaceAll("\\W", "_");
-    if (!keyConflict(baseName)) {
-      return baseName;
-    }
-    // otherwise we need to create a non-conflicting key.
-    int suffix = 1;
-    while (true) {
-      String nextName = baseName + suffix;
-      if (!keyConflict(nextName)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  private boolean keyConflict(String elementKey) {
-    return (this.getColumnByElementKey(elementKey) != null);
-  }
-
-  /**
-   * Create an element name based on the proposedName parameter. The first
-   * attempt will be the proposedName prepended with an underscore with
-   * whitespace (as defined by java's "\\W") replaced by an underscore. If that
-   * elementName is already used for this table, an integer suffix, beginning
-   * with 1, is tried to be added to key until a conflict no longer exists.
-   *
-   * @param tableId
-   * @param proposedName
-   * @param db
-   * @return
-   */
-  private String createDbElementName(String proposedName) {
-    String baseName = "_" + proposedName.replaceAll("\\W", "_");
-    if (!nameConflict(baseName)) {
-      return baseName;
-    }
-    // otherwise we need to create a non-conflicting key.
-    int suffix = 1;
-    while (true) {
-      String nextName = baseName + suffix;
-      if (!nameConflict(nextName)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  private boolean nameConflict(String elementName) {
-    return (this.getColumnByElementName(elementName) != null);
-  }
-
-  /**
    * Take the proposed display name and return a display name that has no
    * conflicts with other display names in the table. If there is a conflict,
    * integers are appended to the proposed name until there are no conflicts.
@@ -1268,18 +1212,26 @@ public class TableProperties {
    *          should either be received from the server or null
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName, String elementKey, String elementName,
-      ColumnType columnType, List<String> listChildElementKeys, boolean isPersisted,
+  public ColumnProperties addColumn(String displayName, String elementKey, 
+      String elementName, ColumnType columnType, 
+      List<String> listChildElementKeys, boolean isPersisted,
       JoinColumn joins) {
     if (elementKey == null) {
-      elementKey = createDbElementKey(displayName);
+      elementKey = NameUtil.createUniqueElementKey(displayName, this);
+    } else if (!NameUtil.isValidUserDefinedDatabaseName(elementKey)) {
+      throw new IllegalArgumentException("[addColumn] invalid element key: " + 
+          elementKey);
     }
     if (elementName == null) {
-      elementName = createDbElementName(displayName);
+      elementName = NameUtil.createUniqueElementName(displayName, this);
+    } else if (!NameUtil.isValidUserDefinedDatabaseName(elementName)) {
+      throw new IllegalArgumentException("[addColumn] invalid element name: " +
+          elementName);
     }
     ColumnProperties cp = null;
-    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName, elementKey, elementName,
-        columnType, listChildElementKeys, isPersisted, joins, ColumnProperties.DEFAULT_KEY_VISIBLE,
+    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName, 
+        elementKey, elementName, columnType, listChildElementKeys, isPersisted,
+        joins, ColumnProperties.DEFAULT_KEY_VISIBLE,
         this.getBackingStoreType());
 
     return addColumn(cp);

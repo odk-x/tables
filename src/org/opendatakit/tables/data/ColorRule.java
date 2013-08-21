@@ -18,6 +18,7 @@ package org.opendatakit.tables.data;
 import java.util.UUID;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.tables.data.UserTable.Row;
 
 import android.util.Log;
@@ -212,7 +213,8 @@ public class ColorRule {
       ColumnType columnType;
       if (cp == null) {
         // Was likely a metadata column.
-        if (mElementKey.startsWith("_")) {
+        if (!TableConstants.CLIENT_ONLY_COLUMN_NAMES.contains(mElementKey) &&
+            !TableConstants.SHARED_COLUMN_NAMES.contains(mElementKey)) {
           throw new IllegalArgumentException("element key passed to " +
           		"ColorRule#checkMatch didn't have a mapping and was likely " +
           		"not a metadata elementKey: " + mElementKey);
