@@ -38,6 +38,7 @@ import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.utils.ColorRuleUtil;
+import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 
@@ -696,83 +697,7 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
     }
     return allProps;
-  }
-
-  /**
-   * Returns a legal name for a new table. This method checks all three KVS for
-   * possible conflicts. The name is the displayName prepended with an
-   * underscore, non word characters (as defined by java's "\\W" replaced by
-   * underscores, and a suffix of an integer if there was a conflict.
-   *
-   * @param dbh
-   * @param displayName
-   * @return
-   */
-  // TODO with addition of the table definitions table, this probably needs to
-  // be revised to check displaynames, backing names, etc.
-  public static String createDbTableName(DbHelper dbh, String displayName) {
-    // so we want all properties. we're just going to check all of them, which
-    // probably isn't the most efficient way this could be done, as you could
-    // end up with triplicate table names. Going to not worry about it, as
-    // this is probably just O(3N)?
-    TableProperties[] activeProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
-    TableProperties[] defaultProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
-    TableProperties[] serverProps = getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
-    // this arraylist will hold all the properties.
-    ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
-    listProps.addAll(Arrays.asList(activeProps));
-    listProps.addAll(Arrays.asList(defaultProps));
-    listProps.addAll(Arrays.asList(serverProps));
-    TableProperties[] allProps = listProps.toArray(new TableProperties[listProps.size()]);
-    // You cannot start with a digit, and you can only have alphanumerics
-    // in SQLite. We are going to thus make the basename the displayName
-    // prepended with an underscore, and replace all non-word characters
-    // with an underscore.
-    String baseName = "_" + displayName.replaceAll("\\W", "_");
-    if (!nameConflict(baseName, allProps)) {
-      return baseName;
-    }
-    int suffix = 1;
-    while (true) {
-      String nextName = baseName + suffix;
-      if (!nameConflict(nextName, allProps)) {
-        return nextName;
-      }
-      suffix++;
-    }
-  }
-
-  /**
-   * Return true if a table in allProps has the dbTableName dbTableName.
-   *
-   * @param dbTableName
-   * @param allProps
-   * @return
-   */
-  private static boolean nameConflict(String dbTableName, TableProperties[] allProps) {
-    for (TableProperties tp : allProps) {
-      if (tp.getDbTableName().equals(dbTableName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Return true if a table in allProps has the id tableId.
-   *
-   * @param tableId
-   * @param allProps
-   * @return
-   */
-  private static boolean tableIdConflict(String tableId, TableProperties[] allProps) {
-    for (TableProperties tp : allProps) {
-      if (tp.getTableId().equals(tableId)) {
-        return true;
-      }
-    }
-    return false;
-  }
+  }  
 
   /**
    * Add a table to the database. The intendedStore type exists to force you to
@@ -786,11 +711,12 @@ public class TableProperties {
    *          type of the store to which you're adding.
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey, String dbTableName,
-      String displayName, TableType tableType, KeyValueStore.Type intendedStore) {
+  public static TableProperties addTable(DbHelper dbh, String tableKey, 
+      String dbTableName, String displayName, TableType tableType, 
+      KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName, tableType, id,
-        intendedStore);
+    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName, 
+        tableType, id, intendedStore);
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
@@ -865,7 +791,8 @@ public class TableProperties {
     listProps.addAll(Arrays.asList(defaultProps));
     listProps.addAll(Arrays.asList(serverProps));
     TableProperties[] allProps = listProps.toArray(new TableProperties[listProps.size()]);
-    if (nameConflict(dbTableName, allProps) || tableIdConflict(tableId, allProps)) {
+    if (NameUtil.dbTableNameAlreadyExists(dbTableName,  allProps)
+        || NameUtil.tableIdAlreadyExists(tableId, allProps)) {
       Log.e(t, "a table already exists with the dbTableName: " + dbTableName
           + " or with the tableId: " + tableId);
       throw new TableAlreadyExistsException("a table already exists with the" + " dbTableName: "
@@ -897,8 +824,9 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey, String dbTableName,
-      String displayName, TableType tableType, String id, KeyValueStore.Type typeOfStore) {
+  public static TableProperties addTable(DbHelper dbh, String tableKey, 
+      String dbTableName, String displayName, TableType tableType, String id, 
+      KeyValueStore.Type typeOfStore) {
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
     SQLiteDatabase db = dbh.getWritableDatabase();
@@ -1625,6 +1553,17 @@ public class TableProperties {
     }
     tableKVSH.setString(KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
+  }
+  
+  /**
+   * Unimplemented.
+   * <p>
+   * Should set the table id. First should verify uniqueness, etc.
+   * @param newTableId
+   */
+  public void setTableId(String newTableId) {
+    throw new UnsupportedOperationException(
+        "setTableId is not yet implemented.");
   }
 
   /**

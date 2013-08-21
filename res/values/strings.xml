@@ -277,7 +277,10 @@
 	<string name="add_new_access_control_table">Add New Access Control Table</string>
 	<string name="create_new_table">Create New Table</string>
 	<string name="enter_new_table_name">Enter Name for New Table:</string>
+	<string name="confirm_new_table_id">Confirm New Table ID:</string>
 	<string name="error_table_name_empty">Table name cannot be empty!</string>
+	<string name="error_table_id_exists">Table ID already exists, please pick another!</string>
+	<string name="error_table_id_invalid">Table ID is invalid. Please choose another.</string>
 	<string name="file_import_export_menu_item">File Import/Export</string>
 	<string name="sync_menu_item">Sync with Server</string>
 	<string name="color_rule_revert_to_default_status_rules">Revert to default status rules</string>

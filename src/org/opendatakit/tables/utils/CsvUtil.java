@@ -137,7 +137,11 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    String dbTableName = TableProperties.createDbTableName(dbh, tableName);
+    TableProperties[] allTableProperties = 
+        TableProperties.getTablePropertiesForAll(dbh, 
+            KeyValueStore.Type.ACTIVE);
+    String dbTableName = NameUtil.createUniqueDbTableName(tableName, 
+        allTableProperties);
     TableProperties tp;
     try {
       boolean includesProperties = false;

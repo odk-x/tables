@@ -53,6 +53,7 @@ import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -1404,8 +1405,13 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		private void addTable(String tableName, TableType tableType) {
-			String dbTableName = TableProperties.createDbTableName(dbh,
-					tableName);
+		  // TODO: if this avenue to create a table remains, we need to also
+		  // prompt them for a tableId name.
+		  TableProperties[] allTableProperties = 
+		      TableProperties.getTablePropertiesForAll(dbh, 
+		          KeyValueStore.Type.ACTIVE);
+			String dbTableName = NameUtil.createUniqueDbTableName(tableName, 
+			    allTableProperties);
 			TableProperties tp = TableProperties.addTable(dbh, dbTableName,
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);
