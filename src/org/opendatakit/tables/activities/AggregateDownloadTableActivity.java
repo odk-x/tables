@@ -230,6 +230,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       }
       SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
           new SyncResult());
+      // We're going to add a check here for the framework directory. If we 
+      // don't have it, you also have to sync app level files the first time.
       processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.

@@ -264,6 +264,7 @@ public class CsvUtil {
               cp = tp.addColumn(colName, null, null);
               dbName = cp.getElementKey();
             } else {
+              reader.close();
               throw new IllegalStateException("column name " + colName
                   + " should have been defined in metadata");
             }

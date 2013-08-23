@@ -37,7 +37,7 @@ public class TableFileUtils {
 
   /** The default app name for ODK Tables */
   public static final String ODK_TABLES_APP_NAME = "tables";
-
+  
   /** Filename for the top-level configuration file */
   public static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = "config.properties";
 
@@ -60,6 +60,9 @@ public class TableFileUtils {
   public static final String DIR_METADATA = "metadata";
   /** Name of the logging directory under the app id. */
   public static final String DIR_LOGGING = "logging";
+  /** Name of the framework directory under the app id. */
+  public static final String DIR_FRAMEWORK = "framework";
+  
   /** 
    * Name of the directory under the app id where the table-specific stuff 
    * is stored. 
