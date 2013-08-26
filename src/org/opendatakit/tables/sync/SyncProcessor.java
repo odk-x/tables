@@ -50,7 +50,6 @@ import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
-import android.os.Debug;
 import android.util.Log;
 
 /**
@@ -167,7 +166,11 @@ public class SyncProcessor {
   public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
     DbTable table = DbTable.getDbTable(dbh,
         TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
-            KeyValueStore.Type.ACTIVE));// TODO: should this be SERVER or ACTIVE?
+            KeyValueStore.Type.SERVER)); 
+    // used to get the above from the ACTIVE store. if things go wonky, maybe
+    // check to see if it was ACTIVE rather than SERVER for a reason. can't 
+    // think of one. one thing is that if it fails you'll see a table but won't
+    // be able to open it, as there won't be any KVS stuff appropriate for it.
     boolean success = false;
     // Prepare the tableResult. We'll start it as failure, and only update it
     // if we're successful at the end.
@@ -584,7 +587,7 @@ public class SyncProcessor {
         // delete the dummy table we'd created and then add the new table.
         Log.w(TAG, "table: " + tp.getDisplayName() + " is being downloaded " +
             "for the first time. deleting place holder table.");
-        tp.deleteTableActual();
+        tp.deleteTableActual(); // not sure we need this anymore?
         // update the tp
         // SHOULD THIS METHOD ACTUALLY SET THE SYNC TAG?!? IT SHOWS SETS
         // AT THE END OF THIS METHOD.
@@ -958,8 +961,8 @@ public class SyncProcessor {
         listChildElementKeys = mapper.readValue(lek, List.class);
       }
       tp.addColumn(col.getElementKey(), col.getElementKey(),
-          col.getElementName(), SyncUtil.
-          getTablesColumnTypeFromServerColumnType(col.getElementType()),
+          col.getElementName(), 
+          ColumnType.valueOf(col.getElementType()),
           listChildElementKeys,
           SyncUtil.intToBool(col.getIsPersisted()),
           JoinColumn.fromSerialization(col.getJoins()));
@@ -1041,7 +1044,7 @@ public class SyncProcessor {
         e.printStackTrace();
       }
       Column c = new Column(tp.getTableId(), elementKey, elementName,
-          AggregateSynchronizer.types.get(colType), listChildElementKeysStr,
+          colType.name(), listChildElementKeysStr,
           isPersisted, joinsStr);
       columns.add(c);
     }

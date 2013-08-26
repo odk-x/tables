@@ -86,20 +86,32 @@ public class TableFileUtils {
    * are the concatenation of folder and a member of excluding. If the member 
    * of excluding is a directory, none of its children will be synched either.
    * <p>
-   * If the folder doesn't exist it returns an empty list, presuming there are
-   * no table-associated files. 
+   * If the folder doesn't exist it returns an empty list. 
    * <p>
-   * If the file exists but is not a directory, logs an error and retunrs an
+   * If the file exists but is not a directory, logs an error and returns an
    * empty list.
    * @param folder
    * @param excluding can be null--nothing will be excluded.
+   * @param relativeTo the path to which the returned paths will be relative.
+   * A null value makes them relative to the folder parameter. If it is non 
+   * null, folder must start with relativeTo, or else the files in
+   * folder could not possible be relative to relativeTo. In this case will 
+   * throw an IllegalArgumentException.
    * @return the relative paths of the files under the folder--i.e. the paths
    * after the folder parameter, not including the first separator
+   * @throws IllegalArgumentException if relativeTo is not a substring of 
+   * folder. 
    */
   public static List<String> getAllFilesUnderFolder(String folder, 
-      Set<String> excluding) {
+      Set<String> excluding, String relativeTo) {
     if (excluding == null) {
       excluding = new HashSet<String>();
+    }
+    if (relativeTo == null) {
+      relativeTo = folder;
+    } else if (!folder.startsWith(relativeTo)) {
+      throw new IllegalArgumentException("relativeTo: " + relativeTo + ", " +
+      		" must be a substring of folder: " + folder + ".");
     }
     File baseFolder = new File(folder);
     LinkedList<File> unexploredDirs = new LinkedList<File>();
@@ -112,7 +124,7 @@ public class TableFileUtils {
     }
     unexploredDirs.add(baseFolder);
     List<File> nondirFiles = new ArrayList<File>();
-    // we'll use this length for getting the relative path.
+    // we'll use this length for checking exclusion.
     int appFolderLength = folder.length();
     while (!unexploredDirs.isEmpty()) {
       File exploring = unexploredDirs.pop();
@@ -135,10 +147,11 @@ public class TableFileUtils {
       }
     }
     List<String> relativePaths = new ArrayList<String>();
-    // we want the relative path, so drop the first bits.
+    // we want the relative path, so drop the necessary bets.
+    int relativeFolderLength = relativeTo.length();
     for (File f : nondirFiles) {
       // +1 to exclude the separator.
-      relativePaths.add(f.getPath().substring(appFolderLength + 1));
+      relativePaths.add(f.getPath().substring(relativeFolderLength + 1));
     }
     return relativePaths;
   }

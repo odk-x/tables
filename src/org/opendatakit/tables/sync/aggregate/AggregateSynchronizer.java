@@ -112,34 +112,39 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String VALUE_TRUE = "true";
     
   // TODO: how do we support new column types without breaking this map???
-  public static final Map<ColumnType, Column.ColumnType> types =
-		  				new HashMap<ColumnType, Column.ColumnType>() {
-    {
-        put(ColumnType.NONE, Column.ColumnType.STRING);
-        put(ColumnType.TEXT, Column.ColumnType.STRING);
-        put(ColumnType.INTEGER, Column.ColumnType.INTEGER);
-        put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
-        put(ColumnType.DATE, Column.ColumnType.STRING);
-        put(ColumnType.DATETIME, Column.ColumnType.STRING);
-        put(ColumnType.TIME, Column.ColumnType.STRING);
-        put(ColumnType.BOOLEAN, Column.ColumnType.BOOLEAN); // TODO: confirm this propagates OK?
-        put(ColumnType.MIMEURI, Column.ColumnType.STRING); // TODO: need File + contentType entry in Aggregate (as JSON in Tables)
-        put(ColumnType.MULTIPLE_CHOICES, Column.ColumnType.STRING); // TODO: should be extra-wide storage or split out in Aggregate???
-        put(ColumnType.GEOPOINT, Column.ColumnType.STRING); // TODO: can we handle this generically?
-      put(ColumnType.DATE_RANGE, Column.ColumnType.STRING); // not in Collect, Aggregate
-      put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING); // not in Collect, Aggregate
-      put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING); // not in Collect, Aggregate
-
-      // TODO: goes away -- becomes MULTIPLE_CHOICES + item element type
-      put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING); // select1/select - not in Collect, Aggregate
-
-      // TODO: what is this for???
-      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
-      
-      put(ColumnType.IMAGEURI, Column.ColumnType.STRING);
-    }
-    private static final long serialVersionUID = 1L;
-  };
+  // This map should be handled on the aggregate side, not on the Tables side.
+  // This is because a column definition stores the type on Aggregate, and that
+  // type is what's pulled back down during sync. Therefore you lose 
+  // information when you pull back down from the server, as you don't know
+  // what it originally was. 
+//  public static final Map<ColumnType, Column.ColumnType> types =
+//		  				new HashMap<ColumnType, Column.ColumnType>() {
+//    {
+//        put(ColumnType.NONE, Column.ColumnType.STRING);
+//        put(ColumnType.TEXT, Column.ColumnType.STRING);
+//        put(ColumnType.INTEGER, Column.ColumnType.INTEGER);
+//        put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
+//        put(ColumnType.DATE, Column.ColumnType.STRING);
+//        put(ColumnType.DATETIME, Column.ColumnType.STRING);
+//        put(ColumnType.TIME, Column.ColumnType.STRING);
+//        put(ColumnType.BOOLEAN, Column.ColumnType.BOOLEAN); // TODO: confirm this propagates OK?
+//        put(ColumnType.MIMEURI, Column.ColumnType.STRING); // TODO: need File + contentType entry in Aggregate (as JSON in Tables)
+//        put(ColumnType.MULTIPLE_CHOICES, Column.ColumnType.STRING); // TODO: should be extra-wide storage or split out in Aggregate???
+//        put(ColumnType.GEOPOINT, Column.ColumnType.STRING); // TODO: can we handle this generically?
+//      put(ColumnType.DATE_RANGE, Column.ColumnType.STRING); // not in Collect, Aggregate
+//      put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING); // not in Collect, Aggregate
+//      put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING); // not in Collect, Aggregate
+//
+//      // TODO: goes away -- becomes MULTIPLE_CHOICES + item element type
+//      put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING); // select1/select - not in Collect, Aggregate
+//
+//      // TODO: what is this for???
+//      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
+//      
+//      put(ColumnType.IMAGEURI, Column.ColumnType.STRING);
+//    }
+//    private static final long serialVersionUID = 1L;
+//  };
 
   private final RestTemplate rt;
   private final HttpHeaders requestHeaders;
@@ -537,7 +542,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String appFolder = 
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     List<String> relativePathsOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
     List<String> relativePathsToUpload = 
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
     Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " 
@@ -566,7 +571,7 @@ public class AggregateSynchronizer implements Synchronizer {
     String appFolder = 
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     List<String> relativePathsOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
     List<String> relativePathsToUpload = 
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
     // and then upload the files.
@@ -591,21 +596,21 @@ public class AggregateSynchronizer implements Synchronizer {
         File.separator + tableId;
     String tableFolder = appFolder + File.separator + 
         relativePathToTableFolder;
-    List<String> relativePathsOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(tableFolder, null);
+    List<String> relativePathsToAppFolderOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(tableFolder, null, appFolder);
+    // TODO: relative to folder doesn't match up with the filename given by
+    // aggregate, so uploads everything unnecessarily. fix it. fix it fix it fix it!
     List<String> relativePathsToUpload = 
-        getFilesToBeUploaded(relativePathsOnDevice, manifest);
+        getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
-      String wholePathToFile = tableFolder + File.separator + relativePath;
-      String pathRelativeToAppFolder = relativePathToTableFolder + 
-          File.separator + relativePath;
+      String wholePathToFile = appFolder + File.separator + relativePath;
       successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
-          pathRelativeToAppFolder));
+          relativePath));
     }
   }
- 
+
   private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws 
       JsonParseException, JsonMappingException, IOException {
     Uri.Builder uriBuilder = 
@@ -656,7 +661,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * Get the files that need to be uploaded. i.e. those files that are on the
    * phone but that do not appear on the manifest. Both the manifest and the
    * filesOnPhone are assumed to contain relative paths, not including the 
-   * first separator.
+   * first separator. Paths all relative to the app folder.
    * @param filesOnPhone
    * @param manifest
    * @return
@@ -748,7 +753,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private void downloadFile(File f, String downloadUrl) throws Exception {
     URI uri = null;
     try {
-      // assume the downloadUrl is escaped properly
+      Log.i(TAG, "[downloadFile] downloading at url: " + downloadUrl);
       URL url = new URL(downloadUrl);
       uri = url.toURI();
     } catch (MalformedURLException e) {
