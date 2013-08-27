@@ -62,6 +62,7 @@ import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
+import org.opendatakit.tables.sync.TextPlainHttpMessageConverter;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.opendatakit.tables.utils.FileUtils;
@@ -194,6 +195,7 @@ public class AggregateSynchronizer implements Synchronizer {
         new ArrayList<HttpMessageConverter<?>>();
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
+    converters.add(new TextPlainHttpMessageConverter());
 
     this.rt.setMessageConverters(converters);
 
