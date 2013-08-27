@@ -482,21 +482,24 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
     TableResource resource = getResource(tableId);
     SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
-
+    String lastKnownServerDataTag = null; // the data tag of the whole table.
     if (!rowIds.isEmpty()) {
       for (String rowId : rowIds) {
         URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
         try {
-          rt.delete(url);
+          ResponseEntity<String> response = 
+              rt.exchange(url, HttpMethod.DELETE, null, String.class);
+          lastKnownServerDataTag = response.getBody();
         } catch (ResourceAccessException e) {
           throw new IOException(e.getMessage());
         }
-        throw new IllegalArgumentException("delete isn't implemented correctly!");
-// TODO: THIS NEEDS TO BE FIXED AND GET THE ETAG FROM THE SERVER.
-//        syncTag.incrementDataEtag();
       }
     }
-
+    if (lastKnownServerDataTag == null) {
+      // do something--b/c the delete hasn't worked.
+      Log.e(TAG, "delete call didn't return a known data etag.");
+    }
+    syncTag.setDataEtag(lastKnownServerDataTag);
     return syncTag.toString();
   }
 
