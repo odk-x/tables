@@ -458,8 +458,10 @@ public class AggregateSynchronizer implements Synchronizer {
         }
         RowResource inserted = insertedEntity.getBody();
         rowTags.put(inserted.getRowId(), inserted.getRowEtag());
-        lastKnownServerSyncTag.setDataEtag(row.getDataEtagAtModification());
-//        syncTag.incrementDataEtag();
+        Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last " +
+        		"known dataetag at modification: " + 
+        		inserted.getDataEtagAtModification());
+        lastKnownServerSyncTag.setDataEtag(inserted.getDataEtagAtModification());
       }
     }
 
@@ -482,8 +484,8 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
     TableResource resource = getResource(tableId);
     SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
-    String lastKnownServerDataTag = null; // the data tag of the whole table.
     if (!rowIds.isEmpty()) {
+      String lastKnownServerDataTag = null; // the data tag of the whole table.
       for (String rowId : rowIds) {
         URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
         try {
@@ -494,12 +496,14 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new IOException(e.getMessage());
         }
       }
+      if (lastKnownServerDataTag == null) {
+        // do something--b/c the delete hasn't worked.
+        Log.e(TAG, "delete call didn't return a known data etag.");
+      }
+      Log.i(TAG, "[deleteRows] setting data etag to last known server tag: " 
+          + lastKnownServerDataTag);
+      syncTag.setDataEtag(lastKnownServerDataTag);
     }
-    if (lastKnownServerDataTag == null) {
-      // do something--b/c the delete hasn't worked.
-      Log.e(TAG, "delete call didn't return a known data etag.");
-    }
-    syncTag.setDataEtag(lastKnownServerDataTag);
     return syncTag.toString();
   }
 
