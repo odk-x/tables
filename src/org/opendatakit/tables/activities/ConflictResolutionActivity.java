@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,6 @@ import java.util.Stack;
 
 import org.opendatakit.tables.data.ConflictTable;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.views.ConflictResolutionView;
