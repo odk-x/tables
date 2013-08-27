@@ -443,9 +443,9 @@ public class AggregateSynchronizer implements Synchronizer {
   private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
       throws IOException {
     TableResource resource = getResource(tableId);
-    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
+//    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
     Map<String, String> rowTags = new HashMap<String, String>();
-
+    SyncTag lastKnownServerSyncTag = SyncTag.valueOf(currentSyncTag);
     if (!rows.isEmpty()) {
       for (Row row : rows) {
         URI url = URI.create(resource.getDataUri() + "/" + row.getRowId()).normalize();
@@ -458,13 +458,14 @@ public class AggregateSynchronizer implements Synchronizer {
         }
         RowResource inserted = insertedEntity.getBody();
         rowTags.put(inserted.getRowId(), inserted.getRowEtag());
-        syncTag.incrementDataEtag();
+        lastKnownServerSyncTag.setDataEtag(row.getDataEtagAtModification());
+//        syncTag.incrementDataEtag();
       }
     }
 
     Modification modification = new Modification();
     modification.setSyncTags(rowTags);
-    modification.setTableSyncTag(syncTag.toString());
+    modification.setTableSyncTag(lastKnownServerSyncTag.toString());
 
     return modification;
   }
@@ -490,7 +491,9 @@ public class AggregateSynchronizer implements Synchronizer {
         } catch (ResourceAccessException e) {
           throw new IOException(e.getMessage());
         }
-        syncTag.incrementDataEtag();
+        throw new IllegalArgumentException("delete isn't implemented correctly!");
+// TODO: THIS NEEDS TO BE FIXED AND GET THE ETAG FROM THE SERVER.
+//        syncTag.incrementDataEtag();
       }
     }
 

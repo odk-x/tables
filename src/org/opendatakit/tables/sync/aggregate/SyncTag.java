@@ -52,21 +52,13 @@ private static final String DELIM = "::";
   public String getPropertiesEtag() {
     return (propertiesEtag == null) ? STR_NULL : propertiesEtag;
   }
-
-  /**
-   * Sets the dataEtag to the current system time in millis.
-   */
-  public void incrementDataEtag() {
-    Long currentMillis = System.currentTimeMillis();
-    this.dataEtag = Long.toString(currentMillis);
+  
+  public void setPropertiesEtag(String propertiesEtag) {
+    this.propertiesEtag = propertiesEtag;
   }
-
-  /**
-   * Sets the dataEtag to the current system time in millis.
-   */
-  public void incrementPropertiesEtag() {
-    Long currentMillis = System.currentTimeMillis();
-    this.propertiesEtag = Long.toString(currentMillis);
+  
+  public void setDataEtag(String dataEtag) {
+    this.dataEtag = dataEtag;
   }
 
   /*
