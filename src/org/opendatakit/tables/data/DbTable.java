@@ -165,7 +165,7 @@ public class DbTable {
      ", " + DataTableColumns.URI_ACCESS_CONTROL + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
-     ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NOT NULL" +
+     ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NULL" +
      ", " + DataTableColumns.TIMESTAMP + " INTEGER NOT NULL" +
      ", " + DataTableColumns.SAVED + " TEXT NULL" +
      ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
