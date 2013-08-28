@@ -26,6 +26,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockListActivity;
@@ -65,6 +67,23 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private String mServerRowSyncTag;
   private UserTable mLocal;
   private UserTable mServer;
+  /**
+   * The message to the user as to why they're getting extra options. Will be 
+   * either thing to the effect of "someone has deleted something you've 
+   * changed", or "you've deleted something someone has changed". They'll then
+   * have to choose either to delete or to go ahead and actually restore and
+   * then resolve it.
+   */
+  private TextView mDeletedMessage;
+  /**
+   * The option saying they're going to restore and then resolve the conflicts.
+   */
+  private RadioButton mRadioButtonRestoreAndResolve;
+  /**
+   * The option saying they're going to delete it, possibly discarding any 
+   * changes they'd made.
+   */
+  private RadioButton mRadioButtonDelete;
   private Button mButtonTakeLocal;
   private Button mButtonTakeServer;
   private Button mButtonResolveRow;
@@ -80,6 +99,12 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     this.setContentView(
         org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
     this.mDbHelper = DbHelper.getDbHelper(this);
+    this.mDeletedMessage = (TextView)
+        findViewById(R.id.conflict_resolution_deletion_message);
+    this.mRadioButtonRestoreAndResolve = (RadioButton)
+        findViewById(R.id.conflict_resolution_radio_button_restore);
+    this.mRadioButtonDelete = (RadioButton)
+        findViewById(R.id.conflict_resolution_radio_button_delete);
     this.mButtonTakeLocal = 
         (Button) findViewById(R.id.conflict_resolution_button_take_local);
     this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
