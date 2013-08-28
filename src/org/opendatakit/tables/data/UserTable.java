@@ -535,6 +535,16 @@ public class UserTable {
     public String[] getAllMetadata() {
       return mMetadata;
     }
+    
+    @Override
+    public int hashCode() {
+      final int PRIME = 31;
+      int result = 1;
+      result = result * PRIME + this.mRowId.hashCode();
+      result = result * PRIME + this.mData.hashCode();
+      result = result * PRIME + this.mMetadata.hashCode();
+      return result;
+    }
 
   }
 }

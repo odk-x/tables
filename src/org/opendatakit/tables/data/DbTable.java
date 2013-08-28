@@ -50,6 +50,10 @@ public class DbTable {
     // TODO: see above
 
 
+  
+   private static final String SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE =
+       DataTableColumns.SYNC_STATE + " = ? AND " 
+       + DataTableColumns.CONFLICT_TYPE + " IN ( ?, ? )";
 
 
     /*
@@ -82,7 +86,7 @@ public class DbTable {
       ADMIN_COLUMNS.add(DataTableColumns.URI_ACCESS_CONTROL);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
-      ADMIN_COLUMNS.add(DataTableColumns.TRANSACTIONING);
+      ADMIN_COLUMNS.add(DataTableColumns.CONFLICT_TYPE);
       ADMIN_COLUMNS.add(DataTableColumns.TIMESTAMP);
       ADMIN_COLUMNS.add(DataTableColumns.SAVED);
       ADMIN_COLUMNS.add(DataTableColumns.FORM_ID);
@@ -114,8 +118,10 @@ public class DbTable {
 
     public static final String DB_CSV_COLUMN_LIST =
         DataTableColumns.ROW_ID + ", " + DataTableColumns.URI_ACCESS_CONTROL +
-        ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE + ", " + DataTableColumns.TRANSACTIONING +
-        ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED + ", " + DataTableColumns.FORM_ID +
+        ", " + DataTableColumns.SYNC_TAG + ", " + DataTableColumns.SYNC_STATE 
+        + ", " + DataTableColumns.CONFLICT_TYPE +
+        ", " + DataTableColumns.TIMESTAMP + ", " + DataTableColumns.SAVED 
+        + ", " + DataTableColumns.FORM_ID +
         ", " + DataTableColumns.INSTANCE_NAME + ", " + DataTableColumns.LOCALE;
 
     private final DbHelper dbh;
@@ -159,7 +165,7 @@ public class DbTable {
      ", " + DataTableColumns.URI_ACCESS_CONTROL + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
-     ", " + DataTableColumns.TRANSACTIONING + " INTEGER NOT NULL" +
+     ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NOT NULL" +
      ", " + DataTableColumns.TIMESTAMP + " INTEGER NOT NULL" +
      ", " + DataTableColumns.SAVED + " TEXT NULL" +
      ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
@@ -168,6 +174,77 @@ public class DbTable {
      colListBuilder.toString() +
      ")";
         db.execSQL(toExecute);
+    }
+    
+    /**
+     * See the doc at {@link DbTable#getRaw(List, String[], String[], String)}.
+     * All restrictions apply there. The difference with this method is that
+     * you can pass in more complicated queries (supporting things like sql
+     * IN operators). 
+     * @param projection
+     * @param sqlQuery
+     * @param selectionArgs
+     * @param orderBy
+     * @return
+     */
+    public UserTable getRawWithSpecificQuery(List<String> projection,
+        String sqlQuery, String[] selectionArgs, String orderBy) {
+      return getRawHelper(projection, sqlQuery, null, selectionArgs, orderBy);
+    }
+    
+    /**
+     * Helper method for various of the other get raw methods. Handles null
+     * arguments appropriately so that calls to the simpler getRaw* methods
+     * can contain fewer parameters and be less confusing.
+     * <p>
+     * Either sqlQuery or selectionKeys can be null. 
+     * @param projection
+     * @param sqlQuery
+     * @param selectionKeys
+     * @param selectionArgs
+     * @param orderBy
+     * @return
+     */
+    private UserTable getRawHelper(List<String> projection, String sqlQuery,
+        String[] selectionKeys, String[] selectionArgs, String orderBy) {
+      // The columns we will pass to the db to select. Must include the
+      // columns parameter as well as all the metadata columns.
+      List<String> columnsToSelect;
+        if (projection == null) {
+          columnsToSelect = tp.getColumnOrder();
+          columnsToSelect.addAll(ADMIN_COLUMNS);
+        } else {
+          // The caller wants just their specified columns, but they'll also
+          // have to get the admin columns.
+          columnsToSelect = new ArrayList<String>();
+          columnsToSelect.addAll(projection);
+          columnsToSelect.addAll(ADMIN_COLUMNS);
+        }
+        String[] colArr = new String[columnsToSelect.size() + 1];
+        colArr[0] = DataTableColumns.ROW_ID;
+        for (int i = 0; i < columnsToSelect.size(); i++) {
+            colArr[i + 1] = columnsToSelect.get(i);
+        }
+        SQLiteDatabase db = null;
+        Cursor c = null;
+        try {
+           db = dbh.getReadableDatabase();
+           // here's where we actually have to be smart. If the user has
+           // provided a sqlQuery, we use that. Otherwise we build the 
+           // selection up for them.
+           if (sqlQuery == null) {
+             sqlQuery = buildSelectionSql(selectionKeys);
+           } // else we just use the provided one.
+           c = db.query(tp.getDbTableName(), colArr,
+                   sqlQuery,
+                   selectionArgs, null, null, orderBy);
+           UserTable table = buildTable(c, tp, projection);
+           return table;
+       } finally {
+         if ( c != null && !c.isClosed() ) {
+            c.close();
+         }
+       }    
     }
 
     /**
@@ -184,38 +261,8 @@ public class DbTable {
      */
     public UserTable getRaw(List<String> columns, String[] selectionKeys,
             String[] selectionArgs, String orderBy) {
-      // The columns we will pass to the db to select. Must include the
-      // columns parameter as well as all the metadata columns.
-      List<String> columnsToSelect;
-        if (columns == null) {
-          columnsToSelect = tp.getColumnOrder();
-          columnsToSelect.addAll(ADMIN_COLUMNS);
-        } else {
-          // The caller wants just their specified columns, but they'll also
-          // have to get the admin columns.
-          columnsToSelect = new ArrayList<String>();
-          columnsToSelect.addAll(columns);
-          columnsToSelect.addAll(ADMIN_COLUMNS);
-        }
-        String[] colArr = new String[columnsToSelect.size() + 1];
-        colArr[0] = DataTableColumns.ROW_ID;
-        for (int i = 0; i < columnsToSelect.size(); i++) {
-            colArr[i + 1] = columnsToSelect.get(i);
-        }
-        SQLiteDatabase db = null;
-        Cursor c = null;
-        try {
-	        db = dbh.getReadableDatabase();
-	        c = db.query(tp.getDbTableName(), colArr,
-	                buildSelectionSql(selectionKeys),
-	                selectionArgs, null, null, orderBy);
-	        UserTable table = buildTable(c, tp, columns);
-	        return table;
-	    } finally {
-    		if ( c != null && !c.isClosed() ) {
-    			c.close();
-    		}
-	    }
+      return getRawHelper(columns, null, selectionKeys, selectionArgs, 
+          orderBy);
     }
 
     /**
@@ -283,73 +330,37 @@ public class DbTable {
 
     public ConflictTable getConflictTable() {
       List<String> userColumns = tp.getColumnOrder();
-      // We are defining server and local rows thusly:
-      // The local rows have sync_state conflict (4 at the time of this 
-      // writing) and transactioning false.
-      // The server rows have sync_state deleting (3 at the time of this 
-      // writing) and transactioning true.
+      // The new protocol for syncing is as follows:
+      // local rows and server rows both have SYNC_STATE=CONFLICT.
+      // The server version will have their _conflict_type column set to either
+      // SERVER_DELETED_OLD_VALUES or SERVER_UPDATED_UPDATED_VALUES. The local
+      // version will have its _conflict_type column set to either
+      // LOCAL_DELETED_OLD_VALUES or LOCAL_UPDATED_UPDATED_VALUES. See the
+      // lengthy discussion of these states and their implications at 
+      // SyncUtil.ConflictType.
       String[] selectionKeys = new String[2];
       selectionKeys[0] = DataTableColumns.SYNC_STATE;
-      selectionKeys[1] = DataTableColumns.TRANSACTIONING;
+      selectionKeys[1] = DataTableColumns.CONFLICT_TYPE;
       String syncStateConflictStr = 
           Integer.toString(SyncUtil.State.CONFLICTING);
-      String transactioningFalseStr = 
-          Integer.toString(SyncUtil.boolToInt(false));
-      String syncStateDeletingStr = 
-          Integer.toString(SyncUtil.State.DELETING);
-      String transactioningTrueStr = 
-          Integer.toString(SyncUtil.boolToInt(true));
-      UserTable localTable = getRaw(userColumns, selectionKeys, 
-          new String[] {syncStateConflictStr, transactioningFalseStr}, 
+      String conflictTypeLocalDeletedStr = 
+          Integer.toString(SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES);
+      String conflictTypeLocalUpdatedStr = 
+          Integer.toString(SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+      String conflictTypeServerDeletedStr = 
+          Integer.toString(SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES);
+      String conflictTypeServerUpdatedStr = Integer.toString(
+          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES);
+      UserTable localTable = getRawWithSpecificQuery(userColumns, 
+          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, 
+          new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
+            conflictTypeLocalUpdatedStr}, 
           DataTableColumns.ROW_ID);
       UserTable serverTable = getRaw(userColumns, selectionKeys, 
-          new String[] {syncStateDeletingStr, transactioningTrueStr}, 
+          new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
+            conflictTypeServerUpdatedStr}, 
           DataTableColumns.ROW_ID);
       return new ConflictTable(localTable, serverTable);
-//    	SQLiteDatabase db = null;
-//    	Cursor c = null;
-//    	try {
-//	        db = dbh.getReadableDatabase();
-//	        SqlData sd = query.toConflictSql();
-//	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-//	        int count = c.getCount() / 2;
-//	        String[] header = new String[tp.getColumns().size()];
-//	        String[] rowIds = new String[count];
-//	        String[][] syncTags = new String[count][2];
-//	        String[][][] values = new String[count][2][tp.getColumns().size()];
-//	        if (count == 0) {
-//	            return new ConflictTable(header, rowIds, syncTags, values);
-//	        }
-//	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
-//	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
-//	        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-//	        int[] colIndices = new int[numberOfDisplayColumns];
-//	        for (int i = 0; i < numberOfDisplayColumns; i++) {
-//	        	ColumnProperties cp = tp.getColumnByIndex(i);
-//	            colIndices[i] = c.getColumnIndexOrThrow(
-//	            		cp.getElementKey());
-//	            header[i] = cp.getDisplayName();
-//	        }
-//	        c.moveToFirst();
-//	        for (int i = 0; i < count; i++) {
-//	            rowIds[i] = c.getString(idColIndex);
-//	            syncTags[i][0] = c.getString(stColIndex);
-//	            for (int j = 0; j < tp.getColumns().size(); j++) {
-//	                values[i][0][j] = c.getString(colIndices[j]);
-//	            }
-//	            c.moveToNext();
-//	            syncTags[i][1] = c.getString(stColIndex);
-//	            for (int j = 0; j < tp.getColumns().size(); j++) {
-//	                values[i][1][j] = c.getString(colIndices[j]);
-//	            }
-//	            c.moveToNext();
-//	        }
-//	        return new ConflictTable(header, rowIds, syncTags, values);
-//	    } finally {
-//    		if ( c != null && !c.isClosed() ) {
-//    			c.close();
-//    		}
-//	    }
     }
 
     private UserTable dataQuery(SqlData sd) {
@@ -462,8 +473,7 @@ public class DbTable {
     }
 
     /**
-     * Adds a row to the table with an inserting synchronization state and the
-     * transactioning status set to false.
+     * Adds a row to the table with an inserting synchronization state.
      * <p>
      * If the rowId is null it is not added.
      * <p>
@@ -495,7 +505,6 @@ public class DbTable {
         cv.put(DataTableColumns.TIMESTAMP, timestamp);
         cv.put(DataTableColumns.URI_ACCESS_CONTROL, uriAccessControl);
         cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
-        cv.put(DataTableColumns.TRANSACTIONING, SyncUtil.boolToInt(false));
         cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
         cv.put(DataTableColumns.FORM_ID, formId);
         cv.put(DataTableColumns.LOCALE, locale);
