@@ -15,12 +15,15 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.tables.utils.FileUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -33,6 +36,7 @@ import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -232,6 +236,29 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           new SyncResult());
       // We're going to add a check here for the framework directory. If we 
       // don't have it, you also have to sync app level files the first time.
+      String frameworkDirectoryStr = 
+          ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      File frameworkDirectory = new File(frameworkDirectoryStr);
+      if (!frameworkDirectory.exists()) {
+        FileUtils.createFolder(frameworkDirectoryStr);
+      }
+      // Now it exists. Let's make sure it's a dir.
+      if (!frameworkDirectory.isDirectory()) {
+        Log.e(TAG, "file exists at: " + frameworkDirectoryStr + ", but it " +
+        		"is not a directory. This is a reserved name, so this breaks " +
+        		"an invariant.");
+      } else {
+        try {
+          synchronizer.syncAppLevelFiles(false);
+        } catch (IOException e) {
+          Log.e(TAG, "IO exception trying to pull app-level files for the " +
+          		"first time during table download.");
+          e.printStackTrace();
+          // It's not going to be deemed fatal at this point if the app 
+          // folder doesn't pull down. Perhaps eventually it should, but not
+          // for now.
+        }
+      }
       processor.synchronizeTable(tp, true);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
