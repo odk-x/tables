@@ -421,6 +421,15 @@ public class Query {
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DataTableColumns.SYNC_STATE + " != " + SyncUtil.State.DELETING);
+        
+        // add restriction for not showing rows of conflict_type 
+        // SERVER_DELETED or SERVER_UPDATED. 
+        sd.appendSql(" AND (" + tp.getDbTableName() + "." + 
+          DataTableColumns.CONFLICT_TYPE + " IS NULL OR " + 
+          tp.getDbTableName() + "." + DataTableColumns.CONFLICT_TYPE + 
+          " IN ( " + 
+          SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES + ", " +
+          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES + "))");
 
         // add restriction for ODK Collect intermediate status...
         sd.appendSql(" AND " + tp.getDbTableName() + "." +
@@ -593,6 +602,7 @@ public class Query {
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
                 DataTableColumns.SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+
 
         // add restriction for ODK Collect intermediate status...
         idsd.appendSql(" AND " + tp.getDbTableName() + "." +

@@ -356,7 +356,8 @@ public class DbTable {
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
             conflictTypeLocalUpdatedStr}, 
           DataTableColumns.ROW_ID);
-      UserTable serverTable = getRaw(userColumns, selectionKeys, 
+      UserTable serverTable = getRawWithSpecificQuery(userColumns, 
+          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, 
           new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
             conflictTypeServerUpdatedStr}, 
           DataTableColumns.ROW_ID);
