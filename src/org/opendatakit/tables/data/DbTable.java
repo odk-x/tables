@@ -645,12 +645,17 @@ public class DbTable {
 
     public void resolveConflict(String rowId, String syncTag,
             Map<String, String> values) {
-        String[] deleteWhereArgs = { rowId,
-                Integer.valueOf(SyncUtil.State.DELETING).toString() };
-        String deleteSql = DataTableColumns.ROW_ID + " = ? AND " + DataTableColumns.SYNC_STATE + " = ?";
+        // We're going to delete the column with the matching row id that has
+        // conflict_type SERVER_UPDATED or SERVER_DELETED.
+      String[] deleteWhereArgs = { rowId };
+        String deleteSql = DataTableColumns.ROW_ID + " = ? AND " +
+            DataTableColumns.CONFLICT_TYPE + " IN ( " + 
+            SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES + ", " +
+            SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
         ContentValues updateValues = new ContentValues();
         updateValues.put(DataTableColumns.SYNC_STATE, SyncUtil.State.UPDATING);
         updateValues.put(DataTableColumns.SYNC_TAG, syncTag);
+        updateValues.putNull(DataTableColumns.CONFLICT_TYPE);
         for (String key : values.keySet()) {
             updateValues.put(key, values.get(key));
         }
