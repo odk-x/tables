@@ -26,6 +26,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -234,7 +235,8 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mButtonTakeServer.setEnabled(false);
       mButtonTakeLocal.setEnabled(false);
       mButtonResolveRow.setEnabled(false);
-      getListView().setEnabled(true);
+      mAdapter.setConflictColumnsEnabled(false);
+      mAdapter.notifyDataSetChanged();
     } else if (localConflictType == 
           SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
         serverConflictType == 
@@ -257,7 +259,8 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mButtonTakeServer.setEnabled(false);
       mButtonTakeLocal.setEnabled(false);
       mButtonResolveRow.setEnabled(false);
-      getListView().setEnabled(false);
+      mAdapter.setConflictColumnsEnabled(false);
+      mAdapter.notifyDataSetChanged();
     } else {
       // We should never get here, because it breaks an invariant.
       // We know the vers
@@ -275,7 +278,8 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   public void onDecisionMade() {
     // set the listview enabled in case it'd been down due to deletion 
     // resolution.
-    getListView().setEnabled(true);
+    mAdapter.setConflictColumnsEnabled(true);
+    mAdapter.notifyDataSetChanged();
     if (isResolvable()) {
       Log.e(TAG, "isResolvable returns true!");
       this.mButtonResolveRow.setEnabled(true);
