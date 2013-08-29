@@ -430,7 +430,13 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
               // TODO: delete the local version.
-              Log.e(TAG, "should delete local version");
+              // this will be a simple matter of deleting all the rows with the
+              // same rowid on the local device.
+              DbTable dbTable = 
+                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+              dbTable.deleteRowActual(mRowId);
+              ConflictResolutionRowActivity.this.finish();
+              Log.d(TAG, "deleted local and server versions");
             }
           });
       builder.setCancelable(true);
@@ -471,8 +477,20 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              // TODO: delete the server version.
-              Log.e(TAG, "should flag to delete the server version");
+              // We're going to discard the local changes by acting as if
+              // takeServer was pressed. Then we're going to flag row as 
+              // deleted.
+              DbTable dbTable = 
+                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+              Map<String, String> valuesToUse = new HashMap<String, String>();
+              for (ConflictColumn cc : mConflictColumns) {
+                valuesToUse.put(cc.getElementKey(), cc.getServerValue());
+              }
+              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.markDeleted(mRowId);
+              Log.d(TAG, "deleted the local version and marked the server" +
+              		" version as deleting.");
+              ConflictResolutionRowActivity.this.finish();
             }
           });
       builder.setCancelable(true);
