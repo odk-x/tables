@@ -65,7 +65,6 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected synchronized Boolean doInBackground(Void... params) {
 			Properties prop = new Properties();
-//			android.os.Debug.waitForDebugger();
 			try {
 				File config = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME);
