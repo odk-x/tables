@@ -33,7 +33,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   private static final String TAG = InitializeTaskDialogFragment.class.getSimpleName();
   
   public InitializeTaskDialogFragment() {
-    // explicity empty constructor for fragments.
+    // explicit empty constructor for fragments.
   }
   
   /**
