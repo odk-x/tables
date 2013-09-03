@@ -11,6 +11,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
+import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -37,9 +38,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	private static final String TAG = "InitializeTask";
 
-	private final Callbacks mCallbacks;
+	private InitializeTaskDialogFragment mDialogFragment;
 	private final Context mContext;
-	private ProgressDialog dialog;
 	private String filename;
 	private long fileModifiedTime;
 	private int fileCount;
@@ -52,25 +52,18 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	public boolean problemImportingKVSEntries = false;
 	private boolean poorlyFormatedConfigFile = false;
 
-	public InitializeTask(Context context, Callbacks callbacks) {
-		this.mCallbacks = callbacks;
+	public InitializeTask(Context context) {
 		this.mContext = context;
-		this.dialog = new ProgressDialog(context);
 		this.importStatus = new HashMap<String, Boolean>();
 		this.mTableAlreadyExistsMap = new HashMap<String, Boolean>();
 	}
-
-	@Override
-	protected void onPreExecute() {
-		dialog.setTitle(mContext.getString(R.string.configuring_tables));
-		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		dialog.setCancelable(false);
-		dialog.show();
+	
+	public void setDialogFragment(InitializeTaskDialogFragment dialogFragment) {
+	  this.mDialogFragment = dialogFragment;
 	}
 
 	@Override
 	protected synchronized Boolean doInBackground(Void... params) {
-		if (ConfigurationUtil.isChanged(mCallbacks.getPrefs())) {
 			Properties prop = new Properties();
 			try {
 				File config = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
@@ -106,7 +99,13 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 								filename);
 
 						// update dialog message with current filename
-						publishProgress();
+						if (this.mDialogFragment != null) {
+						  this.mDialogFragment.updateProgress(curFileCount, 
+						      fileCount, filename, lineCount);
+						} else {
+						  Log.e(TAG, "dialog fragment is null! not updating " +
+						  		"progress.");
+						}
 
 						// .tablename is defined
 						if (tablename != null) {
@@ -125,7 +124,13 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 							}
 							importStatus.put(filename, success);
 							if (success) {
-								publishProgress();
+							  if (mDialogFragment != null) {
+							    mDialogFragment.updateProgress(curFileCount, 
+							        fileCount, filename, lineCount);
+							  } else {
+							    Log.e(TAG, "dialog fragment is null! Not updating " +
+							    		"progress.");
+							  }
 							}
 						} else {
 							poorlyFormatedConfigFile = true;
@@ -137,19 +142,18 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 					return false;
 				}
 			}
-		}
 		return true;
-	}
-
-	// refresh TableManager after each successful import
-	protected void onProgressUpdate(Void... progress) {
-		dialog.setMessage(mContext.getString(R.string.importing_file,
-				curFileCount, fileCount, filename, lineCount ));
 	}
 
 	public void updateLineCount(String lineCount) {
 		this.lineCount = lineCount;
-		publishProgress();
+		if (this.mDialogFragment != null) {
+		  this.mDialogFragment.updateProgress(curFileCount, fileCount, filename, 
+		      this.lineCount);
+		} else {
+		  Log.e(TAG, "[updateLineCount] dialog fragment is null, not " +
+		  		"updating progress");
+		}
 	}
 
 	// dismiss ProgressDialog and create an AlertDialog with one
@@ -157,38 +161,19 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
-		mCallbacks.onImportsComplete();
-
-		// dismiss spinning ProgressDialog
-		dialog.dismiss();
-
-		// build AlertDialog displaying the status of the initialization
-		AlertDialog.Builder alertDialogBuilder = 
-		    new AlertDialog.Builder(mContext);
-		alertDialogBuilder.setCancelable(true);
-		alertDialogBuilder.setNeutralButton(mContext.getString(R.string.ok), 
-		    new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+	  if (this.mDialogFragment == null) {
+	    Log.e(TAG, "dialog fragment is null! Task can't report back. " +
+	    		"Returning.");
+	    return;
+	  }
+	  // From this point forward we'll assume that the dialog fragment is not 
+	  // null.
 
 		if (!result) {
-			if (poorlyFormatedConfigFile)
-				alertDialogBuilder.setTitle(
-				    mContext.getString(R.string.bad_config_properties_file));
-			else
-				alertDialogBuilder.setTitle(
-				    mContext.getString(R.string.error));
+		  this.mDialogFragment
+		    .onTaskFinishedWithErrors(poorlyFormatedConfigFile);
 		} else {
-			// update the lastModifiedTime of Tables in Preferences
-			ConfigurationUtil.updateTimeChanged(
-			    mCallbacks.getPrefs(), fileModifiedTime);
-
 			// Build summary message
-			alertDialogBuilder.setTitle(
-			    mContext.getString(R.string.config_summary));
 			StringBuffer msg = new StringBuffer();
 			for (String filename : importStatus.keySet()) {
 			  Log.e(TAG, "filename: " + filename);
@@ -211,11 +196,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			  }
 
 			}
-			alertDialogBuilder.setMessage(msg);
+			this.mDialogFragment.onTaskFinishedSuccessfully(msg.toString(), 
+			    fileModifiedTime);
 		}
-
-		AlertDialog dialog2 = alertDialogBuilder.create();
-		dialog2.show();
 	}
 	
 	public interface Callbacks {
