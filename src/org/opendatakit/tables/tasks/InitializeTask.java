@@ -65,6 +65,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected synchronized Boolean doInBackground(Void... params) {
 			Properties prop = new Properties();
+//			android.os.Debug.waitForDebugger();
 			try {
 				File config = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME);
@@ -99,13 +100,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 								filename);
 
 						// update dialog message with current filename
-						if (this.mDialogFragment != null) {
-						  this.mDialogFragment.updateProgress(curFileCount, 
-						      fileCount, filename, lineCount);
-						} else {
-						  Log.e(TAG, "dialog fragment is null! not updating " +
-						  		"progress.");
-						}
+						publishProgress();
 
 						// .tablename is defined
 						if (tablename != null) {
@@ -124,13 +119,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 							}
 							importStatus.put(filename, success);
 							if (success) {
-							  if (mDialogFragment != null) {
-							    mDialogFragment.updateProgress(curFileCount, 
-							        fileCount, filename, lineCount);
-							  } else {
-							    Log.e(TAG, "dialog fragment is null! Not updating " +
-							    		"progress.");
-							  }
+							  publishProgress();
 							}
 						} else {
 							poorlyFormatedConfigFile = true;
@@ -144,16 +133,21 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			}
 		return true;
 	}
+	
+	@Override
+	protected void onProgressUpdate(Void... values) {
+     if (mDialogFragment != null) {
+       mDialogFragment.updateProgress(curFileCount, 
+           fileCount, filename, lineCount);
+     } else {
+       Log.e(TAG, "dialog fragment is null! Not updating " +
+            "progress.");
+     }
+   }
 
 	public void updateLineCount(String lineCount) {
 		this.lineCount = lineCount;
-		if (this.mDialogFragment != null) {
-		  this.mDialogFragment.updateProgress(curFileCount, fileCount, filename, 
-		      this.lineCount);
-		} else {
-		  Log.e(TAG, "[updateLineCount] dialog fragment is null, not " +
-		  		"updating progress");
-		}
+		publishProgress();
 	}
 
 	// dismiss ProgressDialog and create an AlertDialog with one

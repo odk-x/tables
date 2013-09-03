@@ -100,6 +100,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
         initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
         initalizeTaskDialogFragment.setTask(initializeTask);
         initalizeTaskDialogFragment.setCallbacks(this);
+        initializeTask.setDialogFragment(initalizeTaskDialogFragment);
         FragmentManager fragmentManager = this.getSupportFragmentManager();
         initalizeTaskDialogFragment.show(fragmentManager, 
             InitializeTaskDialogFragment.TAG_FRAGMENT);

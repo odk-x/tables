@@ -60,10 +60,14 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     // We want to keep this around even in the case of rotation--hold onto all
     // of the pertinent data.
     this.setRetainInstance(true);
+    if (this.mTask != null) {
+      mTask.execute();
+    }
   }
   
   @Override
   public void onResume() {
+    super.onResume();
     if (mTask == null) {
       dismiss();
     }
