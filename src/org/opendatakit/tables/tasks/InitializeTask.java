@@ -83,8 +83,27 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 			// prop was loaded
 			if (prop != null) {
+			  // This is an unpleasant solution. We're currently saving the file
+			  // time as used the instant a properties file is loaded. In theory 
+			  // it seems like this should only be saved AFTER the file is 
+			  // successfully used. This is not being done for several reasons. 
+			  // First, despite my best efforts to get the DialogFragments and
+			  // asynctasks to play nice, somehow it still is not consistently
+			  // finding the InitializeTaskDialogFragment in onCreate. It usually,
+			  // usually does, but this is seriously annoying to not work 
+			  // consistently. I can't find a good reason as to why. 
+			  // Second, say that a config attempt did fail, perhaps causing a 
+			  // force close. Without this fix, it would consistently crash, 
+			  // trying each time to load the same misconfigured config file. This
+			  // is similarly unacceptable. So, this seems a way to try and avoid
+			  // both problems, while perhaps eliminating a very annoying problem.
+			  // However, it still feels like a hack, and I wish the AsyncTask/
+			  // Fragment situation wasn't so damned irritating.
 				fileModifiedTime = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME).lastModified();
+				ConfigurationUtil.updateTimeChanged(
+				    this.mDialogFragment.getPreferencesFromContext(), 
+				    fileModifiedTime);
 				String table_keys = prop.getProperty(TOP_LEVEL_KEY_TABLE_KEYS);
 
 				// table_keys is defined
@@ -172,7 +191,6 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
-	  android.os.Debug.waitForDebugger();
 	  if (this.mDialogFragment == null) {
 	    Log.e(TAG, "dialog fragment is null! Task can't report back. " +
 	    		"Returning.");
@@ -218,8 +236,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			  }
 
 			}
-			this.mDialogFragment.onTaskFinishedSuccessfully(msg.toString(), 
-			    fileModifiedTime);
+			this.mDialogFragment.onTaskFinishedSuccessfully(msg.toString());
 		}
 	}
 	

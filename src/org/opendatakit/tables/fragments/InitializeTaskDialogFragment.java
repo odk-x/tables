@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 
@@ -73,6 +74,14 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     }
   }
   
+  /**
+   * Return the preferences from this objects calbacks.
+   * @return
+   */
+  public Preferences getPreferencesFromContext() {
+    return this.mCallbacks.getPrefs();
+  }
+  
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     // Note: don't try and hold on to this dialog as a member variable. I think
@@ -113,7 +122,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   public void onTaskFinishedWithErrors(boolean poorlyFormattedConfigFile) {
     // We'll just pass a dummy value for the modified time and presume that
     // onTaskFinished handles it appropriately.
-    onTaskFinished(false, poorlyFormattedConfigFile, null, 0L);
+    onTaskFinished(false, poorlyFormattedConfigFile, null);
   }
   
   /**
@@ -121,17 +130,15 @@ public class InitializeTaskDialogFragment extends DialogFragment {
    * @param message the message that should be displayed in an alert dialog to
    * the user.
    */
-  public void onTaskFinishedSuccessfully(String message, 
-      long fileModifiedTime) {
-    onTaskFinished(true, false, message, fileModifiedTime);
+  public void onTaskFinishedSuccessfully(String message) {
+    onTaskFinished(true, false, message);
   }
   
   /**
    * Should be called whenever the task is finished.
    */
   private void onTaskFinished(boolean success, 
-      boolean poorlyFormattedConfigFile, 
-      String successMessage, long fileModifiedTime) {
+      boolean poorlyFormattedConfigFile, String successMessage) {
     if (isResumed()) {
       dismiss();
     }
@@ -161,9 +168,6 @@ public class InitializeTaskDialogFragment extends DialogFragment {
         builder.setTitle(getString(R.string.error));
       }
     } else {
-      // Mark the time as successfully completed.
-      ConfigurationUtil.updateTimeChanged(this.mCallbacks.getPrefs(), 
-          fileModifiedTime);
       // Then we need to send ye' olde message to the user.
       builder.setTitle(getString(R.string.config_summary));
       builder.setMessage(successMessage);
