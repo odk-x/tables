@@ -46,7 +46,12 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	private int curFileCount;
 	private String lineCount;
 	private Map<String, Boolean> importStatus;
-	private Map<String, Boolean> mTableAlreadyExistsMap;
+	/** Holds the key to whether or not the table already exists. */
+	private Map<String, Boolean> mKeyToTableAlreadyExistsMap;
+	/** Stores the tables key to whether or not the file was found. */
+	private Map<String, Boolean> mKeyToFileNotFoundMap;
+	/** Stores the table's key to its filename. */
+	private Map<String, String> mKeyToFileMap;
 
 	public boolean caughtDuplicateTableException = false;
 	public boolean problemImportingKVSEntries = false;
@@ -55,7 +60,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	public InitializeTask(Context context) {
 		this.mContext = context;
 		this.importStatus = new HashMap<String, Boolean>();
-		this.mTableAlreadyExistsMap = new HashMap<String, Boolean>();
+		this.mKeyToTableAlreadyExistsMap = new HashMap<String, Boolean>();
+		this.mKeyToFileNotFoundMap = new HashMap<String, Boolean>();
+		this.mKeyToFileMap = new HashMap<String, String>();
 	}
 	
 	public void setDialogFragment(InitializeTaskDialogFragment dialogFragment) {
@@ -95,8 +102,19 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 						curFileCount++;
 						tablename = prop.getProperty(key + KEY_SUFFIX_TABLENAME);
 						filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
+	               this.importStatus.put(key, false);
 						file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 								filename);
+						this.mKeyToFileMap.put(key, filename);
+						if (!file.exists()) {
+						  this.mKeyToFileNotFoundMap.put(key, true);
+						  Log.e(TAG, "putting in file not found map true: " + key);
+						  continue;
+						} else {
+						  this.mKeyToFileNotFoundMap.put(key, false);
+						  Log.e(TAG, "putting in file not found map false: " + key);
+						  // and proceed.
+						}
 
 						// update dialog message with current filename
 						publishProgress();
@@ -110,13 +128,13 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
     							success = cu.importConfigTables(mContext, this, 
     							    request.getFile(), filename, 
     							    request.getTableName());
-    							mTableAlreadyExistsMap.put(filename, false);
+    							mKeyToTableAlreadyExistsMap.put(key, false);
 							} catch (TableAlreadyExistsException e) {
-							  mTableAlreadyExistsMap.put(filename, true);
+							  mKeyToTableAlreadyExistsMap.put(key, true);
 							  Log.e(TAG, "caught able already exists, setting " +
 							  		"success to: " + success);
 							}
-							importStatus.put(filename, success);
+							importStatus.put(key, success);
 							if (success) {
 							  publishProgress();
 							}
@@ -154,6 +172,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
+	  android.os.Debug.waitForDebugger();
 	  if (this.mDialogFragment == null) {
 	    Log.e(TAG, "dialog fragment is null! Task can't report back. " +
 	    		"Returning.");
@@ -168,23 +187,33 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 		} else {
 			// Build summary message
 			StringBuffer msg = new StringBuffer();
-			for (String filename : importStatus.keySet()) {
-			  Log.e(TAG, "filename: " + filename);
-			  if (importStatus.get(filename)) {
-			    Log.e(TAG, "import status from map: " + importStatus.get(filename));
+			for (String key : mKeyToFileMap.keySet()) {
+			  Log.e(TAG, "key: " + key);
+			  if (importStatus.get(key)) {
+			    String nameOfFile = mKeyToFileMap.get(key);
+			    Log.e(TAG, "import status from map: " + importStatus.get(key));
 			    msg.append(mContext.getString(R.string.imported_successfully, 
-			        filename));
+			        nameOfFile));
 			  } else {
 			    // maybe there was an existing table already, maybe there were 
 			    // just errors.
-			    if (mTableAlreadyExistsMap.get(filename)) {
+			    if (mKeyToTableAlreadyExistsMap.containsKey(key) && 
+			        mKeyToTableAlreadyExistsMap.get(key)) {
 			      Log.e(TAG, "table already exists map was true");
 			      msg.append(mContext.getString(R.string.table_already_exists, 
-	                 filename));
-			    } else {
+	                 key));
+			    } else if (mKeyToFileNotFoundMap.containsKey(key) && 
+			        mKeyToFileNotFoundMap.get(key)) {
+			      // We'll first retrieve the file to which this key was pointing.
+			      String nameOfFile = mKeyToFileMap.get(key);
+			      Log.e(TAG, "file wasn't found: " + key);
+			      msg.append(mContext.getString(R.string.file_not_found, 
+			          nameOfFile));
+			    } else { 
+			      // a general error.
 			      Log.e(TAG, "table already exists map was false");
 	            msg.append(mContext.getString(R.string.imported_with_errors, 
-	                filename));			      
+	                key));			      
 			    }
 			  }
 
