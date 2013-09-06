@@ -54,6 +54,7 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
+import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -245,6 +246,7 @@ public abstract class CustomView extends LinearLayout {
 		prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
 	}
 
+
 	/**
 	 * Add a row using Collect. This is the hook into the javascript. The
 	 * activity holding this view must have implemented the onActivityReturn
@@ -317,6 +319,18 @@ public abstract class CustomView extends LinearLayout {
 		CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent,
 				tp);
 	}
+	
+	private void prepopulateRowAndLaunchSurvey(TableProperties tp, 
+	    Map<String, String> elementKeyToValueToPrepopulate) {
+	  Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
+	      getContainerActivity(), tp, elementKeyToValueToPrepopulate);
+	  SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
+	}
+	
+   private void addRowWithSurvey(String tableName, TableProperties tp, 
+       Map<String, String> prepopulateValues) {
+     prepopulateRowAndLaunchSurvey(tp, prepopulateValues);
+   }
 
 	/**
 	 * Retrieve a map from a simple json map that has been stringified.
@@ -1257,6 +1271,19 @@ public abstract class CustomView extends LinearLayout {
 				return;
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
+		}
+		
+		public void addRowWithSurvey(String tableName) {
+		  TableProperties tp = mTable.getTableProperties();
+		  // does this "to receive add" call make sense with survey? unclear.
+		  TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
+		      null, tableName);
+		  if (tpToReceiveAdd == null) {
+		    Log.e(TAG, "table [" + tableName + "] could not be found. " +
+		    		"returning.");
+		    return;
+		  }
+		  CustomView.this.addRowWithSurvey(tableName, tpToReceiveAdd, null);
 		}
 
 		/**

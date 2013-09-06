@@ -319,6 +319,15 @@ public class ControlIf {
 	public void addRowWithCollect(String tableName) {
 		weakControl.get().addRowWithCollect(tableName);
 	}
+	
+	/**
+	 * Add a row using Survey. Not yet sure if we'll actually need to take a 
+	 * table name here or not...
+	 * @param tableName
+	 */
+	public void addRowWithSurvey(String tableName) {
+	  weakControl.get().addRowWithSurvey(tableName);
+	}
 
 	/**
 	 * Add a row using Collect and the form specified by the given parameters.
