@@ -22,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+
 import android.util.Log;
 
 /**
@@ -57,11 +59,16 @@ public class TableFileUtils {
   public static final String RESP_TYPE_JSON = "application/json; charset=utf-8";
     
   /** Name of the metadata directory under the app id. */
-  public static final String DIR_METADATA = "metadata";
+  public static final String DIR_METADATA = 
+      ODKFileUtils.getNameOfMetadataFolder();
   /** Name of the logging directory under the app id. */
-  public static final String DIR_LOGGING = "logging";
+  public static final String DIR_LOGGING = 
+      ODKFileUtils.getNameOfLoggingFolder();
   /** Name of the framework directory under the app id. */
-  public static final String DIR_FRAMEWORK = "framework";
+  public static final String DIR_FRAMEWORK = 
+      ODKFileUtils.getNameOfFrameworkFolder();
+  public static final String DIR_INSTANCES = 
+      ODKFileUtils.getNameOfInstancesFolder();
   
   /** 
    * Name of the directory under the app id where the table-specific stuff 
@@ -91,11 +98,12 @@ public class TableFileUtils {
    * If the file exists but is not a directory, logs an error and returns an
    * empty list.
    * @param folder
-   * @param excluding can be null--nothing will be excluded.
+   * @param excluding can be null--nothing will be excluded. Should be relative
+   * to the given folder.
    * @param relativeTo the path to which the returned paths will be relative.
    * A null value makes them relative to the folder parameter. If it is non 
    * null, folder must start with relativeTo, or else the files in
-   * folder could not possible be relative to relativeTo. In this case will 
+   * folder could not possibly be relative to relativeTo. In this case will 
    * throw an IllegalArgumentException.
    * @return the relative paths of the files under the folder--i.e. the paths
    * after the folder parameter, not including the first separator

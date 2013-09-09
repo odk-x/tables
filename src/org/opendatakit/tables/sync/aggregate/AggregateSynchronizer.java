@@ -596,30 +596,39 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncTableFiles(String tableId) throws IOException {
+  public void syncNonMediaTableFiles(String tableId, boolean pushLocal) 
+      throws IOException {
     List<OdkTablesFileManifestEntry> manifest = 
         getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    String appFolder = 
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToTableFolder = TableFileUtils.DIR_TABLES + 
-        File.separator + tableId;
-    String tableFolder = appFolder + File.separator + 
-        relativePathToTableFolder;
-    List<String> relativePathsToAppFolderOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(tableFolder, null, appFolder);
-    // TODO: relative to folder doesn't match up with the filename given by
-    // aggregate, so uploads everything unnecessarily. fix it. fix it fix it fix it!
-    List<String> relativePathsToUpload = 
-        getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
-    // and then upload the files.
-    Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
-    for (String relativePath : relativePathsToUpload) {
-      String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
-          relativePath));
+    if (pushLocal) {
+      // Then we actually do try and upload things. Otherwise we can just 
+      // continue straight on.
+      String appFolder = 
+          ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      String relativePathToTableFolder = TableFileUtils.DIR_TABLES + 
+          File.separator + tableId;
+      String tableFolder = appFolder + File.separator + 
+          relativePathToTableFolder;
+      Set<String> tableDirsToExclude = new HashSet<String>();
+      // We don't want to sync anything in the instances directory, because this
+      // contains things like media attachments. These should instead be synched 
+      // with a separate call.
+      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
+      List<String> relativePathsToAppFolderOnDevice = 
+          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude, 
+              appFolder);
+      List<String> relativePathsToUpload = 
+          getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+      // and then upload the files.
+      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+      for (String relativePath : relativePathsToUpload) {
+        String wholePathToFile = appFolder + File.separator + relativePath;
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+            relativePath));
+      }
     }
   }
 
@@ -871,6 +880,57 @@ public class AggregateSynchronizer implements Synchronizer {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  @Override
+  public void syncTableMediaFiles(String tableId) throws IOException {
+    // There are two things to do here, really. The first is to get the 
+    // manifest for each instance--or each row of the table. And download all
+    // the files on the manifest.
+    // TODO: handle deletion of files appropiately.
+    // The second is to then upload the files in the instances folder to the
+    // server.
+    //
+    // The implementation of this method will be very similar to the
+    // implementation of syncNonMediaTableFiles when pushLocal==true. 
+    // The main logic is as follows:
+    // 1) request the manifest.
+    // 2) compare hashes of the files existing on the phone, downloading those
+    // that do not exist or that have differing hashes.
+    // 3) get all the files under the INSTANCES directory. 
+    // 4) remove those files that were on the manifest, as they can now be
+    // assumed to be up to date. 
+    // 5) upload all the remaining files.
+    
+    // 1) Get the manifest.
+    // TODO: this is currently just getting the same table-level manifest as 
+    // syncNonMediaTableFiles(). In reality it should be making its own call.
+    List<OdkTablesFileManifestEntry> manifest = 
+        getTableLevelFileManifest(tableId);
+    for (OdkTablesFileManifestEntry entry : manifest) {
+      compareAndDownloadFile(entry);
+    }
+    // Then we actually do try and upload things. Otherwise we can just 
+    // continue straight on.
+    String appFolder = 
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
+        File.separator + tableId + File.separator + 
+        TableFileUtils.DIR_INSTANCES;
+    String instancesFolderFullPath = appFolder + File.separator + 
+        relativePathToInstancesFolder;
+    List<String> relativePathsToAppFolderOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null, 
+            appFolder);
+    List<String> relativePathsToUpload = 
+        getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+    // and then upload the files.
+    Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+    for (String relativePath : relativePathsToUpload) {
+      String wholePathToFile = appFolder + File.separator + relativePath;
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+          relativePath));
     }
   }
 

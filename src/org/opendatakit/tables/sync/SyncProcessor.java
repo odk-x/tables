@@ -47,6 +47,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -125,11 +126,12 @@ public class SyncProcessor {
    * TODO: This should also somehow account for zipped files, exploding them or
    * what have you.
    */
-  public SynchronizationResult synchronize() {
+  public SynchronizationResult synchronize(boolean pushLocalAppLevelFiles,
+      boolean pushLocalTableNonMediaFiles, boolean syncMediaFiles) {
     Log.i(TAG, "entered synchronize()");
     // First we're going to synchronize the app level files.
     try {
-      synchronizer.syncAppLevelFiles(true);
+      synchronizer.syncAppLevelFiles(pushLocalAppLevelFiles);
     } catch (IOException e) {
       // TODO: update a synchronization result to report back to them as well.
       Log.e(TAG, "[synchronize] error trying to synchronize app-level files.");
@@ -143,7 +145,7 @@ public class SyncProcessor {
         KeyValueStore.Type.SERVER);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
-      synchronizeTable(tp, false);
+      synchronizeTable(tp, false, pushLocalTableNonMediaFiles, syncMediaFiles);
     }
     return mUserResult;
   }
@@ -155,6 +157,11 @@ public class SyncProcessor {
    * Note that if the db changes under you when calling this method, the tp
    * parameter will become out of date. It should be refreshed after calling
    * this method.
+   * <p>
+   * This method does NOT synchronize the application files. This means that if
+   * any html files downloaded require the {@link TableFileUtils#DIR_FRAMEWORK}
+   * directory, for instance, the caller must ensure that the app files are 
+   * synchronized as well.
    *
    * @param tp
    *          the table to synchronize
@@ -162,8 +169,14 @@ public class SyncProcessor {
    *          flag saying whether or not the table is being downloaded for the
    *          first time. Only applies to tables have their sync state set to
    *          {@link SyncState#rest}.
+   * @param pushLocalNonMediaFiles true if local non media files should be 
+   * pushed--e.g. any html files on the device should be pushed to the server
+   * @param syncMediaFiles if media files should also be synchronized. Media 
+   * files are defined as files that are part of the actual data of a table, 
+   * e.g. pictures that have been collected.
    */
-  public void synchronizeTable(TableProperties tp, boolean downloadingTable) {
+  public void synchronizeTable(TableProperties tp, boolean downloadingTable,
+      boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     DbTable table = DbTable.getDbTable(dbh,
         TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
             KeyValueStore.Type.SERVER)); 
@@ -180,7 +193,8 @@ public class SyncProcessor {
     try {
       switch (tp.getSyncState()) {
       case inserting:
-        success = synchronizeTableInserting(tp, table, tableResult);
+        success = synchronizeTableInserting(tp, table, tableResult,
+            pushLocalNonMediaFiles, syncMediaFiles);
         break;
       case deleting:
         success = synchronizeTableDeleting(tp, table, tableResult);
@@ -195,12 +209,13 @@ public class SyncProcessor {
           // correct.
           tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
               tp.getBackingStoreType());
-          success = synchronizeTableRest(tp, table, false, tableResult);
+          success = synchronizeTableRest(tp, table, false, tableResult, 
+              pushLocalNonMediaFiles, syncMediaFiles);
         }
         break;
       case rest:
         success = synchronizeTableRest(tp, table, downloadingTable,
-            tableResult);
+            tableResult, pushLocalNonMediaFiles, syncMediaFiles);
         break;
       default:
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
@@ -270,16 +285,27 @@ public class SyncProcessor {
   }
 
   private boolean synchronizeTableInserting(TableProperties tp,
-      DbTable table, TableResult tableResult) {
+      DbTable table, TableResult tableResult, boolean pushLocalNonMediaFiles,
+      boolean syncMediaFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
     
     // Here we'll sycnhronize the table files.
     try {
-      synchronizer.syncTableFiles(tp.getTableId());
+      synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
+          pushLocalNonMediaFiles);
     } catch (IOException e) {
-      // TODO: update table result.
-      Log.e(TAG, "[synchronizeTableInserting] error synching table files");
+      ioException("synchronizeTableInserting--nonMediaFiles", tp, e, 
+          tableResult);
+      Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " +
+      		"files");
+      return false;
+    } catch (Exception e) {
+      exception("synchronizeTableInserting--nonMediaFiles", tp, e, 
+          tableResult);
+      Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " +
+      		"files");
+      return false;
     }
 
     // If it was inserting, then we know we had properties changes to add.
@@ -332,6 +358,20 @@ public class SyncProcessor {
       // might be in an indeterminate state--depends how the endRowsTransaction
       // stuff works.
       tableResult.setPushedLocalData(true);
+      try {
+        synchronizer.syncTableMediaFiles(tp.getTableId());
+      } catch (IOException e) {
+        ioException("synchronizeTableInserting--mediaFiles", tp, e, 
+            tableResult);
+        Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
+        		"files");
+        return false;
+      } catch (Exception e) {
+        exception("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
+        Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
+        		"files");
+        return false;
+      }
       success = true;
     } catch (IOException e) {
       ioException("synchronizeTableInserting", tp, e, tableResult);
@@ -403,15 +443,22 @@ public class SyncProcessor {
    * @return
    */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table,
-      boolean downloadingTable, TableResult tableResult) {
+      boolean downloadingTable, TableResult tableResult, 
+      boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
     
     try {
-      synchronizer.syncTableFiles(tp.getTableId());
+      synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
+          pushLocalNonMediaFiles);
     } catch (IOException e) {
-      // TODO: update table result.
+      ioException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
+      return false;
+    } catch (Exception e) {
+      exception("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
+      Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
+      return false;
     }
       
     // First set the action so we can report it back to the user. We don't have
@@ -492,6 +539,20 @@ public class SyncProcessor {
         table.deleteRowActual(rowId);
         syncResult.stats.numDeletes++;
         syncResult.stats.numEntries++;
+      }
+      // And now try to push up the media files, if necessary.
+      if (syncMediaFiles) {
+        try {
+          synchronizer.syncTableMediaFiles(tp.getTableId());
+        } catch (IOException e) {
+          ioException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
+          Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
+          return false;
+        } catch (Exception e) {
+          exception("synchronizeTableRest--mediaFiles", tp, e, tableResult);
+          Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
+          return false;
+        }
       }
       success = true;
     } catch (IOException e) {

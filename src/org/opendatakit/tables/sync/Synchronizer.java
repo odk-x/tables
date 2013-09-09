@@ -167,10 +167,25 @@ public interface Synchronizer {
   public void syncAllFiles() throws IOException;
   
   /**
-   * Sync only the files associated with the specified table.
+   * Sync only the files associated with the specified table. This does NOT
+   * sync any media files--those files that are associated with individual rows
+   * of the table.
+   * @param tableId
+   * @param pushLocal true if the local files should be pushed
+   * @throws IOException
+   */
+  public void syncNonMediaTableFiles(String tableId, boolean pushLocal) 
+      throws IOException;
+  
+  /**
+   * Sync only the media attachments of a table--those files that belong to
+   * individual rows of the table. This would include things like any pictures
+   * that have been collected as part of the form. I.e. those files that are
+   * considered data, rather than metadata like html defining a list view for
+   * the table.
    * @param tableId
    * @throws IOException
    */
-  public void syncTableFiles(String tableId) throws IOException;
+  public void syncTableMediaFiles(String tableId) throws IOException;
 
 }

@@ -259,7 +259,11 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           // for now.
         }
       }
-      processor.synchronizeTable(tp, true);
+      // We're going to say DO NOT sync media or nonMedia files, as since we're
+      // downloading the table, there shouldn't be any. If for some crazy 
+      // reason there were (e.g. if they were created in the download process),
+      // it shouldn't really matter.
+      processor.synchronizeTable(tp, true, false, false);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);

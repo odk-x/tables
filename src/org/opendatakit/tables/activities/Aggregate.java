@@ -384,7 +384,10 @@ public class Aggregate extends SherlockActivity {
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,
             synchronizer, new SyncResult());
-        result = processor.synchronize();
+        // This is going to assume that we ALWAYS sync all three levels:
+        // app, tableNonMedia, and tableMedia. This might have to be changed
+        // and paramaterized using some user-input values in the future.
+        result = processor.synchronize(true, true, true);
         success = true;
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
