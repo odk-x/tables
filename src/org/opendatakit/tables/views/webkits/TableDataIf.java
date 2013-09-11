@@ -146,6 +146,21 @@ public class TableDataIf {
 		weakTable.get().editRowWithCollectAndSpecificForm(rowNumber, formId,
 				formVersion, formRootElement);
 	}
+	
+	/**
+	 * Edit the row using Survey and a specific form.
+	 * @param rowNumber
+	 * @param formId
+	 * @param screenPath
+	 * @param formPath
+	 * @param refId
+	 */
+	// @JavascriptInterface
+	public void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
+	    String screenPath, String formPath, String refId) {
+	  weakTable.get().editRowWithSurveyAndSpecificForm(rowNumber, formId, 
+	      screenPath, formPath, refId);
+	}
 
 	/**
 	 * @see ControlIf#addRowWithCollect(String)
@@ -156,8 +171,11 @@ public class TableDataIf {
 		weakTable.get().addRowWithCollect(tableName);
 	}
 	
-	public void addRowWithSurvey(String tableName) {
-	  weakTable.get().addRowWithSurvey(tableName);
+	// @JavascriptInterface
+	public void addRowWithSurveyAndSpecificForm(String tableName, 
+	    String formId, String screenPath, String formPath, String refId) {
+	  weakTable.get().addRowWithSurveyAndSpecificForm(tableName, formId,
+	      screenPath, formPath, refId);
 	}
 
 	/**

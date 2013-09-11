@@ -76,6 +76,20 @@ public class RowDataIf {
 		weakRowData.get().editRowWithCollectAndSpecificForm(formId,
 				formVersion, formRootElement);
 	}
+	
+	/**
+	 * Edit the row with Survey and the specified form.
+	 * @param formId
+	 * @param screenPath
+	 * @param formPath
+	 * @param refId
+	 */
+	// @JavascriptInterface
+	public void editRowWithSurveyAndSpecificForm(String formId, 
+	    String screenPath, String formPath, String refId) {
+	  weakRowData.get().editRowWithSurveyAndSpecificForm(formId, screenPath, 
+	      formPath, refId);
+	}
 
 	/**
 	 * @see ControlIf#addRowWithCollect(String)

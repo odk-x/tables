@@ -55,6 +55,7 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -320,16 +321,61 @@ public abstract class CustomView extends LinearLayout {
 				tp);
 	}
 	
-	private void prepopulateRowAndLaunchSurvey(TableProperties tp, 
+	/**
+	 * Actually acquire the Intents and launch the forms.
+	 * @param tp
+	 * @param surveyFormParameters
+	 * @param elementKeyToValueToPrepopulate
+	 */
+	private void prepopulateRowAndLaunchSurveyToAddRow(TableProperties tp,
+	    SurveyFormParameters surveyFormParameters,
 	    Map<String, String> elementKeyToValueToPrepopulate) {
 	  Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
-	      getContainerActivity(), tp, elementKeyToValueToPrepopulate);
+	      getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME,
+	      surveyFormParameters, elementKeyToValueToPrepopulate);
 	  SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
 	}
 	
-   private void addRowWithSurvey(String tableName, TableProperties tp, 
-       Map<String, String> prepopulateValues) {
-     prepopulateRowAndLaunchSurvey(tp, prepopulateValues);
+	/**
+	 * Should eventually handle similar things to the analagous Collect method.
+	 * For now just is a wrapper.
+	 * @param tableName
+	 * @param tp
+	 * @param formId
+	 * @param screenPath
+	 * @param formPath
+	 * @param refId
+	 * @param prepopulateValues
+	 */
+   private void addRowWithSurveyAndSpecificForm(String tableName, 
+       TableProperties tp, String formId, String screenPath, String formPath,
+       String refId, Map<String, String> prepopulateValues) {
+     SurveyFormParameters surveyFormParameters = new 
+         SurveyFormParameters(true, formId, screenPath, formPath, refId);
+     prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters, 
+         prepopulateValues);
+   }
+   
+   /**
+    * Construct the Intent and launch survey to edit the given row.
+    * @param tableName
+    * @param tp
+    * @param instanceId
+    * @param formId
+    * @param screenPath
+    * @param formPath
+    * @param refId
+    */
+   private void editRowWithSurveyAndSpecificForm(TableProperties tp, 
+       String instanceId, String formId, String screenPath,
+       String formPath, String refId) {
+     SurveyFormParameters surveyFormParameters = 
+         new SurveyFormParameters(true, formId, screenPath, formPath, refId);
+     Intent surveyEditRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
+         getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME, 
+         surveyFormParameters, instanceId);
+     SurveyUtil.launchSurveyToEditRow(getContainerActivity(), 
+         surveyEditRowIntent, tp, instanceId);
    }
 
 	/**
@@ -413,6 +459,19 @@ public abstract class CustomView extends LinearLayout {
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					mRowId);
+		}
+		
+		/**
+		 * Edit the row with the specified form.
+		 * @param formId
+		 * @param screenPath
+		 * @param formPath
+		 * @param refId
+		 */
+		public void editRowWithSurveyAndSpecificForm(String formId, 
+		    String screenPath, String formPath, String refId) {
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId, 
+		      formId, screenPath, formPath, refId);
 		}
 
 		/**
@@ -798,6 +857,22 @@ public abstract class CustomView extends LinearLayout {
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
 		}
+		
+		/**
+		 * Edit the row using Survey and a specific form.
+		 * @param rowNumber
+		 * @param formId
+		 * @param screenPath
+		 * @param formPath
+		 * @param refId
+		 */
+		void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
+		    String screenPath, String formPath, String refId) {
+		  TableProperties tp = this.mTable.getTableProperties();
+		  String instanceId = this.mTable.getRowId(rowNumber);
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId, 
+		      formId, screenPath, formPath, refId);
+		}
 
 		/**
 		 * Add a row using collect and the default form.
@@ -821,7 +896,8 @@ public abstract class CustomView extends LinearLayout {
 		 * Add a row using survey and the default form.
 		 * @param tableName
 		 */
-		void addRowWithSurvey(String tableName) {
+		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
+		    String screenPath, String formPath, String refId) {
 		  TableProperties tp = mTable.getTableProperties();
 		  TableProperties tpToReceiveAdd = 
 		      getTablePropertiesByDisplayName(tp, tableName);
@@ -830,7 +906,8 @@ public abstract class CustomView extends LinearLayout {
 		    		"because it could not be found.");
 		    return;
 		  }
-		  CustomView.this.addRowWithSurvey(tableName, tpToReceiveAdd, null);
+		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+		      tpToReceiveAdd, formId, screenPath, formPath, refId, null);
 		}
 
 		/**
@@ -1289,7 +1366,8 @@ public abstract class CustomView extends LinearLayout {
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
 		}
 		
-		public void addRowWithSurvey(String tableName) {
+		public void addRowWithSurveyAndSpecificForm(String tableName,
+		    String formId, String screenPath, String formPath, String refId) {
 		  TableProperties tp = mTable.getTableProperties();
 		  // does this "to receive add" call make sense with survey? unclear.
 		  TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
@@ -1299,7 +1377,8 @@ public abstract class CustomView extends LinearLayout {
 		    		"returning.");
 		    return;
 		  }
-		  CustomView.this.addRowWithSurvey(tableName, tpToReceiveAdd, null);
+		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+		      tpToReceiveAdd, formId, screenPath, formPath, refId, null);
 		}
 
 		/**
