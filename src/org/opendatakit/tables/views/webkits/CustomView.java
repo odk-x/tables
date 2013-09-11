@@ -816,6 +816,22 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
 		}
+		
+		/**
+		 * Add a row using survey and the default form.
+		 * @param tableName
+		 */
+		void addRowWithSurvey(String tableName) {
+		  TableProperties tp = mTable.getTableProperties();
+		  TableProperties tpToReceiveAdd = 
+		      getTablePropertiesByDisplayName(tp, tableName);
+		  if (tpToReceiveAdd == null) {
+		    Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
+		    		"because it could not be found.");
+		    return;
+		  }
+		  CustomView.this.addRowWithSurvey(tableName, tpToReceiveAdd, null);
+		}
 
 		/**
 		 * Add a row using Collect. This is the hook into the javascript. The

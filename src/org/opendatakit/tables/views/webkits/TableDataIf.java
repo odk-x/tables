@@ -155,6 +155,10 @@ public class TableDataIf {
 	public void addRowWithCollect(String tableName) {
 		weakTable.get().addRowWithCollect(tableName);
 	}
+	
+	public void addRowWithSurvey(String tableName) {
+	  weakTable.get().addRowWithSurvey(tableName);
+	}
 
 	/**
 	 * @see ControlIf#addRowWithCollectAndSpecificForm(String, String, String, String)
