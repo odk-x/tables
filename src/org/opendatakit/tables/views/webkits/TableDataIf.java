@@ -157,9 +157,9 @@ public class TableDataIf {
 	 */
 	// @JavascriptInterface
 	public void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
-	    String screenPath, String formPath, String refId) {
+	    String screenPath) {
 	  weakTable.get().editRowWithSurveyAndSpecificForm(rowNumber, formId, 
-	      screenPath, formPath, refId);
+	      screenPath);
 	}
 
 	/**
@@ -173,9 +173,9 @@ public class TableDataIf {
 	
 	// @JavascriptInterface
 	public void addRowWithSurveyAndSpecificForm(String tableName, 
-	    String formId, String screenPath, String formPath, String refId) {
+	    String formId, String screenPath) {
 	  weakTable.get().addRowWithSurveyAndSpecificForm(tableName, formId,
-	      screenPath, formPath, refId);
+	      screenPath);
 	}
 
 	/**

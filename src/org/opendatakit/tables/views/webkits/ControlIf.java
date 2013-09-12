@@ -327,9 +327,9 @@ public class ControlIf {
 	 */
 	// @JavascriptInterface
 	public void addRowWithSurveyAndSpecificForm(String tableName, String formId,
-	    String screenPath, String formPath, String refId) {
+	    String screenPath) {
 	  weakControl.get().addRowWithSurveyAndSpecificForm(tableName, formId,
-	      screenPath, formPath, refId);
+	      screenPath);
 	}
 
 	/**

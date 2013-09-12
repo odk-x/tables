@@ -348,10 +348,10 @@ public abstract class CustomView extends LinearLayout {
 	 * @param prepopulateValues
 	 */
    private void addRowWithSurveyAndSpecificForm(String tableName, 
-       TableProperties tp, String formId, String screenPath, String formPath,
-       String refId, Map<String, String> prepopulateValues) {
+       TableProperties tp, String formId, String screenPath,
+       Map<String, String> prepopulateValues) {
      SurveyFormParameters surveyFormParameters = new 
-         SurveyFormParameters(true, formId, screenPath, formPath, refId);
+         SurveyFormParameters(true, formId, screenPath);
      prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters, 
          prepopulateValues);
    }
@@ -367,10 +367,9 @@ public abstract class CustomView extends LinearLayout {
     * @param refId
     */
    private void editRowWithSurveyAndSpecificForm(TableProperties tp, 
-       String instanceId, String formId, String screenPath,
-       String formPath, String refId) {
+       String instanceId, String formId, String screenPath) {
      SurveyFormParameters surveyFormParameters = 
-         new SurveyFormParameters(true, formId, screenPath, formPath, refId);
+         new SurveyFormParameters(true, formId, screenPath);
      Intent surveyEditRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
          getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME, 
          surveyFormParameters, instanceId);
@@ -469,9 +468,9 @@ public abstract class CustomView extends LinearLayout {
 		 * @param refId
 		 */
 		public void editRowWithSurveyAndSpecificForm(String formId, 
-		    String screenPath, String formPath, String refId) {
+		    String screenPath) {
 		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId, 
-		      formId, screenPath, formPath, refId);
+		      formId, screenPath);
 		}
 
 		/**
@@ -867,11 +866,11 @@ public abstract class CustomView extends LinearLayout {
 		 * @param refId
 		 */
 		void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
-		    String screenPath, String formPath, String refId) {
+		    String screenPath) {
 		  TableProperties tp = this.mTable.getTableProperties();
 		  String instanceId = this.mTable.getRowId(rowNumber);
 		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId, 
-		      formId, screenPath, formPath, refId);
+		      formId, screenPath);
 		}
 
 		/**
@@ -897,7 +896,7 @@ public abstract class CustomView extends LinearLayout {
 		 * @param tableName
 		 */
 		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
-		    String screenPath, String formPath, String refId) {
+		    String screenPath) {
 		  TableProperties tp = mTable.getTableProperties();
 		  TableProperties tpToReceiveAdd = 
 		      getTablePropertiesByDisplayName(tp, tableName);
@@ -907,7 +906,7 @@ public abstract class CustomView extends LinearLayout {
 		    return;
 		  }
 		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
-		      tpToReceiveAdd, formId, screenPath, formPath, refId, null);
+		      tpToReceiveAdd, formId, screenPath, null);
 		}
 
 		/**
@@ -1367,7 +1366,7 @@ public abstract class CustomView extends LinearLayout {
 		}
 		
 		public void addRowWithSurveyAndSpecificForm(String tableName,
-		    String formId, String screenPath, String formPath, String refId) {
+		    String formId, String screenPath) {
 		  TableProperties tp = mTable.getTableProperties();
 		  // does this "to receive add" call make sense with survey? unclear.
 		  TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
@@ -1378,7 +1377,7 @@ public abstract class CustomView extends LinearLayout {
 		    return;
 		  }
 		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
-		      tpToReceiveAdd, formId, screenPath, formPath, refId, null);
+		      tpToReceiveAdd, formId, screenPath, null);
 		}
 
 		/**

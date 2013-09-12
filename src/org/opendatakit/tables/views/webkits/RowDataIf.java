@@ -86,9 +86,8 @@ public class RowDataIf {
 	 */
 	// @JavascriptInterface
 	public void editRowWithSurveyAndSpecificForm(String formId, 
-	    String screenPath, String formPath, String refId) {
-	  weakRowData.get().editRowWithSurveyAndSpecificForm(formId, screenPath, 
-	      formPath, refId);
+	    String screenPath) {
+	  weakRowData.get().editRowWithSurveyAndSpecificForm(formId, screenPath);
 	}
 
 	/**
