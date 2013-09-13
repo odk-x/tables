@@ -75,13 +75,16 @@ public class SurveyUtil {
    * elementKeyToValue. However! Much of this is still unimplemented.
    * @param context
    * @param tp
-   * @param elementKeyToValue
+   * @param elementNameToValue a mapping of elementName to value for the values
+   * that you wish to prepopulate in the add row. Note that these are different
+   * than the values used in Collect, which relies on elementKey rather than
+   * on elementName.
    * @return
    */
   public static Intent getIntentForOdkSurveyAddRow(Context context, 
       TableProperties tp, String appName, 
       SurveyFormParameters surveyFormParameters, 
-      Map<String, String> elementKeyToValue) {
+      Map<String, String> elementNameToValue) {
     Log.e(TAG, "[getIntentForOdkSurveyAddRow] not completely implemented");
     // TODO: we need to figure out how to prepopulate values.
 
@@ -94,7 +97,8 @@ public class SurveyUtil {
         SURVEY_MAIN_MENU_ACTIVITY_COMPONENT_NAME));
     intent.setAction(Intent.ACTION_EDIT);
     Uri addUri = getUriForSurveyAddRow(tp, TableFileUtils.ODK_TABLES_APP_NAME,
-        surveyFormParameters, context.getContentResolver());
+        surveyFormParameters, elementNameToValue, 
+        context.getContentResolver());
     intent.setData(addUri);
     return intent;
   }
@@ -139,6 +143,7 @@ public class SurveyUtil {
    * @param tp
    * @param appName
    * @param surveyFormParameters
+   * @param elementNameToValue a map of prepopulated values to add to the form
    * @param resolver
    * @return
    */
@@ -150,11 +155,12 @@ public class SurveyUtil {
    */
   private static Uri getUriForSurveyAddRow(TableProperties tp, String appName,
       SurveyFormParameters surveyFormParameters, 
+      Map<String, String> elementNameToValue,
       ContentResolver resolver) {
     // We'll create a UUID, as that will tell survey we want a new one.
     String newUuid = INSTANCE_UUID_PREFIX + UUID.randomUUID().toString();
     Uri helpedUri = getUriForSurveyHelper(tp, surveyFormParameters, appName, 
-        newUuid);
+        newUuid, elementNameToValue);
     return helpedUri;
   }
   
@@ -180,8 +186,12 @@ public class SurveyUtil {
     // The helper function does most of the heavy lifting here. Unlike the 
     // add row call, all we do is hand off the info, as we already have our
     // instanceId, which is pointing to an existing row.
+    // Note that while the code path might exist to add key-value pairs to the
+    // end of the URI, since we're editing we're not going to allow this for 
+    // now. It's conceivable, perhaps, that we'll want to allow specification
+    // of subforms or something, but for now we're not going to allow it.
     Uri helpedUri = getUriForSurveyHelper(tp, surveyFormParameters, appName, 
-        instanceId);
+        instanceId, null);
     return helpedUri;
   }
   
@@ -199,7 +209,7 @@ public class SurveyUtil {
    */
   private static Uri getUriForSurveyHelper(TableProperties tp, 
       SurveyFormParameters surveyFormParameters, String appName, 
-      String instanceId) {
+      String instanceId, Map<String, String> elementNameToValue) {
     // We're operating for the moment under the assumption that Survey expects
     // a uri like the following:
     // content://org.opendatakit.survey.android.provider.FormProvider/
@@ -226,6 +236,22 @@ public class SurveyUtil {
     if (surveyFormParameters.getScreenpath() != null) {
       uriStr += "&" + URI_SURVEY_QUERY_PARAM_SCREEN_PATH + 
           surveyFormParameters.getScreenpath();
+    }
+    if (elementNameToValue != null && !elementNameToValue.isEmpty()) {
+      // We'll add all the entries to the URI as key-value pairs.
+      // Use a StringBuilder in case we have a lot of these.
+      // We'll assume we already have parameters added to the frame. This is
+      // reasonable because this URI call thus far insists on an instanceId, so
+      // we know there will be at least that parameter.
+      StringBuilder stringBuilder = new StringBuilder(uriStr);
+      for (Map.Entry<String, String> entry : elementNameToValue.entrySet()) {
+        // First add the ampersand
+        stringBuilder.append("&");
+        stringBuilder.append(entry.getKey());
+        stringBuilder.append("=");
+        stringBuilder.append(entry.getValue());
+      }
+      uriStr = stringBuilder.toString();
     }
     return Uri.parse(uriStr);
   }

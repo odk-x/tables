@@ -1365,19 +1365,51 @@ public abstract class CustomView extends LinearLayout {
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
 		}
 		
+		/**
+		 * Add a row to survey using the specified form and screenpath.
+		 * @param tableName
+		 * @param formId
+		 * @param screenPath
+		 */
 		public void addRowWithSurveyAndSpecificForm(String tableName,
 		    String formId, String screenPath) {
-		  TableProperties tp = mTable.getTableProperties();
-		  // does this "to receive add" call make sense with survey? unclear.
-		  TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
-		      null, tableName);
-		  if (tpToReceiveAdd == null) {
-		    Log.e(TAG, "table [" + tableName + "] could not be found. " +
-		    		"returning.");
-		    return;
-		  }
-		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
-		      tpToReceiveAdd, formId, screenPath, null);
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		      formId, screenPath, null);
+		}
+		
+		/**
+		 * Add a row with survey using the specified formId and screenPath. The 
+		 * jsonMap should be a Stringified json map mapping elementName to values
+		 * to prepopulate with the add row request.
+		 * @param tableName
+		 * @param formId
+		 * @param screenPath
+		 * @param jsonMap
+		 */
+		public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+		    String tableName, String formId, String screenPath, String jsonMap) {
+        TableProperties tp = mTable.getTableProperties();
+        // does this "to receive add" call make sense with survey? unclear.
+        TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
+            null, tableName);
+        if (tpToReceiveAdd == null) {
+          Log.e(TAG, "table [" + tableName + "] could not be found. " +
+               "returning.");
+          return;
+        }
+        Map<String, String> map = null;
+        // Do this null check and only parse and return errors if the jsonMap
+        // is not null. This allows other methods doing similar things to call
+        // through using this method and passing null values.
+        if (jsonMap != null) {
+          map = CustomView.this.getMapFromJson(jsonMap);
+          if (map == null) {
+            Log.e(TAG, "couldn't parse values into map to give to Survey");
+            return;
+          }
+        }
+        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+            tpToReceiveAdd, formId, screenPath, map);
 		}
 
 		/**
