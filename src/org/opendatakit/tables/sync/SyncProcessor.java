@@ -103,23 +103,23 @@ public class SyncProcessor {
    * new order is as follows:
    * <p>
    * 1) Synchronize app-level files. (i.e. those files under the appid directory
-   * that are NOT then under the tables, instances, metadata, or logging 
+   * that are NOT then under the tables, instances, metadata, or logging
    * directories.)
-   * This is a multi-part process: 
-   * a) Get the app-level manifest, download any 
+   * This is a multi-part process:
+   * a) Get the app-level manifest, download any
    * files that have changed (differing hashes) or that do not exist.
    * b) Upload the files that you have that are not on the manifest. Note that
-   * this could be suppressed if the user does not have appropriate 
+   * this could be suppressed if the user does not have appropriate
    * permissions.
    * <p>
-   * 2) Synchronize the static table files for those tables that are set to 
+   * 2) Synchronize the static table files for those tables that are set to
    * sync. (i.e. those files under "appid/tables/tableid"). This follows the
    * same multi-part steps of 1a and 1b.
-   * 3) Synchronize the table properties/metadata. 
+   * 3) Synchronize the table properties/metadata.
    * 4) Synchronize the table data. This includes the data in the db as well as
-   * those files under "appid/instances/tableid". This file synchronization 
+   * those files under "appid/instances/tableid". This file synchronization
    * follows the same multi-part steps of 1a and 1b.
-   * TODO: step four--the synchronization of instances files--should perhaps 
+   * TODO: step four--the synchronization of instances files--should perhaps
    * also be allowed to be modular and permit things like ODK Submit to handle
    * data and files separately.
    * <p>
@@ -179,9 +179,9 @@ public class SyncProcessor {
       boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     DbTable table = DbTable.getDbTable(dbh,
         TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
-            KeyValueStore.Type.SERVER)); 
+            KeyValueStore.Type.SERVER));
     // used to get the above from the ACTIVE store. if things go wonky, maybe
-    // check to see if it was ACTIVE rather than SERVER for a reason. can't 
+    // check to see if it was ACTIVE rather than SERVER for a reason. can't
     // think of one. one thing is that if it fails you'll see a table but won't
     // be able to open it, as there won't be any KVS stuff appropriate for it.
     boolean success = false;
@@ -289,7 +289,7 @@ public class SyncProcessor {
       boolean syncMediaFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
-    
+
     // Here we'll sycnhronize the table files.
     try {
       synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
@@ -382,7 +382,7 @@ public class SyncProcessor {
       success = false;
     } finally {
       if (success) {
-        updateRowsState(table, getRowIdsAsArray(rowsToInsert), 
+        updateRowsState(table, getRowIdsAsArray(rowsToInsert),
             SyncUtil.State.REST);
       }
     }
@@ -447,7 +447,7 @@ public class SyncProcessor {
       boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
-    
+
     try {
       synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
           pushLocalNonMediaFiles);
@@ -460,7 +460,7 @@ public class SyncProcessor {
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
       return false;
     }
-      
+
     // First set the action so we can report it back to the user. We don't have
     // to worry about the special case where we are downloading it from the
     // server of the first time, because that takes place through a separate
@@ -680,7 +680,7 @@ public class SyncProcessor {
     List<SyncRow> rowsToDelete = new ArrayList<SyncRow>();
     // This will store the local versions of the rows that we must transition
     // to state conflicting.
-    Map<String, Row> localVersionsOfConflictingRows = 
+    Map<String, Row> localVersionsOfConflictingRows =
         new HashMap<String, Row>();
 
     for (SyncRow row : rows) {
@@ -698,7 +698,7 @@ public class SyncProcessor {
             else
               rowsToUpdate.add(row);
           } else {
-            localVersionsOfConflictingRows.put(rowId, 
+            localVersionsOfConflictingRows.put(rowId,
                 allRowIds.getRowAtIndex(i));
             rowsToConflict.add(row);
           }
@@ -725,7 +725,7 @@ public class SyncProcessor {
     tp.setSyncTag(newSyncTag);
   }
 
-  private void conflictRowsInDb(DbTable table, List<SyncRow> rows, 
+  private void conflictRowsInDb(DbTable table, List<SyncRow> rows,
       Map<String, Row> localVersionsOfConflictingRows) {
     for (SyncRow row : rows) {
       Log.i(TAG, "conflicting row, id=" + row.getRowId() + " syncTag=" +
@@ -737,7 +737,7 @@ public class SyncProcessor {
       		"( ?, ? )",
           DataTableColumns.ROW_ID,
           DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
-      String[] whereArgs = { row.getRowId(), 
+      String[] whereArgs = { row.getRowId(),
           String.valueOf(SyncUtil.State.CONFLICTING),
           String.valueOf(SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES),
           String.valueOf(SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES)};
@@ -745,25 +745,25 @@ public class SyncProcessor {
 
       // update existing row
       // Here we are updating the local version of the row. Its sync_state
-      // will be CONFLICT. If the row was formerly deleted, then its 
+      // will be CONFLICT. If the row was formerly deleted, then its
       // conflict_type should become LOCAL_DELETED_OLD_VALUES, signifying that
       // that row was deleted locally and contains the values at the time of
-      // deletion. If the row was in state updating, that means that its 
+      // deletion. If the row was in state updating, that means that its
       // conflict_type should become LOCAL_UPDATED_UPDATED_VALUES, signifying
       // that the local version was in state updating, and the version of the
       // row contains the local changes that had been made.
       Row localRow = localVersionsOfConflictingRows.get(row.getRowId());
-      String localRowSyncStateStr = 
+      String localRowSyncStateStr =
           localRow.getDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
       int localRowSyncState = Integer.parseInt(localRowSyncStateStr);
       int localRowConflictType;
       if (localRowSyncState == SyncUtil.State.UPDATING) {
-        localRowConflictType = 
+        localRowConflictType =
             SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
         Log.i(TAG, "local row was in sync state UPDATING, changing to " +
             "CONFLICT and setting conflict type to: " + localRowConflictType);
       } else if (localRowSyncState == SyncUtil.State.DELETING) {
-        localRowConflictType = 
+        localRowConflictType =
             SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES;
         Log.i(TAG, "local row was in sync state DELETING, changing to " +
             "CONFLICT and updating conflict type to: " + localRowConflictType);
@@ -772,25 +772,25 @@ public class SyncProcessor {
           // If we ever make it here we're potentially in big trouble, as we may
           // have updated the db. At the least, we're disobeying the protocol.
           // Throwing an exception, however, could lead to being in an even worse
-          // indeterminate state, so we'll just log an error. 
+          // indeterminate state, so we'll just log an error.
           Log.e(TAG, "a local row was passed to conflictRowsInDb that was" +
           		" not " +
               "a state that should have generated a conflict. Local row " +
               "state " +
-              "was: " + localRowSyncState);  
+              "was: " + localRowSyncState);
         }
         // Would this get passed here? It might. We should leave it in its old
         // conflict type and state.
-        String localRowConflictTypeBeforeSyncStr = 
+        String localRowConflictTypeBeforeSyncStr =
             localRow.getDataOrMetadataByElementKey(
                 DataTableColumns.CONFLICT_TYPE);
-        int localRowConflictTypeBeforeSync = 
+        int localRowConflictTypeBeforeSync =
             Integer.parseInt(localRowConflictTypeBeforeSyncStr);
         localRowConflictType = localRowConflictTypeBeforeSync;
         Log.i(TAG, "local row was in sync state CONFLICTING, leaving as " +
         		"CONFLICTING and leaving conflict type unchanged as: " +
             localRowConflictTypeBeforeSync);
-      } 
+      }
       values.put(DataTableColumns.ROW_ID, row.getRowId());
       values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.CONFLICTING));
@@ -813,10 +813,10 @@ public class SyncProcessor {
       // This is inserting the version of the row from the server.
       int serverRowConflictType;
       if (row.isDeleted()) {
-        serverRowConflictType = 
+        serverRowConflictType =
             SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES;
       } else {
-        serverRowConflictType = 
+        serverRowConflictType =
             SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES;
       }
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
@@ -824,26 +824,26 @@ public class SyncProcessor {
           String.valueOf(SyncUtil.State.CONFLICTING));
       values.put(DataTableColumns.CONFLICT_TYPE, serverRowConflictType);
       table.actualAddRow(values);
-      
+
       // We're going to check our representation invariant here. A local and
       // a server version of the row should only ever be updating/updating,
-      // deleted/updating, or updating/deleted. Anything else and we're in 
-      // trouble. 
-      if (localRowConflictType == 
+      // deleted/updating, or updating/deleted. Anything else and we're in
+      // trouble.
+      if (localRowConflictType ==
           SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES &&
-          serverRowConflictType != 
+          serverRowConflictType !=
             SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
           Log.e(TAG, "local row conflict type is local_deleted, but server " +
           		"row conflict_type is not server_udpated. These states must" +
           		" go together, something went wrong.");
-      } else if (localRowConflictType != 
+      } else if (localRowConflictType !=
                  SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
         Log.e(TAG, "localRowConflictType was not local_deleted or " +
-        		"local_updated! this is an error. local conflict type: " + 
-            localRowConflictType + ", server conflict type: " + 
+        		"local_updated! this is an error. local conflict type: " +
+            localRowConflictType + ", server conflict type: " +
         		serverRowConflictType);
       }
-      
+
       // Why are we telling this to syncResult? Are these particular to the
       // syncadapter's own reckoning? E.g. is our number of conflicts the
       // kind of conflict it's trying to keep an eye on? I'm less than sure.
@@ -957,7 +957,7 @@ public class SyncProcessor {
    * @return
    * @throws IllegalArgumentException if the requested state is CONFLICTING.
    */
-  private List<SyncRow> getRowsToPushToServer(DbTable table, 
+  private List<SyncRow> getRowsToPushToServer(DbTable table,
       List<String> columnsToSync, int state) {
     if (state == SyncUtil.State.CONFLICTING) {
       throw new IllegalArgumentException("requested state CONFLICTING for" +
@@ -1049,7 +1049,7 @@ public class SyncProcessor {
       tp.setSyncState(SyncState.rest);
     tp.setTransactioning(false);
   }
-  
+
   private void updateRowsState(DbTable table, String[] rowIds, int state) {
     ContentValues values = new ContentValues();
     values.put(DataTableColumns.SYNC_STATE, state);
@@ -1093,7 +1093,7 @@ public class SyncProcessor {
         listChildElementKeys = mapper.readValue(lek, List.class);
       }
       tp.addColumn(col.getElementKey(), col.getElementKey(),
-          col.getElementName(), 
+          col.getElementName(),
           ColumnType.valueOf(col.getElementType()),
           listChildElementKeys,
           SyncUtil.intToBool(col.getIsPersisted()),
@@ -1177,7 +1177,7 @@ public class SyncProcessor {
       }
       Column c = new Column(tp.getTableId(), elementKey, elementName,
           colType.name(), listChildElementKeysStr,
-          isPersisted, joinsStr);
+          (isPersisted != 0), joinsStr);
       columns.add(c);
     }
     return columns;
