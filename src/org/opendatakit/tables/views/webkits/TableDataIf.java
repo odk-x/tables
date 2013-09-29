@@ -177,6 +177,21 @@ public class TableDataIf {
 	  weakTable.get().addRowWithSurveyAndSpecificForm(tableName, formId,
 	      screenPath);
 	}
+	
+	/**
+	 * Add a row using Survey, the specified form, and prepopulated values. 
+	 * jsonMap should be a JSON.stringify()'d json object mapping elementName to
+	 * prepopulated value.
+	 * @param tableName
+	 * @param formId
+	 * @param screenPath
+	 * @param jsonMap
+	 */
+	public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	    String tableName, String formId, String screenPath, String jsonMap) {
+	  weakTable.get().addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	      tableName, formId, screenPath, jsonMap);
+	}
 
 	/**
 	 * @see ControlIf#addRowWithCollectAndSpecificForm(String, String, String, String)

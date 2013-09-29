@@ -897,16 +897,30 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
 		    String screenPath) {
-		  TableProperties tp = mTable.getTableProperties();
-		  TableProperties tpToReceiveAdd = 
-		      getTablePropertiesByDisplayName(tp, tableName);
-		  if (tpToReceiveAdd == null) {
-		    Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
-		    		"because it could not be found.");
-		    return;
-		  }
-		  CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
-		      tpToReceiveAdd, formId, screenPath, null);
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		      formId, screenPath, null);
+		}
+		
+		void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+		    String tableName, String formId, String screenPath, String jsonMap) {
+	       TableProperties tp = mTable.getTableProperties();
+	        TableProperties tpToReceiveAdd = 
+	            getTablePropertiesByDisplayName(tp, tableName);
+	        if (tpToReceiveAdd == null) {
+	          Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
+	               "because it could not be found.");
+	          return;
+	        }
+	        Map<String, String> map = null;
+	        if (jsonMap != null) {
+	          map = CustomView.this.getMapFromJson(jsonMap);
+	          if (map == null) {
+	            Log.e(TAG, "couldn't get map from json. returning.");
+	            return;
+	          }
+	        }
+	        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+	            tpToReceiveAdd, formId, screenPath, map);
 		}
 
 		/**

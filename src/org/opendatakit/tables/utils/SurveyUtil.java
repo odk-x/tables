@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.opendatakit.tables.data.TableProperties;
 
 import com.actionbarsherlock.view.ActionProvider.SubUiVisibilityListener;
@@ -249,10 +250,13 @@ public class SurveyUtil {
         stringBuilder.append("&");
         stringBuilder.append(entry.getKey());
         stringBuilder.append("=");
-        stringBuilder.append(entry.getValue());
+        String escapedValue = 
+            StringEscapeUtils.escapeHtml4(entry.getValue());
+        stringBuilder.append(escapedValue);
       }
       uriStr = stringBuilder.toString();
     }
+    Log.d(TAG, "Survey uriStr: " + uriStr);
     return Uri.parse(uriStr);
   }
   
