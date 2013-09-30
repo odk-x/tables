@@ -158,7 +158,11 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
             new AggregateSynchronizer(mAggregateServerUri, mAuthToken);
         SyncProcessor syncProcessor = new SyncProcessor(dbh, synchronizer, 
             new SyncResult());
+        // This is going to use Submit in demo mode: only synching the files.
+        // We will do app-level and non media files, and then ask Submit to do
+        // the media files separately.
         result = syncProcessor.synchronize(true, true, false);
+        // TODO: hand off the media files.
         mSuccess = true;
       } catch (InvalidAuthTokenException e) {
         Log.e(TAG, "authtoken was invalid");
