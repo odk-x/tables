@@ -290,6 +290,11 @@
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
 	
+	<!-- ODKSubmit things -->
+	<string name="send_using_submit">Send Using ODK Submit</string>
+	<string name="cannot_register_app_with_submit">Cannot register app with submit!</string>
+	<string name="cannot_register_data_with_submit">Cannot register data with submit!</string>
+	
 	<!-- Conflict Resolution Stuff -->
 	<string name="take_local">Take Local Version</string>
 	<string name="take_server">Take Server Version</string>
