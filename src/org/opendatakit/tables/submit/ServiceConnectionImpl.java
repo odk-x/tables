@@ -1,8 +1,21 @@
 package org.opendatakit.tables.submit;
 
-import org.opendatakit.submit.data.DataObject;
+import java.io.File;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.submit.address.HttpAddress;
+import org.opendatakit.submit.data.DataPropertiesObject;
+import org.opendatakit.submit.data.SendObject;
 import org.opendatakit.submit.flags.DataSize;
+import org.opendatakit.submit.flags.HttpFlags;
 import org.opendatakit.submit.service.ClientRemote;
+import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -73,14 +86,80 @@ public class ServiceConnectionImpl implements ServiceConnection {
   public String registerData() throws Exception {
     if (!this.mIsBoundToService) {
       Log.e(TAG, "[registerData] not bound to service");
-      throw new Exception("Not bound to service but tryin to register data!");
+      throw new Exception("Not bound to service but trying to register data!");
     }
-    DataObject data = new DataObject();
+    DataPropertiesObject data = new DataPropertiesObject();
     // I'm not sure why we're doing SMALL. Presumably because we're just 
     // waiting for an ok-to-sync message and nothing else? Following Waylon's
     // example in the test project.
     data.setDataSize(DataSize.SMALL); 
     return this.mSubmitService.register(this.mAppUuid, data);
+  }
+  
+  public List<String> registerMediaFiles(String tableId, String aggregateUri) 
+      throws Exception {
+    if (!this.mIsBoundToService) {
+      Log.e(TAG, "[registerMediaFiles] not bound to servce.");
+      throw new Exception("Not bound to service but trying to register " +
+      		"media files!");
+    }
+    Map<String, String> absolutePathToUploadUri = 
+        getFileInfoForSubmit(tableId, aggregateUri);
+    List<String> submitFileUuids = new ArrayList<String>();
+    for (Map.Entry<String, String> entry : 
+        absolutePathToUploadUri.entrySet()) {
+      submitFileUuids.add(giveFileToSubmit(entry.getKey(), entry.getValue()));
+    }
+    return submitFileUuids;
+  }
+  
+  /**
+   * Get a map of absolute path to upload url for each file in the table's
+   * instances folder.
+   * TODO: this is a deeply unsatisfying hack. It doesn't do any checking to
+   * get the correct media files or save sync state or anything, it just says
+   * sync all. This will have to be corrected.
+   * @param tableId
+   * @return
+   */
+  private Map<String, String> getFileInfoForSubmit(String tableId, 
+      String aggregateUri) {
+    String appFolder = 
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
+        File.separator + tableId + File.separator + 
+        TableFileUtils.DIR_INSTANCES;
+    String instancesFolderFullPath = appFolder + File.separator + 
+        relativePathToInstancesFolder;
+    List<String> relativePathsToAppFolderOnDevice = 
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null, 
+            appFolder);
+    Map<String, String> absolutePathToUploadUrl = 
+        new HashMap<String, String>();
+    for (String relativePath : relativePathsToAppFolderOnDevice) {
+      String absolutePath = appFolder + File.separator + relativePath;
+      URI uploadUri = AggregateSynchronizer.getFilePathURI(aggregateUri);
+      absolutePathToUploadUrl.put(absolutePath, uploadUri.toString());
+    }
+    return absolutePathToUploadUrl;
+  }
+  
+  /**
+   * Give a file to submit and return the data uuid for that file that Submit
+   * has assigned to it. Must be bound to the service.
+   * @param absolutePathToFile
+   * @param uploadUrl
+   */
+  private String giveFileToSubmit(String absolutePathToFile, String uploadUrl) 
+      throws Exception {
+    // Following the example in Morgan's test app for files.
+    DataPropertiesObject dataPropertiesObject = new DataPropertiesObject();
+    dataPropertiesObject.setDataSize(DataSize.LARGE);
+    HttpAddress addr = new HttpAddress(uploadUrl, HttpFlags.POST);
+    // Don't think we need the headers Morgan is using.
+    SendObject send = new SendObject(absolutePathToFile);
+    send.addAddress(addr);
+    return this.mSubmitService.submit(mAppUuid, dataPropertiesObject, send);
   }
 
   @Override
@@ -91,9 +170,11 @@ public class ServiceConnectionImpl implements ServiceConnection {
     // This call relies on the CAR being set up BEFORE the call to the 
     // service.
     TablesCommunicationActionReceiver receiver = 
-        TablesCommunicationActionReceiver.getInstance(null, null, null, null, null);
+        TablesCommunicationActionReceiver.getInstance(null, null, null, null, 
+            null, null);
     String broadcastChannel;
-    String dataId;
+    String syncRequestId;
+    List<String> submitFileUploadUids;
     try {
       broadcastChannel = this.registerApp();
     } catch (Exception e) {
@@ -101,14 +182,25 @@ public class ServiceConnectionImpl implements ServiceConnection {
       return;
     }
     try {
-      dataId = this.registerData();
+      syncRequestId = this.registerData();
+      submitFileUploadUids = new ArrayList<String>();
+      for (String tableId : receiver.getTableIdsPendingForSubmit()) {
+        Map<String, String> absolutePathToUploadUrl = 
+            getFileInfoForSubmit(tableId, receiver.getAggregateServerUri());
+        for (Map.Entry<String, String> entry : 
+            absolutePathToUploadUrl.entrySet()) {
+          String absolutePath = entry.getKey();
+          String uploadUrl = entry.getValue();
+          submitFileUploadUids.add(giveFileToSubmit(absolutePath, uploadUrl));
+        }
+      }
     } catch (Exception e) {
       Log.e(TAG, "trouble registering data");
       return;
     }
     receiver.setSubmitId(broadcastChannel);
-    receiver.listenForUid(dataId);
-    
+    receiver.listenForSyncRequestUid(syncRequestId);
+    receiver.listenForFileUids(submitFileUploadUids);
   }
 
   @Override

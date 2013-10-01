@@ -103,6 +103,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
   private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
+  /** Path to the file servlet on the Aggregate server. */
   private static final String FILES_PATH = "/odktables/files/";
   
   private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
@@ -179,9 +180,7 @@ public class AggregateSynchronizer implements Synchronizer {
     URI fileManifestUri = URI.create(aggregateUri).normalize();
     fileManifestUri = fileManifestUri.resolve(FILE_MANIFEST_PATH).normalize();
     this.mFileManifestUri = fileManifestUri;
-    URI filesUri = URI.create(aggregateUri).normalize();
-    filesUri = filesUri.resolve(FILES_PATH).normalize();
-    this.mFilesUri = filesUri;
+    this.mFilesUri = getFilePathURI(aggregateUri);
     
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
@@ -209,6 +208,18 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources = new HashMap<String, TableResource>();
 
     checkAccessToken(accessToken);
+  }
+  
+  /**
+   * Get the URI for the file servlet on the Aggregate server located at 
+   * aggregateUri.
+   * @param aggregateUri
+   * @return
+   */
+  public static URI getFilePathURI(String aggregateUri) {
+    URI filesUri = URI.create(aggregateUri).normalize();
+    filesUri = filesUri.resolve(FILES_PATH).normalize();
+    return filesUri;
   }
 
   private void checkAccessToken(String accessToken) throws
@@ -703,16 +714,26 @@ public class AggregateSynchronizer implements Synchronizer {
       String pathRelativeToAppFolder) {
     File file = new File(wholePathToFile);
     FileSystemResource resource = new FileSystemResource(file);
-    String escapedPath = 
-        SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = URI.create(mFilesUri.toString()).resolve(
-        TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
-          .normalize();
+    URI filePostUri = getFilePostUri(pathRelativeToAppFolder);
     Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     URI responseUri = rt.postForLocation(filePostUri, resource);
     // TODO: verify whether or not this worked.
     return true;
+  }
+  
+  /**
+   * Get the URI to which to post in order to upload the file.
+   * @param pathRelativeToAppFolder
+   * @return
+   */
+  public URI getFilePostUri(String pathRelativeToAppFolder) {
+    String escapedPath = 
+        SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
+    URI filePostUri = URI.create(mFilesUri.toString()).resolve(
+        TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
+          .normalize();
+    return filePostUri;
   }
   
   private boolean compareAndDownloadFile(

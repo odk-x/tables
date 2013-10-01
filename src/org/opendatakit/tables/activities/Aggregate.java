@@ -26,7 +26,9 @@ import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInte
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sms.MsgHandler;
 import org.opendatakit.tables.submit.TablesCommunicationActionReceiver;
 import org.opendatakit.tables.submit.ServiceConnectionImpl;
@@ -297,10 +299,20 @@ public class Aggregate extends SherlockActivity {
       // we'll initialize the receiver correctly and then set up the receiver.
       // the receiver's callback is the one that will say "oh yes, go ahead
       // and do yo' bizness."
+      // The first thing we need to do is get the list of tables that is set
+      // to sync. Submit needs to know about this.
+      DbHelper dbh = DbHelper.getDbHelper(this);
+      TableProperties[] tps = 
+          TableProperties.getTablePropertiesForSynchronizedTables(dbh, 
+              KeyValueStore.Type.SERVER);
+      List<String> tableIdsToSync = new ArrayList<String>();
+      for (TableProperties tp : tps) {
+        tableIdsToSync.add(tp.getTableId());
+      }
       TablesCommunicationActionReceiver receiver = 
           TablesCommunicationActionReceiver.getInstance(
               TableFileUtils.ODK_TABLES_APP_NAME, 
-              null, prefs.getServerUri(), prefs.getAuthToken(), 
+              null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(), 
               getApplicationContext());
       // We set up the receiver.
       ServiceConnectionImpl serviceConnectionImpl = 
