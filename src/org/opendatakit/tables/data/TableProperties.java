@@ -835,6 +835,7 @@ public class TableProperties {
   public static TableProperties addTable(DbHelper dbh, String tableKey, 
       String dbTableName, String displayName, TableType tableType, String id, 
       KeyValueStore.Type typeOfStore) {
+    Log.e(t, "adding table with id: " + id);
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
     SQLiteDatabase db = dbh.getWritableDatabase();
