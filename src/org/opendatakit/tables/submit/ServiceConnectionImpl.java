@@ -53,11 +53,13 @@ public class ServiceConnectionImpl implements ServiceConnection {
     this.mIsBoundToService = false;
     this.mComponentContext = context;
     
+    Log.d(TAG, "[ServiceConnectionImpl] going to bind service");
     // Now bind to the service.
     Intent bindIntent = new Intent();
     bindIntent.setClassName(SUBMIT_PACKAGE_NAME, SUBMIT_SERVICE_CLASS_NAME);
     this.mComponentContext.bindService(bindIntent, this, 
         Context.BIND_AUTO_CREATE);
+    Log.d(TAG, "[ServiceConnectionImpl] called bindService");
   }
   
   public String getAppUuid() {
@@ -98,6 +100,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
   
   public List<String> registerMediaFiles(String tableId, String aggregateUri) 
       throws Exception {
+    Log.d(TAG, "[registerMediaFiles]");
     if (!this.mIsBoundToService) {
       Log.e(TAG, "[registerMediaFiles] not bound to servce.");
       throw new Exception("Not bound to service but trying to register " +
@@ -105,6 +108,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
     }
     Map<String, String> absolutePathToUploadUri = 
         getFileInfoForSubmit(tableId, aggregateUri);
+    Log.d(TAG, "[registerMediaFiles] path->uploadUrl: " + absolutePathToUploadUri);
     List<String> submitFileUuids = new ArrayList<String>();
     for (Map.Entry<String, String> entry : 
         absolutePathToUploadUri.entrySet()) {
@@ -127,8 +131,8 @@ public class ServiceConnectionImpl implements ServiceConnection {
     String appFolder = 
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
-        File.separator + tableId + File.separator + 
-        TableFileUtils.DIR_INSTANCES;
+        File.separator + tableId + File.separator + "instances";
+//        TableFileUtils.DIR_INSTANCES;
     String instancesFolderFullPath = appFolder + File.separator + 
         relativePathToInstancesFolder;
     List<String> relativePathsToAppFolderOnDevice = 
@@ -138,8 +142,10 @@ public class ServiceConnectionImpl implements ServiceConnection {
         new HashMap<String, String>();
     for (String relativePath : relativePathsToAppFolderOnDevice) {
       String absolutePath = appFolder + File.separator + relativePath;
-      URI uploadUri = AggregateSynchronizer.getFilePathURI(aggregateUri);
-      absolutePathToUploadUrl.put(absolutePath, uploadUri.toString());
+      String uploadUri = 
+          AggregateSynchronizer.getFilePathURI(aggregateUri).toString();
+      uploadUri += relativePath;
+      absolutePathToUploadUrl.put(absolutePath, uploadUri);
     }
     return absolutePathToUploadUrl;
   }
@@ -152,6 +158,8 @@ public class ServiceConnectionImpl implements ServiceConnection {
    */
   private String giveFileToSubmit(String absolutePathToFile, String uploadUrl) 
       throws Exception {
+    Log.d(TAG, "[giveFileToSubmit] path; url: " + absolutePathToFile + "; " 
+      + uploadUrl);
     // Following the example in Morgan's test app for files.
     DataPropertiesObject dataPropertiesObject = new DataPropertiesObject();
     dataPropertiesObject.setDataSize(DataSize.LARGE);

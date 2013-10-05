@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SyncResult;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.util.Log;
 
 /**
@@ -55,6 +56,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     if (tableIdsToSync != null) {
       mSingleton.mTableIdsPendingToGiveToSubmit.addAll(tableIdsToSync);
     }
+    Log.d(TAG, "[getInstance] table ids: " + tableIdsToSync);
     return mSingleton;
   }
   
@@ -162,6 +164,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
+    Log.d(TAG, "[onReceive]");
     if (!intent.hasExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID) ||
         !intent.hasExtra(BroadcastExtraKeys.COMMUNICATION_STATE)) {
       // we need both of these things, so log an error and do nothing.
@@ -172,7 +175,8 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     String sendUid = 
         intent.getStringExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID);
     // Otherwise, try and handle the sync.
-    if (this.mSendObjectFiles.contains(sendUid)) {
+    if (this.mSendObjectSyncRequests.contains(sendUid)) {
+      Log.d(TAG, "[onReceive] got a send sync request uid");
       String result = 
           intent.getStringExtra(BroadcastExtraKeys.COMMUNICATION_STATE);
       CommunicationState state = CommunicationState.valueOf(result);
@@ -189,7 +193,8 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       } else {
         Log.i(TAG, "communication state was not send, was: " + state);
       }
-    } else if (this.mSendObjectSyncRequests.contains(sendUid)) {
+    } else if (this.mSendObjectFiles.contains(sendUid)) {
+      Log.d(TAG, "[onReceive] got an object file uid");
       // Then submit is done with the request.
       // TODO: update the file state I guess?
       this.mSendObjectFiles.remove(sendUid); // stop listening for this.
@@ -243,7 +248,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       intent.putExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID, mDataUidToSend);
       if (mSuccess) {
         intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
-            CommunicationState.SUCCESS.toString());
+            (Parcelable) CommunicationState.SUCCESS);
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//            CommunicationState.SUCCESS.toString());
 //            (Parcelable) CommunicationState.SUCCESS.toString());
         mDataIdToFailureCount.remove(mDataUidToSend);
         mSendObjectSyncRequests.remove(mDataUidToSend);
@@ -251,7 +258,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       } else if (mDataIdToFailureCount.get(mDataUidToSend) == null ||
           mDataIdToFailureCount.get(mDataUidToSend) < NUM_RETRIES_BEFORE_STOP){
         intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
-            CommunicationState.FAILURE_RETRY.toString());
+            (Parcelable) CommunicationState.FAILURE_RETRY);
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//            CommunicationState.FAILURE_RETRY.toString());
 //            (Parcelable) CommunicationState.FAILURE_RETRY);
         if (mDataIdToFailureCount.get(mDataUidToSend) == null) {
           mDataIdToFailureCount.put(mDataUidToSend, 1);
@@ -266,7 +275,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
           NUM_RETRIES_BEFORE_STOP) {
         Log.i(TAG, "telling Submit to stop trying to send");
         intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
-            CommunicationState.FAILURE_NO_RETRY.toString());
+            (Parcelable) CommunicationState.FAILURE_NO_RETRY);
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//            CommunicationState.FAILURE_NO_RETRY.toString());
 //            (Parcelable) CommunicationState.FAILURE_NO_RETRY);
         mContext.sendBroadcast(intent);
       } else {

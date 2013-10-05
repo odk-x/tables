@@ -60,15 +60,19 @@ public class TableFileUtils {
     
   /** Name of the metadata directory under the app id. */
   public static final String DIR_METADATA = 
-      ODKFileUtils.getNameOfMetadataFolder();
+      ODKFileUtils.getAppFolder("tables") + "/metadata";
+//      ODKFileUtils.getNameOfMetadataFolder();
   /** Name of the logging directory under the app id. */
   public static final String DIR_LOGGING = 
-      ODKFileUtils.getNameOfLoggingFolder();
+      ODKFileUtils.getAppFolder("tables") + "/logging";
+//      ODKFileUtils.getNameOfLoggingFolder();
   /** Name of the framework directory under the app id. */
   public static final String DIR_FRAMEWORK = 
-      ODKFileUtils.getNameOfFrameworkFolder();
+      ODKFileUtils.getAppFolder("tables") + "/framework";
+//      ODKFileUtils.getNameOfFrameworkFolder();
   public static final String DIR_INSTANCES = 
-      ODKFileUtils.getNameOfInstancesFolder();
+      ODKFileUtils.getAppFolder("tables") + "/instances";
+//      ODKFileUtils.getNameOfInstancesFolder();
   
   /** 
    * Name of the directory under the app id where the table-specific stuff 

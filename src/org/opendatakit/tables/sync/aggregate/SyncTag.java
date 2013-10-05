@@ -31,9 +31,9 @@ private static final String DELIM = "::";
   private String propertiesEtag;
 
   public SyncTag(String dataEtag, String propertiesEtag) {
-    // SS: adding cases for if the passed in tags are null. not sure which
-    // is correct, going to try -1.
-    if (dataEtag.equals("")) {
+    // The data etag can be null if the table has been created but there's not
+    // yet any data on the server.
+    if (dataEtag == null || dataEtag.equals("")) {
       this.dataEtag = EMPTY_ETAG;
     } else {
       this.dataEtag = dataEtag;

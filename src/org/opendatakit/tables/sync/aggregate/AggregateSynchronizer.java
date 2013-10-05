@@ -561,7 +561,9 @@ public class AggregateSynchronizer implements Synchronizer {
     // And now get the files to upload. We only want those that exist on the 
     // device but that do not exist on the manifest.
     Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
-    dirsToExclude.add(TableFileUtils.DIR_TABLES); // no table files.
+//    dirsToExclude.add(TableFileUtils.DIR_TABLES); // no table files.
+    dirsToExclude.add("tables");
+    dirsToExclude.add("metadata");
     String appFolder = 
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     List<String> relativePathsOnDevice = 
@@ -627,12 +629,14 @@ public class AggregateSynchronizer implements Synchronizer {
       // We don't want to sync anything in the instances directory, because this
       // contains things like media attachments. These should instead be synched 
       // with a separate call.
-      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
+//      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
+      tableDirsToExclude.add("instances");
       List<String> relativePathsToAppFolderOnDevice = 
           TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude, 
               appFolder);
       List<String> relativePathsToUpload = 
           getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+      Log.e(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
       // and then upload the files.
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
@@ -742,7 +746,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
       // make sure you don't return a bad string.
-    if (entry.filename.equals("") || entry.filename == null) {
+    if (entry.filename == null || entry.filename.equals("")) {
       Log.i(TAG, "returned a null or empty filename");
       return false;
      } else {
@@ -937,8 +941,8 @@ public class AggregateSynchronizer implements Synchronizer {
     String appFolder = 
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
-        File.separator + tableId + File.separator + 
-        TableFileUtils.DIR_INSTANCES;
+        File.separator + tableId + File.separator + "instances";
+//        TableFileUtils.DIR_INSTANCES;
     String instancesFolderFullPath = appFolder + File.separator + 
         relativePathToInstancesFolder;
     List<String> relativePathsToAppFolderOnDevice = 
@@ -946,6 +950,7 @@ public class AggregateSynchronizer implements Synchronizer {
             appFolder);
     List<String> relativePathsToUpload = 
         getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+    Log.e(TAG, "[syncTableMediaFiles] relativePathsToUpload: " + relativePathsToUpload);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {

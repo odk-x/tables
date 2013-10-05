@@ -358,19 +358,24 @@ public class SyncProcessor {
       // might be in an indeterminate state--depends how the endRowsTransaction
       // stuff works.
       tableResult.setPushedLocalData(true);
-      try {
-        synchronizer.syncTableMediaFiles(tp.getTableId());
-      } catch (IOException e) {
-        ioException("synchronizeTableInserting--mediaFiles", tp, e, 
-            tableResult);
-        Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
-        		"files");
-        return false;
-      } catch (Exception e) {
-        exception("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
-        Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
-        		"files");
-        return false;
+      if (syncMediaFiles) {
+        Log.d(TAG, "[synchronizeTableInserting] synching media files");
+        try {
+          synchronizer.syncTableMediaFiles(tp.getTableId());
+        } catch (IOException e) {
+          ioException("synchronizeTableInserting--mediaFiles", tp, e, 
+              tableResult);
+          Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
+          		"files");
+          return false;
+        } catch (Exception e) {
+          exception("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
+          Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
+          		"files");
+          return false;
+        }
+      } else {
+        Log.d(TAG, "[synchronizeTableInserting] NOT synching media files");
       }
       success = true;
     } catch (IOException e) {
@@ -543,6 +548,7 @@ public class SyncProcessor {
       // And now try to push up the media files, if necessary.
       if (syncMediaFiles) {
         try {
+          Log.d(TAG, "[synchronizeTableRest] synching media files");
           synchronizer.syncTableMediaFiles(tp.getTableId());
         } catch (IOException e) {
           ioException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
@@ -553,6 +559,8 @@ public class SyncProcessor {
           Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
           return false;
         }
+      } else {
+        Log.d(TAG, "[synchronizeTableRest] NOT synching media files");
       }
       success = true;
     } catch (IOException e) {
@@ -1175,9 +1183,12 @@ public class SyncProcessor {
         Log.e(TAG, "i/o exception with json list entry during sync");
         e.printStackTrace();
       }
+//      Column c = new Column(tp.getTableId(), elementKey, elementName,
+//          colType.name(), listChildElementKeysStr,
+//          (isPersisted != 0), joinsStr);
       Column c = new Column(tp.getTableId(), elementKey, elementName,
           colType.name(), listChildElementKeysStr,
-          (isPersisted != 0), joinsStr);
+          isPersisted, joinsStr);
       columns.add(c);
     }
     return columns;
