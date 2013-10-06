@@ -195,6 +195,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
       for (String tableId : receiver.getTableIdsPendingForSubmit()) {
         Map<String, String> absolutePathToUploadUrl = 
             getFileInfoForSubmit(tableId, receiver.getAggregateServerUri());
+        Log.e(TAG, "[onServiceConnected] giving file to submit: " + absolutePathToUploadUrl);
         for (Map.Entry<String, String> entry : 
             absolutePathToUploadUrl.entrySet()) {
           String absolutePath = entry.getKey();

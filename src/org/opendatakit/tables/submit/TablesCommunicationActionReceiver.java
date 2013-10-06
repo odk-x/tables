@@ -164,7 +164,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    Log.d(TAG, "[onReceive]");
+    Log.e(TAG, "[onReceive]");
     if (!intent.hasExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID) ||
         !intent.hasExtra(BroadcastExtraKeys.COMMUNICATION_STATE)) {
       // we need both of these things, so log an error and do nothing.
@@ -220,6 +220,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     
     @Override
     protected SynchronizationResult doInBackground(Void... params) {
+      Log.e(TAG, "[SyncNowWithSubmitTask#doInBackground]");
       SynchronizationResult result = null;
       try {
         DbHelper dbh = DbHelper.getDbHelper(mContext);
@@ -234,6 +235,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
         
         // TODO: hand off the media files.
         mSuccess = true;
+        Log.e(TAG, "[SyncNowWithSubmitTask#doInbackground] success true timestamp: " + System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
         Log.e(TAG, "authtoken was invalid");
         mSuccess = false;

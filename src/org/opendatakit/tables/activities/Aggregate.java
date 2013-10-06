@@ -279,7 +279,7 @@ public class Aggregate extends SherlockActivity {
   public void onClickSyncNow(View v) {
     Log.d(TAG, "in onClickSyncNow");
     String accountName = prefs.getAccount();
-
+    Log.e(TAG, "[onClickSyncNow] timestamp: " + System.currentTimeMillis());
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
@@ -293,6 +293,8 @@ public class Aggregate extends SherlockActivity {
   public void onClickSyncUsingSubmit(View v) {
     Log.d(TAG, "in onClickSyncUsingSubmit");
     String accountName = prefs.getAccount();
+    Log.e(TAG, "[onClickSyncNowUsingSubmit] timestamp: " 
+        + System.currentTimeMillis());
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), 
           Toast.LENGTH_SHORT).show();
@@ -363,6 +365,8 @@ public class Aggregate extends SherlockActivity {
         // and paramaterized using some user-input values in the future.
         result = processor.synchronize(true, true, true);
         success = true;
+        Log.e(TAG, "[SyncNowTask#doInBackground] timestamp: " + 
+            System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         success = false;
