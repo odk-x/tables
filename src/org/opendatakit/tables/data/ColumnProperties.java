@@ -711,20 +711,19 @@ public class ColumnProperties {
    * @param columnType
    * @param listChildElementKeys
    * @param isPersisted
-   * @param joins
    * @param displayVisible
    * @param typeOfStore
    * @return
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
       String displayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted, ArrayList<JoinColumn> joins,
+      List<String> listChildElementKeys, boolean isPersisted,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
         listChildElementKeys, isPersisted, displayVisible, displayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, joins, typeOfStore);
+        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
 
     return cp;
   }

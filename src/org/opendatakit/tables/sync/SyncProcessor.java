@@ -38,7 +38,6 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
@@ -1035,8 +1034,7 @@ public class SyncProcessor {
           col.getElementName(),
           ColumnType.valueOf(col.getElementType()),
           listChildElementKeys,
-          SyncUtil.intToBool(col.getIsPersisted()),
-          JoinColumn.fromSerialization(col.getJoins()));
+          SyncUtil.intToBool(col.getIsPersisted()));
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.refreshTablePropertiesForTable(dbh,
@@ -1097,13 +1095,10 @@ public class SyncProcessor {
       List<String> listChildrenElements =
           cp.getListChildElementKeys();
       int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
-      ArrayList<JoinColumn> joins = cp.getJoins();
       String listChildElementKeysStr = null;
-      String joinsStr = null;
       try {
         listChildElementKeysStr =
             mapper.writeValueAsString(listChildrenElements);
-        joinsStr = JoinColumn.toSerialization(joins);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing json list entry during sync");
         e.printStackTrace();
@@ -1116,7 +1111,7 @@ public class SyncProcessor {
       }
       Column c = new Column(tp.getTableId(), elementKey, elementName,
           colType.name(), listChildElementKeysStr,
-          (isPersisted != 0), joinsStr);
+          (isPersisted != 0));
       columns.add(c);
     }
     return columns;

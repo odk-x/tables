@@ -1188,8 +1188,7 @@ public class TableProperties {
    */
   public ColumnProperties addColumn(String displayName, String elementKey, String elementName) {
     return addColumn(displayName, elementKey, elementName,
-        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, null, ColumnDefinitions.DEFAULT_DB_IS_PERSISTED,
-        null);
+        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, null, ColumnDefinitions.DEFAULT_DB_IS_PERSISTED);
   }
 
   /**
@@ -1214,8 +1213,7 @@ public class TableProperties {
    */
   public ColumnProperties addColumn(String displayName, String elementKey,
       String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted,
-      ArrayList<JoinColumn> joins) {
+      List<String> listChildElementKeys, boolean isPersisted) {
     if (elementKey == null) {
       elementKey = NameUtil.createUniqueElementKey(displayName, this);
     } else if (!NameUtil.isValidUserDefinedDatabaseName(elementKey)) {
@@ -1231,8 +1229,7 @@ public class TableProperties {
     ColumnProperties cp = null;
     cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName,
         elementKey, elementName, columnType, listChildElementKeys, isPersisted,
-        joins, ColumnProperties.DEFAULT_KEY_VISIBLE,
-        this.getBackingStoreType());
+        ColumnProperties.DEFAULT_KEY_VISIBLE, this.getBackingStoreType());
 
     return addColumn(cp);
   }
