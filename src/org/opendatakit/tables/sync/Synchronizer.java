@@ -19,10 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.data.ColumnType;
 
@@ -147,25 +144,25 @@ public interface Synchronizer {
   public String setTableProperties(String tableId, String currentSyncTag,
       String tableName, List<OdkTablesKeyValueStoreEntry> kvsEntries)
           throws IOException;
-  
+
   /**
    * Synchronizes the app level files. This includes any files that are not
-   * associated with a particular table--i.e. those that are not in the 
+   * associated with a particular table--i.e. those that are not in the
    * directory appid/tables/. It also excludes those files that are in a set of
    * directories that do not sync--appid/metadata, appid/logging, etc.
-   * @param true if local files should be pushed. Otherwise they are only 
+   * @param true if local files should be pushed. Otherwise they are only
    * pulled down.
    * @throws IOException
    */
   public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException;
-  
+
   /**
    * Synchronize all the files in an app, including both app-level and table-
    * level files, but not those files that are in unsynched directories.
    * @throws IOException
    */
   public void syncAllFiles() throws IOException;
-  
+
   /**
    * Sync only the files associated with the specified table.
    * @param tableId

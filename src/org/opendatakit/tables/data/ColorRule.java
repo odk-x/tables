@@ -18,7 +18,6 @@ package org.opendatakit.tables.data;
 import java.util.UUID;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.tables.data.UserTable.Row;
 
 import android.util.Log;

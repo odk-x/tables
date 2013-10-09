@@ -56,7 +56,6 @@ import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
 import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManager;
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.sync.IncomingModification;
 import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncRow;
@@ -76,15 +75,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.ResourceHttpMessageConverter;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import android.net.Uri;
-import android.os.Debug;
 import android.util.Log;
 
 import com.google.gson.JsonObject;
@@ -104,20 +100,20 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
   private static final String FILES_PATH = "/odktables/files/";
-  
+
   private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
   private static final String FILE_MANIFEST_PARAM_TABLE_ID = "table_id";
-  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES = 
+  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES =
       "app_level_files";
   /** Value for {@link #FILE_MANIFEST_PARAM_APP_LEVEL_FILES}. */
   private static final String VALUE_TRUE = "true";
-    
+
   // TODO: how do we support new column types without breaking this map???
   // This map should be handled on the aggregate side, not on the Tables side.
   // This is because a column definition stores the type on Aggregate, and that
-  // type is what's pulled back down during sync. Therefore you lose 
+  // type is what's pulled back down during sync. Therefore you lose
   // information when you pull back down from the server, as you don't know
-  // what it originally was. 
+  // what it originally was.
 //  public static final Map<ColumnType, Column.ColumnType> types =
 //		  				new HashMap<ColumnType, Column.ColumnType>() {
 //    {
@@ -141,7 +137,7 @@ public class AggregateSynchronizer implements Synchronizer {
 //
 //      // TODO: what is this for???
 //      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
-//      
+//
 //      put(ColumnType.IMAGEURI, Column.ColumnType.STRING);
 //    }
 //    private static final long serialVersionUID = 1L;
@@ -155,8 +151,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private final URI mFileManifestUri;
   /** The uri for the files on aggregate. */
   private final URI mFilesUri;
-  
-  /** 
+
+  /**
    * For downloading files. Should eventually probably switch to spring, but
    * it was idiotically complicated.
    */
@@ -167,8 +163,8 @@ public class AggregateSynchronizer implements Synchronizer {
     URI uri = URI.create(aggregateUri).normalize();
     uri = uri.resolve("/odktables/tables/").normalize();
     this.baseUri = uri;
-    
-    this.mHttpClient = 
+
+    this.mHttpClient =
         new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = mHttpClient.getParams();
     HttpConnectionParams.setConnectionTimeout(params,
@@ -182,7 +178,7 @@ public class AggregateSynchronizer implements Synchronizer {
     URI filesUri = URI.create(aggregateUri).normalize();
     filesUri = filesUri.resolve(FILES_PATH).normalize();
     this.mFilesUri = filesUri;
-    
+
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(accessToken));
@@ -461,7 +457,7 @@ public class AggregateSynchronizer implements Synchronizer {
         RowResource inserted = insertedEntity.getBody();
         rowTags.put(inserted.getRowId(), inserted.getRowEtag());
         Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last " +
-        		"known dataetag at modification: " + 
+        		"known dataetag at modification: " +
         		inserted.getDataEtagAtModification());
         lastKnownServerSyncTag.setDataEtag(inserted.getDataEtagAtModification());
       }
@@ -491,7 +487,7 @@ public class AggregateSynchronizer implements Synchronizer {
       for (String rowId : rowIds) {
         URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
         try {
-          ResponseEntity<String> response = 
+          ResponseEntity<String> response =
               rt.exchange(url, HttpMethod.DELETE, null, String.class);
           lastKnownServerDataTag = response.getBody();
         } catch (ResourceAccessException e) {
@@ -502,7 +498,7 @@ public class AggregateSynchronizer implements Synchronizer {
         // do something--b/c the delete hasn't worked.
         Log.e(TAG, "delete call didn't return a known data etag.");
       }
-      Log.i(TAG, "[deleteRows] setting data etag to last known server tag: " 
+      Log.i(TAG, "[deleteRows] setting data etag to last known server tag: "
           + lastKnownServerDataTag);
       syncTag.setDataEtag(lastKnownServerDataTag);
     }
@@ -547,29 +543,29 @@ public class AggregateSynchronizer implements Synchronizer {
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    // And now get the files to upload. We only want those that exist on the 
+    // And now get the files to upload. We only want those that exist on the
     // device but that do not exist on the manifest.
     Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
     dirsToExclude.add(TableFileUtils.DIR_TABLES); // no table files.
-    String appFolder = 
+    String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    List<String> relativePathsOnDevice = 
+    List<String> relativePathsOnDevice =
         TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
-    List<String> relativePathsToUpload = 
+    List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
-    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " 
+    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: "
         + relativePathsToUpload);
     // and then upload the files.
     if (pushLocalFiles) {
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
         String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile,
             relativePath));
       }
     }
   }
-  
+
 
   @Override
   public void syncAllFiles() throws IOException {
@@ -577,108 +573,108 @@ public class AggregateSynchronizer implements Synchronizer {
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    // And now get the files to upload. We only want those that exist on the 
+    // And now get the files to upload. We only want those that exist on the
     // device but that do not exist on the manifest.
     Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
-    String appFolder = 
+    String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    List<String> relativePathsOnDevice = 
+    List<String> relativePathsOnDevice =
         TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
-    List<String> relativePathsToUpload = 
+    List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
       String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile,
           relativePath));
     }
   }
 
   @Override
   public void syncTableFiles(String tableId) throws IOException {
-    List<OdkTablesFileManifestEntry> manifest = 
+    List<OdkTablesFileManifestEntry> manifest =
         getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    String appFolder = 
+    String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToTableFolder = TableFileUtils.DIR_TABLES + 
+    String relativePathToTableFolder = TableFileUtils.DIR_TABLES +
         File.separator + tableId;
-    String tableFolder = appFolder + File.separator + 
+    String tableFolder = appFolder + File.separator +
         relativePathToTableFolder;
-    List<String> relativePathsToAppFolderOnDevice = 
+    List<String> relativePathsToAppFolderOnDevice =
         TableFileUtils.getAllFilesUnderFolder(tableFolder, null, appFolder);
     // TODO: relative to folder doesn't match up with the filename given by
     // aggregate, so uploads everything unnecessarily. fix it. fix it fix it fix it!
-    List<String> relativePathsToUpload = 
+    List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
       String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile,
           relativePath));
     }
   }
 
-  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws 
+  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws
       JsonParseException, JsonMappingException, IOException {
-    Uri.Builder uriBuilder = 
+    Uri.Builder uriBuilder =
         Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
         TableFileUtils.ODK_TABLES_APP_NAME);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES,
         VALUE_TRUE);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    ResponseEntity<String> responseEntity = 
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+    ResponseEntity<String> responseEntity =
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
     return SyncUtilities.getManifestEntriesFromResponse(
         responseEntity.getBody());
   }
 
   private List<OdkTablesFileManifestEntry> getTableLevelFileManifest(
-      String tableId) throws JsonParseException, JsonMappingException, 
+      String tableId) throws JsonParseException, JsonMappingException,
       IOException {
-    Uri.Builder uriBuilder = 
+    Uri.Builder uriBuilder =
         Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
         TableFileUtils.ODK_TABLES_APP_NAME);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    ResponseEntity<String> responseEntity = 
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+    ResponseEntity<String> responseEntity =
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
     return SyncUtilities.getManifestEntriesFromResponse(
         responseEntity.getBody());
   }
 
-  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws 
+  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws
       JsonParseException, JsonMappingException, IOException {
-    Uri.Builder uriBuilder = 
+    Uri.Builder uriBuilder =
         Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, 
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
         TableFileUtils.ODK_TABLES_APP_NAME);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    ResponseEntity<String> responseEntity = 
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null, 
+    ResponseEntity<String> responseEntity =
+        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
     return SyncUtilities.getManifestEntriesFromResponse(
         responseEntity.getBody());
   }
-  
+
   /**
    * Get the files that need to be uploaded. i.e. those files that are on the
    * phone but that do not appear on the manifest. Both the manifest and the
-   * filesOnPhone are assumed to contain relative paths, not including the 
+   * filesOnPhone are assumed to contain relative paths, not including the
    * first separator. Paths all relative to the app folder.
    * @param filesOnPhone
    * @param manifest
    * @return
    */
-  private List<String> getFilesToBeUploaded(List<String> relativePathsOnDevice, 
+  private List<String> getFilesToBeUploaded(List<String> relativePathsOnDevice,
       List<OdkTablesFileManifestEntry> manifest) {
     Set<String> filesToRetain = new HashSet<String>();
     filesToRetain.addAll(relativePathsOnDevice);
@@ -689,12 +685,12 @@ public class AggregateSynchronizer implements Synchronizer {
     fileList.addAll(filesToRetain);
     return fileList;
   }
-  
-  private boolean uploadFile(String wholePathToFile, 
+
+  private boolean uploadFile(String wholePathToFile,
       String pathRelativeToAppFolder) {
     File file = new File(wholePathToFile);
     FileSystemResource resource = new FileSystemResource(file);
-    String escapedPath = 
+    String escapedPath =
         SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
     URI filePostUri = URI.create(mFilesUri.toString()).resolve(
         TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
@@ -705,7 +701,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // TODO: verify whether or not this worked.
     return true;
   }
-  
+
   private boolean compareAndDownloadFile(
       OdkTablesFileManifestEntry entry) {
     String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
@@ -759,9 +755,9 @@ public class AggregateSynchronizer implements Synchronizer {
           return true;
         }
       }
-    }    
+    }
   }
-  
+
   private void downloadFile(File f, String downloadUrl) throws Exception {
     URI uri = null;
     try {
@@ -799,7 +795,7 @@ public class AggregateSynchronizer implements Synchronizer {
             // clear the cookies -- should not be necessary?
             // ss: might just be a collect thing?
           }
-          throw new Exception("status wasn't SC_OK when dl'ing file: " 
+          throw new Exception("status wasn't SC_OK when dl'ing file: "
               + downloadUrl);
         }
 
@@ -847,7 +843,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
     }
   }
-  
+
   /**
    * Utility to ensure that the entity stream of a response is drained of bytes.
    *
@@ -855,7 +851,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   private void discardEntityBytes(HttpResponse response) {
     // may be a server that does not handle
-    org.opendatakit.httpclientandroidlib.HttpEntity entity = 
+    org.opendatakit.httpclientandroidlib.HttpEntity entity =
         response.getEntity();
     if (entity != null) {
       try {
@@ -874,5 +870,5 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
-  
+
 }
