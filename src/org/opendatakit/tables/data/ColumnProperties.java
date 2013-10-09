@@ -106,6 +106,19 @@ public class ColumnProperties {
   // table to join against */
   // private static final String DB_JOIN_ELEMENT_KEY = "joinElementKey"; // (was
   // DB_JOIN_COLUMN_NAME)
+  //
+  // javascript side:
+  //
+  //  _joins: { type: 'array', items: {
+  //    type: 'object',
+  //    listChildElementKeys: [],
+  //    properties: {
+  //        "table_id": { type: "string", isNotNullable: false,
+  //                       isPersisted: false, elementKey: 'table_id', elementSet: 'columnMetadata' },
+  //        "element_key": { type: "string", isNotNullable: false,
+  //                       isPersisted: false, elementKey: 'elementKey', elementSet: 'columnMetadata' } } },
+  //    isNotNullable: false, isPersisted: true, elementPath: 'joins', elementSet: 'columnMetadata' }
+  //
   /*
    * elementKey of the value to join (this table's element) against in other
    * table
@@ -284,6 +297,10 @@ public class ColumnProperties {
    */
   public static final String KEY_DISPLAY_FORMAT = "displayFormat";
   /*
+   * Text, null.
+   */
+  public static final String KEY_JOINS = "joins";
+  /*
    * Text, null. Fot future use.
    */
   public static final String KEY_SMS_IN = "smsIn";
@@ -405,7 +422,6 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private JoinColumn joins;
   private boolean isPersisted;
   /*
    * The fields that reside in the key value store.
@@ -418,12 +434,13 @@ public class ColumnProperties {
   private boolean smsOut;
   private String smsLabel;
   private FooterMode footerMode;
+  private ArrayList<JoinColumn> joins;
 
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
-      ColumnType elementType, List<String> listChildElementKeys, JoinColumn joins,
+      ColumnType elementType, List<String> listChildElementKeys,
       boolean isPersisted, boolean displayVisible, String displayName,
       ArrayList<String> displayChoicesMap, String displayFormat, boolean smsIn, boolean smsOut,
-      String smsLabel, FooterMode footerMode, KeyValueStore.Type backingStore) {
+      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
     this.tableId = tableId;
     this.elementKey = elementKey;
@@ -542,6 +559,8 @@ public class ColumnProperties {
     // when new values might come down from the server.
     FooterMode footerMode = (footerModeStr == null) ? DEFAULT_KEY_FOOTER_MODE : FooterMode
         .valueOf(footerModeStr);
+    // KEY_JOINS
+
     // DB_IS_PERSISTED
     String isPersistedStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_PERSISTED);
     boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
@@ -553,7 +572,7 @@ public class ColumnProperties {
     String parseValue = null;
     ArrayList<String> displayChoicesMap = null;
     ArrayList<String> listChildElementKeys = null;
-    JoinColumn joins = null;
+    ArrayList<JoinColumn> joins = null;
     try {
       if (kvsProps.get(KEY_DISPLAY_CHOICES_MAP) != null) {
         String displayChoicesMapValue = kvsProps.get(KEY_DISPLAY_CHOICES_MAP);
@@ -567,8 +586,9 @@ public class ColumnProperties {
         parseValue = listChildElementKeysValue;
         listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
-      if (columnDefinitions.get(ColumnDefinitionsColumns.JOINS) != null) {
-        String joinsValue = columnDefinitions.get(ColumnDefinitionsColumns.JOINS);
+
+      String joinsValue = kvsProps.get(KEY_JOINS);
+      if ( joinsValue != null ) {
         parseValue = joinsValue;
         joins = JoinColumn.fromSerialization(joinsValue);
       }
@@ -584,9 +604,9 @@ public class ColumnProperties {
     }
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
+        listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
         displayChoicesMap, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
-        kvsProps.get(KEY_SMS_LABEL), footerMode, backingStore);
+        kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
 
   /**
@@ -634,13 +654,15 @@ public class ColumnProperties {
         KEY_SMS_LABEL, smsLabel));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_FOOTER_MODE, footerMode.name()));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+        KEY_JOINS, JoinColumn.toSerialization(joins)));
 
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        mapper.writeValueAsString(listChildElementKeys), isPersisted, joins);
+        mapper.writeValueAsString(listChildElementKeys), isPersisted);
   }
 
   public enum ColumnDefinitionChange {
@@ -696,13 +718,13 @@ public class ColumnProperties {
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
       String displayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted, JoinColumn joins,
+      List<String> listChildElementKeys, boolean isPersisted, ArrayList<JoinColumn> joins,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, displayName,
+        listChildElementKeys, isPersisted, displayVisible, displayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, typeOfStore);
+        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, joins, typeOfStore);
 
     return cp;
   }
@@ -929,6 +951,39 @@ public class ColumnProperties {
   }
 
   /**
+   * @return the join definition
+   */
+  public ArrayList<JoinColumn> getJoins() {
+    return joins;
+  }
+
+  /**
+   * Converts the JoinColumn to the json representation of the object using a
+   * mapper and adds it to the database.
+   * <p>
+   * If there is a mapping exception of writing the JoinColumn to a String, it
+   * does nothing, leaving the database untouched.
+   *
+   * @param joins
+   */
+  public void setJoins(ArrayList<JoinColumn> joins) {
+    try {
+      String joinsStr = JoinColumn.toSerialization(joins);
+      setStringProperty(KEY_JOINS, joinsStr);
+      this.joins = joins;
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    }
+  }
+
+  /**
    * @return the column's abbreviation (or null for no abbreviation)
    */
   public String getSmsLabel() {
@@ -1018,39 +1073,6 @@ public class ColumnProperties {
     }
   }
 
-  /**
-   * @return the join definition
-   */
-  public JoinColumn getJoins() {
-    return joins;
-  }
-
-  /**
-   * Converts the JoinColumn to the json representation of the object using a
-   * mapper and adds it to the database.
-   * <p>
-   * If there is a mapping exception of writing the JoinColumn to a String, it
-   * does nothing, leaving the database untouched.
-   *
-   * @param joins
-   */
-  public void setJoins(JoinColumn joins) {
-    try {
-      String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(ColumnDefinitionsColumns.JOINS, joinsStr);
-      this.joins = joins;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    }
-  }
-
   // Map<String, Object> toJson() {
   String toJson() throws JsonGenerationException, JsonMappingException, IOException {
     Map<String, Object> jo = new HashMap<String, Object>();
@@ -1125,7 +1147,7 @@ public class ColumnProperties {
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
     FooterMode footerMode = (joFootMode == null) ? FooterMode.none : FooterMode.valueOf(joFootMode);
 
-    JoinColumn joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
+    ArrayList<JoinColumn> joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
     Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
     ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChildren;
@@ -1135,10 +1157,10 @@ public class ColumnProperties {
 
     ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
-        listChildren, joins, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
+        listChildren, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME),
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
-        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode,
+        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,
         typeOfStore);
 
     return cp;

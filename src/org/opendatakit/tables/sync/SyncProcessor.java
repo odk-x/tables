@@ -1097,13 +1097,13 @@ public class SyncProcessor {
       List<String> listChildrenElements =
           cp.getListChildElementKeys();
       int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
-      JoinColumn joins = cp.getJoins();
+      ArrayList<JoinColumn> joins = cp.getJoins();
       String listChildElementKeysStr = null;
       String joinsStr = null;
       try {
         listChildElementKeysStr =
             mapper.writeValueAsString(listChildrenElements);
-        joinsStr = mapper.writeValueAsString(joins);
+        joinsStr = JoinColumn.toSerialization(joins);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing json list entry during sync");
         e.printStackTrace();

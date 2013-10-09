@@ -54,9 +54,7 @@ public class ColumnDefinitions {
    *  Default values for those columns which require them.
    ***********************************/
   public static final boolean DEFAULT_DB_IS_PERSISTED = true;
-  public static final ColumnType DEFAULT_DB_ELEMENT_TYPE =
-      ColumnType.NONE;
-  public static final String DEFAULT_DB_JOINS = null;
+  public static final ColumnType DEFAULT_DB_ELEMENT_TYPE = ColumnType.NONE;
   public static final String DEFAULT_LIST_CHILD_ELEMENT_KEYS = null;
 
   // A set of all the column names in this table.
@@ -71,7 +69,6 @@ public class ColumnDefinitions {
     columnNames.add(ColumnDefinitionsColumns.ELEMENT_TYPE);
     columnNames.add(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
     columnNames.add(ColumnDefinitionsColumns.IS_PERSISTED);
-    columnNames.add(ColumnDefinitionsColumns.JOINS);
   }
 
   /*
@@ -163,7 +160,6 @@ public class ColumnDefinitions {
       int dbListChildElementKeysIndex =
           c.getColumnIndexOrThrow(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
       int dbIsPersistedIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.IS_PERSISTED);
-      int dbJoinsIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.JOINS);
 
       if (c.getCount() > 1) {
         Log.e(TAG, "query for tableId: " + tableId + "and elementKey: " +
@@ -187,7 +183,6 @@ public class ColumnDefinitions {
             c.getString(dbListChildElementKeysIndex));
         columnDefMap.put(ColumnDefinitionsColumns.IS_PERSISTED, Boolean.toString(
             c.getInt(dbIsPersistedIndex) == 1));
-        columnDefMap.put(ColumnDefinitionsColumns.JOINS, c.getString(dbJoinsIndex));
         c.moveToNext();
         j++;
       }
@@ -290,14 +285,13 @@ public class ColumnDefinitions {
    */
   public static void assertColumnDefinition(SQLiteDatabase db,
       String tableId, String elementKey, String elementName,
-      ColumnType elementType, String listChild, boolean isPersisted,
-      JoinColumn joins) throws JsonGenerationException, JsonMappingException, IOException {
+      ColumnType elementType, String listChild, boolean isPersisted)
+          throws JsonGenerationException, JsonMappingException, IOException {
     ContentValues values = new ContentValues();
     values.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
     values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
     values.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, listChild);
     values.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted ? 1 : 0);
-    values.put(ColumnDefinitionsColumns.JOINS, JoinColumn.toSerialization(joins));
 
     Cursor c = null;
     try {

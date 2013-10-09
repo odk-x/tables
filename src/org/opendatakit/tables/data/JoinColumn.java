@@ -16,6 +16,7 @@
 package org.opendatakit.tables.data;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,27 +71,47 @@ public class JoinColumn {
    */
   private String elementKey;
 
-  public static JoinColumn fromSerialization(String str) throws JsonParseException, JsonMappingException, IOException {
+  public static ArrayList<JoinColumn> fromSerialization(String str) throws JsonParseException, JsonMappingException, IOException {
     if ( str == null || DEFAULT_NOT_SET_VALUE.equals(str) ) {
       return null;
     }
-    Map<String,String> joJoin = ODKFileUtils.mapper.readValue(str, Map.class);
-    if ( joJoin == null ) {
+
+    /*
+    *   joins can be null
+    *   json array of objects:
+    *  [{table_id: tid, element_key: elem}, ...]
+    */
+
+    ArrayList<JoinColumn> jcs = new ArrayList<JoinColumn>();
+    ArrayList<Object> joins = ODKFileUtils.mapper.readValue(str, ArrayList.class);
+    if ( joins == null ) {
       return null;
     }
-    String tableId = joJoin.get(JoinColumn.JSON_KEY_TABLE_ID);
-    String elementKey = joJoin.get(JoinColumn.JSON_KEY_ELEMENT_KEY);
-    return new JoinColumn(tableId, elementKey);
+    for (Object o : joins) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> m = (Map<String, Object>) o;
+      String tId = (String) m.get("table_id");
+      String tEK = (String) m.get("element_key");
+
+      JoinColumn j = new JoinColumn(tId, tEK);
+      jcs.add(j);
+    }
+    return jcs;
   }
 
-  public static String toSerialization(JoinColumn join) throws JsonGenerationException, JsonMappingException, IOException {
-    if ( join == null ) {
+  public static String toSerialization(ArrayList<JoinColumn> joins) throws JsonGenerationException, JsonMappingException, IOException {
+    if ( joins == null ) {
       return DEFAULT_NOT_SET_VALUE;
     }
-    Map<String,String> joJoin = new HashMap<String,String>();
-    joJoin.put(JSON_KEY_TABLE_ID, join.getTableId());
-    joJoin.put(JSON_KEY_ELEMENT_KEY, join.getElementKey());
-    return ODKFileUtils.mapper.writeValueAsString(joJoin);
+
+    ArrayList<Object> jlist = new ArrayList<Object>();
+    for ( JoinColumn join : joins ) {
+      Map<String,String> joJoin = new HashMap<String,String>();
+      joJoin.put(JSON_KEY_TABLE_ID, join.getTableId());
+      joJoin.put(JSON_KEY_ELEMENT_KEY, join.getElementKey());
+      jlist.add(joJoin);
+    }
+    return ODKFileUtils.mapper.writeValueAsString(jlist);
   }
 
   /*

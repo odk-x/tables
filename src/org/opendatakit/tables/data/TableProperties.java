@@ -697,7 +697,7 @@ public class TableProperties {
       allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
     }
     return allProps;
-  }  
+  }
 
   /**
    * Add a table to the database. The intendedStore type exists to force you to
@@ -711,21 +711,21 @@ public class TableProperties {
    *          type of the store to which you're adding.
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey, 
-      String dbTableName, String displayName, TableType tableType, 
+  public static TableProperties addTable(DbHelper dbh, String tableKey,
+      String dbTableName, String displayName, TableType tableType,
       KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName, 
+    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName,
         tableType, id, intendedStore);
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
       tp.addColumn(ShortcutUtil.LABEL_COLUMN_NAME,
           NameUtil.createUniqueElementKey(ShortcutUtil.LABEL_COLUMN_NAME, tp),
-          NameUtil.createUniqueElementName(ShortcutUtil.LABEL_COLUMN_NAME, 
+          NameUtil.createUniqueElementName(ShortcutUtil.LABEL_COLUMN_NAME,
               tp));
       tp.addColumn(ShortcutUtil.INPUT_COLUMN_NAME,
           NameUtil.createUniqueElementKey(ShortcutUtil.INPUT_COLUMN_NAME, tp),
-          NameUtil.createUniqueElementName(ShortcutUtil.INPUT_COLUMN_NAME, 
+          NameUtil.createUniqueElementName(ShortcutUtil.INPUT_COLUMN_NAME,
               tp));
       tp.addColumn(ShortcutUtil.OUTPUT_COLUMN_NAME,
           NameUtil.createUniqueElementKey(ShortcutUtil.OUTPUT_COLUMN_NAME, tp),
@@ -734,7 +734,7 @@ public class TableProperties {
     } else if (tableType == TableType.security) {
       tp.addColumn(SecurityUtil.USER_COLUMN_NAME,
           NameUtil.createUniqueElementKey(SecurityUtil.USER_COLUMN_NAME, tp),
-          NameUtil.createUniqueElementName(SecurityUtil.USER_COLUMN_NAME, 
+          NameUtil.createUniqueElementName(SecurityUtil.USER_COLUMN_NAME,
               tp));
       tp.addColumn(SecurityUtil.PHONENUM_COLUMN_NAME,
           NameUtil.createUniqueElementKey(SecurityUtil.PHONENUM_COLUMN_NAME,
@@ -742,7 +742,7 @@ public class TableProperties {
           NameUtil.createUniqueElementName(SecurityUtil.PHONENUM_COLUMN_NAME,
               tp));
       tp.addColumn(SecurityUtil.PASSWORD_COLUMN_NAME,
-          NameUtil.createUniqueElementKey(SecurityUtil.PASSWORD_COLUMN_NAME, 
+          NameUtil.createUniqueElementKey(SecurityUtil.PASSWORD_COLUMN_NAME,
               tp),
           NameUtil.createUniqueElementName(SecurityUtil.PASSWORD_COLUMN_NAME,
               tp));
@@ -832,8 +832,8 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey, 
-      String dbTableName, String displayName, TableType tableType, String id, 
+  public static TableProperties addTable(DbHelper dbh, String tableKey,
+      String dbTableName, String displayName, TableType tableType, String id,
       KeyValueStore.Type typeOfStore) {
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
@@ -1212,14 +1212,14 @@ public class TableProperties {
    *          should either be received from the server or null
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName, String elementKey, 
-      String elementName, ColumnType columnType, 
+  public ColumnProperties addColumn(String displayName, String elementKey,
+      String elementName, ColumnType columnType,
       List<String> listChildElementKeys, boolean isPersisted,
-      JoinColumn joins) {
+      ArrayList<JoinColumn> joins) {
     if (elementKey == null) {
       elementKey = NameUtil.createUniqueElementKey(displayName, this);
     } else if (!NameUtil.isValidUserDefinedDatabaseName(elementKey)) {
-      throw new IllegalArgumentException("[addColumn] invalid element key: " + 
+      throw new IllegalArgumentException("[addColumn] invalid element key: " +
           elementKey);
     }
     if (elementName == null) {
@@ -1229,7 +1229,7 @@ public class TableProperties {
           elementName);
     }
     ColumnProperties cp = null;
-    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName, 
+    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName,
         elementKey, elementName, columnType, listChildElementKeys, isPersisted,
         joins, ColumnProperties.DEFAULT_KEY_VISIBLE,
         this.getBackingStoreType());
@@ -1506,7 +1506,7 @@ public class TableProperties {
     tableKVSH.setString(KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
-  
+
   /**
    * Unimplemented.
    * <p>
