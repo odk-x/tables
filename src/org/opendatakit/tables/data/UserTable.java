@@ -36,6 +36,7 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -186,6 +187,7 @@ public class UserTable {
    * @param i
    * @return
    */
+  @SuppressLint("NewApi")
   private static final String getIndexAsString(Cursor c, int i) {
     // If you add additional return types here be sure to modify the javadoc.
     int version = android.os.Build.VERSION.SDK_INT;
@@ -232,7 +234,7 @@ public class UserTable {
   }
 
   public Long getTimestamp(int rowNum) {
-    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.TIMESTAMP));
+    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
 
   public Row getRowAtIndex(int index) {
@@ -535,7 +537,7 @@ public class UserTable {
     public String[] getAllMetadata() {
       return mMetadata;
     }
-    
+
     @Override
     public int hashCode() {
       final int PRIME = 31;

@@ -79,7 +79,7 @@ public class SecurityUtil {
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(DataTableColumns.ROW_ID);
         UserTable table = dbt.getRaw(columns,
-                new String[] {DataTableColumns.SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {DataTableColumns.SAVEPOINT_TYPE, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
         return (table.getHeight() > 0);
     }

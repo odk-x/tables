@@ -137,10 +137,10 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    TableProperties[] allTableProperties = 
-        TableProperties.getTablePropertiesForAll(dbh, 
+    TableProperties[] allTableProperties =
+        TableProperties.getTablePropertiesForAll(dbh,
             KeyValueStore.Type.ACTIVE);
-    String dbTableName = NameUtil.createUniqueDbTableName(tableName, 
+    String dbTableName = NameUtil.createUniqueDbTableName(tableName,
         allTableProperties);
     TableProperties tp;
     try {
@@ -239,7 +239,7 @@ public class CsvUtil {
           dbName = DataTableColumns.ROW_ID;
         } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
           idxTimestamp = i;
-          dbName = DataTableColumns.TIMESTAMP;
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
         } else if (colName.equals(URI_ACCESS_CONTROL_LABEL)) {
           idxUriAccessControl = i;
           dbName = DataTableColumns.URI_ACCESS_CONTROL;
@@ -377,7 +377,7 @@ public class CsvUtil {
         String dbName = null;
         if (colName.equals(LAST_MOD_TIME_LABEL)) {
           idxTimestamp = i;
-          dbName = DataTableColumns.TIMESTAMP;
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
         } else if (colName.equals(ROW_ID_LABEL)) {
           idxRowId = i;
           dbName = DataTableColumns.ROW_ID;
@@ -435,9 +435,9 @@ public class CsvUtil {
    * @param String
    *          tablename
    * @return boolean true if successful
-   * @throws TableAlreadyExistsException 
+   * @throws TableAlreadyExistsException
    */
-  public boolean importConfigTables(Context c, InitializeTask it, File file, 
+  public boolean importConfigTables(Context c, InitializeTask it, File file,
       String filename, String tablename) throws TableAlreadyExistsException {
 
     this.it = it;
@@ -698,7 +698,7 @@ public class CsvUtil {
       }
 
       {
-        columns.add(DataTableColumns.TIMESTAMP);
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
         headerRow.add(LAST_MOD_TIME_LABEL);
         idxTimestamp = index;
         index++;
@@ -755,7 +755,7 @@ public class CsvUtil {
       }
     } else {
       if (includeTimestamp) {
-        columns.add(DataTableColumns.TIMESTAMP);
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
         headerRow.add(LAST_MOD_TIME_LABEL);
         idxTimestamp = index;
         index++;
@@ -796,7 +796,7 @@ public class CsvUtil {
     }
     // getting data
     DbTable dbt = DbTable.getDbTable(dbh, tp);
-    String[] selectionKeys = { DataTableColumns.SAVED };
+    String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE };
     String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
     UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null);
     // writing data

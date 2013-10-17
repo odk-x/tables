@@ -262,7 +262,7 @@ public class MsgHandler {
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         UserTable table = sDbt.getRaw(
         		columns,
-        		new String[] {DataTableColumns.SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
+        		new String[] {DataTableColumns.SAVEPOINT_TYPE, SecurityUtil.PHONENUM_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
         for (int i = 0; i < table.getHeight(); i++) {
             if (password.equals(table.getData(i, 0))) {

@@ -557,7 +557,7 @@ public class SyncProcessor {
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
     UserTable allRowIds = table.getRaw(columns,
-    		new String[] {DataTableColumns.SAVED},
+    		new String[] {DataTableColumns.SAVEPOINT_TYPE},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
     /**************************
@@ -740,7 +740,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP,
+      		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -803,7 +803,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP,
+      		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -829,7 +829,7 @@ public class SyncProcessor {
     	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
     		String lastModTime = entry.getValue();
     		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-    		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+    		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, Long.toString(dt.getMillis()));
     	} else {
     		values.put(colName, entry.getValue());
     	}
@@ -903,7 +903,7 @@ public class SyncProcessor {
     }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
     UserTable rows = table.getRaw(columnsToSync, new String[]
-        {DataTableColumns.SAVED,
+        {DataTableColumns.SAVEPOINT_TYPE,
     			DataTableColumns.SYNC_STATE },
         new String[] { DbTable.SavedStatus.COMPLETE.name(),
     			String.valueOf(state) },
@@ -943,9 +943,9 @@ public class SyncProcessor {
           // columns specified as synchable metadata columns in DbTable.
         for (String metadataElementKey : cachedColumnsToSync.keySet()) {
           // Special check for the timestamp to format correctly.
-          if (metadataElementKey.equals(DataTableColumns.TIMESTAMP)) {
+          if (metadataElementKey.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
             Long timestamp = Long.valueOf(rows.getMetadataByElementKey(
-                i, DataTableColumns.TIMESTAMP));
+                i, DataTableColumns.SAVEPOINT_TIMESTAMP));
             DateTime dt = new DateTime(timestamp);
             String lastModTime = du.formatDateTimeForDb(dt);
             values.put(LAST_MOD_TIME_LABEL, lastModTime);
