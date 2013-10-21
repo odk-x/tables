@@ -673,7 +673,7 @@ public class SyncProcessor {
       // delete conflicting row if it already exists
       String whereClause = String.format("%s = ? AND %s = ? AND %s IN " +
       		"( ?, ? )",
-          DataTableColumns.ROW_ID,
+          DataTableColumns.ID,
           DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
       String[] whereArgs = { row.getRowId(),
           String.valueOf(SyncUtil.State.CONFLICTING),
@@ -729,7 +729,7 @@ public class SyncProcessor {
         		"CONFLICTING and leaving conflict type unchanged as: " +
             localRowConflictTypeBeforeSync);
       }
-      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.CONFLICTING));
       values.put(DataTableColumns.CONFLICT_TYPE, localRowConflictType);
@@ -794,7 +794,7 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
-      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
       values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.REST);
 

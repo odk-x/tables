@@ -46,9 +46,9 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
         android.R.layout.simple_list_item_1);
     for (int i = 0; i < this.mConflictTable.getLocalTable().getHeight(); i++) {
       String localRowId = this.mConflictTable.getLocalTable()
-          .getMetadataByElementKey(i, DataTableColumns.ROW_ID);
+          .getMetadataByElementKey(i, DataTableColumns.ID);
       String serverRowId = this.mConflictTable.getServerTable()
-          .getMetadataByElementKey(i, DataTableColumns.ROW_ID);
+          .getMetadataByElementKey(i, DataTableColumns.ID);
       if (!localRowId.equals(serverRowId)) {
         Log.e(TAG, "row ids at same index are not the same! this is an " +
             "error.");
