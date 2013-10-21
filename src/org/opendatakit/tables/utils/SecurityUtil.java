@@ -83,4 +83,9 @@ public class SecurityUtil {
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
         return (table.getHeight() > 0);
     }
+
+    public static String mapPhoneNumToAccessControl(String phoneNum) {
+      // TODO Define how phoneNum maps to an accessControl value
+      return null;
+    }
 }

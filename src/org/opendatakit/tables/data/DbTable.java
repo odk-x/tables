@@ -82,7 +82,7 @@ public class DbTable {
 
     static {
       ADMIN_COLUMNS = new ArrayList<String>();
-      ADMIN_COLUMNS.add(DataTableColumns.ROW_ID);
+      ADMIN_COLUMNS.add(DataTableColumns.ID);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
       ADMIN_COLUMNS.add(DataTableColumns.CONFLICT_TYPE);
@@ -91,14 +91,12 @@ public class DbTable {
       ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_TYPE);
       ADMIN_COLUMNS.add(DataTableColumns.FORM_ID);
       ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
-      ADMIN_COLUMNS.add(DataTableColumns.INSTANCE_NAME);
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
       COLUMNS_TO_SYNC.put(DataTableColumns.URI_ACCESS_CONTROL, ColumnType.TEXT);
       COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.DATETIME);
       COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.TEXT);
       COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.TEXT);
-      COLUMNS_TO_SYNC.put(DataTableColumns.INSTANCE_NAME, ColumnType.TEXT);
     }
 
     /**
@@ -119,7 +117,7 @@ public class DbTable {
     };
 
     public static final String DB_CSV_COLUMN_LIST =
-        DataTableColumns.ROW_ID
+        DataTableColumns.ID
         + ", " + DataTableColumns.SYNC_TAG
         + ", " + DataTableColumns.SYNC_STATE
         + ", " + DataTableColumns.CONFLICT_TYPE
@@ -128,7 +126,6 @@ public class DbTable {
         + ", " + DataTableColumns.SAVEPOINT_TYPE
         + ", " + DataTableColumns.FORM_ID
         + ", " + DataTableColumns.LOCALE
-        + ", " + DataTableColumns.INSTANCE_NAME
         ;
 
     private final DbHelper dbh;
@@ -168,7 +165,7 @@ public class DbTable {
             }
         }
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
-            DataTableColumns.ROW_ID + " TEXT NOT NULL" +
+            DataTableColumns.ID + " TEXT NOT NULL" +
      ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
      ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
      ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NULL" +
@@ -177,7 +174,6 @@ public class DbTable {
      ", " + DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL" +
      ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
      ", " + DataTableColumns.LOCALE + " TEXT NULL" +
-     ", " + DataTableColumns.INSTANCE_NAME + " TEXT NOT NULL" +
      colListBuilder.toString() +
      ")";
         db.execSQL(toExecute);
@@ -228,7 +224,7 @@ public class DbTable {
           columnsToSelect.addAll(ADMIN_COLUMNS);
         }
         String[] colArr = new String[columnsToSelect.size() + 1];
-        colArr[0] = DataTableColumns.ROW_ID;
+        colArr[0] = DataTableColumns.ID;
         for (int i = 0; i < columnsToSelect.size(); i++) {
             colArr[i + 1] = columnsToSelect.get(i);
         }
@@ -362,12 +358,12 @@ public class DbTable {
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE,
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
             conflictTypeLocalUpdatedStr},
-          DataTableColumns.ROW_ID);
+          DataTableColumns.ID);
       UserTable serverTable = getRawWithSpecificQuery(userColumns,
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE,
           new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
             conflictTypeServerUpdatedStr},
-          DataTableColumns.ROW_ID);
+          DataTableColumns.ID);
       return new ConflictTable(localTable, serverTable);
     }
 
@@ -489,20 +485,14 @@ public class DbTable {
      * server. I think it is only called when creating on the phone...
      */
     public void addRow(Map<String, String> values, String rowId,
-          Long timestamp, String phoneNum, String instanceName, String formId,
-          String locale ) {
-        // TODO: phoneNum should be mapped to a uriAccessControl
-        String uriAccessControl = phoneNum;
+          Long timestamp, String accessControl, String formId, String locale ) {
 
         if (timestamp == null) {
         	timestamp = System.currentTimeMillis();
         }
-        if (instanceName == null) {
-        	instanceName = Long.toString(System.currentTimeMillis());
-        }
         ContentValues cv = new ContentValues();
         if (rowId != null) {
-          cv.put(DataTableColumns.ROW_ID, rowId);
+          cv.put(DataTableColumns.ID, rowId);
         }
         for (String column : values.keySet()) {
         	if ( column != null ) {
@@ -511,9 +501,8 @@ public class DbTable {
         }
         // The admin columns get added here and also in actualAddRow
         cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
-        cv.put(DataTableColumns.URI_ACCESS_CONTROL, uriAccessControl);
+        cv.put(DataTableColumns.URI_ACCESS_CONTROL, accessControl);
         cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timestamp);
-        cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
         cv.put(DataTableColumns.FORM_ID, formId);
         cv.put(DataTableColumns.LOCALE, locale);
         actualAddRow(cv);
@@ -533,9 +522,9 @@ public class DbTable {
      * @param values the values to put in the row
      */
     public void actualAddRow(ContentValues values) {
-        if (!values.containsKey(DataTableColumns.ROW_ID)) {
+        if (!values.containsKey(DataTableColumns.ID)) {
           String id = UUID.randomUUID().toString();
-          values.put(DataTableColumns.ROW_ID, id);
+          values.put(DataTableColumns.ID, id);
         }
         if (!values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
         	values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
@@ -544,11 +533,6 @@ public class DbTable {
         // values from the server will be null or non-existent. This will cause
         // problems if there are NON NULL constraints on the tables. Check and
         // add default values as appropriate.
-        if (!values.containsKey(DataTableColumns.INSTANCE_NAME) ||
-            values.get(DataTableColumns.INSTANCE_NAME) == null) {
-          values.put(DataTableColumns.INSTANCE_NAME,
-              DataTableColumns.INSTANCE_NAME);
-        }
         if (!values.containsKey(DataTableColumns.LOCALE) ||
             values.get(DataTableColumns.LOCALE) == null) {
           values.put(DataTableColumns.LOCALE,
@@ -579,13 +563,11 @@ public class DbTable {
      * updating.
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
-     * @param phoneNum the source phone number to put in the row
+     * @param accessControl the access control restriction for this row
      * @param timestamp the last modification time to put in the row
      */
     public void updateRow(String rowId, Map<String, String> values,
-            String phoneNum, Long timestamp, String instanceName, String formId, String locale) {
-        // TODO: figure out how to go from phoneNum to uriAccessControl
-        String uriAccessControl = phoneNum;
+            String accessControl, Long timestamp, String formId, String locale) {
         ContentValues cv = new ContentValues();
         // TODO is this a race condition of sorts? isSynchronized(), which
         // formerly returned isSynched, may kind of be doing double duty,
@@ -607,14 +589,11 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
-        if ( uriAccessControl != null ) {
-        	cv.put(DataTableColumns.URI_ACCESS_CONTROL, uriAccessControl);
+        if ( accessControl != null ) {
+        	cv.put(DataTableColumns.URI_ACCESS_CONTROL, accessControl);
         }
         if ( timestamp != null ) {
         	cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timestamp);
-        }
-        if ( instanceName != null ) {
-        	cv.put(DataTableColumns.INSTANCE_NAME, instanceName);
         }
         if ( formId != null ) {
         	cv.put(DataTableColumns.FORM_ID, formId);
@@ -632,7 +611,7 @@ public class DbTable {
      */
     public void actualUpdateRowByRowId(String rowId, ContentValues values) {
         String[] whereArgs = { rowId };
-        actualUpdateRow(values, DataTableColumns.ROW_ID + " = ?", whereArgs);
+        actualUpdateRow(values, DataTableColumns.ID + " = ?", whereArgs);
     }
 
     private void actualUpdateRow(ContentValues values, String where,
@@ -655,7 +634,7 @@ public class DbTable {
         // We're going to delete the column with the matching row id that has
         // conflict_type SERVER_UPDATED or SERVER_DELETED.
       String[] deleteWhereArgs = { rowId };
-        String deleteSql = DataTableColumns.ROW_ID + " = ? AND " +
+        String deleteSql = DataTableColumns.ID + " = ? AND " +
             DataTableColumns.CONFLICT_TYPE + " IN ( " +
             SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES + ", " +
             SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
@@ -667,7 +646,7 @@ public class DbTable {
             updateValues.put(key, values.get(key));
         }
         String[] updateWhereArgs = { rowId };
-        String updateWhereSql = DataTableColumns.ROW_ID + " = ?";
+        String updateWhereSql = DataTableColumns.ID + " = ?";
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
 	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
@@ -706,7 +685,7 @@ public class DbTable {
           try {
 	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
 	          values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
-	          db.update(tp.getDbTableName(), values, DataTableColumns.ROW_ID + " = ?", whereArgs);
+	          db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
           } finally {
             // TODO: fix the when to close problem
 //        	  db.close();
@@ -721,7 +700,7 @@ public class DbTable {
      */
     public void deleteRowActual(String rowId) {
         String[] whereArgs = { rowId };
-        String whereClause = DataTableColumns.ROW_ID + " = ?";
+        String whereClause = DataTableColumns.ID + " = ?";
         deleteRowActual(whereClause, whereArgs);
     }
 
@@ -745,7 +724,7 @@ public class DbTable {
 		Cursor c = null;
 		try {
 	      db = dbh.getReadableDatabase();
-	      c = db.query(tp.getDbTableName(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ROW_ID + " = ?",
+	      c = db.query(tp.getDbTableName(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID + " = ?",
 	          new String[] { rowId }, null, null, null);
 	      int syncState = -1;
 	      if (c.moveToFirst()) {

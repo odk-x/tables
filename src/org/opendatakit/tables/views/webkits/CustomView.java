@@ -56,6 +56,7 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -92,7 +93,8 @@ public abstract class CustomView extends LinearLayout {
 		webView.addJavascriptInterface(o, name);
 	}
 
-	private static void clearInterfaces() {
+	@SuppressLint("NewApi")
+  private static void clearInterfaces() {
 		for (String str : javascriptInterfaces) {
 			webView.addJavascriptInterface(null, str);
 			if (Build.VERSION.SDK_INT >= 11) {
@@ -349,7 +351,6 @@ public abstract class CustomView extends LinearLayout {
 		private final TableProperties tp;
 		private Map<String, String> data;
 		private String mRowId;
-		private String mInstanceName;
 
 		public RowDataIf getJavascriptInterfaceWithWeakReference() {
 			return new RowDataIf(this);
@@ -359,10 +360,9 @@ public abstract class CustomView extends LinearLayout {
 			this.tp = tp;
 		}
 
-		void set(String rowId, String mInstanceName, Map<String, String> data) {
+		void set(String rowId, Map<String, String> data) {
 			this.data = data;
 			this.mRowId = rowId;
-			this.mInstanceName = mInstanceName;
 		}
 
 		/**
@@ -372,7 +372,7 @@ public abstract class CustomView extends LinearLayout {
 		public void editRowWithCollect() {
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp, data, null,
-					null, null, mRowId, mInstanceName);
+					null, null, mRowId);
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					mRowId);
@@ -393,7 +393,7 @@ public abstract class CustomView extends LinearLayout {
 				String formVersion, String formRootElement) {
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp, data, formId,
-					formVersion, formRootElement, mRowId, mInstanceName);
+					formVersion, formRootElement, mRowId);
 			// We have to launch it through this method so that the rowId is
 			// persisted in the SharedPreferences.
 			CollectUtil.launchCollectToEditRow(
@@ -751,8 +751,7 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp,
-					elementKeyToValue, null, null, null, rowId,
-					mTable.getInstanceName(rowNumber));
+					elementKeyToValue, null, null, null, rowId);
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
@@ -779,7 +778,7 @@ public abstract class CustomView extends LinearLayout {
 			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
 					CustomView.this.getContainerActivity(), tp,
 					elementKeyToValue, formId, formVersion, formRootElement,
-					rowId, mTable.getInstanceName(rowNumber));
+					rowId);
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
@@ -1320,7 +1319,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
 		}
-		
+
 		/**
 		 * Get the string that is displayed in the search box.
 		 * @return the search text
@@ -1407,10 +1406,10 @@ public abstract class CustomView extends LinearLayout {
 		private void addTable(String tableName, TableType tableType) {
 		  // TODO: if this avenue to create a table remains, we need to also
 		  // prompt them for a tableId name.
-		  TableProperties[] allTableProperties = 
-		      TableProperties.getTablePropertiesForAll(dbh, 
+		  TableProperties[] allTableProperties =
+		      TableProperties.getTablePropertiesForAll(dbh,
 		          KeyValueStore.Type.ACTIVE);
-			String dbTableName = NameUtil.createUniqueDbTableName(tableName, 
+			String dbTableName = NameUtil.createUniqueDbTableName(tableName,
 			    allTableProperties);
 			TableProperties tp = TableProperties.addTable(dbh, dbTableName,
 					dbTableName, tableName, tableType,

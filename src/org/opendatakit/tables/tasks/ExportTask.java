@@ -30,8 +30,7 @@ public class ExportTask
         return cu.export(this, request.getFile(),
                 request.getTableProperties(),
                 request.getIncludeTimestamps(),
-                request.getIncludeUriUsers(),
-                request.getIncludeInstanceNames(),
+                request.getIncludeAccessControl(),
                 request.getIncludeFormIds(),
                 request.getIncludeLocales(),
                 request.getIncludeProperties());

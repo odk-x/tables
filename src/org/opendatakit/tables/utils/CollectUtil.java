@@ -25,9 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -128,6 +126,7 @@ public class CollectUtil {
   public static final String COLLECT_KEY_FORM_FILE_PATH = "formFilePath";
 
   private static final String COLLECT_FORMS_URI_STRING = "content://org.odk.collect.android.provider.odk.forms/forms";
+  @SuppressWarnings("unused")
   private static final Uri ODKCOLLECT_FORMS_CONTENT_URI = Uri.parse(COLLECT_FORMS_URI_STRING);
   private static final String COLLECT_INSTANCES_URI_STRING = "content://org.odk.collect.android.provider.odk.instances/instances";
   private static final Uri COLLECT_INSTANCES_CONTENT_URI = Uri.parse(COLLECT_INSTANCES_URI_STRING);
@@ -224,7 +223,7 @@ public class CollectUtil {
         writer.write(cp.getElementKey());
         writer.write("/>");
       }
-      writer.write("<meta><instanceID/><instanceName/></meta>");
+      writer.write("<meta><instanceID/></meta>");
       writer.write("</");
       writer.write(DEFAULT_ROOT_ELEMENT);
       writer.write(">");
@@ -242,9 +241,6 @@ public class CollectUtil {
       writer.write("<bind nodeset=\"/");
       writer.write(DEFAULT_ROOT_ELEMENT);
       writer.write("/meta/instanceID\" type=\"string\" required=\"true()\"/>");
-      writer.write("<bind nodeset=\"/");
-      writer.write(DEFAULT_ROOT_ELEMENT);
-      writer.write("/meta/instanceName\" type=\"string\" required=\"true()\" constraint=\"string-length(.) &gt; 0\"/>");
 
       writer.write("<itext>");
       writer.write("<translation lang=\"eng\">");
@@ -277,9 +273,6 @@ public class CollectUtil {
             + ":label')\"/>");
         writer.write("</" + action + ">");
       }
-      writer.write("<input ref=\"/" + DEFAULT_ROOT_ELEMENT + "/meta/instanceName\">");
-      writer.write("<label>Short Descriptive Name for this Record (Instance Name)</label>");
-      writer.write("</input>");
       writer.write("</h:body>");
       writer.write("</h:html>");
       writer.flush();
@@ -371,8 +364,7 @@ public class CollectUtil {
    */
   private static boolean writeRowDataToBeEdited(Context context,
       // UserTable table, int rowNum,
-      Map<String, String> values, TableProperties tp, CollectFormParameters params, String rowId,
-      String instanceName) {
+      Map<String, String> values, TableProperties tp, CollectFormParameters params, String rowId) {
     /*
      * This is currently implemented thinking that all you need to have is:
      *
@@ -476,9 +468,6 @@ public class CollectUtil {
       writer.write("<instanceID>");
       writer.write(StringEscapeUtils.escapeXml(rowId));
       writer.write("</instanceID>");
-      writer.write("<instanceName>");
-      writer.write(StringEscapeUtils.escapeXml(instanceName));
-      writer.write("</instanceName>");
       writer.write("</meta>");
       writer.write("</");
       writer.write(params.getRootElement());
@@ -555,13 +544,12 @@ public class CollectUtil {
    * in the method updateInstanceDatabase().
    */
   private static Uri getUriForCollectInstanceForRowData(TableProperties tp, CollectFormParameters params,
-        String rowId, String instanceName, boolean shouldUpdate, ContentResolver resolver) {
+        String rowId, boolean shouldUpdate, ContentResolver resolver) {
 
     String instanceFilePath = getEditRowFormFile(tp, rowId).getAbsolutePath();
 
     ContentValues values = new ContentValues();
     // First we need to fill the values with various little things.
-    values.put(COLLECT_KEY_DISPLAY_NAME, instanceName);
     values.put(COLLECT_KEY_STATUS, COLLECT_KEY_STATUS_INCOMPLETE);
     values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
     values.put(COLLECT_KEY_INSTANCE_FILE_PATH, instanceFilePath);
@@ -796,7 +784,7 @@ public class CollectUtil {
 
   public static Intent getIntentForOdkCollectEditRow(Context context, TableProperties tp,
       Map<String, String> elementKeyToValue, String formId, String formVersion,
-      String formRootElement, String rowId, String instanceName) {
+      String formRootElement, String rowId) {
 
     CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(tp);
 
@@ -810,7 +798,7 @@ public class CollectUtil {
       formParameters.setRootElement(formRootElement);
     }
     Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(context, tp,
-        elementKeyToValue, formParameters, rowId, instanceName);
+        elementKeyToValue, formParameters, rowId);
 
     return editRowIntent;
   }
@@ -830,8 +818,7 @@ public class CollectUtil {
    * @return
    */
   private static Intent getIntentForOdkCollectEditRow(Context context, TableProperties tp,
-      Map<String, String> elementKeyToValue, CollectFormParameters params, String rowId,
-      String instanceName) {
+      Map<String, String> elementKeyToValue, CollectFormParameters params, String rowId) {
     // Check if there is a custom form. If there is not, we want to delete
     // the old form and write the new form.
     if (!params.isCustom()) {
@@ -845,11 +832,11 @@ public class CollectUtil {
     boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData( tp, rowId, context.getContentResolver());
 
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
-        rowId, instanceName);
+        rowId);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
-    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName, shouldUpdate,
+    Uri insertUri = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, shouldUpdate,
         context.getContentResolver());
 
     // Copied the below from getIntentForOdkCollectEditRow().
@@ -991,12 +978,11 @@ public class CollectUtil {
     Map<String,String> formValues = new HashMap<String,String>();
     Long timestamp; // should be endTime in form?
     String instanceID;
-    String instanceName;
     String formId;
     String locale;
     // TODO: clarify whether this is the userId or the uriAccessControl
     // at this point. It might need to be the userId...
-    String uriAccessControl;
+    String accessControl;
 
     FormValues() {};
   };
@@ -1023,7 +1009,6 @@ public class CollectUtil {
 	    c.moveToFirst();
 	    FormValues fv = new FormValues();
 	    fv.timestamp = c.getLong(c.getColumnIndexOrThrow(COLLECT_KEY_LAST_STATUS_CHANGE_DATE));
-	    fv.instanceName = c.getString(c.getColumnIndexOrThrow("displayName"));
 	    String instancepath = c.getString(c.getColumnIndexOrThrow("instanceFilePath"));
 	    File instanceFile = new File(instancepath);
 	    parseXML(fv, instanceFile);
@@ -1074,7 +1059,7 @@ public class CollectUtil {
     Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
     DbHelper dbh = DbHelper.getDbHelper(context);
     DbTable dbTable = DbTable.getDbTable(dbh, tp);
-    dbTable.updateRow(rowId, values, formValues.uriAccessControl, formValues.timestamp, formValues.instanceName, formValues.formId, formValues.locale);
+    dbTable.updateRow(rowId, values, formValues.accessControl, formValues.timestamp, formValues.formId, formValues.locale);
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
     // will mean there's no you could accidentally wind up overwriting the
@@ -1146,8 +1131,8 @@ public class CollectUtil {
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
     DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp);
-    dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.uriAccessControl,
-            formValues.instanceName, formValues.formId, formValues.locale);
+    dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.accessControl,
+            formValues.formId, formValues.locale);
     return true;
   }
 
@@ -1197,21 +1182,19 @@ public class CollectUtil {
     }
     // manufacture a rowId for this record...
     String rowId = "uuid:" + UUID.randomUUID().toString();
-    SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    String instanceName = f.format(new Date());
 
     boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData( tp, rowId, context.getContentResolver());
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
-        rowId, instanceName);
+        rowId);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, instanceName, shouldUpdate,
+    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, shouldUpdate,
         context.getContentResolver());
 
     // And now finally create the intent.
@@ -1285,8 +1268,6 @@ public class CollectUtil {
             String name = e.getName();
             if ( name.equals("instanceID") ) {
               fv.instanceID = ODKFileUtils.getXMLText(e, false);
-            } else if ( name.equals("instanceName") ) {
-              fv.instanceName = ODKFileUtils.getXMLText(e, false);
             }
           }
         } else {

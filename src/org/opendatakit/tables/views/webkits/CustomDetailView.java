@@ -98,8 +98,7 @@ public class CustomDetailView extends CustomView {
       tmpData.put(userTable.getElementKey(i), userTable.getData(rowNum, i));
     }
 
-    rowData.set(rowId, userTable.getInstanceName(rowNum),
-        tmpData);
+    rowData.set(rowId, tmpData);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
     if (this.mFilename != null) {

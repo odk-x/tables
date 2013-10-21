@@ -325,7 +325,9 @@ public class MsgHandler {
             }
         }
         DbTable dbt = DbTable.getDbTable(dbh, tp);
-        dbt.addRow(rowValues, null, null, phoneNum, null /* instanceName */,
+
+        String accessControl = SecurityUtil.mapPhoneNumToAccessControl(phoneNum);
+        dbt.addRow(rowValues, null, null, accessControl,
             null /* formId */, null /* locale */);
         return true;
     }

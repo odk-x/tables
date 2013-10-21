@@ -433,7 +433,7 @@ public class Controller implements CustomViewCallbacks {
 	}
 
 	Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
-          null, null, null, table.getRowId(rowNum), table.getInstanceName(rowNum));
+          null, null, null, table.getRowId(rowNum));
 
 	if (intent != null) {
       CollectUtil.launchCollectToEditRow(activity, intent,
@@ -1003,14 +1003,13 @@ public class Controller implements CustomViewCallbacks {
                           value);
 
                   // TODO: supply reasonable values for these...
-                  String uriUser = null; // user on phone
+                  String accessControl = null; // user on phone
                   Long timestamp = null; // current time
-                  String instanceName = null; // meta/instanceName if present in form
                   String formId = null; // formId used by ODK Collect
                   String locale = null; // current locale
 
-                  dbt.updateRow(rowId, values, uriUser, timestamp,
-                      instanceName, formId, locale);
+                  dbt.updateRow(rowId, values, accessControl, timestamp,
+                      formId, locale);
                   da.init();
                   dismiss();
               }

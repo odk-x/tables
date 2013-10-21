@@ -123,7 +123,7 @@ public class UserTable {
     buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
-    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
     // element key _my_data, and this column is at index 5 in the data
@@ -227,10 +227,6 @@ public class UserTable {
 
   public String getRowId(int rowNum) {
     return this.mRows.get(rowNum).mRowId;
-  }
-
-  public String getInstanceName(int rowNum) {
-    return getMetadataByElementKey(rowNum, DataTableColumns.INSTANCE_NAME);
   }
 
   public Long getTimestamp(int rowNum) {
