@@ -76,6 +76,8 @@ public class TableProperties {
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
+  public static final String KEY_TABLE_TYPE = "tableType";
+  public static final String KEY_ACCESS_CONTROL_TABLE_ID = "accessControlTableId";
   public static final String KEY_DISPLAY_NAME = "displayName";
   public static final String KEY_COLUMN_ORDER = "colOrder";
   public static final String KEY_PRIME_COLUMNS = "primeCols";
@@ -104,6 +106,7 @@ public class TableProperties {
   private static final String JSON_KEY_DB_TABLE_NAME = "dbTableName";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
   private static final String JSON_KEY_TABLE_TYPE = "type";
+  private static final String JSON_KEY_ACCESS_CONTROL_TABLE_ID = "accessControlTableId";
   private static final String JSON_KEY_COLUMN_ORDER = "colOrder";
   private static final String JSON_KEY_COLUMNS = "columns";
   private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
@@ -599,13 +602,13 @@ public class TableProperties {
   private static TableProperties constructPropertiesFromMap(DbHelper dbh,
       Map<String, String> props, KeyValueStore.Type backingStore) {
     // first we have to get the appropriate type for the non-string fields.
-    String tableTypeStr = props.get(TableDefinitionsColumns.TYPE);
-    TableType tableType = TableType.valueOf(tableTypeStr);
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
     SyncState syncState = SyncState.valueOf(syncStateStr);
     String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
+    String tableTypeStr = props.get(KEY_TABLE_TYPE);
+    TableType tableType = TableType.valueOf(tableTypeStr);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
     String currentViewTypeStr = props.get(KEY_CURRENT_VIEW_TYPE);
     TableViewType currentViewType;
@@ -670,8 +673,10 @@ public class TableProperties {
     }
     return new TableProperties(dbh, props.get(TableDefinitionsColumns.TABLE_ID),
         props.get(TableDefinitionsColumns.TABLE_KEY),
-        props.get(TableDefinitionsColumns.DB_TABLE_NAME), props.get(KEY_DISPLAY_NAME), tableType,
-        props.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS), columnOrder, primeList,
+        props.get(TableDefinitionsColumns.DB_TABLE_NAME),
+        props.get(KEY_DISPLAY_NAME), tableType,
+        props.get(KEY_ACCESS_CONTROL_TABLE_ID),
+        columnOrder, primeList,
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         props.get(TableDefinitionsColumns.SYNC_TAG),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), currentViewType,
@@ -988,11 +993,10 @@ public class TableProperties {
    *          the new table type
    */
   public void setTableType(TableType tableType) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.TYPE, tableType.name(), db);
+    // NOTE: this does not change the cache status of
+    // TableProperties, since the value is now in the KVS
+    tableKVSH.setString(KEY_TABLE_TYPE, tableType.name());
     this.tableType = tableType;
-    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
-    // TODO: handle closing of the database
   }
 
   /**
@@ -1551,12 +1555,8 @@ public class TableProperties {
   }
 
   public void setAccessControls(String accessControls) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS,
-        accessControls, db);
+    tableKVSH.setString(KEY_ACCESS_CONTROL_TABLE_ID, accessControls);
     this.accessControls = accessControls;
-    TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
-    // TODO: figure out how to handle closing the db
   }
 
   // TODO: fix how these security tables are accessed. need to figure this out
@@ -1719,7 +1719,7 @@ public class TableProperties {
     jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
     jo.put(JSON_KEY_TABLE_TYPE, tableType);
-    jo.put(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS, accessControls);
+    jo.put(JSON_KEY_ACCESS_CONTROL_TABLE_ID, accessControls);
     jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
     jo.put(JSON_KEY_COLUMNS, cols);
     jo.put(JSON_KEY_PRIME_COLUMNS, primes);
@@ -1755,7 +1755,7 @@ public class TableProperties {
       setPrimeColumns(primes);
       setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
       setIndexColumn((String) jo.get(JSON_KEY_INDEX_COLUMN));
-      setAccessControls((String) jo.get(TableDefinitionsColumns.TABLE_ID_ACCESS_CONTROLS));
+      setAccessControls((String) jo.get(JSON_KEY_ACCESS_CONTROL_TABLE_ID));
       setCurrentViewType(TableViewType.valueOf((String) jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
       setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
 
