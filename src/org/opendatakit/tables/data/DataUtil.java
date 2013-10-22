@@ -336,7 +336,7 @@ public class DataUtil {
 
     private String validifyMultipleChoiceValue(ColumnProperties cp,
             String input) {
-        for (String opt : cp.getDisplayChoicesMap()) {
+        for (String opt : cp.getDisplayChoicesList()) {
             if (opt.equalsIgnoreCase(input)) {
                 return opt;
             }

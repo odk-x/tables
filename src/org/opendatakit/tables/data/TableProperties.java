@@ -33,6 +33,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
@@ -71,24 +72,24 @@ public class TableProperties {
   /***********************************
    * The partition and aspect of table properties in the key value store.
    ***********************************/
-  public static final String KVS_PARTITION = "Table";
+  public static final String KVS_PARTITION = KeyValueStoreConstants.PARTITION_TABLE;
 
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
-  public static final String KEY_TABLE_TYPE = "tableType";
-  public static final String KEY_ACCESS_CONTROL_TABLE_ID = "accessControlTableId";
-  public static final String KEY_DISPLAY_NAME = "displayName";
-  public static final String KEY_COLUMN_ORDER = "colOrder";
-  public static final String KEY_PRIME_COLUMNS = "primeCols";
-  public static final String KEY_SORT_COLUMN = "sortCol";
-  public static final String KEY_INDEX_COLUMN = "indexCol";
-  public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
-  // public static final String KEY_DETAIL_VIEW_FILE = "detailViewFile";
-  public static final String KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
+  public static final String KEY_TABLE_TYPE = KeyValueStoreConstants.TABLE_TYPE;
+  public static final String KEY_ACCESS_CONTROL_TABLE_ID = KeyValueStoreConstants.TABLE_ACCESS_CONTROL_TABLE_ID;
+  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
+  public static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
+  public static final String KEY_PRIME_COLUMNS = KeyValueStoreConstants.TABLE_PRIME_COLS;
+  public static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
+  public static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
+  public static final String KEY_CURRENT_VIEW_TYPE = KeyValueStoreConstants.TABLE_CURRENT_VIEW_TYPE;
+  public static final String KEY_SUM_DISPLAY_FORMAT = KeyValueStoreConstants.TABLE_SUMMARY_DISPLAY_FORMAT;
+
   // this should just be the saved query on a table. it isn't a property, it's
   // just a key. The default is the empty string.
-  public static final String KEY_CURRENT_QUERY = "currentQuery";
+  public static final String KEY_CURRENT_QUERY = KeyValueStoreConstants.TABLE_CURRENT_QUERY;
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
    * can be added her just as a sanity check. Note that they are NOT guaranteed
@@ -112,14 +113,7 @@ public class TableProperties {
   private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
   private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
-  private static final String JSON_KEY_READ_SECURITY_TABLE_ID = "readAccessTid";
-  private static final String JSON_KEY_WRITE_SECURITY_TABLE_ID = "writeAccessTid";
   private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
-  // private static final String JSON_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
-  // "currentOverviewViewType";
-  // private static final String JSON_KEY_CURRENT_COLLECTION_VIEW_TYPE =
-  // "currentCollectionViewType";
-  // private static final String JSON_KEY_DETAIL_VIEW_FILE = "detailViewFile";
   private static final String JSON_KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
 
   /***********************************
@@ -130,15 +124,8 @@ public class TableProperties {
   public static final String DEFAULT_KEY_PRIME_COLUMNS = "";
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_INDEX_COLUMN = "";
-  public static final String DEFAULT_KEY_CO_VIEW_SETTINGS = "";
   public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.Spreadsheet.name();
-  // public static final String DEFAULT_KEY_CURRENT_OVERVIEW_VIEW_TYPE =
-  // TableViewType.Spreadsheet.name();
-  // public static final String DEFAULT_KEY_CURRENT_COLLECTION_VIEW_TYPE =
-  // TableViewType.Spreadsheet.name();
-  // public static final String DEFAULT_KEY_DETAIL_VIEW_FILE = "";
   public static final String DEFAULT_KEY_SUM_DISPLAY_FORMAT = "";
-  public static final String DEFAULT_KEY_OV_VIEW_SETTINGS = "";
   public static final String DEFAULT_KEY_COLUMN_ORDER = "";
   public static final String DEFAULT_KEY_CURRENT_QUERY = "";
 
@@ -148,18 +135,12 @@ public class TableProperties {
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
       KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN,
-      // KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-      // KEY_CURRENT_COLLECTION_VIEW_TYPE,
-      // KEY_DETAIL_VIEW_FILE,
       KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT };
 
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
       KEY_COLUMN_ORDER, KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
       KEY_INDEX_COLUMN,
-      // KEY_CURRENT_OVERVIEW_VIEW_TYPE,
-      // KEY_CURRENT_COLLECTION_VIEW_TYPE,
-      // KEY_DETAIL_VIEW_FILE,
       KEY_SUM_DISPLAY_FORMAT, });
 
   static {

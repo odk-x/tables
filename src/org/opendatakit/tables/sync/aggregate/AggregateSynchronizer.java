@@ -254,14 +254,12 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @Override
   public String createTable(String tableId, List<Column> columns,
-      String tableKey, String dbTableName, TableType type,
-      String tableIdAccessControls) throws IOException {
+      String tableKey, String dbTableName) throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
     TableDefinition definition =
-        new TableDefinition(tableId, columns, tableKey, dbTableName,
-            type, tableIdAccessControls);
+        new TableDefinition(tableId, columns, tableKey, dbTableName);
     HttpEntity<TableDefinition> requestEntity =
         new HttpEntity<TableDefinition>(definition, requestHeaders);
 

@@ -26,6 +26,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -211,12 +212,12 @@ public class ColumnProperties {
    */
   // private static final String DB_DISPLAY_NAME = "displayName"; /* perhaps as
   // json i18n */
-  // private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  // private static final String DB_DISPLAY_CHOICES_LIST = "displayChoicesList";
   // /* (was mcOptions)
   // choices i18n structure (Java needs rework).
   // TODO: allocate large storage on Aggregate
   /*
-   * displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
+   * displayChoicesList -- TODO: rework ( this is still an ArrayList<String> )
    *
    * This is a map used for select1 and select choices, either closed-universe
    * (fixed set) or open-universe (select1-or-other, select-or-other). Stores
@@ -247,7 +248,7 @@ public class ColumnProperties {
    * share a subset of this functionality in Tables for managing how to render a
    * value.
    *
-   * TODO: how does this interact with displayChoicesMap?
+   * TODO: how does this interact with displayChoicesList?
    *
    * The proposed eventual subset describes numeric formatting. It could also be
    * used to render qrcode images, etc. 'this' and elementName both refer to
@@ -276,46 +277,46 @@ public class ColumnProperties {
   /***********************************
    * The partition name of the column keys in the key value store.
    ***********************************/
-  public static final String KVS_PARTITION = "Column";
+  public static final String KVS_PARTITION = KeyValueStoreConstants.PARTITION_COLUMN;
 
   /***********************************
    * The names of keys that are defaulted to exist in the column key value
    * store.
    ***********************************/
-  public static final String KEY_DISPLAY_VISIBLE = "displayVisible";
+  public static final String KEY_DISPLAY_VISIBLE = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
   /*
    * Integer, non null. 1: visible 0: not visible -1: deleted (even necessary?)
    */
-  public static final String KEY_DISPLAY_NAME = "displayName";
+  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
   /*
    * Text, not null. Must be input when adding a column as they all must have a
    * display name.
    */
-  public static final String KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  public static final String KEY_DISPLAY_CHOICES_LIST = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
   /*
    * Text, null.
    */
-  public static final String KEY_DISPLAY_FORMAT = "displayFormat";
+  public static final String KEY_DISPLAY_FORMAT = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
   /*
    * Text, null.
    */
-  public static final String KEY_JOINS = "joins";
+  public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
   /*
    * Text, null. Fot future use.
    */
-  public static final String KEY_SMS_IN = "smsIn";
+  public static final String KEY_SMS_IN = KeyValueStoreConstants.COLUMN_SMS_IN;
   /*
    * Integer, not null. As boolean. Allow incoming SMS to modify the column.
    */
-  public static final String KEY_SMS_OUT = "smsOut";
+  public static final String KEY_SMS_OUT = KeyValueStoreConstants.COLUMN_SMS_OUT;
   /*
    * Integer, not null. As boolean. Allow outgoing SMS to access this column.
    */
-  public static final String KEY_SMS_LABEL = "smsLabel";
+  public static final String KEY_SMS_LABEL = KeyValueStoreConstants.COLUMN_SMS_LABEL;
   /*
    * Text null.
    */
-  public static final String KEY_FOOTER_MODE = "footerMode";
+  public static final String KEY_FOOTER_MODE = KeyValueStoreConstants.COLUMN_FOOTER_MODE;
   /*
    * What the footer should display.
    */
@@ -361,7 +362,7 @@ public class ColumnProperties {
 
   private static final String JSON_KEY_DISPLAY_VISIBLE = "displayVisible";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
-  private static final String JSON_KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
   private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
 
   private static final String JSON_KEY_SMS_IN = "smsIn";
@@ -428,7 +429,7 @@ public class ColumnProperties {
    */
   private boolean displayVisible;
   private String displayName;
-  private ArrayList<String> displayChoicesMap;
+  private ArrayList<String> displayChoicesList;
   private String displayFormat;
   private boolean smsIn;
   private boolean smsOut;
@@ -439,7 +440,7 @@ public class ColumnProperties {
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
       boolean isPersisted, boolean displayVisible, String displayName,
-      ArrayList<String> displayChoicesMap, String displayFormat, boolean smsIn, boolean smsOut,
+      ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
       String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
     this.tableId = tableId;
@@ -451,7 +452,7 @@ public class ColumnProperties {
     this.isPersisted = isPersisted;
     this.displayVisible = displayVisible;
     this.displayName = displayName;
-    this.displayChoicesMap = displayChoicesMap;
+    this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
     this.smsIn = smsIn;
     this.smsOut = smsOut;
@@ -570,14 +571,14 @@ public class ColumnProperties {
 
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
-    ArrayList<String> displayChoicesMap = null;
+    ArrayList<String> displayChoicesList = null;
     ArrayList<String> listChildElementKeys = null;
     ArrayList<JoinColumn> joins = null;
     try {
-      if (kvsProps.get(KEY_DISPLAY_CHOICES_MAP) != null) {
-        String displayChoicesMapValue = kvsProps.get(KEY_DISPLAY_CHOICES_MAP);
-        parseValue = displayChoicesMapValue;
-        displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
+      if (kvsProps.get(KEY_DISPLAY_CHOICES_LIST) != null) {
+        String displayChoicesListValue = kvsProps.get(KEY_DISPLAY_CHOICES_LIST);
+        parseValue = displayChoicesListValue;
+        displayChoicesList = mapper.readValue(displayChoicesListValue, ArrayList.class);
       }
 
       if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
@@ -605,7 +606,7 @@ public class ColumnProperties {
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
         listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
-        displayChoicesMap, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
+        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
         kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
 
@@ -642,7 +643,7 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_NAME, displayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_CHOICES_MAP, mapper.writeValueAsString(displayChoicesMap)));
+        KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
     // TODO: both the SMS entries should become booleans?
@@ -1039,8 +1040,8 @@ public class ColumnProperties {
   /**
    * @return an array of the multiple-choice options
    */
-  public ArrayList<String> getDisplayChoicesMap() {
-    return displayChoicesMap;
+  public ArrayList<String> getDisplayChoicesList() {
+    return displayChoicesList;
   }
 
   /**
@@ -1052,23 +1053,23 @@ public class ColumnProperties {
    * @throws JsonMappingException
    * @throws JsonGenerationException
    */
-  public void setDisplayChoicesMap(ArrayList<String> options) {
+  public void setDisplayChoicesList(ArrayList<String> options) {
     try {
       String encoding = null;
       if (options != null && options.size() > 0) {
         encoding = mapper.writeValueAsString(options);
       }
-      setStringProperty(KEY_DISPLAY_CHOICES_MAP, encoding);
-      displayChoicesMap = options;
+      setStringProperty(KEY_DISPLAY_CHOICES_LIST, encoding);
+      displayChoicesList = options;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (JsonMappingException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     }
   }
 
@@ -1086,7 +1087,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-    jo.put(JSON_KEY_DISPLAY_CHOICES_MAP, displayChoicesMap);
+    jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
     jo.put(JSON_KEY_SMS_IN, smsIn);
     jo.put(JSON_KEY_SMS_OUT, smsOut);
@@ -1150,7 +1151,7 @@ public class ColumnProperties {
     Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
     ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChildren;
-    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_MAP);
+    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_LIST);
     ArrayList<String> listChoices = (joListChoices == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChoices;
 

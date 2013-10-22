@@ -51,18 +51,10 @@ public interface Synchronizer {
    * @param tableKey
    *          the tableKey (as of May6 is the display name on the server)
    * @param dbTable name
-   * @param type
-   *           {@link org.opendatakit.aggregate.odktables.entity.api.TableType}
-   *           represetenting the table type
-   * @param tableIdAccessControls
-   *           the tableId of the table holding access control information on
-   *           the table.
    * @return a string which will be stored as the syncTag of the table
    */
   public String createTable(String tableId, List<Column> columns,
-      String tableKey, String dbTableName,
-      org.opendatakit.aggregate.odktables.rest.entity.TableType type,
-      String tableIdAccessControls) throws IOException;
+      String tableKey, String dbTableName) throws IOException;
 
   /**
    * Delete the table with the given id from the server.

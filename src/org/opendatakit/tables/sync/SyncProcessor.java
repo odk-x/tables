@@ -43,6 +43,7 @@ import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
@@ -304,9 +305,7 @@ public class SyncProcessor {
        **************************/
       // First create the table definition on the server.
       String syncTag = synchronizer.createTable(tableId,
-          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(),
-          SyncUtil.transformClientTableType(tp.getTableType()),
-          tp.getAccessControls());
+          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName());
       // now create the TableProperties on the server.
       List<OdkTablesKeyValueStoreEntry> kvsEntries =
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
@@ -1017,7 +1016,7 @@ public class SyncProcessor {
         definitionResource.getTableKey(),
         definitionResource.getDbTableName(),
         definitionResource.getTableKey(),
-        SyncUtil.transformServerTableType(definitionResource.getType()),
+        TableType.data, // TODO: confirm that the table type gets updated with KVS change
         definitionResource.getTableId(),
         kvsType);
     for (Column col : definitionResource.getColumns()) {
