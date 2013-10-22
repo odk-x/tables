@@ -19,11 +19,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColumnType;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -38,7 +36,7 @@ import android.util.Log;
 public class SyncUtil {
 
   public static final String TAG = SyncUtil.class.getSimpleName();
-  
+
   private static final String FORWARD_SLASH = "/";
 
   /**
@@ -84,21 +82,21 @@ public class SyncUtil {
     private State() {
     }
   }
-  
+
   /**
-   * This class stores ints that should be stored in the 
+   * This class stores ints that should be stored in the
    * {@link DataTableColumns#CONFLICT_TYPE} column. This column represents the
-   * reason that the rows are labeled as conflict. 
+   * reason that the rows are labeled as conflict.
    * <p>
    * There are essentially three scenarios to consider. All of which will have
-   * the rows' {@link DataTableColumns#SYNC_STATE} set to 
+   * the rows' {@link DataTableColumns#SYNC_STATE} set to
    * {@link SyncUtil.State#CONFLICTING}:
    * <ol>
    * <li>Two users have modified the same row, one has synched, the other pull
    * those changes</li>
    * <ul>
-   * <li> In this case neither row has been deleted. The local row will have 
-   * {@link DataTableColumns#CONFLICT_TYPE} equal to 
+   * <li> In this case neither row has been deleted. The local row will have
+   * {@link DataTableColumns#CONFLICT_TYPE} equal to
    * {@link SyncUtil.ConflictType#LOCAL_UPDATED_UPDATED_VALUES}, and the server
    * row will have {@link DataTableColumns#CONFLICT_TYPE} equal to
    * {@link SyncUtil.ConflictType#SERVER_UPDATED_UPDATED_VALUES}.
@@ -107,10 +105,10 @@ public class SyncUtil {
    * their local version</li>
    * <ul>
    * <li> In this case the server row is considered deleted. Its
-   * {@link DataTableColumns#CONFLICT_TYPE} row will be set to 
-   * {@link SyncUtil.ConflictType#SERVER_DELETED_OLD_VALUES}. The values in 
+   * {@link DataTableColumns#CONFLICT_TYPE} row will be set to
+   * {@link SyncUtil.ConflictType#SERVER_DELETED_OLD_VALUES}. The values in
    * that row will be the contents of that row on the server at the time of
-   * deletion. The local row, which had been edited and been in 
+   * deletion. The local row, which had been edited and been in
    * {@link SyncUtil.State#UPDATING} before the sync (and thus why it was
    * not deleted outright), will have {@link DataTableColumns#CONFLICT_TYPE}
    * set to {@link SyncUtil.ConflictType#LOCAL_UPDATED_UPDATED_VALUES}.
@@ -120,16 +118,16 @@ public class SyncUtil {
    * <li> The local row has been deleted, but a newer version has
    * been updated on the server</li>
    * <ul>
-   * <li> In this case the local row will have 
-   * {@link DataTableColumns#CONFLICT_TYPE} equal to 
+   * <li> In this case the local row will have
+   * {@link DataTableColumns#CONFLICT_TYPE} equal to
    * {@link SyncUtil.ConflictType#LOCAL_DELETED_OLD_VALUES}. It will have the
-   * values that were in the row at the time of deletion. These may differ 
+   * values that were in the row at the time of deletion. These may differ
    * from the last synced version of the row--i.e. updates may have been
    * performed before deletion, meaning the sync state moved from
    * {@link SyncUtil.State#REST} to {@link SyncUtil.State#UPDATING} to
    * {@link SyncUtil.State#DELETING}. The server row meanwhile will have
    * {@link DataTableColumns#CONFLICT_TYPE} set to
-   * {@link SyncUtil.ConflictType#SERVER_UPDATED_UPDATED_VALUES}. The 
+   * {@link SyncUtil.ConflictType#SERVER_UPDATED_UPDATED_VALUES}. The
    * contents of this row will be the latest version of the updated row on the
    * server.
    * </ul>
@@ -138,31 +136,31 @@ public class SyncUtil {
    *
    */
   public class ConflictType {
-    
+
     public static final int LOCAL_DELETED_OLD_VALUES = 0;
     public static final int LOCAL_UPDATED_UPDATED_VALUES = 1;
     public static final int SERVER_DELETED_OLD_VALUES = 2;
     public static final int SERVER_UPDATED_UPDATED_VALUES = 3;
-    
+
     private ConflictType() {
-      // perhaps for serialization? following model of SyncUtil#State, which 
+      // perhaps for serialization? following model of SyncUtil#State, which
       // has been working.
     }
   }
-  
+
   /**
-   * Get the path to the file server. Should be appended to the uri of the 
+   * Get the path to the file server. Should be appended to the uri of the
    * aggregate uri. Begins and ends with "/".
    * @return
    */
   public static String getFileServerPath() {
     return "/odktables/files/";
   }
-  
+
   public static String getFileManifestServerPath() {
     return "/odktables/filemanifest";
   }
-  
+
   /**
    * Format a file path to be pushed up to aggregate. Essentially escapes the
    * string as for an html url, but leaves forward slashes. The path must begin
@@ -173,10 +171,10 @@ public class SyncUtil {
     String escaped = Uri.encode(path, "/");
     return escaped;
   }
-  
+
   /**
-   * Escape a list of paths for aggregate, leaving forward slashes. This 
-   * utility method is equivalent to calling 
+   * Escape a list of paths for aggregate, leaving forward slashes. This
+   * utility method is equivalent to calling
    * {@link SyncUtil#formatPathForAggregate(String)} on every element of the
    * list.
    * @param paths
@@ -349,7 +347,7 @@ public class SyncUtil {
 
     return msg.toString();
   }
-  
+
   /**
    * Get a {@link RestTemplate} for synchronizing files.
    * @return
@@ -361,19 +359,19 @@ public class SyncUtil {
     ResourceHttpMessageConverter fileConverter = new ResourceHttpMessageConverter();
     rt.getMessageConverters().add(fileConverter);
 //    rt.setErrorHandler(new ResponseErrorHandler() {
-//      
+//
 //      @Override
 //      public boolean hasError(ClientHttpResponse resp) throws IOException {
 //        HttpStatus status = resp.getStatusCode();
-//        if (HttpStatus.CREATED.equals(status) 
+//        if (HttpStatus.CREATED.equals(status)
 //            || HttpStatus.OK.equals(status)) {
-//         return false; 
+//         return false;
 //        } else {
 //          Log.e(TAG, "[hasError] response: " + resp.getBody());
 //          return true;
 //        }
 //      }
-//      
+//
 //      @Override
 //      public void handleError(ClientHttpResponse resp) throws IOException {
 //        Log.e(TAG, "[handleError] response body: " + resp.getBody());
@@ -382,7 +380,7 @@ public class SyncUtil {
 //    });
     return rt;
   }
-  
+
   public static RestTemplate getRestTemplateForString() {
     RestTemplate rt = new RestTemplate();
     rt.getMessageConverters().add(new StringHttpMessageConverter());

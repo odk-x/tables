@@ -345,8 +345,7 @@ public class TableActivity extends SherlockFragmentActivity
     }
     Intent collectEditIntent =
     	CollectUtil.getIntentForOdkCollectEditRow(this, mTableProperties,
-    	    elementKeyToValue, formId, formVersion, formRootElement, mRowId,
-    	    table.getInstanceName(rowNum));
+    	    elementKeyToValue, formId, formVersion, formRootElement, mRowId);
     if (collectEditIntent != null) {
       mRowId = table.getRowId(rowNum);
       CollectUtil.launchCollectToEditRow(this, collectEditIntent, mRowId);
@@ -749,7 +748,7 @@ public class TableActivity extends SherlockFragmentActivity
           Map<String, String> values = new HashMap<String, String>();
           values.put(mColumnElementKey, value);
           // TODO: Update these nulls.
-          mDbTable.updateRow(rowId, values, null, null, null, null, null);
+          mDbTable.updateRow(rowId, values, null, null, null, null);
           dismiss();
         }
       });

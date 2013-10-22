@@ -26,6 +26,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -106,6 +107,19 @@ public class ColumnProperties {
   // table to join against */
   // private static final String DB_JOIN_ELEMENT_KEY = "joinElementKey"; // (was
   // DB_JOIN_COLUMN_NAME)
+  //
+  // javascript side:
+  //
+  //  _joins: { type: 'array', items: {
+  //    type: 'object',
+  //    listChildElementKeys: [],
+  //    properties: {
+  //        "table_id": { type: "string", isNotNullable: false,
+  //                       isPersisted: false, elementKey: 'table_id', elementSet: 'columnMetadata' },
+  //        "element_key": { type: "string", isNotNullable: false,
+  //                       isPersisted: false, elementKey: 'elementKey', elementSet: 'columnMetadata' } } },
+  //    isNotNullable: false, isPersisted: true, elementPath: 'joins', elementSet: 'columnMetadata' }
+  //
   /*
    * elementKey of the value to join (this table's element) against in other
    * table
@@ -198,12 +212,12 @@ public class ColumnProperties {
    */
   // private static final String DB_DISPLAY_NAME = "displayName"; /* perhaps as
   // json i18n */
-  // private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  // private static final String DB_DISPLAY_CHOICES_LIST = "displayChoicesList";
   // /* (was mcOptions)
   // choices i18n structure (Java needs rework).
   // TODO: allocate large storage on Aggregate
   /*
-   * displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
+   * displayChoicesList -- TODO: rework ( this is still an ArrayList<String> )
    *
    * This is a map used for select1 and select choices, either closed-universe
    * (fixed set) or open-universe (select1-or-other, select-or-other). Stores
@@ -234,7 +248,7 @@ public class ColumnProperties {
    * share a subset of this functionality in Tables for managing how to render a
    * value.
    *
-   * TODO: how does this interact with displayChoicesMap?
+   * TODO: how does this interact with displayChoicesList?
    *
    * The proposed eventual subset describes numeric formatting. It could also be
    * used to render qrcode images, etc. 'this' and elementName both refer to
@@ -263,42 +277,46 @@ public class ColumnProperties {
   /***********************************
    * The partition name of the column keys in the key value store.
    ***********************************/
-  public static final String KVS_PARTITION = "Column";
+  public static final String KVS_PARTITION = KeyValueStoreConstants.PARTITION_COLUMN;
 
   /***********************************
    * The names of keys that are defaulted to exist in the column key value
    * store.
    ***********************************/
-  public static final String KEY_DISPLAY_VISIBLE = "displayVisible";
+  public static final String KEY_DISPLAY_VISIBLE = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
   /*
    * Integer, non null. 1: visible 0: not visible -1: deleted (even necessary?)
    */
-  public static final String KEY_DISPLAY_NAME = "displayName";
+  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
   /*
    * Text, not null. Must be input when adding a column as they all must have a
    * display name.
    */
-  public static final String KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  public static final String KEY_DISPLAY_CHOICES_LIST = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
   /*
    * Text, null.
    */
-  public static final String KEY_DISPLAY_FORMAT = "displayFormat";
+  public static final String KEY_DISPLAY_FORMAT = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
+  /*
+   * Text, null.
+   */
+  public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
   /*
    * Text, null. Fot future use.
    */
-  public static final String KEY_SMS_IN = "smsIn";
+  public static final String KEY_SMS_IN = KeyValueStoreConstants.COLUMN_SMS_IN;
   /*
    * Integer, not null. As boolean. Allow incoming SMS to modify the column.
    */
-  public static final String KEY_SMS_OUT = "smsOut";
+  public static final String KEY_SMS_OUT = KeyValueStoreConstants.COLUMN_SMS_OUT;
   /*
    * Integer, not null. As boolean. Allow outgoing SMS to access this column.
    */
-  public static final String KEY_SMS_LABEL = "smsLabel";
+  public static final String KEY_SMS_LABEL = KeyValueStoreConstants.COLUMN_SMS_LABEL;
   /*
    * Text null.
    */
-  public static final String KEY_FOOTER_MODE = "footerMode";
+  public static final String KEY_FOOTER_MODE = KeyValueStoreConstants.COLUMN_FOOTER_MODE;
   /*
    * What the footer should display.
    */
@@ -344,7 +362,7 @@ public class ColumnProperties {
 
   private static final String JSON_KEY_DISPLAY_VISIBLE = "displayVisible";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
-  private static final String JSON_KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
   private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
 
   private static final String JSON_KEY_SMS_IN = "smsIn";
@@ -405,25 +423,25 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private JoinColumn joins;
   private boolean isPersisted;
   /*
    * The fields that reside in the key value store.
    */
   private boolean displayVisible;
   private String displayName;
-  private ArrayList<String> displayChoicesMap;
+  private ArrayList<String> displayChoicesList;
   private String displayFormat;
   private boolean smsIn;
   private boolean smsOut;
   private String smsLabel;
   private FooterMode footerMode;
+  private ArrayList<JoinColumn> joins;
 
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
-      ColumnType elementType, List<String> listChildElementKeys, JoinColumn joins,
+      ColumnType elementType, List<String> listChildElementKeys,
       boolean isPersisted, boolean displayVisible, String displayName,
-      ArrayList<String> displayChoicesMap, String displayFormat, boolean smsIn, boolean smsOut,
-      String smsLabel, FooterMode footerMode, KeyValueStore.Type backingStore) {
+      ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
+      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
     this.tableId = tableId;
     this.elementKey = elementKey;
@@ -434,7 +452,7 @@ public class ColumnProperties {
     this.isPersisted = isPersisted;
     this.displayVisible = displayVisible;
     this.displayName = displayName;
-    this.displayChoicesMap = displayChoicesMap;
+    this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
     this.smsIn = smsIn;
     this.smsOut = smsOut;
@@ -542,6 +560,8 @@ public class ColumnProperties {
     // when new values might come down from the server.
     FooterMode footerMode = (footerModeStr == null) ? DEFAULT_KEY_FOOTER_MODE : FooterMode
         .valueOf(footerModeStr);
+    // KEY_JOINS
+
     // DB_IS_PERSISTED
     String isPersistedStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_PERSISTED);
     boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
@@ -551,14 +571,14 @@ public class ColumnProperties {
 
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
-    ArrayList<String> displayChoicesMap = null;
+    ArrayList<String> displayChoicesList = null;
     ArrayList<String> listChildElementKeys = null;
-    JoinColumn joins = null;
+    ArrayList<JoinColumn> joins = null;
     try {
-      if (kvsProps.get(KEY_DISPLAY_CHOICES_MAP) != null) {
-        String displayChoicesMapValue = kvsProps.get(KEY_DISPLAY_CHOICES_MAP);
-        parseValue = displayChoicesMapValue;
-        displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
+      if (kvsProps.get(KEY_DISPLAY_CHOICES_LIST) != null) {
+        String displayChoicesListValue = kvsProps.get(KEY_DISPLAY_CHOICES_LIST);
+        parseValue = displayChoicesListValue;
+        displayChoicesList = mapper.readValue(displayChoicesListValue, ArrayList.class);
       }
 
       if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
@@ -567,8 +587,9 @@ public class ColumnProperties {
         parseValue = listChildElementKeysValue;
         listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
-      if (columnDefinitions.get(ColumnDefinitionsColumns.JOINS) != null) {
-        String joinsValue = columnDefinitions.get(ColumnDefinitionsColumns.JOINS);
+
+      String joinsValue = kvsProps.get(KEY_JOINS);
+      if ( joinsValue != null ) {
         parseValue = joinsValue;
         joins = JoinColumn.fromSerialization(joinsValue);
       }
@@ -584,9 +605,9 @@ public class ColumnProperties {
     }
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
-        displayChoicesMap, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
-        kvsProps.get(KEY_SMS_LABEL), footerMode, backingStore);
+        listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
+        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
+        kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
 
   /**
@@ -622,7 +643,7 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_NAME, displayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_CHOICES_MAP, mapper.writeValueAsString(displayChoicesMap)));
+        KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
     // TODO: both the SMS entries should become booleans?
@@ -634,13 +655,15 @@ public class ColumnProperties {
         KEY_SMS_LABEL, smsLabel));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_FOOTER_MODE, footerMode.name()));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+        KEY_JOINS, JoinColumn.toSerialization(joins)));
 
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        mapper.writeValueAsString(listChildElementKeys), isPersisted, joins);
+        mapper.writeValueAsString(listChildElementKeys), isPersisted);
   }
 
   public enum ColumnDefinitionChange {
@@ -689,20 +712,19 @@ public class ColumnProperties {
    * @param columnType
    * @param listChildElementKeys
    * @param isPersisted
-   * @param joins
    * @param displayVisible
    * @param typeOfStore
    * @return
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
       String displayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted, JoinColumn joins,
+      List<String> listChildElementKeys, boolean isPersisted,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, displayName,
+        listChildElementKeys, isPersisted, displayVisible, displayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, typeOfStore);
+        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
 
     return cp;
   }
@@ -929,6 +951,39 @@ public class ColumnProperties {
   }
 
   /**
+   * @return the join definition
+   */
+  public ArrayList<JoinColumn> getJoins() {
+    return joins;
+  }
+
+  /**
+   * Converts the JoinColumn to the json representation of the object using a
+   * mapper and adds it to the database.
+   * <p>
+   * If there is a mapping exception of writing the JoinColumn to a String, it
+   * does nothing, leaving the database untouched.
+   *
+   * @param joins
+   */
+  public void setJoins(ArrayList<JoinColumn> joins) {
+    try {
+      String joinsStr = JoinColumn.toSerialization(joins);
+      setStringProperty(KEY_JOINS, joinsStr);
+      this.joins = joins;
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    }
+  }
+
+  /**
    * @return the column's abbreviation (or null for no abbreviation)
    */
   public String getSmsLabel() {
@@ -985,8 +1040,8 @@ public class ColumnProperties {
   /**
    * @return an array of the multiple-choice options
    */
-  public ArrayList<String> getDisplayChoicesMap() {
-    return displayChoicesMap;
+  public ArrayList<String> getDisplayChoicesList() {
+    return displayChoicesList;
   }
 
   /**
@@ -998,56 +1053,23 @@ public class ColumnProperties {
    * @throws JsonMappingException
    * @throws JsonGenerationException
    */
-  public void setDisplayChoicesMap(ArrayList<String> options) {
+  public void setDisplayChoicesList(ArrayList<String> options) {
     try {
       String encoding = null;
       if (options != null && options.size() > 0) {
         encoding = mapper.writeValueAsString(options);
       }
-      setStringProperty(KEY_DISPLAY_CHOICES_MAP, encoding);
-      displayChoicesMap = options;
+      setStringProperty(KEY_DISPLAY_CHOICES_LIST, encoding);
+      displayChoicesList = options;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (JsonMappingException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
-    }
-  }
-
-  /**
-   * @return the join definition
-   */
-  public JoinColumn getJoins() {
-    return joins;
-  }
-
-  /**
-   * Converts the JoinColumn to the json representation of the object using a
-   * mapper and adds it to the database.
-   * <p>
-   * If there is a mapping exception of writing the JoinColumn to a String, it
-   * does nothing, leaving the database untouched.
-   *
-   * @param joins
-   */
-  public void setJoins(JoinColumn joins) {
-    try {
-      String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(ColumnDefinitionsColumns.JOINS, joinsStr);
-      this.joins = joins;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     }
   }
 
@@ -1065,7 +1087,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-    jo.put(JSON_KEY_DISPLAY_CHOICES_MAP, displayChoicesMap);
+    jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
     jo.put(JSON_KEY_SMS_IN, smsIn);
     jo.put(JSON_KEY_SMS_OUT, smsOut);
@@ -1125,20 +1147,20 @@ public class ColumnProperties {
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
     FooterMode footerMode = (joFootMode == null) ? FooterMode.none : FooterMode.valueOf(joFootMode);
 
-    JoinColumn joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
+    ArrayList<JoinColumn> joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
     Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
     ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChildren;
-    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_MAP);
+    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_LIST);
     ArrayList<String> listChoices = (joListChoices == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChoices;
 
     ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
-        listChildren, joins, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
+        listChildren, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME),
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
-        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode,
+        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,
         typeOfStore);
 
     return cp;

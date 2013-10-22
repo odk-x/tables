@@ -19,10 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.data.ColumnType;
 
@@ -54,18 +51,10 @@ public interface Synchronizer {
    * @param tableKey
    *          the tableKey (as of May6 is the display name on the server)
    * @param dbTable name
-   * @param type
-   *           {@link org.opendatakit.aggregate.odktables.entity.api.TableType}
-   *           represetenting the table type
-   * @param tableIdAccessControls
-   *           the tableId of the table holding access control information on
-   *           the table.
    * @return a string which will be stored as the syncTag of the table
    */
   public String createTable(String tableId, List<Column> columns,
-      String tableKey, String dbTableName,
-      org.opendatakit.aggregate.odktables.rest.entity.TableType type,
-      String tableIdAccessControls) throws IOException;
+      String tableKey, String dbTableName) throws IOException;
 
   /**
    * Delete the table with the given id from the server.
@@ -147,25 +136,25 @@ public interface Synchronizer {
   public String setTableProperties(String tableId, String currentSyncTag,
       String tableName, List<OdkTablesKeyValueStoreEntry> kvsEntries)
           throws IOException;
-  
+
   /**
    * Synchronizes the app level files. This includes any files that are not
-   * associated with a particular table--i.e. those that are not in the 
+   * associated with a particular table--i.e. those that are not in the
    * directory appid/tables/. It also excludes those files that are in a set of
    * directories that do not sync--appid/metadata, appid/logging, etc.
-   * @param true if local files should be pushed. Otherwise they are only 
+   * @param true if local files should be pushed. Otherwise they are only
    * pulled down.
    * @throws IOException
    */
   public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException;
-  
+
   /**
    * Synchronize all the files in an app, including both app-level and table-
    * level files, but not those files that are in unsynched directories.
    * @throws IOException
    */
   public void syncAllFiles() throws IOException;
-  
+
   /**
    * Sync only the files associated with the specified table. This does NOT
    * sync any media files--those files that are associated with individual rows

@@ -88,12 +88,11 @@ public class CsvUtil {
 
   private static final String t = "CsvUtil";
 
-  private static final String LAST_MOD_TIME_LABEL = "last_mod_time";
-  private static final String URI_ACCESS_CONTROL_LABEL = DataTableColumns.URI_ACCESS_CONTROL;
-  private static final String INSTANCE_NAME_LABEL = DataTableColumns.INSTANCE_NAME;
+  private static final String LAST_MOD_TIME_LABEL = "_last_mod_time";
+  private static final String ACCESS_CONTROL_LABEL = "_access_control";
   private static final String FORM_ID_LABEL = DataTableColumns.FORM_ID;
   private static final String LOCALE_LABEL = DataTableColumns.LOCALE;
-  private static final String ROW_ID_LABEL = DataTableColumns.ROW_ID;
+  private static final String ROW_ID_LABEL = DataTableColumns.ID;
 
   private static final char DELIMITING_CHAR = ',';
   private static final char QUOTE_CHAR = '\"';
@@ -137,10 +136,10 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    TableProperties[] allTableProperties = 
-        TableProperties.getTablePropertiesForAll(dbh, 
+    TableProperties[] allTableProperties =
+        TableProperties.getTablePropertiesForAll(dbh,
             KeyValueStore.Type.ACTIVE);
-    String dbTableName = NameUtil.createUniqueDbTableName(tableName, 
+    String dbTableName = NameUtil.createUniqueDbTableName(tableName,
         allTableProperties);
     String tableId = NameUtil.createUniqueTableId(dbTableName, 
         allTableProperties);
@@ -152,7 +151,6 @@ public class CsvUtil {
       int idxRowId = -1;
       int idxTimestamp = -1;
       int idxUriAccessControl = -1;
-      int idxInstanceName = -1;
       int idxFormId = -1;
       int idxLocale = -1;
 
@@ -238,16 +236,13 @@ public class CsvUtil {
 
         if (colName.equals(ROW_ID_LABEL)) {
           idxRowId = i;
-          dbName = DataTableColumns.ROW_ID;
+          dbName = DataTableColumns.ID;
         } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
           idxTimestamp = i;
-          dbName = DataTableColumns.TIMESTAMP;
-        } else if (colName.equals(URI_ACCESS_CONTROL_LABEL)) {
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
+        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
           idxUriAccessControl = i;
           dbName = DataTableColumns.URI_ACCESS_CONTROL;
-        } else if (colName.equals(INSTANCE_NAME_LABEL)) {
-          idxInstanceName = i;
-          dbName = DataTableColumns.INSTANCE_NAME;
         } else if (colName.equals(FORM_ID_LABEL)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
@@ -277,7 +272,7 @@ public class CsvUtil {
         columns.add(dbName);
       }
       return importTable(c, reader, tp, columns, idxRowId, idxTimestamp, idxUriAccessControl,
-          idxInstanceName, idxFormId, idxLocale, includesProperties);
+          idxFormId, idxLocale, includesProperties);
     } catch (FileNotFoundException e) {
       return false;
     } catch (IOException e) {
@@ -371,7 +366,6 @@ public class CsvUtil {
       int idxRowId = -1;
       int idxTimestamp = -1;
       int idxUriAccessControl = -1;
-      int idxInstanceName = -1;
       int idxFormId = -1;
       int idxLocale = -1;
       for (int i = 0; i < row.length; ++i) {
@@ -379,16 +373,13 @@ public class CsvUtil {
         String dbName = null;
         if (colName.equals(LAST_MOD_TIME_LABEL)) {
           idxTimestamp = i;
-          dbName = DataTableColumns.TIMESTAMP;
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
         } else if (colName.equals(ROW_ID_LABEL)) {
           idxRowId = i;
-          dbName = DataTableColumns.ROW_ID;
-        } else if (colName.equals(URI_ACCESS_CONTROL_LABEL)) {
+          dbName = DataTableColumns.ID;
+        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
           idxUriAccessControl = i;
           dbName = DataTableColumns.URI_ACCESS_CONTROL;
-        } else if (colName.equals(INSTANCE_NAME_LABEL)) {
-          idxInstanceName = i;
-          dbName = DataTableColumns.INSTANCE_NAME;
         } else if (colName.equals(FORM_ID_LABEL)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
@@ -419,7 +410,7 @@ public class CsvUtil {
       }
 
       return importTable(c, reader, tp, columns, idxRowId, idxTimestamp, idxUriAccessControl,
-          idxInstanceName, idxFormId, idxLocale, includesProperties);
+          idxFormId, idxLocale, includesProperties);
     } catch (FileNotFoundException e) {
       return false;
     } catch (IOException e) {
@@ -437,9 +428,9 @@ public class CsvUtil {
    * @param String
    *          tablename
    * @return boolean true if successful
-   * @throws TableAlreadyExistsException 
+   * @throws TableAlreadyExistsException
    */
-  public boolean importConfigTables(Context c, InitializeTask it, File file, 
+  public boolean importConfigTables(Context c, InitializeTask it, File file,
       String filename, String tablename) throws TableAlreadyExistsException {
 
     this.it = it;
@@ -565,7 +556,7 @@ public class CsvUtil {
   }
 
   private boolean importTable(Context c, CSVReader reader, TableProperties tableProperties,
-      List<String> columns, int idxRowId, int idxTimestamp, int idxUriAccessControl, int idxInstanceName,
+      List<String> columns, int idxRowId, int idxTimestamp, int idxUriAccessControl,
       int idxFormId, int idxLocale, boolean exportedWithProperties) {
 
     DbTable dbt = DbTable.getDbTable(dbh, tableProperties);
@@ -575,7 +566,6 @@ public class CsvUtil {
       idxMetadata.add(idxRowId);
       idxMetadata.add(idxTimestamp);
       idxMetadata.add(idxUriAccessControl);
-      idxMetadata.add(idxInstanceName);
       idxMetadata.add(idxFormId);
       idxMetadata.add(idxLocale);
       ColumnProperties[] cps = new ColumnProperties[columns.size()];
@@ -612,10 +602,9 @@ public class CsvUtil {
         String lastModTime = idxTimestamp == -1 ? du.formatNowForDb() : row[idxTimestamp];
         DateTime t = du.parseDateTimeFromDb(lastModTime);
         String uriAccessControl = idxUriAccessControl == -1 ? null : row[idxUriAccessControl];
-        String instanceName = idxInstanceName == -1 ? null : row[idxInstanceName];
         String formId = idxFormId == -1 ? null : row[idxFormId];
         String locale = idxLocale == -1 ? null : row[idxLocale];
-        dbt.addRow(values, rowId, t.getMillis(), uriAccessControl, instanceName, formId, locale);
+        dbt.addRow(values, rowId, t.getMillis(), uriAccessControl, formId, locale);
 
         if (rowCount % 30 == 0 && it != null) {
           it.updateLineCount(c.getString(R.string.import_thru_row, 1 + rowCount));
@@ -650,8 +639,7 @@ public class CsvUtil {
    * @param file
    * @param tableId
    * @param includeTimestamp
-   * @param includeUriUser
-   * @param includeInstanceName
+   * @param includeAccessControl
    * @param includeFormId
    * @param includeLocale
    * @param exportProperties
@@ -659,7 +647,7 @@ public class CsvUtil {
    * @return
    */
   public boolean export(ExportTask exportTask, File file, TableProperties tp,
-      boolean includeTimestamp, boolean includeUriUser, boolean includeInstanceName,
+      boolean includeTimestamp, boolean includeAccessControl,
       boolean includeFormId, boolean includeLocale, boolean exportProperties) {
     // building array of columns to select and header row for output file
     int columnCount = tp.getColumns().size();
@@ -669,9 +657,7 @@ public class CsvUtil {
     } else {
       if (includeTimestamp)
         columnCount++;
-      if (includeUriUser)
-        columnCount++;
-      if (includeInstanceName)
+      if (includeAccessControl)
         columnCount++;
       if (includeFormId)
         columnCount++;
@@ -684,8 +670,7 @@ public class CsvUtil {
     ArrayList<String> headerRow = new ArrayList<String>();
     int idxRowId = -1;
     int idxTimestamp = -1;
-    int idxUriUser = -1;
-    int idxInstanceName = -1;
+    int idxAccessControl = -1;
     int idxFormId = -1;
     int idxLocale = -1;
 
@@ -693,14 +678,14 @@ public class CsvUtil {
     if (exportProperties) {
       // put the user-relevant metadata columns in leftmost columns
       {
-        columns.add(DataTableColumns.ROW_ID);
+        columns.add(DataTableColumns.ID);
         headerRow.add(ROW_ID_LABEL);
         idxRowId = index;
         index++;
       }
 
       {
-        columns.add(DataTableColumns.TIMESTAMP);
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
         headerRow.add(LAST_MOD_TIME_LABEL);
         idxTimestamp = index;
         index++;
@@ -708,15 +693,8 @@ public class CsvUtil {
 
       {
         columns.add(DataTableColumns.URI_ACCESS_CONTROL);
-        headerRow.add(URI_ACCESS_CONTROL_LABEL);
-        idxUriUser = index;
-        index++;
-      }
-
-      {
-        columns.add(DataTableColumns.INSTANCE_NAME);
-        headerRow.add(INSTANCE_NAME_LABEL);
-        idxInstanceName = index;
+        headerRow.add(ACCESS_CONTROL_LABEL);
+        idxAccessControl = index;
         index++;
       }
 
@@ -757,21 +735,15 @@ public class CsvUtil {
       }
     } else {
       if (includeTimestamp) {
-        columns.add(DataTableColumns.TIMESTAMP);
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
         headerRow.add(LAST_MOD_TIME_LABEL);
         idxTimestamp = index;
         index++;
       }
-      if (includeUriUser) {
+      if (includeAccessControl) {
         columns.add(DataTableColumns.URI_ACCESS_CONTROL);
-        headerRow.add(URI_ACCESS_CONTROL_LABEL);
-        idxUriUser = index;
-        index++;
-      }
-      if (includeInstanceName) {
-        columns.add(DataTableColumns.INSTANCE_NAME);
-        headerRow.add(INSTANCE_NAME_LABEL);
-        idxInstanceName = index;
+        headerRow.add(ACCESS_CONTROL_LABEL);
+        idxAccessControl = index;
         index++;
       }
       if (includeFormId) {
@@ -798,7 +770,7 @@ public class CsvUtil {
     }
     // getting data
     DbTable dbt = DbTable.getDbTable(dbh, tp);
-    String[] selectionKeys = { DataTableColumns.SAVED };
+    String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE };
     String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
     UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null);
     // writing data

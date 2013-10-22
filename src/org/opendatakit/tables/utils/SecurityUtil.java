@@ -77,10 +77,15 @@ public class SecurityUtil {
         DbHelper dbh = DbHelper.getDbHelper(context);
         DbTable dbt = DbTable.getDbTable(dbh, tp);
         ArrayList<String> columns = new ArrayList<String>();
-        columns.add(DataTableColumns.ROW_ID);
+        columns.add(DataTableColumns.ID);
         UserTable table = dbt.getRaw(columns,
-                new String[] {DataTableColumns.SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {DataTableColumns.SAVEPOINT_TYPE, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
         return (table.getHeight() > 0);
+    }
+
+    public static String mapPhoneNumToAccessControl(String phoneNum) {
+      // TODO Define how phoneNum maps to an accessControl value
+      return null;
     }
 }

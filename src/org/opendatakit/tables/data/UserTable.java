@@ -36,6 +36,7 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -122,7 +123,7 @@ public class UserTable {
     buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
-    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
     // element key _my_data, and this column is at index 5 in the data
@@ -186,6 +187,7 @@ public class UserTable {
    * @param i
    * @return
    */
+  @SuppressLint("NewApi")
   private static final String getIndexAsString(Cursor c, int i) {
     // If you add additional return types here be sure to modify the javadoc.
     int version = android.os.Build.VERSION.SDK_INT;
@@ -227,12 +229,8 @@ public class UserTable {
     return this.mRows.get(rowNum).mRowId;
   }
 
-  public String getInstanceName(int rowNum) {
-    return getMetadataByElementKey(rowNum, DataTableColumns.INSTANCE_NAME);
-  }
-
   public Long getTimestamp(int rowNum) {
-    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.TIMESTAMP));
+    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
 
   public Row getRowAtIndex(int index) {
@@ -535,7 +533,7 @@ public class UserTable {
     public String[] getAllMetadata() {
       return mMetadata;
     }
-    
+
     @Override
     public int hashCode() {
       final int PRIME = 31;

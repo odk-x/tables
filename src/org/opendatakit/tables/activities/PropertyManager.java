@@ -171,13 +171,12 @@ public class PropertyManager extends PreferenceActivity {
       category.addPreference(new McOptionSettingsDialogPreference(this));
     } else if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
       // first handle what happens if it's null.
-      JoinColumn joins = cp.getJoins();
+      ArrayList<JoinColumn> joins = cp.getJoins();
       if (joins == null) {
-        joins = new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE,
-            JoinColumn.DEFAULT_NOT_SET_VALUE);
+        joins = new ArrayList<JoinColumn>();
         cp.setJoins(joins);
       }
-      String joinTableId = cp.getJoins().getTableId();
+      String joinTableId = (joins != null && joins.size() == 1) ? joins.get(0).getTableId() : null;
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
           DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
@@ -203,7 +202,7 @@ public class PropertyManager extends PreferenceActivity {
           selectedTableId, tableNames, tableIds));
       if (selectedTp != null) {
         // TODO: resolve how joins work
-        String joinColName = cp.getJoins().getElementKey();
+        String joinColName = (joins != null && joins.size() == 1) ? joins.get(0).getElementKey() : null;
         int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
         String[] colDbNames = new String[numberOfDisplayColumns + 1];
         String selectedDbName = colDbNames[0] = null;
@@ -289,12 +288,28 @@ public class PropertyManager extends PreferenceActivity {
       }
     } else if (key.equals("JOIN_TABLE")) {
       // TODO: resolve the ifs here for joins
-      JoinColumn oldJoins = cp.getJoins();
-      oldJoins.setTableId(newVal);
+      ArrayList<JoinColumn> oldJoins = cp.getJoins();
+      if ( oldJoins == null ) {
+        oldJoins = new ArrayList<JoinColumn>();
+      }
+      if ( oldJoins.size() == 0 ) {
+        oldJoins.add( new JoinColumn(newVal, JoinColumn.DEFAULT_NOT_SET_VALUE));
+      } else {
+        JoinColumn jc = oldJoins.get(0);
+        jc.setTableId(newVal);
+      }
       cp.setJoins(oldJoins);
     } else if (key.equals("JOIN_COLUMN")) {
-      JoinColumn oldJoins = cp.getJoins();
-      oldJoins.setElementKey(newVal);
+      ArrayList<JoinColumn> oldJoins = cp.getJoins();
+      if ( oldJoins == null ) {
+        oldJoins = new ArrayList<JoinColumn>();
+      }
+      if ( oldJoins.size() == 0 ) {
+        oldJoins.add( new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE, newVal));
+      } else {
+        JoinColumn jc = oldJoins.get(0);
+        jc.setElementKey(newVal);
+      }
       cp.setJoins(oldJoins);
     } else if (key.equals("DISPLAY_NAME")) {
       if ( !newVal.equals(cp.getDisplayName()) ) {

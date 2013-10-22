@@ -83,12 +83,10 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	private EditText filenameValField;
 	/* the checkbox for including properties */
 	private CheckBox incAllPropertiesCheck;
-	/* the checkbox for including source phone numbers */
-	private CheckBox incUriUsersCheck;
+	/* the checkbox for including access control field */
+	private CheckBox incAccessControlCheck;
 	/* the checkbox for including timestamps */
 	private CheckBox incTimestampsCheck;
-	/* the checkbox for including instance names */
-	private CheckBox incInstanceNamesCheck;
 	/* the checkbox for including form ids */
 	private CheckBox incFormIdsCheck;
 	/* the checkbox for including locales */
@@ -150,9 +148,9 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the include user id checkbox
 		{
 			LinearLayout incUI = new LinearLayout(this);
-			incUriUsersCheck = new CheckBox(this);
-			incUriUsersCheck.setChecked(true);
-			incUI.addView(incUriUsersCheck);
+			incAccessControlCheck = new CheckBox(this);
+			incAccessControlCheck.setChecked(true);
+			incUI.addView(incAccessControlCheck);
 			TextView incUILabel = new TextView(this);
 			incUILabel.setText(getString(R.string.export_opt_include_user_id));
 			incUILabel.setTextColor(getResources().getColor(R.color.white));
@@ -170,18 +168,6 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 			incTSLabel.setTextColor(getResources().getColor(R.color.white));
 			incTS.addView(incTSLabel);
 			v.addView(incTS);
-		}
-		// adding the include instance names checkbox
-		{
-			LinearLayout incIN = new LinearLayout(this);
-			incInstanceNamesCheck = new CheckBox(this);
-			incInstanceNamesCheck.setChecked(true);
-			incIN.addView(incInstanceNamesCheck);
-			TextView incINLabel = new TextView(this);
-			incINLabel.setText(getString(R.string.export_opt_include_instance_name));
-			incINLabel.setTextColor(getResources().getColor(R.color.white));
-			incIN.addView(incINLabel);
-			v.addView(incIN);
 		}
 		// adding the include form id checkbox
 		{
@@ -248,13 +234,12 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
         boolean incProps = incAllPropertiesCheck.isChecked();
         boolean incTs = incTimestampsCheck.isChecked();
-        boolean incPn = incUriUsersCheck.isChecked();
-        boolean incIN = incInstanceNamesCheck.isChecked();
+        boolean incAC = incAccessControlCheck.isChecked();
         boolean incFI = incFormIdsCheck.isChecked();
         boolean incLo = incLocalesCheck.isChecked();
         ExportTask task = new ExportTask(this);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(tp, file, incTs, incPn, incIN, incFI, incLo, incProps));
+        task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
 	}
 
 	@Override

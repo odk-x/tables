@@ -38,12 +38,12 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
@@ -331,9 +331,7 @@ public class SyncProcessor {
        **************************/
       // First create the table definition on the server.
       String syncTag = synchronizer.createTable(tableId,
-          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName(),
-          SyncUtil.transformClientTableType(tp.getTableType()),
-          tp.getAccessControls());
+          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName());
       // now create the TableProperties on the server.
       List<OdkTablesKeyValueStoreEntry> kvsEntries =
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
@@ -627,7 +625,7 @@ public class SyncProcessor {
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
 
     UserTable allRowIds = table.getRaw(columns,
-    		new String[] {DataTableColumns.SAVED},
+    		new String[] {DataTableColumns.SAVEPOINT_TYPE},
             new String[] {DbTable.SavedStatus.COMPLETE.name()}, null);
 
     /**************************
@@ -743,7 +741,7 @@ public class SyncProcessor {
       // delete conflicting row if it already exists
       String whereClause = String.format("%s = ? AND %s = ? AND %s IN " +
       		"( ?, ? )",
-          DataTableColumns.ROW_ID,
+          DataTableColumns.ID,
           DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
       String[] whereArgs = { row.getRowId(),
           String.valueOf(SyncUtil.State.CONFLICTING),
@@ -799,7 +797,7 @@ public class SyncProcessor {
         		"CONFLICTING and leaving conflict type unchanged as: " +
             localRowConflictTypeBeforeSync);
       }
-      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_STATE,
           String.valueOf(SyncUtil.State.CONFLICTING));
       values.put(DataTableColumns.CONFLICT_TYPE, localRowConflictType);
@@ -810,7 +808,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP,
+      		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -864,7 +862,7 @@ public class SyncProcessor {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
-      values.put(DataTableColumns.ROW_ID, row.getRowId());
+      values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
       values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.REST);
 
@@ -873,7 +871,7 @@ public class SyncProcessor {
       	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
       		String lastModTime = entry.getValue();
       		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-      		values.put(DataTableColumns.TIMESTAMP,
+      		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP,
       		    Long.toString(dt.getMillis()));
       	} else {
       		values.put(colName, entry.getValue());
@@ -899,7 +897,7 @@ public class SyncProcessor {
     	if ( colName.equals(LAST_MOD_TIME_LABEL)) {
     		String lastModTime = entry.getValue();
     		DateTime dt = du.parseDateTimeFromDb(lastModTime);
-    		values.put(DataTableColumns.TIMESTAMP, Long.toString(dt.getMillis()));
+    		values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, Long.toString(dt.getMillis()));
     	} else {
     		values.put(colName, entry.getValue());
     	}
@@ -973,7 +971,7 @@ public class SyncProcessor {
     }
     // TODO: confirm handling of rows that have pending/unsaved changes from Collect
     UserTable rows = table.getRaw(columnsToSync, new String[]
-        {DataTableColumns.SAVED,
+        {DataTableColumns.SAVEPOINT_TYPE,
     			DataTableColumns.SYNC_STATE },
         new String[] { DbTable.SavedStatus.COMPLETE.name(),
     			String.valueOf(state) },
@@ -1013,9 +1011,9 @@ public class SyncProcessor {
           // columns specified as synchable metadata columns in DbTable.
         for (String metadataElementKey : cachedColumnsToSync.keySet()) {
           // Special check for the timestamp to format correctly.
-          if (metadataElementKey.equals(DataTableColumns.TIMESTAMP)) {
+          if (metadataElementKey.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
             Long timestamp = Long.valueOf(rows.getMetadataByElementKey(
-                i, DataTableColumns.TIMESTAMP));
+                i, DataTableColumns.SAVEPOINT_TIMESTAMP));
             DateTime dt = new DateTime(timestamp);
             String lastModTime = du.formatDateTimeForDb(dt);
             values.put(LAST_MOD_TIME_LABEL, lastModTime);
@@ -1087,7 +1085,7 @@ public class SyncProcessor {
         definitionResource.getTableKey(),
         definitionResource.getDbTableName(),
         definitionResource.getTableKey(),
-        SyncUtil.transformServerTableType(definitionResource.getType()),
+        TableType.data, // TODO: confirm that the table type gets updated with KVS change
         definitionResource.getTableId(),
         kvsType);
     for (Column col : definitionResource.getColumns()) {
@@ -1104,8 +1102,7 @@ public class SyncProcessor {
           col.getElementName(),
           ColumnType.valueOf(col.getElementType()),
           listChildElementKeys,
-          SyncUtil.intToBool(col.getIsPersisted()),
-          JoinColumn.fromSerialization(col.getJoins()));
+          SyncUtil.intToBool(col.getIsPersisted()));
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.refreshTablePropertiesForTable(dbh,
@@ -1166,13 +1163,10 @@ public class SyncProcessor {
       List<String> listChildrenElements =
           cp.getListChildElementKeys();
       int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
-      JoinColumn joins = cp.getJoins();
       String listChildElementKeysStr = null;
-      String joinsStr = null;
       try {
         listChildElementKeysStr =
             mapper.writeValueAsString(listChildrenElements);
-        joinsStr = mapper.writeValueAsString(joins);
       } catch (JsonGenerationException e) {
         Log.e(TAG, "problem parsing json list entry during sync");
         e.printStackTrace();
@@ -1188,7 +1182,7 @@ public class SyncProcessor {
 //          (isPersisted != 0), joinsStr);
       Column c = new Column(tp.getTableId(), elementKey, elementName,
           colType.name(), listChildElementKeysStr,
-          isPersisted, joinsStr);
+          (isPersisted != 0));
       columns.add(c);
     }
     return columns;

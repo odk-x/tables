@@ -28,7 +28,6 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -83,7 +82,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         Controller.FIRST_FREE_MENU_ITEM_ID + 11;
     private static final int MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES =
         Controller.FIRST_FREE_MENU_ITEM_ID + 12;
-    private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT = 
+    private static final int MENU_ITEM_ID_RESOLVE_ROW_CONFLICT =
         Controller.FIRST_FREE_MENU_ITEM_ID + 13;
     private static final String MENU_ITEM_MSG_OPEN_JOIN_TABLE =
         "Open Join Table";
@@ -551,7 +550,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        // Now we need to check to see if we are a row in conflict, in which
 	        // case we want to allow resolution of that row.
 	        final int rowNumber = cellId / table.getWidth();
-	        if (Integer.parseInt(table.getMetadataByElementKey(rowNumber, 
+	        if (Integer.parseInt(table.getMetadataByElementKey(rowNumber,
 	            DataTableColumns.SYNC_STATE)) == SyncUtil.State.CONFLICTING) {
 	          // Then huzzah, we need to add an option to resolve.
 	          itemIds.add(MENU_ITEM_ID_RESOLVE_ROW_CONFLICT);
@@ -600,13 +599,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    break;
 	                case MENU_ITEM_ID_RESOLVE_ROW_CONFLICT:
 	                  // We'll just launch the resolve activity.
-	                  Intent i = new Intent(context, 
+	                  Intent i = new Intent(context,
 	                      ConflictResolutionRowActivity.class);
-	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID, 
+	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID,
 	                      table.getTableProperties().getTableId());
 	                  String conflictRowId = table.getRowId(rowNumber);
 	                  i.putExtra(
-	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, 
+	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID,
 	                      conflictRowId);
 	                  context.startActivity(i);
 	                  break;
@@ -647,11 +646,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    break;
 	                case MENU_ITEM_ID_OPEN_JOIN_TABLE:
 	                  // Get the JoinColumn.
-	                  JoinColumn joinColumn = cp.getJoins();
+	                  ArrayList<JoinColumn> joinColumns = cp.getJoins();
 	                  AlertDialog.Builder badJoinDialog;
 	                  // TODO should check for valid table properties and
 	                  // column properties here. or rather valid ids and keys.
-	                  if (joinColumn == null) {
+	                  if (joinColumns == null || joinColumns.size() == 0) {
 	                    badJoinDialog = new AlertDialog.Builder(context);
 	                    badJoinDialog.setTitle("Bad Join");
 	                    badJoinDialog.setMessage("A join column has not been " +
@@ -660,34 +659,47 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    Log.e(TAG, "cp.getJoins was null but open join table " +
 	                    		"was requested for cp: " +
 	                    cp.getElementKey());
-	                  } else if (joinColumn.getTableId()
+	                  } else if (joinColumns.size() != 1) {
+	                       badJoinDialog = new AlertDialog.Builder(context);
+	                       badJoinDialog.setTitle("Bad Join");
+	                       badJoinDialog.setMessage("Multiple join associations have been " +
+	                           "set in Column Properties.");
+	                       badJoinDialog.create().show();
+	                       Log.e(TAG, "cp.getJoins has multiple joins " +
+	                       		"(missing code is needed to handle this) for cp: " +
+	                       		cp.getElementKey());
+	                  } else {
+	                    JoinColumn joinColumn = joinColumns.get(0);
+	                    if (joinColumn.getTableId()
 	                      .equals(JoinColumn.DEFAULT_NOT_SET_VALUE) ||
 	                      joinColumn.getElementKey()
 	                      .equals(JoinColumn.DEFAULT_NOT_SET_VALUE)) {
-                       badJoinDialog = new AlertDialog.Builder(context);
-                       badJoinDialog.setTitle("Bad Join");
-                       badJoinDialog.setMessage("Both a table and column " +
-                       		"must be set.");
-                       badJoinDialog.create().show();
-                       Log.e(TAG, "Bad elementKey or tableId in open join " +
-                       		"table. tableId: " + joinColumn.getTableId() +
-                       		" elementKey: " + joinColumn.getElementKey());
+                         badJoinDialog = new AlertDialog.Builder(context);
+                         badJoinDialog.setTitle("Bad Join");
+                         badJoinDialog.setMessage("Both a table and column " +
+                         		"must be set.");
+                         badJoinDialog.create().show();
+                         Log.e(TAG, "Bad elementKey or tableId in open join " +
+                         		"table. tableId: " + joinColumn.getTableId() +
+                         		" elementKey: " + joinColumn.getElementKey());
+                       } else {
+      	                  String tableId = joinColumn.getTableId();
+      	                  String elementKey = joinColumn.getElementKey();
+      	                  TableProperties joinedTable =
+                               TableProperties.getTablePropertiesForTable(dbh, tableId,
+                                   KeyValueStore.Type.ACTIVE);
+      	                  String joinedColDisplayName =
+      	                      joinedTable.getColumnByElementKey(elementKey)
+      	                      .getDisplayName();
+      	                  // I would prefer this kind of query to be set in another
+      	                  // object, but alas, it looks like atm it is hardcoded.
+      	                  String queryText = joinedColDisplayName + ":" +
+      	                      table.getData(cellId);
+      	                    Controller.launchTableActivity(context, joinedTable,
+      	                        queryText, c.getIsOverview(), null, null);
+      	                    c.removeOverlay();
+                       }
                      }
-	                  String tableId = joinColumn.getTableId();
-	                  String elementKey = joinColumn.getElementKey();
-	                  TableProperties joinedTable =
-                         TableProperties.getTablePropertiesForTable(dbh, tableId,
-                             KeyValueStore.Type.ACTIVE);
-	                  String joinedColDisplayName =
-	                      joinedTable.getColumnByElementKey(elementKey)
-	                      .getDisplayName();
-	                  // I would prefer this kind of query to be set in another
-	                  // object, but alas, it looks like atm it is hardcoded.
-	                  String queryText = joinedColDisplayName + ":" +
-	                      table.getData(cellId);
-	                    Controller.launchTableActivity(context, joinedTable,
-	                        queryText, c.getIsOverview(), null, null);
-	                    c.removeOverlay();
 	                  break;
 	                default:
 	                  Log.e(TAG, "unrecognized menu action: " +
