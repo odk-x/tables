@@ -54,6 +54,8 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
+import org.opendatakit.tables.utils.SurveyUtil;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.annotation.SuppressLint;
@@ -247,6 +249,7 @@ public abstract class CustomView extends LinearLayout {
 		prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
 	}
 
+
 	/**
 	 * Add a row using Collect. This is the hook into the javascript. The
 	 * activity holding this view must have implemented the onActivityReturn
@@ -319,6 +322,62 @@ public abstract class CustomView extends LinearLayout {
 		CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent,
 				tp);
 	}
+	
+	/**
+	 * Actually acquire the Intents and launch the forms.
+	 * @param tp
+	 * @param surveyFormParameters
+	 * @param elementKeyToValueToPrepopulate
+	 */
+	private void prepopulateRowAndLaunchSurveyToAddRow(TableProperties tp,
+	    SurveyFormParameters surveyFormParameters,
+	    Map<String, String> elementKeyToValueToPrepopulate) {
+	  Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
+	      getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME,
+	      surveyFormParameters, elementKeyToValueToPrepopulate);
+	  SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
+	}
+	
+	/**
+	 * Should eventually handle similar things to the analagous Collect method.
+	 * For now just is a wrapper.
+	 * @param tableName
+	 * @param tp
+	 * @param formId
+	 * @param screenPath
+	 * @param formPath
+	 * @param refId
+	 * @param prepopulateValues
+	 */
+   private void addRowWithSurveyAndSpecificForm(String tableName, 
+       TableProperties tp, String formId, String screenPath,
+       Map<String, String> prepopulateValues) {
+     SurveyFormParameters surveyFormParameters = new 
+         SurveyFormParameters(true, formId, screenPath);
+     prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters, 
+         prepopulateValues);
+   }
+   
+   /**
+    * Construct the Intent and launch survey to edit the given row.
+    * @param tableName
+    * @param tp
+    * @param instanceId
+    * @param formId
+    * @param screenPath
+    * @param formPath
+    * @param refId
+    */
+   private void editRowWithSurveyAndSpecificForm(TableProperties tp, 
+       String instanceId, String formId, String screenPath) {
+     SurveyFormParameters surveyFormParameters = 
+         new SurveyFormParameters(true, formId, screenPath);
+     Intent surveyEditRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
+         getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME, 
+         surveyFormParameters, instanceId);
+     SurveyUtil.launchSurveyToEditRow(getContainerActivity(), 
+         surveyEditRowIntent, tp, instanceId);
+   }
 
 	/**
 	 * Retrieve a map from a simple json map that has been stringified.
@@ -399,6 +458,19 @@ public abstract class CustomView extends LinearLayout {
 			CollectUtil.launchCollectToEditRow(
 					CustomView.this.getContainerActivity(), editRowIntent,
 					mRowId);
+		}
+		
+		/**
+		 * Edit the row with the specified form.
+		 * @param formId
+		 * @param screenPath
+		 * @param formPath
+		 * @param refId
+		 */
+		public void editRowWithSurveyAndSpecificForm(String formId, 
+		    String screenPath) {
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId, 
+		      formId, screenPath);
 		}
 
 		/**
@@ -783,6 +855,22 @@ public abstract class CustomView extends LinearLayout {
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
 		}
+		
+		/**
+		 * Edit the row using Survey and a specific form.
+		 * @param rowNumber
+		 * @param formId
+		 * @param screenPath
+		 * @param formPath
+		 * @param refId
+		 */
+		void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
+		    String screenPath) {
+		  TableProperties tp = this.mTable.getTableProperties();
+		  String instanceId = this.mTable.getRowId(rowNumber);
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId, 
+		      formId, screenPath);
+		}
 
 		/**
 		 * Add a row using collect and the default form.
@@ -800,6 +888,38 @@ public abstract class CustomView extends LinearLayout {
 				return;
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
+		}
+		
+		/**
+		 * Add a row using survey and the default form.
+		 * @param tableName
+		 */
+		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
+		    String screenPath) {
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		      formId, screenPath, null);
+		}
+		
+		void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+		    String tableName, String formId, String screenPath, String jsonMap) {
+	       TableProperties tp = mTable.getTableProperties();
+	        TableProperties tpToReceiveAdd = 
+	            getTablePropertiesByDisplayName(tp, tableName);
+	        if (tpToReceiveAdd == null) {
+	          Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
+	               "because it could not be found.");
+	          return;
+	        }
+	        Map<String, String> map = null;
+	        if (jsonMap != null) {
+	          map = CustomView.this.getMapFromJson(jsonMap);
+	          if (map == null) {
+	            Log.e(TAG, "couldn't get map from json. returning.");
+	            return;
+	          }
+	        }
+	        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+	            tpToReceiveAdd, formId, screenPath, map);
 		}
 
 		/**
@@ -1256,6 +1376,53 @@ public abstract class CustomView extends LinearLayout {
 				return;
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
+		}
+		
+		/**
+		 * Add a row to survey using the specified form and screenpath.
+		 * @param tableName
+		 * @param formId
+		 * @param screenPath
+		 */
+		public void addRowWithSurveyAndSpecificForm(String tableName,
+		    String formId, String screenPath) {
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		      formId, screenPath, null);
+		}
+		
+		/**
+		 * Add a row with survey using the specified formId and screenPath. The 
+		 * jsonMap should be a Stringified json map mapping elementName to values
+		 * to prepopulate with the add row request.
+		 * @param tableName
+		 * @param formId
+		 * @param screenPath
+		 * @param jsonMap
+		 */
+		public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+		    String tableName, String formId, String screenPath, String jsonMap) {
+        TableProperties tp = mTable.getTableProperties();
+        // does this "to receive add" call make sense with survey? unclear.
+        TableProperties tpToReceiveAdd = getTablePropertiesByDisplayName(
+            null, tableName);
+        if (tpToReceiveAdd == null) {
+          Log.e(TAG, "table [" + tableName + "] could not be found. " +
+               "returning.");
+          return;
+        }
+        Map<String, String> map = null;
+        // Do this null check and only parse and return errors if the jsonMap
+        // is not null. This allows other methods doing similar things to call
+        // through using this method and passing null values.
+        if (jsonMap != null) {
+          map = CustomView.this.getMapFromJson(jsonMap);
+          if (map == null) {
+            Log.e(TAG, "couldn't parse values into map to give to Survey");
+            return;
+          }
+        }
+        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+            tpToReceiveAdd, formId, screenPath, map);
 		}
 
 		/**

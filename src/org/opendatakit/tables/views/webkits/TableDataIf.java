@@ -146,6 +146,21 @@ public class TableDataIf {
 		weakTable.get().editRowWithCollectAndSpecificForm(rowNumber, formId,
 				formVersion, formRootElement);
 	}
+	
+	/**
+	 * Edit the row using Survey and a specific form.
+	 * @param rowNumber
+	 * @param formId
+	 * @param screenPath
+	 * @param formPath
+	 * @param refId
+	 */
+	// @JavascriptInterface
+	public void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
+	    String screenPath) {
+	  weakTable.get().editRowWithSurveyAndSpecificForm(rowNumber, formId, 
+	      screenPath);
+	}
 
 	/**
 	 * @see ControlIf#addRowWithCollect(String)
@@ -154,6 +169,28 @@ public class TableDataIf {
 	// @JavascriptInterface
 	public void addRowWithCollect(String tableName) {
 		weakTable.get().addRowWithCollect(tableName);
+	}
+	
+	// @JavascriptInterface
+	public void addRowWithSurveyAndSpecificForm(String tableName, 
+	    String formId, String screenPath) {
+	  weakTable.get().addRowWithSurveyAndSpecificForm(tableName, formId,
+	      screenPath);
+	}
+	
+	/**
+	 * Add a row using Survey, the specified form, and prepopulated values. 
+	 * jsonMap should be a JSON.stringify()'d json object mapping elementName to
+	 * prepopulated value.
+	 * @param tableName
+	 * @param formId
+	 * @param screenPath
+	 * @param jsonMap
+	 */
+	public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	    String tableName, String formId, String screenPath, String jsonMap) {
+	  weakTable.get().addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	      tableName, formId, screenPath, jsonMap);
 	}
 
 	/**

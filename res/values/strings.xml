@@ -93,6 +93,7 @@
 	<string name="error">error</string>
 	<string name="config_summary">Configuration Summary:</string>
 	<string name="table_already_exists">- %1$s already exists.\n\n</string>
+	<string name="file_not_found">- File not found: %1$s.\n\n</string>
 	<string name="imported_successfully">- %1$s imported successfully\n\n</string>
 	<string name="imported_with_errors">- %1$s imported with errors\n\n</string>
 	<string name="use_default">Use Default</string>
@@ -289,6 +290,11 @@
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
 	
+	<!-- ODKSubmit things -->
+	<string name="send_using_submit">Send Using ODK Submit</string>
+	<string name="cannot_register_app_with_submit">Cannot register app with submit!</string>
+	<string name="cannot_register_data_with_submit">Cannot register data with submit!</string>
+	
 	<!-- Conflict Resolution Stuff -->
 	<string name="take_local">Take Local Version</string>
 	<string name="take_server">Take Server Version</string>
@@ -297,4 +303,12 @@
 	<string name="take_server_warning">Overwrite all local changes with the server changes?</string>
 	<string name="resolve_row_warning">Overwrite local and server changes with the selected values?</string>
 	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
+	<string name="conflict_local_was_deleted_explanation">You have deleted a row someone else has edited.</string>
+	<string name="conflict_server_was_deleted_explanation">Another user has deleted a row you have edited.</string>
+	<string name="radio_button_message_restore_local_deleted">Restore and resolve.</string>
+	<string name="radio_button_message_delete_local_deleted">Ignore changes, delete on server.</string>
+	<string name="radio_button_message_restore_server_deleted">Restore and resolve.</string>
+	<string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
+	<string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
+	<string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
 </resources>

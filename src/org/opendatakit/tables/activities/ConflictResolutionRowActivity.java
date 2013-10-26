@@ -13,6 +13,7 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConcordantColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConflictColumn;
@@ -25,8 +26,10 @@ import android.content.DialogInterface.OnCancelListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,6 +70,12 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private String mServerRowSyncTag;
   private UserTable mLocal;
   private UserTable mServer;
+
+  private Button mButtonTakeLocal;
+  private Button mButtonTakeServer;
+  private Button mButtonResolveRow;
+  private List<ConflictColumn> mConflictColumns;
+  
   /**
    * The message to the user as to why they're getting extra options. Will be 
    * either thing to the effect of "someone has deleted something you've 
@@ -74,20 +83,17 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
    * have to choose either to delete or to go ahead and actually restore and
    * then resolve it.
    */
-  private TextView mDeletedMessage;
+  private TextView mTextViewDeletionMessage;
   /**
    * The option saying they're going to restore and then resolve the conflicts.
    */
+  private RadioGroup mRadioGroupDeletion;
   private RadioButton mRadioButtonRestoreAndResolve;
   /**
    * The option saying they're going to delete it, possibly discarding any 
    * changes they'd made.
    */
   private RadioButton mRadioButtonDelete;
-  private Button mButtonTakeLocal;
-  private Button mButtonTakeServer;
-  private Button mButtonResolveRow;
-  private List<ConflictColumn> mConflictColumns;
   
   private boolean mIsShowingTakeLocalDialog;
   private boolean mIsShowingTakeServerDialog;
@@ -99,8 +105,10 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     this.setContentView(
         org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
     this.mDbHelper = DbHelper.getDbHelper(this);
-    this.mDeletedMessage = (TextView)
+    this.mTextViewDeletionMessage = (TextView)
         findViewById(R.id.conflict_resolution_deletion_message);
+    this.mRadioGroupDeletion = (RadioGroup)
+        findViewById(R.id.conflict_resolution_deleted_states_radio_group);
     this.mRadioButtonRestoreAndResolve = (RadioButton)
         findViewById(R.id.conflict_resolution_radio_button_restore);
     this.mRadioButtonDelete = (RadioButton)
@@ -127,6 +135,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // We'll use these later on, so heat up the caches.
     this.mLocal.reloadCacheOfColumnProperties();
     this.mServer.reloadCacheOfColumnProperties();
+    // 
     // And now we need to construct up the adapter.
     // There are several things to do be aware of. We need to get all the 
     // section headings, which will be the column names. We also need to get 
@@ -181,6 +190,84 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
     this.onDecisionMade();
+    // Here we'll handle the cases of whether or not rows were deleted. There
+    // are three cases to consider: 
+    // 1) both rows were updated, neither is deleted. This is the normal case
+    // 2) the server row was deleted, the local was updated (thus a conflict)
+    // 3) the local was deleted, the server was updated (thus a conflict)
+    // To Figure this out we'll first need the state of each version.
+    // Note that these calls should never return nulls, as whenever a row is in
+    // conflict, there should be a conflict type. Therefore if we throw an 
+    // error that is fine, as we've violated an invariant.
+    int localConflictType = Integer.parseInt(mLocal.getRowAtIndex(mRowNumber)
+        .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+    int serverConflictType = 
+        Integer.parseInt(mServer.getRowAtIndex(mRowNumber)
+            .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
+    if (localConflictType == 
+          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+        serverConflictType ==
+          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+      // Then it's a normal conflict. Hide the elements of the view relevant
+      // to deletion restoration.
+      mTextViewDeletionMessage.setVisibility(View.GONE);
+      mRadioGroupDeletion.setVisibility(View.GONE);
+      this.onDecisionMade();
+    } else if (localConflictType == 
+          SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES &&
+        serverConflictType ==
+          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+      // Then the local row was deleted, but someone had inserted a newer
+      // updated version on the server.
+      this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
+      this.mTextViewDeletionMessage.setText(
+          getString(R.string.conflict_local_was_deleted_explanation));
+      this.mRadioGroupDeletion.setVisibility(View.VISIBLE);
+      this.mRadioButtonRestoreAndResolve.setText(
+          getString(R.string.radio_button_message_restore_local_deleted));
+      this.mRadioButtonRestoreAndResolve.setOnClickListener(
+          new RestoreDeletedClickListener());
+      this.mRadioButtonDelete.setOnClickListener(
+          new SetRowToDeleteOnServerListener());
+      this.mRadioButtonDelete.setText(
+          getString(R.string.radio_button_message_delete_local_deleted));
+      // Disable these, b/c can't yet take action on row.
+      mButtonTakeServer.setEnabled(false);
+      mButtonTakeLocal.setEnabled(false);
+      mButtonResolveRow.setEnabled(false);
+      mAdapter.setConflictColumnsEnabled(false);
+      mAdapter.notifyDataSetChanged();
+    } else if (localConflictType == 
+          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+        serverConflictType == 
+          SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES) {
+      // Then the row was updated locally but someone had deleted it on the 
+      // server.
+      this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
+      this.mTextViewDeletionMessage.setText(
+          getString(R.string.conflict_server_was_deleted_explanation));
+      this.mRadioGroupDeletion.setVisibility(View.VISIBLE);
+      this.mRadioButtonRestoreAndResolve.setText(
+          getString(R.string.radio_button_message_restore_server_deleted));
+      this.mRadioButtonRestoreAndResolve.setOnClickListener(
+          new RestoreDeletedClickListener());
+      this.mRadioButtonDelete.setText(
+          getString(R.string.radio_button_message_delete_server_deleted));
+      this.mRadioButtonDelete.setOnClickListener(
+          new DiscardChangesAndDeleteLocalListener());
+      // Disable these, because can't yet take action on row.
+      mButtonTakeServer.setEnabled(false);
+      mButtonTakeLocal.setEnabled(false);
+      mButtonResolveRow.setEnabled(false);
+      mAdapter.setConflictColumnsEnabled(false);
+      mAdapter.notifyDataSetChanged();
+    } else {
+      // We should never get here, because it breaks an invariant.
+      // We know the vers
+      Log.e(TAG, "server and local versions of the row did not match a known" +
+      		" pair of conflict types. local: " + localConflictType + 
+      		", sever: " + serverConflictType);
+    }
   }
 
   /*
@@ -189,6 +276,10 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
    */
   @Override
   public void onDecisionMade() {
+    // set the listview enabled in case it'd been down due to deletion 
+    // resolution.
+    mAdapter.setConflictColumnsEnabled(true);
+    mAdapter.notifyDataSetChanged();
     if (isResolvable()) {
       Log.e(TAG, "isResolvable returns true!");
       this.mButtonResolveRow.setEnabled(true);
@@ -307,6 +398,136 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     Log.e(TAG, "going to call onDecisionMade");
     this.onDecisionMade();
 
+  }
+  
+  /**
+   * Class handling the restore radio button. Should just make the normal
+   * actions available.
+   *
+   */
+  private class RestoreDeletedClickListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      // All we'll do is set everything to be enabled.
+      mButtonTakeLocal.setEnabled(true);
+      mButtonTakeServer.setEnabled(true);
+      onDecisionMade();
+    }
+    
+  }
+  
+  private class DiscardChangesAndDeleteLocalListener
+      implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      // We should do a popup.
+      AlertDialog.Builder builder = new AlertDialog.Builder(
+          ConflictResolutionRowActivity.this.getSupportActionBar()
+          .getThemedContext());
+      builder.setMessage(
+          getString(R.string.conflict_delete_local_confirmation_warning));
+      builder.setPositiveButton(getString(R.string.yes), 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              // TODO: delete the local version.
+              // this will be a simple matter of deleting all the rows with the
+              // same rowid on the local device.
+              DbTable dbTable = 
+                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+              dbTable.deleteRowActual(mRowId);
+              ConflictResolutionRowActivity.this.finish();
+              Log.d(TAG, "deleted local and server versions");
+            }
+          });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel), 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          });
+      builder.setOnCancelListener(new OnCancelListener() {
+        
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          // here we need to do nothing and UNCHECK the radiobutton.
+          mRadioButtonDelete.setChecked(false);
+          dialog.dismiss();
+        }
+      });
+      builder.create().show();
+    }
+  }
+  
+  private class SetRowToDeleteOnServerListener
+      implements View.OnClickListener {
+    
+    @Override
+    public void onClick(View v) {
+      // We should do a popup.
+      AlertDialog.Builder builder = new AlertDialog.Builder(
+          ConflictResolutionRowActivity.this.getSupportActionBar()
+          .getThemedContext());
+      builder.setMessage(
+          getString(R.string.conflict_delete_on_server_confirmation_warning));
+      builder.setPositiveButton(getString(R.string.yes), 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              // We're going to discard the local changes by acting as if
+              // takeServer was pressed. Then we're going to flag row as 
+              // deleted.
+              DbTable dbTable = 
+                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+              Map<String, String> valuesToUse = new HashMap<String, String>();
+              for (ConflictColumn cc : mConflictColumns) {
+                valuesToUse.put(cc.getElementKey(), cc.getServerValue());
+              }
+              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.markDeleted(mRowId);
+              Log.d(TAG, "deleted the local version and marked the server" +
+              		" version as deleting.");
+              ConflictResolutionRowActivity.this.finish();
+            }
+          });
+      builder.setCancelable(true);
+      builder.setNegativeButton(getString(R.string.cancel), 
+          new DialogInterface.OnClickListener() {
+            
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.cancel();
+            }
+          });
+      builder.setOnCancelListener(new OnCancelListener() {
+        
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          // here we need to do nothing and UNCHECK the radiobutton.
+          mRadioButtonDelete.setChecked(false);
+          dialog.dismiss();
+        }
+      });
+      builder.create().show();
+    }
+}
+  
+  private class RestoreDeletedListener implements View.OnClickListener {
+
+    @Override
+    public void onClick(View v) {
+      mButtonTakeLocal.setEnabled(true);
+      mButtonTakeServer.setEnabled(true);
+      onDecisionMade();
+    }
+    
   }
   
   private class TakeLocalClickListener implements View.OnClickListener {

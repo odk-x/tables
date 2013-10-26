@@ -59,7 +59,8 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
       }
       SyncProcessor processor = new SyncProcessor(helper, synchronizer,
           syncResult);
-      processor.synchronize();
+      // TODO: Get these values from somewhere meaningful.
+      processor.synchronize(true, true, true);
     }
   }
 

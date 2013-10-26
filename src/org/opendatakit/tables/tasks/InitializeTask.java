@@ -11,6 +11,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
+import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -37,40 +38,39 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 	private static final String TAG = "InitializeTask";
 
-	private final Callbacks mCallbacks;
+	private InitializeTaskDialogFragment mDialogFragment;
 	private final Context mContext;
-	private ProgressDialog dialog;
 	private String filename;
 	private long fileModifiedTime;
 	private int fileCount;
 	private int curFileCount;
 	private String lineCount;
 	private Map<String, Boolean> importStatus;
-	private Map<String, Boolean> mTableAlreadyExistsMap;
+	/** Holds the key to whether or not the table already exists. */
+	private Map<String, Boolean> mKeyToTableAlreadyExistsMap;
+	/** Stores the tables key to whether or not the file was found. */
+	private Map<String, Boolean> mKeyToFileNotFoundMap;
+	/** Stores the table's key to its filename. */
+	private Map<String, String> mKeyToFileMap;
 
 	public boolean caughtDuplicateTableException = false;
 	public boolean problemImportingKVSEntries = false;
 	private boolean poorlyFormatedConfigFile = false;
 
-	public InitializeTask(Context context, Callbacks callbacks) {
-		this.mCallbacks = callbacks;
+	public InitializeTask(Context context) {
 		this.mContext = context;
-		this.dialog = new ProgressDialog(context);
 		this.importStatus = new HashMap<String, Boolean>();
-		this.mTableAlreadyExistsMap = new HashMap<String, Boolean>();
+		this.mKeyToTableAlreadyExistsMap = new HashMap<String, Boolean>();
+		this.mKeyToFileNotFoundMap = new HashMap<String, Boolean>();
+		this.mKeyToFileMap = new HashMap<String, String>();
 	}
-
-	@Override
-	protected void onPreExecute() {
-		dialog.setTitle(mContext.getString(R.string.configuring_tables));
-		dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		dialog.setCancelable(false);
-		dialog.show();
+	
+	public void setDialogFragment(InitializeTaskDialogFragment dialogFragment) {
+	  this.mDialogFragment = dialogFragment;
 	}
 
 	@Override
 	protected synchronized Boolean doInBackground(Void... params) {
-		if (ConfigurationUtil.isChanged(mCallbacks.getPrefs())) {
 			Properties prop = new Properties();
 			try {
 				File config = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
@@ -83,8 +83,27 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 			// prop was loaded
 			if (prop != null) {
+			  // This is an unpleasant solution. We're currently saving the file
+			  // time as used the instant a properties file is loaded. In theory 
+			  // it seems like this should only be saved AFTER the file is 
+			  // successfully used. This is not being done for several reasons. 
+			  // First, despite my best efforts to get the DialogFragments and
+			  // asynctasks to play nice, somehow it still is not consistently
+			  // finding the InitializeTaskDialogFragment in onCreate. It usually,
+			  // usually does, but this is seriously annoying to not work 
+			  // consistently. I can't find a good reason as to why. 
+			  // Second, say that a config attempt did fail, perhaps causing a 
+			  // force close. Without this fix, it would consistently crash, 
+			  // trying each time to load the same misconfigured config file. This
+			  // is similarly unacceptable. So, this seems a way to try and avoid
+			  // both problems, while perhaps eliminating a very annoying problem.
+			  // However, it still feels like a hack, and I wish the AsyncTask/
+			  // Fragment situation wasn't so damned irritating.
 				fileModifiedTime = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME).lastModified();
+				ConfigurationUtil.updateTimeChanged(
+				    this.mDialogFragment.getPreferencesFromContext(), 
+				    fileModifiedTime);
 				String table_keys = prop.getProperty(TOP_LEVEL_KEY_TABLE_KEYS);
 
 				// table_keys is defined
@@ -102,8 +121,19 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 						curFileCount++;
 						tablename = prop.getProperty(key + KEY_SUFFIX_TABLENAME);
 						filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
+	               this.importStatus.put(key, false);
 						file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 								filename);
+						this.mKeyToFileMap.put(key, filename);
+						if (!file.exists()) {
+						  this.mKeyToFileNotFoundMap.put(key, true);
+						  Log.e(TAG, "putting in file not found map true: " + key);
+						  continue;
+						} else {
+						  this.mKeyToFileNotFoundMap.put(key, false);
+						  Log.e(TAG, "putting in file not found map false: " + key);
+						  // and proceed.
+						}
 
 						// update dialog message with current filename
 						publishProgress();
@@ -117,15 +147,15 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
     							success = cu.importConfigTables(mContext, this, 
     							    request.getFile(), filename, 
     							    request.getTableName());
-    							mTableAlreadyExistsMap.put(filename, false);
+    							mKeyToTableAlreadyExistsMap.put(key, false);
 							} catch (TableAlreadyExistsException e) {
-							  mTableAlreadyExistsMap.put(filename, true);
+							  mKeyToTableAlreadyExistsMap.put(key, true);
 							  Log.e(TAG, "caught able already exists, setting " +
 							  		"success to: " + success);
 							}
-							importStatus.put(filename, success);
+							importStatus.put(key, success);
 							if (success) {
-								publishProgress();
+							  publishProgress();
 							}
 						} else {
 							poorlyFormatedConfigFile = true;
@@ -137,15 +167,19 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 					return false;
 				}
 			}
-		}
 		return true;
 	}
-
-	// refresh TableManager after each successful import
-	protected void onProgressUpdate(Void... progress) {
-		dialog.setMessage(mContext.getString(R.string.importing_file,
-				curFileCount, fileCount, filename, lineCount ));
-	}
+	
+	@Override
+	protected void onProgressUpdate(Void... values) {
+     if (mDialogFragment != null) {
+       mDialogFragment.updateProgress(curFileCount, 
+           fileCount, filename, lineCount);
+     } else {
+       Log.e(TAG, "dialog fragment is null! Not updating " +
+            "progress.");
+     }
+   }
 
 	public void updateLineCount(String lineCount) {
 		this.lineCount = lineCount;
@@ -157,65 +191,53 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	@Override
 	protected void onPostExecute(Boolean result) {
 		// refresh TableManager to show newly imported tables
-		mCallbacks.onImportsComplete();
-
-		// dismiss spinning ProgressDialog
-		dialog.dismiss();
-
-		// build AlertDialog displaying the status of the initialization
-		AlertDialog.Builder alertDialogBuilder = 
-		    new AlertDialog.Builder(mContext);
-		alertDialogBuilder.setCancelable(true);
-		alertDialogBuilder.setNeutralButton(mContext.getString(R.string.ok), 
-		    new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
-			}
-		});
+	  if (this.mDialogFragment == null) {
+	    Log.e(TAG, "dialog fragment is null! Task can't report back. " +
+	    		"Returning.");
+	    return;
+	  }
+	  // From this point forward we'll assume that the dialog fragment is not 
+	  // null.
 
 		if (!result) {
-			if (poorlyFormatedConfigFile)
-				alertDialogBuilder.setTitle(
-				    mContext.getString(R.string.bad_config_properties_file));
-			else
-				alertDialogBuilder.setTitle(
-				    mContext.getString(R.string.error));
+		  this.mDialogFragment
+		    .onTaskFinishedWithErrors(poorlyFormatedConfigFile);
 		} else {
-			// update the lastModifiedTime of Tables in Preferences
-			ConfigurationUtil.updateTimeChanged(
-			    mCallbacks.getPrefs(), fileModifiedTime);
-
 			// Build summary message
-			alertDialogBuilder.setTitle(
-			    mContext.getString(R.string.config_summary));
 			StringBuffer msg = new StringBuffer();
-			for (String filename : importStatus.keySet()) {
-			  Log.e(TAG, "filename: " + filename);
-			  if (importStatus.get(filename)) {
-			    Log.e(TAG, "import status from map: " + importStatus.get(filename));
+			for (String key : mKeyToFileMap.keySet()) {
+			  Log.e(TAG, "key: " + key);
+			  if (importStatus.get(key)) {
+			    String nameOfFile = mKeyToFileMap.get(key);
+			    Log.e(TAG, "import status from map: " + importStatus.get(key));
 			    msg.append(mContext.getString(R.string.imported_successfully, 
-			        filename));
+			        nameOfFile));
 			  } else {
 			    // maybe there was an existing table already, maybe there were 
 			    // just errors.
-			    if (mTableAlreadyExistsMap.get(filename)) {
+			    if (mKeyToTableAlreadyExistsMap.containsKey(key) && 
+			        mKeyToTableAlreadyExistsMap.get(key)) {
 			      Log.e(TAG, "table already exists map was true");
 			      msg.append(mContext.getString(R.string.table_already_exists, 
-	                 filename));
-			    } else {
+	                 key));
+			    } else if (mKeyToFileNotFoundMap.containsKey(key) && 
+			        mKeyToFileNotFoundMap.get(key)) {
+			      // We'll first retrieve the file to which this key was pointing.
+			      String nameOfFile = mKeyToFileMap.get(key);
+			      Log.e(TAG, "file wasn't found: " + key);
+			      msg.append(mContext.getString(R.string.file_not_found, 
+			          nameOfFile));
+			    } else { 
+			      // a general error.
 			      Log.e(TAG, "table already exists map was false");
 	            msg.append(mContext.getString(R.string.imported_with_errors, 
-	                filename));			      
+	                key));			      
 			    }
 			  }
 
 			}
-			alertDialogBuilder.setMessage(msg);
+			this.mDialogFragment.onTaskFinishedSuccessfully(msg.toString());
 		}
-
-		AlertDialog dialog2 = alertDialogBuilder.create();
-		dialog2.show();
 	}
 	
 	public interface Callbacks {

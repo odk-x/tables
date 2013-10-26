@@ -319,6 +319,33 @@ public class ControlIf {
 	public void addRowWithCollect(String tableName) {
 		weakControl.get().addRowWithCollect(tableName);
 	}
+	
+	/**
+	 * Add a row using Survey. Not yet sure if we'll actually need to take a 
+	 * table name here or not...
+	 * @param tableName
+	 */
+	// @JavascriptInterface
+	public void addRowWithSurveyAndSpecificForm(String tableName, String formId,
+	    String screenPath) {
+	  weakControl.get().addRowWithSurveyAndSpecificForm(tableName, formId,
+	      screenPath);
+	}
+	
+	/**
+	 * Add a row using survey and prepopulating the form with the given values.
+	 * The jsonmap should contain a mapping of elementName to value.
+	 * @param tableName
+	 * @param formId
+	 * @param screenPath
+	 * @param jsonMap
+	 */
+	public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	    String tableName, String formId, String screenPath, String jsonMap) {
+	  weakControl.get().addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	      tableName, formId, screenPath, jsonMap);
+	  
+	}
 
 	/**
 	 * Add a row using Collect and the form specified by the given parameters.

@@ -20,6 +20,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
@@ -28,11 +29,12 @@ import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
@@ -42,8 +44,8 @@ import com.actionbarsherlock.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class CustomHomeScreenActivity extends SherlockActivity implements
-    DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
+public class CustomHomeScreenActivity extends SherlockFragmentActivity 
+    implements DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
 
@@ -82,17 +84,35 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     } else {
       mFilename = CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME;
     }
+    // It's possible that we're coming back after a rotation. In this case, a
+    // InitializeTaskDialogFragment will still exist and we'll have to hook up
+    // our callbacks.
+    InitializeTaskDialogFragment initalizeTaskDialogFragment =
+        (InitializeTaskDialogFragment)
+        getSupportFragmentManager().findFragmentByTag(
+            InitializeTaskDialogFragment.TAG_FRAGMENT);
+    if (initalizeTaskDialogFragment != null) {
+      initalizeTaskDialogFragment.setCallbacks(this);
+    } else {
+      // We'll check to see if we need to begin an initialization task.
+      if (ConfigurationUtil.isChanged(mPrefs)) {
+        InitializeTask initializeTask = new InitializeTask(this);
+        initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
+        initalizeTaskDialogFragment.setTask(initializeTask);
+        initalizeTaskDialogFragment.setCallbacks(this);
+        initalizeTaskDialogFragment.setCancelable(false);
+        initializeTask.setDialogFragment(initalizeTaskDialogFragment);
+        FragmentManager fragmentManager = this.getSupportFragmentManager();
+        initalizeTaskDialogFragment.show(fragmentManager, 
+            InitializeTaskDialogFragment.TAG_FRAGMENT);
+      }
+    }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     Log.d(TAG, "in onResume()");
-    // Now we'll also try to import any tables based on the configuration
-    // properties file.
-    if (ConfigurationUtil.isChanged(this.mPrefs)) {
-      new InitializeTask(this, this).execute();
-    }
     init();
   }
 

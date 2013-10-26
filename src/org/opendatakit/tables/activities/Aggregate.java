@@ -26,7 +26,12 @@ import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInte
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.sms.MsgHandler;
+import org.opendatakit.tables.submit.TablesCommunicationActionReceiver;
+import org.opendatakit.tables.submit.ServiceConnectionImpl;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.SynchronizationResult;
@@ -36,7 +41,7 @@ import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.tasks.FileUploaderTask;
-import org.opendatakit.tables.tasks.RetrieveFileManifestTask;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
 
@@ -52,7 +57,6 @@ import android.content.Intent;
 import android.content.SyncResult;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Debug;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -230,6 +234,7 @@ public class Aggregate extends SherlockActivity {
         // SS Oct 15: clear the auth token here.
         // TODO if you change a user you can switch to their privileges without
         // this.
+        Log.d(TAG, "[onClickSaveSettings][onClick] invalidated authtoken");
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         updateButtonsEnabled();
       }
@@ -274,7 +279,7 @@ public class Aggregate extends SherlockActivity {
   public void onClickSyncNow(View v) {
     Log.d(TAG, "in onClickSyncNow");
     String accountName = prefs.getAccount();
-
+    Log.e(TAG, "[onClickSyncNow] timestamp: " + System.currentTimeMillis());
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
@@ -284,70 +289,41 @@ public class Aggregate extends SherlockActivity {
     updateButtonsEnabled();
   }
 
-  /**
-   * Hooked to syncFilesNowButton's onClick in aggregate_activity.xml
-   * @param accountName
-   */
-  public void onClickSyncFilesNow(View v) {
-    Log.d(TAG, "in onClickSyncFilesNow");
+  
+  public void onClickSyncUsingSubmit(View v) {
+    Log.d(TAG, "in onClickSyncUsingSubmit");
     String accountName = prefs.getAccount();
-    //Intent i = new Intent()
+    Log.e(TAG, "[onClickSyncNowUsingSubmit] timestamp: " 
+        + System.currentTimeMillis());
     if (accountName == null) {
-      Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, getString(R.string.choose_account), 
+          Toast.LENGTH_SHORT).show();
     } else {
-//      SyncFilesNowTask syncFilesTask = new SyncFilesNowTask();
-//      syncFilesTask.execute();
-      
-      String aggregateUri = prefs.getServerUri(); // uri of our server.
-      String accessToken = prefs.getAuthToken();
-      
-      // first we'll just try to get the manifest.
-      RetrieveFileManifestTask manifestTask = new RetrieveFileManifestTask(
-          this, "tables", aggregateUri, accessToken, 
-          RetrieveFileManifestTask.RequestType.ALL_FILES, null);
-      manifestTask.execute();
-      
-
-      FileUploaderTask fut = new FileUploaderTask(this, "tables", aggregateUri,
-          accessToken);
-      String appFolder = ODKFileUtils.getAppFolder("tables");
-      File appFolderFile = new File(appFolder);
-      LinkedList<File> unexploredDirs = new LinkedList<File>();
-      if (!appFolderFile.isDirectory()) {
-        Log.e(TAG, "[SyncFilesNowTask#doInBackground] appFolder not a directory somehow");
-        // TODO: display an error.
+      // we'll initialize the receiver correctly and then set up the receiver.
+      // the receiver's callback is the one that will say "oh yes, go ahead
+      // and do yo' bizness."
+      // The first thing we need to do is get the list of tables that is set
+      // to sync. Submit needs to know about this.
+      DbHelper dbh = DbHelper.getDbHelper(this);
+      TableProperties[] tps = 
+          TableProperties.getTablePropertiesForSynchronizedTables(dbh, 
+              KeyValueStore.Type.SERVER);
+      List<String> tableIdsToSync = new ArrayList<String>();
+      for (TableProperties tp : tps) {
+        tableIdsToSync.add(tp.getTableId());
       }
-      unexploredDirs.add(appFolderFile);
-      List<File> nondirFiles = new ArrayList<File>();
-      while (!unexploredDirs.isEmpty()) {
-        File exploring = unexploredDirs.pop();
-        File[] files = exploring.listFiles();
-        for (File f : files) {
-          if (f.isDirectory()) {
-            // we don't want to sync the metadata folder
-            if (!f.getAbsolutePath().equals(appFolder + "/metadata")) {
-              unexploredDirs.add(f);
-            }
-          } else {
-            nondirFiles.add(f);
-          }
-        }
-      }
-      Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files: " + nondirFiles);
-      List<String> relativePaths = new ArrayList<String>();
-      // we want the relative path, so drop the first bits.
-      int appFolderLength = appFolder.length();
-      for (File f : nondirFiles) {
-        relativePaths.add(f.getPath().substring(appFolderLength));
-      }
-      Debug.waitForDebugger();
-      Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files relative: " + relativePaths);
-      // and now format the paths.
-      fut.execute(relativePaths.toArray(new String[] {}));
+      TablesCommunicationActionReceiver receiver = 
+          TablesCommunicationActionReceiver.getInstance(
+              TableFileUtils.ODK_TABLES_APP_NAME, 
+              null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(), 
+              getApplicationContext());
+      // We set up the receiver.
+      ServiceConnectionImpl serviceConnectionImpl = 
+          new ServiceConnectionImpl(TableFileUtils.ODK_TABLES_APP_NAME, this);
 
     }
   }
-
+  
   public static void requestSync(String accountName) {
     if (accountName != null) {
       Account account = new Account(accountName, ACCOUNT_TYPE_G);
@@ -384,8 +360,13 @@ public class Aggregate extends SherlockActivity {
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,
             synchronizer, new SyncResult());
-        result = processor.synchronize();
+        // This is going to assume that we ALWAYS sync all three levels:
+        // app, tableNonMedia, and tableMedia. This might have to be changed
+        // and paramaterized using some user-input values in the future.
+        result = processor.synchronize(true, true, true);
         success = true;
+        Log.e(TAG, "[SyncNowTask#doInBackground] timestamp: " + 
+            System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
         success = false;

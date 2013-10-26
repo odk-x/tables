@@ -70,7 +70,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:onClick="onClickSyncFilesNow"
-        android:text="@+string/sync_files_now" />
+        android:onClick="onClickSyncUsingSubmit"
+        android:text="@+string/send_using_submit" />
 
 </LinearLayout>
