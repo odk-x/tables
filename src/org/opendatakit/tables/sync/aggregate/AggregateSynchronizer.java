@@ -43,7 +43,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableType;
 import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
 import org.opendatakit.aggregate.odktables.rest.serialization.JsonObjectHttpMessageConverter;
 import org.opendatakit.aggregate.odktables.rest.serialization.SimpleXMLSerializerForAggregate;
