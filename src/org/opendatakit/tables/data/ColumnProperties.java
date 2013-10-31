@@ -428,6 +428,7 @@ public class ColumnProperties {
    * The fields that reside in the key value store.
    */
   private boolean displayVisible;
+  private String jsonStringifyDisplayName;
   private String displayName;
   private ArrayList<String> displayChoicesList;
   private String displayFormat;
@@ -437,9 +438,29 @@ public class ColumnProperties {
   private FooterMode footerMode;
   private ArrayList<JoinColumn> joins;
 
+  /**
+   *
+   * @param dbh
+   * @param tableId
+   * @param elementKey
+   * @param elementName
+   * @param elementType
+   * @param listChildElementKeys
+   * @param isPersisted
+   * @param displayVisible
+   * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
+   * @param displayChoicesList
+   * @param displayFormat
+   * @param smsIn
+   * @param smsOut
+   * @param smsLabel
+   * @param footerMode
+   * @param joins
+   * @param backingStore
+   */
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
-      boolean isPersisted, boolean displayVisible, String displayName,
+      boolean isPersisted, boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
       String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
@@ -451,7 +472,8 @@ public class ColumnProperties {
     this.joins = joins;
     this.isPersisted = isPersisted;
     this.displayVisible = displayVisible;
-    this.displayName = displayName;
+    this.jsonStringifyDisplayName = jsonStringifyDisplayName;
+    updateDisplayNameFromJsonStringifyDisplayName();
     this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
     this.smsIn = smsIn;
@@ -605,7 +627,7 @@ public class ColumnProperties {
     }
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
+        listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
         kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
@@ -617,22 +639,12 @@ public class ColumnProperties {
    * via createDbElementKey and createDbElementName to avoid conflicts. A
    * possible idea would be to pass them display name.
    *
-   * @param dbh
+   *
    * @param db
    * @param tableId
-   * @param displayName
-   * @param elementKey
-   * @param elementName
-   * @param columnType
-   * @param listChildElementKeys
-   * @param isPersisted
-   * @param joins
-   * @param displayVisible
-   * @param typeOfStore
-   * @return
-   * @throws IOException
-   * @throws JsonMappingException
    * @throws JsonGenerationException
+   * @throws JsonMappingException
+   * @throws IOException
    */
   void persistColumn(SQLiteDatabase db, String tableId) throws JsonGenerationException,
       JsonMappingException, IOException {
@@ -641,7 +653,7 @@ public class ColumnProperties {
     values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_VISIBLE, displayVisible));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_NAME, displayName));
+        KEY_DISPLAY_NAME, jsonStringifyDisplayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
@@ -706,7 +718,7 @@ public class ColumnProperties {
    *
    * @param dbh
    * @param tableId
-   * @param displayName
+   * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
    * @param elementKey
    * @param elementName
    * @param columnType
@@ -717,12 +729,12 @@ public class ColumnProperties {
    * @return
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
-      String displayName, String elementKey, String elementName, ColumnType columnType,
+      String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
       List<String> listChildElementKeys, boolean isPersisted,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
-        listChildElementKeys, isPersisted, displayVisible, displayName,
+        listChildElementKeys, isPersisted, displayVisible, jsonStringifyDisplayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
         DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
 
@@ -898,6 +910,37 @@ public class ColumnProperties {
     return displayName;
   }
 
+  private void updateDisplayNameFromJsonStringifyDisplayName() {
+    try {
+      this.displayName = null;
+      if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
+        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        if ( displayObject instanceof String ) {
+          this.displayName = (String)  displayObject;
+        } else if ( displayObject instanceof Map ) {
+          // TODO: get current locale; deal with non-default locales
+          @SuppressWarnings("rawtypes")
+          Object v = ((Map) displayObject).get("default");
+          if ( v != null && v instanceof String ) {
+            this.displayName = (String) v;
+          }
+        }
+      }
+      if ( this.displayName == null || this.displayName.length() == 0 ) {
+        throw new IllegalArgumentException("displayName is not valid: " + jsonStringifyDisplayName);
+      }
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    }
+  }
+
   /**
    * Sets the column's display name.
    *
@@ -905,13 +948,51 @@ public class ColumnProperties {
    * conflict with any other column display names in use within the table. Use
    * TableProperties.createDisplayName(proposedName) to do this.
    *
+   * NOTE: this updates the jsonStringifyDisplayName, which is what is persisted in the KVS.
+   *
    * @param displayName
    *          the new display name
    * @return the
    */
   public void setDisplayName(String displayName) {
-    setStringProperty(KEY_DISPLAY_NAME, displayName);
-    this.displayName = displayName;
+    try {
+      // error if displayName is not set...
+      if ( displayName == null || displayName.length() == 0 ) {
+        throw new IllegalArgumentException("displayName is not valid: " + displayName);
+      }
+      // parse the existing jsonStringifyDisplayName value...
+      if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
+        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        if ( displayObject instanceof String ) {
+          // just overwrite it...
+          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+          this.displayName = displayName;
+        } else if ( displayObject instanceof Map ) {
+          // TODO: get current locale; deal with non-default locales
+          ((Map) displayObject).put("default", displayName);
+          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
+          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+          this.displayName = displayName;
+        }
+      } else {
+        String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+        setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+        this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+        this.displayName = displayName;
+      }
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    }
   }
 
   /**
@@ -1086,7 +1167,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
     jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
-    jo.put(JSON_KEY_DISPLAY_NAME, displayName);
+    jo.put(JSON_KEY_DISPLAY_NAME, jsonStringifyDisplayName);
     jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
     jo.put(JSON_KEY_SMS_IN, smsIn);
@@ -1158,7 +1239,7 @@ public class ColumnProperties {
     ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
         listChildren, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
-        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME),
+        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
         (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,
         typeOfStore);

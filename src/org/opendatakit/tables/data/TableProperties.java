@@ -1212,8 +1212,24 @@ public class TableProperties {
       throw new IllegalArgumentException("[addColumn] invalid element name: " +
           elementName);
     }
+    String jsonStringifyDisplayName = null;
+    try {
+      jsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] invalid display name: " +
+          displayName + " for: " + elementName);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] invalid display name: " +
+          displayName + " for: " + elementName);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] invalid display name: " +
+          displayName + " for: " + elementName);
+    }
     ColumnProperties cp = null;
-    cp = ColumnProperties.createNotPersisted(dbh, tableId, displayName,
+    cp = ColumnProperties.createNotPersisted(dbh, tableId, jsonStringifyDisplayName,
         elementKey, elementName, columnType, listChildElementKeys, isPersisted,
         ColumnProperties.DEFAULT_KEY_VISIBLE, this.getBackingStoreType());
 
