@@ -213,7 +213,7 @@ public class TableDefinitions {
    * @return a map of column names to fields for the new table
    */
   public static Map<String, String> addTable(SQLiteDatabase db, String tableId,
-      String tableKey, String dbTableName, TableType tableType) {
+      String tableKey, String dbTableName) {
     ContentValues values = new ContentValues();
     values.put(TableDefinitionsColumns.TABLE_ID, tableId);
     values.put(TableDefinitionsColumns.TABLE_KEY, tableKey);
