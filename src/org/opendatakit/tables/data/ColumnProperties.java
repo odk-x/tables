@@ -73,7 +73,7 @@ public class ColumnProperties {
   /*
    * (was dbColumnName) unique id for this element. There should be only one
    * such elementKey for a given tableId. This is the dbColumnName if it is a
-   * value persisted into the database
+   * value written into the database
    */
   // private static final String DB_ELEMENT_NAME = "elementName";
   /*
@@ -91,13 +91,13 @@ public class ColumnProperties {
    * if this is a composite type (geopoint), this is a JSON list of the element
    * keys of the direct descendants of this field name.
    */
-  // private static final String DB_IS_PERSISTED =
-  // "is_persisted";
+  // private static final String DB_IS_UNIT_OF_RETENTION =
+  // "is_unit_of_retention";
   /*
-   * default: 1 (true) -- whether or not this is persisted to the database. If
-   * true, elementId is the dbColumnName in which this value is written. The
-   * value will be written as JSON if it is a composite type. see larger comment
-   * below for example.
+   * default: 1 (true) -- whether or not this is a column in the underlying
+   * database table. If true, elementKey is the dbColumnName in which this
+   * value is written. The value will be written as JSON if it is a composite
+   * type. see larger comment below for example.
    */
   /*
    * These two columns have been replaced by the single column DB_JOINS
@@ -115,10 +115,10 @@ public class ColumnProperties {
   //    listChildElementKeys: [],
   //    properties: {
   //        "table_id": { type: "string", isNotNullable: false,
-  //                       isPersisted: false, elementKey: 'table_id', elementSet: 'columnMetadata' },
+  //                       isUnitOfRetention: false, elementKey: 'table_id', elementSet: 'columnMetadata' },
   //        "element_key": { type: "string", isNotNullable: false,
-  //                       isPersisted: false, elementKey: 'elementKey', elementSet: 'columnMetadata' } } },
-  //    isNotNullable: false, isPersisted: true, elementPath: 'joins', elementSet: 'columnMetadata' }
+  //                       isUnitOfRetention: false, elementKey: 'elementKey', elementSet: 'columnMetadata' } } },
+  //    isNotNullable: false, isUnitOfRetention: true, elementPath: 'joins', elementSet: 'columnMetadata' }
   //
   /*
    * elementKey of the value to join (this table's element) against in other
@@ -142,10 +142,10 @@ public class ColumnProperties {
    * JSON encoding of string values. i.e., '["ache","fever"]'
    *
    * ekey: patientSymptoms ename: patientSymptoms etype: MULTIPLE_CHOICE
-   * listChildEKeys: '[ patientSymptomsItem ]' isPersist: true
+   * listChildEKeys: '[ patientSymptomsItem ]' isUnitOfRetention: true
    *
    * ekey: patientSymptomsItem ename: null // elements are not named within this
-   * list etype: STRING listChildEKeys: null isPersist: false
+   * list etype: STRING listChildEKeys: null isUnitOfRetention: false
    *
    * ------------- e.g., geopoint defining a northernmost point of something:
    *
@@ -154,36 +154,37 @@ public class ColumnProperties {
    *
    * ekey: northernmostPoint ename: northernmostPoint etype: geopoint
    * listChildEKeys: '[ "northLatitude", "northLongitude", "northAltitude",
-   * "northAccuracy"]' isPersist: false
+   * "northAccuracy"]' isUnitOfRetention: false
    *
    * ekey: northLatitude ename: latitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northLongitude ename: longitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northAltitude ename: altitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northAccuracy ename: accuracy etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ODK Collect can do calculations and constraint tests like
    * 'northermostPoint.altitude < 4.0'
    *
    * e.g., 'clientPhone' as a phonenumber type, which is just a restriction on a
-   * STRING value persists under 'clientPhone' column in database.
+   * STRING value that is stored under 'clientPhone' column in database (it is
+   * its own unit of retention).
    *
    * ekey: clientPhone ename: clientPhone etype: phoneNumber listChildEKeys: [
-   * "clientPhoneNumber" ] // single element isPersist: true
+   * "clientPhoneNumber" ] // single element isUnitOfRetention: true
    *
    * ekey: clientPhoneNumber ename: null // null -- indicates restriction on
-   * etype etype: STRING listChildEKeys: null isPersist: false
+   * etype etype: STRING listChildEKeys: null isUnitOfRetention: false
    *
    * e.g., 'image' file capture in ODK Collect. Stored as a MIMEURI
    *
    * ekey: locationImage ename: locationImage etype: MIMEURI listChildEKeys:
-   * null isPersist: true
+   * null isUnitOfRetention: true
    *
    * MIMEURI stores a JSON object:
    *
@@ -198,8 +199,9 @@ public class ColumnProperties {
    * NOTE: you can have a composite type stored in two ways: (1) store the leaf
    * nodes of the composite type in the database. Describe the entire type
    * hierarchy down to those leaf nodes. (2) store it as a json object at the
-   * top level. Describe the structure of this json object and its leaf nodes
-   * (but none of these persist anything).
+   * top level (isUnitOfRetention == true) and describe the structure of this
+   * json object and its leaf nodes (but none of these leaf nodes are retained
+   * individually (isUnitOfRetention == false for these leaf nodes)).
    *
    * Each has its advantages -- (1) does independent value updates easily. (2)
    * does atomic updates easily.
@@ -272,7 +274,7 @@ public class ColumnProperties {
   // /***********************************
   // * Default values for those columns that have defaults.
   // ***********************************/
-  // public static final int DEFAULT_DB_IS_PERSISTED = 1;
+  // public static final int DEFAULT_DB_IS_UNIT_OF_RETENTION = 1;
 
   /***********************************
    * The partition name of the column keys in the key value store.
@@ -358,7 +360,7 @@ public class ColumnProperties {
                                                                      // colType)
   private static final String JSON_KEY_LIST_CHILD_ELEMENT_KEYS = "listChildElementKeys";
   private static final String JSON_KEY_JOINS = "joins";
-  private static final String JSON_KEY_IS_PERSISTED = "isPersisted";
+  private static final String JSON_KEY_IS_UNIT_OF_RETENTION = "isUnitOfRetention";
 
   private static final String JSON_KEY_DISPLAY_VISIBLE = "displayVisible";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
@@ -382,7 +384,7 @@ public class ColumnProperties {
   // DB_ELEMENT_NAME, DB_ELEMENT_TYPE, DB_LIST_CHILD_ELEMENT_KEYS, DB_JOINS,
   // // DB_JOIN_TABLE_ID,
   // // DB_JOIN_ELEMENT_KEY,
-  // DB_IS_PERSISTED,
+  // DB_IS_UNIT_OF_RETENTION,
 
   // DB_DISPLAY_VISIBLE,
   // DB_DISPLAY_NAME,
@@ -423,7 +425,7 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private boolean isPersisted;
+  private boolean isUnitOfRetention;
   /*
    * The fields that reside in the key value store.
    */
@@ -446,7 +448,7 @@ public class ColumnProperties {
    * @param elementName
    * @param elementType
    * @param listChildElementKeys
-   * @param isPersisted
+   * @param isUnitOfRetention
    * @param displayVisible
    * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
    * @param displayChoicesList
@@ -460,7 +462,7 @@ public class ColumnProperties {
    */
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
-      boolean isPersisted, boolean displayVisible, String jsonStringifyDisplayName,
+      boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
       String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
@@ -470,7 +472,7 @@ public class ColumnProperties {
     this.elementType = elementType;
     this.listChildElementKeys = listChildElementKeys;
     this.joins = joins;
-    this.isPersisted = isPersisted;
+    this.isUnitOfRetention = isUnitOfRetention;
     this.displayVisible = displayVisible;
     this.jsonStringifyDisplayName = jsonStringifyDisplayName;
     updateDisplayNameFromJsonStringifyDisplayName();
@@ -484,23 +486,23 @@ public class ColumnProperties {
   }
 
   /**
-   * Return the ColumnProperties for the PERSISTED columns belonging to this
-   * table. TODO: this should probably be modified in the future to return both
-   * the persisted and non persisted columns. At the moment ODK Tables only
-   * cares about the persisted columns, and with this message returning only
-   * those columns it removes the need to deal with non-persisted columns at
+   * Return the ColumnProperties for the columns written to the database table.
+   * TODO: this should probably be modified in the future to return both
+   * the isUnitOfRetention and non-isUnitOfRetention columns. At the moment ODK Tables only
+   * cares about the isUnitOfRetention columns, and with this message returning only
+   * those columns it removes the need to deal with non-isUnitOfRetention columns at
    * this juncture.
    *
    * @param dbh
    * @param tableId
-   * @return a map of elementKey to ColumnProperties for each persisted column.
+   * @return a map of elementKey to ColumnProperties for each isUnitOfRetention column.
    */
   static Map<String, ColumnProperties> getColumnPropertiesForTable(DbHelper dbh, String tableId,
       KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
-      List<String> elementKeys = ColumnDefinitions.getPersistedElementKeysForTable(tableId, db);
+      List<String> elementKeys = ColumnDefinitions.getDatabaseColumnNamesForTable(tableId, db);
       Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId, elementKeys.get(i), typeOfStore);
@@ -549,8 +551,8 @@ public class ColumnProperties {
 
   /**
    * Construct a ColumnProperties from the given json serialization. NOTE: the
-   * resulting ColumnProperties object has NOT been persisted to the database.
-   * The caller is responsible for persisting it and/or adding it to the
+   * resulting ColumnProperties object has NOT been written to the database.
+   * The caller is responsible for writing it and/or adding it to the
    * TableProperties of the tableId.
    *
    * @param dbh
@@ -584,9 +586,9 @@ public class ColumnProperties {
         .valueOf(footerModeStr);
     // KEY_JOINS
 
-    // DB_IS_PERSISTED
-    String isPersistedStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_PERSISTED);
-    boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
+    // DB_IS_UNIT_OF_RETENTION
+    String isUnitOfRetentionStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
+    boolean isUnitOfRetention = SyncUtil.stringToBool(isUnitOfRetentionStr);
     // DB_COLUMN_TYPE
     String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);
@@ -627,7 +629,7 @@ public class ColumnProperties {
     }
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
+        listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
         kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
@@ -675,7 +677,7 @@ public class ColumnProperties {
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        mapper.writeValueAsString(listChildElementKeys), isPersisted);
+        mapper.writeValueAsString(listChildElementKeys), isUnitOfRetention);
   }
 
   public enum ColumnDefinitionChange {
@@ -697,7 +699,7 @@ public class ColumnProperties {
     if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
-    if (this.isPersisted() != cp.isPersisted()) {
+    if (this.isUnitOfRetention() != cp.isUnitOfRetention()) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (this.getColumnType() != cp.getColumnType()) {
@@ -714,7 +716,7 @@ public class ColumnProperties {
    * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
    *
    * Create a ColumnProperties object with the given values (assumed to be good).
-   * Caller is responsible for persisting this to the database.
+   * Caller is responsible for writing this to the database.
    *
    * @param dbh
    * @param tableId
@@ -723,18 +725,18 @@ public class ColumnProperties {
    * @param elementName
    * @param columnType
    * @param listChildElementKeys
-   * @param isPersisted
+   * @param isUnitOfRetention
    * @param displayVisible
    * @param typeOfStore
    * @return
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
       String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted,
+      List<String> listChildElementKeys, boolean isUnitOfRetention,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
-        listChildElementKeys, isPersisted, displayVisible, jsonStringifyDisplayName,
+        listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
         DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
 
@@ -802,7 +804,7 @@ public class ColumnProperties {
   /**
    * DB_ELEMENT_KEY, DB_ELEMENT_NAME, DB_ELEMENT_TYPE,
    * DB_LIST_CHILD_ELEMENT_KEYS, DB_JOIN_TABLE_ID, DB_JOIN_ELEMENT_KEY,
-   * DB_IS_PERSISTED,
+   * DB_IS_UNIT_OF_RETENTION,
    *
    * DB_DISPLAY_VISIBLE, DB_DISPLAY_NAME, DB_DISPLAY_CHOICES_MAP,
    * DB_DISPLAY_FORMAT,
@@ -876,13 +878,13 @@ public class ColumnProperties {
     }
   }
 
-  public boolean isPersisted() {
-    return isPersisted;
+  public boolean isUnitOfRetention() {
+    return isUnitOfRetention;
   }
 
-  public void setIsPersisted(boolean setting) {
-    setBooleanProperty(ColumnDefinitionsColumns.IS_PERSISTED, setting);
-    this.isPersisted = setting;
+  public void setIsUnitOfRetention(boolean setting) {
+    setBooleanProperty(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, setting);
+    this.isUnitOfRetention = setting;
   }
 
   /**
@@ -948,7 +950,8 @@ public class ColumnProperties {
    * conflict with any other column display names in use within the table. Use
    * TableProperties.createDisplayName(proposedName) to do this.
    *
-   * NOTE: this updates the jsonStringifyDisplayName, which is what is persisted in the KVS.
+   * NOTE: this updates the jsonStringifyDisplayName, which is what is writtin
+   * in the KVS.
    *
    * @param displayName
    *          the new display name
@@ -1165,7 +1168,7 @@ public class ColumnProperties {
     jo.put(JSON_KEY_ELEMENT_TYPE, elementType.name());
     jo.put(JSON_KEY_FOOTER_MODE, footerMode.name());
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-    jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
+    jo.put(JSON_KEY_IS_UNIT_OF_RETENTION, isUnitOfRetention);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
     jo.put(JSON_KEY_DISPLAY_NAME, jsonStringifyDisplayName);
     jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
@@ -1195,8 +1198,8 @@ public class ColumnProperties {
   }
 
   /**
-   * Construct a ColumnProperties object from JSON. NOTE: Nothing is persisted
-   * to the database. The caller is responsible for persisting the changes.
+   * Construct a ColumnProperties object from JSON. NOTE: Nothing is written
+   * to the database. The caller is responsible for writing the changes.
    *
    * @param dbh
    * @param json
@@ -1238,7 +1241,7 @@ public class ColumnProperties {
 
     ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
-        listChildren, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
+        listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
         (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,

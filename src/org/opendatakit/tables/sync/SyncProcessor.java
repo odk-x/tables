@@ -160,7 +160,7 @@ public class SyncProcessor {
    * <p>
    * This method does NOT synchronize the application files. This means that if
    * any html files downloaded require the {@link TableFileUtils#DIR_FRAMEWORK}
-   * directory, for instance, the caller must ensure that the app files are 
+   * directory, for instance, the caller must ensure that the app files are
    * synchronized as well.
    *
    * @param tp
@@ -169,10 +169,10 @@ public class SyncProcessor {
    *          flag saying whether or not the table is being downloaded for the
    *          first time. Only applies to tables have their sync state set to
    *          {@link SyncState#rest}.
-   * @param pushLocalNonMediaFiles true if local non media files should be 
+   * @param pushLocalNonMediaFiles true if local non media files should be
    * pushed--e.g. any html files on the device should be pushed to the server
-   * @param syncMediaFiles if media files should also be synchronized. Media 
-   * files are defined as files that are part of the actual data of a table, 
+   * @param syncMediaFiles if media files should also be synchronized. Media
+   * files are defined as files that are part of the actual data of a table,
    * e.g. pictures that have been collected.
    */
   public void synchronizeTable(TableProperties tp, boolean downloadingTable,
@@ -209,7 +209,7 @@ public class SyncProcessor {
           // correct.
           tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
               tp.getBackingStoreType());
-          success = synchronizeTableRest(tp, table, false, tableResult, 
+          success = synchronizeTableRest(tp, table, false, tableResult,
               pushLocalNonMediaFiles, syncMediaFiles);
         }
         break;
@@ -292,16 +292,16 @@ public class SyncProcessor {
 
     // Here we'll sycnhronize the table files.
     try {
-      synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
+      synchronizer.syncNonMediaTableFiles(tp.getTableId(),
           pushLocalNonMediaFiles);
     } catch (IOException e) {
-      ioException("synchronizeTableInserting--nonMediaFiles", tp, e, 
+      ioException("synchronizeTableInserting--nonMediaFiles", tp, e,
           tableResult);
       Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " +
       		"files");
       return false;
     } catch (Exception e) {
-      exception("synchronizeTableInserting--nonMediaFiles", tp, e, 
+      exception("synchronizeTableInserting--nonMediaFiles", tp, e,
           tableResult);
       Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " +
       		"files");
@@ -361,7 +361,7 @@ public class SyncProcessor {
         try {
           synchronizer.syncTableMediaFiles(tp.getTableId());
         } catch (IOException e) {
-          ioException("synchronizeTableInserting--mediaFiles", tp, e, 
+          ioException("synchronizeTableInserting--mediaFiles", tp, e,
               tableResult);
           Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " +
           		"files");
@@ -446,13 +446,13 @@ public class SyncProcessor {
    * @return
    */
   private boolean synchronizeTableRest(TableProperties tp, DbTable table,
-      boolean downloadingTable, TableResult tableResult, 
+      boolean downloadingTable, TableResult tableResult,
       boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tp.getDisplayName());
 
     try {
-      synchronizer.syncNonMediaTableFiles(tp.getTableId(), 
+      synchronizer.syncNonMediaTableFiles(tp.getTableId(),
           pushLocalNonMediaFiles);
     } catch (IOException e) {
       ioException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
@@ -1102,7 +1102,7 @@ public class SyncProcessor {
           col.getElementName(),
           ColumnType.valueOf(col.getElementType()),
           listChildElementKeys,
-          SyncUtil.intToBool(col.getIsPersisted()));
+          SyncUtil.intToBool(col.getIsUnitOfRetention()));
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.refreshTablePropertiesForTable(dbh,
@@ -1162,7 +1162,7 @@ public class SyncProcessor {
       ColumnType colType = cp.getColumnType();
       List<String> listChildrenElements =
           cp.getListChildElementKeys();
-      int isPersisted = SyncUtil.boolToInt(cp.isPersisted());
+      int isUnitOfRetention = SyncUtil.boolToInt(cp.isUnitOfRetention());
       String listChildElementKeysStr = null;
       try {
         listChildElementKeysStr =
@@ -1179,10 +1179,10 @@ public class SyncProcessor {
       }
 //      Column c = new Column(tp.getTableId(), elementKey, elementName,
 //          colType.name(), listChildElementKeysStr,
-//          (isPersisted != 0), joinsStr);
+//          (isUnitOfRetention != 0), joinsStr);
       Column c = new Column(tp.getTableId(), elementKey, elementName,
           colType.name(), listChildElementKeysStr,
-          (isPersisted != 0));
+          (isUnitOfRetention != 0));
       columns.add(c);
     }
     return columns;

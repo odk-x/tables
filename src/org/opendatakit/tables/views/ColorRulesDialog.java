@@ -92,7 +92,7 @@ public class ColorRulesDialog extends Dialog {
   /**
    * SS: This is a method I've made to clean up the state after they hit the ok
    * button so that if you reopen you don't end up seeing things that haven't
-   * been persisted. This perhaps should go in one of android's life cycle
+   * been retained. This perhaps should go in one of android's life cycle
    * functions, but I'm not sure which one. Quick and dirty I'm just putting
    * here.
    */

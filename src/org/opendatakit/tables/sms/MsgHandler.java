@@ -504,14 +504,14 @@ public class MsgHandler {
         }
         int count = 0;
         for ( ColumnProperties cp : cols ) {
-          if ( cp.isPersisted() ) {
+          if ( cp.isUnitOfRetention() ) {
             ++count;
           }
         }
         String[] colNames = new String[count];
         count = -1;
         for ( ColumnProperties cp : cols ) {
-          if ( cp.isPersisted() ) {
+          if ( cp.isUnitOfRetention() ) {
             colNames[++count] = cp.getElementKey();
           }
         }

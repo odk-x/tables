@@ -84,7 +84,7 @@ public class CollectUtil {
 
   /**
    * This is the name of the shared preference to which collect util will save
-   * the things it must persist. At the moment this is only the row id that is
+   * the things it must retain. At the moment this is only the row id that is
    * being edited. The vast majority of state should not be saved here.
    */
   private static final String SHARED_PREFERENCE_NAME = "CollectUtil_Preference";
@@ -1047,7 +1047,7 @@ public class CollectUtil {
         Context.MODE_PRIVATE);
     String rowId = sharedPreferences.getString(PREFERENCE_KEY_EDITED_ROW_ID, null);
     if (rowId == null) {
-      // Then it wasn't persisted and something went wrong.
+      // Then it wasn't retained and something went wrong.
       Log.e(TAG, "rowId retrieved from shared preferences was null.");
       return false;
     }
