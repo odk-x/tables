@@ -135,7 +135,8 @@ public class TableProperties {
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
       KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN,
-      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT };
+      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT, KEY_TABLE_TYPE, 
+      KEY_ACCESS_CONTROL_TABLE_ID };
 
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
@@ -833,13 +834,14 @@ public class TableProperties {
     mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
     mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
     mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
+    mapProps.put(KEY_TABLE_TYPE, tableType.name());
     TableProperties tp = null;
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     try {
       db.beginTransaction();
       try {
         Map<String, String> tableDefProps = TableDefinitions.addTable(db, id, tableKey,
-            dbTableName, tableType);
+            dbTableName);
         mapProps.putAll(tableDefProps);
         tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
         tp.refreshColumns();
@@ -852,6 +854,7 @@ public class TableProperties {
         kvsh.setString(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
         kvsh.setString(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
         kvsh.setString(KEY_CURRENT_QUERY, "");
+        kvsh.setString(KEY_TABLE_TYPE, tableType.name());
         Log.d(t, "adding table: " + dbTableName);
         DbTable.createDbTable(db, tp);
         // And now set the default color rules.
