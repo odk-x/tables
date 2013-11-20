@@ -29,9 +29,8 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.sms.MsgHandler;
-import org.opendatakit.tables.submit.TablesCommunicationActionReceiver;
 import org.opendatakit.tables.submit.ServiceConnectionImpl;
+import org.opendatakit.tables.submit.TablesCommunicationActionReceiver;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.SynchronizationResult;
@@ -289,14 +288,14 @@ public class Aggregate extends SherlockActivity {
     updateButtonsEnabled();
   }
 
-  
+
   public void onClickSyncUsingSubmit(View v) {
     Log.d(TAG, "in onClickSyncUsingSubmit");
     String accountName = prefs.getAccount();
-    Log.e(TAG, "[onClickSyncNowUsingSubmit] timestamp: " 
+    Log.e(TAG, "[onClickSyncNowUsingSubmit] timestamp: "
         + System.currentTimeMillis());
     if (accountName == null) {
-      Toast.makeText(this, getString(R.string.choose_account), 
+      Toast.makeText(this, getString(R.string.choose_account),
           Toast.LENGTH_SHORT).show();
     } else {
       // we'll initialize the receiver correctly and then set up the receiver.
@@ -305,25 +304,25 @@ public class Aggregate extends SherlockActivity {
       // The first thing we need to do is get the list of tables that is set
       // to sync. Submit needs to know about this.
       DbHelper dbh = DbHelper.getDbHelper(this);
-      TableProperties[] tps = 
-          TableProperties.getTablePropertiesForSynchronizedTables(dbh, 
+      TableProperties[] tps =
+          TableProperties.getTablePropertiesForSynchronizedTables(dbh,
               KeyValueStore.Type.SERVER);
       List<String> tableIdsToSync = new ArrayList<String>();
       for (TableProperties tp : tps) {
         tableIdsToSync.add(tp.getTableId());
       }
-      TablesCommunicationActionReceiver receiver = 
+      TablesCommunicationActionReceiver receiver =
           TablesCommunicationActionReceiver.getInstance(
-              TableFileUtils.ODK_TABLES_APP_NAME, 
-              null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(), 
+              TableFileUtils.ODK_TABLES_APP_NAME,
+              null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(),
               getApplicationContext());
       // We set up the receiver.
-      ServiceConnectionImpl serviceConnectionImpl = 
+      ServiceConnectionImpl serviceConnectionImpl =
           new ServiceConnectionImpl(TableFileUtils.ODK_TABLES_APP_NAME, this);
 
     }
   }
-  
+
   public static void requestSync(String accountName) {
     if (accountName != null) {
       Account account = new Account(accountName, ACCOUNT_TYPE_G);
@@ -365,7 +364,7 @@ public class Aggregate extends SherlockActivity {
         // and paramaterized using some user-input values in the future.
         result = processor.synchronize(true, true, true);
         success = true;
-        Log.e(TAG, "[SyncNowTask#doInBackground] timestamp: " + 
+        Log.e(TAG, "[SyncNowTask#doInBackground] timestamp: " +
             System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
         invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
@@ -397,9 +396,9 @@ public class Aggregate extends SherlockActivity {
    * Hopefully the task for syncing files. Modeled on SyncNowTask.
    */
   private class SyncFilesNowTask extends AsyncTask<Void, Void, Void> {
-    
+
     private final String TAG = SyncFilesNowTask.class.getSimpleName();
-    
+
     private ProgressDialog pd;
     private boolean success;
     private String message;
@@ -428,22 +427,23 @@ public class Aggregate extends SherlockActivity {
         List<ClientHttpRequestInterceptor> interceptors =
             new ArrayList<ClientHttpRequestInterceptor>();
         String accessToken = prefs.getAuthToken();
-        
+
         interceptors.add(new AggregateRequestInterceptor(accessToken));
 //        ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-//        ClientHttpRequest request = 
+//        ClientHttpRequest request =
 //            factory.createRequest(fileServletUri, HttpMethod.POST);
-        String filePath = "tables/helloServer.txt"; // just a hardcoded dummy
-        File file = new File("/sdcard/odk/" + filePath);
-        URI filePostUri = fileServletUri.resolve(filePath).normalize();
+        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        String fileName = "helloServer.txt"; // just a hardcoded dummy
+        File file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + fileName);
+        URI filePostUri = fileServletUri.resolve(TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName).normalize();
         // from http://agilesc.barryku.com/?p=243
-//        MultiValueMap<String, Object> parts = 
+//        MultiValueMap<String, Object> parts =
 //            new LinkedMultiValueMap<String, Object>();
 //        parts.add(filePath, new FileSystemResource(file));
         RestTemplate rt = SyncUtil.getRestTemplateForFiles();
 //        URI responseUri = rt.postForLocation(filePostUri, new FileSystemResource(file));
         int i = 3; // just to trigger the debugger.
-        
+
         FileUploaderTask fut = new FileUploaderTask(Aggregate.this, "tables", aggregateUri,
             accessToken);
         String appFolder = ODKFileUtils.getAppFolder("tables");
@@ -456,7 +456,8 @@ public class Aggregate extends SherlockActivity {
         unexploredDirs.add(appFolderFile);
         List<File> nondirFiles = new ArrayList<File>();
         while (!unexploredDirs.isEmpty()) {
-          File exploring = unexploredDirs.pop();
+          File exploring = unexploredDirs.get(0);
+          unexploredDirs.remove(0);
           File[] files = exploring.listFiles();
           for (File f : files) {
             if (f.isDirectory()) {
@@ -479,17 +480,17 @@ public class Aggregate extends SherlockActivity {
           relativePaths.add(f.getPath().substring(appFolderLength));
         }
         Log.e(TAG, "[SyncFilesNowTask#doInBackground] all files relative: " + relativePaths);
-        
-        
-        
-       
+
+
+
+
 //        Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
 //        List<HttpMessageConverter<?>> converters =
 //            new ArrayList<HttpMessageConverter<?>>();
 //        converters.add(new JsonObjectHttpMessageConverter());
 //        converters.add(new SimpleXmlHttpMessageConverter(serializer));
 //        rt.setMessageConverters(converters);
-//        MultiValueMap<String, Object> map = 
+//        MultiValueMap<String, Object> map =
 //            new LinkedMultiValueMap<String, Object>();
 //        map.add("app_id", "tables");
 //        map.add("table_id", "testTableId");
@@ -502,9 +503,9 @@ public class Aggregate extends SherlockActivity {
 //        acceptableMediaTypes.add(new MediaType("text", "xml"));
 //        headers.setAccept(acceptableMediaTypes);
 //        headers.setContentType(MediaType.TEXT_XML);
-//        HttpEntity<MultiValueMap<String, Object>> request = 
+//        HttpEntity<MultiValueMap<String, Object>> request =
 //            new HttpEntity<MultiValueMap<String, Object>>(map, headers);
-//        String response = rt.postForObject(totalUrl, request, 
+//        String response = rt.postForObject(totalUrl, request,
 //            String.class);
 //        Log.e(TAG, "response: " + response);
 // This is an old an no-good way of doing the manifest. Commenting out as I try
@@ -516,8 +517,8 @@ public class Aggregate extends SherlockActivity {
 
       }
     }
-    
-    
+
+
     @Override
     protected void onPostExecute(Void param) {
       Log.e(TAG, "[onPostExecute]");

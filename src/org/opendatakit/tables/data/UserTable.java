@@ -35,6 +35,7 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -283,13 +284,10 @@ public class UserTable {
         }
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
-        String uri = (String) m.get("uri");
-        try {
-          File f = FileProvider.getAsFile(context, uri);
-          return f.getName();
-        } catch (IllegalArgumentException e) {
-          return context.getString(R.string.missing_file);
-        }
+        String uriFragment = (String) m.get("uriFragment");
+        String uri = FileProvider.getAsUri(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
+        File f = FileProvider.getAsFile(context, uri);
+        return f.getName();
       } catch (JsonParseException e) {
         e.printStackTrace();
       } catch (JsonMappingException e) {

@@ -93,7 +93,9 @@ public class CustomGraphView extends CustomView {
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
     addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(), "graph_data");
     if (filename != null) {
-      load(FileProvider.getAsUrl(getContext(), new File(filename)));
+      String fullPath = FileProvider.getAsUri(getContext(), TableFileUtils.ODK_TABLES_APP_NAME,
+          ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
+      load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);
     }

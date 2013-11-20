@@ -19,9 +19,11 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 
@@ -102,7 +104,9 @@ public class CustomDetailView extends CustomView {
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
     if (this.mFilename != null) {
-      load(FileProvider.getAsUrl(mActivity, new File(mFilename)));
+      String fullPath = FileProvider.getAsUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
+          ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(mFilename)));
+      load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);
     }

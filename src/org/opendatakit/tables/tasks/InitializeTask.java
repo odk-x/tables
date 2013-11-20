@@ -16,10 +16,7 @@ import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.CsvUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -64,7 +61,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 		this.mKeyToFileNotFoundMap = new HashMap<String, Boolean>();
 		this.mKeyToFileMap = new HashMap<String, String>();
 	}
-	
+
 	public void setDialogFragment(InitializeTaskDialogFragment dialogFragment) {
 	  this.mDialogFragment = dialogFragment;
 	}
@@ -84,16 +81,16 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			// prop was loaded
 			if (prop != null) {
 			  // This is an unpleasant solution. We're currently saving the file
-			  // time as used the instant a properties file is loaded. In theory 
-			  // it seems like this should only be saved AFTER the file is 
-			  // successfully used. This is not being done for several reasons. 
+			  // time as used the instant a properties file is loaded. In theory
+			  // it seems like this should only be saved AFTER the file is
+			  // successfully used. This is not being done for several reasons.
 			  // First, despite my best efforts to get the DialogFragments and
 			  // asynctasks to play nice, somehow it still is not consistently
 			  // finding the InitializeTaskDialogFragment in onCreate. It usually,
-			  // usually does, but this is seriously annoying to not work 
-			  // consistently. I can't find a good reason as to why. 
-			  // Second, say that a config attempt did fail, perhaps causing a 
-			  // force close. Without this fix, it would consistently crash, 
+			  // usually does, but this is seriously annoying to not work
+			  // consistently. I can't find a good reason as to why.
+			  // Second, say that a config attempt did fail, perhaps causing a
+			  // force close. Without this fix, it would consistently crash,
 			  // trying each time to load the same misconfigured config file. This
 			  // is similarly unacceptable. So, this seems a way to try and avoid
 			  // both problems, while perhaps eliminating a very annoying problem.
@@ -102,7 +99,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 				fileModifiedTime = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
 						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME).lastModified();
 				ConfigurationUtil.updateTimeChanged(
-				    this.mDialogFragment.getPreferencesFromContext(), 
+				    this.mDialogFragment.getPreferencesFromContext(),
 				    fileModifiedTime);
 				String table_keys = prop.getProperty(TOP_LEVEL_KEY_TABLE_KEYS);
 
@@ -144,8 +141,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 
 							boolean success = false;
 							try {
-    							success = cu.importConfigTables(mContext, this, 
-    							    request.getFile(), filename, 
+    							success = cu.importConfigTables(mContext, this,
+    							    request.getFile(), filename,
     							    request.getTableName());
     							mKeyToTableAlreadyExistsMap.put(key, false);
 							} catch (TableAlreadyExistsException e) {
@@ -169,11 +166,11 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			}
 		return true;
 	}
-	
+
 	@Override
 	protected void onProgressUpdate(Void... values) {
      if (mDialogFragment != null) {
-       mDialogFragment.updateProgress(curFileCount, 
+       mDialogFragment.updateProgress(curFileCount,
            fileCount, filename, lineCount);
      } else {
        Log.e(TAG, "dialog fragment is null! Not updating " +
@@ -196,7 +193,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	    		"Returning.");
 	    return;
 	  }
-	  // From this point forward we'll assume that the dialog fragment is not 
+	  // From this point forward we'll assume that the dialog fragment is not
 	  // null.
 
 		if (!result) {
@@ -210,28 +207,28 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			  if (importStatus.get(key)) {
 			    String nameOfFile = mKeyToFileMap.get(key);
 			    Log.e(TAG, "import status from map: " + importStatus.get(key));
-			    msg.append(mContext.getString(R.string.imported_successfully, 
+			    msg.append(mContext.getString(R.string.imported_successfully,
 			        nameOfFile));
 			  } else {
-			    // maybe there was an existing table already, maybe there were 
+			    // maybe there was an existing table already, maybe there were
 			    // just errors.
-			    if (mKeyToTableAlreadyExistsMap.containsKey(key) && 
+			    if (mKeyToTableAlreadyExistsMap.containsKey(key) &&
 			        mKeyToTableAlreadyExistsMap.get(key)) {
 			      Log.e(TAG, "table already exists map was true");
-			      msg.append(mContext.getString(R.string.table_already_exists, 
+			      msg.append(mContext.getString(R.string.table_already_exists,
 	                 key));
-			    } else if (mKeyToFileNotFoundMap.containsKey(key) && 
+			    } else if (mKeyToFileNotFoundMap.containsKey(key) &&
 			        mKeyToFileNotFoundMap.get(key)) {
 			      // We'll first retrieve the file to which this key was pointing.
 			      String nameOfFile = mKeyToFileMap.get(key);
 			      Log.e(TAG, "file wasn't found: " + key);
-			      msg.append(mContext.getString(R.string.file_not_found, 
+			      msg.append(mContext.getString(R.string.file_not_found,
 			          nameOfFile));
-			    } else { 
+			    } else {
 			      // a general error.
 			      Log.e(TAG, "table already exists map was false");
-	            msg.append(mContext.getString(R.string.imported_with_errors, 
-	                key));			      
+	            msg.append(mContext.getString(R.string.imported_with_errors,
+	                key));
 			    }
 			  }
 
@@ -239,16 +236,16 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			this.mDialogFragment.onTaskFinishedSuccessfully(msg.toString());
 		}
 	}
-	
+
 	public interface Callbacks {
-	  
+
 	  /**
-	   * Get an {@link Preferences} object for handling information about the 
-	   * time of the last import from a config file, etc. 
+	   * Get an {@link Preferences} object for handling information about the
+	   * time of the last import from a config file, etc.
 	   * @return
 	   */
 	  public Preferences getPrefs();
-	  
+
 	  /**
 	   * Update the display to the user after the import is complete.
 	   */

@@ -1,7 +1,6 @@
 package org.opendatakit.tables.submit;
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,47 +24,47 @@ import android.os.IBinder;
 import android.util.Log;
 
 /**
- * Implementation to integrate with Submit service. Based on Waylon's 
+ * Implementation to integrate with Submit service. Based on Waylon's
  * implementation in org.opendatakit.submittest.Tester.java.
  * @author sudar.sam@gmail.com
  *
  */
 public class ServiceConnectionImpl implements ServiceConnection {
-  
+
   /** The package name of submit. */
-  private static final String SUBMIT_PACKAGE_NAME = 
+  private static final String SUBMIT_PACKAGE_NAME =
       "org.opendatakit.submit";
   /** The class name of the submit service. */
   private static final String SUBMIT_SERVICE_CLASS_NAME =
       "org.opendatakit.submit.service.SubmitService";
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       ServiceConnectionImpl.class.getSimpleName();
-  
+
   private Context mComponentContext;
   private boolean mIsBoundToService;
   private ClientRemote mSubmitService; // RPCs, baby
   private String mAppUuid;
-  
+
   public ServiceConnectionImpl(String appUuid, Context context) {
     // First we'll set the state.
     this.mAppUuid = appUuid;
     this.mIsBoundToService = false;
     this.mComponentContext = context;
-    
+
     Log.d(TAG, "[ServiceConnectionImpl] going to bind service");
     // Now bind to the service.
     Intent bindIntent = new Intent();
     bindIntent.setClassName(SUBMIT_PACKAGE_NAME, SUBMIT_SERVICE_CLASS_NAME);
-    this.mComponentContext.bindService(bindIntent, this, 
+    this.mComponentContext.bindService(bindIntent, this,
         Context.BIND_AUTO_CREATE);
     Log.d(TAG, "[ServiceConnectionImpl] called bindService");
   }
-  
+
   public String getAppUuid() {
     return this.mAppUuid;
   }
-  
+
   /**
    * Register the app with submit.
    * @return
@@ -79,7 +78,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
     }
     return this.mSubmitService.registerApplication(this.mAppUuid);
   }
-  
+
   /**
    * Register data with the submit service.
    * @return
@@ -91,14 +90,14 @@ public class ServiceConnectionImpl implements ServiceConnection {
       throw new Exception("Not bound to service but trying to register data!");
     }
     DataPropertiesObject data = new DataPropertiesObject();
-    // I'm not sure why we're doing SMALL. Presumably because we're just 
+    // I'm not sure why we're doing SMALL. Presumably because we're just
     // waiting for an ok-to-sync message and nothing else? Following Waylon's
     // example in the test project.
-    data.setDataSize(DataSize.SMALL); 
+    data.setDataSize(DataSize.SMALL);
     return this.mSubmitService.register(this.mAppUuid, data);
   }
-  
-  public List<String> registerMediaFiles(String tableId, String aggregateUri) 
+
+  public List<String> registerMediaFiles(String tableId, String aggregateUri)
       throws Exception {
     Log.d(TAG, "[registerMediaFiles]");
     if (!this.mIsBoundToService) {
@@ -106,17 +105,17 @@ public class ServiceConnectionImpl implements ServiceConnection {
       throw new Exception("Not bound to service but trying to register " +
       		"media files!");
     }
-    Map<String, String> absolutePathToUploadUri = 
+    Map<String, String> absolutePathToUploadUri =
         getFileInfoForSubmit(tableId, aggregateUri);
     Log.d(TAG, "[registerMediaFiles] path->uploadUrl: " + absolutePathToUploadUri);
     List<String> submitFileUuids = new ArrayList<String>();
-    for (Map.Entry<String, String> entry : 
+    for (Map.Entry<String, String> entry :
         absolutePathToUploadUri.entrySet()) {
       submitFileUuids.add(giveFileToSubmit(entry.getKey(), entry.getValue()));
     }
     return submitFileUuids;
   }
-  
+
   /**
    * Get a map of absolute path to upload url for each file in the table's
    * instances folder.
@@ -126,39 +125,39 @@ public class ServiceConnectionImpl implements ServiceConnection {
    * @param tableId
    * @return
    */
-  private Map<String, String> getFileInfoForSubmit(String tableId, 
+  private Map<String, String> getFileInfoForSubmit(String tableId,
       String aggregateUri) {
-    String appFolder = 
+    String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
+    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES +
         File.separator + tableId + File.separator + "instances";
 //        TableFileUtils.DIR_INSTANCES;
-    String instancesFolderFullPath = appFolder + File.separator + 
+    String instancesFolderFullPath = appFolder + File.separator +
         relativePathToInstancesFolder;
-    List<String> relativePathsToAppFolderOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null, 
+    List<String> relativePathsToAppFolderOnDevice =
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
             appFolder);
-    Map<String, String> absolutePathToUploadUrl = 
+    Map<String, String> absolutePathToUploadUrl =
         new HashMap<String, String>();
     for (String relativePath : relativePathsToAppFolderOnDevice) {
       String absolutePath = appFolder + File.separator + relativePath;
-      String uploadUri = 
+      String uploadUri =
           AggregateSynchronizer.getFilePathURI(aggregateUri).toString();
       uploadUri += relativePath;
       absolutePathToUploadUrl.put(absolutePath, uploadUri);
     }
     return absolutePathToUploadUrl;
   }
-  
+
   /**
    * Give a file to submit and return the data uuid for that file that Submit
    * has assigned to it. Must be bound to the service.
    * @param absolutePathToFile
    * @param uploadUrl
    */
-  private String giveFileToSubmit(String absolutePathToFile, String uploadUrl) 
+  private String giveFileToSubmit(String absolutePathToFile, String uploadUrl)
       throws Exception {
-    Log.d(TAG, "[giveFileToSubmit] path; url: " + absolutePathToFile + "; " 
+    Log.d(TAG, "[giveFileToSubmit] path; url: " + absolutePathToFile + "; "
       + uploadUrl);
     // Following the example in Morgan's test app for files.
     DataPropertiesObject dataPropertiesObject = new DataPropertiesObject();
@@ -175,10 +174,10 @@ public class ServiceConnectionImpl implements ServiceConnection {
     Log.d(TAG, "[onServiceConnected] bound to submit service");
     this.mSubmitService = ClientRemote.Stub.asInterface(service);
     this.mIsBoundToService = true;
-    // This call relies on the CAR being set up BEFORE the call to the 
+    // This call relies on the CAR being set up BEFORE the call to the
     // service.
-    TablesCommunicationActionReceiver receiver = 
-        TablesCommunicationActionReceiver.getInstance(null, null, null, null, 
+    TablesCommunicationActionReceiver receiver =
+        TablesCommunicationActionReceiver.getInstance(null, null, null, null,
             null, null);
     String broadcastChannel;
     String syncRequestId;
@@ -193,10 +192,10 @@ public class ServiceConnectionImpl implements ServiceConnection {
       syncRequestId = this.registerData();
       submitFileUploadUids = new ArrayList<String>();
       for (String tableId : receiver.getTableIdsPendingForSubmit()) {
-        Map<String, String> absolutePathToUploadUrl = 
+        Map<String, String> absolutePathToUploadUrl =
             getFileInfoForSubmit(tableId, receiver.getAggregateServerUri());
         Log.e(TAG, "[onServiceConnected] giving file to submit: " + absolutePathToUploadUrl);
-        for (Map.Entry<String, String> entry : 
+        for (Map.Entry<String, String> entry :
             absolutePathToUploadUrl.entrySet()) {
           String absolutePath = entry.getKey();
           String uploadUrl = entry.getValue();

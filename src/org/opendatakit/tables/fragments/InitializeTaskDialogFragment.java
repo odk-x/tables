@@ -3,7 +3,6 @@ package org.opendatakit.tables.fragments;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.tasks.InitializeTask;
-import org.opendatakit.tables.utils.ConfigurationUtil;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -24,37 +23,37 @@ import android.util.Log;
  * http://creeder.com/?&page=AsyncTask
  */
 public class InitializeTaskDialogFragment extends DialogFragment {
-  
-  public static final String TAG_FRAGMENT = 
+
+  public static final String TAG_FRAGMENT =
       InitializeTaskDialogFragment.class.getSimpleName();
-  
+
   private InitializeTask mTask;
   private InitializeTask.Callbacks mCallbacks;
-  
+
   private static final String TAG = InitializeTaskDialogFragment.class.getSimpleName();
-  
+
   public InitializeTaskDialogFragment() {
     // explicit empty constructor for fragments.
   }
-  
+
   /**
-   * Set the {@link InitializeTask} for which this fragment will be 
+   * Set the {@link InitializeTask} for which this fragment will be
    * responsible.
    * @param task
    */
   public void setTask(InitializeTask task) {
     this.mTask = task;
   }
-  
+
   /**
-   * Set the callbacks that will be invoked on behalf of the 
+   * Set the callbacks that will be invoked on behalf of the
    * {@link InitializeTask}.
    * @param callbacks
    */
   public void setCallbacks(InitializeTask.Callbacks callbacks) {
     this.mCallbacks = callbacks;
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -65,7 +64,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
       mTask.execute();
     }
   }
-  
+
   @Override
   public void onResume() {
     super.onResume();
@@ -73,7 +72,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
       dismiss();
     }
   }
-  
+
   /**
    * Return the preferences from this objects calbacks.
    * @return
@@ -81,7 +80,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
   public Preferences getPreferencesFromContext() {
     return this.mCallbacks.getPrefs();
   }
-  
+
   @Override
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     // Note: don't try and hold on to this dialog as a member variable. I think
@@ -92,10 +91,10 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     dialog.setCancelable(false);
     return dialog;
   }
-  
+
   @Override
   public void onDestroyView() {
-    // Some hacky stuff to ensure that the fragment actually survives 
+    // Some hacky stuff to ensure that the fragment actually survives
     // orientation changes. See discussion in numerous places online, including
     // here:
     // http://creeder.com/?&page=AsyncTask
@@ -104,7 +103,7 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     }
     super.onDestroyView();
   }
-  
+
   /**
    * Called by the task to update the dialog's progress.
    * @param currentFileCount
@@ -112,32 +111,32 @@ public class InitializeTaskDialogFragment extends DialogFragment {
    * @param filename
    * @param lineCount
    */
-  public void updateProgress(int currentFileCount, int fileCount, 
+  public void updateProgress(int currentFileCount, int fileCount,
       String filename, String lineCount) {
     ProgressDialog dialog = (ProgressDialog) getDialog();
     dialog.setMessage(getString(R.string.importing_file, currentFileCount,
         fileCount, filename, lineCount));
   }
-  
+
   public void onTaskFinishedWithErrors(boolean poorlyFormattedConfigFile) {
     // We'll just pass a dummy value for the modified time and presume that
     // onTaskFinished handles it appropriately.
     onTaskFinished(false, poorlyFormattedConfigFile, null);
   }
-  
+
   /**
-   * 
+   *
    * @param message the message that should be displayed in an alert dialog to
    * the user.
    */
   public void onTaskFinishedSuccessfully(String message) {
     onTaskFinished(true, false, message);
   }
-  
+
   /**
    * Should be called whenever the task is finished.
    */
-  private void onTaskFinished(boolean success, 
+  private void onTaskFinished(boolean success,
       boolean poorlyFormattedConfigFile, String successMessage) {
     if (isResumed()) {
       dismiss();
@@ -151,16 +150,16 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     // Otherwise we create the alert dialog saying things went well.
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder.setCancelable(false);
-    builder.setNeutralButton(getString(R.string.ok), 
+    builder.setNeutralButton(getString(R.string.ok),
         new DialogInterface.OnClickListener() {
-      
+
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.dismiss();
       }
     });
     if (!success) {
-      // Then something went wrong. 
+      // Then something went wrong.
       if (poorlyFormattedConfigFile) {
         // Then the reason was a poorly formatted configuration file.
         builder.setTitle(getString(R.string.bad_config_properties_file));
@@ -176,6 +175,6 @@ public class InitializeTaskDialogFragment extends DialogFragment {
     AlertDialog resultDialog = builder.create();
     resultDialog.show();
   }
-  
+
 
 }

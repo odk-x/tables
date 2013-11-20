@@ -188,7 +188,7 @@ public class ColumnProperties {
    *
    * MIMEURI stores a JSON object:
    *
-   * '{"path":"/mnt/sdcard/odk/tables/app/instances/2342.jpg","mimetype":"image/jpg"}'
+   * '{"uriFragment":"tables/tableId/instances/instanceId/2342.jpg","mimetype":"image/jpg"}'
    *
    * i.e., ODK Collect image/audio/video capture store everything as a MIMEURI
    * with different mimetype values.

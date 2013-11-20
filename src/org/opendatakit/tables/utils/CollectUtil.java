@@ -403,13 +403,10 @@ public class CollectUtil {
             @SuppressWarnings("unchecked")
             Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
             if ( ref != null ) {
-              try {
-                File f = FileProvider.getAsFile(context, ref.get("uri"));
-                value = f.getName();
-              } catch (IllegalArgumentException e) {
-                // file is not present...
-                value = null;
-              }
+              String uriFragment = ref.get("uriFragment");
+              String uri = FileProvider.getAsUri(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
+              File f = FileProvider.getAsFile(context, uri);
+              value = f.getName();
             } else {
               value = null;
             }

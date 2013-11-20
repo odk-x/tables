@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.support.v4.app.Fragment;
@@ -227,7 +229,9 @@ public class CustomTableView extends CustomView implements
 		addJavascriptInterface(
 				tableData.getJavascriptInterfaceWithWeakReference(), "data");
 		if (filename != null) {
-			load(FileProvider.getAsUrl(getContext(), new File(filename)));
+		  String fullPath = FileProvider.getAsUri(getContext(), TableFileUtils.ODK_TABLES_APP_NAME,
+		        ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
+			load(fullPath);
 		} else {
 			loadData(DEFAULT_HTML, "text/html", null);
 		}

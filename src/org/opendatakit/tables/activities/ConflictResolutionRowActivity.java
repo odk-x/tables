@@ -26,7 +26,6 @@ import android.content.DialogInterface.OnCancelListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -36,31 +35,31 @@ import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockListActivity;
 
 /**
- * Activity for resolving the conflicts in a row. This is the native version, 
+ * Activity for resolving the conflicts in a row. This is the native version,
  * which presents a UI and does not support HTML or js rules.
  * @author sudar.sam@gmail.com
  *
  */
 public class ConflictResolutionRowActivity extends SherlockListActivity
     implements ConflictResolutionListAdapter.UICallbacks {
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       ConflictResolutionRowActivity.class.getSimpleName();
-  
+
   public static final String INTENT_KEY_ROW_ID = "rowId";
-  
-  private static final String BUNDLE_KEY_SHOWING_LOCAL_DIALOG = 
+
+  private static final String BUNDLE_KEY_SHOWING_LOCAL_DIALOG =
       "showingLocalDialog";
-  private static final String BUNDLE_KEY_SHOWING_SERVER_DIALOG = 
+  private static final String BUNDLE_KEY_SHOWING_SERVER_DIALOG =
       "showingServerDialog";
-  private static final String BUNDLE_KEY_SHOWING_RESOLVE_DIALOG = 
+  private static final String BUNDLE_KEY_SHOWING_RESOLVE_DIALOG =
       "showingResolveDialog";
   private static final String BUNDLE_KEY_VALUE_KEYS = "valueValueKeys";
   private static final String BUNDLE_KEY_CHOSEN_VALUES = "chosenValues";
   private static final String BUNDLE_KEY_RESOLUTION_KEYS = "resolutionKeys";
-  private static final String BUNDLE_KEY_RESOLUTION_VALUES = 
+  private static final String BUNDLE_KEY_RESOLUTION_VALUES =
       "resolutionValues";
-  
+
   private DbHelper mDbHelper;
   private ConflictTable mConflictTable;
   private ConflictResolutionListAdapter mAdapter;
@@ -75,10 +74,10 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private Button mButtonTakeServer;
   private Button mButtonResolveRow;
   private List<ConflictColumn> mConflictColumns;
-  
+
   /**
-   * The message to the user as to why they're getting extra options. Will be 
-   * either thing to the effect of "someone has deleted something you've 
+   * The message to the user as to why they're getting extra options. Will be
+   * either thing to the effect of "someone has deleted something you've
    * changed", or "you've deleted something someone has changed". They'll then
    * have to choose either to delete or to go ahead and actually restore and
    * then resolve it.
@@ -90,15 +89,15 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private RadioGroup mRadioGroupDeletion;
   private RadioButton mRadioButtonRestoreAndResolve;
   /**
-   * The option saying they're going to delete it, possibly discarding any 
+   * The option saying they're going to delete it, possibly discarding any
    * changes they'd made.
    */
   private RadioButton mRadioButtonDelete;
-  
+
   private boolean mIsShowingTakeLocalDialog;
   private boolean mIsShowingTakeServerDialog;
   private boolean mIsShowingResolveDialog;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -113,20 +112,20 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         findViewById(R.id.conflict_resolution_radio_button_restore);
     this.mRadioButtonDelete = (RadioButton)
         findViewById(R.id.conflict_resolution_radio_button_delete);
-    this.mButtonTakeLocal = 
+    this.mButtonTakeLocal =
         (Button) findViewById(R.id.conflict_resolution_button_take_local);
     this.mButtonTakeLocal.setOnClickListener(new TakeLocalClickListener());
     this.mButtonTakeServer =
         (Button) findViewById(R.id.conflict_resolution_button_take_server);
     this.mButtonTakeServer.setOnClickListener(new TakeServerClickListener());
-    this.mButtonResolveRow = 
+    this.mButtonResolveRow =
         (Button) findViewById(R.id.conflict_resolution_button_resolve_row);
     this.mButtonResolveRow.setOnClickListener(new ResolveRowClickListener());
-    String tableId = 
+    String tableId =
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
     this.mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
-    TableProperties tableProperties = 
-        TableProperties.getTablePropertiesForTable(mDbHelper, tableId, 
+    TableProperties tableProperties =
+        TableProperties.getTablePropertiesForTable(mDbHelper, tableId,
             KeyValueStore.Type.ACTIVE);
     DbTable dbTable = DbTable.getDbTable(mDbHelper, tableProperties);
     this.mConflictTable = dbTable.getConflictTable();
@@ -135,41 +134,41 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // We'll use these later on, so heat up the caches.
     this.mLocal.reloadCacheOfColumnProperties();
     this.mServer.reloadCacheOfColumnProperties();
-    // 
+    //
     // And now we need to construct up the adapter.
-    // There are several things to do be aware of. We need to get all the 
-    // section headings, which will be the column names. We also need to get 
+    // There are several things to do be aware of. We need to get all the
+    // section headings, which will be the column names. We also need to get
     // all the values which are in conflict, as well as those that are not.
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
     this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
-    this.mServerRowSyncTag = this.mServer.getMetadataByElementKey(mRowNumber, 
+    this.mServerRowSyncTag = this.mServer.getMetadataByElementKey(mRowNumber,
         DataTableColumns.SYNC_TAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getColumnOrder();
-    // This will be the number of rows down we are in the adapter. Each 
-    // heading and each cell value gets its own row. Columns in conflict get 
+    // This will be the number of rows down we are in the adapter. Each
+    // heading and each cell value gets its own row. Columns in conflict get
     // two, as we'll need to display each one to the user.
     int adapterOffset = 0;
     List<Section> sections = new ArrayList<Section>();
     this.mConflictColumns = new ArrayList<ConflictColumn>();
-    List<ConcordantColumn> noConflictColumns = 
+    List<ConcordantColumn> noConflictColumns =
         new ArrayList<ConcordantColumn>();
     for (int i = 0; i < columnOrder.size(); i++) {
       String elementKey = columnOrder.get(i);
-      String columnDisplayName = 
+      String columnDisplayName =
           tp.getColumnByElementKey(elementKey).getDisplayName();
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);
-      String localValue = mLocal.getDisplayTextOfData(this, mRowNumber, 
+      String localValue = mLocal.getDisplayTextOfData(this, mRowNumber,
           mLocal.getColumnIndexOfElementKey(elementKey), true);
-      String serverValue = mServer.getDisplayTextOfData(this, mRowNumber, 
+      String serverValue = mServer.getDisplayTextOfData(this, mRowNumber,
           mLocal.getColumnIndexOfElementKey(elementKey), true);
       if (localValue.equals(serverValue)) {
         // TODO: this doesn't compare actual equality of blobs if their display
-        // text is the same. 
-        // We only want to display a single row, b/c there are no choices to 
+        // text is the same.
+        // We only want to display a single row, b/c there are no choices to
         // be made by the user.
         ConcordantColumn concordance = new ConcordantColumn(adapterOffset,
             localValue);
@@ -177,34 +176,34 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         ++adapterOffset;
       } else {
         // We need to display both the server and local versions.
-        ConflictColumn conflictColumn = new ConflictColumn(adapterOffset, 
+        ConflictColumn conflictColumn = new ConflictColumn(adapterOffset,
             elementKey, localValue, serverValue);
         ++adapterOffset;
         mConflictColumns.add(conflictColumn);
       }
     }
-    // Now that we have the appropriate lists, we need to construct the 
+    // Now that we have the appropriate lists, we need to construct the
     // adapter that will display the information.
     this.mAdapter = new ConflictResolutionListAdapter(
-        this.getSupportActionBar().getThemedContext(), this, sections, 
+        this.getSupportActionBar().getThemedContext(), this, sections,
         noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
     this.onDecisionMade();
     // Here we'll handle the cases of whether or not rows were deleted. There
-    // are three cases to consider: 
+    // are three cases to consider:
     // 1) both rows were updated, neither is deleted. This is the normal case
     // 2) the server row was deleted, the local was updated (thus a conflict)
     // 3) the local was deleted, the server was updated (thus a conflict)
     // To Figure this out we'll first need the state of each version.
     // Note that these calls should never return nulls, as whenever a row is in
-    // conflict, there should be a conflict type. Therefore if we throw an 
+    // conflict, there should be a conflict type. Therefore if we throw an
     // error that is fine, as we've violated an invariant.
     int localConflictType = Integer.parseInt(mLocal.getRowAtIndex(mRowNumber)
         .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
-    int serverConflictType = 
+    int serverConflictType =
         Integer.parseInt(mServer.getRowAtIndex(mRowNumber)
             .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
-    if (localConflictType == 
+    if (localConflictType ==
           SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
         serverConflictType ==
           SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
@@ -213,7 +212,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mTextViewDeletionMessage.setVisibility(View.GONE);
       mRadioGroupDeletion.setVisibility(View.GONE);
       this.onDecisionMade();
-    } else if (localConflictType == 
+    } else if (localConflictType ==
           SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES &&
         serverConflictType ==
           SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
@@ -237,11 +236,11 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mButtonResolveRow.setEnabled(false);
       mAdapter.setConflictColumnsEnabled(false);
       mAdapter.notifyDataSetChanged();
-    } else if (localConflictType == 
+    } else if (localConflictType ==
           SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
-        serverConflictType == 
+        serverConflictType ==
           SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES) {
-      // Then the row was updated locally but someone had deleted it on the 
+      // Then the row was updated locally but someone had deleted it on the
       // server.
       this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
       this.mTextViewDeletionMessage.setText(
@@ -265,7 +264,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       // We should never get here, because it breaks an invariant.
       // We know the vers
       Log.e(TAG, "server and local versions of the row did not match a known" +
-      		" pair of conflict types. local: " + localConflictType + 
+      		" pair of conflict types. local: " + localConflictType +
       		", sever: " + serverConflictType);
     }
   }
@@ -276,7 +275,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
    */
   @Override
   public void onDecisionMade() {
-    // set the listview enabled in case it'd been down due to deletion 
+    // set the listview enabled in case it'd been down due to deletion
     // resolution.
     mAdapter.setConflictColumnsEnabled(true);
     mAdapter.notifyDataSetChanged();
@@ -287,7 +286,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       this.mButtonResolveRow.setEnabled(false);
     }
   }
-  
+
   /**
    * True if all the conflict columns have entries that have been chosen by the
    * user in the adapter.
@@ -305,17 +304,17 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     }
     return true;
   }
-  
+
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG, 
+    outState.putBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG,
         mIsShowingTakeLocalDialog);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG, 
+    outState.putBoolean(BUNDLE_KEY_SHOWING_SERVER_DIALOG,
         mIsShowingTakeServerDialog);
-    outState.putBoolean(BUNDLE_KEY_SHOWING_RESOLVE_DIALOG, 
+    outState.putBoolean(BUNDLE_KEY_SHOWING_RESOLVE_DIALOG,
         mIsShowingResolveDialog);
-    // We also need to get the chosen values and decisions and save them so 
+    // We also need to get the chosen values and decisions and save them so
     // that we don't lose information if they rotate the screen.
     Map<String, String> chosenValuesMap = mAdapter.getResolvedValues();
     Map<String, Resolution> userResolutions = mAdapter.getResolutions();
@@ -336,7 +335,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       ++i;;
     }
     i = 0;
-    for (Map.Entry<String, Resolution> resolutionEntry : 
+    for (Map.Entry<String, Resolution> resolutionEntry :
         userResolutions.entrySet()) {
       resolutionKeys[i] = resolutionEntry.getKey();
       resolutionValues[i] = resolutionEntry.getValue().name();
@@ -347,13 +346,13 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     outState.putStringArray(BUNDLE_KEY_RESOLUTION_KEYS, resolutionKeys);
     outState.putStringArray(BUNDLE_KEY_RESOLUTION_VALUES, resolutionValues);
   }
-  
+
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
     Log.e(TAG, "onRestoreInstanceState");
     if (savedInstanceState.containsKey(BUNDLE_KEY_SHOWING_LOCAL_DIALOG)) {
-      boolean wasShowingLocal = 
+      boolean wasShowingLocal =
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_LOCAL_DIALOG);
       if (wasShowingLocal) this.mButtonTakeLocal.performClick();
     }
@@ -367,29 +366,29 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           savedInstanceState.getBoolean(BUNDLE_KEY_SHOWING_RESOLVE_DIALOG);
       if (wasShowingResolve) this.mButtonResolveRow.performClick();
     }
-    String[] valueKeys = 
+    String[] valueKeys =
         savedInstanceState.getStringArray(BUNDLE_KEY_VALUE_KEYS);
-    String[] chosenValues = 
+    String[] chosenValues =
         savedInstanceState.getStringArray(BUNDLE_KEY_CHOSEN_VALUES);
-    String[] resolutionKeys = 
+    String[] resolutionKeys =
         savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_KEYS);
     String[] resolutionValues =
         savedInstanceState.getStringArray(BUNDLE_KEY_RESOLUTION_VALUES);
     if (valueKeys != null) {
-      // Then we know that we should have the chosenValues as well, or else 
+      // Then we know that we should have the chosenValues as well, or else
       // there is trouble. We're not doing a null check here, but if we didn't
-      // get it then we know there is an error. We'll throw a null pointer 
+      // get it then we know there is an error. We'll throw a null pointer
       // exception, but that is better than restoring bad state.
-      // Same thing goes for the resolution keys. Those and the map should 
+      // Same thing goes for the resolution keys. Those and the map should
       // always go together.
       Map<String, String> chosenValuesMap = new HashMap<String, String>();
       for (int i = 0; i < valueKeys.length; i++) {
         chosenValuesMap.put(valueKeys[i], chosenValues[i]);
       }
-      Map<String, Resolution> userResolutions = 
+      Map<String, Resolution> userResolutions =
           new HashMap<String, Resolution>();
       for (int i = 0; i < resolutionKeys.length; i++) {
-        userResolutions.put(resolutionKeys[i], 
+        userResolutions.put(resolutionKeys[i],
             Resolution.valueOf(resolutionValues[i]));
       }
       mAdapter.setRestoredState(chosenValuesMap, userResolutions);
@@ -399,7 +398,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     this.onDecisionMade();
 
   }
-  
+
   /**
    * Class handling the restore radio button. Should just make the normal
    * actions available.
@@ -414,9 +413,9 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mButtonTakeServer.setEnabled(true);
       onDecisionMade();
     }
-    
+
   }
-  
+
   private class DiscardChangesAndDeleteLocalListener
       implements View.OnClickListener {
 
@@ -428,15 +427,15 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           .getThemedContext());
       builder.setMessage(
           getString(R.string.conflict_delete_local_confirmation_warning));
-      builder.setPositiveButton(getString(R.string.yes), 
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               // TODO: delete the local version.
               // this will be a simple matter of deleting all the rows with the
               // same rowid on the local device.
-              DbTable dbTable = 
+              DbTable dbTable =
                   DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
               dbTable.deleteRowActual(mRowId);
               ConflictResolutionRowActivity.this.finish();
@@ -444,16 +443,16 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             }
           });
       builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), 
+      builder.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
             }
           });
       builder.setOnCancelListener(new OnCancelListener() {
-        
+
         @Override
         public void onCancel(DialogInterface dialog) {
           // here we need to do nothing and UNCHECK the radiobutton.
@@ -464,10 +463,10 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       builder.create().show();
     }
   }
-  
+
   private class SetRowToDeleteOnServerListener
       implements View.OnClickListener {
-    
+
     @Override
     public void onClick(View v) {
       // We should do a popup.
@@ -476,15 +475,15 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           .getThemedContext());
       builder.setMessage(
           getString(R.string.conflict_delete_on_server_confirmation_warning));
-      builder.setPositiveButton(getString(R.string.yes), 
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               // We're going to discard the local changes by acting as if
-              // takeServer was pressed. Then we're going to flag row as 
+              // takeServer was pressed. Then we're going to flag row as
               // deleted.
-              DbTable dbTable = 
+              DbTable dbTable =
                   DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
@@ -498,16 +497,16 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             }
           });
       builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), 
+      builder.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
             }
           });
       builder.setOnCancelListener(new OnCancelListener() {
-        
+
         @Override
         public void onCancel(DialogInterface dialog) {
           // here we need to do nothing and UNCHECK the radiobutton.
@@ -518,7 +517,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       builder.create().show();
     }
 }
-  
+
   private class RestoreDeletedListener implements View.OnClickListener {
 
     @Override
@@ -527,9 +526,9 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mButtonTakeServer.setEnabled(true);
       onDecisionMade();
     }
-    
+
   }
-  
+
   private class TakeLocalClickListener implements View.OnClickListener {
 
     @Override
@@ -538,13 +537,13 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           ConflictResolutionRowActivity.this.getSupportActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.take_local_warning));
-      builder.setPositiveButton(getString(R.string.yes), 
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingTakeLocalDialog = false;
-              DbTable dbTable = 
+              DbTable dbTable =
                   DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
@@ -555,16 +554,16 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             }
           });
       builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), 
+      builder.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
             }
           });
       builder.setOnCancelListener(new OnCancelListener() {
-        
+
         @Override
         public void onCancel(DialogInterface dialog) {
           mIsShowingTakeLocalDialog = false;
@@ -573,25 +572,25 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mIsShowingTakeLocalDialog = true;
       builder.create().show();
     }
-    
+
   }
-  
+
   private class TakeServerClickListener implements View.OnClickListener {
-    
- 
+
+
     @Override
     public void onClick(View v) {
       AlertDialog.Builder builder = new AlertDialog.Builder(
           ConflictResolutionRowActivity.this.getSupportActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.take_server_warning));
-      builder.setPositiveButton(getString(R.string.yes), 
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingTakeServerDialog = false;
-              DbTable dbTable = 
+              DbTable dbTable =
                   DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
@@ -602,16 +601,16 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             }
           });
       builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), 
+      builder.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
             }
           });
       builder.setOnCancelListener(new OnCancelListener() {
-        
+
         @Override
         public void onCancel(DialogInterface dialog) {
           mIsShowingTakeServerDialog = false;
@@ -619,12 +618,12 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       });
       mIsShowingTakeServerDialog = true;
       builder.create().show();
-    }   
-    
+    }
+
   }
-  
+
   private class ResolveRowClickListener implements View.OnClickListener {
-    
+
     private final String TAG = ResolveRowClickListener.class.getSimpleName();
 
     @Override
@@ -633,21 +632,21 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           ConflictResolutionRowActivity.this.getSupportActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.resolve_row_warning));
-      builder.setPositiveButton(getString(R.string.yes), 
+      builder.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingResolveDialog = false;
-              DbTable dbTable = 
+              DbTable dbTable =
                   DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
               if (!isResolvable()) {
                 // We should never have gotten here! Triz-ouble.
                 Log.e(TAG, "[onClick--positive button] the row is not " +
                 		"resolvable! The button shouldn't have been enabled.");
                 Toast.makeText(ConflictResolutionRowActivity.this
-                    .getSupportActionBar().getThemedContext(), 
-                    getString(R.string.resolve_cannot_complete_message), 
+                    .getSupportActionBar().getThemedContext(),
+                    getString(R.string.resolve_cannot_complete_message),
                     Toast.LENGTH_SHORT).show();
                 return;
               }
@@ -657,16 +656,16 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             }
           });
       builder.setCancelable(true);
-      builder.setNegativeButton(getString(R.string.cancel), 
+      builder.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
-            
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.cancel();
             }
           });
       builder.setOnCancelListener(new OnCancelListener() {
-        
+
         @Override
         public void onCancel(DialogInterface dialog) {
           mIsShowingResolveDialog = false;
@@ -674,9 +673,9 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       });
       mIsShowingResolveDialog = true;
       builder.create().show();
-      
+
     }
-    
+
   }
 
 }
