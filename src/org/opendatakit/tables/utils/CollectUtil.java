@@ -26,6 +26,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -551,6 +553,7 @@ public class CollectUtil {
     values.put(COLLECT_KEY_CAN_EDIT_WHEN_COMPLETE, Boolean.toString(true));
     values.put(COLLECT_KEY_INSTANCE_FILE_PATH, instanceFilePath);
     values.put(COLLECT_KEY_JR_FORM_ID, params.getFormId());
+    values.put(COLLECT_KEY_DISPLAY_NAME, params.getRowDisplayName() + "_" + WebUtils.iso8601Date(new Date()));
     // only add the version if it exists (ie not null)
     if (params.getFormVersion() != null) {
       values.put(COLLECT_KEY_JR_VERSION, params.getFormVersion());
