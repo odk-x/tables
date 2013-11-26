@@ -550,7 +550,7 @@ public class DbTable {
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
-	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, SavedStatus.COMPLETE.name());
+	        values.put(DataTableColumns.SAVEPOINT_TYPE, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
         } finally {
           // TODO: fix the when to close problem
