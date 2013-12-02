@@ -46,6 +46,11 @@
         android:installLocation="auto"
         android:largeHeap="true"
         android:hardwareAccelerated="true"	>
+
+		<meta-data
+		    android:name="com.google.android.gms.version"
+		    android:value="3136110" />
+
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyBBdNVHO1BUmWpFp1LxOUwZEMaWd3gsqxw"/>
