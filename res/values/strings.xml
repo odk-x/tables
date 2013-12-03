@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-	<string name="app_name">ODK Tables</string>
+	<string name="app_name">ODK HOPE Study</string>
 	<string name="ok">OK</string>
 	<string name="cancel">Cancel</string>
 	<string name="set">Set</string>
@@ -86,7 +86,7 @@
 	<string name="yellow">Yellow</string>
 	<string name="title_form_id">Form Id</string>
 	<string name="title_root_element">Root Element</string>
-	<string name="configuring_tables">Configuring ODK Tables</string>
+	<string name="configuring_tables">Configuring ODK HOPE Study</string>
 	<string name="processing_file">processing file&#8230;</string>
 	<string name="importing_file">Importing file (%1$d of %2$d): %3$s\n(%4$s)</string>
 	<string name="bad_config_properties_file">bad config.properties file</string>
@@ -280,7 +280,7 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
-	
+
 	<!-- Conflict Resolution Stuff -->
 	<string name="take_local">Take Local Version</string>
 	<string name="take_server">Take Server Version</string>

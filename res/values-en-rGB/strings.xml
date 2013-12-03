@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">ODK Tables</string>
+	<string name="app_name">ODK HOPE Study</string>
 	<string name="ok">OK</string>
 	<string name="cancel">Cancel</string>
 	<string name="set">Set</string>
@@ -85,7 +85,7 @@
 	<string name="yellow">Yellow</string>
 	<string name="title_form_id">Form Id</string>
 	<string name="title_root_element">Root Element</string>
-	<string name="configuring_tables">Configuring ODK Tables</string>
+	<string name="configuring_tables">ODK HOPE Study</string>
 	<string name="processing_file">processing file&#8230;</string>
 	<string name="importing_file">Importing file (%1$d of %2$d): %3$s\n(%4$s)</string>
 	<string name="bad_config_properties_file">bad config.properties file</string>

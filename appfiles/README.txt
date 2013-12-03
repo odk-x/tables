@@ -1,3 +1,3 @@
-These files should be copied to the sdcard/odk/tables directory on the device.
+These files should be copied to the sdcard/odk/hope directory on the device.
 
-.... CustomGraphView.java, opens optionspane.html which relies on the provided js files. 
+.... CustomGraphView.java, opens optionspane.html which relies on the provided js files.

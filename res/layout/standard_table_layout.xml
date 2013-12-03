@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone" >
 
-            <org.opendatakit.tables.views.ClearableEditText
+            <org.opendatakit.hope.views.ClearableEditText
                 android:id="@+id/search_field"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

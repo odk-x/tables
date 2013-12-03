@@ -7,7 +7,7 @@
 
 	<org.opendatakit.tables.views.TouchListView
 		xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:tlv="http://schemas.android.com/apk/res/org.opendatakit.tables"
+		xmlns:tlv="http://schemas.android.com/apk/res/org.opendatakit.hope"
 
 		android:id="@android:id/list"
 		android:layout_width="fill_parent"

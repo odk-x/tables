@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.opendatakit.tables"
-    android:versionCode="6"
+    package="org.opendatakit.hope"
+    android:versionCode="7"
     android:versionName="2.0 alpha" >
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -19,9 +19,9 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <permission
-          android:name="org.opendatakit.tables.permission.MAPS_RECEIVE"
+          android:name="org.opendatakit.hope.permission.MAPS_RECEIVE"
           android:protectionLevel="signature" />
-    <uses-permission android:name="org.opendatakit.tables.permission.MAPS_RECEIVE" />
+    <uses-permission android:name="org.opendatakit.hope.permission.MAPS_RECEIVE" />
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
@@ -46,61 +46,66 @@
         android:installLocation="auto"
         android:largeHeap="true"
         android:hardwareAccelerated="true"	>
+
+		<meta-data
+		    android:name="com.google.android.gms.version"
+		    android:value="3136110" />
+
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyBBdNVHO1BUmWpFp1LxOUwZEMaWd3gsqxw"/>
+            android:value="AIzaSyD_LYA6ZAbig70W8vDvENrEj79Vh2eWo3M"/>
 
         <uses-library
             android:name="com.google.android.maps"
             android:required="false" />
 
         <activity
-            android:name=".activities.util.Launcher"
+            android:name="org.opendatakit.hope.activities.util.Launcher"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.AccountInfoActivity" />
-        <activity android:name=".activities.Aggregate" />
-        <activity android:name=".activities.AggregateChooseTablesActivity" />
-        <activity android:name=".activities.AggregateDownloadTableActivity" />
-        <activity android:name=".activities.ColorRuleManagerActivity"/>
-        <activity android:name=".activities.ColumnManager"/>
-        <activity android:name=".activities.ConflictResolutionActivity"/>
-        <activity android:name=".activities.CustomHomeScreenActivity"/>
-        <activity android:name=".activities.DetailDisplayActivity"/>
-        <activity android:name=".activities.DisplayPrefsActivity"/>
-        <activity android:name=".activities.EditSavedColorRuleActivity"/>
-        <activity android:name=".activities.EditSavedListViewEntryActivity"/>
-        <activity android:name=".activities.ListDisplayActivity"/>
-        <activity android:name=".activities.ListViewManager"/>
-        <activity android:name=".activities.PropertyManager"/>
-        <activity android:name=".activities.SecurityManager"/>
-        <activity android:name=".activities.ShortcutsManager"/>
+        <activity android:name="org.opendatakit.hope.activities.AccountInfoActivity" />
+        <activity android:name="org.opendatakit.hope.activities.Aggregate" />
+        <activity android:name="org.opendatakit.hope.activities.AggregateChooseTablesActivity" />
+        <activity android:name="org.opendatakit.hope.activities.AggregateDownloadTableActivity" />
+        <activity android:name="org.opendatakit.hope.activities.ColorRuleManagerActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.ColumnManager"/>
+        <activity android:name="org.opendatakit.hope.activities.ConflictResolutionActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.CustomHomeScreenActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.DetailDisplayActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.DisplayPrefsActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.EditSavedColorRuleActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.EditSavedListViewEntryActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.ListDisplayActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.ListViewManager"/>
+        <activity android:name="org.opendatakit.hope.activities.PropertyManager"/>
+        <activity android:name="org.opendatakit.hope.activities.SecurityManager"/>
+        <activity android:name="org.opendatakit.hope.activities.ShortcutsManager"/>
         <activity android:name=".activities.SpreadsheetDisplayActivity"
             android:hardwareAccelerated="false" />
-        <activity android:name=".activities.TableActivity"/>
-        <activity android:name=".activities.TableManager"/>
-        <activity android:name=".activities.TablePropertiesManager"/>
-		<activity android:name=".activities.ConflictResolutionListActivity" />
-		<activity android:name=".activities.ConflictResolutionRowActivity" />
-        <activity android:name=".activities.graphs.BarGraphDisplayActivity" />
-        <activity android:name=".activities.graphs.BoxStemGraphDisplayActivity" />
-        <activity android:name=".activities.graphs.GraphDisplayActivity"/>
-        <activity android:name=".activities.graphs.LineGraphDisplayActivity"/>
-        <activity android:name=".activities.importexport.ImportExportActivity"/>
-        <activity android:name=".activities.importexport.ImportCSVActivity"/>
-        <activity android:name=".activities.importexport.ExportCSVActivity"/>
-        <activity android:name=".activities.settings.ListDisplaySettings"/>
-        <activity android:name=".activities.settings.MainDisplaySettings"/>
-
-        <receiver android:name=".sms.SmsReceiver" >
+        <activity android:name="org.opendatakit.hope.activities.TableActivity"/>
+        <activity android:name="org.opendatakit.hope.activities.TableManager"/>
+        <activity android:name="org.opendatakit.hope.activities.TablePropertiesManager"/>
+		<activity android:name="org.opendatakit.hope.activities.ConflictResolutionListActivity" />
+		<activity android:name="org.opendatakit.hope.activities.ConflictResolutionRowActivity" />
+-        <activity android:name=".activities.graphs.BarGraphDisplayActivity" />
+-        <activity android:name=".activities.graphs.BoxStemGraphDisplayActivity" />
+-        <activity android:name=".activities.graphs.GraphDisplayActivity"/>
+-        <activity android:name=".activities.graphs.LineGraphDisplayActivity"/>
+-        <activity android:name=".activities.importexport.ImportExportActivity"/>
+-        <activity android:name=".activities.importexport.ImportCSVActivity"/>
+-        <activity android:name=".activities.importexport.ExportCSVActivity"/>
+-        <activity android:name=".activities.settings.ListDisplaySettings"/>
+-        <activity android:name=".activities.settings.MainDisplaySettings"/>
+-
+-        <receiver android:name=".sms.SmsReceiver" >
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
-        </receiver>
+            </receiver>
 
         <!--
         <service
@@ -117,7 +122,7 @@
         <! service for syncing files
         -->
         <service
-            android:name=".sync.files.FileSyncService"
+            android:name="org.opendatakit.hope.sync.files.FileSyncService"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
@@ -131,20 +136,20 @@
 		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
 	    <provider
 	        android:exported="true"
-	        android:name="org.opendatakit.tables.provider.FileProvider"
-	        android:authorities="org.opendatakit.tables.android.provider.file" />
+	        android:name="org.opendatakit.hope.provider.FileProvider"
+	        android:authorities="org.opendatakit.hope.android.provider.file" />
 
         <!--  dummy ContentProvider for syncing tables -->
         <provider
             android:exported="true"
-            android:name=".sync.TablesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.content" />
+            android:name="org.opendatakit.hope.sync.TablesContentProvider"
+            android:authorities="org.opendatakit.hope.android.provider.content" />
 
         <!-- dummy ContentProvider for syncing files -->
         <provider
             android:exported="true"
-            android:name=".sync.files.FilesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.files" />
+            android:name="org.opendatakit.hope.sync.files.FilesContentProvider"
+            android:authorities="org.opendatakit.hope.android.provider.files" />
 
     </application>
 
