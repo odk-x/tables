@@ -181,7 +181,8 @@ public class ListViewManager extends SherlockListActivity {
     setTitle(getString(R.string.list_view_manager));
     // Set the app icon as an action to go home.
     ActionBar actionBar = getSupportActionBar();
-    actionBar.setDisplayHomeAsUpEnabled(true);
+// TODO: HOPESTUDY_UI
+//    actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
 

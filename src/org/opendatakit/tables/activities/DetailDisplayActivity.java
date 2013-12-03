@@ -95,7 +95,6 @@ public class DetailDisplayActivity extends SherlockActivity
 
     private void displayView() {
       TableProperties tp = c.getTableProperties();
-      tp.refreshColumns();
         Query query = new Query(DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE, tp);
         query.addRowIdConstraint(rowId);
         table = c.getIsOverview() ?
@@ -116,10 +115,12 @@ public class DetailDisplayActivity extends SherlockActivity
         // We want to be able to edit a row from the detail view. Rather than
         // add a new button, we're just going to hook onto the add row
         // button, change the png.
-        MenuItem addRow = menu.getItem(Controller.MENU_ITEM_ID_ADD_ROW_BUTTON);
-        addRow.setIcon(R.drawable.content_edit);
-        addRow.setEnabled(true);
-        return true;
+// TODO: HOPESTUDY_UI
+//        MenuItem addRow = menu.getItem(Controller.MENU_ITEM_ID_ADD_ROW_BUTTON);
+//        addRow.setIcon(R.drawable.content_edit);
+//        addRow.setEnabled(true);
+//        return true;
+        return false;
     }
 
     @Override

@@ -98,7 +98,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     super.onCreate(icicle);
     setContentView(org.opendatakit.tables.R.layout.color_rule_manager);
     ActionBar actionBar = getSupportActionBar();
-    actionBar.setDisplayHomeAsUpEnabled(true);
+// TODO: HOPESTUDY_UI
+//    actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
 

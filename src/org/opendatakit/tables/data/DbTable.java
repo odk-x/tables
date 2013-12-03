@@ -281,51 +281,75 @@ public class DbTable {
 //                table.getData(), footerQuery(query));
     }
 
-    public ConflictTable getConflictTable(Query query) {
-    	SQLiteDatabase db = null;
-    	Cursor c = null;
-    	try {
-	        db = dbh.getReadableDatabase();
-	        SqlData sd = query.toConflictSql();
-	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        int count = c.getCount() / 2;
-	        String[] header = new String[tp.getColumns().size()];
-	        String[] rowIds = new String[count];
-	        String[][] syncTags = new String[count][2];
-	        String[][][] values = new String[count][2][tp.getColumns().size()];
-	        if (count == 0) {
-	            return new ConflictTable(header, rowIds, syncTags, values);
-	        }
-	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
-	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
-	        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-	        int[] colIndices = new int[numberOfDisplayColumns];
-	        for (int i = 0; i < numberOfDisplayColumns; i++) {
-	        	ColumnProperties cp = tp.getColumnByIndex(i);
-	            colIndices[i] = c.getColumnIndexOrThrow(
-	            		cp.getElementKey());
-	            header[i] = cp.getDisplayName();
-	        }
-	        c.moveToFirst();
-	        for (int i = 0; i < count; i++) {
-	            rowIds[i] = c.getString(idColIndex);
-	            syncTags[i][0] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().size(); j++) {
-	                values[i][0][j] = c.getString(colIndices[j]);
-	            }
-	            c.moveToNext();
-	            syncTags[i][1] = c.getString(stColIndex);
-	            for (int j = 0; j < tp.getColumns().size(); j++) {
-	                values[i][1][j] = c.getString(colIndices[j]);
-	            }
-	            c.moveToNext();
-	        }
-	        return new ConflictTable(header, rowIds, syncTags, values);
-	    } finally {
-    		if ( c != null && !c.isClosed() ) {
-    			c.close();
-    		}
-	    }
+    public ConflictTable getConflictTable() {
+      List<String> userColumns = tp.getColumnOrder();
+      // We are defining server and local rows thusly:
+      // The local rows have sync_state conflict (4 at the time of this 
+      // writing) and transactioning false.
+      // The server rows have sync_state deleting (3 at the time of this 
+      // writing) and transactioning true.
+      String[] selectionKeys = new String[2];
+      selectionKeys[0] = DataTableColumns.SYNC_STATE;
+      selectionKeys[1] = DataTableColumns.TRANSACTIONING;
+      String syncStateConflictStr = 
+          Integer.toString(SyncUtil.State.CONFLICTING);
+      String transactioningFalseStr = 
+          Integer.toString(SyncUtil.boolToInt(false));
+      String syncStateDeletingStr = 
+          Integer.toString(SyncUtil.State.DELETING);
+      String transactioningTrueStr = 
+          Integer.toString(SyncUtil.boolToInt(true));
+      UserTable localTable = getRaw(userColumns, selectionKeys, 
+          new String[] {syncStateConflictStr, transactioningFalseStr}, 
+          DataTableColumns.ROW_ID);
+      UserTable serverTable = getRaw(userColumns, selectionKeys, 
+          new String[] {syncStateDeletingStr, transactioningTrueStr}, 
+          DataTableColumns.ROW_ID);
+      return new ConflictTable(localTable, serverTable);
+//    	SQLiteDatabase db = null;
+//    	Cursor c = null;
+//    	try {
+//	        db = dbh.getReadableDatabase();
+//	        SqlData sd = query.toConflictSql();
+//	        c = db.rawQuery(sd.getSql(), sd.getArgs());
+//	        int count = c.getCount() / 2;
+//	        String[] header = new String[tp.getColumns().size()];
+//	        String[] rowIds = new String[count];
+//	        String[][] syncTags = new String[count][2];
+//	        String[][][] values = new String[count][2][tp.getColumns().size()];
+//	        if (count == 0) {
+//	            return new ConflictTable(header, rowIds, syncTags, values);
+//	        }
+//	        int idColIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+//	        int stColIndex = c.getColumnIndexOrThrow(DataTableColumns.SYNC_TAG);
+//	        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+//	        int[] colIndices = new int[numberOfDisplayColumns];
+//	        for (int i = 0; i < numberOfDisplayColumns; i++) {
+//	        	ColumnProperties cp = tp.getColumnByIndex(i);
+//	            colIndices[i] = c.getColumnIndexOrThrow(
+//	            		cp.getElementKey());
+//	            header[i] = cp.getDisplayName();
+//	        }
+//	        c.moveToFirst();
+//	        for (int i = 0; i < count; i++) {
+//	            rowIds[i] = c.getString(idColIndex);
+//	            syncTags[i][0] = c.getString(stColIndex);
+//	            for (int j = 0; j < tp.getColumns().size(); j++) {
+//	                values[i][0][j] = c.getString(colIndices[j]);
+//	            }
+//	            c.moveToNext();
+//	            syncTags[i][1] = c.getString(stColIndex);
+//	            for (int j = 0; j < tp.getColumns().size(); j++) {
+//	                values[i][1][j] = c.getString(colIndices[j]);
+//	            }
+//	            c.moveToNext();
+//	        }
+//	        return new ConflictTable(header, rowIds, syncTags, values);
+//	    } finally {
+//    		if ( c != null && !c.isClosed() ) {
+//    			c.close();
+//    		}
+//	    }
     }
 
     private UserTable dataQuery(SqlData sd) {
@@ -724,43 +748,43 @@ public class DbTable {
         return selBuilder.toString();
     }
 
-    public class ConflictTable {
-
-        private final String[] header;
-        private final String[] rowIds;
-        private final String[][] syncTags;
-        private final String[][][] values;
-
-        private ConflictTable(String[] header, String[] rowIds,
-                String[][] syncTags, String[][][] values) {
-            this.header = header;
-            this.rowIds = rowIds;
-            this.syncTags = syncTags;
-            this.values = values;
-        }
-
-        public int getCount() {
-            return rowIds.length;
-        }
-
-        public int getWidth() {
-            return header.length;
-        }
-
-        public String getHeader(int colNum) {
-            return header[colNum];
-        }
-
-        public String getRowId(int index) {
-            return rowIds[index];
-        }
-
-        public String getSyncTag(int index, int rowNum) {
-            return syncTags[index][rowNum];
-        }
-
-        public String getValue(int index, int rowNum, int colNum) {
-            return values[index][rowNum][colNum];
-        }
-    }
+//    public class ConflictTable {
+//
+//        private final String[] header;
+//        private final String[] rowIds;
+//        private final String[][] syncTags;
+//        private final String[][][] values;
+//
+//        private ConflictTable(String[] header, String[] rowIds,
+//                String[][] syncTags, String[][][] values) {
+//            this.header = header;
+//            this.rowIds = rowIds;
+//            this.syncTags = syncTags;
+//            this.values = values;
+//        }
+//
+//        public int getCount() {
+//            return rowIds.length;
+//        }
+//
+//        public int getWidth() {
+//            return header.length;
+//        }
+//
+//        public String getHeader(int colNum) {
+//            return header[colNum];
+//        }
+//
+//        public String getRowId(int index) {
+//            return rowIds[index];
+//        }
+//
+//        public String getSyncTag(int index, int rowNum) {
+//            return syncTags[index][rowNum];
+//        }
+//
+//        public String getValue(int index, int rowNum, int colNum) {
+//            return values[index][rowNum][colNum];
+//        }
+//    }
 }

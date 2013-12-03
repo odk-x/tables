@@ -20,6 +20,7 @@ import java.util.List;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.ListDisplayActivity;
+import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -51,13 +52,13 @@ import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
 
 /**
- * This activity presents all the possible list views that might be displayed
+ * This activity presents all the possible graph views that might be displayed
  * for the given table.
  * <p>
  * It's general structure is modeled on the ColumnManager class, so that we keep
  * a standard feel throughout the app.
  *
- * @author sudar.sam@gmail.com
+ * @author Nathan Brandes?
  *
  */
 public class GraphDisplayActivity extends SherlockListActivity {
@@ -83,7 +84,10 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	 * Menu ID for opening the edit entry activity.
 	 */
 	public static final int MENU_EDIT_ENTRY = 2;
-
+	
+	public static final int MENU_ITEM_ID_SETTINGS_SUBMENU = 3;
+	public static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 4;
+	
 	/**
 	 * This will be the names of all the possible list views.
 	 */
@@ -222,47 +226,57 @@ public class GraphDisplayActivity extends SherlockListActivity {
 	@Override
 	public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
 		super.onCreateOptionsMenu(menu);
-
-		final TableViewType[] viewTypes = tp.getPossibleViewTypes();
-		// 	  -build a checkable submenu to select the view type
-		SubMenu viewTypeSubMenu =
-				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON,
-						Menu.NONE, getString(R.string.view_type));
-		MenuItem viewType = viewTypeSubMenu.getItem();
-		viewType.setIcon(R.drawable.view);
-		viewType.setEnabled(true);
-		viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		MenuItem item;
-		// This will be the name of the default list view, which if exists
-		// means we should display the list view as an option.
-		KeyValueStoreHelper kvsh =
-				tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-		String nameOfView = kvsh.getString(
-				ListDisplayActivity.KEY_LIST_VIEW_NAME);
-		for(int i = 0; i < viewTypes.length; i++) {
-			item = viewTypeSubMenu.add(MENU_ITEM_ID_SEARCH_BUTTON,
-					viewTypes[i].getId(), i,
-					viewTypes[i].name());
-			// mark the current viewType as selected
-			if (tp.getCurrentViewType() == viewTypes[i]) {
-				item.setChecked(true);
-			}
-			// disable list view if no file is specified
-			if (viewTypes[i] == TableViewType.List &&
-					nameOfView == null) {
-				item.setEnabled(false);
-			}
-		}
-
-		viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_SEARCH_BUTTON,
-				true, true);
-
-
+// TODO: HOPESTUDY_UI
+//		final TableViewType[] viewTypes = tp.getPossibleViewTypes();
+//		// 	  -build a checkable submenu to select the view type
+//		SubMenu viewTypeSubMenu =
+//				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON,
+//						Menu.NONE, getString(R.string.view_type));
+//		MenuItem viewType = viewTypeSubMenu.getItem();
+//		viewType.setIcon(R.drawable.view);
+//		viewType.setEnabled(true);
+//		viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//		MenuItem item;
+//		// This will be the name of the default list view, which if exists
+//		// means we should display the list view as an option.
+//		KeyValueStoreHelper kvsh =
+//				tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//		String nameOfView = kvsh.getString(
+//				ListDisplayActivity.KEY_LIST_VIEW_NAME);
+//		for(int i = 0; i < viewTypes.length; i++) {
+//			item = viewTypeSubMenu.add(MENU_ITEM_ID_SEARCH_BUTTON,
+//					viewTypes[i].getId(), i,
+//					viewTypes[i].name());
+//			// mark the current viewType as selected
+//			if (tp.getCurrentViewType() == viewTypes[i]) {
+//				item.setChecked(true);
+//			}
+//			// disable list view if no file is specified
+//			if (viewTypes[i] == TableViewType.List &&
+//					nameOfView == null) {
+//				item.setEnabled(false);
+//			}
+//		}
+//
+//		viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_SEARCH_BUTTON,
+//				true, true);
+//
+//
 		MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW,
 				Menu.NONE,
 				getString(R.string.add_new_graph)).setEnabled(true);
 		addItem.setIcon(R.drawable.content_new);
 		addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		
+      // Settings submenu
+      SubMenu settings =
+          menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU,
+              Menu.NONE, getString(R.string.settings));
+      MenuItem settingsItem = settings.getItem();
+      settingsItem.setIcon(R.drawable.settings_icon2);
+      settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+      settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
+          getString(R.string.table_props)).setEnabled(true);
 
 		return true;
 	}
@@ -284,6 +298,14 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		case ADD_NEW_GRAPH_VIEW:
 			createNewGraph();
 			return true;
+      case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
+         {
+         Intent intent = new Intent(this, TablePropertiesManager.class);
+         intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
+                 tp.getTableId());
+         startActivity(intent);
+         }
+         return true;
 		}
 		return false;
 	}

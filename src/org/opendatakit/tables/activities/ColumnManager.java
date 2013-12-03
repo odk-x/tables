@@ -110,7 +110,8 @@ public class ColumnManager extends SherlockListActivity {
 		setTitle(getString(R.string.column_manager));
 		// set the app icon as an action to go home
 		ActionBar actionBar = getSupportActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
+// TODO: HOPESTUDY_UI
+//		actionBar.setDisplayHomeAsUpEnabled(true);
 	}
 
 	@Override

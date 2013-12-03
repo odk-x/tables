@@ -57,6 +57,7 @@ import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -1319,6 +1320,14 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
 		}
+		
+		/**
+		 * Get the string that is displayed in the search box.
+		 * @return the search text
+		 */
+		public String getSearchText() {
+		  return mCallbacks.getSearchString();
+		}
 
 		/**
 		 * Create an alert that will allow for a new table name. This might be
@@ -1402,7 +1411,23 @@ public abstract class CustomView extends LinearLayout {
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);
 		}
+		
+	   /**
+	    * Launches Collect send finalized forms screen
+	    */
+	   public void sendData() {
+	     Intent intent = new Intent();
+	     intent.setComponent(new ComponentName("org.odk.collect.android",
+	             "org.odk.collect.android.activities.InstanceUploaderList"));
+	     intent.setAction(Intent.ACTION_EDIT);
+	     if (intent != null) {
+	       CustomView.this.mParentActivity.startActivity(intent);
+	     }
+	   }
+	   
 	}
+	
+
 
 	public interface CustomViewCallbacks {
 		/**

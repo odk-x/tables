@@ -515,59 +515,61 @@ public class Controller implements CustomViewCallbacks {
     void buildOptionsMenu(Menu menu, boolean enabled) {
 		// set the app icon as an action to go home
     	ActionBar actionBar = activity.getSupportActionBar();
-    	actionBar.setDisplayHomeAsUpEnabled(true);
+// TODO: HOPESTUDY_UI
+//    	actionBar.setDisplayHomeAsUpEnabled(true);
 
-        // search
-        MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
-                activity.getString(R.string.search));
-        searchItem.setIcon(R.drawable.ic_action_search);
-        searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        searchItem.setEnabled(enabled);
-
-
-        // view type submenu
-        // 	  -determine the possible view types
-        final TableViewType[] viewTypes = tp.getPossibleViewTypes();
-        // 	  -build a checkable submenu to select the view type
-        SubMenu viewTypeSubMenu =
-            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
-                Menu.NONE, activity.getString(R.string.view_type));
-        MenuItem viewType = viewTypeSubMenu.getItem();
-        viewType.setIcon(R.drawable.view);
-        viewType.setEnabled(enabled);
-        viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        MenuItem item;
-        // This will be the name of the default list view, which if exists
-        // means we should display the list view as an option.
-        KeyValueStoreHelper kvsh =
-            tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-        String nameOfView = kvsh.getString(
-            ListDisplayActivity.KEY_LIST_VIEW_NAME);
-        for(int i = 0; i < viewTypes.length; i++) {
-        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
-        	    viewTypes[i].getId(), i,
-        	    viewTypes[i].name());
-        	// mark the current viewType as selected
-          	if (tp.getCurrentViewType() == viewTypes[i]) {
-          	  item.setChecked(true);
-          	}
-            // disable list view if no file is specified
-            if (viewTypes[i] == TableViewType.List &&
-                nameOfView == null) {
-               item.setEnabled(false);
-            }
-        }
-
-
-        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
-            true, true);
-
-        // Add Row
-        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON,
-            Menu.NONE,
-              activity.getString(R.string.add_row)).setEnabled(enabled);
-        addItem.setIcon(R.drawable.content_new);
-        addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+// TODO: HOPESTUDY_UI
+//        // search
+//        MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE,
+//                activity.getString(R.string.search));
+//        searchItem.setIcon(R.drawable.ic_action_search);
+//        searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//        searchItem.setEnabled(enabled);
+//
+// TODO: HOPESTUDY_UI
+//        // view type submenu
+//        // 	  -determine the possible view types
+//        final TableViewType[] viewTypes = tp.getPossibleViewTypes();
+//        // 	  -build a checkable submenu to select the view type
+//        SubMenu viewTypeSubMenu =
+//            menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
+//                Menu.NONE, activity.getString(R.string.view_type));
+//        MenuItem viewType = viewTypeSubMenu.getItem();
+//        viewType.setIcon(R.drawable.view);
+//        viewType.setEnabled(enabled);
+//        viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//        MenuItem item;
+//        // This will be the name of the default list view, which if exists
+//        // means we should display the list view as an option.
+//        KeyValueStoreHelper kvsh =
+//            tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//        String nameOfView = kvsh.getString(
+//            ListDisplayActivity.KEY_LIST_VIEW_NAME);
+//        for(int i = 0; i < viewTypes.length; i++) {
+//        	item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
+//        	    viewTypes[i].getId(), i,
+//        	    viewTypes[i].name());
+//        	// mark the current viewType as selected
+//          	if (tp.getCurrentViewType() == viewTypes[i]) {
+//          	  item.setChecked(true);
+//          	}
+//            // disable list view if no file is specified
+//            if (viewTypes[i] == TableViewType.List &&
+//                nameOfView == null) {
+//               item.setEnabled(false);
+//            }
+//        }
+//
+//
+//        viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU,
+//            true, true);
+//
+//        // Add Row
+//        MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON,
+//            Menu.NONE,
+//              activity.getString(R.string.add_row)).setEnabled(enabled);
+//        addItem.setIcon(R.drawable.content_new);
+//        addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         // Settings submenu
         SubMenu settings =
@@ -576,22 +578,23 @@ public class Controller implements CustomViewCallbacks {
         MenuItem settingsItem = settings.getItem();
         settingsItem.setIcon(R.drawable.settings_icon2);
         settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-        MenuItem display =
-            settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES,
-                Menu.NONE,
-        		activity.getString(R.string.display_prefs)).setEnabled(enabled);
-        // always disable DisplayPreferences if it is currently in list view
-        if (tp.getCurrentViewType() == TableViewType.List)
-        	display.setEnabled(false);
+// TODO: HOPESTUDY_UI
+//        MenuItem display =
+//            settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES,
+//                Menu.NONE,
+//        		activity.getString(R.string.display_prefs)).setEnabled(enabled);
+//        // always disable DisplayPreferences if it is currently in list view
+//        if (tp.getCurrentViewType() == TableViewType.List)
+//        	display.setEnabled(false);
         settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
     			activity.getString(R.string.table_props)).setEnabled(enabled);
-        settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
-              activity.getString(R.string.column_manager)).setEnabled(enabled);
-        // Now an option for editing list views.
-        MenuItem manageListViews =
-            settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
-                Menu.NONE, activity.getString(R.string.list_view_manager)).setEnabled(true);
+// TODO: HOPESTUDY_UI
+//        settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE,
+//              activity.getString(R.string.column_manager)).setEnabled(enabled);
+//        // Now an option for editing list views.
+//        MenuItem manageListViews =
+//            settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
+//                Menu.NONE, activity.getString(R.string.list_view_manager)).setEnabled(true);
     }
 
     /**

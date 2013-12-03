@@ -377,5 +377,17 @@ public class ControlIf {
 						tableName, formId, formVersion, formRootElement,
 						jsonMap);
 	}
+	
+	/**
+	 * Launches Collect to the send finalized forms screen.
+	 */
+	public void sendData() {
+	  weakControl.get().sendData();
+	}
+	
+	// @JavascriptInterface
+	public String getSearchText() {
+	  return weakControl.get().getSearchText();
+	}
 
 }
