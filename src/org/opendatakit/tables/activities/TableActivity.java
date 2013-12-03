@@ -407,14 +407,14 @@ public class TableActivity extends SherlockFragmentActivity
     ActionBar actionBar = getSupportActionBar();
 // TODO: HOPESTUDY_UI
 //    actionBar.setDisplayHomeAsUpEnabled(true);
-    actionBar.setTitle("");
+//    actionBar.setTitle("");
 // TODO: HOPESTUDY_UI
-//    // Search
+    // Search
 //    MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE, "Search");
 //    searchItem.setIcon(R.drawable.ic_action_search);
 //    searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 //    searchItem.setEnabled(true);
-//
+
 //    // View type submenu
 //    // -determine the possible view types
 //    final TableViewType[] viewTypes = mTableProperties.getPossibleViewTypes();
@@ -466,7 +466,7 @@ public class TableActivity extends SherlockFragmentActivity
 //    }
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
         .setEnabled(true);
-// TODO: HOPESTUDY_UI
+//// TODO: HOPESTUDY_UI
 //    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
 //        .setEnabled(true);
 //    // Now an option for editing list views.
