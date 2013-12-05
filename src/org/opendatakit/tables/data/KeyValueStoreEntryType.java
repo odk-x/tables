@@ -18,24 +18,24 @@ package org.opendatakit.tables.data;
 /**
  * Represents the type of an entry in the key value store. This essentially
  * confines the string values that may be set to the type column in the key
- * value store. 
+ * value store.
  * @author sudar.sam@gmail.com
  *
  */
 public enum KeyValueStoreEntryType {
-  TEXT("text"),
+  STRING("string"),
   INTEGER("integer"),
   NUMBER("number"),
   BOOLEAN("boolean"),
   ARRAYLIST("arraylist"),
   OBJECT("object");
-  
+
   private String label;
-  
+
   private KeyValueStoreEntryType(String label) {
     this.label = label;
   }
-  
+
   public String getLabel() {
     return label;
   }

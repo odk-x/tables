@@ -148,7 +148,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
-      // get tables from server
+      // get tables (tableId -> schemaETag) from server
       Map<String, String> tables = null;
       try {
         tables = sync.getTables();
@@ -219,7 +219,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 // during the process. along those lines, the same process should exist in the
 // table creation on the phone. or rather, THAT should try and follow the same
 // order.
-      TableProperties tp = TableProperties.addTable(dbh, tableName, tableName,
+      TableProperties tp = TableProperties.addTable(dbh, tableName,
           tableName, TableType.data, tableId, KeyValueStore.Type.SERVER);
       tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
@@ -234,9 +234,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       }
       SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
           new SyncResult());
-      // We're going to add a check here for the framework directory. If we 
+      // We're going to add a check here for the framework directory. If we
       // don't have it, you also have to sync app level files the first time.
-      String frameworkDirectoryStr = 
+      String frameworkDirectoryStr =
           ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
       File frameworkDirectory = new File(frameworkDirectoryStr);
       if (!frameworkDirectory.exists()) {
@@ -254,13 +254,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           Log.e(TAG, "IO exception trying to pull app-level files for the " +
           		"first time during table download.");
           e.printStackTrace();
-          // It's not going to be deemed fatal at this point if the app 
+          // It's not going to be deemed fatal at this point if the app
           // folder doesn't pull down. Perhaps eventually it should, but not
           // for now.
         }
       }
       // We're going to say DO NOT sync media or nonMedia files, as since we're
-      // downloading the table, there shouldn't be any. If for some crazy 
+      // downloading the table, there shouldn't be any. If for some crazy
       // reason there were (e.g. if they were created in the download process),
       // it shouldn't really matter.
       processor.synchronizeTable(tp, true, false, false);

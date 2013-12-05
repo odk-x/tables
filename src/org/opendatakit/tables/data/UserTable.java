@@ -34,7 +34,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.annotation.SuppressLint;
@@ -308,6 +307,8 @@ public class UserTable {
       DataUtil du = DataUtil.getDefaultDataUtil();
       DateTime d = du.parseDateTimeFromDb(raw);
       return timeFormatter.print(d);
+    } else if ( type == ColumnType.TABLE_JOIN ) {
+      return raw;
     } else {
       return raw;
     }

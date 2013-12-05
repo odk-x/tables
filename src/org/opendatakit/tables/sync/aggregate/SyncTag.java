@@ -29,8 +29,9 @@ private static final String DELIM = "::";
 
   private String dataEtag;
   private String propertiesEtag;
+  private String schemaEtag;
 
-  public SyncTag(String dataEtag, String propertiesEtag) {
+  public SyncTag(String dataEtag, String propertiesEtag, String schemaEtag) {
     // The data etag can be null if the table has been created but there's not
     // yet any data on the server.
     if (dataEtag == null || dataEtag.equals("")) {
@@ -43,6 +44,11 @@ private static final String DELIM = "::";
     } else {
       this.propertiesEtag = propertiesEtag;
     }
+    if (schemaEtag.equals("")) {
+      this.schemaEtag = EMPTY_ETAG;
+    } else {
+      this.schemaEtag = schemaEtag;
+    }
   }
 
   public String getDataEtag() {
@@ -52,11 +58,19 @@ private static final String DELIM = "::";
   public String getPropertiesEtag() {
     return (propertiesEtag == null) ? STR_NULL : propertiesEtag;
   }
-  
+
+  public String getSchemaEtag() {
+    return (schemaEtag == null) ? STR_NULL : schemaEtag;
+  }
+
+  public void setSchemaEtag(String schemaEtag) {
+    this.schemaEtag = schemaEtag;
+  }
+
   public void setPropertiesEtag(String propertiesEtag) {
     this.propertiesEtag = propertiesEtag;
   }
-  
+
   public void setDataEtag(String dataEtag) {
     this.dataEtag = dataEtag;
   }
@@ -72,6 +86,7 @@ private static final String DELIM = "::";
     int result = 1;
     result = prime * result + dataEtag.hashCode();
     result = prime * result + propertiesEtag.hashCode();
+    result = prime * result + schemaEtag.hashCode();
     return result;
   }
 
@@ -93,21 +108,25 @@ private static final String DELIM = "::";
     boolean samePropertiesTag = propertiesEtag == null ?
         other.propertiesEtag == null :
           propertiesEtag.equals(other.propertiesEtag);
-    return sameDataTag && samePropertiesTag;
+    boolean sameSchemaTag = schemaEtag == null ?
+        other.schemaEtag == null :
+          schemaEtag.equals(other.schemaEtag);
+    return sameDataTag && samePropertiesTag && sameSchemaTag;
   }
 
   @Override
   public String toString() {
-    return String.format("%s%s%s", dataEtag, DELIM, propertiesEtag);
+    return String.format("%s%s%s%s%s", dataEtag, DELIM, propertiesEtag, DELIM, schemaEtag);
   }
 
   public static SyncTag valueOf(String syncTag) {
     String[] tokens = syncTag.split(DELIM);
-    if (tokens.length != 2)
+    if (tokens.length != 3)
       throw new IllegalArgumentException("Malformed syncTag: " + syncTag);
 
     String dataEtag = tokens[0];
     String propertiesEtag = tokens[1];
-    return new SyncTag(dataEtag, propertiesEtag);
+    String schemaEtag = tokens[2];
+    return new SyncTag(dataEtag, propertiesEtag, schemaEtag);
   }
 }

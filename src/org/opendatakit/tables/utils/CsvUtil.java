@@ -141,7 +141,7 @@ public class CsvUtil {
             KeyValueStore.Type.ACTIVE);
     String dbTableName = NameUtil.createUniqueDbTableName(tableName,
         allTableProperties);
-    String tableId = NameUtil.createUniqueTableId(dbTableName, 
+    String tableId = NameUtil.createUniqueTableId(dbTableName,
         allTableProperties);
     TableProperties tp;
     try {
@@ -224,7 +224,7 @@ public class CsvUtil {
         discoverColumnNames = false;
         row = reader.readNext();
       } else {
-        tp = TableProperties.addTable(dbh, dbTableName, dbTableName, tableName,
+        tp = TableProperties.addTable(dbh, dbTableName, tableName,
             TableType.data, tableId, KeyValueStore.Type.ACTIVE);
         discoverColumnNames = true;
       }

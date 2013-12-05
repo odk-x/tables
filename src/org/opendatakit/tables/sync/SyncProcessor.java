@@ -267,7 +267,7 @@ public class SyncProcessor {
       tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
           KeyValueStore.Type.SERVER);
       String syncTag = synchronizer.setTableProperties(tableId,
-          tp.getSyncTag(), tp.getTableKey(), getAllKVSEntries(tableId,
+          tp.getSyncTag(), tp.getDbTableName(), getAllKVSEntries(tableId,
               KeyValueStore.Type.SERVER));
       // So we've updated the server.
       tableResult.setPushedLocalProperties(true);
@@ -331,12 +331,12 @@ public class SyncProcessor {
        **************************/
       // First create the table definition on the server.
       String syncTag = synchronizer.createTable(tableId,
-          getColumnsForTable(tp), tp.getTableKey(), tp.getDbTableName());
+          getColumnsForTable(tp), tp.getDbTableName());
       // now create the TableProperties on the server.
       List<OdkTablesKeyValueStoreEntry> kvsEntries =
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
       String syncTagProperties = synchronizer.setTableProperties(
-          tp.getTableId(), syncTag, tp.getTableKey(), kvsEntries);
+          tp.getTableId(), syncTag, tp.getDbTableName(), kvsEntries);
       // If we make it here we've set both the definition and the properties,
       // so we can say yes we've added the table to the server.
       tableResult.setPushedLocalProperties(true);
@@ -1082,9 +1082,8 @@ public class SyncProcessor {
       TableDefinitionResource definitionResource, String syncTag) throws JsonParseException, JsonMappingException, IOException {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
     TableProperties tp = TableProperties.addTable(dbh,
-        definitionResource.getTableKey(),
-        definitionResource.getDbTableName(),
-        definitionResource.getTableKey(),
+        definitionResource.getTableId(),
+        definitionResource.getDisplayName(),
         TableType.data, // TODO: confirm that the table type gets updated with KVS change
         definitionResource.getTableId(),
         kvsType);

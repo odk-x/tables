@@ -693,7 +693,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                      .getDisplayName();
       	                  // I would prefer this kind of query to be set in another
       	                  // object, but alas, it looks like atm it is hardcoded.
-      	                  String queryText = joinedColDisplayName + ":" +
+      	                  String queryText = "_id:" +
       	                      table.getData(cellId);
       	                    Controller.launchTableActivity(context, joinedTable,
       	                        queryText, c.getIsOverview(), null, null);

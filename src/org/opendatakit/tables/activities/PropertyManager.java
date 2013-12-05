@@ -203,13 +203,13 @@ public class PropertyManager extends PreferenceActivity {
       if (selectedTp != null) {
         // TODO: resolve how joins work
         String joinColName = (joins != null && joins.size() == 1) ? joins.get(0).getElementKey() : null;
-        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        int numberOfDisplayColumns = selectedTp.getNumberOfDisplayColumns();
         String[] colDbNames = new String[numberOfDisplayColumns + 1];
         String selectedDbName = colDbNames[0] = null;
         String[] colDisplayNames = new String[numberOfDisplayColumns + 1];
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
         for (int i = 0; i < numberOfDisplayColumns; i++) {
-          ColumnProperties cp = tp.getColumnByIndex(i);
+          ColumnProperties cp = selectedTp.getColumnByIndex(i);
           String elementKey = cp.getElementKey();
           String colDisplayName = cp.getDisplayName();
           colDbNames[i + 1] = elementKey;

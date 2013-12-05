@@ -76,7 +76,6 @@ public class TableDefinitions {
   static {
     columnNames = new HashSet<String>();
     columnNames.add(TableDefinitionsColumns.TABLE_ID);
-    columnNames.add(TableDefinitionsColumns.TABLE_KEY);
     columnNames.add(TableDefinitionsColumns.DB_TABLE_NAME);
     columnNames.add(TableDefinitionsColumns.SYNC_TAG);
     columnNames.add(TableDefinitionsColumns.LAST_SYNC_TIME);
@@ -116,7 +115,6 @@ public class TableDefinitions {
       c = db.query(DB_BACKING_NAME, arrColumnNames, WHERE_SQL_FOR_TABLE,
           new String[] {tableId}, null, null, null);
       int dbTableIdIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.TABLE_ID);
-      int dbTableKeyIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.TABLE_KEY);
       int dbDbTableNameIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.DB_TABLE_NAME);
       int dbSyncTagIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.SYNC_TAG);
       int dbLastSyncTimeIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.LAST_SYNC_TIME);
@@ -135,7 +133,6 @@ public class TableDefinitions {
       int j = 0;
       while (j < c.getCount()) {
         tableDefMap.put(TableDefinitionsColumns.TABLE_ID, c.getString(dbTableIdIndex));
-        tableDefMap.put(TableDefinitionsColumns.TABLE_KEY, c.getString(dbTableKeyIndex));
         tableDefMap.put(TableDefinitionsColumns.DB_TABLE_NAME, c.getString(dbDbTableNameIndex));
         tableDefMap.put(TableDefinitionsColumns.SYNC_TAG, c.getString(dbSyncTagIndex));
         tableDefMap.put(TableDefinitionsColumns.LAST_SYNC_TIME, c.getString(dbLastSyncTimeIndex));
@@ -213,10 +210,9 @@ public class TableDefinitions {
    * @return a map of column names to fields for the new table
    */
   public static Map<String, String> addTable(SQLiteDatabase db, String tableId,
-      String tableKey, String dbTableName) {
+      String dbTableName) {
     ContentValues values = new ContentValues();
     values.put(TableDefinitionsColumns.TABLE_ID, tableId);
-    values.put(TableDefinitionsColumns.TABLE_KEY, tableKey);
     values.put(TableDefinitionsColumns.DB_TABLE_NAME, dbTableName);
     values.put(TableDefinitionsColumns.SYNC_TAG, DEFAULT_DB_SYNC_TAG);
     values.put(TableDefinitionsColumns.LAST_SYNC_TIME, DEFAULT_DB_LAST_SYNC_TIME);
@@ -226,7 +222,6 @@ public class TableDefinitions {
     // Take care of the return.
     Map<String, String> valueMap = new HashMap<String, String>();
     valueMap.put(TableDefinitionsColumns.TABLE_ID, tableId);
-    valueMap.put(TableDefinitionsColumns.TABLE_KEY, tableKey);
     valueMap.put(TableDefinitionsColumns.DB_TABLE_NAME, dbTableName);
     valueMap.put(TableDefinitionsColumns.SYNC_TAG, DEFAULT_DB_SYNC_TAG);
     valueMap.put(TableDefinitionsColumns.LAST_SYNC_TIME,

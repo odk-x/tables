@@ -36,7 +36,7 @@ public interface Synchronizer {
   /**
    * Get a list of all tables in the server.
    *
-   * @return a map from table ids to tableKeys
+   * @return a map from table ids to schemaETags
    */
   public Map<String, String> getTables() throws IOException;
 
@@ -48,13 +48,12 @@ public interface Synchronizer {
    * @param cols
    *          a map from column names to column types, see
    *          {@link ColumnType}
-   * @param tableKey
-   *          the tableKey (as of May6 is the display name on the server)
-   * @param dbTable name
+   * @param displayName name
+   *          the quoted display name for this table
    * @return a string which will be stored as the syncTag of the table
    */
   public String createTable(String tableId, List<Column> columns,
-      String tableKey, String dbTableName) throws IOException;
+      String displayName) throws IOException;
 
   /**
    * Delete the table with the given id from the server.
@@ -163,9 +162,9 @@ public interface Synchronizer {
    * @param pushLocal true if the local files should be pushed
    * @throws IOException
    */
-  public void syncNonMediaTableFiles(String tableId, boolean pushLocal) 
+  public void syncNonMediaTableFiles(String tableId, boolean pushLocal)
       throws IOException;
-  
+
   /**
    * Sync only the media attachments of a table--those files that belong to
    * individual rows of the table. This would include things like any pictures

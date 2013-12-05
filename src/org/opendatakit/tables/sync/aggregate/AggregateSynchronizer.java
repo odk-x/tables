@@ -176,7 +176,7 @@ public class AggregateSynchronizer implements Synchronizer {
     fileManifestUri = fileManifestUri.resolve(FILE_MANIFEST_PATH).normalize();
     this.mFileManifestUri = fileManifestUri;
     this.mFilesUri = getFilePathURI(aggregateUri);
-    
+
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(accessToken));
@@ -204,9 +204,9 @@ public class AggregateSynchronizer implements Synchronizer {
 
     checkAccessToken(accessToken);
   }
-  
+
   /**
-   * Get the URI for the file servlet on the Aggregate server located at 
+   * Get the URI for the file servlet on the Aggregate server located at
    * aggregateUri.
    * @param aggregateUri
    * @return
@@ -235,7 +235,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   /**
-   * Return a map of tableId to tableKey.
+   * Return a map of tableId to schemaETag.
    */
   @SuppressWarnings("unchecked")
   @Override
@@ -250,7 +250,7 @@ public class AggregateSynchronizer implements Synchronizer {
     }
 
     for (TableResource tableResource : tableResources)
-      tables.put(tableResource.getTableId(), tableResource.getTableKey());
+      tables.put(tableResource.getTableId(), tableResource.getSchemaEtag());
 
     return tables;
   }
@@ -264,12 +264,12 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @Override
   public String createTable(String tableId, List<Column> columns,
-      String tableKey, String dbTableName) throws IOException {
+      String displayName) throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
-    TableDefinition definition =
-        new TableDefinition(tableId, columns, tableKey, dbTableName);
+    TableDefinition definition = new TableDefinition(tableId, columns);
+    definition.setDisplayName(displayName);
     HttpEntity<TableDefinition> requestEntity =
         new HttpEntity<TableDefinition>(definition, requestHeaders);
 
@@ -290,7 +290,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     // return sync tag
     SyncTag syncTag = new SyncTag(resource.getDataEtag(),
-        resource.getPropertiesEtag());
+        resource.getPropertiesEtag(), resource.getSchemaEtag());
     return syncTag.toString();
   }
 
@@ -345,10 +345,10 @@ public class AggregateSynchronizer implements Synchronizer {
     if (currentSyncTag != null)
       currentTag = SyncTag.valueOf(currentSyncTag);
     else
-      currentTag = new SyncTag("", "");
+      currentTag = new SyncTag("", "", "");
     // This tag is ultimately returned. May8--make sure it works.
     SyncTag newTag = new SyncTag(resource.getDataEtag(),
-        resource.getPropertiesEtag());
+        resource.getPropertiesEtag(), resource.getSchemaEtag());
 
     // stop now if there are no updates
     if (newTag.equals(currentTag)) {
@@ -541,7 +541,7 @@ public class AggregateSynchronizer implements Synchronizer {
     PropertiesResource propsResource = updatedEntity.getBody();
 
     SyncTag newTag = new SyncTag(currentTag.getDataEtag(),
-        propsResource.getPropertiesEtag());
+        propsResource.getPropertiesEtag(),currentTag.getSchemaEtag());
     return newTag.toString();
   }
 
@@ -600,39 +600,39 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncNonMediaTableFiles(String tableId, boolean pushLocal) 
+  public void syncNonMediaTableFiles(String tableId, boolean pushLocal)
       throws IOException {
-    List<OdkTablesFileManifestEntry> manifest = 
+    List<OdkTablesFileManifestEntry> manifest =
         getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
     if (pushLocal) {
-      // Then we actually do try and upload things. Otherwise we can just 
+      // Then we actually do try and upload things. Otherwise we can just
       // continue straight on.
-      String appFolder = 
+      String appFolder =
           ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      String relativePathToTableFolder = TableFileUtils.DIR_TABLES + 
+      String relativePathToTableFolder = TableFileUtils.DIR_TABLES +
           File.separator + tableId;
-      String tableFolder = appFolder + File.separator + 
+      String tableFolder = appFolder + File.separator +
           relativePathToTableFolder;
       Set<String> tableDirsToExclude = new HashSet<String>();
       // We don't want to sync anything in the instances directory, because this
-      // contains things like media attachments. These should instead be synched 
+      // contains things like media attachments. These should instead be synched
       // with a separate call.
 //      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
       tableDirsToExclude.add("instances");
-      List<String> relativePathsToAppFolderOnDevice = 
-          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude, 
+      List<String> relativePathsToAppFolderOnDevice =
+          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude,
               appFolder);
-      List<String> relativePathsToUpload = 
+      List<String> relativePathsToUpload =
           getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
       Log.e(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
       // and then upload the files.
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
         String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile,
             relativePath));
       }
     }
@@ -720,21 +720,21 @@ public class AggregateSynchronizer implements Synchronizer {
     // TODO: verify whether or not this worked.
     return true;
   }
-  
+
   /**
    * Get the URI to which to post in order to upload the file.
    * @param pathRelativeToAppFolder
    * @return
    */
   public URI getFilePostUri(String pathRelativeToAppFolder) {
-    String escapedPath = 
+    String escapedPath =
         SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
     URI filePostUri = URI.create(mFilesUri.toString()).resolve(
         TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
           .normalize();
     return filePostUri;
   }
-  
+
   private boolean compareAndDownloadFile(
       OdkTablesFileManifestEntry entry) {
     String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
@@ -905,7 +905,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public void syncTableMediaFiles(String tableId) throws IOException {
-    // There are two things to do here, really. The first is to get the 
+    // There are two things to do here, really. The first is to get the
     // manifest for each instance--or each row of the table. And download all
     // the files on the manifest.
     // TODO: handle deletion of files appropiately.
@@ -913,47 +913,47 @@ public class AggregateSynchronizer implements Synchronizer {
     // server.
     //
     // The implementation of this method will be very similar to the
-    // implementation of syncNonMediaTableFiles when pushLocal==true. 
+    // implementation of syncNonMediaTableFiles when pushLocal==true.
     // The main logic is as follows:
     // 1) request the manifest.
     // 2) compare hashes of the files existing on the phone, downloading those
     // that do not exist or that have differing hashes.
-    // 3) get all the files under the INSTANCES directory. 
+    // 3) get all the files under the INSTANCES directory.
     // 4) remove those files that were on the manifest, as they can now be
-    // assumed to be up to date. 
+    // assumed to be up to date.
     // 5) upload all the remaining files.
-    
+
     // 1) Get the manifest.
-    // TODO: this is currently just getting the same table-level manifest as 
+    // TODO: this is currently just getting the same table-level manifest as
     // syncNonMediaTableFiles(). In reality it should be making its own call.
-    List<OdkTablesFileManifestEntry> manifest = 
+    List<OdkTablesFileManifestEntry> manifest =
         getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    // Then we actually do try and upload things. Otherwise we can just 
+    // Then we actually do try and upload things. Otherwise we can just
     // continue straight on.
-    String appFolder = 
+    String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES + 
+    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES +
         File.separator + tableId + File.separator + "instances";
 //        TableFileUtils.DIR_INSTANCES;
-    String instancesFolderFullPath = appFolder + File.separator + 
+    String instancesFolderFullPath = appFolder + File.separator +
         relativePathToInstancesFolder;
-    List<String> relativePathsToAppFolderOnDevice = 
-        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null, 
+    List<String> relativePathsToAppFolderOnDevice =
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
             appFolder);
-    List<String> relativePathsToUpload = 
+    List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
     Log.e(TAG, "[syncTableMediaFiles] relativePathsToUpload: " + relativePathsToUpload);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
       String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile, 
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile,
           relativePath));
     }
   }
 
-  
+
 }

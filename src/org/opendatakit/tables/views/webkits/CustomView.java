@@ -322,7 +322,7 @@ public abstract class CustomView extends LinearLayout {
 		CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent,
 				tp);
 	}
-	
+
 	/**
 	 * Actually acquire the Intents and launch the forms.
 	 * @param tp
@@ -337,7 +337,7 @@ public abstract class CustomView extends LinearLayout {
 	      surveyFormParameters, elementKeyToValueToPrepopulate);
 	  SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
 	}
-	
+
 	/**
 	 * Should eventually handle similar things to the analagous Collect method.
 	 * For now just is a wrapper.
@@ -349,15 +349,15 @@ public abstract class CustomView extends LinearLayout {
 	 * @param refId
 	 * @param prepopulateValues
 	 */
-   private void addRowWithSurveyAndSpecificForm(String tableName, 
+   private void addRowWithSurveyAndSpecificForm(String tableName,
        TableProperties tp, String formId, String screenPath,
        Map<String, String> prepopulateValues) {
-     SurveyFormParameters surveyFormParameters = new 
+     SurveyFormParameters surveyFormParameters = new
          SurveyFormParameters(true, formId, screenPath);
-     prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters, 
+     prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters,
          prepopulateValues);
    }
-   
+
    /**
     * Construct the Intent and launch survey to edit the given row.
     * @param tableName
@@ -368,14 +368,14 @@ public abstract class CustomView extends LinearLayout {
     * @param formPath
     * @param refId
     */
-   private void editRowWithSurveyAndSpecificForm(TableProperties tp, 
+   private void editRowWithSurveyAndSpecificForm(TableProperties tp,
        String instanceId, String formId, String screenPath) {
-     SurveyFormParameters surveyFormParameters = 
+     SurveyFormParameters surveyFormParameters =
          new SurveyFormParameters(true, formId, screenPath);
      Intent surveyEditRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
-         getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME, 
+         getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME,
          surveyFormParameters, instanceId);
-     SurveyUtil.launchSurveyToEditRow(getContainerActivity(), 
+     SurveyUtil.launchSurveyToEditRow(getContainerActivity(),
          surveyEditRowIntent, tp, instanceId);
    }
 
@@ -459,7 +459,7 @@ public abstract class CustomView extends LinearLayout {
 					CustomView.this.getContainerActivity(), editRowIntent,
 					mRowId);
 		}
-		
+
 		/**
 		 * Edit the row with the specified form.
 		 * @param formId
@@ -467,9 +467,9 @@ public abstract class CustomView extends LinearLayout {
 		 * @param formPath
 		 * @param refId
 		 */
-		public void editRowWithSurveyAndSpecificForm(String formId, 
+		public void editRowWithSurveyAndSpecificForm(String formId,
 		    String screenPath) {
-		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId, 
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId,
 		      formId, screenPath);
 		}
 
@@ -855,7 +855,7 @@ public abstract class CustomView extends LinearLayout {
 					CustomView.this.getContainerActivity(), editRowIntent,
 					rowId);
 		}
-		
+
 		/**
 		 * Edit the row using Survey and a specific form.
 		 * @param rowNumber
@@ -868,7 +868,7 @@ public abstract class CustomView extends LinearLayout {
 		    String screenPath) {
 		  TableProperties tp = this.mTable.getTableProperties();
 		  String instanceId = this.mTable.getRowId(rowNumber);
-		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId, 
+		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId,
 		      formId, screenPath);
 		}
 
@@ -889,21 +889,21 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
 		}
-		
+
 		/**
 		 * Add a row using survey and the default form.
 		 * @param tableName
 		 */
 		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
 		    String screenPath) {
-		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName,
 		      formId, screenPath, null);
 		}
-		
+
 		void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
 		    String tableName, String formId, String screenPath, String jsonMap) {
 	       TableProperties tp = mTable.getTableProperties();
-	        TableProperties tpToReceiveAdd = 
+	        TableProperties tpToReceiveAdd =
 	            getTablePropertiesByDisplayName(tp, tableName);
 	        if (tpToReceiveAdd == null) {
 	          Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
@@ -918,7 +918,7 @@ public abstract class CustomView extends LinearLayout {
 	            return;
 	          }
 	        }
-	        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+	        CustomView.this.addRowWithSurveyAndSpecificForm(tableName,
 	            tpToReceiveAdd, formId, screenPath, map);
 		}
 
@@ -1377,7 +1377,7 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
 		}
-		
+
 		/**
 		 * Add a row to survey using the specified form and screenpath.
 		 * @param tableName
@@ -1386,12 +1386,12 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public void addRowWithSurveyAndSpecificForm(String tableName,
 		    String formId, String screenPath) {
-		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName, 
+		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName,
 		      formId, screenPath, null);
 		}
-		
+
 		/**
-		 * Add a row with survey using the specified formId and screenPath. The 
+		 * Add a row with survey using the specified formId and screenPath. The
 		 * jsonMap should be a Stringified json map mapping elementName to values
 		 * to prepopulate with the add row request.
 		 * @param tableName
@@ -1421,7 +1421,7 @@ public abstract class CustomView extends LinearLayout {
             return;
           }
         }
-        CustomView.this.addRowWithSurveyAndSpecificForm(tableName, 
+        CustomView.this.addRowWithSurveyAndSpecificForm(tableName,
             tpToReceiveAdd, formId, screenPath, map);
 		}
 
@@ -1578,7 +1578,7 @@ public abstract class CustomView extends LinearLayout {
 		          KeyValueStore.Type.ACTIVE);
 			String dbTableName = NameUtil.createUniqueDbTableName(tableName,
 			    allTableProperties);
-			TableProperties tp = TableProperties.addTable(dbh, dbTableName,
+			TableProperties tp = TableProperties.addTable(dbh,
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);
 		}

@@ -161,10 +161,10 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.TEXT.getLabel())) {
+    if (!entry.type.equals(KeyValueStoreEntryType.STRING.getLabel())) {
       throw new IllegalArgumentException("requested int entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.TEXT.getLabel());
+          "not of type: " + KeyValueStoreEntryType.STRING.getLabel());
     }
     return entry.value;
   }
@@ -288,7 +288,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   private void setStringEntry(String aspect, String key, String value) {
     SQLiteDatabase db = dbh.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.TEXT.getLabel(), value);
+        KeyValueStoreEntryType.STRING.getLabel(), value);
   }
 
   /**
@@ -312,7 +312,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   public void setStringEntry(SQLiteDatabase db, String aspect, String key, String value) {
 	    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-	            KeyValueStoreEntryType.TEXT.getLabel(), value);
+	            KeyValueStoreEntryType.STRING.getLabel(), value);
   }
 
   @Override

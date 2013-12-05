@@ -135,7 +135,7 @@ public class TableProperties {
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
       KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN,
-      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT, KEY_TABLE_TYPE, 
+      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT, KEY_TABLE_TYPE,
       KEY_ACCESS_CONTROL_TABLE_ID };
 
   // columns included in json properties
@@ -443,7 +443,6 @@ public class TableProperties {
    * The fields that reside in TableDefintions
    */
   private final String tableId;
-  private String tableKey;
   private String dbTableName;
   private TableType tableType;
   private String accessControls;
@@ -478,7 +477,7 @@ public class TableProperties {
   private String sumDisplayFormat;
   private KeyValueStoreHelper tableKVSH;
 
-  private TableProperties(DbHelper dbh, String tableId, String tableKey, String dbTableName,
+  private TableProperties(DbHelper dbh, String tableId, String dbTableName,
       String displayName, TableType tableType, String accessControls,
       ArrayList<String> columnOrder, ArrayList<String> primeColumns, String sortColumn,
       String indexColumn, String syncTag,
@@ -492,7 +491,6 @@ public class TableProperties {
     this.dbh = dbh;
     whereArgs = new String[] { tableId };
     this.tableId = tableId;
-    this.tableKey = tableKey;
     this.dbTableName = dbTableName;
     this.displayName = displayName;
     this.tableType = tableType;
@@ -654,7 +652,6 @@ public class TableProperties {
       }
     }
     return new TableProperties(dbh, props.get(TableDefinitionsColumns.TABLE_ID),
-        props.get(TableDefinitionsColumns.TABLE_KEY),
         props.get(TableDefinitionsColumns.DB_TABLE_NAME),
         props.get(KEY_DISPLAY_NAME), tableType,
         props.get(KEY_ACCESS_CONTROL_TABLE_ID),
@@ -698,11 +695,11 @@ public class TableProperties {
    *          type of the store to which you're adding.
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey,
+  public static TableProperties addTable(DbHelper dbh,
       String dbTableName, String displayName, TableType tableType,
       KeyValueStore.Type intendedStore) {
     String id = UUID.randomUUID().toString();
-    TableProperties tp = addTable(dbh, tableKey, dbTableName, displayName,
+    TableProperties tp = addTable(dbh, dbTableName, displayName,
         tableType, id, intendedStore);
     SQLiteDatabase db = dbh.getWritableDatabase();
     if (tableType == TableType.shortcut) {
@@ -793,7 +790,7 @@ public class TableProperties {
       throw new TableAlreadyExistsException("a table already exists with the" + " dbTableName: "
           + dbTableName + " or with the tableId: " + tableId);
     }
-    TableProperties tp = addTable(dbh, dbTableName, dbTableName, displayName,
+    TableProperties tp = addTable(dbh, dbTableName, displayName,
         TableType.valueOf(dbTableType), tableId, typeOfStore);
     if ( !tp.setFromJson(json) ) {
       throw new IllegalStateException("this should never happen");
@@ -808,8 +805,7 @@ public class TableProperties {
    * NB: Currently adds all the keys defined in this class to the key value
    * store as well. This should likely change.
    * <p>
-   * NB: Sets the table_key and db_table_name in TableDefinitions both to the
-   * dbTableName parameter.
+   * NB: Sets the db_table_name in TableDefinitions to the dbTableName parameter.
    *
    * @param dbh
    * @param dbTableName
@@ -819,7 +815,7 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(DbHelper dbh, String tableKey,
+  public static TableProperties addTable(DbHelper dbh,
       String dbTableName, String displayName, TableType tableType, String id,
       KeyValueStore.Type typeOfStore) {
     Log.e(t, "adding table with id: " + id);
@@ -840,7 +836,7 @@ public class TableProperties {
     try {
       db.beginTransaction();
       try {
-        Map<String, String> tableDefProps = TableDefinitions.addTable(db, id, tableKey,
+        Map<String, String> tableDefProps = TableDefinitions.addTable(db, id,
             dbTableName);
         mapProps.putAll(tableDefProps);
         tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
@@ -925,18 +921,14 @@ public class TableProperties {
     }
   }
 
-  public String getTableId() {
-    return tableId;
-  }
-
   /**
-   * This is the user-friendly-ish string that for the short term (May 6) is the
-   * display name on the server.
+   * This is the user-defined string that is not translated and uniquely identifies
+   * this data table. Begins as the cleaned up display name of the table.
    *
    * @return
    */
-  public String getTableKey() {
-    return this.tableKey;
+  public String getTableId() {
+    return tableId;
   }
 
   /**
