@@ -331,7 +331,11 @@ public class SyncProcessor {
        **************************/
       // First create the table definition on the server.
       String syncTag = synchronizer.createTable(tableId,
-          getColumnsForTable(tp), tp.getDbTableName());
+          getColumnsForTable(tp), tp.getDisplayName());
+      // set schema syncTag
+      tp.setSyncTag(syncTag);
+      // TODO: make sure tp copy is always current...
+
       // now create the TableProperties on the server.
       List<OdkTablesKeyValueStoreEntry> kvsEntries =
           getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER);
@@ -347,7 +351,7 @@ public class SyncProcessor {
        * Now we need to put some data on the server.
        **************************/
       Modification modification = synchronizer.insertRows(tableId,
-          tp.getSyncTag(), rowsToInsert);
+          syncTagProperties, rowsToInsert);
       updateDbFromModification(modification, table, tp);
       // If we made it here, then we know we pushed the data to the server AND
       // updated our db with the synctags appropriately.
