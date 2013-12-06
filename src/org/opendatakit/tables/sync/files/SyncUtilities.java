@@ -213,17 +213,17 @@ public class SyncUtilities {
       throw new IllegalStateException("io trouble in getKeyValueEntries");
     }
   }
-  
+
   /**
    * Deserialize the file manifest response from Aggregate.
    * @param response
    * @return
-   * @throws IOException 
-   * @throws JsonMappingException 
-   * @throws JsonParseException 
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonParseException
    */
-  public static List<OdkTablesFileManifestEntry> 
-      getManifestEntriesFromResponse(String response) throws 
+  public static List<OdkTablesFileManifestEntry>
+      getManifestEntriesFromResponse(String response) throws
       JsonParseException, JsonMappingException, IOException {
     TypeReference<ArrayList<OdkTablesFileManifestEntry>> typeRef =
         new TypeReference<ArrayList<OdkTablesFileManifestEntry>>() {};
@@ -246,8 +246,8 @@ public class SyncUtilities {
           OdkTablesFileManifestEntry fileEntry = mapper.readValue(
               fileString, typeRef);
           if (compareAndDownloadFile(context, tableId, entry.key, fileEntry)) {
-            String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-            String path = basePath + File.separator + tableId + File.separator + fileEntry.filename;
+            String basePath = ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+            String path = basePath + File.separator + fileEntry.filename;
             entry.value = path;
           } else {
             // TODO:
@@ -317,7 +317,7 @@ public class SyncUtilities {
       String key, OdkTablesFileManifestEntry fileEntry) {
     Log.d(TAG, "in compareAndDownloadFile");
     // the path for the base of where the app can save its files.
-    String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String basePath =  ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
       // make sure you don't return a bad string.
@@ -327,8 +327,7 @@ public class SyncUtilities {
      } else {
       // filename is the unrooted path of the file, so append the tableId
       // and the basepath.
-      String path = basePath + File.separator + tableId +
-          File.separator + fileEntry.filename;
+      String path = basePath + File.separator + fileEntry.filename;
       // Before we try dl'ing the file, we have to make the folder,
       // b/c otherwise if the folders down to the path have too many non-
       // existent folders, we'll get a FileNotFoundException when we open
@@ -376,8 +375,8 @@ public class SyncUtilities {
    * Make sure the files on the phone are up to date. Downloads the files
    * to the directory:
    *
-   *  ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
-   *    File.separator + tableId + File.separator + fileEntry.filename
+   *   ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId) +
+   *    File.separator + fileEntry.filename
    *
    * @param context
    * @param manFiles
@@ -387,7 +386,7 @@ public class SyncUtilities {
       List<OdkTablesFileManifestEntry> manFiles) {
     Log.d(TAG, "in compareAndDownloadFiles");
     // the path for the base of where the app can save its files.
-    String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String basePath =  ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
     for (OdkTablesFileManifestEntry fileEntry : manFiles) {
@@ -397,8 +396,7 @@ public class SyncUtilities {
       } else {
         // filename is the unrooted path of the file, so append the tableId
         // and the basepath.
-        String path = basePath + File.separator + tableId +
-            File.separator + fileEntry.filename;
+        String path = basePath + File.separator + fileEntry.filename;
         File newFile = new File(path);
         if (!newFile.exists()) {
           // the file doesn't exist on the system

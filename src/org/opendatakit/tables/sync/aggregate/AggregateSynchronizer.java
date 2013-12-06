@@ -612,10 +612,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // continue straight on.
       String appFolder =
           ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      String relativePathToTableFolder = TableFileUtils.DIR_TABLES +
-          File.separator + tableId;
-      String tableFolder = appFolder + File.separator +
-          relativePathToTableFolder;
+      String tableFolder = ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
       Set<String> tableDirsToExclude = new HashSet<String>();
       // We don't want to sync anything in the instances directory, because this
       // contains things like media attachments. These should instead be synched
@@ -935,11 +932,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // continue straight on.
     String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES +
-        File.separator + tableId + File.separator + "instances";
-//        TableFileUtils.DIR_INSTANCES;
-    String instancesFolderFullPath = appFolder + File.separator +
-        relativePathToInstancesFolder;
+    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
     List<String> relativePathsToAppFolderOnDevice =
         TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
             appFolder);

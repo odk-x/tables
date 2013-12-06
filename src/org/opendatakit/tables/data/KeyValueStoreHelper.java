@@ -131,7 +131,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return null;
     }
     if (!entry.type.equals(KeyValueStoreEntryType.ARRAYLIST.getLabel())) {
-      throw new IllegalArgumentException("requested int entry for " +
+      throw new IllegalArgumentException("requested list entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.ARRAYLIST.getLabel());
     }
@@ -162,7 +162,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return null;
     }
     if (!entry.type.equals(KeyValueStoreEntryType.STRING.getLabel())) {
-      throw new IllegalArgumentException("requested int entry for " +
+      throw new IllegalArgumentException("requested string entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.STRING.getLabel());
     }
@@ -180,7 +180,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return null;
     }
     if (!entry.type.equals(KeyValueStoreEntryType.OBJECT.getLabel())) {
-      throw new IllegalArgumentException("requested int entry for " +
+      throw new IllegalArgumentException("requested object entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.OBJECT.getLabel());
     }
@@ -198,7 +198,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return null;
     }
     if (!entry.type.equals(KeyValueStoreEntryType.BOOLEAN.getLabel())) {
-      throw new IllegalArgumentException("requested int entry for " +
+      throw new IllegalArgumentException("requested boolean entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.BOOLEAN.getLabel());
     }
@@ -216,7 +216,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return null;
     }
     if (!entry.type.equals(KeyValueStoreEntryType.NUMBER.getLabel())) {
-      throw new IllegalArgumentException("requested int entry for " +
+      throw new IllegalArgumentException("requested number entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.NUMBER.getLabel());
     }

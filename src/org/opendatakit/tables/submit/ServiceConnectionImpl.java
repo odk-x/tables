@@ -129,11 +129,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
       String aggregateUri) {
     String appFolder =
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String relativePathToInstancesFolder = TableFileUtils.DIR_TABLES +
-        File.separator + tableId + File.separator + "instances";
-//        TableFileUtils.DIR_INSTANCES;
-    String instancesFolderFullPath = appFolder + File.separator +
-        relativePathToInstancesFolder;
+    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
     List<String> relativePathsToAppFolderOnDevice =
         TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
             appFolder);

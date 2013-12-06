@@ -444,9 +444,9 @@ public class Aggregate extends SherlockActivity {
 //        URI responseUri = rt.postForLocation(filePostUri, new FileSystemResource(file));
         int i = 3; // just to trigger the debugger.
 
-        FileUploaderTask fut = new FileUploaderTask(Aggregate.this, "tables", aggregateUri,
+        FileUploaderTask fut = new FileUploaderTask(Aggregate.this, TableFileUtils.ODK_TABLES_APP_NAME, aggregateUri,
             accessToken);
-        String appFolder = ODKFileUtils.getAppFolder("tables");
+        String appFolder = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
         File appFolderFile = new File(appFolder);
         LinkedList<File> unexploredDirs = new LinkedList<File>();
         if (!appFolderFile.isDirectory()) {
