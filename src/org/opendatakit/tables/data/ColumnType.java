@@ -32,14 +32,14 @@ import java.util.Map;
  */
 public class ColumnType {
 	private static Map<String, ColumnType> nameMap = new HashMap<String, ColumnType>();
-	
+
 	/*
-	 * NB: All of these files must have an entry in the map in 
+	 * NB: All of these files must have an entry in the map in
 	 * AggregateSynchronizer or else sync won't work correctly.
 	 */
 
 	public static ColumnType NONE;
-	public static ColumnType TEXT;
+	public static ColumnType STRING;
 	public static ColumnType INTEGER;
 	public static ColumnType NUMBER;
 	public static ColumnType DATE;
@@ -88,7 +88,7 @@ public class ColumnType {
 
 	static {
 		nameMap.put("none", NONE = new ColumnType("none", "None", "string"));
-		nameMap.put("text", TEXT = new ColumnType("text", "Text", "string"));
+		nameMap.put("string", STRING = new ColumnType("string", "Text", "string"));
 		nameMap.put("integer", INTEGER = new ColumnType("integer", "Integer", "int"));
 		nameMap.put("number", NUMBER = new ColumnType("number", "Number", "decimal"));
 		nameMap.put("date", DATE = new ColumnType("date", "Date", "date"));

@@ -771,7 +771,7 @@ public class ColumnProperties {
     entry.tableId = tableId;
     entry.partition = partition;
     entry.aspect = elementKey;
-    entry.type = ColumnType.TEXT.name();
+    entry.type = ColumnType.STRING.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -1293,7 +1293,7 @@ public class ColumnProperties {
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
-          ColumnType.TEXT.name(), value);
+          ColumnType.STRING.name(), value);
     }
     Log.d(TAG, "updated string property " + property + " to " + value + " for table " + tableId
         + ", column " + elementKey);

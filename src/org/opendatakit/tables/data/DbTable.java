@@ -93,10 +93,11 @@ public class DbTable {
       ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
-      COLUMNS_TO_SYNC.put(DataTableColumns.URI_ACCESS_CONTROL, ColumnType.TEXT);
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.DATETIME);
-      COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.TEXT);
-      COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.TEXT);
+      COLUMNS_TO_SYNC.put(DataTableColumns.URI_ACCESS_CONTROL, ColumnType.STRING);
+      // Upload as Text so as not to worry about Long vs. Integer
+      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.STRING);
     }
 
     /**
