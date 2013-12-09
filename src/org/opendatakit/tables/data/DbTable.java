@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.Query.SqlData;
 import org.opendatakit.tables.sync.SyncUtil;
 
@@ -345,16 +347,15 @@ public class DbTable {
       String[] selectionKeys = new String[2];
       selectionKeys[0] = DataTableColumns.SYNC_STATE;
       selectionKeys[1] = DataTableColumns.CONFLICT_TYPE;
-      String syncStateConflictStr =
-          Integer.toString(SyncUtil.State.CONFLICTING);
+      String syncStateConflictStr = SyncState.conflicting.name();
       String conflictTypeLocalDeletedStr =
-          Integer.toString(SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES);
+          Integer.toString(ConflictType.LOCAL_DELETED_OLD_VALUES);
       String conflictTypeLocalUpdatedStr =
-          Integer.toString(SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
+          Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES);
       String conflictTypeServerDeletedStr =
-          Integer.toString(SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES);
+          Integer.toString(ConflictType.SERVER_DELETED_OLD_VALUES);
       String conflictTypeServerUpdatedStr = Integer.toString(
-          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES);
+          ConflictType.SERVER_UPDATED_UPDATED_VALUES);
       UserTable localTable = getRawWithSpecificQuery(userColumns,
           SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE,
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
@@ -501,7 +502,7 @@ public class DbTable {
         	}
         }
         // The admin columns get added here and also in actualAddRow
-        cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.INSERTING);
+        cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
         cv.put(DataTableColumns.URI_ACCESS_CONTROL, accessControl);
         cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timestamp);
         cv.put(DataTableColumns.FORM_ID, formId);
@@ -585,8 +586,8 @@ public class DbTable {
         boolean isSetToSync = syncKVSM.isSetToSync();
         // hilary's original
         //if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
-        if (isSetToSync && getSyncState(rowId) == SyncUtil.State.REST)
-          cv.put(DataTableColumns.SYNC_STATE, SyncUtil.State.UPDATING);
+        if (isSetToSync && getSyncState(rowId) == SyncState.rest)
+          cv.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
@@ -637,10 +638,10 @@ public class DbTable {
       String[] deleteWhereArgs = { rowId };
         String deleteSql = DataTableColumns.ID + " = ? AND " +
             DataTableColumns.CONFLICT_TYPE + " IN ( " +
-            SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES + ", " +
-            SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
+            ConflictType.SERVER_DELETED_OLD_VALUES + ", " +
+            ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
         ContentValues updateValues = new ContentValues();
-        updateValues.put(DataTableColumns.SYNC_STATE, SyncUtil.State.UPDATING);
+        updateValues.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
         updateValues.put(DataTableColumns.SYNC_TAG, syncTag);
         updateValues.putNull(DataTableColumns.CONFLICT_TYPE);
         for (String key : values.keySet()) {
@@ -675,13 +676,13 @@ public class DbTable {
       if (!isSetToSync) {
         deleteRowActual(rowId);
       } else {
-        int syncState = getSyncState(rowId);
-        if (syncState == SyncUtil.State.INSERTING) {
+        SyncState syncState = getSyncState(rowId);
+        if (syncState == SyncState.inserting) {
           deleteRowActual(rowId);
-        } else if (syncState == SyncUtil.State.REST || syncState == SyncUtil.State.UPDATING) {
+        } else if (syncState == SyncState.rest || syncState == SyncState.updating) {
           String[] whereArgs = { rowId };
           ContentValues values = new ContentValues();
-          values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.DELETING);
+          values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
           SQLiteDatabase db = dbh.getWritableDatabase();
           try {
 	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
@@ -720,19 +721,21 @@ public class DbTable {
      * @return the sync state of the row (see {@link SyncUtil.State}), or -1 if
      *         the row does not exist.
      */
-    private int getSyncState(String rowId) {
+    private SyncState getSyncState(String rowId) {
 		SQLiteDatabase db = null;
 		Cursor c = null;
 		try {
 	      db = dbh.getReadableDatabase();
 	      c = db.query(tp.getDbTableName(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID + " = ?",
 	          new String[] { rowId }, null, null, null);
-	      int syncState = -1;
 	      if (c.moveToFirst()) {
 	        int syncStateIndex = c.getColumnIndex(DataTableColumns.SYNC_STATE);
-	        syncState = c.getInt(syncStateIndex);
+	        if ( !c.isNull(syncStateIndex) ) {
+	          String val = c.getString(syncStateIndex);
+	          return SyncState.valueOf(val);
+	        }
 	      }
-	      return syncState;
+	      return null;
 	    } finally {
     		if ( c != null && !c.isClosed() ) {
     			c.close();

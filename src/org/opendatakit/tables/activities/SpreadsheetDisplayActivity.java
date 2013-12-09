@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -550,8 +551,10 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	        // Now we need to check to see if we are a row in conflict, in which
 	        // case we want to allow resolution of that row.
 	        final int rowNumber = cellId / table.getWidth();
-	        if (Integer.parseInt(table.getMetadataByElementKey(rowNumber,
-	            DataTableColumns.SYNC_STATE)) == SyncUtil.State.CONFLICTING) {
+	        String syncStateName = table.getMetadataByElementKey(rowNumber,
+                                     DataTableColumns.SYNC_STATE);
+	        if ( syncStateName != null && syncStateName.length() != 0 &&
+	            SyncState.valueOf(syncStateName) == SyncState.conflicting ) {
 	          // Then huzzah, we need to add an option to resolve.
 	          itemIds.add(MENU_ITEM_ID_RESOLVE_ROW_CONFLICT);
 	          itemLabels.add(context.getString(R.string.resolve_conflict));

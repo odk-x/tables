@@ -13,6 +13,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.Table;
 import org.opendatakit.tables.sync.SyncRow;
@@ -27,7 +28,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
     verify(synchronizer).createTable(eq(tp.getTableId()), eq(tp.getDisplayName()),
         argThat(containsKeys(dbColumnNames)), anyString());
     tp = this.dm.getTableProperties(tp.getTableId());
-    assertEquals(SyncUtil.State.REST, tp.getSyncState());
+    assertEquals(SyncState.rest.name(),tp.getSyncState());
     assertEquals(false, tp.isTransactioning());
   }
 
@@ -54,7 +55,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
         new String[] { Data.Columns.name.name() }, new String[] { Data.Rows.dylan.name() }, null);
 
     assertEquals(1, rows.getHeight());
-    assertEquals(SyncUtil.State.REST, Integer.parseInt(rows.getData(0, 0)));
+    assertEquals(SyncState.rest.name(),rows.getData(0, 0));
     assertEquals(SyncUtil.boolToInt(false), Integer.parseInt(rows.getData(0, 1)));
   }
 
@@ -79,7 +80,7 @@ public class SyncProcessorTest extends BaseSyncProcessorTest {
     Table rows = table.getRaw(new String[] { DbTable.DB_SYNC_STATE, DbTable.DB_TRANSACTIONING },
         null, null, null);
     assertEquals(1, rows.getHeight());
-    assertEquals(SyncUtil.State.REST, Integer.parseInt(rows.getData(0, 0)));
+    assertEquals(SyncState.rest.name(), rows.getData(0, 0));
     assertEquals(SyncUtil.boolToInt(false), Integer.parseInt(rows.getData(0, 1)));
   }
 

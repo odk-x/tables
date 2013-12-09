@@ -34,6 +34,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;

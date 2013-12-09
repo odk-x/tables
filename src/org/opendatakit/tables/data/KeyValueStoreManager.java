@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.Cursor;

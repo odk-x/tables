@@ -23,13 +23,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.tables.utils.FileUtils;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;

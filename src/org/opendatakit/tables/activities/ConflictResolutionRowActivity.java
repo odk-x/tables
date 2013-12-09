@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ConflictTable;
@@ -13,7 +14,6 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConcordantColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConflictColumn;
@@ -204,18 +204,18 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         Integer.parseInt(mServer.getRowAtIndex(mRowNumber)
             .getDataOrMetadataByElementKey(DataTableColumns.CONFLICT_TYPE));
     if (localConflictType ==
-          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+          ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
         serverConflictType ==
-          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+          ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
       // Then it's a normal conflict. Hide the elements of the view relevant
       // to deletion restoration.
       mTextViewDeletionMessage.setVisibility(View.GONE);
       mRadioGroupDeletion.setVisibility(View.GONE);
       this.onDecisionMade();
     } else if (localConflictType ==
-          SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES &&
+          ConflictType.LOCAL_DELETED_OLD_VALUES &&
         serverConflictType ==
-          SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+          ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
       // Then the local row was deleted, but someone had inserted a newer
       // updated version on the server.
       this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);
@@ -237,9 +237,9 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
       mAdapter.setConflictColumnsEnabled(false);
       mAdapter.notifyDataSetChanged();
     } else if (localConflictType ==
-          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
+          ConflictType.LOCAL_UPDATED_UPDATED_VALUES &&
         serverConflictType ==
-          SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES) {
+          ConflictType.SERVER_DELETED_OLD_VALUES) {
       // Then the row was updated locally but someone had deleted it on the
       // server.
       this.mTextViewDeletionMessage.setVisibility(View.VISIBLE);

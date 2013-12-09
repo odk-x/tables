@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
@@ -377,21 +378,21 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         if (DbTable.getAdminColumns().contains(elementKey)) {
           isMetadataRule = true;
           // We know it must be a String rep of an int.
-          int targetState = Integer.parseInt(colorRule.getVal());
+          SyncState targetState = SyncState.valueOf(colorRule.getVal());
           // For now we need to handle the special cases of the sync state.
-          if (targetState == SyncUtil.State.INSERTING) {
+          if (targetState == SyncState.inserting) {
             description =
                 getString(R.string.sync_state_equals_inserting_message);
-          } else if (targetState == SyncUtil.State.UPDATING) {
+          } else if (targetState == SyncState.updating) {
             description =
                 getString(R.string.sync_state_equals_updating_message);
-          } else if (targetState == SyncUtil.State.REST) {
+          } else if (targetState == SyncState.rest) {
             description =
                 getString(R.string.sync_state_equals_rest_message);
-          } else if (targetState == SyncUtil.State.DELETING) {
+          } else if (targetState == SyncState.deleting) {
             description =
                 getString(R.string.sync_state_equals_deleting_message);
-          } else if (targetState == SyncUtil.State.CONFLICTING) {
+          } else if (targetState == SyncState.conflicting) {
             description =
                 getString(R.string.sync_state_equals_conflicting_message);
           } else {

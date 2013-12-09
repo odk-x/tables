@@ -31,7 +31,9 @@ import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
@@ -40,7 +42,6 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
-import org.opendatakit.tables.data.SyncState;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
@@ -305,7 +306,7 @@ public class SyncProcessor {
     tableResult.setTableAction(SyncState.inserting);
 
     List<String> userColumns = tp.getColumnOrder();
-    List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncUtil.State.INSERTING);
+    List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncState.inserting);
     // If there are rows, then we have to let tableResult know it.
     if (rowsToInsert.size() > 0) {
       tableResult.setHadLocalDataChanges(true);
@@ -372,7 +373,7 @@ public class SyncProcessor {
       success = false;
     } finally {
       if (success) {
-        updateRowsState(table, getRowIdsAsArray(rowsToInsert), SyncUtil.State.REST);
+        updateRowsState(table, getRowIdsAsArray(rowsToInsert), SyncState.rest);
       }
     }
 
@@ -486,9 +487,9 @@ public class SyncProcessor {
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
-    List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncUtil.State.INSERTING);
-    List<SyncRow> rowsToUpdate = getRowsToPushToServer(table, userColumns, SyncUtil.State.UPDATING);
-    List<SyncRow> rowsToDelete = getRowsToPushToServer(table, userColumns, SyncUtil.State.DELETING);
+    List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncState.inserting);
+    List<SyncRow> rowsToUpdate = getRowsToPushToServer(table, userColumns, SyncState.updating);
+    List<SyncRow> rowsToDelete = getRowsToPushToServer(table, userColumns, SyncState.deleting);
 
     if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 || rowsToDelete.size() != 0) {
       if (tableResult.hadLocalDataChanges()) {
@@ -548,7 +549,7 @@ public class SyncProcessor {
     } finally {
       if (success) {
         allRows.removeAll(rowsToDelete);
-        updateRowsState(table, getRowIdsAsArray(allRows), SyncUtil.State.REST);
+        updateRowsState(table, getRowIdsAsArray(allRows), SyncState.rest);
       }
     }
 
@@ -666,11 +667,11 @@ public class SyncProcessor {
       boolean found = false;
       for (int i = 0; i < allRowIds.getHeight(); i++) {
         String rowId = allRowIds.getRowId(i);
-        String stateStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
-        int state = Integer.parseInt(stateStr);
         if (row.getRowId().equals(rowId)) {
+          String stateStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
+          SyncState state = SyncState.valueOf(stateStr);
           found = true;
-          if (state == SyncUtil.State.REST) {
+          if (state == state.rest) {
             if (row.isDeleted())
               rowsToDelete.add(row);
             else
@@ -711,9 +712,9 @@ public class SyncProcessor {
       // delete conflicting row if it already exists
       String whereClause = String.format("%s = ? AND %s = ? AND %s IN " + "( ?, ? )",
           DataTableColumns.ID, DataTableColumns.SYNC_STATE, DataTableColumns.CONFLICT_TYPE);
-      String[] whereArgs = { row.getRowId(), String.valueOf(SyncUtil.State.CONFLICTING),
-          String.valueOf(SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES),
-          String.valueOf(SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) };
+      String[] whereArgs = { row.getRowId(), SyncState.conflicting.name(),
+          String.valueOf(ConflictType.SERVER_DELETED_OLD_VALUES),
+          String.valueOf(ConflictType.SERVER_UPDATED_UPDATED_VALUES) };
       table.deleteRowActual(whereClause, whereArgs);
 
       // update existing row
@@ -728,18 +729,18 @@ public class SyncProcessor {
       Row localRow = localVersionsOfConflictingRows.get(row.getRowId());
       String localRowSyncStateStr = localRow
           .getDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
-      int localRowSyncState = Integer.parseInt(localRowSyncStateStr);
+      SyncState localRowSyncState = SyncState.valueOf(localRowSyncStateStr);
       int localRowConflictType;
-      if (localRowSyncState == SyncUtil.State.UPDATING) {
-        localRowConflictType = SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
+      if (localRowSyncState == SyncState.updating) {
+        localRowConflictType = ConflictType.LOCAL_UPDATED_UPDATED_VALUES;
         Log.i(TAG, "local row was in sync state UPDATING, changing to "
             + "CONFLICT and setting conflict type to: " + localRowConflictType);
-      } else if (localRowSyncState == SyncUtil.State.DELETING) {
-        localRowConflictType = SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES;
+      } else if (localRowSyncState == SyncState.deleting) {
+        localRowConflictType = ConflictType.LOCAL_DELETED_OLD_VALUES;
         Log.i(TAG, "local row was in sync state DELETING, changing to "
             + "CONFLICT and updating conflict type to: " + localRowConflictType);
       } else {
-        if (localRowSyncState != SyncUtil.State.CONFLICTING) {
+        if (localRowSyncState != SyncState.conflicting) {
           // If we ever make it here we're potentially in big trouble, as we may
           // have updated the db. At the least, we're disobeying the protocol.
           // Throwing an exception, however, could lead to being in an even
@@ -760,7 +761,7 @@ public class SyncProcessor {
             + localRowConflictTypeBeforeSync);
       }
       values.put(DataTableColumns.ID, row.getRowId());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
+      values.put(DataTableColumns.SYNC_STATE, SyncState.conflicting.name());
       values.put(DataTableColumns.CONFLICT_TYPE, localRowConflictType);
       table.actualUpdateRowByRowId(row.getRowId(), values);
 
@@ -773,12 +774,12 @@ public class SyncProcessor {
       // This is inserting the version of the row from the server.
       int serverRowConflictType;
       if (row.isDeleted()) {
-        serverRowConflictType = SyncUtil.ConflictType.SERVER_DELETED_OLD_VALUES;
+        serverRowConflictType = ConflictType.SERVER_DELETED_OLD_VALUES;
       } else {
-        serverRowConflictType = SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES;
+        serverRowConflictType = ConflictType.SERVER_UPDATED_UPDATED_VALUES;
       }
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.CONFLICTING));
+      values.put(DataTableColumns.SYNC_STATE, SyncState.conflicting.name());
       values.put(DataTableColumns.CONFLICT_TYPE, serverRowConflictType);
       table.actualAddRow(values);
 
@@ -786,12 +787,12 @@ public class SyncProcessor {
       // a server version of the row should only ever be updating/updating,
       // deleted/updating, or updating/deleted. Anything else and we're in
       // trouble.
-      if (localRowConflictType == SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES
-          && serverRowConflictType != SyncUtil.ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
+      if (localRowConflictType == ConflictType.LOCAL_DELETED_OLD_VALUES
+          && serverRowConflictType != ConflictType.SERVER_UPDATED_UPDATED_VALUES) {
         Log.e(TAG, "local row conflict type is local_deleted, but server "
             + "row conflict_type is not server_udpated. These states must"
             + " go together, something went wrong.");
-      } else if (localRowConflictType != SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
+      } else if (localRowConflictType != ConflictType.LOCAL_UPDATED_UPDATED_VALUES) {
         Log.e(TAG, "localRowConflictType was not local_deleted or "
             + "local_updated! this is an error. local conflict type: " + localRowConflictType
             + ", server conflict type: " + serverRowConflictType);
@@ -811,7 +812,7 @@ public class SyncProcessor {
 
       values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, SyncUtil.State.REST);
+      values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
         String colName = entry.getKey();
@@ -829,7 +830,7 @@ public class SyncProcessor {
       ContentValues values = new ContentValues();
 
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
-      values.put(DataTableColumns.SYNC_STATE, String.valueOf(SyncUtil.State.REST));
+      values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
         String colName = entry.getKey();
@@ -900,8 +901,8 @@ public class SyncProcessor {
    * @throws IllegalArgumentException
    *           if the requested state is CONFLICTING.
    */
-  private List<SyncRow> getRowsToPushToServer(DbTable table, List<String> columnsToSync, int state) {
-    if (state == SyncUtil.State.CONFLICTING) {
+  private List<SyncRow> getRowsToPushToServer(DbTable table, List<String> columnsToSync, SyncState state) {
+    if (state == SyncState.conflicting) {
       throw new IllegalArgumentException("requested state CONFLICTING for"
           + " rows to push to the server.");
     }
@@ -909,7 +910,7 @@ public class SyncProcessor {
     // Collect
     UserTable rows = table.getRaw(columnsToSync, new String[] { DataTableColumns.SAVEPOINT_TYPE,
         DataTableColumns.SYNC_STATE },
-        new String[] { DbTable.SavedStatus.COMPLETE.name(), String.valueOf(state) }, null);
+        new String[] { DbTable.SavedStatus.COMPLETE.name(), state.name() }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getHeight();
@@ -979,9 +980,9 @@ public class SyncProcessor {
     tp.setTransactioning(false);
   }
 
-  private void updateRowsState(DbTable table, String[] rowIds, int state) {
+  private void updateRowsState(DbTable table, String[] rowIds, SyncState state) {
     ContentValues values = new ContentValues();
-    values.put(DataTableColumns.SYNC_STATE, state);
+    values.put(DataTableColumns.SYNC_STATE, state.name());
     for (String rowId : rowIds) {
       table.actualUpdateRowByRowId(rowId, values);
     }

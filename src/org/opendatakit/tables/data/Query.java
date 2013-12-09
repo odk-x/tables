@@ -20,8 +20,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.common.android.provider.SyncState;
 
 
 public class Query {
@@ -420,7 +421,7 @@ public class Query {
             sd.appendArgs(joinSd.getArgList());
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DataTableColumns.SYNC_STATE + " != " + SyncUtil.State.DELETING);
+                DataTableColumns.SYNC_STATE + " != '" + SyncState.deleting.name() + "'");
 
         // add restriction for not showing rows of conflict_type
         // SERVER_DELETED or SERVER_UPDATED.
@@ -428,8 +429,8 @@ public class Query {
           DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
           tp.getDbTableName() + "." + DataTableColumns.CONFLICT_TYPE +
           " IN ( " +
-          SyncUtil.ConflictType.LOCAL_DELETED_OLD_VALUES + ", " +
-          SyncUtil.ConflictType.LOCAL_UPDATED_UPDATED_VALUES + "))");
+          ConflictType.LOCAL_DELETED_OLD_VALUES + ", " +
+          ConflictType.LOCAL_UPDATED_UPDATED_VALUES + "))");
 
         // add restriction for ODK Collect intermediate status...
         sd.appendSql(" AND " + tp.getDbTableName() + "." +
@@ -602,7 +603,7 @@ public class Query {
             idsd.appendArgs(joinSd.getArgList());
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DataTableColumns.SYNC_STATE + " = " + SyncUtil.State.CONFLICTING);
+                DataTableColumns.SYNC_STATE + " = '" + SyncState.conflicting.name() + "'");
 
 
         // add restriction for ODK Collect intermediate status...
@@ -631,11 +632,9 @@ public class Query {
         sd.appendSql(") jt ON ");
         sd.appendSql(tp.getDbTableName() + "." + DataTableColumns.ID + " = jt." +
                 DataTableColumns.ID);
-        sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
-                DataTableColumns.ID + ", " + DataTableColumns.SYNC_STATE + " ");
         // so that conflicting rows are always before deleting rows
-        sd.appendSql((SyncUtil.State.CONFLICTING > SyncUtil.State.DELETING) ?
-                "DESC" : "ASC");
+        sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
+                DataTableColumns.ID + " ASC, " + DataTableColumns.SYNC_STATE + " ASC");
         return sd;
     }
 

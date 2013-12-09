@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 
 import android.content.ContentValues;

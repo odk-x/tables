@@ -1,6 +1,6 @@
 package org.opendatakit.tables.sync;
 
-import org.opendatakit.tables.data.SyncState;
+import org.opendatakit.common.android.provider.SyncState;
 
 /**
  * The mapping of a table to the status of its synchronization.
