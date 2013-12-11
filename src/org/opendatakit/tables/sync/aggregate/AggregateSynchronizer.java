@@ -161,7 +161,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public AggregateSynchronizer(String aggregateUri, String accessToken)
       throws InvalidAuthTokenException {
     URI uri = URI.create(aggregateUri).normalize();
-    uri = uri.resolve("/odktables/tables/").normalize();
+    uri = uri.resolve("/odktables/" + TableFileUtils.ODK_TABLES_APP_NAME + "/").normalize();
     this.baseUri = uri;
 
     this.mHttpClient =
