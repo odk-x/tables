@@ -104,7 +104,7 @@ public class CustomDetailView extends CustomView {
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
     if (this.mFilename != null) {
-      String fullPath = FileProvider.getAsUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
+      String fullPath = FileProvider.getAsWebViewUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
           ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(mFilename)));
       load(fullPath);
     } else {

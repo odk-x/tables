@@ -284,8 +284,7 @@ public class UserTable {
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
         String uriFragment = (String) m.get("uriFragment");
-        String uri = FileProvider.getAsUri(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
-        File f = FileProvider.getAsFile(context, uri);
+        File f = FileProvider.getAsFile(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
         return f.getName();
       } catch (JsonParseException e) {
         e.printStackTrace();

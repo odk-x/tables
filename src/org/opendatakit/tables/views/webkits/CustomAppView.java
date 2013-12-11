@@ -81,7 +81,7 @@ public class CustomAppView extends CustomView {
     // First we want to see if we're supposed to display a custom HTML, or if
     // we want to display just the homescreen.html file. We'll check for the
     // key.
-    String fullPath = FileProvider.getAsUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
+    String fullPath = FileProvider.getAsWebViewUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
         ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(dir + "/" + mFilename)));
     load(fullPath);
     initView();

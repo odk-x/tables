@@ -406,8 +406,7 @@ public class CollectUtil {
             Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
             if ( ref != null ) {
               String uriFragment = ref.get("uriFragment");
-              String uri = FileProvider.getAsUri(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
-              File f = FileProvider.getAsFile(context, uri);
+              File f = FileProvider.getAsFile(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
               value = f.getName();
             } else {
               value = null;

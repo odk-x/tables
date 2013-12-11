@@ -229,7 +229,7 @@ public class CustomTableView extends CustomView implements
 		addJavascriptInterface(
 				tableData.getJavascriptInterfaceWithWeakReference(), "data");
 		if (filename != null) {
-		  String fullPath = FileProvider.getAsUri(getContext(), TableFileUtils.ODK_TABLES_APP_NAME,
+		  String fullPath = FileProvider.getAsWebViewUri(getContext(), TableFileUtils.ODK_TABLES_APP_NAME,
 		        ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
 			load(fullPath);
 		} else {
