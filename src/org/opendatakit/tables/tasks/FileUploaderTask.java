@@ -35,49 +35,49 @@ import android.net.Uri;
 import android.os.AsyncTask;
 
 /**
- * Task for uploading files to the server. Based on Collect's 
+ * Task for uploading files to the server. Based on Collect's
  * InstanceUploaderTask.
  * @author sudar.sam@gmail.com
  *
  */
-public class FileUploaderTask extends AsyncTask<String, Integer, 
+public class FileUploaderTask extends AsyncTask<String, Integer,
     FileUploaderTask.Outcome> {
-  
+
   private static final String SEPARATOR = "/";
-  
+
   // The id of the app whose files will be synced.
   private final String mAppId;
   private final Context mContext;
   private final String mAggregateUri;
   private final String mFileServerPath;
   private final RestTemplate mRestTemplate;
-  
+
   private ProgressDialog mProgressDialog;
-  
+
   public static class Outcome {
     public Uri mAuthRequestingServer = null;
     public HashMap<String, String> mResults = new HashMap<String, String>();
   }
-  
-  public FileUploaderTask(Context context, String appId, String aggregateUri, 
+
+  public FileUploaderTask(Context context, String appId, String aggregateUri,
       String authtoken) {
     this.mContext = context;
     this.mAppId = appId;
     this.mAggregateUri = aggregateUri;
-    URI uri = URI.create(aggregateUri).normalize();
-    uri = uri.resolve(SyncUtil.getFileServerPath()).normalize();
+    URI uriBase = URI.create(aggregateUri).normalize();
+    URI uri = uriBase.resolve(SyncUtil.getFileServerPath()).normalize();
     this.mFileServerPath = uri.toString();
     // Now get the rest template.
-    List<ClientHttpRequestInterceptor> interceptors = 
+    List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(authtoken));
+    interceptors.add(new AggregateRequestInterceptor(uriBase, authtoken));
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     rt.setInterceptors(interceptors);
     this.mRestTemplate = rt;
   }
-  
+
   /**
-   * Upload a single file and add the result to the runningOutcome. 
+   * Upload a single file and add the result to the runningOutcome.
    * @param file the actual file to be uploaded
    * @param relativePath the path of the file relative to the odk directory--
    * i.e. including the app id, and beginning with "/".
@@ -87,20 +87,20 @@ public class FileUploaderTask extends AsyncTask<String, Integer,
   private boolean uploadOneFile(FileSystemResource file, String relativePath,
       Outcome runningOutcome) {
     String escapedPath = SyncUtil.formatPathForAggregate(relativePath);
-    URI filePostUri = 
+    URI filePostUri =
         URI.create(mFileServerPath).resolve(mAppId + escapedPath).normalize();
     URI responseUri = this.mRestTemplate.postForLocation(filePostUri, file);
     runningOutcome.mResults.put(relativePath, "tried something");
     return true;
   }
-  
+
   @Override
   protected void onPreExecute() {
-    this.mProgressDialog = ProgressDialog.show(mContext, 
+    this.mProgressDialog = ProgressDialog.show(mContext,
         mContext.getString(R.string.please_wait),
         mContext.getString(R.string.synchronizing));
   }
-  
+
   @Override
   protected Outcome doInBackground(String... filePaths) {
     // filePaths should contain all of the files (relative to the odk folder--
@@ -115,7 +115,7 @@ public class FileUploaderTask extends AsyncTask<String, Integer,
     }
     return outcome;
   }
-  
+
   @Override
   protected void onPostExecute(Outcome outcome) {
     this.mProgressDialog.dismiss();

@@ -288,7 +288,7 @@ public class SyncProcessor {
 
     // Here we'll sycnhronize the table files.
     try {
-      synchronizer.syncNonMediaTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
+      synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
     } catch (IOException e) {
       ioException("synchronizeTableInserting--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " + "files");
@@ -350,7 +350,7 @@ public class SyncProcessor {
       if (syncMediaFiles) {
         Log.d(TAG, "[synchronizeTableInserting] synching media files");
         try {
-          synchronizer.syncTableMediaFiles(tp.getTableId());
+          synchronizer.syncRowDataFiles(tp.getTableId());
         } catch (IOException e) {
           ioException("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
           Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " + "files");
@@ -439,7 +439,7 @@ public class SyncProcessor {
     Log.i(TAG, "REST " + tp.getDisplayName());
 
     try {
-      synchronizer.syncNonMediaTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
+      synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
     } catch (IOException e) {
       ioException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
@@ -526,7 +526,7 @@ public class SyncProcessor {
       if (syncMediaFiles) {
         try {
           Log.d(TAG, "[synchronizeTableRest] synching media files");
-          synchronizer.syncTableMediaFiles(tp.getTableId());
+          synchronizer.syncRowDataFiles(tp.getTableId());
         } catch (IOException e) {
           ioException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
           Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");

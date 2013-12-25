@@ -289,12 +289,12 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
-	
+
 	<!-- ODKSubmit things -->
 	<string name="send_using_submit">Send Using ODK Submit</string>
 	<string name="cannot_register_app_with_submit">Cannot register app with submit!</string>
 	<string name="cannot_register_data_with_submit">Cannot register data with submit!</string>
-	
+
 	<!-- Conflict Resolution Stuff -->
 	<string name="take_local">Take Local Version</string>
 	<string name="take_server">Take Server Version</string>
@@ -311,4 +311,5 @@
 	<string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
 	<string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
 	<string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
+	<string name="shortcut_name">ODK Tables App</string>
 </resources>

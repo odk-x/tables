@@ -31,7 +31,6 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;

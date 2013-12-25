@@ -24,7 +24,6 @@ import java.util.Set;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.ColorRule;
-import org.opendatakit.tables.sync.SyncUtil;
 
 import android.graphics.Color;
 

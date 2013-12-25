@@ -95,6 +95,16 @@
         <activity android:name=".activities.importexport.ExportCSVActivity"/>
         <activity android:name=".activities.settings.ListDisplaySettings"/>
         <activity android:name=".activities.settings.MainDisplaySettings"/>
+        <activity
+            android:name="org.opendatakit.tables.activities.AndroidShortcuts"
+            android:label="@string/shortcut_name"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <receiver android:name=".sms.SmsReceiver" >
             <intent-filter>

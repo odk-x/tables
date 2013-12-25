@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.tasks;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,8 +89,9 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
     // Now get the rest template.
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(authToken));
+    interceptors.add(new AggregateRequestInterceptor(URI.create(aggregateUri).normalize(), authToken));
     this.mRestTemplate = SyncUtil.getRestTemplateForString();
+    this.mRestTemplate.setInterceptors(interceptors);
   }
 
   @Override

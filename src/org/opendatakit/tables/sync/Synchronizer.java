@@ -137,6 +137,13 @@ public interface Synchronizer {
           throws IOException;
 
   /**
+   * Synchronize all the files in an app, including both app-level and table-
+   * level files, but not those files that are in unsynched directories.
+   * @throws IOException
+   */
+  public void syncAllFiles() throws IOException;
+
+  /**
    * Synchronizes the app level files. This includes any files that are not
    * associated with a particular table--i.e. those that are not in the
    * directory appid/tables/. It also excludes those files that are in a set of
@@ -148,32 +155,24 @@ public interface Synchronizer {
   public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException;
 
   /**
-   * Synchronize all the files in an app, including both app-level and table-
-   * level files, but not those files that are in unsynched directories.
-   * @throws IOException
-   */
-  public void syncAllFiles() throws IOException;
-
-  /**
    * Sync only the files associated with the specified table. This does NOT
-   * sync any media files--those files that are associated with individual rows
-   * of the table.
+   * sync any media files associated with individual rows of the table.
+   *
    * @param tableId
    * @param pushLocal true if the local files should be pushed
    * @throws IOException
    */
-  public void syncNonMediaTableFiles(String tableId, boolean pushLocal)
+  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal)
       throws IOException;
 
   /**
-   * Sync only the media attachments of a table--those files that belong to
-   * individual rows of the table. This would include things like any pictures
-   * that have been collected as part of the form. I.e. those files that are
-   * considered data, rather than metadata like html defining a list view for
-   * the table.
+   * Sync only the media files associated with individual rows of a table.
+   * This includes things like any pictures that have been collected as part
+   * of a form. I.e. those files that are considered data.
+   *
    * @param tableId
    * @throws IOException
    */
-  public void syncTableMediaFiles(String tableId) throws IOException;
+  public void syncRowDataFiles(String tableId) throws IOException;
 
 }

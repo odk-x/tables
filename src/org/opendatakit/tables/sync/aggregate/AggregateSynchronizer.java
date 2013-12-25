@@ -108,41 +108,7 @@ public class AggregateSynchronizer implements Synchronizer {
   /** Value for {@link #FILE_MANIFEST_PARAM_APP_LEVEL_FILES}. */
   private static final String VALUE_TRUE = "true";
 
-  // TODO: how do we support new column types without breaking this map???
-  // This map should be handled on the aggregate side, not on the Tables side.
-  // This is because a column definition stores the type on Aggregate, and that
-  // type is what's pulled back down during sync. Therefore you lose
-  // information when you pull back down from the server, as you don't know
-  // what it originally was.
-//  public static final Map<ColumnType, Column.ColumnType> types =
-//		  				new HashMap<ColumnType, Column.ColumnType>() {
-//    {
-//        put(ColumnType.NONE, Column.ColumnType.STRING);
-//        put(ColumnType.TEXT, Column.ColumnType.STRING);
-//        put(ColumnType.INTEGER, Column.ColumnType.INTEGER);
-//        put(ColumnType.NUMBER, Column.ColumnType.DECIMAL);
-//        put(ColumnType.DATE, Column.ColumnType.STRING);
-//        put(ColumnType.DATETIME, Column.ColumnType.STRING);
-//        put(ColumnType.TIME, Column.ColumnType.STRING);
-//        put(ColumnType.BOOLEAN, Column.ColumnType.BOOLEAN); // TODO: confirm this propagates OK?
-//        put(ColumnType.MIMEURI, Column.ColumnType.STRING); // TODO: need File + contentType entry in Aggregate (as JSON in Tables)
-//        put(ColumnType.MULTIPLE_CHOICES, Column.ColumnType.STRING); // TODO: should be extra-wide storage or split out in Aggregate???
-//        put(ColumnType.GEOPOINT, Column.ColumnType.STRING); // TODO: can we handle this generically?
-//      put(ColumnType.DATE_RANGE, Column.ColumnType.STRING); // not in Collect, Aggregate
-//      put(ColumnType.PHONE_NUMBER, Column.ColumnType.STRING); // not in Collect, Aggregate
-//      put(ColumnType.COLLECT_FORM, Column.ColumnType.STRING); // not in Collect, Aggregate
-//
-//      // TODO: goes away -- becomes MULTIPLE_CHOICES + item element type
-//      put(ColumnType.MC_OPTIONS, Column.ColumnType.STRING); // select1/select - not in Collect, Aggregate
-//
-//      // TODO: what is this for???
-//      put(ColumnType.TABLE_JOIN, Column.ColumnType.STRING);// not in Collect; needs to be in Aggregate
-//
-//      put(ColumnType.IMAGEURI, Column.ColumnType.STRING);
-//    }
-//    private static final long serialVersionUID = 1L;
-//  };
-
+  private final String accessToken;
   private final RestTemplate rt;
   private final HttpHeaders requestHeaders;
   private final URI baseUri;
@@ -172,14 +138,14 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpConnectionParams.setSoTimeout(params,
         TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
 
-    URI fileManifestUri = URI.create(aggregateUri).normalize();
-    fileManifestUri = fileManifestUri.resolve(FILE_MANIFEST_PATH).normalize();
+    URI uriBase = URI.create(aggregateUri).normalize();
+    URI fileManifestUri = uriBase.resolve(FILE_MANIFEST_PATH).normalize();
     this.mFileManifestUri = fileManifestUri;
     this.mFilesUri = getFilePathURI(aggregateUri);
 
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(accessToken));
+    interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken));
 
     this.rt = new RestTemplate();
     this.rt.setInterceptors(interceptors);
@@ -203,6 +169,7 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources = new HashMap<String, TableResource>();
 
     checkAccessToken(accessToken);
+    this.accessToken = accessToken;
   }
 
   /**
@@ -600,7 +567,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncNonMediaTableFiles(String tableId, boolean pushLocal)
+  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal)
       throws IOException {
     List<OdkTablesFileManifestEntry> manifest =
         getTableLevelFileManifest(tableId);
@@ -644,6 +611,10 @@ public class AggregateSynchronizer implements Synchronizer {
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES,
         VALUE_TRUE);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
+    List<ClientHttpRequestInterceptor> interceptors =
+        new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
+    rt.setInterceptors(interceptors);
     ResponseEntity<String> responseEntity =
         rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
@@ -660,6 +631,10 @@ public class AggregateSynchronizer implements Synchronizer {
         TableFileUtils.ODK_TABLES_APP_NAME);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
+    List<ClientHttpRequestInterceptor> interceptors =
+        new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
+    rt.setInterceptors(interceptors);
     ResponseEntity<String> responseEntity =
         rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
@@ -674,6 +649,10 @@ public class AggregateSynchronizer implements Synchronizer {
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
         TableFileUtils.ODK_TABLES_APP_NAME);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
+    List<ClientHttpRequestInterceptor> interceptors =
+        new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
+    rt.setInterceptors(interceptors);
     ResponseEntity<String> responseEntity =
         rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
             String.class);
@@ -713,6 +692,10 @@ public class AggregateSynchronizer implements Synchronizer {
           .normalize();
     Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
+    List<ClientHttpRequestInterceptor> interceptors =
+        new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
+    rt.setInterceptors(interceptors);
     URI responseUri = rt.postForLocation(filePostUri, resource);
     // TODO: verify whether or not this worked.
     return true;
@@ -901,7 +884,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncTableMediaFiles(String tableId) throws IOException {
+  public void syncRowDataFiles(String tableId) throws IOException {
     // There are two things to do here, really. The first is to get the
     // manifest for each instance--or each row of the table. And download all
     // the files on the manifest.
@@ -938,7 +921,7 @@ public class AggregateSynchronizer implements Synchronizer {
             appFolder);
     List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
-    Log.e(TAG, "[syncTableMediaFiles] relativePathsToUpload: " + relativePathsToUpload);
+    Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {

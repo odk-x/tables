@@ -421,14 +421,14 @@ public class Aggregate extends SherlockActivity {
           return null;
         }
         String aggregateUri = prefs.getServerUri(); // uri of our server.
-        URI uri = URI.create(aggregateUri).normalize();
-        uri = uri.resolve("/odktables/files/").normalize();
+        URI uriBase = URI.create(aggregateUri).normalize();
+        URI uri = uriBase.resolve("/odktables/files/").normalize();
         URI fileServletUri = uri;
         List<ClientHttpRequestInterceptor> interceptors =
             new ArrayList<ClientHttpRequestInterceptor>();
         String accessToken = prefs.getAuthToken();
 
-        interceptors.add(new AggregateRequestInterceptor(accessToken));
+        interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken));
 //        ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 //        ClientHttpRequest request =
 //            factory.createRequest(fileServletUri, HttpMethod.POST);

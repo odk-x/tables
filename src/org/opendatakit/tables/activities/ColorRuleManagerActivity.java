@@ -27,7 +27,6 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.utils.ColorRuleUtil;
 
 import android.app.AlertDialog;
