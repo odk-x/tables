@@ -426,7 +426,7 @@ public class Controller implements CustomViewCallbacks {
    */
   void editRow(UserTable table, int rowNum) {
 	Map<String, String> elementKeyToValue = new HashMap<String, String>();
-	for (ColumnProperties cp : tp.getColumns().values()) {
+	for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
 	  String value = table.getData(rowNum,
 	      tp.getColumnIndex(cp.getElementKey()));
 	  elementKeyToValue.put(cp.getElementKey(), value);

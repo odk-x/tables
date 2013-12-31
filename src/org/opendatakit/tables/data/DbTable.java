@@ -157,7 +157,7 @@ public class DbTable {
      */
     static void createDbTable(SQLiteDatabase db, TableProperties tp) {
         StringBuilder colListBuilder = new StringBuilder();
-        for (ColumnProperties cp : tp.getColumns().values()) {
+        for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
             colListBuilder.append(", " + cp.getElementKey());
             if (cp.getColumnType() == ColumnType.NUMBER) {
                 colListBuilder.append(" REAL");

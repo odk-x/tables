@@ -183,7 +183,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     @Override
     protected void onPostExecute(Map<String, String> result) {
-      pd.dismiss();
+      // TODO: this is probably broken!!!
+      if ( pd != null ) {
+        pd.dismiss();
+      }
       AggregateDownloadTableActivity.this.respondToTablesQuery(result);
     }
   }

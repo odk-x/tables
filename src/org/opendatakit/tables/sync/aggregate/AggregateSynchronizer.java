@@ -24,6 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +35,7 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
@@ -160,11 +163,11 @@ public class AggregateSynchronizer implements Synchronizer {
     this.rt.setMessageConverters(converters);
 
     List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
-    acceptableMediaTypes.add(new MediaType("text", "xml"));
+    acceptableMediaTypes.add(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
 
     this.requestHeaders = new HttpHeaders();
     this.requestHeaders.setAccept(acceptableMediaTypes);
-    this.requestHeaders.setContentType(new MediaType("text", "xml"));
+    this.requestHeaders.setContentType(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
 
     this.resources = new HashMap<String, TableResource>();
 
@@ -421,7 +424,7 @@ public class AggregateSynchronizer implements Synchronizer {
     SyncTag lastKnownServerSyncTag = SyncTag.valueOf(currentSyncTag);
     if (!rows.isEmpty()) {
       for (Row row : rows) {
-        URI url = URI.create(resource.getDataUri() + "/" + row.getRowId()).normalize();
+        URI url = URI.create(resource.getDataUri() + "/" + URLEncoder.encode(row.getRowId(), "UTF-8")).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
         ResponseEntity<RowResource> insertedEntity;
         try {
@@ -520,12 +523,11 @@ public class AggregateSynchronizer implements Synchronizer {
     }
     // And now get the files to upload. We only want those that exist on the
     // device but that do not exist on the manifest.
-    Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
-    dirsToExclude.add(TableFileUtils.DIR_TABLES); // no table files.
-    String appFolder =
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
+    String appName = TableFileUtils.ODK_TABLES_APP_NAME;
+    String appFolder = ODKFileUtils.getAppFolder(appName);
     List<String> relativePathsOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
     List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
     Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: "
@@ -550,11 +552,11 @@ public class AggregateSynchronizer implements Synchronizer {
     }
     // And now get the files to upload. We only want those that exist on the
     // device but that do not exist on the manifest.
-    Set<String> dirsToExclude = TableFileUtils.getUnsynchedDirectories();
-    String appFolder =
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(false);
+    String appName = TableFileUtils.ODK_TABLES_APP_NAME;
+    String appFolder = ODKFileUtils.getAppFolder(appName);
     List<String> relativePathsOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude, null);
+        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
     List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsOnDevice, manifest);
     // and then upload the files.
@@ -577,18 +579,17 @@ public class AggregateSynchronizer implements Synchronizer {
     if (pushLocal) {
       // Then we actually do try and upload things. Otherwise we can just
       // continue straight on.
-      String appFolder =
-          ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      String tableFolder = ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+      String appName = TableFileUtils.ODK_TABLES_APP_NAME;
+      String appFolder = ODKFileUtils.getAppFolder(appName);
+      String tableFolder = ODKFileUtils.getTablesFolder(appName, tableId);
       Set<String> tableDirsToExclude = new HashSet<String>();
       // We don't want to sync anything in the instances directory, because this
       // contains things like media attachments. These should instead be synched
       // with a separate call.
 //      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
-      tableDirsToExclude.add("instances");
+      tableDirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
       List<String> relativePathsToAppFolderOnDevice =
-          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude,
-              appFolder);
+          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude);
       List<String> relativePathsToUpload =
           getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
       Log.e(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
@@ -913,12 +914,11 @@ public class AggregateSynchronizer implements Synchronizer {
     }
     // Then we actually do try and upload things. Otherwise we can just
     // continue straight on.
-    String appFolder =
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+    String appName = TableFileUtils.ODK_TABLES_APP_NAME;
+    String appFolder = ODKFileUtils.getAppFolder(appName);
+    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
     List<String> relativePathsToAppFolderOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
-            appFolder);
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null);
     List<String> relativePathsToUpload =
         getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
     Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);

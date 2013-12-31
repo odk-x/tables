@@ -69,7 +69,7 @@ public class CustomTableView extends CustomView implements
 		this.table = table;
 		colIndexTable.clear();
 		Map<String, ColumnProperties> elementKeyToColumnProperties = table
-				.getTableProperties().getColumns();
+				.getTableProperties().getDatabaseColumns();
 		colIndexTable.putAll(table.getMapOfUserDataToIndex());
 		for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
 			String smsLabel = cp.getSmsLabel();

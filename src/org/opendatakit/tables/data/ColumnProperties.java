@@ -486,23 +486,19 @@ public class ColumnProperties {
   }
 
   /**
-   * Return the ColumnProperties for the columns written to the database table.
-   * TODO: this should probably be modified in the future to return both
-   * the isUnitOfRetention and non-isUnitOfRetention columns. At the moment ODK Tables only
-   * cares about the isUnitOfRetention columns, and with this message returning only
-   * those columns it removes the need to deal with non-isUnitOfRetention columns at
-   * this juncture.
+   * Return the ColumnProperties for all the columns in a table, whether or not
+   * they are written to the database table.
    *
    * @param dbh
    * @param tableId
-   * @return a map of elementKey to ColumnProperties for each isUnitOfRetention column.
+   * @return a map of elementKey to ColumnProperties for all columns.
    */
   static Map<String, ColumnProperties> getColumnPropertiesForTable(DbHelper dbh, String tableId,
       KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
-      List<String> elementKeys = ColumnDefinitions.getDatabaseColumnNamesForTable(tableId, db);
+      List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tableId, db);
       Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId, elementKeys.get(i), typeOfStore);

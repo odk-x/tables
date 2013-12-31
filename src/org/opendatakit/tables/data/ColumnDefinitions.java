@@ -95,25 +95,27 @@ public class ColumnDefinitions {
   }
 
   /**
-   * Return all the database column names for the given table.  These will be
-   * the element keys that are 'units of retention.' Elements that are
-   * composite types whose sub-elements are written individually to the database,
-   * such as geopoint, are not returned.
+   * Return all the column names for the given table.  These will be
+   * the element keys that are 'units of retention' (stored as columns in
+   * the database) AND the element keys that define super- or sub- structural
+   * elements such as composite types whose sub-elements are written
+   * individually to the database (e.g., geopoint) or subsumed by the
+   * enclosing element (e.g., lists of items).
    * <p>
    * Does not close the passed in database.
    * @param tableId
    * @param db
    * @return
    */
-  public static List<String> getDatabaseColumnNamesForTable(String tableId,
+  public static List<String> getAllColumnNamesForTable(String tableId,
       SQLiteDatabase db) {
     Cursor c = null;
     List<String> elementKeys = new ArrayList<String>();
     try {
       c = db.query(DB_BACKING_NAME,
           new String[] {ColumnDefinitionsColumns.ELEMENT_KEY}, // we only want the element key column
-          WHERE_SQL_FOR_TABLE_IS_UNIT_OF_RETENTION,
-          new String[] {tableId, "1"}, null, null, null);
+          WHERE_SQL_FOR_TABLE,
+          new String[] {tableId}, null, null, null);
       int dbElementKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
       c.moveToFirst();
       int j = 0;

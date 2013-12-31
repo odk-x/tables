@@ -499,7 +499,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
-    for (ColumnProperties cp : tp.getColumns().values()) {
+    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numberCols.add(cp);
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {

@@ -650,7 +650,7 @@ public class CsvUtil {
       boolean includeTimestamp, boolean includeAccessControl,
       boolean includeFormId, boolean includeLocale, boolean exportProperties) {
     // building array of columns to select and header row for output file
-    int columnCount = tp.getColumns().size();
+    int columnCount = tp.getDatabaseColumns().size();
     if (exportProperties) {
       // then we are including all the metadata columns.
       columnCount += DbTable.getAdminColumns().size();
@@ -761,7 +761,7 @@ public class CsvUtil {
 
       idxFirstUserColumns = index;
       // export everything in the user columns
-      for (ColumnProperties cp : tp.getColumns().values()) {
+      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
         userColumns.add(cp.getElementKey());
         columns.add(cp.getElementKey());
         headerRow.add(cp.getElementKey());

@@ -73,7 +73,7 @@ public class CustomGraphView extends CustomView {
   private void set(UserTable table) {
     this.table = table;
     colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties().getColumns();
+    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties().getDatabaseColumns();
     colIndexTable.putAll(table.getMapOfUserDataToIndex());
     for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
       String smsLabel = cp.getSmsLabel();

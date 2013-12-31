@@ -648,7 +648,7 @@ public abstract class CustomView extends LinearLayout {
 			mColumnDisplayNameToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
 			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
-					.getColumns();
+					.getDatabaseColumns();
 			colMap = new HashMap<String, Integer>();
 			for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
 				String smsLabel = cp.getSmsLabel();

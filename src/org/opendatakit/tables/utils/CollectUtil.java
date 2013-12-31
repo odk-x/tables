@@ -390,7 +390,7 @@ public class CollectUtil {
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      for (ColumnProperties cp : tp.getColumns().values()) {
+      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
         String value = (values == null) ? null : values.get(cp.getElementKey());
         writer.write("<");
         writer.write(cp.getElementKey());
@@ -914,7 +914,7 @@ public class CollectUtil {
       FormValues formValues) {
     DataUtil du = DataUtil.getDefaultDataUtil();
     Map<String, String> values = new HashMap<String, String>();
-    for (ColumnProperties cp : tp.getColumns().values()) {
+    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       // we want to use element key here
       String elementKey = cp.getElementKey();
       String value = formValues.formValues.get(elementKey);
@@ -1300,7 +1300,7 @@ public class CollectUtil {
     // do
     // a check, we'll add a blank row b/c there are values in the key value
     // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : tp.getColumns().values()) {
+    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
     Query currentQuery = new Query(DbHelper.getDbHelper(context), KeyValueStore.Type.ACTIVE, tp);

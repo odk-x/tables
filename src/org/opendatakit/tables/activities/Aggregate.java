@@ -78,6 +78,8 @@ public class Aggregate extends SherlockActivity {
   private static final String ACCOUNT_TYPE_G = "com.google";
   private static final String URI_FIELD_EMPTY = "http://";
 
+  private static int AUTHORIZE_ACCOUNT_RESULT_ID = 1;
+
   private EditText uriField;
   private Spinner accountListSpinner;
 
@@ -250,8 +252,7 @@ public class Aggregate extends SherlockActivity {
     Intent i = new Intent(this, AccountInfoActivity.class);
     Account account = new Account(prefs.getAccount(), ACCOUNT_TYPE_G);
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
-    startActivity(i);
-    updateButtonsEnabled();
+    startActivityForResult(i, AUTHORIZE_ACCOUNT_RESULT_ID);
   }
 
   /**
@@ -524,6 +525,12 @@ public class Aggregate extends SherlockActivity {
       Log.e(TAG, "[onPostExecute]");
       this.pd.dismiss();
     }
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    updateButtonsEnabled();
   }
 
 }

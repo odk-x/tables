@@ -517,7 +517,9 @@ public class TableProperties {
     if (columnOrder.size() == 0) {
 
       for (ColumnProperties cp : mElementKeyToColumnProperties.values()) {
-        columnOrder.add(cp.getElementKey());
+        if  ( cp.isUnitOfRetention() ) {
+          columnOrder.add(cp.getElementKey());
+        }
       }
       Collections.sort(columnOrder, new Comparator<String>() {
 
@@ -892,7 +894,7 @@ public class TableProperties {
   public void deleteTableActual() {
     // Two things must be done: delete all the key value pairs from the active
     // key value store and drop the table holding the data from the database.
-    Map<String, ColumnProperties> columns = getColumns();
+    Map<String, ColumnProperties> columns = getDatabaseColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -1006,12 +1008,39 @@ public class TableProperties {
    * @return a map of the table's columns as represented by their
    *         {@link ColumnProperties}.
    */
-  public Map<String, ColumnProperties> getColumns() {
+  public Map<String, ColumnProperties> getDatabaseColumns() {
     if (mElementKeyToColumnProperties == null) {
       refreshColumns();
     }
     Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
-    defensiveCopy.putAll(this.mElementKeyToColumnProperties);
+    for ( String col : mElementKeyToColumnProperties.keySet() ) {
+      ColumnProperties cp = mElementKeyToColumnProperties.get(col);
+      if ( cp.isUnitOfRetention() ) {
+        defensiveCopy.put(col, cp);
+      }
+    }
+    return defensiveCopy;
+  }
+
+  /**
+   * Return all the columns for the given table.  These will be
+   * the element keys that are 'units of retention' (stored as columns in
+   * the database) AND the element keys that define super- or sub- structural
+   * elements such as composite types whose sub-elements are written
+   * individually to the database (e.g., geopoint) or subsumed by the
+   * enclosing element (e.g., lists of items).
+   *
+   * @return map of all the columns in the table
+   */
+  public Map<String, ColumnProperties> getAllColumns() {
+    if (mElementKeyToColumnProperties == null) {
+      refreshColumns();
+    }
+    Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
+    for ( String col : mElementKeyToColumnProperties.keySet() ) {
+      ColumnProperties cp = mElementKeyToColumnProperties.get(col);
+      defensiveCopy.put(col, cp);
+    }
     return defensiveCopy;
   }
 
@@ -1117,7 +1146,7 @@ public class TableProperties {
    * the moment is all legacy code.
    */
   public ColumnProperties getColumnByUserLabel(String name) {
-    Collection<ColumnProperties> cps = getColumns().values();
+    Collection<ColumnProperties> cps = getDatabaseColumns().values();
     for (ColumnProperties cp : cps) {
       String cdn = cp.getDisplayName();
       if (cdn.equalsIgnoreCase(name)) {
@@ -1357,8 +1386,12 @@ public class TableProperties {
    */
   public void reformTable(SQLiteDatabase db) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
-    for (String col : getColumns().keySet()) {
-      csvBuilder.append(", " + col);
+    Map<String,ColumnProperties> cols = getDatabaseColumns();
+    for (String col : cols.keySet()) {
+      ColumnProperties cp = cols.get(col);
+      if ( cp.isUnitOfRetention() ) {
+        csvBuilder.append(", " + col);
+      }
     }
     String csv = csvBuilder.toString();
     db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
@@ -1694,7 +1727,7 @@ public class TableProperties {
   }
 
   public String toJson() throws JsonGenerationException, JsonMappingException, IOException {
-    Map<String, ColumnProperties> columnsMap = getColumns(); // ensuring columns
+    Map<String, ColumnProperties> columnsMap = getDatabaseColumns(); // ensuring columns
                                                              // is initialized
     // I think this removes exceptions from not having getters/setters...
     ArrayList<String> colOrder = new ArrayList<String>();
@@ -1783,7 +1816,7 @@ public class TableProperties {
 
       // Collect the columns that are not in the newly defined set
       Set<String> columnsToDelete = new HashSet<String>();
-      for (String column : this.getColumns().keySet()) {
+      for (String column : this.getDatabaseColumns().keySet()) {
         if (!columnElementKeys.contains(column)) {
           columnsToDelete.add(column);
         }
@@ -1821,7 +1854,7 @@ public class TableProperties {
     int numericColCount = 0;
     int locationColCount = 0;
     int dateColCount = 0;
-    Map<String, ColumnProperties> columnProperties = this.getColumns();
+    Map<String, ColumnProperties> columnProperties = this.getDatabaseColumns();
     for (ColumnProperties cp : columnProperties.values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numericColCount++;

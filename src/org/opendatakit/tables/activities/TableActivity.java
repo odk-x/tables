@@ -338,7 +338,7 @@ public class TableActivity extends SherlockFragmentActivity
   void editRow(UserTable table, int rowNum,
           String formId, String formVersion, String formRootElement) {
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
+    for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
       String value = table.getData(rowNum, mTableProperties.getColumnIndex(
           cp.getElementKey()));
       elementKeyToValue.put(cp.getElementKey(), value);
@@ -575,7 +575,7 @@ public class TableActivity extends SherlockFragmentActivity
     // do
     // a check, we'll add a blank row b/c there are values in the key value
     // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : mTableProperties.getColumns().values()) {
+    for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
     Query currentQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE, mTableProperties);

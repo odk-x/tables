@@ -620,7 +620,7 @@ public class Query {
                 DataTableColumns.ID + " AS " + DataTableColumns.ID + ", " +
                 tp.getDbTableName() + "." + DataTableColumns.SYNC_TAG + " AS " +
                 DataTableColumns.SYNC_TAG);
-        for (ColumnProperties cp : tp.getColumns().values()) {
+        for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
           if ( cp.isUnitOfRetention() ) {
             sd.appendSql(", " + tp.getDbTableName() + "." +
                     cp.getElementKey() + " AS " + cp.getElementKey());

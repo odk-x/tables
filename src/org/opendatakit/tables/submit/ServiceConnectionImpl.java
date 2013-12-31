@@ -127,12 +127,11 @@ public class ServiceConnectionImpl implements ServiceConnection {
    */
   private Map<String, String> getFileInfoForSubmit(String tableId,
       String aggregateUri) {
-    String appFolder =
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+    String appName = TableFileUtils.ODK_TABLES_APP_NAME;
+    String appFolder = ODKFileUtils.getAppFolder(appName);
+    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
     List<String> relativePathsToAppFolderOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null,
-            appFolder);
+        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null);
     Map<String, String> absolutePathToUploadUrl =
         new HashMap<String, String>();
     for (String relativePath : relativePathsToAppFolderOnDevice) {
