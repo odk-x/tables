@@ -18,6 +18,7 @@ import org.opendatakit.tables.sync.SynchronizationResult;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,29 +30,29 @@ import android.os.Parcelable;
 import android.util.Log;
 
 /**
- * The broadcast receiver responsible for dealing with Submit. Based on 
+ * The broadcast receiver responsible for dealing with Submit. Based on
  * Waylon's sample app
  * org.opendatakit.submittest.CommunicationActionReceiver.java.
  * @author sudar.sam@gmail.com
  *
  */
 public class TablesCommunicationActionReceiver extends BroadcastReceiver {
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       TablesCommunicationActionReceiver.class.getSimpleName();
-  
+
   private static final int NUM_RETRIES_BEFORE_STOP = 10;
-  
+
   private static TablesCommunicationActionReceiver mSingleton = null;
-  
-  public static TablesCommunicationActionReceiver getInstance(String appUuid, 
+
+  public static TablesCommunicationActionReceiver getInstance(String appUuid,
       String submitId, String aggregateServerUri, List<String> tableIdsToSync,
       String authToken,
       Context context) {
     if (mSingleton == null) {
       mSingleton = new TablesCommunicationActionReceiver(appUuid, submitId,
           aggregateServerUri, authToken, context);
-    } 
+    }
     // Add the tableIds to the list of tables to sync.
     if (tableIdsToSync != null) {
       mSingleton.mTableIdsPendingToGiveToSubmit.addAll(tableIdsToSync);
@@ -59,7 +60,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     Log.d(TAG, "[getInstance] table ids: " + tableIdsToSync);
     return mSingleton;
   }
-  
+
   private final Context mContext;
   /** The uuids from Submit that belong to sync requests. */
   private final Collection<String> mSendObjectSyncRequests;
@@ -67,28 +68,28 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
   private final Collection<String> mSendObjectFiles;
   private final Map<String, Integer> mDataIdToFailureCount;
   private String mSubmitChannelUuid;
-  /** 
+  /**
    * These are the list of table ids that are waiting to be given to Submit.
-   * It should only ever contain those that have been requested but that 
-   * Submit does not yet know about. After passing to Submit, it should be 
+   * It should only ever contain those that have been requested but that
+   * Submit does not yet know about. After passing to Submit, it should be
    * cleared.
    */
   private Set<String> mTableIdsPendingToGiveToSubmit;
-  
+
   /** Flag saying whether or not we're already in the middle of a sync. */
   private boolean mCurrentlySynching;
-  
-  /** 
-   * The url of the server running Aggregate. Potentially changeable in the 
+
+  /**
+   * The url of the server running Aggregate. Potentially changeable in the
    * future.
    */
   private String mAggregateServerUri;
   /**
-   * Auth token the user is using. This can expire and should eventually be 
+   * Auth token the user is using. This can expire and should eventually be
    * smarter about getting the new one.
    */
   private String mAuthToken;
-  
+
   private TablesCommunicationActionReceiver(String appUuid, String submitId,
       String aggregateServerUri, String authToken, Context context) {
     super();
@@ -97,9 +98,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     this.mAggregateServerUri = aggregateServerUri;
     this.mAuthToken = authToken;
     this.mSendObjectSyncRequests = new ArrayList<String>();
-    // Going to use a set because we'll be getting a lot more of these and 
+    // Going to use a set because we'll be getting a lot more of these and
     // order doesn't really matter.
-    this.mSendObjectFiles = new HashSet<String>(); 
+    this.mSendObjectFiles = new HashSet<String>();
     this.mDataIdToFailureCount = new HashMap<String, Integer>();
     this.mTableIdsPendingToGiveToSubmit = new HashSet<String>();
     this.mSubmitChannelUuid = submitId;
@@ -107,7 +108,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
     filter.addAction(appUuid);
     this.mContext.registerReceiver(this, filter);
   }
-  
+
   /**
    * Add the uid to the collection of Strings that this receiver is listening
    * for.
@@ -116,47 +117,47 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
   public void listenForSyncRequestUid(String uid) {
     this.mSendObjectSyncRequests.add(uid);
   }
-  
+
   /**
-   * Add the uid of the file Submit is trying to upload to the list that is 
+   * Add the uid of the file Submit is trying to upload to the list that is
    * waiting for a response from Submit.
    * @param uid
    */
   public void listenForFileUid(String uid) {
     this.mSendObjectFiles.add(uid);
   }
-  
+
   /**
-   * Convenience method to avoid multiple calls to 
+   * Convenience method to avoid multiple calls to
    * {@link TablesCommunicationActionReceiver#listenForFileUid(String)}.
    * @param uids
    */
   public void listenForFileUids(Collection<String> uids) {
     this.mSendObjectFiles.addAll(uids);
   }
-  
+
   public void destroy() {
     this.mContext.unregisterReceiver(this);
   }
-  
+
   public void setSubmitId(String submitId) {
     this.mSubmitChannelUuid = submitId;
   }
-  
+
   public String getAggregateServerUri() {
     return this.mAggregateServerUri;
   }
-  
-  /** 
+
+  /**
    * Remove the tableIds from those that are waiting to be given to Submit.
    * @param tableIds
    */
   public void removePendingTableIds(List<String> tableIds) {
     this.mTableIdsPendingToGiveToSubmit.remove(tableIds);
   }
-  
-  /** 
-   * Get the table ids that Submit needs to be told about. 
+
+  /**
+   * Get the table ids that Submit needs to be told about.
    */
   public Set<String> getTableIdsPendingForSubmit() {
     return Collections.unmodifiableSet(this.mTableIdsPendingToGiveToSubmit);
@@ -172,12 +173,12 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       return;
     }
     // Retrieve the ID of the data object Submit is telling us to send.
-    String sendUid = 
+    String sendUid =
         intent.getStringExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID);
     // Otherwise, try and handle the sync.
     if (this.mSendObjectSyncRequests.contains(sendUid)) {
       Log.d(TAG, "[onReceive] got a send sync request uid");
-      String result = 
+      String result =
           intent.getStringExtra(BroadcastExtraKeys.COMMUNICATION_STATE);
       CommunicationState state = CommunicationState.valueOf(result);
       if (state == CommunicationState.SEND){
@@ -187,7 +188,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
           Log.d(TAG, "already synching, not trying again");
         } else {
           Log.d(TAG, "not synching, beginning a sync");
-          SyncNowWithSubmitTask submitTask = new SyncNowWithSubmitTask(sendUid);
+          SyncNowWithSubmitTask submitTask = new SyncNowWithSubmitTask(TableFileUtils.ODK_TABLES_APP_NAME, sendUid);
           submitTask.execute();
         }
       } else {
@@ -205,34 +206,36 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       return;
     }
   }
-  
-  public class SyncNowWithSubmitTask extends 
+
+  public class SyncNowWithSubmitTask extends
       AsyncTask<Void, Void, SynchronizationResult> {
-    
+
     private boolean mSuccess;
+    private String mAppName;
     private String mDataUidToSend;
-    
-    public SyncNowWithSubmitTask(String dataUidToSend) {
+
+    public SyncNowWithSubmitTask(String appName, String dataUidToSend) {
       this.mSuccess = false;
       mCurrentlySynching = true;
+      this.mAppName = appName;
       this.mDataUidToSend = dataUidToSend;
     }
-    
+
     @Override
     protected SynchronizationResult doInBackground(Void... params) {
       Log.e(TAG, "[SyncNowWithSubmitTask#doInBackground]");
       SynchronizationResult result = null;
       try {
-        DbHelper dbh = DbHelper.getDbHelper(mContext);
-        Synchronizer synchronizer = 
+        DbHelper dbh = DbHelper.getDbHelper(mContext, mAppName);
+        Synchronizer synchronizer =
             new AggregateSynchronizer(mAggregateServerUri, mAuthToken);
-        SyncProcessor syncProcessor = new SyncProcessor(dbh, synchronizer, 
+        SyncProcessor syncProcessor = new SyncProcessor(dbh, synchronizer,
             new SyncResult());
         // This is going to use Submit in demo mode: only synching the files.
         // We will do app-level and non media files, and then ask Submit to do
         // the media files separately.
         result = syncProcessor.synchronize(true, true, false);
-        
+
         // TODO: hand off the media files.
         mSuccess = true;
         Log.e(TAG, "[SyncNowWithSubmitTask#doInbackground] success true timestamp: " + System.currentTimeMillis());
@@ -244,14 +247,14 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
         Log.e(TAG, "exception during synchronization. Stack trace:\n" +
             Arrays.toString(e.getStackTrace()));
         mSuccess = false;
-      }      
+      }
       Intent intent = new Intent();
       intent.setAction(mSubmitChannelUuid);
       intent.putExtra(BroadcastExtraKeys.SUBMIT_OBJECT_ID, mDataUidToSend);
       if (mSuccess) {
-        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
             (Parcelable) CommunicationState.SUCCESS);
-//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
 //            CommunicationState.SUCCESS.toString());
 //            (Parcelable) CommunicationState.SUCCESS.toString());
         mDataIdToFailureCount.remove(mDataUidToSend);
@@ -259,9 +262,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
         mContext.sendBroadcast(intent);
       } else if (mDataIdToFailureCount.get(mDataUidToSend) == null ||
           mDataIdToFailureCount.get(mDataUidToSend) < NUM_RETRIES_BEFORE_STOP){
-        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
             (Parcelable) CommunicationState.FAILURE_RETRY);
-//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
 //            CommunicationState.FAILURE_RETRY.toString());
 //            (Parcelable) CommunicationState.FAILURE_RETRY);
         if (mDataIdToFailureCount.get(mDataUidToSend) == null) {
@@ -273,12 +276,12 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
         }
         Log.i(TAG, "telling submit to retry");
         mContext.sendBroadcast(intent);
-      } else if (mDataIdToFailureCount.get(mDataUidToSend) >= 
+      } else if (mDataIdToFailureCount.get(mDataUidToSend) >=
           NUM_RETRIES_BEFORE_STOP) {
         Log.i(TAG, "telling Submit to stop trying to send");
-        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
             (Parcelable) CommunicationState.FAILURE_NO_RETRY);
-//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE, 
+//        intent.putExtra(BroadcastExtraKeys.COMMUNICATION_STATE,
 //            CommunicationState.FAILURE_NO_RETRY.toString());
 //            (Parcelable) CommunicationState.FAILURE_NO_RETRY);
         mContext.sendBroadcast(intent);
@@ -289,7 +292,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       mCurrentlySynching = false;
       return result;
     }
-    
+
   }
 
 }

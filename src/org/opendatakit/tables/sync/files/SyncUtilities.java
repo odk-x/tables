@@ -77,12 +77,13 @@ public class SyncUtilities {
    * <p>
    * This is only the Server->Phone direction. It overwrites all the key value
    * entries for the table.
-   * @param context
+   * @param dbh
+   * @param appName
    * @param aggregateUri
    * @param authToken
    * @param tp the tableProperties you should be modifying
    */
-  public static void pullKeyValueEntriesForTable(Context context,
+  public static void pullKeyValueEntriesForTable(DbHelper dbh, String appName,
       String aggregateUri, String authToken, TableProperties tp) {
     String tableId = tp.getTableId();
     List<OdkTablesKeyValueStoreEntry> allEntries =
@@ -90,7 +91,6 @@ public class SyncUtilities {
 
     // so now allEntries should have had their file entries updated.
     // begin the database stuff.
-    DbHelper dbh = DbHelper.getDbHelper(context);
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    // So I'm a bit confused as to why I have the dbhelper and pass
@@ -107,7 +107,7 @@ public class SyncUtilities {
 	      // properties and things fail, you don't end up with the entries in
 	      // the key value store changed. You will still have downloaded the
 	      // files though.
-	      downloadFilesAndUpdateValues(context, allEntries);
+	      downloadFilesAndUpdateValues(appName, allEntries);
 //	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId,
 //	          KeyValueStore.Type.SERVER);
 	      KeyValueStore backingKVS = kvsm.getStoreForTable(tableId,
@@ -230,7 +230,7 @@ public class SyncUtilities {
     return mapper.readValue(response, typeRef);
   }
 
-  public static void downloadFilesAndUpdateValues(Context context,
+  public static void downloadFilesAndUpdateValues(String appName,
       List<OdkTablesKeyValueStoreEntry> allEntries) {
     // If the entry is a file, we see if we need to download it and update
     // the value with the path to the file. Otherwise, we leave the entry.
@@ -245,8 +245,8 @@ public class SyncUtilities {
         try {
           OdkTablesFileManifestEntry fileEntry = mapper.readValue(
               fileString, typeRef);
-          if (compareAndDownloadFile(context, tableId, entry.key, fileEntry)) {
-            String basePath = ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+          if (compareAndDownloadFile(appName, tableId, entry.key, fileEntry)) {
+            String basePath = ODKFileUtils.getTablesFolder(appName, tableId);
             String path = basePath + File.separator + fileEntry.filename;
             entry.value = path;
           } else {
@@ -313,11 +313,11 @@ public class SyncUtilities {
    * @param fileEntry
    * @return
    */
-  public static boolean compareAndDownloadFile(Context context, String tableId,
+  public static boolean compareAndDownloadFile(String appName, String tableId,
       String key, OdkTablesFileManifestEntry fileEntry) {
     Log.d(TAG, "in compareAndDownloadFile");
     // the path for the base of where the app can save its files.
-    String basePath =  ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+    String basePath =  ODKFileUtils.getTablesFolder(appName, tableId);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
       // make sure you don't return a bad string.

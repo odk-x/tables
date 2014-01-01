@@ -20,6 +20,7 @@ import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
@@ -144,7 +145,7 @@ public class TableActivity extends SherlockFragmentActivity
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
 
     // Initialize data objects.
-    mDbh = DbHelper.getDbHelper(this);
+    mDbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     refreshDbTable(tableId);
     mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
@@ -591,7 +592,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-	if (!CollectUtil.handleOdkCollectAddReturn(this, mTableProperties, returnCode, data)) {
+	if (!CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, mTableProperties, returnCode, data)) {
       return;
     }
 	// TODO: refresh display???
@@ -599,7 +600,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-    if (!CollectUtil.handleOdkCollectEditReturn(this, mTableProperties, returnCode, data)) {
+    if (!CollectUtil.handleOdkCollectEditReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, mTableProperties, returnCode, data)) {
       return;
     }
     mRowId = null;

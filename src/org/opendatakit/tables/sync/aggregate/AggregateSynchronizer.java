@@ -27,6 +27,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,8 +108,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
   private static final String FILE_MANIFEST_PARAM_TABLE_ID = "table_id";
-  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES =
-      "app_level_files";
+  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES = "app_level_files";
   /** Value for {@link #FILE_MANIFEST_PARAM_APP_LEVEL_FILES}. */
   private static final String VALUE_TRUE = "true";
 
@@ -122,8 +123,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private final URI mFilesUri;
 
   /**
-   * For downloading files. Should eventually probably switch to spring, but
-   * it was idiotically complicated.
+   * For downloading files. Should eventually probably switch to spring, but it
+   * was idiotically complicated.
    */
   private final HttpClient mHttpClient;
 
@@ -133,29 +134,24 @@ public class AggregateSynchronizer implements Synchronizer {
     uri = uri.resolve("/odktables/" + TableFileUtils.ODK_TABLES_APP_NAME + "/").normalize();
     this.baseUri = uri;
 
-    this.mHttpClient =
-        new DefaultHttpClient(new BasicClientConnectionManager());
+    this.mHttpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = mHttpClient.getParams();
-    HttpConnectionParams.setConnectionTimeout(params,
-        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
-    HttpConnectionParams.setSoTimeout(params,
-        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+    HttpConnectionParams.setConnectionTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+    HttpConnectionParams.setSoTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
 
     URI uriBase = URI.create(aggregateUri).normalize();
     URI fileManifestUri = uriBase.resolve(FILE_MANIFEST_PATH).normalize();
     this.mFileManifestUri = fileManifestUri;
     this.mFilesUri = getFilePathURI(aggregateUri);
 
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken));
 
     this.rt = new RestTemplate();
     this.rt.setInterceptors(interceptors);
 
     Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
-    List<HttpMessageConverter<?>> converters =
-        new ArrayList<HttpMessageConverter<?>>();
+    List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
     converters.add(new JsonObjectHttpMessageConverter());
     converters.add(new SimpleXmlHttpMessageConverter(serializer));
     converters.add(new TextPlainHttpMessageConverter());
@@ -163,11 +159,13 @@ public class AggregateSynchronizer implements Synchronizer {
     this.rt.setMessageConverters(converters);
 
     List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
-    acceptableMediaTypes.add(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
+    acceptableMediaTypes
+        .add(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
 
     this.requestHeaders = new HttpHeaders();
     this.requestHeaders.setAccept(acceptableMediaTypes);
-    this.requestHeaders.setContentType(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
+    this.requestHeaders.setContentType(new MediaType("text", "xml", Charset
+        .forName(ApiConstants.UTF8_ENCODE)));
 
     this.resources = new HashMap<String, TableResource>();
 
@@ -178,6 +176,7 @@ public class AggregateSynchronizer implements Synchronizer {
   /**
    * Get the URI for the file servlet on the Aggregate server located at
    * aggregateUri.
+   *
    * @param aggregateUri
    * @return
    */
@@ -187,19 +186,15 @@ public class AggregateSynchronizer implements Synchronizer {
     return filesUri;
   }
 
-  private void checkAccessToken(String accessToken) throws
-      InvalidAuthTokenException {
+  private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
     try {
       rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
     } catch (HttpClientErrorException e) {
       Log.e(TAG, "HttpClientErrorException in checkAccessToken");
       JsonParser parser = new JsonParser();
-      JsonObject resp = parser.parse(e.getResponseBodyAsString())
-          .getAsJsonObject();
-      if (resp.has("error") && resp.get("error").getAsString()
-          .equals("invalid_token")) {
-        throw new InvalidAuthTokenException("Invalid auth token: "
-          + accessToken, e);
+      JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
+      if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
+        throw new InvalidAuthTokenException("Invalid auth token: " + accessToken, e);
       }
     }
   }
@@ -209,8 +204,8 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, String> getTables() throws IOException {
-    Map<String, String> tables = new HashMap<String, String>();
+  public List<TableResource> getTables() throws IOException {
+    List<TableResource> tables = new ArrayList<TableResource>();
 
     List<TableResource> tableResources;
     try {
@@ -219,36 +214,46 @@ public class AggregateSynchronizer implements Synchronizer {
       throw new IOException(e.getMessage());
     }
 
-    for (TableResource tableResource : tableResources)
-      tables.put(tableResource.getTableId(), tableResource.getSchemaEtag());
+    for (TableResource tableResource : tableResources) {
+      resources.put(tableResource.getTableId(), tableResource);
+      tables.add(tableResource);
+    }
 
+    Collections.sort(tables, new Comparator<TableResource>(){
+
+      @Override
+      public int compare(TableResource lhs, TableResource rhs) {
+        if ( lhs.getDisplayName() != null ) {
+          return lhs.getDisplayName().compareTo(rhs.getDisplayName());
+        }
+        return -1;
+      }});
     return tables;
   }
 
   /*
    * (non-Javadoc)
+   *
    * @see org.opendatakit.tables.sync.Synchronizer#createTable(j
    * ava.lang.String, java.util.List, java.lang.String, java.lang.String,
-   * org.opendatakit.aggregate.odktables.entity.api.TableType,
-   * java.lang.String)
+   * org.opendatakit.aggregate.odktables.entity.api.TableType, java.lang.String)
    */
   @Override
-  public String createTable(String tableId, List<Column> columns,
-      String displayName) throws IOException {
+  public String createTable(String tableId, List<Column> columns, String displayName)
+      throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
     TableDefinition definition = new TableDefinition(tableId, columns);
     definition.setDisplayName(displayName);
-    HttpEntity<TableDefinition> requestEntity =
-        new HttpEntity<TableDefinition>(definition, requestHeaders);
+    HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
+                                                                                requestHeaders);
 
     // create table
     ResponseEntity<TableResource> resourceEntity;
     try {
       // TODO: we also need to put up the key value store/properties.
-      resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity,
-          TableResource.class);
+      resourceEntity = rt.exchange(uri, HttpMethod.PUT, requestEntity, TableResource.class);
     } catch (ResourceAccessException e) {
       Log.e(TAG, "ResourceAccessException in createTable");
       throw new IOException(e.getMessage());
@@ -259,8 +264,8 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources.put(resource.getTableId(), resource);
 
     // return sync tag
-    SyncTag syncTag = new SyncTag(resource.getDataEtag(),
-        resource.getPropertiesEtag(), resource.getSchemaEtag());
+    SyncTag syncTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag(),
+                                  resource.getSchemaEtag());
     return syncTag.toString();
   }
 
@@ -305,8 +310,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public IncomingModification getUpdates(String tableId, String currentSyncTag)
-      throws IOException {
+  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException {
     IncomingModification modification = new IncomingModification();
 
     // get current and new sync tags
@@ -317,8 +321,8 @@ public class AggregateSynchronizer implements Synchronizer {
     else
       currentTag = new SyncTag("", "", "");
     // This tag is ultimately returned. May8--make sure it works.
-    SyncTag newTag = new SyncTag(resource.getDataEtag(),
-        resource.getPropertiesEtag(), resource.getSchemaEtag());
+    SyncTag newTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag(),
+                                 resource.getSchemaEtag());
 
     // stop now if there are no updates
     if (newTag.equals(currentTag)) {
@@ -334,8 +338,7 @@ public class AggregateSynchronizer implements Synchronizer {
         url = URI.create(resource.getDataUri());
       } else {
         String diffUri = resource.getDiffUri();
-        url = URI.create(diffUri + "?data_etag=" +
-            currentTag.getDataEtag()).normalize();
+        url = URI.create(diffUri + "?data_etag=" + currentTag.getDataEtag()).normalize();
       }
       List<RowResource> rows;
       try {
@@ -346,8 +349,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
       List<SyncRow> syncRows = new ArrayList<SyncRow>();
       for (RowResource row : rows) {
-        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowEtag(),
-            row.isDeleted(), row.getValues());
+        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowEtag(), row.isDeleted(),
+                                      row.getValues());
         syncRows.add(syncRow);
       }
       modification.setRows(syncRows);
@@ -363,10 +366,8 @@ public class AggregateSynchronizer implements Synchronizer {
       TableDefinitionResource definitionRes;
       PropertiesResource propertiesRes;
       try {
-        propertiesRes = rt.getForObject(resource.getPropertiesUri(),
-            PropertiesResource.class);
-        definitionRes = rt.getForObject(resource.getDefinitionUri(),
-            TableDefinitionResource.class);
+        propertiesRes = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
+        definitionRes = rt.getForObject(resource.getDefinitionUri(), TableDefinitionResource.class);
       } catch (ResourceAccessException e) {
         throw new IOException(e.getMessage());
       }
@@ -419,12 +420,13 @@ public class AggregateSynchronizer implements Synchronizer {
   private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
       throws IOException {
     TableResource resource = getResource(tableId);
-//    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
+    // SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
     Map<String, String> rowTags = new HashMap<String, String>();
     SyncTag lastKnownServerSyncTag = SyncTag.valueOf(currentSyncTag);
     if (!rows.isEmpty()) {
       for (Row row : rows) {
-        URI url = URI.create(resource.getDataUri() + "/" + URLEncoder.encode(row.getRowId(), "UTF-8")).normalize();
+        URI url = URI.create(
+            resource.getDataUri() + "/" + URLEncoder.encode(row.getRowId(), "UTF-8")).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
         ResponseEntity<RowResource> insertedEntity;
         try {
@@ -434,9 +436,8 @@ public class AggregateSynchronizer implements Synchronizer {
         }
         RowResource inserted = insertedEntity.getBody();
         rowTags.put(inserted.getRowId(), inserted.getRowEtag());
-        Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last " +
-        		"known dataetag at modification: " +
-        		inserted.getDataEtagAtModification());
+        Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last "
+            + "known dataetag at modification: " + inserted.getDataEtagAtModification());
         lastKnownServerSyncTag.setDataEtag(inserted.getDataEtagAtModification());
       }
     }
@@ -465,8 +466,7 @@ public class AggregateSynchronizer implements Synchronizer {
       for (String rowId : rowIds) {
         URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
         try {
-          ResponseEntity<String> response =
-              rt.exchange(url, HttpMethod.DELETE, null, String.class);
+          ResponseEntity<String> response = rt.exchange(url, HttpMethod.DELETE, null, String.class);
           lastKnownServerDataTag = response.getBody();
         } catch (ResourceAccessException e) {
           throw new IOException(e.getMessage());
@@ -485,33 +485,31 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /*
    * (non-Javadoc)
+   *
    * @see org.opendatakit.tables.sync.Synchronizer#setTableProperties(
    * java.lang.String, java.lang.String, java.lang.String, java.util.List)
    */
   @Override
-  public String setTableProperties(String tableId, String currentSyncTag,
-      String tableKey, List<OdkTablesKeyValueStoreEntry> kvsEntries)
-          throws IOException {
+  public String setTableProperties(String tableId, String currentSyncTag, String tableKey,
+                                   List<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
     TableResource resource = getResource(tableId);
     SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
 
     // put new properties
-    TableProperties properties =
-        new TableProperties(currentTag.getPropertiesEtag(), tableId,
-            kvsEntries);
-    HttpEntity<TableProperties> entity =
-        new HttpEntity<TableProperties>(properties, requestHeaders);
+    TableProperties properties = new TableProperties(currentTag.getPropertiesEtag(), tableId,
+                                                     kvsEntries);
+    HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
     ResponseEntity<PropertiesResource> updatedEntity;
     try {
-      updatedEntity = rt.exchange(resource.getPropertiesUri(), HttpMethod.PUT,
-          entity, PropertiesResource.class);
+      updatedEntity = rt.exchange(resource.getPropertiesUri(), HttpMethod.PUT, entity,
+          PropertiesResource.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
     }
     PropertiesResource propsResource = updatedEntity.getBody();
 
-    SyncTag newTag = new SyncTag(currentTag.getDataEtag(),
-        propsResource.getPropertiesEtag(),currentTag.getSchemaEtag());
+    SyncTag newTag = new SyncTag(currentTag.getDataEtag(), propsResource.getPropertiesEtag(),
+                                 currentTag.getSchemaEtag());
     return newTag.toString();
   }
 
@@ -526,23 +524,19 @@ public class AggregateSynchronizer implements Synchronizer {
     Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
     String appName = TableFileUtils.ODK_TABLES_APP_NAME;
     String appFolder = ODKFileUtils.getAppFolder(appName);
-    List<String> relativePathsOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
-    List<String> relativePathsToUpload =
-        getFilesToBeUploaded(relativePathsOnDevice, manifest);
-    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: "
-        + relativePathsToUpload);
+    List<String> relativePathsOnDevice = TableFileUtils.getAllFilesUnderFolder(appFolder,
+        dirsToExclude);
+    List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
+    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " + relativePathsToUpload);
     // and then upload the files.
     if (pushLocalFiles) {
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
         String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile,
-            relativePath));
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
       }
     }
   }
-
 
   @Override
   public void syncAllFiles() throws IOException {
@@ -555,24 +549,20 @@ public class AggregateSynchronizer implements Synchronizer {
     Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(false);
     String appName = TableFileUtils.ODK_TABLES_APP_NAME;
     String appFolder = ODKFileUtils.getAppFolder(appName);
-    List<String> relativePathsOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(appFolder, dirsToExclude);
-    List<String> relativePathsToUpload =
-        getFilesToBeUploaded(relativePathsOnDevice, manifest);
+    List<String> relativePathsOnDevice = TableFileUtils.getAllFilesUnderFolder(appFolder,
+        dirsToExclude);
+    List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
       String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile,
-          relativePath));
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
     }
   }
 
   @Override
-  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal)
-      throws IOException {
-    List<OdkTablesFileManifestEntry> manifest =
-        getTableLevelFileManifest(tableId);
+  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws IOException {
+    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
@@ -586,95 +576,78 @@ public class AggregateSynchronizer implements Synchronizer {
       // We don't want to sync anything in the instances directory, because this
       // contains things like media attachments. These should instead be synched
       // with a separate call.
-//      tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
+      // tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
       tableDirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
-      List<String> relativePathsToAppFolderOnDevice =
-          TableFileUtils.getAllFilesUnderFolder(tableFolder, tableDirsToExclude);
-      List<String> relativePathsToUpload =
-          getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+      List<String> relativePathsToAppFolderOnDevice = TableFileUtils.getAllFilesUnderFolder(
+          tableFolder, tableDirsToExclude);
+      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
+          manifest);
       Log.e(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
       // and then upload the files.
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
         String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile,
-            relativePath));
+        successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
       }
     }
   }
 
-  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws
-      JsonParseException, JsonMappingException, IOException {
-    Uri.Builder uriBuilder =
-        Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
-        TableFileUtils.ODK_TABLES_APP_NAME);
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES,
-        VALUE_TRUE);
+  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws JsonParseException,
+      JsonMappingException, IOException {
+    Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, TableFileUtils.ODK_TABLES_APP_NAME);
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES, VALUE_TRUE);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
     rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity =
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
-            String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(
-        responseEntity.getBody());
+    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
+        HttpMethod.GET, null, String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
   }
 
-  private List<OdkTablesFileManifestEntry> getTableLevelFileManifest(
-      String tableId) throws JsonParseException, JsonMappingException,
-      IOException {
-    Uri.Builder uriBuilder =
-        Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
-        TableFileUtils.ODK_TABLES_APP_NAME);
+  private List<OdkTablesFileManifestEntry> getTableLevelFileManifest(String tableId)
+      throws JsonParseException, JsonMappingException, IOException {
+    Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, TableFileUtils.ODK_TABLES_APP_NAME);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
     rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity =
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
-            String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(
-        responseEntity.getBody());
+    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
+        HttpMethod.GET, null, String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
   }
 
-  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws
-      JsonParseException, JsonMappingException, IOException {
-    Uri.Builder uriBuilder =
-        Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID,
-        TableFileUtils.ODK_TABLES_APP_NAME);
+  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws JsonParseException,
+      JsonMappingException, IOException {
+    Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
+    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, TableFileUtils.ODK_TABLES_APP_NAME);
     RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
     rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity =
-        rt.exchange(uriBuilder.build().toString(), HttpMethod.GET, null,
-            String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(
-        responseEntity.getBody());
+    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
+        HttpMethod.GET, null, String.class);
+    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
   }
 
   /**
    * Get the files that need to be uploaded. i.e. those files that are on the
    * phone but that do not appear on the manifest. Both the manifest and the
-   * filesOnPhone are assumed to contain relative paths, not including the
-   * first separator. Paths all relative to the app folder.
+   * filesOnPhone are assumed to contain relative paths, not including the first
+   * separator. Paths all relative to the app folder.
+   *
    * @param filesOnPhone
    * @param manifest
    * @return
    */
   private List<String> getFilesToBeUploaded(List<String> relativePathsOnDevice,
-      List<OdkTablesFileManifestEntry> manifest) {
+                                            List<OdkTablesFileManifestEntry> manifest) {
     Set<String> filesToRetain = new HashSet<String>();
     filesToRetain.addAll(relativePathsOnDevice);
-    for (OdkTablesFileManifestEntry entry: manifest) {
+    for (OdkTablesFileManifestEntry entry : manifest) {
       filesToRetain.remove(entry.filename);
     }
     List<String> fileList = new ArrayList<String>();
@@ -682,19 +655,15 @@ public class AggregateSynchronizer implements Synchronizer {
     return fileList;
   }
 
-  private boolean uploadFile(String wholePathToFile,
-      String pathRelativeToAppFolder) {
+  private boolean uploadFile(String wholePathToFile, String pathRelativeToAppFolder) {
     File file = new File(wholePathToFile);
     FileSystemResource resource = new FileSystemResource(file);
-    String escapedPath =
-        SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = URI.create(mFilesUri.toString()).resolve(
-        TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
-          .normalize();
+    String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
+    URI filePostUri = URI.create(mFilesUri.toString())
+        .resolve(TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath).normalize();
     Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
     interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
     rt.setInterceptors(interceptors);
     URI responseUri = rt.postForLocation(filePostUri, resource);
@@ -704,28 +673,26 @@ public class AggregateSynchronizer implements Synchronizer {
 
   /**
    * Get the URI to which to post in order to upload the file.
+   *
    * @param pathRelativeToAppFolder
    * @return
    */
   public URI getFilePostUri(String pathRelativeToAppFolder) {
-    String escapedPath =
-        SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = URI.create(mFilesUri.toString()).resolve(
-        TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath)
-          .normalize();
+    String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
+    URI filePostUri = URI.create(mFilesUri.toString())
+        .resolve(TableFileUtils.ODK_TABLES_APP_NAME + File.separator + escapedPath).normalize();
     return filePostUri;
   }
 
-  private boolean compareAndDownloadFile(
-      OdkTablesFileManifestEntry entry) {
+  private boolean compareAndDownloadFile(OdkTablesFileManifestEntry entry) {
     String basePath = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
-      // make sure you don't return a bad string.
+    // make sure you don't return a bad string.
     if (entry.filename == null || entry.filename.equals("")) {
       Log.i(TAG, "returned a null or empty filename");
       return false;
-     } else {
+    } else {
       // filename is the unrooted path of the file, so append the tableId
       // and the basepath.
       String path = basePath + File.separator + entry.filename;
@@ -739,7 +706,7 @@ public class AggregateSynchronizer implements Synchronizer {
       File newFile = new File(path);
       if (!newFile.exists()) {
         // the file doesn't exist on the system
-        //filesToDL.add(newFile);
+        // filesToDL.add(newFile);
         try {
           downloadFile(newFile, entry.downloadUrl);
           return true;
@@ -809,8 +776,7 @@ public class AggregateSynchronizer implements Synchronizer {
             // clear the cookies -- should not be necessary?
             // ss: might just be a collect thing?
           }
-          throw new Exception("status wasn't SC_OK when dl'ing file: "
-              + downloadUrl);
+          throw new Exception("status wasn't SC_OK when dl'ing file: " + downloadUrl);
         }
 
         // write connection to file
@@ -865,8 +831,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   private void discardEntityBytes(HttpResponse response) {
     // may be a server that does not handle
-    org.opendatakit.httpclientandroidlib.HttpEntity entity =
-        response.getEntity();
+    org.opendatakit.httpclientandroidlib.HttpEntity entity = response.getEntity();
     if (entity != null) {
       try {
         // have to read the stream in order to reuse the connection
@@ -907,8 +872,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // 1) Get the manifest.
     // TODO: this is currently just getting the same table-level manifest as
     // syncNonMediaTableFiles(). In reality it should be making its own call.
-    List<OdkTablesFileManifestEntry> manifest =
-        getTableLevelFileManifest(tableId);
+    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
@@ -917,19 +881,17 @@ public class AggregateSynchronizer implements Synchronizer {
     String appName = TableFileUtils.ODK_TABLES_APP_NAME;
     String appFolder = ODKFileUtils.getAppFolder(appName);
     String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
-    List<String> relativePathsToAppFolderOnDevice =
-        TableFileUtils.getAllFilesUnderFolder(instancesFolderFullPath, null);
-    List<String> relativePathsToUpload =
-        getFilesToBeUploaded(relativePathsToAppFolderOnDevice, manifest);
+    List<String> relativePathsToAppFolderOnDevice = TableFileUtils.getAllFilesUnderFolder(
+        instancesFolderFullPath, null);
+    List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
+        manifest);
     Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);
     // and then upload the files.
     Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
     for (String relativePath : relativePathsToUpload) {
       String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile,
-          relativePath));
+      successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
     }
   }
-
 
 }

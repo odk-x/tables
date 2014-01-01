@@ -1036,7 +1036,7 @@ public class CollectUtil {
     return tableId;
   }
 
-  private static boolean updateRowFromOdkCollectInstance(Context context, TableProperties tp,
+  private static boolean updateRowFromOdkCollectInstance(Context context, String appName, TableProperties tp,
       int instanceId) {
     // First we need to check to make sure the row id is in the shared
     // preferences. If it's not, something has gone wrong.
@@ -1056,7 +1056,7 @@ public class CollectUtil {
       return false;
     }
     Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
-    DbHelper dbh = DbHelper.getDbHelper(context);
+    DbHelper dbh = DbHelper.getDbHelper(context, appName);
     DbTable dbTable = DbTable.getDbTable(dbh, tp);
     dbTable.updateRow(rowId, values, formValues.accessControl, formValues.timestamp, formValues.formId, formValues.locale);
     // If we made it here and there were no errors, then clear the row id
@@ -1075,12 +1075,13 @@ public class CollectUtil {
    * {@link #updateRowFromOdkCollectInstance(Context, TableProperties, int)}.
    *
    * @param context
+   * @param appName
    * @param tp
    * @param returnCode
    * @param data
    * @return
    */
-  public static boolean handleOdkCollectEditReturn(Context context, TableProperties tp,
+  public static boolean handleOdkCollectEditReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != SherlockActivity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok, not inserting " + "edited data.");
@@ -1091,7 +1092,7 @@ public class CollectUtil {
       Log.i(TAG, "instance wasn't marked as finalized--not updating");
       return false;
     }
-    return updateRowFromOdkCollectInstance(context, tp, instanceId);
+    return updateRowFromOdkCollectInstance(context, appName, tp, instanceId);
   }
 
   /**
@@ -1102,12 +1103,13 @@ public class CollectUtil {
    * {@link #addRowFromOdkCollectInstance(Context, TableProperties, int)}.
    *
    * @param context
+   * @param appName
    * @param tp
    * @param returnCode
    * @param data
    * @return
    */
-  public static boolean handleOdkCollectAddReturn(Context context, TableProperties tp,
+  public static boolean handleOdkCollectAddReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != SherlockActivity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
@@ -1118,10 +1120,10 @@ public class CollectUtil {
       Log.i(TAG, "instance wasn't finalized--not adding");
       return false;
     }
-    return addRowFromOdkCollectInstance(context, tp, instanceId);
+    return addRowFromOdkCollectInstance(context, appName, tp, instanceId);
   }
 
-  private static boolean addRowFromOdkCollectInstance(Context context, TableProperties tp,
+  private static boolean addRowFromOdkCollectInstance(Context context, String appName, TableProperties tp,
       int instanceId) {
     FormValues formValues = CollectUtil.getOdkCollectFormValuesFromInstanceId(context,
         instanceId);
@@ -1129,20 +1131,20 @@ public class CollectUtil {
       return false;
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
-    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context), tp);
+    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context, appName), tp);
     dbTable.addRow(values, formValues.instanceID, formValues.timestamp, formValues.accessControl,
             formValues.formId, formValues.locale);
     return true;
   }
 
-  public static Intent getIntentForOdkCollectAddRowByQuery(Context context, TableProperties tp,
+  public static Intent getIntentForOdkCollectAddRowByQuery(Context context, String appName, TableProperties tp,
       CollectFormParameters params, String queryString) {
     Intent intentAddRow;
     if (queryString == null || queryString.length() == 0) {
       intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params, null);
     } else {
       Map<String, String> elementKeyToValue =
-          CollectUtil.getMapFromQuery(context, tp, queryString);
+          CollectUtil.getMapFromQuery(context, appName, tp, queryString);
       intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params,
           elementKeyToValue);
     }
@@ -1290,7 +1292,7 @@ public class CollectUtil {
    * @param query
    * @return
    */
-  private static Map<String, String> getMapFromQuery(Context context, TableProperties tp, String queryString) {
+  private static Map<String, String> getMapFromQuery(Context context, String appName, TableProperties tp, String queryString) {
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     // First add all empty strings. We will overwrite the ones that are
     // queried
@@ -1303,7 +1305,7 @@ public class CollectUtil {
     for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(DbHelper.getDbHelper(context), KeyValueStore.Type.ACTIVE, tp);
+    Query currentQuery = new Query(DbHelper.getDbHelper(context, appName), KeyValueStore.Type.ACTIVE, tp);
     currentQuery.loadFromUserQuery(queryString);
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

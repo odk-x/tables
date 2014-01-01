@@ -7,6 +7,7 @@ import org.opendatakit.tables.activities.TableActivity;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
@@ -87,7 +88,7 @@ public class TableMapListFragment extends SherlockFragment {
         return;
       }
       // Create the custom view and set it.
-      CustomTableView view = CustomTableView.get(getActivity(), table,
+      CustomTableView view = CustomTableView.get(getActivity(), TableFileUtils.ODK_TABLES_APP_NAME, table,
           filename, mIndexes, getFragmentManager()
           .findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP),
           (CustomViewCallbacks) getActivity());

@@ -26,6 +26,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.accounts.Account;
@@ -53,9 +54,11 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String TAG = "FileSyncAdapter";
 
   private final Context context;
+  private final String appName;
 
-  public FileSyncAdapter(Context context, boolean autoInitialize) {
+  public FileSyncAdapter(Context context, String appName, boolean autoInitialize) {
     super(context, autoInitialize);
+    this.appName = appName;
     this.context = context;
   }
 
@@ -71,12 +74,12 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
 
-    DbHelper dbh = DbHelper.getDbHelper(context);
+    DbHelper dbh = DbHelper.getDbHelper(context, appName);
     TableProperties[] tableProperties = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
     for (TableProperties tableProp : tableProperties) {
-      SyncUtilities.pullKeyValueEntriesForTable(context, aggregateUri,
-          authToken, tableProp);
+      SyncUtilities.pullKeyValueEntriesForTable(dbh, appName,
+          aggregateUri, authToken, tableProp);
       /*
        * We are going to hack something together for now that updates the list
        * and detail views for the table that we just pulled. Eventually we want

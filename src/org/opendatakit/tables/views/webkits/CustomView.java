@@ -105,15 +105,17 @@ public abstract class CustomView extends LinearLayout {
 		}
 	}
 
-	private Activity mParentActivity;
+	protected final Activity mParentActivity;
+	protected final String mAppName;
 
 	private Map<String, TableProperties> tpMap;
 	private CustomViewCallbacks mCallbacks;
 
-	protected CustomView(Activity parentActivity, CustomViewCallbacks callbacks) {
+	protected CustomView(Activity parentActivity, String appName, CustomViewCallbacks callbacks) {
 		super(parentActivity);
 		initCommonWebView(parentActivity);
 		this.mParentActivity = parentActivity;
+		this.mAppName = appName;
 		this.mCallbacks = callbacks;
 	}
 
@@ -179,7 +181,7 @@ public abstract class CustomView extends LinearLayout {
 		}
 		tpMap = new HashMap<String, TableProperties>();
 		TableProperties[] allTps = TableProperties.getTablePropertiesForAll(
-				DbHelper.getDbHelper(mParentActivity),
+				DbHelper.getDbHelper(mParentActivity, mAppName),
 				KeyValueStore.Type.ACTIVE);
 		for (TableProperties tp : allTps) {
 			tpMap.put(tp.getDisplayName(), tp);
@@ -310,7 +312,8 @@ public abstract class CustomView extends LinearLayout {
 			String currentQueryString = mCallbacks.getSearchString();
 
 			addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
-					CustomView.this.getContainerActivity(), tp, params,
+					CustomView.this.getContainerActivity(),
+					mAppName, tp, params,
 					currentQueryString);
 		} else {
 			// We've received a map to prepopulate with.
@@ -333,7 +336,7 @@ public abstract class CustomView extends LinearLayout {
 	    SurveyFormParameters surveyFormParameters,
 	    Map<String, String> elementKeyToValueToPrepopulate) {
 	  Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
-	      getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME,
+	      getContainerActivity(), tp, mAppName,
 	      surveyFormParameters, elementKeyToValueToPrepopulate);
 	  SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
 	}
@@ -373,7 +376,7 @@ public abstract class CustomView extends LinearLayout {
      SurveyFormParameters surveyFormParameters =
          new SurveyFormParameters(true, formId, screenPath);
      Intent surveyEditRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
-         getContainerActivity(), tp, TableFileUtils.ODK_TABLES_APP_NAME,
+         getContainerActivity(), tp, mAppName,
          surveyFormParameters, instanceId);
      SurveyUtil.launchSurveyToEditRow(getContainerActivity(),
          surveyEditRowIntent, tp, instanceId);
@@ -1045,7 +1048,7 @@ public abstract class CustomView extends LinearLayout {
 		public Control(Activity activity, UserTable table) {
 			this.mActivity = activity;
 			this.mTable = table;
-			dbh = DbHelper.getDbHelper(mActivity);
+			dbh = DbHelper.getDbHelper(mActivity, mAppName);
 			Log.d(TAG, "calling Control Constructor");
 		}
 
@@ -1077,7 +1080,7 @@ public abstract class CustomView extends LinearLayout {
 				return false;
 			}
 			String pathToTablesFolder = ODKFileUtils
-					.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+					.getAppFolder(mAppName);
 			String pathToFile = pathToTablesFolder + File.separator + filename;
 			Controller.launchDetailActivity(mActivity, mTable, index,
 					pathToFile);
@@ -1150,7 +1153,7 @@ public abstract class CustomView extends LinearLayout {
 				return false;
 			}
 			String pathToTablesFolder = ODKFileUtils
-					.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+					.getAppFolder(mAppName);
 			String pathToFile = pathToTablesFolder + File.separator + filename;
 			Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp,
 					searchText, null, false, pathToFile, sqlWhereClause,
@@ -1353,7 +1356,7 @@ public abstract class CustomView extends LinearLayout {
 		public void launchHTML(String filename) {
 			Log.d(TAG, "in launchHTML with filename: " + filename);
          String pathToTablesFolder = ODKFileUtils
-             .getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+             .getAppFolder(mAppName);
          String pathToFile = pathToTablesFolder + File.separator + filename;
 			Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
 			i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
@@ -1576,8 +1579,7 @@ public abstract class CustomView extends LinearLayout {
 		  TableProperties[] allTableProperties =
 		      TableProperties.getTablePropertiesForAll(dbh,
 		          KeyValueStore.Type.ACTIVE);
-			String dbTableName = NameUtil.createUniqueDbTableName(tableName,
-			    allTableProperties);
+			String dbTableName = NameUtil.createUniqueDbTableName(tableName,dbh);
 			TableProperties tp = TableProperties.addTable(dbh,
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);

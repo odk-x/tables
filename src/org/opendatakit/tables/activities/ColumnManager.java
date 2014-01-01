@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.TouchListView;
 
 import android.app.AlertDialog;
@@ -90,7 +91,7 @@ public class ColumnManager extends SherlockListActivity {
 	// Initialize fields.
 	private void init() {
 		tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		DbHelper dbh = DbHelper.getDbHelper(this);
+		DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
 		// We need to order the ColumnProperties appropriately
@@ -214,7 +215,7 @@ public class ColumnManager extends SherlockListActivity {
          AlertDialog.Builder alert =
          new AlertDialog.Builder(ColumnManager.this);
          alert.setTitle(getString(R.string.confirm_delete_column))
-         .setMessage(getString(R.string.are_you_sure_delete_column, 
+         .setMessage(getString(R.string.are_you_sure_delete_column,
              tp.getColumnByElementKey(currentCol).getDisplayName()));
          // OK Action => delete the column
          alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {

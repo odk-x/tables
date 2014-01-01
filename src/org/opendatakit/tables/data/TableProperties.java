@@ -785,9 +785,8 @@ public class TableProperties {
     listProps.addAll(Arrays.asList(activeProps));
     listProps.addAll(Arrays.asList(defaultProps));
     listProps.addAll(Arrays.asList(serverProps));
-    TableProperties[] allProps = listProps.toArray(new TableProperties[listProps.size()]);
-    if (NameUtil.dbTableNameAlreadyExists(dbTableName,  allProps)
-        || NameUtil.tableIdAlreadyExists(tableId, allProps)) {
+    if (NameUtil.dbTableNameAlreadyExists(dbTableName,  dbh)
+        || NameUtil.tableIdAlreadyExists(tableId, dbh)) {
       Log.e(t, "a table already exists with the dbTableName: " + dbTableName
           + " or with the tableId: " + tableId);
       throw new TableAlreadyExistsException("a table already exists with the" + " dbTableName: "

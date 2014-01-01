@@ -21,6 +21,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.KeyValueStoreSync;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.os.Bundle;
 import android.view.View;
@@ -48,7 +49,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
     int count = listView.getCount();
-    DbHelper dbh = DbHelper.getDbHelper(this);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     for (int i = 0; i < count; i++) {
       TableProperties tp = (TableProperties) listView.getItemAtPosition(i);
@@ -66,7 +67,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    * must also have an "isSetToSync" entry in the sync KVS.
    */
   private TableProperties[] getServerDataTables() {
-    DbHelper dbh = DbHelper.getDbHelper(this);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     // hilary's original--return dm.getDataTableProperties();
     return TableProperties.getTablePropertiesForDataTables(dbh,
         KeyValueStore.Type.SERVER);
@@ -79,7 +80,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
         (TableProperties) listView.getItemAtPosition(position);
     // hilary's original
     //tp.setSynchronized(listView.isItemChecked(position));
-    DbHelper dbh = DbHelper.getDbHelper(this);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tp.getTableId());
     boolean wantToSync;

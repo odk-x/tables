@@ -23,7 +23,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 
@@ -53,14 +52,14 @@ public class CustomDetailView extends CustomView {
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No detail view has been specified.</p>" + "</body></html>";
 
-  private Activity mActivity;
   private KeyValueStoreHelper detailKVSH;
   /** The filename of the html we are displaying. */
   private String mFilename;
-	// IMPORTANT: hold a strong reference to control because Webkit holds a weak
-	// reference
+  // IMPORTANT: hold a strong reference to control because Webkit holds a weak
+  // reference
   private Control control;
-  // IMPORTANT: hold a strong reference to rowData because Webkit holds a weak reference
+  // IMPORTANT: hold a strong reference to rowData because Webkit holds a weak
+  // reference
   private RowData rowData;
 
   /**
@@ -72,11 +71,10 @@ public class CustomDetailView extends CustomView {
    *          the filename to display as the detail view. If null, tries to
    *          receive the value from the key value store.
    */
-  public CustomDetailView(Activity activity, TableProperties tp,
-      String filename, CustomViewCallbacks callbacks) {
-    super(activity, callbacks);
-    this.mActivity = activity;
-    this.control = new Control(mActivity);
+  public CustomDetailView(Activity activity, String appName, TableProperties tp, String filename,
+                          CustomViewCallbacks callbacks) {
+    super(activity, appName, callbacks);
+    this.control = new Control(mParentActivity);
     this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
     if (filename == null) {
       String recoveredFilename = this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
@@ -104,8 +102,8 @@ public class CustomDetailView extends CustomView {
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
     if (this.mFilename != null) {
-      String fullPath = FileProvider.getAsWebViewUri(mActivity, TableFileUtils.ODK_TABLES_APP_NAME,
-          ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(mFilename)));
+      String fullPath = FileProvider.getAsWebViewUri(mParentActivity, mAppName,
+          ODKFileUtils.asUriFragment(mAppName, new File(mFilename)));
       load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);

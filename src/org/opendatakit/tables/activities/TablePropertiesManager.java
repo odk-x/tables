@@ -35,6 +35,7 @@ import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.utils.LanguageUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.app.AlertDialog;
@@ -102,7 +103,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    dbh = DbHelper.getDbHelper(this);
+    dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
     init();

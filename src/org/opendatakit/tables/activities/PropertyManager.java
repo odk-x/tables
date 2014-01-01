@@ -28,6 +28,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.SliderPreference;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.MultipleChoiceSettingDialog;
 import org.opendatakit.tables.views.SpreadsheetView;
 
@@ -74,7 +75,7 @@ public class PropertyManager extends PreferenceActivity {
     // Column Name
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.elementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
-    DbHelper dbh = DbHelper.getDbHelper(this);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
     this.columnKVSH =
@@ -178,7 +179,7 @@ public class PropertyManager extends PreferenceActivity {
       }
       String joinTableId = (joins != null && joins.size() == 1) ? joins.get(0).getTableId() : null;
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
-          DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
+          DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
       String[] tableIds = new String[tps.length];
       String selectedTableId = tableIds[0] = null;

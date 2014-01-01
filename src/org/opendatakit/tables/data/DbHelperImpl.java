@@ -36,9 +36,9 @@ public class DbHelperImpl {
 
     private DataModelDatabaseHelper mDbHelper;
 
-    private DbHelperImpl(Context context) {
+    private DbHelperImpl(Context context, String appName) {
       // TODO: make this app-centric
-      String path = ODKFileUtils.getWebDbFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      String path = ODKFileUtils.getWebDbFolder(appName);
 
       WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(context, path);
       WebDbDefinition defn = h.getWebKitDatabaseInfoHelper();
@@ -57,9 +57,9 @@ public class DbHelperImpl {
       return mDbHelper.getWritableDatabase();
     }
 
-    public static DbHelperImpl getDbHelper(Context context) {
+    public static DbHelperImpl getDbHelper(Context context, String appName) {
         if (dbh == null) {
-            dbh = new DbHelperImpl(context);
+            dbh = new DbHelperImpl(context, appName);
         }
         return dbh;
     }

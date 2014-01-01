@@ -110,10 +110,12 @@ public class CsvUtil {
 
   private final DataUtil du;
   private final DbHelper dbh;
+  private final String appName;
 
-  public CsvUtil(Context context) {
+  public CsvUtil(Context context, String appName) {
+    this.appName = appName;
     du = DataUtil.getDefaultDataUtil();
-    dbh = DbHelper.getDbHelper(context);
+    dbh = DbHelper.getDbHelper(context, appName);
   }
 
   /**
@@ -136,13 +138,8 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    TableProperties[] allTableProperties =
-        TableProperties.getTablePropertiesForAll(dbh,
-            KeyValueStore.Type.ACTIVE);
-    String dbTableName = NameUtil.createUniqueDbTableName(tableName,
-        allTableProperties);
-    String tableId = NameUtil.createUniqueTableId(dbTableName,
-        allTableProperties);
+    String dbTableName = NameUtil.createUniqueDbTableName(tableName,dbh);
+    String tableId = NameUtil.createUniqueTableId(dbTableName,dbh);
     TableProperties tp;
     try {
       boolean includesProperties = false;
@@ -451,7 +448,7 @@ public class CsvUtil {
       }
       String propFilename = baseName += PROPERTIES_CSV_FILE_EXTENSION;
 
-      File csvProp = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
+      File csvProp = new File(ODKFileUtils.getAppFolder(appName),
           propFilename);
 
       if (csvProp.exists()) {
@@ -488,7 +485,7 @@ public class CsvUtil {
   }
 
   private File joinCSVs(File prop, File data) throws IOException {
-    File temp = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
+    File temp = new File(ODKFileUtils.getAppFolder(appName),
         TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
 
     InputStream isProp = null;

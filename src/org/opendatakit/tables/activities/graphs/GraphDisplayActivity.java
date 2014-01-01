@@ -27,6 +27,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -144,7 +145,7 @@ public class GraphDisplayActivity extends SherlockListActivity {
 		    getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
 		this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
 		    Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-		DbHelper dbh = DbHelper.getDbHelper(this);
+		DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
 		this.kvsh =

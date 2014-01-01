@@ -72,7 +72,7 @@ public class Launcher extends Activity {
               startActivity(i);
           } else {
               TableProperties tp = TableProperties.getTablePropertiesForTable(
-                      DbHelper.getDbHelper(this), tableId,
+                      DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), tableId,
                       KeyValueStore.Type.ACTIVE);
               Controller.launchTableActivity(this, tp, true);
           }

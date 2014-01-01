@@ -304,7 +304,7 @@ public class Aggregate extends SherlockActivity {
       // and do yo' bizness."
       // The first thing we need to do is get the list of tables that is set
       // to sync. Submit needs to know about this.
-      DbHelper dbh = DbHelper.getDbHelper(this);
+      DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
       TableProperties[] tps =
           TableProperties.getTablePropertiesForSynchronizedTables(dbh,
               KeyValueStore.Type.SERVER);
@@ -355,7 +355,7 @@ public class Aggregate extends SherlockActivity {
     protected SynchronizationResult doInBackground(Void... params) {
       SynchronizationResult result = null;
       try {
-        DbHelper dbh = DbHelper.getDbHelper(Aggregate.this);
+        DbHelper dbh = DbHelper.getDbHelper(Aggregate.this, TableFileUtils.ODK_TABLES_APP_NAME);
         Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,

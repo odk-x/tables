@@ -7,6 +7,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.SliderPreference;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.os.Bundle;
 import android.preference.Preference;
@@ -36,7 +37,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
         	generalPreferences();
         } else {
         	// was called from controller so it is table specific
-        	dbh = DbHelper.getDbHelper(this);
+        	dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
         	tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         			KeyValueStore.Type.ACTIVE);
         	kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");

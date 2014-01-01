@@ -31,6 +31,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;
@@ -104,7 +105,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         // remove a title
         setTitle("");
 
-        dbh = DbHelper.getDbHelper(this);
+        dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
         c = new Controller(this, this, getIntent().getExtras());
     }
 

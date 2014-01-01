@@ -28,7 +28,6 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.util.Log;
@@ -38,34 +37,36 @@ public class CustomGraphView extends CustomView {
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
 
-  private Activity mActivity;
   private Map<String, Integer> colIndexTable;
   private UserTable table;
   private String filename;
   private String graphName;
   private String potentialGraphName;
-  // IMPORTANT: hold a strong reference to control because Webkit holds a weak reference
+  // IMPORTANT: hold a strong reference to control because Webkit holds a weak
+  // reference
   private Control control;
-  // IMPORTANT: hold a strong reference to tableData because Webkit holds a weak reference
+  // IMPORTANT: hold a strong reference to tableData because Webkit holds a weak
+  // reference
   private TableData tableData;
-  // IMPORTANT: hold a strong reference to graphData because Webkit holds a weak reference
+  // IMPORTANT: hold a strong reference to graphData because Webkit holds a weak
+  // reference
   private GraphData graphData;
 
-  private CustomGraphView(Activity activity, String graphName, String potentialGraphName,
-      CustomViewCallbacks callbacks) {
-    super(activity, callbacks);
-    this.mActivity = activity;
-    this.filename = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator
-        + "optionspane.html";
+  private CustomGraphView(Activity activity, String appName, String graphName,
+                          String potentialGraphName, CustomViewCallbacks callbacks) {
+    super(activity, appName, callbacks);
+    this.filename = ODKFileUtils.getAppFolder(appName) + File.separator + "optionspane.html";
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
     Log.i("CustomGraphView", "IDDD: " + graphName);
     colIndexTable = new HashMap<String, Integer>();
   }
 
-  public static CustomGraphView get(Activity activity, UserTable table, String graphName,
-      String potentialGraphName, Controller controller) {
-    CustomGraphView ctv = new CustomGraphView(activity, graphName, potentialGraphName, controller);
+  public static CustomGraphView get(Activity activity, String appName, UserTable table,
+                                    String graphName, String potentialGraphName,
+                                    Controller controller) {
+    CustomGraphView ctv = new CustomGraphView(activity, appName, graphName, potentialGraphName,
+                                              controller);
     ctv.set(table);
     return ctv;
   }
@@ -73,7 +74,8 @@ public class CustomGraphView extends CustomView {
   private void set(UserTable table) {
     this.table = table;
     colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties().getDatabaseColumns();
+    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties()
+        .getDatabaseColumns();
     colIndexTable.putAll(table.getMapOfUserDataToIndex());
     for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
       String smsLabel = cp.getSmsLabel();
@@ -87,14 +89,14 @@ public class CustomGraphView extends CustomView {
   }
 
   public void display() {
-    control = new Control(mActivity, table);
+    control = new Control(mParentActivity, table);
     tableData = new TableData(table);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
     addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(), "graph_data");
     if (filename != null) {
-      String fullPath = FileProvider.getAsWebViewUri(getContext(), TableFileUtils.ODK_TABLES_APP_NAME,
-          ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
+      String fullPath = FileProvider.getAsWebViewUri(getContext(), mAppName,
+          ODKFileUtils.asUriFragment(mAppName, new File(filename)));
       load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);
@@ -140,8 +142,8 @@ public class CustomGraphView extends CustomView {
     private GraphData(String graphString) {
       isModified = false;
       this.graphString = graphString;
-      this.kvsh = table.getTableProperties().
-          getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
+      this.kvsh = table.getTableProperties().getKeyValueStoreHelper(
+          BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
       this.aspectHelper = kvsh.getAspectHelper(this.graphString);
       this.aspectHelper = saveGraphToName(potentialGraphName);
     }

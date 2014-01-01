@@ -21,6 +21,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.content.Intent;
@@ -86,7 +87,7 @@ public class DetailDisplayActivity extends SherlockActivity
         // null if not found, so we can just pass it right along into the view.
         String intentFilename =
             getIntent().getStringExtra(INTENT_KEY_FILENAME);
-        view = new CustomDetailView(this, c.getTableProperties(),
+        view = new CustomDetailView(this, TableFileUtils.ODK_TABLES_APP_NAME, c.getTableProperties(),
             intentFilename, c);
         displayView();
         c.setDisplayView(view);
@@ -95,7 +96,7 @@ public class DetailDisplayActivity extends SherlockActivity
 
     private void displayView() {
       TableProperties tp = c.getTableProperties();
-        Query query = new Query(DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE, tp);
+        Query query = new Query(DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE, tp);
         query.addRowIdConstraint(rowId);
         table = c.getIsOverview() ?
             c.getDbTable().getUserOverviewTable(query) :

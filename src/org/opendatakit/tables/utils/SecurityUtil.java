@@ -72,9 +72,9 @@ public class SecurityUtil {
         return indices;
     }
 
-    public static boolean isValid(Context context, TableProperties tp,
+    public static boolean isValid(Context context, String appName, TableProperties tp,
             String phoneNum, String password) {
-        DbHelper dbh = DbHelper.getDbHelper(context);
+        DbHelper dbh = DbHelper.getDbHelper(context, appName);
         DbTable dbt = DbTable.getDbTable(dbh, tp);
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(DataTableColumns.ID);

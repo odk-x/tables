@@ -30,6 +30,7 @@ import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
 import android.os.Bundle;
@@ -107,7 +108,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
         INTENT_FLAG_NEW_RULE);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    this.dbh = DbHelper.getDbHelper(this);
+    this.dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
     this.mKvsh =

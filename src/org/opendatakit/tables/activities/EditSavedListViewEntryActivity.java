@@ -100,7 +100,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-    this.dbh = DbHelper.getDbHelper(this);
+    this.dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
     this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);

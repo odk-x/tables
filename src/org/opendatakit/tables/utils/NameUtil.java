@@ -15,8 +15,12 @@
  */
 package org.opendatakit.tables.utils;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeSet;
 
+import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.util.Log;
@@ -264,19 +268,41 @@ public class NameUtil {
    * {@link TableProperties}.
    * @return
    */
-  public static String createUniqueTableId(String proposedTableId,
-      TableProperties[] allTableProperties) {
+  public static String createUniqueTableId(String proposedTableId, DbHelper dbh) {
+
     // a table id is just a user-friendly version of the display name without
     // any word characters.
     String baseName = createValidUserDefinedDatabaseName(proposedTableId);
-    if (!tableIdAlreadyExists(baseName, allTableProperties)) {
+    Set<String> existingIds = new HashSet<String>();
+    Set<String> dbTableNames = new HashSet<String>();
+
+    TableProperties[] tableProps;
+
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+
+    if ( !existingIds.contains(baseName) && !dbTableNames.contains(baseName) ) {
       return baseName;
     }
+
     // Otherwise we need to add some suffixes.
     int suffix = 1;
     while (true) {
       String nextName = baseName + suffix;
-      if (!tableIdAlreadyExists(nextName, allTableProperties)) {
+      if (!existingIds.contains(nextName) && !dbTableNames.contains(nextName) ) {
         if (!isValidUserDefinedDatabaseName(nextName)) {
           throw new IllegalStateException("[createUniqueTableId] invariant" +
           		" violated--about to return: " + nextName + " and it is not" +
@@ -297,22 +323,45 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static String createUniqueDbTableName(String proposedDbTableName,
-      TableProperties[] allTableProperties) {
+  public static String createUniqueDbTableName(String proposedDbTableName, DbHelper dbh) {
+
+    // a table id is just a user-friendly version of the display name without
+    // any word characters.
     String baseName = createValidUserDefinedDatabaseName(proposedDbTableName);
-    if (!dbTableNameAlreadyExists(baseName, allTableProperties)) {
+    Set<String> existingIds = new HashSet<String>();
+    Set<String> dbTableNames = new HashSet<String>();
+
+    TableProperties[] tableProps;
+
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+      dbTableNames.add(tp.getDbTableName());
+    }
+
+    if ( !existingIds.contains(baseName) && !dbTableNames.contains(baseName) ) {
       return baseName;
     }
-    // else we need to construct one up.
+
+    // Otherwise we need to add some suffixes.
     int suffix = 1;
     while (true) {
       String nextName = baseName + suffix;
-      if (!dbTableNameAlreadyExists(nextName, allTableProperties)) {
+      if (!existingIds.contains(nextName) && !dbTableNames.contains(nextName) ) {
         if (!isValidUserDefinedDatabaseName(nextName)) {
-          throw new IllegalStateException("[createUniqueDbTableName] " +
-          		"invariant violated--about to return: " + nextName
-          		+ " and it is not" +
-                    " a valid user-defined database name.");
+          throw new IllegalStateException("[createUniqueDbTableName] invariant" +
+               " violated--about to return: " + nextName + " and it is not" +
+                     " a valid user-defined database name.");
         }
         return nextName;
       }
@@ -408,14 +457,26 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static boolean tableIdAlreadyExists(String proposedTableId,
-      TableProperties[] allTableProperties) {
-    for (TableProperties tp : allTableProperties) {
-      if (tp.getTableId().equals(proposedTableId)) {
-        return true;
-      }
+  public static boolean tableIdAlreadyExists(String proposedTableId, DbHelper dbh) {
+
+    Set<String> existingIds = new HashSet<String>();
+
+    TableProperties[] tableProps;
+
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
     }
-    return false;
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    for ( TableProperties tp : tableProps ) {
+      existingIds.add(tp.getTableId());
+    }
+
+    return existingIds.contains(proposedTableId);
   }
 
   /**
@@ -427,14 +488,26 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static boolean dbTableNameAlreadyExists(String proposedDbTableName,
-      TableProperties[] allTableProperties) {
-    for (TableProperties tp : allTableProperties) {
-      if (tp.getDbTableName().equals(proposedDbTableName)) {
-        return true;
-      }
+  public static boolean dbTableNameAlreadyExists(String proposedDbTableName, DbHelper dbh) {
+
+    Set<String> dbTableNames = new HashSet<String>();
+
+    TableProperties[] tableProps;
+
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    for ( TableProperties tp : tableProps ) {
+      dbTableNames.add(tp.getDbTableName());
     }
-    return false;
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    for ( TableProperties tp : tableProps ) {
+      dbTableNames.add(tp.getDbTableName());
+    }
+    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    for ( TableProperties tp : tableProps ) {
+      dbTableNames.add(tp.getDbTableName());
+    }
+
+    return dbTableNames.contains(proposedDbTableName);
   }
 
 

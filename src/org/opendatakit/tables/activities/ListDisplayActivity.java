@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.content.Intent;
@@ -104,7 +105,7 @@ public class ListDisplayActivity extends SherlockActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("");
-        dbh = DbHelper.getDbHelper(this);
+        dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
         c = new Controller(this, this, getIntent().getExtras());
         kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
         // TODO: why do we get all table properties here? this is an expensive
@@ -163,7 +164,7 @@ public class ListDisplayActivity extends SherlockActivity
                 c.getTableProperties().getBackingStoreType());
           }
         }
-        view = CustomTableView.get(this, table, filename, c);
+        view = CustomTableView.get(this, TableFileUtils.ODK_TABLES_APP_NAME, table, filename, c);
         // change the info bar text IF necessary
         c.setListViewInfoBarText();
         displayView();

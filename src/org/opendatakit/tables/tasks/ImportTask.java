@@ -10,12 +10,14 @@ public class ImportTask
 extends AsyncTask<ImportRequest, Integer, Boolean> {
 
 	private final ImportCSVActivity importCSVActivity;
+	private final String appName;
 
 	/**
 	 * @param importCSVActivity
 	 */
-	public ImportTask(ImportCSVActivity importCSVActivity) {
+	public ImportTask(ImportCSVActivity importCSVActivity, String appName) {
 		this.importCSVActivity = importCSVActivity;
+		this.appName = appName;
 	}
 
 	private static final String TAG = "ImportTask";
@@ -26,7 +28,7 @@ extends AsyncTask<ImportRequest, Integer, Boolean> {
 	@Override
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
-		CsvUtil cu = new CsvUtil(this.importCSVActivity);
+		CsvUtil cu = new CsvUtil(this.importCSVActivity, appName);
 		if (request.getCreateTable()) {
 			try {
 				return cu.importNewTable(importCSVActivity, this, request.getFile(),

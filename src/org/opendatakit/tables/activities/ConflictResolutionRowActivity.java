@@ -14,6 +14,7 @@ import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConcordantColumn;
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.ConflictColumn;
@@ -103,7 +104,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     super.onCreate(savedInstanceState);
     this.setContentView(
         org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
-    this.mDbHelper = DbHelper.getDbHelper(this);
+    this.mDbHelper = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     this.mTextViewDeletionMessage = (TextView)
         findViewById(R.id.conflict_resolution_deletion_message);
     this.mRadioGroupDeletion = (RadioGroup)

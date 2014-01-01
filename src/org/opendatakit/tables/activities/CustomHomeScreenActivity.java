@@ -24,6 +24,7 @@ import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
@@ -44,7 +45,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class CustomHomeScreenActivity extends SherlockFragmentActivity 
+public class CustomHomeScreenActivity extends SherlockFragmentActivity
     implements DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
@@ -96,14 +97,14 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     } else {
       // We'll check to see if we need to begin an initialization task.
       if (ConfigurationUtil.isChanged(mPrefs)) {
-        InitializeTask initializeTask = new InitializeTask(this);
+        InitializeTask initializeTask = new InitializeTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
         initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
         initalizeTaskDialogFragment.setTask(initializeTask);
         initalizeTaskDialogFragment.setCallbacks(this);
         initalizeTaskDialogFragment.setCancelable(false);
         initializeTask.setDialogFragment(initalizeTaskDialogFragment);
         FragmentManager fragmentManager = this.getSupportFragmentManager();
-        initalizeTaskDialogFragment.show(fragmentManager, 
+        initalizeTaskDialogFragment.show(fragmentManager,
             InitializeTaskDialogFragment.TAG_FRAGMENT);
       }
     }
@@ -122,7 +123,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
-    mView = new CustomAppView(this, mFilename, this);
+    mView = new CustomAppView(this, TableFileUtils.ODK_TABLES_APP_NAME, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
   }
@@ -147,7 +148,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
 
      return true;
   }
-  
+
   @Override
   protected void onActivityResult(int requestCode, int resultCode,
         Intent data) {
@@ -155,8 +156,8 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // We are going to handle the add row the same for both cases--an add row
     // for the original table as well as an add row for another table. This is
     // because the List and Detail activities maintain a TableProperties object
-    // for the table they were displaying. So when you return, if you were 
-    // adding to the same table that you were displaying you already have the 
+    // for the table they were displaying. So when you return, if you were
+    // adding to the same table that you were displaying you already have the
     // TableProperties object. In the case of this Activity, however, we never
     // have a TableProperties (since we aren't really displaying a specific
     // table), so you have to handle the return the same in both cases--first
@@ -172,9 +173,9 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
       }
       TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(this), tableId,
+              DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), tableId,
               KeyValueStore.Type.ACTIVE);
-      CollectUtil.handleOdkCollectAddReturn(this, tpToReceiveAdd,
+      CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, tpToReceiveAdd,
           resultCode, data);
       break;
     default:

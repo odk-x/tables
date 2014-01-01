@@ -12,12 +12,14 @@ public class ExportTask
 	 *
 	 */
 	private final ExportCSVActivity exportCSVActivity;
+	private final String appName;
 
 	/**
 	 * @param exportCSVActivity
 	 */
-	public ExportTask(ExportCSVActivity exportCSVActivity) {
+	public ExportTask(ExportCSVActivity exportCSVActivity, String appName) {
 		this.exportCSVActivity = exportCSVActivity;
+		this.appName = appName;
 	}
 
 // This says whether or not the secondary entries in the key value store
@@ -26,7 +28,7 @@ public class ExportTask
 
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
-        CsvUtil cu = new CsvUtil(this.exportCSVActivity);
+        CsvUtil cu = new CsvUtil(this.exportCSVActivity, appName);
         return cu.export(this, request.getFile(),
                 request.getTableProperties(),
                 request.getIncludeTimestamps(),

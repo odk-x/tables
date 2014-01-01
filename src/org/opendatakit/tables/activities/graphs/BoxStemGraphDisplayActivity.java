@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.graphs.BoxStemChart;
 
 import android.content.Intent;
@@ -61,7 +62,7 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
-        DbHelper dbh = DbHelper.getDbHelper(this);
+        DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
         query = new Query(dbh,
             KeyValueStore.Type.ACTIVE,
             c.getTableProperties());

@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -103,7 +104,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		tps = TableProperties.getTablePropertiesForAll(
-		        DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
+		        DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length + 1];
 		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
@@ -156,7 +157,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		ImportTask task = new ImportTask(this);
+		ImportTask task = new ImportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
             showDialog(IMPORT_IN_PROGRESS_DIALOG);

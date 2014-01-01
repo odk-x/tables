@@ -31,6 +31,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
@@ -75,6 +76,7 @@ public class Controller implements CustomViewCallbacks {
 
   private static final String TAG = "Controller";
 
+    public static final String INTENT_KEY_APP_NAME = "appName";
     public static final String INTENT_KEY_TABLE_ID = "tableId";
     public static final String INTENT_KEY_SEARCH = "search";
     public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
@@ -130,6 +132,7 @@ public class Controller implements CustomViewCallbacks {
 
     private final DataUtil du;
     private final SherlockActivity activity;
+    private final String appName;
     private final DisplayActivity da;
     private final DbHelper dbh;
     private TableProperties tp;
@@ -148,6 +151,12 @@ public class Controller implements CustomViewCallbacks {
             Bundle intentBundle) {
         du = DataUtil.getDefaultDataUtil();
         this.activity = activity;
+        String tmpAppName = intentBundle.getString(INTENT_KEY_APP_NAME);
+        if ( tmpAppName == null ) {
+          this.appName = TableFileUtils.ODK_TABLES_APP_NAME;
+        } else {
+          this.appName = tmpAppName;
+        }
         this.da = da;
         // getting intent information
         String tableId = intentBundle.getString(INTENT_KEY_TABLE_ID);
@@ -169,7 +178,7 @@ public class Controller implements CustomViewCallbacks {
         }
         isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
         // initializing data objects
-        dbh = DbHelper.getDbHelper(activity);
+        dbh = DbHelper.getDbHelper(activity, appName);
         refreshDbTable(tableId);
 
         // INITIALIZING VIEW OBJECTS
@@ -628,7 +637,7 @@ public class Controller implements CustomViewCallbacks {
 	          // means that if there IS a join column, we'll throw an error!!!
 	          // So be careful.
 	          Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRowByQuery(
-	        		  activity, tp, params, getSearchText());
+	        		  activity, appName, tp, params, getSearchText());
 
 	          if (intentAddRow != null) {
 	              Controller.this.activity.startActivityForResult(intentAddRow,
@@ -684,7 +693,7 @@ public class Controller implements CustomViewCallbacks {
   }
 
     private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-        if (!CollectUtil.handleOdkCollectAddReturn(activity, tp, returnCode,
+        if (!CollectUtil.handleOdkCollectAddReturn(activity, appName, tp, returnCode,
             data)) {
           return;
         } else {
@@ -694,7 +703,7 @@ public class Controller implements CustomViewCallbacks {
     }
 
     private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-      if (!CollectUtil.handleOdkCollectEditReturn(activity, tp, returnCode,
+      if (!CollectUtil.handleOdkCollectEditReturn(activity, appName, tp, returnCode,
           data)) {
         return;
       } else {
@@ -721,9 +730,9 @@ public class Controller implements CustomViewCallbacks {
       }
       TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(activity), tableId,
+              DbHelper.getDbHelper(activity, appName), tableId,
               KeyValueStore.Type.ACTIVE);
-      CollectUtil.handleOdkCollectAddReturn(activity, tpToReceiveAdd,
+      CollectUtil.handleOdkCollectAddReturn(activity, appName, tpToReceiveAdd,
           returnCode, data);
     }
 

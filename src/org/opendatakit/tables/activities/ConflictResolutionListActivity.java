@@ -6,6 +6,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.util.Log;
@@ -35,7 +36,7 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     // when we come back.
     String tableId =
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    DbHelper dbHelper = DbHelper.getDbHelper(this);
+    DbHelper dbHelper = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     TableProperties tableProperties =
         TableProperties.getTablePropertiesForTable(dbHelper, tableId,
             KeyValueStore.Type.ACTIVE);

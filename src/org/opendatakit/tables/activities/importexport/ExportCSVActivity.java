@@ -23,6 +23,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -96,7 +97,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		dbh = DbHelper.getDbHelper(this);
+		dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		setContentView(getView());
 	}
 
@@ -237,7 +238,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         boolean incAC = incAccessControlCheck.isChecked();
         boolean incFI = incFormIdsCheck.isChecked();
         boolean incLo = incLocalesCheck.isChecked();
-        ExportTask task = new ExportTask(this);
+        ExportTask task = new ExportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
         task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
 	}

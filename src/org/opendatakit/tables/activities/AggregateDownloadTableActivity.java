@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.opendatakit.tables.utils.FileUtils;
+import org.opendatakit.tables.utils.NameUtil;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
@@ -81,7 +83,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
   }
 
-  private void respondToTablesQuery(Map<String, String> tablesFromServer) {
+  private void respondToTablesQuery(List<TableResource> tablesFromServer) {
     if (tablesFromServer == null) {
       finishDialog.setMessage(getString(R.string.error_contacting_server));
       finishDialog.show();
@@ -91,9 +93,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     } else {
       tableIds = new ArrayList<String>();
       tableNames = new ArrayList<String>();
-      for (String tableId : tablesFromServer.keySet()) {
-        tableIds.add(tableId);
-        tableNames.add(tablesFromServer.get(tableId));
+      for (TableResource table : tablesFromServer) {
+        tableIds.add(table.getTableId());
+        tableNames.add(table.getDisplayName());
       }
       setListAdapter(new ArrayAdapter<String>(this,
           android.R.layout.simple_list_item_1, tableNames));
@@ -113,13 +115,15 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
-    String tableName = (String) getListView().getItemAtPosition(position);
+    String displayName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
-    DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, tableName);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    String dbTableNameActive = NameUtil.createUniqueDbTableName(tableId,dbh);
+    DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, dbTableNameActive, displayName);
     task.execute();
   }
 
-  private class GetTablesTask extends AsyncTask<Void, Void, Map<String, String>> {
+  private class GetTablesTask extends AsyncTask<Void, Void, List<TableResource>> {
     private String aggregateUrl;
     private String authToken;
     private ProgressDialog pd;
@@ -138,7 +142,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     }
 
     @Override
-    protected Map<String, String> doInBackground(Void... args) {
+    protected List<TableResource> doInBackground(Void... args) {
       //android.os.Debug.waitForDebugger();
       Synchronizer sync;
       try {
@@ -149,7 +153,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       }
 
       // get tables (tableId -> schemaETag) from server
-      Map<String, String> tables = null;
+      List<TableResource> tables = null;
       try {
         tables = sync.getTables();
       } catch (IOException e) {
@@ -160,7 +164,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
       // filter tables to remove ones already downloaded
       if (tables != null) {
-        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
+        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
         // we're going to check for downloaded tables ONLY in the server store,
         // b/c there will only be UUID collisions if the tables have been
         // downloaded, which means they must be in the server KVS. The
@@ -169,11 +173,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         // virtually zero.
         TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
             KeyValueStore.Type.SERVER);
-        Set<String> tableIds = tables.keySet();
         for (TableProperties tp : props) {
-          String tableId = tp.getTableId();
-          if (tableIds.contains(tableId)) {
-            tables.remove(tableId);
+          for ( int i = 0 ; i < tables.size() ; ++i ) {
+            TableResource table = tables.get(i);
+            if ( table.getTableId().equals(tp.getTableId()) ) {
+              tables.remove(i);
+              break;
+            }
           }
         }
       }
@@ -182,7 +188,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     }
 
     @Override
-    protected void onPostExecute(Map<String, String> result) {
+    protected void onPostExecute(List<TableResource> result) {
       // TODO: this is probably broken!!!
       if ( pd != null ) {
         pd.dismiss();
@@ -194,14 +200,16 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   private class DownloadTableTask extends AsyncTask<Void, Void, Void> {
 
     private String tableId;
-    private String tableName;
+    private String dbTableName;
+    private String displayName;
     private String accountName;
     private ProgressDialog pd;
 
-    public DownloadTableTask(String accountName, String tableId, String tableName) {
+    public DownloadTableTask(String accountName, String tableId, String dbTableName, String displayName) {
       this.accountName = accountName;
       this.tableId = tableId;
-      this.tableName = tableName;
+      this.dbTableName = dbTableName;
+      this.displayName = displayName;
     }
 
     @Override
@@ -209,21 +217,21 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       super.onPreExecute();
       pd = ProgressDialog.show(AggregateDownloadTableActivity.this,
           getString(R.string.please_wait),
-          getString(R.string.fetching_this_table, tableName));
+          getString(R.string.fetching_this_table, displayName));
     }
 
     @Override
     protected Void doInBackground(Void... params) {
       //android.os.Debug.waitForDebugger();
-      DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this);
+      DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
 //TODO the order of synching should probably be re-arranged so that you first
 // get the table properties and column entries (ie the table definition) and
 // THEN get the row data. This would make it more resilient to network failures
 // during the process. along those lines, the same process should exist in the
 // table creation on the phone. or rather, THAT should try and follow the same
 // order.
-      TableProperties tp = TableProperties.addTable(dbh, tableName,
-          tableName, TableType.data, tableId, KeyValueStore.Type.SERVER);
+      TableProperties tp = TableProperties.addTable(dbh, dbTableName,
+          displayName, TableType.data, tableId, KeyValueStore.Type.SERVER);
       tp.setSyncState(SyncState.rest);
       tp.setSyncTag(null);
 
@@ -280,7 +288,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected void onPostExecute(Void result) {
       pd.dismiss();
-      finishDialog.setMessage(getString(R.string.downloaded_table, tableName));
+      finishDialog.setMessage(getString(R.string.downloaded_table, displayName));
       finishDialog.show();
     }
 

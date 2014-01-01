@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 
 import android.app.AlertDialog;
@@ -98,7 +99,7 @@ implements DisplayActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setTitle("");
-		dbh = DbHelper.getDbHelper(this);
+		dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		this.graphName = getIntent().getStringExtra(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
 		this.potentialGraphName = getIntent().getStringExtra(BarGraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME);
 		if(graphName == null) {
@@ -138,7 +139,7 @@ implements DisplayActivity {
             c.getDbTable().getUserTable(query);
       }
 
-      view = CustomGraphView.get(this, table,
+      view = CustomGraphView.get(this, TableFileUtils.ODK_TABLES_APP_NAME, table,
 	     graphName, potentialGraphName, c);
       c.setGraphViewInfoBarText(graphName);
       displayView();
