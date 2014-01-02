@@ -228,7 +228,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       try {
         DbHelper dbh = DbHelper.getDbHelper(mContext, mAppName);
         Synchronizer synchronizer =
-            new AggregateSynchronizer(mAggregateServerUri, mAuthToken);
+            new AggregateSynchronizer(mAppName, mAggregateServerUri, mAuthToken);
         SyncProcessor syncProcessor = new SyncProcessor(dbh, synchronizer,
             new SyncResult());
         // This is going to use Submit in demo mode: only synching the files.

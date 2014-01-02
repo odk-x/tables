@@ -52,7 +52,7 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
       DbHelper helper = DbHelper.getDbHelper(context, TableFileUtils.ODK_TABLES_APP_NAME);
       AggregateSynchronizer synchronizer;
       try {
-        synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
+        synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUri, authToken);
       } catch (InvalidAuthTokenException e) {
         Aggregate.invalidateAuthToken(authToken, context);
         syncResult.stats.numAuthExceptions++;

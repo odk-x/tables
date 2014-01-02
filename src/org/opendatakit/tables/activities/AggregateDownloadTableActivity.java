@@ -78,7 +78,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     aggregateUrl = prefs.getServerUri();
     authToken = prefs.getAuthToken();
 
-    GetTablesTask task = new GetTablesTask(aggregateUrl, authToken);
+    GetTablesTask task = new GetTablesTask(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUrl, authToken);
     task.execute();
 
   }
@@ -124,11 +124,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   }
 
   private class GetTablesTask extends AsyncTask<Void, Void, List<TableResource>> {
-    private String aggregateUrl;
-    private String authToken;
+    private final String appName;
+    private final String aggregateUrl;
+    private final String authToken;
     private ProgressDialog pd;
 
-    public GetTablesTask(String aggregateUrl, String authToken) {
+    public GetTablesTask(String appName, String aggregateUrl, String authToken) {
+      this.appName = appName;
       this.aggregateUrl = aggregateUrl;
       this.authToken = authToken;
     }
@@ -146,7 +148,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       //android.os.Debug.waitForDebugger();
       Synchronizer sync;
       try {
-        sync = new AggregateSynchronizer(aggregateUrl, authToken);
+        sync = new AggregateSynchronizer(appName, aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e1) {
         Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this);
         return null;
@@ -237,7 +239,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
       Synchronizer synchronizer;
       try {
-        synchronizer = new AggregateSynchronizer(aggregateUrl, authToken);
+        synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e) {
         Aggregate.invalidateAuthToken(authToken,
             AggregateDownloadTableActivity.this);

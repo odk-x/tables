@@ -356,7 +356,7 @@ public class Aggregate extends SherlockActivity {
       SynchronizationResult result = null;
       try {
         DbHelper dbh = DbHelper.getDbHelper(Aggregate.this, TableFileUtils.ODK_TABLES_APP_NAME);
-        Synchronizer synchronizer = new AggregateSynchronizer(prefs.getServerUri(),
+        Synchronizer synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, prefs.getServerUri(),
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,
             synchronizer, new SyncResult());

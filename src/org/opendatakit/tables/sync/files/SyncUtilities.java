@@ -382,11 +382,11 @@ public class SyncUtilities {
    * @param manFiles
    * @return a List of files that need to be downloaded.
    */
-  public static void compareAndDownloadFiles(Context context, String tableId,
+  public static void compareAndDownloadFiles(Context context, String appName, String tableId,
       List<OdkTablesFileManifestEntry> manFiles) {
     Log.d(TAG, "in compareAndDownloadFiles");
     // the path for the base of where the app can save its files.
-    String basePath =  ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId);
+    String basePath =  ODKFileUtils.getTablesFolder(appName, tableId);
     // now we need to look through the manifest and see where the files are
     // supposed to be stored.
     for (OdkTablesFileManifestEntry fileEntry : manFiles) {
