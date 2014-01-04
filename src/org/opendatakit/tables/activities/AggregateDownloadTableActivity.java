@@ -22,12 +22,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.tables.utils.FileUtils;
 import org.opendatakit.tables.utils.NameUtil;
+import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
@@ -37,7 +42,9 @@ import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
@@ -63,6 +70,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   private String authToken;
   private List<String> tableIds;
   private List<String> tableNames;
+  private List<String> tableDefinitionUris;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -93,9 +101,11 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     } else {
       tableIds = new ArrayList<String>();
       tableNames = new ArrayList<String>();
+      tableDefinitionUris = new ArrayList<String>();
       for (TableResource table : tablesFromServer) {
         tableIds.add(table.getTableId());
         tableNames.add(table.getDisplayName());
+        tableDefinitionUris.add(table.getDefinitionUri());
       }
       setListAdapter(new ArrayAdapter<String>(this,
           android.R.layout.simple_list_item_1, tableNames));
@@ -117,9 +127,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     String displayName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
+    String tableDefinitionUri = tableDefinitionUris.get(position);
     DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     String dbTableNameActive = NameUtil.createUniqueDbTableName(tableId,dbh);
-    DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, dbTableNameActive, displayName);
+    DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, dbTableNameActive, displayName, tableDefinitionUri);
     task.execute();
   }
 
@@ -201,17 +212,19 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
   private class DownloadTableTask extends AsyncTask<Void, Void, Void> {
 
-    private String tableId;
-    private String dbTableName;
-    private String displayName;
-    private String accountName;
+    private final String accountName;
+    private final String tableId;
+    private final String dbTableName;
+    private final String displayName;
+    private final String tableDefinitionUri;
     private ProgressDialog pd;
 
-    public DownloadTableTask(String accountName, String tableId, String dbTableName, String displayName) {
+    public DownloadTableTask(String accountName, String tableId, String dbTableName, String displayName, String tableDefinitionUri) {
       this.accountName = accountName;
       this.tableId = tableId;
       this.dbTableName = dbTableName;
       this.displayName = displayName;
+      this.tableDefinitionUri = tableDefinitionUri;
     }
 
     @Override
@@ -226,16 +239,6 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     protected Void doInBackground(Void... params) {
       //android.os.Debug.waitForDebugger();
       DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
-//TODO the order of synching should probably be re-arranged so that you first
-// get the table properties and column entries (ie the table definition) and
-// THEN get the row data. This would make it more resilient to network failures
-// during the process. along those lines, the same process should exist in the
-// table creation on the phone. or rather, THAT should try and follow the same
-// order.
-      TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-          displayName, TableType.data, tableId, KeyValueStore.Type.SERVER);
-      tp.setSyncState(SyncState.rest);
-      tp.setSyncTag(null);
 
       Synchronizer synchronizer;
       try {
@@ -245,37 +248,61 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
             AggregateDownloadTableActivity.this);
         return null;
       }
+
       SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
           new SyncResult());
       // We're going to add a check here for the framework directory. If we
       // don't have it, you also have to sync app level files the first time.
-      String frameworkDirectoryStr =
-          ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-      File frameworkDirectory = new File(frameworkDirectoryStr);
-      if (!frameworkDirectory.exists()) {
-        FileUtils.createFolder(frameworkDirectoryStr);
+      ODKFileUtils.assertDirectoryStructure(TableFileUtils.ODK_TABLES_APP_NAME);
+      try {
+        synchronizer.syncAppLevelFiles(false);
+      } catch (IOException e) {
+        Log.e(TAG, "IO exception trying to pull app-level files for the " +
+        		"first time during table download.");
+        // TODO report failure properly
+        e.printStackTrace();
+        // It's not going to be deemed fatal at this point if the app
+        // folder doesn't pull down. Perhaps eventually it should, but not
+        // for now.
+        return null;
       }
-      // Now it exists. Let's make sure it's a dir.
-      if (!frameworkDirectory.isDirectory()) {
-        Log.e(TAG, "file exists at: " + frameworkDirectoryStr + ", but it " +
-        		"is not a directory. This is a reserved name, so this breaks " +
-        		"an invariant.");
-      } else {
-        try {
-          synchronizer.syncAppLevelFiles(false);
-        } catch (IOException e) {
-          Log.e(TAG, "IO exception trying to pull app-level files for the " +
-          		"first time during table download.");
-          e.printStackTrace();
-          // It's not going to be deemed fatal at this point if the app
-          // folder doesn't pull down. Perhaps eventually it should, but not
-          // for now.
-        }
+
+      TableResource tr;
+      try {
+        tr = synchronizer.getTable(tableId);
+      } catch (IOException e) {
+        // TODO report failure properly
+        e.printStackTrace();
+        return null;
       }
+
+      TableProperties tp;
+      try {
+        tp = processor.assertTableDefinition(tr.getDefinitionUri());
+      } catch (JsonParseException e) {
+        // TODO report failure properly
+        e.printStackTrace();
+        return null;
+      } catch (JsonMappingException e) {
+        // TODO report failure properly
+        e.printStackTrace();
+        return null;
+      } catch (IOException e) {
+        // TODO report failure properly
+        e.printStackTrace();
+        return null;
+      } catch (SchemaMismatchException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return null;
+      }
+
+      tp.setSyncState(SyncState.rest);
       // We're going to say DO NOT sync media or nonMedia files, as since we're
       // downloading the table, there shouldn't be any. If for some crazy
       // reason there were (e.g. if they were created in the download process),
       // it shouldn't really matter.
+
       processor.synchronizeTable(tp, true, false, false);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.

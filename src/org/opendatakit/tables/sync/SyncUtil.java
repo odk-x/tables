@@ -222,7 +222,7 @@ public class SyncUtil {
         msg.append("Failed to pull data from server. ");
       }
     } else {
-      msg.append("No data to pull from server. ");
+      msg.append("Data not re-fetched from server. ");
     }
 
     if (result.serverHadPropertiesChanges()) {
@@ -232,7 +232,17 @@ public class SyncUtil {
         msg.append("Failed to pull properties from server. ");
       }
     } else {
-      msg.append("No properties to pull from server.");
+      msg.append("Properties not re-fetched from server.");
+    }
+
+    if (result.serverHadSchemaChanges()) {
+      if (result.pulledServerSchema()) {
+        msg.append("Pulled schema from server. ");
+      } else {
+        msg.append("Failed to pull schema from server. ");
+      }
+    } else {
+      msg.append("Schema not re-fetched from server.");
     }
 
     return msg.toString();

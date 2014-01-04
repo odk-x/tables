@@ -18,10 +18,14 @@ package org.opendatakit.tables.sync;
 import java.io.IOException;
 import java.util.List;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.tables.data.TableProperties;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
@@ -39,11 +43,17 @@ public interface Synchronizer {
    */
   public List<TableResource> getTables() throws IOException;
 
+  public TableResource getTable(String tableId) throws IOException;
+
+  public TableDefinitionResource getTableDefinition(String tableDefinitionUri);
+
   /**
    * Create a table with the given id on the server.
    *
    * @param tableId
    *          the unique identifier of the table
+   * @param schemaETag
+   *          the ETag for the schema
    * @param cols
    *          a map from column names to column types, see {@link ColumnType}
    * @param displayName
@@ -51,7 +61,7 @@ public interface Synchronizer {
    *          the quoted display name for this table
    * @return a string which will be stored as the syncTag of the table
    */
-  public String createTable(String tableId, List<Column> columns, String displayName)
+  public String createTable(String tableId, String schemaETag, List<Column> columns, String displayName)
       throws IOException;
 
   /**

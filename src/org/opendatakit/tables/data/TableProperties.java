@@ -182,6 +182,9 @@ public class TableProperties {
       for ( String tableId : idsInActiveKVS ) {
         Map<String, String> propPairs = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
         TableProperties tp = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
+        if ( tp == null ) {
+          throw new IllegalStateException("Unexpectedly missing " + tableId);
+        }
         activeTableIdMap.put(tp.getTableId(), tp);
       }
       staleActiveCache = false;
@@ -231,7 +234,7 @@ public class TableProperties {
 
     Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
     TableProperties tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-    if (typeOfStore == KeyValueStore.Type.ACTIVE) {
+    if (tp != null && typeOfStore == KeyValueStore.Type.ACTIVE) {
       // update the cache...
       activeTableIdMap.put(tp.getTableId(), tp);
     }
@@ -243,7 +246,7 @@ public class TableProperties {
 
     Map<String, String> mapProps = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
     TableProperties tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-    if (typeOfStore == KeyValueStore.Type.ACTIVE) {
+    if (tp != null && typeOfStore == KeyValueStore.Type.ACTIVE) {
       // update the cache...
       activeTableIdMap.put(tp.getTableId(), tp);
     }
@@ -586,11 +589,19 @@ public class TableProperties {
       Map<String, String> props, KeyValueStore.Type backingStore) {
     // first we have to get the appropriate type for the non-string fields.
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
+    if ( syncStateStr == null ) {
+      // we don't have any entry for this table
+      return null;
+    }
     SyncState syncState = SyncState.valueOf(syncStateStr);
     String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
     String tableTypeStr = props.get(KEY_TABLE_TYPE);
+    if ( tableTypeStr == null ) {
+      // we don't have any KVS entry for this table in this KVS store
+      return null;
+    }
     TableType tableType = TableType.valueOf(tableTypeStr);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
     String currentViewTypeStr = props.get(KEY_CURRENT_VIEW_TYPE);
@@ -682,6 +693,9 @@ public class TableProperties {
       // Map<String, String> propPairs = intendedKVS.getProperties(db);
       Map<String, String> propPairs = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
       allProps[i] = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
+      if ( allProps[i] == null ) {
+        throw new IllegalStateException("Unexpectedly missing " + tableId);
+      }
     }
     return allProps;
   }
@@ -842,6 +856,9 @@ public class TableProperties {
             dbTableName);
         mapProps.putAll(tableDefProps);
         tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
+        if ( tp == null ) {
+          throw new IllegalStateException("Unexpectedly missing " + id);
+        }
         tp.refreshColumns();
         KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
         kvsh.setString(KEY_DISPLAY_NAME, displayName);

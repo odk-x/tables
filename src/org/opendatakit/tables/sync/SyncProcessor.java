@@ -47,6 +47,8 @@ import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
+import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ContentValues;
@@ -149,6 +151,16 @@ public class SyncProcessor {
     return mUserResult;
   }
 
+  public TableProperties assertTableDefinition(String tableDefinitionUri) throws JsonParseException, JsonMappingException, IOException, SchemaMismatchException {
+    TableDefinitionResource definitionResource = synchronizer.getTableDefinition(tableDefinitionUri);
+
+    SyncTag newTag = new SyncTag(null, null, definitionResource.getSchemaETag());
+
+    TableProperties tp = addTableFromDefinitionResource(definitionResource, newTag.toString());
+
+    return tp;
+  }
+
   /**
    * Synchronize the table represented by the given TableProperties with the
    * cloud.
@@ -178,8 +190,22 @@ public class SyncProcessor {
    */
   public void synchronizeTable(TableProperties tp, boolean downloadingTable,
       boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
-    DbTable table = DbTable.getDbTable(dbh, TableProperties.refreshTablePropertiesForTable(dbh,
-        tp.getTableId(), KeyValueStore.Type.SERVER));
+  //TODO the order of synching should probably be re-arranged so that you first
+ // get the table properties and column entries (ie the table definition) and
+ // THEN get the row data. This would make it more resilient to network failures
+ // during the process. along those lines, the same process should exist in the
+ // table creation on the phone. or rather, THAT should try and follow the same
+ // order.
+//       TableProperties tp = TableProperties.addTable(dbh, dbTableName,
+//           displayName, TableType.data, tableId, KeyValueStore.Type.SERVER);
+//       tp.setSyncState(SyncState.rest);
+//       tp.setSyncTag(null);
+
+    // is this necessary?
+    tp = TableProperties.refreshTablePropertiesForTable(dbh,
+        tp.getTableId(), KeyValueStore.Type.SERVER);
+
+    DbTable table = DbTable.getDbTable(dbh, tp);
     // used to get the above from the ACTIVE store. if things go wonky, maybe
     // check to see if it was ACTIVE rather than SERVER for a reason. can't
     // think of one. one thing is that if it fails you'll see a table but won't
@@ -232,7 +258,7 @@ public class SyncProcessor {
         // TableResult to be exception.
         if (tableResult.getStatus() == Status.EXCEPTION) {
           Log.e(TAG, "tableResult status for table: " + tp.getDbTableName()
-              + " was EXCEPTION, and yet success returned true. This shouldn't" + " be possible.");
+              + " was EXCEPTION, and yet success returned true. This shouldn't be possible.");
         } else {
           tableResult.setStatus(Status.SUCCESS);
         }
@@ -319,7 +345,7 @@ public class SyncProcessor {
        * server. This comes in two parts--the definition and the properties.
        **************************/
       // First create the table definition on the server.
-      String syncTag = synchronizer.createTable(tableId, getColumnsForTable(tp),
+      String syncTag = synchronizer.createTable(tableId, null, getColumnsForTable(tp),
           tp.getDisplayName());
       // set schema syncTag
       tp.setSyncTag(syncTag);
@@ -588,71 +614,95 @@ public class SyncProcessor {
     // returned true that tp had changed and that i had a new sync row (the old
     // row). this shouldn't do that.
     IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
-    List<SyncRow> rows = modification.getRows();
     String newSyncTag = modification.getTableSyncTag();
-    // Update the tableResult object now. We have enough information to know if
+    // Update the tableResult object server statuses now.
+    // We have enough information to know if
     // the properties or data changed on the server.
+    if (modification.hasTableSchemaChanged()) {
+      Log.d(TAG, "updateDbFromServer setServerHadSchemaChanges(true)");
+      tableResult.setServerHadSchemaChanges(true);
+    }
     if (modification.hasTablePropertiesChanged()) {
-      Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanged(true)");
+      Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanges(true)");
       tableResult.setServerHadPropertiesChanges(true);
     }
-    // Now check if there were rows.
-    if (rows.size() > 0) {
+    if (modification.hasTableDataChanged()) {
+      Log.d(TAG, "updateDbFromServer setServerHadDataChanges(true)");
       tableResult.setServerHadDataChanges(true);
     }
-    List<String> columns = tp.getColumnOrder();
-    // TODO: confirm handling of rows that have pending/unsaved changes from
-    // Collect
 
-    UserTable allRowIds = table.getRaw(columns, new String[] { DataTableColumns.SAVEPOINT_TYPE },
-        new String[] { DbTable.SavedStatus.COMPLETE.name() }, null);
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
+    // TODO *********** CRITICAL ************* adjust sync tag incrementally
 
     /**************************
-     * PART 1: UPDATE THE TABLE ITSELF. We only do this if necessary. Do this
+     * PART 1A: UPDATE THE TABLE SCHEMA. We only do this if necessary. Do this
      * before updating data in case columns have changed or something specific
      * applies. These updates come in two parts: the table definition, and the
      * table properties (i.e. the key value store).
+     **************************/
+    if (modification.hasTableSchemaChanged()) {
+      TableDefinitionResource definitionResource = modification.getTableDefinitionResource();
+      tableResult.setPulledServerSchema(true);
+
+      try {
+        tp = addTableFromDefinitionResource(definitionResource, newSyncTag);
+        Log.w(TAG, "database schema has changed. "
+            + "structural modifications, if any, were successful.");
+      } catch ( SchemaMismatchException e ) {
+        Log.w(TAG, "database properties have changed. "
+            + "structural modifications were not successful. You must delete the table"
+            + " and download it to receive the updates.");
+        tableResult.setStatus(Status.FAILURE);
+        return;
+      }
+    }
+
+    /**************************
+     * PART 1B: UPDATE THE TABLE PROPERTIES (i.e., the key value store).
+     * We only do this if necessary. Do this before updating data.
      **************************/
     if (modification.hasTablePropertiesChanged()) {
       // We have two things to worry about. One is if the table definition
       // (i.e. the table datastructure or the table's columns' datastructure)
       // has changed. The other is if the key value store has changed.
       // We'll get both pieces of information from the properties resource.
-      TableDefinitionResource definitionResource = modification.getTableDefinitionResource();
       PropertiesResource propertiesResource = modification.getTableProperties();
-      /**************************
-       * PART 1A: UPDATE THE DEFINITION. If we're downloading the table, we go
-       * ahead and update. Otherwise, we don't allow changes to the definition,
-       * so just log an error message.
-       **************************/
-      if (downloadingTable) {
-        // The table is being downloaded for the first time. We first must
-        // delete the dummy table we'd created and then add the new table.
-        Log.w(TAG, "table: " + tp.getDisplayName() + " is being downloaded "
-            + "for the first time. deleting place holder table.");
-        tp.deleteTableActual(); // not sure we need this anymore?
-        // update the tp
-        // SHOULD THIS METHOD ACTUALLY SET THE SYNC TAG?!? IT SHOWS SETS
-        // AT THE END OF THIS METHOD.
-        tp = addTableFromDefinitionResource(definitionResource, newSyncTag);
-        // We've updated the definition, so set this to true. Even though we
-        // might not have the KVS values themselves! So might be a bad idea.
-        tableResult.setPulledServerProperties(true);
-      } else {
-        Log.w(TAG, "database properties have changed. "
-            + "structural modifications are not allowed. if structure needs"
-            + " to be updated, it is not happening.");
-      }
-      /**************************
-       * PART 1B: UPDATE THE PROPERTIES/KVS. So, the properties had changed on
-       * the server. We have them in the modification. Note that if we had
-       * properties on the server, we'll blow away our modifications that had
-       * been in the server store on the phone. That's just the cruel way of the
-       * world, and is by design.
-       **************************/
-      resetKVSForPropertiesResource(tp, propertiesResource);
       tableResult.setPulledServerProperties(true);
+
+      resetKVSForPropertiesResource(tp, propertiesResource);
     }
+
+    /**************************
+     * PART 2: UPDATE THE DATA
+     **************************/
+    List<SyncRow> rows = modification.getRows();
+    List<String> columns = tp.getColumnOrder();
+    // TODO: confirm handling of rows that have pending/unsaved changes from Collect
+
+    UserTable allRowIds = table.getRaw(columns, new String[] { DataTableColumns.SAVEPOINT_TYPE },
+        new String[] { DbTable.SavedStatus.COMPLETE.name() }, null);
 
     // sort data changes into types
     List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
@@ -781,6 +831,10 @@ public class SyncProcessor {
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
       values.put(DataTableColumns.SYNC_STATE, SyncState.conflicting.name());
       values.put(DataTableColumns.CONFLICT_TYPE, serverRowConflictType);
+      values.put(DataTableColumns.URI_ACCESS_CONTROL, row.getUriAccessControl());
+      values.put(DataTableColumns.FORM_ID, row.getFormId());
+      values.put(DataTableColumns.LOCALE, row.getLocale());
+      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, row.getSavepointTimestamp());
       table.actualAddRow(values);
 
       // We're going to check our representation invariant here. A local and
@@ -813,6 +867,10 @@ public class SyncProcessor {
       values.put(DataTableColumns.ID, row.getRowId());
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
       values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+      values.put(DataTableColumns.URI_ACCESS_CONTROL, row.getUriAccessControl());
+      values.put(DataTableColumns.FORM_ID, row.getFormId());
+      values.put(DataTableColumns.LOCALE, row.getLocale());
+      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, row.getSavepointTimestamp());
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
         String colName = entry.getKey();
@@ -831,6 +889,10 @@ public class SyncProcessor {
 
       values.put(DataTableColumns.SYNC_TAG, row.getSyncTag());
       values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+      values.put(DataTableColumns.URI_ACCESS_CONTROL, row.getUriAccessControl());
+      values.put(DataTableColumns.FORM_ID, row.getFormId());
+      values.put(DataTableColumns.LOCALE, row.getLocale());
+      values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, row.getSavepointTimestamp());
 
       for (Entry<String, String> entry : row.getValues().entrySet()) {
         String colName = entry.getKey();
@@ -922,7 +984,6 @@ public class SyncProcessor {
     }
     // And now for each row we need to add both the user columns AND the
     // columns to sync, AND the sync tag for the row.
-    Map<String, ColumnType> cachedColumnsToSync = DbTable.getColumnsToSync();
     for (int i = 0; i < numRows; i++) {
       String rowId = rows.getRowId(i);
       String syncTag = rows.getMetadataByElementKey(i, DataTableColumns.SYNC_TAG);
@@ -941,13 +1002,13 @@ public class SyncProcessor {
         // defined columns. If they're not present we know there is a problem,
         String columnElementKey = columnsToSync.get(j);
         values.put(columnElementKey, rows.getData(i, userDataIndex[j]));
-        // And now add the necessary metadata. This will be based on the
-        // columns specified as synchable metadata columns in DbTable.
-        for (String metadataElementKey : cachedColumnsToSync.keySet()) {
-          values.put(metadataElementKey, rows.getMetadataByElementKey(i, metadataElementKey));
-        }
       }
-      SyncRow row = new SyncRow(rowId, syncTag, false, values);
+      SyncRow row = new SyncRow(rowId, syncTag, false,
+                      rows.getMetadataByElementKey(i,  DataTableColumns.URI_ACCESS_CONTROL),
+                      rows.getMetadataByElementKey(i, DataTableColumns.FORM_ID),
+                      rows.getMetadataByElementKey(i, DataTableColumns.LOCALE),
+                      Long.valueOf(rows.getMetadataByElementKey(i, DataTableColumns.SAVEPOINT_TIMESTAMP)),
+                      values);
       changedRows.add(row);
     }
 
@@ -1003,27 +1064,60 @@ public class SyncProcessor {
    * @throws IOException
    * @throws JsonMappingException
    * @throws JsonParseException
+   * @throws SchemaMismatchException
    */
-  private TableProperties addTableFromDefinitionResource(
+  public TableProperties addTableFromDefinitionResource(
       TableDefinitionResource definitionResource, String syncTag) throws JsonParseException,
-      JsonMappingException, IOException {
+      JsonMappingException, IOException, SchemaMismatchException {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
-    TableProperties tp = TableProperties.addTable(dbh, definitionResource.getTableId(),
-        definitionResource.getDisplayName(), TableType.data,
-        definitionResource.getTableId(), kvsType);
-    for (Column col : definitionResource.getColumns()) {
-      // TODO: We aren't handling types correctly here. Need to have a mapping
-      // on the server as well so that you can pull down the right thing.
-      // TODO: add an addcolumn method to allow setting all of the dbdefinition
-      // fields.
-      List<String> listChildElementKeys = null;
-      String lek = col.getListChildElementKeys();
-      if (lek != null && lek.length() != 0) {
-        listChildElementKeys = mapper.readValue(lek, List.class);
+    TableProperties tp = TableProperties.refreshTablePropertiesForTable(dbh, definitionResource.getTableId(),
+        kvsType);
+    if ( tp == null ) {
+      tp = TableProperties.addTable(dbh, definitionResource.getTableId(),
+          definitionResource.getDisplayName(), TableType.data,
+          definitionResource.getTableId(), kvsType);
+      for (Column col : definitionResource.getColumns()) {
+        // TODO: We aren't handling types correctly here. Need to have a mapping
+        // on the server as well so that you can pull down the right thing.
+        // TODO: add an addcolumn method to allow setting all of the dbdefinition
+        // fields.
+        List<String> listChildElementKeys = null;
+        String lek = col.getListChildElementKeys();
+        if (lek != null && lek.length() != 0) {
+          listChildElementKeys = mapper.readValue(lek, List.class);
+        }
+        tp.addColumn(col.getElementKey(), col.getElementKey(), col.getElementName(),
+            ColumnType.valueOf(col.getElementType()), listChildElementKeys,
+            SyncUtil.intToBool(col.getIsUnitOfRetention()));
       }
-      tp.addColumn(col.getElementKey(), col.getElementKey(), col.getElementName(),
-          ColumnType.valueOf(col.getElementType()), listChildElementKeys,
-          SyncUtil.intToBool(col.getIsUnitOfRetention()));
+    } else {
+      // see if the server copy matches our local schema
+      boolean found = false;
+      for ( Column col : definitionResource.getColumns() ) {
+        List<String> listChildElementKeys = null;
+        String lek = col.getListChildElementKeys();
+        if (lek != null && lek.length() != 0) {
+          listChildElementKeys = mapper.readValue(lek, List.class);
+        }
+        ColumnProperties cp = tp.getColumnByElementKey(col.getElementKey());
+        if ( cp == null ) {
+          // we can support modifying of schema via adding of columns
+          tp.addColumn(col.getElementKey(), col.getElementKey(), col.getElementName(),
+              ColumnType.valueOf(col.getElementType()), listChildElementKeys,
+              SyncUtil.intToBool(col.getIsUnitOfRetention()));
+        } else if (!(cp.getElementName().equals(col.getElementName()) &&
+             cp.isUnitOfRetention() == SyncUtil.intToBool(col.getIsUnitOfRetention()) &&
+             cp.getListChildElementKeys().size() == listChildElementKeys.size() &&
+             cp.getListChildElementKeys().containsAll(listChildElementKeys) &&
+             listChildElementKeys.containsAll(cp.getListChildElementKeys()) )) {
+          throw new SchemaMismatchException("Server schema differs from local schema");
+        } else if ( !cp.getColumnType().equals(ColumnType.valueOf(col.getElementType())) ) {
+          // we have a column datatype change.
+          // we should be able to handle this for simple types (unknown -> text or text -> integer)
+          throw new SchemaMismatchException("Server schema differs from local schema (column datatype change)");
+        }
+      }
+      tp.setDisplayName(definitionResource.getDisplayName());
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.refreshTablePropertiesForTable(dbh, definitionResource.getTableId(),

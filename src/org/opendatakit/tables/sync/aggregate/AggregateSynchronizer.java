@@ -205,7 +205,6 @@ public class AggregateSynchronizer implements Synchronizer {
   /**
    * Return a map of tableId to schemaETag.
    */
-  @SuppressWarnings("unchecked")
   @Override
   public List<TableResource> getTables() throws IOException {
     List<TableResource> tables = new ArrayList<TableResource>();
@@ -234,6 +233,13 @@ public class AggregateSynchronizer implements Synchronizer {
     return tables;
   }
 
+  @Override
+  public TableDefinitionResource getTableDefinition(String tableDefinitionUri) {
+    TableDefinitionResource definitionRes = rt.getForObject(tableDefinitionUri, TableDefinitionResource.class);
+
+    return definitionRes;
+  }
+
   /*
    * (non-Javadoc)
    *
@@ -242,13 +248,12 @@ public class AggregateSynchronizer implements Synchronizer {
    * org.opendatakit.aggregate.odktables.entity.api.TableType, java.lang.String)
    */
   @Override
-  public String createTable(String tableId, List<Column> columns, String displayName)
+  public String createTable(String tableId, String schemaETag, List<Column> columns, String displayName)
       throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
-    TableDefinition definition = new TableDefinition(tableId, columns);
-    definition.setDisplayName(displayName);
+    TableDefinition definition = new TableDefinition(tableId, schemaETag, columns, displayName);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
 
@@ -267,12 +272,13 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources.put(resource.getTableId(), resource);
 
     // return sync tag
-    SyncTag syncTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag(),
-                                  resource.getSchemaEtag());
+    SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
+                                  resource.getSchemaETag());
     return syncTag.toString();
   }
 
-  private TableResource getResource(String tableId) throws IOException {
+  @Override
+  public TableResource getTable(String tableId) throws IOException {
     if (resources.containsKey(tableId)) {
       return resources.get(tableId);
     } else {
@@ -311,7 +317,6 @@ public class AggregateSynchronizer implements Synchronizer {
    * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#getUpdates(java.lang
    * .String, java.lang.String)
    */
-  @SuppressWarnings("unchecked")
   @Override
   public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException {
     IncomingModification modification = new IncomingModification();
@@ -324,8 +329,8 @@ public class AggregateSynchronizer implements Synchronizer {
     else
       currentTag = new SyncTag("", "", "");
     // This tag is ultimately returned. May8--make sure it works.
-    SyncTag newTag = new SyncTag(resource.getDataEtag(), resource.getPropertiesEtag(),
-                                 resource.getSchemaEtag());
+    SyncTag newTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
+                                 resource.getSchemaETag());
 
     // stop now if there are no updates
     if (newTag.equals(currentTag)) {
@@ -334,14 +339,46 @@ public class AggregateSynchronizer implements Synchronizer {
       return modification;
     }
 
+    // get schema updates.
+    // TODO: need to plumb support for this
+    if (!newTag.getSchemaETag().equals(currentTag.getSchemaETag())) {
+      TableDefinitionResource definitionRes;
+      try {
+        definitionRes = rt.getForObject(resource.getDefinitionUri(), TableDefinitionResource.class);
+      } catch (ResourceAccessException e) {
+        throw new IOException(e.getMessage());
+      }
+
+      modification.setTableSchemaChanged(true);
+      modification.setTableDefinitionResource(definitionRes);
+    }
+
+    // get properties updates.
+    // To do this we first check to see if the properties ETag is up to date.
+    // If it is, we can do nothing. If it is out of date, we have to:
+    // 1) get a TableDefinitionResource to see if we need to update the table
+    // data structure of any of the columns.
+    // 2) get a PropertiesResource to get all the key value entries.
+    if (!newTag.getPropertiesETag().equals(currentTag.getPropertiesETag())) {
+      PropertiesResource propertiesRes;
+      try {
+        propertiesRes = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
+      } catch (ResourceAccessException e) {
+        throw new IOException(e.getMessage());
+      }
+
+      modification.setTablePropertiesChanged(true);
+      modification.setTableProperties(propertiesRes);
+    }
+
     // get data updates
-    if (!newTag.getDataEtag().equals(currentTag.getDataEtag())) {
+    if (!newTag.getDataETag().equals(currentTag.getDataETag())) {
       URI url;
       if (currentSyncTag == null) {
         url = URI.create(resource.getDataUri());
       } else {
         String diffUri = resource.getDiffUri();
-        url = URI.create(diffUri + "?data_etag=" + currentTag.getDataEtag()).normalize();
+        url = URI.create(diffUri + "?data_etag=" + currentTag.getDataETag()).normalize();
       }
       List<RowResource> rows;
       try {
@@ -352,32 +389,12 @@ public class AggregateSynchronizer implements Synchronizer {
 
       List<SyncRow> syncRows = new ArrayList<SyncRow>();
       for (RowResource row : rows) {
-        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowEtag(), row.isDeleted(),
-                                      row.getValues());
+        SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowETag(), row.isDeleted(),
+                                      row.getUriAccessControl(), row.getFormId(), row.getLocale(),
+                                      row.getSavepointTimestamp(), row.getValues());
         syncRows.add(syncRow);
       }
       modification.setRows(syncRows);
-    }
-
-    // get properties updates.
-    // To do this we first check to see if the properties Etag is up to date.
-    // If it is, we can do nothing. If it is out of date, we have to:
-    // 1) get a TableDefinitionResource to see if we need to update the table
-    // data structure of any of the columns.
-    // 2) get a PropertiesResource to get all the key value entries.
-    if (!newTag.getPropertiesEtag().equals(currentTag.getPropertiesEtag())) {
-      TableDefinitionResource definitionRes;
-      PropertiesResource propertiesRes;
-      try {
-        propertiesRes = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
-        definitionRes = rt.getForObject(resource.getDefinitionUri(), TableDefinitionResource.class);
-      } catch (ResourceAccessException e) {
-        throw new IOException(e.getMessage());
-      }
-
-      modification.setTablePropertiesChanged(true);
-      modification.setTableProperties(propertiesRes);
-      modification.setTableDefinitionResource(definitionRes);
     }
 
     modification.setTableSyncTag(newTag.toString());
@@ -396,7 +413,9 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
     List<Row> newRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToInsert) {
-      Row row = Row.forInsert(syncRow.getRowId(), syncRow.getValues());
+      Row row = Row.forInsert(syncRow.getRowId(),
+          syncRow.getUriAccessControl(), syncRow.getFormId(), syncRow.getLocale(), syncRow.getSavepointTimestamp(),
+          syncRow.getValues());
       newRows.add(row);
     }
     return insertOrUpdateRows(tableId, currentSyncTag, newRows);
@@ -414,7 +433,9 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
     List<Row> changedRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToUpdate) {
-      Row row = Row.forUpdate(syncRow.getRowId(), syncRow.getSyncTag(), syncRow.getValues());
+      Row row = Row.forUpdate(syncRow.getRowId(), syncRow.getSyncTag(),
+          syncRow.getUriAccessControl(), syncRow.getFormId(), syncRow.getLocale(), syncRow.getSavepointTimestamp(),
+          syncRow.getValues());
       changedRows.add(row);
     }
     return insertOrUpdateRows(tableId, currentSyncTag, changedRows);
@@ -422,7 +443,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
       throws IOException {
-    TableResource resource = getResource(tableId);
+    TableResource resource = getTable(tableId);
     // SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
     Map<String, String> rowTags = new HashMap<String, String>();
     SyncTag lastKnownServerSyncTag = SyncTag.valueOf(currentSyncTag);
@@ -438,10 +459,10 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new IOException(e.getMessage());
         }
         RowResource inserted = insertedEntity.getBody();
-        rowTags.put(inserted.getRowId(), inserted.getRowEtag());
+        rowTags.put(inserted.getRowId(), inserted.getRowETag());
         Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last "
-            + "known dataetag at modification: " + inserted.getDataEtagAtModification());
-        lastKnownServerSyncTag.setDataEtag(inserted.getDataEtagAtModification());
+            + "known dataetag at modification: " + inserted.getDataETagAtModification());
+        lastKnownServerSyncTag.setDataETag(inserted.getDataETagAtModification());
       }
     }
 
@@ -462,7 +483,7 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public String deleteRows(String tableId, String currentSyncTag, List<String> rowIds)
       throws IOException {
-    TableResource resource = getResource(tableId);
+    TableResource resource = getTable(tableId);
     SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
     if (!rowIds.isEmpty()) {
       String lastKnownServerDataTag = null; // the data tag of the whole table.
@@ -481,7 +502,7 @@ public class AggregateSynchronizer implements Synchronizer {
       }
       Log.i(TAG, "[deleteRows] setting data etag to last known server tag: "
           + lastKnownServerDataTag);
-      syncTag.setDataEtag(lastKnownServerDataTag);
+      syncTag.setDataETag(lastKnownServerDataTag);
     }
     return syncTag.toString();
   }
@@ -495,11 +516,11 @@ public class AggregateSynchronizer implements Synchronizer {
   @Override
   public String setTableProperties(String tableId, String currentSyncTag, String tableKey,
                                    List<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
-    TableResource resource = getResource(tableId);
+    TableResource resource = getTable(tableId);
     SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
 
     // put new properties
-    TableProperties properties = new TableProperties(currentTag.getPropertiesEtag(), tableId,
+    TableProperties properties = new TableProperties(currentTag.getPropertiesETag(), tableId,
                                                      kvsEntries);
     HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
     ResponseEntity<PropertiesResource> updatedEntity;
@@ -511,8 +532,8 @@ public class AggregateSynchronizer implements Synchronizer {
     }
     PropertiesResource propsResource = updatedEntity.getBody();
 
-    SyncTag newTag = new SyncTag(currentTag.getDataEtag(), propsResource.getPropertiesEtag(),
-                                 currentTag.getSchemaEtag());
+    SyncTag newTag = new SyncTag(currentTag.getDataETag(), propsResource.getPropertiesETag(),
+                                 currentTag.getSchemaETag());
     return newTag.toString();
   }
 

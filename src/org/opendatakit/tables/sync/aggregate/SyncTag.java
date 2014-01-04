@@ -27,52 +27,52 @@ private static final String DELIM = "::";
    */
   public static final String EMPTY_ETAG = "NONE";
 
-  private String dataEtag;
-  private String propertiesEtag;
-  private String schemaEtag;
+  private String dataETag;
+  private String propertiesETag;
+  private String schemaETag;
 
-  public SyncTag(String dataEtag, String propertiesEtag, String schemaEtag) {
-    // The data etag can be null if the table has been created but there's not
+  public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
+    // The data ETag can be null if the table has been created but there's not
     // yet any data on the server.
-    if (dataEtag == null || dataEtag.equals("")) {
-      this.dataEtag = EMPTY_ETAG;
+    if (dataETag == null || dataETag.equals("")) {
+      this.dataETag = EMPTY_ETAG;
     } else {
-      this.dataEtag = dataEtag;
+      this.dataETag = dataETag;
     }
-    if (propertiesEtag.equals("")) {
-      this.propertiesEtag = EMPTY_ETAG;
+    if (propertiesETag == null || propertiesETag.equals("")) {
+      this.propertiesETag = EMPTY_ETAG;
     } else {
-      this.propertiesEtag = propertiesEtag;
+      this.propertiesETag = propertiesETag;
     }
-    if (schemaEtag.equals("")) {
-      this.schemaEtag = EMPTY_ETAG;
+    if (schemaETag == null || schemaETag.equals("")) {
+      this.schemaETag = EMPTY_ETAG;
     } else {
-      this.schemaEtag = schemaEtag;
+      this.schemaETag = schemaETag;
     }
   }
 
-  public String getDataEtag() {
-    return (dataEtag == null) ? STR_NULL : dataEtag;
+  public String getDataETag() {
+    return (dataETag == null) ? STR_NULL : dataETag;
   }
 
-  public String getPropertiesEtag() {
-    return (propertiesEtag == null) ? STR_NULL : propertiesEtag;
+  public String getPropertiesETag() {
+    return (propertiesETag == null) ? STR_NULL : propertiesETag;
   }
 
-  public String getSchemaEtag() {
-    return (schemaEtag == null) ? STR_NULL : schemaEtag;
+  public String getSchemaETag() {
+    return (schemaETag == null) ? STR_NULL : schemaETag;
   }
 
-  public void setSchemaEtag(String schemaEtag) {
-    this.schemaEtag = schemaEtag;
+  public void setSchemaETag(String schemaETag) {
+    this.schemaETag = schemaETag;
   }
 
-  public void setPropertiesEtag(String propertiesEtag) {
-    this.propertiesEtag = propertiesEtag;
+  public void setPropertiesETag(String propertiesETag) {
+    this.propertiesETag = propertiesETag;
   }
 
-  public void setDataEtag(String dataEtag) {
-    this.dataEtag = dataEtag;
+  public void setDataETag(String dataETag) {
+    this.dataETag = dataETag;
   }
 
   /*
@@ -84,9 +84,9 @@ private static final String DELIM = "::";
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + dataEtag.hashCode();
-    result = prime * result + propertiesEtag.hashCode();
-    result = prime * result + schemaEtag.hashCode();
+    result = prime * result + dataETag.hashCode();
+    result = prime * result + propertiesETag.hashCode();
+    result = prime * result + schemaETag.hashCode();
     return result;
   }
 
@@ -103,20 +103,20 @@ private static final String DELIM = "::";
     if (!(obj instanceof SyncTag))
       return false;
     SyncTag other = (SyncTag) obj;
-    boolean sameDataTag =  dataEtag == null ?
-        other.dataEtag == null : dataEtag.equals(other.dataEtag);
-    boolean samePropertiesTag = propertiesEtag == null ?
-        other.propertiesEtag == null :
-          propertiesEtag.equals(other.propertiesEtag);
-    boolean sameSchemaTag = schemaEtag == null ?
-        other.schemaEtag == null :
-          schemaEtag.equals(other.schemaEtag);
+    boolean sameDataTag =  dataETag == null ?
+        other.dataETag == null : dataETag.equals(other.dataETag);
+    boolean samePropertiesTag = propertiesETag == null ?
+        other.propertiesETag == null :
+          propertiesETag.equals(other.propertiesETag);
+    boolean sameSchemaTag = schemaETag == null ?
+        other.schemaETag == null :
+          schemaETag.equals(other.schemaETag);
     return sameDataTag && samePropertiesTag && sameSchemaTag;
   }
 
   @Override
   public String toString() {
-    return String.format("%s%s%s%s%s", dataEtag, DELIM, propertiesEtag, DELIM, schemaEtag);
+    return String.format("%s%s%s%s%s", dataETag, DELIM, propertiesETag, DELIM, schemaETag);
   }
 
   public static SyncTag valueOf(String syncTag) {
@@ -124,9 +124,9 @@ private static final String DELIM = "::";
     if (tokens.length != 3)
       throw new IllegalArgumentException("Malformed syncTag: " + syncTag);
 
-    String dataEtag = tokens[0];
-    String propertiesEtag = tokens[1];
-    String schemaEtag = tokens[2];
-    return new SyncTag(dataEtag, propertiesEtag, schemaEtag);
+    String dataETag = tokens[0];
+    String propertiesETag = tokens[1];
+    String schemaETag = tokens[2];
+    return new SyncTag(dataETag, propertiesETag, schemaETag);
   }
 }

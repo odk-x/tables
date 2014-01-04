@@ -148,7 +148,9 @@ public class FileUtils {
             for (;;) {
                 int len = is.read(chunk, 0, chunkSize);
                 if ( len == -1 ) break;
-                md.update(chunk, 0, len);
+                if ( len > 0 ) {
+                  md.update(chunk, 0, len);
+                }
             }
             byte[] messageDigest = md.digest();
 
