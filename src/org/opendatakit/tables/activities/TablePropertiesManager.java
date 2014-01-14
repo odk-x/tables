@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -758,31 +760,35 @@ public class TablePropertiesManager extends PreferenceActivity {
     case RC_LIST_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      // This set it in the main partition. We actually want to set it in the
-      // other partition for now.
-      // kvsh =
-      // tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-      // kvsh.setString(
-      // ListDisplayActivity.KEY_FILENAME,
-      // filename2);
+      // We need to get the relative path under the app name.
+      String relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
       kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to
       // allow custom naming, checking for redundancy, etc.
       KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, filename);
-
-      // TableViewSettings settings = tp.getOverviewViewSettings();
-      // settings.setCustomListFilename(filename2);
+      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
       tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-          TableMapFragment.KEY_FILENAME, data.getData().getPath());
+          TableMapFragment.KEY_FILENAME, 
+          getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
+  }
+  
+  /**
+   * Get the relative filepath under the app directory for the full path as
+   * returned from OI file picker.
+   * @param fullPath
+   * @return
+   */
+  private String getRelativePathOfFile(String fullPath) {
+    String relativePath = TableFileUtils.getRelativePath(fullPath);
+    return relativePath;
   }
 
   @Override

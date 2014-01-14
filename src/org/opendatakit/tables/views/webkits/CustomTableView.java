@@ -220,7 +220,7 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
     if (filename != null) {
       String fullPath = FileProvider.getAsWebViewUri(getContext(), mAppName,
-          ODKFileUtils.asUriFragment(mAppName, new File(filename)));
+          filename);
       load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);

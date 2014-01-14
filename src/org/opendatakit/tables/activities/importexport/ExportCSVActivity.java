@@ -17,6 +17,7 @@ package org.opendatakit.tables.activities.importexport;
 
 import java.io.File;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -231,7 +232,10 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	 * Attempts to export a table.
 	 */
 	private void exportSubmission() {
-        File file = new File(filenameValField.getText().toString());
+        File file = ODKFileUtils.asAppFile(
+            TableFileUtils.ODK_TABLES_APP_NAME, 
+            filenameValField.getText().toString().trim()
+        );
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
         boolean incProps = incAllPropertiesCheck.isChecked();
         boolean incTs = incTimestampsCheck.isChecked();
@@ -249,7 +253,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         if(resultCode == RESULT_CANCELED) {return;}
         Uri fileUri = data.getData();
         String filepath = fileUri.getPath();
-        filenameValField.setText(filepath);
+        String relativePath = TableFileUtils.getRelativePath(filepath);
+        filenameValField.setText(relativePath);
     }
 
 	private class ButtonListener implements OnClickListener {

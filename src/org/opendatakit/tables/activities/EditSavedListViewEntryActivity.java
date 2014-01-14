@@ -148,9 +148,10 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
         Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
         // Set the current filename.
         if (listViewFilename != null) {
-          File adjustedFile = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
-        		  	ODKFileUtils.toAppPath(listViewFilename));
-          filePickerIntent.setData(Uri.parse("file:///" + adjustedFile.getAbsolutePath()));
+          File adjustedFile = new File(ODKFileUtils.getAppFolder(
+              TableFileUtils.ODK_TABLES_APP_NAME), listViewFilename);
+          filePickerIntent.setData(
+              Uri.parse("file:///" + adjustedFile.getAbsolutePath()));
         }
         try {
           startActivityForResult(filePickerIntent, RETURN_CODE_NEW_FILE);
@@ -208,11 +209,15 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       Uri newFileUri = data.getData();
       String newFilename = newFileUri.getPath();
       if (newFilename != null && !newFilename.equals("")) {
+        // Get the relative path under the app directory. This is what Tables
+        // uses internally, as opposed to the full path as returned by OI
+        // file picker.
+        String relativePath = TableFileUtils.getRelativePath(newFilename);
         if (kvsh.getAspectsForPartition().size() == 0) {
           setToDefault(listViewName);
         }
-        aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, newFilename);
-        listViewFilename = newFilename;
+        aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
+        listViewFilename = relativePath;
       } else {
         Log.d(TAG, "received null or empty string from file picker: " + newFilename);
       }

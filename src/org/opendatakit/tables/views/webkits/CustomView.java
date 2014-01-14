@@ -16,7 +16,10 @@
 package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +47,7 @@ import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -76,6 +80,8 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 public abstract class CustomView extends LinearLayout {
 
@@ -586,6 +592,19 @@ public abstract class CustomView extends LinearLayout {
 	protected class TableData {
 
 		private static final String TAG = "TableData";
+		
+		// These are keys we'll be outputting for use in debugging when we write
+	   // this object to a file.
+	   private static final String JSON_KEY_IN_COLLECTION_MODE = 
+	       "inCollectionMode";
+	   private static final String JSON_KEY_COUNT = "count";
+	   private static final String JSON_KEY_COLUMN_DATA = "columnData";
+	   private static final String JSON_KEY_COLUMNS = "columns";
+	   private static final String JSON_KEY_COLLECTION_SIZE = "collectionSize";
+	   private static final String JSON_KEY_IS_INDEXED = "isIndexed";
+	   private static final String JSON_KEY_DATA = "data";
+	   
+	   private static final int NUM_ROWS_IN_DEBUG_OBJECT = 10;
 
 		public TableDataIf getJavascriptInterfaceWithWeakReference() {
 			return new TableDataIf(this);
@@ -612,6 +631,8 @@ public abstract class CustomView extends LinearLayout {
 			this.mActivity = activity;
 			this.mTable = table;
 			initMaps();
+			// TODO: WRAP THIS IN A SETTING!!! hugely important.
+			writeDataObjectAsJSON();
 		}
 
 		boolean inCollectionMode() {
@@ -648,6 +669,7 @@ public abstract class CustomView extends LinearLayout {
 		// access to the current table's state.
 		private void initMaps() {
 			TableProperties tp = mTable.getTableProperties();
+			collectionMap = new HashMap<Integer, Integer>();
 			mColumnDisplayNameToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
 			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
@@ -682,28 +704,43 @@ public abstract class CustomView extends LinearLayout {
 		 * data for the given column name format: [row1, row2, row3, row4]
 		 */
 		String getColumnData(String colName) {
-			ArrayList<String> arr = new ArrayList<String>();
-			for (int i = 0; i < getCount(); i++) {
-				if (colMap.containsKey(colName)) {
-					arr.add(i, mTable.getData(i, colMap.get(colName)));
-				} else {
-					arr.add(i, "");
-				}
-			}
-			return new JSONArray(arr).toString();
+			return getColumnData(colName, getCount());
+		}
+		
+		String getColumnData(String colName, int requestedRows) {
+        ArrayList<String> arr = new ArrayList<String>();
+        for (int i = 0; i < requestedRows; i++) {
+           if (colMap.containsKey(colName)) {
+              arr.add(i, mTable.getData(i, colMap.get(colName)));
+           } else {
+              arr.add(i, "");
+           }
+        }
+        return new JSONArray(arr).toString();
 		}
 
 		String getColumns() {
-			TableProperties tp = mTable.getTableProperties();
 			Map<String, String> colInfo = new HashMap<String, String>();
 			for (String column : colMap.keySet()) {
-				ColumnProperties cp = tp.getColumnByDisplayName(column);
-				String dbName = cp.getElementKey();
-				String label = tp.getColumnByElementKey(dbName).getColumnType()
-						.label();
+			   String label = getColumnTypeLabelForElementKey(column);
 				colInfo.put(column, label);
 			}
 			return new JSONObject(colInfo).toString();
+		}
+		
+		/**
+		 * Get the element {@link ColumnType#label()} for the column with the
+		 * given elementKey.
+		 * @param elementKey
+		 * @return
+		 */
+		private String getColumnTypeLabelForElementKey(String elementKey) {
+        TableProperties tp = mTable.getTableProperties();
+        ColumnProperties cp = tp.getColumnByDisplayName(elementKey);
+        String dbName = cp.getElementKey();
+        String label = tp.getColumnByElementKey(dbName).getColumnType()
+              .label();
+        return label;
 		}
 
 		/**
@@ -780,9 +817,18 @@ public abstract class CustomView extends LinearLayout {
 			}
 		}
 
-		// Returns the number of rows in the collection at the given row index.
+		/** 
+		 * Returns the number of rows in the collection at the given row index.
+		 * Returns -1 if it is not in collection mode.
+		 * @param rowNum
+		 * @return
+		 */
 		int getCollectionSize(int rowNum) {
-			return collectionMap.get(rowNum);
+		   if (!this.inCollectionMode()) {
+		     return -1;
+		   } else {
+		     return collectionMap.get(rowNum);  
+		   }
 		}
 
 		// Returns whether the table is indexed.
@@ -1010,6 +1056,89 @@ public abstract class CustomView extends LinearLayout {
 		public String getTableDisplayName() {
 			return mTable.getTableProperties().getDisplayName();
 		}
+		
+	   
+	   /**
+	    * This should write a version of this object as json that we can then 
+	    * use in debugging.
+	    */
+	   public void writeDataObjectAsJSON() {
+	     /* 
+	      * The object here is expected to be the following:
+	      * {
+	      * JSON_KEY_IN_COLLECTION_MODE: boolean,
+	      * JSON_KEY_COUNT: int,
+	      * JSON_KEY_COLLECTION_SIZE: Array, // array of ints
+	      * JSON_KEY_IS_INDEXED: boolean,
+	      * JSON_KEY_DATA: Array,
+	      * JSON_KEY_COLUMN_DATA: {elementKey: Array, ...},
+	      * JSON_KEY_COLUMNS: {elementKey: string, ...}
+	      * }
+	      */
+	     // We'll essentially just be caching some of the values.
+	     // First figure out how many rows we're going to be writing--the lesser
+	     // of the max and the count.
+	     int numRowsToWrite = Math.min(NUM_ROWS_IN_DEBUG_OBJECT, getCount());
+	     // First let's get the string values. All should be for js.
+	     boolean inCollectionMode = 
+	         this.inCollectionMode() ? true : false;
+	     int count = this.getCount();
+	     boolean isIndexed = this.isIndexed();
+	     int[] collectionSize = new int[numRowsToWrite];
+	     for (int i = 0; i < numRowsToWrite; i++) {
+	       collectionSize[i] = getCollectionSize(i);
+	     }
+	     Map<String, String> columns = new HashMap<String, String>();
+	     Map<String, List<String>> allColumnData = 
+	         new HashMap<String, List<String>>();
+	     // Here we're using this object b/c these appear to be the columns
+	     // available to the client--are metadata columns exposed to them? It's
+	     // not obvious to me here.
+	     Set<String> columnKeys = colMap.keySet();
+        String[][] partialData = 
+            new String[numRowsToWrite][columnKeys.size()];
+	     // Now construct up the objects we need.
+        int columnIndex = 0;
+        for (String elementKey : columnKeys) {
+          // Get the column type
+          columns.put(elementKey, getColumnTypeLabelForElementKey(elementKey));
+          // get the column data and the table data.
+          List<String> columnData = new ArrayList<String>();
+          for (int i = 0; i < numRowsToWrite; i++) {
+            String value = getData(i, elementKey);
+            columnData.add(value);
+            partialData[i][columnIndex] = value; 
+          }
+          allColumnData.put(elementKey, columnData);
+          columnIndex++;
+        }
+        Map<String, Object> outputObject = new HashMap<String, Object>();
+        outputObject.put(JSON_KEY_IN_COLLECTION_MODE, inCollectionMode);
+        outputObject.put(JSON_KEY_COUNT, count);
+        outputObject.put(JSON_KEY_COLLECTION_SIZE, collectionSize);
+        outputObject.put(JSON_KEY_IS_INDEXED, isIndexed);
+        outputObject.put(JSON_KEY_COLUMN_DATA, allColumnData);
+        outputObject.put(JSON_KEY_COLUMNS, columns);
+        outputObject.put(JSON_KEY_DATA, partialData);
+        Gson gson = new Gson();
+        String outputString = gson.toJson(outputObject);
+        String fileName = 
+            ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
+            mTable.getTableProperties().getDbTableName() + "_data.json";
+        try {
+          PrintWriter writer = new PrintWriter(fileName, "UTF-8");
+          Log.d(TAG, "writing data out to: " + fileName);
+          writer.println(outputString);
+          writer.flush();
+          writer.close();
+        } catch (FileNotFoundException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+	   }
 
 	}
 

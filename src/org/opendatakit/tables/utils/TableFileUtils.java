@@ -142,5 +142,15 @@ public class TableFileUtils {
     }
     return relativePaths;
   }
+  
+  /**
+   * Get the path of the file relative to the Tables app.
+   * @param absolutePath
+   * @return
+   */
+  public static String getRelativePath(String absolutePath) {
+    File file = new File(absolutePath);
+    return ODKFileUtils.asRelativePath(ODK_TABLES_APP_NAME, file);
+  }
 
 }
