@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +38,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
@@ -51,10 +51,10 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
@@ -415,6 +415,56 @@ public abstract class CustomView extends LinearLayout {
 		}
 		return map;
 	}
+	
+	/**
+	 * Returns all the metadata and user-defined data element keys to value in
+	 * a map.
+	 * @param tableId
+	 * @param rowId
+	 * @return
+	 */
+	private Map<String, String> getElementKeyToValues(String tableId, 
+	    String rowId) {
+	  TableProperties tableProperties = getTablePropertiesById(tableId);
+	  String sqlQuery = "WHERE " + DataTableColumns.ID + " = ? ";
+	  String[] selectionArgs = {rowId};
+	  DbHelper dbHelper = DbHelper.getDbHelper(getContext(), 
+	      TableFileUtils.ODK_TABLES_APP_NAME);
+	  DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
+	  UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs);
+	  if (userTable.getHeight() > 1) {
+	    Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " +
+	    		"rowId: " + rowId);
+	  } else if (userTable.getHeight() == 0) {
+	    Log.e(TAG, "query returned no rows for tableId: " + tableId +
+	        " and rowId: " + rowId);
+	  }
+	  Map<String, String> elementKeyToValue = new HashMap<String, String>();
+	  Row requestedRow = userTable.getRowAtIndex(0);
+	  List<String> userDefinedElementKeys = userTable.getTableProperties().getColumnOrder();
+	  Set<String> metadataElementKeys = 
+	      userTable.getMapOfUserDataToIndex().keySet();
+	  List<String> allElementKeys = new ArrayList<String>();
+	  allElementKeys.addAll(userDefinedElementKeys);
+	  allElementKeys.addAll(metadataElementKeys);
+	  for (String elementKey : allElementKeys) {
+	    elementKeyToValue.put(elementKey, 
+	        requestedRow.getDataOrMetadataByElementKey(elementKey));
+	  }
+	  return elementKeyToValue;
+	}
+	
+	/**
+	 * Return the element key for the column based on the element path.
+	 * @param elementPath
+	 * @return
+	 */
+	private String getElementKeyFromElementPath(String tableId, 
+	    String elementPath) {
+	  // TODO: do this correctly. This is just a hack that often works.
+	  String hackPath = elementPath.replace(".", "_");
+	  return hackPath;
+	}
 
 	/**
 	 * This class is invoked by the RowDataIf class, which is the class invoked
@@ -440,128 +490,21 @@ public abstract class CustomView extends LinearLayout {
 			this.data = data;
 			this.mRowId = rowId;
 		}
-
+		
 		/**
-		 * Edit the row with collect. Uses the form specified in the table
-		 * properties or else the ODKTables-generated default form.
+		 * Return the row id of the row being represented by this object.
+		 * @return
 		 */
-		public void editRowWithCollect() {
-			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-					CustomView.this.getContainerActivity(), tp, data, null,
-					null, null, mRowId);
-			CollectUtil.launchCollectToEditRow(
-					CustomView.this.getContainerActivity(), editRowIntent,
-					mRowId);
+		public String getRowId() {
+		  return this.mRowId;
 		}
-
+		
 		/**
-		 * Edit the row with collect.
-		 * <p>
-		 * Similar to {@link #editRowWithCollect()}, except that it allows you
-		 * to edit the row with a specific form.
-		 *
-		 * @param tableName
-		 * @param formId
-		 * @param formVersion
-		 * @param formRootElement
+		 * Return the table id of the table containing the row.
+		 * @return
 		 */
-		public void editRowWithCollectAndSpecificForm(String formId,
-				String formVersion, String formRootElement) {
-			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-					CustomView.this.getContainerActivity(), tp, data, formId,
-					formVersion, formRootElement, mRowId);
-			// We have to launch it through this method so that the rowId is
-			// persisted in the SharedPreferences.
-			CollectUtil.launchCollectToEditRow(
-					CustomView.this.getContainerActivity(), editRowIntent,
-					mRowId);
-		}
-
-		/**
-		 * Edit the row with the specified form.
-		 * @param formId
-		 * @param screenPath
-		 * @param formPath
-		 * @param refId
-		 */
-		public void editRowWithSurveyAndSpecificForm(String formId,
-		    String screenPath) {
-		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, this.mRowId,
-		      formId, screenPath);
-		}
-
-		/**
-		 * Add a row using collect and the default form.
-		 *
-		 * @param tableId
-		 */
-		public void addRowWithCollect(String tableId) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableId + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			CustomView.this.addRowWithCollect(tableId, tpToReceiveAdd, null);
-		}
-
-		/**
-		 * Add a row using Collect. This is the hook into the javascript. The
-		 * activity holding this view must have implemented the onActivityReturn
-		 * method appropriately to handle the result.
-		 * <p>
-		 * It allows you to specify a form other than that which may be the
-		 * default for the table. It differs in {@link #addRow(String)} in that
-		 * it lets you add the row using an arbitrary form.
-		 */
-		public void addRowWithCollectAndSpecificForm(String tableName,
-				String formId, String formVersion, String formRootElement) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-					formVersion, formRootElement, tpToReceiveAdd, null);
-		}
-
-		public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-				String tableName, String formId, String formVersion,
-				String formRootElement, String jsonMap) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
-			if (map == null) {
-				Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
-				return;
-			}
-			CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-					formVersion, formRootElement, tpToReceiveAdd, map);
-		}
-
-		public void addRowWithCollectAndPrepopulatedValues(String tableName,
-				String jsonMap) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
-			if (map == null) {
-				Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
-				return;
-			}
-			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
+		public String getTableId() {
+		  return this.tp.getTableId();
 		}
 
 		/**
@@ -571,20 +514,18 @@ public abstract class CustomView extends LinearLayout {
 		 * Returns null if the column matching the passed in user label could
 		 * not be found.
 		 *
-		 * @param key
+		 * @param elementPath
 		 * @return
 		 */
-		public String get(String key) {
-			ColumnProperties cp = tp.getColumnByUserLabel(key);
-			if (cp == null) {
-				return null;
-			}
-			String result = data.get(cp.getElementKey());
-			if (result == null) {
-				return "";
-			} else {
-				return result;
-			}
+		public String get(String elementPath) {
+		  String elementKey = 
+		      getElementKeyFromElementPath(getTableId(), elementPath);
+		  ColumnProperties cp = tp.getColumnByElementKey(elementKey);
+		  if (cp == null) {
+		    return null;
+		  }
+		  String result = data.get(cp.getElementKey());
+		  return result;
 		}
 
 	}
@@ -639,11 +580,10 @@ public abstract class CustomView extends LinearLayout {
 			writeDataObjectAsJSON();
 		}
 
-		boolean inCollectionMode() {
+		public boolean inCollectionMode() {
 			if (!isIndexed()) {
 				return false;
 			}
-
 			// Test 1: Check that every cell value under the indexed column are
 			// equal (characteristic of a collection)
 			String test = getData(0, primeColumns.get(0).substring(1));
@@ -652,7 +592,6 @@ public abstract class CustomView extends LinearLayout {
 					return false;
 				}
 			}
-
 			// Test 2: The number of rows in the table equal the number of rows
 			// in the (corresponding) collection
 			return (getCount() == collectionMap.get(0));
@@ -662,7 +601,6 @@ public abstract class CustomView extends LinearLayout {
 			Log.d(TAG, "calling TableData constructor with UserTable");
 			this.mTable = table;
 			initMaps();
-
 			// The collectionMap will be initialized if the table is indexed.
 			if (isIndexed()) {
 				initCollectionMap();
@@ -697,21 +635,21 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		// Returns the number of rows in the table being viewed.
-		int getCount() {
+		public int getCount() {
 			return this.mTable.getHeight();
 		}
 
-		/*
+		/**
 		 * @param: colName, column name in the userTable/rawTable
 		 *
 		 * @return: returns a String in JSONArray format containing all the row
 		 * data for the given column name format: [row1, row2, row3, row4]
 		 */
-		String getColumnData(String colName) {
+		public String getColumnData(String colName) {
 			return getColumnData(colName, getCount());
 		}
 		
-		String getColumnData(String colName, int requestedRows) {
+		public String getColumnData(String colName, int requestedRows) {
         ArrayList<String> arr = new ArrayList<String>();
         for (int i = 0; i < requestedRows; i++) {
            if (colMap.containsKey(colName)) {
@@ -723,7 +661,11 @@ public abstract class CustomView extends LinearLayout {
         return new JSONArray(arr).toString();
 		}
 
-		String getColumns() {
+		/**
+		 * Return a map of element key to the {@link ColumnType#label()}.
+		 * @return
+		 */
+		public String getColumns() {
 			Map<String, String> colInfo = new HashMap<String, String>();
 			for (String column : colMap.keySet()) {
 			   String label = getColumnTypeLabelForElementKey(column);
@@ -757,7 +699,7 @@ public abstract class CustomView extends LinearLayout {
 		 *            the string value of the datum
 		 * @return
 		 */
-		String getForegroundColor(String colName, String value) {
+		public String getForegroundColor(String colName, String value) {
 			TableProperties tp = mTable.getTableProperties();
 			ColumnProperties cp = tp.getColumnByDisplayName(colName);
 			String elementKey = cp.getElementKey();
@@ -829,7 +771,7 @@ public abstract class CustomView extends LinearLayout {
 		 * @param rowNum
 		 * @return
 		 */
-		int getCollectionSize(int rowNum) {
+		public int getCollectionSize(int rowNum) {
 		   if (!this.inCollectionMode()) {
 		     return -1;
 		   } else {
@@ -838,7 +780,7 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		// Returns whether the table is indexed.
-		boolean isIndexed() {
+		public boolean isIndexed() {
 			return (!primeColumns.isEmpty());
 		}
 
@@ -852,7 +794,7 @@ public abstract class CustomView extends LinearLayout {
 		 * @param colName
 		 * @return
 		 */
-		String getData(int rowNum, String colName) {
+		public String getData(int rowNum, String colName) {
 			if (colMap.containsKey(colName)) {
 				String result = mTable.getData(rowNum, colMap.get(colName));
 				if (result == null) {
@@ -864,205 +806,15 @@ public abstract class CustomView extends LinearLayout {
 				return null;
 			}
 		}
-
-		/**
-		 * Edit the row with collect. Uses the form specified in the table
-		 * properties or else the ODKTables-generated default form.
-		 *
-		 * @param rowNumber
-		 *            the number of the row to edit.
-		 */
-		void editRowWithCollect(int rowNumber) {
-			TableProperties tp = mTable.getTableProperties();
-			String rowId = this.mTable.getRowId(rowNumber);
-			Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
-			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-					CustomView.this.getContainerActivity(), tp,
-					elementKeyToValue, null, null, null, rowId);
-			CollectUtil.launchCollectToEditRow(
-					CustomView.this.getContainerActivity(), editRowIntent,
-					rowId);
-		}
-
-		/**
-		 * Edit the row with collect.
-		 * <p>
-		 * Similar to {@link #editRowWithCollect()}, except that it allows you
-		 * to edit the row with a specific form.
-		 *
-		 * @param rowNumber
-		 *            the number of the row to be edited
-		 * @param tableName
-		 * @param formId
-		 * @param formVersion
-		 * @param formRootElement
-		 */
-		void editRowWithCollectAndSpecificForm(int rowNumber, String formId,
-				String formVersion, String formRootElement) {
-			TableProperties tp = mTable.getTableProperties();
-			String rowId = this.mTable.getRowId(rowNumber);
-			Map<String, String> elementKeyToValue = getElementKeyToValueMapForRow(rowNumber);
-			Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-					CustomView.this.getContainerActivity(), tp,
-					elementKeyToValue, formId, formVersion, formRootElement,
-					rowId);
-			CollectUtil.launchCollectToEditRow(
-					CustomView.this.getContainerActivity(), editRowIntent,
-					rowId);
-		}
-
-		/**
-		 * Edit the row using Survey and a specific form.
-		 * @param rowNumber
-		 * @param formId
-		 * @param screenPath
-		 * @param formPath
-		 * @param refId
-		 */
-		void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
-		    String screenPath) {
-		  TableProperties tp = this.mTable.getTableProperties();
-		  String instanceId = this.mTable.getRowId(rowNumber);
-		  CustomView.this.editRowWithSurveyAndSpecificForm(tp, instanceId,
-		      formId, screenPath);
-		}
-
-		/**
-		 * Add a row using collect and the default form.
-		 *
-		 * @param tableName
-		 */
-		void addRowWithCollect(String tableName) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tp = mTable.getTableProperties();
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, null);
-		}
-
-		/**
-		 * Add a row using survey and the default form.
-		 * @param tableName
-		 */
-		void addRowWithSurveyAndSpecificForm(String tableName, String formId,
-		    String screenPath) {
-		  this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableName,
-		      formId, screenPath, null);
-		}
-
-		void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
-		    String tableName, String formId, String screenPath, String jsonMap) {
-	       TableProperties tp = mTable.getTableProperties();
-	        TableProperties tpToReceiveAdd =
-	            getTablePropertiesById(tableName);
-	        if (tpToReceiveAdd == null) {
-	          Log.e(TAG, "table [" + tableName + "] cannot have a row added " +
-	               "because it could not be found.");
-	          return;
-	        }
-	        Map<String, String> map = null;
-	        if (jsonMap != null) {
-	          map = CustomView.this.getMapFromJson(jsonMap);
-	          if (map == null) {
-	            Log.e(TAG, "couldn't get map from json. returning.");
-	            return;
-	          }
-	        }
-	        CustomView.this.addRowWithSurveyAndSpecificForm(tableName,
-	            tpToReceiveAdd, formId, screenPath, map);
-		}
-
-		/**
-		 * Add a row using Collect. This is the hook into the javascript. The
-		 * activity holding this view must have implemented the onActivityReturn
-		 * method appropriately to handle the result.
-		 * <p>
-		 * It allows you to specify a form other than that which may be the
-		 * default for the table. It differs in {@link #addRow(String)} in that
-		 * it lets you add the row using an arbitrary form.
-		 */
-		void addRowWithCollectAndSpecificForm(String tableName, String formId,
-				String formVersion, String formRootElement) {
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tp = mTable.getTableProperties();
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-					formVersion, formRootElement, tpToReceiveAdd, null);
-		}
-
-		void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-				String tableName, String formId, String formVersion,
-				String formRootElement, String jsonMap) {
-			TableProperties tp = mTable.getTableProperties();
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
-			if (map == null) {
-				Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
-				return;
-			}
-			CustomView.this.addRowWithCollectAndSpecificForm(tableName, formId,
-					formVersion, formRootElement, tpToReceiveAdd, map);
-		}
-
-		void addRowWithCollectAndPrepopulatedValues(String tableName,
-				String jsonMap) {
-			TableProperties tp = mTable.getTableProperties();
-			// The first thing we need to do is get the correct TableProperties.
-			TableProperties tpToReceiveAdd = getTablePropertiesById(tableName);
-			if (tpToReceiveAdd == null) {
-				Log.e(TAG, "table [" + tableName + "] cannot have a row added"
-						+ " because it could not be found");
-				return;
-			}
-			Map<String, String> map = CustomView.this.getMapFromJson(jsonMap);
-			if (map == null) {
-				Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
-				return;
-			}
-			CustomView.this.addRowWithCollect(tableName, tpToReceiveAdd, map);
-		}
-
-		/**
-		 * Get a map of elementKey to value for the given row number.
-		 *
-		 * @param rowNum
-		 * @return
-		 */
-		private Map<String, String> getElementKeyToValueMapForRow(int rowNum) {
-			TableProperties tp = mTable.getTableProperties();
-			Map<String, String> elementKeyToValue = new HashMap<String, String>();
-			for (Entry<String, Integer> entry : colMap.entrySet()) {
-				ColumnProperties cp = tp.getColumnByDisplayName(entry.getKey());
-				String elementKey = cp.getElementKey();
-				String value = this.mTable.getData(rowNum, entry.getValue());
-				elementKeyToValue.put(elementKey, value);
-			}
-			return elementKeyToValue;
-		}
 		
 		public String getTableId() {
 		  return mTable.getTableProperties().getTableId();
 		}
 		
-	   
+		
 	   /**
 	    * This should write a version of this object as json that we can then 
-	    * use in debugging.
+	    * use in debugging on the javascript and server side.
 	    */
 	   public void writeDataObjectAsJSON() {
 	     /* 
@@ -1374,11 +1126,12 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Launch the {@link CustomHomeScreenActivity} with the custom filename
-		 * to display.
+		 * to display. The return type on this method currently is always true,
+		 * should probably check if the file exists first.
 		 *
 		 * @param relativePath
 		 */
-		public void launchHTML(String relativePath) {
+		public boolean launchHTML(String relativePath) {
 			Log.d(TAG, "in launchHTML with filename: " + relativePath);
          String pathToTablesFolder = ODKFileUtils
              .getAppFolder(mAppName);
@@ -1386,6 +1139,7 @@ public abstract class CustomView extends LinearLayout {
 			Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
 			i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
 			mActivity.startActivity(i);
+			return true;
 		}
 
 		/**
@@ -1396,15 +1150,16 @@ public abstract class CustomView extends LinearLayout {
 		 * @param formId
 		 * @param screenPath
 		 * @param jsonMap
+		 * @return true if the launch succeeded, false if something went wrong
 		 */
-		public void helperAddRowWithSurvey(
+		public boolean helperAddRowWithSurvey(
 		    String tableId, String formId, String screenPath, String jsonMap) {
         // does this "to receive add" call make sense with survey? unclear.
         TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
         if (tpToReceiveAdd == null) {
           Log.e(TAG, "table [" + tableId + "] could not be found. " +
                "returning.");
-          return;
+          return false;
         }
         Map<String, String> map = null;
         // Do this null check and only parse and return errors if the jsonMap
@@ -1414,11 +1169,12 @@ public abstract class CustomView extends LinearLayout {
           map = CustomView.this.getMapFromJson(jsonMap);
           if (map == null) {
             Log.e(TAG, "couldn't parse values into map to give to Survey");
-            return;
+            return false;
           }
         }
         CustomView.this.addRowWithSurveyAndSpecificForm(tableId,
             tpToReceiveAdd, formId, screenPath, map);
+        return true;
 		}
 
       /**
@@ -1435,8 +1191,9 @@ public abstract class CustomView extends LinearLayout {
        * @param formRootElement
        * @param jsonMap a json string of values to prepopulate the form with. a
        * null value won't prepopulate any values.
+       * @return true if the launch succeeded, else false
        */
-		public void helperAddRowWithCollect(
+		public boolean helperAddRowWithCollect(
 				String tableId, String formId, String formVersion,
 				String formRootElement, String jsonMap) {
 			// The first thing we need to do is get the correct TableProperties.
@@ -1444,14 +1201,14 @@ public abstract class CustomView extends LinearLayout {
 			if (tpToReceiveAdd == null) {
 				Log.e(TAG, "table [" + tableId + "] cannot have a row added"
 						+ " because it could not be found");
-				return;
+				return false;
 			}
 			Map<String, String> map = null;
 			if (jsonMap != null) {
     			map = CustomView.this.getMapFromJson(jsonMap);
     			if (map == null) {
     				Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
-    				return;
+    				return false;
     			}
 			}
 			if (formId == null) {
@@ -1465,7 +1222,78 @@ public abstract class CustomView extends LinearLayout {
 			}
 			CustomView.this.addRowWithCollectAndSpecificForm(tableId, formId,
 					formVersion, formRootElement, tpToReceiveAdd, map);
+			return true;
 		}
+		
+	    /**
+	     * Launch survey to edit the row.
+	     * @param tableId
+	     * @param rowId
+	     * @param formId
+	     * @param screenPath
+	     * @return true if the edit was launched successfully, else false
+	     */
+      public boolean helperEditRowWithSurvey(String tableId, 
+          String rowId, String formId, String screenPath) {
+        TableProperties tableToReceiveAdd = 
+            getTablePropertiesById(tableId);
+        if (tableToReceiveAdd == null) {
+          Log.e(TAG, "table [" + tableId + "] cannot have a row edited with" +
+          		" survey because it cannot be found");
+          return false;
+        }
+        CustomView.this.editRowWithSurveyAndSpecificForm(tableToReceiveAdd,
+            rowId, formId, screenPath);
+        return true;
+      }
+      
+      /**
+       * Edit the given row with Collect. Returns true if things went well,
+       * or false if something went wrong.
+       * <p>
+       * formId is checked for null--if it is, it tries to use the default
+       * form. If not null, it uses that form.
+       * @param tableId
+       * @param rowId
+       * @param formId
+       * @param formVersion
+       * @param formRootElement
+       * @return
+       */
+      public boolean helperEditRowWithCollect(String tableId,
+          String rowId, String formId, String formVersion, 
+          String formRootElement) {
+        TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
+        if (tpToReceiveAdd == null) {
+          Log.e(TAG, "table [" + tableId + "] cannot have row edited, " +
+          		"because it cannot be found");
+          return false;
+        }
+        if (formId == null) {
+          // Then we want to construct the form parameters using default
+          // values.
+          CollectFormParameters formParameters = CollectFormParameters
+              .constructCollectFormParameters(tpToReceiveAdd);
+          formId = formParameters.getFormId();
+          formVersion = formParameters.getFormVersion();
+          formRootElement = formParameters.getRootElement();
+        }
+        Map<String, String> elementKeyToValue = 
+            getElementKeyToValues(tableId, rowId);
+        Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+               CustomView.this.getContainerActivity(), tpToReceiveAdd,
+               elementKeyToValue, formId, formVersion, formRootElement,
+               rowId);
+        if (editRowIntent == null) {
+          Log.e(TAG, "the edit row with collect intent was null, returning " +
+          		"false");
+          return false;
+        }
+        CollectUtil.launchCollectToEditRow(
+               CustomView.this.getContainerActivity(), editRowIntent,
+               rowId);
+        return true;
+      }
 
 		/**
 		 * Create an alert that will allow for a new table name. This might be

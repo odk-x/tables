@@ -119,7 +119,8 @@ public class UserTable {
     mElementKeyForIndex = elementKeyForIndex;
   }
 
-  public UserTable(Cursor c, TableProperties tableProperties, List<String> userColumnOrder) {
+  public UserTable(Cursor c, TableProperties tableProperties, 
+      List<String> userColumnOrder) {
     buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();

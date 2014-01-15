@@ -288,10 +288,11 @@ public class ControlIf {
 	 * Launch an arbitrary HTML file specified by filename.
 	 * @see #openTableToListViewWithFile(String, String, String)
 	 * @param relativePath file name relative to the ODK Tables folder.
+	 * @return true if the file was launched, false if something went wrong
 	 */
 	// @JavascriptInterface
-	public void launchHTML(String relativePath) {
-		weakControl.get().launchHTML(relativePath);
+	public boolean launchHTML(String relativePath) {
+		return weakControl.get().launchHTML(relativePath);
 	}
 
 	/**
@@ -325,11 +326,12 @@ public class ControlIf {
 	/**
 	 * Add a row using Collect and the default form. 
 	 * @param tableId the display name of the table to receive the add.
+    * @return true if the activity was launched, false if something went wrong
 	 */
 	// @JavascriptInterface
-	public void addRowWithCollect(String tableId) {
-		weakControl.get().helperAddRowWithCollect(tableId, null, null, null,
-		    null);
+	public boolean addRowWithCollect(String tableId) {
+		return weakControl.get().helperAddRowWithCollect(tableId, null, null, 
+		    null, null);
 	}
 	
 	/**
@@ -345,11 +347,12 @@ public class ControlIf {
     * @param formId
     * @param formVersion may be null
     * @param formRootElement
+    * @return true if the activity was launched, false if something went wrong
     */
    // @JavascriptInterface
-   public void addRowWithCollectAndSpecificForm(String tableId,
+   public boolean addRowWithCollectAndSpecificForm(String tableId,
          String formId, String formVersion, String formRootElement) {
-      weakControl.get().helperAddRowWithCollect(tableId, formId,
+      return weakControl.get().helperAddRowWithCollect(tableId, formId,
             formVersion, formRootElement, null);
    }
 
@@ -362,11 +365,12 @@ public class ControlIf {
     * {@link #getElementKeyForColumn(String, String)}. The map can then be
     * converted to a String using JSON.stringify() and passed to this method. A
     * null value will not prepopulate any values.
+    * @return true if the activity was launched, false if something went wrong
     */
    // @JavascriptInterface
-   public void addRowWithCollectAndPrepopulatedValues(String tableId,
+   public boolean addRowWithCollectAndPrepopulatedValues(String tableId,
          String jsonMap) {
-      weakControl.get().helperAddRowWithCollect(tableId, null, null, 
+      return weakControl.get().helperAddRowWithCollect(tableId, null, null, 
           null, jsonMap);
    }
    
@@ -380,12 +384,13 @@ public class ControlIf {
     * @param formVersion
     * @param formRootElement
     * @param jsonMap
+    * @return true if the activity was launched, false if something went wrong
     */
-   public void addRowWithCollect(String tableId,
+   public boolean addRowWithCollect(String tableId,
        String formId, String formVersion, String formRootElement, 
        String jsonMap) {
-     addRowWithCollectAndSpecificFormAndPrepopulatedValues(tableId, formId, 
-         formVersion, formRootElement, null);
+     return addRowWithCollectAndSpecificFormAndPrepopulatedValues(tableId, 
+         formId, formVersion, formRootElement, null);
    }
    
    /**
@@ -398,12 +403,13 @@ public class ControlIf {
     * @param formVersion
     * @param formRootElement
     * @param jsonMap
+    * @return true if the activity was launched, false if something went wrong
     */
    // @JavascriptInterface
-   public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
+   public boolean addRowWithCollectAndSpecificFormAndPrepopulatedValues(
          String tableId, String formId, String formVersion,
          String formRootElement, String jsonMap) {
-      weakControl.get()
+      return weakControl.get()
             .helperAddRowWithCollect(tableId, formId, formVersion, 
                 formRootElement, jsonMap);
    }
@@ -418,11 +424,12 @@ public class ControlIf {
     * @param formId
     * @param screenPath
     * @param jsonMap
+    * @return true if the activity was launched, false if something went wrong
     */
-   public void addRowWithSurvey(String tableId, String formId, 
+   public boolean addRowWithSurvey(String tableId, String formId, 
        String screenPath, String jsonMap) {
-     this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableId, formId,
-         screenPath, jsonMap);
+     return this.addRowWithSurveyAndSpecificFormAndPrepopulatedValues(tableId,
+         formId, screenPath, jsonMap);
    }
 	
 	/**
@@ -431,9 +438,9 @@ public class ControlIf {
 	 * @param tableId
 	 */
 	// @JavascriptInterface
-	public void addRowWithSurveyAndSpecificForm(String tableId, String formId,
+	public boolean addRowWithSurveyAndSpecificForm(String tableId, String formId,
 	    String screenPath) {
-	  weakControl.get().helperAddRowWithSurvey(tableId, formId,
+	  return weakControl.get().helperAddRowWithSurvey(tableId, formId,
 	      screenPath, null);
 	}
 	
@@ -444,10 +451,11 @@ public class ControlIf {
 	 * @param formId
 	 * @param screenPath
 	 * @param jsonMap
+	 * @return true if the activity was launched, false if something went wrong
 	 */
-	public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
+	public boolean addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
 	    String tableId, String formId, String screenPath, String jsonMap) {
-	  weakControl.get().helperAddRowWithSurvey(
+	  return weakControl.get().helperAddRowWithSurvey(
 	      tableId, formId, screenPath, jsonMap);
 	  
 	}

@@ -38,105 +38,25 @@ public class RowDataIf {
 	}
 
 	/**
-	 * Takes the display name for the column and returns the value in that 
-	 * column. Any null values are replaced by the empty string.
-	 * <p>
-	 * Returns null if the column matching the passed in user label could not be
-	 * found.
-	 *
-	 * @param key the display name of the column
-	 * @return the datum at the given column name
+	 * Takes the element path for the column and returns the value in that 
+    * column.
+    * <p>
+    * Returns null if the column could not be found, or if the value in the
+    * database was null.
+	 * @param elementPath
+	 * @return
 	 */
 	// @JavascriptInterface
-	public String get(String key) {
-		return weakRowData.get().get(key);
-	}
-
-	/**
-	 * Edit the row with collect. Uses the default form.
-	 */
-	// @JavascriptInterface
-	public void editRowWithCollect() {
-		weakRowData.get().editRowWithCollect();
-	}
-
-	/**
-	 * Edit the row with collect.
-	 * <p>
-	 * Similar to {@link #editRowWithCollect()}, except that it allows you to
-	 * edit the row with a specific form.
-	 *
-	 * @param formId
-	 * @param formVersion
-	 * @param formRootElement
-	 */
-	// @JavascriptInterface
-	public void editRowWithCollectAndSpecificForm(String formId,
-			String formVersion, String formRootElement) {
-		weakRowData.get().editRowWithCollectAndSpecificForm(formId,
-				formVersion, formRootElement);
+	public String get(String elementPath) {
+		return weakRowData.get().get(elementPath);
 	}
 	
 	/**
-	 * Edit the row with Survey and the specified form.
-	 * @param formId
-	 * @param screenPath
-	 * @param formPath
-	 * @param refId
+	 * Return the table id of the table containing this row.
+	 * @return
 	 */
-	// @JavascriptInterface
-	public void editRowWithSurveyAndSpecificForm(String formId, 
-	    String screenPath) {
-	  weakRowData.get().editRowWithSurveyAndSpecificForm(formId, screenPath);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollect(String)
-	 * @param tableName
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollect(String tableName) {
-		weakRowData.get().addRowWithCollect(tableName);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndPrepopulatedValues(String, String)
-	 * @param tableName
-	 * @param jsonMap
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndPrepopulatedValues(String tableName,
-			String jsonMap) {
-		weakRowData.get().addRowWithCollectAndPrepopulatedValues(tableName,
-				jsonMap);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndSpecificForm(String, String, String, String)
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificForm(String tableName,
-			String formId, String formVersion, String formRootElement) {
-		weakRowData.get().addRowWithCollectAndSpecificForm(tableName, formId,
-				formVersion, formRootElement);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)
-	 * @param tableName
-	 * @param formId
-	 * @param formVersion
-	 * @param formRootElement
-	 * @param jsonMap
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-			String tableName, String formId, String formVersion,
-			String formRootElement, String jsonMap) {
-		weakRowData.get()
-				.addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-						tableName, formId, formVersion, formRootElement,
-						jsonMap);
+	public String getTableId() {
+	  return weakRowData.get().getTableId();
 	}
 
 }

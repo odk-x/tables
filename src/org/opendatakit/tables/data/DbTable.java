@@ -317,8 +317,6 @@ public class DbTable {
         UserTable table = dataQuery(query.toSql(desiredColumns));
         table.setFooter(footerQuery(query));
         return table;
-//        return new UserTable(table.getRowIds(), getUserHeader(),
-//                table.getData(), footerQuery(query));
     }
 
     public UserTable getUserOverviewTable(Query query) {
@@ -330,8 +328,6 @@ public class DbTable {
         UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
         table.setFooter(footerQuery(query));
         return table;
-//        return new UserTable(table.getRowIds(), getUserHeader(),
-//                table.getData(), footerQuery(query));
     }
 
     public ConflictTable getConflictTable() {
