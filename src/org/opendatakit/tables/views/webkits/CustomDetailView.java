@@ -71,13 +71,15 @@ public class CustomDetailView extends CustomView {
    *          the filename to display as the detail view. If null, tries to
    *          receive the value from the key value store.
    */
-  public CustomDetailView(Activity activity, String appName, TableProperties tp, String filename,
-                          CustomViewCallbacks callbacks) {
+  public CustomDetailView(Activity activity, String appName, 
+      TableProperties tp, String filename, CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
     this.control = new Control(mParentActivity);
-    this.detailKVSH = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
+    this.detailKVSH = 
+        tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
     if (filename == null) {
-      String recoveredFilename = this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
+      String recoveredFilename = 
+          this.detailKVSH.getString(CustomDetailView.KEY_FILENAME);
       if (recoveredFilename == null) {
         // Then no default has been set.
         this.mFilename = null;
@@ -99,8 +101,10 @@ public class CustomDetailView extends CustomView {
     }
 
     rowData.set(rowId, tmpData);
-    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
-    addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(), "data");
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
+        "control");
+    addJavascriptInterface(rowData.getJavascriptInterfaceWithWeakReference(),
+        "data");
     if (this.mFilename != null) {
       String fullPath = FileProvider.getAsWebViewUri(mParentActivity, mAppName,
           ODKFileUtils.asUriFragment(mAppName, new File(mFilename)));

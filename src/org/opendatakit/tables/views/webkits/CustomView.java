@@ -91,8 +91,8 @@ public abstract class CustomView extends LinearLayout {
 	private static ViewGroup lastParent;
 
 	private static ObjectMapper MAPPER = new ObjectMapper();
-	private static TypeReference<HashMap<String, String>> MAP_REF = new TypeReference<HashMap<String, String>>() {
-	};
+	private static TypeReference<HashMap<String, String>> MAP_REF = 
+	    new TypeReference<HashMap<String, String>>() {};
 
 	private static Set<String> javascriptInterfaces = new HashSet<String>();
 
@@ -117,7 +117,8 @@ public abstract class CustomView extends LinearLayout {
 	private Map<String, TableProperties> tableIdToProperties;
 	private CustomViewCallbacks mCallbacks;
 
-	protected CustomView(Activity parentActivity, String appName, CustomViewCallbacks callbacks) {
+	protected CustomView(Activity parentActivity, String appName, 
+	    CustomViewCallbacks callbacks) {
 		super(parentActivity);
 		initCommonWebView(parentActivity);
 		this.mParentActivity = parentActivity;
@@ -441,7 +442,8 @@ public abstract class CustomView extends LinearLayout {
 	  }
 	  Map<String, String> elementKeyToValue = new HashMap<String, String>();
 	  Row requestedRow = userTable.getRowAtIndex(0);
-	  List<String> userDefinedElementKeys = userTable.getTableProperties().getColumnOrder();
+	  List<String> userDefinedElementKeys = 
+	      userTable.getTableProperties().getColumnOrder();
 	  Set<String> metadataElementKeys = 
 	      userTable.getMapOfUserDataToIndex().keySet();
 	  List<String> allElementKeys = new ArrayList<String>();
@@ -612,7 +614,8 @@ public abstract class CustomView extends LinearLayout {
 		private void initMaps() {
 			TableProperties tp = mTable.getTableProperties();
 			collectionMap = new HashMap<Integer, Integer>();
-			mColumnDisplayNameToColorRuleGroup = new HashMap<String, ColorRuleGroup>();
+			mColumnDisplayNameToColorRuleGroup = 
+			    new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
 			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
 					.getDatabaseColumns();
@@ -716,7 +719,8 @@ public abstract class CustomView extends LinearLayout {
 			Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
 			indexOfDataMap.put(elementKey, 0);
 			String[] elementKeyForIndex = new String[] { elementKey };
-			Map<String, Integer> indexOfMetadataMap = new HashMap<String, Integer>();
+			Map<String, Integer> indexOfMetadataMap = 
+			    new HashMap<String, Integer>();
 			indexOfMetadataMap.put(elementKey, 0);
 			// We need to construct a dummy UserTable for the ColorRule to
 			// interpret.
@@ -786,22 +790,21 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Returns the value of the column with the given user-label at the
-		 * given row number. Null values are returned as the empty string.
+		 * given row number.
 		 * <p>
-		 * Null is returned if the column could not be found.
-		 *
+		 * Null is returned if the column could not be found, or if the value in
+		 * the database is null.
+		 * <p>
 		 * @param rowNum
-		 * @param colName
+		 * @param elementPath
 		 * @return
 		 */
-		public String getData(int rowNum, String colName) {
-			if (colMap.containsKey(colName)) {
-				String result = mTable.getData(rowNum, colMap.get(colName));
-				if (result == null) {
-					return "";
-				} else {
-					return result;
-				}
+		public String getData(int rowNum, String elementPath) {
+		  String elementKey = getElementKeyFromElementPath(
+		      mTable.getTableProperties().getTableId(), elementPath);
+			if (colMap.containsKey(elementKey)) {
+				String result = mTable.getData(rowNum, colMap.get(elementKey));
+				return result;
 			} else {
 				return null;
 			}
@@ -955,7 +958,8 @@ public abstract class CustomView extends LinearLayout {
 			}
 			String pathToTablesFolder = ODKFileUtils
 					.getAppFolder(mAppName);
-			String pathToFile = pathToTablesFolder + File.separator + relativePath;
+			String pathToFile = 
+			    pathToTablesFolder + File.separator + relativePath;
 			Controller.launchDetailActivity(mActivity, mTable, index,
 					pathToFile);
 			return true;
@@ -985,7 +989,8 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Actually open the table with the file.
-       * see {@link ControlIf#openTableToListViewWithFileAndSqlQuery(String, String, String, String[])}
+       * see {@link ControlIf#openTableToListViewWithFileAndSqlQuery(String, 
+       * String, String, String[])}
 		 * @param tableId
 		 * @param relativePath the path relative to the app folder
 		 * @param sqlWhereClause
@@ -1002,7 +1007,8 @@ public abstract class CustomView extends LinearLayout {
 			}
 			String pathToTablesFolder = ODKFileUtils
 					.getAppFolder(mAppName);
-			String pathToFile = pathToTablesFolder + File.separator + relativePath;
+			String pathToFile = 
+			    pathToTablesFolder + File.separator + relativePath;
 			// We're not supporting search text, so pass in null.
 			Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp,
 					null, null, false, pathToFile, sqlWhereClause,
@@ -1012,7 +1018,8 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Open the table to the map view.
-		 * @see {@link ControlIf#openTableToMapViewWithSqlQuery(String, String, String[])}
+		 * @see {@link ControlIf#openTableToMapViewWithSqlQuery(String, String, 
+		 * String[])}
 		 * @param tableId
 		 * @param sqlWhereClause
 		 * @param sqlSelectionArgs
@@ -1034,7 +1041,8 @@ public abstract class CustomView extends LinearLayout {
 
 		/**
 		 * Open the table to the spreadsheet view.
-		 * @see {@link ControlIf#openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
+		 * @see {@link ControlIf#openTableToSpreadsheetViewWithSqlQuery(String, 
+		 * String, String[])}
 		 * @param tableId
 		 * @param sqlWhereClause
 		 * @param sqlSelectionArgs
@@ -1135,7 +1143,8 @@ public abstract class CustomView extends LinearLayout {
 			Log.d(TAG, "in launchHTML with filename: " + relativePath);
          String pathToTablesFolder = ODKFileUtils
              .getAppFolder(mAppName);
-         String pathToFile = pathToTablesFolder + File.separator + relativePath;
+         String pathToFile = 
+             pathToTablesFolder + File.separator + relativePath;
 			Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
 			i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
 			mActivity.startActivity(i);
