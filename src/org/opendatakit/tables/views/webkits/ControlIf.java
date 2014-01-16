@@ -327,6 +327,7 @@ public class ControlIf {
 	 * Add a row using Collect and the default form. 
 	 * @param tableId the display name of the table to receive the add.
     * @return true if the activity was launched, false if something went wrong
+    * @deprecated
 	 */
 	// @JavascriptInterface
 	public boolean addRowWithCollect(String tableId) {
@@ -348,6 +349,7 @@ public class ControlIf {
     * @param formVersion may be null
     * @param formRootElement
     * @return true if the activity was launched, false if something went wrong
+    * @deprecated
     */
    // @JavascriptInterface
    public boolean addRowWithCollectAndSpecificForm(String tableId,
@@ -366,6 +368,7 @@ public class ControlIf {
     * converted to a String using JSON.stringify() and passed to this method. A
     * null value will not prepopulate any values.
     * @return true if the activity was launched, false if something went wrong
+    * @deprecated
     */
    // @JavascriptInterface
    public boolean addRowWithCollectAndPrepopulatedValues(String tableId,
@@ -385,6 +388,7 @@ public class ControlIf {
     * @param formRootElement
     * @param jsonMap
     * @return true if the activity was launched, false if something went wrong
+    * @deprecated
     */
    public boolean addRowWithCollect(String tableId,
        String formId, String formVersion, String formRootElement, 
@@ -404,6 +408,7 @@ public class ControlIf {
     * @param formRootElement
     * @param jsonMap
     * @return true if the activity was launched, false if something went wrong
+    * @deprecated
     */
    // @JavascriptInterface
    public boolean addRowWithCollectAndSpecificFormAndPrepopulatedValues(
@@ -412,6 +417,102 @@ public class ControlIf {
       return weakControl.get()
             .helperAddRowWithCollect(tableId, formId, formVersion, 
                 formRootElement, jsonMap);
+   }
+   
+   /**
+    * Edit the given row using Collect.
+    * @param tableId
+    * @param rowId
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+    */
+   public boolean editRowWithCollect(String tableId, String rowId) {
+     return this.editRowWithCollect(tableId, rowId, null, null, null);
+   }
+   
+   /**
+    * Edit the given row using Collect and a specific form.
+    * @param tableId
+    * @param rowId
+    * @param formId
+    * @param formVersion
+    * @param formRootElement
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+    */
+   public boolean editRowWithCollectAndSpecificForm(String tableId, 
+       String rowId, String formId, String formVersion, 
+       String formRootElement) {
+     return weakControl.get().helperEditRowWithCollect(tableId, rowId, formId,
+         formVersion, formRootElement);
+   }
+   
+   /**
+    * Alias for {@link #editRowWithCollectAndSpecificForm(String, String, 
+    * String, String, String)}.
+    * @see {@link #editRowWithCollect(String, String, String, String, String)}
+    * @param tableId
+    * @param rowId
+    * @param formId
+    * @param formVersion
+    * @param formRootElement
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+    */
+   public boolean editRowWithCollect(String tableId, String rowId,
+       String formId, String formVersion, String formRootElement) {
+     return this.editRowWithCollect(tableId, rowId, formId, formVersion,
+         formRootElement);
+   }
+   
+   /**
+    * Edit the given row using Survey and the default form.
+    * @param tableId
+    * @param rowId
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean editRowWithSurvey(String tableId, String rowId) {
+     return editRowWithSurveyAndSpecificForm(tableId, rowId, null, null);
+   }
+   
+   /**
+    * Edit the given row using Survey and a specific form.
+    * @param tableId
+    * @param rowId
+    * @param formId
+    * @param screenPath
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean editRowWithSurveyAndSpecificForm(String tableId, 
+       String rowId, String formId, String screenPath) {
+     return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, 
+         screenPath);
+   }
+   
+   /**
+    * Alias for {@link #editRowWithSurveyAndSpecificForm(String, String, 
+    * String, String)}.
+    * @see {@link #editRowWithSurveyAndSpecificForm(String, String, String, 
+    * String)}
+    * @param tableId
+    * @param rowId
+    * @param formId
+    * @param screenPath
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean editRowWithSurvey(String tableId, String rowId,
+       String formId, String screenPath) {
+     return editRowWithSurveyAndSpecificForm(tableId, rowId, formId,
+         screenPath);
+   }
+   
+   /**
+    * Add a row with Survey and the default form.
+    * @param tableId the table to receive the add
+    * @return true if Survey was launched, else false
+    */
+   public boolean addRowWithSurvey(String tableId) {
+     return this.addRowWithSurvey(tableId, null, null, null);
    }
    
    /**
@@ -442,6 +543,22 @@ public class ControlIf {
 	    String screenPath) {
 	  return weakControl.get().helperAddRowWithSurvey(tableId, formId,
 	      screenPath, null);
+	}
+	
+	/**
+	 * Add a row using Survey and the default form, but prepopulating some
+	 * values.
+	 * @param tableId the id of the table to receive the add
+	 * @param jsonMap a JSON map of element key to value, as retrieved by
+    * {@link #getElementKeyForColumn(String, String)}. The map can then be
+    * converted to a String using JSON.stringify() and passed to this method. A
+    * null value will not prepopulate any values. 
+	 * @return true if the activity was launched, false if something went wrong
+	 */
+	public boolean addRowWithSurveyAndPrepopulatedValues(String tableId,
+	    String jsonMap) {
+	  return weakControl.get().helperAddRowWithSurvey(tableId, null, null, 
+	      jsonMap);
 	}
 	
 	/**

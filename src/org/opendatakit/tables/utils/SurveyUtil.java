@@ -314,6 +314,19 @@ public class SurveyUtil {
     private SurveyFormParameters() {
       // including this in case it needs to be serialized to json.
     }
+    
+    /**
+     * This is an un-implemented method meant only to mirror the way that
+     * {@link CollectUtil.CollectFormParameters#constructCollectFormParameters(TableProperties)}.
+     * It is tbd if this is the right way to do it.
+     * @param tableProperties
+     */
+    public static SurveyFormParameters ConstructSurveyFormParameters(
+        TableProperties tableProperties) {
+      // TODO: support default forms for survey, and persisted survey forms.
+      Log.e(TAG, "ConstructSurveyFormParameters is unimplemented");
+      return null;
+    }
 
     public SurveyFormParameters(boolean isUserDefined, String formId,
         String screenPath) {

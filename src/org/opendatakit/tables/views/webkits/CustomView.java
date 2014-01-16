@@ -1156,7 +1156,7 @@ public abstract class CustomView extends LinearLayout {
 		 * jsonMap should be a Stringified json map mapping elementName to values
 		 * to prepopulate with the add row request.
 		 * @param tableId
-		 * @param formId
+		 * @param formId if null, uses the default form
 		 * @param screenPath
 		 * @param jsonMap
 		 * @return true if the launch succeeded, false if something went wrong
@@ -1169,6 +1169,11 @@ public abstract class CustomView extends LinearLayout {
           Log.e(TAG, "table [" + tableId + "] could not be found. " +
                "returning.");
           return false;
+        }
+        if (formId == null) {
+          SurveyFormParameters surveyFormParameters = SurveyFormParameters
+              .ConstructSurveyFormParameters(tpToReceiveAdd);
+          formId = surveyFormParameters.getFormId();
         }
         Map<String, String> map = null;
         // Do this null check and only parse and return errors if the jsonMap
