@@ -21,6 +21,12 @@ import org.json.JSONArray;
 import org.opendatakit.tables.views.webkits.CustomView.Control;
 import org.opendatakit.tables.views.webkits.CustomView.TableData;
 
+/**
+ * This object is handed to all the javascript views as "control".
+ * @author mitchellsundt@gmail.com
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class ControlIf {
 
 	private WeakReference<Control> weakControl;
@@ -30,7 +36,7 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the table with the given name and searches with the given query.
+	 * Open the table with the given name.
 	 * Opens to the current default view of the table.
 	 * @param tableId the table id of the table
 	 * @return true if the open succeeded
@@ -42,11 +48,11 @@ public class ControlIf {
 	
 	/**
 	 * Alias for {@link #openTableWithSqlQuery(String, String, String[])}
-	 * @see {@link #openTableWithSqlQuery(String, String, String[])}
+	 * @see #openTableWithSqlQuery(String, String, String[])
 	 * @param tableId
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	public boolean openTable(String tableId, String sqlWhereClause,
 	    String[] sqlSelectionArgs) {
@@ -71,7 +77,7 @@ public class ControlIf {
 	 * use the table ids. The references to the columns
 	 * must be the element paths. The
 	 * elementKey is fixed and unchanging for each column, and can be retrieved
-	 * using {@link #getElementKeyForColumn(String, String)}.
+	 * using {@link #getElementKey(String, String)}.
 	 * @param sqlSelectionArgs an array of selection arguments, one for each "?"
 	 * in sqlWhereClause
 	 * @return true if the open succeeded
@@ -88,7 +94,6 @@ public class ControlIf {
 	 * Open the table specified by tableName as a list view using the specified
 	 * filename as a list view. The filename is relative to the odk tables path.
 	 * @param tableId the table id of the table to open
-	 * @param searchText the search string with which to search the table.
 	 * @param relativePath the name of the file specifying the list view,
     * relative to the app folder.
 	 * @return true if the open succeeded
@@ -102,10 +107,10 @@ public class ControlIf {
 	
 	/**
 	 * Alias for {@link #openTableToListViewWithFile(String, String)}.
-	 * @see {@link #openTableToListViewWithFile(String, String)}
+	 * @see #openTableToListViewWithFile(String, String)
 	 * @param tableId
 	 * @param relativePath
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	public boolean openTableToListView(String tableId, String relativePath) {
 	  return openTableToListViewWithFile(tableId, relativePath);
@@ -113,12 +118,12 @@ public class ControlIf {
 	
 	/**
 	 * Alias for {@link #openTableToListViewWithFileAndSqlQuery(String, String, String, String[])}
-	 * @see {@link #openTableToListViewWithFileAndSqlQuery(String, String, String, String[])}
+	 * @see #openTableToListViewWithFileAndSqlQuery(String, String, String, String[])
 	 * @param tableId
 	 * @param relativePath
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	public boolean openTableToListView(String tableId, String relativePath,
 	    String sqlWhereClause, String[] sqlSelectionArgs) {
@@ -129,7 +134,7 @@ public class ControlIf {
 	/**
 	 * Open the given table with the given list view, restricted by the given
 	 * SQL query.
-	 * @see #openTableToListViewWithFile(String, String, String)
+	 * @see #openTableToListViewWithFile(String, String)
 	 * @see #openTableWithSqlQuery(String, String, String[])
 	 * @see #queryWithSql(String, String, String[])
 	 * @param tableId
@@ -166,7 +171,7 @@ public class ControlIf {
 	/**
 	 * Open the given table to the map view, restricted with the given query
 	 * string. Uses the settings that have last been saved to map view.
-	 * @see #openTable(String, String)
+	 * @see #openTable(String)
 	 * @param tableId
 	 * @return true if the open succeeded
 	 */
@@ -177,11 +182,11 @@ public class ControlIf {
 	
 	/**
 	 * Alias for {@link #openTableToMapViewWithSqlQuery(String, String, String[])}
-	 * @see {@link #openTableToMapViewWithSqlQuery(String, String, String[])}
+	 * @see #openTableToMapViewWithSqlQuery(String, String, String[])
 	 * @param tableId
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	public boolean openTableToMapView(String tableId, String sqlWhereClause,
 	    String[] sqlSelectionArgs) {
@@ -203,11 +208,11 @@ public class ControlIf {
 	
 	/**
 	 * Alias for {@link #openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
-	 * @see {@link #openTableToSpreadsheetViewWithSqlQuery(String, String, String[])}
+	 * @see #openTableToSpreadsheetViewWithSqlQuery(String, String, String[])
 	 * @param tableId
 	 * @param sqlWhereClause
 	 * @param sqlSelectionArgs
-	 * @return
+	 * @return true if the open succeeded
 	 */
 	public boolean openTableToSpreadsheetView(String tableId, 
 	    String sqlWhereClause, String[] sqlSelectionArgs) {
@@ -217,7 +222,7 @@ public class ControlIf {
 
 	/**
 	 * Open the table to spreadsheet view, restricting by the given SQL query.
-	 * @see #openTable(String, String)
+	 * @see #openTable(String)
 	 * @see #openTableWithSqlQuery(String, String, String[])
 	 * @see #queryWithSql(String, String, String[])
 	 * @param tableId
@@ -275,18 +280,17 @@ public class ControlIf {
 	}
 
 	/**
-	 * Get the display names of all the tables in the database, sorted in case
-	 * insensitive order.
-	 * @return an JSONArray containing the display names
+	 * Get the table ids of all the tables in the database.
+	 * @return a stringified json array of the table ids
 	 */
 	// @JavascriptInterface
-	public JSONArray getTableDisplayNames() {
-		return weakControl.get().getTableDisplayNames();
+	public String getAllTableIds() {
+		return weakControl.get().getAllTableIds();
 	}
 
 	/**
 	 * Launch an arbitrary HTML file specified by filename.
-	 * @see #openTableToListViewWithFile(String, String, String)
+	 * @see ControlIf#openTableToListViewWithFile(String, String)
 	 * @param relativePath file name relative to the ODK Tables folder.
 	 * @return true if the file was launched, false if something went wrong
 	 */
@@ -294,7 +298,7 @@ public class ControlIf {
 	public boolean launchHTML(String relativePath) {
 		return weakControl.get().launchHTML(relativePath);
 	}
-
+	
 	/**
 	 * Opens the detail view for the item at the given index.
 	 * <p>
@@ -364,7 +368,7 @@ public class ControlIf {
     * query string to prepopulate values, a json map is used.
     * @param tableId
     * @param jsonMap a JSON map of element key to value, as retrieved by
-    * {@link #getElementKeyForColumn(String, String)}. The map can then be
+    * {@link #getElementKey(String, String)}. The map can then be
     * converted to a String using JSON.stringify() and passed to this method. A
     * null value will not prepopulate any values.
     * @return true if the activity was launched, false if something went wrong
@@ -381,7 +385,7 @@ public class ControlIf {
     * An alias for {@link #addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)}.
     * Because the above method has the null-safe json map parameter, this can
     * be used as a shorter version of the other Collect methods.
-    * @see {@link #addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)}
+    * @see #addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)
     * @param tableId
     * @param formId
     * @param formVersion
@@ -394,7 +398,7 @@ public class ControlIf {
        String formId, String formVersion, String formRootElement, 
        String jsonMap) {
      return addRowWithCollectAndSpecificFormAndPrepopulatedValues(tableId, 
-         formId, formVersion, formRootElement, null);
+         formId, formVersion, formRootElement, jsonMap);
    }
    
    /**
@@ -450,7 +454,7 @@ public class ControlIf {
    /**
     * Alias for {@link #editRowWithCollectAndSpecificForm(String, String, 
     * String, String, String)}.
-    * @see {@link #editRowWithCollect(String, String, String, String, String)}
+    * @see #editRowWithCollect(String, String, String, String, String)
     * @param tableId
     * @param rowId
     * @param formId
@@ -461,8 +465,8 @@ public class ControlIf {
     */
    public boolean editRowWithCollect(String tableId, String rowId,
        String formId, String formVersion, String formRootElement) {
-     return this.editRowWithCollect(tableId, rowId, formId, formVersion,
-         formRootElement);
+     return this.editRowWithCollectAndSpecificForm(tableId, rowId, formId, 
+         formVersion, formRootElement);
    }
    
    /**
@@ -492,8 +496,8 @@ public class ControlIf {
    /**
     * Alias for {@link #editRowWithSurveyAndSpecificForm(String, String, 
     * String, String)}.
-    * @see {@link #editRowWithSurveyAndSpecificForm(String, String, String, 
-    * String)}
+    * @see #editRowWithSurveyAndSpecificForm(String, String, String, 
+    * String)
     * @param tableId
     * @param rowId
     * @param formId
@@ -550,7 +554,7 @@ public class ControlIf {
 	 * values.
 	 * @param tableId the id of the table to receive the add
 	 * @param jsonMap a JSON map of element key to value, as retrieved by
-    * {@link #getElementKeyForColumn(String, String)}. The map can then be
+    * {@link #getElementKey(String, String)}. The map can then be
     * converted to a String using JSON.stringify() and passed to this method. A
     * null value will not prepopulate any values. 
 	 * @return true if the activity was launched, false if something went wrong
@@ -575,6 +579,68 @@ public class ControlIf {
 	  return weakControl.get().helperAddRowWithSurvey(
 	      tableId, formId, screenPath, jsonMap);
 	  
+	}
+	
+	/**
+	 * Return the element key for the column with the given element path.
+	 * @param tableId
+	 * @param elementPath
+	 * @return the element key for the column
+	 */
+	public String getElementKey(String tableId, String elementPath) {
+	  return weakControl.get().getElementKey(tableId, elementPath);
+	}
+	
+	/**
+	 * Get the display name for the given column.
+	 * @param tableId
+	 * @param elementPath
+	 * @return the display name for the given column
+	 */
+	public String getColumnDisplayName(String tableId, String elementPath) {
+	  return weakControl.get().getColumnDisplayName(tableId, elementPath);
+	}
+	
+	/**
+	 * Retrieve the display name for the given table.
+	 * <p>
+	 * If the display name has been localized, it returns the json
+	 * representation of the display name.
+	 * @param tableId
+	 * @return the display name for the table, in stringified json form if the
+	 * name has been internationalized
+	 */
+	public String getTableDisplayName(String tableId) {
+	  return weakControl.get().getTableDisplayName(tableId);
+	}
+	
+	/**
+	 * Determine if the column exist in the given table.
+	 * @param tableId
+	 * @param elementPath
+	 * @return true if the column exists, else false
+	 */
+	public boolean columnExists(String tableId, String elementPath) {
+	  return weakControl.get().columnExists(tableId, elementPath);
+	}
+	
+	/**
+	 * Take the path of a file relative to the app folder and return a url by
+	 * which it can be accessed.
+	 * @param relativePath
+	 * @return an absolute URI to the file
+	 */
+	public String getFileAsUrl(String relativePath) {
+	  return weakControl.get().getFileAsUrl(relativePath);
+	}
+	
+	/**
+	 * Return the platform info as a stringified json object. This is an object
+	 * containing the keys: container, version, appName, baseUri, logLevel.
+	 * @return a stringified json object with the above keys
+	 */
+	public String getPlatformInfo() {
+	  return weakControl.get().getPlatformInfo();
 	}
 
 }

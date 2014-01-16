@@ -58,13 +58,14 @@ public class TableDataIf {
 	}
 
 	/**
-	 * Returns a stringified JSONArray of all the values in the given column.
-	 * @param colName the display name of the column
+	 * Returns a stringified JSONArray of all the values in the given column, 
+	 * or null if the column cannot be found.
+	 * @param elementPath the element path of the column
 	 * @return JSONArray of all the data in the column
 	 */
 	// @JavascriptInterface
-	public String getColumnData(String colName) {
-		return weakTable.get().getColumnData(colName);
+	public String getColumnData(String elementPath) {
+		return weakTable.get().getColumnData(elementPath);
 	}
 
 	/**
@@ -79,13 +80,13 @@ public class TableDataIf {
 	/**
 	 * Get the text color of the cell in the given column for the given value.
 	 * Uses the color rules of the column. The default value is -16777216.
-	 * @param colName the display name of the column
+	 * @param elementPath the element path of the column
 	 * @param value the string value of the datum
 	 * @return String representation of the text color
 	 */
 	// @JavascriptInterface
-	public String getForegroundColor(String colName, String value) {
-		return weakTable.get().getForegroundColor(colName, value);
+	public String getForegroundColor(String elementPath, String value) {
+		return weakTable.get().getForegroundColor(elementPath, value);
 	}
 
 	/**
@@ -113,15 +114,18 @@ public class TableDataIf {
 	 * are zero-indexed, meaning the first row is 0. For  example, if you were 
 	 * displaying a list view and had a column titled "Age", you would retrieve 
 	 * the "Age" value for the second row by calling getData(1, "Age").
+	 * <p>
+	 * The null value is returned if the column could not be found, or if the
+	 * value in the database is null.
 	 * @param rowNum the row number
-	 * @param colName the display name of the column to which you want the 
-	 * data.
+	 * @param elementPath the element path of the column
 	 * @return the String representation of the datum at the given row in the
-	 * given column
+	 * given column, or null if the value in the database is null or the column
+	 * does not exist
 	 */
 	// @JavascriptInterface
-	public String getData(int rowNum, String colName) {
-		return weakTable.get().getData(rowNum, colName);
+	public String getData(int rowNum, String elementPath) {
+		return weakTable.get().getData(rowNum, elementPath);
 	}
 	
 }

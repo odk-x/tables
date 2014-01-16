@@ -39,6 +39,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
@@ -68,6 +69,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -86,6 +88,13 @@ import com.google.gson.Gson;
 public abstract class CustomView extends LinearLayout {
 
 	private static final String TAG = CustomView.class.getSimpleName();
+	
+	// The keys for the platformInfo json object.
+	private static final String PLATFORM_INFO_KEY_CONTAINER = "container";
+	private static final String PLATFORM_INFO_KEY_VERSION = "version";
+	private static final String PLATFORM_INFO_KEY_APP_NAME = "appName";
+	private static final String PLATFORM_INFO_KEY_BASE_URI = "baseUri";
+	private static final String PLATFORM_INFO_KEY_LOG_LEVEL = "logLevel";
 
 	protected static WebView webView;
 	private static ViewGroup lastParent;
@@ -204,22 +213,6 @@ public abstract class CustomView extends LinearLayout {
 	  return tp;
 	}
 
-	/**
-	 * Get a list of all the table display names.
-	 * TODO: handle the fact that each name can be an internationalized json
-	 * string
-	 * @return
-	 */
-	private List<String> getTableDisplayNames() {
-		initTpInfo();
-		List<String> allNames = new ArrayList<String>();
-		for (TableProperties tableProperties : tableIdToProperties.values()) {
-		  allNames.add(tableProperties.getDisplayName());
-		}
-		Collections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
-		return allNames;
-	}
-
 	protected void initView() {
 		if (lastParent != null) {
 			lastParent.removeView(webView);
@@ -249,23 +242,6 @@ public abstract class CustomView extends LinearLayout {
 	protected Activity getContainerActivity() {
 		return this.mParentActivity;
 	}
-
-	/**
-	 * Add a row using collect and the default form.
-	 *
-	 * @param tableName
-	 * @param tp
-	 * @param prepopulateValues
-	 *            a map of elementKey to value for the rows with which you want
-	 *            to prepopulate the add row.
-	 */
-	private void addRowWithCollect(String tableName, TableProperties tp,
-			Map<String, String> prepopulateValues) {
-		CollectFormParameters formParameters = CollectFormParameters
-				.constructCollectFormParameters(tp);
-		prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
-	}
-
 
 	/**
 	 * Add a row using Collect. This is the hook into the javascript. The
@@ -558,13 +534,19 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		private final UserTable mTable; // contains TableProperties
-		private Map<String, Integer> colMap; // Maps the column names with an
-		// index number
-		private Map<Integer, Integer> collectionMap; // Maps each collection
-		// with the number of
-		// rows under it
-		private List<String> primeColumns; // Holds the db names of indexed
-		// columns
+		/**
+		 * Maps the column element keys and sms labels to their index in the
+		 * table. Thus the values in the map are not unique.
+		 */
+		private Map<String, Integer> columnIdentifierToIndex;
+		/**
+		 * Maps each collection with the number of rows under it.
+		 */
+		private Map<Integer, Integer> collectionMap;
+		/**
+		 * Holds the element keys of the indexed columns.
+		 */
+		private List<String> primeColumns;
 		/**
 		 * A simple cache of color rules so they're not recreated unnecessarily
 		 * each time. Maps the column display name to {@link ColorRuleGroup} for
@@ -619,19 +601,19 @@ public abstract class CustomView extends LinearLayout {
 			primeColumns = tp.getPrimeColumns();
 			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
 					.getDatabaseColumns();
-			colMap = new HashMap<String, Integer>();
+			columnIdentifierToIndex = new HashMap<String, Integer>();
 			for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
 				String smsLabel = cp.getSmsLabel();
 				Integer idx = mTable.getColumnIndexOfElementKey(cp
 						.getElementKey());
 				if (idx != null) {
-					colMap.put(cp.getDisplayName(), idx);
+					columnIdentifierToIndex.put(cp.getDisplayName(), idx);
 					if (smsLabel != null) {
 						// TODO: this doesn't look to ever be used, and ignores
 						// the
 						// possibility of conflicting element keys and sms
 						// labels.
-						colMap.put(smsLabel, idx);
+						columnIdentifierToIndex.put(smsLabel, idx);
 					}
 				}
 			}
@@ -643,34 +625,43 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * @param: colName, column name in the userTable/rawTable
-		 *
-		 * @return: returns a String in JSONArray format containing all the row
-		 * data for the given column name format: [row1, row2, row3, row4]
+		 * @see {@link TableDataIf#getColumnData(String)}
 		 */
-		public String getColumnData(String colName) {
-			return getColumnData(colName, getCount());
+		public String getColumnData(String elementPath) {
+		  // Return all the rows.
+		  return getColumnData(elementPath, getCount());
 		}
 		
-		public String getColumnData(String colName, int requestedRows) {
-        ArrayList<String> arr = new ArrayList<String>();
-        for (int i = 0; i < requestedRows; i++) {
-           if (colMap.containsKey(colName)) {
-              arr.add(i, mTable.getData(i, colMap.get(colName)));
-           } else {
-              arr.add(i, "");
-           }
+		/**
+		 * Return a strinfigied JSON array of the data in the columns. Returns
+		 * null and logs an error if the column is not found. 
+		 * @param elementPath
+		 * @param requestedRows
+		 * @return returns a String in JSONArray format containing all the row
+       * data for the given column name format: [row1, row2, row3, row4]
+		 */
+		public String getColumnData(String elementPath, int requestedRows) {
+		  String tableId = this.mTable.getTableProperties().getTableId();
+		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+        ArrayList<String> rowValues = new ArrayList<String>();
+        if (!columnIdentifierToIndex.containsKey(elementKey)) {
+          Log.e(TAG, "column not found with element path: " + elementPath +
+              " and key: " + elementKey);
+          return null;
         }
-        return new JSONArray(arr).toString();
+        int columnIndex = columnIdentifierToIndex.get(elementKey);
+        for (int i = 0; i < requestedRows; i++) {
+           rowValues.add(this.mTable.getData(i, columnIndex));
+        }
+        return new JSONArray(rowValues).toString();
 		}
 
 		/**
 		 * Return a map of element key to the {@link ColumnType#label()}.
-		 * @return
 		 */
 		public String getColumns() {
 			Map<String, String> colInfo = new HashMap<String, String>();
-			for (String column : colMap.keySet()) {
+			for (String column : columnIdentifierToIndex.keySet()) {
 			   String label = getColumnTypeLabelForElementKey(column);
 				colInfo.put(column, label);
 			}
@@ -693,25 +684,18 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * Get the foreground color for the given value according to the color
-		 * rules for the column specified by colName. The default is -16777216.
-		 *
-		 * @param colName
-		 *            the display name of the column
-		 * @param value
-		 *            the string value of the datum
-		 * @return
+		 * @see {@link TableDataIf#getForegroundColor(String, String)}
 		 */
-		public String getForegroundColor(String colName, String value) {
+		public String getForegroundColor(String elementPath, String value) {
 			TableProperties tp = mTable.getTableProperties();
-			ColumnProperties cp = tp.getColumnByDisplayName(colName);
-			String elementKey = cp.getElementKey();
+			String elementKey = 
+			    getElementKeyFromElementPath(tp.getTableId(), elementPath);
 			ColorRuleGroup colRul = this.mColumnDisplayNameToColorRuleGroup
-					.get(colName);
+					.get(elementPath);
 			if (colRul == null) {
 				// If it's not already there, cache it for future use.
 				colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
-				this.mColumnDisplayNameToColorRuleGroup.put(colName, colRul);
+				this.mColumnDisplayNameToColorRuleGroup.put(elementPath, colRul);
 			}
 			// Rather than hand off the whole row data, we'll just dummy up the
 			// info requested, as this will be easier for the html programmer
@@ -724,7 +708,7 @@ public abstract class CustomView extends LinearLayout {
 			indexOfMetadataMap.put(elementKey, 0);
 			// We need to construct a dummy UserTable for the ColorRule to
 			// interpret.
-			String[] header = new String[] { colName };
+			String[] header = new String[] { elementPath };
 			String[] rowId = new String[] { "dummyRowId" };
 			String[][] data = new String[1][1];
 			String[][] metadata = new String[1][1];
@@ -752,7 +736,7 @@ public abstract class CustomView extends LinearLayout {
 			// the first col
 			// is the main,
 			// indexed col
-			for (String col : colMap.keySet()) {
+			for (String col : columnIdentifierToIndex.keySet()) {
 				if (col.equalsIgnoreCase(colName)) {
 					colName = col;
 				}
@@ -789,21 +773,13 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * Returns the value of the column with the given user-label at the
-		 * given row number.
-		 * <p>
-		 * Null is returned if the column could not be found, or if the value in
-		 * the database is null.
-		 * <p>
-		 * @param rowNum
-		 * @param elementPath
-		 * @return
+		 * @see {@link TableDataIf#getData(int, String)}.
 		 */
 		public String getData(int rowNum, String elementPath) {
 		  String elementKey = getElementKeyFromElementPath(
 		      mTable.getTableProperties().getTableId(), elementPath);
-			if (colMap.containsKey(elementKey)) {
-				String result = mTable.getData(rowNum, colMap.get(elementKey));
+			if (columnIdentifierToIndex.containsKey(elementKey)) {
+				String result = mTable.getData(rowNum, columnIdentifierToIndex.get(elementKey));
 				return result;
 			} else {
 				return null;
@@ -851,7 +827,7 @@ public abstract class CustomView extends LinearLayout {
 	     // Here we're using this object b/c these appear to be the columns
 	     // available to the client--are metadata columns exposed to them? It's
 	     // not obvious to me here.
-	     Set<String> columnKeys = colMap.keySet();
+	     Set<String> columnKeys = columnIdentifierToIndex.keySet();
         String[][] partialData = 
             new String[numRowsToWrite][columnKeys.size()];
 	     // Now construct up the objects we need.
@@ -1123,13 +1099,102 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * @see {@link ControlIf#getTableDisplayNames()}
+		 * @see {@link ControlIf#getAllTableIds()}
 		 */
-		public JSONArray getTableDisplayNames() {
-			Log.d(TAG, "called getTableDisplayNames()");
-			List<String> allNames = CustomView.this.getTableDisplayNames();
-			JSONArray result = new JSONArray((Collection<String>) allNames);
-			return result;
+		public String getAllTableIds() {
+		  Set<String> tableIdsSet = tableIdToProperties.keySet();
+		  JSONArray result = new JSONArray(tableIdsSet);
+		  return result.toString();
+		}
+		
+		/**
+		 * @see {@link ControlIf#getElementKey(String, String)}
+		 * @param tableId
+		 * @param elementPath
+		 * @return
+		 */
+		public String getElementKey(String tableId, String elementPath) {
+		  return getElementKeyFromElementPath(tableId, elementPath);
+		}
+		
+		/**
+		 * @see {@link ControlIf#getColumnDisplayName(String, String)}
+		 * @param tableId
+		 * @param elementPath
+		 * @return
+		 */
+		public String getColumnDisplayName(String tableId, String elementPath) {
+		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  String displayName = 
+		      tableProperties.getColumnByElementKey(elementKey).getDisplayName();
+		  return displayName;
+		}
+		
+		/**
+		 * @see {@link ControlIf#getTableDisplayName(String)}
+		 * @param tableId
+		 * @return
+		 */
+		public String getTableDisplayName(String tableId) {
+		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  return tableProperties.getDisplayName();
+		}
+		
+		/**
+		 * @see {@link ControlIf#getPlatformInfo()}
+		 * @return
+		 */
+		public String getPlatformInfo() {
+		  // This is based on:
+		  // org.opendatakit.survey.android.views.ODKShimJavascriptCallback
+		  Map<String, String> platformInfo = new HashMap<String, String>();
+		  platformInfo.put(PLATFORM_INFO_KEY_VERSION, Build.VERSION.RELEASE);
+		  platformInfo.put(PLATFORM_INFO_KEY_CONTAINER, "Android");
+		  platformInfo.put(PLATFORM_INFO_KEY_APP_NAME, 
+		      TableFileUtils.ODK_TABLES_APP_NAME);
+		  platformInfo.put(PLATFORM_INFO_KEY_BASE_URI, getBaseContentUri());
+		  platformInfo.put(PLATFORM_INFO_KEY_LOG_LEVEL, "D");
+		  JSONObject jsonObject = new JSONObject(platformInfo);
+		  String result = jsonObject.toString();
+		  return result;
+		}
+		
+		/**
+		 * @see {@link ControlIf#getFileAsUrl(String)}
+		 * @param relativePath
+		 * @return
+		 */
+		public String getFileAsUrl(String relativePath) {
+		  String baseUri = getBaseContentUri();
+		  String result = baseUri + relativePath;
+		  return result;
+		}
+		
+		/**
+		 * @see ControlIf#columnExists(String, String)
+		 * @param tableId
+		 * @param elementPath
+		 * @return
+		 */
+		public boolean columnExists(String tableId, String elementPath) {
+		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  ColumnProperties columnProperties =
+		      tableProperties.getColumnByElementKey(elementKey);
+		  return columnProperties != null;
+		}
+		
+		/**
+		 * Return the base uri for the Tables app name with a trailing 
+		 * separator.
+		 * @return
+		 */
+		private String getBaseContentUri() {
+		  Uri contentUri = FileProvider.getWebViewContentUri(getContext());
+		  contentUri = Uri.withAppendedPath(contentUri, 
+		      Uri.encode(TableFileUtils.ODK_TABLES_APP_NAME));
+		  return contentUri.toString() + File.separator;
 		}
 
 		/**

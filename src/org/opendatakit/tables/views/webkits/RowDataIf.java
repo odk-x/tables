@@ -40,11 +40,9 @@ public class RowDataIf {
 	/**
 	 * Takes the element path for the column and returns the value in that 
     * column.
-    * <p>
-    * Returns null if the column could not be found, or if the value in the
-    * database was null.
 	 * @param elementPath
-	 * @return
+	 * @return the data value. null if the column could not be found, or if the
+	 * value in the database was null.
 	 */
 	// @JavascriptInterface
 	public String get(String elementPath) {
@@ -53,7 +51,7 @@ public class RowDataIf {
 	
 	/**
 	 * Return the table id of the table containing this row.
-	 * @return
+	 * @return the table id
 	 */
 	public String getTableId() {
 	  return weakRowData.get().getTableId();
