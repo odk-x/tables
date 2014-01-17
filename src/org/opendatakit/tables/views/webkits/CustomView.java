@@ -915,17 +915,6 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * @see {@link ControlIf#openItem(int)}
-		 */
-		public boolean openItem(int index) {
-			if (mTable == null) {
-				return false;
-			}
-			Controller.launchDetailActivity(mActivity, mTable, index, null);
-			return true;
-		}
-
-		/**
 		 * @see {@link ControlIf#openDetailViewWithFile(int, String)}
 		 */
 		public boolean openDetailViewWithFile(int index, String relativePath) {
