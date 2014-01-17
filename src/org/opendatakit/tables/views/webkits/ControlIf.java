@@ -75,18 +75,16 @@ public class ControlIf {
    /**
     * Open the given table with the given list view, restricted by the given
     * SQL query.
-    * @see #openTableToListViewWithFile(String, String)
-    * @see #openTableWithSqlQuery(String, String, String[])
     * @see #queryWithSql(String, String, String[])
     * @param tableId
-    * @param relativePath the name of the file specifying the list view,
-    * relative to the app folder.
     * @param sqlWhereClause
     * @param sqlSelectionArgs
+    * @param relativePath the name of the file specifying the list view,
+    * relative to the app folder.
     * @return true if the open succeeded
     */
-	public boolean openTableToListView(String tableId, String relativePath,
-	    String sqlWhereClause, String[] sqlSelectionArgs) {
+	public boolean openTableToListView(String tableId, String sqlWhereClause,
+	    String[] sqlSelectionArgs, String relativePath) {
      return weakControl.get().helperOpenTableWithFile(
          tableId, relativePath, sqlWhereClause, sqlSelectionArgs);
 	}
@@ -94,17 +92,17 @@ public class ControlIf {
    /**
     * Open the given table to the map view, restricted with the given SQL
     * query.
-    * @see #openTableWithSqlQuery(String, String, String[])
     * @see #queryWithSql(String, String, String[])
     * @param tableId table id of the table to open.
     * @param sqlWhereClause
     * @param sqlSelectionArgs
+    * @param relativePath NOT YET SUPPORTED
     * @return true if the open succeeded
     */
 	public boolean openTableToMapView(String tableId, String sqlWhereClause,
-	    String[] sqlSelectionArgs) {
+	    String[] sqlSelectionArgs, String relativePath) {
      return weakControl.get().helperOpenTableToMapView(tableId,
-         sqlWhereClause, sqlSelectionArgs);
+         sqlWhereClause, sqlSelectionArgs, relativePath);
 	}
 	
    /**
@@ -132,19 +130,17 @@ public class ControlIf {
 	 * <p>
 	 * This can be used to do powerful cross-table queries.
 	 * @param tableId display name of the table
-	 * @param whereClause an SQL where clause as specified in
-	 * {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @param selectionArgs selection arguments for the whereClause as
-	 * specified in {@link #openTableWithSqlQuery(String, String, String[])}.
+	 * @param sqlWhereClause an SQL where clause
+	 * @param sqlSelectionArgs selection arguments
 	 * @return a new TableDataIf with the results of the query. Should be
 	 * released with {@link #releaseQueryResources(String)} when it is no longer
 	 * needed.
 	 */
 	// @JavascriptInterface
-	public TableDataIf queryWithSql(String tableId, String whereClause,
-			String[] selectionArgs) {
-		TableData td = weakControl.get().queryWithSql(tableId, whereClause,
-				selectionArgs);
+	public TableDataIf queryWithSql(String tableId, String sqlWhereClause,
+			String[] sqlSelectionArgs) {
+		TableData td = weakControl.get().queryWithSql(tableId, sqlWhereClause,
+				sqlSelectionArgs);
 		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
 		} else {
@@ -175,7 +171,6 @@ public class ControlIf {
 
 	/**
 	 * Launch an arbitrary HTML file specified by filename.
-	 * @see ControlIf#openTableToListViewWithFile(String, String)
 	 * @param relativePath file name relative to the ODK Tables folder.
 	 * @return true if the file was launched, false if something went wrong
 	 */
@@ -185,23 +180,24 @@ public class ControlIf {
 	}
 
 	/**
-    * Open the item specified by the index to the detail view specified by
-    * the given filename. The filename is relative to the odk tables
-    * directory.
-	 * <p>
-	 * Only makes sense when you are in a list view.
-	 * @param index
+    * Open the item specified by the index to the detail view.
+    * <p>
+    * The relativePath parameter is optional, and if null an attempt will be
+    * made to use the default file.
+	 * @param tableId
+	 * @param rowId
 	 * @param relativePath the name of the file specifying the detail view,
-    * relative to the app folder.
+    * relative to the app folder. If not present, the default detail view file
+    * will be used
 	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
-	public boolean openDetailViewWithFile(int index, String relativePath) {
-	  // THIS DOESN'T MAKE SENSE HERE, not a data object--should require a
-	  // row id.
-		return weakControl.get().openDetailViewWithFile(index, relativePath);
+	public boolean openDetailView(String tableId, String rowId,
+	    String relativePath) {
+		return weakControl.get().openDetailViewWithFile(tableId, rowId,
+		    relativePath);
 	}
-
+	
 	/**
 	 * Add a row using Collect and the default form. 
 	 * @param tableId the display name of the table to receive the add.
@@ -221,8 +217,6 @@ public class ControlIf {
    * <p>
    * The form must have been added to Collect and visible in the "Fill Blank
    * Forms" screen.
-   * @see #addRowWithCollectAndSpecificForm(String, String, String, String)
-   * @see #addRowWithCollectAndPrepopulatedValues(String, String)
    * @param tableId
    * @param formId if null, will launch the default form
    * @param formVersion
@@ -305,15 +299,12 @@ public class ControlIf {
    }
    
    /**
-    * Alias for {@link #addRowWithSurveyAndSpecificFormAndPrepopulatedValues(String, String, String, String)}.
-    * Because the json map parameter is only added if it is non-null, you can
-    * use this as a shorter method for your interactions with Survey, much like
-    * {@link #addRowWithCollect(String, String, String, String, String)} for
-    * Collect.
+    * Add a row using Survey. 
     * @param tableId
-    * @param formId
+    * @param formId if null, the default form will be used
     * @param screenPath
-    * @param jsonMap
+    * @param jsonMap a stringified json object matching element key to 
+    * the value to prepopulate in the new row
     * @return true if the activity was launched, false if something went wrong
     */
    public boolean addRowWithSurvey(String tableId, String formId, 

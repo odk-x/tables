@@ -28,7 +28,7 @@ import org.opendatakit.tables.views.webkits.CustomView.TableData;
  * a summary of each row, and then iterate over all the rows of the table using
  * {@link #getCount()} and {@link #getData(int, String)}, rendering each row as
  * an item. A click handler can then be added to call 
- * {@link ControlIf#openItem(int)} to launch a Detail View for a clicked row.
+ * {@link ControlIf#openDetailView(String, String, String)} to launch a Detail View for a clicked row.
  * <p>
  * This class then serves as a summary and an access point to the Detail View.
  * @author Mitch Sundt

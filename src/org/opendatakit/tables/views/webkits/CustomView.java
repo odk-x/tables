@@ -915,17 +915,20 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		/**
-		 * @see {@link ControlIf#openDetailViewWithFile(int, String)}
+		 * @see {@link ControlIf#openDetailView(String, String, String)}
 		 */
-		public boolean openDetailViewWithFile(int index, String relativePath) {
-			if (mTable == null) {
-				return false;
+		public boolean openDetailViewWithFile(String tableId, String rowId,
+		     String relativePath) {
+		  TableProperties tableProperties = getTablePropertiesById(tableId);
+			if (tableProperties == null) {
+			  Log.e(TAG, "table could not be found with id: " + tableId);
+			  return false;
 			}
 			String pathToTablesFolder = ODKFileUtils
 					.getAppFolder(mAppName);
 			String pathToFile = 
 			    pathToTablesFolder + File.separator + relativePath;
-			Controller.launchDetailActivity(mActivity, mTable, index,
+			Controller.launchDetailActivity(mActivity, tableId, rowId,
 					pathToFile);
 			return true;
 		}
@@ -991,13 +994,14 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public boolean helperOpenTableToMapView(String tableId,
-				String sqlWhereClause,
-				String[] sqlSelectionArgs) {
+				String sqlWhereClause, String[] sqlSelectionArgs,
+				String relativePath) {
 			TableProperties tp = getTablePropertiesById(tableId);
 			if (tp == null) {
 				Log.e(TAG, "tableName [" + tableId + "] not in map");
 				return false;
 			}
+			Log.e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
 			// We're not supporting search text, so pass in null.
 			Controller.launchMapView(mActivity, tp, null, null, false,
 					sqlWhereClause, sqlSelectionArgs);

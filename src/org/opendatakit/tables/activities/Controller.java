@@ -964,12 +964,10 @@ public class Controller implements CustomViewCallbacks {
    * set in the key value store.
    */
   public static void launchDetailActivity(Activity activity,
-      UserTable table,
-      int rowNum, String filename) {
-    TableProperties tp = table.getTableProperties();
+      String tableId, String rowId, String filename) {
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
+    intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
+    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
     if (filename != null) {
       // a null value informs the DetailDisplayActivity that the filename in
       // the kvs should be used, so only add it if it has been set.
