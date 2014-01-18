@@ -17,15 +17,17 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
+import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
@@ -33,10 +35,22 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
 
+/**
+ * The activity that displays information for a detail view.
+ * @author most was unknown
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class DetailDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
   private static final String TAG = "DetaiDisplayActivity";
+  
+  // These are strings necessary for the key value store
+  public static final String KVS_PARTITION = "DetailDisplayActivity";
+  public static final String KVS_ASPECT_DEFAULT = "default";
+  /** The key storing the default file name for the detail view. */
+  public static final String KEY_FILENAME = "filename";
 
     public static final String INTENT_KEY_ROW_ID = "rowId";
     /** Intent key to specify a filename other than that saved in the kvs. Does
@@ -45,18 +59,27 @@ public class DetailDisplayActivity extends SherlockActivity
      */
     public static final String INTENT_KEY_FILENAME = "filename";
 
-    private String rowId;
+    /** The id of the row that is being displayed in this detail view. */
+    private String mRowId;
+    /** The table id to which the row belongs. */
+    private String mTableId;
     private Controller c;
-    private CustomDetailView view;
-    private UserTable table = null;
+    private CustomTableView mCustomTableView = null;
+    private UserTable mTable = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("");
-        rowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
+        mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
+        mTableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+        if (mRowId == null) {
+          Log.e(TAG, "no row id was specified");
+        }
+        if (mTableId == null) {
+          Log.e(TAG, "no table id was specified");
+        }
         c = new Controller(this, this, getIntent().getExtras());
-        init();
     }
 
     @Override
@@ -74,9 +97,8 @@ public class DetailDisplayActivity extends SherlockActivity
     @Override
     public void onResume() {
         super.onResume();
+        init();
         displayView();
-        c.setDisplayView(view);
-        setContentView(c.getContainerView());
     }
 
     @Override
@@ -85,23 +107,41 @@ public class DetailDisplayActivity extends SherlockActivity
         c.setDetailViewInfoBarText();
         // See if the caller included a filename that should be used. Will be
         // null if not found, so we can just pass it right along into the view.
-        String intentFilename =
+
+        DbHelper dbHelper = 
+            DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+        TableProperties tableProperties = 
+            TableProperties.getTablePropertiesForTable(dbHelper, mTableId, 
+                KeyValueStore.Type.ACTIVE);
+        DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
+        mTable = dbTable.getTableForSingleRow(mRowId);
+        // Now we have to get the file name we're going to be displaying.
+        // There are two options--the default file, set in TableProperties,
+        // and a custom file that has been passed in.
+        String filename =
             getIntent().getStringExtra(INTENT_KEY_FILENAME);
-        view = new CustomDetailView(this, TableFileUtils.ODK_TABLES_APP_NAME, c.getTableProperties(),
-            intentFilename, c);
-        displayView();
-        c.setDisplayView(view);
-        setContentView(c.getContainerView());
+        if (filename == null) {
+          // Then we need to recover the file name.
+          KeyValueStoreHelper detailActivityKVS = 
+              tableProperties.getKeyValueStoreHelper(
+                  DetailDisplayActivity.KVS_PARTITION);
+          String recoveredFilename = 
+              detailActivityKVS.getString(DetailDisplayActivity.KEY_FILENAME);
+          if (recoveredFilename == null) {
+            // Then no default file has been set.
+            Log.i(TAG, "no detail view has been set for tableId: " + mTableId);
+          }
+          // If we recovered it, good, otherwise we leave as null.
+          filename = recoveredFilename;
+        }
+        mCustomTableView = CustomTableView.get(this, 
+            TableFileUtils.ODK_TABLES_APP_NAME, mTable, filename, c);
     }
 
     private void displayView() {
-      TableProperties tp = c.getTableProperties();
-        Query query = new Query(DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE, tp);
-        query.addRowIdConstraint(rowId);
-        table = c.getIsOverview() ?
-            c.getDbTable().getUserOverviewTable(query) :
-              c.getDbTable().getUserTable(query);
-        view.display(rowId, table);
+      mCustomTableView.display();
+      c.setDisplayView(mCustomTableView);
+      setContentView(c.getContainerView());
     }
 
     @Override
@@ -128,15 +168,14 @@ public class DetailDisplayActivity extends SherlockActivity
       // Otherwise, we let controller handle it.
       if (item.getItemId() == Controller.MENU_ITEM_ID_ADD_ROW_BUTTON) {
         // get the row num.
-        int rowNum = table.getRowNumFromId(rowId);
+        int rowNum = mTable.getRowNumFromId(mRowId);
         // handle the case that it wasn't found, and do nothing
         if (rowNum == -1) {
           Toast.makeText(this.getApplicationContext(),
         		  getString(R.string.error_row_not_found), Toast.LENGTH_SHORT).show();
           return true;
         }
-        c.editRow(table, rowNum);
-//        Log.d(TAG, "clicked add row button");
+        c.editRow(mTable, rowNum);
         return true;
       }
         return c.handleMenuItemSelection(item);

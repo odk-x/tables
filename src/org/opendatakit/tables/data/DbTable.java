@@ -56,6 +56,12 @@ public class DbTable {
    private static final String SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE =
        DataTableColumns.SYNC_STATE + " = ? AND "
        + DataTableColumns.CONFLICT_TYPE + " IN ( ?, ? )";
+   
+   /**
+    * The sql where clause to select a single row.
+    */
+   private static final String SQL_WHERE_FOR_SINGLE_ROW = "WHERE " + 
+       DataTableColumns.ID + " = ?";
 
 
     /*
@@ -301,6 +307,16 @@ public class DbTable {
           c.close();
         }
       }
+    }
+    
+    /**
+     * Return an {@link UserTable} that will contain a single row.
+     * @param rowId
+     * @return
+     */
+    public UserTable getTableForSingleRow(String rowId) {
+      String[] sqlSelectionArgs = {rowId};
+      return rawSqlQuery(SQL_WHERE_FOR_SINGLE_ROW, sqlSelectionArgs);
     }
 
     public UserTable getRaw(Query query, String[] columns) {

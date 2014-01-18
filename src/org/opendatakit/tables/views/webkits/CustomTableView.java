@@ -15,13 +15,11 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.UserTable;

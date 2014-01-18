@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -26,8 +27,6 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -141,12 +140,12 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         // and now check for detail.
         desiredKeys.clear();
 //        desiredKeys.add(TableProperties.KEY_DETAIL_VIEW_FILE);
-        desiredKeys.add(CustomDetailView.KEY_FILENAME);
+        desiredKeys.add(DetailDisplayActivity.KEY_FILENAME);
         entries =
-            kvs.getEntriesForKeys(db, CustomDetailView.KVS_PARTITION,
-                CustomDetailView.KVS_ASPECT_DEFAULT, desiredKeys);
+            kvs.getEntriesForKeys(db, DetailDisplayActivity.KVS_PARTITION,
+                DetailDisplayActivity.KVS_ASPECT_DEFAULT, desiredKeys);
         if (entries.size() > 1) {
-          Log.e(TAG, "query for " + CustomDetailView.KEY_FILENAME +
+          Log.e(TAG, "query for " + DetailDisplayActivity.KEY_FILENAME +
               " for table " + tableProp.getTableId() + " in the kvs of type " +
               tableProp.getBackingStoreType() + " returned " + entries.size()
               + " entries. It should be at most one.");
@@ -156,8 +155,8 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
           KeyValueStoreHelper detailHelper =
-              tableProp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-          detailHelper.setString(CustomDetailView.KEY_FILENAME,
+              tableProp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+          detailHelper.setString(DetailDisplayActivity.KEY_FILENAME,
               entries.get(0).value);
         }
       } finally {

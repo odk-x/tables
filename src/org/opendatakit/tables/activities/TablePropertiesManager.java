@@ -38,7 +38,6 @@ import org.opendatakit.tables.utils.LanguageUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -274,14 +273,16 @@ public class TablePropertiesManager extends PreferenceActivity {
     FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
     detailViewPref.setTitle(getString(R.string.detail_view_file));
     detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-    String detailViewFilename = kvsh.getString(CustomDetailView.KEY_FILENAME);
+    final KeyValueStoreHelper kvsh = 
+        tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+    String detailViewFilename = 
+        kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
     detailViewPref.setText(detailViewFilename);
     detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // tp.setDetailViewFilename((String) newValue);
-        kvsh.setString(CustomDetailView.KEY_FILENAME, (String) newValue);
+        kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
         init();
         return false;
       }
@@ -752,8 +753,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     case RC_DETAIL_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-      kvsh.setString(CustomDetailView.KEY_FILENAME, filename);
+      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, filename);
       // tp.setDetailViewFilename(filename);
       init();
       break;

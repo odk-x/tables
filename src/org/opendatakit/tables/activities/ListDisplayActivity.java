@@ -153,7 +153,6 @@ public class ListDisplayActivity extends SherlockActivity
             KeyValueStoreHelper namedListViewsPartitionKvsh =
                 c.getTableProperties().getKeyValueStoreHelper(
                     ListDisplayActivity.KVS_PARTITION_VIEWS);
-            AspectHelper aspectHelper = kvsh.getAspectHelper(nameOfView);
             AspectHelper viewAspectHelper =
                 namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
             filename =
