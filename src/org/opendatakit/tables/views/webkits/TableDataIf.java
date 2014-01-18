@@ -128,4 +128,16 @@ public class TableDataIf {
 		return weakTable.get().getData(rowNum, elementPath);
 	}
 	
+	/**
+	 * Retrieve the datum in the given column from the first row. This is a
+	 * convenience method when operating in a detail view and is equivalent to
+	 * calling {@link #getData(int, String)} with a rowNum of 0.
+	 * @param elementPath
+	 * @return the String representation of the datum in the given column at the
+	 * first row of the table
+	 */
+	public String get(String elementPath) {
+	  return this.getData(0, elementPath);
+	}
+	
 }

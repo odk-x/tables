@@ -115,6 +115,11 @@ public class DetailDisplayActivity extends SherlockActivity
                 KeyValueStore.Type.ACTIVE);
         DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
         mTable = dbTable.getTableForSingleRow(mRowId);
+        if (mTable.getHeight() > 1) {
+          Log.e(TAG, "a detail display activity is displaying more than a" +
+          		" single row for tableid: " + mTableId + " and row id: " +
+              mRowId);
+        }
         // Now we have to get the file name we're going to be displaying.
         // There are two options--the default file, set in TableProperties,
         // and a custom file that has been passed in.
