@@ -126,7 +126,7 @@ public abstract class CustomView extends LinearLayout {
 	private Map<String, TableProperties> tableIdToProperties;
 	private CustomViewCallbacks mCallbacks;
 
-	protected CustomView(Activity parentActivity, String appName, 
+	public CustomView(Activity parentActivity, String appName, 
 	    CustomViewCallbacks callbacks) {
 		super(parentActivity);
 		initCommonWebView(parentActivity);
@@ -431,39 +431,14 @@ public abstract class CustomView extends LinearLayout {
 	  }
 	  return elementKeyToValue;
 	}
-	
-	/**
-	 * Return the element key for the column based on the element path.
-	 * @param elementPath
-	 * @return
-	 */
-	private String getElementKeyFromElementPath(String tableId, 
-	    String elementPath) {
-	  // TODO: do this correctly. This is just a hack that often works.
-	  String hackPath = elementPath.replace(".", "_");
-	  return hackPath;
-	}
 
 	/**
 	 * "Unused" warnings are suppressed because the public methods of this class
 	 * are meant to be called through the JavaScript interface.
 	 */
-	protected class TableData {
+	public class TableData {
 
 		private static final String TAG = "TableData";
-		
-		// These are keys we'll be outputting for use in debugging when we write
-	   // this object to a file.
-	   private static final String JSON_KEY_IN_COLLECTION_MODE = 
-	       "inCollectionMode";
-	   private static final String JSON_KEY_COUNT = "count";
-	   private static final String JSON_KEY_COLUMN_DATA = "columnData";
-	   private static final String JSON_KEY_COLUMNS = "columns";
-	   private static final String JSON_KEY_COLLECTION_SIZE = "collectionSize";
-	   private static final String JSON_KEY_IS_INDEXED = "isIndexed";
-	   private static final String JSON_KEY_DATA = "data";
-	   
-	   private static final int NUM_ROWS_IN_DEBUG_OBJECT = 10;
 
 		public TableDataIf getJavascriptInterfaceWithWeakReference() {
 			return new TableDataIf(this);
@@ -496,8 +471,6 @@ public abstract class CustomView extends LinearLayout {
 			this.mActivity = activity;
 			this.mTable = table;
 			initMaps();
-			// TODO: WRAP THIS IN A SETTING!!! hugely important.
-			writeDataObjectAsJSON();
 		}
 
 		public boolean inCollectionMode() {
@@ -577,8 +550,9 @@ public abstract class CustomView extends LinearLayout {
        * data for the given column name format: [row1, row2, row3, row4]
 		 */
 		public String getColumnData(String elementPath, int requestedRows) {
-		  String tableId = this.mTable.getTableProperties().getTableId();
-		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+		  String elementKey = 
+		      this.mTable.getTableProperties().getElementKeyFromElementPath(
+		          elementPath);
         ArrayList<String> rowValues = new ArrayList<String>();
         if (!columnIdentifierToIndex.containsKey(elementKey)) {
           Log.e(TAG, "column not found with element path: " + elementPath +
@@ -612,10 +586,8 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		private String getColumnTypeLabelForElementKey(String elementKey) {
         TableProperties tp = mTable.getTableProperties();
-        ColumnProperties cp = tp.getColumnByDisplayName(elementKey);
-        String dbName = cp.getElementKey();
-        String label = tp.getColumnByElementKey(dbName).getColumnType()
-              .label();
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
+        String label = cp.getColumnType().label();
         return label;
 		}
 
@@ -625,7 +597,7 @@ public abstract class CustomView extends LinearLayout {
 		public String getForegroundColor(String elementPath, String value) {
 			TableProperties tp = mTable.getTableProperties();
 			String elementKey = 
-			    getElementKeyFromElementPath(tp.getTableId(), elementPath);
+			    tp.getElementKeyFromElementPath(elementPath);
 			ColorRuleGroup colRul = this.mColumnDisplayNameToColorRuleGroup
 					.get(elementPath);
 			if (colRul == null) {
@@ -712,8 +684,9 @@ public abstract class CustomView extends LinearLayout {
 		 * @see {@link TableDataIf#getData(int, String)}.
 		 */
 		public String getData(int rowNum, String elementPath) {
-		  String elementKey = getElementKeyFromElementPath(
-		      mTable.getTableProperties().getTableId(), elementPath);
+		  String elementKey =
+		      mTable.getTableProperties().getElementKeyFromElementPath(
+		          elementPath);
 			if (columnIdentifierToIndex.containsKey(elementKey)) {
 				String result = mTable.getData(rowNum, columnIdentifierToIndex.get(elementKey));
 				return result;
@@ -727,87 +700,87 @@ public abstract class CustomView extends LinearLayout {
 		}
 		
 		
-	   /**
-	    * This should write a version of this object as json that we can then 
-	    * use in debugging on the javascript and server side.
-	    */
-	   public void writeDataObjectAsJSON() {
-	     /* 
-	      * The object here is expected to be the following:
-	      * {
-	      * JSON_KEY_IN_COLLECTION_MODE: boolean,
-	      * JSON_KEY_COUNT: int,
-	      * JSON_KEY_COLLECTION_SIZE: Array, // array of ints
-	      * JSON_KEY_IS_INDEXED: boolean,
-	      * JSON_KEY_DATA: Array,
-	      * JSON_KEY_COLUMN_DATA: {elementKey: Array, ...},
-	      * JSON_KEY_COLUMNS: {elementKey: string, ...}
-	      * }
-	      */
-	     // We'll essentially just be caching some of the values.
-	     // First figure out how many rows we're going to be writing--the lesser
-	     // of the max and the count.
-	     int numRowsToWrite = Math.min(NUM_ROWS_IN_DEBUG_OBJECT, getCount());
-	     // First let's get the string values. All should be for js.
-	     boolean inCollectionMode = 
-	         this.inCollectionMode() ? true : false;
-	     int count = this.getCount();
-	     boolean isIndexed = this.isIndexed();
-	     int[] collectionSize = new int[numRowsToWrite];
-	     for (int i = 0; i < numRowsToWrite; i++) {
-	       collectionSize[i] = getCollectionSize(i);
-	     }
-	     Map<String, String> columns = new HashMap<String, String>();
-	     Map<String, List<String>> allColumnData = 
-	         new HashMap<String, List<String>>();
-	     // Here we're using this object b/c these appear to be the columns
-	     // available to the client--are metadata columns exposed to them? It's
-	     // not obvious to me here.
-	     Set<String> columnKeys = columnIdentifierToIndex.keySet();
-        String[][] partialData = 
-            new String[numRowsToWrite][columnKeys.size()];
-	     // Now construct up the objects we need.
-        int columnIndex = 0;
-        for (String elementKey : columnKeys) {
-          // Get the column type
-          columns.put(elementKey, getColumnTypeLabelForElementKey(elementKey));
-          // get the column data and the table data.
-          List<String> columnData = new ArrayList<String>();
-          for (int i = 0; i < numRowsToWrite; i++) {
-            String value = getData(i, elementKey);
-            columnData.add(value);
-            partialData[i][columnIndex] = value; 
-          }
-          allColumnData.put(elementKey, columnData);
-          columnIndex++;
-        }
-        Map<String, Object> outputObject = new HashMap<String, Object>();
-        outputObject.put(JSON_KEY_IN_COLLECTION_MODE, inCollectionMode);
-        outputObject.put(JSON_KEY_COUNT, count);
-        outputObject.put(JSON_KEY_COLLECTION_SIZE, collectionSize);
-        outputObject.put(JSON_KEY_IS_INDEXED, isIndexed);
-        outputObject.put(JSON_KEY_COLUMN_DATA, allColumnData);
-        outputObject.put(JSON_KEY_COLUMNS, columns);
-        outputObject.put(JSON_KEY_DATA, partialData);
-        Gson gson = new Gson();
-        String outputString = gson.toJson(outputObject);
-        String fileName = 
-            ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
-            mTable.getTableProperties().getDbTableName() + "_data.json";
-        try {
-          PrintWriter writer = new PrintWriter(fileName, "UTF-8");
-          Log.d(TAG, "writing data out to: " + fileName);
-          writer.println(outputString);
-          writer.flush();
-          writer.close();
-        } catch (FileNotFoundException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-	   }
+//	   /**
+//	    * This should write a version of this object as json that we can then 
+//	    * use in debugging on the javascript and server side.
+//	    */
+//	   public void writeDataObjectAsJSON() {
+//	     /* 
+//	      * The object here is expected to be the following:
+//	      * {
+//	      * JSON_KEY_IN_COLLECTION_MODE: boolean,
+//	      * JSON_KEY_COUNT: int,
+//	      * JSON_KEY_COLLECTION_SIZE: Array, // array of ints
+//	      * JSON_KEY_IS_INDEXED: boolean,
+//	      * JSON_KEY_DATA: Array,
+//	      * JSON_KEY_COLUMN_DATA: {elementKey: Array, ...},
+//	      * JSON_KEY_COLUMNS: {elementKey: string, ...}
+//	      * }
+//	      */
+//	     // We'll essentially just be caching some of the values.
+//	     // First figure out how many rows we're going to be writing--the lesser
+//	     // of the max and the count.
+//	     int numRowsToWrite = Math.min(NUM_ROWS_IN_DEBUG_OBJECT, getCount());
+//	     // First let's get the string values. All should be for js.
+//	     boolean inCollectionMode = 
+//	         this.inCollectionMode() ? true : false;
+//	     int count = this.getCount();
+//	     boolean isIndexed = this.isIndexed();
+//	     int[] collectionSize = new int[numRowsToWrite];
+//	     for (int i = 0; i < numRowsToWrite; i++) {
+//	       collectionSize[i] = getCollectionSize(i);
+//	     }
+//	     Map<String, String> columns = new HashMap<String, String>();
+//	     Map<String, List<String>> allColumnData = 
+//	         new HashMap<String, List<String>>();
+//	     // Here we're using this object b/c these appear to be the columns
+//	     // available to the client--are metadata columns exposed to them? It's
+//	     // not obvious to me here.
+//	     Set<String> columnKeys = columnIdentifierToIndex.keySet();
+//        String[][] partialData = 
+//            new String[numRowsToWrite][columnKeys.size()];
+//	     // Now construct up the objects we need.
+//        int columnIndex = 0;
+//        for (String elementKey : columnKeys) {
+//          // Get the column type
+//          columns.put(elementKey, getColumnTypeLabelForElementKey(elementKey));
+//          // get the column data and the table data.
+//          List<String> columnData = new ArrayList<String>();
+//          for (int i = 0; i < numRowsToWrite; i++) {
+//            String value = getData(i, elementKey);
+//            columnData.add(value);
+//            partialData[i][columnIndex] = value; 
+//          }
+//          allColumnData.put(elementKey, columnData);
+//          columnIndex++;
+//        }
+//        Map<String, Object> outputObject = new HashMap<String, Object>();
+//        outputObject.put(JSON_KEY_IN_COLLECTION_MODE, inCollectionMode);
+//        outputObject.put(JSON_KEY_COUNT, count);
+//        outputObject.put(JSON_KEY_COLLECTION_SIZE, collectionSize);
+//        outputObject.put(JSON_KEY_IS_INDEXED, isIndexed);
+//        outputObject.put(JSON_KEY_COLUMN_DATA, allColumnData);
+//        outputObject.put(JSON_KEY_COLUMNS, columns);
+//        outputObject.put(JSON_KEY_DATA, partialData);
+//        Gson gson = new Gson();
+//        String outputString = gson.toJson(outputObject);
+//        String fileName = 
+//            ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
+//            mTable.getTableProperties().getDbTableName() + "_data.json";
+//        try {
+//          PrintWriter writer = new PrintWriter(fileName, "UTF-8");
+//          Log.d(TAG, "writing data out to: " + fileName);
+//          writer.println(outputString);
+//          writer.flush();
+//          writer.close();
+//        } catch (FileNotFoundException e) {
+//          // TODO Auto-generated catch block
+//          e.printStackTrace();
+//        } catch (UnsupportedEncodingException e) {
+//          // TODO Auto-generated catch block
+//          e.printStackTrace();
+//        }
+//	   }
 
 	}
 
@@ -1043,7 +1016,8 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public String getElementKey(String tableId, String elementPath) {
-		  return getElementKeyFromElementPath(tableId, elementPath);
+		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  return tableProperties.getElementKeyFromElementPath(elementPath);
 		}
 		
 		/**
@@ -1053,7 +1027,7 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public String getColumnDisplayName(String tableId, String elementPath) {
-		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+		  String elementKey = this.getElementKey(tableId, elementPath);
 		  TableProperties tableProperties = getTablePropertiesById(tableId);
 		  String displayName = 
 		      tableProperties.getColumnByElementKey(elementKey).getDisplayName();
@@ -1107,7 +1081,7 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public boolean columnExists(String tableId, String elementPath) {
-		  String elementKey = getElementKeyFromElementPath(tableId, elementPath);
+		  String elementKey = this.getElementKey(tableId, elementPath);
 		  TableProperties tableProperties = getTablePropertiesById(tableId);
 		  ColumnProperties columnProperties =
 		      tableProperties.getColumnByElementKey(elementKey);

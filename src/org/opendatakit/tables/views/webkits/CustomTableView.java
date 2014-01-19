@@ -110,6 +110,14 @@ public class CustomTableView extends CustomView
     ctv.set(singleRowTable);
     return ctv;
   }
+  
+  /**
+   * Return the {@link TableData} object backing this view.
+   * @return
+   */
+  public TableData getTableDataObject() {
+    return this.tableData;
+  }
 
   /**
    * Returns a custom view based on the list of indexes. The rows will be
