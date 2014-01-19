@@ -246,6 +246,11 @@ public class UserTable {
     return mElementKeyForIndex[colNum];
   }
 
+  /**
+   * Get the index of the element key for the user-defined columns.
+   * @param elementKey
+   * @return null if the column is not found
+   */
   public Integer getColumnIndexOfElementKey(String elementKey) {
     return mDataKeyToIndex.get(elementKey);
   }
@@ -337,6 +342,16 @@ public class UserTable {
    */
   public String getMetadataByElementKey(int rowNum, String elementKey) {
     return mRows.get(rowNum).getMetadataAtIndex(mMetadataKeyToIndex.get(elementKey));
+  }
+  
+  /**
+   * Return the data or metadata value in the given row by element key.
+   * @param rowNum
+   * @param elementKey
+   * @return
+   */
+  public String getDataByElementKey(int rowNum, String elementKey) {
+    return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
   }
 
   public String getFooter(int colNum) {

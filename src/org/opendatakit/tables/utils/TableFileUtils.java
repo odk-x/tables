@@ -41,6 +41,12 @@ public class TableFileUtils {
 
   /** The default app name for ODK Tables */
   public static final String ODK_TABLES_APP_NAME = "tables";
+  
+  /** The name of the output folder, where files are output from the app. */
+  public static final String OUTPUT_FOLDER_NAME = "output";
+  
+  /** The name of the folder where the debug objects are written. */
+  public static final String DEBUG_FOLDER_NAME = "debug";
 
   /** Filename for the top-level configuration file */
   public static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = "config.properties";
@@ -151,6 +157,36 @@ public class TableFileUtils {
   public static String getRelativePath(String absolutePath) {
     File file = new File(absolutePath);
     return ODKFileUtils.asRelativePath(ODK_TABLES_APP_NAME, file);
+  }
+  
+  /**
+   * Get the output folder for the given app.
+   * @param appName
+   * @return
+   */
+  public static String getOutputFolder(String appName) {
+    String appFolder = ODKFileUtils.getAppFolder(appName);
+    String result = appFolder + File.separator + OUTPUT_FOLDER_NAME;
+    return result;
+  }
+  
+  /**
+   * Get the path to the debug folder, where the control and data json for
+   * debugging purposes are output.
+   * @return
+   */
+  public static String getTablesDebugObjectFolder() {
+    String outputFolder = getOutputFolder();
+    String result = outputFolder + File.separator + DEBUG_FOLDER_NAME;
+    return result;
+  }
+  
+  /**
+   * Get the output folder for the Tables app.
+   * @return
+   */
+  public static String getOutputFolder() {
+    return getOutputFolder(TableFileUtils.ODK_TABLES_APP_NAME);
   }
 
 }

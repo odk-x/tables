@@ -445,11 +445,7 @@ public abstract class CustomView extends LinearLayout {
 		}
 
 		private final UserTable mTable; // contains TableProperties
-		/**
-		 * Maps the column element keys and sms labels to their index in the
-		 * table. Thus the values in the map are not unique.
-		 */
-		private Map<String, Integer> columnIdentifierToIndex;
+
 		/**
 		 * Maps each collection with the number of rows under it.
 		 */
@@ -508,24 +504,6 @@ public abstract class CustomView extends LinearLayout {
 			mColumnDisplayNameToColorRuleGroup = 
 			    new HashMap<String, ColorRuleGroup>();
 			primeColumns = tp.getPrimeColumns();
-			Map<String, ColumnProperties> elementKeyToColumnProperties = tp
-					.getDatabaseColumns();
-			columnIdentifierToIndex = new HashMap<String, Integer>();
-			for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
-				String smsLabel = cp.getSmsLabel();
-				Integer idx = mTable.getColumnIndexOfElementKey(cp
-						.getElementKey());
-				if (idx != null) {
-					columnIdentifierToIndex.put(cp.getDisplayName(), idx);
-					if (smsLabel != null) {
-						// TODO: this doesn't look to ever be used, and ignores
-						// the
-						// possibility of conflicting element keys and sms
-						// labels.
-						columnIdentifierToIndex.put(smsLabel, idx);
-					}
-				}
-			}
 		}
 
 		// Returns the number of rows in the table being viewed.
@@ -554,12 +532,12 @@ public abstract class CustomView extends LinearLayout {
 		      this.mTable.getTableProperties().getElementKeyFromElementPath(
 		          elementPath);
         ArrayList<String> rowValues = new ArrayList<String>();
-        if (!columnIdentifierToIndex.containsKey(elementKey)) {
+        Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
+        if (columnIndex == null) {
           Log.e(TAG, "column not found with element path: " + elementPath +
               " and key: " + elementKey);
           return null;
         }
-        int columnIndex = columnIdentifierToIndex.get(elementKey);
         for (int i = 0; i < requestedRows; i++) {
            rowValues.add(this.mTable.getData(i, columnIndex));
         }
@@ -571,9 +549,10 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public String getColumns() {
 			Map<String, String> colInfo = new HashMap<String, String>();
-			for (String column : columnIdentifierToIndex.keySet()) {
-			   String label = getColumnTypeLabelForElementKey(column);
-				colInfo.put(column, label);
+			for (String elementKey : 
+			     mTable.getTableProperties().getAllColumns().keySet()) {
+			   String label = getColumnTypeLabelForElementKey(elementKey);
+				colInfo.put(elementKey, label);
 			}
 			return new JSONObject(colInfo).toString();
 		}
@@ -644,9 +623,10 @@ public abstract class CustomView extends LinearLayout {
 			// the first col
 			// is the main,
 			// indexed col
-			for (String col : columnIdentifierToIndex.keySet()) {
-				if (col.equalsIgnoreCase(colName)) {
-					colName = col;
+			for (String elementKey : 
+			      mTable.getTableProperties().getAllColumns().keySet()) {
+				if (elementKey.equalsIgnoreCase(colName)) {
+					colName = elementKey;
 				}
 			}
 			// Queries the original table for the rows in every collection and
@@ -687,12 +667,14 @@ public abstract class CustomView extends LinearLayout {
 		  String elementKey =
 		      mTable.getTableProperties().getElementKeyFromElementPath(
 		          elementPath);
-			if (columnIdentifierToIndex.containsKey(elementKey)) {
-				String result = mTable.getData(rowNum, columnIdentifierToIndex.get(elementKey));
-				return result;
-			} else {
-				return null;
-			}
+		  Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
+		  if (columnIndex == null) {
+		    Log.e(TAG, "column with elementKey: " + elementKey + " does not" +
+		    		" exist.");
+		    return null;
+		  }
+		  String result = mTable.getDataByElementKey(rowNum, elementKey);
+		  return result;
 		}
 		
 		public String getTableId() {

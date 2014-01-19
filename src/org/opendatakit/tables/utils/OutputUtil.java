@@ -1,5 +1,9 @@
 package org.opendatakit.tables.utils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +18,10 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.views.webkits.CustomTableView;
-import org.opendatakit.tables.views.webkits.CustomView;
 import org.opendatakit.tables.views.webkits.CustomView.TableData;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.gson.Gson;
 
@@ -28,6 +32,13 @@ import com.google.gson.Gson;
  *
  */
 public class OutputUtil {
+  
+  private static final String TAG = OutputUtil.class.getSimpleName();
+  
+  /** The filename of the control object that will be written out. */
+  public static final String CONTROL_FILE_NAME = "control.json";
+  /** The suffix of the name for each data object that will be written. */
+  public static final String DATA_FILE_SUFFIX = "_data.json";
   
   public static final String CTRL_KEY_TABLE_IDS = "tableIds";
   public static final String CTRL_KEY_TABLE_INFO = "tables";
@@ -223,6 +234,90 @@ public class OutputUtil {
       String tableId) {
     return getStringForDataObject(context, appName, tableId, 
         NUM_ROWS_IN_DATA_OBJECT);
+  }
+  
+  /**
+   * Writes the control string to a json file in the debug folder.
+   * @param context
+   * @param appName
+   */
+  public static void writeControlObject(Context context, String appName) {
+    String controlString = getStringForControlObject(context, appName);
+    String fileName = TableFileUtils.getTablesDebugObjectFolder() + 
+        File.separator + CONTROL_FILE_NAME;
+    PrintWriter writer;
+    try {
+      writer = new PrintWriter(fileName, "UTF-8");
+      Log.d(TAG, "writing control to: " + fileName);
+      writer.print(controlString);
+      writer.flush();
+      writer.close();
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+  
+  /**
+   * Writes the data objects for all the data tables in the database.
+   * @param context
+   * @param appName
+   * @param numberOfRows
+   */
+  public static void writeAllDataObjects(Context context, String appName,
+      int numberOfRows) {
+    DbHelper dbHelper = DbHelper.getDbHelper(context, appName);
+    TableProperties[] allDataTables = 
+        TableProperties.getTablePropertiesForDataTables(dbHelper, 
+            KeyValueStore.Type.ACTIVE);
+    for (TableProperties tableProperties : allDataTables) {
+      writeDataObject(context, appName, tableProperties.getTableId(), 
+          numberOfRows);
+    }
+  }
+  
+  /**
+   * Convenience method. Calls 
+   * {@link #writeAllDataObjects(Context, String, int)} with 
+   * {@link #NUM_ROWS_IN_DATA_OBJECT}.
+   * @param context
+   * @param appName
+   */
+  public static void writeAllDataObjects(Context context, String appName) {
+    writeAllDataObjects(context, appName, NUM_ROWS_IN_DATA_OBJECT);
+  }
+  
+  /**
+   * Write the data object with the given number of rows to the debug folder.
+   * The file is tableId_DATA_FILE_SUFFIX.
+   * @param context
+   * @param appName
+   * @param tableId
+   * @param numberOfRows
+   */
+  public static void writeDataObject(Context context, String appName, 
+      String tableId, int numberOfRows) {
+    String dataString = getStringForDataObject(context, appName, tableId, 
+        numberOfRows);
+    String fileName = TableFileUtils.getTablesDebugObjectFolder() +
+        File.separator + tableId + DATA_FILE_SUFFIX;
+    PrintWriter writer;
+    try {
+      writer = new PrintWriter(fileName, "UTF-8");
+      Log.d(TAG, "writing data object to: " + fileName);
+      writer.print(dataString);
+      writer.flush();
+      writer.close();
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
 }
