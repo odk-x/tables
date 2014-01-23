@@ -115,7 +115,7 @@ public class DetailDisplayActivity extends SherlockActivity
                 KeyValueStore.Type.ACTIVE);
         DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
         mTable = dbTable.getTableForSingleRow(mRowId);
-        if (mTable.getHeight() > 1) {
+        if (mTable.getNumberOfRows() > 1) {
           Log.e(TAG, "a detail display activity is displaying more than a" +
           		" single row for tableid: " + mTableId + " and row id: " +
               mRowId);

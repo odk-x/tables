@@ -447,7 +447,7 @@ class TabularView extends View {
     if (this.type == TableType.INDEX_DATA ||
         this.type == TableType.MAIN_DATA ||
         this.type == TableType.STATUS_DATA) {
-      this.mNumberOfRows = this.mTable.getHeight();
+      this.mNumberOfRows = this.mTable.getNumberOfRows();
     } else if (this.type == TableType.INDEX_FOOTER ||
         this.type == TableType.MAIN_FOOTER ||
         this.type == TableType.STATUS_FOOTER ||
@@ -457,7 +457,7 @@ class TabularView extends View {
       this.mNumberOfRows = 1;
     } else {
       Log.e(TAG, "Unrecognized TableType in constructor: " + this.type.name());
-      this.mNumberOfRows = this.mTable.getHeight();
+      this.mNumberOfRows = this.mTable.getNumberOfRows();
     }
     this.mColumnColorRules = elementKeyToColorRuleGroup;
     if (this.type != TableType.STATUS_DATA) {

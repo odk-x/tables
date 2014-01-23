@@ -50,7 +50,7 @@ public class OutputUtil {
   public static final String DATA_KEY_COUNT = "count";
   public static final String DATA_KEY_COLUMNS = "columns";
   public static final String DATA_KEY_COLLECTION_SIZE = "collectionSize";
-  public static final String DATA_KEY_IS_INDEXED = "isIndexed";
+  public static final String DATA_KEY_IS_GROUPED_BY = "isGroupedBy";
   public static final String DATA_KEY_DATA = "data";
   
   // Keys for the table object contained within control objects.
@@ -172,12 +172,11 @@ public class OutputUtil {
           userTable.getColumnIndexOfElementKey(elementKey));
     }
     // We don't want to try and write more rows than we have.
-    int numRowsToWrite = Math.min(numberOfRows, userTable.getHeight());
+    int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
     // First let's get the string values. All should be for js.
-    boolean inCollectionMode = 
-        tableInterface.inCollectionMode() ? true : false;
+    boolean isGroupedBy = 
+        userTable.isGroupedBy() ? true : false;
     int count = tableInterface.getCount();
-    boolean isIndexed = tableInterface.isIndexed();
     int[] collectionSize = new int[numRowsToWrite];
     for (int i = 0; i < numRowsToWrite; i++) {
       collectionSize[i] = tableInterface.getCollectionSize(i);
@@ -210,10 +209,9 @@ public class OutputUtil {
       columnIndex++;
     }
     Map<String, Object> outputObject = new HashMap<String, Object>();
-    outputObject.put(DATA_KEY_IN_COLLECTION_MODE, inCollectionMode);
+    outputObject.put(DATA_KEY_IS_GROUPED_BY, isGroupedBy);
     outputObject.put(DATA_KEY_COUNT, count);
     outputObject.put(DATA_KEY_COLLECTION_SIZE, collectionSize);
-    outputObject.put(DATA_KEY_IS_INDEXED, isIndexed);
     outputObject.put(DATA_KEY_COLUMNS, columns);
     outputObject.put(DATA_KEY_DATA, partialData);
     Gson gson = new Gson();

@@ -715,7 +715,7 @@ public class SyncProcessor {
 
     for (SyncRow row : rows) {
       boolean found = false;
-      for (int i = 0; i < allRowIds.getHeight(); i++) {
+      for (int i = 0; i < allRowIds.getNumberOfRows(); i++) {
         String rowId = allRowIds.getRowId(i);
         if (row.getRowId().equals(rowId)) {
           String stateStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
@@ -975,7 +975,7 @@ public class SyncProcessor {
         new String[] { DbTable.SavedStatus.COMPLETE.name(), state.name() }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
-    int numRows = rows.getHeight();
+    int numRows = rows.getNumberOfRows();
     int numCols = rows.getWidth();
     if (numCols != columnsToSync.size()) {
       Log.e(TAG, "number of user-defined columns returned in getRows() does "

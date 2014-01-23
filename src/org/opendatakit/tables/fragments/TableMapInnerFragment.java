@@ -246,7 +246,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     LatLng firstLocation = null;
 
     // Go through each row and create a marker at the specified location.
-    for (int i = 0; i < table.getHeight(); i++) {
+    for (int i = 0; i < table.getNumberOfRows(); i++) {
       String latitudeString = table.getData(i, latitudeColumnIndex);
       String longitudeString = table.getData(i, longitudeColumnIndex);
       if (latitudeString == null || longitudeString == null || latitudeString.length() == 0

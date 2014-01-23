@@ -42,11 +42,6 @@ public class TableDataIf {
 		this.weakTable = new WeakReference<TableData>(table);
 	}
 
-	// @JavascriptInterface
-	public boolean inCollectionMode() {
-		return weakTable.get().inCollectionMode();
-	}
-
 	/**
 	 * Returns the number of rows in the table being viewed as restricted by
 	 * the current query, be it SQL or a query string.
@@ -105,8 +100,8 @@ public class TableDataIf {
 	 * @return true if index else false
 	 */
 	// @JavascriptInterface
-	public boolean isIndexed() {
-		return weakTable.get().isIndexed();
+	public boolean isGroupedBy() {
+		return weakTable.get().isGroupedBy();
 	}
 
 	/**

@@ -98,6 +98,8 @@ public abstract class CustomView extends LinearLayout {
 
 	protected static WebView webView;
 	private static ViewGroup lastParent;
+	
+	private static DbHelper mDbHelper;
 
 	private static ObjectMapper MAPPER = new ObjectMapper();
 	private static TypeReference<HashMap<String, String>> MAP_REF = 
@@ -133,6 +135,8 @@ public abstract class CustomView extends LinearLayout {
 		this.mParentActivity = parentActivity;
 		this.mAppName = appName;
 		this.mCallbacks = callbacks;
+		this.mDbHelper = DbHelper.getDbHelper(mParentActivity, 
+		    TableFileUtils.ODK_TABLES_APP_NAME);
 	}
 
 	public static void initCommonWebView(Context context) {
@@ -211,6 +215,21 @@ public abstract class CustomView extends LinearLayout {
 	    Log.d(TAG, "table properties returning null for table id: " + tableId);
 	  }
 	  return tp;
+	}
+	
+	private TableData queryForTableData(String tableId, String sqlWhereClause,
+	    String[] sqlSelectionArgs) {
+     TableProperties tp = getTablePropertiesById(tableId);
+     if (tp == null) {
+        Log.e(TAG, "request for table with tableId [" + tableId
+              + "] cannot be found.");
+        return null;
+     }
+     DbTable dbTable = DbTable.getDbTable(mDbHelper, tp);
+     UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause,
+           sqlSelectionArgs);
+     TableData tableData = new TableData(getContainerActivity(), userTable);
+     return tableData;
 	}
 
 	protected void initView() {
@@ -409,10 +428,10 @@ public abstract class CustomView extends LinearLayout {
 	      TableFileUtils.ODK_TABLES_APP_NAME);
 	  DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
 	  UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs);
-	  if (userTable.getHeight() > 1) {
+	  if (userTable.getNumberOfRows() > 1) {
 	    Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " +
 	    		"rowId: " + rowId);
-	  } else if (userTable.getHeight() == 0) {
+	  } else if (userTable.getNumberOfRows() == 0) {
 	    Log.e(TAG, "query returned no rows for tableId: " + tableId +
 	        " and rowId: " + rowId);
 	  }
@@ -436,7 +455,8 @@ public abstract class CustomView extends LinearLayout {
 	 * "Unused" warnings are suppressed because the public methods of this class
 	 * are meant to be called through the JavaScript interface.
 	 */
-	public class TableData {
+	@SuppressLint("UseSparseArrays")
+  public class TableData {
 
 		private static final String TAG = "TableData";
 
@@ -450,16 +470,13 @@ public abstract class CustomView extends LinearLayout {
 		 * Maps each collection with the number of rows under it.
 		 */
 		private Map<Integer, Integer> collectionMap;
-		/**
-		 * Holds the element keys of the indexed columns.
-		 */
-		private List<String> primeColumns;
+
 		/**
 		 * A simple cache of color rules so they're not recreated unnecessarily
 		 * each time. Maps the column display name to {@link ColorRuleGroup} for
 		 * that column.
 		 */
-		private Map<String, ColorRuleGroup> mColumnDisplayNameToColorRuleGroup;
+		private Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup;
 		protected Activity mActivity;
 
 		public TableData(Activity activity, UserTable table) {
@@ -469,46 +486,43 @@ public abstract class CustomView extends LinearLayout {
 			initMaps();
 		}
 
-		public boolean inCollectionMode() {
-			if (!isIndexed()) {
-				return false;
-			}
-			// Test 1: Check that every cell value under the indexed column are
-			// equal (characteristic of a collection)
-			String test = getData(0, primeColumns.get(0).substring(1));
-			for (int i = 1; i < getCount(); i++) {
-				if (!getData(i, primeColumns.get(0).substring(1)).equals(test)) {
-					return false;
-				}
-			}
-			// Test 2: The number of rows in the table equal the number of rows
-			// in the (corresponding) collection
-			return (getCount() == collectionMap.get(0));
-		}
-
 		public TableData(UserTable table) {
 			Log.d(TAG, "calling TableData constructor with UserTable");
 			this.mTable = table;
 			initMaps();
-			// The collectionMap will be initialized if the table is indexed.
-			if (isIndexed()) {
-				initCollectionMap();
-			}
+		}
+		
+		public boolean isGroupedBy() {
+		  return mTable.isGroupedBy();
 		}
 
 		// Initializes the colMap and primeColumns that provide methods quick
 		// access to the current table's state.
 		private void initMaps() {
-			TableProperties tp = mTable.getTableProperties();
 			collectionMap = new HashMap<Integer, Integer>();
-			mColumnDisplayNameToColorRuleGroup = 
+			mElementKeyToColorRuleGroup = 
 			    new HashMap<String, ColorRuleGroup>();
-			primeColumns = tp.getPrimeColumns();
+			if (isGroupedBy()) {
+		       // Assumes that the first column is the indexed column.
+	         String groupedElementKey = 
+	             mTable.getTableProperties().getPrimeColumns().get(0);
+	         // Queries the original table for the rows in every collection and
+	         // stores the number of resulting rows for each.
+	         for (int i = 0; i < getCount(); i++) {
+	           String sqlWhereClause = "WHERE " + groupedElementKey + " = ?";
+	           String indexedValue = getData(i, groupedElementKey);
+	           String[] sqlSelectionArgs = {indexedValue};
+	           TableData indexedData = 
+	               queryForTableData(mTable.getTableProperties().getTableId(), 
+	                   sqlWhereClause, sqlSelectionArgs);
+	           collectionMap.put(i, indexedData.getCount());
+	         }
+			}
 		}
 
 		// Returns the number of rows in the table being viewed.
 		public int getCount() {
-			return this.mTable.getHeight();
+			return this.mTable.getNumberOfRows();
 		}
 
 		/**
@@ -577,12 +591,12 @@ public abstract class CustomView extends LinearLayout {
 			TableProperties tp = mTable.getTableProperties();
 			String elementKey = 
 			    tp.getElementKeyFromElementPath(elementPath);
-			ColorRuleGroup colRul = this.mColumnDisplayNameToColorRuleGroup
+			ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup
 					.get(elementPath);
 			if (colRul == null) {
 				// If it's not already there, cache it for future use.
 				colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
-				this.mColumnDisplayNameToColorRuleGroup.put(elementPath, colRul);
+				this.mElementKeyToColorRuleGroup.put(elementPath, colRul);
 			}
 			// Rather than hand off the whole row data, we'll just dummy up the
 			// info requested, as this will be easier for the html programmer
@@ -615,32 +629,6 @@ public abstract class CustomView extends LinearLayout {
 			return String.format("#%06X", (0xFFFFFF & foregroundColor));
 		}
 
-		// Maps the number of rows to every collection of a table.
-		private void initCollectionMap() {
-			Control c = new Control(mActivity);
-			collectionMap = new HashMap<Integer, Integer>();
-			String colName = primeColumns.get(0).substring(1); // Assumes that
-			// the first col
-			// is the main,
-			// indexed col
-			for (String elementKey : 
-			      mTable.getTableProperties().getAllColumns().keySet()) {
-				if (elementKey.equalsIgnoreCase(colName)) {
-					colName = elementKey;
-				}
-			}
-			// Queries the original table for the rows in every collection and
-			// stores the number of resulting rows for each.
-			String tableName = mTable.getTableProperties().getDisplayName();
-			for (int i = 0; i < getCount(); i++) {
-				String searchText = colName + ":" + getData(i, colName);
-				
-				// TODO: fix this now that we're not allowing search text.
-//				TableData data = c.query(tableName, searchText);
-//				collectionMap.put(i, data.getCount());
-			}
-		}
-
 		/** 
 		 * Returns the number of rows in the collection at the given row index.
 		 * Returns -1 if it is not in collection mode.
@@ -648,16 +636,11 @@ public abstract class CustomView extends LinearLayout {
 		 * @return
 		 */
 		public int getCollectionSize(int rowNum) {
-		   if (!this.inCollectionMode()) {
+		   if (!this.isGroupedBy()) {
 		     return -1;
 		   } else {
 		     return collectionMap.get(rowNum);  
 		   }
-		}
-
-		// Returns whether the table is indexed.
-		public boolean isIndexed() {
-			return (!primeColumns.isEmpty());
 		}
 
 		/**
@@ -780,7 +763,6 @@ public abstract class CustomView extends LinearLayout {
 		private static final String TAG = "CustomView.Control";
 
 		protected final Activity mActivity;
-		private final DbHelper dbh;
 		private final UserTable mTable;
 
 		// hold onto references to all the results returned to the WebKit
@@ -801,7 +783,6 @@ public abstract class CustomView extends LinearLayout {
 		public Control(Activity activity, UserTable table) {
 			this.mActivity = activity;
 			this.mTable = table;
-			dbh = DbHelper.getDbHelper(mActivity, mAppName);
 			Log.d(TAG, "calling Control Constructor");
 		}
 
@@ -948,7 +929,7 @@ public abstract class CustomView extends LinearLayout {
 		 * args would be ["bar"].
 		 * @see {@link ControlIf#queryWithSql(String, String, String[])}
 		 *
-		 * @param tableName
+		 * @param tableId
 		 *            the display name of the table for which you want the
 		 *            columns to be returned.
 		 * @param whereClause
@@ -960,26 +941,18 @@ public abstract class CustomView extends LinearLayout {
 		 * @param selectionArgs
 		 * @return
 		 */
-		public TableData queryWithSql(String tableName, String whereClause,
+		public TableData queryWithSql(String tableId, String whereClause,
 				String[] selectionArgs) {
 			// We're going to handle this by passing it off to the DbTable
 			// rawSqlQuery(String whereClause, String[] selectionArgs) argument.
-			TableProperties tp = getTablePropertiesById(tableName);
-			if (tp == null) {
-				Log.e(TAG, "request for table with displayName [" + tableName
-						+ "] cannot be found.");
-				return null;
-			}
-			DbTable dbTable = DbTable.getDbTable(dbh, tp);
-			UserTable userTable = dbTable.rawSqlQuery(whereClause,
-					selectionArgs);
-			TableData td = new TableData(mActivity, userTable);
+			TableData tableData = 
+			    queryForTableData(tableId, whereClause, selectionArgs);
 			/**
 			 * IMPORTANT: remember the td. The interfaces will hold weak
 			 * references to them, so we need a strong reference to prevent GC.
 			 */
-			queryResults.add(td);
-			return td;
+			queryResults.add(tableData);
+			return tableData;
 		}
 
 		/**
@@ -1337,11 +1310,9 @@ public abstract class CustomView extends LinearLayout {
 		private void addTable(String tableName, TableType tableType) {
 		  // TODO: if this avenue to create a table remains, we need to also
 		  // prompt them for a tableId name.
-		  TableProperties[] allTableProperties =
-		      TableProperties.getTablePropertiesForAll(dbh,
-		          KeyValueStore.Type.ACTIVE);
-			String dbTableName = NameUtil.createUniqueDbTableName(tableName,dbh);
-			TableProperties tp = TableProperties.addTable(dbh,
+			String dbTableName = 
+			    NameUtil.createUniqueDbTableName(tableName, mDbHelper);
+			TableProperties tp = TableProperties.addTable(mDbHelper,
 					dbTableName, tableName, tableType,
 					KeyValueStore.Type.ACTIVE);
 		}

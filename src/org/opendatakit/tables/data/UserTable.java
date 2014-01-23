@@ -264,6 +264,18 @@ public class UserTable {
   public String getData(int rowNum, int colNum) {
     return mRows.get(rowNum).getDataAtIndex(colNum);
   }
+  
+  /**
+   * True if the table has been grouped by a value. This is referred to in some
+   * places of the code as an "indexed" table, which also and irritatingly
+   * means that a column has been set to "prime". 
+   * @return
+   */
+  public boolean isGroupedBy() {
+    // All this mess of terminology is incredibly confusing and frustrating.
+    // This method comes from CustomView#TableData.
+    return !mTp.getPrimeColumns().isEmpty();
+  }
 
   public String getDisplayTextOfData(Context context, int cellNum) {
     int rowNum = cellNum / getWidth();
@@ -416,7 +428,7 @@ public class UserTable {
     return mRows.get(rowNum).getAllMetadata();
   }
 
-  public int getHeight() {
+  public int getNumberOfRows() {
     return this.mRows.size();
   }
 

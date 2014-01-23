@@ -45,7 +45,7 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     this.mAdapter = new ArrayAdapter<String>(
         getSupportActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
-    for (int i = 0; i < this.mConflictTable.getLocalTable().getHeight(); i++) {
+    for (int i = 0; i < this.mConflictTable.getLocalTable().getNumberOfRows(); i++) {
       String localRowId = this.mConflictTable.getLocalTable()
           .getMetadataByElementKey(i, DataTableColumns.ID);
       String serverRowId = this.mConflictTable.getServerTable()
