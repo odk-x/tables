@@ -17,8 +17,6 @@ package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
-import org.opendatakit.tables.views.webkits.CustomView.TableData;
-
 /**
  * This class is handed to the javascript as "data" when displaying a table in
  * a List View. It is a way to get at the data in a table, allowing for the 

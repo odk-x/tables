@@ -17,8 +17,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
-import org.opendatakit.tables.views.webkits.CustomTableView;
-import org.opendatakit.tables.views.webkits.CustomView.TableData;
+import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
 import android.util.Log;
@@ -159,9 +158,7 @@ public class OutputUtil {
     // Because the code is so freaked up we don't have an easy way to get the
     // information out of the UserTable without going through the TableData
     // object. So we need to create a dummy CustomTableView to get it to work.
-    CustomTableView dummyTableView = 
-        CustomTableView.get(null, appName, userTable, null, null);
-    TableData tableInterface = dummyTableView.getTableDataObject();
+    TableData tableData = new TableData(userTable);
     // We need to also store the element key to the index of the data so that
     // we know how to access it out of the array representing each row.
     Map<String, Integer> elementKeyToIndex = new HashMap<String, Integer>();
@@ -174,8 +171,8 @@ public class OutputUtil {
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
     // First let's get the string values. All should be for js.
     boolean isGroupedBy = 
-        userTable.isGroupedBy() ? true : false;
-    int count = tableInterface.getCount();
+        tableData.isGroupedBy() ? true : false;
+    int count = tableData.getCount();
     Map<String, String> columns = new HashMap<String, String>();
     Map<String, List<String>> allColumnData = 
         new HashMap<String, List<String>>();

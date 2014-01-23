@@ -225,7 +225,7 @@ public class CustomTableView extends CustomView
   public void display() {
     // Load a basic screen as you're getting the other stuff ready to
     // clear the old data.
-    control = new Control(mParentActivity, table);
+    control = new Control(mParentActivity);
     tableData = new TableData(table);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), 
         "control");

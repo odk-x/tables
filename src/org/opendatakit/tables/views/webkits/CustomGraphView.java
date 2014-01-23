@@ -89,7 +89,7 @@ public class CustomGraphView extends CustomView {
   }
 
   public void display() {
-    control = new Control(mParentActivity, table);
+    control = new Control(mParentActivity);
     tableData = new TableData(table);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
