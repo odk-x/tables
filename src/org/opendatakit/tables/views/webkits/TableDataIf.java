@@ -85,18 +85,7 @@ public class TableDataIf {
 	}
 
 	/**
-	 * Return the number of rows in the collection at the given row index. Only
-	 * meaningful if {@link #inCollectionMode()} returns true.
-	 * @param rowNum
-	 * @return number of rows in the collection
-	 */
-	// @JavascriptInterface
-	public int getCollectionSize(int rowNum) {
-		return weakTable.get().getCollectionSize(rowNum);
-	}
-
-	/**
-	 * Returns true if the table is indexed.
+	 * Returns true if the table has been grouped by a column.
 	 * @return true if index else false
 	 */
 	// @JavascriptInterface
@@ -112,6 +101,9 @@ public class TableDataIf {
 	 * <p>
 	 * The null value is returned if the column could not be found, or if the
 	 * value in the database is null.
+	 * <p>
+	 * If {@link #isGroupedBy()} returns true, a valid elementPath is __count,
+	 * which will return the number of rows with the grouped by value.
 	 * @param rowNum the row number
 	 * @param elementPath the element path of the column
 	 * @return the String representation of the datum at the given row in the
@@ -127,6 +119,7 @@ public class TableDataIf {
 	 * Retrieve the datum in the given column from the first row. This is a
 	 * convenience method when operating in a detail view and is equivalent to
 	 * calling {@link #getData(int, String)} with a rowNum of 0.
+	 * @see #getData(int, String)
 	 * @param elementPath
 	 * @return the String representation of the datum in the given column at the
 	 * first row of the table

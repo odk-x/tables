@@ -629,20 +629,6 @@ public abstract class CustomView extends LinearLayout {
 			return String.format("#%06X", (0xFFFFFF & foregroundColor));
 		}
 
-		/** 
-		 * Returns the number of rows in the collection at the given row index.
-		 * Returns -1 if it is not in collection mode.
-		 * @param rowNum
-		 * @return
-		 */
-		public int getCollectionSize(int rowNum) {
-		   if (!this.isGroupedBy()) {
-		     return -1;
-		   } else {
-		     return collectionMap.get(rowNum);  
-		   }
-		}
-
 		/**
 		 * @see {@link TableDataIf#getData(int, String)}.
 		 */

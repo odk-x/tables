@@ -49,7 +49,6 @@ public class OutputUtil {
       "inCollectionMode";
   public static final String DATA_KEY_COUNT = "count";
   public static final String DATA_KEY_COLUMNS = "columns";
-  public static final String DATA_KEY_COLLECTION_SIZE = "collectionSize";
   public static final String DATA_KEY_IS_GROUPED_BY = "isGroupedBy";
   public static final String DATA_KEY_DATA = "data";
   
@@ -177,10 +176,6 @@ public class OutputUtil {
     boolean isGroupedBy = 
         userTable.isGroupedBy() ? true : false;
     int count = tableInterface.getCount();
-    int[] collectionSize = new int[numRowsToWrite];
-    for (int i = 0; i < numRowsToWrite; i++) {
-      collectionSize[i] = tableInterface.getCollectionSize(i);
-    }
     Map<String, String> columns = new HashMap<String, String>();
     Map<String, List<String>> allColumnData = 
         new HashMap<String, List<String>>();
@@ -211,7 +206,6 @@ public class OutputUtil {
     Map<String, Object> outputObject = new HashMap<String, Object>();
     outputObject.put(DATA_KEY_IS_GROUPED_BY, isGroupedBy);
     outputObject.put(DATA_KEY_COUNT, count);
-    outputObject.put(DATA_KEY_COLLECTION_SIZE, collectionSize);
     outputObject.put(DATA_KEY_COLUMNS, columns);
     outputObject.put(DATA_KEY_DATA, partialData);
     Gson gson = new Gson();
