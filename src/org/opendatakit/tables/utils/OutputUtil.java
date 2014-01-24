@@ -23,6 +23,10 @@ import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Methods for dealing with things necessary for debugging in chrome. This
@@ -50,6 +54,7 @@ public class OutputUtil {
   public static final String DATA_KEY_COLUMNS = "columns";
   public static final String DATA_KEY_IS_GROUPED_BY = "isGroupedBy";
   public static final String DATA_KEY_DATA = "data";
+  public static final String DATA_KEY_COLUMN_DATA = "columnData";
   
   // Keys for the table object contained within control objects.
   public static final String CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY = "keyToPath";
@@ -78,11 +83,13 @@ public class OutputUtil {
         TableProperties.getTablePropertiesForDataTables(dbHelper, 
             KeyValueStore.Type.ACTIVE);
     Map<String, String> tableIdToDisplayName = new HashMap<String ,String>();
-    Map<String, String> tableIdToControlTable = new HashMap<String, String>();
+    Map<String, Map<String, Object>> tableIdToControlTable = 
+        new HashMap<String, Map<String, Object>>();
     for (TableProperties tableProperties : allTableProperties) {
       tableIdToDisplayName.put(tableProperties.getTableId(), 
           tableProperties.getDisplayName());
-      String controlTable = getStringForControlTable(context, tableProperties);
+      Map<String, Object> controlTable = 
+          getMapForControlTable(context, tableProperties);
       tableIdToControlTable.put(tableProperties.getTableId(), controlTable);
     }
     Gson gson = new Gson();
@@ -110,7 +117,7 @@ public class OutputUtil {
    * @param tableProperties
    * @return
    */
-  public static String getStringForControlTable(Context context, 
+  public static Map<String, Object> getMapForControlTable(Context context, 
       TableProperties tableProperties) {
     Map<String, Object> controlTable = new HashMap<String, Object>();
     Map<String, String> pathToKey = new HashMap<String, String>();
@@ -122,12 +129,10 @@ public class OutputUtil {
       keyToDisplayName.put(columnProperties.getElementKey(), 
           columnProperties.getDisplayName());
     }
-    Gson gson = new Gson();
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY, pathToKey);
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME,
         keyToDisplayName);
-    String result = gson.toJson(controlTable);
-    return result;
+    return controlTable;
   }
   
   /**
@@ -169,43 +174,56 @@ public class OutputUtil {
     }
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
-    // First let's get the string values. All should be for js.
-//    boolean isGroupedBy = 
-//        tableData.isGroupedBy() ? true : false;
-//    int count = tableData.getCount();
-//    Map<String, String> columns = new HashMap<String, String>();
-    Map<String, List<String>> allColumnData = 
-        new HashMap<String, List<String>>();
     // Here we're using this object b/c these appear to be the columns
     // available to the client--are metadata columns exposed to them? It's
     // not obvious to me here.
     Set<String> columnKeys = elementKeyToIndex.keySet();
-    String[][] partialData = 
-        new String[numRowsToWrite][columnKeys.size()];
-    // Now construct up the objects we need.
-    int columnIndex = 0;
-    for (String elementKey : columnKeys) {
-      // Get the column type
-//      columns.put(elementKey, 
-//          tableProperties.getColumnByElementKey(elementKey)
-//          .getColumnType().label());
-      // get the column data and the table data.
-      List<String> columnData = new ArrayList<String>();
-      for (int i = 0; i < numRowsToWrite; i++) {
-        Row row = userTable.getRowAtIndex(i);
-        String value = row.getDataOrMetadataByElementKey(elementKey);
-        columnData.add(value);
-        partialData[i][columnIndex] = value; 
+    Map[] partialData = new Map[numRowsToWrite];
+    // Now construct up the partial data object.
+    for (int i = 0; i < numRowsToWrite; i++) {
+      Map<String, Object> rowOut = new HashMap<String, Object>();
+      for (String elementKey : columnKeys) {
+        rowOut.put(elementKey, tableData.getData(i, elementKey));
       }
-      allColumnData.put(elementKey, columnData);
-      columnIndex++;
+      partialData[i] = rowOut;
+    }
+    // And now construct the object storing the columns data.
+    JsonParser jsonParser = new JsonParser();
+    Map<String, Object> elementKeyToColumnData = 
+        new HashMap<String, Object>();
+    for (String elementKey : columnKeys) {
+      // The tableData object returns a string, so we'll have to parse it back
+      // into json.
+      JsonArray columnData = (JsonArray) jsonParser.parse(
+          tableData.getColumnData(elementKey, numRowsToWrite)); 
+      // Now that it's json, we want to convert it to an array. Otherwise it
+      // serializes to an object with a single key "elements". Oh gson.
+      String[] columnDataArray = new String[columnData.size()];
+      for (int i = 0; i < columnDataArray.length; i++) {
+        columnDataArray[i] = columnData.get(i).getAsString();
+      }
+      elementKeyToColumnData.put(elementKey, columnDataArray);
+    }
+    Gson gson = new Gson();
+    // We need to parse some of the String objects returned by TableData into
+    // json so that they're output as objects rather than strings.
+    String columnString = tableData.getColumns();
+    JsonObject columnJson = (JsonObject) jsonParser.parse(columnString);
+    // Here, as with JsonArray, we need to convert this to a map or else we'll
+    // serialize as the object to a "members" key.
+    Map<String, Object> columnJsonMap = new HashMap<String, Object>();
+    for (Map.Entry<String, JsonElement> entry : columnJson.entrySet()) {
+      columnJsonMap.put(entry.getKey(), entry.getValue().getAsString());
     }
     Map<String, Object> outputObject = new HashMap<String, Object>();
     outputObject.put(DATA_KEY_IS_GROUPED_BY, tableData.isGroupedBy());
-    outputObject.put(DATA_KEY_COUNT, tableData.getCount());
-    outputObject.put(DATA_KEY_COLUMNS, tableData.getColumns());
+    // We don't want the real count, as that could interfere with for loops in
+    // the code. We in fact want the number of rows that are written, as that
+    // will be the number of rows available to the javascript.
+    outputObject.put(DATA_KEY_COUNT, numRowsToWrite);
+    outputObject.put(DATA_KEY_COLUMNS, columnJsonMap);
+    outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);
     outputObject.put(DATA_KEY_DATA, partialData);
-    Gson gson = new Gson();
     String outputString = gson.toJson(outputObject);
     return outputString;
   }
