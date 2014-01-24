@@ -15,52 +15,38 @@
  */
 package org.opendatakit.tables.sync.aggregate;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.aggregate.odktables.rest.ApiConstants;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+
 public class SyncTag {
-
-  private static final String STR_NULL = "null";
-
-private static final String DELIM = "::";
-
-  /**
-   * This is the value that is replacing -1 as the value of the empty string
-   * in the sync tag.
-   */
-  public static final String EMPTY_ETAG = "NONE";
 
   private String dataETag;
   private String propertiesETag;
   private String schemaETag;
 
   public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
-    // The data ETag can be null if the table has been created but there's not
-    // yet any data on the server.
-    if (dataETag == null || dataETag.equals("")) {
-      this.dataETag = EMPTY_ETAG;
-    } else {
-      this.dataETag = dataETag;
-    }
-    if (propertiesETag == null || propertiesETag.equals("")) {
-      this.propertiesETag = EMPTY_ETAG;
-    } else {
-      this.propertiesETag = propertiesETag;
-    }
-    if (schemaETag == null || schemaETag.equals("")) {
-      this.schemaETag = EMPTY_ETAG;
-    } else {
-      this.schemaETag = schemaETag;
-    }
+    this.dataETag = dataETag;
+    this.propertiesETag = propertiesETag;
+    this.schemaETag = schemaETag;
   }
 
   public String getDataETag() {
-    return (dataETag == null) ? STR_NULL : dataETag;
+    return dataETag;
   }
 
   public String getPropertiesETag() {
-    return (propertiesETag == null) ? STR_NULL : propertiesETag;
+    return propertiesETag;
   }
 
   public String getSchemaETag() {
-    return (schemaETag == null) ? STR_NULL : schemaETag;
+    return schemaETag;
   }
 
   public void setSchemaETag(String schemaETag) {
@@ -84,9 +70,9 @@ private static final String DELIM = "::";
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + dataETag.hashCode();
-    result = prime * result + propertiesETag.hashCode();
-    result = prime * result + schemaETag.hashCode();
+    result = prime * result + ((dataETag == null) ? 1 : dataETag.hashCode());
+    result = prime * result + ((propertiesETag == null) ? 1 : propertiesETag.hashCode());
+    result = prime * result + ((schemaETag == null) ? 1 : schemaETag.hashCode());
     return result;
   }
 
@@ -116,17 +102,45 @@ private static final String DELIM = "::";
 
   @Override
   public String toString() {
-    return String.format("%s%s%s%s%s", dataETag, DELIM, propertiesETag, DELIM, schemaETag);
+    HashMap<String,String> map = new HashMap<String,String>();
+    map.put("dataETag", dataETag);
+    map.put("propertiesETag", propertiesETag);
+    map.put("schemaETag", schemaETag);
+    try {
+      return ODKFileUtils.mapper.writeValueAsString(map);
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    }
   }
 
   public static SyncTag valueOf(String syncTag) {
-    String[] tokens = syncTag.split(DELIM);
-    if (tokens.length != 3)
-      throw new IllegalArgumentException("Malformed syncTag: " + syncTag);
+    if ( syncTag == null || syncTag.length() == 0 ) {
+      return new SyncTag(null, null, null);
+    }
+    HashMap<String, String> map;
+    try {
+      map = (HashMap<String, String>) ODKFileUtils.mapper.readValue(syncTag, Map.class);
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    }
 
-    String dataETag = tokens[0];
-    String propertiesETag = tokens[1];
-    String schemaETag = tokens[2];
+    String dataETag = map.get("dataETag");
+    String propertiesETag = map.get("propertiesETag");
+    String schemaETag = map.get("schemaETag");
     return new SyncTag(dataETag, propertiesETag, schemaETag);
   }
 }

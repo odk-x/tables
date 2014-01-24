@@ -17,8 +17,6 @@ package org.opendatakit.tables.sync;
 
 import java.util.Map;
 
-import org.simpleframework.xml.Element;
-
 /**
  * A SyncRow is an in-between class to map rows in the database to rows in the
  * cloud.

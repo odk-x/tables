@@ -214,22 +214,6 @@ public class SyncUtilities {
     }
   }
 
-  /**
-   * Deserialize the file manifest response from Aggregate.
-   * @param response
-   * @return
-   * @throws IOException
-   * @throws JsonMappingException
-   * @throws JsonParseException
-   */
-  public static List<OdkTablesFileManifestEntry>
-      getManifestEntriesFromResponse(String response) throws
-      JsonParseException, JsonMappingException, IOException {
-    TypeReference<ArrayList<OdkTablesFileManifestEntry>> typeRef =
-        new TypeReference<ArrayList<OdkTablesFileManifestEntry>>() {};
-    return mapper.readValue(response, typeRef);
-  }
-
   public static void downloadFilesAndUpdateValues(String appName,
       List<OdkTablesKeyValueStoreEntry> allEntries) {
     // If the entry is a file, we see if we need to download it and update

@@ -65,7 +65,7 @@ public class AccountInfoActivity extends SherlockActivity {
     Intent intent = getIntent();
     AccountManager accountManager = AccountManager.get(getApplicationContext());
     Account account = (Account) intent.getExtras().get(INTENT_EXTRAS_ACCOUNT);
-    accountManager.getAuthToken(account, authString, false, new AuthTokenCallback(), null);
+    accountManager.getAuthToken(account, authString, null, this, new AuthTokenCallback(), null);
     showDialog(WAITING_ID);
   }
 

@@ -16,16 +16,16 @@
 package org.opendatakit.tables.sync;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
+import org.springframework.web.client.ResourceAccessException;
 
 /**
  * Synchronizer abstracts synchronization of tables to an external cloud/server.
@@ -52,16 +52,11 @@ public interface Synchronizer {
    *
    * @param tableId
    *          the unique identifier of the table
-   * @param schemaETag
-   *          the ETag for the schema
    * @param cols
    *          a map from column names to column types, see {@link ColumnType}
-   * @param displayName
-   *          name
-   *          the quoted display name for this table
-   * @return a string which will be stored as the syncTag of the table
+   * @return the SyncTag for the table
    */
-  public String createTable(String tableId, String schemaETag, List<Column> columns, String displayName)
+  public SyncTag createTable(String tableId, ArrayList<Column> columns)
       throws IOException;
 
   /**
@@ -82,7 +77,7 @@ public interface Synchronizer {
    *          the first synchronization
    * @return an IncomingModification representing the latest state of the table
    */
-  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException;
+  public IncomingModification getUpdates(String tableId, SyncTag currentSyncTag) throws IOException;
 
   /**
    * Insert the given rows in the table on the server.
@@ -95,7 +90,7 @@ public interface Synchronizer {
    *          the rows to insert
    * @return a Modification of the syncTags to save with the rows and table
    */
-  public Modification insertRows(String tableId, String currentSyncTag, List<SyncRow> rowsToInsert)
+  public Modification insertRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToInsert)
       throws IOException;
 
   /**
@@ -109,7 +104,7 @@ public interface Synchronizer {
    *          the rows to update
    * @return a Modification of the syncTags to save with the rows and table
    */
-  public Modification updateRows(String tableId, String currentSyncTag, List<SyncRow> rowsToUpdate)
+  public Modification updateRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToUpdate)
       throws IOException;
 
   /**
@@ -121,9 +116,9 @@ public interface Synchronizer {
    *          the last value that was stored as the syncTag
    * @param rowIds
    *          the row ids of the rows to delete
-   * @return a string which will be stored as the syncTag of the table
+   * @return the updated syncTag of the table
    */
-  public String deleteRows(String tableId, String currentSyncTag, List<String> rowIds)
+  public SyncTag deleteRows(String tableId, SyncTag currentSyncTag, List<String> rowIds)
       throws IOException;
 
   /**
@@ -138,19 +133,19 @@ public interface Synchronizer {
    * @param kvsEntries
    *          all the entries in the key value store for this table. Should
    *          be of the server kvs, since this is for synchronization.
-   * @return a string which will be stored as the syncTag of the table
+   * @return the syncTag of the table
    * @throws IOException
    */
-  public String setTableProperties(String tableId, String currentSyncTag, String tableName,
-                                   List<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
+  public SyncTag setTableProperties(String tableId, SyncTag currentSyncTag, String tableName,
+                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
 
   /**
    * Synchronize all the files in an app, including both app-level and table-
    * level files, but not those files that are in unsynched directories.
    *
-   * @throws IOException
+   * @throws ResourceAccessException
    */
-  public void syncAllFiles() throws IOException;
+  public void syncAllFiles() throws ResourceAccessException;
 
   /**
    * Synchronizes the app level files. This includes any files that are not
@@ -160,9 +155,9 @@ public interface Synchronizer {
    *
    * @param true if local files should be pushed. Otherwise they are only
    *        pulled down.
-   * @throws IOException
+   * @throws ResourceAccessException
    */
-  public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException;
+  public void syncAppLevelFiles(boolean pushLocalFiles) throws ResourceAccessException;
 
   /**
    * Sync only the files associated with the specified table. This does NOT
@@ -171,9 +166,9 @@ public interface Synchronizer {
    * @param tableId
    * @param pushLocal
    *          true if the local files should be pushed
-   * @throws IOException
+   * @throws ResourceAccessException
    */
-  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws IOException;
+  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws ResourceAccessException;
 
   /**
    * Sync only the media files associated with individual rows of a table.
@@ -181,8 +176,8 @@ public interface Synchronizer {
    * of a form. I.e. those files that are considered data.
    *
    * @param tableId
-   * @throws IOException
+   * @throws ResourceAccessException
    */
-  public void syncRowDataFiles(String tableId) throws IOException;
+  public void syncRowDataFiles(String tableId) throws ResourceAccessException;
 
 }

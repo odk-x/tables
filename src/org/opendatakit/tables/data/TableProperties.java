@@ -39,6 +39,7 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.utils.ColorRuleUtil;
 import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
@@ -450,7 +451,7 @@ public class TableProperties {
   private String dbTableName;
   private TableType tableType;
   private String accessControls;
-  private String syncTag;
+  private SyncTag syncTag;
   // TODO lastSyncTime should probably eventually be an int?
   // keeping as a string for now to minimize errors.
   private String lastSyncTime;
@@ -484,7 +485,7 @@ public class TableProperties {
   private TableProperties(DbHelper dbh, String tableId, String dbTableName,
       String displayName, TableType tableType, String accessControls,
       ArrayList<String> columnOrder, ArrayList<String> primeColumns, String sortColumn,
-      String indexColumn, String syncTag,
+      String indexColumn, SyncTag syncTag,
       String lastSyncTime,
       TableViewType currentViewType,
       // TableViewType overviewViewType,
@@ -671,7 +672,7 @@ public class TableProperties {
         props.get(KEY_ACCESS_CONTROL_TABLE_ID),
         columnOrder, primeList,
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
-        props.get(TableDefinitionsColumns.SYNC_TAG),
+        SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), currentViewType,
         // overviewViewType,
         // collectionViewType,
@@ -1639,7 +1640,7 @@ public class TableProperties {
   /**
    * @return the sync tag. Unsynched tables return the empty string.
    */
-  public String getSyncTag() {
+  public SyncTag getSyncTag() {
     return syncTag;
   }
 
@@ -1649,9 +1650,9 @@ public class TableProperties {
    * @param syncTag
    *          the new sync tag
    */
-  public void setSyncTag(String syncTag) {
+  public void setSyncTag(SyncTag syncTag) {
     SQLiteDatabase db = dbh.getWritableDatabase();
-    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag, db);
+    TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag.toString(), db);
     this.syncTag = syncTag;
     TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     // TODO: figure out how to handle closing the database

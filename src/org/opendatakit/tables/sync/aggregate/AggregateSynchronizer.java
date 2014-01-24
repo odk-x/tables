@@ -25,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,22 +35,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.Row;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
+import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
-import org.opendatakit.aggregate.odktables.rest.serialization.JsonObjectHttpMessageConverter;
-import org.opendatakit.aggregate.odktables.rest.serialization.SimpleXMLSerializerForAggregate;
+import org.opendatakit.aggregate.odktables.rest.serialization.OdkJsonHttpMessageConverter;
+import org.opendatakit.aggregate.odktables.rest.serialization.OdkXmlHttpMessageConverter;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
@@ -68,10 +68,8 @@ import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TextPlainHttpMessageConverter;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
-import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.opendatakit.tables.utils.FileUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.simpleframework.xml.Serializer;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -80,16 +78,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.xml.SimpleXmlHttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import android.net.Uri;
 import android.util.Log;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * Implementation of {@link Synchronizer} for ODK Aggregate.
@@ -146,31 +140,35 @@ public class AggregateSynchronizer implements Synchronizer {
     URI fileManifestUri = uriBase.resolve(FILE_MANIFEST_PATH).normalize();
     this.mFileManifestUri = fileManifestUri;
     this.mFilesUri = getFilePathURI(aggregateUri);
-
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken));
-
     this.rt = new RestTemplate();
-    this.rt.setInterceptors(interceptors);
 
-    Serializer serializer = SimpleXMLSerializerForAggregate.getSerializer();
     List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-    converters.add(new JsonObjectHttpMessageConverter());
-    converters.add(new SimpleXmlHttpMessageConverter(serializer));
+    // plain text
     converters.add(new TextPlainHttpMessageConverter());
+    // JSON conversion...
+    converters.add(new OdkJsonHttpMessageConverter());
+    // XML conversion...
+    converters.add(new OdkXmlHttpMessageConverter());
 
     this.rt.setMessageConverters(converters);
+    MediaType protocolType = new MediaType(MediaType.TEXT_XML.getType(), MediaType.TEXT_XML.getSubtype(), Charset.forName(ApiConstants.UTF8_ENCODE));
 
     List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
-    acceptableMediaTypes
-        .add(new MediaType("text", "xml", Charset.forName(ApiConstants.UTF8_ENCODE)));
+    acceptableMediaTypes.add(MediaType.APPLICATION_JSON);
+    acceptableMediaTypes.add(protocolType);
+    acceptableMediaTypes.add(MediaType.APPLICATION_WILDCARD_XML);
 
     this.requestHeaders = new HttpHeaders();
     this.requestHeaders.setAccept(acceptableMediaTypes);
-    this.requestHeaders.setContentType(new MediaType("text", "xml", Charset
-        .forName(ApiConstants.UTF8_ENCODE)));
+    this.requestHeaders.setAcceptCharset(Collections.singletonList(Charset.forName(ApiConstants.UTF8_ENCODE)));
+    this.requestHeaders.setContentType(protocolType);
 
     this.resources = new HashMap<String, TableResource>();
+
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken, acceptableMediaTypes));
+
+    this.rt.setInterceptors(interceptors);
 
     checkAccessToken(accessToken);
     this.accessToken = accessToken;
@@ -190,14 +188,28 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
+    ResponseEntity<Object> responseEntity;
     try {
-      rt.getForObject(TOKEN_INFO + accessToken, JsonObject.class);
+      responseEntity = rt.getForEntity(TOKEN_INFO + accessToken, Object.class);
+      @SuppressWarnings("unused")
+      Object o = responseEntity.getBody();
     } catch (HttpClientErrorException e) {
       Log.e(TAG, "HttpClientErrorException in checkAccessToken");
-      JsonParser parser = new JsonParser();
-      JsonObject resp = parser.parse(e.getResponseBodyAsString()).getAsJsonObject();
-      if (resp.has("error") && resp.get("error").getAsString().equals("invalid_token")) {
-        throw new InvalidAuthTokenException("Invalid auth token: " + accessToken, e);
+      Object o = null;
+      try {
+        o = ODKFileUtils.mapper.readValue(e.getResponseBodyAsString(), Object.class);
+      } catch (Exception e1) {
+        e1.printStackTrace();
+        throw new InvalidAuthTokenException("Unable to parse response from auth token verification (" + e.toString() + ")", e);
+      }
+      if ( o != null && o instanceof Map ) {
+        @SuppressWarnings("rawtypes")
+        Map m = (Map) o;
+        if ( m.containsKey("error")) {
+          throw new InvalidAuthTokenException("Invalid auth token (" +  m.get("error").toString() + "): " + accessToken, e);
+        } else {
+          throw new InvalidAuthTokenException("Unknown response from auth token verification (" + e.toString() + ")", e);
+        }
       }
     }
   }
@@ -209,14 +221,14 @@ public class AggregateSynchronizer implements Synchronizer {
   public List<TableResource> getTables() throws IOException {
     List<TableResource> tables = new ArrayList<TableResource>();
 
-    List<TableResource> tableResources;
+    TableResourceList tableResources;
     try {
-      tableResources = rt.getForObject(baseUri, List.class);
+      tableResources = rt.getForObject(baseUri, TableResourceList.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
     }
 
-    for (TableResource tableResource : tableResources) {
+    for (TableResource tableResource : tableResources.getEntries()) {
       resources.put(tableResource.getTableId(), tableResource);
       tables.add(tableResource);
     }
@@ -248,12 +260,12 @@ public class AggregateSynchronizer implements Synchronizer {
    * org.opendatakit.aggregate.odktables.entity.api.TableType, java.lang.String)
    */
   @Override
-  public String createTable(String tableId, String schemaETag, List<Column> columns, String displayName)
+  public SyncTag createTable(String tableId, ArrayList<Column> columns)
       throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
-    TableDefinition definition = new TableDefinition(tableId, schemaETag, columns, displayName);
+    TableDefinition definition = new TableDefinition(tableId, null, columns);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
 
@@ -274,7 +286,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // return sync tag
     SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
                                   resource.getSchemaETag());
-    return syncTag.toString();
+    return syncTag;
   }
 
   @Override
@@ -318,23 +330,18 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.lang.String)
    */
   @Override
-  public IncomingModification getUpdates(String tableId, String currentSyncTag) throws IOException {
+  public IncomingModification getUpdates(String tableId, SyncTag currentTag) throws IOException {
     IncomingModification modification = new IncomingModification();
 
     // get current and new sync tags
     TableResource resource = refreshResource(tableId);
-    SyncTag currentTag;
-    if (currentSyncTag != null)
-      currentTag = SyncTag.valueOf(currentSyncTag);
-    else
-      currentTag = new SyncTag("", "", "");
     // This tag is ultimately returned. May8--make sure it works.
     SyncTag newTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
                                  resource.getSchemaETag());
 
     // stop now if there are no updates
     if (newTag.equals(currentTag)) {
-      modification.setTableSyncTag(currentTag.toString());
+      modification.setTableSyncTag(currentTag);
       modification.setTablePropertiesChanged(false);
       return modification;
     }
@@ -371,24 +378,27 @@ public class AggregateSynchronizer implements Synchronizer {
       modification.setTableProperties(propertiesRes);
     }
 
+    // TODO: need to loop here to process segments of change
+    // vs. an entire bucket of changes.
+
     // get data updates
     if (!newTag.getDataETag().equals(currentTag.getDataETag())) {
       URI url;
-      if (currentSyncTag == null) {
+      if (currentTag.getDataETag() == null) {
         url = URI.create(resource.getDataUri());
       } else {
         String diffUri = resource.getDiffUri();
         url = URI.create(diffUri + "?data_etag=" + currentTag.getDataETag()).normalize();
       }
-      List<RowResource> rows;
+      RowResourceList rows;
       try {
-        rows = rt.getForObject(url, List.class);
+        rows = rt.getForObject(url, RowResourceList.class);
       } catch (ResourceAccessException e) {
         throw new IOException(e.getMessage());
       }
 
       List<SyncRow> syncRows = new ArrayList<SyncRow>();
-      for (RowResource row : rows) {
+      for (RowResource row : rows.getEntries()) {
         SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowETag(), row.isDeleted(),
                                       row.getUriAccessControl(), row.getFormId(), row.getLocale(),
                                       row.getSavepointTimestamp(), row.getValues());
@@ -397,7 +407,7 @@ public class AggregateSynchronizer implements Synchronizer {
       modification.setRows(syncRows);
     }
 
-    modification.setTableSyncTag(newTag.toString());
+    modification.setTableSyncTag(newTag);
     return modification;
   }
 
@@ -409,7 +419,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public Modification insertRows(String tableId, String currentSyncTag, List<SyncRow> rowsToInsert)
+  public Modification insertRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToInsert)
       throws IOException {
     List<Row> newRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToInsert) {
@@ -429,7 +439,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public Modification updateRows(String tableId, String currentSyncTag, List<SyncRow> rowsToUpdate)
+  public Modification updateRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToUpdate)
       throws IOException {
     List<Row> changedRows = new ArrayList<Row>();
     for (SyncRow syncRow : rowsToUpdate) {
@@ -441,16 +451,16 @@ public class AggregateSynchronizer implements Synchronizer {
     return insertOrUpdateRows(tableId, currentSyncTag, changedRows);
   }
 
-  private Modification insertOrUpdateRows(String tableId, String currentSyncTag, List<Row> rows)
+  private Modification insertOrUpdateRows(String tableId, SyncTag currentSyncTag, List<Row> rows)
       throws IOException {
     TableResource resource = getTable(tableId);
     // SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
     Map<String, String> rowTags = new HashMap<String, String>();
-    SyncTag lastKnownServerSyncTag = SyncTag.valueOf(currentSyncTag);
+    SyncTag lastKnownServerSyncTag = new SyncTag(currentSyncTag.getDataETag(), currentSyncTag.getPropertiesETag(), currentSyncTag.getSchemaETag());
     if (!rows.isEmpty()) {
       for (Row row : rows) {
         URI url = URI.create(
-            resource.getDataUri() + "/" + URLEncoder.encode(row.getRowId(), "UTF-8")).normalize();
+            resource.getDataUri() + "/" + row.getRowId()).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
         ResponseEntity<RowResource> insertedEntity;
         try {
@@ -468,7 +478,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     Modification modification = new Modification();
     modification.setSyncTags(rowTags);
-    modification.setTableSyncTag(lastKnownServerSyncTag.toString());
+    modification.setTableSyncTag(lastKnownServerSyncTag);
 
     return modification;
   }
@@ -481,10 +491,10 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public String deleteRows(String tableId, String currentSyncTag, List<String> rowIds)
+  public SyncTag deleteRows(String tableId, SyncTag currentSyncTag, List<String> rowIds)
       throws IOException {
     TableResource resource = getTable(tableId);
-    SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
+    SyncTag syncTag = currentSyncTag;
     if (!rowIds.isEmpty()) {
       String lastKnownServerDataTag = null; // the data tag of the whole table.
       for (String rowId : rowIds) {
@@ -504,7 +514,7 @@ public class AggregateSynchronizer implements Synchronizer {
           + lastKnownServerDataTag);
       syncTag.setDataETag(lastKnownServerDataTag);
     }
-    return syncTag.toString();
+    return syncTag;
   }
 
   /*
@@ -514,10 +524,9 @@ public class AggregateSynchronizer implements Synchronizer {
    * java.lang.String, java.lang.String, java.lang.String, java.util.List)
    */
   @Override
-  public String setTableProperties(String tableId, String currentSyncTag, String tableKey,
-                                   List<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
+  public SyncTag setTableProperties(String tableId, SyncTag currentTag, String tableKey,
+                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
     TableResource resource = getTable(tableId);
-    SyncTag currentTag = SyncTag.valueOf(currentSyncTag);
 
     // put new properties
     TableProperties properties = new TableProperties(currentTag.getPropertiesETag(), tableId,
@@ -534,11 +543,11 @@ public class AggregateSynchronizer implements Synchronizer {
 
     SyncTag newTag = new SyncTag(currentTag.getDataETag(), propsResource.getPropertiesETag(),
                                  currentTag.getSchemaETag());
-    return newTag.toString();
+    return newTag;
   }
 
   @Override
-  public void syncAppLevelFiles(boolean pushLocalFiles) throws IOException {
+  public void syncAppLevelFiles(boolean pushLocalFiles) throws ResourceAccessException {
     List<OdkTablesFileManifestEntry> manifest = getAppLevelFileManifest();
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
@@ -562,7 +571,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncAllFiles() throws IOException {
+  public void syncAllFiles() throws ResourceAccessException {
     List<OdkTablesFileManifestEntry> manifest = getFileManifestForAllFiles();
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
@@ -583,7 +592,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws IOException {
+  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws ResourceAccessException {
     List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
@@ -613,45 +622,33 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
-  private List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws JsonParseException,
-      JsonMappingException, IOException {
+  public List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES, VALUE_TRUE);
-    RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
-    rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
-        HttpMethod.GET, null, String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
+    ResponseEntity<OdkTablesFileManifest> responseEntity;
+    responseEntity = rt.exchange(uriBuilder.build().toString(),
+            HttpMethod.GET, null, OdkTablesFileManifest.class);
+    return responseEntity.getBody().getEntries();
   }
 
-  private List<OdkTablesFileManifestEntry> getTableLevelFileManifest(String tableId)
-      throws JsonParseException, JsonMappingException, IOException {
+  public List<OdkTablesFileManifestEntry> getTableLevelFileManifest(String tableId) throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
-    RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
-    rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
-        HttpMethod.GET, null, String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
+    ResponseEntity<OdkTablesFileManifest> responseEntity;
+      responseEntity = rt.exchange(uriBuilder.build().toString(),
+              HttpMethod.GET, null, OdkTablesFileManifest.class);
+    return responseEntity.getBody().getEntries();
   }
 
-  private List<OdkTablesFileManifestEntry> getFileManifestForAllFiles() throws JsonParseException,
-      JsonMappingException, IOException {
+  public List<OdkTablesFileManifestEntry> getFileManifestForAllFiles()  throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
-    RestTemplate rt = SyncUtil.getRestTemplateForString();
-    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(mFileManifestUri, accessToken));
-    rt.setInterceptors(interceptors);
-    ResponseEntity<String> responseEntity = rt.exchange(uriBuilder.build().toString(),
-        HttpMethod.GET, null, String.class);
-    return SyncUtilities.getManifestEntriesFromResponse(responseEntity.getBody());
+    ResponseEntity<OdkTablesFileManifest> responseEntity;
+      responseEntity = rt.exchange(uriBuilder.build().toString(),
+              HttpMethod.GET, null, OdkTablesFileManifest.class);
+    return responseEntity.getBody().getEntries();
   }
 
   /**
@@ -875,7 +872,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncRowDataFiles(String tableId) throws IOException {
+  public void syncRowDataFiles(String tableId) throws ResourceAccessException {
     // There are two things to do here, really. The first is to get the
     // manifest for each instance--or each row of the table. And download all
     // the files on the manifest.
