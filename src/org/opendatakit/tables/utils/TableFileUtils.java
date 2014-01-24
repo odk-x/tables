@@ -172,12 +172,14 @@ public class TableFileUtils {
   
   /**
    * Get the path to the debug folder, where the control and data json for
-   * debugging purposes are output.
+   * debugging purposes are output. Creates the necessary directory structure.
    * @return
    */
   public static String getTablesDebugObjectFolder() {
     String outputFolder = getOutputFolder();
     String result = outputFolder + File.separator + DEBUG_FOLDER_NAME;
+    File debugOutputFolder = new File(result);
+    debugOutputFolder.mkdirs();
     return result;
   }
   

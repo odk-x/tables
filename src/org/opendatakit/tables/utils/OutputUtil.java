@@ -170,10 +170,10 @@ public class OutputUtil {
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
     // First let's get the string values. All should be for js.
-    boolean isGroupedBy = 
-        tableData.isGroupedBy() ? true : false;
-    int count = tableData.getCount();
-    Map<String, String> columns = new HashMap<String, String>();
+//    boolean isGroupedBy = 
+//        tableData.isGroupedBy() ? true : false;
+//    int count = tableData.getCount();
+//    Map<String, String> columns = new HashMap<String, String>();
     Map<String, List<String>> allColumnData = 
         new HashMap<String, List<String>>();
     // Here we're using this object b/c these appear to be the columns
@@ -186,9 +186,9 @@ public class OutputUtil {
     int columnIndex = 0;
     for (String elementKey : columnKeys) {
       // Get the column type
-      columns.put(elementKey, 
-          tableProperties.getColumnByElementKey(elementKey)
-          .getColumnType().label());
+//      columns.put(elementKey, 
+//          tableProperties.getColumnByElementKey(elementKey)
+//          .getColumnType().label());
       // get the column data and the table data.
       List<String> columnData = new ArrayList<String>();
       for (int i = 0; i < numRowsToWrite; i++) {
@@ -201,9 +201,9 @@ public class OutputUtil {
       columnIndex++;
     }
     Map<String, Object> outputObject = new HashMap<String, Object>();
-    outputObject.put(DATA_KEY_IS_GROUPED_BY, isGroupedBy);
-    outputObject.put(DATA_KEY_COUNT, count);
-    outputObject.put(DATA_KEY_COLUMNS, columns);
+    outputObject.put(DATA_KEY_IS_GROUPED_BY, tableData.isGroupedBy());
+    outputObject.put(DATA_KEY_COUNT, tableData.getCount());
+    outputObject.put(DATA_KEY_COLUMNS, tableData.getColumns());
     outputObject.put(DATA_KEY_DATA, partialData);
     Gson gson = new Gson();
     String outputString = gson.toJson(outputObject);
