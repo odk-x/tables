@@ -57,7 +57,7 @@ public class OutputUtil {
   public static final String DATA_KEY_COLUMN_DATA = "columnData";
   
   // Keys for the table object contained within control objects.
-  public static final String CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY = "keyToPath";
+  public static final String CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY = "pathToKey";
   public static final String CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME =
       "pathToName";
   
