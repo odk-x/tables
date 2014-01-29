@@ -561,6 +561,26 @@ public class DbTable {
     }
 
     /**
+     * Called when the schema on the server has changed w.r.t. the schema on
+     * the device. In this case, we do not know whether the rows on the device
+     * match those on the server. Reset all rows to 'insert' to ensure they
+     * are sync'd to the server.
+     */
+    public void changeRestRowsToInserting() {
+      SQLiteDatabase db = dbh.getWritableDatabase();
+
+      StringBuilder b = new StringBuilder();
+      b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
+      .append(" =? WHERE ").append(DataTableColumns.SYNC_STATE).append(" =?");
+      String sql = b.toString();
+      String args[] = {
+          SyncState.inserting.name(),
+          SyncState.rest.name()
+      };
+      db.execSQL(sql, args);
+    }
+
+    /**
      * Updates a row in the table and marks its synchronization state as
      * updating.
      * @param rowId the ID of the row to update

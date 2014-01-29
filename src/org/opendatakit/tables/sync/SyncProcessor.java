@@ -347,8 +347,18 @@ public class SyncProcessor {
        **************************/
       // First create the table definition on the server.
       SyncTag syncTag = synchronizer.createTable(tableId, tp.getSyncTag(), getColumnsForTable(tp));
-      // set schema syncTag
-      tp.setSyncTag(syncTag);
+
+      if ( tp.getSyncTag().getSchemaETag() == null ||
+           !syncTag.getSchemaETag().equals(tp.getSyncTag().getSchemaETag()) ) {
+        tp.setSyncTag(syncTag);
+        // we are transferring to a different server database or schema. Reverify that all the
+        // 'rest' records in our table are on the server by marking them all as 'inserting' records.
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        dbt.changeRestRowsToInserting();
+      } else {
+        // set schema syncTag
+        tp.setSyncTag(syncTag);
+      }
       // TODO: make sure tp copy is always current...
 
       // now create the TableProperties on the server.
