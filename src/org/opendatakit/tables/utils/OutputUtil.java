@@ -43,7 +43,8 @@ public class OutputUtil {
   /** The suffix of the name for each data object that will be written. */
   public static final String DATA_FILE_SUFFIX = "_data.json";
   
-  public static final String CTRL_KEY_TABLE_IDS = "tableIds";
+  public static final String CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME = 
+      "tableIdToDisplayName";
   public static final String CTRL_KEY_TABLE_INFO = "tables";
   
   // These are keys we'll be outputting for use in debugging when we write
@@ -55,6 +56,8 @@ public class OutputUtil {
   public static final String DATA_KEY_IS_GROUPED_BY = "isGroupedBy";
   public static final String DATA_KEY_DATA = "data";
   public static final String DATA_KEY_COLUMN_DATA = "columnData";
+  public static final String DATA_KEY_TABLE_ID = "tableId";
+  public static final String DATA_KEY_ROW_IDS = "rowIds";
   
   // Keys for the table object contained within control objects.
   public static final String CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY = "pathToKey";
@@ -70,7 +73,8 @@ public class OutputUtil {
    * <p>
    * The object is as follows: <br>
    * {
-   * {@link #CTRL_KEY_TABLE_IDS}: {tableIdOne: displayName, ...},
+   * {@link #CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME}: 
+   *     {tableIdOne: displayName, ...},
    * {@link #CTRL_KEY_TABLE_INFO: {tableIdOne: tableObjectOne, ...}
    * }
    * @return
@@ -93,7 +97,8 @@ public class OutputUtil {
       tableIdToControlTable.put(tableProperties.getTableId(), controlTable);
     }
     Gson gson = new Gson();
-    controlMap.put(CTRL_KEY_TABLE_IDS, tableIdToDisplayName);
+    controlMap.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME, 
+        tableIdToDisplayName);
     controlMap.put(CTRL_KEY_TABLE_INFO, tableIdToControlTable);
     String result = gson.toJson(controlMap);
     return result;
@@ -174,6 +179,11 @@ public class OutputUtil {
     }
     // We don't want to try and write more rows than we have.
     int numRowsToWrite = Math.min(numberOfRows, userTable.getNumberOfRows());
+    // First write the array of row ids.
+    String[] rowIds = new String[numRowsToWrite];
+    for (int i = 0; i < rowIds.length; i++) {
+      rowIds[i] = userTable.getRowAtIndex(i).getRowId();
+    }
     // Here we're using this object b/c these appear to be the columns
     // available to the client--are metadata columns exposed to them? It's
     // not obvious to me here.
@@ -220,10 +230,13 @@ public class OutputUtil {
     // We don't want the real count, as that could interfere with for loops in
     // the code. We in fact want the number of rows that are written, as that
     // will be the number of rows available to the javascript.
+    outputObject.put(DATA_KEY_TABLE_ID, 
+        userTable.getTableProperties().getTableId());
     outputObject.put(DATA_KEY_COUNT, numRowsToWrite);
     outputObject.put(DATA_KEY_COLUMNS, columnJsonMap);
     outputObject.put(DATA_KEY_COLUMN_DATA, elementKeyToColumnData);
     outputObject.put(DATA_KEY_DATA, partialData);
+    outputObject.put(DATA_KEY_ROW_IDS, rowIds);
     String outputString = gson.toJson(outputObject);
     return outputString;
   }

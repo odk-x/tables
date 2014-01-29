@@ -225,6 +225,10 @@ public abstract class CustomView extends LinearLayout {
               + "] cannot be found.");
         return null;
      }
+     if (sqlWhereClause == null) {
+       // Then we need to say the selection is an empty string.
+       sqlWhereClause = "";
+     }
      DbTable dbTable = DbTable.getDbTable(mDbHelper, tp);
      UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause,
            sqlSelectionArgs);

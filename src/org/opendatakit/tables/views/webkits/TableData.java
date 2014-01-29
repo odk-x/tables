@@ -192,5 +192,9 @@ public class TableData {
      public String getTableId() {
        return mTable.getTableProperties().getTableId();
      }
+     
+     public String getRowId(int index) {
+       return mTable.getRowAtIndex(index).getRowId();
+     }
 
 }

@@ -93,7 +93,7 @@ public class CustomTableView extends CustomView
     String[][] metadata = new String[1][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
-    rowIds[0] = table.getRowId(index);
+    rowIds[0] = table.getRowAtIndex(index).getRowId();
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       data[0][i] = table.getData(index, i);
@@ -152,7 +152,7 @@ public class CustomTableView extends CustomView
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowId(indexes.get(j));
+        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
         data[j][i] = table.getData(indexes.get(j), i);
         metadata[j] = table.getAllMetadataForRow(indexes.get(j));
       }
@@ -199,7 +199,7 @@ public class CustomTableView extends CustomView
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowId(indexes.get(j));
+        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
         data[j][i] = table.getData(indexes.get(j), i);
         metadata[j] = table.getAllMetadataForRow(indexes.get(j));
       }
@@ -243,7 +243,8 @@ public class CustomTableView extends CustomView
 
   @Override
   public boolean selectItem(int index) {
-    ((TableMapInnerFragment) mFragment).focusOnMarker(table.getRowId(index));
+    ((TableMapInnerFragment) mFragment).focusOnMarker(
+        table.getRowAtIndex(index).getRowId());
     return true;
   }
 

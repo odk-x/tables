@@ -442,11 +442,11 @@ public class Controller implements CustomViewCallbacks {
 	}
 
 	Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
-          null, null, null, table.getRowId(rowNum));
+          null, null, null, table.getRowAtIndex(rowNum).getRowId());
 
 	if (intent != null) {
       CollectUtil.launchCollectToEditRow(activity, intent,
-          table.getRowId(rowNum));
+          table.getRowAtIndex(rowNum).getRowId());
     } else {
       Log.e(TAG, "intent null when trying to create for edit row.");
     }

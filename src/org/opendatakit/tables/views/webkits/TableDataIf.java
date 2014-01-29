@@ -60,6 +60,25 @@ public class TableDataIf {
 	public String getColumnData(String elementPath) {
 		return weakTable.get().getColumnData(elementPath);
 	}
+	
+	/**
+	 * Returns the tableId of the table being displayed.
+	 * @return the tabeId
+	 */
+	// @JavascriptInterface
+	public String getTableId() {
+	  return weakTable.get().getTableId();
+	}
+	
+	/**
+	 * Get the id for the row at the given index.
+	 * @param rowNumber the row number
+	 * @return the rowId of the row number
+	 */
+	// @JavascriptInterface
+	public String getRowId(int rowNumber) {
+	  return weakTable.get().getRowId(rowNumber);
+	}
 
 	/**
 	 * Return a stringified JSON object mapping elementKey its column type.
@@ -102,15 +121,15 @@ public class TableDataIf {
 	 * <p>
 	 * If {@link #isGroupedBy()} returns true, a valid elementPath is __count,
 	 * which will return the number of rows with the grouped by value.
-	 * @param rowNum the row number
+	 * @param rowNumber the row number
 	 * @param elementPath the element path of the column
 	 * @return the String representation of the datum at the given row in the
 	 * given column, or null if the value in the database is null or the column
 	 * does not exist
 	 */
 	// @JavascriptInterface
-	public String getData(int rowNum, String elementPath) {
-		return weakTable.get().getData(rowNum, elementPath);
+	public String getData(int rowNumber, String elementPath) {
+		return weakTable.get().getData(rowNumber, elementPath);
 	}
 	
 	/**

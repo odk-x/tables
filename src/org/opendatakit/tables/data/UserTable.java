@@ -226,10 +226,6 @@ public class UserTable {
     }
   }
 
-  public String getRowId(int rowNum) {
-    return this.mRows.get(rowNum).mRowId;
-  }
-
   public Long getTimestamp(int rowNum) {
     return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
@@ -514,6 +510,14 @@ public class UserTable {
      */
     public String getMetadataAtIndex(int index) {
       return mMetadata[index];
+    }
+    
+    /**
+     * Return the id of this row.
+     * @return
+     */
+    public String getRowId() {
+      return this.mRowId;
     }
 
     /**
