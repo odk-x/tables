@@ -292,7 +292,7 @@ public class SyncProcessor {
       tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
           KeyValueStore.Type.SERVER);
       SyncTag syncTag = synchronizer.setTableProperties(tableId, tp.getSyncTag(),
-          tp.getDbTableName(), getAllKVSEntries(tableId, KeyValueStore.Type.SERVER));
+          getAllKVSEntries(tableId, KeyValueStore.Type.SERVER));
       // So we've updated the server.
       tableResult.setPushedLocalProperties(true);
       tp.setSyncTag(syncTag);
@@ -346,7 +346,7 @@ public class SyncProcessor {
        * server. This comes in two parts--the definition and the properties.
        **************************/
       // First create the table definition on the server.
-      SyncTag syncTag = synchronizer.createTable(tableId, getColumnsForTable(tp));
+      SyncTag syncTag = synchronizer.createTable(tableId, tp.getSyncTag(), getColumnsForTable(tp));
       // set schema syncTag
       tp.setSyncTag(syncTag);
       // TODO: make sure tp copy is always current...
@@ -354,8 +354,7 @@ public class SyncProcessor {
       // now create the TableProperties on the server.
       ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = getAllKVSEntries(tp.getTableId(),
           KeyValueStore.Type.SERVER);
-      SyncTag syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), syncTag,
-          tp.getDbTableName(), kvsEntries);
+      SyncTag syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), syncTag, kvsEntries);
       // If we make it here we've set both the definition and the properties,
       // so we can say yes we've added the table to the server.
       tableResult.setPushedLocalProperties(true);

@@ -52,12 +52,30 @@ public interface Synchronizer {
    *
    * @param tableId
    *          the unique identifier of the table
+   * @param currentSyncTag
+   *          the current SyncTag for the table
    * @param cols
    *          a map from column names to column types, see {@link ColumnType}
-   * @return the SyncTag for the table
+   * @return the revised SyncTag for the table
    */
-  public SyncTag createTable(String tableId, ArrayList<Column> columns)
+  public SyncTag createTable(String tableId, SyncTag currentSyncTag, ArrayList<Column> columns)
       throws IOException;
+
+  /**
+   * Sets the table name and table properties on the server.
+   *
+   * @param tableId
+   *          the unique identifier of the table
+   * @param currentSyncTag
+   *          the last value that was stored as the syncTag
+   * @param kvsEntries
+   *          all the entries in the key value store for this table. Should
+   *          be of the server kvs, since this is for synchronization.
+   * @return the syncTag of the table
+   * @throws IOException
+   */
+  public SyncTag setTableProperties(String tableId, SyncTag currentSyncTag,
+                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
 
   /**
    * Delete the table with the given id from the server.
@@ -120,24 +138,6 @@ public interface Synchronizer {
    */
   public SyncTag deleteRows(String tableId, SyncTag currentSyncTag, List<String> rowIds)
       throws IOException;
-
-  /**
-   * Sets the table name and table properties on the server.
-   *
-   * @param tableId
-   *          the unique identifier of the table
-   * @param currentSyncTag
-   *          the last value that was stored as the syncTag
-   * @param tableKey
-   *          the tableKey of the table (from the definitions tables)
-   * @param kvsEntries
-   *          all the entries in the key value store for this table. Should
-   *          be of the server kvs, since this is for synchronization.
-   * @return the syncTag of the table
-   * @throws IOException
-   */
-  public SyncTag setTableProperties(String tableId, SyncTag currentSyncTag, String tableName,
-                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
 
   /**
    * Synchronize all the files in an app, including both app-level and table-

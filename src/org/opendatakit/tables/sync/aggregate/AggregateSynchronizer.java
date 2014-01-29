@@ -25,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInte
 import org.opendatakit.aggregate.odktables.rest.serialization.OdkJsonHttpMessageConverter;
 import org.opendatakit.aggregate.odktables.rest.serialization.OdkXmlHttpMessageConverter;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
@@ -67,7 +69,9 @@ import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.TextPlainHttpMessageConverter;
+import org.opendatakit.tables.sync.exceptions.AccessDeniedException;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.exceptions.RequestFailureException;
 import org.opendatakit.tables.utils.FileUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.core.io.FileSystemResource;
@@ -77,9 +81,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpClientAndroidlibRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import android.net.Uri;
@@ -146,22 +153,63 @@ public class AggregateSynchronizer implements Synchronizer {
     // plain text
     converters.add(new TextPlainHttpMessageConverter());
     // JSON conversion...
-    converters.add(new OdkJsonHttpMessageConverter());
+    converters.add(new OdkJsonHttpMessageConverter(true));
     // XML conversion...
     converters.add(new OdkXmlHttpMessageConverter());
 
     this.rt.setMessageConverters(converters);
-    MediaType protocolType = new MediaType(MediaType.TEXT_XML.getType(), MediaType.TEXT_XML.getSubtype(), Charset.forName(ApiConstants.UTF8_ENCODE));
+    this.rt.setErrorHandler(new ResponseErrorHandler() {
 
-    List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
-    acceptableMediaTypes.add(MediaType.APPLICATION_JSON);
-    acceptableMediaTypes.add(protocolType);
-    acceptableMediaTypes.add(MediaType.APPLICATION_WILDCARD_XML);
+      @Override
+      public void handleError(ClientHttpResponse resp) throws IOException {
+        switch ( resp.getStatusCode().value() ) {
+        case HttpStatus.SC_OK:
+          throw new IllegalStateException("OK should not get here");
+        case HttpStatus.SC_FORBIDDEN:
+          throw new AccessDeniedException(resp.getStatusText());
+        default:
+          throw new RequestFailureException(resp.getStatusText());
+        }
+
+      }
+
+      @Override
+      public boolean hasError(ClientHttpResponse resp) throws IOException {
+        org.springframework.http.HttpStatus status = resp.getStatusCode();
+        int rc = status.value();
+        return ( rc != HttpStatus.SC_OK );
+      }});
 
     this.requestHeaders = new HttpHeaders();
-    this.requestHeaders.setAccept(acceptableMediaTypes);
-    this.requestHeaders.setAcceptCharset(Collections.singletonList(Charset.forName(ApiConstants.UTF8_ENCODE)));
+
+    // select our preferred protocol...
+    MediaType protocolType = MediaType.APPLICATION_JSON;
     this.requestHeaders.setContentType(protocolType);
+
+    // set our preferred response media type to json using quality parameters
+    List<MediaType> acceptableMediaTypes = new ArrayList<MediaType>();
+
+    Map<String,String> mediaTypeParams;
+    mediaTypeParams = new HashMap<String,String>();
+    mediaTypeParams.put("charset", "utf-8");
+    mediaTypeParams.put("q", "0.9");
+    MediaType txmlUtf8 = new MediaType(MediaType.TEXT_XML.getType(), MediaType.TEXT_XML.getSubtype(), mediaTypeParams);
+    mediaTypeParams = new HashMap<String,String>();
+    mediaTypeParams.put("charset", "utf-8");
+    mediaTypeParams.put("q", "0.8");
+    MediaType axmlUtf8 = new MediaType(MediaType.APPLICATION_WILDCARD_XML.getType(), MediaType.APPLICATION_WILDCARD_XML.getSubtype(), mediaTypeParams);
+    mediaTypeParams = new HashMap<String,String>();
+    mediaTypeParams.put("q", "1.0");
+    MediaType json = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), mediaTypeParams);
+
+    acceptableMediaTypes.add(json);
+    acceptableMediaTypes.add(txmlUtf8);
+    acceptableMediaTypes.add(axmlUtf8);
+
+    this.requestHeaders.setAccept(acceptableMediaTypes);
+
+    // set the response entity character set to UTF-8
+    this.requestHeaders.setAcceptCharset(Collections.singletonList(Charset.forName(ApiConstants.UTF8_ENCODE)));
 
     this.resources = new HashMap<String, TableResource>();
 
@@ -170,8 +218,23 @@ public class AggregateSynchronizer implements Synchronizer {
 
     this.rt.setInterceptors(interceptors);
 
+    HttpClientAndroidlibRequestFactory factory = new HttpClientAndroidlibRequestFactory(WebUtils.createHttpClient(WebUtils.CONNECTION_TIMEOUT, 1));
+    factory.setConnectTimeout(WebUtils.CONNECTION_TIMEOUT);
+    factory.setReadTimeout(2*WebUtils.CONNECTION_TIMEOUT);
+    this.rt.setRequestFactory(factory);
+
     checkAccessToken(accessToken);
     this.accessToken = accessToken;
+
+    // undo work-around for erroneous gzip on auth token interaction
+    converters = new ArrayList<HttpMessageConverter<?>>();
+    // plain text
+    converters.add(new TextPlainHttpMessageConverter());
+    // JSON conversion...
+    converters.add(new OdkJsonHttpMessageConverter(false));
+    // XML conversion...
+    converters.add(new OdkXmlHttpMessageConverter());
+    this.rt.setMessageConverters(converters);
   }
 
   /**
@@ -190,7 +253,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
     ResponseEntity<Object> responseEntity;
     try {
-      responseEntity = rt.getForEntity(TOKEN_INFO + accessToken, Object.class);
+      responseEntity = rt.getForEntity(TOKEN_INFO + URLEncoder.encode(accessToken, ApiConstants.UTF8_ENCODE), Object.class);
       @SuppressWarnings("unused")
       Object o = responseEntity.getBody();
     } catch (HttpClientErrorException e) {
@@ -211,6 +274,10 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new InvalidAuthTokenException("Unknown response from auth token verification (" + e.toString() + ")", e);
         }
       }
+    } catch (Exception e ) {
+      Log.e(TAG, "HttpClientErrorException in checkAccessToken");
+      Object o = null;
+      throw new InvalidAuthTokenException("Invalid auth token (): " + accessToken, e);
     }
   }
 
@@ -252,23 +319,15 @@ public class AggregateSynchronizer implements Synchronizer {
     return definitionRes;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.opendatakit.tables.sync.Synchronizer#createTable(j
-   * ava.lang.String, java.util.List, java.lang.String, java.lang.String,
-   * org.opendatakit.aggregate.odktables.entity.api.TableType, java.lang.String)
-   */
   @Override
-  public SyncTag createTable(String tableId, ArrayList<Column> columns)
+  public SyncTag createTable(String tableId, SyncTag syncTag, ArrayList<Column> columns)
       throws IOException {
 
     // build request
     URI uri = baseUri.resolve(tableId);
-    TableDefinition definition = new TableDefinition(tableId, null, columns);
+    TableDefinition definition = new TableDefinition(tableId, syncTag.getSchemaETag(), columns);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
-
     // create table
     ResponseEntity<TableResource> resourceEntity;
     try {
@@ -284,9 +343,9 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources.put(resource.getTableId(), resource);
 
     // return sync tag
-    SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
+    SyncTag newSyncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
                                   resource.getSchemaETag());
-    return syncTag;
+    return newSyncTag;
   }
 
   @Override
@@ -517,14 +576,8 @@ public class AggregateSynchronizer implements Synchronizer {
     return syncTag;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.opendatakit.tables.sync.Synchronizer#setTableProperties(
-   * java.lang.String, java.lang.String, java.lang.String, java.util.List)
-   */
   @Override
-  public SyncTag setTableProperties(String tableId, SyncTag currentTag, String tableKey,
+  public SyncTag setTableProperties(String tableId, SyncTag currentTag,
                                    ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
     TableResource resource = getTable(tableId);
 
@@ -646,7 +699,7 @@ public class AggregateSynchronizer implements Synchronizer {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     ResponseEntity<OdkTablesFileManifest> responseEntity;
-      responseEntity = rt.exchange(uriBuilder.build().toString(),
+    responseEntity = rt.exchange(uriBuilder.build().toString(),
               HttpMethod.GET, null, OdkTablesFileManifest.class);
     return responseEntity.getBody().getEntries();
   }
