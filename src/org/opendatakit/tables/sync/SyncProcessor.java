@@ -348,32 +348,39 @@ public class SyncProcessor {
       // First create the table definition on the server.
       SyncTag syncTag = synchronizer.createTable(tableId, tp.getSyncTag(), getColumnsForTable(tp));
 
+      // revise ONLY the schemaETag
+      SyncTag revisedTag = new SyncTag(tp.getSyncTag());
+      revisedTag.setSchemaETag(syncTag.getSchemaETag());
+
       if ( tp.getSyncTag().getSchemaETag() == null ||
            !syncTag.getSchemaETag().equals(tp.getSyncTag().getSchemaETag()) ) {
-        tp.setSyncTag(syncTag);
+        tp.setSyncTag(revisedTag);
         // we are transferring to a different server database or schema. Reverify that all the
         // 'rest' records in our table are on the server by marking them all as 'inserting' records.
         DbTable dbt = DbTable.getDbTable(dbh, tp);
         dbt.changeRestRowsToInserting();
       } else {
         // set schema syncTag
-        tp.setSyncTag(syncTag);
+        tp.setSyncTag(revisedTag);
       }
       // TODO: make sure tp copy is always current...
 
       // now create the TableProperties on the server.
       ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = getAllKVSEntries(tp.getTableId(),
           KeyValueStore.Type.SERVER);
-      SyncTag syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), syncTag, kvsEntries);
+      SyncTag syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), tp.getSyncTag(), kvsEntries);
       // If we make it here we've set both the definition and the properties,
       // so we can say yes we've added the table to the server.
       tableResult.setPushedLocalProperties(true);
-      tp.setSyncTag(syncTagProperties);
+      revisedTag = new SyncTag(tp.getSyncTag());
+      revisedTag.setSchemaETag(syncTagProperties.getSchemaETag());
+      revisedTag.setPropertiesETag(syncTagProperties.getPropertiesETag());
+      tp.setSyncTag(revisedTag);
 
       /**************************
        * PART 2: INSERT THE DATA Now we need to put some data on the server.
        **************************/
-      Modification modification = synchronizer.insertRows(tableId, syncTagProperties, rowsToInsert);
+      Modification modification = synchronizer.insertRows(tableId, revisedTag, rowsToInsert);
       updateDbFromModification(modification, table, tp);
       // If we made it here, then we know we pushed the data to the server AND
       // updated our db with the synctags appropriately.

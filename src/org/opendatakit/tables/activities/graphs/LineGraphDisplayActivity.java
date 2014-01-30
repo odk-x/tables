@@ -37,9 +37,6 @@ public class LineGraphDisplayActivity extends SherlockActivity
 
   private static final String TAG = "LineGraphDisplayActivity";
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
     private DbHelper dbh;
     private Controller c;
     private Query query;

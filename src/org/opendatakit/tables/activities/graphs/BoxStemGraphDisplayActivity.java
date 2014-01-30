@@ -50,9 +50,6 @@ public class BoxStemGraphDisplayActivity extends SherlockActivity
 
   private static final String TAG = "BoxStemGraphDisplayActivity";
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
     private Controller c;
     private Query query;
     private UserTable table;

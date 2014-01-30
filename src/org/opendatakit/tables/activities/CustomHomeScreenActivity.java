@@ -163,8 +163,8 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // table), so you have to handle the return the same in both cases--first
     // retrieve the tableId for the table that launched Collect, then get the
     // TableProperties for that table, then add the row.
-    case Controller.RCODE_ODKCOLLECT_ADD_ROW:
-    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE: {
       String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(this);
       if (tableId == null) {
         Log.e(TAG, "return from ODK Collect expected to find a tableId " +
@@ -178,6 +178,12 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
       CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, tpToReceiveAdd,
           resultCode, data);
       break;
+    }
+    case Controller.RCODE_ODK_SURVEY_ADD_ROW:
+    case Controller.RCODE_ODK_SURVEY_EDIT_ROW: {
+      // no-op ???
+      break;
+    }
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
