@@ -19,9 +19,12 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
+import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.SurveyUtil;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
@@ -32,6 +35,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -53,6 +57,7 @@ import com.actionbarsherlock.view.SubMenu;
 public class TableActivity extends SherlockFragmentActivity
     implements CustomViewCallbacks{
 
+  public static final String t = "TableActivity";
   // / Static Strings ///
   public static final String INTENT_KEY_TABLE_ID = "tableId";
   public static final String INTENT_KEY_SEARCH = "search";
@@ -75,13 +80,6 @@ public class TableActivity extends SherlockFragmentActivity
   private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
   private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
   static final int FIRST_FREE_MENU_ITEM_ID = 8;
-
-  // Return codes from different activities.
-  private static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
-  private static final int RCODE_COLUMN_MANAGER = 1;
-  private static final int RCODE_ODKCOLLECT_ADD_ROW = 2;
-  private static final int RCODE_ODKCOLLECT_EDIT_ROW = 3;
-  private static final int RCODE_LIST_VIEW_MANAGER = 4;
 
   /** The current fragment being displayed. */
   private ITableFragment mCurrentFragment;
@@ -114,6 +112,8 @@ public class TableActivity extends SherlockFragmentActivity
   private boolean mIsOverview;
   private Activity mActivity;
 
+  private String mAppName = TableFileUtils.ODK_TABLES_APP_NAME;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -145,7 +145,7 @@ public class TableActivity extends SherlockFragmentActivity
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
 
     // Initialize data objects.
-    mDbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    mDbh = DbHelper.getDbHelper(this, mAppName);
     refreshDbTable(tableId);
     mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
         mTableProperties);
@@ -324,51 +324,28 @@ public class TableActivity extends SherlockFragmentActivity
     }
   }
 
-  /**
-   * This should launch Collect to edit the data for the row. If there is a
-   * custom form defined for the table, its info should be passed in. Otherwise,
-   * null values will cause the default form to be generated, which is
-   * just every column with its own entry field on a single screen.
-   *
-   * @param table
-   * @param rowNum
-   * @param formId
-   * @param formVersion
-   * @param formRootElement
-   */
-  void editRow(UserTable table, int rowNum,
-          String formId, String formVersion, String formRootElement) {
-    Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
-      String value = table.getData(rowNum, mTableProperties.getColumnIndex(
-          cp.getElementKey()));
-      elementKeyToValue.put(cp.getElementKey(), value);
-    }
-    Intent collectEditIntent =
-    	CollectUtil.getIntentForOdkCollectEditRow(this, mTableProperties,
-    	    elementKeyToValue, formId, formVersion, formRootElement, mRowId);
-    if (collectEditIntent != null) {
-      mRowId = table.getRowId(rowNum);
-      CollectUtil.launchCollectToEditRow(this, collectEditIntent, mRowId);
-    }
-  }
-
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
-    case RCODE_TABLE_PROPERTIES_MANAGER:
+    case Controller.RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
       break;
-    case RCODE_COLUMN_MANAGER:
+    case Controller.RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
       break;
-    case RCODE_ODKCOLLECT_ADD_ROW:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW:
       handleOdkCollectAddReturn(resultCode, data);
       break;
-    case RCODE_ODKCOLLECT_EDIT_ROW:
+    case Controller.RCODE_ODK_COLLECT_EDIT_ROW:
       handleOdkCollectEditReturn(resultCode, data);
       break;
-    case RCODE_LIST_VIEW_MANAGER:
+    case Controller.RCODE_ODK_SURVEY_ADD_ROW:
+      handleOdkSurveyAddReturn(resultCode, data);
+      break;
+    case Controller.RCODE_ODK_SURVEY_EDIT_ROW:
+      handleOdkSurveyEditReturn(resultCode, data);
+      break;
+    case Controller.RCODE_LIST_VIEW_MANAGER:
       handleListViewManagerReturn();
       break;
     default:
@@ -510,19 +487,19 @@ public class TableActivity extends SherlockFragmentActivity
         Intent tablePropertiesIntent = new Intent(this, TablePropertiesManager.class);
         tablePropertiesIntent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
-        startActivityForResult(tablePropertiesIntent, RCODE_TABLE_PROPERTIES_MANAGER);
+        startActivityForResult(tablePropertiesIntent, Controller.RCODE_TABLE_PROPERTIES_MANAGER);
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
         Intent columnManagerIntent = new Intent(this, ColumnManager.class);
         columnManagerIntent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
-        startActivityForResult(columnManagerIntent, RCODE_COLUMN_MANAGER);
+        startActivityForResult(columnManagerIntent, Controller.RCODE_COLUMN_MANAGER);
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
         Intent listViewManagerIntent = new Intent(this, ListViewManager.class);
         listViewManagerIntent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
-        startActivityForResult(listViewManagerIntent, RCODE_LIST_VIEW_MANAGER);
+        startActivityForResult(listViewManagerIntent, Controller.RCODE_LIST_VIEW_MANAGER);
         return true;
       case android.R.id.home:
         Intent tableManagerIntent = new Intent(this, TableManager.class);
@@ -545,16 +522,25 @@ public class TableActivity extends SherlockFragmentActivity
    *          launching the activity.
    */
   public void addRow(Map<String, String> elementNameToValue) {
-    CollectFormParameters params = CollectUtil.CollectFormParameters
-        .constructCollectFormParameters(mTableProperties);
-    // Try to construct the values currently in the search bar to
-    // prepopulate with the form. We're going to ignore joins. This
-    // means that if there IS a join column, we'll throw an error!!!
-    // So be careful.
-    Intent collectAddIntent =
-      CollectUtil.getIntentForOdkCollectAddRow(this, mTableProperties, params, elementNameToValue);
-    if (collectAddIntent != null) {
-      CollectUtil.launchCollectToAddRow(this, collectAddIntent, mTableProperties);
+    FormType formType = FormType.constructFormType(mTableProperties);
+    if ( formType.isCollectForm() ) {
+      CollectFormParameters params = formType.getCollectFormParameters();
+      // Try to construct the values currently in the search bar to
+      // prepopulate with the form. We're going to ignore joins. This
+      // means that if there IS a join column, we'll throw an error!!!
+      // So be careful.
+      Intent collectAddIntent =
+        CollectUtil.getIntentForOdkCollectAddRow(this, mTableProperties, params, elementNameToValue);
+      if (collectAddIntent != null) {
+        CollectUtil.launchCollectToAddRow(this, collectAddIntent, mTableProperties);
+      }
+    } else {
+      SurveyFormParameters params = formType.getSurveyFormParameters();
+      Intent surveyAddIntent =
+          SurveyUtil.getIntentForOdkSurveyAddRow(this, mTableProperties, mAppName, params, null);
+      if (surveyAddIntent != null) {
+        SurveyUtil.launchSurveyToAddRow(this, surveyAddIntent, mTableProperties);
+      }
     }
   }
 
@@ -592,7 +578,7 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleOdkCollectAddReturn(int returnCode, Intent data) {
-	if (!CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, mTableProperties, returnCode, data)) {
+	if (!CollectUtil.handleOdkCollectAddReturn(this, mAppName, mTableProperties, returnCode, data)) {
       return;
     }
 	// TODO: refresh display???
@@ -600,7 +586,26 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
-    if (!CollectUtil.handleOdkCollectEditReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, mTableProperties, returnCode, data)) {
+    if (!CollectUtil.handleOdkCollectEditReturn(this, mAppName, mTableProperties, returnCode, data)) {
+      return;
+    }
+    mRowId = null;
+    // TODO: refresh display???
+    refreshDbTable(mTableProperties.getTableId());
+  }
+
+  private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
+    if (returnCode != SherlockActivity.RESULT_OK) {
+      Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
+      return;
+    }
+   // TODO: refresh display???
+   refreshDbTable(mTableProperties.getTableId());
+  }
+
+  private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
+    if (returnCode != SherlockActivity.RESULT_OK) {
+      Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }
     mRowId = null;

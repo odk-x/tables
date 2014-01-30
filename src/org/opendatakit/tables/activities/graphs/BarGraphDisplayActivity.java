@@ -83,9 +83,6 @@ implements DisplayActivity {
 
 	public static final String GRAPH_TYPE = "graphtype";
 
-	private static final int RCODE_ODKCOLLECT_ADD_ROW =
-			Controller.FIRST_FREE_RCODE;
-
 	private Controller c;
 	private Query query;
 	private UserTable table;
@@ -318,9 +315,6 @@ implements DisplayActivity {
 	}
 	/*
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
     private Controller c;
     private Query query;
     private List<String> labels;
@@ -371,7 +365,7 @@ implements DisplayActivity {
             return;
         }
         switch (requestCode) {
-        case RCODE_ODKCOLLECT_ADD_ROW:
+        case Controller.RCODE_ODK_COLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(
                     Integer.valueOf(data.getData().getLastPathSegment()));
             init();

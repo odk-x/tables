@@ -22,7 +22,6 @@ import java.util.Map;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 public class SyncTag {
@@ -30,6 +29,12 @@ public class SyncTag {
   private String dataETag;
   private String propertiesETag;
   private String schemaETag;
+
+  public SyncTag(SyncTag syncTag) {
+    this.dataETag = syncTag.dataETag;
+    this.propertiesETag = syncTag.propertiesETag;
+    this.schemaETag = syncTag.schemaETag;
+  }
 
   public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
     this.dataETag = dataETag;
@@ -120,6 +125,7 @@ public class SyncTag {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static SyncTag valueOf(String syncTag) {
     if ( syncTag == null || syncTag.length() == 0 ) {
       return new SyncTag(null, null, null);

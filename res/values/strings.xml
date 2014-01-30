@@ -312,4 +312,6 @@
 	<string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
 	<string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
 	<string name="shortcut_name">ODK Tables App</string>
+	<string name="use_collect_form">Use ODK Collect form</string>
+	<string name="use_survey_form">Use ODK Survey form</string>
 </resources>

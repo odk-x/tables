@@ -582,7 +582,7 @@ public class AggregateSynchronizer implements Synchronizer {
     TableResource resource = getTable(tableId);
 
     // put new properties
-    TableProperties properties = new TableProperties(currentTag.getPropertiesETag(), tableId,
+    TableProperties properties = new TableProperties(currentTag.getSchemaETag(), currentTag.getPropertiesETag(), tableId,
                                                      kvsEntries);
     HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
     ResponseEntity<PropertiesResource> updatedEntity;
@@ -595,7 +595,7 @@ public class AggregateSynchronizer implements Synchronizer {
     PropertiesResource propsResource = updatedEntity.getBody();
 
     SyncTag newTag = new SyncTag(currentTag.getDataETag(), propsResource.getPropertiesETag(),
-                                 currentTag.getSchemaETag());
+                                  propsResource.getSchemaETag());
     return newTag;
   }
 
