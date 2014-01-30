@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 /**
  * An IncomingModification represents changes coming down from the server.
@@ -44,7 +45,7 @@ public class IncomingModification {
   private boolean tablePropertiesChanged;
   private PropertiesResource tablePropertiesRes;
 
-  private String tableSyncTag;
+  private SyncTag tableSyncTag;
 
   public IncomingModification() {
     this.rows = new ArrayList<SyncRow>();
@@ -52,7 +53,7 @@ public class IncomingModification {
     tablePropertiesRes = null;
     this.tableSchemaChanged = false;
     this.tablePropertiesChanged = false;
-    this.tableSyncTag = null;
+    this.tableSyncTag = new SyncTag(null,null,null);
   }
 
   /**
@@ -68,7 +69,7 @@ public class IncomingModification {
    *
    * @return the latest synchronization tag
    */
-  public String getTableSyncTag() {
+  public SyncTag getTableSyncTag() {
     return this.tableSyncTag;
   }
 
@@ -130,7 +131,7 @@ public class IncomingModification {
    * @param tableSyncTag
    *          the latest synchronization tag
    */
-  public void setTableSyncTag(final String tableSyncTag) {
+  public void setTableSyncTag(final SyncTag tableSyncTag) {
     this.tableSyncTag = tableSyncTag;
   }
 

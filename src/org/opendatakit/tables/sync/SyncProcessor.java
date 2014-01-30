@@ -50,6 +50,7 @@ import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.springframework.web.client.ResourceAccessException;
 
 import android.content.ContentValues;
 import android.content.SyncResult;
@@ -134,7 +135,7 @@ public class SyncProcessor {
     // First we're going to synchronize the app level files.
     try {
       synchronizer.syncAppLevelFiles(pushLocalAppLevelFiles);
-    } catch (IOException e) {
+    } catch (ResourceAccessException e) {
       // TODO: update a synchronization result to report back to them as well.
       Log.e(TAG, "[synchronize] error trying to synchronize app-level files.");
       e.printStackTrace();
@@ -156,7 +157,7 @@ public class SyncProcessor {
 
     SyncTag newTag = new SyncTag(null, null, definitionResource.getSchemaETag());
 
-    TableProperties tp = addTableFromDefinitionResource(definitionResource, newTag.toString());
+    TableProperties tp = addTableFromDefinitionResource(definitionResource, newTag);
 
     return tp;
   }
@@ -290,8 +291,8 @@ public class SyncProcessor {
       // update the tp.
       tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
           KeyValueStore.Type.SERVER);
-      String syncTag = synchronizer.setTableProperties(tableId, tp.getSyncTag(),
-          tp.getDbTableName(), getAllKVSEntries(tableId, KeyValueStore.Type.SERVER));
+      SyncTag syncTag = synchronizer.setTableProperties(tableId, tp.getSyncTag(),
+          getAllKVSEntries(tableId, KeyValueStore.Type.SERVER));
       // So we've updated the server.
       tableResult.setPushedLocalProperties(true);
       tp.setSyncTag(syncTag);
@@ -312,11 +313,11 @@ public class SyncProcessor {
     String tableId = tp.getTableId();
     Log.i(TAG, "INSERTING " + tp.getDisplayName());
 
-    // Here we'll sycnhronize the table files.
+    // Here we'll synchronize the table files.
     try {
       synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
-    } catch (IOException e) {
-      ioException("synchronizeTableInserting--nonMediaFiles", tp, e, tableResult);
+    } catch (ResourceAccessException e) {
+      resourceAccessException("synchronizeTableInserting--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableInserting] error synchronizing table " + "files");
       return false;
     } catch (Exception e) {
@@ -345,26 +346,41 @@ public class SyncProcessor {
        * server. This comes in two parts--the definition and the properties.
        **************************/
       // First create the table definition on the server.
-      String syncTag = synchronizer.createTable(tableId, null, getColumnsForTable(tp),
-          tp.getDisplayName());
-      // set schema syncTag
-      tp.setSyncTag(syncTag);
+      SyncTag syncTag = synchronizer.createTable(tableId, tp.getSyncTag(), getColumnsForTable(tp));
+
+      // revise ONLY the schemaETag
+      SyncTag revisedTag = new SyncTag(tp.getSyncTag());
+      revisedTag.setSchemaETag(syncTag.getSchemaETag());
+
+      if ( tp.getSyncTag().getSchemaETag() == null ||
+           !syncTag.getSchemaETag().equals(tp.getSyncTag().getSchemaETag()) ) {
+        tp.setSyncTag(revisedTag);
+        // we are transferring to a different server database or schema. Reverify that all the
+        // 'rest' records in our table are on the server by marking them all as 'inserting' records.
+        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        dbt.changeRestRowsToInserting();
+      } else {
+        // set schema syncTag
+        tp.setSyncTag(revisedTag);
+      }
       // TODO: make sure tp copy is always current...
 
       // now create the TableProperties on the server.
-      List<OdkTablesKeyValueStoreEntry> kvsEntries = getAllKVSEntries(tp.getTableId(),
+      ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = getAllKVSEntries(tp.getTableId(),
           KeyValueStore.Type.SERVER);
-      String syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), syncTag,
-          tp.getDbTableName(), kvsEntries);
+      SyncTag syncTagProperties = synchronizer.setTableProperties(tp.getTableId(), tp.getSyncTag(), kvsEntries);
       // If we make it here we've set both the definition and the properties,
       // so we can say yes we've added the table to the server.
       tableResult.setPushedLocalProperties(true);
-      tp.setSyncTag(syncTagProperties);
+      revisedTag = new SyncTag(tp.getSyncTag());
+      revisedTag.setSchemaETag(syncTagProperties.getSchemaETag());
+      revisedTag.setPropertiesETag(syncTagProperties.getPropertiesETag());
+      tp.setSyncTag(revisedTag);
 
       /**************************
        * PART 2: INSERT THE DATA Now we need to put some data on the server.
        **************************/
-      Modification modification = synchronizer.insertRows(tableId, syncTagProperties, rowsToInsert);
+      Modification modification = synchronizer.insertRows(tableId, revisedTag, rowsToInsert);
       updateDbFromModification(modification, table, tp);
       // If we made it here, then we know we pushed the data to the server AND
       // updated our db with the synctags appropriately.
@@ -377,8 +393,8 @@ public class SyncProcessor {
         Log.d(TAG, "[synchronizeTableInserting] synching media files");
         try {
           synchronizer.syncRowDataFiles(tp.getTableId());
-        } catch (IOException e) {
-          ioException("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
+        } catch (ResourceAccessException e) {
+          resourceAccessException("synchronizeTableInserting--mediaFiles", tp, e, tableResult);
           Log.e(TAG, "[synchronizeTableInserting] error synchronizing media " + "files");
           return false;
         } catch (Exception e) {
@@ -466,8 +482,8 @@ public class SyncProcessor {
 
     try {
       synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
-    } catch (IOException e) {
-      ioException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
+    } catch (ResourceAccessException e) {
+      resourceAccessException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
       return false;
     } catch (Exception e) {
@@ -538,7 +554,7 @@ public class SyncProcessor {
       updateDbFromModification(modification, table, tp);
       modification = synchronizer.updateRows(tableId, tp.getSyncTag(), rowsToUpdate);
       updateDbFromModification(modification, table, tp);
-      String syncTag = synchronizer.deleteRows(tableId, tp.getSyncTag(),
+      SyncTag syncTag = synchronizer.deleteRows(tableId, tp.getSyncTag(),
           getRowIdsAsList(rowsToDelete));
       // And now update that we've pushed our changes to the server.
       tableResult.setPushedLocalData(true);
@@ -553,8 +569,8 @@ public class SyncProcessor {
         try {
           Log.d(TAG, "[synchronizeTableRest] synching media files");
           synchronizer.syncRowDataFiles(tp.getTableId());
-        } catch (IOException e) {
-          ioException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
+        } catch (ResourceAccessException e) {
+          resourceAccessException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
           Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
           return false;
         } catch (Exception e) {
@@ -580,6 +596,13 @@ public class SyncProcessor {
     }
 
     return success;
+  }
+
+  private void resourceAccessException(String method, TableProperties tp, ResourceAccessException e, TableResult tableResult) {
+    Log.e(TAG, String.format("ResourceAccessException in %s for table: %s", method, tp.getDisplayName()), e);
+    tableResult.setStatus(Status.EXCEPTION);
+    tableResult.setMessage(e.getMessage());
+    syncResult.stats.numIoExceptions++;
   }
 
   private void ioException(String method, TableProperties tp, IOException e, TableResult tableResult) {
@@ -614,7 +637,7 @@ public class SyncProcessor {
     // returned true that tp had changed and that i had a new sync row (the old
     // row). this shouldn't do that.
     IncomingModification modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
-    String newSyncTag = modification.getTableSyncTag();
+    SyncTag newSyncTag = modification.getTableSyncTag();
     // Update the tableResult object server statuses now.
     // We have enough information to know if
     // the properties or data changed on the server.
@@ -1067,14 +1090,14 @@ public class SyncProcessor {
    * @throws SchemaMismatchException
    */
   public TableProperties addTableFromDefinitionResource(
-      TableDefinitionResource definitionResource, String syncTag) throws JsonParseException,
+      TableDefinitionResource definitionResource, SyncTag syncTag) throws JsonParseException,
       JsonMappingException, IOException, SchemaMismatchException {
     KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
     TableProperties tp = TableProperties.refreshTablePropertiesForTable(dbh, definitionResource.getTableId(),
         kvsType);
     if ( tp == null ) {
       tp = TableProperties.addTable(dbh, definitionResource.getTableId(),
-          definitionResource.getDisplayName(), TableType.data,
+          definitionResource.getTableId(), TableType.data,
           definitionResource.getTableId(), kvsType);
       for (Column col : definitionResource.getColumns()) {
         // TODO: We aren't handling types correctly here. Need to have a mapping
@@ -1117,7 +1140,6 @@ public class SyncProcessor {
           throw new SchemaMismatchException("Server schema differs from local schema (column datatype change)");
         }
       }
-      tp.setDisplayName(definitionResource.getDisplayName());
     }
     // Refresh the table properties to get the columns.
     tp = TableProperties.refreshTablePropertiesForTable(dbh, definitionResource.getTableId(),
@@ -1154,11 +1176,11 @@ public class SyncProcessor {
    * @param typeOfStore
    * @return
    */
-  private List<OdkTablesKeyValueStoreEntry> getAllKVSEntries(String tableId,
+  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(String tableId,
       KeyValueStore.Type typeOfStore) {
     KeyValueStore kvs = KeyValueStoreManager.getKVSManager(dbh).getStoreForTable(tableId,
         typeOfStore);
-    List<OdkTablesKeyValueStoreEntry> allEntries = kvs.getEntries(dbh.getReadableDatabase());
+    ArrayList<OdkTablesKeyValueStoreEntry> allEntries = kvs.getEntries(dbh.getReadableDatabase());
     return allEntries;
   }
 
@@ -1169,8 +1191,8 @@ public class SyncProcessor {
    * @param tp
    * @return
    */
-  private List<Column> getColumnsForTable(TableProperties tp) {
-    List<Column> columns = new ArrayList<Column>();
+  private ArrayList<Column> getColumnsForTable(TableProperties tp) {
+    ArrayList<Column> columns = new ArrayList<Column>();
     for (ColumnProperties cp : tp.getAllColumns().values()) {
       String elementKey = cp.getElementKey();
       String elementName = cp.getElementName();

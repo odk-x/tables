@@ -3,13 +3,60 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-    
-    <CheckBox
-        android:id="@+id/edit_def_form_checkbox_use_default_form"
-        android:layout_width="fill_parent"
+
+    <RadioGroup android:id="@+id/edit_def_form_choice"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checkedButton="@+id/edit_def_form_use_default_collect_form">
+      <RadioButton
+        android:id="@+id/edit_def_form_use_default_collect_form"
+        android:layout_width="wrap_content"
         android:text="@string/use_generated_form"
         android:layout_height="wrap_content" />
-    
-    
+      <RadioButton
+        android:id="@+id/edit_def_form_use_collect_form"
+        android:layout_width="wrap_content"
+        android:text="@string/use_collect_form"
+        android:layout_height="wrap_content" />
+      <RadioButton
+        android:id="@+id/edit_def_form_use_survey_form"
+        android:layout_width="wrap_content"
+        android:text="@string/use_survey_form"
+        android:layout_height="wrap_content" />
+    </RadioGroup>
+
+    <TextView
+        android:text="@string/title_form_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+    <EditText
+        android:id="@+id/edit_form_id"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="35dip"
+        android:inputType="textNoSuggestions"
+        android:autoText="false"
+        android:capitalize="none"
+        android:enabled="false"
+        />
+
+    <TextView
+        android:id="@+id/label_root_element"
+        android:text="@string/title_root_element"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        />
+    <EditText
+        android:id="@+id/edit_root_element"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="35dip"
+        android:inputType="textNoSuggestions"
+        android:autoText="false"
+        android:capitalize="none"
+        android:enabled="false"
+        />
 
 </LinearLayout>

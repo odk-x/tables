@@ -179,7 +179,7 @@ public class KeyValueStore {
    * @param db
    * @return
    */
-  public List<OdkTablesKeyValueStoreEntry> getEntries(SQLiteDatabase db) {
+  public ArrayList<OdkTablesKeyValueStoreEntry> getEntries(SQLiteDatabase db) {
     Cursor c = db.query(this.dbBackingName,
         new String[] {KeyValueStoreColumns.TABLE_ID,
                       KeyValueStoreColumns.PARTITION,
@@ -270,8 +270,8 @@ public class KeyValueStore {
    * Get the full entries from the table. These are the full entries, with
    * tableId and type information.
    */
-  protected List<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
-    List<OdkTablesKeyValueStoreEntry> entries =
+  protected ArrayList<OdkTablesKeyValueStoreEntry> getEntriesFromCursor(Cursor c) {
+    ArrayList<OdkTablesKeyValueStoreEntry> entries =
         new ArrayList<OdkTablesKeyValueStoreEntry>();
     int idIndex = c.getColumnIndexOrThrow(KeyValueStoreColumns.TABLE_ID);
     int partitionIndex =

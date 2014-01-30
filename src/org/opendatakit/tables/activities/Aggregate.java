@@ -375,7 +375,7 @@ public class Aggregate extends SherlockActivity {
         Log.e(TAG, "[exception during synchronization. stack trace:\n" +
             Arrays.toString(e.getStackTrace()));
         success = false;
-        message = e.getMessage();
+        message = e.toString();
       }
       return result;
     }

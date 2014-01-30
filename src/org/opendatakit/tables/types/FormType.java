@@ -15,160 +15,153 @@
  */
 package org.opendatakit.tables.types;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.opendatakit.tables.R;
+import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
-
-import android.content.Context;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 /**
  * Definition of the form data type.
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public class FormType {
 
-  private static final String TAG = FormType.class.getName();
+  public static final String KVS_PARTITION = "FormType";
+  public static final String KVS_ASPECT = "default";
+  public static final String KEY_FORM_TYPE = "FormType.formType";
 
   /*
    * The two things that define a form in the system.
    */
-  private CollectFormParameters mParams;
-  // TODO: add in form version stuff
-  private TableProperties mTp;
-  private KeyValueStoreHelper mKvsh;
-  private AspectHelper mAh;
+  public enum Type {
+    COLLECT, SURVEY
+  };
 
-  /*
-   * These are tags for marking the views so that we can come back and get them
-   * upon saving.
-   */
-  public static final String TAG_FORM_ID = "formId";
-  public static final String TAG_FORM_ROOT_ELEMENT = "rootElement";
+  private Type type;
+  private CollectFormParameters mCollectParams;
+  private SurveyFormParameters mSurveyParams;
 
-
-  public FormType(CollectFormParameters params, TableProperties tp) {
-    this.mParams = params;
-    this.mTp = tp;
-    this.mKvsh = tp.getKeyValueStoreHelper(CollectUtil.KVS_PARTITION);
-    this.mAh = this.mKvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
+  public static FormType constructFormType(TableProperties tp) {
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(FormType.KVS_PARTITION);
+    KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
+    String formType = aspectHelper.getString(FormType.KEY_FORM_TYPE);
+    if (formType == null) {
+      return new FormType(CollectFormParameters.constructDefaultCollectFormParameters(tp), tp);
+    }
+    try {
+      Type t = Type.valueOf(formType);
+      if (t == Type.COLLECT) {
+        return new FormType(CollectFormParameters.constructCollectFormParameters(tp), tp);
+      }
+      return new FormType(SurveyFormParameters.constructSurveyFormParameters(tp), tp);
+    } catch (Exception e) {
+      return new FormType(CollectFormParameters.constructCollectFormParameters(tp), tp);
+    }
   }
 
-  /**
-   * Construct a form with the default info.
-   * @param tp
-   */
-  public FormType(TableProperties tp) {
-    // TODO: out of time, but need to do this!!
+  public void persist(TableProperties tp) {
+    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(FormType.KVS_PARTITION);
+    KeyValueHelper aspectHelper = kvsh.getAspectHelper(FormType.KVS_ASPECT);
+    aspectHelper.setString(KEY_FORM_TYPE, type.name());
+
+    this.mCollectParams.persist(tp);
+    this.mSurveyParams.persist(tp);
+  }
+
+  public FormType(CollectFormParameters params, TableProperties tp) {
+    this.type = Type.COLLECT;
+    this.mCollectParams = params;
+    this.mSurveyParams = SurveyFormParameters.constructSurveyFormParameters(tp);
+  }
+
+  public FormType(SurveyFormParameters params, TableProperties tp) {
+    this.type = Type.SURVEY;
+    this.mSurveyParams = params;
+    this.mCollectParams = CollectFormParameters.constructCollectFormParameters(tp);
+  }
+
+  public boolean isCollectForm() {
+    return (type == Type.COLLECT);
+  }
+
+  public void setIsCollectForm(boolean isCollectForm) {
+    if (isCollectForm) {
+      type = Type.COLLECT;
+    } else {
+      type = Type.SURVEY;
+    }
   }
 
   public String getFormId() {
-    return this.mParams.getFormId();
+    if (type == Type.COLLECT) {
+      return this.mCollectParams.getFormId();
+    } else {
+      return this.mSurveyParams.getFormId();
+    }
   }
 
-  /**
-   * Returns true if the form represents a default form.
-   * @return
-   */
-  public boolean isCustom() {
-    return this.mParams.isCustom();
-  }
-
-  public String getFormRootElement() {
-    return this.mParams.getRootElement();
-  }
-
-  /**
-   * Get the view that will display the information within this data type.
-   * <p>
-   * Eg for form it should have two text views--one for id, and one for root
-   * element.
-   * @return
-   */
-  public LinearLayout getDisplayView(Context context) {
-    // TODO: be sure to save the information in these text views in the
-    // appropriate instance state methods.
-    LinearLayout ll = new LinearLayout(context);
-    ll.setOrientation(LinearLayout.VERTICAL);
-    // Form Id text view title
-    TextView idTitle = new TextView(context);
-    idTitle.setText(context.getString(R.string.title_form_id), TextView.BufferType.NORMAL);
-    idTitle.setEnabled(true);
-    // Form Id editable for the user to enter.
-    EditText idText = new EditText(context);
-    idText.setLayoutParams(
-        new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT));
-    idText.setText(mParams.getFormId());
-    idText.setEnabled(true);
-    idText.setTag(TAG_FORM_ID);
-    // Root Element Title
-    TextView rootTitle = new TextView(context);
-    rootTitle.setText(context.getString(R.string.title_root_element), TextView.BufferType.NORMAL);
-    rootTitle.setEnabled(true);
-    // Root Element editable for the user to enter.
-    EditText rootText = new EditText(context);
-    rootText.setText(mParams.getRootElement());
-    rootText.setEnabled(true);
-    rootText.setTag(TAG_FORM_ROOT_ELEMENT);
-    ll.addView(idTitle);
-    ll.addView(idText);
-    ll.addView(rootTitle);
-    ll.addView(rootText);
-    return ll;
-  }
-
-  /**
-   * Receive a map of the view tags in {@link getTagsInView} mapped to the new
-   * values. Update this object to reflect the new values and update the new
-   * values in the database. Only updates if the data is determined to be new.
-   * @param newValues
-   * @return
-   */
-  public void udateAndPersist(Map<String, Object> newValues) {
-    // Maybe we should be making this transactional?
-    String newFormId = (String) newValues.get(TAG_FORM_ID);
-    String newRootElement = (String) newValues.get(TAG_FORM_ROOT_ELEMENT);
-    if (!mParams.getFormId().equals(newFormId) ||
-        !mParams.getRootElement().equals(newRootElement)) {
-      this.mParams.setFormId(newFormId);
-      this.mParams.setRootElement(newRootElement);
-      mAh.deleteAllEntriesInThisAspect();
-      mAh.setString(CollectUtil.KEY_FORM_ID, newFormId);
-      mAh.setString(CollectUtil.KEY_FORM_ROOT_ELEMENT, newRootElement);
+  public void setFormId(String formId) {
+    if (type == Type.COLLECT) {
+      this.mCollectParams.setFormId(formId);
+    } else {
+      this.mSurveyParams.setFormId(formId);
     }
   }
 
   /**
-   * Delete the a custom form from the key value store. Note that this
-   * therefore only has an effect if {@link #isCustom()} returns true.
-   */
-  public void deleteCustomForm() {
-    mAh.deleteAllEntriesInThisAspect();
-  }
-
-  /**
-   * Get the set of tags of views that are of interest to the caller. In this
-   * case we're getting them so that upon success, they can be returned to the
-   * user if they're changed so they can be persisted.
+   * Returns true if the form represents a default form.
+   *
    * @return
    */
-  public static Set<String> getTagsInView() {
-    Set<String> tags = new HashSet<String>();
-    tags.add(TAG_FORM_ID);
-    tags.add(TAG_FORM_ROOT_ELEMENT);
-    return tags;
+  public boolean isCustom() {
+    if (type == Type.COLLECT) {
+      return this.mCollectParams.isCustom();
+    } else {
+      return this.mSurveyParams.isUserDefined();
+    }
+  }
+
+  public void setIsCustom(boolean isCustom) {
+    if (type == Type.COLLECT) {
+      this.mCollectParams.setIsCustom(isCustom);
+    } else {
+      this.mSurveyParams.setIsUserDefined(isCustom);
+    }
+  }
+
+  public String getFormRootElement() {
+    if (type == Type.COLLECT) {
+      return this.mCollectParams.getRootElement();
+    } else {
+      throw new IllegalStateException("Unexpected attempt to retrieve FormRootElement");
+    }
+  }
+
+  public void setFormRootElement(String formRootElement) {
+    if (type == Type.COLLECT) {
+      this.mCollectParams.setRootElement(formRootElement);
+    } else {
+      throw new IllegalStateException("Unexpected attempt to retrieve FormRootElement");
+    }
+  }
+
+  public CollectFormParameters getCollectFormParameters() {
+    if (type == Type.COLLECT) {
+      return this.mCollectParams;
+    } else {
+      throw new IllegalStateException("Unexpected attempt to retrieve CollectFormParameters");
+    }
+  }
+
+  public SurveyFormParameters getSurveyFormParameters() {
+    if (type == Type.SURVEY) {
+      return this.mSurveyParams;
+    } else {
+      throw new IllegalStateException("Unexpected attempt to retrieve SurveyFormParameters");
+    }
   }
 
 }

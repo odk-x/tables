@@ -20,11 +20,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -486,8 +488,9 @@ public class KeyValueStoreManager {
 	    // Now try to update the properties tag.
 	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
 	        tableId, KeyValueStore.Type.SERVER);
-	    String syncTagStr = tp.getSyncTag();
-	    if (syncTagStr == null || syncTagStr.equals("")) {
+	    SyncTag syncTag = tp.getSyncTag();
+	    if (syncTag.getSchemaETag() == null ||
+	        syncTag.getPropertiesETag() == null ) {
 	      // Then it's not been synched and we can rely on it to first be inited
 	      // during the sync.
 	    } else {

@@ -15,21 +15,17 @@
  */
 package org.opendatakit.tables.tasks;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
+import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.sync.SyncUtil;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.web.client.RestTemplate;
+import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.springframework.web.client.ResourceAccessException;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Debug;
 
@@ -39,7 +35,7 @@ import android.os.Debug;
  * @author sudar.sam@gmail.com
  *
  */
-public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
+public class RetrieveFileManifestTask extends AsyncTask<Void, Void, List<OdkTablesFileManifestEntry>> {
 
   public enum RequestType {
     ALL_FILES, APP_FILES, TABLE_FILES;
@@ -48,10 +44,9 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
   private final String mAppId;
   private final Context mContext;
   private final String mAggregateUri;
-  private final String mFileManifestPath;
-  private final RestTemplate mRestTemplate;
   private final RequestType mRequestType;
   private final String mTableId;
+  private final AggregateSynchronizer synchronizer;
 
   private ProgressDialog mProgressDialog;
 
@@ -71,10 +66,11 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
    * @param tableId the table id. If not requesting a particular table, null.
    * If the requestType is not {@link RequestType#TABLE_FILES}, this will be
    * ignored.
+   * @throws InvalidAuthTokenException
    */
   public RetrieveFileManifestTask(Context context, String appId,
       String aggregateUri, String authToken, RequestType requestType,
-      String tableId) {
+      String tableId) throws InvalidAuthTokenException {
     this.mRequestType = requestType;
     if (requestType == RequestType.TABLE_FILES && tableId == null) {
       throw new IllegalArgumentException("Requested files for a table but " +
@@ -84,14 +80,8 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
     this.mAggregateUri = aggregateUri;
     this.mAppId = appId;
     this.mContext = context;
-    this.mFileManifestPath = aggregateUri +
-        SyncUtil.getFileManifestServerPath();
-    // Now get the rest template.
-    List<ClientHttpRequestInterceptor> interceptors =
-        new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(URI.create(aggregateUri).normalize(), authToken));
-    this.mRestTemplate = SyncUtil.getRestTemplateForString();
-    this.mRestTemplate.setInterceptors(interceptors);
+
+    synchronizer = new AggregateSynchronizer(mAppId, mAggregateUri, authToken);
   }
 
   @Override
@@ -101,43 +91,31 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, String> {
         mContext.getString(R.string.synchronizing));  }
 
   @Override
-  protected String doInBackground(Void... params) {
+  protected List<OdkTablesFileManifestEntry> doInBackground(Void... params) {
     // All we want to do is get and parse the manifest from the server.
     Debug.waitForDebugger();
-//    MultiValueMap<String, String> parameterValues =
-//        new LinkedMultiValueMap<String, String>();
-    // And now we need to build up our requiest appropriately.
-    Uri.Builder uriBuilder = Uri.parse(mFileManifestPath).buildUpon();
-    uriBuilder.appendQueryParameter("app_id", mAppId);
-//    parameterValues.add("app_id", mAppId);
-    switch (this.mRequestType) {
+    List<OdkTablesFileManifestEntry> entries = new ArrayList<OdkTablesFileManifestEntry>();
+    try {
+    switch (mRequestType) {
     case ALL_FILES:
-      // we don't need to do anything.
+        entries = synchronizer.getFileManifestForAllFiles();
       break;
     case APP_FILES:
-//      parameterValues.add("app_level_files", "true");
-      uriBuilder.appendQueryParameter("app_level_files", "true");
+      entries = synchronizer.getAppLevelFileManifest();
       break;
     case TABLE_FILES:
-      // Rely on the throw exception in the constructor to ensure this is
-      // never null.
-//      parameterValues.add("table_id", "true");
-      uriBuilder.appendQueryParameter("table_id", mTableId);
+      entries = synchronizer.getTableLevelFileManifest(mTableId);
       break;
     }
-    ResponseEntity<String> responseEntity =
-        mRestTemplate.exchange(uriBuilder.build().toString(),
-            HttpMethod.GET, null, String.class);
-    String response = responseEntity.getBody();
-    return response;
+    } catch (ResourceAccessException e) {
+      e.printStackTrace();
+    }
+    return entries;
   }
 
   @Override
-  protected void onPostExecute(String response) {
-    // The response is the response of the webpage. Here we should try to
-    // deserialize it.
-
-
+  protected void onPostExecute(List<OdkTablesFileManifestEntry> entries) {
+    // The response from the webpage.
     this.mProgressDialog.dismiss();
   }
 

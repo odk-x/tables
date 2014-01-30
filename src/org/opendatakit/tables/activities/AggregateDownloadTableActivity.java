@@ -15,37 +15,29 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.opendatakit.tables.utils.FileUtils;
-import org.opendatakit.tables.utils.NameUtil;
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
+import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.springframework.web.client.ResourceAccessException;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -256,8 +248,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       ODKFileUtils.assertDirectoryStructure(TableFileUtils.ODK_TABLES_APP_NAME);
       try {
         synchronizer.syncAppLevelFiles(false);
-      } catch (IOException e) {
-        Log.e(TAG, "IO exception trying to pull app-level files for the " +
+      } catch (ResourceAccessException e) {
+        Log.e(TAG, "ResourceAccessException trying to pull app-level files for the " +
         		"first time during table download.");
         // TODO report failure properly
         e.printStackTrace();

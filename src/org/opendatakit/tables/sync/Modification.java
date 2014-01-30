@@ -17,26 +17,28 @@ package org.opendatakit.tables.sync;
 
 import java.util.Map;
 
+import org.opendatakit.tables.sync.aggregate.SyncTag;
+
 /**
  * A Modification represents a set of synchronization tags to save in the
  * database after updates have been made in the server.
- * 
+ *
  * @author the.dylan.price@gmail.com
- * 
+ *
  */
 public class Modification {
   Map<String, String> syncTags;
-  String tableSyncTag;
+  SyncTag tableSyncTag;
 
   /**
    * Create a new Modification.
-   * 
+   *
    * @param syncTags
    *          a map from rowIds to syncTags
    * @param tableSyncTag
    *          the table-level syncTag
    */
-  public Modification(final Map<String, String> syncTags, final String tableSyncTag) {
+  public Modification(final Map<String, String> syncTags, final SyncTag tableSyncTag) {
     this.syncTags = syncTags;
     this.tableSyncTag = tableSyncTag;
   }
@@ -45,7 +47,7 @@ public class Modification {
   }
 
   /**
-   * 
+   *
    * @return a map from rowIds to syncTags
    */
   public Map<String, String> getSyncTags() {
@@ -53,15 +55,15 @@ public class Modification {
   }
 
   /**
-   * 
+   *
    * @return the table-level syncTag
    */
-  public String getTableSyncTag() {
+  public SyncTag getTableSyncTag() {
     return this.tableSyncTag;
   }
 
   /**
-   * 
+   *
    * @param syncTags
    *          a map from rowIds to syncTags
    */
@@ -70,11 +72,11 @@ public class Modification {
   }
 
   /**
-   * 
+   *
    * @param tableSyncTag
    *          the table-level syncTag
    */
-  public void setTableSyncTag(final String tableSyncTag) {
+  public void setTableSyncTag(final SyncTag tableSyncTag) {
     this.tableSyncTag = tableSyncTag;
   }
 

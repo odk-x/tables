@@ -873,7 +873,7 @@ public class CollectUtil {
         SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
     preferences.edit().putString(PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
     activityToAwaitReturn.startActivityForResult(collectEditIntent,
-        Controller.RCODE_ODKCOLLECT_EDIT_ROW);
+        Controller.RCODE_ODK_COLLECT_EDIT_ROW);
   }
 
   /**
@@ -1370,6 +1370,11 @@ public class CollectUtil {
       this.mRowDisplayName = rowDisplayName;
     }
 
+    public static CollectFormParameters constructDefaultCollectFormParameters(TableProperties tp) {
+      return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
+          DEFAULT_ROOT_ELEMENT, tp.getDisplayName());
+    }
+
     /**
      * Construct a CollectFormProperties object from the given TableProperties.
      * The object is determined to have custom parameters if a formId can be
@@ -1399,6 +1404,20 @@ public class CollectUtil {
         rootElement = DEFAULT_ROOT_ELEMENT;
       }
       return new CollectFormParameters(true, formId, formVersion, rootElement, tp.getDisplayName());
+    }
+
+    public void persist(TableProperties tp) {
+      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CollectUtil.KVS_PARTITION);
+      KeyValueHelper aspectHelper = kvsh.getAspectHelper(CollectUtil.KVS_ASPECT);
+      if ( this.isCustom() ) {
+        aspectHelper.setString(CollectUtil.KEY_FORM_ID, this.mFormId);
+        aspectHelper.setString(CollectUtil.KEY_FORM_VERSION, this.mFormVersion);
+        aspectHelper.setString(CollectUtil.KEY_FORM_ROOT_ELEMENT, this.mFormXMLRootElement);
+      } else {
+        aspectHelper.removeKey(CollectUtil.KEY_FORM_ID);
+        aspectHelper.removeKey(CollectUtil.KEY_FORM_VERSION);
+        aspectHelper.removeKey(CollectUtil.KEY_FORM_ROOT_ELEMENT);
+      }
     }
 
     /**

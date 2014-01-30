@@ -281,12 +281,6 @@ public class SyncUtil {
     return rt;
   }
 
-  public static RestTemplate getRestTemplateForString() {
-    RestTemplate rt = new RestTemplate();
-    rt.getMessageConverters().add(new StringHttpMessageConverter());
-    return rt;
-  }
-
 
   /**
    * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
