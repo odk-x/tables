@@ -618,8 +618,8 @@ public class Query {
         SqlData sd = new SqlData();
         sd.appendSql("SELECT " + tp.getDbTableName() + "." +
                 DataTableColumns.ID + " AS " + DataTableColumns.ID + ", " +
-                tp.getDbTableName() + "." + DataTableColumns.SYNC_TAG + " AS " +
-                DataTableColumns.SYNC_TAG);
+                tp.getDbTableName() + "." + DataTableColumns.ROW_ETAG + " AS " +
+                DataTableColumns.ROW_ETAG);
         for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
           if ( cp.isUnitOfRetention() ) {
             sd.appendSql(", " + tp.getDbTableName() + "." +

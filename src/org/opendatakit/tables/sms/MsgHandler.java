@@ -326,9 +326,9 @@ public class MsgHandler {
         }
         DbTable dbt = DbTable.getDbTable(dbh, tp);
 
-        String accessControl = SecurityUtil.mapPhoneNumToAccessControl(phoneNum);
-        dbt.addRow(rowValues, null, null, accessControl,
-            null /* formId */, null /* locale */);
+        String savepointCreator = SecurityUtil.mapPhoneNumToUserIdentity(phoneNum);
+        dbt.addRow(null, "_sms_receive_", null /* locale */,
+            System.currentTimeMillis(), savepointCreator, rowValues);
         return true;
     }
 

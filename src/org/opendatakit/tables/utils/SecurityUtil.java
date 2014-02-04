@@ -84,7 +84,7 @@ public class SecurityUtil {
         return (table.getHeight() > 0);
     }
 
-    public static String mapPhoneNumToAccessControl(String phoneNum) {
+    public static String mapPhoneNumToUserIdentity(String phoneNum) {
       // TODO Define how phoneNum maps to an accessControl value
       return null;
     }

@@ -175,15 +175,19 @@ public class SyncUtil {
       TableResult result) {
     StringBuilder msg = new StringBuilder();
     msg.append(result.getTableDisplayName() + ": ");
-    switch (result.getTableAction()) {
-    case inserting:
-      msg.append(
-          context.getString(R.string.sync_action_message_insert) + "--");
-      break;
-    case deleting:
-      msg.append(
-          context.getString(R.string.sync_action_message_delete) + "--");
-      break;
+    if ( result.getTableAction() == null ) {
+      msg.append("unspecified sync state--");
+    } else {
+      switch (result.getTableAction()) {
+      case inserting:
+        msg.append(
+            context.getString(R.string.sync_action_message_insert) + "--");
+        break;
+      case deleting:
+        msg.append(
+            context.getString(R.string.sync_action_message_delete) + "--");
+        break;
+      }
     }
     // Now add the result of the status.
     msg.append(getLocalizedNameForTableResultStatus(context,

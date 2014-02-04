@@ -31,6 +31,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -230,7 +231,7 @@ public class UserTable {
   }
 
   public Long getTimestamp(int rowNum) {
-    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
+    return TableConstants.milliSecondsFromNanos(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
 
   public Row getRowAtIndex(int index) {

@@ -754,7 +754,7 @@ public class TableActivity extends SherlockFragmentActivity
           Map<String, String> values = new HashMap<String, String>();
           values.put(mColumnElementKey, value);
           // TODO: Update these nulls.
-          mDbTable.updateRow(rowId, values, null, null, null, null);
+          mDbTable.updateRow(rowId, "_cell_edit_", null, System.currentTimeMillis(), null, values);
           dismiss();
         }
       });

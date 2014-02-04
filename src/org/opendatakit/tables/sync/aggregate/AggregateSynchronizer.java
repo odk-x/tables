@@ -64,7 +64,7 @@ import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManag
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.tables.sync.IncomingModification;
-import org.opendatakit.tables.sync.Modification;
+import org.opendatakit.tables.sync.RowModification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
@@ -459,8 +459,8 @@ public class AggregateSynchronizer implements Synchronizer {
       List<SyncRow> syncRows = new ArrayList<SyncRow>();
       for (RowResource row : rows.getEntries()) {
         SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowETag(), row.isDeleted(),
-                                      row.getUriAccessControl(), row.getFormId(), row.getLocale(),
-                                      row.getSavepointTimestamp(), row.getValues());
+                                      row.getFormId(), row.getLocale(),
+                                      row.getSavepointTimestamp(), row.getSavepointCreator(), row.getValues());
         syncRows.add(syncRow);
       }
       modification.setRows(syncRows);
@@ -470,54 +470,27 @@ public class AggregateSynchronizer implements Synchronizer {
     return modification;
   }
 
-  /*
-   * (non-Javadoc)
+  /**
+   * Insert or update the given row in the table on the server.
    *
-   * @see
-   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#insertRows(java.lang
-   * .String, java.util.List)
+   * @param tableId
+   *          the unique identifier of the table
+   * @param currentSyncTag
+   *          the last value that was stored as the syncTag
+   * @param rowToInsertOrUpdate
+   *          the row to insert or update
+   * @return a RowModification containing the (rowId, rowETag, table dataETag) after the modification
    */
-  @Override
-  public Modification insertRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToInsert)
+  public RowModification insertOrUpdateRow(String tableId, SyncTag currentSyncTag, SyncRow rowToInsertOrUpdate)
       throws IOException {
-    List<Row> newRows = new ArrayList<Row>();
-    for (SyncRow syncRow : rowsToInsert) {
-      Row row = Row.forInsert(syncRow.getRowId(),
-          syncRow.getUriAccessControl(), syncRow.getFormId(), syncRow.getLocale(), syncRow.getSavepointTimestamp(),
-          syncRow.getValues());
-      newRows.add(row);
-    }
-    return insertOrUpdateRows(tableId, currentSyncTag, newRows);
-  }
+        TableResource resource = getTable(tableId);
+        SyncTag lastKnownServerSyncTag = new SyncTag(currentSyncTag.getDataETag(), currentSyncTag.getPropertiesETag(), currentSyncTag.getSchemaETag());
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see
-   * yoonsung.odk.spreadsheet.sync.aggregate.Synchronizer#updateRows(java.lang
-   * .String, java.util.List)
-   */
-  @Override
-  public Modification updateRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToUpdate)
-      throws IOException {
-    List<Row> changedRows = new ArrayList<Row>();
-    for (SyncRow syncRow : rowsToUpdate) {
-      Row row = Row.forUpdate(syncRow.getRowId(), syncRow.getSyncTag(),
-          syncRow.getUriAccessControl(), syncRow.getFormId(), syncRow.getLocale(), syncRow.getSavepointTimestamp(),
-          syncRow.getValues());
-      changedRows.add(row);
-    }
-    return insertOrUpdateRows(tableId, currentSyncTag, changedRows);
-  }
+        Row row = Row.forUpdate(rowToInsertOrUpdate.getRowId(), rowToInsertOrUpdate.getRowETag(),
+            rowToInsertOrUpdate.getFormId(), rowToInsertOrUpdate.getLocale(),
+            rowToInsertOrUpdate.getSavepointTimestamp(), rowToInsertOrUpdate.getSavepointCreator(),
+            rowToInsertOrUpdate.getValues());
 
-  private Modification insertOrUpdateRows(String tableId, SyncTag currentSyncTag, List<Row> rows)
-      throws IOException {
-    TableResource resource = getTable(tableId);
-    // SyncTag syncTag = SyncTag.valueOf(currentSyncTag);
-    Map<String, String> rowTags = new HashMap<String, String>();
-    SyncTag lastKnownServerSyncTag = new SyncTag(currentSyncTag.getDataETag(), currentSyncTag.getPropertiesETag(), currentSyncTag.getSchemaETag());
-    if (!rows.isEmpty()) {
-      for (Row row : rows) {
         URI url = URI.create(
             resource.getDataUri() + "/" + row.getRowId()).normalize();
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
@@ -528,19 +501,12 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new IOException(e.getMessage());
         }
         RowResource inserted = insertedEntity.getBody();
-        rowTags.put(inserted.getRowId(), inserted.getRowETag());
         Log.i(TAG, "[insertOrUpdateRows] setting data etag to row's last "
             + "known dataetag at modification: " + inserted.getDataETagAtModification());
         lastKnownServerSyncTag.setDataETag(inserted.getDataETagAtModification());
+
+        return new RowModification( inserted.getRowId(), inserted.getRowETag(), lastKnownServerSyncTag);
       }
-    }
-
-    Modification modification = new Modification();
-    modification.setSyncTags(rowTags);
-    modification.setTableSyncTag(lastKnownServerSyncTag);
-
-    return modification;
-  }
 
   /*
    * (non-Javadoc)
@@ -550,30 +516,44 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.util.List)
    */
   @Override
-  public SyncTag deleteRows(String tableId, SyncTag currentSyncTag, List<String> rowIds)
+  public RowModification deleteRow(String tableId, SyncTag currentSyncTag, SyncRow rowToDelete)
       throws IOException {
     TableResource resource = getTable(tableId);
     SyncTag syncTag = currentSyncTag;
-    if (!rowIds.isEmpty()) {
-      String lastKnownServerDataTag = null; // the data tag of the whole table.
-      for (String rowId : rowIds) {
-        URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
-        try {
-          ResponseEntity<String> response = rt.exchange(url, HttpMethod.DELETE, null, String.class);
-          lastKnownServerDataTag = response.getBody();
-        } catch (ResourceAccessException e) {
-          throw new IOException(e.getMessage());
-        }
-      }
-      if (lastKnownServerDataTag == null) {
-        // do something--b/c the delete hasn't worked.
-        Log.e(TAG, "delete call didn't return a known data etag.");
-      }
-      Log.i(TAG, "[deleteRows] setting data etag to last known server tag: "
-          + lastKnownServerDataTag);
-      syncTag.setDataETag(lastKnownServerDataTag);
+    String lastKnownServerDataTag = null; // the data tag of the whole table.
+    String rowId = rowToDelete.getRowId();
+    URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
+    try {
+      ResponseEntity<String> response = rt.exchange(url, HttpMethod.DELETE, null, String.class);
+      lastKnownServerDataTag = response.getBody();
+    } catch (ResourceAccessException e) {
+      throw new IOException(e.getMessage());
     }
-    return syncTag;
+    if (lastKnownServerDataTag == null) {
+      // do something--b/c the delete hasn't worked.
+      Log.e(TAG, "delete call didn't return a known data etag.");
+    }
+    Log.i(TAG, "[deleteRows] setting data etag to last known server tag: "
+        + lastKnownServerDataTag);
+    syncTag.setDataETag(lastKnownServerDataTag);
+    return new RowModification(rowToDelete.getRowId(), null, syncTag);
+  }
+
+  @Override
+  public TableProperties getTableProperties(String tableId, SyncTag currentTag) throws IOException {
+    TableResource resource = getTable(tableId);
+
+    // put new properties
+    TableProperties properties = new TableProperties(currentTag.getSchemaETag(), currentTag.getPropertiesETag(), tableId,
+                                                     null);
+    PropertiesResource propsResource;
+    try {
+      propsResource = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
+    } catch (ResourceAccessException e) {
+      throw new IOException(e.getMessage());
+    }
+
+    return propsResource;
   }
 
   @Override

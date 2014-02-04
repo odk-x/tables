@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
@@ -85,19 +86,18 @@ public class DbTable {
     static {
       ADMIN_COLUMNS = new ArrayList<String>();
       ADMIN_COLUMNS.add(DataTableColumns.ID);
-      ADMIN_COLUMNS.add(DataTableColumns.SYNC_TAG);
+      ADMIN_COLUMNS.add(DataTableColumns.ROW_ETAG);
       ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
       ADMIN_COLUMNS.add(DataTableColumns.CONFLICT_TYPE);
-      ADMIN_COLUMNS.add(DataTableColumns.URI_ACCESS_CONTROL);
       ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_CREATOR);
       ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_TYPE);
       ADMIN_COLUMNS.add(DataTableColumns.FORM_ID);
       ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
-      COLUMNS_TO_SYNC.put(DataTableColumns.URI_ACCESS_CONTROL, ColumnType.STRING);
-      // Upload as Text so as not to worry about Long vs. Integer
       COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_CREATOR, ColumnType.STRING);
       COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.STRING);
       COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.STRING);
     }
@@ -121,14 +121,14 @@ public class DbTable {
 
     public static final String DB_CSV_COLUMN_LIST =
         DataTableColumns.ID
-        + ", " + DataTableColumns.SYNC_TAG
+        + ", " + DataTableColumns.ROW_ETAG
         + ", " + DataTableColumns.SYNC_STATE
         + ", " + DataTableColumns.CONFLICT_TYPE
-        + ", " + DataTableColumns.URI_ACCESS_CONTROL
-        + ", " + DataTableColumns.SAVEPOINT_TIMESTAMP
-        + ", " + DataTableColumns.SAVEPOINT_TYPE
         + ", " + DataTableColumns.FORM_ID
         + ", " + DataTableColumns.LOCALE
+        + ", " + DataTableColumns.SAVEPOINT_TYPE
+        + ", " + DataTableColumns.SAVEPOINT_TIMESTAMP
+        + ", " + DataTableColumns.SAVEPOINT_CREATOR
         ;
 
     private final DbHelper dbh;
@@ -169,14 +169,14 @@ public class DbTable {
         }
         String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
             DataTableColumns.ID + " TEXT NOT NULL" +
-     ", " + DataTableColumns.SYNC_TAG + " TEXT NULL" +
-     ", " + DataTableColumns.SYNC_STATE + " INTEGER NOT NULL" +
+     ", " + DataTableColumns.ROW_ETAG + " TEXT NULL" +
+     ", " + DataTableColumns.SYNC_STATE + " TEXT NOT NULL" +
      ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NULL" +
-     ", " + DataTableColumns.URI_ACCESS_CONTROL + " TEXT NULL" +
-     ", " + DataTableColumns.SAVEPOINT_TIMESTAMP + " INTEGER NOT NULL" +
-     ", " + DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL" +
      ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
      ", " + DataTableColumns.LOCALE + " TEXT NULL" +
+     ", " + DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL" +
+     ", " + DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL" +
+     ", " + DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL" +
      colListBuilder.toString() +
      ")";
         db.execSQL(toExecute);
@@ -486,8 +486,8 @@ public class DbTable {
      * I don't think this is called when downloading table data from the
      * server. I think it is only called when creating on the phone...
      */
-    public void addRow(Map<String, String> values, String rowId,
-          Long timestamp, String accessControl, String formId, String locale ) {
+    public void addRow(String rowId, String formId, String locale,
+          Long timestamp, String savepointCreator, Map<String, String> values ) {
 
         if (timestamp == null) {
         	timestamp = System.currentTimeMillis();
@@ -503,8 +503,8 @@ public class DbTable {
         }
         // The admin columns get added here and also in actualAddRow
         cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
-        cv.put(DataTableColumns.URI_ACCESS_CONTROL, accessControl);
-        cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timestamp);
+        cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(timestamp));
+        cv.put(DataTableColumns.SAVEPOINT_CREATOR, savepointCreator);
         cv.put(DataTableColumns.FORM_ID, formId);
         cv.put(DataTableColumns.LOCALE, locale);
         actualAddRow(cv);
@@ -529,7 +529,7 @@ public class DbTable {
           values.put(DataTableColumns.ID, id);
         }
         if (!values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-        	values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
+        	values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
         // There is the possibility here that for whatever reason some of the
         // values from the server will be null or non-existent. This will cause
@@ -538,17 +538,17 @@ public class DbTable {
         if (!values.containsKey(DataTableColumns.LOCALE) ||
             values.get(DataTableColumns.LOCALE) == null) {
           values.put(DataTableColumns.LOCALE,
-              DataTableColumns.LOCALE);
+              DataTableColumns.DEFAULT_LOCALE);
         }
-        if (!values.containsKey(DataTableColumns.URI_ACCESS_CONTROL) ||
-            values.get(DataTableColumns.URI_ACCESS_CONTROL) == null) {
-          values.put(DataTableColumns.URI_ACCESS_CONTROL,
-              DataTableColumns.URI_ACCESS_CONTROL);
+        if (!values.containsKey(DataTableColumns.SAVEPOINT_CREATOR) ||
+            values.get(DataTableColumns.SAVEPOINT_CREATOR) == null) {
+          values.put(DataTableColumns.SAVEPOINT_CREATOR,
+              DataTableColumns.DEFAULT_SAVEPOINT_CREATOR);
         }
-        if (!values.containsKey(DataTableColumns.SYNC_TAG) ||
-            values.get(DataTableColumns.SYNC_TAG) == null) {
-          values.put(DataTableColumns.SYNC_TAG,
-              DataTableColumns.SYNC_TAG);
+        if (!values.containsKey(DataTableColumns.ROW_ETAG) ||
+            values.get(DataTableColumns.ROW_ETAG) == null) {
+          values.put(DataTableColumns.ROW_ETAG,
+              DataTableColumns.DEFAULT_ROW_ETAG);
         }
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
@@ -585,11 +585,11 @@ public class DbTable {
      * updating.
      * @param rowId the ID of the row to update
      * @param values the values to update the row with
-     * @param accessControl the access control restriction for this row
+     * @param savepointCreator the user saving this change of this row
      * @param timestamp the last modification time to put in the row
      */
-    public void updateRow(String rowId, Map<String, String> values,
-            String accessControl, Long timestamp, String formId, String locale) {
+    public void updateRow(String rowId,
+            String formId, String locale, Long timestamp, String savepointCreator, Map<String, String> values) {
         ContentValues cv = new ContentValues();
         // TODO is this a race condition of sorts? isSynchronized(), which
         // formerly returned isSynched, may kind of be doing double duty,
@@ -611,11 +611,11 @@ public class DbTable {
         for (String column : values.keySet()) {
             cv.put(column, values.get(column));
         }
-        if ( accessControl != null ) {
-        	cv.put(DataTableColumns.URI_ACCESS_CONTROL, accessControl);
+        if ( savepointCreator != null ) {
+        	cv.put(DataTableColumns.SAVEPOINT_CREATOR, savepointCreator);
         }
         if ( timestamp != null ) {
-        	cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, timestamp);
+        	cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(timestamp));
         }
         if ( formId != null ) {
         	cv.put(DataTableColumns.FORM_ID, formId);
@@ -640,7 +640,7 @@ public class DbTable {
             String[] whereArgs) {
         SQLiteDatabase db = dbh.getWritableDatabase();
         if ( !values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP) ) {
-	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
+	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
         try {
 	        values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
@@ -651,7 +651,7 @@ public class DbTable {
         }
     }
 
-    public void resolveConflict(String rowId, String syncTag,
+    public void resolveConflict(String rowId, String serverRowETag,
             Map<String, String> values) {
         // We're going to delete the column with the matching row id that has
         // conflict_type SERVER_UPDATED or SERVER_DELETED.
@@ -662,7 +662,7 @@ public class DbTable {
             ConflictType.SERVER_UPDATED_UPDATED_VALUES + ")";
         ContentValues updateValues = new ContentValues();
         updateValues.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
-        updateValues.put(DataTableColumns.SYNC_TAG, syncTag);
+        updateValues.put(DataTableColumns.ROW_ETAG, serverRowETag);
         updateValues.putNull(DataTableColumns.CONFLICT_TYPE);
         for (String key : values.keySet()) {
             updateValues.put(key, values.get(key));
@@ -672,7 +672,7 @@ public class DbTable {
         SQLiteDatabase db = dbh.getWritableDatabase();
         try {
 	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
-	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
+	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	        updateValues.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
 	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
 	                updateWhereArgs);
@@ -705,7 +705,7 @@ public class DbTable {
           values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
           SQLiteDatabase db = dbh.getWritableDatabase();
           try {
-	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, System.currentTimeMillis());
+	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	          values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
 	          db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
           } finally {

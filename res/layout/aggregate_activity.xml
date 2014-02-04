@@ -66,7 +66,7 @@
         android:text="@+string/sync_now" />
 
     <Button
-        android:id="@+id/aggregate_activity_sync_files_button"
+        android:id="@+id/aggregate_activity_sync_using_submit_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"

@@ -58,7 +58,11 @@ public class NameUtil {
     /**
      * ODK Metadata reserved names
      */
+    reservedNames.add("ROW_ETAG");
+    reservedNames.add("SYNC_STATE");
+    reservedNames.add("CONFLICT_TYPE");
     reservedNames.add("SAVEPOINT_TIMESTAMP");
+    reservedNames.add("SAVEPOINT_CREATOR");
     reservedNames.add("SAVEPOINT_TYPE");
     reservedNames.add("FORM_ID");
     reservedNames.add("LOCALE");

@@ -1031,12 +1031,12 @@ public class Controller implements CustomViewCallbacks {
           values.put(CellEditDialog.this.elementKey, value);
 
           // TODO: supply reasonable values for these...
-          String accessControl = null; // user on phone
+          String savepointCreator = null; // user on phone
           Long timestamp = null; // current time
           String formId = null; // formId used by ODK Collect
           String locale = null; // current locale
 
-          dbt.updateRow(rowId, values, accessControl, timestamp, formId, locale);
+          dbt.updateRow(rowId, formId, locale, timestamp, savepointCreator, values);
           da.init();
           dismiss();
         }
