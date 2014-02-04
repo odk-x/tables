@@ -48,7 +48,7 @@ public class ControlIf {
 	 * a simple query string, but is possible using SQL. Note that in this case,
 	 * even though the SQL query is restricting the rows shown in the table, the
 	 * query will not appear in the search box.
-	 * @see #queryWithSql(String, String, String[])
+	 * @see #query(String, String, String[])
 	 * @param tableId the table id of the table to open
 	 * @param sqlWhereClause the where clause for the selection, beginning with
 	 * "WHERE". Must include "?" instead of actual values, which are instead
@@ -74,7 +74,7 @@ public class ControlIf {
    /**
     * Open the given table with the given list view, restricted by the given
     * SQL query.
-    * @see #queryWithSql(String, String, String[])
+    * @see #query(String, String, String[])
     * @param tableId
     * @param sqlWhereClause
     * @param sqlSelectionArgs
@@ -91,7 +91,7 @@ public class ControlIf {
    /**
     * Open the given table to the map view, restricted with the given SQL
     * query.
-    * @see #queryWithSql(String, String, String[])
+    * @see #query(String, String, String[])
     * @param tableId table id of the table to open.
     * @param sqlWhereClause
     * @param sqlSelectionArgs
@@ -107,7 +107,7 @@ public class ControlIf {
    /**
     * Open the table to spreadsheet view, restricting by the given SQL query.
     * @see #openTable(String, String, String[])
-    * @see #queryWithSql(String, String, String[])
+    * @see #query(String, String, String[])
     * @param tableId
     * @param sqlWhereClause
     * @param sqlSelectionArgs
@@ -136,9 +136,9 @@ public class ControlIf {
 	 * needed.
 	 */
 	// @JavascriptInterface
-	public TableDataIf queryWithSql(String tableId, String sqlWhereClause,
+	public TableDataIf query(String tableId, String sqlWhereClause,
 			String[] sqlSelectionArgs) {
-		TableData td = weakControl.get().queryWithSql(tableId, sqlWhereClause,
+		TableData td = weakControl.get().query(tableId, sqlWhereClause,
 				sqlSelectionArgs);
 		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
@@ -316,7 +316,8 @@ public class ControlIf {
 	 * Return the element key for the column with the given element path.
 	 * @param tableId
 	 * @param elementPath
-	 * @return the element key for the column
+	 * @return the element key for the column, or null if a table cannot be
+	 * found with the existing tableId.
 	 */
 	public String getElementKey(String tableId, String elementPath) {
 	  return weakControl.get().getElementKey(tableId, elementPath);
@@ -349,7 +350,8 @@ public class ControlIf {
 	 * Determine if the column exist in the given table.
 	 * @param tableId
 	 * @param elementPath
-	 * @return true if the column exists, else false
+	 * @return true if the column exists, else false. Returns false also if the
+	 * tableId does not match any table.
 	 */
 	public boolean columnExists(String tableId, String elementPath) {
 	  return weakControl.get().columnExists(tableId, elementPath);

@@ -134,6 +134,12 @@ public class TableData {
         TableProperties tp = mTable.getTableProperties();
         String elementKey = 
             tp.getElementKeyFromElementPath(elementPath);
+        if (elementKey == null) {
+          // Note that this currently cannot happen, because the implementation
+          // of getElementKeyFromElementPath is not real. It just does a string
+          // replace, which is incorrect. But we should have this case.
+          return null;
+        }
         ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup
               .get(elementPath);
         if (colRul == null) {

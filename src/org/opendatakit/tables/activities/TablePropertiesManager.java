@@ -788,12 +788,14 @@ public class TablePropertiesManager extends PreferenceActivity {
     KeyValueStoreHelper kvsh;
     Uri uri;
     String filename;
+    String relativePath;
     switch (requestCode) {
     case RC_DETAIL_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
+      relativePath = getRelativePathOfFile(filename);
       kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, filename);
+      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
       // tp.setDetailViewFilename(filename);
       init();
       break;
@@ -801,7 +803,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       uri = data.getData();
       filename = uri.getPath();
       // We need to get the relative path under the app name.
-      String relativePath = getRelativePathOfFile(filename);
+      relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
       kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to

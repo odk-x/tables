@@ -228,6 +228,12 @@ public abstract class CustomView extends LinearLayout {
      if (sqlWhereClause == null) {
        // Then we need to say the selection is an empty string.
        sqlWhereClause = "";
+     } else {
+       // We're going to handle this by passing it off to the DbTable
+       // rawSqlQuery(String whereClause, String[] selectionArgs) argument.
+       // Because this method expects a where, however, we're going to prepend
+       // it.
+       sqlWhereClause = "WHERE " + sqlWhereClause;
      }
      DbTable dbTable = DbTable.getDbTable(mDbHelper, tp);
      UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause,
@@ -583,8 +589,10 @@ public abstract class CustomView extends LinearLayout {
 			}
 			String pathToTablesFolder = ODKFileUtils
 					.getAppFolder(mAppName);
-			String pathToFile = 
-			    pathToTablesFolder + File.separator + relativePath;
+			String pathToFile = null;
+			if (relativePath != null) {
+			  pathToFile = pathToTablesFolder + File.separator + relativePath;
+			}
 			Controller.launchDetailActivity(mActivity, tableId, rowId,
 					pathToFile);
 			return true;
@@ -602,6 +610,7 @@ public abstract class CustomView extends LinearLayout {
 		public boolean helperOpenTable(String tableId,
 				String sqlWhereClause, String[] sqlSelectionArgs) {
 			TableProperties tpToOpen = getTablePropertiesById(tableId);
+			sqlWhereClause = getWhereSql(sqlWhereClause);
 			if (tpToOpen == null) {
 				Log.e(TAG, "tableId [" + tableId + "] not in map");
 				return false;
@@ -626,17 +635,21 @@ public abstract class CustomView extends LinearLayout {
 		     String relativePath, String sqlWhereClause,
 			  String[] sqlSelectionArgs) {
 			TableProperties tp = getTablePropertiesById(tableId);
+			sqlWhereClause = getWhereSql(sqlWhereClause);
 			if (tp == null) {
 				Log.e(TAG, "tableId [" + tableId + "] not in map");
 				return false;
 			}
-			String pathToTablesFolder = ODKFileUtils
-					.getAppFolder(mAppName);
-			String pathToFile = 
-			    pathToTablesFolder + File.separator + relativePath;
+//			String pathToFile = null;
+//			if (relativePath != null) {
+//		       String pathToTablesFolder = ODKFileUtils
+//	               .getAppFolder(mAppName);
+//	         pathToFile = 
+//	             pathToTablesFolder + File.separator + relativePath;			  
+//			}
 			// We're not supporting search text, so pass in null.
 			Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp,
-					null, null, false, pathToFile, sqlWhereClause,
+					null, null, false, relativePath, sqlWhereClause,
 					sqlSelectionArgs);
 			return true;
 		}
@@ -654,6 +667,7 @@ public abstract class CustomView extends LinearLayout {
 				String sqlWhereClause, String[] sqlSelectionArgs,
 				String relativePath) {
 			TableProperties tp = getTablePropertiesById(tableId);
+			sqlWhereClause = getWhereSql(sqlWhereClause);
 			if (tp == null) {
 				Log.e(TAG, "tableName [" + tableId + "] not in map");
 				return false;
@@ -679,6 +693,7 @@ public abstract class CustomView extends LinearLayout {
 				String[] sqlSelectionArgs) {
 			initTpInfo();
 			TableProperties tp = tableIdToProperties.get(tableId);
+			sqlWhereClause = getWhereSql(sqlWhereClause);
 			if (tp == null) {
 				Log.e(TAG, "tableId [" + tableId + "] not in map");
 				return false;
@@ -707,12 +722,13 @@ public abstract class CustomView extends LinearLayout {
 		 * specified by the tableName parameter.
 		 * <p>
 		 * Any arguments in the WHERE statement must be replaced by "?" and
-		 * contained in order in the selectionArgs array.
+		 * contained in order in the selectionArgs array. In this sense it is
+		 * exactly a sql select minus the WHERE.
 		 * <p>
 		 * For example, if you wanted all the rows where the column foo equaled
-		 * bar, the where clause would be "WHERE foo = ? " and the selection
+		 * bar, the where clause would be "foo = ? " and the selection
 		 * args would be ["bar"].
-		 * @see {@link ControlIf#queryWithSql(String, String, String[])}
+		 * @see {@link ControlIf#query(String, String, String[])}
 		 *
 		 * @param tableId
 		 *            the display name of the table for which you want the
@@ -726,10 +742,8 @@ public abstract class CustomView extends LinearLayout {
 		 * @param selectionArgs
 		 * @return
 		 */
-		public TableData queryWithSql(String tableId, String whereClause,
+		public TableData query(String tableId, String whereClause,
 				String[] selectionArgs) {
-			// We're going to handle this by passing it off to the DbTable
-			// rawSqlQuery(String whereClause, String[] selectionArgs) argument.
 			TableData tableData = 
 			    queryForTableData(tableId, whereClause, selectionArgs);
 			/**
@@ -757,6 +771,9 @@ public abstract class CustomView extends LinearLayout {
 		 */
 		public String getElementKey(String tableId, String elementPath) {
 		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  if (tableProperties == null) {
+		    return null;
+		  }
 		  return tableProperties.getElementKeyFromElementPath(elementPath);
 		}
 		
@@ -769,8 +786,16 @@ public abstract class CustomView extends LinearLayout {
 		public String getColumnDisplayName(String tableId, String elementPath) {
 		  String elementKey = this.getElementKey(tableId, elementPath);
 		  TableProperties tableProperties = getTablePropertiesById(tableId);
-		  String displayName = 
-		      tableProperties.getColumnByElementKey(elementKey).getDisplayName();
+		  if (tableProperties == null) {
+		    return null;
+		  }
+		  ColumnProperties columnProperties =
+		      tableProperties.getColumnByElementKey(elementKey);
+		  if (columnProperties == null) {
+		    Log.e(TAG, "column with elementKey does not exist: " + elementKey);
+		    return null;
+		  }
+		  String displayName = columnProperties.getDisplayName();
 		  return displayName;
 		}
 		
@@ -823,6 +848,9 @@ public abstract class CustomView extends LinearLayout {
 		public boolean columnExists(String tableId, String elementPath) {
 		  String elementKey = this.getElementKey(tableId, elementPath);
 		  TableProperties tableProperties = getTablePropertiesById(tableId);
+		  if (tableProperties == null) {
+		    return false;
+		  }
 		  ColumnProperties columnProperties =
 		      tableProperties.getColumnByElementKey(elementKey);
 		  return columnProperties != null;
@@ -838,6 +866,24 @@ public abstract class CustomView extends LinearLayout {
 		  contentUri = Uri.withAppendedPath(contentUri, 
 		      Uri.encode(TableFileUtils.ODK_TABLES_APP_NAME));
 		  return contentUri.toString() + File.separator;
+		}
+		
+		/**
+		 * Handle the selection string coming in from the javascript. Essentially
+		 * gets the string ready to go to be handed off to the java.
+		 * <p>
+		 * This is necessary at least for now because the DbTable rawQuery
+		 * expects a string beginning with a WHERE, but the javascript api does
+		 * not, so this wraps that up. 
+		 * @param sqlSelection
+		 * @return
+		 */
+		private String getWhereSql(String sqlSelection) {
+		  if (sqlSelection == null) {
+		    return null;
+		  } else {
+		    return "WHERE " + sqlSelection;
+		  }
 		}
 
 		/**
