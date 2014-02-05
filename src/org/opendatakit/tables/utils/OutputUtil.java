@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.tables.activities.DetailDisplayActivity;
+import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
@@ -46,6 +48,11 @@ public class OutputUtil {
   public static final String CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME = 
       "tableIdToDisplayName";
   public static final String CTRL_KEY_TABLE_INFO = "tables";
+  /** The key for the default detail view file in the table. */
+  public static final String CTRL_KEY_DEFAULT_DETAIL_FILE = 
+      "defaultDetailFile";
+  /** The key for the default list view file in the table. */
+  public static final String CTRL_KEY_DEFAULT_LIST_FILE = "defaultListFile";
   
   // These are keys we'll be outputting for use in debugging when we write
   // this object to a file.
@@ -97,7 +104,7 @@ public class OutputUtil {
       tableIdToControlTable.put(tableProperties.getTableId(), controlTable);
     }
     Gson gson = new Gson();
-    controlMap.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME, 
+    controlMap.put(CTRL_KEY_TABLE_ID_TO_DISPLAY_NAME, 
         tableIdToDisplayName);
     controlMap.put(CTRL_KEY_TABLE_INFO, tableIdToControlTable);
     String result = gson.toJson(controlMap);
@@ -134,9 +141,15 @@ public class OutputUtil {
       keyToDisplayName.put(columnProperties.getElementKey(), 
           columnProperties.getDisplayName());
     }
+    String defaultDetailFileName = 
+        DetailDisplayActivity.getDefaultDetailFileName(tableProperties);
+    String defaultListFileName = 
+        ListDisplayActivity.getDefaultListFileName(tableProperties);
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY, pathToKey);
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME,
         keyToDisplayName);
+    controlTable.put(CTRL_KEY_DEFAULT_DETAIL_FILE, defaultDetailFileName);
+    controlTable.put(CTRL_KEY_DEFAULT_LIST_FILE, defaultListFileName);
     return controlTable;
   }
   

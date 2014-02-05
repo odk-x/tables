@@ -22,6 +22,7 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
@@ -120,6 +121,32 @@ public class ListDisplayActivity extends SherlockActivity
         super.onResume();
         init();
     }
+    
+    /**
+     * Return the default list view file name that has been set for the table
+     * represented by the given {@link TableProperties} object. May return
+     * null if no default list view has been set.
+     * @param tableProperties
+     * @return
+     */
+    public static String getDefaultListFileName(
+        TableProperties tableProperties) {
+      KeyValueStoreHelper kvsh = 
+          tableProperties.getKeyValueStoreHelper(KVS_PARTITION);
+      String nameOfView = kvsh.getString(KEY_LIST_VIEW_NAME);
+      if (nameOfView == null) {
+        // Then none has been set.
+        return null;
+      }
+      KeyValueStoreHelper namedListViewsPartitionKvsh =
+          tableProperties.getKeyValueStoreHelper(
+              ListDisplayActivity.KVS_PARTITION_VIEWS);
+      AspectHelper viewAspectHelper =
+          namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
+      String filename =
+          viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+      return filename;
+    }
 
     @Override
     public void init() {
@@ -150,17 +177,7 @@ public class ListDisplayActivity extends SherlockActivity
             getIntent().getExtras().getString(INTENT_KEY_FILENAME);
         if (nameOfView != null) {
           if (filename == null) {
-            KeyValueStoreHelper namedListViewsPartitionKvsh =
-                c.getTableProperties().getKeyValueStoreHelper(
-                    ListDisplayActivity.KVS_PARTITION_VIEWS);
-            AspectHelper viewAspectHelper =
-                namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
-            filename =
-                viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-            KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-            KeyValueStore kvs =
-                kvsm.getStoreForTable(c.getTableProperties().getTableId(),
-                c.getTableProperties().getBackingStoreType());
+            filename = getDefaultListFileName(table.getTableProperties());
           }
         }
         view = CustomTableView.get(this, TableFileUtils.ODK_TABLES_APP_NAME, table, filename, c);

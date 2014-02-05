@@ -589,12 +589,8 @@ public abstract class CustomView extends LinearLayout {
 			}
 			String pathToTablesFolder = ODKFileUtils
 					.getAppFolder(mAppName);
-			String pathToFile = null;
-			if (relativePath != null) {
-			  pathToFile = pathToTablesFolder + File.separator + relativePath;
-			}
 			Controller.launchDetailActivity(mActivity, tableId, rowId,
-					pathToFile);
+					relativePath);
 			return true;
 		}
 
@@ -640,13 +636,6 @@ public abstract class CustomView extends LinearLayout {
 				Log.e(TAG, "tableId [" + tableId + "] not in map");
 				return false;
 			}
-//			String pathToFile = null;
-//			if (relativePath != null) {
-//		       String pathToTablesFolder = ODKFileUtils
-//	               .getAppFolder(mAppName);
-//	         pathToFile = 
-//	             pathToTablesFolder + File.separator + relativePath;			  
-//			}
 			// We're not supporting search text, so pass in null.
 			Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp,
 					null, null, false, relativePath, sqlWhereClause,

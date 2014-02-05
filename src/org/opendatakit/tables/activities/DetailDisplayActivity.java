@@ -100,6 +100,24 @@ public class DetailDisplayActivity extends SherlockActivity
         init();
         displayView();
     }
+    
+    /**
+     * Return the default detail view file name that has been set for the table
+     * represented by the given {@link TableProperties} object. May return null
+     * if no default detail view has been set.
+     * @param tableProperties
+     * @return
+     */
+    public static String getDefaultDetailFileName(
+        TableProperties tableProperties) {
+      // Then we need to recover the file name.
+      KeyValueStoreHelper detailActivityKVS = 
+          tableProperties.getKeyValueStoreHelper(
+              DetailDisplayActivity.KVS_PARTITION);
+      String recoveredFilename = 
+          detailActivityKVS.getString(DetailDisplayActivity.KEY_FILENAME);
+      return recoveredFilename;
+    }
 
     @Override
     public void init() {
@@ -127,11 +145,7 @@ public class DetailDisplayActivity extends SherlockActivity
             getIntent().getStringExtra(INTENT_KEY_FILENAME);
         if (filename == null) {
           // Then we need to recover the file name.
-          KeyValueStoreHelper detailActivityKVS = 
-              tableProperties.getKeyValueStoreHelper(
-                  DetailDisplayActivity.KVS_PARTITION);
-          String recoveredFilename = 
-              detailActivityKVS.getString(DetailDisplayActivity.KEY_FILENAME);
+          String recoveredFilename = getDefaultDetailFileName(tableProperties);
           if (recoveredFilename == null) {
             // Then no default file has been set.
             Log.i(TAG, "no detail view has been set for tableId: " + mTableId);
