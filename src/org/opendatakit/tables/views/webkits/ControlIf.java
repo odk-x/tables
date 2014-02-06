@@ -39,107 +39,126 @@ public class ControlIf {
 
 	/**
 	 * Open the table with the given id.
-	 * <p>
-	 * If the sqlWhereClause and sqlSelectionArgs are specified, it performs
-	 * a simple "SELECT * FROM" statement with the sqlWhereClause
-	 * performing a query. Both must either be specified or both must be null.
-	 * <p>
-	 * This is useful for doing more complicated joins than are possible with
-	 * a simple query string, but is possible using SQL. Note that in this case,
-	 * even though the SQL query is restricting the rows shown in the table, the
-	 * query will not appear in the search box.
 	 * @see #query(String, String, String[])
 	 * @param tableId the table id of the table to open
-	 * @param sqlWhereClause the where clause for the selection, beginning with
-	 * "WHERE". Must include "?" instead of actual values, which are instead
-	 * passed in the sqlSelectionArgs parameter. The references to tables must
-	 * use the table ids. The references to the columns
-	 * must be the element paths. The
-	 * elementKey is fixed and unchanging for each column, and can be retrieved
-	 * using {@link #getElementKey(String, String)}.
-	 * @param sqlSelectionArgs an array of selection arguments, one for each "?"
-	 * in sqlWhereClause
+	 * @param whereClause query as specified by 
+	 * {@link #query(String, String, String[])}
+	 * If null will not restrict the results.
+	 * @param selectionArgs an array of selection arguments, one for each "?"
+	 * in whereClause. If null will not restrict the results.
 	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
 	public boolean openTable(String tableId,
-			String sqlWhereClause, String[] sqlSelectionArgs) {
+			String whereClause, String[] selectionArgs) {
 	  // TODO: convert to element keys
 	  Log.e(TAG, "TO-WC openTableWithSqlQuery(tableId, sqlWhereClause, " +
 	  		"sqlSelectionArgs");
 		return weakControl.get().helperOpenTable(tableId,
-				sqlWhereClause, sqlSelectionArgs);
+				whereClause, selectionArgs);
 	}
 	
    /**
-    * Open the given table with the given list view, restricted by the given
-    * SQL query.
+    * Open the given table with the given list view, restricted by given query.
     * @see #query(String, String, String[])
-    * @param tableId
-    * @param sqlWhereClause
-    * @param sqlSelectionArgs
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
     * @param relativePath the name of the file specifying the list view,
     * relative to the app folder.
     * @return true if the open succeeded
     */
-	public boolean openTableToListView(String tableId, String sqlWhereClause,
-	    String[] sqlSelectionArgs, String relativePath) {
+	public boolean openTableToListView(String tableId, String whereClause,
+	    String[] selectionArgs, String relativePath) {
      return weakControl.get().helperOpenTableWithFile(
-         tableId, relativePath, sqlWhereClause, sqlSelectionArgs);
+         tableId, relativePath, whereClause, selectionArgs);
 	}
 	
    /**
     * Open the given table to the map view, restricted with the given SQL
     * query.
     * @see #query(String, String, String[])
-    * @param tableId table id of the table to open.
-    * @param sqlWhereClause
-    * @param sqlSelectionArgs
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
     * @param relativePath NOT YET SUPPORTED
     * @return true if the open succeeded
     */
-	public boolean openTableToMapView(String tableId, String sqlWhereClause,
-	    String[] sqlSelectionArgs, String relativePath) {
+	public boolean openTableToMapView(String tableId, String whereClause,
+	    String[] selectionArgs, String relativePath) {
      return weakControl.get().helperOpenTableToMapView(tableId,
-         sqlWhereClause, sqlSelectionArgs, relativePath);
+         whereClause, selectionArgs, relativePath);
 	}
 	
    /**
     * Open the table to spreadsheet view, restricting by the given SQL query.
-    * @see #openTable(String, String, String[])
     * @see #query(String, String, String[])
-    * @param tableId
-    * @param sqlWhereClause
-    * @param sqlSelectionArgs
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
     * @return true if the open succeeded
     */
 	public boolean openTableToSpreadsheetView(String tableId, 
-	    String sqlWhereClause, String[] sqlSelectionArgs) {
+	    String whereClause, String[] selectionArgs) {
      return weakControl.get().helperOpenTableToSpreadsheetView(
-         tableId, sqlWhereClause, sqlSelectionArgs);
+         tableId, whereClause, selectionArgs);
 	}
 
 	/**
-	 * Return a {@link TableDataIf} object for the given table id, queried
-	 * using SQL.
+	 * Return a {@link TableDataIf} object for the given table id, where the
+	 * rows have been restricted by the query.
 	 * <p>
-	 * For example, if you wanted all the rows where the column foo equaled
-	 * bar, the where clause would be "WHERE foo = ? ", and the selection args
-	 * would be ["bar"].
+	 * For example, if you wanted all the rows where the column with elementKey
+	 * foo equaled bar, the where clause would be "foo = ? ", and the selection 
+	 * args would be ["bar"].
+	 * <p>
+	 * If you require only those rows where foo equals bar and foo2 = bar2,
+	 * you can combine these restrictions using "AND". For instance, this query
+	 * would have a where clause of "foo = ? AND foo2 = ?" while the
+	 * selectionArgs would be ["bar", "bar2"].
+	 * <p>
+	 * The query also supports OR operations, so you can modify the above query
+	 * to include rows where foo equals bar or those where foo2 = bar2, you can
+	 * say "foo = ? OR foo2 = ?" and use the same selectionArgs.
+	 * <p>
+	 * If you need more complicated queries joining tables, this can also be
+	 * achieved using this method and SQL syntax. The {@link TableDataIf}
+	 * returned by this method can only contain those columns present in the
+	 * table specified by tableId. This means that you cannot join tables and
+	 * retrieve the entire projection. You can, however, perform subselections
+	 * and other valid SQL queries, so long as you do not require additional
+	 * columns in the projection.
 	 * <p>
 	 * This can be used to do powerful cross-table queries.
-	 * @param tableId display name of the table
-	 * @param sqlWhereClause an SQL where clause
-	 * @param sqlSelectionArgs selection arguments
+	 * @param tableId the tableId of the table
+	 * @param whereClause a where clause as described above. Must include "?" 
+	 * instead of actual values, which are instead
+    * passed in the sqlSelectionArgs parameter. The references to tables must
+    * use the table ids. The references to the columns
+    * must be the element keys
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in sqlWhereClause
 	 * @return a new TableDataIf with the results of the query. Should be
-	 * released with {@link #releaseQueryResources(String)} when it is no longer
+	 * released with {@link #releaseQueryResources(String)} when no longer
 	 * needed.
 	 */
 	// @JavascriptInterface
-	public TableDataIf query(String tableId, String sqlWhereClause,
-			String[] sqlSelectionArgs) {
-		TableData td = weakControl.get().query(tableId, sqlWhereClause,
-				sqlSelectionArgs);
+	public TableDataIf query(String tableId, String whereClause,
+			String[] selectionArgs) {
+		TableData td = weakControl.get().query(tableId, whereClause,
+				selectionArgs);
 		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
 		} else {
@@ -152,7 +171,7 @@ public class ControlIf {
 	 * statements, above. The object will be retained until this method is
 	 * called, so good practice is to release the query when its data is no
 	 * longer needed to free up resources.
-	 * @param tableId display name for the table
+	 * @param tableId tableId of the table
 	 */
 	// @JavascriptInterface
 	public void releaseQueryResources(String tableId) {
@@ -199,7 +218,7 @@ public class ControlIf {
 	
 	/**
 	 * Add a row using Collect and the default form. 
-	 * @param tableId the display name of the table to receive the add.
+	 * @param tableId the tableId of the table to receive the add.
     * @return true if the activity was launched, false if something went wrong
     * @deprecated
 	 */
