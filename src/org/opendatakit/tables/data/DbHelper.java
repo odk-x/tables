@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
