@@ -434,19 +434,22 @@ public class Controller implements CustomViewCallbacks {
       }
 
       Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
-          null, null, null, table.getRowId(rowNum));
+          null, null, null, table.getRowAtIndex(rowNum).getRowId());
 
       if (intent != null) {
-        CollectUtil.launchCollectToEditRow(activity, intent, table.getRowId(rowNum));
+        CollectUtil.launchCollectToEditRow(activity, intent, 
+            table.getRowAtIndex(rowNum).getRowId());
       } else {
         Log.e(TAG, "intent null when trying to create for edit row.");
       }
     } else {
       SurveyFormParameters params = formType.getSurveyFormParameters();
 
-      Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, tp, appName, params, table.getRowId(rowNum));
+      Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, tp, 
+          appName, params, table.getRowAtIndex(rowNum).getRowId());
       if ( intent != null ) {
-        SurveyUtil.launchSurveyToEditRow(activity, intent, tp, table.getRowId(rowNum));
+        SurveyUtil.launchSurveyToEditRow(activity, intent, tp, 
+            table.getRowAtIndex(rowNum).getRowId());
       }
     }
   }
@@ -984,12 +987,11 @@ public class Controller implements CustomViewCallbacks {
    *          the filename to be used if the filename differs than that
    *          set in the key value store.
    */
-  public static void launchDetailActivity(Activity activity, UserTable table, int rowNum,
-                                          String filename) {
-    TableProperties tp = table.getTableProperties();
+  public static void launchDetailActivity(Activity activity,
+      String tableId, String rowId, String filename) {
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
+    intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
+    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
     if (filename != null) {
       // a null value informs the DetailDisplayActivity that the filename in
       // the kvs should be used, so only add it if it has been set.

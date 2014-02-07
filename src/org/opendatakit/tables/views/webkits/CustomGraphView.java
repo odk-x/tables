@@ -55,7 +55,8 @@ public class CustomGraphView extends CustomView {
   private CustomGraphView(Activity activity, String appName, String graphName,
                           String potentialGraphName, CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
-    this.filename = ODKFileUtils.getFrameworkFolder(appName) + File.separator + "optionspane.html";
+    this.filename = ODKFileUtils.getFrameworkFolder(appName) 
+        + File.separator + "optionspane.html";
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
     Log.i("CustomGraphView", "IDDD: " + graphName);
@@ -89,7 +90,7 @@ public class CustomGraphView extends CustomView {
   }
 
   public void display() {
-    control = new Control(mParentActivity, table);
+    control = new Control(mParentActivity);
     tableData = new TableData(table);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");

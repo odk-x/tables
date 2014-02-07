@@ -717,7 +717,8 @@ public class TableActivity extends SherlockFragmentActivity
       UserTable table, int rowNum) {
     Intent intent = new Intent(context, DetailDisplayActivity.class);
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, table.getRowId(rowNum));
+    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, 
+        table.getRowAtIndex(rowNum).getRowId());
     context.startActivity(intent);
   }
 

@@ -797,8 +797,8 @@ public class SyncProcessor {
 
     for (SyncRow row : rows) {
       boolean found = false;
-      for (int i = 0; i < allRowIds.getHeight(); i++) {
-        String rowId = allRowIds.getRowId(i);
+      for (int i = 0; i < allRowIds.getNumberOfRows(); i++) {
+        String rowId = allRowIds.getRowAtIndex(i).getRowId();
         if (row.getRowId().equals(rowId)) {
           String stateStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
           SyncState state = SyncState.valueOf(stateStr);
@@ -1051,7 +1051,7 @@ public class SyncProcessor {
     }, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
-    int numRows = rows.getHeight();
+    int numRows = rows.getNumberOfRows();
     int numCols = rows.getWidth();
     if (numCols != columnsToSync.size()) {
       Log.e(TAG, "number of user-defined columns returned in getRows() does "
@@ -1061,7 +1061,7 @@ public class SyncProcessor {
     // And now for each row we need to add both the user columns AND the
     // columns to sync, AND the sync tag for the row.
     for (int i = 0; i < numRows; i++) {
-      String rowId = rows.getRowId(i);
+      String rowId = rows.getRowAtIndex(i).getRowId();
       String rowETag = rows.getMetadataByElementKey(i, DataTableColumns.ROW_ETAG);
       Map<String, String> values = new HashMap<String, String>();
 

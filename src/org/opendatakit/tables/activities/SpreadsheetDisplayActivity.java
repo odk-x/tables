@@ -265,12 +265,14 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          return true;
      case MENU_ITEM_ID_EDIT_CELL:
          c.openCellEditDialog(
-                 table.getRowId(lastDataCellMenued / table.getWidth()),
+                 table.getRowAtIndex(
+                     lastDataCellMenued / table.getWidth()).getRowId(),
                  table.getData(lastDataCellMenued),
                  lastDataCellMenued % table.getWidth());
          return true;
      case MENU_ITEM_ID_DELETE_ROW:
-         c.deleteRow(table.getRowId(lastDataCellMenued / table.getWidth()));
+         c.deleteRow(table.getRowAtIndex(
+             lastDataCellMenued / table.getWidth()).getRowId());
          init();
          return true;
      case MENU_ITEM_ID_EDIT_ROW:
@@ -595,7 +597,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                    break;
 	                case MENU_ITEM_ID_EDIT_CELL:
 	                    c.openCellEditDialog(
-	                            table.getRowId(cellId / table.getWidth()),
+	                            table.getRowAtIndex(
+	                                cellId / table.getWidth()).getRowId(),
 	                            table.getData(cellId),
 	                            cellId % table.getWidth());
 	                    c.removeOverlay();
@@ -606,7 +609,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                      ConflictResolutionRowActivity.class);
 	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID,
 	                      table.getTableProperties().getTableId());
-	                  String conflictRowId = table.getRowId(rowNumber);
+	                  String conflictRowId = 
+	                      table.getRowAtIndex(rowNumber).getRowId();
 	                  i.putExtra(
 	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID,
 	                      conflictRowId);
@@ -615,7 +619,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
-	                  final String rowId = table.getRowId(cellId / table.getWidth());
+	                  final String rowId = 
+	                      table.getRowAtIndex(cellId / table.getWidth()).getRowId();
 	                  AlertDialog.Builder alert =
 	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);
 	                  alert.setTitle(getString(R.string.confirm_delete_row))

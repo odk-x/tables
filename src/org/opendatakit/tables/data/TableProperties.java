@@ -1138,6 +1138,19 @@ public class TableProperties {
     }
     return null;
   }
+  
+  /**
+   * Return the element key for the column based on the element path.
+   * <p>
+   * TODO: CURRENTLY A HACK!!! 
+   * @param elementPath
+   * @return
+   */
+  public String getElementKeyFromElementPath(String elementPath) {
+    // TODO: do this correctly. This is just a hack that often works.
+    String hackPath = elementPath.replace(".", "_");
+    return hackPath;
+  }
 
   public ColumnProperties getColumnByElementName(String elementName) {
     if (this.mElementKeyToColumnProperties == null) {

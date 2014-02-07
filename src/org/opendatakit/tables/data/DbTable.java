@@ -57,6 +57,12 @@ public class DbTable {
    private static final String SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE =
        DataTableColumns.SYNC_STATE + " = ? AND "
        + DataTableColumns.CONFLICT_TYPE + " IN ( ?, ? )";
+   
+   /**
+    * The sql where clause to select a single row.
+    */
+   private static final String SQL_WHERE_FOR_SINGLE_ROW = "WHERE " + 
+       DataTableColumns.ID + " = ?";
 
 
     /*
@@ -302,6 +308,16 @@ public class DbTable {
         }
       }
     }
+    
+    /**
+     * Return an {@link UserTable} that will contain a single row.
+     * @param rowId
+     * @return
+     */
+    public UserTable getTableForSingleRow(String rowId) {
+      String[] sqlSelectionArgs = {rowId};
+      return rawSqlQuery(SQL_WHERE_FOR_SINGLE_ROW, sqlSelectionArgs);
+    }
 
     public UserTable getRaw(Query query, String[] columns) {
       List<String> desiredColumns = tp.getColumnOrder();
@@ -317,8 +333,6 @@ public class DbTable {
         UserTable table = dataQuery(query.toSql(desiredColumns));
         table.setFooter(footerQuery(query));
         return table;
-//        return new UserTable(table.getRowIds(), getUserHeader(),
-//                table.getData(), footerQuery(query));
     }
 
     public UserTable getUserOverviewTable(Query query) {
@@ -330,8 +344,6 @@ public class DbTable {
         UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
         table.setFooter(footerQuery(query));
         return table;
-//        return new UserTable(table.getRowIds(), getUserHeader(),
-//                table.getData(), footerQuery(query));
     }
 
     public ConflictTable getConflictTable() {

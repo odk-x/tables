@@ -826,7 +826,7 @@ public class CsvUtil {
       }
       cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
       String[] row = new String[columnCount];
-      for (int i = 0; i < table.getHeight(); i++) {
+      for (int i = 0; i < table.getNumberOfRows(); i++) {
         for (int j = 0; j < columns.size(); ++j) {
           if (j >= idxFirstUserColumns && j < idxFirstUserColumns + userColumns.size()) {
             row[j] = table.getData(i, j - idxFirstUserColumns);

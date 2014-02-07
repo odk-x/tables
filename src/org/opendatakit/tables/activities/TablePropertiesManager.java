@@ -15,9 +15,11 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -33,10 +35,10 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.utils.LanguageUtil;
+import org.opendatakit.tables.utils.OutputUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -95,6 +97,9 @@ public class TablePropertiesManager extends PreferenceActivity {
   private AlertDialog saveAsDefaultDialog;
   private AlertDialog defaultToServerDialog;
   private AlertDialog serverToDefaultDialog;
+  
+  /** Alerts to confirm the output of the debug objects. */
+  private AlertDialog mOutputDebugObjectsDialog;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -201,6 +206,22 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     serverToDefaultDialog = builder.create();
+    
+    builder = new AlertDialog.Builder(TablePropertiesManager.this);
+    builder.setMessage(
+        getString(R.string.are_you_sure_write_debug_objects));
+    builder.setCancelable(true);
+    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        // So now we have to write the data and control objects.
+        OutputUtil.writeControlObject(TablePropertiesManager.this, 
+            TableFileUtils.ODK_TABLES_APP_NAME);
+        OutputUtil.writeAllDataObjects(TablePropertiesManager.this, 
+            TableFileUtils.ODK_TABLES_APP_NAME);
+      }
+    });
+    mOutputDebugObjectsDialog = builder.create();
 
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
@@ -272,14 +293,16 @@ public class TablePropertiesManager extends PreferenceActivity {
     FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
     detailViewPref.setTitle(getString(R.string.detail_view_file));
     detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-    String detailViewFilename = kvsh.getString(CustomDetailView.KEY_FILENAME);
+    final KeyValueStoreHelper kvsh = 
+        tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+    String detailViewFilename = 
+        kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
     detailViewPref.setText(detailViewFilename);
     detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // tp.setDetailViewFilename((String) newValue);
-        kvsh.setString(CustomDetailView.KEY_FILENAME, (String) newValue);
+        kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
         init();
         return false;
       }
@@ -491,6 +514,25 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     defaultsCat.addPreference(serverToDefaultPref);
+    
+    // The preference for debugging stuff.
+    PreferenceCategory developerCategory = new PreferenceCategory(this);
+    root.addPreference(developerCategory);
+    developerCategory.setTitle(getString(R.string.developer));
+
+    // the actual entry that has the option above.
+    Preference writeDebugObjectsPref = new Preference(this);
+    writeDebugObjectsPref.setTitle(getString(R.string.write_debug_objects));
+    writeDebugObjectsPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        mOutputDebugObjectsDialog.show();
+        return true;
+      }
+    });
+    
+    developerCategory.addPreference(writeDebugObjectsPref);
+
 
     setPreferenceScreen(root);
   }
@@ -746,43 +788,49 @@ public class TablePropertiesManager extends PreferenceActivity {
     KeyValueStoreHelper kvsh;
     Uri uri;
     String filename;
+    String relativePath;
     switch (requestCode) {
     case RC_DETAIL_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-      kvsh.setString(CustomDetailView.KEY_FILENAME, filename);
+      relativePath = getRelativePathOfFile(filename);
+      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
       // tp.setDetailViewFilename(filename);
       init();
       break;
     case RC_LIST_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      // This set it in the main partition. We actually want to set it in the
-      // other partition for now.
-      // kvsh =
-      // tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-      // kvsh.setString(
-      // ListDisplayActivity.KEY_FILENAME,
-      // filename2);
+      // We need to get the relative path under the app name.
+      relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
       kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to
       // allow custom naming, checking for redundancy, etc.
       KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, filename);
-
-      // TableViewSettings settings = tp.getOverviewViewSettings();
-      // settings.setCustomListFilename(filename2);
+      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
       tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-          TableMapFragment.KEY_FILENAME, data.getData().getPath());
+          TableMapFragment.KEY_FILENAME, 
+          getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
+  }
+  
+  /**
+   * Get the relative filepath under the app directory for the full path as
+   * returned from OI file picker.
+   * @param fullPath
+   * @return
+   */
+  private String getRelativePathOfFile(String fullPath) {
+    String relativePath = TableFileUtils.getRelativePath(fullPath);
+    return relativePath;
   }
 
   @Override

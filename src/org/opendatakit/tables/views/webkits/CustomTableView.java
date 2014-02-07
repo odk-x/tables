@@ -15,13 +15,11 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -31,7 +29,8 @@ import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.webkit.WebViewClient;
 
-public class CustomTableView extends CustomView implements ExtendedTableControl {
+public class CustomTableView extends CustomView 
+    implements ExtendedTableControl {
 
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
@@ -54,9 +53,10 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
     colIndexTable = new HashMap<String, Integer>();
   }
 
-  public static CustomTableView get(Activity activity, String appName, UserTable table,
-                                    String filename, CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, callbacks);
+  public static CustomTableView get(Activity activity, String appName, 
+      UserTable table, String filename, CustomViewCallbacks callbacks) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+        callbacks);
     ctv.set(table);
     return ctv;
   }
@@ -64,7 +64,8 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
   private void set(UserTable table) {
     this.table = table;
     colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties()
+    Map<String, ColumnProperties> elementKeyToColumnProperties = 
+        table.getTableProperties()
         .getDatabaseColumns();
     colIndexTable.putAll(table.getMapOfUserDataToIndex());
     for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
@@ -80,9 +81,10 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
 
   // //////////////////////////// TEST ///////////////////////////////
 
-  public static CustomTableView get(Activity activity, String appName, UserTable table,
-                                    String filename, int index, Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, controller);
+  public static CustomTableView get(Activity activity, String appName, 
+      UserTable table, String filename, int index, Controller controller) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+        controller);
     // Create a new table with only the row specified at index.
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[1];
@@ -91,22 +93,30 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
     String[][] metadata = new String[1][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
-    rowIds[0] = table.getRowId(index);
+    rowIds[0] = table.getRowAtIndex(index).getRowId();
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       data[0][i] = table.getData(index, i);
       footers[i] = table.getFooter(i);
       metadata[0] = table.getAllMetadataForRow(i);
     }
-    UserTable singleRowTable = new UserTable(table.getTableProperties(), rowIds, headers, data,
-                                             table.getElementKeysForIndex(),
-                                             table.getMapOfUserDataToIndex(), metadata,
-                                             table.getMapOfMetadataToIndex(), footers);
+    UserTable singleRowTable = new UserTable(table.getTableProperties(), 
+        rowIds, headers, data, table.getElementKeysForIndex(),
+        table.getMapOfUserDataToIndex(), metadata,
+        table.getMapOfMetadataToIndex(), footers);
     // UserTable singleRowTable = new UserTable(rowIds, headers, data,
     // footers);
 
     ctv.set(singleRowTable);
     return ctv;
+  }
+  
+  /**
+   * Return the {@link TableData} object backing this view.
+   * @return
+   */
+  public TableData getTableDataObject() {
+    return this.tableData;
   }
 
   /**
@@ -126,32 +136,32 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, String appName, UserTable table,
-                                    String filename, List<Integer> indexes, Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, controller);
+  public static CustomTableView get(Activity activity, String appName, 
+      UserTable table, String filename, List<Integer> indexes, 
+      Controller controller) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+        controller);
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];
     String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata = new String[indexes.size()][table.getNumberOfMetadataColumns()];
+    String[][] metadata = 
+        new String[indexes.size()][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowId(indexes.get(j));
+        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
         data[j][i] = table.getData(indexes.get(j), i);
         metadata[j] = table.getAllMetadataForRow(indexes.get(j));
       }
       footers[i] = table.getFooter(i);
     }
-    UserTable multiRowTable = new UserTable(table.getTableProperties(), rowIds, headers, data,
-                                            table.getElementKeysForIndex(),
-                                            table.getMapOfUserDataToIndex(), metadata,
-                                            table.getMapOfMetadataToIndex(), footers);
-    // UserTable multiRowTable = new UserTable(rowIds, headers, data,
-    // footers);
-
+    UserTable multiRowTable = new UserTable(table.getTableProperties(), rowIds,
+        headers, data, table.getElementKeysForIndex(),
+        table.getMapOfUserDataToIndex(), metadata,
+        table.getMapOfMetadataToIndex(), footers);
     ctv.set(multiRowTable);
     return ctv;
   }
@@ -173,30 +183,33 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, String appName, UserTable table,
-                                    String filename, List<Integer> indexes, Fragment fragment,
-                                    CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, callbacks);
+  public static CustomTableView get(Activity activity, String appName, 
+      UserTable table, String filename, List<Integer> indexes, 
+      Fragment fragment, CustomViewCallbacks callbacks) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+        callbacks);
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];
     String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata = new String[indexes.size()][table.getNumberOfMetadataColumns()];
+    String[][] metadata = 
+        new String[indexes.size()][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
     for (int i = 0; i < table.getWidth(); i++) {
       headers[i] = table.getHeader(i);
       for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowId(indexes.get(j));
+        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
         data[j][i] = table.getData(indexes.get(j), i);
         metadata[j] = table.getAllMetadataForRow(indexes.get(j));
       }
       footers[i] = table.getFooter(i);
     }
-    UserTable multiRowTable = new UserTable(table.getTableProperties(), rowIds, headers, data,
-                                            table.getElementKeysForIndex(),
-                                            table.getMapOfUserDataToIndex(), metadata,
-                                            table.getMapOfMetadataToIndex(), footers);
+    UserTable multiRowTable = 
+        new UserTable(table.getTableProperties(), rowIds, headers, data,
+            table.getElementKeysForIndex(),
+            table.getMapOfUserDataToIndex(), metadata,
+            table.getMapOfMetadataToIndex(), footers);
 
     ctv.set(multiRowTable);
     ctv.mFragment = fragment;
@@ -212,15 +225,15 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
   public void display() {
     // Load a basic screen as you're getting the other stuff ready to
     // clear the old data.
-    control = new Control(mParentActivity, table);
+    control = new Control(mParentActivity);
     tableData = new TableData(table);
-    Object extendedInterface;
-    extendedInterface = new ControlWithTableExtensionsIf(this, control);
-    addJavascriptInterface(extendedInterface, "control");
-    addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), 
+        "control");
+    addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
+        "data");
     if (filename != null) {
       String fullPath = FileProvider.getAsWebViewUri(getContext(), mAppName,
-          ODKFileUtils.asUriFragment(mAppName, new File(filename)));
+          filename);
       load(fullPath);
     } else {
       loadData(DEFAULT_HTML, "text/html", null);
@@ -230,7 +243,8 @@ public class CustomTableView extends CustomView implements ExtendedTableControl 
 
   @Override
   public boolean selectItem(int index) {
-    ((TableMapInnerFragment) mFragment).focusOnMarker(table.getRowId(index));
+    ((TableMapInnerFragment) mFragment).focusOnMarker(
+        table.getRowAtIndex(index).getRowId());
     return true;
   }
 

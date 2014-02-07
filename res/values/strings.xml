@@ -173,6 +173,9 @@
 	<string name="are_you_sure_save_default_settings">Please confirm saving of these settings as default. Any modifications of the old default settings will be lost.</string>
 	<string name="are_you_sure_copy_default_settings_to_server_settings">Please confirm copying of default settings to server sync settings. Settings in the server sync set will be pushed to the server at next sync.</string>
 	<string name="are_you_sure_merge_server_settings_into_default_settings">Please confirm merging of server settings into default settings.</string>
+	<string name="are_you_sure_write_debug_objects">Do you want to wipe any old debug objects and write new ones to the output directory?</string>
+	<string name="write_debug_objects">Write Debug Objects</string>
+	<string name="developer">Developer</string>
 	<string name="general_settings">General Settings</string>
 	<string name="table_display_name">Display Name</string>
 	<string name="change_table_display_name">Change Table Display Name</string>

@@ -17,8 +17,6 @@ package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
-import org.opendatakit.tables.views.webkits.CustomView.TableData;
-
 /**
  * This class is handed to the javascript as "data" when displaying a table in
  * a List View. It is a way to get at the data in a table, allowing for the 
@@ -28,7 +26,7 @@ import org.opendatakit.tables.views.webkits.CustomView.TableData;
  * a summary of each row, and then iterate over all the rows of the table using
  * {@link #getCount()} and {@link #getData(int, String)}, rendering each row as
  * an item. A click handler can then be added to call 
- * {@link ControlIf#openItem(int)} to launch a Detail View for a clicked row.
+ * {@link ControlIf#openDetailView(String, String, String)} to launch a Detail View for a clicked row.
  * <p>
  * This class then serves as a summary and an access point to the Detail View.
  * @author Mitch Sundt
@@ -42,11 +40,6 @@ public class TableDataIf {
 		this.weakTable = new WeakReference<TableData>(table);
 	}
 
-	// @JavascriptInterface
-	public boolean inCollectionMode() {
-		return weakTable.get().inCollectionMode();
-	}
-
 	/**
 	 * Returns the number of rows in the table being viewed as restricted by
 	 * the current query, be it SQL or a query string.
@@ -58,13 +51,33 @@ public class TableDataIf {
 	}
 
 	/**
-	 * Returns a stringified JSONArray of all the values in the given column.
-	 * @param colName the display name of the column
+	 * Returns a stringified JSONArray of all the values in the given column, 
+	 * or null if the column cannot be found.
+	 * @param elementPath the element path of the column
 	 * @return JSONArray of all the data in the column
 	 */
 	// @JavascriptInterface
-	public String getColumnData(String colName) {
-		return weakTable.get().getColumnData(colName);
+	public String getColumnData(String elementPath) {
+		return weakTable.get().getColumnData(elementPath);
+	}
+	
+	/**
+	 * Returns the tableId of the table being displayed.
+	 * @return the tabeId
+	 */
+	// @JavascriptInterface
+	public String getTableId() {
+	  return weakTable.get().getTableId();
+	}
+	
+	/**
+	 * Get the id for the row at the given index.
+	 * @param rowNumber the row number
+	 * @return the rowId of the row number
+	 */
+	// @JavascriptInterface
+	public String getRowId(int rowNumber) {
+	  return weakTable.get().getRowId(rowNumber);
 	}
 
 	/**
@@ -79,33 +92,22 @@ public class TableDataIf {
 	/**
 	 * Get the text color of the cell in the given column for the given value.
 	 * Uses the color rules of the column. The default value is -16777216.
-	 * @param colName the display name of the column
+	 * @param elementPath the element path of the column
 	 * @param value the string value of the datum
 	 * @return String representation of the text color
 	 */
 	// @JavascriptInterface
-	public String getForegroundColor(String colName, String value) {
-		return weakTable.get().getForegroundColor(colName, value);
+	public String getForegroundColor(String elementPath, String value) {
+		return weakTable.get().getForegroundColor(elementPath, value);
 	}
 
 	/**
-	 * Return the number of rows in the collection at the given row index. Only
-	 * meaningful if {@link #inCollectionMode()} returns true.
-	 * @param rowNum
-	 * @return number of rows in the collection
-	 */
-	// @JavascriptInterface
-	public int getCollectionSize(int rowNum) {
-		return weakTable.get().getCollectionSize(rowNum);
-	}
-
-	/**
-	 * Returns true if the table is indexed.
+	 * Returns true if the table has been grouped by a column.
 	 * @return true if index else false
 	 */
 	// @JavascriptInterface
-	public boolean isIndexed() {
-		return weakTable.get().isIndexed();
+	public boolean isGroupedBy() {
+		return weakTable.get().isGroupedBy();
 	}
 
 	/**
@@ -113,126 +115,34 @@ public class TableDataIf {
 	 * are zero-indexed, meaning the first row is 0. For  example, if you were 
 	 * displaying a list view and had a column titled "Age", you would retrieve 
 	 * the "Age" value for the second row by calling getData(1, "Age").
-	 * @param rowNum the row number
-	 * @param colName the display name of the column to which you want the 
-	 * data.
+	 * <p>
+	 * The null value is returned if the column could not be found, or if the
+	 * value in the database is null.
+	 * <p>
+	 * If {@link #isGroupedBy()} returns true, a valid elementPath is __count,
+	 * which will return the number of rows with the grouped by value.
+	 * @param rowNumber the row number
+	 * @param elementPath the element path of the column
 	 * @return the String representation of the datum at the given row in the
-	 * given column
+	 * given column, or null if the value in the database is null or the column
+	 * does not exist
 	 */
 	// @JavascriptInterface
-	public String getData(int rowNum, String colName) {
-		return weakTable.get().getData(rowNum, colName);
-	}
-
-	/**
-	 * Edit the row using Collect and the default form.
-	 * @param rowNumber
-	 */
-	// @JavascriptInterface
-	public void editRowWithCollect(int rowNumber) {
-		weakTable.get().editRowWithCollect(rowNumber);
-	}
-
-	/**
-	 * Edit the row using Collect and a specific form.
-	 * @param rowNumber
-	 * @param formId 
-	 * @param formVersion can be null
-	 * @param formRootElement
-	 */
-	// @JavascriptInterface
-	public void editRowWithCollectAndSpecificForm(int rowNumber, String formId,
-			String formVersion, String formRootElement) {
-		weakTable.get().editRowWithCollectAndSpecificForm(rowNumber, formId,
-				formVersion, formRootElement);
+	public String getData(int rowNumber, String elementPath) {
+		return weakTable.get().getData(rowNumber, elementPath);
 	}
 	
 	/**
-	 * Edit the row using Survey and a specific form.
-	 * @param rowNumber
-	 * @param formId
-	 * @param screenPath
-	 * @param formPath
-	 * @param refId
+	 * Retrieve the datum in the given column from the first row. This is a
+	 * convenience method when operating in a detail view and is equivalent to
+	 * calling {@link #getData(int, String)} with a rowNum of 0.
+	 * @see #getData(int, String)
+	 * @param elementPath
+	 * @return the String representation of the datum in the given column at the
+	 * first row of the table
 	 */
-	// @JavascriptInterface
-	public void editRowWithSurveyAndSpecificForm(int rowNumber, String formId,
-	    String screenPath) {
-	  weakTable.get().editRowWithSurveyAndSpecificForm(rowNumber, formId, 
-	      screenPath);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollect(String)
-	 * @param tableName
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollect(String tableName) {
-		weakTable.get().addRowWithCollect(tableName);
+	public String get(String elementPath) {
+	  return this.getData(0, elementPath);
 	}
 	
-	// @JavascriptInterface
-	public void addRowWithSurveyAndSpecificForm(String tableName, 
-	    String formId, String screenPath) {
-	  weakTable.get().addRowWithSurveyAndSpecificForm(tableName, formId,
-	      screenPath);
-	}
-	
-	/**
-	 * Add a row using Survey, the specified form, and prepopulated values. 
-	 * jsonMap should be a JSON.stringify()'d json object mapping elementName to
-	 * prepopulated value.
-	 * @param tableName
-	 * @param formId
-	 * @param screenPath
-	 * @param jsonMap
-	 */
-	public void addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
-	    String tableName, String formId, String screenPath, String jsonMap) {
-	  weakTable.get().addRowWithSurveyAndSpecificFormAndPrepopulatedValues(
-	      tableName, formId, screenPath, jsonMap);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndSpecificForm(String, String, String, String)
-	 * @param tableName
-	 * @param formId
-	 * @param formVersion
-	 * @param formRootElement
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificForm(String tableName,
-			String formId, String formVersion, String formRootElement) {
-		weakTable.get().addRowWithCollectAndSpecificForm(tableName, formId,
-				formVersion, formRootElement);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndPrepopulatedValues(String, String)
-	 * @param tableName
-	 * @param jsonMap
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndPrepopulatedValues(String tableName,
-			String jsonMap) {
-		weakTable.get().addRowWithCollectAndPrepopulatedValues(tableName,
-				jsonMap);
-	}
-
-	/**
-	 * @see ControlIf#addRowWithCollectAndSpecificFormAndPrepopulatedValues(String, String, String, String, String)
-	 * @param tableName
-	 * @param formId
-	 * @param formVersion
-	 * @param formRootElement
-	 * @param jsonMap
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-			String tableName, String formId, String formVersion,
-			String formRootElement, String jsonMap) {
-		weakTable.get().addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-				tableName, formId, formVersion, formRootElement, jsonMap);
-	}
-
 }
