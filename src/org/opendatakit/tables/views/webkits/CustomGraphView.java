@@ -28,6 +28,7 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.util.Log;
@@ -55,8 +56,7 @@ public class CustomGraphView extends CustomView {
   private CustomGraphView(Activity activity, String appName, String graphName,
                           String potentialGraphName, CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
-    this.filename = ODKFileUtils.getFrameworkFolder(appName) 
-        + File.separator + "optionspane.html";
+    this.filename = TableFileUtils.getRelativePathToGraphFile();
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
     Log.i("CustomGraphView", "IDDD: " + graphName);

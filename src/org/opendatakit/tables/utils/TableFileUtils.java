@@ -65,7 +65,14 @@ public class TableFileUtils {
 
   /** The response type expected from the server for a json object. */
   public static final String RESP_TYPE_JSON = "application/json; charset=utf-8";
-
+  
+  /** The name of the directory holding the tables javascript. */
+  public static final String TABLES_JS_DIR = "js";
+  /** The name of the directory holding the graphing files. */
+  public static final String TABLES_GRAPH_DIR = "graph";
+  /** The name of the base graphing file. */
+  public static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
+  
   /**
    * Get all the files under the given folder, excluding those directories that
    * are the concatenation of folder and a member of excluding. If the member
@@ -167,6 +174,22 @@ public class TableFileUtils {
   public static String getOutputFolder(String appName) {
     String appFolder = ODKFileUtils.getAppFolder(appName);
     String result = appFolder + File.separator + OUTPUT_FOLDER_NAME;
+    return result;
+  }
+  
+  /**
+   * Get the path of the base file used for Tables graphing, relative to the
+   * app folder.
+   * @return
+   */
+  public static String getRelativePathToGraphFile() {
+    String frameworkPath = 
+        ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+    String result = 
+        frameworkPath + File.separator +
+        TABLES_JS_DIR + File.separator +
+        TABLES_GRAPH_DIR + File.separator +
+        TABLES_GRAPH_BASE_FILE_NAME;
     return result;
   }
   
