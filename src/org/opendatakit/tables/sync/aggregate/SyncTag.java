@@ -30,12 +30,24 @@ public class SyncTag {
   private String propertiesETag;
   private String schemaETag;
 
+  /**
+   * Make a copy of the given syncTag
+   *
+   * @param syncTag
+   */
   public SyncTag(SyncTag syncTag) {
     this.dataETag = syncTag.dataETag;
     this.propertiesETag = syncTag.propertiesETag;
     this.schemaETag = syncTag.schemaETag;
   }
 
+  /**
+   * Construct a sync tag with the given parameters
+   *
+   * @param dataETag
+   * @param propertiesETag
+   * @param schemaETag
+   */
   public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
     this.dataETag = dataETag;
     this.propertiesETag = propertiesETag;

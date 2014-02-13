@@ -22,6 +22,7 @@ import java.util.List;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
@@ -43,12 +44,25 @@ public interface Synchronizer {
    */
   public List<TableResource> getTables() throws IOException;
 
+  /**
+   * Discover the current sync state of a given tableId.
+   *
+   * @param tableId
+   * @return
+   * @throws IOException
+   */
   public TableResource getTable(String tableId) throws IOException;
 
+  /**
+   * Discover the schema for a table resource.
+   *
+   * @param tableDefinitionUri
+   * @return
+   */
   public TableDefinitionResource getTableDefinition(String tableDefinitionUri);
 
   /**
-   * Create a table with the given id on the server.
+   * Assert that a table with the given id and schema exists on the server.
    *
    * @param tableId
    *          the unique identifier of the table
@@ -56,13 +70,36 @@ public interface Synchronizer {
    *          the current SyncTag for the table
    * @param cols
    *          a map from column names to column types, see {@link ColumnType}
-   * @return the revised SyncTag for the table
+   * @return the revised SyncTag for the table (the server may return a new schemaETag)
    */
   public SyncTag createTable(String tableId, SyncTag currentSyncTag, ArrayList<Column> columns)
       throws IOException;
 
   /**
-   * Sets the table name and table properties on the server.
+   * Delete the table with the given id from the server.
+   *
+   * @param tableId
+   *          the unique identifier of the table
+   */
+  public void deleteTable(String tableId) throws IOException;
+
+  /**
+   * Sets the table display name and table properties on the server.
+   *
+   * @param tableId
+   *          the unique identifier of the table
+   * @param currentSyncTag
+   *          the last value that was stored as the syncTag
+   * @return
+   *          all the properties for the given table
+   *
+   * @throws IOException
+   */
+  public TableProperties getTableProperties(String tableId, SyncTag currentSyncTag) throws IOException;
+
+
+  /**
+   * Sets the table display name and table properties on the server.
    *
    * @param tableId
    *          the unique identifier of the table
@@ -78,14 +115,6 @@ public interface Synchronizer {
                                    ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
 
   /**
-   * Delete the table with the given id from the server.
-   *
-   * @param tableId
-   *          the unique identifier of the table
-   */
-  public void deleteTable(String tableId) throws IOException;
-
-  /**
    * Retrieve changes in the server state since the last synchronization.
    *
    * @param tableId
@@ -98,32 +127,19 @@ public interface Synchronizer {
   public IncomingModification getUpdates(String tableId, SyncTag currentSyncTag) throws IOException;
 
   /**
-   * Insert the given rows in the table on the server.
+   * Insert or update the given row in the table on the server.
    *
    * @param tableId
    *          the unique identifier of the table
    * @param currentSyncTag
    *          the last value that was stored as the syncTag
-   * @param rowsToInsert
-   *          the rows to insert
-   * @return a Modification of the syncTags to save with the rows and table
+   * @param rowToInsertOrUpdate
+   *          the row to insert or update
+   * @return a RowModification containing the (rowId, rowETag, table dataETag) after the modification
    */
-  public Modification insertRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToInsert)
+  public RowModification insertOrUpdateRow(String tableId, SyncTag currentSyncTag, SyncRow rowToInsertOrUpdate)
       throws IOException;
 
-  /**
-   * Update the given rows in the table on the server.
-   *
-   * @param tableId
-   *          the unique identifier of the table
-   * @param currentSyncTag
-   *          the last value that was stored as the syncTag
-   * @param rowsToUpdate
-   *          the rows to update
-   * @return a Modification of the syncTags to save with the rows and table
-   */
-  public Modification updateRows(String tableId, SyncTag currentSyncTag, List<SyncRow> rowsToUpdate)
-      throws IOException;
 
   /**
    * Delete the given row ids from the server.
@@ -132,11 +148,11 @@ public interface Synchronizer {
    *          the unique identifier of the table
    * @param currentSyncTag
    *          the last value that was stored as the syncTag
-   * @param rowIds
-   *          the row ids of the rows to delete
-   * @return the updated syncTag of the table
+   * @param rowToDelete
+   *          the row to delete
+   * @return a RowModification containing the (rowId, null, table dataETag) after the modification
    */
-  public SyncTag deleteRows(String tableId, SyncTag currentSyncTag, List<String> rowIds)
+  public RowModification deleteRow(String tableId, SyncTag currentSyncTag, SyncRow rowToDelete)
       throws IOException;
 
   /**

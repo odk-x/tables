@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;

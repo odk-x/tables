@@ -33,6 +33,7 @@ import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.tables.utils.NameUtil;
@@ -182,7 +183,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           for ( int i = 0 ; i < tables.size() ; ++i ) {
             TableResource table = tables.get(i);
             if ( table.getTableId().equals(tp.getTableId()) ) {
-              tables.remove(i);
+              SyncTag serverTag = new SyncTag(table.getDataETag(), table.getPropertiesETag(), table.getSchemaETag());
+              if ( serverTag.equals(tp.getSyncTag()) ) {
+                tables.remove(i);
+              }
               break;
             }
           }

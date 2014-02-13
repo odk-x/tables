@@ -67,7 +67,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   /** The row number of the row in conflict within the {@link ConflictTable}.*/
   private int mRowNumber;
   private String mRowId;
-  private String mServerRowSyncTag;
+  private String mServerRowETag;
   private UserTable mLocal;
   private UserTable mServer;
 
@@ -143,8 +143,8 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
     this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
-    this.mServerRowSyncTag = this.mServer.getMetadataByElementKey(mRowNumber,
-        DataTableColumns.SYNC_TAG);
+    this.mServerRowETag = this.mServer.getMetadataByElementKey(mRowNumber,
+        DataTableColumns.ROW_ETAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getColumnOrder();
     // This will be the number of rows down we are in the adapter. Each
@@ -490,7 +490,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getServerValue());
               }
-              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               dbTable.markDeleted(mRowId);
               Log.d(TAG, "deleted the local version and marked the server" +
               		" version as deleting.");
@@ -550,7 +550,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getLocalValue());
               }
-              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });
@@ -597,7 +597,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getServerValue());
               }
-              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });
@@ -652,7 +652,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
                 return;
               }
               Map<String, String> valuesToUse = mAdapter.getResolvedValues();
-              dbTable.resolveConflict(mRowId, mServerRowSyncTag, valuesToUse);
+              dbTable.resolveConflict(mRowId, mServerRowETag, valuesToUse);
               ConflictResolutionRowActivity.this.finish();
             }
           });

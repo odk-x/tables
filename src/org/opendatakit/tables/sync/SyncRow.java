@@ -26,17 +26,12 @@ import java.util.Map;
  */
 public class SyncRow {
   private String rowId;
-  private String syncTag;
+  private String rowETag;
 
   /**
    * Sync status field.
    */
   private boolean deleted;
-
-  /**
-   * OdkTables metadata column.
-   */
-  private String uriAccessControl;
 
   /**
    * OdkTables metadata column.
@@ -51,17 +46,22 @@ public class SyncRow {
   /**
    * OdkTables metadata column.
    */
-  private Long savepointTimestamp;
+  private String savepointTimestamp;
+
+  /**
+   * OdkTables metadata column.
+   */
+  private String savepointCreator;
 
   private Map<String, String> values;
 
-  public SyncRow(final String rowId, final String syncTag, final boolean deleted,
-      final String uriAccessControl, final String formId, final String locale,
-      final Long savepointTimestamp, final Map<String, String> values) {
+  public SyncRow(final String rowId, final String rowETag, final boolean deleted,
+      final String formId, final String locale,
+      final String savepointTimestamp, final String savepointCreator, final Map<String, String> values) {
     this.rowId = rowId;
-    this.syncTag = syncTag;
+    this.rowETag = rowETag;
     this.deleted = deleted;
-    this.uriAccessControl = uriAccessControl;
+    this.savepointCreator = savepointCreator;
     this.formId = formId;
     this.locale = locale;
     this.savepointTimestamp = savepointTimestamp;
@@ -76,12 +76,12 @@ public class SyncRow {
     this.rowId = rowId;
   }
 
-  public String getSyncTag() {
-    return this.syncTag;
+  public String getRowETag() {
+    return this.rowETag;
   }
 
-  public void setSyncTag(final String syncTag) {
-    this.syncTag = syncTag;
+  public void setRowETag(final String rowETag) {
+    this.rowETag = rowETag;
   }
 
   public boolean isDeleted() {
@@ -90,14 +90,6 @@ public class SyncRow {
 
   public void setDeleted(final boolean deleted) {
     this.deleted = deleted;
-  }
-
-  public String getUriAccessControl() {
-    return uriAccessControl;
-  }
-
-  public void setUriAccessControl(String uriAccessControl) {
-    this.uriAccessControl = uriAccessControl;
   }
 
   public String getFormId() {
@@ -116,12 +108,20 @@ public class SyncRow {
     this.locale = locale;
   }
 
-  public Long getSavepointTimestamp() {
+  public String getSavepointTimestamp() {
     return savepointTimestamp;
   }
 
-  public void setSavepointTimestamp(Long savepointTimestamp) {
+  public void setSavepointTimestamp(String savepointTimestamp) {
     this.savepointTimestamp = savepointTimestamp;
+  }
+
+  public String getSavepointCreator() {
+    return savepointCreator;
+  }
+
+  public void setSavepointCreator(String savepointCreator) {
+    this.savepointCreator = savepointCreator;
   }
 
   public Map<String, String> getValues() {
@@ -146,19 +146,19 @@ public class SyncRow {
       return false;
 
     // sync status
-    if (this.getSyncTag() == null ? other.getSyncTag() != null : !this.getSyncTag().equals(other.getSyncTag()))
+    if (this.getRowETag() == null ? other.getRowETag() != null : !this.getRowETag().equals(other.getRowETag()))
       return false;
     if (this.isDeleted() != other.isDeleted())
       return false;
 
     // sync'd metadata
-    if (this.getUriAccessControl() == null ? other.getUriAccessControl() != null : !this.getUriAccessControl().equals(other.getUriAccessControl()))
-      return false;
     if (this.getFormId() == null ? other.getFormId() != null : !this.getFormId().equals(other.getFormId()))
       return false;
     if (this.getLocale() == null ? other.getLocale() != null : !this.getLocale().equals(other.getLocale()))
       return false;
     if (this.getSavepointTimestamp() == null ? other.getSavepointTimestamp() != null : !this.getSavepointTimestamp().equals(other.getSavepointTimestamp()))
+      return false;
+    if (this.getSavepointCreator() == null ? other.getSavepointCreator() != null : !this.getSavepointCreator().equals(other.getSavepointCreator()))
       return false;
 
     // data
@@ -179,13 +179,13 @@ public class SyncRow {
     // primary key
     result = result * PRIME + (this.getRowId() == null ? 0 : this.getRowId().hashCode());
     // sync status
-    result = result * PRIME + (this.getSyncTag() == null ? 0 : this.getSyncTag().hashCode());
+    result = result * PRIME + (this.getRowETag() == null ? 0 : this.getRowETag().hashCode());
     result = result * PRIME + (this.isDeleted() ? 1231 : 1237);
     // sync'd metadata
-    result = result * PRIME + (this.getUriAccessControl() == null ? 0 : this.getUriAccessControl().hashCode());
     result = result * PRIME + (this.getFormId() == null ? 0 : this.getFormId().hashCode());
     result = result * PRIME + (this.getLocale() == null ? 0 : this.getLocale().hashCode());
     result = result * PRIME + (this.getSavepointTimestamp() == null ? 0 : this.getSavepointTimestamp().hashCode());
+    result = result * PRIME + (this.getSavepointCreator() == null ? 0 : this.getSavepointCreator().hashCode());
     // data
     result = result * PRIME + (this.getValues() == null ? 0 : this.getValues().hashCode());
     return result;
@@ -193,12 +193,12 @@ public class SyncRow {
 
   @java.lang.Override
   public java.lang.String toString() {
-    return "SyncRow[rowId=" + this.getRowId() + ", syncTag=" + this.getSyncTag()
+    return "SyncRow[rowId=" + this.getRowId() + ", rowETag=" + this.getRowETag()
         + ", deleted="+ this.isDeleted()
-        + ", uriAccessControl=" + this.getUriAccessControl()
         + ", formId=" + this.getFormId()
         + ", locale=" + this.getLocale()
         + ", savepointTimestamp=" + this.getSavepointTimestamp()
+        + ", savepointCreator=" + this.getSavepointCreator()
         + ", values=" + this.getValues()
         + "[";
   }

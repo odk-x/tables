@@ -19,7 +19,6 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.WebDbDefinition;
 import org.opendatakit.common.android.database.WebSqlDatabaseHelper;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

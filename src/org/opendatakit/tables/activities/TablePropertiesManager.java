@@ -15,11 +15,9 @@
  */
 package org.opendatakit.tables.activities;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -97,7 +95,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   private AlertDialog saveAsDefaultDialog;
   private AlertDialog defaultToServerDialog;
   private AlertDialog serverToDefaultDialog;
-  
+
   /** Alerts to confirm the output of the debug objects. */
   private AlertDialog mOutputDebugObjectsDialog;
 
@@ -206,18 +204,17 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     serverToDefaultDialog = builder.create();
-    
+
     builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder.setMessage(
-        getString(R.string.are_you_sure_write_debug_objects));
+    builder.setMessage(getString(R.string.are_you_sure_write_debug_objects));
     builder.setCancelable(true);
     builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         // So now we have to write the data and control objects.
-        OutputUtil.writeControlObject(TablePropertiesManager.this, 
+        OutputUtil.writeControlObject(TablePropertiesManager.this,
             TableFileUtils.ODK_TABLES_APP_NAME);
-        OutputUtil.writeAllDataObjects(TablePropertiesManager.this, 
+        OutputUtil.writeAllDataObjects(TablePropertiesManager.this,
             TableFileUtils.ODK_TABLES_APP_NAME);
       }
     });
@@ -249,10 +246,8 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     List<String> columnOrder = tp.getColumnOrder();
     boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(columnOrder);
-    boolean canBeShortcutTable =
-        ShortcutUtil.couldBeShortcutTable(columnOrder);
-    int tableTypeCount =
-        1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
+    boolean canBeShortcutTable = ShortcutUtil.couldBeShortcutTable(columnOrder);
+    int tableTypeCount = 1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
     String[] tableTypeIds = new String[tableTypeCount];
     String[] tableTypeNames = new String[tableTypeCount];
     tableTypeIds[0] = TableType.data.name();
@@ -293,10 +288,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
     detailViewPref.setTitle(getString(R.string.detail_view_file));
     detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-    final KeyValueStoreHelper kvsh = 
-        tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-    String detailViewFilename = 
-        kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
+    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+    String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
     detailViewPref.setText(detailViewFilename);
     detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
@@ -514,7 +507,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     defaultsCat.addPreference(serverToDefaultPref);
-    
+
     // The preference for debugging stuff.
     PreferenceCategory developerCategory = new PreferenceCategory(this);
     root.addPreference(developerCategory);
@@ -530,9 +523,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         return true;
       }
     });
-    
-    developerCategory.addPreference(writeDebugObjectsPref);
 
+    developerCategory.addPreference(writeDebugObjectsPref);
 
     setPreferenceScreen(root);
   }
@@ -710,8 +702,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // Color Options Preference!
       String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
       if (colorType == null) {
-        kvsHelper
-            .setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
+        kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
         colorType = TableMapFragment.COLOR_TYPE_NONE;
       }
       ListPreference colorRulePref = new ListPreference(this);
@@ -737,7 +728,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If the color rule type is columns, add the preference to select the
       // column.
       if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
         String[] colorColDisplayNames = new String[numberOfDisplayColumns];
         String[] colorColElementKeys = new String[numberOfDisplayColumns];
         for (int i = 0; i < numberOfDisplayColumns; i++) {
@@ -749,8 +740,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
             .getString(TableMapFragment.KEY_COLOR_RULE_COLUMN));
         if (colorColumn == null) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN,
-              tp.getColumnByIndex(0).getElementKey());
+          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, tp.getColumnByIndex(0)
+              .getElementKey());
           colorColumn = tp.getColumnByIndex(0);
         }
 
@@ -814,17 +805,17 @@ public class TablePropertiesManager extends PreferenceActivity {
       break;
     case RC_MAP_LIST_VIEW_FILE:
       tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-          TableMapFragment.KEY_FILENAME, 
-          getRelativePathOfFile(data.getData().getPath()));
+          TableMapFragment.KEY_FILENAME, getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
   }
-  
+
   /**
    * Get the relative filepath under the app directory for the full path as
    * returned from OI file picker.
+   *
    * @param fullPath
    * @return
    */

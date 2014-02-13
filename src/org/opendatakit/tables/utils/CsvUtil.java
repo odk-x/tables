@@ -41,6 +41,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTime;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -138,18 +139,18 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    String dbTableName = NameUtil.createUniqueDbTableName(tableName,dbh);
-    String tableId = NameUtil.createUniqueTableId(dbTableName,dbh);
+    String dbTableName = NameUtil.createUniqueDbTableName(tableName, dbh);
+    String tableId = NameUtil.createUniqueTableId(dbTableName, dbh);
     TableProperties tp;
     try {
       boolean includesProperties = false;
       // columns contains all columns in the csv file...
       List<String> columns = new ArrayList<String>();
       int idxRowId = -1;
-      int idxTimestamp = -1;
-      int idxUriAccessControl = -1;
       int idxFormId = -1;
       int idxLocale = -1;
+      int idxTimestamp = -1;
+      int idxSavepointCreator = -1;
 
       InputStream is;
       try {
@@ -221,8 +222,8 @@ public class CsvUtil {
         discoverColumnNames = false;
         row = reader.readNext();
       } else {
-        tp = TableProperties.addTable(dbh, dbTableName, tableName,
-            TableType.data, tableId, KeyValueStore.Type.ACTIVE);
+        tp = TableProperties.addTable(dbh, dbTableName, tableName, TableType.data, tableId,
+            KeyValueStore.Type.ACTIVE);
         discoverColumnNames = true;
       }
 
@@ -234,25 +235,25 @@ public class CsvUtil {
         if (colName.equals(ROW_ID_LABEL)) {
           idxRowId = i;
           dbName = DataTableColumns.ID;
-        } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
-          idxTimestamp = i;
-          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
-        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
-          idxUriAccessControl = i;
-          dbName = DataTableColumns.URI_ACCESS_CONTROL;
         } else if (colName.equals(FORM_ID_LABEL)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
         } else if (colName.equals(LOCALE_LABEL)) {
           idxLocale = i;
           dbName = DataTableColumns.LOCALE;
+        } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
+          idxTimestamp = i;
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
+        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
+          idxSavepointCreator = i;
+          dbName = DataTableColumns.SAVEPOINT_CREATOR;
         } else {
           Log.d(TAG, "processing column: " + colName);
 
           ColumnProperties cp = tp.getColumnByDisplayName(colName);
           if (cp == null) {
             // And now add all remaining metadata columns
-            if ( DbTable.getAdminColumns().contains(colName) ) {
+            if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
               cp = tp.addColumn(colName, null, null);
@@ -268,8 +269,8 @@ public class CsvUtil {
         }
         columns.add(dbName);
       }
-      return importTable(c, reader, tp, columns, idxRowId, idxTimestamp, idxUriAccessControl,
-          idxFormId, idxLocale, includesProperties);
+      return importTable(c, reader, tp, columns, idxRowId, idxFormId, idxLocale, idxTimestamp,
+          idxSavepointCreator, includesProperties);
     } catch (FileNotFoundException e) {
       return false;
     } catch (IOException e) {
@@ -329,7 +330,8 @@ public class CsvUtil {
               KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
               KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), tp.getBackingStoreType());
               kvs.addEntriesToStore(dbh.getWritableDatabase(), recoveredEntries);
-              // Since the KVS has all the display properties for a table, we must
+              // Since the KVS has all the display properties for a table, we
+              // must
               // re-read everything to get them.
               tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
                   tp.getBackingStoreType());
@@ -362,34 +364,34 @@ public class CsvUtil {
       ArrayList<String> columns = new ArrayList<String>();
       int idxRowId = -1;
       int idxTimestamp = -1;
-      int idxUriAccessControl = -1;
+      int idxSavepointCreator = -1;
       int idxFormId = -1;
       int idxLocale = -1;
       for (int i = 0; i < row.length; ++i) {
         String colName = row[i];
         String dbName = null;
-        if (colName.equals(LAST_MOD_TIME_LABEL)) {
-          idxTimestamp = i;
-          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
-        } else if (colName.equals(ROW_ID_LABEL)) {
+        if (colName.equals(ROW_ID_LABEL)) {
           idxRowId = i;
           dbName = DataTableColumns.ID;
-        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
-          idxUriAccessControl = i;
-          dbName = DataTableColumns.URI_ACCESS_CONTROL;
         } else if (colName.equals(FORM_ID_LABEL)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
         } else if (colName.equals(LOCALE_LABEL)) {
           idxLocale = i;
           dbName = DataTableColumns.LOCALE;
+        } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
+          idxTimestamp = i;
+          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
+        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
+          idxSavepointCreator = i;
+          dbName = DataTableColumns.SAVEPOINT_CREATOR;
         } else {
           Log.d(TAG, "processing column: " + colName);
 
           ColumnProperties cp = tp.getColumnByDisplayName(colName);
           if (cp == null) {
             // And now add all remaining metadata columns
-            if ( DbTable.getAdminColumns().contains(colName) ) {
+            if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
               cp = tp.addColumn(colName, null, null);
@@ -401,13 +403,13 @@ public class CsvUtil {
           } else {
             dbName = cp.getElementKey();
           }
-//          dbName = cp.getElementKey();
+          // dbName = cp.getElementKey();
         }
         columns.add(dbName);
       }
 
-      return importTable(c, reader, tp, columns, idxRowId, idxTimestamp, idxUriAccessControl,
-          idxFormId, idxLocale, includesProperties);
+      return importTable(c, reader, tp, columns, idxRowId, idxFormId, idxLocale, idxTimestamp,
+          idxSavepointCreator, includesProperties);
     } catch (FileNotFoundException e) {
       return false;
     } catch (IOException e) {
@@ -427,8 +429,8 @@ public class CsvUtil {
    * @return boolean true if successful
    * @throws TableAlreadyExistsException
    */
-  public boolean importConfigTables(Context c, InitializeTask it, File file,
-      String filename, String tablename) throws TableAlreadyExistsException {
+  public boolean importConfigTables(Context c, InitializeTask it, File file, String filename,
+                                    String tablename) throws TableAlreadyExistsException {
 
     this.it = it;
 
@@ -437,8 +439,8 @@ public class CsvUtil {
       String baseName = null; // the filename without the .csv
       // split on ".csv" to get the filename without extension
       if (filename.endsWith(CSV_FILE_EXTENSION)) {
-      // create the file name/path of a .properties.csv file
-      // and check if it exits
+        // create the file name/path of a .properties.csv file
+        // and check if it exits
         String[] tokens = filename.split(CSV_FILE_EXTENSION);
         StringBuffer s = new StringBuffer();
         for (int i = 0; i < tokens.length; i++) {
@@ -448,8 +450,7 @@ public class CsvUtil {
       }
       String propFilename = baseName += PROPERTIES_CSV_FILE_EXTENSION;
 
-      File csvProp = new File(ODKFileUtils.getAppFolder(appName),
-          propFilename);
+      File csvProp = new File(ODKFileUtils.getAppFolder(appName), propFilename);
 
       if (csvProp.exists()) {
         try {
@@ -461,22 +462,22 @@ public class CsvUtil {
         } catch (IOException e) {
           e.printStackTrace();
           return false;
-//        } catch (TableAlreadyExistsException e) {
-//          Log.e(TAG, "[importConfigTables] table already exists when " +
-//          		"importing with properties: " + filename);
-//          e.printStackTrace();
-//
-//          return false;
+          // } catch (TableAlreadyExistsException e) {
+          // Log.e(TAG, "[importConfigTables] table already exists when " +
+          // "importing with properties: " + filename);
+          // e.printStackTrace();
+          //
+          // return false;
         }
       } else {
-//        try {
-          return this.importNewTable(c, null, file, tablename);
-//        } catch (TableAlreadyExistsException e) {
-//          e.printStackTrace();
-//          Log.e(TAG, "[importConfigTables] table already exists when " +
-//          		"importing without csv properties file: " + filename);
-//          return false;
-//        }
+        // try {
+        return this.importNewTable(c, null, file, tablename);
+        // } catch (TableAlreadyExistsException e) {
+        // e.printStackTrace();
+        // Log.e(TAG, "[importConfigTables] table already exists when " +
+        // "importing without csv properties file: " + filename);
+        // return false;
+        // }
       }
     } else {
       Log.e(t, "bad filename");
@@ -486,7 +487,7 @@ public class CsvUtil {
 
   private File joinCSVs(File prop, File data) throws IOException {
     File temp = new File(ODKFileUtils.getAppFolder(appName),
-        TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
+                         TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
 
     InputStream isProp = null;
     InputStreamReader isrProp = null;
@@ -553,20 +554,21 @@ public class CsvUtil {
   }
 
   private boolean importTable(Context c, CSVReader reader, TableProperties tableProperties,
-      List<String> columns, int idxRowId, int idxTimestamp, int idxUriAccessControl,
-      int idxFormId, int idxLocale, boolean exportedWithProperties) {
+                              List<String> columns, int idxRowId, int idxFormId, int idxLocale,
+                              int idxSavepointTimestamp, int idxSavepointCreator,
+                              boolean exportedWithProperties) {
 
     DbTable dbt = DbTable.getDbTable(dbh, tableProperties);
 
     try {
       Set<Integer> idxMetadata = new HashSet<Integer>();
       idxMetadata.add(idxRowId);
-      idxMetadata.add(idxTimestamp);
-      idxMetadata.add(idxUriAccessControl);
       idxMetadata.add(idxFormId);
       idxMetadata.add(idxLocale);
+      idxMetadata.add(idxSavepointTimestamp);
+      idxMetadata.add(idxSavepointCreator);
       ColumnProperties[] cps = new ColumnProperties[columns.size()];
-      for (int i = 0 ; i < columns.size() ; ++i) {
+      for (int i = 0; i < columns.size(); ++i) {
         if (!idxMetadata.contains(i)) {
           cps[i] = tableProperties.getColumnByElementKey(columns.get(i));
         } else {
@@ -578,7 +580,7 @@ public class CsvUtil {
       int rowCount = 0;
       while (row != null) {
         String rowId = idxRowId == -1 ? null : row[idxRowId];
-        if ( rowId == null ) {
+        if (rowId == null) {
           rowId = UUID.randomUUID().toString();
         }
         Map<String, String> values = new HashMap<String, String>();
@@ -587,21 +589,19 @@ public class CsvUtil {
             String value = du.validifyValue(cps[i], row[i]);
             values.put(columns.get(i), value);
             ColumnType type = cps[i].getColumnType();
-            if ( type == ColumnType.IMAGEURI ||
-                 type == ColumnType.AUDIOURI ||
-                 type == ColumnType.VIDEOURI ||
-                 type == ColumnType.MIMEURI ) {
-              value = du.serializeAsMimeUri(c, tableProperties,
-                  rowId, type.baseContentType(), value);
+            if (type == ColumnType.IMAGEURI || type == ColumnType.AUDIOURI
+                || type == ColumnType.VIDEOURI || type == ColumnType.MIMEURI) {
+              value = du.serializeAsMimeUri(c, tableProperties, rowId, type.baseContentType(),
+                  value);
             }
           }
         }
-        String lastModTime = idxTimestamp == -1 ? du.formatNowForDb() : row[idxTimestamp];
-        DateTime t = du.parseDateTimeFromDb(lastModTime);
-        String uriAccessControl = idxUriAccessControl == -1 ? null : row[idxUriAccessControl];
         String formId = idxFormId == -1 ? null : row[idxFormId];
         String locale = idxLocale == -1 ? null : row[idxLocale];
-        dbt.addRow(values, rowId, t.getMillis(), uriAccessControl, formId, locale);
+        String lastModTime = idxSavepointTimestamp == -1 ? du.formatNowForDb() : row[idxSavepointTimestamp];
+        DateTime t = du.parseDateTimeFromDb(lastModTime);
+        String savepointCreator = idxSavepointCreator == -1 ? null : row[idxSavepointCreator];
+        dbt.addRow(rowId, formId, locale, t.getMillis(), savepointCreator, values);
 
         if (rowCount % 30 == 0 && it != null) {
           it.updateLineCount(c.getString(R.string.import_thru_row, 1 + rowCount));
@@ -644,8 +644,8 @@ public class CsvUtil {
    * @return
    */
   public boolean export(ExportTask exportTask, File file, TableProperties tp,
-      boolean includeTimestamp, boolean includeAccessControl,
-      boolean includeFormId, boolean includeLocale, boolean exportProperties) {
+                        boolean includeTimestamp, boolean includeAccessControl,
+                        boolean includeFormId, boolean includeLocale, boolean exportProperties) {
     // building array of columns to select and header row for output file
     int columnCount = tp.getDatabaseColumns().size();
     if (exportProperties) {
@@ -667,7 +667,7 @@ public class CsvUtil {
     ArrayList<String> headerRow = new ArrayList<String>();
     int idxRowId = -1;
     int idxTimestamp = -1;
-    int idxAccessControl = -1;
+    int idxSavepointCreator = -1;
     int idxFormId = -1;
     int idxLocale = -1;
 
@@ -682,20 +682,6 @@ public class CsvUtil {
       }
 
       {
-        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-        headerRow.add(LAST_MOD_TIME_LABEL);
-        idxTimestamp = index;
-        index++;
-      }
-
-      {
-        columns.add(DataTableColumns.URI_ACCESS_CONTROL);
-        headerRow.add(ACCESS_CONTROL_LABEL);
-        idxAccessControl = index;
-        index++;
-      }
-
-      {
         columns.add(DataTableColumns.FORM_ID);
         headerRow.add(FORM_ID_LABEL);
         idxFormId = index;
@@ -706,6 +692,20 @@ public class CsvUtil {
         columns.add(DataTableColumns.LOCALE);
         headerRow.add(LOCALE_LABEL);
         idxLocale = index;
+        index++;
+      }
+
+      {
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+        headerRow.add(LAST_MOD_TIME_LABEL);
+        idxTimestamp = index;
+        index++;
+      }
+
+      {
+        columns.add(DataTableColumns.SAVEPOINT_CREATOR);
+        headerRow.add(ACCESS_CONTROL_LABEL);
+        idxSavepointCreator = index;
         index++;
       }
 
@@ -731,18 +731,6 @@ public class CsvUtil {
         index++;
       }
     } else {
-      if (includeTimestamp) {
-        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-        headerRow.add(LAST_MOD_TIME_LABEL);
-        idxTimestamp = index;
-        index++;
-      }
-      if (includeAccessControl) {
-        columns.add(DataTableColumns.URI_ACCESS_CONTROL);
-        headerRow.add(ACCESS_CONTROL_LABEL);
-        idxAccessControl = index;
-        index++;
-      }
       if (includeFormId) {
         columns.add(DataTableColumns.FORM_ID);
         headerRow.add(FORM_ID_LABEL);
@@ -753,6 +741,18 @@ public class CsvUtil {
         columns.add(DataTableColumns.LOCALE);
         headerRow.add(LOCALE_LABEL);
         idxLocale = index;
+        index++;
+      }
+      if (includeTimestamp) {
+        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+        headerRow.add(LAST_MOD_TIME_LABEL);
+        idxTimestamp = index;
+        index++;
+      }
+      if (includeAccessControl) {
+        columns.add(DataTableColumns.SAVEPOINT_CREATOR);
+        headerRow.add(ACCESS_CONTROL_LABEL);
+        idxSavepointCreator = index;
         index++;
       }
 
@@ -767,8 +767,10 @@ public class CsvUtil {
     }
     // getting data
     DbTable dbt = DbTable.getDbTable(dbh, tp);
-    String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE };
-    String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name() };
+    String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE
+    };
+    String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name()
+    };
     UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null);
     // writing data
     OutputStreamWriter output = null;
@@ -813,10 +815,12 @@ public class CsvUtil {
         }
         if (strKvsEntries == null) {
           // mapping failed
-          settingsRow = new String[] { tp.toJson() };
+          settingsRow = new String[] { tp.toJson()
+          };
         } else {
           // something was mapped
-          settingsRow = new String[] { tp.toJson(), strKvsEntries };
+          settingsRow = new String[] { tp.toJson(), strKvsEntries
+          };
         }
         cw.writeNext(settingsRow);
       }
@@ -832,7 +836,7 @@ public class CsvUtil {
         }
         if (idxTimestamp != -1) {
           // reformat the timestamp to be a nice string
-          Long timestamp = Long.valueOf(row[idxTimestamp]);
+          Long timestamp = TableConstants.milliSecondsFromNanos(row[idxTimestamp]);
           DateTime dt = new DateTime(timestamp);
           row[idxTimestamp] = du.formatDateTimeForDb(dt);
         }

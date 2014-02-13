@@ -3,6 +3,10 @@
 	<name>ODK Tables</name>
 	<comment></comment>
 	<projects>
+		<project>actionbarsherlock</project>
+		<project>androidcommon</project>
+		<project>ODKSubmit</project>
+		<project>playservices</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -32,7 +36,7 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>submitcommonsrc</name>
+			<name>commonsrc</name>
 			<type>2</type>
 			<location>/Users/sudars/Dropbox/Gaetano/workspaceTablesSurvey/submit/commonsrc</location>
 		</link>
