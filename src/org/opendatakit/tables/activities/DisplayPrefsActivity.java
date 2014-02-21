@@ -10,8 +10,10 @@ import org.opendatakit.tables.preferences.SliderPreference;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.CheckBoxPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
@@ -19,7 +21,7 @@ import android.preference.PreferenceScreen;
 
 public class DisplayPrefsActivity extends PreferenceActivity {
     public static final String INTENT_KEY_TABLE_ID = "tableId";
-	private Preferences prefs;
+	 private Preferences prefs;
     private DbHelper dbh;
     private TableProperties tp;
     private KeyValueStoreHelper kvsh;
@@ -54,6 +56,9 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 		root.addPreference(genCat);
 		genCat.setTitle(getString(R.string.general_display_preferences));
 
+      /*********************************
+       * The app-wide fontsize preference.
+       *********************************/
 		SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
 		fontSizePref.setTitle(getString(R.string.font_size));
 		fontSizePref.setDialogTitle(getString(R.string.change_font_size));
@@ -69,6 +74,30 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 					}
 				});
 		genCat.addPreference(fontSizePref);
+		
+		/*********************************
+		 * The homescreen preference.
+		 *********************************/
+		CheckBoxPreference useHomescreenPref = new CheckBoxPreference(this);
+		useHomescreenPref.setChecked(prefs.getUseHomeScreen());
+		if (TableFileUtils.tablesHomeScreenFileExists()) {
+		  useHomescreenPref.setTitle(R.string.use_index_html);
+		  useHomescreenPref.setEnabled(true);
+		} else {
+		  useHomescreenPref.setTitle(R.string.no_index);
+		  useHomescreenPref.setEnabled(false);
+		}
+		useHomescreenPref.setOnPreferenceChangeListener(
+		    new OnPreferenceChangeListener() {
+        
+        @Override
+        public boolean onPreferenceChange(Preference preference, 
+            Object newValue) {
+          prefs.setUseHomeScreen((Boolean) newValue);
+          return true;
+        }
+      });
+		genCat.addPreference(useHomescreenPref);
 
 		setPreferenceScreen(root);
 	}

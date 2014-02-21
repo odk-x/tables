@@ -83,7 +83,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     if (extras != null && extras.getString(INTENT_KEY_FILENAME) != null) {
       mFilename = extras.getString(INTENT_KEY_FILENAME);
     } else {
-      mFilename = CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME;
+      mFilename = TableFileUtils.getTablesHomeScreenFile();
     }
     // It's possible that we're coming back after a rotation. In this case, a
     // InitializeTaskDialogFragment will still exist and we'll have to hook up

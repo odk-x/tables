@@ -43,6 +43,9 @@ public class TableFileUtils {
   /** The name of the output folder, where files are output from the app. */
   public static final String OUTPUT_FOLDER_NAME = "output";
   
+  /** The name of the assets folder. */
+  public static final String ASSETS_FOLDER_NAME = "assets";
+  
   /** The name of the folder where the debug objects are written. */
   public static final String DEBUG_FOLDER_NAME = "debug";
 
@@ -70,6 +73,9 @@ public class TableFileUtils {
   public static final String TABLES_GRAPH_DIR = "graph";
   /** The name of the base graphing file. */
   public static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
+  
+  /** The name of the file that is rendered as the custom user home screen. */
+  public static final String USER_HOME_SCREEN_FILE_NAME = "index.html";
   
   /**
    * Get all the files under the given folder, excluding those directories that
@@ -176,6 +182,52 @@ public class TableFileUtils {
   }
   
   /**
+   * Get the assets folder for the given app.
+   * @param appName
+   * @return
+   */
+  public static String getAssetsFolder(String appName) {
+    String appFolder = ODKFileUtils.getAppFolder(appName);
+    String result = appFolder + File.separator + ASSETS_FOLDER_NAME;
+    return result;
+  }
+  
+  /**
+   * Get the path to the assets folder for the Tables app. This is a
+   * convenience method and is equivalent to calling 
+   * {@link #getAssetsFolder(String)} with 
+   * {@link TableFileUtils#ODK_TABLES_APP_NAME}.
+   * @return
+   */
+  public static String getTablesAssetsFolder() {
+    return getAssetsFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+  }
+  
+  /**
+   * Get the path to the user-defined home screen file.
+   * @param appName
+   * @return
+   */
+  public static String getUserHomeScreenFile(String appName) {
+    // We're going to assume that it is located at assets/index.html.
+    String result = 
+        getAssetsFolder(appName) + 
+        File.separator + 
+        USER_HOME_SCREEN_FILE_NAME;
+    return result;
+  }
+  
+  /**
+   * Convenience method equivalent to calling 
+   * {@link TableFileUtils#getUserHomeScreenFile(String)} with
+   * {@link TableFileUtils#ODK_TABLES_APP_NAME}.
+   * @return
+   */
+  public static String getTablesHomeScreenFile() {
+    return getUserHomeScreenFile(TableFileUtils.ODK_TABLES_APP_NAME);
+  }
+  
+  /**
    * Get the path of the base file used for Tables graphing, relative to the
    * app folder.
    * @return
@@ -210,6 +262,27 @@ public class TableFileUtils {
    */
   public static String getOutputFolder() {
     return getOutputFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+  }
+  
+  /**
+   * Returns true if a user-defined home screen file exists at the correct
+   * location.
+   * @return
+   */
+  public static boolean homeScreenFileExists(String appName) {
+    String path = getUserHomeScreenFile(appName);
+    File homeScreenFile = new File(path);
+    return homeScreenFile.exists();
+  }
+  
+  /**
+   * Convenience method equivalent to calling 
+   * {@link #homeScreenFileExists(String)} with
+   * {@link #ODK_TABLES_APP_NAME}.
+   * @return
+   */
+  public static boolean tablesHomeScreenFileExists() {
+    return homeScreenFileExists(ODK_TABLES_APP_NAME);
   }
 
 }

@@ -36,11 +36,6 @@ import android.view.ViewGroup;
  */
 public class CustomAppView extends CustomView {
 
-  /**
-   * The filename of the html that defines the custom homescreen of the app.
-   */
-  public static final String CUSTOM_HOMESCREEN_FILE_NAME = "homescreen.html";
-
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
 
@@ -73,14 +68,15 @@ public class CustomAppView extends CustomView {
   public void display() {
     control = new Control(mParentActivity);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
-    // We're going to assume this is only being called if homescreen.html has
-    // been found, so we're just going to use that, not do any checking.
-    String dir = ODKFileUtils.getAppFolder(mAppName);
     // First we want to see if we're supposed to display a custom HTML, or if
     // we want to display just the homescreen.html file. We'll check for the
     // key.
-    String fullPath = FileProvider.getAsWebViewUri(mParentActivity, mAppName,
-        ODKFileUtils.asUriFragment(mAppName, new File(dir + "/" + mFilename)));
+    File f = new File(mFilename);
+    String uriFragment = ODKFileUtils.asUriFragment(mAppName, f);
+    String fullPath = FileProvider.getAsWebViewUri(
+        mParentActivity, 
+        mAppName,
+        uriFragment);
     load(fullPath);
     initView();
   }

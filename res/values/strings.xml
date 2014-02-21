@@ -153,7 +153,7 @@
 	<string name="list_view_manager">List View Manager</string>
 	<string name="launch_table_manager">Launch Table Manager</string>
 	<string name="error_row_not_found">Row ID not found, please edit via Spreadsheet View</string>
-	<string name="general_display_preferences">General Display Preferences</string>
+	<string name="general_display_preferences">App-Level Preferences</string>
 	<string name="font_size">Font Size</string>
 	<string name="change_font_size">Change Font Size</string>
 	<string name="display_prefs_for">Display Preferences for: %1$s</string>
@@ -317,4 +317,7 @@
 	<string name="shortcut_name">ODK Tables App</string>
 	<string name="use_collect_form">Use ODK Collect form</string>
 	<string name="use_survey_form">Use ODK Survey form</string>
+	
+	<string name="use_index_html">Use custom home screen</string>
+	<string name="no_index">No assets/index.html</string>
 </resources>

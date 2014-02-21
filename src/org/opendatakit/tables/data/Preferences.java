@@ -33,6 +33,7 @@ public class Preferences {
 	private static final String ACCOUNT_KEY = "account";
 	private static final String AUTH_KEY = "auth";
 	private static final String TIME_LAST_CONFIG = "timeLastConfig";
+	private static final String USE_HOME_SCREEN_KEY = "useHomeScreen";
 	
 	private static final int DEFAULT_FONT_SIZE = 16;
 
@@ -48,6 +49,25 @@ public class Preferences {
 
 	public Preferences(Context context) {
 		prefs = context.getSharedPreferences(FILE_NAME, 0);
+	}
+	
+	/**
+	 * Get true if the app has been configured to use a custom homescreen, else
+	 * false.
+	 * @return
+	 */
+	public boolean getUseHomeScreen() {
+	  return prefs.getBoolean(USE_HOME_SCREEN_KEY, false);
+	}
+	
+	/**
+	 * Persist whether or not a user-defined home screen should be used.
+	 * @param useHomeScreen
+	 */
+	public void setUseHomeScreen(boolean useHomeScreen) {
+	  SharedPreferences.Editor editor = prefs.edit();
+	  editor.putBoolean(USE_HOME_SCREEN_KEY, useHomeScreen);
+	  editor.commit();
 	}
 
 	public String getDefaultTableId() {

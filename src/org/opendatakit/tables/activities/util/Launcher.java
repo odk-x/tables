@@ -50,21 +50,21 @@ public class Launcher extends Activity {
         }
         // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
-        // The first thing we'll do is check to see if a custom app file
-        // exists. If it does, we'll launch it. Otherwise we'll use the
-        // TableManager.
-        File homescreenFile = new File(dir + "/" +
-            CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME);
-        Log.d(TAG, "looking for homescreen file: "
-            + homescreenFile.toString());
-        if (homescreenFile.exists()) {
+        // First determine if we're supposed to use a custom home screen. 
+        // Do a check also to make sure the file actually exists.
+        Preferences preferences = new Preferences(this);
+        if (preferences.getUseHomeScreen() && 
+            TableFileUtils.tablesHomeScreenFileExists()) {
           // launch it.
-          Log.d(TAG, "homescreen file exists.");
+          Log.d(TAG, "homescreen file exists and is set to be used.");
           Intent i = new Intent(this, CustomHomeScreenActivity.class);
-          i.putExtra("trial", "trial");
           startActivity(i);
         } else {
           Log.d(TAG, "no homescreen file found, launching TableManager");
+          // First set the prefs to false. This is useful in the case where
+          // someone has configured an app to use a home screen and then 
+          // deleted that file out from under it.
+          preferences.setUseHomeScreen(false);
           // Launch the TableManager.
           String tableId = (new Preferences(this)).getDefaultTableId();
           if (tableId == null) {
