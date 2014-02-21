@@ -96,8 +96,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   private AlertDialog defaultToServerDialog;
   private AlertDialog serverToDefaultDialog;
 
-  /** Alerts to confirm the output of the debug objects. */
-  private AlertDialog mOutputDebugObjectsDialog;
+
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -204,21 +203,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     serverToDefaultDialog = builder.create();
-
-    builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder.setMessage(getString(R.string.are_you_sure_write_debug_objects));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int which) {
-        // So now we have to write the data and control objects.
-        OutputUtil.writeControlObject(TablePropertiesManager.this,
-            TableFileUtils.ODK_TABLES_APP_NAME);
-        OutputUtil.writeAllDataObjects(TablePropertiesManager.this,
-            TableFileUtils.ODK_TABLES_APP_NAME);
-      }
-    });
-    mOutputDebugObjectsDialog = builder.create();
 
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
@@ -507,24 +491,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     defaultsCat.addPreference(serverToDefaultPref);
-
-    // The preference for debugging stuff.
-    PreferenceCategory developerCategory = new PreferenceCategory(this);
-    root.addPreference(developerCategory);
-    developerCategory.setTitle(getString(R.string.developer));
-
-    // the actual entry that has the option above.
-    Preference writeDebugObjectsPref = new Preference(this);
-    writeDebugObjectsPref.setTitle(getString(R.string.write_debug_objects));
-    writeDebugObjectsPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        mOutputDebugObjectsDialog.show();
-        return true;
-      }
-    });
-
-    developerCategory.addPreference(writeDebugObjectsPref);
 
     setPreferenceScreen(root);
   }
