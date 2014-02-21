@@ -236,9 +236,8 @@ public class TableFileUtils {
     String frameworkPath = 
         ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
     String result = 
-        frameworkPath + File.separator +
-        TABLES_JS_DIR + File.separator +
-        TABLES_GRAPH_DIR + File.separator +
+        frameworkPath + 
+        File.separator +
         TABLES_GRAPH_BASE_FILE_NAME;
     return result;
   }
