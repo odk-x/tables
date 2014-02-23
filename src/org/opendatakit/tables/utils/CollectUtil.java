@@ -365,8 +365,8 @@ public class CollectUtil {
    * screen by screen fashion, generating the entire form on the fly.
    */
   private static boolean writeRowDataToBeEdited(Context context,
-      // UserTable table, int rowNum,
-      Map<String, String> values, TableProperties tp, CollectFormParameters params, String rowId) {
+      Map<String, String> values, TableProperties tp, 
+      CollectFormParameters params, String rowId) {
     /*
      * This is currently implemented thinking that all you need to have is:
      *
@@ -1182,18 +1182,29 @@ public class CollectUtil {
     // manufacture a rowId for this record...
     String rowId = "uuid:" + UUID.randomUUID().toString();
 
-    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData( tp, rowId, context.getContentResolver());
+    boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(
+        tp, 
+        rowId, 
+        context.getContentResolver());
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
-    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(context, elementKeyToValue, tp, params,
+    boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(
+        context, 
+        elementKeyToValue, 
+        tp, 
+        params,
         rowId);
     if (!writeDataSuccessful) {
       Log.e(TAG, "could not write instance file successfully!");
     }
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
-    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(tp, params, rowId, shouldUpdate,
+    Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(
+        tp, 
+        params, 
+        rowId, 
+        shouldUpdate,
         context.getContentResolver());
 
     // And now finally create the intent.
