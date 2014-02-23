@@ -892,14 +892,15 @@ public class CollectUtil {
    *          the TableProperties of the table that will be receiving the add
    *          row from Collect
    */
-  public static void launchCollectToAddRow(Activity activityToAwaitReturn, Intent collectAddIntent,
-      TableProperties tp) {
+  public static void launchCollectToAddRow(Activity activityToAwaitReturn, 
+      Intent collectAddIntent, TableProperties tp) {
     // We want to save the id of the table that is going to receive the row
     // that returns from Collect. We'll store it in a SharedPreference so
     // that we can get at it.
     SharedPreferences preferences = activityToAwaitReturn.getSharedPreferences(
         SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
-    preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD, tp.getTableId()).commit();
+    preferences.edit().putString(PREFERENCE_KEY_TABLE_ID_ADD,
+        tp.getTableId()).commit();
     activityToAwaitReturn.startActivityForResult(collectAddIntent,
         Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE);
   }

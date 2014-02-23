@@ -91,8 +91,8 @@ public abstract class CustomView extends LinearLayout {
   private static DbHelper mDbHelper;
 
   private static ObjectMapper MAPPER = new ObjectMapper();
-  private static TypeReference<HashMap<String, String>> MAP_REF = new TypeReference<HashMap<String, String>>() {
-  };
+  private static TypeReference<HashMap<String, String>> MAP_REF = 
+      new TypeReference<HashMap<String, String>>() {};
 
   private static Set<String> javascriptInterfaces = new HashSet<String>();
 
@@ -266,55 +266,24 @@ public abstract class CustomView extends LinearLayout {
    *          a map of elementKey to value for the rows with which you want to
    *          prepopulate the add row.
    */
-  private void addRowWithCollectAndSpecificForm(String tableName, String formId,
-      String formVersion, String formRootElement, TableProperties tp,
-      Map<String, String> prepopulateValues) {
-    // TODO: should these add methods be moved to the TableData and RowData
-    // objects?
-    CollectFormParameters formParameters = CollectFormParameters.constructCollectFormParameters(tp);
-    if (formId != null && !formId.equals("")) {
-      formParameters.setFormId(formId);
-    }
-    if (formVersion != null && !formVersion.equals("")) {
-      formParameters.setFormVersion(formVersion);
-    }
-    if (formRootElement != null && !formRootElement.equals("")) {
-      formParameters.setRootElement(formRootElement);
-    }
-    prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
-  }
+//  private void addRowWithCollectAndSpecificForm(String tableName, 
+//      String formId, String formVersion, String formRootElement,
+//      TableProperties tp, Map<String, String> prepopulateValues) {
+//    CollectFormParameters formParameters = 
+//        CollectFormParameters.constructCollectFormParameters(tp);
+//    if (formId != null && !formId.equals("")) {
+//      formParameters.setFormId(formId);
+//    }
+//    if (formVersion != null && !formVersion.equals("")) {
+//      formParameters.setFormVersion(formVersion);
+//    }
+//    if (formRootElement != null && !formRootElement.equals("")) {
+//      formParameters.setRootElement(formRootElement);
+//    }
+//    prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
+//  }
 
-  /**
-   * This is called by the internal data classes. It prepopulates the form as it
-   * needs based on the query (or the elKeyToValueToPrepopulate parameter) and
-   * launches the form.
-   *
-   * @param params
-   * @param tp
-   * @param elKeyToValueToPrepopulate
-   *          a map of element key to value that will prepopulate the Collect
-   *          form for the new add row. Must be a map of column element key to
-   *          value. If this parameter is null, it prepopulates based on the
-   *          searchString, if there is one. If this value is not null, it
-   *          ignores the queryString and uses only the map.
-   */
-  private void prepopulateRowAndLaunchCollect(CollectFormParameters params, TableProperties tp,
-      Map<String, String> elKeyToValueToPrepopulate) {
-    Intent addRowIntent;
-    if (elKeyToValueToPrepopulate == null) {
-      // The prepopulated values we need to get from the query string.
-      String currentQueryString = mCallbacks.getSearchString();
 
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
-          CustomView.this.getContainerActivity(), mAppName, tp, params, currentQueryString);
-    } else {
-      // We've received a map to prepopulate with.
-      addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
-          CustomView.this.getContainerActivity(), tp, params, elKeyToValueToPrepopulate);
-    }
-    // Now just launch the intent to add the row.
-    CollectUtil.launchCollectToAddRow(getContainerActivity(), addRowIntent, tp);
-  }
 
   /**
    * Actually acquire the Intents and launch the forms.
@@ -683,11 +652,15 @@ public abstract class CustomView extends LinearLayout {
      * @param selectionArgs
      * @return
      */
-    public TableData query(String tableId, String whereClause, String[] selectionArgs) {
-      TableData tableData = queryForTableData(tableId, whereClause, selectionArgs);
+    public TableData query(String tableId, String whereClause, 
+        String[] selectionArgs) {
+      TableData tableData = queryForTableData(
+          tableId,
+          whereClause,
+          selectionArgs);
       /**
-       * IMPORTANT: remember the td. The interfaces will hold weak references to
-       * them, so we need a strong reference to prevent GC.
+       * IMPORTANT: remember the td. The interfaces will hold weak references 
+       * to them, so we need a strong reference to prevent GC.
        */
       queryResults.add(tableData);
       return tableData;
@@ -898,8 +871,8 @@ public abstract class CustomView extends LinearLayout {
      *          value won't prepopulate any values.
      * @return true if the launch succeeded, else false
      */
-    public boolean helperAddRowWithCollect(String tableId, String formId, String formVersion,
-        String formRootElement, String jsonMap) {
+    public boolean helperAddRowWithCollect(String tableId, String formId, 
+        String formVersion, String formRootElement, String jsonMap) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
       if (tpToReceiveAdd == null) {
@@ -915,18 +888,62 @@ public abstract class CustomView extends LinearLayout {
           return false;
         }
       }
-      if (formId == null) {
-        // Then we're going to try and construct a form parameters using the
-        // default values
-        CollectFormParameters formParameters = CollectFormParameters
-            .constructCollectFormParameters(tpToReceiveAdd);
-        formId = formParameters.getFormId();
-        formVersion = formParameters.getFormVersion();
-        formRootElement = formParameters.getRootElement();
-      }
-      CustomView.this.addRowWithCollectAndSpecificForm(tableId, formId, formVersion,
-          formRootElement, tpToReceiveAdd, map);
+      CollectFormParameters formParameters = 
+          CollectFormParameters.constructCollectFormParameters(tpToReceiveAdd);
+      if (formId != null) {
+        formParameters.setFormId(formId);
+        if (formVersion != null) {
+          formParameters.setFormVersion(formVersion);
+        }
+        if (formRootElement != null) {
+          formParameters.setRootElement(formRootElement);
+        }
+      } 
+      this.prepopulateRowAndLaunchCollect(
+          formParameters,
+          tpToReceiveAdd, 
+          map);
       return true;
+    }
+    
+    /**
+     * It prepopulates the form as it needs based on the query (or the 
+     * elKeyToValueToPrepopulate parameter) and launches the form.
+     *
+     * @param params
+     * @param tp
+     * @param elKeyToValueToPrepopulate
+     *          a map of element key to value that will prepopulate the Collect
+     *          form for the new add row. Must be a map of column element key to
+     *          value. If this parameter is null, it prepopulates based on the
+     *          searchString, if there is one. If this value is not null, it
+     *          ignores the queryString and uses only the map.
+     */
+    private void prepopulateRowAndLaunchCollect(CollectFormParameters params, 
+        TableProperties tp, Map<String, String> elKeyToValueToPrepopulate) {
+      Intent addRowIntent;
+      if (elKeyToValueToPrepopulate == null) {
+        // The prepopulated values we need to get from the query string.
+        String currentQueryString = mCallbacks.getSearchString();
+        addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
+            CustomView.this.getContainerActivity(), 
+            mAppName,
+            tp,
+            params,
+            currentQueryString);
+      } else {
+        // We've received a map to prepopulate with.
+        addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
+            CustomView.this.getContainerActivity(), 
+            tp, 
+            params,
+            elKeyToValueToPrepopulate);
+      }
+      // Now just launch the intent to add the row.
+      CollectUtil.launchCollectToAddRow(
+          getContainerActivity(),
+          addRowIntent,
+          tp);
     }
 
     /**

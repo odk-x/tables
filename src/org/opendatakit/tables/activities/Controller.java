@@ -637,8 +637,13 @@ public class Controller implements CustomViewCallbacks {
           // prepopulate with the form. We're going to ignore joins. This
           // means that if there IS a join column, we'll throw an error!!!
           // So be careful.
-          Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRowByQuery(activity, appName,
-              tp, params, getSearchText());
+          Intent intentAddRow = 
+              CollectUtil.getIntentForOdkCollectAddRowByQuery(
+                  activity,
+                  appName,
+                  tp,
+                  params,
+                  getSearchText());
 
           if (intentAddRow != null) {
             Controller.this.activity
