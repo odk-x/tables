@@ -72,8 +72,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	protected synchronized Boolean doInBackground(Void... params) {
 			Properties prop = new Properties();
 			try {
-				File config = new File(ODKFileUtils.getAppFolder(mAppName),
-						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME);
+			  String pathToConfigFile = 
+			      TableFileUtils.getTablesConfigurationFile();
+				File config = new File(pathToConfigFile);
 				prop.load(new FileInputStream(config));
 			} catch (IOException ex) {
 				ex.printStackTrace();
@@ -98,8 +99,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			  // both problems, while perhaps eliminating a very annoying problem.
 			  // However, it still feels like a hack, and I wish the AsyncTask/
 			  // Fragment situation wasn't so damned irritating.
-				fileModifiedTime = new File(ODKFileUtils.getAppFolder(mAppName),
-						TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME).lastModified();
+				fileModifiedTime = 
+				    new File(TableFileUtils.getTablesConfigurationFile())
+				    .lastModified();
 				ConfigurationUtil.updateTimeChanged(
 				    this.mDialogFragment.getPreferencesFromContext(),
 				    fileModifiedTime);

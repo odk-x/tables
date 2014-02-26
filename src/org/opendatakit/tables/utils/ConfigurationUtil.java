@@ -2,7 +2,6 @@ package org.opendatakit.tables.utils;
 
 import java.io.File;
 
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.Preferences;
 
 /**
@@ -18,11 +17,11 @@ public class ConfigurationUtil {
      */
 	public static boolean isChanged(Preferences prefs) {
 
-		File config = new File( ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME),
-				TableFileUtils.ODK_TABLES_CONFIG_PROPERTIES_FILENAME);
-		if (config.isFile()) {
+		if (TableFileUtils.tablesConfigurationFileExists()) {
+		  File configFile = 
+		      new File(TableFileUtils.getTablesConfigurationFile());
 			long timeLastConfig = prefs.getTimeLastConfig();
-			long timeLastMod = config.lastModified();
+			long timeLastMod = configFile.lastModified();
 			if (timeLastMod == timeLastConfig)
 				return false;
 			else

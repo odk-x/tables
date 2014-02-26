@@ -50,7 +50,8 @@ public class TableFileUtils {
   public static final String DEBUG_FOLDER_NAME = "debug";
 
   /** Filename for the top-level configuration file */
-  public static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = "config.properties";
+  private static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = 
+      "config.properties";
 
   /** Filename for a csv file used for joining files (?) */
   public static final String ODK_TABLES_JOINING_CSV_FILENAME = "temp.csv";
@@ -72,10 +73,10 @@ public class TableFileUtils {
   /** The name of the directory holding the graphing files. */
   public static final String TABLES_GRAPH_DIR = "graph";
   /** The name of the base graphing file. */
-  public static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
+  private static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
   
   /** The name of the file that is rendered as the custom user home screen. */
-  public static final String USER_HOME_SCREEN_FILE_NAME = "index.html";
+  private static final String USER_HOME_SCREEN_FILE_NAME = "index.html";
   
   /**
    * Get all the files under the given folder, excluding those directories that
@@ -218,6 +219,29 @@ public class TableFileUtils {
   }
   
   /**
+   * Get the path to the configuration file for the given app.
+   * @param appName
+   * @return
+   */
+  public static String getConfigurationFile(String appName) {
+    String assetsFolder = getAssetsFolder(appName);
+    String result = 
+        assetsFolder + 
+        File.separator + 
+        ODK_TABLES_CONFIG_PROPERTIES_FILENAME;
+    return result;
+  }
+  
+  /**
+   * Get the path to the configuration file for ODK Tables.
+   * @return
+   */
+  public static String getTablesConfigurationFile() {
+    String result = getConfigurationFile(ODK_TABLES_APP_NAME);
+    return result;
+  }
+  
+  /**
    * Convenience method equivalent to calling 
    * {@link TableFileUtils#getUserHomeScreenFile(String)} with
    * {@link TableFileUtils#ODK_TABLES_APP_NAME}.
@@ -282,6 +306,27 @@ public class TableFileUtils {
    */
   public static boolean tablesHomeScreenFileExists() {
     return homeScreenFileExists(ODK_TABLES_APP_NAME);
+  }
+  
+  /**
+   * Returns true if a configuration file exists at the correct
+   * location.
+   * @return
+   */
+  public static boolean configurationFileExists(String appName) {
+    String path = getConfigurationFile(appName);
+    File configurationFile = new File(path);
+    return configurationFile.exists();
+  }
+  
+  /**
+   * Convenience method equivalent to calling 
+   * {@link #configurationFileExists(String)} with 
+   * {@link #ODK_TABLES_APP_NAME}.
+   * @return
+   */
+  public static boolean tablesConfigurationFileExists() {
+    return configurationFileExists(ODK_TABLES_APP_NAME);
   }
 
 }

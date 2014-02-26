@@ -33,6 +33,8 @@ public class SurveyUtil {
   public static final String KVS_PARTITION = "SurveyUtil";
   public static final String KVS_ASPECT = "default";
   public static final String KEY_FORM_ID = "SurveyUtil.formId";
+  
+  public static final String URL_ENCODED_SPACE = "%20";
 
   /**
    * A url-style query param that is used when constructing a survey intent.
@@ -281,7 +283,12 @@ public class SurveyUtil {
           stringBuilder.append("&");
           stringBuilder.append(URLEncoder.encode(entry.getKey(), ApiConstants.UTF8_ENCODE));
           stringBuilder.append("=");
-          String escapedValue = URLEncoder.encode(entry.getValue(), ApiConstants.UTF8_ENCODE);
+          // We've got to replace the plus with %20, which is what js's
+          // decodeURIComponent expects.
+          String escapedValue = URLEncoder.encode(
+              entry.getValue(),
+              ApiConstants.UTF8_ENCODE)
+              .replace("+", URL_ENCODED_SPACE);
           stringBuilder.append(escapedValue);
         }
         uriStr = stringBuilder.toString();
