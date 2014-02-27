@@ -157,7 +157,7 @@ public class Aggregate extends SherlockActivity {
     findViewById(R.id.aggregate_activity_choose_tables_button).setEnabled(restOfButtons);
     findViewById(R.id.aggregate_activity_get_table_button).setEnabled(restOfButtons);
     findViewById(R.id.aggregate_activity_sync_now_button).setEnabled(restOfButtons);
-    findViewById(R.id.aggregate_activity_sync_using_submit_button).setEnabled(restOfButtons);
+//    findViewById(R.id.aggregate_activity_sync_using_submit_button).setEnabled(restOfButtons);
   }
 
   private void saveSettings() {

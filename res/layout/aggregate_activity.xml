@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/aggregate_activity_layout"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:fillViewport="true" >
+<LinearLayout 
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical" >
 
     <TextView
@@ -65,12 +69,13 @@
         android:onClick="onClickSyncNow"
         android:text="@+string/sync_now" />
 
-    <Button
+<!--     <Button
         android:id="@+id/aggregate_activity_sync_using_submit_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:onClick="onClickSyncUsingSubmit"
-        android:text="@+string/send_using_submit" />
+        android:text="@+string/send_using_submit" /> -->
 
 </LinearLayout>
+</ScrollView>
