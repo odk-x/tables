@@ -34,7 +34,6 @@ import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
-import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.UTMConverter;
@@ -177,7 +176,7 @@ public class DataUtil {
      * @param formValues
      * @param mimeTypeBase
      * @param filename
-     * @return
+     * @return mimeUri string -- e.g., {uriFragment:'tables/tableId/instances/instanceId/name.jpg',contentType:'image/jpg'}
      */
     public String serializeAsMimeUri(Context context, TableProperties tp,
         String instanceID, String mimeTypeBase, String filename) {
@@ -204,7 +203,7 @@ public class DataUtil {
           e.printStackTrace();
           throw new IllegalStateException("Unable to serialize mimeUri", e);
         }
-        if ( ref != null && ref.containsKey("uri") && ref.containsKey("contentType")) {
+        if ( ref != null && ref.containsKey("uriFragment") && ref.containsKey("contentType")) {
           // value looks good!
           return filename; // actually a mimeUri...
         } else {
@@ -221,11 +220,11 @@ public class DataUtil {
         mimeuri.put("contentType", mimeTypeBase + "/" + ext);
         if ( filename.indexOf("/") != -1) {
           // contains a path -- assume it is a filepath?
-          mimeuri.put("uri", FileProvider.getAsUrl(context, new File(filename)));
+          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
         } else {
           File ifolder = new File(ODKFileUtils.getInstanceFolder(
               TableFileUtils.ODK_TABLES_APP_NAME, tp.getTableId(), instanceID));
-          mimeuri.put("uri", FileProvider.getAsUrl(context, new File(ifolder, filename)));
+          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(ifolder, filename)));
         }
         try {
           String serializedValue = ODKFileUtils.mapper.writeValueAsString(mimeuri);
@@ -336,7 +335,7 @@ public class DataUtil {
 
     private String validifyMultipleChoiceValue(ColumnProperties cp,
             String input) {
-        for (String opt : cp.getDisplayChoicesMap()) {
+        for (String opt : cp.getDisplayChoicesList()) {
             if (opt.equalsIgnoreCase(input)) {
                 return opt;
             }

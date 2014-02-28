@@ -56,7 +56,7 @@ public class InputScreenUtil {
             return new DateRangeInputView(context, value);
         } else if ( cp.getColumnType() == ColumnType.MC_OPTIONS ) {
             return new McOptionsInputView(context,
-                    cp.getDisplayChoicesMap(), value);
+                    cp.getDisplayChoicesList(), value);
         } else {
             return new GeneralInputView(context, value);
         }

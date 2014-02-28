@@ -20,19 +20,22 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
@@ -42,8 +45,8 @@ import com.actionbarsherlock.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class CustomHomeScreenActivity extends SherlockActivity implements
-    DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
+public class CustomHomeScreenActivity extends SherlockFragmentActivity
+    implements DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
 
@@ -80,7 +83,30 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     if (extras != null && extras.getString(INTENT_KEY_FILENAME) != null) {
       mFilename = extras.getString(INTENT_KEY_FILENAME);
     } else {
-      mFilename = CustomAppView.CUSTOM_HOMESCREEN_FILE_NAME;
+      mFilename = TableFileUtils.getTablesHomeScreenFile();
+    }
+    // It's possible that we're coming back after a rotation. In this case, a
+    // InitializeTaskDialogFragment will still exist and we'll have to hook up
+    // our callbacks.
+    InitializeTaskDialogFragment initalizeTaskDialogFragment =
+        (InitializeTaskDialogFragment)
+        getSupportFragmentManager().findFragmentByTag(
+            InitializeTaskDialogFragment.TAG_FRAGMENT);
+    if (initalizeTaskDialogFragment != null) {
+      initalizeTaskDialogFragment.setCallbacks(this);
+    } else {
+      // We'll check to see if we need to begin an initialization task.
+      if (ConfigurationUtil.isChanged(mPrefs)) {
+        InitializeTask initializeTask = new InitializeTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
+        initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
+        initalizeTaskDialogFragment.setTask(initializeTask);
+        initalizeTaskDialogFragment.setCallbacks(this);
+        initalizeTaskDialogFragment.setCancelable(false);
+        initializeTask.setDialogFragment(initalizeTaskDialogFragment);
+        FragmentManager fragmentManager = this.getSupportFragmentManager();
+        initalizeTaskDialogFragment.show(fragmentManager,
+            InitializeTaskDialogFragment.TAG_FRAGMENT);
+      }
     }
   }
 
@@ -88,11 +114,6 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
   protected void onResume() {
     super.onResume();
     Log.d(TAG, "in onResume()");
-    // Now we'll also try to import any tables based on the configuration
-    // properties file.
-    if (ConfigurationUtil.isChanged(this.mPrefs)) {
-      new InitializeTask(this, this).execute();
-    }
     init();
   }
 
@@ -102,7 +123,7 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
-    mView = new CustomAppView(this, mFilename, this);
+    mView = new CustomAppView(this, TableFileUtils.ODK_TABLES_APP_NAME, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
   }
@@ -127,7 +148,7 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
 
      return true;
   }
-  
+
   @Override
   protected void onActivityResult(int requestCode, int resultCode,
         Intent data) {
@@ -135,15 +156,15 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
     // We are going to handle the add row the same for both cases--an add row
     // for the original table as well as an add row for another table. This is
     // because the List and Detail activities maintain a TableProperties object
-    // for the table they were displaying. So when you return, if you were 
-    // adding to the same table that you were displaying you already have the 
+    // for the table they were displaying. So when you return, if you were
+    // adding to the same table that you were displaying you already have the
     // TableProperties object. In the case of this Activity, however, we never
     // have a TableProperties (since we aren't really displaying a specific
     // table), so you have to handle the return the same in both cases--first
     // retrieve the tableId for the table that launched Collect, then get the
     // TableProperties for that table, then add the row.
-    case Controller.RCODE_ODKCOLLECT_ADD_ROW:
-    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW:
+    case Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE: {
       String tableId = CollectUtil.retrieveAndRemoveTableIdForAddRow(this);
       if (tableId == null) {
         Log.e(TAG, "return from ODK Collect expected to find a tableId " +
@@ -152,11 +173,17 @@ public class CustomHomeScreenActivity extends SherlockActivity implements
       }
       TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(this), tableId,
+              DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), tableId,
               KeyValueStore.Type.ACTIVE);
-      CollectUtil.handleOdkCollectAddReturn(this, tpToReceiveAdd,
+      CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, tpToReceiveAdd,
           resultCode, data);
       break;
+    }
+    case Controller.RCODE_ODK_SURVEY_ADD_ROW:
+    case Controller.RCODE_ODK_SURVEY_EDIT_ROW: {
+      // no-op ???
+      break;
+    }
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }

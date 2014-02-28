@@ -33,9 +33,10 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.utils.LanguageUtil;
+import org.opendatakit.tables.utils.OutputUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -95,6 +96,8 @@ public class TablePropertiesManager extends PreferenceActivity {
   private AlertDialog defaultToServerDialog;
   private AlertDialog serverToDefaultDialog;
 
+
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -102,7 +105,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    dbh = DbHelper.getDbHelper(this);
+    dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
     init();
@@ -227,10 +230,8 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     List<String> columnOrder = tp.getColumnOrder();
     boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(columnOrder);
-    boolean canBeShortcutTable =
-        ShortcutUtil.couldBeShortcutTable(columnOrder);
-    int tableTypeCount =
-        1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
+    boolean canBeShortcutTable = ShortcutUtil.couldBeShortcutTable(columnOrder);
+    int tableTypeCount = 1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
     String[] tableTypeIds = new String[tableTypeCount];
     String[] tableTypeNames = new String[tableTypeCount];
     tableTypeIds[0] = TableType.data.name();
@@ -271,14 +272,14 @@ public class TablePropertiesManager extends PreferenceActivity {
     FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
     detailViewPref.setTitle(getString(R.string.detail_view_file));
     detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-    String detailViewFilename = kvsh.getString(CustomDetailView.KEY_FILENAME);
+    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+    String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
     detailViewPref.setText(detailViewFilename);
     detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
         // tp.setDetailViewFilename((String) newValue);
-        kvsh.setString(CustomDetailView.KEY_FILENAME, (String) newValue);
+        kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
         init();
         return false;
       }
@@ -499,7 +500,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
-    for (ColumnProperties cp : tp.getColumns().values()) {
+    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numberCols.add(cp);
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
@@ -667,8 +668,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // Color Options Preference!
       String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
       if (colorType == null) {
-        kvsHelper
-            .setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
+        kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
         colorType = TableMapFragment.COLOR_TYPE_NONE;
       }
       ListPreference colorRulePref = new ListPreference(this);
@@ -694,7 +694,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If the color rule type is columns, add the preference to select the
       // column.
       if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
         String[] colorColDisplayNames = new String[numberOfDisplayColumns];
         String[] colorColElementKeys = new String[numberOfDisplayColumns];
         for (int i = 0; i < numberOfDisplayColumns; i++) {
@@ -706,8 +706,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
             .getString(TableMapFragment.KEY_COLOR_RULE_COLUMN));
         if (colorColumn == null) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN,
-              tp.getColumnByIndex(0).getElementKey());
+          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, tp.getColumnByIndex(0)
+              .getElementKey());
           colorColumn = tp.getColumnByIndex(0);
         }
 
@@ -745,43 +745,49 @@ public class TablePropertiesManager extends PreferenceActivity {
     KeyValueStoreHelper kvsh;
     Uri uri;
     String filename;
+    String relativePath;
     switch (requestCode) {
     case RC_DETAIL_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      kvsh = tp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-      kvsh.setString(CustomDetailView.KEY_FILENAME, filename);
+      relativePath = getRelativePathOfFile(filename);
+      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
       // tp.setDetailViewFilename(filename);
       init();
       break;
     case RC_LIST_VIEW_FILE:
       uri = data.getData();
       filename = uri.getPath();
-      // This set it in the main partition. We actually want to set it in the
-      // other partition for now.
-      // kvsh =
-      // tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-      // kvsh.setString(
-      // ListDisplayActivity.KEY_FILENAME,
-      // filename2);
+      // We need to get the relative path under the app name.
+      relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
       kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to
       // allow custom naming, checking for redundancy, etc.
       KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, filename);
-
-      // TableViewSettings settings = tp.getOverviewViewSettings();
-      // settings.setCustomListFilename(filename2);
+      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
       tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-          TableMapFragment.KEY_FILENAME, data.getData().getPath());
+          TableMapFragment.KEY_FILENAME, getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);
     }
+  }
+
+  /**
+   * Get the relative filepath under the app directory for the full path as
+   * returned from OI file picker.
+   *
+   * @param fullPath
+   * @return
+   */
+  private String getRelativePathOfFile(String fullPath) {
+    String relativePath = TableFileUtils.getRelativePath(fullPath);
+    return relativePath;
   }
 
   @Override

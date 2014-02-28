@@ -19,7 +19,6 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.WebDbDefinition;
 import org.opendatakit.common.android.database.WebSqlDatabaseHelper;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -36,9 +35,9 @@ public class DbHelperImpl {
 
     private DataModelDatabaseHelper mDbHelper;
 
-    private DbHelperImpl(Context context) {
+    private DbHelperImpl(Context context, String appName) {
       // TODO: make this app-centric
-      String path = ODKFileUtils.getWebDbFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+      String path = ODKFileUtils.getWebDbFolder(appName);
 
       WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(context, path);
       WebDbDefinition defn = h.getWebKitDatabaseInfoHelper();
@@ -57,9 +56,9 @@ public class DbHelperImpl {
       return mDbHelper.getWritableDatabase();
     }
 
-    public static DbHelperImpl getDbHelper(Context context) {
+    public static DbHelperImpl getDbHelper(Context context, String appName) {
         if (dbh == null) {
-            dbh = new DbHelperImpl(context);
+            dbh = new DbHelperImpl(context, appName);
         }
         return dbh;
     }

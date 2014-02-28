@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 
 import android.content.ContentValues;
@@ -46,15 +47,14 @@ public class ColumnDefinitions {
 
   private static final String TAG = "ColumnDefinitions";
 
-  private static final String DB_BACKING_NAME = "column_definitions";
+  private static final String DB_BACKING_NAME =
+      DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME;
 
   /***********************************
    *  Default values for those columns which require them.
    ***********************************/
-  public static final boolean DEFAULT_DB_IS_PERSISTED = true;
-  public static final ColumnType DEFAULT_DB_ELEMENT_TYPE =
-      ColumnType.NONE;
-  public static final String DEFAULT_DB_JOINS = null;
+  public static final boolean DEFAULT_DB_IS_UNIT_OF_RETENTION = true;
+  public static final ColumnType DEFAULT_DB_ELEMENT_TYPE = ColumnType.NONE;
   public static final String DEFAULT_LIST_CHILD_ELEMENT_KEYS = null;
 
   // A set of all the column names in this table.
@@ -68,8 +68,7 @@ public class ColumnDefinitions {
     columnNames.add(ColumnDefinitionsColumns.ELEMENT_NAME);
     columnNames.add(ColumnDefinitionsColumns.ELEMENT_TYPE);
     columnNames.add(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
-    columnNames.add(ColumnDefinitionsColumns.IS_PERSISTED);
-    columnNames.add(ColumnDefinitionsColumns.JOINS);
+    columnNames.add(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
   }
 
   /*
@@ -78,8 +77,8 @@ public class ColumnDefinitions {
   private static final String WHERE_SQL_FOR_ELEMENT =
       ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.ELEMENT_KEY + " = ?";
 
-  private static final String WHERE_SQL_FOR_TABLE_IS_PERSISTED =
-      ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.IS_PERSISTED + " = ?";
+  private static final String WHERE_SQL_FOR_TABLE_IS_UNIT_OF_RETENTION =
+      ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION + " = ?";
 
   private static final String WHERE_SQL_FOR_TABLE =
       ColumnDefinitionsColumns.TABLE_ID + " = ?";
@@ -96,26 +95,27 @@ public class ColumnDefinitions {
   }
 
   /**
-   * Return all the persisted element keys for the given table. Since element
-   * keys are the unique identifier of the column, this essentially gets all
-   * the columns for the table id. The lone caveat here is that this is only
-   * the persisted columns. Persisted columns are basically those that are
-   * used by ODK Tables.
+   * Return all the column names for the given table.  These will be
+   * the element keys that are 'units of retention' (stored as columns in
+   * the database) AND the element keys that define super- or sub- structural
+   * elements such as composite types whose sub-elements are written
+   * individually to the database (e.g., geopoint) or subsumed by the
+   * enclosing element (e.g., lists of items).
    * <p>
    * Does not close the passed in database.
    * @param tableId
    * @param db
    * @return
    */
-  public static List<String> getPersistedElementKeysForTable(String tableId,
+  public static List<String> getAllColumnNamesForTable(String tableId,
       SQLiteDatabase db) {
     Cursor c = null;
     List<String> elementKeys = new ArrayList<String>();
     try {
       c = db.query(DB_BACKING_NAME,
           new String[] {ColumnDefinitionsColumns.ELEMENT_KEY}, // we only want the element key column
-          WHERE_SQL_FOR_TABLE_IS_PERSISTED,
-          new String[] {tableId, "1"}, null, null, null);
+          WHERE_SQL_FOR_TABLE,
+          new String[] {tableId}, null, null, null);
       int dbElementKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
       c.moveToFirst();
       int j = 0;
@@ -160,8 +160,7 @@ public class ColumnDefinitions {
       int dbElementTypeIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_TYPE);
       int dbListChildElementKeysIndex =
           c.getColumnIndexOrThrow(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
-      int dbIsPersistedIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.IS_PERSISTED);
-      int dbJoinsIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.JOINS);
+      int dbUnitOfRetentionIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
 
       if (c.getCount() > 1) {
         Log.e(TAG, "query for tableId: " + tableId + "and elementKey: " +
@@ -183,9 +182,8 @@ public class ColumnDefinitions {
         columnDefMap.put(ColumnDefinitionsColumns.ELEMENT_TYPE, c.getString(dbElementTypeIndex));
         columnDefMap.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS,
             c.getString(dbListChildElementKeysIndex));
-        columnDefMap.put(ColumnDefinitionsColumns.IS_PERSISTED, Boolean.toString(
-            c.getInt(dbIsPersistedIndex) == 1));
-        columnDefMap.put(ColumnDefinitionsColumns.JOINS, c.getString(dbJoinsIndex));
+        columnDefMap.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, Boolean.toString(
+            c.getInt(dbUnitOfRetentionIndex) == 1));
         c.moveToNext();
         j++;
       }
@@ -279,8 +277,7 @@ public class ColumnDefinitions {
    * @param elementType type of the column. null values will be converted to
    * DEFAULT_DB_ELEMENT_TYPE
    * @param listChild
-   * @param isPersisted
-   * @param joins
+   * @param isUnitOfRetention
    * @return a map of column names to fields for the new table
    * @throws IOException
    * @throws JsonMappingException
@@ -288,14 +285,13 @@ public class ColumnDefinitions {
    */
   public static void assertColumnDefinition(SQLiteDatabase db,
       String tableId, String elementKey, String elementName,
-      ColumnType elementType, String listChild, boolean isPersisted,
-      JoinColumn joins) throws JsonGenerationException, JsonMappingException, IOException {
+      ColumnType elementType, String listChild, boolean isUnitOfRetention)
+          throws JsonGenerationException, JsonMappingException, IOException {
     ContentValues values = new ContentValues();
     values.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
     values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
     values.put(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, listChild);
-    values.put(ColumnDefinitionsColumns.IS_PERSISTED, isPersisted ? 1 : 0);
-    values.put(ColumnDefinitionsColumns.JOINS, JoinColumn.toSerialization(joins));
+    values.put(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, isUnitOfRetention ? 1 : 0);
 
     Cursor c = null;
     try {

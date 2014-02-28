@@ -72,15 +72,20 @@ public class SecurityUtil {
         return indices;
     }
 
-    public static boolean isValid(Context context, TableProperties tp,
+    public static boolean isValid(Context context, String appName, TableProperties tp,
             String phoneNum, String password) {
-        DbHelper dbh = DbHelper.getDbHelper(context);
+        DbHelper dbh = DbHelper.getDbHelper(context, appName);
         DbTable dbt = DbTable.getDbTable(dbh, tp);
         ArrayList<String> columns = new ArrayList<String>();
-        columns.add(DataTableColumns.ROW_ID);
+        columns.add(DataTableColumns.ID);
         UserTable table = dbt.getRaw(columns,
-                new String[] {DataTableColumns.SAVED, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
+                new String[] {DataTableColumns.SAVEPOINT_TYPE, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
-        return (table.getHeight() > 0);
+        return (table.getNumberOfRows() > 0);
+    }
+
+    public static String mapPhoneNumToUserIdentity(String phoneNum) {
+      // TODO Define how phoneNum maps to an accessControl value
+      return null;
     }
 }

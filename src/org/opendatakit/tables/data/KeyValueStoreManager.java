@@ -16,7 +16,6 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -24,7 +23,9 @@ import java.util.TreeSet;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -242,6 +243,25 @@ public class KeyValueStoreManager {
     }
   }
 
+  public List<String> getTableIdsForTableType(TableType tableType, SQLiteDatabase db,
+      KeyValueStore.Type typeOfStore) {
+    String backingName = getBackingNameForStore(typeOfStore);
+    Cursor c = null;
+    try {
+       c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
+           KeyValueStoreColumns.PARTITION + "=? AND " +
+           KeyValueStoreColumns.ASPECT + "=? AND " +
+           KeyValueStoreColumns.KEY + "=? AND " +
+           KeyValueStoreColumns.VALUE + "=?",
+           new String[] { "Table", "default", "tableType", tableType.name() },
+           null, null, null, null);
+       return getTableIdsFromCursor(c);
+    } finally {
+      if ( c != null && !c.isClosed() ) {
+         c.close();
+      }
+    }
+  }
   /**
    * Get the ids of all the data tables that have entries in the given store.
    * <p>
@@ -253,25 +273,7 @@ public class KeyValueStoreManager {
    */
   public List<String> getDataTableIds(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
-    // the backing name of the store from which you'll check the ids against.
-//    String backingName = getBackingNameForStore(typeOfStore);
-//    Cursor c = getTableIdsWithKeyValue(db, backingName,
-//        TableProperties.DB_TABLE_TYPE,
-//        Integer.toString(TableProperties.TableType.DATA));
-    // all the datatables in the db.
-    List<String> tableDefinitionIds =
-        TableDefinitions.getTableIdsForType(TableType.data, db);
-    // the datatables that have entries in this key value store.
-    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
-    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
-    List<String> dataTablesInThisStore = new ArrayList<String>();
-    for (String id : kvsIds) {
-      if (setTableDefIds.contains(id)) {
-        dataTablesInThisStore.add(id);
-      }
-    }
-//    return getTableIdsFromCursor(c);
-    return dataTablesInThisStore;
+    return getTableIdsForTableType(TableType.data, db, typeOfStore);
   }
 
 
@@ -286,24 +288,7 @@ public class KeyValueStoreManager {
    */
   public List<String> getSecurityTableIds(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
-//    String backingName = getBackingNameForStore(typeOfStore);
-//    Cursor c = getTableIdsWithKeyValue(db, backingName,
-//        TableDefinitions.DB_TYPE,
-//        Integer.toString(TableType.security));
-//    return getTableIdsFromCursor(c);
-    List<String> tableDefinitionIds =
-        TableDefinitions.getTableIdsForType(TableType.security, db);
-    // the datatables that have entries in this key value store.
-    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
-    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
-    List<String> securityTablesInThisStore = new ArrayList<String>();
-    for (String id : kvsIds) {
-      if (setTableDefIds.contains(id)) {
-        securityTablesInThisStore.add(id);
-      }
-    }
-//    return getTableIdsFromCursor(c);
-    return securityTablesInThisStore;
+    return getTableIdsForTableType(TableType.security, db, typeOfStore);
   }
 
   /**
@@ -317,24 +302,7 @@ public class KeyValueStoreManager {
    */
   public List<String> getShortcutTableIds(SQLiteDatabase db,
       KeyValueStore.Type typeOfStore) {
-//    String backingName = getBackingNameForStore(typeOfStore);
-//    Cursor c = getTableIdsWithKeyValue(db, backingName,
-//        TableDefinitions.DB_TYPE,
-//        Integer.toString(TableProperties.TableType.SHORTCUT));
-//    return getTableIdsFromCursor(c);
-    List<String> tableDefinitionIds =
-        TableDefinitions.getTableIdsForType(TableType.shortcut, db);
-    // the datatables that have entries in this key value store.
-    List<String> kvsIds = getAllIdsFromStore(db, typeOfStore);
-    Set<String> setTableDefIds = new HashSet<String>(tableDefinitionIds);
-    List<String> shortcutTablesInThisStore = new ArrayList<String>();
-    for (String id : kvsIds) {
-      if (setTableDefIds.contains(id)) {
-        shortcutTablesInThisStore.add(id);
-      }
-    }
-//    return getTableIdsFromCursor(c);
-    return shortcutTablesInThisStore;
+    return getTableIdsForTableType(TableType.shortcut, db, typeOfStore);
   }
 
   /*
@@ -519,8 +487,9 @@ public class KeyValueStoreManager {
 	    // Now try to update the properties tag.
 	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
 	        tableId, KeyValueStore.Type.SERVER);
-	    String syncTagStr = tp.getSyncTag();
-	    if (syncTagStr == null || syncTagStr.equals("")) {
+	    SyncTag syncTag = tp.getSyncTag();
+	    if (syncTag.getSchemaETag() == null ||
+	        syncTag.getPropertiesETag() == null ) {
 	      // Then it's not been synched and we can rely on it to first be inited
 	      // during the sync.
 	    } else {

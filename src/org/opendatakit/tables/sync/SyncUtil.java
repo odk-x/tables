@@ -15,15 +15,18 @@
  */
 package org.opendatakit.tables.sync;
 
-import org.opendatakit.aggregate.odktables.rest.entity.Column;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColumnType;
+import org.springframework.http.converter.ResourceHttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
-
-import java.util.Comparator;
 
 /**
  * A utility class for common synchronization methods and definitions.
@@ -32,48 +35,46 @@ public class SyncUtil {
 
   public static final String TAG = SyncUtil.class.getSimpleName();
 
-  /**
-   * <p>
-   * Synchronization state.
-   * </p>
-   * <p>
-   * Here is a brief overview of the rules for transitions between states on
-   * basic write operations:
-   *
-   * <pre>
-   * insert:
-   *     state = INSERTING
-   *
-   * update:
-   *     if state == REST:
-   *        state = UPDATING
-   *
-   * delete:
-   *     if state == REST or state == UPDATING:
-   *        state = DELETING
-   *        don't actually delete yet
-   *     else if state == INSERTING:
-   *        actually delete
-   * </pre>
-   *
-   * </p>
-   * <p>
-   * The {@link SyncProcessor} handles moving resources from the INSERTING,
-   * UPDATING, or DELETING states back to the REST state. CONFLICTING is a
-   * special state set by the SyncProcessor to signify conflicts between local
-   * and remote updates to the same resource and is handled separately from the
-   * basic write operations.
-   *
-   */
-  public class State {
-    public static final int REST = 0;
-    public static final int INSERTING = 1;
-    public static final int UPDATING = 2;
-    public static final int DELETING = 3;
-    public static final int CONFLICTING = 4;
+  private static final String FORWARD_SLASH = "/";
 
-    private State() {
+  /**
+   * Get the path to the file server. Should be appended to the uri of the
+   * aggregate uri. Begins and ends with "/".
+   * @return
+   */
+  public static String getFileServerPath() {
+    return "/odktables/files/";
+  }
+
+  public static String getFileManifestServerPath() {
+    return "/odktables/filemanifest";
+  }
+
+  /**
+   * Format a file path to be pushed up to aggregate. Essentially escapes the
+   * string as for an html url, but leaves forward slashes. The path must begin
+   * with a forward slash, as if starting at the root directory.
+   * @return a properly escaped url, with forward slashes remaining.
+   */
+  public static String formatPathForAggregate(String path) {
+    String escaped = Uri.encode(path, "/");
+    return escaped;
+  }
+
+  /**
+   * Escape a list of paths for aggregate, leaving forward slashes. This
+   * utility method is equivalent to calling
+   * {@link SyncUtil#formatPathForAggregate(String)} on every element of the
+   * list.
+   * @param paths
+   * @return
+   */
+  public static List<String> formatPathsForAggregate(List<String> paths) {
+    List<String> escapedPaths = new ArrayList<String>();
+    for (String path : paths) {
+      escapedPaths.add(SyncUtil.formatPathForAggregate(path));
     }
+    return escapedPaths;
   }
 
   public static boolean intToBool(int i) {
@@ -132,21 +133,6 @@ public class SyncUtil {
   }
 
   /**
-   * This should eventually map the the column type
-   * on the server to the phone-side column type. It currently just returns
-   * type none, losing any sort of type information from the server.
-   * TODO: make this method work once it's been updated from the server.
-   * @param strColumn
-   * @return
-   */
-  public static ColumnType getTablesColumnTypeFromServerColumnType(
-      Column.ColumnType serverColumnType) {
-    // TODO: Sort out the way column types are going to go back and forth b/w
-    // the server and the device.
-    return ColumnType.NONE;
-  }
-
-  /**
    * Gets the name of the {@link TableResult#Status}.
    * @param context
    * @param status
@@ -188,15 +174,19 @@ public class SyncUtil {
       TableResult result) {
     StringBuilder msg = new StringBuilder();
     msg.append(result.getTableDisplayName() + ": ");
-    switch (result.getTableAction()) {
-    case inserting:
-      msg.append(
-          context.getString(R.string.sync_action_message_insert) + "--");
-      break;
-    case deleting:
-      msg.append(
-          context.getString(R.string.sync_action_message_delete) + "--");
-      break;
+    if ( result.getTableAction() == null ) {
+      msg.append("unspecified sync state--");
+    } else {
+      switch (result.getTableAction()) {
+      case inserting:
+        msg.append(
+            context.getString(R.string.sync_action_message_insert) + "--");
+        break;
+      case deleting:
+        msg.append(
+            context.getString(R.string.sync_action_message_delete) + "--");
+        break;
+      }
     }
     // Now add the result of the status.
     msg.append(getLocalizedNameForTableResultStatus(context,
@@ -235,7 +225,7 @@ public class SyncUtil {
         msg.append("Failed to pull data from server. ");
       }
     } else {
-      msg.append("No data to pull from server. ");
+      msg.append("Data not re-fetched from server. ");
     }
 
     if (result.serverHadPropertiesChanges()) {
@@ -245,10 +235,53 @@ public class SyncUtil {
         msg.append("Failed to pull properties from server. ");
       }
     } else {
-      msg.append("No properties to pull from server.");
+      msg.append("Properties not re-fetched from server.");
+    }
+
+    if (result.serverHadSchemaChanges()) {
+      if (result.pulledServerSchema()) {
+        msg.append("Pulled schema from server. ");
+      } else {
+        msg.append("Failed to pull schema from server. ");
+      }
+    } else {
+      msg.append("Schema not re-fetched from server.");
     }
 
     return msg.toString();
+  }
+
+  /**
+   * Get a {@link RestTemplate} for synchronizing files.
+   * @return
+   */
+  public static RestTemplate getRestTemplateForFiles() {
+    // Thanks to this guy for the snippet:
+    // https://github.com/barryku/SpringCloud/blob/master/BoxApp/BoxNetApp/src/com/barryku/android/boxnet/RestUtil.java
+    RestTemplate rt = new RestTemplate();
+    ResourceHttpMessageConverter fileConverter = new ResourceHttpMessageConverter();
+    rt.getMessageConverters().add(fileConverter);
+//    rt.setErrorHandler(new ResponseErrorHandler() {
+//
+//      @Override
+//      public boolean hasError(ClientHttpResponse resp) throws IOException {
+//        HttpStatus status = resp.getStatusCode();
+//        if (HttpStatus.CREATED.equals(status)
+//            || HttpStatus.OK.equals(status)) {
+//         return false;
+//        } else {
+//          Log.e(TAG, "[hasError] response: " + resp.getBody());
+//          return true;
+//        }
+//      }
+//
+//      @Override
+//      public void handleError(ClientHttpResponse resp) throws IOException {
+//        Log.e(TAG, "[handleError] response body: " + resp.getBody());
+//        throw new HttpClientErrorException(resp.getStatusCode());
+//      }
+//    });
+    return rt;
   }
 
 

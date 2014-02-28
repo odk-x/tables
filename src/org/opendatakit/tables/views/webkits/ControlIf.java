@@ -17,11 +17,19 @@ package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
-import org.json.JSONArray;
 import org.opendatakit.tables.views.webkits.CustomView.Control;
-import org.opendatakit.tables.views.webkits.CustomView.TableData;
 
+import android.util.Log;
+
+/**
+ * This object is handed to all the javascript views as "control".
+ * @author mitchellsundt@gmail.com
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class ControlIf {
+  
+  private static final String TAG = ControlIf.class.getSimpleName();
 
 	private WeakReference<Control> weakControl;
 
@@ -30,219 +38,126 @@ public class ControlIf {
 	}
 
 	/**
-	 * Open the table with the given name and searches with the given query.
-	 * Opens to the current default view of the table.
-	 * @param tableName the display name of the table
-	 * @param query a query string, represented by a space-separated list of
-	 * "displayName:cellContents". The easiest way to get the correct formatting
-	 * of this string would be to drag and drop contents into the searchbox
-	 * of the Spreadsheet view, letting Tables handle the formatting.
+	 * Open the table with the given id.
+	 * @see #query(String, String, String[])
+	 * @param tableId the table id of the table to open
+	 * @param whereClause query as specified by 
+	 * {@link #query(String, String, String[])}
+	 * If null will not restrict the results.
+	 * @param selectionArgs an array of selection arguments, one for each "?"
+	 * in whereClause. If null will not restrict the results.
 	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
-	public boolean openTable(String tableName, String query) {
-		return weakControl.get().openTable(tableName, query);
+	public boolean openTable(String tableId,
+			String whereClause, String[] selectionArgs) {
+	  // TODO: convert to element keys
+	  Log.e(TAG, "TO-WC openTableWithSqlQuery(tableId, sqlWhereClause, " +
+	  		"sqlSelectionArgs");
+		return weakControl.get().helperOpenTable(tableId,
+				whereClause, selectionArgs);
+	}
+	
+   /**
+    * Open the given table with the given list view, restricted by given query.
+    * @see #query(String, String, String[])
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
+    * @param relativePath the name of the file specifying the list view,
+    * relative to the app folder.
+    * @return true if the open succeeded
+    */
+	public boolean openTableToListView(String tableId, String whereClause,
+	    String[] selectionArgs, String relativePath) {
+     return weakControl.get().helperOpenTableWithFile(
+         tableId, relativePath, whereClause, selectionArgs);
+	}
+	
+   /**
+    * Open the given table to the map view, restricted with the given SQL
+    * query.
+    * @see #query(String, String, String[])
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
+    * @param relativePath NOT YET SUPPORTED
+    * @return true if the open succeeded
+    */
+	public boolean openTableToMapView(String tableId, String whereClause,
+	    String[] selectionArgs, String relativePath) {
+     return weakControl.get().helperOpenTableToMapView(tableId,
+         whereClause, selectionArgs, relativePath);
+	}
+	
+   /**
+    * Open the table to spreadsheet view, restricting by the given SQL query.
+    * @see #query(String, String, String[])
+    * @see #openTable(String, String, String[])
+    * @param tableId the tableId of the table to open
+    * @param whereClause query as specified by 
+    * {@link #query(String, String, String[])}
+    * If null will not restrict the results.
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in whereClause. If null will not restrict the results.
+    * @return true if the open succeeded
+    */
+	public boolean openTableToSpreadsheetView(String tableId, 
+	    String whereClause, String[] selectionArgs) {
+     return weakControl.get().helperOpenTableToSpreadsheetView(
+         tableId, whereClause, selectionArgs);
 	}
 
 	/**
-	 * Open the table with the given name using a sql query.
+	 * Return a {@link TableDataIf} object for the given table id, where the
+	 * rows have been restricted by the query.
 	 * <p>
-	 * Performs a simple "SELECT * FROM" statement with the sqlWhereClause
-	 * performing a query.
+	 * For example, if you wanted all the rows where the column with elementKey
+	 * foo equaled bar, the where clause would be "foo = ? ", and the selection 
+	 * args would be ["bar"].
 	 * <p>
-	 * This is useful for doing more complicated joins than are possible with
-	 * a simple query string, but is possible using SQL. Note that in this case,
-	 * even though the SQL query is restricting the rows shown in the table, the
-	 * query will not appear in the search box.
-	 * @see #queryWithSql(String, String, String[])
-	 * @param tableName the displayName of the table to open
-	 * @param sqlWhereClause the where clause for the selection, beginning with
-	 * "WHERE". Must include "?" instead of actual values, which are instead
-	 * passed in the sqlSelectionArgs parameter. The references to tables must
-	 * use the database table names, as can be retrieved with
-	 * {@link #getDbNameForTable(String)}. The references to the columns
-	 * must be the element key, not the display name of the column. The
-	 * elementKey is fixed and unchanging for each column, and can be retrieved
-	 * using {@link #getElementKeyForColumn(String, String)}.
-	 * @param sqlSelectionArgs an array of selection arguments, one for each "?"
-	 * in sqlWhereClause
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableWithSqlQuery(String tableName,
-			String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableWithSqlQuery(tableName,
-				sqlWhereClause, sqlSelectionArgs);
-	}
-
-	/**
-	 * Open the table specified by tableName as a list view using the specified
-	 * filename as a list view. The filename is relative to the odk tables path.
-	 * @param tableName the display name of the table to open
-	 * @param searchText the search string with which to search the table.
-	 * @param filename the filename of the list view with which to open the
-	 * table. Must be relative to the odk tables path and must not start with
-	 * a delimeter. I.e. "your/path/to/file.html" would be an acceptable
-	 * parameter, where as "/your/path/to/file.html" would not.
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToListViewWithFile(String tableName,
-			String searchText, String filename) {
-		return weakControl.get().openTableToListViewWithFile(tableName,
-				searchText, filename);
-	}
-
-	/**
-	 * Open the given table with the given list view, restricted by the given
-	 * SQL query.
-	 * @see #openTableToListViewWithFile(String, String, String)
-	 * @see #openTableWithSqlQuery(String, String, String[])
-	 * @see #queryWithSql(String, String, String[])
-	 * @param tableName
-	 * @param filename
-	 * @param sqlWhereClause
-	 * @param sqlSelectionArgs
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToListViewWithFileAndSqlQuery(String tableName,
-			String filename, String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableToListViewWithFileAndSqlQuery(
-				tableName, filename, sqlWhereClause, sqlSelectionArgs);
-	}
-
-	/**
-	 * Open the given table to the map view, restricted with the given SQL
-	 * query.
-	 * @see #openTableWithSqlQuery(String, String, String[])
-	 * @see #queryWithSql(String, String, String[])
-	 * @param tableName display name of the table to open.
-	 * @param sqlWhereClause
-	 * @param sqlSelectionArgs
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToMapViewWithSqlQuery(String tableName,
-			String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableToMapViewWithSqlQuery(tableName,
-				sqlWhereClause, sqlSelectionArgs);
-	}
-
-	/**
-	 * Open the given table to the map view, restricted with the given query
-	 * string. Uses the settings that have last been saved to map view.
-	 * @see #openTable(String, String)
-	 * @param tableName
-	 * @param searchText
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToMapView(String tableName, String searchText) {
-		return weakControl.get().openTableToMapView(tableName, searchText);
-	}
-
-	/**
-	 * Open the table to spreadsheet view, restricting by the given query.
-	 * @see #openTable(String, String)
-	 * @param tableName
-	 * @param searchText
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToSpreadsheetView(String tableName,
-			String searchText) {
-		return weakControl.get().openTableToSpreadsheetView(tableName,
-				searchText);
-	}
-
-	/**
-	 * Open the table to spreadsheet view, restricting by the given SQL query.
-	 * @see #openTable(String, String)
-	 * @see #openTableWithSqlQuery(String, String, String[])
-	 * @see #queryWithSql(String, String, String[])
-	 * @param tableName
-	 * @param sqlWhereClause
-	 * @param sqlSelectionArgs
-	 * @return true if the open succeeded
-	 */
-	// @JavascriptInterface
-	public boolean openTableToSpreadsheetViewWithSqlQuery(String tableName,
-			String sqlWhereClause, String[] sqlSelectionArgs) {
-		return weakControl.get().openTableToSpreadsheetViewWithSqlQuery(
-				tableName, sqlWhereClause, sqlSelectionArgs);
-	}
-
-	/**
-	 * Get the database name of the table with the given display name. This is
-	 * necessary for sophisticated queries like those allowed with
-	 * {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @param displayName display name of the table
-	 * @return the database name of the table
-	 */
-	// @JavascriptInterface
-	public String getDbNameForTable(String displayName) {
-		return weakControl.get().getDbNameForTable(displayName);
-	}
-
-	/**
-	 * Get the database name of the column, also known as the element key. This
-	 * is necessary for sophisticated queries like those allowed with
-	 * {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @param tableDisplayName display name of the table holding the column
-	 * @param columnDisplayName display name of the column
-	 * @return the element key (i.e. the database name) of the column with the
-	 * given display name in the given table.
-	 */
-	// @JavascriptInterface
-	public String getElementKeyForColumn(String tableDisplayName,
-			String columnDisplayName) {
-		return weakControl.get().getElementKeyForColumn(tableDisplayName,
-				columnDisplayName);
-	}
-
-	/**
-	 * Return a {@link TableDataIf} object for the given table name, queried
-	 * with the given searchText.
-	 * @param tableName display name of the table
-	 * @param searchText a search string as defined in
-	 * {@link #openTable(String, String)}
-	 * @return a new TableDataIf with the results of the query. Should be
-    * released with {@link #releaseQueryResources(String)} when it is no longer
-    * needed.
-	 */
-	// @JavascriptInterface
-	public TableDataIf query(String tableName, String searchText) {
-		TableData td = weakControl.get().query(tableName, searchText);
-		if (td != null) {
-			return td.getJavascriptInterfaceWithWeakReference();
-		} else {
-			return null;
-		}
-	}
-
-	/**
-	 * Return a {@link TableDataIf} object for the given table name, queried
-	 * using SQL.
+	 * If you require only those rows where foo equals bar and foo2 = bar2,
+	 * you can combine these restrictions using "AND". For instance, this query
+	 * would have a where clause of "foo = ? AND foo2 = ?" while the
+	 * selectionArgs would be ["bar", "bar2"].
 	 * <p>
-	 * For example, if you wanted all the rows where the column foo equaled
-	 * bar, the where clause would be "WHERE foo = ? ", and the selection args
-	 * would be ["bar"].
+	 * The query also supports OR operations, so you can modify the above query
+	 * to include rows where foo equals bar or those where foo2 = bar2, you can
+	 * say "foo = ? OR foo2 = ?" and use the same selectionArgs.
+	 * <p>
+	 * If you need more complicated queries joining tables, this can also be
+	 * achieved using this method and SQL syntax. The {@link TableDataIf}
+	 * returned by this method can only contain those columns present in the
+	 * table specified by tableId. This means that you cannot join tables and
+	 * retrieve the entire projection. You can, however, perform subselections
+	 * and other valid SQL queries, so long as you do not require additional
+	 * columns in the projection.
 	 * <p>
 	 * This can be used to do powerful cross-table queries.
-	 * @param tableName display name of the table
-	 * @param whereClause an SQL where clause as specified in
-	 * {@link #openTableWithSqlQuery(String, String, String[])}.
-	 * @param selectionArgs selection arguments for the whereClause as
-	 * specified in {@link #openTableWithSqlQuery(String, String, String[])}.
+	 * @param tableId the tableId of the table
+	 * @param whereClause a where clause as described above. Must include "?" 
+	 * instead of actual values, which are instead
+    * passed in the sqlSelectionArgs parameter. The references to tables must
+    * use the table ids. The references to the columns
+    * must be the element keys
+    * @param selectionArgs an array of selection arguments, one for each "?"
+    * in sqlWhereClause
 	 * @return a new TableDataIf with the results of the query. Should be
-	 * released with {@link #releaseQueryResources(String)} when it is no longer
+	 * released with {@link #releaseQueryResources(String)} when no longer
 	 * needed.
 	 */
 	// @JavascriptInterface
-	public TableDataIf queryWithSql(String tableName, String whereClause,
+	public TableDataIf query(String tableId, String whereClause,
 			String[] selectionArgs) {
-		TableData td = weakControl.get().queryWithSql(tableName, whereClause,
+		TableData td = weakControl.get().query(tableId, whereClause,
 				selectionArgs);
 		if (td != null) {
 			return td.getJavascriptInterfaceWithWeakReference();
@@ -256,126 +171,228 @@ public class ControlIf {
 	 * statements, above. The object will be retained until this method is
 	 * called, so good practice is to release the query when its data is no
 	 * longer needed to free up resources.
-	 * @param tableName display name for the table
+	 * @param tableId tableId of the table
 	 */
 	// @JavascriptInterface
-	public void releaseQueryResources(String tableName) {
-		weakControl.get().releaseQueryResources(tableName);
+	public void releaseQueryResources(String tableId) {
+		weakControl.get().releaseQueryResources(tableId);
 	}
 
 	/**
-	 * Get the display names of all the tables in the database.
-	 * @return an JSONArray containing the display names
+	 * Get the table ids of all the tables in the database.
+	 * @return a stringified json array of the table ids
 	 */
 	// @JavascriptInterface
-	public JSONArray getTableDisplayNames() {
-		return weakControl.get().getTableDisplayNames();
+	public String getAllTableIds() {
+		return weakControl.get().getAllTableIds();
 	}
 
 	/**
 	 * Launch an arbitrary HTML file specified by filename.
-	 * @see #openTableToListViewWithFile(String, String, String)
-	 * @param filename file name relative to the ODK Tables folder.
+	 * @param relativePath file name relative to the ODK Tables folder.
+	 * @return true if the file was launched, false if something went wrong
 	 */
 	// @JavascriptInterface
-	public void launchHTML(String filename) {
-		weakControl.get().launchHTML(filename);
+	public boolean launchHTML(String relativePath) {
+		return weakControl.get().launchHTML(relativePath);
 	}
 
 	/**
-	 * Opens the detail view for the item at the given index.
-	 * <p>
-	 * Only makes sense when we are on a list view.
-	 * @param index
+    * Open the item specified by the index to the detail view.
+    * <p>
+    * The relativePath parameter is optional, and if null an attempt will be
+    * made to use the default file.
+	 * @param tableId
+	 * @param rowId
+	 * @param relativePath the name of the file specifying the detail view,
+    * relative to the app folder. If not present, the default detail view file
+    * will be used
 	 * @return true if the open succeeded
 	 */
 	// @JavascriptInterface
-	public boolean openItem(int index) {
-		return weakControl.get().openItem(index);
+	public boolean openDetailView(String tableId, String rowId,
+	    String relativePath) {
+		return weakControl.get().openDetailViewWithFile(tableId, rowId,
+		    relativePath);
 	}
-
+	
 	/**
-	 * Open the detail view for the item at the given index with the given
-	 * filename.
+	 * Add a row using Collect and the default form. 
+	 * @param tableId the tableId of the table to receive the add.
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+	 */
+	// @JavascriptInterface
+	public boolean addRowWithCollectDefault(String tableId) {
+	  Log.e(TAG, "TO-WC addRowWithCollect");
+		return this.addRowWithCollect(tableId, null, null, 
+		    null, null);
+	}
+   
+  /**
+   * Add a row using Collect, a specific form, and a map of prepopulated
+   * values.
+   * <p>
+   * The form must have been added to Collect and visible in the "Fill Blank
+   * Forms" screen.
+   * @param tableId
+   * @param formId if null, will launch the default form
+   * @param formVersion
+   * @param formRootElement
+   * @param jsonMap a JSON map of element key to value, as retrieved by
+   * {@link #getElementKey(String, String)}. The map can then be
+   * converted to a String using JSON.stringify() and passed to this method. A
+   * null value will not prepopulate any values.
+   * @return true if the activity was launched, false if something went wrong
+   * @deprecated
+   */
+   public boolean addRowWithCollect(String tableId,
+       String formId, String formVersion, String formRootElement, 
+       String jsonMap) {
+     return weakControl.get()
+         .helperAddRowWithCollect(tableId, formId, formVersion, 
+             formRootElement, jsonMap);
+   }
+   
+   /**
+    * Edit the given row using Collect.
+    * @param tableId
+    * @param rowId
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+    */
+   public boolean editRowWithCollectDefault(String tableId, String rowId) {
+     return this.editRowWithCollect(tableId, rowId, null, null, null);
+   }
+   
+   /**
+    * Edit the given row using Collect and a specific form.
+    * @param tableId
+    * @param rowId
+    * @param formId if null, uses the default form
+    * @param formVersion
+    * @param formRootElement
+    * @return true if the activity was launched, false if something went wrong
+    * @deprecated
+    */
+   public boolean editRowWithCollect(String tableId, 
+       String rowId, String formId, String formVersion, 
+       String formRootElement) {
+     return weakControl.get().helperEditRowWithCollect(tableId, rowId, formId,
+         formVersion, formRootElement);
+   }
+
+   
+   /**
+    * Edit the given row using Survey and the default form.
+    * @param tableId
+    * @param rowId
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean editRowWithSurveyDefault(String tableId, String rowId) {
+     return editRowWithSurvey(tableId, rowId, null, null);
+   }
+   
+   /**
+    * Edit the given row using Survey and a specific form.
+    * @param tableId
+    * @param rowId
+    * @param formId
+    * @param screenPath
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean editRowWithSurvey(String tableId, String rowId,
+       String formId, String screenPath) {
+     return weakControl.get().helperEditRowWithSurvey(tableId, rowId, formId, 
+         screenPath);
+   }
+   
+   /**
+    * Add a row with Survey and the default form.
+    * @param tableId the table to receive the add
+    * @return true if Survey was launched, else false
+    */
+   public boolean addRowWithSurveyDefault(String tableId) {
+     return this.addRowWithSurvey(tableId, null, null, null);
+   }
+   
+   /**
+    * Add a row using Survey. 
+    * @param tableId
+    * @param formId if null, the default form will be used
+    * @param screenPath
+    * @param jsonMap a stringified json object matching element key to 
+    * the value to prepopulate in the new row
+    * @return true if the activity was launched, false if something went wrong
+    */
+   public boolean addRowWithSurvey(String tableId, String formId, 
+       String screenPath, String jsonMap) {
+     return weakControl.get().helperAddRowWithSurvey(
+         tableId, formId, screenPath, jsonMap);
+   }
+	
+	/**
+	 * Return the element key for the column with the given element path.
+	 * @param tableId
+	 * @param elementPath
+	 * @return the element key for the column, or null if a table cannot be
+	 * found with the existing tableId.
+	 */
+	public String getElementKey(String tableId, String elementPath) {
+	  return weakControl.get().getElementKey(tableId, elementPath);
+	}
+	
+	/**
+	 * Get the display name for the given column.
+	 * @param tableId
+	 * @param elementPath
+	 * @return the display name for the given column
+	 */
+	public String getColumnDisplayName(String tableId, String elementPath) {
+	  return weakControl.get().getColumnDisplayName(tableId, elementPath);
+	}
+	
+	/**
+	 * Retrieve the display name for the given table.
 	 * <p>
-	 * Only makes sense when we are in a list view.
-	 * @param index
-	 * @param filename
-	 * @return true if the open suceeded
+	 * If the display name has been localized, it returns the json
+	 * representation of the display name.
+	 * @param tableId
+	 * @return the display name for the table, in stringified json form if the
+	 * name has been internationalized
 	 */
-	// @JavascriptInterface
-	public boolean openDetailViewWithFile(int index, String filename) {
-		return weakControl.get().openDetailViewWithFile(index, filename);
+	public String getTableDisplayName(String tableId) {
+	  return weakControl.get().getTableDisplayName(tableId);
 	}
-
+	
 	/**
-	 * Add a row using Collect and the default form. Uses the query string
-	 * currently restricting the data of the table to prepopulate values in
-	 * Collect. I.e. if you have searched for id:12, the id field of the Collect
-	 * form (if it exists) will be prepopulated with the value 12.
-	 * @param tableName the display name of the table to receive the add.
+	 * Determine if the column exist in the given table.
+	 * @param tableId
+	 * @param elementPath
+	 * @return true if the column exists, else false. Returns false also if the
+	 * tableId does not match any table.
 	 */
-	// @JavascriptInterface
-	public void addRowWithCollect(String tableName) {
-		weakControl.get().addRowWithCollect(tableName);
+	public boolean columnExists(String tableId, String elementPath) {
+	  return weakControl.get().columnExists(tableId, elementPath);
 	}
-
+	
 	/**
-	 * Add a row using Collect and the form specified by the given parameters.
-	 * Allows you to specify an arbitrary form depending on the work flow.
-	 * <p>
-	 * The form must have been added to Collect and visible in the "Fill Blank
-	 * Forms" screen.
-	 * <p>
-	 * Values are prepopulated as described in
-	 * {@link #addRowWithCollect(String)}.
-	 * @param tableName the display name of the table to receive the add
-	 * @param formId
-	 * @param formVersion may be null
-	 * @param formRootElement
+	 * Take the path of a file relative to the app folder and return a url by
+	 * which it can be accessed.
+	 * @param relativePath
+	 * @return an absolute URI to the file
 	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificForm(String tableName,
-			String formId, String formVersion, String formRootElement) {
-		weakControl.get().addRowWithCollectAndSpecificForm(tableName, formId,
-				formVersion, formRootElement);
+	public String getFileAsUrl(String relativePath) {
+	  return weakControl.get().getFileAsUrl(relativePath);
 	}
-
+	
 	/**
-	 * Add a row using Collect and the default form. Similar to
-	 * {@link #addRowWithCollect(String)}, except that rather than using the
-	 * query string to prepopulate values, a json map is used.
-	 * @param tableName
-	 * @param jsonMap a JSON map of element key to value, as retrieved by
-	 * {@link #getElementKeyForColumn(String, String)}. The map can then be
-	 * converted to a String using JSON.stringify() and passed to this method.
+	 * Return the platform info as a stringified json object. This is an object
+	 * containing the keys: container, version, appName, baseUri, logLevel.
+	 * @return a stringified json object with the above keys
 	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndPrepopulatedValues(String tableName,
-			String jsonMap) {
-		weakControl.get().addRowWithCollectAndPrepopulatedValues(tableName,
-				jsonMap);
-	}
-
-	/**
-	 * Add a row using Collect, a specific form, and a map of prepopulated
-	 * values.
-	 * @see #addRowWithCollectAndSpecificForm(String, String, String, String)
-	 * @see #addRowWithCollectAndPrepopulatedValues(String, String)
-	 * @param tableName
-	 * @param formId
-	 * @param formVersion
-	 * @param formRootElement
-	 * @param jsonMap
-	 */
-	// @JavascriptInterface
-	public void addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-			String tableName, String formId, String formVersion,
-			String formRootElement, String jsonMap) {
-		weakControl.get()
-				.addRowWithCollectAndSpecificFormAndPrepopulatedValues(
-						tableName, formId, formVersion, formRootElement,
-						jsonMap);
+	public String getPlatformInfo() {
+	  return weakControl.get().getPlatformInfo();
 	}
 
 }

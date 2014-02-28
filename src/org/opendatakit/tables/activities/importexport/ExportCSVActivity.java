@@ -17,12 +17,14 @@ package org.opendatakit.tables.activities.importexport;
 
 import java.io.File;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -83,12 +85,10 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	private EditText filenameValField;
 	/* the checkbox for including properties */
 	private CheckBox incAllPropertiesCheck;
-	/* the checkbox for including source phone numbers */
-	private CheckBox incUriUsersCheck;
+	/* the checkbox for including access control field */
+	private CheckBox incAccessControlCheck;
 	/* the checkbox for including timestamps */
 	private CheckBox incTimestampsCheck;
-	/* the checkbox for including instance names */
-	private CheckBox incInstanceNamesCheck;
 	/* the checkbox for including form ids */
 	private CheckBox incFormIdsCheck;
 	/* the checkbox for including locales */
@@ -98,7 +98,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		dbh = DbHelper.getDbHelper(this);
+		dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		setContentView(getView());
 	}
 
@@ -150,9 +150,9 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the include user id checkbox
 		{
 			LinearLayout incUI = new LinearLayout(this);
-			incUriUsersCheck = new CheckBox(this);
-			incUriUsersCheck.setChecked(true);
-			incUI.addView(incUriUsersCheck);
+			incAccessControlCheck = new CheckBox(this);
+			incAccessControlCheck.setChecked(true);
+			incUI.addView(incAccessControlCheck);
 			TextView incUILabel = new TextView(this);
 			incUILabel.setText(getString(R.string.export_opt_include_user_id));
 			incUILabel.setTextColor(getResources().getColor(R.color.white));
@@ -170,18 +170,6 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 			incTSLabel.setTextColor(getResources().getColor(R.color.white));
 			incTS.addView(incTSLabel);
 			v.addView(incTS);
-		}
-		// adding the include instance names checkbox
-		{
-			LinearLayout incIN = new LinearLayout(this);
-			incInstanceNamesCheck = new CheckBox(this);
-			incInstanceNamesCheck.setChecked(true);
-			incIN.addView(incInstanceNamesCheck);
-			TextView incINLabel = new TextView(this);
-			incINLabel.setText(getString(R.string.export_opt_include_instance_name));
-			incINLabel.setTextColor(getResources().getColor(R.color.white));
-			incIN.addView(incINLabel);
-			v.addView(incIN);
 		}
 		// adding the include form id checkbox
 		{
@@ -244,17 +232,19 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	 * Attempts to export a table.
 	 */
 	private void exportSubmission() {
-        File file = new File(filenameValField.getText().toString());
+        File file = ODKFileUtils.asAppFile(
+            TableFileUtils.ODK_TABLES_APP_NAME, 
+            filenameValField.getText().toString().trim()
+        );
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
         boolean incProps = incAllPropertiesCheck.isChecked();
         boolean incTs = incTimestampsCheck.isChecked();
-        boolean incPn = incUriUsersCheck.isChecked();
-        boolean incIN = incInstanceNamesCheck.isChecked();
+        boolean incAC = incAccessControlCheck.isChecked();
         boolean incFI = incFormIdsCheck.isChecked();
         boolean incLo = incLocalesCheck.isChecked();
-        ExportTask task = new ExportTask(this);
+        ExportTask task = new ExportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(tp, file, incTs, incPn, incIN, incFI, incLo, incProps));
+        task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
 	}
 
 	@Override
@@ -263,7 +253,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         if(resultCode == RESULT_CANCELED) {return;}
         Uri fileUri = data.getData();
         String filepath = fileUri.getPath();
-        filenameValField.setText(filepath);
+        String relativePath = TableFileUtils.getRelativePath(filepath);
+        filenameValField.setText(relativePath);
     }
 
 	private class ButtonListener implements OnClickListener {

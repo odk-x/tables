@@ -31,11 +31,13 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
@@ -118,11 +120,12 @@ public class UserTable {
     mElementKeyForIndex = elementKeyForIndex;
   }
 
-  public UserTable(Cursor c, TableProperties tableProperties, List<String> userColumnOrder) {
+  public UserTable(Cursor c, TableProperties tableProperties, 
+      List<String> userColumnOrder) {
     buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
-    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ROW_ID);
+    int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
     // element key _my_data, and this column is at index 5 in the data
@@ -186,6 +189,7 @@ public class UserTable {
    * @param i
    * @return
    */
+  @SuppressLint("NewApi")
   private static final String getIndexAsString(Cursor c, int i) {
     // If you add additional return types here be sure to modify the javadoc.
     int version = android.os.Build.VERSION.SDK_INT;
@@ -223,16 +227,8 @@ public class UserTable {
     }
   }
 
-  public String getRowId(int rowNum) {
-    return this.mRows.get(rowNum).mRowId;
-  }
-
-  public String getInstanceName(int rowNum) {
-    return getMetadataByElementKey(rowNum, DataTableColumns.INSTANCE_NAME);
-  }
-
   public Long getTimestamp(int rowNum) {
-    return Long.valueOf(getMetadataByElementKey(rowNum, DataTableColumns.TIMESTAMP));
+    return TableConstants.milliSecondsFromNanos(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
 
   public Row getRowAtIndex(int index) {
@@ -247,6 +243,11 @@ public class UserTable {
     return mElementKeyForIndex[colNum];
   }
 
+  /**
+   * Get the index of the element key for the user-defined columns.
+   * @param elementKey
+   * @return null if the column is not found
+   */
   public Integer getColumnIndexOfElementKey(String elementKey) {
     return mDataKeyToIndex.get(elementKey);
   }
@@ -259,6 +260,18 @@ public class UserTable {
 
   public String getData(int rowNum, int colNum) {
     return mRows.get(rowNum).getDataAtIndex(colNum);
+  }
+  
+  /**
+   * True if the table has been grouped by a value. This is referred to in some
+   * places of the code as an "indexed" table, which also and irritatingly
+   * means that a column has been set to "prime". 
+   * @return
+   */
+  public boolean isGroupedBy() {
+    // All this mess of terminology is incredibly confusing and frustrating.
+    // This method comes from CustomView#TableData.
+    return !mTp.getPrimeColumns().isEmpty();
   }
 
   public String getDisplayTextOfData(Context context, int cellNum) {
@@ -285,13 +298,9 @@ public class UserTable {
         }
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
-        String uri = (String) m.get("uri");
-        try {
-          File f = FileProvider.getAsFile(context, uri);
-          return f.getName();
-        } catch (IllegalArgumentException e) {
-          return context.getString(R.string.missing_file);
-        }
+        String uriFragment = (String) m.get("uriFragment");
+        File f = FileProvider.getAsFile(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
+        return f.getName();
       } catch (JsonParseException e) {
         e.printStackTrace();
       } catch (JsonMappingException e) {
@@ -312,6 +321,8 @@ public class UserTable {
       DataUtil du = DataUtil.getDefaultDataUtil();
       DateTime d = du.parseDateTimeFromDb(raw);
       return timeFormatter.print(d);
+    } else if ( type == ColumnType.TABLE_JOIN ) {
+      return raw;
     } else {
       return raw;
     }
@@ -340,6 +351,16 @@ public class UserTable {
    */
   public String getMetadataByElementKey(int rowNum, String elementKey) {
     return mRows.get(rowNum).getMetadataAtIndex(mMetadataKeyToIndex.get(elementKey));
+  }
+  
+  /**
+   * Return the data or metadata value in the given row by element key.
+   * @param rowNum
+   * @param elementKey
+   * @return
+   */
+  public String getDataByElementKey(int rowNum, String elementKey) {
+    return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
   }
 
   public String getFooter(int colNum) {
@@ -404,7 +425,7 @@ public class UserTable {
     return mRows.get(rowNum).getAllMetadata();
   }
 
-  public int getHeight() {
+  public int getNumberOfRows() {
     return this.mRows.size();
   }
 
@@ -491,6 +512,14 @@ public class UserTable {
     public String getMetadataAtIndex(int index) {
       return mMetadata[index];
     }
+    
+    /**
+     * Return the id of this row.
+     * @return
+     */
+    public String getRowId() {
+      return this.mRowId;
+    }
 
     /**
      * Return the String representing the contents of the column represented by
@@ -534,6 +563,16 @@ public class UserTable {
 
     public String[] getAllMetadata() {
       return mMetadata;
+    }
+
+    @Override
+    public int hashCode() {
+      final int PRIME = 31;
+      int result = 1;
+      result = result * PRIME + this.mRowId.hashCode();
+      result = result * PRIME + this.mData.hashCode();
+      result = result * PRIME + this.mMetadata.hashCode();
+      return result;
     }
 
   }

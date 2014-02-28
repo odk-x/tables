@@ -39,6 +39,8 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       new SparseArray<ConflictColumn>();
   private SparseArray<ConcordantColumn> mConcordantColumns = 
       new SparseArray<ConcordantColumn>();
+  /** Whether or not conflictColumns are enabled should be disabled. */
+  private boolean mConflictColumnsAreEnabled; 
   /** 
    * The decisions the user has made on the resolution of the conflict. Maps
    * element key to resolution. 
@@ -151,10 +153,25 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     for (ConflictColumn cc : conflictColumns) {
       mConflictColumns.append(cc.position, cc);
     }
+    this.mConflictColumnsAreEnabled = true;
   }
   
   public boolean isSectionHeaderPosition(int position) {
     return mSections.get(position) != null;
+  }
+  
+  /**
+   * Set the user choices backing this object. Intended to allow restoring of 
+   * state on things like screen rotation. Cannot rely on the framework to do
+   * this for us because are programmatically creating views, and thus reusing
+   * ids.
+   * @param chosenValues
+   * @param chosenResolutions
+   */
+  public void setRestoredState(Map<String, String> chosenValues,
+      Map<String, Resolution> chosenResolutions) {
+    this.mResolvedValues = chosenValues;
+    this.mResolutions = chosenResolutions;
   }
   
   public boolean isConflictColumnPosition(int position) {
@@ -213,7 +230,11 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     if (isSectionHeaderPosition(position)) {
       return false;
     } else if (isConflictColumnPosition(position)) {
-      return true;
+      if (mConflictColumnsAreEnabled) {
+        return true;
+      } else {
+        return false;
+      }
     } else if (isConcordantColumnPosition(position)) {
       return false;
     } else {
@@ -230,6 +251,9 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   
   @Override
   public boolean areAllItemsEnabled() {
+    // this might be false because this says in the spec something about 
+    // dividers returning true or false? Kind of a strange thing, but if 
+    // you're wondering why, consider looking at that.
     return false;
   }
   
@@ -242,6 +266,14 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
    */
   public Map<String, String> getResolvedValues() {
     return this.mResolvedValues;
+  }
+  
+  /**
+   * Sets whether or not the views returned by this adapter are clickable.
+   * @param enabled
+   */
+  public void setConflictColumnsEnabled(boolean enabled) {
+    this.mConflictColumnsAreEnabled = enabled;
   }
   
   /**
@@ -303,7 +335,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
           (TextView) view.findViewById(R.id.list_item_server_text);
       serverTextView.setText(conflictColumn.serverValue);
       // The decision the user has made. May be null if it hasn't been set.
-      Resolution userDecision = mResolutions.get(position);
+      Resolution userDecision = mResolutions.get(conflictColumn.elementKey);
       RadioButton localButton = 
           (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
       RadioButton serverButton = 
@@ -340,6 +372,8 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       serverRow.setTag(R.id.list_view_conflict_row, position);
       localRow.setOnClickListener(new ResolutionOnClickListener());
       serverRow.setOnClickListener(new ResolutionOnClickListener());
+      localRow.setEnabled(mConflictColumnsAreEnabled);
+      serverRow.setEnabled(mConflictColumnsAreEnabled);
       // We'll want the radio buttons to trigger their whole associated list 
       // item to keep the UI the same. Otherwise you could press the radio 
       // button and NOT have the whole row highlighted, which I find annoying.

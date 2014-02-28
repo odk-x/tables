@@ -10,22 +10,19 @@ public class ExportRequest {
     private final File file;
     private final boolean includeProperties;
     private final boolean includeTimestamps;
-    private final boolean includeUriUsers;
-    private final boolean includeInstanceNames;
+    private final boolean includeAccessControl;
     private final boolean includeFormIds;
     private final boolean includeLocales;
 
     public ExportRequest(TableProperties tp, File file,
-    		boolean includeTimestamps, boolean includeUriUsers,
-    		boolean includeInstanceNames, boolean includeFormIds,
-    		boolean includeLocales,
+    		boolean includeTimestamps, boolean includeAccessControl,
+    		boolean includeFormIds,	boolean includeLocales,
             boolean includeProperties ) {
         this.tp = tp;
         this.file = file;
         this.includeProperties = includeProperties;
         this.includeTimestamps = includeTimestamps;
-        this.includeUriUsers = includeUriUsers;
-        this.includeInstanceNames = includeInstanceNames;
+        this.includeAccessControl = includeAccessControl;
         this.includeFormIds = includeFormIds;
         this.includeLocales = includeLocales;
     }
@@ -46,12 +43,8 @@ public class ExportRequest {
         return includeTimestamps;
     }
 
-    public boolean getIncludeUriUsers() {
-        return includeUriUsers;
-    }
-
-    public boolean getIncludeInstanceNames() {
-        return includeInstanceNames;
+    public boolean getIncludeAccessControl() {
+        return includeAccessControl;
     }
 
     public boolean getIncludeFormIds() {

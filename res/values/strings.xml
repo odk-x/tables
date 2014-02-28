@@ -92,6 +92,8 @@
 	<string name="bad_config_properties_file">bad config.properties file</string>
 	<string name="error">error</string>
 	<string name="config_summary">Configuration Summary:</string>
+	<string name="table_already_exists">- %1$s already exists.\n\n</string>
+	<string name="file_not_found">- File not found: %1$s.\n\n</string>
 	<string name="imported_successfully">- %1$s imported successfully\n\n</string>
 	<string name="imported_with_errors">- %1$s imported with errors\n\n</string>
 	<string name="use_default">Use Default</string>
@@ -151,7 +153,7 @@
 	<string name="list_view_manager">List View Manager</string>
 	<string name="launch_table_manager">Launch Table Manager</string>
 	<string name="error_row_not_found">Row ID not found, please edit via Spreadsheet View</string>
-	<string name="general_display_preferences">General Display Preferences</string>
+	<string name="general_display_preferences">App-Level Preferences</string>
 	<string name="font_size">Font Size</string>
 	<string name="change_font_size">Change Font Size</string>
 	<string name="display_prefs_for">Display Preferences for: %1$s</string>
@@ -171,6 +173,9 @@
 	<string name="are_you_sure_save_default_settings">Please confirm saving of these settings as default. Any modifications of the old default settings will be lost.</string>
 	<string name="are_you_sure_copy_default_settings_to_server_settings">Please confirm copying of default settings to server sync settings. Settings in the server sync set will be pushed to the server at next sync.</string>
 	<string name="are_you_sure_merge_server_settings_into_default_settings">Please confirm merging of server settings into default settings.</string>
+	<string name="are_you_sure_write_debug_objects">Do you want to wipe any old debug objects and write new ones to the output directory?</string>
+	<string name="write_debug_objects">Write Debug Objects</string>
+	<string name="developer">Developer</string>
 	<string name="general_settings">General Settings</string>
 	<string name="table_display_name">Display Name</string>
 	<string name="change_table_display_name">Change Table Display Name</string>
@@ -259,6 +264,10 @@
 	<string name="are_you_sure_overwrite_graph">Please confirm overwriting of graph: %1$s</string>
 	<string name="confirm_delete_row">Confirm Delete Row</string>
 	<string name="are_you_sure_delete_row">Please confirm deletion of row: %1$s</string>
+	<string name="resolve_conflict">Resolve Conflict</string>
+	<string name="edit_cell">Edit Cell</string>
+	<string name="delete_row">Delete Row</string>
+	<string name="edit_row">Edit Row</string>
 	<string name="delete_table">Delete this Table</string>
 	<string name="confirm_delete_table">Confirm Delete Table</string>
 	<string name="are_you_sure_delete_table">Please confirm deletion of table: %1$s</string>
@@ -272,7 +281,10 @@
 	<string name="add_new_access_control_table">Add New Access Control Table</string>
 	<string name="create_new_table">Create New Table</string>
 	<string name="enter_new_table_name">Enter Name for New Table:</string>
+	<string name="confirm_new_table_id">Confirm New Table ID:</string>
 	<string name="error_table_name_empty">Table name cannot be empty!</string>
+	<string name="error_table_id_exists">Table ID already exists, please pick another!</string>
+	<string name="error_table_id_invalid">Table ID is invalid. Please choose another.</string>
 	<string name="file_import_export_menu_item">File Import/Export</string>
 	<string name="sync_menu_item">Sync with Server</string>
 	<string name="color_rule_revert_to_default_status_rules">Revert to default status rules</string>
@@ -280,7 +292,12 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="missing_file">&lt;missing file!&gt;</string>
 	<string name="use_generated_form">Use Generated Form</string>
-	
+
+	<!-- ODKSubmit things -->
+	<string name="send_using_submit">Send Using ODK Submit</string>
+	<string name="cannot_register_app_with_submit">Cannot register app with submit!</string>
+	<string name="cannot_register_data_with_submit">Cannot register data with submit!</string>
+
 	<!-- Conflict Resolution Stuff -->
 	<string name="take_local">Take Local Version</string>
 	<string name="take_server">Take Server Version</string>
@@ -289,4 +306,18 @@
 	<string name="take_server_warning">Overwrite all local changes with the server changes?</string>
 	<string name="resolve_row_warning">Overwrite local and server changes with the selected values?</string>
 	<string name="resolve_cannot_complete_message">A value has not been chosen for every conflicting column. The row cannot be resolved.</string>
+	<string name="conflict_local_was_deleted_explanation">You have deleted a row someone else has edited.</string>
+	<string name="conflict_server_was_deleted_explanation">Another user has deleted a row you have edited.</string>
+	<string name="radio_button_message_restore_local_deleted">Restore and resolve.</string>
+	<string name="radio_button_message_delete_local_deleted">Ignore changes, delete on server.</string>
+	<string name="radio_button_message_restore_server_deleted">Restore and resolve.</string>
+	<string name="radio_button_message_delete_server_deleted">Delete and lose local changes.</string>
+	<string name="conflict_delete_local_confirmation_warning">Delete the row and lose your local changes?</string>
+	<string name="conflict_delete_on_server_confirmation_warning">Delete row on server?</string>
+	<string name="shortcut_name">ODK Tables App</string>
+	<string name="use_collect_form">Use ODK Collect form</string>
+	<string name="use_survey_form">Use ODK Survey form</string>
+	
+	<string name="use_index_html">Use custom home screen</string>
+	<string name="no_index">No assets/index.html</string>
 </resources>

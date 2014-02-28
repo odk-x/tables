@@ -246,7 +246,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     LatLng firstLocation = null;
 
     // Go through each row and create a marker at the specified location.
-    for (int i = 0; i < table.getHeight(); i++) {
+    for (int i = 0; i < table.getNumberOfRows(); i++) {
       String latitudeString = table.getData(i, latitudeColumnIndex);
       String longitudeString = table.getData(i, longitudeColumnIndex);
       if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
@@ -309,7 +309,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
-      for (ColumnProperties cp : tp.getColumns().values()) {
+      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
         if (TableProperties.isLatitudeColumn(cp)) {
           latitudeElementKey = cp.getElementKey();
           kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
@@ -329,7 +329,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      for (ColumnProperties cp : tp.getColumns().values()) {
+      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
         if (TableProperties.isLongitudeColumn(cp)) {
           longitudeElementKey = cp.getElementKey();
           kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
@@ -404,7 +404,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         // values in the location.
         TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
         Map<String, String> elementNameToValue = new HashMap<String, String>();
-        for (ColumnProperties cp : tp.getColumns().values()) {
+        for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
           elementNameToValue.put(cp.getElementName(), "");
         }
         final KeyValueStoreHelper kvsHelper = tp

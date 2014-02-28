@@ -25,6 +25,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
@@ -64,7 +65,7 @@ public class AccountInfoActivity extends SherlockActivity {
     Intent intent = getIntent();
     AccountManager accountManager = AccountManager.get(getApplicationContext());
     Account account = (Account) intent.getExtras().get(INTENT_EXTRAS_ACCOUNT);
-    accountManager.getAuthToken(account, authString, false, new AuthTokenCallback(), null);
+    accountManager.getAuthToken(account, authString, null, this, new AuthTokenCallback(), null);
     showDialog(WAITING_ID);
   }
 
@@ -88,8 +89,8 @@ public class AccountInfoActivity extends SherlockActivity {
         // We need to call the intent to get the token.
         else if (intent != null) {
           // Use the bundle dialog.
-          startActivity(intent);
           shownDialog = true;
+          startActivityForResult(intent, WAITING_ID);
         } else {
           gotAuthToken(bundle);
         }
@@ -110,6 +111,7 @@ public class AccountInfoActivity extends SherlockActivity {
     Preferences prefs = new Preferences(this);
     prefs.setAuthToken(null);
     dismissDialog(WAITING_ID);
+    setResult(Activity.RESULT_CANCELED);
     finish();
   }
 
@@ -124,6 +126,7 @@ public class AccountInfoActivity extends SherlockActivity {
     Preferences prefs = new Preferences(this);
     prefs.setAuthToken(auth_token);
     dismissDialog(WAITING_ID);
+    setResult(Activity.RESULT_OK);
     finish();
   }
 
@@ -144,6 +147,12 @@ public class AccountInfoActivity extends SherlockActivity {
       dialog = null;
     }
     return dialog;
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    // TODO Auto-generated method stub
+    super.onActivityResult(requestCode, resultCode, data);
   }
 
 }

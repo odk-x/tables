@@ -138,7 +138,7 @@ public class ListDisplayView extends LinearLayout {
         ScrollView scroll = new ScrollView(context);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
-        int count = table.getHeight();
+        int count = table.getNumberOfRows();
         for (int i = 0; i < count; i++) {
             LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,

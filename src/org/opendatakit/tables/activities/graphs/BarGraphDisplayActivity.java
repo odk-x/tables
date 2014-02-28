@@ -24,6 +24,7 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 
 import android.app.AlertDialog;
@@ -82,9 +83,6 @@ implements DisplayActivity {
 
 	public static final String GRAPH_TYPE = "graphtype";
 
-	private static final int RCODE_ODKCOLLECT_ADD_ROW =
-			Controller.FIRST_FREE_RCODE;
-
 	private Controller c;
 	private Query query;
 	private UserTable table;
@@ -98,7 +96,7 @@ implements DisplayActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setTitle("");
-		dbh = DbHelper.getDbHelper(this);
+		dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		this.graphName = getIntent().getStringExtra(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
 		this.potentialGraphName = getIntent().getStringExtra(BarGraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME);
 		if(graphName == null) {
@@ -138,7 +136,7 @@ implements DisplayActivity {
             c.getDbTable().getUserTable(query);
       }
 
-      view = CustomGraphView.get(this, table,
+      view = CustomGraphView.get(this, TableFileUtils.ODK_TABLES_APP_NAME, table,
 	     graphName, potentialGraphName, c);
       c.setGraphViewInfoBarText(graphName);
       displayView();
@@ -317,9 +315,6 @@ implements DisplayActivity {
 	}
 	/*
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
     private Controller c;
     private Query query;
     private List<String> labels;
@@ -370,7 +365,7 @@ implements DisplayActivity {
             return;
         }
         switch (requestCode) {
-        case RCODE_ODKCOLLECT_ADD_ROW:
+        case Controller.RCODE_ODK_COLLECT_ADD_ROW:
             c.addRowFromOdkCollectForm(
                     Integer.valueOf(data.getData().getLastPathSegment()));
             init();

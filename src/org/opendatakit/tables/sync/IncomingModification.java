@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 /**
  * An IncomingModification represents changes coming down from the server.
@@ -30,7 +31,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
  */
 public class IncomingModification {
   private List<SyncRow> rows;
-  private boolean tablePropertiesChanged;
+
   /*
    * The two resource objects are XML representations of the eponymous objects
    * from the server. TableDefinitionResource holds the information about the
@@ -38,41 +39,21 @@ public class IncomingModification {
    * the phone's TableDefinitions and ColumnDefinitions tables.
    * TablePropertiesResource holds all the key values from the key value store.
    */
+  private boolean tableSchemaChanged;
   private TableDefinitionResource tableDefinitionRes;
+
+  private boolean tablePropertiesChanged;
   private PropertiesResource tablePropertiesRes;
-  private String tableSyncTag;
+
+  private SyncTag tableSyncTag;
 
   public IncomingModification() {
     this.rows = new ArrayList<SyncRow>();
     tableDefinitionRes = null;
     tablePropertiesRes = null;
+    this.tableSchemaChanged = false;
     this.tablePropertiesChanged = false;
-    this.tableSyncTag = null;
-  }
-
-  /**
-   * Create a new IncomingModification.
-   *
-   * @param rows
-   *          a list of rows that represent the changes in the server's state
-   *          since the last synchronization
-   * @param tablePropertiesChanged
-   *          true if the table properties have changed since the last
-   *          synchronization
-   * @param tableProperties
-   *          if tablePropertiesChanged is true, then this should be the new
-   *          table properties. Otherwise it will be ignored and may be null.
-   * @param tableSyncTag
-   *          the latest synchronization tag
-   */
-  public IncomingModification(List<SyncRow> rows,
-      boolean tablePropertiesChanged,
-      TableDefinitionResource definitionResource,
-      PropertiesResource tableProperties, String tableSyncTag) {
-    this.rows = rows;
-    this.tableSyncTag = tableSyncTag;
-    this.tableDefinitionRes = definitionResource;
-    this.tablePropertiesRes = tableProperties;
+    this.tableSyncTag = new SyncTag(null,null,null);
   }
 
   /**
@@ -88,8 +69,28 @@ public class IncomingModification {
    *
    * @return the latest synchronization tag
    */
-  public String getTableSyncTag() {
+  public SyncTag getTableSyncTag() {
     return this.tableSyncTag;
+  }
+
+  /**
+   * @return true if the table properties have changed since the last
+   *         synchronization
+   */
+  public boolean hasTableSchemaChanged() {
+    return tableSchemaChanged;
+  }
+
+  /**
+   * Return the {@link TableDefinitionResource} holding the changes to the
+   * datastructure of the table if {@link #hasTableSchemaChanged()} is
+   * true. As with {@link #getTableProperties()},
+   * if {@link IncomingModification#hasTableSchemaChanged()} is false, the
+   * value is undefined and means nothing.
+   * @return
+   */
+  public TableDefinitionResource getTableDefinitionResource() {
+    return tableDefinitionRes;
   }
 
   /**
@@ -101,15 +102,10 @@ public class IncomingModification {
   }
 
   /**
-   * Return the {@link TableDefinitionResource} holding the changes to the
-   * datastructure of the table if {@link #hasTablePropertiesChanged()} is
-   * true. As with {@link #getTableProperties()},
-   * if {@link IncomingModification#hasTablePropertiesChanged()} is false, the
-   * value is undefined and means nothing.
-   * @return
+   * @return true if the server has row changes.
    */
-  public TableDefinitionResource getTableDefinitionResource() {
-    return tableDefinitionRes;
+  public boolean hasTableDataChanged() {
+    return rows.size() != 0;
   }
 
   /**
@@ -135,7 +131,7 @@ public class IncomingModification {
    * @param tableSyncTag
    *          the latest synchronization tag
    */
-  public void setTableSyncTag(final String tableSyncTag) {
+  public void setTableSyncTag(final SyncTag tableSyncTag) {
     this.tableSyncTag = tableSyncTag;
   }
 
@@ -155,6 +151,15 @@ public class IncomingModification {
    */
   public void setTableProperties(PropertiesResource tableProperties) {
     this.tablePropertiesRes = tableProperties;
+  }
+
+  /**
+   * @param tablePropertiesChanged
+   *          true if the table properties have changed since the last
+   *          synchronization
+   */
+  public void setTableSchemaChanged(boolean tableSchemaChanged) {
+    this.tableSchemaChanged = tableSchemaChanged;
   }
 
   /**
@@ -185,6 +190,8 @@ public class IncomingModification {
         return false;
     } else if (!tableDefinitionRes.equals(other.tableDefinitionRes))
       return false;
+    if (tableSchemaChanged != other.tableSchemaChanged)
+      return false;
     if (tablePropertiesRes == null) {
       if (other.tablePropertiesRes != null) {
         return false;
@@ -212,6 +219,7 @@ public class IncomingModification {
     result = prime * result + ((rows == null) ? 0 : rows.hashCode());
     result = prime * result + ((tableDefinitionRes == null) ? 0 : tableDefinitionRes.hashCode());
     result = prime * result + ((tablePropertiesRes == null) ? 0 : tablePropertiesRes.hashCode());
+    result = prime * result + (tableSchemaChanged ? 1231 : 1237);
     result = prime * result + (tablePropertiesChanged ? 1231 : 1237);
     result = prime * result + ((tableSyncTag == null) ? 0 : tableSyncTag.hashCode());
     return result;
@@ -220,8 +228,9 @@ public class IncomingModification {
   @Override
   public String toString() {
     return "IncomingModification [rows=" + rows
+        + ", tableSchemaChanged=" + tableSchemaChanged
+        + ", tableDefinitionResource=" + tableDefinitionRes.toString()
         + ", tablePropertiesChanged=" + tablePropertiesChanged
-        + ", tableDefinitionResource=" + tablePropertiesRes.toString()
         + ", tablePropertiesResource=" + tablePropertiesRes.toString()
         + ", tableSyncTag=" + tableSyncTag
         + "]";

@@ -55,7 +55,7 @@ public class CellValueView {
         public MultipleChoiceEditView(Context context, ColumnProperties cp,
                 String value) {
             super(context);
-            ArrayList<String> opts = cp.getDisplayChoicesMap();
+            ArrayList<String> opts = cp.getDisplayChoicesList();
             int selection = -1;
             for (int i = 0; i < opts.size(); i++) {
                 if (opts.get(i).equals(value)) {
@@ -65,7 +65,7 @@ public class CellValueView {
             }
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
                     android.R.layout.simple_spinner_item,
-                    cp.getDisplayChoicesMap());
+                    cp.getDisplayChoicesList());
             adapter.setDropDownViewResource(
                     android.R.layout.simple_spinner_dropdown_item);
             spinner = new Spinner(context);

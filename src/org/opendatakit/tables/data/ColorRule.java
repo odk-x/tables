@@ -212,9 +212,9 @@ public class ColorRule {
       ColumnType columnType;
       if (cp == null) {
         // Was likely a metadata column.
-        if (mElementKey.startsWith("_")) {
+        if (!DbTable.getAdminColumns().contains(mElementKey)) {
           throw new IllegalArgumentException("element key passed to " +
-          		"ColorRule#checkMatch didn't have a mapping and was likely " +
+          		"ColorRule#checkMatch didn't have a mapping and was " +
           		"not a metadata elementKey: " + mElementKey);
         }
         columnType = ColumnType.NONE;

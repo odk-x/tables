@@ -20,8 +20,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.common.android.provider.SyncState;
 
 
 public class Query {
@@ -399,8 +400,8 @@ public class Query {
         String dbTn = tp.getDbTableName();
         StringBuilder sb = new StringBuilder();
         if (includeId) {
-            sb.append(dbTn + "." + DataTableColumns.ROW_ID + " AS " +
-                    DataTableColumns.ROW_ID);
+            sb.append(dbTn + "." + DataTableColumns.ID + " AS " +
+                    DataTableColumns.ID);
         } else {
             sb.append(dbTn + "." + columns[0] + " AS " + columns[0]);
         }
@@ -420,11 +421,20 @@ public class Query {
             sd.appendArgs(joinSd.getArgList());
         }
         sd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DataTableColumns.SYNC_STATE + " != " + SyncUtil.State.DELETING);
+                DataTableColumns.SYNC_STATE + " != '" + SyncState.deleting.name() + "'");
+
+        // add restriction for not showing rows of conflict_type
+        // SERVER_DELETED or SERVER_UPDATED.
+        sd.appendSql(" AND (" + tp.getDbTableName() + "." +
+          DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
+          tp.getDbTableName() + "." + DataTableColumns.CONFLICT_TYPE +
+          " IN ( " +
+          ConflictType.LOCAL_DELETED_OLD_VALUES + ", " +
+          ConflictType.LOCAL_UPDATED_UPDATED_VALUES + "))");
 
         // add restriction for ODK Collect intermediate status...
         sd.appendSql(" AND " + tp.getDbTableName() + "." +
-                DataTableColumns.SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+                DataTableColumns.SAVEPOINT_TYPE + " = '" + DbTable.SavedStatus.COMPLETE.name() + "'");
 
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
@@ -466,21 +476,22 @@ public class Query {
         }
         primeList.delete(0, 2);
         SqlData sd = new SqlData();
-        sd.appendSql("SELECT d." + DataTableColumns.ROW_ID);
+        sd.appendSql("SELECT d." + DataTableColumns.ID);
         for (String column : arrayList) {
             sd.appendSql(", d." + column);
         }
         sd.appendSql(" FROM " + tp.getDbTableName() + " d");
         sd.appendSql(" JOIN (");
 
+        // TODO: THIS MAKES NO SENSE -- select max(_ID) ??!!!???
         if (tp.getSortColumn() == null) {
             sd.append(toSql("MAX(" + tp.getDbTableName() + "." +
-                    DataTableColumns.ROW_ID + ") AS " + DataTableColumns.ROW_ID));
+                    DataTableColumns.ID + ") AS " + DataTableColumns.ID));
             sd.appendSql(" GROUP BY " + primeList.toString());
         } else {
             String sort = tp.getSortColumn();
-            sd.appendSql("SELECT MAX(" + DataTableColumns.ROW_ID + ") AS " +
-                    DataTableColumns.ROW_ID + " FROM ");
+            sd.appendSql("SELECT MAX(" + DataTableColumns.ID + ") AS " +
+                    DataTableColumns.ID + " FROM ");
 
             List<String> primes = tp.getPrimeColumns();
             String[] xCols = new String[primes.size()];
@@ -519,8 +530,8 @@ public class Query {
             sd.appendSql(xPrimeList.toString());
         }
 
-        sd.appendSql(") z ON d." + DataTableColumns.ROW_ID + " = z." +
-                DataTableColumns.ROW_ID);
+        sd.appendSql(") z ON d." + DataTableColumns.ID + " = z." +
+                DataTableColumns.ID);
         return sd;
     }
 
@@ -584,7 +595,7 @@ public class Query {
     @SuppressWarnings("unused")
     public SqlData toConflictSql() {
         SqlData idsd = new SqlData();
-        idsd.appendSql("SELECT " + DataTableColumns.ROW_ID);
+        idsd.appendSql("SELECT " + DataTableColumns.ID);
         idsd.appendSql(" FROM " + tp.getDbTableName());
         for (int i = 0; i < joins.size(); i++) {
             SqlData joinSd = joins.get(i).toSql();
@@ -592,11 +603,12 @@ public class Query {
             idsd.appendArgs(joinSd.getArgList());
         }
         idsd.appendSql(" WHERE " + tp.getDbTableName() + "." +
-                DataTableColumns.SYNC_STATE + " == " + SyncUtil.State.CONFLICTING);
+                DataTableColumns.SYNC_STATE + " = '" + SyncState.conflicting.name() + "'");
+
 
         // add restriction for ODK Collect intermediate status...
         idsd.appendSql(" AND " + tp.getDbTableName() + "." +
-                DataTableColumns.SAVED + " == '" + DbTable.SavedStatus.COMPLETE.name() + "'");
+                DataTableColumns.SAVEPOINT_TYPE + " = '" + DbTable.SavedStatus.COMPLETE.name() + "'");
 
         for (int i = 0; i < constraints.size(); i++) {
             SqlData csd = constraints.get(i).toSql();
@@ -605,11 +617,11 @@ public class Query {
         }
         SqlData sd = new SqlData();
         sd.appendSql("SELECT " + tp.getDbTableName() + "." +
-                DataTableColumns.ROW_ID + " AS " + DataTableColumns.ROW_ID + ", " +
-                tp.getDbTableName() + "." + DataTableColumns.SYNC_TAG + " AS " +
-                DataTableColumns.SYNC_TAG);
-        for (ColumnProperties cp : tp.getColumns().values()) {
-          if ( cp.isPersisted() ) {
+                DataTableColumns.ID + " AS " + DataTableColumns.ID + ", " +
+                tp.getDbTableName() + "." + DataTableColumns.ROW_ETAG + " AS " +
+                DataTableColumns.ROW_ETAG);
+        for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+          if ( cp.isUnitOfRetention() ) {
             sd.appendSql(", " + tp.getDbTableName() + "." +
                     cp.getElementKey() + " AS " + cp.getElementKey());
           }
@@ -618,13 +630,11 @@ public class Query {
         sd.appendSql(" JOIN (");
         sd.append(idsd);
         sd.appendSql(") jt ON ");
-        sd.appendSql(tp.getDbTableName() + "." + DataTableColumns.ROW_ID + " = jt." +
-                DataTableColumns.ROW_ID);
-        sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
-                DataTableColumns.ROW_ID + ", " + DataTableColumns.SYNC_STATE + " ");
+        sd.appendSql(tp.getDbTableName() + "." + DataTableColumns.ID + " = jt." +
+                DataTableColumns.ID);
         // so that conflicting rows are always before deleting rows
-        sd.appendSql((SyncUtil.State.CONFLICTING > SyncUtil.State.DELETING) ?
-                "DESC" : "ASC");
+        sd.appendSql(" ORDER BY " + tp.getDbTableName() + "." +
+                DataTableColumns.ID + " ASC, " + DataTableColumns.SYNC_STATE + " ASC");
         return sd;
     }
 

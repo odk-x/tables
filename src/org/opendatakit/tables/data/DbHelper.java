@@ -15,6 +15,11 @@
  */
 package org.opendatakit.tables.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.opendatakit.tables.utils.TableFileUtils;
+
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -28,17 +33,23 @@ public class DbHelper {
 
     private DbHelperImpl impl;
 
-    private static DbHelper dbh = null;
+    private static Map<String,DbHelper> dbhMap = new HashMap<String,DbHelper>();
 
-    private DbHelper(Context context) {
-        impl = DbHelperImpl.getDbHelper(context);
+    private DbHelper(Context context, String appName) {
+        impl = DbHelperImpl.getDbHelper(context, appName);
     }
 
-    public static DbHelper getDbHelper(Context context) {
-        if (dbh == null) {
-            dbh = new DbHelper(context);
-        }
-        return dbh;
+    public static synchronized DbHelper getDbHelper(Context context, String appName) {
+      if ( appName == null ) {
+        appName = TableFileUtils.ODK_TABLES_APP_NAME;
+      }
+
+      DbHelper v = dbhMap.get(appName);
+      if ( v == null ) {
+        v = new DbHelper(context, appName);
+        dbhMap.put(appName, v);
+      }
+      return v;
     }
 
     public SQLiteDatabase getReadableDatabase() {

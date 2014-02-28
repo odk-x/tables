@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
@@ -26,7 +27,8 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.views.webkits.CustomDetailView;
+import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -53,9 +55,11 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String TAG = "FileSyncAdapter";
 
   private final Context context;
+  private final String appName;
 
-  public FileSyncAdapter(Context context, boolean autoInitialize) {
+  public FileSyncAdapter(Context context, String appName, boolean autoInitialize) {
     super(context, autoInitialize);
+    this.appName = appName;
     this.context = context;
   }
 
@@ -71,12 +75,21 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
 
-    DbHelper dbh = DbHelper.getDbHelper(context);
+    DbHelper dbh = DbHelper.getDbHelper(context, appName);
     TableProperties[] tableProperties = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
+
+    AggregateSynchronizer sync;
+    try {
+      sync = new AggregateSynchronizer(appName, aggregateUri, authToken);
+    } catch (InvalidAuthTokenException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("Access Token is invalid");
+    }
+
     for (TableProperties tableProp : tableProperties) {
-      SyncUtilities.pullKeyValueEntriesForTable(context, aggregateUri,
-          authToken, tableProp);
+      SyncUtilities.pullKeyValueEntriesForTable(sync, dbh, appName,
+          aggregateUri, authToken, tableProp);
       /*
        * We are going to hack something together for now that updates the list
        * and detail views for the table that we just pulled. Eventually we want
@@ -138,12 +151,12 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
         // and now check for detail.
         desiredKeys.clear();
 //        desiredKeys.add(TableProperties.KEY_DETAIL_VIEW_FILE);
-        desiredKeys.add(CustomDetailView.KEY_FILENAME);
+        desiredKeys.add(DetailDisplayActivity.KEY_FILENAME);
         entries =
-            kvs.getEntriesForKeys(db, CustomDetailView.KVS_PARTITION,
-                CustomDetailView.KVS_ASPECT_DEFAULT, desiredKeys);
+            kvs.getEntriesForKeys(db, DetailDisplayActivity.KVS_PARTITION,
+                DetailDisplayActivity.KVS_ASPECT_DEFAULT, desiredKeys);
         if (entries.size() > 1) {
-          Log.e(TAG, "query for " + CustomDetailView.KEY_FILENAME +
+          Log.e(TAG, "query for " + DetailDisplayActivity.KEY_FILENAME +
               " for table " + tableProp.getTableId() + " in the kvs of type " +
               tableProp.getBackingStoreType() + " returned " + entries.size()
               + " entries. It should be at most one.");
@@ -153,8 +166,8 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
           // to try and fail more gracefully if something has gone wrong with
           // the set invariant.
           KeyValueStoreHelper detailHelper =
-              tableProp.getKeyValueStoreHelper(CustomDetailView.KVS_PARTITION);
-          detailHelper.setString(CustomDetailView.KEY_FILENAME,
+              tableProp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+          detailHelper.setString(DetailDisplayActivity.KEY_FILENAME,
               entries.get(0).value);
         }
       } finally {

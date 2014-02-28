@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
@@ -26,8 +27,8 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.utils.ColorRuleUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -294,7 +295,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    DbHelper dbh = DbHelper.getDbHelper(this);
+    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
     switch (mType) {
@@ -377,21 +378,21 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
         if (DbTable.getAdminColumns().contains(elementKey)) {
           isMetadataRule = true;
           // We know it must be a String rep of an int.
-          int targetState = Integer.parseInt(colorRule.getVal());
+          SyncState targetState = SyncState.valueOf(colorRule.getVal());
           // For now we need to handle the special cases of the sync state.
-          if (targetState == SyncUtil.State.INSERTING) {
+          if (targetState == SyncState.inserting) {
             description =
                 getString(R.string.sync_state_equals_inserting_message);
-          } else if (targetState == SyncUtil.State.UPDATING) {
+          } else if (targetState == SyncState.updating) {
             description =
                 getString(R.string.sync_state_equals_updating_message);
-          } else if (targetState == SyncUtil.State.REST) {
+          } else if (targetState == SyncState.rest) {
             description =
                 getString(R.string.sync_state_equals_rest_message);
-          } else if (targetState == SyncUtil.State.DELETING) {
+          } else if (targetState == SyncState.deleting) {
             description =
                 getString(R.string.sync_state_equals_deleting_message);
-          } else if (targetState == SyncUtil.State.CONFLICTING) {
+          } else if (targetState == SyncState.conflicting) {
             description =
                 getString(R.string.sync_state_equals_conflicting_message);
           } else {

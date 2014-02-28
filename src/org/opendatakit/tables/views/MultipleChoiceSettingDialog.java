@@ -60,7 +60,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         optionValues.clear();
-        for (String option : cp.getDisplayChoicesMap()) {
+        for (String option : cp.getDisplayChoicesList()) {
             optionValues.add(option);
         }
         init();
@@ -112,7 +112,7 @@ public class MultipleChoiceSettingDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateValueList();
-                cp.setDisplayChoicesMap(optionValues);
+                cp.setDisplayChoicesList(optionValues);
                 dismiss();
             }
         });

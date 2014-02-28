@@ -20,6 +20,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -48,10 +49,10 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
     if (aggregateUri != null && authToken != null) {
-      DbHelper helper = DbHelper.getDbHelper(context);
+      DbHelper helper = DbHelper.getDbHelper(context, TableFileUtils.ODK_TABLES_APP_NAME);
       AggregateSynchronizer synchronizer;
       try {
-        synchronizer = new AggregateSynchronizer(aggregateUri, authToken);
+        synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUri, authToken);
       } catch (InvalidAuthTokenException e) {
         Aggregate.invalidateAuthToken(authToken, context);
         syncResult.stats.numAuthExceptions++;
@@ -59,7 +60,8 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
       }
       SyncProcessor processor = new SyncProcessor(helper, synchronizer,
           syncResult);
-      processor.synchronize();
+      // TODO: Get these values from somewhere meaningful.
+      processor.synchronize(true, true, true);
     }
   }
 

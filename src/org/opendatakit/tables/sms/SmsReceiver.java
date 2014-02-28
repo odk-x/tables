@@ -22,6 +22,7 @@ import java.util.Date;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
@@ -37,7 +38,7 @@ public class SmsReceiver extends BroadcastReceiver {
 	@Override
     public void onReceive(Context context, Intent intent) {
 	    MsgHandler mh = new MsgHandler(
-	            DbHelper.getDbHelper(context), new SMSSender());
+	            DbHelper.getDbHelper(context, TableFileUtils.ODK_TABLES_APP_NAME), new SMSSender());
 	    String body = getSMSBody(intent.getExtras());
 	    mh.handleMessage(body, getSMSFrom(intent.getExtras()));
 

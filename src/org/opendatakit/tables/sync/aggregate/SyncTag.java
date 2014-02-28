@@ -15,58 +15,67 @@
  */
 package org.opendatakit.tables.sync.aggregate;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
+
 public class SyncTag {
 
-  private static final String STR_NULL = "null";
-
-private static final String DELIM = "::";
+  private String dataETag;
+  private String propertiesETag;
+  private String schemaETag;
 
   /**
-   * This is the value that is replacing -1 as the value of the empty string
-   * in the sync tag.
+   * Make a copy of the given syncTag
+   *
+   * @param syncTag
    */
-  public static final String EMPTY_ETAG = "NONE";
-
-  private String dataEtag;
-  private String propertiesEtag;
-
-  public SyncTag(String dataEtag, String propertiesEtag) {
-    // SS: adding cases for if the passed in tags are null. not sure which
-    // is correct, going to try -1.
-    if (dataEtag.equals("")) {
-      this.dataEtag = EMPTY_ETAG;
-    } else {
-      this.dataEtag = dataEtag;
-    }
-    if (propertiesEtag.equals("")) {
-      this.propertiesEtag = EMPTY_ETAG;
-    } else {
-      this.propertiesEtag = propertiesEtag;
-    }
-  }
-
-  public String getDataEtag() {
-    return (dataEtag == null) ? STR_NULL : dataEtag;
-  }
-
-  public String getPropertiesEtag() {
-    return (propertiesEtag == null) ? STR_NULL : propertiesEtag;
+  public SyncTag(SyncTag syncTag) {
+    this.dataETag = syncTag.dataETag;
+    this.propertiesETag = syncTag.propertiesETag;
+    this.schemaETag = syncTag.schemaETag;
   }
 
   /**
-   * Sets the dataEtag to the current system time in millis.
+   * Construct a sync tag with the given parameters
+   *
+   * @param dataETag
+   * @param propertiesETag
+   * @param schemaETag
    */
-  public void incrementDataEtag() {
-    Long currentMillis = System.currentTimeMillis();
-    this.dataEtag = Long.toString(currentMillis);
+  public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
+    this.dataETag = dataETag;
+    this.propertiesETag = propertiesETag;
+    this.schemaETag = schemaETag;
   }
 
-  /**
-   * Sets the dataEtag to the current system time in millis.
-   */
-  public void incrementPropertiesEtag() {
-    Long currentMillis = System.currentTimeMillis();
-    this.propertiesEtag = Long.toString(currentMillis);
+  public String getDataETag() {
+    return dataETag;
+  }
+
+  public String getPropertiesETag() {
+    return propertiesETag;
+  }
+
+  public String getSchemaETag() {
+    return schemaETag;
+  }
+
+  public void setSchemaETag(String schemaETag) {
+    this.schemaETag = schemaETag;
+  }
+
+  public void setPropertiesETag(String propertiesETag) {
+    this.propertiesETag = propertiesETag;
+  }
+
+  public void setDataETag(String dataETag) {
+    this.dataETag = dataETag;
   }
 
   /*
@@ -78,8 +87,9 @@ private static final String DELIM = "::";
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + dataEtag.hashCode();
-    result = prime * result + propertiesEtag.hashCode();
+    result = prime * result + ((dataETag == null) ? 1 : dataETag.hashCode());
+    result = prime * result + ((propertiesETag == null) ? 1 : propertiesETag.hashCode());
+    result = prime * result + ((schemaETag == null) ? 1 : schemaETag.hashCode());
     return result;
   }
 
@@ -96,26 +106,59 @@ private static final String DELIM = "::";
     if (!(obj instanceof SyncTag))
       return false;
     SyncTag other = (SyncTag) obj;
-    boolean sameDataTag =  dataEtag == null ?
-        other.dataEtag == null : dataEtag.equals(other.dataEtag);
-    boolean samePropertiesTag = propertiesEtag == null ?
-        other.propertiesEtag == null :
-          propertiesEtag.equals(other.propertiesEtag);
-    return sameDataTag && samePropertiesTag;
+    boolean sameDataTag =  dataETag == null ?
+        other.dataETag == null : dataETag.equals(other.dataETag);
+    boolean samePropertiesTag = propertiesETag == null ?
+        other.propertiesETag == null :
+          propertiesETag.equals(other.propertiesETag);
+    boolean sameSchemaTag = schemaETag == null ?
+        other.schemaETag == null :
+          schemaETag.equals(other.schemaETag);
+    return sameDataTag && samePropertiesTag && sameSchemaTag;
   }
 
   @Override
   public String toString() {
-    return String.format("%s%s%s", dataEtag, DELIM, propertiesEtag);
+    HashMap<String,String> map = new HashMap<String,String>();
+    map.put("dataETag", dataETag);
+    map.put("propertiesETag", propertiesETag);
+    map.put("schemaETag", schemaETag);
+    try {
+      return ODKFileUtils.mapper.writeValueAsString(map);
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("failed conversion");
+    }
   }
 
+  @SuppressWarnings("unchecked")
   public static SyncTag valueOf(String syncTag) {
-    String[] tokens = syncTag.split(DELIM);
-    if (tokens.length != 2)
-      throw new IllegalArgumentException("Malformed syncTag: " + syncTag);
+    if ( syncTag == null || syncTag.length() == 0 ) {
+      return new SyncTag(null, null, null);
+    }
+    HashMap<String, String> map;
+    try {
+      map = (HashMap<String, String>) ODKFileUtils.mapper.readValue(syncTag, Map.class);
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("failed conversion: " + syncTag);
+    }
 
-    String dataEtag = tokens[0];
-    String propertiesEtag = tokens[1];
-    return new SyncTag(dataEtag, propertiesEtag);
+    String dataETag = map.get("dataETag");
+    String propertiesETag = map.get("propertiesETag");
+    String schemaETag = map.get("schemaETag");
+    return new SyncTag(dataETag, propertiesETag, schemaETag);
   }
 }

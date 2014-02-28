@@ -128,7 +128,7 @@ public class FileUtils {
         try {
             // CTS (6/15/2010) : stream file through digest instead of handing it the byte[]
             MessageDigest md = MessageDigest.getInstance("MD5");
-            int chunkSize = 256;
+            int chunkSize = 4096;
 
             byte[] chunk = new byte[chunkSize];
 
@@ -145,16 +145,12 @@ public class FileUtils {
             InputStream is = null;
             is = new FileInputStream(file);
 
-            int l = 0;
-            for (l = 0; l + chunkSize < length; l += chunkSize) {
-                is.read(chunk, 0, chunkSize);
-                md.update(chunk, 0, chunkSize);
-            }
-
-            int remaining = length - l;
-            if (remaining > 0) {
-                is.read(chunk, 0, remaining);
-                md.update(chunk, 0, remaining);
+            for (;;) {
+                int len = is.read(chunk, 0, chunkSize);
+                if ( len == -1 ) break;
+                if ( len > 0 ) {
+                  md.update(chunk, 0, len);
+                }
             }
             byte[] messageDigest = md.digest();
 

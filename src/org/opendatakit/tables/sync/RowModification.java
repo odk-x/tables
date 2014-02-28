@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 University of Washington
+ * Copyright (C) 2014 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,66 +15,69 @@
  */
 package org.opendatakit.tables.sync;
 
-import java.util.Map;
+import org.opendatakit.tables.sync.aggregate.SyncTag;
 
 /**
- * A Modification represents a set of synchronization tags to save in the
- * database after updates have been made in the server.
- * 
- * @author the.dylan.price@gmail.com
- * 
+ * A RowModification represents the update to a row's ETag and the dataset's
+ * sync tag after the server update completes.
+ *
+ * @author mitchellsundt@gmail.com
+ *
  */
-public class Modification {
-  Map<String, String> syncTags;
-  String tableSyncTag;
+public class RowModification {
+  String rowId;
+  String rowETag;
+  SyncTag tableSyncTag;
 
   /**
    * Create a new Modification.
-   * 
-   * @param syncTags
-   *          a map from rowIds to syncTags
+   *
+   * @param rowId
+   *          rowId that was being modified
+   * @param rowETag
+   *          updated rowETag from server
    * @param tableSyncTag
    *          the table-level syncTag
    */
-  public Modification(final Map<String, String> syncTags, final String tableSyncTag) {
-    this.syncTags = syncTags;
+  public RowModification(final String rowId, final String rowETag, final SyncTag tableSyncTag) {
+    this.rowId = rowId;
+    this.rowETag = rowETag;
     this.tableSyncTag = tableSyncTag;
   }
 
-  public Modification() {
+  public RowModification() {
   }
 
   /**
-   * 
-   * @return a map from rowIds to syncTags
+   *
+   * @return the rowId
    */
-  public Map<String, String> getSyncTags() {
-    return this.syncTags;
+  public String getRowId() {
+    return this.rowId;
   }
 
   /**
-   * 
+   *
+   * @return the rowETag
+   */
+  public String getRowETag() {
+    return this.rowETag;
+  }
+
+  /**
+   *
    * @return the table-level syncTag
    */
-  public String getTableSyncTag() {
+  public SyncTag getTableSyncTag() {
     return this.tableSyncTag;
   }
 
   /**
-   * 
-   * @param syncTags
-   *          a map from rowIds to syncTags
-   */
-  public void setSyncTags(final Map<String, String> syncTags) {
-    this.syncTags = syncTags;
-  }
-
-  /**
-   * 
+   *
    * @param tableSyncTag
    *          the table-level syncTag
    */
-  public void setTableSyncTag(final String tableSyncTag) {
+  public void setTableSyncTag(final SyncTag tableSyncTag) {
     this.tableSyncTag = tableSyncTag;
   }
 
@@ -82,13 +85,14 @@ public class Modification {
   public boolean equals(final java.lang.Object o) {
     if (o == this)
       return true;
-    if (!(o instanceof Modification))
+    if (!(o instanceof RowModification))
       return false;
-    final Modification other = (Modification) o;
+    final RowModification other = (RowModification) o;
     if (!other.canEqual((java.lang.Object) this))
       return false;
-    if (this.getSyncTags() == null ? other.getSyncTags() != null : !this.getSyncTags().equals(
-        (java.lang.Object) other.getSyncTags()))
+    if (this.getRowId() == null ? other.getRowId() != null : !this.getRowId().equals(other.getRowId()))
+      return false;
+    if (this.getRowETag() == null ? other.getRowETag() != null : !this.getRowETag().equals(other.getRowETag()))
       return false;
     if (this.getTableSyncTag() == null ? other.getTableSyncTag() != null : !this.getTableSyncTag()
         .equals((java.lang.Object) other.getTableSyncTag()))
@@ -97,14 +101,15 @@ public class Modification {
   }
 
   public boolean canEqual(final java.lang.Object other) {
-    return other instanceof Modification;
+    return other instanceof RowModification;
   }
 
   @Override
   public int hashCode() {
     final int PRIME = 31;
     int result = 1;
-    result = result * PRIME + (this.getSyncTags() == null ? 0 : this.getSyncTags().hashCode());
+    result = result * PRIME + (this.getRowId() == null ? 0 : this.getRowId().hashCode());
+    result = result * PRIME + (this.getRowETag() == null ? 0 : this.getRowETag().hashCode());
     result = result * PRIME
         + (this.getTableSyncTag() == null ? 0 : this.getTableSyncTag().hashCode());
     return result;
@@ -112,7 +117,7 @@ public class Modification {
 
   @Override
   public java.lang.String toString() {
-    return "Modification(syncTags=" + this.getSyncTags() + ", tableSyncTag="
+    return "RowModification(rowId=" + this.getRowId() + ", rowETag=" + this.getRowETag() + ", tableSyncTag="
         + this.getTableSyncTag() + ")";
   }
 }

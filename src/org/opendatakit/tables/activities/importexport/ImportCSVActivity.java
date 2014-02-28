@@ -17,16 +17,19 @@ package org.opendatakit.tables.activities.importexport;
 
 import java.io.File;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -43,6 +46,8 @@ import android.widget.TextView;
  * An activity for importing CSV files to a table.
  */
 public class ImportCSVActivity extends AbstractImportExportActivity {
+  
+  private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
 	/** view IDs (for use in testing) */
 	public static int NTNVAL_ID = 1;
@@ -103,7 +108,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		tps = TableProperties.getTablePropertiesForAll(
-		        DbHelper.getDbHelper(this), KeyValueStore.Type.ACTIVE);
+		        DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length + 1];
 		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
@@ -152,11 +157,14 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	 * Attempts to import a CSV file.
 	 */
 	private void importSubmission() {
-		File file = new File(filenameValField.getText().toString().trim());
+	   File file = ODKFileUtils.asAppFile(
+	          TableFileUtils.ODK_TABLES_APP_NAME, 
+	          filenameValField.getText().toString().trim()
+	   );
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		ImportTask task = new ImportTask(this);
+		ImportTask task = new ImportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
             showDialog(IMPORT_IN_PROGRESS_DIALOG);
@@ -181,7 +189,11 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	    if(resultCode == RESULT_CANCELED) {return;}
 	    Uri fileUri = data.getData();
 	    String filepath = fileUri.getPath();
-	    filenameValField.setText(filepath);
+	    // We have to first hand this off to account for the difference in
+	    // external storage directories on different versions of android.
+	    String relativePath = TableFileUtils.getRelativePath(filepath);
+	    Log.d(TAG, "relative path of import file: " + relativePath);
+	    filenameValField.setText(relativePath);
 	}
 
 	/**

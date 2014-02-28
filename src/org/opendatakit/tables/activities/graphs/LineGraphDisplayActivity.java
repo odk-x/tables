@@ -21,6 +21,7 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -36,9 +37,6 @@ public class LineGraphDisplayActivity extends SherlockActivity
 
   private static final String TAG = "LineGraphDisplayActivity";
 
-    private static final int RCODE_ODKCOLLECT_ADD_ROW =
-        Controller.FIRST_FREE_RCODE;
-
     private DbHelper dbh;
     private Controller c;
     private Query query;
@@ -48,7 +46,7 @@ public class LineGraphDisplayActivity extends SherlockActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         c = new Controller(this, this, getIntent().getExtras());
-        dbh = DbHelper.getDbHelper(this);
+        dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
         query = new Query(dbh,
             KeyValueStore.Type.ACTIVE,
             c.getTableProperties());

@@ -3,6 +3,10 @@
 	<name>ODK Tables</name>
 	<comment></comment>
 	<projects>
+		<project>actionbarsherlock</project>
+		<project>androidcommon</project>
+		<project>ODKSubmit</project>
+		<project>playservices</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -30,4 +34,11 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>commonsrc</name>
+			<type>2</type>
+			<locationURI>WORKSPACE_LOC/opendatakit.submit/commonsrc</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

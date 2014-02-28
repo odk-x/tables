@@ -153,7 +153,7 @@ public class MsgHandler {
             		cpOutput.getElementKey()};
             DbTable dbt = DbTable.getDbTable(dbh, scTp);
             UserTable table = dbt.getRaw(new Query(dbh, KeyValueStore.Type.ACTIVE, scTp), scCols);
-            for (int i = 0; i < table.getHeight(); i++) {
+            for (int i = 0; i < table.getNumberOfRows(); i++) {
                 scNames.add(table.getData(i, 0));
                 scInputs.add(table.getData(i, 1));
                 scOutputs.add(table.getData(i, 2));
@@ -262,9 +262,9 @@ public class MsgHandler {
         columns.add(SecurityUtil.PASSWORD_COLUMN_NAME);
         UserTable table = sDbt.getRaw(
         		columns,
-        		new String[] {DataTableColumns.SAVED, SecurityUtil.PHONENUM_COLUMN_NAME},
+        		new String[] {DataTableColumns.SAVEPOINT_TYPE, SecurityUtil.PHONENUM_COLUMN_NAME},
                 new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum}, null);
-        for (int i = 0; i < table.getHeight(); i++) {
+        for (int i = 0; i < table.getNumberOfRows(); i++) {
             if (password.equals(table.getData(i, 0))) {
                 return true;
             }
@@ -325,8 +325,10 @@ public class MsgHandler {
             }
         }
         DbTable dbt = DbTable.getDbTable(dbh, tp);
-        dbt.addRow(rowValues, null, null, phoneNum, null /* instanceName */,
-            null /* formId */, null /* locale */);
+
+        String savepointCreator = SecurityUtil.mapPhoneNumToUserIdentity(phoneNum);
+        dbt.addRow(null, "_sms_receive_", null /* locale */,
+            System.currentTimeMillis(), savepointCreator, rowValues);
         return true;
     }
 
@@ -502,24 +504,24 @@ public class MsgHandler {
         }
         int count = 0;
         for ( ColumnProperties cp : cols ) {
-          if ( cp.isPersisted() ) {
+          if ( cp.isUnitOfRetention() ) {
             ++count;
           }
         }
         String[] colNames = new String[count];
         count = -1;
         for ( ColumnProperties cp : cols ) {
-          if ( cp.isPersisted() ) {
+          if ( cp.isUnitOfRetention() ) {
             colNames[++count] = cp.getElementKey();
           }
         }
         DbTable dbt = DbTable.getDbTable(dbh, tp);
         UserTable table = dbt.getRaw(query, colNames);
         String resp;
-        if (table.getHeight() == 0) {
+        if (table.getNumberOfRows() == 0) {
             resp = "No rows found.";
         } else {
-            int limit = Math.min(DEFAULT_LIMIT, table.getHeight());
+            int limit = Math.min(DEFAULT_LIMIT, table.getNumberOfRows());
             List<String> rows = new ArrayList<String>();
             for (int i = 0; i < limit; i++) {
                 StringBuilder sb = new StringBuilder();
@@ -559,7 +561,7 @@ public class MsgHandler {
                 new String[] {drSlotColumn.getElementKey()});
         // TODO: range should not be slash-separated but stored as two columns OR json in db...
         List<String[]> rawRanges = new ArrayList<String[]>();
-        for (int i = 0; i < table.getHeight(); i++) {
+        for (int i = 0; i < table.getNumberOfRows(); i++) {
             rawRanges.add(table.getData(i, 0).split("/"));
         }
         String earlyDate = null;

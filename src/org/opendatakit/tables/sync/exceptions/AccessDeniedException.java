@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 University of Washington
+ * Copyright (C) 2014 University of Washington
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,20 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.data;
+package org.opendatakit.tables.sync.exceptions;
 
-/**
- * The state of the table with regards to synching to the datastore. 
- * <p>
- * NB: Lowercase due to considerations regarding javascript and being able to
- * call the valueOf function to get the enum.
- * @author sudar.sam@gmail.com
- *
- */
-public enum SyncState {
-  rest,
-  inserting,
-  updating,
-  deleting,
-  conflicting;
+import java.io.IOException;
+
+public class AccessDeniedException extends IOException {
+
+  private static final long serialVersionUID = 1L;
+
+  public AccessDeniedException() {
+    super();
+  }
+
+  /**
+   * @param detailMessage
+   */
+  public AccessDeniedException(String detailMessage) {
+    super(detailMessage);
+  }
+
 }

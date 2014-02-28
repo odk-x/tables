@@ -26,6 +26,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -72,7 +73,7 @@ public class ColumnProperties {
   /*
    * (was dbColumnName) unique id for this element. There should be only one
    * such elementKey for a given tableId. This is the dbColumnName if it is a
-   * value persisted into the database
+   * value written into the database
    */
   // private static final String DB_ELEMENT_NAME = "elementName";
   /*
@@ -90,13 +91,13 @@ public class ColumnProperties {
    * if this is a composite type (geopoint), this is a JSON list of the element
    * keys of the direct descendants of this field name.
    */
-  // private static final String DB_IS_PERSISTED =
-  // "is_persisted";
+  // private static final String DB_IS_UNIT_OF_RETENTION =
+  // "is_unit_of_retention";
   /*
-   * default: 1 (true) -- whether or not this is persisted to the database. If
-   * true, elementId is the dbColumnName in which this value is written. The
-   * value will be written as JSON if it is a composite type. see larger comment
-   * below for example.
+   * default: 1 (true) -- whether or not this is a column in the underlying
+   * database table. If true, elementKey is the dbColumnName in which this
+   * value is written. The value will be written as JSON if it is a composite
+   * type. see larger comment below for example.
    */
   /*
    * These two columns have been replaced by the single column DB_JOINS
@@ -106,6 +107,19 @@ public class ColumnProperties {
   // table to join against */
   // private static final String DB_JOIN_ELEMENT_KEY = "joinElementKey"; // (was
   // DB_JOIN_COLUMN_NAME)
+  //
+  // javascript side:
+  //
+  //  _joins: { type: 'array', items: {
+  //    type: 'object',
+  //    listChildElementKeys: [],
+  //    properties: {
+  //        "table_id": { type: "string", isNotNullable: false,
+  //                       isUnitOfRetention: false, elementKey: 'table_id', elementSet: 'columnMetadata' },
+  //        "element_key": { type: "string", isNotNullable: false,
+  //                       isUnitOfRetention: false, elementKey: 'elementKey', elementSet: 'columnMetadata' } } },
+  //    isNotNullable: false, isUnitOfRetention: true, elementPath: 'joins', elementSet: 'columnMetadata' }
+  //
   /*
    * elementKey of the value to join (this table's element) against in other
    * table
@@ -128,10 +142,10 @@ public class ColumnProperties {
    * JSON encoding of string values. i.e., '["ache","fever"]'
    *
    * ekey: patientSymptoms ename: patientSymptoms etype: MULTIPLE_CHOICE
-   * listChildEKeys: '[ patientSymptomsItem ]' isPersist: true
+   * listChildEKeys: '[ patientSymptomsItem ]' isUnitOfRetention: true
    *
    * ekey: patientSymptomsItem ename: null // elements are not named within this
-   * list etype: STRING listChildEKeys: null isPersist: false
+   * list etype: STRING listChildEKeys: null isUnitOfRetention: false
    *
    * ------------- e.g., geopoint defining a northernmost point of something:
    *
@@ -140,40 +154,41 @@ public class ColumnProperties {
    *
    * ekey: northernmostPoint ename: northernmostPoint etype: geopoint
    * listChildEKeys: '[ "northLatitude", "northLongitude", "northAltitude",
-   * "northAccuracy"]' isPersist: false
+   * "northAccuracy"]' isUnitOfRetention: false
    *
    * ekey: northLatitude ename: latitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northLongitude ename: longitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northAltitude ename: altitude etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ekey: northAccuracy ename: accuracy etype: DECIMAL listChildEKeys: null
-   * isPersist: true
+   * isUnitOfRetention: true
    *
    * ODK Collect can do calculations and constraint tests like
    * 'northermostPoint.altitude < 4.0'
    *
    * e.g., 'clientPhone' as a phonenumber type, which is just a restriction on a
-   * STRING value persists under 'clientPhone' column in database.
+   * STRING value that is stored under 'clientPhone' column in database (it is
+   * its own unit of retention).
    *
    * ekey: clientPhone ename: clientPhone etype: phoneNumber listChildEKeys: [
-   * "clientPhoneNumber" ] // single element isPersist: true
+   * "clientPhoneNumber" ] // single element isUnitOfRetention: true
    *
    * ekey: clientPhoneNumber ename: null // null -- indicates restriction on
-   * etype etype: STRING listChildEKeys: null isPersist: false
+   * etype etype: STRING listChildEKeys: null isUnitOfRetention: false
    *
    * e.g., 'image' file capture in ODK Collect. Stored as a MIMEURI
    *
    * ekey: locationImage ename: locationImage etype: MIMEURI listChildEKeys:
-   * null isPersist: true
+   * null isUnitOfRetention: true
    *
    * MIMEURI stores a JSON object:
    *
-   * '{"path":"/mnt/sdcard/odk/tables/app/instances/2342.jpg","mimetype":"image/jpg"}'
+   * '{"uriFragment":"tables/tableId/instances/instanceId/2342.jpg","mimetype":"image/jpg"}'
    *
    * i.e., ODK Collect image/audio/video capture store everything as a MIMEURI
    * with different mimetype values.
@@ -184,8 +199,9 @@ public class ColumnProperties {
    * NOTE: you can have a composite type stored in two ways: (1) store the leaf
    * nodes of the composite type in the database. Describe the entire type
    * hierarchy down to those leaf nodes. (2) store it as a json object at the
-   * top level. Describe the structure of this json object and its leaf nodes
-   * (but none of these persist anything).
+   * top level (isUnitOfRetention == true) and describe the structure of this
+   * json object and its leaf nodes (but none of these leaf nodes are retained
+   * individually (isUnitOfRetention == false for these leaf nodes)).
    *
    * Each has its advantages -- (1) does independent value updates easily. (2)
    * does atomic updates easily.
@@ -198,12 +214,12 @@ public class ColumnProperties {
    */
   // private static final String DB_DISPLAY_NAME = "displayName"; /* perhaps as
   // json i18n */
-  // private static final String DB_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  // private static final String DB_DISPLAY_CHOICES_LIST = "displayChoicesList";
   // /* (was mcOptions)
   // choices i18n structure (Java needs rework).
   // TODO: allocate large storage on Aggregate
   /*
-   * displayChoicesMap -- TODO: rework ( this is still an ArrayList<String> )
+   * displayChoicesList -- TODO: rework ( this is still an ArrayList<String> )
    *
    * This is a map used for select1 and select choices, either closed-universe
    * (fixed set) or open-universe (select1-or-other, select-or-other). Stores
@@ -234,7 +250,7 @@ public class ColumnProperties {
    * share a subset of this functionality in Tables for managing how to render a
    * value.
    *
-   * TODO: how does this interact with displayChoicesMap?
+   * TODO: how does this interact with displayChoicesList?
    *
    * The proposed eventual subset describes numeric formatting. It could also be
    * used to render qrcode images, etc. 'this' and elementName both refer to
@@ -258,47 +274,51 @@ public class ColumnProperties {
   // /***********************************
   // * Default values for those columns that have defaults.
   // ***********************************/
-  // public static final int DEFAULT_DB_IS_PERSISTED = 1;
+  // public static final int DEFAULT_DB_IS_UNIT_OF_RETENTION = 1;
 
   /***********************************
    * The partition name of the column keys in the key value store.
    ***********************************/
-  public static final String KVS_PARTITION = "Column";
+  public static final String KVS_PARTITION = KeyValueStoreConstants.PARTITION_COLUMN;
 
   /***********************************
    * The names of keys that are defaulted to exist in the column key value
    * store.
    ***********************************/
-  public static final String KEY_DISPLAY_VISIBLE = "displayVisible";
+  public static final String KEY_DISPLAY_VISIBLE = KeyValueStoreConstants.COLUMN_DISPLAY_VISIBLE;
   /*
    * Integer, non null. 1: visible 0: not visible -1: deleted (even necessary?)
    */
-  public static final String KEY_DISPLAY_NAME = "displayName";
+  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.COLUMN_DISPLAY_NAME;
   /*
    * Text, not null. Must be input when adding a column as they all must have a
    * display name.
    */
-  public static final String KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  public static final String KEY_DISPLAY_CHOICES_LIST = KeyValueStoreConstants.COLUMN_DISPLAY_CHOICES_LIST;
   /*
    * Text, null.
    */
-  public static final String KEY_DISPLAY_FORMAT = "displayFormat";
+  public static final String KEY_DISPLAY_FORMAT = KeyValueStoreConstants.COLUMN_DISPLAY_FORMAT;
+  /*
+   * Text, null.
+   */
+  public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
   /*
    * Text, null. Fot future use.
    */
-  public static final String KEY_SMS_IN = "smsIn";
+  public static final String KEY_SMS_IN = KeyValueStoreConstants.COLUMN_SMS_IN;
   /*
    * Integer, not null. As boolean. Allow incoming SMS to modify the column.
    */
-  public static final String KEY_SMS_OUT = "smsOut";
+  public static final String KEY_SMS_OUT = KeyValueStoreConstants.COLUMN_SMS_OUT;
   /*
    * Integer, not null. As boolean. Allow outgoing SMS to access this column.
    */
-  public static final String KEY_SMS_LABEL = "smsLabel";
+  public static final String KEY_SMS_LABEL = KeyValueStoreConstants.COLUMN_SMS_LABEL;
   /*
    * Text null.
    */
-  public static final String KEY_FOOTER_MODE = "footerMode";
+  public static final String KEY_FOOTER_MODE = KeyValueStoreConstants.COLUMN_FOOTER_MODE;
   /*
    * What the footer should display.
    */
@@ -340,11 +360,11 @@ public class ColumnProperties {
                                                                      // colType)
   private static final String JSON_KEY_LIST_CHILD_ELEMENT_KEYS = "listChildElementKeys";
   private static final String JSON_KEY_JOINS = "joins";
-  private static final String JSON_KEY_IS_PERSISTED = "isPersisted";
+  private static final String JSON_KEY_IS_UNIT_OF_RETENTION = "isUnitOfRetention";
 
   private static final String JSON_KEY_DISPLAY_VISIBLE = "displayVisible";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
-  private static final String JSON_KEY_DISPLAY_CHOICES_MAP = "displayChoicesMap";
+  private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
   private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
 
   private static final String JSON_KEY_SMS_IN = "smsIn";
@@ -364,7 +384,7 @@ public class ColumnProperties {
   // DB_ELEMENT_NAME, DB_ELEMENT_TYPE, DB_LIST_CHILD_ELEMENT_KEYS, DB_JOINS,
   // // DB_JOIN_TABLE_ID,
   // // DB_JOIN_ELEMENT_KEY,
-  // DB_IS_PERSISTED,
+  // DB_IS_UNIT_OF_RETENTION,
 
   // DB_DISPLAY_VISIBLE,
   // DB_DISPLAY_NAME,
@@ -405,25 +425,46 @@ public class ColumnProperties {
   private String elementName;
   private ColumnType elementType;
   private List<String> listChildElementKeys;
-  private JoinColumn joins;
-  private boolean isPersisted;
+  private boolean isUnitOfRetention;
   /*
    * The fields that reside in the key value store.
    */
   private boolean displayVisible;
+  private String jsonStringifyDisplayName;
   private String displayName;
-  private ArrayList<String> displayChoicesMap;
+  private ArrayList<String> displayChoicesList;
   private String displayFormat;
   private boolean smsIn;
   private boolean smsOut;
   private String smsLabel;
   private FooterMode footerMode;
+  private ArrayList<JoinColumn> joins;
 
+  /**
+   *
+   * @param dbh
+   * @param tableId
+   * @param elementKey
+   * @param elementName
+   * @param elementType
+   * @param listChildElementKeys
+   * @param isUnitOfRetention
+   * @param displayVisible
+   * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
+   * @param displayChoicesList
+   * @param displayFormat
+   * @param smsIn
+   * @param smsOut
+   * @param smsLabel
+   * @param footerMode
+   * @param joins
+   * @param backingStore
+   */
   private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
-      ColumnType elementType, List<String> listChildElementKeys, JoinColumn joins,
-      boolean isPersisted, boolean displayVisible, String displayName,
-      ArrayList<String> displayChoicesMap, String displayFormat, boolean smsIn, boolean smsOut,
-      String smsLabel, FooterMode footerMode, KeyValueStore.Type backingStore) {
+      ColumnType elementType, List<String> listChildElementKeys,
+      boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
+      ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
+      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
     this.dbh = dbh;
     this.tableId = tableId;
     this.elementKey = elementKey;
@@ -431,10 +472,11 @@ public class ColumnProperties {
     this.elementType = elementType;
     this.listChildElementKeys = listChildElementKeys;
     this.joins = joins;
-    this.isPersisted = isPersisted;
+    this.isUnitOfRetention = isUnitOfRetention;
     this.displayVisible = displayVisible;
-    this.displayName = displayName;
-    this.displayChoicesMap = displayChoicesMap;
+    this.jsonStringifyDisplayName = jsonStringifyDisplayName;
+    updateDisplayNameFromJsonStringifyDisplayName();
+    this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
     this.smsIn = smsIn;
     this.smsOut = smsOut;
@@ -444,23 +486,19 @@ public class ColumnProperties {
   }
 
   /**
-   * Return the ColumnProperties for the PERSISTED columns belonging to this
-   * table. TODO: this should probably be modified in the future to return both
-   * the persisted and non persisted columns. At the moment ODK Tables only
-   * cares about the persisted columns, and with this message returning only
-   * those columns it removes the need to deal with non-persisted columns at
-   * this juncture.
+   * Return the ColumnProperties for all the columns in a table, whether or not
+   * they are written to the database table.
    *
    * @param dbh
    * @param tableId
-   * @return a map of elementKey to ColumnProperties for each persisted column.
+   * @return a map of elementKey to ColumnProperties for all columns.
    */
   static Map<String, ColumnProperties> getColumnPropertiesForTable(DbHelper dbh, String tableId,
       KeyValueStore.Type typeOfStore) {
     SQLiteDatabase db = null;
     try {
       db = dbh.getReadableDatabase();
-      List<String> elementKeys = ColumnDefinitions.getPersistedElementKeysForTable(tableId, db);
+      List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tableId, db);
       Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
         ColumnProperties cp = getColumnProperties(dbh, tableId, elementKeys.get(i), typeOfStore);
@@ -509,8 +547,8 @@ public class ColumnProperties {
 
   /**
    * Construct a ColumnProperties from the given json serialization. NOTE: the
-   * resulting ColumnProperties object has NOT been persisted to the database.
-   * The caller is responsible for persisting it and/or adding it to the
+   * resulting ColumnProperties object has NOT been written to the database.
+   * The caller is responsible for writing it and/or adding it to the
    * TableProperties of the tableId.
    *
    * @param dbh
@@ -542,23 +580,25 @@ public class ColumnProperties {
     // when new values might come down from the server.
     FooterMode footerMode = (footerModeStr == null) ? DEFAULT_KEY_FOOTER_MODE : FooterMode
         .valueOf(footerModeStr);
-    // DB_IS_PERSISTED
-    String isPersistedStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_PERSISTED);
-    boolean isPersisted = SyncUtil.stringToBool(isPersistedStr);
+    // KEY_JOINS
+
+    // DB_IS_UNIT_OF_RETENTION
+    String isUnitOfRetentionStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
+    boolean isUnitOfRetention = SyncUtil.stringToBool(isUnitOfRetentionStr);
     // DB_COLUMN_TYPE
     String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);
 
     // Now we need to reclaim the list values from their db entries.
     String parseValue = null;
-    ArrayList<String> displayChoicesMap = null;
+    ArrayList<String> displayChoicesList = null;
     ArrayList<String> listChildElementKeys = null;
-    JoinColumn joins = null;
+    ArrayList<JoinColumn> joins = null;
     try {
-      if (kvsProps.get(KEY_DISPLAY_CHOICES_MAP) != null) {
-        String displayChoicesMapValue = kvsProps.get(KEY_DISPLAY_CHOICES_MAP);
-        parseValue = displayChoicesMapValue;
-        displayChoicesMap = mapper.readValue(displayChoicesMapValue, ArrayList.class);
+      if (kvsProps.get(KEY_DISPLAY_CHOICES_LIST) != null) {
+        String displayChoicesListValue = kvsProps.get(KEY_DISPLAY_CHOICES_LIST);
+        parseValue = displayChoicesListValue;
+        displayChoicesList = mapper.readValue(displayChoicesListValue, ArrayList.class);
       }
 
       if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
@@ -567,8 +607,9 @@ public class ColumnProperties {
         parseValue = listChildElementKeysValue;
         listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
-      if (columnDefinitions.get(ColumnDefinitionsColumns.JOINS) != null) {
-        String joinsValue = columnDefinitions.get(ColumnDefinitionsColumns.JOINS);
+
+      String joinsValue = kvsProps.get(KEY_JOINS);
+      if ( joinsValue != null ) {
         parseValue = joinsValue;
         joins = JoinColumn.fromSerialization(joinsValue);
       }
@@ -584,9 +625,9 @@ public class ColumnProperties {
     }
     return new ColumnProperties(dbh, tableId, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, kvsProps.get(KEY_DISPLAY_NAME),
-        displayChoicesMap, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
-        kvsProps.get(KEY_SMS_LABEL), footerMode, backingStore);
+        listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
+        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
+        kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
   }
 
   /**
@@ -596,22 +637,12 @@ public class ColumnProperties {
    * via createDbElementKey and createDbElementName to avoid conflicts. A
    * possible idea would be to pass them display name.
    *
-   * @param dbh
+   *
    * @param db
    * @param tableId
-   * @param displayName
-   * @param elementKey
-   * @param elementName
-   * @param columnType
-   * @param listChildElementKeys
-   * @param isPersisted
-   * @param joins
-   * @param displayVisible
-   * @param typeOfStore
-   * @return
-   * @throws IOException
-   * @throws JsonMappingException
    * @throws JsonGenerationException
+   * @throws JsonMappingException
+   * @throws IOException
    */
   void persistColumn(SQLiteDatabase db, String tableId) throws JsonGenerationException,
       JsonMappingException, IOException {
@@ -620,9 +651,9 @@ public class ColumnProperties {
     values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_VISIBLE, displayVisible));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_NAME, displayName));
+        KEY_DISPLAY_NAME, jsonStringifyDisplayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_CHOICES_MAP, mapper.writeValueAsString(displayChoicesMap)));
+        KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
     // TODO: both the SMS entries should become booleans?
@@ -634,13 +665,15 @@ public class ColumnProperties {
         KEY_SMS_LABEL, smsLabel));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_FOOTER_MODE, footerMode.name()));
+    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
+        KEY_JOINS, JoinColumn.toSerialization(joins)));
 
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        mapper.writeValueAsString(listChildElementKeys), isPersisted, joins);
+        mapper.writeValueAsString(listChildElementKeys), isUnitOfRetention);
   }
 
   public enum ColumnDefinitionChange {
@@ -662,7 +695,7 @@ public class ColumnProperties {
     if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
-    if (this.isPersisted() != cp.isPersisted()) {
+    if (this.isUnitOfRetention() != cp.isUnitOfRetention()) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (this.getColumnType() != cp.getColumnType()) {
@@ -679,30 +712,29 @@ public class ColumnProperties {
    * NOTE: ONLY CALL THIS FROM TableProperties.addColumn() !!!!!!!
    *
    * Create a ColumnProperties object with the given values (assumed to be good).
-   * Caller is responsible for persisting this to the database.
+   * Caller is responsible for writing this to the database.
    *
    * @param dbh
    * @param tableId
-   * @param displayName
+   * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
    * @param elementKey
    * @param elementName
    * @param columnType
    * @param listChildElementKeys
-   * @param isPersisted
-   * @param joins
+   * @param isUnitOfRetention
    * @param displayVisible
    * @param typeOfStore
    * @return
    */
   static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
-      String displayName, String elementKey, String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isPersisted, JoinColumn joins,
+      String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
+      List<String> listChildElementKeys, boolean isUnitOfRetention,
       boolean displayVisible, KeyValueStore.Type typeOfStore) {
 
     ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
-        listChildElementKeys, joins, isPersisted, displayVisible, displayName,
+        listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, typeOfStore);
+        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
 
     return cp;
   }
@@ -735,7 +767,7 @@ public class ColumnProperties {
     entry.tableId = tableId;
     entry.partition = partition;
     entry.aspect = elementKey;
-    entry.type = ColumnType.TEXT.name();
+    entry.type = ColumnType.STRING.name();
     entry.value = value;
     entry.key = key;
     return entry;
@@ -768,7 +800,7 @@ public class ColumnProperties {
   /**
    * DB_ELEMENT_KEY, DB_ELEMENT_NAME, DB_ELEMENT_TYPE,
    * DB_LIST_CHILD_ELEMENT_KEYS, DB_JOIN_TABLE_ID, DB_JOIN_ELEMENT_KEY,
-   * DB_IS_PERSISTED,
+   * DB_IS_UNIT_OF_RETENTION,
    *
    * DB_DISPLAY_VISIBLE, DB_DISPLAY_NAME, DB_DISPLAY_CHOICES_MAP,
    * DB_DISPLAY_FORMAT,
@@ -842,13 +874,13 @@ public class ColumnProperties {
     }
   }
 
-  public boolean isPersisted() {
-    return isPersisted;
+  public boolean isUnitOfRetention() {
+    return isUnitOfRetention;
   }
 
-  public void setIsPersisted(boolean setting) {
-    setBooleanProperty(ColumnDefinitionsColumns.IS_PERSISTED, setting);
-    this.isPersisted = setting;
+  public void setIsUnitOfRetention(boolean setting) {
+    setBooleanProperty(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, setting);
+    this.isUnitOfRetention = setting;
   }
 
   /**
@@ -876,6 +908,37 @@ public class ColumnProperties {
     return displayName;
   }
 
+  private void updateDisplayNameFromJsonStringifyDisplayName() {
+    try {
+      this.displayName = null;
+      if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
+        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        if ( displayObject instanceof String ) {
+          this.displayName = (String)  displayObject;
+        } else if ( displayObject instanceof Map ) {
+          // TODO: get current locale; deal with non-default locales
+          @SuppressWarnings("rawtypes")
+          Object v = ((Map) displayObject).get("default");
+          if ( v != null && v instanceof String ) {
+            this.displayName = (String) v;
+          }
+        }
+      }
+      if ( this.displayName == null || this.displayName.length() == 0 ) {
+        throw new IllegalArgumentException("displayName is not valid: " + jsonStringifyDisplayName);
+      }
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    }
+  }
+
   /**
    * Sets the column's display name.
    *
@@ -883,13 +946,52 @@ public class ColumnProperties {
    * conflict with any other column display names in use within the table. Use
    * TableProperties.createDisplayName(proposedName) to do this.
    *
+   * NOTE: this updates the jsonStringifyDisplayName, which is what is writtin
+   * in the KVS.
+   *
    * @param displayName
    *          the new display name
    * @return the
    */
   public void setDisplayName(String displayName) {
-    setStringProperty(KEY_DISPLAY_NAME, displayName);
-    this.displayName = displayName;
+    try {
+      // error if displayName is not set...
+      if ( displayName == null || displayName.length() == 0 ) {
+        throw new IllegalArgumentException("displayName is not valid: " + displayName);
+      }
+      // parse the existing jsonStringifyDisplayName value...
+      if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
+        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        if ( displayObject instanceof String ) {
+          // just overwrite it...
+          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+          this.displayName = displayName;
+        } else if ( displayObject instanceof Map ) {
+          // TODO: get current locale; deal with non-default locales
+          ((Map) displayObject).put("default", displayName);
+          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
+          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+          this.displayName = displayName;
+        }
+      } else {
+        String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+        setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+        this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
+        this.displayName = displayName;
+      }
+    } catch (JsonParseException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("displayName is not JSON.stringify() content: " + jsonStringifyDisplayName);
+    }
   }
 
   /**
@@ -926,6 +1028,39 @@ public class ColumnProperties {
   public void setFooterMode(FooterMode footerMode) {
     setStringProperty(KEY_FOOTER_MODE, footerMode.name());
     this.footerMode = footerMode;
+  }
+
+  /**
+   * @return the join definition
+   */
+  public ArrayList<JoinColumn> getJoins() {
+    return joins;
+  }
+
+  /**
+   * Converts the JoinColumn to the json representation of the object using a
+   * mapper and adds it to the database.
+   * <p>
+   * If there is a mapping exception of writing the JoinColumn to a String, it
+   * does nothing, leaving the database untouched.
+   *
+   * @param joins
+   */
+  public void setJoins(ArrayList<JoinColumn> joins) {
+    try {
+      String joinsStr = JoinColumn.toSerialization(joins);
+      setStringProperty(KEY_JOINS, joinsStr);
+      this.joins = joins;
+    } catch (JsonGenerationException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (JsonMappingException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+    }
   }
 
   /**
@@ -985,8 +1120,8 @@ public class ColumnProperties {
   /**
    * @return an array of the multiple-choice options
    */
-  public ArrayList<String> getDisplayChoicesMap() {
-    return displayChoicesMap;
+  public ArrayList<String> getDisplayChoicesList() {
+    return displayChoicesList;
   }
 
   /**
@@ -998,56 +1133,23 @@ public class ColumnProperties {
    * @throws JsonMappingException
    * @throws JsonGenerationException
    */
-  public void setDisplayChoicesMap(ArrayList<String> options) {
+  public void setDisplayChoicesList(ArrayList<String> options) {
     try {
       String encoding = null;
       if (options != null && options.size() > 0) {
         encoding = mapper.writeValueAsString(options);
       }
-      setStringProperty(KEY_DISPLAY_CHOICES_MAP, encoding);
-      displayChoicesMap = options;
+      setStringProperty(KEY_DISPLAY_CHOICES_LIST, encoding);
+      displayChoicesList = options;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (JsonMappingException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setDisplayChoicesMap failed: " + options.toString(), e);
-    }
-  }
-
-  /**
-   * @return the join definition
-   */
-  public JoinColumn getJoins() {
-    return joins;
-  }
-
-  /**
-   * Converts the JoinColumn to the json representation of the object using a
-   * mapper and adds it to the database.
-   * <p>
-   * If there is a mapping exception of writing the JoinColumn to a String, it
-   * does nothing, leaving the database untouched.
-   *
-   * @param joins
-   */
-  public void setJoins(JoinColumn joins) {
-    try {
-      String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(ColumnDefinitionsColumns.JOINS, joinsStr);
-      this.joins = joins;
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setJoins failed: " + joins.toString(), e);
+      throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     }
   }
 
@@ -1062,10 +1164,10 @@ public class ColumnProperties {
     jo.put(JSON_KEY_ELEMENT_TYPE, elementType.name());
     jo.put(JSON_KEY_FOOTER_MODE, footerMode.name());
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-    jo.put(JSON_KEY_IS_PERSISTED, isPersisted);
+    jo.put(JSON_KEY_IS_UNIT_OF_RETENTION, isUnitOfRetention);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
-    jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-    jo.put(JSON_KEY_DISPLAY_CHOICES_MAP, displayChoicesMap);
+    jo.put(JSON_KEY_DISPLAY_NAME, jsonStringifyDisplayName);
+    jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
     jo.put(JSON_KEY_SMS_IN, smsIn);
     jo.put(JSON_KEY_SMS_OUT, smsOut);
@@ -1092,8 +1194,8 @@ public class ColumnProperties {
   }
 
   /**
-   * Construct a ColumnProperties object from JSON. NOTE: Nothing is persisted
-   * to the database. The caller is responsible for persisting the changes.
+   * Construct a ColumnProperties object from JSON. NOTE: Nothing is written
+   * to the database. The caller is responsible for writing the changes.
    *
    * @param dbh
    * @param json
@@ -1125,20 +1227,20 @@ public class ColumnProperties {
     String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
     FooterMode footerMode = (joFootMode == null) ? FooterMode.none : FooterMode.valueOf(joFootMode);
 
-    JoinColumn joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
+    ArrayList<JoinColumn> joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
     Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
     ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChildren;
-    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_MAP);
+    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_LIST);
     ArrayList<String> listChoices = (joListChoices == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChoices;
 
     ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
-        listChildren, joins, (Boolean) jo.get(JSON_KEY_IS_PERSISTED),
-        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME),
+        listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
+        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
-        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode,
+        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,
         typeOfStore);
 
     return cp;
@@ -1187,7 +1289,7 @@ public class ColumnProperties {
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
-          ColumnType.TEXT.name(), value);
+          ColumnType.STRING.name(), value);
     }
     Log.d(TAG, "updated string property " + property + " to " + value + " for table " + tableId
         + ", column " + elementKey);
