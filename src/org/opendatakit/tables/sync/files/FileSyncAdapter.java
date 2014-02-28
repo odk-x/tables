@@ -27,6 +27,8 @@ import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -76,8 +78,17 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     DbHelper dbh = DbHelper.getDbHelper(context, appName);
     TableProperties[] tableProperties = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
+
+    AggregateSynchronizer sync;
+    try {
+      sync = new AggregateSynchronizer(appName, aggregateUri, authToken);
+    } catch (InvalidAuthTokenException e) {
+      e.printStackTrace();
+      throw new IllegalStateException("Access Token is invalid");
+    }
+
     for (TableProperties tableProp : tableProperties) {
-      SyncUtilities.pullKeyValueEntriesForTable(dbh, appName,
+      SyncUtilities.pullKeyValueEntriesForTable(sync, dbh, appName,
           aggregateUri, authToken, tableProp);
       /*
        * We are going to hack something together for now that updates the list

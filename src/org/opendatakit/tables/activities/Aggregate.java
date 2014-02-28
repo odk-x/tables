@@ -39,6 +39,7 @@ import org.opendatakit.tables.sync.TableResult;
 import org.opendatakit.tables.sync.TablesContentProvider;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.opendatakit.tables.tasks.FileUploaderTask;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -423,21 +424,20 @@ public class Aggregate extends SherlockActivity {
           return null;
         }
         String aggregateUri = prefs.getServerUri(); // uri of our server.
-        URI uriBase = URI.create(aggregateUri).normalize();
-        URI uri = uriBase.resolve("/odktables/files/").normalize();
+        URI uri = SyncUtilities.normalizeUri(aggregateUri, SyncUtil.getFileServerPath());
         URI fileServletUri = uri;
         List<ClientHttpRequestInterceptor> interceptors =
             new ArrayList<ClientHttpRequestInterceptor>();
         String accessToken = prefs.getAuthToken();
 
-        interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken));
+        interceptors.add(new AggregateRequestInterceptor(SyncUtilities.normalizeUri(aggregateUri, "/"), accessToken));
 //        ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 //        ClientHttpRequest request =
 //            factory.createRequest(fileServletUri, HttpMethod.POST);
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
         String fileName = "helloServer.txt"; // just a hardcoded dummy
         File file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + fileName);
-        URI filePostUri = fileServletUri.resolve(TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName).normalize();
+        URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName);
         // from http://agilesc.barryku.com/?p=243
 //        MultiValueMap<String, Object> parts =
 //            new LinkedMultiValueMap<String, Object>();

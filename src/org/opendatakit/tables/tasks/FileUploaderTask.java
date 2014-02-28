@@ -25,6 +25,7 @@ import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInte
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.sync.SyncUtil;
+import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
@@ -64,13 +65,12 @@ public class FileUploaderTask extends AsyncTask<String, Integer,
     this.mContext = context;
     this.mAppId = appId;
     this.mAggregateUri = aggregateUri;
-    URI uriBase = URI.create(aggregateUri).normalize();
-    URI uri = uriBase.resolve(SyncUtil.getFileServerPath()).normalize();
+    URI uri = SyncUtilities.normalizeUri(mAggregateUri, SyncUtil.getFileServerPath());
     this.mFileServerPath = uri.toString();
     // Now get the rest template.
     List<ClientHttpRequestInterceptor> interceptors =
         new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(uriBase, authtoken));
+    interceptors.add(new AggregateRequestInterceptor(SyncUtilities.normalizeUri(mAggregateUri, "/"), authtoken));
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     rt.setInterceptors(interceptors);
     this.mRestTemplate = rt;
@@ -87,8 +87,7 @@ public class FileUploaderTask extends AsyncTask<String, Integer,
   private boolean uploadOneFile(FileSystemResource file, String relativePath,
       Outcome runningOutcome) {
     String escapedPath = SyncUtil.formatPathForAggregate(relativePath);
-    URI filePostUri =
-        URI.create(mFileServerPath).resolve(mAppId + escapedPath).normalize();
+    URI filePostUri = SyncUtilities.normalizeUri(mAggregateUri, mAppId + escapedPath);
     URI responseUri = this.mRestTemplate.postForLocation(filePostUri, file);
     runningOutcome.mResults.put(relativePath, "tried something");
     return true;

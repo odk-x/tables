@@ -27,14 +27,19 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.zip.GZIPInputStream;
 
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
@@ -55,6 +60,7 @@ import org.opendatakit.aggregate.odktables.rest.serialization.OdkJsonHttpMessage
 import org.opendatakit.aggregate.odktables.rest.serialization.OdkXmlHttpMessageConverter;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
+import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
@@ -72,6 +78,7 @@ import org.opendatakit.tables.sync.TextPlainHttpMessageConverter;
 import org.opendatakit.tables.sync.exceptions.AccessDeniedException;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.exceptions.RequestFailureException;
+import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.opendatakit.tables.utils.FileUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.core.io.FileSystemResource;
@@ -115,6 +122,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String VALUE_TRUE = "true";
 
   private final String appName;
+  private final String aggregateUri;
   private final String accessToken;
   private final RestTemplate rt;
   private final HttpHeaders requestHeaders;
@@ -134,17 +142,15 @@ public class AggregateSynchronizer implements Synchronizer {
   public AggregateSynchronizer(String appName, String aggregateUri, String accessToken)
       throws InvalidAuthTokenException {
     this.appName = appName;
-    URI uri = URI.create(aggregateUri).normalize();
-    uri = uri.resolve("/odktables/" + appName + "/").normalize();
-    this.baseUri = uri;
+    this.aggregateUri = aggregateUri;
+    this.baseUri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/" + appName + "/");
 
     this.mHttpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = mHttpClient.getParams();
     HttpConnectionParams.setConnectionTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
     HttpConnectionParams.setSoTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
 
-    URI uriBase = URI.create(aggregateUri).normalize();
-    URI fileManifestUri = uriBase.resolve(FILE_MANIFEST_PATH).normalize();
+    URI fileManifestUri = SyncUtilities.normalizeUri(aggregateUri, FILE_MANIFEST_PATH);
     this.mFileManifestUri = fileManifestUri;
     this.mFilesUri = getFilePathURI(aggregateUri);
     this.rt = new RestTemplate();
@@ -214,7 +220,7 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources = new HashMap<String, TableResource>();
 
     List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(uriBase, accessToken, acceptableMediaTypes));
+    interceptors.add(new AggregateRequestInterceptor(SyncUtilities.normalizeUri(aggregateUri, "/"), accessToken, acceptableMediaTypes));
 
     this.rt.setInterceptors(interceptors);
 
@@ -245,8 +251,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * @return
    */
   public static URI getFilePathURI(String aggregateUri) {
-    URI filesUri = URI.create(aggregateUri).normalize();
-    filesUri = filesUri.resolve(FILES_PATH).normalize();
+    URI filesUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH);
     return filesUri;
   }
 
@@ -324,7 +329,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
 
     // build request
-    URI uri = baseUri.resolve(tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
     TableDefinition definition = new TableDefinition(tableId, syncTag.getSchemaETag(), columns);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
@@ -358,7 +363,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private TableResource refreshResource(String tableId) throws IOException {
-    URI uri = baseUri.resolve(tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
     TableResource resource;
     try {
       resource = rt.getForObject(uri, TableResource.class);
@@ -378,7 +383,8 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @Override
   public void deleteTable(String tableId) {
-    rt.delete(baseUri.resolve(tableId));
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
+    rt.delete(uri);
   }
 
   /*
@@ -444,10 +450,10 @@ public class AggregateSynchronizer implements Synchronizer {
     if (!newTag.getDataETag().equals(currentTag.getDataETag())) {
       URI url;
       if (currentTag.getDataETag() == null) {
-        url = URI.create(resource.getDataUri());
+        url = SyncUtilities.normalizeUri(resource.getDataUri(), "/");;
       } else {
         String diffUri = resource.getDiffUri();
-        url = URI.create(diffUri + "?data_etag=" + currentTag.getDataETag()).normalize();
+        url = SyncUtilities.normalizeUri(diffUri, "?data_etag=" + currentTag.getDataETag());
       }
       RowResourceList rows;
       try {
@@ -491,8 +497,7 @@ public class AggregateSynchronizer implements Synchronizer {
             rowToInsertOrUpdate.getSavepointTimestamp(), rowToInsertOrUpdate.getSavepointCreator(),
             rowToInsertOrUpdate.getValues());
 
-        URI url = URI.create(
-            resource.getDataUri() + "/" + row.getRowId()).normalize();
+        URI url = SyncUtilities.normalizeUri(resource.getDataUri(), row.getRowId());
         HttpEntity<Row> requestEntity = new HttpEntity<Row>(row, requestHeaders);
         ResponseEntity<RowResource> insertedEntity;
         try {
@@ -522,7 +527,7 @@ public class AggregateSynchronizer implements Synchronizer {
     SyncTag syncTag = currentSyncTag;
     String lastKnownServerDataTag = null; // the data tag of the whole table.
     String rowId = rowToDelete.getRowId();
-    URI url = URI.create(resource.getDataUri() + "/" + rowId).normalize();
+    URI url = SyncUtilities.normalizeUri(resource.getDataUri(), rowId);
     try {
       ResponseEntity<String> response = rt.exchange(url, HttpMethod.DELETE, null, String.class);
       lastKnownServerDataTag = response.getBody();
@@ -710,8 +715,7 @@ public class AggregateSynchronizer implements Synchronizer {
     File file = new File(wholePathToFile);
     FileSystemResource resource = new FileSystemResource(file);
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = URI.create(mFilesUri.toString())
-        .resolve(appName + File.separator + escapedPath).normalize();
+    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + File.separator + escapedPath);
     Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
@@ -730,8 +734,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   public URI getFilePostUri(String appName, String pathRelativeToAppFolder) {
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = URI.create(mFilesUri.toString())
-        .resolve(appName + File.separator + escapedPath).normalize();
+    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, appName + File.separator + escapedPath);
     return filePostUri;
   }
 
@@ -790,7 +793,7 @@ public class AggregateSynchronizer implements Synchronizer {
     }
   }
 
-  private void downloadFile(File f, String downloadUrl) throws Exception {
+  public void downloadFile(File f, String downloadUrl) throws Exception {
     URI uri = null;
     try {
       Log.i(TAG, "[downloadFile] downloading at url: " + downloadUrl);
@@ -815,6 +818,20 @@ public class AggregateSynchronizer implements Synchronizer {
 
       // set up request...
       HttpGet req = new HttpGet(downloadUrl);
+      req.setHeader(ApiConstants.ACCEPT_CONTENT_ENCODING_HEADER, ApiConstants.GZIP_CONTENT_ENCODING);
+      req.setHeader(ApiConstants.OPEN_DATA_KIT_VERSION_HEADER, ApiConstants.OPEN_DATA_KIT_VERSION);
+      GregorianCalendar g = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+      g.setTime(new Date());
+      SimpleDateFormat formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss zz");
+      formatter.setCalendar(g);
+      req.setHeader(ApiConstants.DATE_HEADER, formatter.format(new Date()));
+
+      if (accessToken != null && uri != null) {
+        if (uri.getHost().equals(baseUri.getHost())
+            && uri.getPort() == baseUri.getPort()) {
+          req.setHeader("Authorization", "Bearer " + accessToken);
+        }
+      }
 
       HttpResponse response = null;
       try {
@@ -834,7 +851,23 @@ public class AggregateSynchronizer implements Synchronizer {
         BufferedInputStream is = null;
         BufferedOutputStream os = null;
         try {
-          InputStream isRaw = response.getEntity().getContent();
+          Header[] encodings = response.getHeaders(ApiConstants.CONTENT_ENCODING_HEADER);
+          boolean isCompressed = false;
+          if (encodings != null ) {
+            for ( int i = 0 ; i < encodings.length ; ++i ) {
+              if ( encodings[i].getValue().equalsIgnoreCase(ApiConstants.GZIP_CONTENT_ENCODING) ) {
+                isCompressed = true;
+                break;
+              }
+            }
+          }
+          InputStream isRaw;
+          if ( isCompressed ) {
+            isRaw = new GZIPInputStream(response.getEntity().getContent());
+          } else {
+            isRaw = response.getEntity().getContent();
+          }
+
           is = new BufferedInputStream(isRaw);
           os = new BufferedOutputStream(new FileOutputStream(f));
           byte buf[] = new byte[8096];

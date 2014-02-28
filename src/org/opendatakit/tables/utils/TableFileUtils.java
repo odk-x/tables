@@ -39,18 +39,18 @@ public class TableFileUtils {
 
   /** The default app name for ODK Tables */
   public static final String ODK_TABLES_APP_NAME = "tables";
-  
+
   /** The name of the output folder, where files are output from the app. */
   public static final String OUTPUT_FOLDER_NAME = "output";
-  
+
   /** The name of the assets folder. */
   public static final String ASSETS_FOLDER_NAME = "assets";
-  
+
   /** The name of the folder where the debug objects are written. */
   public static final String DEBUG_FOLDER_NAME = "debug";
 
   /** Filename for the top-level configuration file */
-  private static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME = 
+  private static final String ODK_TABLES_CONFIG_PROPERTIES_FILENAME =
       "config.properties";
 
   /** Filename for a csv file used for joining files (?) */
@@ -59,25 +59,22 @@ public class TableFileUtils {
   /** Timeout (in ms) we specify for each http request */
   public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 
-  /** URI from base to get the manifest for a server. */
-  public static final String MANIFEST_ADDR_URI = "/tableKeyValueManifest";
-
   /** The url parameter name of the tableId. */
   public static final String TABLE_ID_PARAM = "tableId";
 
   /** The response type expected from the server for a json object. */
   public static final String RESP_TYPE_JSON = "application/json; charset=utf-8";
-  
+
   /** The name of the directory holding the tables javascript. */
   public static final String TABLES_JS_DIR = "js";
   /** The name of the directory holding the graphing files. */
   public static final String TABLES_GRAPH_DIR = "graph";
   /** The name of the base graphing file. */
   private static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
-  
+
   /** The name of the file that is rendered as the custom user home screen. */
   private static final String USER_HOME_SCREEN_FILE_NAME = "index.html";
-  
+
   /**
    * Get all the files under the given folder, excluding those directories that
    * are the concatenation of folder and a member of excluding. If the member
@@ -160,7 +157,7 @@ public class TableFileUtils {
     }
     return relativePaths;
   }
-  
+
   /**
    * Get the path of the file relative to the Tables app.
    * @param absolutePath
@@ -170,7 +167,7 @@ public class TableFileUtils {
     File file = new File(absolutePath);
     return ODKFileUtils.asRelativePath(ODK_TABLES_APP_NAME, file);
   }
-  
+
   /**
    * Get the output folder for the given app.
    * @param appName
@@ -181,7 +178,7 @@ public class TableFileUtils {
     String result = appFolder + File.separator + OUTPUT_FOLDER_NAME;
     return result;
   }
-  
+
   /**
    * Get the assets folder for the given app.
    * @param appName
@@ -192,18 +189,18 @@ public class TableFileUtils {
     String result = appFolder + File.separator + ASSETS_FOLDER_NAME;
     return result;
   }
-  
+
   /**
    * Get the path to the assets folder for the Tables app. This is a
-   * convenience method and is equivalent to calling 
-   * {@link #getAssetsFolder(String)} with 
+   * convenience method and is equivalent to calling
+   * {@link #getAssetsFolder(String)} with
    * {@link TableFileUtils#ODK_TABLES_APP_NAME}.
    * @return
    */
   public static String getTablesAssetsFolder() {
     return getAssetsFolder(TableFileUtils.ODK_TABLES_APP_NAME);
   }
-  
+
   /**
    * Get the path to the user-defined home screen file.
    * @param appName
@@ -211,13 +208,13 @@ public class TableFileUtils {
    */
   public static String getUserHomeScreenFile(String appName) {
     // We're going to assume that it is located at assets/index.html.
-    String result = 
-        getAssetsFolder(appName) + 
-        File.separator + 
+    String result =
+        getAssetsFolder(appName) +
+        File.separator +
         USER_HOME_SCREEN_FILE_NAME;
     return result;
   }
-  
+
   /**
    * Get the path to the configuration file for the given app.
    * @param appName
@@ -225,13 +222,13 @@ public class TableFileUtils {
    */
   public static String getConfigurationFile(String appName) {
     String assetsFolder = getAssetsFolder(appName);
-    String result = 
-        assetsFolder + 
-        File.separator + 
+    String result =
+        assetsFolder +
+        File.separator +
         ODK_TABLES_CONFIG_PROPERTIES_FILENAME;
     return result;
   }
-  
+
   /**
    * Get the path to the configuration file for ODK Tables.
    * @return
@@ -240,9 +237,9 @@ public class TableFileUtils {
     String result = getConfigurationFile(ODK_TABLES_APP_NAME);
     return result;
   }
-  
+
   /**
-   * Convenience method equivalent to calling 
+   * Convenience method equivalent to calling
    * {@link TableFileUtils#getUserHomeScreenFile(String)} with
    * {@link TableFileUtils#ODK_TABLES_APP_NAME}.
    * @return
@@ -250,22 +247,22 @@ public class TableFileUtils {
   public static String getTablesHomeScreenFile() {
     return getUserHomeScreenFile(TableFileUtils.ODK_TABLES_APP_NAME);
   }
-  
+
   /**
    * Get the path of the base file used for Tables graphing, relative to the
    * app folder.
    * @return
    */
   public static String getRelativePathToGraphFile() {
-    String frameworkPath = 
+    String frameworkPath =
         ODKFileUtils.getFrameworkFolder(TableFileUtils.ODK_TABLES_APP_NAME);
-    String result = 
-        frameworkPath + 
+    String result =
+        frameworkPath +
         File.separator +
         TABLES_GRAPH_BASE_FILE_NAME;
     return result;
   }
-  
+
   /**
    * Get the path to the debug folder, where the control and data json for
    * debugging purposes are output. Creates the necessary directory structure.
@@ -278,7 +275,7 @@ public class TableFileUtils {
     debugOutputFolder.mkdirs();
     return result;
   }
-  
+
   /**
    * Get the output folder for the Tables app.
    * @return
@@ -286,7 +283,7 @@ public class TableFileUtils {
   public static String getOutputFolder() {
     return getOutputFolder(TableFileUtils.ODK_TABLES_APP_NAME);
   }
-  
+
   /**
    * Returns true if a user-defined home screen file exists at the correct
    * location.
@@ -297,9 +294,9 @@ public class TableFileUtils {
     File homeScreenFile = new File(path);
     return homeScreenFile.exists();
   }
-  
+
   /**
-   * Convenience method equivalent to calling 
+   * Convenience method equivalent to calling
    * {@link #homeScreenFileExists(String)} with
    * {@link #ODK_TABLES_APP_NAME}.
    * @return
@@ -307,7 +304,7 @@ public class TableFileUtils {
   public static boolean tablesHomeScreenFileExists() {
     return homeScreenFileExists(ODK_TABLES_APP_NAME);
   }
-  
+
   /**
    * Returns true if a configuration file exists at the correct
    * location.
@@ -318,10 +315,10 @@ public class TableFileUtils {
     File configurationFile = new File(path);
     return configurationFile.exists();
   }
-  
+
   /**
-   * Convenience method equivalent to calling 
-   * {@link #configurationFileExists(String)} with 
+   * Convenience method equivalent to calling
+   * {@link #configurationFileExists(String)} with
    * {@link #ODK_TABLES_APP_NAME}.
    * @return
    */
