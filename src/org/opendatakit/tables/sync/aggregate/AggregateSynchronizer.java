@@ -114,6 +114,8 @@ public class AggregateSynchronizer implements Synchronizer {
   private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
   /** Path to the file servlet on the Aggregate server. */
   private static final String FILES_PATH = "/odktables/files/";
+  /** Path to the tables servlet (the one that manages table definitions) on the Aggregate server. */
+  private static final String TABLES_PATH = "/odktables/tables/";
 
   private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
   private static final String FILE_MANIFEST_PARAM_TABLE_ID = "table_id";
@@ -126,8 +128,9 @@ public class AggregateSynchronizer implements Synchronizer {
   private final String accessToken;
   private final RestTemplate rt;
   private final HttpHeaders requestHeaders;
-  private final URI baseUri;
   private final Map<String, TableResource> resources;
+  /** normalized aggregateUri */
+  private final URI baseUri;
   /** The uri for the file manifest on aggregate. */
   private final URI mFileManifestUri;
   /** The uri for the files on aggregate. */
@@ -143,7 +146,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throws InvalidAuthTokenException {
     this.appName = appName;
     this.aggregateUri = aggregateUri;
-    this.baseUri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/" + appName + "/");
+    this.baseUri = SyncUtilities.normalizeUri(aggregateUri, "/");
 
     this.mHttpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = mHttpClient.getParams();
@@ -220,7 +223,7 @@ public class AggregateSynchronizer implements Synchronizer {
     this.resources = new HashMap<String, TableResource>();
 
     List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
-    interceptors.add(new AggregateRequestInterceptor(SyncUtilities.normalizeUri(aggregateUri, "/"), accessToken, acceptableMediaTypes));
+    interceptors.add(new AggregateRequestInterceptor(this.baseUri, accessToken, acceptableMediaTypes));
 
     this.rt.setInterceptors(interceptors);
 
@@ -295,7 +298,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
     TableResourceList tableResources;
     try {
-      tableResources = rt.getForObject(baseUri, TableResourceList.class);
+      URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH);
+      tableResources = rt.getForObject(uri, TableResourceList.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
     }
@@ -329,7 +333,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
 
     // build request
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
     TableDefinition definition = new TableDefinition(tableId, syncTag.getSchemaETag(), columns);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
@@ -363,7 +367,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private TableResource refreshResource(String tableId) throws IOException {
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
     TableResource resource;
     try {
       resource = rt.getForObject(uri, TableResource.class);
@@ -383,7 +387,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @Override
   public void deleteTable(String tableId) {
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, "/odktables/tables/" + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
     rt.delete(uri);
   }
 
@@ -734,7 +738,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   public URI getFilePostUri(String appName, String pathRelativeToAppFolder) {
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, appName + File.separator + escapedPath);
+    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + File.separator + escapedPath);
     return filePostUri;
   }
 
