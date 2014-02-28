@@ -40,6 +40,7 @@ public class Tables extends Application {
 
   private synchronized void startServer() {
     if (server == null || !server.isAlive()) {
+      stopServer();
       SimpleWebServer testing = new SimpleWebServer();
       try {
         testing.start();
