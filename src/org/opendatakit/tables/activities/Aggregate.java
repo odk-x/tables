@@ -436,7 +436,7 @@ public class Aggregate extends SherlockActivity {
         // TODO: this is not used and untested.
 
         String aggregateUri = prefs.getServerUri(); // uri of our server.
-        URI uri = SyncUtilities.normalizeUri(aggregateUri, SyncUtil.getFileServerPath());
+        URI uri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + TableFileUtils.ODK_TABLES_APP_NAME + "/");
         URI fileServletUri = uri;
         List<ClientHttpRequestInterceptor> interceptors =
             new ArrayList<ClientHttpRequestInterceptor>();
@@ -449,7 +449,7 @@ public class Aggregate extends SherlockActivity {
         ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
         String fileName = "helloServer.txt"; // just a hardcoded dummy
         File file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + fileName);
-        URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, SyncUtil.getFileServerPath() + TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName);
+        URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName);
         // from http://agilesc.barryku.com/?p=243
 //        MultiValueMap<String, Object> parts =
 //            new LinkedMultiValueMap<String, Object>();

@@ -168,30 +168,31 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         Log.e(TAG, "Unexpected exception getting table list", e);
       }
 
-      // filter tables to remove ones already downloaded
-      if (tables != null) {
-        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
-        // we're going to check for downloaded tables ONLY in the server store,
-        // b/c there will only be UUID collisions if the tables have been
-        // downloaded, which means they must be in the server KVS. The
-        // probability of a user defined table, which would NOT have entries
-        // in the server KVS, having the same UUID as another table is
-        // virtually zero.
-        TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
-            KeyValueStore.Type.SERVER);
-        for (TableProperties tp : props) {
-          for ( int i = 0 ; i < tables.size() ; ++i ) {
-            TableResource table = tables.get(i);
-            if ( table.getTableId().equals(tp.getTableId()) ) {
-              SyncTag serverTag = new SyncTag(table.getDataETag(), table.getPropertiesETag(), table.getSchemaETag());
-              if ( serverTag.equals(tp.getSyncTag()) ) {
-                tables.remove(i);
-              }
-              break;
-            }
-          }
-        }
-      }
+      // we may want to download data from the server even if we already have data locally.
+//      // filter tables to remove ones already downloaded
+//      if (tables != null) {
+//        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
+//        // we're going to check for downloaded tables ONLY in the server store,
+//        // b/c there will only be UUID collisions if the tables have been
+//        // downloaded, which means they must be in the server KVS. The
+//        // probability of a user defined table, which would NOT have entries
+//        // in the server KVS, having the same UUID as another table is
+//        // virtually zero.
+//        TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
+//            KeyValueStore.Type.SERVER);
+//        for (TableProperties tp : props) {
+//          for ( int i = 0 ; i < tables.size() ; ++i ) {
+//            TableResource table = tables.get(i);
+//            if ( table.getTableId().equals(tp.getTableId()) ) {
+//              SyncTag serverTag = new SyncTag(table.getDataETag(), table.getPropertiesETag(), table.getSchemaETag());
+//              if ( serverTag.equals(tp.getSyncTag()) ) {
+//                tables.remove(i);
+//              }
+//              break;
+//            }
+//          }
+//        }
+//      }
 
       return tables;
     }

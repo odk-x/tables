@@ -28,8 +28,10 @@ import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
 
@@ -45,8 +47,9 @@ public class AccountInfoActivity extends SherlockActivity {
   public static final String INTENT_EXTRAS_ACCOUNT = "account";
 
   private final static int WAITING_ID = 1;
+  private final static int CALLBACK_DIALOG_INTENT_ID = 2;
   private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
-  private boolean shownDialog = false;
+  private AccountManagerFuture<Bundle> request = null;
 
   /**
    * Activity startup.
@@ -63,16 +66,18 @@ public class AccountInfoActivity extends SherlockActivity {
   protected void onResume() {
     super.onResume();
     Intent intent = getIntent();
-    AccountManager accountManager = AccountManager.get(getApplicationContext());
-    Account account = (Account) intent.getExtras().get(INTENT_EXTRAS_ACCOUNT);
-    accountManager.getAuthToken(account, authString, null, this, new AuthTokenCallback(), null);
-    showDialog(WAITING_ID);
+    if ( request == null ) {
+      AccountManager accountManager = AccountManager.get(getApplicationContext());
+      Account account = (Account) intent.getExtras().get(INTENT_EXTRAS_ACCOUNT);
+      request = accountManager.getAuthToken(account, authString, null, this, new AuthTokenCallback(), null);
+      showDialog(WAITING_ID);
+    } else if (request.isCancelled() || request.isDone()) {
+      failedAuthToken();
+    }
   }
 
   /**
    * Helper class to handle getting the auth token.
-   *
-   * @author cswenson@google.com (Christopher Swenson)
    */
   private class AuthTokenCallback implements AccountManagerCallback<Bundle> {
     @Override
@@ -82,24 +87,30 @@ public class AccountInfoActivity extends SherlockActivity {
         bundle = result.getResult();
         Intent intent = (Intent) bundle.get(AccountManager.KEY_INTENT);
 
-        // Check to see if the last intent failed.
-        if ((intent != null) && shownDialog) {
-          failedAuthToken();
-        }
-        // We need to call the intent to get the token.
-        else if (intent != null) {
-          // Use the bundle dialog.
-          shownDialog = true;
-          startActivityForResult(intent, WAITING_ID);
+        if (intent != null) {
+          // We need to call the intent to get the token.
+          startActivityForResult(intent, CALLBACK_DIALOG_INTENT_ID);
         } else {
           gotAuthToken(bundle);
         }
-      } catch (OperationCanceledException e) {
-        failedAuthToken();
-      } catch (AuthenticatorException e) {
-        failedAuthToken();
-      } catch (IOException e) {
-        failedAuthToken();
+      } catch (final OperationCanceledException e) {
+        e.printStackTrace();
+        AccountInfoActivity.this.runOnUiThread(new Runnable() {
+
+          @Override
+          public void run() {
+            Toast.makeText(AccountInfoActivity.this, "Authentication Cancelled: " + e.toString(), Toast.LENGTH_LONG).show();
+            failedAuthToken();
+          }});
+      } catch (final Exception e) {
+        e.printStackTrace();
+        AccountInfoActivity.this.runOnUiThread(new Runnable() {
+
+          @Override
+          public void run() {
+            Toast.makeText(AccountInfoActivity.this, "Authentication Failed: " + e.toString(), Toast.LENGTH_LONG).show();
+            failedAuthToken();
+          }});
       }
     }
   }
@@ -151,7 +162,6 @@ public class AccountInfoActivity extends SherlockActivity {
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    // TODO Auto-generated method stub
     super.onActivityResult(requestCode, resultCode, data);
   }
 

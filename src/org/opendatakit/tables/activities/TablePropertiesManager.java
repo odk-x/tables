@@ -33,7 +33,6 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.utils.LanguageUtil;
-import org.opendatakit.tables.utils.OutputUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 import org.opendatakit.tables.utils.TableFileUtils;

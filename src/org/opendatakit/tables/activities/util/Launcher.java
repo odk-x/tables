@@ -26,7 +26,6 @@ import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomAppView;
 import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Activity;
@@ -50,10 +49,10 @@ public class Launcher extends Activity {
         }
         // this should happen in another thread if possible
         CustomView.initCommonWebView(this);
-        // First determine if we're supposed to use a custom home screen. 
+        // First determine if we're supposed to use a custom home screen.
         // Do a check also to make sure the file actually exists.
         Preferences preferences = new Preferences(this);
-        if (preferences.getUseHomeScreen() && 
+        if (preferences.getUseHomeScreen() &&
             TableFileUtils.tablesHomeScreenFileExists()) {
           // launch it.
           Log.d(TAG, "homescreen file exists and is set to be used.");
@@ -62,7 +61,7 @@ public class Launcher extends Activity {
         } else {
           Log.d(TAG, "no homescreen file found, launching TableManager");
           // First set the prefs to false. This is useful in the case where
-          // someone has configured an app to use a home screen and then 
+          // someone has configured an app to use a home screen and then
           // deleted that file out from under it.
           preferences.setUseHomeScreen(false);
           // Launch the TableManager.

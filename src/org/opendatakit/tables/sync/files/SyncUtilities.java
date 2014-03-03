@@ -82,6 +82,7 @@ public class SyncUtilities {
     }
     term = term + additionalPathPortion;
     URI uri = uriBase.resolve(term).normalize();
+    Log.d(TAG, "normalizeUri: " + uri.toString());
     return uri;
   }
   /**
