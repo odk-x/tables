@@ -168,30 +168,31 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         Log.e(TAG, "Unexpected exception getting table list", e);
       }
 
-      // filter tables to remove ones already downloaded
-      if (tables != null) {
-        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
-        // we're going to check for downloaded tables ONLY in the server store,
-        // b/c there will only be UUID collisions if the tables have been
-        // downloaded, which means they must be in the server KVS. The
-        // probability of a user defined table, which would NOT have entries
-        // in the server KVS, having the same UUID as another table is
-        // virtually zero.
-        TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
-            KeyValueStore.Type.SERVER);
-        for (TableProperties tp : props) {
-          for ( int i = 0 ; i < tables.size() ; ++i ) {
-            TableResource table = tables.get(i);
-            if ( table.getTableId().equals(tp.getTableId()) ) {
-              SyncTag serverTag = new SyncTag(table.getDataETag(), table.getPropertiesETag(), table.getSchemaETag());
-              if ( serverTag.equals(tp.getSyncTag()) ) {
-                tables.remove(i);
-              }
-              break;
-            }
-          }
-        }
-      }
+      // we may want to download data from the server even if we already have data locally.
+//      // filter tables to remove ones already downloaded
+//      if (tables != null) {
+//        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
+//        // we're going to check for downloaded tables ONLY in the server store,
+//        // b/c there will only be UUID collisions if the tables have been
+//        // downloaded, which means they must be in the server KVS. The
+//        // probability of a user defined table, which would NOT have entries
+//        // in the server KVS, having the same UUID as another table is
+//        // virtually zero.
+//        TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
+//            KeyValueStore.Type.SERVER);
+//        for (TableProperties tp : props) {
+//          for ( int i = 0 ; i < tables.size() ; ++i ) {
+//            TableResource table = tables.get(i);
+//            if ( table.getTableId().equals(tp.getTableId()) ) {
+//              SyncTag serverTag = new SyncTag(table.getDataETag(), table.getPropertiesETag(), table.getSchemaETag());
+//              if ( serverTag.equals(tp.getSyncTag()) ) {
+//                tables.remove(i);
+//              }
+//              break;
+//            }
+//          }
+//        }
+//      }
 
       return tables;
     }
@@ -263,6 +264,18 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
+      TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
+                                      KeyValueStore.Type.SERVER);
+      TableProperties tpOriginal = null;
+      boolean tablePresent = false;
+      for ( TableProperties p : props ) {
+        if ( p.getTableId().equals(tableId) ) {
+          tablePresent = true;
+          tpOriginal.setSyncTag(new SyncTag(null, null, null));
+          break;
+        }
+      }
+
       TableResource tr;
       try {
         tr = synchronizer.getTable(tableId);
@@ -293,13 +306,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
-      tp.setSyncState(SyncState.rest);
+      tp.setSyncState(tablePresent ? SyncState.inserting : SyncState.rest);
       // We're going to say DO NOT sync media or nonMedia files, as since we're
       // downloading the table, there shouldn't be any. If for some crazy
       // reason there were (e.g. if they were created in the download process),
       // it shouldn't really matter.
 
-      processor.synchronizeTable(tp, true, false, false);
+      processor.synchronizeTable(tp, true, false, tablePresent);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);

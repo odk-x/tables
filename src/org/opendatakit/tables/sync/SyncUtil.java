@@ -38,19 +38,6 @@ public class SyncUtil {
   private static final String FORWARD_SLASH = "/";
 
   /**
-   * Get the path to the file server. Should be appended to the uri of the
-   * aggregate uri. Begins and ends with "/".
-   * @return
-   */
-  public static String getFileServerPath() {
-    return "/odktables/files/";
-  }
-
-  public static String getFileManifestServerPath() {
-    return "/odktables/filemanifest";
-  }
-
-  /**
    * Format a file path to be pushed up to aggregate. Essentially escapes the
    * string as for an html url, but leaves forward slashes. The path must begin
    * with a forward slash, as if starting at the root directory.

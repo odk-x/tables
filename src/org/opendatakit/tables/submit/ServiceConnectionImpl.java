@@ -137,7 +137,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
     for (String relativePath : relativePathsToAppFolderOnDevice) {
       String absolutePath = appFolder + File.separator + relativePath;
       String uploadUri =
-          AggregateSynchronizer.getFilePathURI(aggregateUri).toString();
+          AggregateSynchronizer.getFilePathURI(aggregateUri, appName).toString();
       uploadUri += relativePath;
       absolutePathToUploadUrl.put(absolutePath, uploadUri);
     }

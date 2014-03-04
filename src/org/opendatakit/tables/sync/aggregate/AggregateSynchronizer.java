@@ -113,7 +113,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
   /** Path to the file servlet on the Aggregate server. */
-  private static final String FILES_PATH = "/odktables/files/";
+  public static final String FILES_PATH = "/odktables/files/";
   /** Path to the tables servlet (the one that manages table definitions) on the Aggregate server. */
   private static final String TABLES_PATH = "/odktables/tables/";
 
@@ -126,6 +126,7 @@ public class AggregateSynchronizer implements Synchronizer {
   private final String appName;
   private final String aggregateUri;
   private final String accessToken;
+  private final RestTemplate tokenRt;
   private final RestTemplate rt;
   private final HttpHeaders requestHeaders;
   private final Map<String, TableResource> resources;
@@ -140,7 +141,7 @@ public class AggregateSynchronizer implements Synchronizer {
    * For downloading files. Should eventually probably switch to spring, but it
    * was idiotically complicated.
    */
-  private final HttpClient mHttpClient;
+  private final DefaultHttpClient mHttpClient;
 
   public AggregateSynchronizer(String appName, String aggregateUri, String accessToken)
       throws InvalidAuthTokenException {
@@ -153,21 +154,13 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpConnectionParams.setConnectionTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
     HttpConnectionParams.setSoTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
 
-    URI fileManifestUri = SyncUtilities.normalizeUri(aggregateUri, FILE_MANIFEST_PATH);
+    URI fileManifestUri = SyncUtilities.normalizeUri(aggregateUri, FILE_MANIFEST_PATH + appName + "/");
     this.mFileManifestUri = fileManifestUri;
-    this.mFilesUri = getFilePathURI(aggregateUri);
+    this.mFilesUri = getFilePathURI(aggregateUri, appName);
     this.rt = new RestTemplate();
+    this.tokenRt = new RestTemplate();
 
-    List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-    // plain text
-    converters.add(new TextPlainHttpMessageConverter());
-    // JSON conversion...
-    converters.add(new OdkJsonHttpMessageConverter(true));
-    // XML conversion...
-    converters.add(new OdkXmlHttpMessageConverter());
-
-    this.rt.setMessageConverters(converters);
-    this.rt.setErrorHandler(new ResponseErrorHandler() {
+    ResponseErrorHandler handler = new ResponseErrorHandler() {
 
       @Override
       public void handleError(ClientHttpResponse resp) throws IOException {
@@ -187,7 +180,10 @@ public class AggregateSynchronizer implements Synchronizer {
         org.springframework.http.HttpStatus status = resp.getStatusCode();
         int rc = status.value();
         return ( rc != HttpStatus.SC_OK );
-      }});
+      }
+    };
+    this.rt.setErrorHandler(handler);
+    this.tokenRt.setErrorHandler(handler);
 
     this.requestHeaders = new HttpHeaders();
 
@@ -226,16 +222,16 @@ public class AggregateSynchronizer implements Synchronizer {
     interceptors.add(new AggregateRequestInterceptor(this.baseUri, accessToken, acceptableMediaTypes));
 
     this.rt.setInterceptors(interceptors);
+    this.tokenRt.setInterceptors(interceptors);
 
     HttpClientAndroidlibRequestFactory factory = new HttpClientAndroidlibRequestFactory(WebUtils.createHttpClient(WebUtils.CONNECTION_TIMEOUT, 1));
     factory.setConnectTimeout(WebUtils.CONNECTION_TIMEOUT);
     factory.setReadTimeout(2*WebUtils.CONNECTION_TIMEOUT);
     this.rt.setRequestFactory(factory);
+    this.tokenRt.setRequestFactory(factory);
 
-    checkAccessToken(accessToken);
-    this.accessToken = accessToken;
+    List<HttpMessageConverter<?>> converters;
 
-    // undo work-around for erroneous gzip on auth token interaction
     converters = new ArrayList<HttpMessageConverter<?>>();
     // plain text
     converters.add(new TextPlainHttpMessageConverter());
@@ -244,6 +240,20 @@ public class AggregateSynchronizer implements Synchronizer {
     // XML conversion...
     converters.add(new OdkXmlHttpMessageConverter());
     this.rt.setMessageConverters(converters);
+
+    // undo work-around for erroneous gzip on auth token interaction
+    converters = new ArrayList<HttpMessageConverter<?>>();
+    // plain text
+    converters.add(new TextPlainHttpMessageConverter());
+    // JSON conversion...
+    converters.add(new OdkJsonHttpMessageConverter(true));
+    // XML conversion...
+    converters.add(new OdkXmlHttpMessageConverter());
+    this.tokenRt.setMessageConverters(converters);
+
+    checkAccessToken(accessToken);
+    this.accessToken = accessToken;
+
   }
 
   /**
@@ -253,15 +263,15 @@ public class AggregateSynchronizer implements Synchronizer {
    * @param aggregateUri
    * @return
    */
-  public static URI getFilePathURI(String aggregateUri) {
-    URI filesUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH);
+  public static URI getFilePathURI(String aggregateUri, String appName) {
+    URI filesUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + "/");
     return filesUri;
   }
 
   private void checkAccessToken(String accessToken) throws InvalidAuthTokenException {
     ResponseEntity<Object> responseEntity;
     try {
-      responseEntity = rt.getForEntity(TOKEN_INFO + URLEncoder.encode(accessToken, ApiConstants.UTF8_ENCODE), Object.class);
+      responseEntity = tokenRt.getForEntity(TOKEN_INFO + URLEncoder.encode(accessToken, ApiConstants.UTF8_ENCODE), Object.class);
       @SuppressWarnings("unused")
       Object o = responseEntity.getBody();
     } catch (HttpClientErrorException e) {
@@ -298,7 +308,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     TableResourceList tableResources;
     try {
-      URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH);
+      URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + appName + "/");
       tableResources = rt.getForObject(uri, TableResourceList.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
@@ -333,7 +343,7 @@ public class AggregateSynchronizer implements Synchronizer {
       throws IOException {
 
     // build request
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + appName + "/" + tableId);
     TableDefinition definition = new TableDefinition(tableId, syncTag.getSchemaETag(), columns);
     HttpEntity<TableDefinition> requestEntity = new HttpEntity<TableDefinition>(definition,
                                                                                 requestHeaders);
@@ -367,7 +377,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   private TableResource refreshResource(String tableId) throws IOException {
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + appName + "/" + tableId);
     TableResource resource;
     try {
       resource = rt.getForObject(uri, TableResource.class);
@@ -387,7 +397,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   @Override
   public void deleteTable(String tableId) {
-    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + tableId);
+    URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + appName + "/" + tableId);
     rt.delete(uri);
   }
 
@@ -666,7 +676,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
   public List<OdkTablesFileManifestEntry> getAppLevelFileManifest() throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_LEVEL_FILES, VALUE_TRUE);
     ResponseEntity<OdkTablesFileManifest> responseEntity;
     responseEntity = rt.exchange(uriBuilder.build().toString(),
@@ -676,7 +685,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
   public List<OdkTablesFileManifestEntry> getTableLevelFileManifest(String tableId) throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_TABLE_ID, tableId);
     ResponseEntity<OdkTablesFileManifest> responseEntity;
       responseEntity = rt.exchange(uriBuilder.build().toString(),
@@ -686,7 +694,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
   public List<OdkTablesFileManifestEntry> getFileManifestForAllFiles()  throws ResourceAccessException {
     Uri.Builder uriBuilder = Uri.parse(mFileManifestUri.toString()).buildUpon();
-    uriBuilder.appendQueryParameter(FILE_MANIFEST_PARAM_APP_ID, appName);
     ResponseEntity<OdkTablesFileManifest> responseEntity;
     responseEntity = rt.exchange(uriBuilder.build().toString(),
               HttpMethod.GET, null, OdkTablesFileManifest.class);
@@ -719,7 +726,7 @@ public class AggregateSynchronizer implements Synchronizer {
     File file = new File(wholePathToFile);
     FileSystemResource resource = new FileSystemResource(file);
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + File.separator + escapedPath);
+    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + "/" + escapedPath);
     Log.i(TAG, "[uploadFile] filePostUri: " + filePostUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
@@ -738,7 +745,7 @@ public class AggregateSynchronizer implements Synchronizer {
    */
   public URI getFilePostUri(String appName, String pathRelativeToAppFolder) {
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
-    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + File.separator + escapedPath);
+    URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, FILES_PATH + appName + "/" + escapedPath);
     return filePostUri;
   }
 
