@@ -264,6 +264,18 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
+      TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
+                                      KeyValueStore.Type.SERVER);
+      TableProperties tpOriginal = null;
+      boolean tablePresent = false;
+      for ( TableProperties p : props ) {
+        if ( p.getTableId().equals(tableId) ) {
+          tablePresent = true;
+          tpOriginal.setSyncTag(new SyncTag(null, null, null));
+          break;
+        }
+      }
+
       TableResource tr;
       try {
         tr = synchronizer.getTable(tableId);
@@ -294,13 +306,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
-      tp.setSyncState(SyncState.rest);
+      tp.setSyncState(tablePresent ? SyncState.inserting : SyncState.rest);
       // We're going to say DO NOT sync media or nonMedia files, as since we're
       // downloading the table, there shouldn't be any. If for some crazy
       // reason there were (e.g. if they were created in the download process),
       // it shouldn't really matter.
 
-      processor.synchronizeTable(tp, true, false, false);
+      processor.synchronizeTable(tp, true, false, tablePresent);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
