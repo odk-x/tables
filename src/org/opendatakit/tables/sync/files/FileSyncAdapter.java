@@ -75,6 +75,8 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
 
+    if ( aggregateUri == null || aggregateUri.length() == 0 ) return;
+
     DbHelper dbh = DbHelper.getDbHelper(context, appName);
     TableProperties[] tableProperties = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
         KeyValueStore.Type.SERVER);
