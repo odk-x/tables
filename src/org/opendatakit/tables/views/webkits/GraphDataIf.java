@@ -15,6 +15,11 @@ public class GraphDataIf {
 	public boolean isModified() {
 		return weakGraphData.get().isModified();
 	}
+	
+	// @JavascriptInterface
+	public boolean isModifiable() {
+		return weakGraphData.get().isModifiable();
+	}
 
 	// @JavascriptInterface
 	public boolean hasGraph(String graph) {
@@ -40,6 +45,26 @@ public class GraphDataIf {
 	public String getGraphRAxis() {
 		return weakGraphData.get().getGraphRAxis();
 	}
+	
+	// @JavascriptInterface
+	public String getBoxSource() {
+		return weakGraphData.get().getBoxSource();
+	}
+	
+	// @JavascriptInterface
+	public String getBoxValues() {
+		return weakGraphData.get().getBoxValues();
+	}
+	
+	// @JavascriptInterface
+	public String getBoxIterations() {
+		return weakGraphData.get().getBoxIterations();
+	}
+	
+	// @JavascriptInterface
+		public String getBoxOperation() {
+			return weakGraphData.get().getBoxOperation();
+		}
 
 	// @JavascriptInterface
 	public String getGraphOp() {
