@@ -268,7 +268,7 @@ implements DisplayActivity {
 			}
 		});
 		// Cancel Action
-		alert.setNegativeButton(getString(R.string.no),
+		alert.setNegativeButton(getString(R.string.cancel),
 				new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				// Canceled.
