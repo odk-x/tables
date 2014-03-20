@@ -104,9 +104,13 @@ public class CustomGraphView extends CustomView {
     }
     initView();
   }
-
+  
   public void createNewGraph(String graphName) {
     graphData.saveGraphToName(graphName);
+  }
+  
+  public void setPermissions(String givenGraphName, boolean isImmutable) {
+		graphData.setPermissions(givenGraphName, isImmutable);
   }
 
   public boolean hasGraph(String graph) {
@@ -133,6 +137,11 @@ public class CustomGraphView extends CustomView {
     private static final String Y_AXIS = "selecty";
     private static final String AGREG = "operation";
     private static final String R_AXIS = "selectr";
+    private static final String BOX_OPTION = "box_operation";
+    private static final String BOX_SOURCE = "box_source";
+    private static final String ITER_COUNTER = "iteration_counter";
+    private static final String BOX_VALUES = "box_values";
+    private static final String MODIFIABLE = "modifiable";
 
     private static final String TAG = "GraphData";
 
@@ -159,7 +168,23 @@ public class CustomGraphView extends CustomView {
       // TODO Auto-generated method stub
       return isModified;
     }
-
+    
+    // determine if the graph is mutable or only for viewing
+    public boolean isModifiable() {
+    	String result = aspectHelper.getString(MODIFIABLE);
+    	if (result == null) {
+    		return true;
+    	} else {
+    		return false;
+    	}
+	}
+    
+    public void setPermissions(String graphName, boolean isImmutable) {
+    	AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
+	    if(isImmutable) {
+	    	newAspectHelper.setString(MODIFIABLE, "immutable");
+	    }
+    }
     // If the graph is DEFAULT_GRAPH then the aspectHelper field is replaced
     // with the new name
     // and the DEFAULT_GRAPH aspect and contents are deleted
@@ -175,9 +200,16 @@ public class CustomGraphView extends CustomView {
           newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
           newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
           newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
-        }
-        if (getGraphType().equals("Scatter Plot")) {
+        } else if (getGraphType().equals("Scatter Plot")) {
           newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
+        } else if(getGraphType().equals("Line Graph")) {
+        	newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
+            newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
+        } else if(getGraphType().equals("Box Plot")) {
+        	newAspectHelper.setString("box_operation", aspectHelper.getString(BOX_OPTION));
+        	newAspectHelper.setString("box_source", aspectHelper.getString(BOX_SOURCE));
+        	newAspectHelper.setString("iteration_counter", aspectHelper.getString(ITER_COUNTER));
+        	newAspectHelper.setString("box_values", aspectHelper.getString(BOX_VALUES));
         }
       } else {
         newAspectHelper.setString(GRAPH_TYPE, "unset type");
@@ -203,7 +235,23 @@ public class CustomGraphView extends CustomView {
         return graphType;
       }
     }
+    
+    public String getBoxOperation() {
+    	return loadSelection(BOX_OPTION);
+    }
 
+    public String getBoxSource() {
+    	return loadSelection(BOX_SOURCE);
+    }
+    
+    public String getBoxValues() {
+    	return loadSelection(BOX_VALUES);
+    }
+    
+    public String getBoxIterations() {
+    	return loadSelection(ITER_COUNTER);
+    }
+    
     public String getGraphXAxis() {
       return loadSelection(X_AXIS);
     }

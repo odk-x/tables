@@ -257,7 +257,6 @@ implements DisplayActivity {
 					toastGraphNameError(getString(R.string.error_graph_name_spaces));
 					alertForNewGraphName(graphName.replace(' ', '_'));
 				} else if (view.hasGraph(graphName)) {
-					Log.d("stufftotest", "" + graphName);
 					handleOverwriteRequest(graphName);
 				} else {
 					// Create new graph
@@ -268,10 +267,8 @@ implements DisplayActivity {
 				}
 			}
 		});
-
-
 		// Cancel Action
-		alert.setNegativeButton(getString(R.string.cancel),
+		alert.setNegativeButton(getString(R.string.no),
 				new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				// Canceled.
@@ -299,6 +296,7 @@ implements DisplayActivity {
 				switch (which){
 				case DialogInterface.BUTTON_POSITIVE:
 					view.createNewGraph(givenGraphName);
+					view.setPermissions(givenGraphName, true);
 					backPressedWhileInGraph();
 					break;
 				case DialogInterface.BUTTON_NEGATIVE:
