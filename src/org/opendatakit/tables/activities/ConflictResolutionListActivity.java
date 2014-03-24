@@ -34,9 +34,13 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     String tableId =
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    DbHelper dbHelper = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbHelper = DbHelper.getDbHelper(this, appName);
     TableProperties tableProperties =
         TableProperties.getTablePropertiesForTable(dbHelper, tableId,
             KeyValueStore.Type.ACTIVE);
@@ -64,9 +68,11 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.e(TAG, "[onListItemClick] clicked position: " + position);
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
+    i.putExtra(Controller.INTENT_KEY_APP_NAME,
+        mConflictTable.getLocalTable().getTableProperties().getAppName());
     i.putExtra(Controller.INTENT_KEY_TABLE_ID,
         mConflictTable.getLocalTable().getTableProperties().getTableId());
-    String rowId = 
+    String rowId =
         this.mConflictTable.getLocalTable().getRowAtIndex(position).getRowId();
     i.putExtra(ConflictResolutionRowActivity.INTENT_KEY_ROW_ID, rowId);
     this.startActivity(i);

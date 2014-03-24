@@ -41,8 +41,12 @@ public class Launcher extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        if ( appName == null ) {
+          appName = TableFileUtils.getDefaultAppName();
+        }
         // ensuring directories exist
-        String dir = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        String dir = ODKFileUtils.getAppFolder(appName);
         File dirFile = new File(dir);
         if (!dirFile.exists()) {
             dirFile.mkdirs();
@@ -51,12 +55,13 @@ public class Launcher extends Activity {
         CustomView.initCommonWebView(this);
         // First determine if we're supposed to use a custom home screen.
         // Do a check also to make sure the file actually exists.
-        Preferences preferences = new Preferences(this);
+        Preferences preferences = new Preferences(this, appName);
         if (preferences.getUseHomeScreen() &&
-            TableFileUtils.tablesHomeScreenFileExists()) {
+            TableFileUtils.tablesHomeScreenFileExists(appName)) {
           // launch it.
           Log.d(TAG, "homescreen file exists and is set to be used.");
           Intent i = new Intent(this, CustomHomeScreenActivity.class);
+          i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
           startActivity(i);
         } else {
           Log.d(TAG, "no homescreen file found, launching TableManager");
@@ -65,13 +70,14 @@ public class Launcher extends Activity {
           // deleted that file out from under it.
           preferences.setUseHomeScreen(false);
           // Launch the TableManager.
-          String tableId = (new Preferences(this)).getDefaultTableId();
+          String tableId = (new Preferences(this, appName)).getDefaultTableId();
           if (tableId == null) {
               Intent i = new Intent(this, TableManager.class);
+              i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
               startActivity(i);
           } else {
               TableProperties tp = TableProperties.getTablePropertiesForTable(
-                      DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), tableId,
+                      DbHelper.getDbHelper(this, appName), tableId,
                       KeyValueStore.Type.ACTIVE);
               Controller.launchTableActivity(this, tp, true);
           }

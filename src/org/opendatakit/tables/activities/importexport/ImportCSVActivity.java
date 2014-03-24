@@ -19,6 +19,7 @@ import java.io.File;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
@@ -46,7 +47,7 @@ import android.widget.TextView;
  * An activity for importing CSV files to a table.
  */
 public class ImportCSVActivity extends AbstractImportExportActivity {
-  
+
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
 	/** view IDs (for use in testing) */
@@ -55,6 +56,8 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	public static int FILENAMEVAL_ID = 3;
 	public static int IMPORTBUTTON_ID = 4;
 
+	/* the appName context within which we are running */
+	private String appName;
 	/* the list of table properties */
 	private TableProperties[] tps;
 	/* the list of table names */
@@ -74,6 +77,10 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		if ( appName == null ) {
+		  appName = TableFileUtils.getDefaultAppName();
+		}
 		setContentView(getView());
 	}
 
@@ -96,7 +103,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		v.addView(fn);
 		pickFileButton = new Button(this);
 		pickFileButton.setText(getString(R.string.import_choose_csv_file));
-		pickFileButton.setOnClickListener(new PickFileButtonListener(getString(R.string.import_choose_csv_file)));
+		pickFileButton.setOnClickListener(new PickFileButtonListener(this.appName, getString(R.string.import_choose_csv_file)));
 		v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
@@ -108,7 +115,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
 		tps = TableProperties.getTablePropertiesForAll(
-		        DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE);
+		        DbHelper.getDbHelper(this, appName), KeyValueStore.Type.ACTIVE);
 		tableNames = new String[tps.length + 1];
 		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
@@ -158,13 +165,13 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	 */
 	private void importSubmission() {
 	   File file = ODKFileUtils.asAppFile(
-	          TableFileUtils.ODK_TABLES_APP_NAME, 
+	          appName,
 	          filenameValField.getText().toString().trim()
 	   );
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		ImportTask task = new ImportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
+		ImportTask task = new ImportTask(this, appName);
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
             showDialog(IMPORT_IN_PROGRESS_DIALOG);

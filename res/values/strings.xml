@@ -270,7 +270,9 @@
 	<string name="edit_row">Edit Row</string>
 	<string name="delete_table">Delete this Table</string>
 	<string name="confirm_delete_table">Confirm Delete Table</string>
+	<string name="confirm_remove_table">Confirm Remove Table from Device</string>
 	<string name="are_you_sure_delete_table">Please confirm deletion of table: %1$s</string>
+	<string name="are_you_sure_remove_table">Please confirm removal of table: %1$s from device</string>
 	<string name="confirm_delete_column">Confirm Delete Column</string>
 	<string name="are_you_sure_delete_column">Please confirm deletion of column: %1$s</string>
 	<string name="manage_conflicts">Manage Conflicts</string>
@@ -317,7 +319,7 @@
 	<string name="shortcut_name">ODK Tables App</string>
 	<string name="use_collect_form">Use ODK Collect form</string>
 	<string name="use_survey_form">Use ODK Survey form</string>
-	
+
 	<string name="use_index_html">Use custom home screen</string>
 	<string name="no_index">No assets/index.html</string>
 </resources>

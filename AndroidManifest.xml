@@ -87,14 +87,11 @@
         <activity android:name=".activities.TablePropertiesManager"/>
 		<activity android:name=".activities.ConflictResolutionListActivity" />
 		<activity android:name=".activities.ConflictResolutionRowActivity" />
-        <activity android:name=".activities.graphs.BarGraphDisplayActivity" />
-        <activity android:name=".activities.graphs.BoxStemGraphDisplayActivity" />
-        <activity android:name=".activities.graphs.GraphDisplayActivity"/>
-        <activity android:name=".activities.graphs.LineGraphDisplayActivity"/>
+        <activity android:name=".activities.graphs.GraphDisplayActivity" />
+        <activity android:name=".activities.graphs.GraphManagerActivity"/>
         <activity android:name=".activities.importexport.ImportExportActivity"/>
         <activity android:name=".activities.importexport.ImportCSVActivity"/>
         <activity android:name=".activities.importexport.ExportCSVActivity"/>
-        <activity android:name=".activities.settings.ListDisplaySettings"/>
         <activity android:name=".activities.settings.MainDisplaySettings"/>
         <activity
             android:name="org.opendatakit.tables.activities.AndroidShortcuts"

@@ -62,6 +62,8 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
   private CustomAppView mView;
   private LinearLayout mContainerView;
   private String mFilename;
+
+  private String mAppName;
   /**
    * The Preferences for dealing with importing based on a config file.
    */
@@ -70,9 +72,13 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( mAppName == null ) {
+      mAppName = TableFileUtils.getDefaultAppName();
+    }
     Log.d(TAG, "in onCreate()");
     setTitle("");
-    this.mPrefs = new Preferences(this);
+    this.mPrefs = new Preferences(this, mAppName);
     mContainerView = new LinearLayout(this);
     mContainerView.setLayoutParams(new ViewGroup.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -83,7 +89,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     if (extras != null && extras.getString(INTENT_KEY_FILENAME) != null) {
       mFilename = extras.getString(INTENT_KEY_FILENAME);
     } else {
-      mFilename = TableFileUtils.getTablesHomeScreenFile();
+      mFilename = TableFileUtils.getTablesHomeScreenFile(mAppName);
     }
     // It's possible that we're coming back after a rotation. In this case, a
     // InitializeTaskDialogFragment will still exist and we'll have to hook up
@@ -97,7 +103,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     } else {
       // We'll check to see if we need to begin an initialization task.
       if (ConfigurationUtil.isChanged(mPrefs)) {
-        InitializeTask initializeTask = new InitializeTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
+        InitializeTask initializeTask = new InitializeTask(this, mAppName);
         initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
         initalizeTaskDialogFragment.setTask(initializeTask);
         initalizeTaskDialogFragment.setCallbacks(this);
@@ -123,7 +129,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
-    mView = new CustomAppView(this, TableFileUtils.ODK_TABLES_APP_NAME, mFilename, this);
+    mView = new CustomAppView(this, mAppName, mFilename, this);
     mContainerView.addView(mView);
     mView.display();
   }
@@ -173,9 +179,9 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
       }
       TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), tableId,
+              DbHelper.getDbHelper(this, mAppName), tableId,
               KeyValueStore.Type.ACTIVE);
-      CollectUtil.handleOdkCollectAddReturn(this, TableFileUtils.ODK_TABLES_APP_NAME, tpToReceiveAdd,
+      CollectUtil.handleOdkCollectAddReturn(this, mAppName, tpToReceiveAdd,
           resultCode, data);
       break;
     }
@@ -195,6 +201,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     switch (item.getItemId()) {
     case MENU_ITEM_TABLE_MANAGER:
       Intent i = new Intent(this, TableManager.class);
+      i.putExtra(Controller.INTENT_KEY_APP_NAME, mAppName);
       startActivity(i);
       return true;
     default:

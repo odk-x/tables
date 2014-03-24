@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
+import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -112,11 +112,15 @@ public class TableActivity extends SherlockFragmentActivity
   private boolean mIsOverview;
   private Activity mActivity;
 
-  private String mAppName = TableFileUtils.ODK_TABLES_APP_NAME;
+  private String mAppName;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( mAppName == null ) {
+      mAppName = TableFileUtils.getDefaultAppName();
+    }
     setContentView(R.layout.standard_table_layout);
 
     mActivity = this;
@@ -480,29 +484,37 @@ public class TableActivity extends SherlockFragmentActivity
         return true;
       case MENU_ITEM_ID_DISPLAY_PREFERENCES:
         Intent k = new Intent(this, DisplayPrefsActivity.class);
+        k.putExtra(Controller.INTENT_KEY_APP_NAME, mTableProperties.getAppName());
         k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, mTableProperties.getTableId());
         startActivity(k);
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
         Intent tablePropertiesIntent = new Intent(this, TablePropertiesManager.class);
-        tablePropertiesIntent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID,
+        tablePropertiesIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            mTableProperties.getAppName());
+        tablePropertiesIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
         startActivityForResult(tablePropertiesIntent, Controller.RCODE_TABLE_PROPERTIES_MANAGER);
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
         Intent columnManagerIntent = new Intent(this, ColumnManager.class);
-        columnManagerIntent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID,
+        columnManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            mTableProperties.getAppName());
+        columnManagerIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
         startActivityForResult(columnManagerIntent, Controller.RCODE_COLUMN_MANAGER);
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
         Intent listViewManagerIntent = new Intent(this, ListViewManager.class);
-        listViewManagerIntent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID,
+        listViewManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            mTableProperties.getAppName());
+        listViewManagerIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
         startActivityForResult(listViewManagerIntent, Controller.RCODE_LIST_VIEW_MANAGER);
         return true;
       case android.R.id.home:
         Intent tableManagerIntent = new Intent(this, TableManager.class);
+        tableManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, mTableProperties.getAppName());
         // Add this flag so that you don't back from TableManager back
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -672,15 +684,8 @@ public class TableActivity extends SherlockFragmentActivity
         intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
       }
       break;
-    // case TableViewSettings.Type.LINE_GRAPH:
-    // intent = new Intent(context, LineGraphDisplayActivity.class);
-    // break;
-    // case TableViewSettings.Type.BOX_STEM:
-    // intent = new Intent(context, BoxStemGraphDisplayActivity.class);
-    // break;
-    // case TableViewSettings.Type.BAR_GRAPH:
     case Graph:
-      intent = new Intent(context, GraphDisplayActivity.class);
+      intent = new Intent(context, GraphManagerActivity.class);
       break;
     // case TableViewSettings.Type.MAP:
     case Map:
@@ -692,6 +697,7 @@ public class TableActivity extends SherlockFragmentActivity
     default:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
+    intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (searchStack != null) {
       String[] stackValues = new String[searchStack.size()];
@@ -716,8 +722,9 @@ public class TableActivity extends SherlockFragmentActivity
   public static void launchDetailActivity(Context context, TableProperties tp,
       UserTable table, int rowNum) {
     Intent intent = new Intent(context, DetailDisplayActivity.class);
+    intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, 
+    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID,
         table.getRowAtIndex(rowNum).getRowId());
     context.startActivity(intent);
   }

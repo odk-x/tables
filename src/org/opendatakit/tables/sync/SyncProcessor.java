@@ -456,6 +456,15 @@ public class SyncProcessor {
     return success;
   }
 
+  /**
+   * This is broken -- we can delete tables locally without deleting them on the
+   * server. We need a new mechanism.
+   *
+   * @param tp
+   * @param table
+   * @param tableResult
+   * @return
+   */
   private boolean synchronizeTableDeleting(TableProperties tp, DbTable table,
                                            TableResult tableResult) {
     String tableId = tp.getTableId();
@@ -476,7 +485,7 @@ public class SyncProcessor {
       // what was on the server.
       tableResult.setPushedLocalData(true);
       tableResult.setPushedLocalProperties(true);
-      tp.deleteTableActual();
+      tp.deleteTable();
       // If this worked, then we were successful. No field currently exists for
       // "updated local db" without there being incoming data changes from the
       // server, so we'll rely on an action of deleting and a status of

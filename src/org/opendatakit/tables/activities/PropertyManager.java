@@ -57,6 +57,7 @@ public class PropertyManager extends PreferenceActivity {
   public static final String INTENT_KEY_ELEMENT_KEY = "elementKey";
 
   // Private Fields
+  private String appName;
   private String tableId;
   private String elementKey;
   private TableProperties tp;
@@ -68,6 +69,10 @@ public class PropertyManager extends PreferenceActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
 
     // Set title of activity
     setTitle("ODK Tables > Column Property");
@@ -75,7 +80,7 @@ public class PropertyManager extends PreferenceActivity {
     // Column Name
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.elementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
     this.columnKVSH =
@@ -179,7 +184,7 @@ public class PropertyManager extends PreferenceActivity {
       }
       String joinTableId = (joins != null && joins.size() == 1) ? joins.get(0).getTableId() : null;
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(
-          DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME), KeyValueStore.Type.ACTIVE);
+          DbHelper.getDbHelper(this, appName), KeyValueStore.Type.ACTIVE);
       TableProperties selectedTp = null;
       String[] tableIds = new String[tps.length];
       String selectedTableId = tableIds[0] = null;
@@ -438,6 +443,8 @@ public class PropertyManager extends PreferenceActivity {
     protected void onClick() {
       Intent i = new Intent(PropertyManager.this,
           ColorRuleManagerActivity.class);
+      i.putExtra(
+          Controller.INTENT_KEY_APP_NAME, appName);
       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, elementKey);
       i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
           tp.getTableId());

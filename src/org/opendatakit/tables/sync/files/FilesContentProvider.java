@@ -15,8 +15,6 @@
  */
 package org.opendatakit.tables.sync.files;
 
-import org.opendatakit.tables.utils.TableFileUtils;
-
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -33,7 +31,6 @@ import android.net.Uri;
 public class FilesContentProvider extends ContentProvider {
 
   public static final String AUTHORITY = "org.opendatakit.tables.android.provider.files";
-  public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + TableFileUtils.ODK_TABLES_APP_NAME);
 
   // not including a URI. should there be one?
   public static final String MESSAGE = FilesContentProvider.class.getName()

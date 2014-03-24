@@ -22,6 +22,7 @@ import android.preference.PreferenceScreen;
 
 public class DisplayPrefsActivity extends PreferenceActivity {
   public static final String INTENT_KEY_TABLE_ID = "tableId";
+  private String appName;
   private Preferences prefs;
   private DbHelper dbh;
   private TableProperties tp;
@@ -33,7 +34,11 @@ public class DisplayPrefsActivity extends PreferenceActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    prefs = new Preferences(this);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
+    prefs = new Preferences(this, appName);
     // check if this activity was called from Controller, in which case it
     // would have an extra string "tableId" bundled in
     String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
@@ -42,7 +47,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       generalPreferences();
     } else {
       // was called from controller so it is table specific
-      dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+      dbh = DbHelper.getDbHelper(this, appName);
       tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
       kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
       customPreferences();
@@ -79,7 +84,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
      *********************************/
     CheckBoxPreference useHomescreenPref = new CheckBoxPreference(this);
     useHomescreenPref.setChecked(prefs.getUseHomeScreen());
-    if (TableFileUtils.tablesHomeScreenFileExists()) {
+    if (TableFileUtils.tablesHomeScreenFileExists(appName)) {
       useHomescreenPref.setTitle(R.string.use_index_html);
       useHomescreenPref.setEnabled(true);
     } else {
@@ -107,15 +112,13 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       public void onClick(DialogInterface dialog, int which) {
         // So now we have to write the data and control objects.
         OutputUtil.writeControlObject(
-            DisplayPrefsActivity.this,
-            TableFileUtils.ODK_TABLES_APP_NAME);
+            DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
         OutputUtil.writeAllDataObjects(
-            DisplayPrefsActivity.this,
-            TableFileUtils.ODK_TABLES_APP_NAME);
+            DisplayPrefsActivity.this,DisplayPrefsActivity.this.appName);
       }
     });
     mOutputDebugObjectsDialog = builder.create();
-    
+
     // The preference for debugging stuff.
     PreferenceCategory developerCategory = new PreferenceCategory(this);
     root.addPreference(developerCategory);

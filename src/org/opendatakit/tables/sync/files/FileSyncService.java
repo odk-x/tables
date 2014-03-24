@@ -15,8 +15,6 @@
  */
 package org.opendatakit.tables.sync.files;
 
-import org.opendatakit.tables.utils.TableFileUtils;
-
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -37,7 +35,7 @@ public class FileSyncService extends Service {
   public void onCreate() {
     synchronized(FILE_SYNC_ADAPTER_LOCK) {
       if (syncAdapter == null) {
-        syncAdapter = new FileSyncAdapter(getApplicationContext(), TableFileUtils.ODK_TABLES_APP_NAME, true);
+        syncAdapter = new FileSyncAdapter(getApplicationContext(), true);
       }
     }
   }

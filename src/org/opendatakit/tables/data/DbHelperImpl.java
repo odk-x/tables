@@ -33,10 +33,11 @@ public class DbHelperImpl {
 
     private static DbHelperImpl dbh = null;
 
+    private String appName;
     private DataModelDatabaseHelper mDbHelper;
 
     private DbHelperImpl(Context context, String appName) {
-      // TODO: make this app-centric
+      this.appName = appName;
       String path = ODKFileUtils.getWebDbFolder(appName);
 
       WebSqlDatabaseHelper h = new WebSqlDatabaseHelper(context, path);
@@ -46,6 +47,10 @@ public class DbHelperImpl {
          mDbHelper = new DataModelDatabaseHelper(defn.dbFile.getParent(),
                defn.dbFile.getName());
       }
+    }
+
+    public String getAppName() {
+      return appName;
     }
 
     public SQLiteDatabase getReadableDatabase() {

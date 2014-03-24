@@ -17,7 +17,6 @@ package org.opendatakit.tables.activities.importexport;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -87,16 +86,18 @@ public abstract class AbstractImportExportActivity extends SherlockActivity {
 	}
 
     protected class PickFileButtonListener implements OnClickListener {
+      String appName;
     	String title;
 
-    	public PickFileButtonListener(String title) {
+    	public PickFileButtonListener(String appName, String title) {
+    	   this.appName = appName;
     		this.title = title;
     	}
 
         @Override
         public void onClick(View v) {
             Intent intent = new Intent("org.openintents.action.PICK_FILE");
-            intent.setData(Uri.parse("file://" + ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME)));
+            intent.setData(Uri.parse("file://" + ODKFileUtils.getAppFolder(appName)));
             intent.putExtra("org.openintents.extra.TITLE", title);
             try {
               startActivityForResult(intent, 1);

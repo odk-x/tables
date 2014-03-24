@@ -41,7 +41,7 @@ public class DbHelper {
 
     public static synchronized DbHelper getDbHelper(Context context, String appName) {
       if ( appName == null ) {
-        appName = TableFileUtils.ODK_TABLES_APP_NAME;
+        throw new IllegalArgumentException("Null value for appName!");
       }
 
       DbHelper v = dbhMap.get(appName);
@@ -50,6 +50,10 @@ public class DbHelper {
         dbhMap.put(appName, v);
       }
       return v;
+    }
+
+    public String getAppName() {
+      return impl.getAppName();
     }
 
     public SQLiteDatabase getReadableDatabase() {

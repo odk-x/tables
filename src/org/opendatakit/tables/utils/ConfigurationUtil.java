@@ -17,9 +17,9 @@ public class ConfigurationUtil {
      */
 	public static boolean isChanged(Preferences prefs) {
 
-		if (TableFileUtils.tablesConfigurationFileExists()) {
-		  File configFile = 
-		      new File(TableFileUtils.getTablesConfigurationFile());
+		if (TableFileUtils.tablesConfigurationFileExists(prefs.getAppName())) {
+		  File configFile =
+		      new File(TableFileUtils.getTablesConfigurationFile(prefs.getAppName()));
 			long timeLastConfig = prefs.getTimeLastConfig();
 			long timeLastMod = configFile.lastModified();
 			if (timeLastMod == timeLastConfig)

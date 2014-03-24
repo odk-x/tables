@@ -23,7 +23,7 @@ import java.util.Map;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.activities.graphs.BarGraphDisplayActivity;
+import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
@@ -56,7 +56,7 @@ public class CustomGraphView extends CustomView {
   private CustomGraphView(Activity activity, String appName, String graphName,
                           String potentialGraphName, CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
-    this.filename = TableFileUtils.getRelativePathToGraphFile();
+    this.filename = TableFileUtils.getRelativePathToGraphFile(appName);
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
     Log.i("CustomGraphView", "IDDD: " + graphName);
@@ -104,11 +104,11 @@ public class CustomGraphView extends CustomView {
     }
     initView();
   }
-  
+
   public void createNewGraph(String graphName) {
     graphData.saveGraphToName(graphName);
   }
-  
+
   public void setPermissions(String givenGraphName, boolean isImmutable) {
 		graphData.setPermissions(givenGraphName, isImmutable);
   }
@@ -153,22 +153,16 @@ public class CustomGraphView extends CustomView {
       isModified = false;
       this.graphString = graphString;
       this.kvsh = table.getTableProperties().getKeyValueStoreHelper(
-          BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
+          GraphDisplayActivity.KVS_PARTITION_VIEWS);
       this.aspectHelper = kvsh.getAspectHelper(this.graphString);
       this.aspectHelper = saveGraphToName(potentialGraphName);
     }
-
-    /*
-     * if(graphString.equals(BarGraphDisplayActivity.DEFAULT_GRAPH)) {
-     * aspectHelper.deleteAllEntriesInThisAspect(); aspectHelper =
-     * newAspectHelper; graphString = graphName; }
-     */
 
     public boolean isModified() {
       // TODO Auto-generated method stub
       return isModified;
     }
-    
+
     // determine if the graph is mutable or only for viewing
     public boolean isModifiable() {
     	String result = aspectHelper.getString(MODIFIABLE);
@@ -178,7 +172,7 @@ public class CustomGraphView extends CustomView {
     		return false;
     	}
 	}
-    
+
     public void setPermissions(String graphName, boolean isImmutable) {
     	AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
 	    if(isImmutable) {
@@ -228,14 +222,14 @@ public class CustomGraphView extends CustomView {
     }
 
     public String getGraphType() {
-      String graphType = aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
+      String graphType = aspectHelper.getString(GraphDisplayActivity.GRAPH_TYPE);
       if (graphType == null || graphType.equals("unset type")) {
         return "";
       } else {
         return graphType;
       }
     }
-    
+
     public String getBoxOperation() {
     	return loadSelection(BOX_OPTION);
     }
@@ -243,15 +237,15 @@ public class CustomGraphView extends CustomView {
     public String getBoxSource() {
     	return loadSelection(BOX_SOURCE);
     }
-    
+
     public String getBoxValues() {
     	return loadSelection(BOX_VALUES);
     }
-    
+
     public String getBoxIterations() {
     	return loadSelection(ITER_COUNTER);
     }
-    
+
     public String getGraphXAxis() {
       return loadSelection(X_AXIS);
     }

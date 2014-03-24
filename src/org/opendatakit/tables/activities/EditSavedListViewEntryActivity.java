@@ -99,8 +99,12 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-    this.dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    this.dbh = DbHelper.getDbHelper(this, appName);
     this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
     this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
@@ -146,10 +150,11 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       @Override
       public boolean onPreferenceClick(Preference preference) {
         Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
+        filePickerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, dbh.getAppName());
         // Set the current filename.
         if (listViewFilename != null) {
-          File adjustedFile = new File(ODKFileUtils.getAppFolder(
-              TableFileUtils.ODK_TABLES_APP_NAME), listViewFilename);
+          File adjustedFile = new File(ODKFileUtils.getAppFolder(dbh.getAppName()),
+              listViewFilename);
           filePickerIntent.setData(
               Uri.parse("file:///" + adjustedFile.getAbsolutePath()));
         }

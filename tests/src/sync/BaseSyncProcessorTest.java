@@ -32,6 +32,8 @@ import org.opendatakit.tables.sync.Modification;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.Synchronizer;
+import org.opendatakit.tables.utils.TableFileUtils;
+
 import android.content.Context;
 import android.content.SyncResult;
 
@@ -48,7 +50,7 @@ public class BaseSyncProcessorTest {
   public void setUp() throws IOException {
     MockitoAnnotations.initMocks(this);
     Context context = new SpreadSheet();
-    this.helper = DbHelper.getDbHelper(context);
+    this.helper = DbHelper.getDbHelper(context, TableFileUtils.extractAppName());
     SyncResult syncResult = new SyncResult();
     this.processor = new SyncProcessor(helper, synchronizer, syncResult);
 

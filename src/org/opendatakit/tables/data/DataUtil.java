@@ -35,7 +35,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.UTMConverter;
 
 import android.content.Context;
@@ -220,11 +219,11 @@ public class DataUtil {
         mimeuri.put("contentType", mimeTypeBase + "/" + ext);
         if ( filename.indexOf("/") != -1) {
           // contains a path -- assume it is a filepath?
-          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(filename)));
+          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(tp.getAppName(), new File(filename)));
         } else {
           File ifolder = new File(ODKFileUtils.getInstanceFolder(
-              TableFileUtils.ODK_TABLES_APP_NAME, tp.getTableId(), instanceID));
-          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(TableFileUtils.ODK_TABLES_APP_NAME, new File(ifolder, filename)));
+              tp.getAppName(), tp.getTableId(), instanceID));
+          mimeuri.put("uriFragment", ODKFileUtils.asUriFragment(tp.getAppName(), new File(ifolder, filename)));
         }
         try {
           String serializedValue = ODKFileUtils.mapper.writeValueAsString(mimeuri);

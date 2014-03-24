@@ -118,6 +118,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       Intent newColorRuleIntent =
           new Intent(this, EditSavedColorRuleActivity.class);
       newColorRuleIntent.putExtra(
+          Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+      newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_ELEMENT_KEY, mElementKey);
@@ -159,7 +161,9 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       confirmRevertAlert.show();
       return true;
     case android.R.id.home:
-      startActivity(new Intent(this, TableManager.class));
+      Intent i = new Intent(this, TableManager.class);
+      i.putExtra(Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+      startActivity(i);
       return true;
     }
     return false;
@@ -261,6 +265,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
       Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
           EditSavedColorRuleActivity.class);
       editColorRuleIntent.putExtra(
+          Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+      editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_ELEMENT_KEY, mElementKey);
@@ -291,11 +297,15 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
   }
 
   private void init() {
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     this.mTableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
     switch (mType) {
@@ -339,6 +349,8 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     }
     Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
         EditSavedColorRuleActivity.class);
+    editColorRuleIntent.putExtra(
+        Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
     editColorRuleIntent.putExtra(
         EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
     editColorRuleIntent.putExtra(

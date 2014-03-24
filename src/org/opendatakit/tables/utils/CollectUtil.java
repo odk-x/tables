@@ -167,7 +167,7 @@ public class CollectUtil {
    * @return
    */
   private static File getAddRowFormFile(TableProperties tp) {
-    return new File(ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+    return new File(ODKFileUtils.getTablesFolder(tp.getAppName(),
         tp.getTableId()), "addrowform.xml");
   }
 
@@ -179,7 +179,7 @@ public class CollectUtil {
    * @return
    */
   private static File getEditRowFormFile(TableProperties tp, String rowId) {
-    return new File(ODKFileUtils.getInstanceFolder(TableFileUtils.ODK_TABLES_APP_NAME,
+    return new File(ODKFileUtils.getInstanceFolder(tp.getAppName(),
         tp.getTableId(), rowId), "editRowData.xml");
   }
 
@@ -365,7 +365,7 @@ public class CollectUtil {
    * screen by screen fashion, generating the entire form on the fly.
    */
   private static boolean writeRowDataToBeEdited(Context context,
-      Map<String, String> values, TableProperties tp, 
+      Map<String, String> values, TableProperties tp,
       CollectFormParameters params, String rowId) {
     /*
      * This is currently implemented thinking that all you need to have is:
@@ -406,7 +406,7 @@ public class CollectUtil {
             Map<String,String> ref = ODKFileUtils.mapper.readValue(value, Map.class);
             if ( ref != null ) {
               String uriFragment = ref.get("uriFragment");
-              File f = FileProvider.getAsFile(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
+              File f = FileProvider.getAsFile(context, tp.getAppName(), uriFragment);
               value = f.getName();
             } else {
               value = null;
@@ -892,7 +892,7 @@ public class CollectUtil {
    *          the TableProperties of the table that will be receiving the add
    *          row from Collect
    */
-  public static void launchCollectToAddRow(Activity activityToAwaitReturn, 
+  public static void launchCollectToAddRow(Activity activityToAwaitReturn,
       Intent collectAddIntent, TableProperties tp) {
     // We want to save the id of the table that is going to receive the row
     // that returns from Collect. We'll store it in a SharedPreference so
@@ -1159,8 +1159,8 @@ public class CollectUtil {
    *          values with which you want to prepopulate the add row form.
    * @return
    */
-  public static Intent getIntentForOdkCollectAddRow(Context context, 
-      TableProperties tp, CollectFormParameters params, 
+  public static Intent getIntentForOdkCollectAddRow(Context context,
+      TableProperties tp, CollectFormParameters params,
       Map<String, String> elementKeyToValue) {
     /*
      * So, there are several things to check here. The first thing we want to do
@@ -1184,16 +1184,16 @@ public class CollectUtil {
     String rowId = "uuid:" + UUID.randomUUID().toString();
 
     boolean shouldUpdate = CollectUtil.isExistingCollectInstanceForRowData(
-        tp, 
-        rowId, 
+        tp,
+        rowId,
         context.getContentResolver());
 
     // emit the empty or partially-populated instance
     // we've received some values to prepopulate the add row with.
     boolean writeDataSuccessful = CollectUtil.writeRowDataToBeEdited(
-        context, 
-        elementKeyToValue, 
-        tp, 
+        context,
+        elementKeyToValue,
+        tp,
         params,
         rowId);
     if (!writeDataSuccessful) {
@@ -1202,9 +1202,9 @@ public class CollectUtil {
     // Here we'll just act as if we're inserting 0, which
     // really doesn't matter?
     Uri formToLaunch = CollectUtil.getUriForCollectInstanceForRowData(
-        tp, 
-        params, 
-        rowId, 
+        tp,
+        params,
+        rowId,
         shouldUpdate,
         context.getContentResolver());
 

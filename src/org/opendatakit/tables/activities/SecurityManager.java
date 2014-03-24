@@ -37,8 +37,6 @@ import android.widget.TextView;
 // actually defining the correct access model, which we currently don't have.
 public class SecurityManager extends Activity {
 
-    public static final String INTENT_KEY_TABLE_ID = "tableId";
-
    private TableProperties tp;
 	private TableProperties[] securityTps;
 
@@ -49,20 +47,25 @@ public class SecurityManager extends Activity {
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
-		setContentView(R.layout.security_activity);
 
-		// Set title of activity
-		setTitle("ODK Tables > Security");
-
+		String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		if ( appName == null ) {
+		  appName = TableFileUtils.getDefaultAppName();
+		}
 		// Settings
-		String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+		String tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+		DbHelper dbh = DbHelper.getDbHelper(this, appName);
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 		    KeyValueStore.Type.ACTIVE);
 		securityTps = TableProperties.getTablePropertiesForSecurityTables(dbh,
 		    KeyValueStore.Type.ACTIVE);
 
-        // Set current table name
+      setContentView(R.layout.security_activity);
+
+      // Set title of activity
+      setTitle("ODK Tables > Security");
+
+      // Set current table name
         TextView tv = (TextView)findViewById(R.id.security_activity_table_name);
         String currentTableName = tp.getDisplayName();
         tv.setText(currentTableName);

@@ -57,6 +57,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
   private static final String TAG = AggregateDownloadTableActivity.class.getSimpleName();
 
+  private String appName;
   private AlertDialog.Builder finishDialog;
   private Preferences prefs;
   private String aggregateUrl;
@@ -68,6 +69,10 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
 
     final ListView listView = getListView();
 
@@ -75,11 +80,11 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
 
     initializeDialogs();
 
-    prefs = new Preferences(this);
+    prefs = new Preferences(this, appName);
     aggregateUrl = prefs.getServerUri();
     authToken = prefs.getAuthToken();
 
-    GetTablesTask task = new GetTablesTask(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUrl, authToken);
+    GetTablesTask task = new GetTablesTask(appName, aggregateUrl, authToken);
     task.execute();
 
   }
@@ -121,7 +126,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     String displayName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
     String tableDefinitionUri = tableDefinitionUris.get(position);
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     String dbTableNameActive = NameUtil.createUniqueDbTableName(tableId,dbh);
     DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, dbTableNameActive, displayName, tableDefinitionUri);
     task.execute();
@@ -154,7 +159,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       try {
         sync = new AggregateSynchronizer(appName, aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e1) {
-        Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this);
+        Aggregate.invalidateAuthToken(authToken, AggregateDownloadTableActivity.this, appName);
         return null;
       }
 
@@ -171,7 +176,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       // we may want to download data from the server even if we already have data locally.
 //      // filter tables to remove ones already downloaded
 //      if (tables != null) {
-//        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
+//        DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, appName);
 //        // we're going to check for downloaded tables ONLY in the server store,
 //        // b/c there will only be UUID collisions if the tables have been
 //        // downloaded, which means they must be in the server KVS. The
@@ -235,14 +240,14 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected Void doInBackground(Void... params) {
       //android.os.Debug.waitForDebugger();
-      DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, TableFileUtils.ODK_TABLES_APP_NAME);
+      DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, appName);
 
       Synchronizer synchronizer;
       try {
-        synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUrl, authToken);
+        synchronizer = new AggregateSynchronizer(appName, aggregateUrl, authToken);
       } catch (InvalidAuthTokenException e) {
         Aggregate.invalidateAuthToken(authToken,
-            AggregateDownloadTableActivity.this);
+            AggregateDownloadTableActivity.this, appName);
         return null;
       }
 
@@ -250,7 +255,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
           new SyncResult());
       // We're going to add a check here for the framework directory. If we
       // don't have it, you also have to sync app level files the first time.
-      ODKFileUtils.assertDirectoryStructure(TableFileUtils.ODK_TABLES_APP_NAME);
+      ODKFileUtils.assertDirectoryStructure(appName);
       try {
         synchronizer.syncAppLevelFiles(false);
       } catch (ResourceAccessException e) {

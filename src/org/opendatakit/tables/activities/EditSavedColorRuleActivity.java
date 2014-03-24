@@ -30,7 +30,6 @@ import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.ColorPickerDialog.OnColorChangedListener;
 
 import android.os.Bundle;
@@ -44,7 +43,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     implements EditSavedViewEntryHandler, OnColorChangedListener {
 
   private static final String TAG =
-      EditSavedListViewEntryActivity.class.getName();
+      EditSavedColorRuleActivity.class.getName();
 
   private static final String PREFERENCE_KEY_COMP_TYPE = "pref_comp_type";
   private static final String PREFERENCE_KEY_VALUE = "pref_value";
@@ -74,6 +73,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   public static final String COLOR_PREF_KEY_TEXT = "textKey";
   public static final String COLOR_PREF_KEY_BACKGROUND = "backgroundKey";
 
+  private String mAppName;
   private String mTableId;
   private int mRulePosition;
   private TableProperties mTp;
@@ -102,13 +102,14 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    this.mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
     this.mTableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mRulePosition = getIntent().getIntExtra(INTENT_KEY_RULE_POSITION,
         INTENT_FLAG_NEW_RULE);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    this.dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    this.dbh = DbHelper.getDbHelper(this, mAppName);
     this.mTp = TableProperties.getTablePropertiesForTable(dbh, mTableId,
         KeyValueStore.Type.ACTIVE);
     this.mKvsh =

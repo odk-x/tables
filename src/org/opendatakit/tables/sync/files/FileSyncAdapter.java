@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
@@ -29,6 +30,7 @@ import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -55,11 +57,9 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String TAG = "FileSyncAdapter";
 
   private final Context context;
-  private final String appName;
 
-  public FileSyncAdapter(Context context, String appName, boolean autoInitialize) {
+  public FileSyncAdapter(Context context, boolean autoInitialize) {
     super(context, autoInitialize);
-    this.appName = appName;
     this.context = context;
   }
 
@@ -69,9 +69,13 @@ public class FileSyncAdapter extends AbstractThreadedSyncAdapter {
   @Override
   public void onPerformSync(Account account, Bundle extras, String authority,
       ContentProviderClient provider, SyncResult syncResult) {
+    String appName = extras.getString(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.extractAppName();
+    }
     Log.d(TAG, "in onPerformSync");
     android.os.Debug.waitForDebugger();
-    Preferences prefs = new Preferences(this.context);
+    Preferences prefs = new Preferences(this.context, appName);
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
 

@@ -16,6 +16,7 @@
 package org.opendatakit.tables.sync;
 
 import org.opendatakit.tables.activities.Aggregate;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
@@ -44,17 +45,21 @@ public class TablesSyncAdapter extends AbstractThreadedSyncAdapter {
   @Override
   public void onPerformSync(Account account, Bundle extras, String authority,
       ContentProviderClient provider, SyncResult syncResult) {
+    String appName = extras.getString(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.extractAppName();
+    }
     Log.d(TAG, "in onPerformSync");
-    Preferences prefs = new Preferences(this.context);
+    Preferences prefs = new Preferences(this.context, appName);
     String aggregateUri = prefs.getServerUri();
     String authToken = prefs.getAuthToken();
     if (aggregateUri != null && authToken != null) {
-      DbHelper helper = DbHelper.getDbHelper(context, TableFileUtils.ODK_TABLES_APP_NAME);
+      DbHelper helper = DbHelper.getDbHelper(context, appName);
       AggregateSynchronizer synchronizer;
       try {
-        synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, aggregateUri, authToken);
+        synchronizer = new AggregateSynchronizer(appName, aggregateUri, authToken);
       } catch (InvalidAuthTokenException e) {
-        Aggregate.invalidateAuthToken(authToken, context);
+        Aggregate.invalidateAuthToken(authToken, context, appName);
         syncResult.stats.numAuthExceptions++;
         return;
       }

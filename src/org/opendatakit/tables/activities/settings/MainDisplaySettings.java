@@ -16,7 +16,9 @@
 package org.opendatakit.tables.activities.settings;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -34,6 +36,7 @@ public class MainDisplaySettings extends Activity {
 
     public static final String TABLE_ID_INTENT_KEY = "tableId";
 
+    private String appName;
     private Preferences prefs;
     private String tableId;
     private Spinner viewTypeSpinner;
@@ -42,11 +45,16 @@ public class MainDisplaySettings extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        if ( appName == null ) {
+          appName = TableFileUtils.getDefaultAppName();
+        }
+
         final String[] spinnerTexts = { getString(R.string.view_type_table),
         								getString(R.string.view_type_list),
         								getString(R.string.view_type_graph) };
 
-        prefs = new Preferences(this);
+        prefs = new Preferences(this, appName);
         tableId = getIntent().getStringExtra(TABLE_ID_INTENT_KEY);
         setContentView(R.layout.settings_maindisplay);
         viewTypeSpinner = (Spinner) findViewById(

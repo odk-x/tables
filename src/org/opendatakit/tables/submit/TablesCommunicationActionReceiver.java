@@ -188,7 +188,7 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
           Log.d(TAG, "already synching, not trying again");
         } else {
           Log.d(TAG, "not synching, beginning a sync");
-          SyncNowWithSubmitTask submitTask = new SyncNowWithSubmitTask(TableFileUtils.ODK_TABLES_APP_NAME, sendUid);
+          SyncNowWithSubmitTask submitTask = new SyncNowWithSubmitTask(TableFileUtils.extractAppName(), sendUid);
           submitTask.execute();
         }
       } else {

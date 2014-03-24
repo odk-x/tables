@@ -84,15 +84,19 @@ public class Aggregate extends SherlockActivity {
   private EditText uriField;
   private Spinner accountListSpinner;
 
+  private String appName;
   private AccountManager accountManager;
   private Preferences prefs;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     accountManager = AccountManager.get(this);
-    prefs = new Preferences(this);
+    prefs = new Preferences(this, appName);
 
     setTitle("");
     setContentView(R.layout.aggregate_activity);
@@ -238,7 +242,7 @@ public class Aggregate extends SherlockActivity {
         // TODO if you change a user you can switch to their privileges without
         // this.
         Log.d(TAG, "[onClickSaveSettings][onClick] invalidated authtoken");
-        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
+        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this, appName);
         updateButtonsEnabled();
       }
     });
@@ -253,6 +257,7 @@ public class Aggregate extends SherlockActivity {
   public void onClickAuthorizeAccount(View v) {
     Intent i = new Intent(this, AccountInfoActivity.class);
     Account account = new Account(prefs.getAccount(), ACCOUNT_TYPE_G);
+    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
     startActivityForResult(i, AUTHORIZE_ACCOUNT_RESULT_ID);
   }
@@ -262,6 +267,7 @@ public class Aggregate extends SherlockActivity {
    */
   public void onClickChooseTables(View v) {
     Intent i = new Intent(this, AggregateChooseTablesActivity.class);
+    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
     startActivity(i);
     updateButtonsEnabled();
   }
@@ -271,6 +277,7 @@ public class Aggregate extends SherlockActivity {
    */
   public void onClickDownloadTableFromServer(View v) {
     Intent i = new Intent(this, AggregateDownloadTableActivity.class);
+    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
     startActivity(i);
     updateButtonsEnabled();
   }
@@ -306,7 +313,7 @@ public class Aggregate extends SherlockActivity {
       // and do yo' bizness."
       // The first thing we need to do is get the list of tables that is set
       // to sync. Submit needs to know about this.
-      DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+      DbHelper dbh = DbHelper.getDbHelper(this, appName);
       TableProperties[] tps =
           TableProperties.getTablePropertiesForSynchronizedTables(dbh,
               KeyValueStore.Type.SERVER);
@@ -316,26 +323,28 @@ public class Aggregate extends SherlockActivity {
       }
       TablesCommunicationActionReceiver receiver =
           TablesCommunicationActionReceiver.getInstance(
-              TableFileUtils.ODK_TABLES_APP_NAME,
+              appName,
               null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(),
               getApplicationContext());
       // We set up the receiver.
       ServiceConnectionImpl serviceConnectionImpl =
-          new ServiceConnectionImpl(TableFileUtils.ODK_TABLES_APP_NAME, this);
+          new ServiceConnectionImpl(appName, this);
 
     }
   }
 
-  public static void requestSync(String accountName) {
+  public static void requestSync(String appName, String accountName) {
     if (accountName != null) {
       Account account = new Account(accountName, ACCOUNT_TYPE_G);
-      ContentResolver.requestSync(account, TablesContentProvider.AUTHORITY, new Bundle());
+      Bundle b = new Bundle();
+      b.putString(Controller.INTENT_KEY_APP_NAME, appName);
+      ContentResolver.requestSync(account, TablesContentProvider.AUTHORITY, b);
     }
   }
 
-  public static void invalidateAuthToken(String authToken, Context context) {
+  public static void invalidateAuthToken(String authToken, Context context, String appName) {
     AccountManager.get(context).invalidateAuthToken(ACCOUNT_TYPE_G, authToken);
-    Preferences prefs = new Preferences(context);
+    Preferences prefs = new Preferences(context, appName);
     prefs.setAuthToken(null);
   }
 
@@ -357,8 +366,8 @@ public class Aggregate extends SherlockActivity {
     protected SynchronizationResult doInBackground(Void... params) {
       SynchronizationResult result = null;
       try {
-        DbHelper dbh = DbHelper.getDbHelper(Aggregate.this, TableFileUtils.ODK_TABLES_APP_NAME);
-        Synchronizer synchronizer = new AggregateSynchronizer(TableFileUtils.ODK_TABLES_APP_NAME, prefs.getServerUri(),
+        DbHelper dbh = DbHelper.getDbHelper(Aggregate.this, appName);
+        Synchronizer synchronizer = new AggregateSynchronizer(appName, prefs.getServerUri(),
             prefs.getAuthToken());
         SyncProcessor processor = new SyncProcessor(dbh,
             synchronizer, new SyncResult());
@@ -370,7 +379,7 @@ public class Aggregate extends SherlockActivity {
         Log.e(TAG, "[SyncNowTask#doInBackground] timestamp: " +
             System.currentTimeMillis());
       } catch (InvalidAuthTokenException e) {
-        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this);
+        invalidateAuthToken(prefs.getAuthToken(), Aggregate.this, appName);
         success = false;
         message = getString(R.string.auth_expired);
       } catch (Exception e) {
@@ -436,7 +445,7 @@ public class Aggregate extends SherlockActivity {
         // TODO: this is not used and untested.
 
         String aggregateUri = prefs.getServerUri(); // uri of our server.
-        URI uri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + TableFileUtils.ODK_TABLES_APP_NAME + "/");
+        URI uri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + appName + "/");
         URI fileServletUri = uri;
         List<ClientHttpRequestInterceptor> interceptors =
             new ArrayList<ClientHttpRequestInterceptor>();
@@ -446,10 +455,10 @@ public class Aggregate extends SherlockActivity {
 //        ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 //        ClientHttpRequest request =
 //            factory.createRequest(fileServletUri, HttpMethod.POST);
-        ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        ODKFileUtils.getAppFolder(appName);
         String fileName = "helloServer.txt"; // just a hardcoded dummy
-        File file = new File(ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) + File.separator + fileName);
-        URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + TableFileUtils.ODK_TABLES_APP_NAME + "/" + fileName);
+        File file = new File(ODKFileUtils.getAppFolder(appName) + File.separator + fileName);
+        URI filePostUri = SyncUtilities.normalizeUri(aggregateUri, AggregateSynchronizer.FILES_PATH + appName + "/" + fileName);
         // from http://agilesc.barryku.com/?p=243
 //        MultiValueMap<String, Object> parts =
 //            new LinkedMultiValueMap<String, Object>();
@@ -458,9 +467,9 @@ public class Aggregate extends SherlockActivity {
 //        URI responseUri = rt.postForLocation(filePostUri, new FileSystemResource(file));
         int i = 3; // just to trigger the debugger.
 
-        FileUploaderTask fut = new FileUploaderTask(Aggregate.this, TableFileUtils.ODK_TABLES_APP_NAME, aggregateUri,
+        FileUploaderTask fut = new FileUploaderTask(Aggregate.this, appName, aggregateUri,
             accessToken);
-        String appFolder = ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME);
+        String appFolder = ODKFileUtils.getAppFolder(appName);
         File appFolderFile = new File(appFolder);
         LinkedList<File> unexploredDirs = new LinkedList<File>();
         if (!appFolderFile.isDirectory()) {

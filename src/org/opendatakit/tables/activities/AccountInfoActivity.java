@@ -14,21 +14,18 @@
 
 package org.opendatakit.tables.activities;
 
-import java.io.IOException;
-
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.Notification;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -49,6 +46,8 @@ public class AccountInfoActivity extends SherlockActivity {
   private final static int WAITING_ID = 1;
   private final static int CALLBACK_DIALOG_INTENT_ID = 2;
   private final static String authString = "oauth2:https://www.googleapis.com/auth/userinfo.email";
+
+  private String appName;
   private AccountManagerFuture<Bundle> request = null;
 
   /**
@@ -57,6 +56,10 @@ public class AccountInfoActivity extends SherlockActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
   }
 
   /**
@@ -119,7 +122,7 @@ public class AccountInfoActivity extends SherlockActivity {
    * If we failed to get an auth token.
    */
   protected void failedAuthToken() {
-    Preferences prefs = new Preferences(this);
+    Preferences prefs = new Preferences(this, appName);
     prefs.setAuthToken(null);
     dismissDialog(WAITING_ID);
     setResult(Activity.RESULT_CANCELED);
@@ -134,7 +137,7 @@ public class AccountInfoActivity extends SherlockActivity {
   protected void gotAuthToken(Bundle bundle) {
     // Set the authentication token and dismiss the dialog.
     String auth_token = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-    Preferences prefs = new Preferences(this);
+    Preferences prefs = new Preferences(this, appName);
     prefs.setAuthToken(auth_token);
     dismissDialog(WAITING_ID);
     setResult(Activity.RESULT_OK);

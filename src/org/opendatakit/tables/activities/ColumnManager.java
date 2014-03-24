@@ -68,8 +68,6 @@ public class ColumnManager extends SherlockListActivity {
 
 	private static final String EMPTY_STRING = "";
 
-	public static final String INTENT_KEY_TABLE_ID = "tableId";
-
 	// Menu IDs
 	public static final int SET_AS_PRIME = 1;
 	public static final int SET_AS_ORDER_BY = 2;
@@ -82,6 +80,7 @@ public class ColumnManager extends SherlockListActivity {
 	private IconicAdapter adapter;
 
 	// Private Fields
+	private String appName;
 	private String tableId;
 	private TableProperties tp;
 	private ColumnProperties[] cps;
@@ -90,8 +89,12 @@ public class ColumnManager extends SherlockListActivity {
 
 	// Initialize fields.
 	private void init() {
-		tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+	   appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+	   if ( appName == null ) {
+	     appName = TableFileUtils.getDefaultAppName();
+	   }
+		tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+		DbHelper dbh = DbHelper.getDbHelper(this, appName);
 		tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
 				KeyValueStore.Type.ACTIVE);
 		// We need to order the ColumnProperties appropriately
@@ -173,7 +176,9 @@ public class ColumnManager extends SherlockListActivity {
 			alertForNewColumnName(null);
 			return true;
 		case android.R.id.home:
-			startActivity(new Intent(this, TableManager.class));
+	      Intent i = new Intent(this, TableManager.class);
+	      i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+			startActivity(i);
 			return true;
 		}
 		return false;
@@ -249,8 +254,9 @@ public class ColumnManager extends SherlockListActivity {
 	// Load Column Property Manager Activity.
 	private void loadColumnPropertyManager(String elementKey) {
 		Intent cpm = new Intent(this, PropertyManager.class);
+		cpm.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
 		cpm.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
-        cpm.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY, elementKey);
+      cpm.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY, elementKey);
 		startActivity(cpm);
 	}
 

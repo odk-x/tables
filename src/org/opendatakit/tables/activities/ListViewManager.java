@@ -62,8 +62,6 @@ public class ListViewManager extends SherlockListActivity {
 
   public static final String TAG = ListViewManager.class.getName();
 
-  public static final String INTENT_KEY_TABLE_ID = "tableId";
-
   /**
    * Menu ID for adding a new list view.
    */
@@ -120,8 +118,12 @@ public class ListViewManager extends SherlockListActivity {
    * Get the fields up and running.
    */
   private void init() {
-    this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
+    this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
         KeyValueStore.Type.ACTIVE);
     this.kvsh =
@@ -221,14 +223,18 @@ public class ListViewManager extends SherlockListActivity {
       Intent newListViewIntent =
           new Intent(this, EditSavedListViewEntryActivity.class);
       newListViewIntent.putExtra(
-          EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
+          Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+      newListViewIntent.putExtra(
+          Controller.INTENT_KEY_TABLE_ID, tableId);
       newListViewIntent.putExtra(
           EditSavedListViewEntryActivity.INTENT_KEY_LISTVIEW_NAME,
           potentialName);
       startActivity(newListViewIntent);
       return true;
     case android.R.id.home:
-      startActivity(new Intent(this, TableManager.class));
+      Intent i = new Intent(this, TableManager.class);
+      i.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+      startActivity(i);
       return true;
     }
     return false;
@@ -286,6 +292,8 @@ public class ListViewManager extends SherlockListActivity {
       menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
       Intent editListViewIntent = new Intent(ListViewManager.this,
       EditSavedListViewEntryActivity.class);
+      editListViewIntent.putExtra(
+          Controller.INTENT_KEY_APP_NAME, tp.getAppName());
       editListViewIntent.putExtra(
           EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
       editListViewIntent.putExtra(

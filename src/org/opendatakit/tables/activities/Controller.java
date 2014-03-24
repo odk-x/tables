@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
+import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbHelper;
@@ -158,7 +158,7 @@ public class Controller implements CustomViewCallbacks {
     this.activity = activity;
     String tmpAppName = intentBundle.getString(INTENT_KEY_APP_NAME);
     if (tmpAppName == null) {
-      this.appName = TableFileUtils.ODK_TABLES_APP_NAME;
+      this.appName = TableFileUtils.getDefaultAppName();
     } else {
       this.appName = tmpAppName;
     }
@@ -437,7 +437,7 @@ public class Controller implements CustomViewCallbacks {
           null, null, null, table.getRowAtIndex(rowNum).getRowId());
 
       if (intent != null) {
-        CollectUtil.launchCollectToEditRow(activity, intent, 
+        CollectUtil.launchCollectToEditRow(activity, intent,
             table.getRowAtIndex(rowNum).getRowId());
       } else {
         Log.e(TAG, "intent null when trying to create for edit row.");
@@ -445,10 +445,10 @@ public class Controller implements CustomViewCallbacks {
     } else {
       SurveyFormParameters params = formType.getSurveyFormParameters();
 
-      Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, tp, 
+      Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, tp,
           appName, params, table.getRowAtIndex(rowNum).getRowId());
       if ( intent != null ) {
-        SurveyUtil.launchSurveyToEditRow(activity, intent, tp, 
+        SurveyUtil.launchSurveyToEditRow(activity, intent, tp,
             table.getRowAtIndex(rowNum).getRowId());
       }
     }
@@ -637,7 +637,7 @@ public class Controller implements CustomViewCallbacks {
           // prepopulate with the form. We're going to ignore joins. This
           // means that if there IS a join column, we'll throw an error!!!
           // So be careful.
-          Intent intentAddRow = 
+          Intent intentAddRow =
               CollectUtil.getIntentForOdkCollectAddRowByQuery(
                   activity,
                   appName,
@@ -665,30 +665,34 @@ public class Controller implements CustomViewCallbacks {
         return true;
       case MENU_ITEM_ID_DISPLAY_PREFERENCES:
         Intent k = new Intent(activity, DisplayPrefsActivity.class);
+        k.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
         k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-
         activity.startActivity(k);
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES: {
         Intent intent = new Intent(activity, TablePropertiesManager.class);
-        intent.putExtra(TablePropertiesManager.INTENT_KEY_TABLE_ID, tp.getTableId());
+        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_TABLE_PROPERTIES_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER: {
         Intent intent = new Intent(activity, ColumnManager.class);
-        intent.putExtra(ColumnManager.INTENT_KEY_TABLE_ID, tp.getTableId());
+        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER: {
         Intent intent = new Intent(activity, ListViewManager.class);
-        intent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID, tp.getTableId());
+        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
       }
         return true;
       case android.R.id.home:
         Intent tableManagerIntent = new Intent(activity, TableManager.class);
+        tableManagerIntent.putExtra(INTENT_KEY_APP_NAME, appName);
         // Add this flag so that you don't back from TableManager back
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -827,10 +831,11 @@ public class Controller implements CustomViewCallbacks {
                                                 boolean isOverview, String filename,
                                                 String sqlWhereClause, String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
     context.startActivity(intent);
@@ -856,10 +861,11 @@ public class Controller implements CustomViewCallbacks {
                                                            String sqlWhereClause,
                                                            String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
     context.startActivity(intent);
@@ -881,6 +887,7 @@ public class Controller implements CustomViewCallbacks {
                                    Stack<String> searchStack, boolean isOverview,
                                    String sqlWhereClause, String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, TableActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
@@ -891,6 +898,7 @@ public class Controller implements CustomViewCallbacks {
                                            Stack<String> searchStack, boolean isOverview,
                                            String sqlWhereClause, String[] sqlSelectionArgs) {
     Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
@@ -910,7 +918,8 @@ public class Controller implements CustomViewCallbacks {
   public static void launchGraphView(Context context, TableProperties tp, String searchText,
                                      Stack<String> searchStack, boolean isOverview,
                                      String sqlWhereClause, String[] sqlSelectionArgs) {
-    Intent intent = new Intent(context, GraphDisplayActivity.class);
+    Intent intent = new Intent(context, GraphManagerActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
@@ -964,7 +973,7 @@ public class Controller implements CustomViewCallbacks {
       }
       break;
     case Graph:
-      intent = new Intent(context, GraphDisplayActivity.class);
+      intent = new Intent(context, GraphManagerActivity.class);
       break;
     case Map:
       intent = new Intent(context, TableActivity.class);
@@ -975,6 +984,7 @@ public class Controller implements CustomViewCallbacks {
     default:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
+    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
         sqlSelectionArgs);
@@ -984,17 +994,18 @@ public class Controller implements CustomViewCallbacks {
   /**
    * Launch a detail view for the given table showing the given rowNum.
    *
-   * @param context
-   * @param tp
-   * @param table
-   * @param rowNum
+   * @param activity
+   * @param appName
+   * @param tableId
+   * @param rowId
    * @param filename
    *          the filename to be used if the filename differs than that
    *          set in the key value store.
    */
   public static void launchDetailActivity(Activity activity,
-      String tableId, String rowId, String filename) {
+      String appName, String tableId, String rowId, String filename) {
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
+    intent.putExtra(INTENT_KEY_APP_NAME, appName);
     intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
     if (filename != null) {

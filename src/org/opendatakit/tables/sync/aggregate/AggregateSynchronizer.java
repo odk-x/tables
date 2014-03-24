@@ -63,7 +63,6 @@ import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
-import org.opendatakit.httpclientandroidlib.client.HttpClient;
 import org.opendatakit.httpclientandroidlib.client.methods.HttpGet;
 import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
 import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManager;

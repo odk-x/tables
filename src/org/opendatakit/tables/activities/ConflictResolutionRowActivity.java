@@ -102,9 +102,13 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
+    this.mDbHelper = DbHelper.getDbHelper(this, appName);
     this.setContentView(
         org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
-    this.mDbHelper = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
     this.mTextViewDeletionMessage = (TextView)
         findViewById(R.id.conflict_resolution_deletion_message);
     this.mRadioGroupDeletion = (RadioGroup)

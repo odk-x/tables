@@ -52,7 +52,6 @@ import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -91,7 +90,7 @@ public abstract class CustomView extends LinearLayout {
   private static DbHelper mDbHelper;
 
   private static ObjectMapper MAPPER = new ObjectMapper();
-  private static TypeReference<HashMap<String, String>> MAP_REF = 
+  private static TypeReference<HashMap<String, String>> MAP_REF =
       new TypeReference<HashMap<String, String>>() {};
 
   private static Set<String> javascriptInterfaces = new HashSet<String>();
@@ -123,7 +122,7 @@ public abstract class CustomView extends LinearLayout {
     this.mParentActivity = parentActivity;
     this.mAppName = appName;
     this.mCallbacks = callbacks;
-    this.mDbHelper = DbHelper.getDbHelper(mParentActivity, TableFileUtils.ODK_TABLES_APP_NAME);
+    this.mDbHelper = DbHelper.getDbHelper(mParentActivity, mAppName);
   }
 
   public static void initCommonWebView(Context context) {
@@ -266,10 +265,10 @@ public abstract class CustomView extends LinearLayout {
    *          a map of elementKey to value for the rows with which you want to
    *          prepopulate the add row.
    */
-//  private void addRowWithCollectAndSpecificForm(String tableName, 
+//  private void addRowWithCollectAndSpecificForm(String tableName,
 //      String formId, String formVersion, String formRootElement,
 //      TableProperties tp, Map<String, String> prepopulateValues) {
-//    CollectFormParameters formParameters = 
+//    CollectFormParameters formParameters =
 //        CollectFormParameters.constructCollectFormParameters(tp);
 //    if (formId != null && !formId.equals("")) {
 //      formParameters.setFormId(formId);
@@ -368,7 +367,7 @@ public abstract class CustomView extends LinearLayout {
     TableProperties tableProperties = getTablePropertiesById(tableId);
     String sqlQuery = "WHERE " + DataTableColumns.ID + " = ? ";
     String[] selectionArgs = { rowId };
-    DbHelper dbHelper = DbHelper.getDbHelper(getContext(), TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbHelper = DbHelper.getDbHelper(getContext(), mAppName);
     DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
     UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs);
     if (userTable.getNumberOfRows() > 1) {
@@ -454,7 +453,7 @@ public abstract class CustomView extends LinearLayout {
   // Gson gson = new Gson();
   // String outputString = gson.toJson(outputObject);
   // String fileName =
-  // ODKFileUtils.getAppFolder(TableFileUtils.ODK_TABLES_APP_NAME) +
+  // ODKFileUtils.getAppFolder(mAppName) +
   // mTable.getTableProperties().getDbTableName() + "_data.json";
   // try {
   // PrintWriter writer = new PrintWriter(fileName, "UTF-8");
@@ -514,7 +513,7 @@ public abstract class CustomView extends LinearLayout {
         return false;
       }
       String pathToTablesFolder = ODKFileUtils.getAppFolder(mAppName);
-      Controller.launchDetailActivity(mActivity, tableId, rowId, relativePath);
+      Controller.launchDetailActivity(mActivity, mAppName, tableId, rowId, relativePath);
       return true;
     }
 
@@ -652,14 +651,14 @@ public abstract class CustomView extends LinearLayout {
      * @param selectionArgs
      * @return
      */
-    public TableData query(String tableId, String whereClause, 
+    public TableData query(String tableId, String whereClause,
         String[] selectionArgs) {
       TableData tableData = queryForTableData(
           tableId,
           whereClause,
           selectionArgs);
       /**
-       * IMPORTANT: remember the td. The interfaces will hold weak references 
+       * IMPORTANT: remember the td. The interfaces will hold weak references
        * to them, so we need a strong reference to prevent GC.
        */
       queryResults.add(tableData);
@@ -730,7 +729,7 @@ public abstract class CustomView extends LinearLayout {
       Map<String, String> platformInfo = new HashMap<String, String>();
       platformInfo.put(PLATFORM_INFO_KEY_VERSION, Build.VERSION.RELEASE);
       platformInfo.put(PLATFORM_INFO_KEY_CONTAINER, "Android");
-      platformInfo.put(PLATFORM_INFO_KEY_APP_NAME, TableFileUtils.ODK_TABLES_APP_NAME);
+      platformInfo.put(PLATFORM_INFO_KEY_APP_NAME, mAppName);
       platformInfo.put(PLATFORM_INFO_KEY_BASE_URI, getBaseContentUri());
       platformInfo.put(PLATFORM_INFO_KEY_LOG_LEVEL, "D");
       JSONObject jsonObject = new JSONObject(platformInfo);
@@ -772,7 +771,7 @@ public abstract class CustomView extends LinearLayout {
      */
     private String getBaseContentUri() {
       Uri contentUri = FileProvider.getWebViewContentUri(getContext());
-      contentUri = Uri.withAppendedPath(contentUri, Uri.encode(TableFileUtils.ODK_TABLES_APP_NAME));
+      contentUri = Uri.withAppendedPath(contentUri, Uri.encode(mAppName));
       return contentUri.toString() + File.separator;
     }
 
@@ -807,6 +806,7 @@ public abstract class CustomView extends LinearLayout {
       String pathToTablesFolder = ODKFileUtils.getAppFolder(mAppName);
       String pathToFile = pathToTablesFolder + File.separator + relativePath;
       Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
+      i.putExtra(Controller.INTENT_KEY_APP_NAME, mAppName);
       i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
       mActivity.startActivity(i);
       return true;
@@ -871,7 +871,7 @@ public abstract class CustomView extends LinearLayout {
      *          value won't prepopulate any values.
      * @return true if the launch succeeded, else false
      */
-    public boolean helperAddRowWithCollect(String tableId, String formId, 
+    public boolean helperAddRowWithCollect(String tableId, String formId,
         String formVersion, String formRootElement, String jsonMap) {
       // The first thing we need to do is get the correct TableProperties.
       TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
@@ -888,7 +888,7 @@ public abstract class CustomView extends LinearLayout {
           return false;
         }
       }
-      CollectFormParameters formParameters = 
+      CollectFormParameters formParameters =
           CollectFormParameters.constructCollectFormParameters(tpToReceiveAdd);
       if (formId != null) {
         formParameters.setFormId(formId);
@@ -898,16 +898,16 @@ public abstract class CustomView extends LinearLayout {
         if (formRootElement != null) {
           formParameters.setRootElement(formRootElement);
         }
-      } 
+      }
       this.prepopulateRowAndLaunchCollect(
           formParameters,
-          tpToReceiveAdd, 
+          tpToReceiveAdd,
           map);
       return true;
     }
-    
+
     /**
-     * It prepopulates the form as it needs based on the query (or the 
+     * It prepopulates the form as it needs based on the query (or the
      * elKeyToValueToPrepopulate parameter) and launches the form.
      *
      * @param params
@@ -919,14 +919,14 @@ public abstract class CustomView extends LinearLayout {
      *          searchString, if there is one. If this value is not null, it
      *          ignores the queryString and uses only the map.
      */
-    private void prepopulateRowAndLaunchCollect(CollectFormParameters params, 
+    private void prepopulateRowAndLaunchCollect(CollectFormParameters params,
         TableProperties tp, Map<String, String> elKeyToValueToPrepopulate) {
       Intent addRowIntent;
       if (elKeyToValueToPrepopulate == null) {
         // The prepopulated values we need to get from the query string.
         String currentQueryString = mCallbacks.getSearchString();
         addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
-            CustomView.this.getContainerActivity(), 
+            CustomView.this.getContainerActivity(),
             mAppName,
             tp,
             params,
@@ -934,8 +934,8 @@ public abstract class CustomView extends LinearLayout {
       } else {
         // We've received a map to prepopulate with.
         addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
-            CustomView.this.getContainerActivity(), 
-            tp, 
+            CustomView.this.getContainerActivity(),
+            tp,
             params,
             elKeyToValueToPrepopulate);
       }

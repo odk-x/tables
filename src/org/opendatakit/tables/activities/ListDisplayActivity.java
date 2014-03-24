@@ -102,8 +102,12 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     setTitle("");
-    dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    dbh = DbHelper.getDbHelper(this, appName);
     c = new Controller(this, this, getIntent().getExtras());
     kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
     // TODO: why do we get all table properties here? this is an expensive
@@ -166,7 +170,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
         filename = getDefaultListFileName(table.getTableProperties());
       }
     }
-    view = CustomTableView.get(this, TableFileUtils.ODK_TABLES_APP_NAME, table, filename, c);
+    view = CustomTableView.get(this, dbh.getAppName(), table, filename, c);
     // change the info bar text IF necessary
     c.setListViewInfoBarText();
     displayView();

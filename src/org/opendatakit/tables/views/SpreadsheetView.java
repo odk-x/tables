@@ -132,7 +132,7 @@ public class SpreadsheetView extends LinearLayout
         // if not, use the general font size defined in preferences
         KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
         if (kvsh.getInteger("fontSize") == null)
-        	fontSize = (new Preferences(context)).getFontSize();
+        	fontSize = (new Preferences(context, tp.getAppName())).getFontSize();
         else
         	fontSize = kvsh.getInteger("fontSize");
 

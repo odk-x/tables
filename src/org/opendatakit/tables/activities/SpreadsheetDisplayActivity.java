@@ -101,11 +101,15 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        if ( appName == null ) {
+          appName = TableFileUtils.getDefaultAppName();
+        }
 
         // remove a title
         setTitle("");
 
-        dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+        dbh = DbHelper.getDbHelper(this, appName);
         c = new Controller(this, this, getIntent().getExtras());
     }
 
@@ -208,6 +212,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
     void openColumnPropertiesManager(ColumnProperties cp) {
         Intent intent = new Intent(this, PropertyManager.class);
+        intent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            c.getTableProperties().getAppName());
         intent.putExtra(PropertyManager.INTENT_KEY_TABLE_ID,
                 c.getTableProperties().getTableId());
         intent.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY,
@@ -310,6 +316,8 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
          return true;
      case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
        Intent i = new Intent(this, ColorRuleManagerActivity.class);
+       i.putExtra(
+           Controller.INTENT_KEY_APP_NAME, table.getTableProperties().getAppName());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
            tp.getColumnByIndex(lastHeaderCellMenued).getElementKey());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
@@ -607,9 +615,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                  // We'll just launch the resolve activity.
 	                  Intent i = new Intent(context,
 	                      ConflictResolutionRowActivity.class);
+                     i.putExtra(Controller.INTENT_KEY_APP_NAME,
+                         table.getTableProperties().getAppName());
 	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID,
 	                      table.getTableProperties().getTableId());
-	                  String conflictRowId = 
+	                  String conflictRowId =
 	                      table.getRowAtIndex(rowNumber).getRowId();
 	                  i.putExtra(
 	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID,
@@ -619,7 +629,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
-	                  final String rowId = 
+	                  final String rowId =
 	                      table.getRowAtIndex(cellId / table.getWidth()).getRowId();
 	                  AlertDialog.Builder alert =
 	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);

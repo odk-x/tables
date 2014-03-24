@@ -35,7 +35,6 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -120,7 +119,7 @@ public class UserTable {
     mElementKeyForIndex = elementKeyForIndex;
   }
 
-  public UserTable(Cursor c, TableProperties tableProperties, 
+  public UserTable(Cursor c, TableProperties tableProperties,
       List<String> userColumnOrder) {
     buildFormatters();
     mTp = tableProperties;
@@ -261,11 +260,11 @@ public class UserTable {
   public String getData(int rowNum, int colNum) {
     return mRows.get(rowNum).getDataAtIndex(colNum);
   }
-  
+
   /**
    * True if the table has been grouped by a value. This is referred to in some
    * places of the code as an "indexed" table, which also and irritatingly
-   * means that a column has been set to "prime". 
+   * means that a column has been set to "prime".
    * @return
    */
   public boolean isGroupedBy() {
@@ -299,7 +298,7 @@ public class UserTable {
         @SuppressWarnings("rawtypes")
         Map m = ODKFileUtils.mapper.readValue(raw, Map.class);
         String uriFragment = (String) m.get("uriFragment");
-        File f = FileProvider.getAsFile(context, TableFileUtils.ODK_TABLES_APP_NAME, uriFragment);
+        File f = FileProvider.getAsFile(context, mTp.getAppName(), uriFragment);
         return f.getName();
       } catch (JsonParseException e) {
         e.printStackTrace();
@@ -352,7 +351,7 @@ public class UserTable {
   public String getMetadataByElementKey(int rowNum, String elementKey) {
     return mRows.get(rowNum).getMetadataAtIndex(mMetadataKeyToIndex.get(elementKey));
   }
-  
+
   /**
    * Return the data or metadata value in the given row by element key.
    * @param rowNum
@@ -512,7 +511,7 @@ public class UserTable {
     public String getMetadataAtIndex(int index) {
       return mMetadata[index];
     }
-    
+
     /**
      * Return the id of this row.
      * @return

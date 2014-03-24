@@ -19,6 +19,7 @@ import java.io.File;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.TableProperties;
@@ -98,7 +99,11 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+		String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		if ( appName == null ) {
+		  appName = TableFileUtils.getDefaultAppName();
+		}
+		dbh = DbHelper.getDbHelper(this, appName);
 		setContentView(getView());
 	}
 
@@ -211,7 +216,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.addView(fn);
         pickFileButton = new Button(this);
         pickFileButton.setText(getString(R.string.export_choose_csv_file));
-        pickFileButton.setOnClickListener(new PickFileButtonListener(getString(R.string.export_choose_csv_file)));
+        pickFileButton.setOnClickListener(new PickFileButtonListener(dbh.getAppName(), getString(R.string.export_choose_csv_file)));
         v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
@@ -233,7 +238,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	 */
 	private void exportSubmission() {
         File file = ODKFileUtils.asAppFile(
-            TableFileUtils.ODK_TABLES_APP_NAME, 
+            dbh.getAppName(),
             filenameValField.getText().toString().trim()
         );
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
@@ -242,7 +247,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         boolean incAC = incAccessControlCheck.isChecked();
         boolean incFI = incFormIdsCheck.isChecked();
         boolean incLo = incLocalesCheck.isChecked();
-        ExportTask task = new ExportTask(this, TableFileUtils.ODK_TABLES_APP_NAME);
+        ExportTask task = new ExportTask(this, dbh.getAppName());
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
         task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
 	}

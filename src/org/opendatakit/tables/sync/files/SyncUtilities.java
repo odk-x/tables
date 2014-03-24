@@ -378,7 +378,7 @@ public class SyncUtilities {
    * Make sure the files on the phone are up to date. Downloads the files
    * to the directory:
    *
-   *   ODKFileUtils.getTablesFolder(TableFileUtils.ODK_TABLES_APP_NAME, tableId) +
+   *   ODKFileUtils.getTablesFolder(appName, tableId) +
    *    File.separator + fileEntry.filename
    *
    * @param context

@@ -20,7 +20,7 @@ import android.content.SharedPreferences;
 
 /**
  * A class for managing preferences.
- * 
+ *
  * @author hkworden
  */
 public class Preferences {
@@ -34,7 +34,7 @@ public class Preferences {
 	private static final String AUTH_KEY = "auth";
 	private static final String TIME_LAST_CONFIG = "timeLastConfig";
 	private static final String USE_HOME_SCREEN_KEY = "useHomeScreen";
-	
+
 	private static final int DEFAULT_FONT_SIZE = 16;
 
 	public class ViewType {
@@ -45,12 +45,19 @@ public class Preferences {
 		public static final int COUNT = 4; // the number of types
 	}
 
+	private final String appName;
+
 	private final SharedPreferences prefs;
 
-	public Preferences(Context context) {
+	public Preferences(Context context, String appName) {
+	   this.appName = appName;
 		prefs = context.getSharedPreferences(FILE_NAME, 0);
 	}
-	
+
+	public String getAppName() {
+	  return appName;
+	}
+
 	/**
 	 * Get true if the app has been configured to use a custom homescreen, else
 	 * false.
@@ -59,7 +66,7 @@ public class Preferences {
 	public boolean getUseHomeScreen() {
 	  return prefs.getBoolean(USE_HOME_SCREEN_KEY, false);
 	}
-	
+
 	/**
 	 * Persist whether or not a user-defined home screen should be used.
 	 * @param useHomeScreen
@@ -90,24 +97,24 @@ public class Preferences {
 		editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type);
 		editor.commit();
 	}
-	
+
 	public int getFontSize() {
 	    return prefs.getInt(FONT_SIZE, DEFAULT_FONT_SIZE);
 	}
-	
+
 	public void setFontSize(int fontSize) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(FONT_SIZE, fontSize);
         editor.commit();
 	}
-	
+
 	/**
 	 * Return the last time Tables was configured
 	 */
 	public long getTimeLastConfig() {
 		return prefs.getLong(TIME_LAST_CONFIG, 0);
 	}
-	
+
 	/**
 	 * Updates lastTimeConfig
 	 * @param long timeLastConfig
@@ -127,23 +134,23 @@ public class Preferences {
 	public String getServerUri() {
 		return prefs.getString(SERVER_URI_KEY, null);
 	}
-	
+
 	public void setAccount(String accountName) {
 	  SharedPreferences.Editor editor = prefs.edit();
 	  editor.putString(ACCOUNT_KEY, accountName);
 	  editor.commit();
 	}
-	
+
 	public String getAccount() {
 	  return prefs.getString(ACCOUNT_KEY, null);
 	}
-	
+
 	public void setAuthToken(String authToken) {
 	  SharedPreferences.Editor editor = prefs.edit();
 	  editor.putString(AUTH_KEY, authToken);
 	  editor.commit();
 	}
-	
+
 	public String getAuthToken() {
 	  return prefs.getString(AUTH_KEY, null);
 	}

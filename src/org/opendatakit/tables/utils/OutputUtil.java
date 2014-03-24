@@ -248,7 +248,7 @@ public class OutputUtil {
    */
   public static void writeControlObject(Context context, String appName) {
     String controlString = getStringForControlObject(context, appName);
-    String fileName = TableFileUtils.getTablesDebugObjectFolder() + File.separator
+    String fileName = TableFileUtils.getTablesDebugObjectFolder(appName) + File.separator
         + CONTROL_FILE_NAME;
     PrintWriter writer;
     try {
@@ -306,7 +306,7 @@ public class OutputUtil {
   public static void writeDataObject(Context context, String appName, String tableId,
       int numberOfRows) {
     String dataString = getStringForDataObject(context, appName, tableId, numberOfRows);
-    String fileName = TableFileUtils.getTablesDebugObjectFolder() + File.separator + tableId
+    String fileName = TableFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
         + DATA_FILE_SUFFIX;
     PrintWriter writer;
     try {

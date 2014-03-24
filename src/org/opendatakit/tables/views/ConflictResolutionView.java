@@ -71,7 +71,7 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 		this.context = context;
 		this.tp = tp;
 		// this.tvs = tvs;
-		fontSize = (new Preferences(context)).getFontSize();
+		fontSize = (new Preferences(context, tp.getAppName())).getFontSize();
 		this.table = table;
 		rowItems = null;
 		colorDeciders = null;

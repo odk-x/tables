@@ -32,11 +32,16 @@ import com.actionbarsherlock.app.SherlockListActivity;
 
 public class AggregateChooseTablesActivity extends SherlockListActivity {
 
-  ListView tablesView;
+  private String appName;
+  private ListView tablesView;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
     setContentView(R.layout.aggregate_choose_tables_activity);
 
     setListAdapter(new ArrayAdapter<TableProperties>(this,
@@ -49,7 +54,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
     int count = listView.getCount();
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     for (int i = 0; i < count; i++) {
       TableProperties tp = (TableProperties) listView.getItemAtPosition(i);
@@ -67,7 +72,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    * must also have an "isSetToSync" entry in the sync KVS.
    */
   private TableProperties[] getServerDataTables() {
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     // hilary's original--return dm.getDataTableProperties();
     return TableProperties.getTablePropertiesForDataTables(dbh,
         KeyValueStore.Type.SERVER);
@@ -80,7 +85,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
         (TableProperties) listView.getItemAtPosition(position);
     // hilary's original
     //tp.setSynchronized(listView.isItemChecked(position));
-    DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    DbHelper dbh = DbHelper.getDbHelper(this, appName);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tp.getTableId());
     boolean wantToSync;

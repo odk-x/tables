@@ -68,8 +68,6 @@ public class TablePropertiesManager extends PreferenceActivity {
 
   private static final String TAG = "TablePropertiesManager";
 
-  public static final String INTENT_KEY_TABLE_ID = "tableId";
-
   // these ints are used when selecting/changing the view files
   private static final int RC_DETAIL_VIEW_FILE = 0;
   private static final int RC_LIST_VIEW_FILE = 1;
@@ -100,11 +98,15 @@ public class TablePropertiesManager extends PreferenceActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    String tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
+    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    if ( appName == null ) {
+      appName = TableFileUtils.getDefaultAppName();
+    }
+    String tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
+    dbh = DbHelper.getDbHelper(this, appName);
     tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
     setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
     init();
@@ -299,6 +301,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       public boolean onPreferenceClick(Preference preference) {
         Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
             ColorRuleManagerActivity.class);
+        rowColorRuleManagerIntent.putExtra(
+            Controller.INTENT_KEY_APP_NAME, tp.getAppName());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
             tp.getTableId());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
@@ -318,6 +322,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       public boolean onPreferenceClick(Preference preference) {
         Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
             ColorRuleManagerActivity.class);
+        rowColorRuleManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            tp.getAppName());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
             tp.getTableId());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
@@ -560,7 +566,8 @@ public class TablePropertiesManager extends PreferenceActivity {
         public boolean onPreferenceClick(Preference preference) {
           Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
               ListViewManager.class);
-          selectListViewIntent.putExtra(ListViewManager.INTENT_KEY_TABLE_ID, tp.getTableId());
+          selectListViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
           startActivity(selectListViewIntent);
           return true;
         }

@@ -97,7 +97,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
     return this.mSubmitService.register(this.mAppUuid, data);
   }
 
-  public List<String> registerMediaFiles(String tableId, String aggregateUri)
+  public List<String> registerMediaFiles(String appName, String tableId, String aggregateUri)
       throws Exception {
     Log.d(TAG, "[registerMediaFiles]");
     if (!this.mIsBoundToService) {
@@ -106,7 +106,7 @@ public class ServiceConnectionImpl implements ServiceConnection {
       		"media files!");
     }
     Map<String, String> absolutePathToUploadUri =
-        getFileInfoForSubmit(tableId, aggregateUri);
+        getFileInfoForSubmit(appName, tableId, aggregateUri);
     Log.d(TAG, "[registerMediaFiles] path->uploadUrl: " + absolutePathToUploadUri);
     List<String> submitFileUuids = new ArrayList<String>();
     for (Map.Entry<String, String> entry :
@@ -125,9 +125,8 @@ public class ServiceConnectionImpl implements ServiceConnection {
    * @param tableId
    * @return
    */
-  private Map<String, String> getFileInfoForSubmit(String tableId,
+  private Map<String, String> getFileInfoForSubmit(String appName, String tableId,
       String aggregateUri) {
-    String appName = TableFileUtils.ODK_TABLES_APP_NAME;
     String appFolder = ODKFileUtils.getAppFolder(appName);
     String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
     List<String> relativePathsToAppFolderOnDevice =
@@ -184,11 +183,13 @@ public class ServiceConnectionImpl implements ServiceConnection {
       return;
     }
     try {
+      // TODO: remove this via passing it in...
+      String appName = TableFileUtils.extractAppName();
       syncRequestId = this.registerData();
       submitFileUploadUids = new ArrayList<String>();
       for (String tableId : receiver.getTableIdsPendingForSubmit()) {
         Map<String, String> absolutePathToUploadUrl =
-            getFileInfoForSubmit(tableId, receiver.getAggregateServerUri());
+            getFileInfoForSubmit(appName, tableId, receiver.getAggregateServerUri());
         Log.e(TAG, "[onServiceConnected] giving file to submit: " + absolutePathToUploadUrl);
         for (Map.Entry<String, String> entry :
             absolutePathToUploadUrl.entrySet()) {

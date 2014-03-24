@@ -15,444 +15,308 @@
  */
 package org.opendatakit.tables.activities.graphs;
 
-import java.util.List;
-
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.activities.ListDisplayActivity;
+import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewType;
+import org.opendatakit.tables.data.Query;
+import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.views.webkits.CustomGraphView;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
+import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockListActivity;
+import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
 
 /**
- * This activity presents all the possible list views that might be displayed
- * for the given table.
- * <p>
- * It's general structure is modeled on the ColumnManager class, so that we keep
- * a standard feel throughout the app.
- *
- * @author sudar.sam@gmail.com
+ * Renders the CustomGraphView for the specified graph.
  *
  */
-public class GraphDisplayActivity extends SherlockListActivity {
+public class GraphDisplayActivity extends SherlockActivity
+implements DisplayActivity {
 
-	public static final String TAG = GraphDisplayActivity.class.getName();
+	private static final String TAG = "GraphDisplayActivity";
 
-	public static final String INTENT_KEY_TABLE_ID = "tableId";
-	public static final String INTENT_KEY_GRAPHVIEW_NAME = "graphViewName";
+   /**************************
+    * Strings necessary for the key value store.
+    **************************/
+   /**
+    * The general partition in which table-wide ListDisplayActivity information
+    * is stored. An example might be the current list view for a table.
+    */
+   public static final String KVS_PARTITION = "GraphDisplayActivity";
+   /**
+    * The partition under which actual individual view information is stored.
+    * For instance if a user added a list view named "Doctor", the partition
+    * would be KVS_PARTITION_VIEWS, and all the keys relating to this view would
+    * fall within this partition and a particular aspect. (Perhaps the name
+    * "Doctor"?)
+    */
+   public static final String KVS_PARTITION_VIEWS = KVS_PARTITION + ".views";
+
+   /**
+    * This key holds the name of the list view. In the default aspect the idea
+    * is that this will then give the value of the aspect for which the default
+    * list view is set.
+    * <p>
+    * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT,
+    * key="KEY_LIST_VIEW_NAME", value="My Custom List View" would mean that
+    * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS
+    * partition that had the information regarding a custom list view.
+    */
+   public static final String KEY_GRAPH_VIEW_NAME = "nameOfGraphView";
+   public static final String POTENTIAL_GRAPH_VIEW_NAME = "potentialGraphName";
+
+   /**
+    * Key for KVS -- the type of graph
+    */
+   public static final String GRAPH_TYPE = "graphtype";
 
 
-	/**
-	 * Menu ID for adding a new list view.
-	 */
-	public static final int MENU_ITEM_ID_SEARCH_BUTTON = 1;
-
-	public static final int ADD_NEW_GRAPH_VIEW = 0;
-
-	/**
-	 * Menu ID for deleting an entry.
-	 */
-	public static final int MENU_DELETE_ENTRY = 1;
-	/**
-	 * Menu ID for opening the edit entry activity.
-	 */
-	public static final int MENU_EDIT_ENTRY = 2;
-
-	/**
-	 * This will be the names of all the possible list views.
-	 */
-	private List<String> graphViewNames;
-
-	/**
-	 * This will be the adapter that handles displaying the actual rows as well
-	 * as presenting the menu to edit the entry.
-	 */
-	private GraphViewAdapter adapter;
-
-	/**
-	 * The id of the table for which we are displaying the list views.
-	 */
-	private String tableId;
-
-	/**
-	 * The TableProperties of the table for which we are displaying the possible
-	 * list views
-	 */
-	private TableProperties tp;
-
-	/**
-	 * The KVS helper through which we will be getting the list view information.
-	 */
+	private Controller c;
+	private Query query;
+	private UserTable table;
+	private CustomGraphView view;
+	private DbHelper dbh;
 	private KeyValueStoreHelper kvsh;
-
-	/**
-	 * This is the name of the graph view that is currently set to the default.
-	 */
-	private String defaultGraphViewName;
-
-	/**
-	 * This is the aspect helper for the general list view partition. This stands
-	 * opposed to the partition where the named views themselves reside.
-	 */
-	private KeyValueStoreHelper graphViewKvsh;
-
-	/**
-	 * A sql where clause that may have come from an intent. Needs to be
-	 * forwarded to the display activity.
-	 * @see DbTable#rawSqlQuery
-	 */
-	private String mSqlWhereClause;
-	/**
-	 * A String array of sql selection args that may have come from an intent.
-	 * Needs to be forwarded to the display activity.
-	 * @see DbTable#rawSqlQuery
-	 */
-	private String[] mSqlSelectionArgs;
-
-	/*
-	 * Get the fields up and running.
-	 */
-	private void init() {
-		this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-		this.mSqlWhereClause =
-		    getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
-		this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
-		    Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-		DbHelper dbh = DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
-		this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-				KeyValueStore.Type.ACTIVE);
-		this.kvsh =
-				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION_VIEWS);
-		this.graphViewKvsh =
-				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
-		this.defaultGraphViewName =
-				graphViewKvsh.getString(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
-		this.graphViewNames = kvsh.getAspectsForPartition();
-		Log.d(TAG, "graphViewNames: " + graphViewNames);
-		// Set the adapter. It adds the list view itself.
-		this.adapter = new GraphViewAdapter();
-		setListAdapter(adapter);
-	}
+	private String graphName;
+	private String potentialGraphName;
 
 	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		// Since at the moment we are counting on the Controller class to
-		// do the changing, we don't use the intent directly. If someone
-		// clicks on this view, that means they want to display the list
-		// view using this activity. Further, it means that they want to
-		// see the list view. To get this to work, we need to set the view
-		// type to list view
-		tp.setCurrentViewType(TableViewType.Graph);
-		// This will help us access keys for the general partition. (We
-		// need this to set this view as the default list view for the
-		// table.)
-		KeyValueStoreHelper kvshGraphViewPartition =
-				tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
-		// We need this to get the filename of the current list view.
-		KeyValueHelper aspectHelper =
-				kvsh.getAspectHelper((String)
-						getListView().getItemAtPosition(position));
-		String filenameOfSelectedView =
-				aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
-		// Check if there are prime columns. If there are, then we're using
-		// the collection view? This needs to be sorted out.
-		// TODO: launch if something is a collection view correctly.
-		// For example, right now there is an issue where you might be
-		// selecting a collection list view but you're not viewing the
-		// table with a prime column, or vice versa, and this could create
-		// an issue.
-		String graphName = (String)getListView().getItemAtPosition(position);
-		Intent newGraphViewIntent = new Intent(this, BarGraphDisplayActivity.class);
-		newGraphViewIntent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-		newGraphViewIntent.putExtra(BarGraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME, getPotentialGraphName());
-		newGraphViewIntent.putExtra(BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME, graphName);
-		// Now put the sql ones if they exist.
-		if (this.mSqlWhereClause != null) {
-		  newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_WHERE,
-		      mSqlWhereClause);
-		  newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_SELECTION_ARGS,
-		      mSqlSelectionArgs);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+	    if ( appName == null ) {
+	      appName = TableFileUtils.getDefaultAppName();
+	    }
+		setTitle("");
+		dbh = DbHelper.getDbHelper(this, appName);
+		this.graphName = getIntent().getStringExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
+		this.potentialGraphName = getIntent().getStringExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME);
+		if(graphName == null) {
+			graphName = potentialGraphName;
 		}
-		startActivity(newGraphViewIntent);
+		c = new Controller(this, this, getIntent().getExtras());
+		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
+		// TODO: why do we get all table properties here? this is an expensive
+		// call. I don't think we should do it.
+		query = new Query(dbh, KeyValueStore.Type.ACTIVE, c.getTableProperties());
 	}
 
 	@Override
-	public void onCreate(Bundle icicle) {
-		super.onCreate(icicle);
-		setContentView(org.opendatakit.tables.R.layout.graph_view_manager);
-		setTitle(getString(R.string.graph_manager));
-		// Set the app icon as an action to go home.
-		ActionBar actionBar = getSupportActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
-		registerForContextMenu(getListView());
-	}
-
-	@Override
-	public void onResume() {
+	protected void onResume() {
 		super.onResume();
 		init();
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
-		super.onCreateOptionsMenu(menu);
+	public void init() {
+		// I hate having to do these two refreshes here, but with the code the
+		// way it is it seems the only way.
+		c.refreshDbTable(c.getTableProperties().getTableId());
+		query.clear();
+		query.loadFromUserQuery(c.getSearchText());
+      String sqlWhereClause =
+          getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
+      if (sqlWhereClause != null) {
+        String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+            Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+        DbTable dbTable = DbTable.getDbTable(dbh, c.getTableProperties());
+        table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+      } else {
+        // We use the query.
+        table = c.getIsOverview() ?
+            c.getDbTable().getUserOverviewTable(query) :
+            c.getDbTable().getUserTable(query);
+      }
 
-		final TableViewType[] viewTypes = tp.getPossibleViewTypes();
-		// 	  -build a checkable submenu to select the view type
-		SubMenu viewTypeSubMenu =
-				menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON,
-						Menu.NONE, getString(R.string.view_type));
-		MenuItem viewType = viewTypeSubMenu.getItem();
-		viewType.setIcon(R.drawable.view);
-		viewType.setEnabled(true);
-		viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		MenuItem item;
-		// This will be the name of the default list view, which if exists
-		// means we should display the list view as an option.
-		KeyValueStoreHelper kvsh =
-				tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-		String nameOfView = kvsh.getString(
-				ListDisplayActivity.KEY_LIST_VIEW_NAME);
-		for(int i = 0; i < viewTypes.length; i++) {
-			item = viewTypeSubMenu.add(MENU_ITEM_ID_SEARCH_BUTTON,
-					viewTypes[i].getId(), i,
-					viewTypes[i].name());
-			// mark the current viewType as selected
-			if (tp.getCurrentViewType() == viewTypes[i]) {
-				item.setChecked(true);
-			}
-			// disable list view if no file is specified
-			if (viewTypes[i] == TableViewType.List &&
-					nameOfView == null) {
-				item.setEnabled(false);
-			}
+      view = CustomGraphView.get(this, table.getTableProperties().getAppName(), table,
+	     graphName, potentialGraphName, c);
+      c.setGraphViewInfoBarText(graphName);
+      displayView();
+	}
+
+	private void displayView() {
+		view.display();
+		c.setDisplayView(view);
+		setContentView(c.getContainerView());
+	}
+
+	public void backPressedWhileInGraph() {
+		view.deleteDefaultGraph();
+		c.onBackPressed();
+	}
+
+	@Override
+	public void onBackPressed() {
+		//check if it should ask to save
+		if(!view.graphIsModified()) {
+			backPressedWhileInGraph();
 		}
 
-		viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_SEARCH_BUTTON,
-				true, true);
 
+		//ask if they wish to save
+		final String getOldGraphName;
+		if(graphName.equals(potentialGraphName)) {
+			getOldGraphName = null;
+		} else {
+			getOldGraphName = graphName;
+		}
 
-		MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW,
-				Menu.NONE,
-				getString(R.string.add_new_graph)).setEnabled(true);
-		addItem.setIcon(R.drawable.content_new);
-		addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which){
+				case DialogInterface.BUTTON_POSITIVE:
+					alertForNewGraphName(getOldGraphName);
+					break;
 
+				case DialogInterface.BUTTON_NEGATIVE:
+					backPressedWhileInGraph();
+					break;
+				}
+			}
+		};
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.confirm_save_graph))
+		.setMessage(getString(R.string.are_you_sure_save_graph))
+		.setPositiveButton(getString(R.string.yes), dialogClickListener)
+		.setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
+
+		//view.handleBackButtonCall();
+		// c.onBackPressed();
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode,
+			Intent data) {
+		if (c.handleActivityReturn(requestCode, resultCode, data)) {
+			return;
+		} else {
+			super.onActivityResult(requestCode, resultCode, data);
+		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		c.buildOptionsMenu(menu);
 		return true;
 	}
 
 	@Override
-	public boolean onMenuItemSelected(int featureId,
-			com.actionbarsherlock.view.MenuItem item) {
-
-		if(item.getGroupId() == MENU_ITEM_ID_SEARCH_BUTTON) {
-			tp.setCurrentViewType(
-					TableViewType.getViewTypeFromId(item.getItemId()));
-			Controller.launchTableActivity(this, tp, "", true, null, null);
-			return true;
-		}
-		switch (item.getItemId()) {
-		case MENU_ITEM_ID_SEARCH_BUTTON:
-
-			return true;
-		case ADD_NEW_GRAPH_VIEW:
-			createNewGraph();
-			return true;
-		}
-		return false;
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		return c.handleMenuItemSelection(item);
 	}
 
 	@Override
-	public boolean onContextItemSelected(android.view.MenuItem item) {
-		// We need this so we can get the position of the thing that was clicked.
-		AdapterContextMenuInfo menuInfo =
-				(AdapterContextMenuInfo) item.getMenuInfo();
-		final int position = menuInfo.position;
-		final String entryName =
-				(String) getListView().getItemAtPosition(position);
-		switch(item.getItemId()) {
-		case MENU_DELETE_ENTRY:
-			// Make an alert dialog that will give them the option to delete it or
-			// cancel.
-			AlertDialog confirmDeleteAlert;
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle(getString(R.string.confirm_delete_graph));
-			builder.setMessage(getString(R.string.are_you_sure_delete_graph, entryName));
-			// For the OK action we want to actually delete this list view.
-			builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+	public void onSearch() {
+		c.recordSearch();
+		init();
+	}
 
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					// We need to delete the entry. First delete it in the key value
-					// store.
-					AspectHelper aspectHelper = kvsh.getAspectHelper(entryName);
-					aspectHelper.deleteAllEntriesInThisAspect();
-					if (entryName.equals(defaultGraphViewName)) {
-						KeyValueStoreHelper generalViewHelper =
-								tp.getKeyValueStoreHelper(BarGraphDisplayActivity.KVS_PARTITION);
-						generalViewHelper.removeKey(
-								BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
-					}
-					defaultGraphViewName = null;
-					// Now remove it from the list view.
-					graphViewNames.remove(position);
-					adapter.notifyDataSetChanged();
+
+	private void alertForNewGraphName(String givenGraphName) {
+
+		AlertDialog newColumnAlert;
+		// Prompt an alert box
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+	    View aview = getLayoutInflater().inflate(R.layout.message_with_text_edit_field_dialog, null);
+	    alert.setView(aview)
+		.setTitle(R.string.save_graph_as);
+
+	    final TextView msg = (TextView) aview.findViewById(R.id.message);
+	    msg.setText(getString(R.string.enter_new_graph_name));
+
+		// Set an EditText view to get user input
+		final EditText input = (EditText) aview.findViewById(R.id.edit_field);
+		input.setFocusableInTouchMode(true);
+		input.setFocusable(true);
+		input.requestFocus();
+		// adding the following line
+		//((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE))
+		//.showSoftInput(input, InputMethodManager.SHOW_FORCED);
+		if (givenGraphName != null)
+			input.setText(givenGraphName);
+
+		// OK Action => Create new Column
+		alert.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				String graphName = input.getText().toString();
+				graphName = graphName.trim();
+				if (graphName == null || graphName.equals("")) {
+					toastGraphNameError(getString(R.string.error_graph_name_empty));
+					alertForNewGraphName(null);
+				} else if (graphName.contains(" ")) {
+					toastGraphNameError(getString(R.string.error_graph_name_spaces));
+					alertForNewGraphName(graphName.replace(' ', '_'));
+				} else if (view.hasGraph(graphName)) {
+					handleOverwriteRequest(graphName);
+				} else {
+					// Create new graph
+					view.createNewGraph(graphName);
+					backPressedWhileInGraph();
+					// Load Column Property Manger
+					//loadColumnPropertyManager(cp.getElementKey());
 				}
-			});
+			}
+		});
+		// Cancel Action
+		alert.setNegativeButton(getString(R.string.cancel),
+				new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				// Canceled.
+			}
+		});
 
-			builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+		newColumnAlert = alert.create();
+		newColumnAlert.getWindow().setSoftInputMode(WindowManager.LayoutParams.
+				SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+		newColumnAlert.show();
+		//alert.show();
+	}
 
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					// Canceled. Do nothing.
+	private void toastGraphNameError(String msg) {
+		Context context = getApplicationContext();
+		Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
+		toast.show();
+	}
+
+	public void handleOverwriteRequest(final String givenGraphName) {
+		//Ask if the user wants to override a previous graph
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which){
+				case DialogInterface.BUTTON_POSITIVE:
+					view.createNewGraph(givenGraphName);
+					view.setPermissions(givenGraphName, true);
+					backPressedWhileInGraph();
+					break;
+				case DialogInterface.BUTTON_NEGATIVE:
+					alertForNewGraphName(givenGraphName);
+					break;
 				}
-			});
-			confirmDeleteAlert = builder.create();
-			confirmDeleteAlert.show();
-			return true;
-		case MENU_EDIT_ENTRY:
-			menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
-			Intent editGraphViewIntent = new Intent(GraphDisplayActivity.this,
-					BarGraphDisplayActivity.class);
-			editGraphViewIntent.putExtra(
-					GraphDisplayActivity.INTENT_KEY_TABLE_ID, tableId);
-			editGraphViewIntent.putExtra(
-					BarGraphDisplayActivity.KEY_GRAPH_VIEW_NAME, entryName);
-			editGraphViewIntent.putExtra(BarGraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME, getPotentialGraphName());
-			startActivity(editGraphViewIntent);
-			return true;
-		default:
-			Log.e(TAG, "android MenuItem id not recognized: " + item.getItemId());
-			return false;
-		}
+			}
+		};
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.confirm_overwrite_graph))
+		.setMessage(getString(R.string.are_you_sure_overwrite_graph, givenGraphName))
+		.setPositiveButton(getString(R.string.yes), dialogClickListener)
+		.setNegativeButton(getString(R.string.cancel), dialogClickListener).show();
 	}
-
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v,
-			ContextMenuInfo menuInfo) {
-		menu.add(0,MENU_DELETE_ENTRY, 0, getString(R.string.delete_graph));
-		menu.add(0, MENU_EDIT_ENTRY, 0, getString(R.string.edit_graph));
-	}
-
-	/**
-	 * This is the data structure that actually bears the list to be displayed to
-	 * the user, and handles the View creation of each element in the normal
-	 * Android Adapter way.
-	 * <p>
-	 * The general idea is that this class gives the icon necessary for viewing
-	 * the adapter and adding settings.
-	 *
-	 * @author sudar.sam@gmail.com
-	 *
-	 */
-	class GraphViewAdapter extends ArrayAdapter<String> {
-
-		/**
-		 * Set this adapter to use the @listViewNames as its backing object.
-		 */
-		GraphViewAdapter() {
-			super(GraphDisplayActivity.this,
-					org.opendatakit.tables.R.layout.touchlistview_row2,
-					graphViewNames);
-		}
-
-		 /**
-	     * The method responsible for getting the view that will represent an
-	     * element in the list. Since we're just displaying Strings, we must make
-	     * sure that the settings button generates the correct options for selecting
-	     * a new list view.
-	     */
-	    @Override
-	    public View getView(int position, View convertView, ViewGroup parent) {
-	      // Per the Android programming contract, it's possible that we've
-	      // been handed an old view we need to convert to a new one. (This
-	      // is what the convertView param is.) So, try that.
-	      View row = convertView;
-	      // It's possible that we weren't handed one and have to construct
-	      // it up from scratch.
-	      if (row == null) {
-	        row = getLayoutInflater().inflate(
-	            org.opendatakit.tables.R.layout.row_for_edit_view_entry,
-	            parent, false);
-	      }
-	      final int currentPosition = position;
-	      final String listViewName = graphViewNames.get(currentPosition);
-	      // Set the label of this row.
-	      TextView label =
-	          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
-	      label.setText(listViewName);
-	      // We can ignore the "ext" TextView, as there's not at this point any
-	      // other information we wish to be displaying.
-	      TextView extraString =
-	          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
-	      AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
-	      String filename =
-	          aspectHelper.getString(BarGraphDisplayActivity.GRAPH_TYPE);
-	      extraString.setText(filename);
-	      // The radio button showing whether or not this is the default list view.
-
-	      // And now prepare the listener for the settings icon.
-	      final ImageView editView = (ImageView)
-	          row.findViewById(org.opendatakit.tables.R.id.row_options);
-	      final View holderView = row;
-	      editView.setOnClickListener(new OnClickListener() {
-	        @Override
-	        public void onClick(View v) {
-	          // Open the context menu of the view, because that's where we're
-	          // doing the logistics.
-	          holderView.showContextMenu();
-	        }
-	      });
-	      // And now we're set, so just kick it on back.
-	      return row;
-	    }
-	}
-
-	private void createNewGraph() {
-		Intent newGraphViewIntent = new Intent(this, BarGraphDisplayActivity.class);
-		newGraphViewIntent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-		newGraphViewIntent.putExtra(BarGraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME, getPotentialGraphName());
-		startActivity(newGraphViewIntent);
-	}
-
-	private String getPotentialGraphName() {
-	      List<String> existingListViewNames = kvsh.getAspectsForPartition();
-	      int suffix = existingListViewNames.size();
-	      String potentialName = getString(R.string.generated_graph_name, suffix);
-	      while (existingListViewNames.contains(potentialName)) {
-	        suffix++;
-	        potentialName = getString(R.string.generated_graph_name, suffix);
-	      }
-	      return potentialName;
-	}
-
-
-
 }

@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.data;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -36,6 +38,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -890,27 +893,36 @@ public class TableProperties {
     }
   }
 
-  public void deleteTable() {
+  public boolean isSharedTable() {
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
     boolean isSetToSync = syncKVSM.isSetToSync();
-    // hilary's original
-    // if (isSynched && (syncState == SyncUtil.State.REST
-    // || syncState == SyncUtil.State.UPDATING))
+    return (isSetToSync && (syncState == SyncState.rest || syncState == SyncState.updating));
+  }
+
+  public void markDeleteTable() {
+    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+    KeyValueStoreSync syncKVSM = kvsm.getSyncStoreForTable(tableId);
+
+    boolean isSetToSync = syncKVSM.isSetToSync();
     if (isSetToSync && (syncState == SyncState.rest || syncState == SyncState.updating))
       setSyncState(SyncState.deleting);
-    // hilary's original
-    // else if (!isSynched || syncState == SyncUtil.State.INSERTING)
-    else if (!isSetToSync || syncState == SyncState.inserting)
-      deleteTableActual();
   }
 
   /**
-   * Remove the table from the database. This cannot be undone.
+   * Remove the table from the local database. This cannot be undone.
    */
-  public void deleteTableActual() {
+  public void deleteTable() {
     // Two things must be done: delete all the key value pairs from the active
     // key value store and drop the table holding the data from the database.
+    String tableDir = ODKFileUtils.getTablesFolder(dbh.getAppName(), tableId);
+    try {
+      FileUtils.deleteDirectory(new File(tableDir));
+    } catch (IOException e1) {
+      e1.printStackTrace();
+      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
+    }
+
     Map<String, ColumnProperties> columns = getDatabaseColumns();
     SQLiteDatabase db = dbh.getWritableDatabase();
     try {
@@ -925,6 +937,8 @@ public class TableProperties {
         kvsm.getStoreForTable(tableId, KeyValueStore.Type.ACTIVE).clearKeyValuePairs(db);
         kvsm.getStoreForTable(tableId, KeyValueStore.Type.DEFAULT).clearKeyValuePairs(db);
         kvsm.getStoreForTable(tableId, KeyValueStore.Type.SERVER).clearKeyValuePairs(db);
+        // remove it from sync store
+        kvsm.getSyncStoreForTable(tableId).clearKeyValuePairs(db);
         db.setTransactionSuccessful();
       } catch (Exception e) {
         e.printStackTrace();
@@ -939,6 +953,10 @@ public class TableProperties {
       markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
       markStaleCache(dbh, KeyValueStore.Type.SERVER);
     }
+  }
+
+  public String getAppName() {
+    return dbh.getAppName();
   }
 
   /**
@@ -1138,11 +1156,11 @@ public class TableProperties {
     }
     return null;
   }
-  
+
   /**
    * Return the element key for the column based on the element path.
    * <p>
-   * TODO: CURRENTLY A HACK!!! 
+   * TODO: CURRENTLY A HACK!!!
    * @param elementPath
    * @return
    */

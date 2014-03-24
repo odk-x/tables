@@ -45,7 +45,7 @@ public class DetailDisplayActivity extends SherlockActivity
         implements DisplayActivity {
 
   private static final String TAG = "DetaiDisplayActivity";
-  
+
   // These are strings necessary for the key value store
   public static final String KVS_PARTITION = "DetailDisplayActivity";
   public static final String KVS_ASPECT_DEFAULT = "default";
@@ -59,6 +59,7 @@ public class DetailDisplayActivity extends SherlockActivity
      */
     public static final String INTENT_KEY_FILENAME = "filename";
 
+    private String mAppName;
     /** The id of the row that is being displayed in this detail view. */
     private String mRowId;
     /** The table id to which the row belongs. */
@@ -70,6 +71,10 @@ public class DetailDisplayActivity extends SherlockActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        if ( mAppName == null ) {
+          mAppName = TableFileUtils.getDefaultAppName();
+        }
         setTitle("");
         mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
         mTableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
@@ -100,7 +105,7 @@ public class DetailDisplayActivity extends SherlockActivity
         init();
         displayView();
     }
-    
+
     /**
      * Return the default detail view file name that has been set for the table
      * represented by the given {@link TableProperties} object. May return null
@@ -111,10 +116,10 @@ public class DetailDisplayActivity extends SherlockActivity
     public static String getDefaultDetailFileName(
         TableProperties tableProperties) {
       // Then we need to recover the file name.
-      KeyValueStoreHelper detailActivityKVS = 
+      KeyValueStoreHelper detailActivityKVS =
           tableProperties.getKeyValueStoreHelper(
               DetailDisplayActivity.KVS_PARTITION);
-      String recoveredFilename = 
+      String recoveredFilename =
           detailActivityKVS.getString(DetailDisplayActivity.KEY_FILENAME);
       return recoveredFilename;
     }
@@ -126,10 +131,10 @@ public class DetailDisplayActivity extends SherlockActivity
         // See if the caller included a filename that should be used. Will be
         // null if not found, so we can just pass it right along into the view.
 
-        DbHelper dbHelper = 
-            DbHelper.getDbHelper(this, TableFileUtils.ODK_TABLES_APP_NAME);
-        TableProperties tableProperties = 
-            TableProperties.getTablePropertiesForTable(dbHelper, mTableId, 
+        DbHelper dbHelper =
+            DbHelper.getDbHelper(this, mAppName);
+        TableProperties tableProperties =
+            TableProperties.getTablePropertiesForTable(dbHelper, mTableId,
                 KeyValueStore.Type.ACTIVE);
         DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
         mTable = dbTable.getTableForSingleRow(mRowId);
@@ -153,8 +158,8 @@ public class DetailDisplayActivity extends SherlockActivity
           // If we recovered it, good, otherwise we leave as null.
           filename = recoveredFilename;
         }
-        mCustomTableView = CustomTableView.get(this, 
-            TableFileUtils.ODK_TABLES_APP_NAME, mTable, filename, c);
+        mCustomTableView = CustomTableView.get(this,
+            mAppName, mTable, filename, c);
     }
 
     private void displayView() {

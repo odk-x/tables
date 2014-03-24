@@ -72,8 +72,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 	protected synchronized Boolean doInBackground(Void... params) {
 			Properties prop = new Properties();
 			try {
-			  String pathToConfigFile = 
-			      TableFileUtils.getTablesConfigurationFile();
+			  String pathToConfigFile =
+			      TableFileUtils.getTablesConfigurationFile(mAppName);
 				File config = new File(pathToConfigFile);
 				prop.load(new FileInputStream(config));
 			} catch (IOException ex) {
@@ -99,8 +99,8 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
 			  // both problems, while perhaps eliminating a very annoying problem.
 			  // However, it still feels like a hack, and I wish the AsyncTask/
 			  // Fragment situation wasn't so damned irritating.
-				fileModifiedTime = 
-				    new File(TableFileUtils.getTablesConfigurationFile())
+				fileModifiedTime =
+				    new File(TableFileUtils.getTablesConfigurationFile(mAppName))
 				    .lastModified();
 				ConfigurationUtil.updateTimeChanged(
 				    this.mDialogFragment.getPreferencesFromContext(),

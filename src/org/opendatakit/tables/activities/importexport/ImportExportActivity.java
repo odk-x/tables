@@ -17,6 +17,8 @@ package org.opendatakit.tables.activities.importexport;
 
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.TabActivity;
 import android.content.Intent;
@@ -30,18 +32,24 @@ public class ImportExportActivity extends TabActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		if ( appName == null ) {
+		  appName = TableFileUtils.getDefaultAppName();
+		}
 		setContentView(R.layout.importexport_view);
 		TabHost th = getTabHost();
 		TabHost.TabSpec spec;
 		Intent intent;
 		// the import CSV option
 		intent = new Intent().setClass(this, ImportCSVActivity.class);
+		intent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
 		spec = th.newTabSpec("importcsv");
 		spec.setIndicator(getString(R.string.import_csv));
 		spec.setContent(intent);
 		th.addTab(spec);
 		// the export CSV option
 		intent = new Intent().setClass(this, ExportCSVActivity.class);
+      intent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
 		spec = th.newTabSpec("exportcsv");
 		spec.setIndicator(getString(R.string.export_csv));
 		spec.setContent(intent);
