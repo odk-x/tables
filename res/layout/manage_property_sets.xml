@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical">
+  	<Button
+ 	  android:id="@+id/restore_defaults_button"
+  	  android:layout_width="match_parent"
+  	  android:layout_height="wrap_content"
+  	  android:text="@+string/restore_defaults"/>
+  	<Button
+  	  android:id="@+id/save_to_defaults_button"
+  	  android:layout_width="match_parent"
+  	  android:layout_height="wrap_content"
+  	  android:text="@+string/save_to_defaults"/>
+  	<Button
+  	  android:id="@+id/copy_defaults_to_server_button"
+  	  android:layout_width="match_parent"
+  	  android:layout_height="wrap_content"
+  	  android:text="@+string/copy_defaults_to_server"/>
+  	<Button
+  	  android:id="@+id/merge_server_into_defaults_button"
+  	  android:layout_width="match_parent"
+  	  android:layout_height="wrap_content"
+  	  android:text="@+string/merge_server_into_defaults"/>
+</LinearLayout>

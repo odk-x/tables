@@ -102,7 +102,8 @@
 	<string name="list_view_file">List View File</string>
 	<string name="edit_default_form">Edit Default Form</string>
 	<string name="table_manager_title">Table Manager > %1$s</string>
-	<string name="revert_warning">Revert to default settings? Any modifications you have made will be lost.</string>
+	<string name="manage_property_sets_title">Manage Property Sets > %1$s</string>
+		<string name="revert_warning">Revert to default settings? Any modifications you have made will be lost.</string>
 	<string name="yes">Yes</string>
 	<string name="waiting_auth">Waiting on authentication</string>
 	<string name="confirm_change_settings">Confirm Change Settings</string>

@@ -26,7 +26,6 @@ import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreManager;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewType;
@@ -37,14 +36,11 @@ import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -88,11 +84,6 @@ public class TablePropertiesManager extends PreferenceActivity {
   private DbHelper dbh;
   private TableProperties tp;
 
-  private AlertDialog revertDialog;
-  private AlertDialog saveAsDefaultDialog;
-  private AlertDialog defaultToServerDialog;
-  private AlertDialog serverToDefaultDialog;
-
 
 
   @Override
@@ -113,97 +104,6 @@ public class TablePropertiesManager extends PreferenceActivity {
   }
 
   private void init() {
-
-    // TODO move this into the actual preference somehow.
-    AlertDialog.Builder builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder.setMessage(getString(R.string.revert_warning));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore defaultKVS = kvsm.getStoreForTable(tp.getTableId(),
-            KeyValueStore.Type.DEFAULT);
-        if (!defaultKVS.entriesExist(db)) {
-          AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
-              TablePropertiesManager.this);
-          noDefaultsDialog.setMessage(getString(R.string.no_default_no_changes));
-          noDefaultsDialog.setNeutralButton(getString(R.string.ok), null);
-          noDefaultsDialog.show();
-        } else {
-          kvsm.copyDefaultToActiveForTable(tp.getTableId());
-        }
-      }
-    });
-    builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        dialog.cancel();
-      }
-    });
-    revertDialog = builder.create();
-
-    builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder.setMessage(getString(R.string.are_you_sure_save_default_settings));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore activeKVS = kvsm.getStoreForTable(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-
-        kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
-      }
-    });
-    builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        dialog.cancel();
-      }
-    });
-    saveAsDefaultDialog = builder.create();
-
-    builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder.setMessage(getString(R.string.are_you_sure_copy_default_settings_to_server_settings));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore activeKVS = kvsm.getStoreForTable(tp.getTableId(), KeyValueStore.Type.ACTIVE);
-
-        kvsm.copyDefaultToServerForTable(tp.getTableId());
-      }
-    });
-    builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        dialog.cancel();
-      }
-    });
-    defaultToServerDialog = builder.create();
-
-    builder = new AlertDialog.Builder(TablePropertiesManager.this);
-    builder
-        .setMessage(getString(R.string.are_you_sure_merge_server_settings_into_default_settings));
-    builder.setCancelable(true);
-    builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        try {
-          KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-          KeyValueStore activeKVS = kvsm.getStoreForTable(tp.getTableId(),
-              KeyValueStore.Type.ACTIVE);
-
-          kvsm.mergeServerToDefaultForTable(tp.getTableId());
-        } finally {
-          // TODO: fix the when to close problem
-          // if ( db != null ) {
-          // db.close();
-          // }
-        }
-      }
-    });
-    builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int id) {
-        dialog.cancel();
-      }
-    });
-    serverToDefaultDialog = builder.create();
 
     PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
 
@@ -440,62 +340,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     securityCat.addPreference(writeTablePref);
-
-    // the managing of default properties
-
-    // under development!
-    PreferenceCategory defaultsCat = new PreferenceCategory(this);
-    root.addPreference(defaultsCat);
-    defaultsCat.setTitle(getString(R.string.manage_table_property_sets));
-
-    // the actual entry that has the option above.
-    Preference revertPref = new Preference(this);
-    revertPref.setTitle(getString(R.string.restore_defaults));
-    revertPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        revertDialog.show();
-        return true;
-      }
-    });
-    defaultsCat.addPreference(revertPref);
-
-    Preference saveAsDefaultPref = new Preference(this);
-    saveAsDefaultPref.setTitle(getString(R.string.save_to_defaults));
-    saveAsDefaultPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        saveAsDefaultDialog.show();
-        return true;
-      }
-    });
-    defaultsCat.addPreference(saveAsDefaultPref);
-
-    Preference defaultToServerPref = new Preference(this);
-    defaultToServerPref.setTitle(getString(R.string.copy_defaults_to_server));
-    defaultToServerPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        defaultToServerDialog.show();
-        return true;
-      }
-    });
-    defaultsCat.addPreference(defaultToServerPref);
-
-    Preference serverToDefaultPref = new Preference(this);
-    serverToDefaultPref.setTitle(getString(R.string.merge_server_into_defaults));
-    serverToDefaultPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        serverToDefaultDialog.show();
-        return true;
-      }
-    });
-    defaultsCat.addPreference(serverToDefaultPref);
 
     setPreferenceScreen(root);
   }

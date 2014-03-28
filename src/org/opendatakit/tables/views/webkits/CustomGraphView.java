@@ -190,12 +190,15 @@ public class CustomGraphView extends CustomView {
           newAspectHelper.deleteAllEntriesInThisAspect();
         }
         newAspectHelper.setString(GRAPH_TYPE, getGraphType());
-        if (getGraphType().equals("Bar Graph") || getGraphType().equals("Scatter Plot")) {
+        if (getGraphType().equals("Bar Graph") || getGraphType().equals("Pie Chart")) {
           newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
           newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
           newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
         } else if (getGraphType().equals("Scatter Plot")) {
+          newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
+          newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));
           newAspectHelper.setString("selectr", aspectHelper.getString(R_AXIS));
+          newAspectHelper.setString("operation", aspectHelper.getString(AGREG));
         } else if(getGraphType().equals("Line Graph")) {
         	newAspectHelper.setString("selectx", aspectHelper.getString(X_AXIS));
             newAspectHelper.setString("selecty", aspectHelper.getString(Y_AXIS));

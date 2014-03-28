@@ -79,6 +79,7 @@ public class TableActivity extends SherlockFragmentActivity
   private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
   private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
   private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
+  private static final int MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS = 8;
   static final int FIRST_FREE_MENU_ITEM_ID = 8;
 
   /** The current fragment being displayed. */
@@ -334,6 +335,9 @@ public class TableActivity extends SherlockFragmentActivity
     case Controller.RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
       break;
+    case Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS:
+      handleManagePropertySetsReturn();
+      break;
     case Controller.RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
       break;
@@ -365,6 +369,16 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleTablePropertiesManagerReturn() {
+    TableViewType oldViewType = mTableProperties.getCurrentViewType();
+    refreshDbTable(mTableProperties.getTableId());
+    if (oldViewType == mTableProperties.getCurrentViewType()) {
+      init();
+    } else {
+      launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
+    }
+  }
+
+  private void handleManagePropertySetsReturn() {
     TableViewType oldViewType = mTableProperties.getCurrentViewType();
     refreshDbTable(mTableProperties.getTableId());
     if (oldViewType == mTableProperties.getCurrentViewType()) {
@@ -446,6 +460,9 @@ public class TableActivity extends SherlockFragmentActivity
     }
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
         .setEnabled(true);
+    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS, Menu.NONE, "Manage Property Sets")
+    .setEnabled(true);
+
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
         .setEnabled(true);
     // Now an option for editing list views.
@@ -495,6 +512,14 @@ public class TableActivity extends SherlockFragmentActivity
         tablePropertiesIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
         startActivityForResult(tablePropertiesIntent, Controller.RCODE_TABLE_PROPERTIES_MANAGER);
+        return true;
+      case MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS:
+        Intent managePropertySetsIntent = new Intent(this, ManagePropertySetsManager.class);
+        managePropertySetsIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            mTableProperties.getAppName());
+        managePropertySetsIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
+            mTableProperties.getTableId());
+        startActivityForResult(managePropertySetsIntent, Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS);
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
         Intent columnManagerIntent = new Intent(this, ColumnManager.class);
