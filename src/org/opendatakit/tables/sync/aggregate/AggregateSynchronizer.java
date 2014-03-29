@@ -330,15 +330,63 @@ public class AggregateSynchronizer implements Synchronizer {
     return tables;
   }
 
+  private void verifyResource( String tableId, String propertiesETag, String schemaETag ) {
+    TableResource tr = resources.get(tableId);
+    if ( tr == null ) return;
+    if (!( tr.getPropertiesETag() == propertiesETag ||
+          (tr.getPropertiesETag() != null && tr.getPropertiesETag().equals(propertiesETag))) ) {
+      // dataETag is stale...
+      resources.remove(tableId);
+      return;
+    }
+    if (!( tr.getSchemaETag() == schemaETag ||
+          (tr.getSchemaETag() != null && tr.getSchemaETag().equals(schemaETag))) ) {
+      // dataETag is stale...
+      resources.remove(tableId);
+      return;
+    }
+  }
+
+  private void updateResource( String tableId, SyncTag syncTag) {
+    TableResource tr = resources.get(tableId);
+    if ( tr == null ) return;
+    if (!( tr.getSchemaETag() == syncTag.getSchemaETag() ||
+          (tr.getSchemaETag() != null && tr.getSchemaETag().equals(syncTag.getSchemaETag()))) ) {
+      // schemaETag is stale...
+      resources.remove(tableId);
+      return;
+    }
+    if (!( tr.getPropertiesETag() == syncTag.getPropertiesETag() ||
+        (tr.getPropertiesETag() != null && tr.getPropertiesETag().equals(syncTag.getPropertiesETag()))) ) {
+      // propertiesETag is stale...
+      resources.remove(tableId);
+      return;
+    }
+    // otherwise, update the dataETag
+    tr.setDataETag(syncTag.getDataETag());
+  }
+
+  private void verifyResource( String tableId, String schemaETag ) {
+    TableResource tr = resources.get(tableId);
+    if ( tr == null ) return;
+    if (!( tr.getSchemaETag() == schemaETag ||
+          (tr.getSchemaETag() != null && tr.getSchemaETag().equals(schemaETag))) ) {
+      // dataETag is stale...
+      resources.remove(tableId);
+      return;
+    }
+  }
+
   @Override
   public TableDefinitionResource getTableDefinition(String tableDefinitionUri) {
     TableDefinitionResource definitionRes = rt.getForObject(tableDefinitionUri, TableDefinitionResource.class);
 
+    verifyResource(definitionRes.getTableId(), definitionRes.getSchemaETag());
     return definitionRes;
   }
 
   @Override
-  public SyncTag createTable(String tableId, SyncTag syncTag, ArrayList<Column> columns)
+  public TableResource createTable(String tableId, SyncTag syncTag, ArrayList<Column> columns)
       throws IOException {
 
     // build request
@@ -359,11 +407,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     // save resource
     this.resources.put(resource.getTableId(), resource);
-
-    // return sync tag
-    SyncTag newSyncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
-                                  resource.getSchemaETag());
-    return newSyncTag;
+    return resource;
   }
 
   public boolean hasTable(String tableId) {
@@ -421,6 +465,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public void deleteTable(String tableId) {
     URI uri = SyncUtilities.normalizeUri(aggregateUri, TABLES_PATH + appName + "/" + tableId);
     rt.delete(uri);
+    this.resources.remove(tableId);
   }
 
   /*
@@ -508,6 +553,8 @@ public class AggregateSynchronizer implements Synchronizer {
             + "known dataetag at modification: " + inserted.getDataETagAtModification());
         lastKnownServerSyncTag.setDataETag(inserted.getDataETagAtModification());
 
+        updateResource(tableId, lastKnownServerSyncTag);
+
         return new RowModification( inserted.getRowId(), inserted.getRowETag(), lastKnownServerSyncTag);
       }
 
@@ -539,27 +586,29 @@ public class AggregateSynchronizer implements Synchronizer {
     Log.i(TAG, "[deleteRows] setting data etag to last known server tag: "
         + lastKnownServerDataTag);
     syncTag.setDataETag(lastKnownServerDataTag);
+
+    updateResource(tableId, syncTag);
+
     return new RowModification(rowToDelete.getRowId(), null, syncTag);
   }
 
   @Override
-  public PropertiesResource getTableProperties(String tableId, SyncTag currentTag) throws IOException {
-    TableResource resource = getTable(tableId);
-
+  public PropertiesResource getTablePropertiesResource(String propertiesUri, SyncTag currentTag) throws IOException {
     PropertiesResource propsResource;
     try {
-      propsResource = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
+      propsResource = rt.getForObject(propertiesUri, PropertiesResource.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
     }
+
+    verifyResource(propsResource.getTableId(), propsResource.getPropertiesETag(), propsResource.getSchemaETag());
 
     return propsResource;
   }
 
   @Override
-  public SyncTag setTableProperties(String tableId, SyncTag currentTag,
+  public SyncTag setTablePropertiesResource(String propertiesUri, SyncTag currentTag, String tableId,
                                    ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
-    TableResource resource = getTable(tableId);
 
     // put new properties
     TableProperties properties = new TableProperties(currentTag.getSchemaETag(), currentTag.getPropertiesETag(), tableId,
@@ -567,7 +616,7 @@ public class AggregateSynchronizer implements Synchronizer {
     HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
     ResponseEntity<PropertiesResource> updatedEntity;
     try {
-      updatedEntity = rt.exchange(resource.getPropertiesUri(), HttpMethod.PUT, entity,
+      updatedEntity = rt.exchange(propertiesUri, HttpMethod.PUT, entity,
           PropertiesResource.class);
     } catch (ResourceAccessException e) {
       throw new IOException(e.getMessage());
@@ -576,6 +625,9 @@ public class AggregateSynchronizer implements Synchronizer {
 
     SyncTag newTag = new SyncTag(currentTag.getDataETag(), propsResource.getPropertiesETag(),
                                   propsResource.getSchemaETag());
+
+    updateResource(propsResource.getTableId(), newTag);
+
     return newTag;
   }
 

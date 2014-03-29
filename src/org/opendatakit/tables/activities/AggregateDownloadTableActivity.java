@@ -32,6 +32,7 @@ import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.Synchronizer;
+import org.opendatakit.tables.sync.TableResult;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
@@ -220,6 +221,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     private final String displayName;
     private final String tableDefinitionUri;
     private ProgressDialog pd;
+    private TableResult downloadResult;
+
 
     public DownloadTableTask(String accountName, String tableId, String dbTableName, String displayName, String tableDefinitionUri) {
       this.accountName = accountName;
@@ -227,6 +230,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       this.dbTableName = dbTableName;
       this.displayName = displayName;
       this.tableDefinitionUri = tableDefinitionUri;
+      this.downloadResult = null;
     }
 
     @Override
@@ -276,6 +280,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       for ( TableProperties p : props ) {
         if ( p.getTableId().equals(tableId) ) {
           tablePresent = true;
+          tpOriginal = p;
           tpOriginal.setSyncTag(new SyncTag(null, null, null));
           break;
         }
@@ -318,6 +323,12 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       // it shouldn't really matter.
 
       processor.synchronizeTable(tp, false, tablePresent);
+
+      List<TableResult> results = processor.getTableResults();
+      if ( results.size() == 1 ) {
+        downloadResult = results.get(0);
+      }
+
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
@@ -331,7 +342,13 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected void onPostExecute(Void result) {
       pd.dismiss();
-      finishDialog.setMessage(getString(R.string.downloaded_table, displayName));
+      if ( downloadResult == null ) {
+        finishDialog.setMessage(getString(R.string.failed_download_table, displayName, "Unknown Error"));
+      } else if ( downloadResult.getStatus() != TableResult.Status.SUCCESS ) {
+        finishDialog.setMessage(getString(R.string.failed_download_table, displayName, downloadResult.getMessage()));
+      } else {
+        finishDialog.setMessage(getString(R.string.downloaded_table, displayName));
+      }
       finishDialog.show();
     }
 

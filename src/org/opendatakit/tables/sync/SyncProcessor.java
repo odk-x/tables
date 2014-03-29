@@ -96,6 +96,10 @@ public class SyncProcessor {
     this.mUserResult = new SynchronizationResult();
   }
 
+  public List<TableResult> getTableResults() {
+    return mUserResult.getTableResults();
+  }
+
   /**
    * Synchronize all synchronized tables with the cloud.
    * <p>
@@ -515,9 +519,8 @@ public class SyncProcessor {
          * server. This comes in two parts--the definition and the properties.
          **************************/
         // First create the table definition on the server.
-        SyncTag syncTag;
         try {
-          syncTag = synchronizer.createTable(tp.getTableId(), newSyncTag,
+          resource = synchronizer.createTable(tp.getTableId(), newSyncTag,
                                                     getColumnsForTable(tp));
         } catch (Exception e) {
           String msg = e.getMessage();
@@ -530,10 +533,11 @@ public class SyncProcessor {
         /***************************
          * PART 1B: SET PROPERTIES Set the table properties on the server
          * *************************/
+        SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(), resource.getSchemaETag());
         SyncTag syncTagProperties;
         try {
-          syncTagProperties = synchronizer.setTableProperties(tp.getTableId(),
-            syncTag, getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER));
+          syncTagProperties = synchronizer.setTablePropertiesResource(resource.getPropertiesETag(),
+            syncTag, tp.getTableId(), getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER));
         } catch (Exception e) {
           String msg = e.getMessage();
           if ( msg == null ) msg = e.toString();
@@ -664,7 +668,7 @@ public class SyncProcessor {
       // We'll get both pieces of information from the properties resource.
       PropertiesResource propertiesResource;
       try {
-        propertiesResource = synchronizer.getTableProperties(resource.getPropertiesUri(), resourceSyncTag);
+        propertiesResource = synchronizer.getTablePropertiesResource(resource.getPropertiesUri(), resourceSyncTag);
       } catch (Exception e) {
         String msg = e.getMessage();
         if ( msg == null ) msg = e.toString();
@@ -684,7 +688,7 @@ public class SyncProcessor {
       // try to push these up to the server.
       SyncTag syncTag;
       try {
-        syncTag = synchronizer.setTableProperties(tp.getTableId(), tp.getSyncTag(),
+        syncTag = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(), tp.getSyncTag(), tp.getTableId(),
                                 getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER));
       } catch (Exception e) {
         String msg = e.getMessage();

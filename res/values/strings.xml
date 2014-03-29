@@ -323,4 +323,5 @@
 
 	<string name="use_index_html">Use custom home screen</string>
 	<string name="no_index">No assets/index.html</string>
+	<string name="failed_download_table">Failed to download table %1$s. Error: %2$s</string>
 </resources>
