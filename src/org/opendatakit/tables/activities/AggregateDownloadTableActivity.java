@@ -317,7 +317,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       // reason there were (e.g. if they were created in the download process),
       // it shouldn't really matter.
 
-      processor.synchronizeTable(tp, true, false, tablePresent);
+      processor.synchronizeTable(tp, false, tablePresent);
       // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);

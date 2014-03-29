@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
+import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
@@ -46,12 +47,24 @@ public interface Synchronizer {
 
   /**
    * Discover the current sync state of a given tableId.
+   * This may throw an exception if the table is not found on
+   * the server.
    *
    * @param tableId
    * @return
    * @throws IOException
    */
   public TableResource getTable(String tableId) throws IOException;
+
+  /**
+   * Returns the given tableId resource or null if the resource
+   * does not exist on the server.
+   *
+   * @param tableId
+   * @return
+   * @throws IOException
+   */
+  public TableResource getTableOrNull(String tableId) throws IOException;
 
   /**
    * Discover the schema for a table resource.
@@ -95,7 +108,7 @@ public interface Synchronizer {
    *
    * @throws IOException
    */
-  public TableProperties getTableProperties(String tableId, SyncTag currentSyncTag) throws IOException;
+  public PropertiesResource getTableProperties(String tableId, SyncTag currentSyncTag) throws IOException;
 
 
   /**
@@ -123,8 +136,11 @@ public interface Synchronizer {
    *          the last value that was stored as the syncTag, or null if this is
    *          the first synchronization
    * @return an IncomingModification representing the latest state of the table
+   *         on server since the last sync or null if the table does not exist
+   *         on the server.
+   *
    */
-  public IncomingModification getUpdates(String tableId, SyncTag currentSyncTag) throws IOException;
+  public IncomingRowModifications getUpdates(String tableId, SyncTag currentSyncTag) throws IOException;
 
   /**
    * Insert or update the given row in the table on the server.

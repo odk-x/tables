@@ -68,7 +68,7 @@ import org.opendatakit.httpclientandroidlib.impl.client.DefaultHttpClient;
 import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManager;
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
-import org.opendatakit.tables.sync.IncomingModification;
+import org.opendatakit.tables.sync.IncomingRowModifications;
 import org.opendatakit.tables.sync.RowModification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.SyncUtil;
@@ -366,6 +366,10 @@ public class AggregateSynchronizer implements Synchronizer {
     return newSyncTag;
   }
 
+  public boolean hasTable(String tableId) {
+    return resources.containsKey(tableId);
+  }
+
   @Override
   public TableResource getTable(String tableId) throws IOException {
     if (resources.containsKey(tableId)) {
@@ -373,6 +377,25 @@ public class AggregateSynchronizer implements Synchronizer {
     } else {
       return refreshResource(tableId);
     }
+  }
+
+  @Override
+  public TableResource getTableOrNull(String tableId) throws IOException {
+    // TODO: need to discriminate failure modes for server responses
+    // this is not very efficient...
+    List<TableResource> resources = getTables();
+    TableResource resource = null;
+    for ( TableResource t : resources ) {
+      if ( t.getTableId().equals(tableId) ) {
+        resource = t;
+        break;
+      }
+    }
+
+    if ( resource == null ) {
+      return null;
+    }
+    return resource;
   }
 
   private TableResource refreshResource(String tableId) throws IOException {
@@ -408,53 +431,15 @@ public class AggregateSynchronizer implements Synchronizer {
    * .String, java.lang.String)
    */
   @Override
-  public IncomingModification getUpdates(String tableId, SyncTag currentTag) throws IOException {
-    IncomingModification modification = new IncomingModification();
+  public IncomingRowModifications getUpdates(String tableId, SyncTag currentTag) throws IOException {
+    IncomingRowModifications modification = new IncomingRowModifications();
+
+    TableResource resource = getTable(tableId);
 
     // get current and new sync tags
-    TableResource resource = refreshResource(tableId);
     // This tag is ultimately returned. May8--make sure it works.
     SyncTag newTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
                                  resource.getSchemaETag());
-
-    // stop now if there are no updates
-    if (newTag.equals(currentTag)) {
-      modification.setTableSyncTag(currentTag);
-      modification.setTablePropertiesChanged(false);
-      return modification;
-    }
-
-    // get schema updates.
-    // TODO: need to plumb support for this
-    if (!newTag.getSchemaETag().equals(currentTag.getSchemaETag())) {
-      TableDefinitionResource definitionRes;
-      try {
-        definitionRes = rt.getForObject(resource.getDefinitionUri(), TableDefinitionResource.class);
-      } catch (ResourceAccessException e) {
-        throw new IOException(e.getMessage());
-      }
-
-      modification.setTableSchemaChanged(true);
-      modification.setTableDefinitionResource(definitionRes);
-    }
-
-    // get properties updates.
-    // To do this we first check to see if the properties ETag is up to date.
-    // If it is, we can do nothing. If it is out of date, we have to:
-    // 1) get a TableDefinitionResource to see if we need to update the table
-    // data structure of any of the columns.
-    // 2) get a PropertiesResource to get all the key value entries.
-    if (!newTag.getPropertiesETag().equals(currentTag.getPropertiesETag())) {
-      PropertiesResource propertiesRes;
-      try {
-        propertiesRes = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
-      } catch (ResourceAccessException e) {
-        throw new IOException(e.getMessage());
-      }
-
-      modification.setTablePropertiesChanged(true);
-      modification.setTableProperties(propertiesRes);
-    }
 
     // TODO: need to loop here to process segments of change
     // vs. an entire bucket of changes.
@@ -558,12 +543,9 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public TableProperties getTableProperties(String tableId, SyncTag currentTag) throws IOException {
+  public PropertiesResource getTableProperties(String tableId, SyncTag currentTag) throws IOException {
     TableResource resource = getTable(tableId);
 
-    // put new properties
-    TableProperties properties = new TableProperties(currentTag.getSchemaETag(), currentTag.getPropertiesETag(), tableId,
-                                                     null);
     PropertiesResource propsResource;
     try {
       propsResource = rt.getForObject(resource.getPropertiesUri(), PropertiesResource.class);
