@@ -73,9 +73,44 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    */
   private TableProperties[] getServerDataTables() {
     DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    // hilary's original--return dm.getDataTableProperties();
-    return TableProperties.getTablePropertiesForDataTables(dbh,
-        KeyValueStore.Type.SERVER);
+
+    TableProperties[] activeProps =
+        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.ACTIVE);
+    // silently promote all active values to default if there is no default
+    TableProperties[] defaultProps =
+        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.DEFAULT);
+    for ( int i = 0 ; i < activeProps.length ; ++i ) {
+      boolean found = false;
+      for ( int j = 0 ; j < defaultProps.length ; ++j ) {
+        if ( defaultProps[j].getTableId().equals(activeProps[i].getTableId()) ) {
+          found = true;
+          break;
+        }
+      }
+      if ( !found ) {
+        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+        kvsm.setCurrentAsDefaultPropertiesForTable(activeProps[i].getTableId());
+      }
+    }
+    // silently promote all default values to server sync if there is no server sync
+    TableProperties[] serverProps =
+        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.SERVER);
+    for ( int i = 0 ; i < defaultProps.length ; ++i ) {
+      boolean found = false;
+      for ( int j = 0 ; j < serverProps.length ; ++j ) {
+        if ( serverProps[j].getTableId().equals(defaultProps[i].getTableId()) ) {
+          found = true;
+          break;
+        }
+      }
+      if ( !found ) {
+        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
+        kvsm.copyDefaultToServerForTable(defaultProps[i].getTableId());
+      }
+    }
+
+    // and return the server properties
+    return TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.SERVER);
   }
 
   @Override

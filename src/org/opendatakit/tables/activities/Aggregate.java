@@ -287,6 +287,7 @@ public class Aggregate extends SherlockActivity {
    */
   public void onClickSyncNow(View v) {
     Log.d(TAG, "in onClickSyncNow");
+    // ask whether to sync app files and table-level files
     String accountName = prefs.getAccount();
     Log.e(TAG, "[onClickSyncNow] timestamp: " + System.currentTimeMillis());
     if (accountName == null) {
