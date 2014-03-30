@@ -915,6 +915,11 @@ public class ColumnProperties {
         Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
         if ( displayObject instanceof String ) {
           this.displayName = (String)  displayObject;
+          if ( this.displayName == null || this.displayName.length() == 0 ) {
+          	// just use the elementName and fudge it back into the serialization
+          	this.jsonStringifyDisplayName = "\"" + this.elementName + "\"";
+          	this.displayName = this.elementName;
+          }
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           @SuppressWarnings("rawtypes")
@@ -922,10 +927,17 @@ public class ColumnProperties {
           if ( v != null && v instanceof String ) {
             this.displayName = (String) v;
           }
+          if ( this.displayName == null || this.displayName.length() == 0 ) {
+    	  	((Map) displayObject).put("default", this.elementName);
+    	  	this.jsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
+        	this.displayName = this.elementName;
+          }
         }
       }
       if ( this.displayName == null || this.displayName.length() == 0 ) {
-        throw new IllegalArgumentException("displayName is not valid: " + jsonStringifyDisplayName);
+    	// just use the elementName and write it back into the serialization
+    	this.jsonStringifyDisplayName = "\"" + this.elementName + "\"";
+    	this.displayName = this.elementName;
       }
     } catch (JsonParseException e) {
       e.printStackTrace();

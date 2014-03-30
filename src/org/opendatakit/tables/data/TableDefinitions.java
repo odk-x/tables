@@ -107,48 +107,35 @@ public class TableDefinitions {
     Cursor c = null;
     Map<String, String> tableDefMap = new HashMap<String, String>();
     try {
-      String[] arrColumnNames = new String[columnNames.size()];
-      int i = 0;
-      for (String colName : columnNames) {
-        arrColumnNames[i] = colName;
-        i++;
-      }
-      c = db.query(DB_BACKING_NAME, arrColumnNames, WHERE_SQL_FOR_TABLE,
+      c = db.query(DB_BACKING_NAME, null, WHERE_SQL_FOR_TABLE,
           new String[] {tableId}, null, null, null);
-      int dbTableIdIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.TABLE_ID);
-      int dbDbTableNameIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.DB_TABLE_NAME);
-      int dbSyncTagIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.SYNC_TAG);
-      int dbLastSyncTimeIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.LAST_SYNC_TIME);
-      int dbSyncStateIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.SYNC_STATE);
-      int dbTransactioningIndex = c.getColumnIndexOrThrow(TableDefinitionsColumns.TRANSACTIONING);
 
       if (c.getCount() > 1) {
         Log.e(TAG, "query for tableId: " + tableId + " returned >1 row in" +
         		"TableDefinitions");
+        throw new IllegalStateException("Multiple TableDefinitions for " + tableId);
       }
       if (c.getCount() < 1) {
         Log.e(TAG, "query for tableId: " + tableId + " returned <1 row in" +
             "TableDefinitions");
+        return tableDefMap;
       }
+
       c.moveToFirst();
-      int j = 0;
-      while (j < c.getCount()) {
-        tableDefMap.put(TableDefinitionsColumns.TABLE_ID, c.getString(dbTableIdIndex));
-        tableDefMap.put(TableDefinitionsColumns.DB_TABLE_NAME, c.getString(dbDbTableNameIndex));
-        tableDefMap.put(TableDefinitionsColumns.SYNC_TAG, c.getString(dbSyncTagIndex));
-        tableDefMap.put(TableDefinitionsColumns.LAST_SYNC_TIME, c.getString(dbLastSyncTimeIndex));
-        tableDefMap.put(TableDefinitionsColumns.SYNC_STATE, c.getString(dbSyncStateIndex));
-        tableDefMap.put(TableDefinitionsColumns.TRANSACTIONING,
-            Integer.toString(c.getInt(dbTransactioningIndex)));
-        c.moveToNext();
-        j++;
+      for ( int j = 0 ; j < c.getColumnCount() ; ++j ) {
+    	String columnName = c.getColumnName(j);
+    	String value = c.getString(j);
+    	if ( columnNames.contains(columnName) ) {
+    		tableDefMap.put(columnName, value);
+    	}
       }
+
+      return tableDefMap;
     } finally {
         if (c != null && !c.isClosed()) {
           c.close();
         }
     }
-    return tableDefMap;
   }
 
   /**
@@ -193,25 +180,13 @@ public class TableDefinitions {
    * are added. Those with values not passed in are set to their default values
    * as defined in TableDefinitions.
    * <p>
-   * Returns a Map<String,String> of columnName->value. This is intended to
-   * play nicely with {@link TableProperties}, which requires construction of
-   * a TableProperties object with this information during table adding.
-   * <p>
    * Does not close the passed in database.
-   * TODO: check for redundant names
-   * TODO: make this method also create the actual table for the rows.
-   * TODO: make this return String->TypeValuePair, not the String represenation
-   * of all the types.
+   *
    * @param db
    * @param tableId
-   * @param tableKey
    * @param dbTableName
-   * @param tableType
-   * @param accessControls
-   * @return a map of column names to fields for the new table
    */
-  public static Map<String, String> addTable(SQLiteDatabase db, String tableId,
-      String dbTableName) {
+  public static void addTable(SQLiteDatabase db, String tableId, String dbTableName) {
     ContentValues values = new ContentValues();
     values.put(TableDefinitionsColumns.TABLE_ID, tableId);
     values.put(TableDefinitionsColumns.DB_TABLE_NAME, dbTableName);
@@ -220,17 +195,6 @@ public class TableDefinitions {
     values.put(TableDefinitionsColumns.SYNC_STATE, DEFAULT_DB_SYNC_STATE.name());
     values.put(TableDefinitionsColumns.TRANSACTIONING, DEFAULT_DB_TRANSACTIONING);
     db.insert(DB_BACKING_NAME, null, values);
-    // Take care of the return.
-    Map<String, String> valueMap = new HashMap<String, String>();
-    valueMap.put(TableDefinitionsColumns.TABLE_ID, tableId);
-    valueMap.put(TableDefinitionsColumns.DB_TABLE_NAME, dbTableName);
-    valueMap.put(TableDefinitionsColumns.SYNC_TAG, DEFAULT_DB_SYNC_TAG);
-    valueMap.put(TableDefinitionsColumns.LAST_SYNC_TIME,
-        Integer.toString(DEFAULT_DB_LAST_SYNC_TIME));
-    valueMap.put(TableDefinitionsColumns.SYNC_STATE, DEFAULT_DB_SYNC_STATE.name());
-    valueMap.put(TableDefinitionsColumns.TRANSACTIONING,
-        Integer.toString(DEFAULT_DB_TRANSACTIONING));
-    return valueMap;
   }
 
   public static List<String> getAllTableIds(SQLiteDatabase db) {

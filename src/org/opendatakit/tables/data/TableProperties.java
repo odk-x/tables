@@ -836,35 +836,20 @@ public class TableProperties {
    * @return
    */
   public static TableProperties addTable(DbHelper dbh,
-      String dbTableName, String displayName, TableType tableType, String id,
+      String dbTableName, String displayName, TableType tableType, String tableId,
       KeyValueStore.Type typeOfStore) {
-    Log.e(t, "adding table with id: " + id);
+    Log.e(t, "adding table with id: " + tableId);
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    Map<String, String> mapProps = new HashMap<String, String>();
-    mapProps.put(KEY_DISPLAY_NAME, displayName);
-    mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
-    mapProps.put(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
-    mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
-    mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
-    mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
-    mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-    mapProps.put(KEY_TABLE_TYPE, tableType.name());
     TableProperties tp = null;
+    SQLiteDatabase db = dbh.getWritableDatabase();
     KeyValueStoreManager kvms = KeyValueStoreManager.getKVSManager(dbh);
     try {
       db.beginTransaction();
       try {
-        Map<String, String> tableDefProps = TableDefinitions.addTable(db, id,
-            dbTableName);
-        mapProps.putAll(tableDefProps);
-        tp = constructPropertiesFromMap(dbh, mapProps, typeOfStore);
-        if ( tp == null ) {
-          throw new IllegalStateException("Unexpectedly missing " + id);
-        }
-        tp.refreshColumns();
-        KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(KVS_PARTITION);
+        TableDefinitions.addTable(db, tableId, dbTableName);
+        KeyValueStore backingStore = kvms.getStoreForTable(tableId, typeOfStore);
+        KeyValueStoreHelper kvsh = new KeyValueStoreHelper(backingStore, KVS_PARTITION);
         kvsh.setString(KEY_DISPLAY_NAME, displayName);
         kvsh.setString(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
         kvsh.setString(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
@@ -874,6 +859,12 @@ public class TableProperties {
         kvsh.setString(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
         kvsh.setString(KEY_CURRENT_QUERY, "");
         kvsh.setString(KEY_TABLE_TYPE, tableType.name());
+
+        Map<String, String> propPairs = getMapOfPropertiesForTable(dbh, tableId, typeOfStore);
+        tp = constructPropertiesFromMap(dbh, propPairs, typeOfStore);
+        if ( tp == null ) {
+          throw new IllegalStateException("Unexpectedly missing " + tableId);
+        }
         Log.d(t, "adding table: " + dbTableName);
         DbTable.createDbTable(db, tp);
         // And now set the default color rules.
@@ -883,6 +874,11 @@ public class TableProperties {
         db.setTransactionSuccessful();
       } catch (Exception e) {
         e.printStackTrace();
+        if ( e instanceof IllegalStateException ) {
+        	throw (IllegalStateException) e;
+        } else {
+        	throw new IllegalStateException("TableProperties could not be created", e);
+        }
       } finally {
         db.endTransaction();
       }

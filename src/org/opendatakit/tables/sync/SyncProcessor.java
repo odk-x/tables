@@ -1156,9 +1156,6 @@ public class SyncProcessor {
         }
       }
     }
-    // Refresh the table properties to get the columns.
-    tp = TableProperties.refreshTablePropertiesForTable(dbh, definitionResource.getTableId(),
-        kvsType);
     KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(definitionResource.getTableId());
     syncKVS.setIsSetToSync(true);
