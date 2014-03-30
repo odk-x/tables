@@ -170,7 +170,8 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
           mLocal.getColumnIndexOfElementKey(elementKey), true);
       String serverValue = mServer.getDisplayTextOfData(this, mRowNumber,
           mLocal.getColumnIndexOfElementKey(elementKey), true);
-      if (localValue.equals(serverValue)) {
+      if ((localValue == null && serverValue == null) ||
+    	  (localValue != null && localValue.equals(serverValue))) {
         // TODO: this doesn't compare actual equality of blobs if their display
         // text is the same.
         // We only want to display a single row, b/c there are no choices to
