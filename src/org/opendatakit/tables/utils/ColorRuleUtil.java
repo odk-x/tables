@@ -55,7 +55,7 @@ public class ColorRuleUtil {
   private static final int DEFAULT_SYNC_STATE_UPDATING_FOREGROUND =
       Color.BLACK;
   private static final int DEFAULT_SYNC_STATE_UPDATING_BACKGROUND =
-      Color.YELLOW;
+	  0xfff1b82d; // http://identity.missouri.edu/logos-design/mu-colors.php
 
   private static final int DEFAULT_SYNC_STATE_CONFLICT_FOREGROUND =
       Color.BLACK;
