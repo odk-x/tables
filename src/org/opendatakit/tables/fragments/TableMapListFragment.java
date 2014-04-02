@@ -111,7 +111,7 @@ public class TableMapListFragment extends SherlockFragment {
    * Sets the index of the list view, which will be the row of the data wanting
    * to be displayed.
    */
-  public void setIndex(int index) {
+  public void setMapListIndex(final int index) {
     if (mIndexes != null) {
       mIndexes.clear();
     }
@@ -126,7 +126,7 @@ public class TableMapListFragment extends SherlockFragment {
    * Sets the indexes of the list view, which will be the rows of data wanting
    * to be displayed.
    */
-  public void setIndexes(ArrayList<Integer> indexes) {
+  public void setMapListIndexes(ArrayList<Integer> indexes) {
     if (mIndexes != null) {
       mIndexes.clear();
     }

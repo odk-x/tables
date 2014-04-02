@@ -156,7 +156,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
           File adjustedFile = new File(ODKFileUtils.getAppFolder(dbh.getAppName()),
               listViewFilename);
           filePickerIntent.setData(
-              Uri.parse("file:///" + adjustedFile.getAbsolutePath()));
+              Uri.parse("file://" + adjustedFile.getAbsolutePath()));
         }
         try {
           startActivityForResult(filePickerIntent, RETURN_CODE_NEW_FILE);

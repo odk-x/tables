@@ -66,7 +66,7 @@ public class TableMapFragment extends Fragment implements ITableFragment,
       TableMapListFragment list = new TableMapListFragment();
 
       // Add both the list and the map at the same time.
-      getChildFragmentManager().beginTransaction().add(R.id.list, list, FRAGMENT_TAG_LIST)
+      getFragmentManager().beginTransaction().add(R.id.list, list, FRAGMENT_TAG_LIST)
           .add(R.id.map, map, FRAGMENT_TAG_MAP).commit();
     }
   }
@@ -96,7 +96,7 @@ public class TableMapFragment extends Fragment implements ITableFragment,
     if (!isTabletDevice(getActivity())) {
       TableMapListFragment list = getList();
       if (list != null) {
-        list.setIndex(i);
+        list.setMapListIndex(i);
       }
     }
   }
@@ -105,7 +105,7 @@ public class TableMapFragment extends Fragment implements ITableFragment,
   public void onSetIndexes(ArrayList<Integer> indexes) {
     TableMapListFragment list = getList();
     if (list != null) {
-      list.setIndexes(indexes);
+      list.setMapListIndexes(indexes);
     }
   }
 
@@ -122,12 +122,12 @@ public class TableMapFragment extends Fragment implements ITableFragment,
 
   /** The list view fragment. */
   private TableMapListFragment getList() {
-    return (TableMapListFragment) getChildFragmentManager().findFragmentByTag(FRAGMENT_TAG_LIST);
+    return (TableMapListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG_LIST);
   }
 
   /** The map view fragment. */
   private TableMapInnerFragment getMap() {
-    return (TableMapInnerFragment) getChildFragmentManager().findFragmentByTag(FRAGMENT_TAG_MAP);
+    return (TableMapInnerFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG_MAP);
   }
 
   /**
