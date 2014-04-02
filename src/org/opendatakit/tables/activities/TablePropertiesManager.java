@@ -15,9 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -671,7 +674,15 @@ public class TablePropertiesManager extends PreferenceActivity {
       if (hasFilePicker()) {
         Intent intent = new Intent("org.openintents.action.PICK_FILE");
         if (getText() != null) {
-          intent.setData(Uri.parse("file:///" + getText()));
+          File fullFile = ODKFileUtils.asAppFile(dbh.getAppName(), getText());
+          try {
+            intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
+          } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            Toast.makeText(TablePropertiesManager.this, getString(R.string.file_not_found, fullFile.getAbsolutePath()),
+                Toast.LENGTH_LONG).show();
+          }
         }
         try {
           startActivityForResult(intent, mRequestCode);
