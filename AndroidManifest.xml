@@ -69,7 +69,6 @@
         <activity android:name=".activities.AggregateDownloadTableActivity" />
         <activity android:name=".activities.ColorRuleManagerActivity"/>
         <activity android:name=".activities.ColumnManager"/>
-        <activity android:name=".activities.ConflictResolutionActivity"/>
         <activity android:name=".activities.CustomHomeScreenActivity"/>
         <activity android:name=".activities.DetailDisplayActivity"/>
         <activity android:name=".activities.DisplayPrefsActivity"/>
