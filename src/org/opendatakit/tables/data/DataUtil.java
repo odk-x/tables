@@ -34,6 +34,7 @@ import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.UTMConverter;
 
@@ -41,9 +42,6 @@ import android.content.Context;
 
 
 public class DataUtil {
-
-    private static final DateTimeFormatter DB_DATETIME_FORMATTER =
-        DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZoneUTC();
 
     private static final String[] USER_FULL_DATETIME_PATTERNS = {
         "yyyy-MM-dd'T'HH:mm:ss.SSSZ", // ODK Collect format
@@ -468,7 +466,7 @@ public class DataUtil {
     }
 
     public String formatDateTimeForDb(DateTime dt) {
-        return DB_DATETIME_FORMATTER.print(dt);
+        return TableConstants.nanoSecondsFromMillis(dt.getMillis());
     }
 
     public String formatIntervalForDb(Interval interval) {
@@ -481,14 +479,15 @@ public class DataUtil {
     }
 
     public DateTime parseDateTimeFromDb(String dbString) {
-        return DB_DATETIME_FORMATTER.parseDateTime(dbString);
+      DateTime t = new DateTime(TableConstants.milliSecondsFromNanos(dbString), DateTimeZone.UTC);
+      return t;
     }
 
     public Interval parseIntervalFromDb(String dbString) {
     	// TODO: range should not be slash-separated but stored as two columns OR json in db...
         String[] split = dbString.split("/");
-        return new Interval(DB_DATETIME_FORMATTER.parseDateTime(split[0]),
-                DB_DATETIME_FORMATTER.parseDateTime(split[1]));
+        return new Interval(parseDateTimeFromDb(split[0]),
+            parseDateTimeFromDb(split[1]));
     }
 
     public String formatForUserDisplay(ColumnProperties cp, String value) {

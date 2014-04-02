@@ -92,8 +92,8 @@ public class ColumnType {
 		nameMap.put("integer", INTEGER = new ColumnType("integer", "Integer", "int"));
 		nameMap.put("number", NUMBER = new ColumnType("number", "Number", "decimal"));
 		nameMap.put("date", DATE = new ColumnType("date", "Date", "date"));
-		nameMap.put("datetime", DATETIME
-				= new ColumnType("datetime", "Date and Time", "dateTime"));
+		nameMap.put("dateTime", DATETIME
+				= new ColumnType("dateTime", "Date and Time", "dateTime"));
 		nameMap.put("time", TIME = new ColumnType("time", "Time", "time"));
 
 		nameMap.put("boolean", BOOLEAN = new ColumnType("boolean", "Boolean", "string"));

@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.crypto.spec.IvParameterSpec;
+
 import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -36,6 +38,7 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -48,6 +51,8 @@ import org.opendatakit.tables.utils.NameUtil;
 import org.opendatakit.tables.utils.SecurityUtil;
 import org.opendatakit.tables.utils.ShortcutUtil;
 
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -1398,7 +1403,7 @@ public class TableProperties {
         // NOTE: this assumes mElementKeyToColumnProperties
         // has been updated; the rest of TableProperties
         // can have stale values (e.g., ColumnOrder).
-        reformTable(db);
+        reformTable(db, null);
         // The hard part was done -- now delete the column
         // definition and update the column order.
         this.setColumnOrder(db, newColumnOrder);
@@ -1421,6 +1426,18 @@ public class TableProperties {
     }
   }
 
+  private static class RowUpdate {
+    String id;
+    String savepointTimestamp;
+    String value;
+
+    RowUpdate(String id, String timestamp, String value) {
+      this.id = id;
+      this.savepointTimestamp = timestamp;
+      this.value = value;
+    }
+  }
+
   /**
    * Uses mElementKeyToColumnProperties to construct a temporary database table
    * to save the current table, then creates a new table and copies the data
@@ -1428,18 +1445,59 @@ public class TableProperties {
    *
    * @param db
    */
-  public void reformTable(SQLiteDatabase db) {
+  public void reformTable(SQLiteDatabase db, String elementKey) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
-    Map<String,ColumnProperties> cols = getDatabaseColumns();
+    Map<String, ColumnProperties> cols = getDatabaseColumns();
+    ColumnProperties cpKey = null;
+    ColumnType elementType = null;
+    boolean needsConversion = false;
     for (String col : cols.keySet()) {
       ColumnProperties cp = cols.get(col);
-      if ( cp.isUnitOfRetention() ) {
+      if (cp.isUnitOfRetention()) {
         csvBuilder.append(", " + col);
+        if (cp.getElementKey().equals(elementKey)) {
+          cpKey = cp;
+          elementType = cp.getColumnType();
+          needsConversion = (elementType == ColumnType.DATE)
+              || (elementType == ColumnType.DATETIME)
+              || (elementType == ColumnType.NUMBER)
+              || (elementType == ColumnType.INTEGER)
+              || (elementType == ColumnType.TIME)
+              || (elementType == ColumnType.DATE_RANGE);
+        }
       }
     }
     String csv = csvBuilder.toString();
     db.execSQL("CREATE TEMPORARY TABLE backup_(" + csv + ")");
     db.execSQL("INSERT INTO backup_(" + csv + ") SELECT " + csv + " FROM " + dbTableName);
+    if (needsConversion) {
+      List<RowUpdate> updates = new ArrayList<RowUpdate>();
+      Cursor c = db.query("backup_", new String[] { DataTableColumns.ID,
+          DataTableColumns.SAVEPOINT_TIMESTAMP, elementKey }, null, null, null, null, null);
+      int idxId = c.getColumnIndex(DataTableColumns.ID);
+      int idxTimestamp = c.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      int idxKey = c.getColumnIndex(elementKey);
+      DataUtil du = DataUtil.getDefaultDataUtil();
+      while (c.moveToNext()) {
+        if ( !c.isNull(idxKey) ) {
+          String value = c.getString(idxKey);
+          String update = du.validifyValue(cpKey, value);
+          if (update == null) {
+            throw new IllegalArgumentException("Unable to convert " + value + " to "
+                + elementType.name());
+          }
+          updates.add(new RowUpdate(c.getString(idxId), c.getString(idxTimestamp), update));
+        }
+      }
+      c.close();
+      for (RowUpdate ru : updates) {
+        ContentValues cv = new ContentValues();
+        cv.put(elementKey, ru.value);
+        db.update("backup_", cv, DataTableColumns.ID + "=? and "
+            + DataTableColumns.SAVEPOINT_TIMESTAMP + "=?",
+            new String[] { ru.id, ru.savepointTimestamp });
+      }
+    }
     db.execSQL("DROP TABLE " + dbTableName);
     DbTable.createDbTable(db, this);
     db.execSQL("INSERT INTO " + dbTableName + "(" + csv + ") SELECT " + csv + " FROM backup_");
@@ -1899,15 +1957,19 @@ public class TableProperties {
     int locationColCount = 0;
     int dateColCount = 0;
     Map<String, ColumnProperties> columnProperties = this.getDatabaseColumns();
+    List<ColumnProperties> geoPoints = getGeopointColumns();
     for (ColumnProperties cp : columnProperties.values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numericColCount++;
+        if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
+          locationColCount++;
+        }
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
         locationColCount += 2;// latitude and longitude
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateColCount++;
-      } else if (isLatitudeColumn(cp) || isLongitudeColumn(cp)) {
+      } else if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
         locationColCount++;
       }
     }
@@ -1925,14 +1987,50 @@ public class TableProperties {
     return arr;
   }
 
-  public static boolean isLatitudeColumn(ColumnProperties cp) {
-    return (cp.getColumnType() == ColumnType.GEOPOINT)
-        || endsWithIgnoreCase(cp.getDisplayName(), "latitude");
+  public List<ColumnProperties> getGeopointColumns() {
+    Map<String, ColumnProperties> allColumns = this.getAllColumns();
+    List<ColumnProperties> cpList = new ArrayList<ColumnProperties>();
+    // TODO: HACK BROKEN HACK BROKEN
+    // this is all entirely broken
+//    for ( ColumnProperties cp : allColumns.values()) {
+//      if ( cp.getColumnType() == ColumnType.GEOPOINT ) {
+//        cpList.add(cp);
+//      }
+//    }
+    return cpList;
   }
 
-  public static boolean isLongitudeColumn(ColumnProperties cp) {
-    return (cp.getColumnType() == ColumnType.GEOPOINT)
-        || endsWithIgnoreCase(cp.getDisplayName(), "longitude");
+  public boolean isLatitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
+    if ( endsWithIgnoreCase(cp.getDisplayName(), "latitude") ) return true;
+    if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
+    // TODO: HACK BROKEN HACK BROKEN
+    if ( "latitude".equals(cp.getElementName()) ) return true;
+//
+//    for ( ColumnProperties geoPoint : geoPointList ) {
+//      List<String> children = geoPoint.getListChildElementKeys();
+//      for ( String elementKey : children ) {
+//        if ( elementKey.equals(cp.getElementKey()) ) {
+//          return cp.getElementName().equals("latitude");
+//        }
+//      }
+//    }
+    return false;
+  }
+
+  public boolean isLongitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
+    if ( endsWithIgnoreCase(cp.getDisplayName(), "longitude") ) return true;
+    if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
+    if ( "longitude".equals(cp.getElementName()) ) return true;
+    // TODO: HACK BROKEN HACK BROKEN
+//    for ( ColumnProperties geoPoint : geoPointList ) {
+//      List<String> children = geoPoint.getListChildElementKeys();
+//      for ( String elementKey : children ) {
+//        if ( elementKey.equals(cp.getElementKey()) ) {
+//          return cp.getElementName().equals("longitude");
+//        }
+//      }
+//    }
+    return false;
   }
 
   private static boolean endsWithIgnoreCase(String text, String ending) {

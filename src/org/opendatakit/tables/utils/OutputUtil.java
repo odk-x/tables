@@ -24,6 +24,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -154,6 +155,9 @@ public class OutputUtil {
         KeyValueStore.Type.ACTIVE);
     DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
     UserTable userTable = dbTable.rawSqlQuery("", null);
+
+    // TODO: This is broken w.r.t. elementKey != elementPath
+    // TODO: HACKED HACKED HACKED HACKED
     // Because the code is so freaked up we don't have an easy way to get the
     // information out of the UserTable without going through the TableData
     // object. So we need to create a dummy CustomTableView to get it to work.
@@ -191,13 +195,19 @@ public class OutputUtil {
     for (String elementKey : columnKeys) {
       // The tableData object returns a string, so we'll have to parse it back
       // into json.
-      JsonArray columnData = (JsonArray) jsonParser.parse(tableData.getColumnData(elementKey,
-          numRowsToWrite));
+      String strColumnData = tableData.getColumnDataForElementKey(elementKey, numRowsToWrite);
+      if ( strColumnData == null ) continue;
+      JsonArray columnData = (JsonArray) jsonParser.parse(strColumnData);
       // Now that it's json, we want to convert it to an array. Otherwise it
       // serializes to an object with a single key "elements". Oh gson.
       String[] columnDataArray = new String[columnData.size()];
       for (int i = 0; i < columnDataArray.length; i++) {
-        columnDataArray[i] = columnData.get(i).getAsString();
+        JsonElement e = columnData.get(i);
+        if ( e == JsonNull.INSTANCE ) {
+          columnDataArray[i] = null;
+        } else {
+          columnDataArray[i] = e.getAsString();
+        }
       }
       elementKeyToColumnData.put(elementKey, columnDataArray);
     }
@@ -210,7 +220,12 @@ public class OutputUtil {
     // serialize as the object to a "members" key.
     Map<String, Object> columnJsonMap = new HashMap<String, Object>();
     for (Map.Entry<String, JsonElement> entry : columnJson.entrySet()) {
-      columnJsonMap.put(entry.getKey(), entry.getValue().getAsString());
+      JsonElement e = entry.getValue();
+      if ( e == JsonNull.INSTANCE ) {
+        columnJsonMap.put(entry.getKey(), null);
+      } else {
+        columnJsonMap.put(entry.getKey(), e.getAsString());
+      }
     }
     Map<String, Object> outputObject = new HashMap<String, Object>();
     outputObject.put(DATA_KEY_IS_GROUPED_BY, tableData.isGroupedBy());
@@ -306,6 +321,7 @@ public class OutputUtil {
   public static void writeDataObject(Context context, String appName, String tableId,
       int numberOfRows) {
     String dataString = getStringForDataObject(context, appName, tableId, numberOfRows);
+    if ( dataString == null ) return;
     String fileName = TableFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
         + DATA_FILE_SUFFIX;
     PrintWriter writer;

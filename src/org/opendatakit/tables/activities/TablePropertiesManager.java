@@ -349,15 +349,19 @@ public class TablePropertiesManager extends PreferenceActivity {
     final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
+    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numberCols.add(cp);
+        if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
+          locationCols.add(cp);
+        }
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
         locationCols.add(cp);
       } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
           || cp.getColumnType() == ColumnType.TIME) {
         dateCols.add(cp);
-      } else if (TableProperties.isLatitudeColumn(cp) || TableProperties.isLongitudeColumn(cp)) {
+      } else if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
         locationCols.add(cp);
       }
     }
@@ -435,7 +439,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If there is none, take the first of the location columns and set it.
       if (latCol == null) {
         for (ColumnProperties column : locationCols) {
-          if (TableProperties.isLatitudeColumn(column)) {
+          if (tp.isLatitudeColumn(geoPointCols, column)) {
             latCol = column;
             break;
           }
@@ -452,7 +456,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       // If there is none, take the first of the location columns and set it.
       if (longCol == null) {
         for (ColumnProperties column : locationCols) {
-          if (TableProperties.isLongitudeColumn(column)) {
+          if (tp.isLongitudeColumn(geoPointCols, column)) {
             longCol = column;
             break;
           }

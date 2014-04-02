@@ -51,7 +51,7 @@ public class TableData {
         this.mTable = table;
         initMaps();
      }
-     
+
      public boolean isGroupedBy() {
        return mTable.isGroupedBy();
      }
@@ -59,7 +59,7 @@ public class TableData {
      // Initializes the colMap and primeColumns that provide methods quick
      // access to the current table's state.
      private void initMaps() {
-        mElementKeyToColorRuleGroup = 
+        mElementKeyToColorRuleGroup =
             new HashMap<String, ColorRuleGroup>();
      }
 
@@ -75,17 +75,17 @@ public class TableData {
        // Return all the rows.
        return getColumnData(elementPath, getCount());
      }
-     
+
      /**
       * Return a strinfigied JSON array of the data in the columns. Returns
-      * null and logs an error if the column is not found. 
+      * null and logs an error if the column is not found.
       * @param elementPath
       * @param requestedRows
       * @return returns a String in JSONArray format containing all the row
       * data for the given column name format: [row1, row2, row3, row4]
       */
      public String getColumnData(String elementPath, int requestedRows) {
-       String elementKey = 
+       String elementKey =
            this.mTable.getTableProperties().getElementKeyFromElementPath(
                elementPath);
        ArrayList<String> rowValues = new ArrayList<String>();
@@ -101,19 +101,32 @@ public class TableData {
        return new JSONArray(rowValues).toString();
      }
 
+     public String getColumnDataForElementKey(String elementKey, int requestedRows) {
+       ArrayList<String> rowValues = new ArrayList<String>();
+       Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
+       if (columnIndex == null) {
+         Log.e(TAG, "column not found with element key: " + elementKey);
+         return null;
+       }
+       for (int i = 0; i < requestedRows; i++) {
+          rowValues.add(this.mTable.getData(i, columnIndex));
+       }
+       return new JSONArray(rowValues).toString();
+     }
+
      /**
       * Return a map of element key to the {@link ColumnType#label()}.
       */
      public String getColumns() {
         Map<String, String> colInfo = new HashMap<String, String>();
-        for (String elementKey : 
+        for (String elementKey :
              mTable.getTableProperties().getAllColumns().keySet()) {
            String label = getColumnTypeLabelForElementKey(elementKey);
            colInfo.put(elementKey, label);
         }
         return new JSONObject(colInfo).toString();
      }
-     
+
      /**
       * Get the element {@link ColumnType#label()} for the column with the
       * given elementKey.
@@ -132,7 +145,7 @@ public class TableData {
       */
      public String getForegroundColor(String elementPath, String value) {
         TableProperties tp = mTable.getTableProperties();
-        String elementKey = 
+        String elementKey =
             tp.getElementKeyFromElementPath(elementPath);
         if (elementKey == null) {
           // Note that this currently cannot happen, because the implementation
@@ -153,7 +166,7 @@ public class TableData {
         Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
         indexOfDataMap.put(elementKey, 0);
         String[] elementKeyForIndex = new String[] { elementKey };
-        Map<String, Integer> indexOfMetadataMap = 
+        Map<String, Integer> indexOfMetadataMap =
             new HashMap<String, Integer>();
         indexOfMetadataMap.put(elementKey, 0);
         // We need to construct a dummy UserTable for the ColorRule to
@@ -194,11 +207,11 @@ public class TableData {
        String result = mTable.getDataByElementKey(rowNum, elementKey);
        return result;
      }
-     
+
      public String getTableId() {
        return mTable.getTableProperties().getTableId();
      }
-     
+
      public String getRowId(int index) {
        return mTable.getRowAtIndex(index).getRowId();
      }

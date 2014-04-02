@@ -303,6 +303,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
   private String getLatitudeElementKey() {
     TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
     String latitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
@@ -310,7 +311,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
       for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-        if (TableProperties.isLatitudeColumn(cp)) {
+        if (tp.isLatitudeColumn(geoPointCols, cp)) {
           latitudeElementKey = cp.getElementKey();
           kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
           break;
@@ -323,6 +324,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
   private String getLongitudeElementKey() {
     TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
     String longitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
@@ -330,7 +332,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
       for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-        if (TableProperties.isLongitudeColumn(cp)) {
+        if (tp.isLongitudeColumn(geoPointCols, cp)) {
           longitudeElementKey = cp.getElementKey();
           kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
           break;

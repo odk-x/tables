@@ -615,6 +615,9 @@ public class CsvUtil {
     } catch (IOException e) {
       e.printStackTrace();
       return false;
+    } catch (IllegalArgumentException e) { // validifyValue
+      e.printStackTrace();
+      return false;
     }
   }
 

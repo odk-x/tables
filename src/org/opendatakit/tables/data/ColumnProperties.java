@@ -838,7 +838,7 @@ public class ColumnProperties {
       setStringProperty(db, ColumnDefinitionsColumns.ELEMENT_TYPE, columnType.name());
       // TODO: we should run validation rules on the input, converting it to a
       // form that SQLite will properly convert into the new datatype.
-      tp.reformTable(db);
+      tp.reformTable(db, this.elementKey);
       db.setTransactionSuccessful();
       db.endTransaction();
       this.elementType = columnType;
