@@ -18,8 +18,6 @@ package org.opendatakit.tables.data;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.opendatakit.tables.utils.TableFileUtils;
-
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 

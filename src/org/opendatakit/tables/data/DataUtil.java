@@ -186,7 +186,6 @@ public class DataUtil {
       }
 
       if ( filename.startsWith("{") ) {
-        @SuppressWarnings("unchecked")
         Map<String, String> ref;
         try {
           ref = ODKFileUtils.mapper.readValue(filename, Map.class);
@@ -313,6 +312,9 @@ public class DataUtil {
     }
 
     private String validifyNumberValue(String input) {
+      if ( input == null || input.length() == 0 ) {
+        return null;
+      }
         try {
             Double.parseDouble(input);
             return input;
@@ -322,6 +324,9 @@ public class DataUtil {
     }
 
     private String validifyIntegerValue(String input) {
+      if ( input == null || input.length() == 0 ) {
+        return null;
+      }
         try {
             Integer.parseInt(input);
             return input;

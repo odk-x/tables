@@ -15,8 +15,8 @@
  */
 package org.opendatakit.tables.sync;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 
@@ -30,22 +30,22 @@ import org.opendatakit.tables.sync.aggregate.SyncTag;
  */
 public class IncomingRowModifications {
 
-  // tableRowsChanged iff !rows.isEmpty();
-  private List<SyncRow> rows;
+  // rowId to SyncRow
+  private Map<String, SyncRow> rows;
 
   private SyncTag tableSyncTag;
 
   public IncomingRowModifications() {
-    this.rows = new ArrayList<SyncRow>();
+    this.rows = new HashMap<String, SyncRow>();
     this.tableSyncTag = new SyncTag(null,null,null);
   }
 
   /**
    *
-   * @return a list of rows that represent the changes in the server's state
+   * @return a map of rowId to SyncRow that represent the changes in the server's state
    *         since the last synchronization
    */
-  public List<SyncRow> getRows() {
+  public Map<String, SyncRow> getRows() {
     return this.rows;
   }
 
@@ -67,10 +67,10 @@ public class IncomingRowModifications {
   /**
    *
    * @param rows
-   *          a list of rows that represent the changes in the server's state
+   *          a map of rowId to SyncRow that represent the changes in the server's state
    *          since the last synchronization
    */
-  public void setRows(final List<SyncRow> rows) {
+  public void setRows(final Map<String, SyncRow> rows) {
     this.rows = rows;
   }
 

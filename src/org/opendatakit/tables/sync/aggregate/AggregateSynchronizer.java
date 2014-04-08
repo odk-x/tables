@@ -490,7 +490,8 @@ public class AggregateSynchronizer implements Synchronizer {
     // vs. an entire bucket of changes.
 
     // get data updates
-    if (!newTag.getDataETag().equals(currentTag.getDataETag())) {
+    if (newTag.getDataETag() != currentTag.getDataETag() &&
+        (newTag.getDataETag() == null || !newTag.getDataETag().equals(currentTag.getDataETag()))) {
       URI url;
       if (currentTag.getDataETag() == null) {
         url = SyncUtilities.normalizeUri(resource.getDataUri(), "/");;
@@ -505,12 +506,12 @@ public class AggregateSynchronizer implements Synchronizer {
         throw new IOException(e.getMessage());
       }
 
-      List<SyncRow> syncRows = new ArrayList<SyncRow>();
+      Map<String, SyncRow> syncRows = new HashMap<String, SyncRow>();
       for (RowResource row : rows.getEntries()) {
         SyncRow syncRow = new SyncRow(row.getRowId(), row.getRowETag(), row.isDeleted(),
                                       row.getFormId(), row.getLocale(),
                                       row.getSavepointTimestamp(), row.getSavepointCreator(), row.getValues());
-        syncRows.add(syncRow);
+        syncRows.put(row.getRowId(), syncRow);
       }
       modification.setRows(syncRows);
     }
