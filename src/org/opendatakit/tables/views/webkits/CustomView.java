@@ -87,8 +87,6 @@ public abstract class CustomView extends LinearLayout {
   protected static WebView webView;
   private static ViewGroup lastParent;
 
-  private static DbHelper mDbHelper;
-
   private static ObjectMapper MAPPER = new ObjectMapper();
   private static TypeReference<HashMap<String, String>> MAP_REF =
       new TypeReference<HashMap<String, String>>() {};
@@ -113,6 +111,8 @@ public abstract class CustomView extends LinearLayout {
   protected final Activity mParentActivity;
   protected final String mAppName;
 
+  private DbHelper mDbHelper;
+
   private Map<String, TableProperties> tableIdToProperties;
   private CustomViewCallbacks mCallbacks;
 
@@ -125,6 +125,7 @@ public abstract class CustomView extends LinearLayout {
     this.mDbHelper = DbHelper.getDbHelper(mParentActivity, mAppName);
   }
 
+  @SuppressLint("SetJavaScriptEnabled")
   public static void initCommonWebView(Context context) {
     if (webView != null) {
       clearInterfaces();
@@ -159,15 +160,14 @@ public abstract class CustomView extends LinearLayout {
       @Override
       @Deprecated
       public void onConsoleMessage(String message, int lineNumber, String sourceID) {
-        // TODO Auto-generated method stub
         super.onConsoleMessage(message, lineNumber, sourceID);
         Log.i("CustomView", "onConsoleMessage " + message);
       }
 
       @Override
+      @Deprecated
       public void onReachedMaxAppCacheSize(long requiredStorage, long quota,
           QuotaUpdater quotaUpdater) {
-        // TODO Auto-generated method stub
         super.onReachedMaxAppCacheSize(requiredStorage, quota, quotaUpdater);
         Log.i("CustomView", "onReachedMaxAppCacheSize " + Long.toString(quota));
       }
@@ -229,12 +229,12 @@ public abstract class CustomView extends LinearLayout {
   }
 
   protected void load(String url) {
-    webView.clearView();
+    webView.loadUrl("about:blank");
     webView.loadUrl(url);
   }
 
   protected void loadData(String data, String mimeType, String encoding) {
-    webView.clearView();
+    webView.loadUrl("about:blank");
     webView.loadData(data, mimeType, encoding);
   }
 
@@ -512,7 +512,6 @@ public abstract class CustomView extends LinearLayout {
         Log.e(TAG, "table could not be found with id: " + tableId);
         return false;
       }
-      String pathToTablesFolder = ODKFileUtils.getAppFolder(mAppName);
       Controller.launchDetailActivity(mActivity, mAppName, tableId, rowId, relativePath);
       return true;
     }
@@ -1085,6 +1084,7 @@ public abstract class CustomView extends LinearLayout {
       // TODO: if this avenue to create a table remains, we need to also
       // prompt them for a tableId name.
       String dbTableName = NameUtil.createUniqueDbTableName(tableName, mDbHelper);
+      @SuppressWarnings("unused")
       TableProperties tp = TableProperties.addTable(mDbHelper, dbTableName, tableName, tableType,
           KeyValueStore.Type.ACTIVE);
     }
