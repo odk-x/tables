@@ -329,7 +329,6 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         downloadResult = results.get(0);
       }
 
-      // Aggregate.requestSync(accountName);
       // Now copy the properties from the server to the default to the active.
       KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
       // TODO: this code not working. these two methods gone wrong.

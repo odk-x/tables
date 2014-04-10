@@ -110,49 +110,11 @@
             </intent-filter>
         </receiver>
 
-        <!--
-        <service
-            android:name=".sync.SyncService"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.content.SyncAdapter" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter" />
-        </service>
-        <! service for syncing files
-        -->
-        <service
-            android:name=".sync.files.FileSyncService"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.content.SyncAdapter" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.content.SyncAdapter"
-                android:resource="@xml/filesyncadapter" />
-        </service>
-
 		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
 	    <provider
 	        android:exported="true"
 	        android:name="org.opendatakit.tables.provider.FileProvider"
 	        android:authorities="org.opendatakit.tables.android.provider.file" />
-
-        <!--  dummy ContentProvider for syncing tables -->
-        <provider
-            android:exported="true"
-            android:name=".sync.TablesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.content" />
-
-        <!-- dummy ContentProvider for syncing files -->
-        <provider
-            android:exported="true"
-            android:name=".sync.files.FilesContentProvider"
-            android:authorities="org.opendatakit.tables.android.provider.files" />
 
     </application>
 

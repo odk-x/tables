@@ -73,7 +73,6 @@ import org.opendatakit.tables.sync.RowModification;
 import org.opendatakit.tables.sync.SyncRow;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.Synchronizer;
-import org.opendatakit.tables.sync.TextPlainHttpMessageConverter;
 import org.opendatakit.tables.sync.exceptions.AccessDeniedException;
 import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.sync.exceptions.RequestFailureException;
@@ -232,8 +231,6 @@ public class AggregateSynchronizer implements Synchronizer {
     List<HttpMessageConverter<?>> converters;
 
     converters = new ArrayList<HttpMessageConverter<?>>();
-    // plain text
-    converters.add(new TextPlainHttpMessageConverter());
     // JSON conversion...
     converters.add(new OdkJsonHttpMessageConverter(false));
     // XML conversion...
@@ -242,8 +239,6 @@ public class AggregateSynchronizer implements Synchronizer {
 
     // undo work-around for erroneous gzip on auth token interaction
     converters = new ArrayList<HttpMessageConverter<?>>();
-    // plain text
-    converters.add(new TextPlainHttpMessageConverter());
     // JSON conversion...
     converters.add(new OdkJsonHttpMessageConverter(true));
     // XML conversion...
