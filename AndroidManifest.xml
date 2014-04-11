@@ -103,19 +103,5 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <receiver android:name=".sms.SmsReceiver" >
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
-		<!--  FileProvider provides read-only access to files specified by: appName/filepath -->
-	    <provider
-	        android:exported="true"
-	        android:name="org.opendatakit.tables.provider.FileProvider"
-	        android:authorities="org.opendatakit.tables.android.provider.file" />
-
     </application>
-
 </manifest>
