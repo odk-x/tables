@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.submit.ServiceConnectionImpl;
@@ -285,10 +284,9 @@ public class Aggregate extends SherlockActivity implements SyncNowCallback {
       // and do yo' bizness."
       // The first thing we need to do is get the list of tables that is set
       // to sync. Submit needs to know about this.
-      DbHelper dbh = DbHelper.getDbHelper(this, appName);
       TableProperties[] tps =
-          TableProperties.getTablePropertiesForSynchronizedTables(dbh,
-              KeyValueStore.Type.SERVER);
+          TableProperties.getTablePropertiesForSynchronizedTables(this, appName,
+              KeyValueStoreType.SERVER);
       List<String> tableIdsToSync = new ArrayList<String>();
       for (TableProperties tp : tps) {
         tableIdsToSync.add(tp.getTableId());

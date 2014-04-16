@@ -49,12 +49,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.tasks.ExportTask;
@@ -110,13 +107,13 @@ public class CsvUtil {
   private InitializeTask it = null;
 
   private final DataUtil du;
-  private final DbHelper dbh;
+  private final Context context;
   private final String appName;
 
   public CsvUtil(Context context, String appName) {
+	this.context = context;
     this.appName = appName;
     du = DataUtil.getDefaultDataUtil();
-    dbh = DbHelper.getDbHelper(context, appName);
   }
 
   /**
@@ -139,8 +136,8 @@ public class CsvUtil {
   public boolean importNewTable(Context c, ImportTask importTask, File file, String tableName)
       throws TableAlreadyExistsException {
 
-    String dbTableName = NameUtil.createUniqueDbTableName(tableName, dbh);
-    String tableId = NameUtil.createUniqueTableId(dbTableName, dbh);
+    String dbTableName = NameUtil.createUniqueDbTableName(c, appName, tableName);
+    String tableId = NameUtil.createUniqueTableId(c, appName, dbTableName);
     TableProperties tp;
     try {
       boolean includesProperties = false;
@@ -183,7 +180,7 @@ public class CsvUtil {
         // string until we find it, but if there are other occurrences
         // of the tableId json key we will get into trouble. So, we must
         // deserialize it.
-        tp = TableProperties.addTableFromJson(dbh, jsonProperties, KeyValueStore.Type.ACTIVE);
+        tp = TableProperties.addTableFromJson(c, appName, jsonProperties, KeyValueStoreType.ACTIVE);
         // we need to check if we need to import all the key value store
         // things as well.
         if (row.length > 1) {
@@ -194,12 +191,10 @@ public class CsvUtil {
             List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
                 new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
                 });
-            KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-            KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), tp.getBackingStoreType());
-            kvs.addEntriesToStore(dbh.getWritableDatabase(), recoveredEntries);
+            tp.addMetaDataEntries(recoveredEntries, KeyValueStoreType.ACTIVE, false);
             // Since the KVS has all the display properties for a table, we must
             // re-read everything to get them.
-            tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
+            tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
                 tp.getBackingStoreType());
             // TODO: sort out closing database appropriately.
           } catch (JsonGenerationException e) {
@@ -222,8 +217,8 @@ public class CsvUtil {
         discoverColumnNames = false;
         row = reader.readNext();
       } else {
-        tp = TableProperties.addTable(dbh, dbTableName, tableName, TableType.data, tableId,
-            KeyValueStore.Type.ACTIVE);
+        tp = TableProperties.addTable(c, appName, dbTableName, tableName, tableId,
+            KeyValueStoreType.ACTIVE);
         discoverColumnNames = true;
       }
 
@@ -313,7 +308,7 @@ public class CsvUtil {
         // TODO: it might be that we do NOT want to overwrite an
         // existing
         // table's properties, in which case we shouldn't set from json.
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId, KeyValueStoreType.ACTIVE);
         if (tp.setFromJson(row[0])) {
           // OK the metadata is for this tableId, so we can proceed...
 
@@ -327,13 +322,11 @@ public class CsvUtil {
               List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
                   new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
                   });
-              KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-              KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), tp.getBackingStoreType());
-              kvs.addEntriesToStore(dbh.getWritableDatabase(), recoveredEntries);
+              tp.addMetaDataEntries(recoveredEntries, KeyValueStoreType.ACTIVE, false);
               // Since the KVS has all the display properties for a table, we
               // must
               // re-read everything to get them.
-              tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
+              tp = TableProperties.refreshTablePropertiesForTable(c, appName, tp.getTableId(),
                   tp.getBackingStoreType());
               // TODO: sort out closing database appropriately.
             } catch (JsonGenerationException e) {
@@ -357,7 +350,7 @@ public class CsvUtil {
         }
         row = reader.readNext();
       } else {
-        tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId, KeyValueStoreType.ACTIVE);
         discoverColumnNames = true;
       }
 
@@ -558,7 +551,7 @@ public class CsvUtil {
                               int idxSavepointTimestamp, int idxSavepointCreator,
                               boolean exportedWithProperties) {
 
-    DbTable dbt = DbTable.getDbTable(dbh, tableProperties);
+    DbTable dbt = DbTable.getDbTable(tableProperties);
 
     try {
       Set<Integer> idxMetadata = new HashSet<Integer>();
@@ -769,7 +762,7 @@ public class CsvUtil {
       }
     }
     // getting data
-    DbTable dbt = DbTable.getDbTable(dbh, tp);
+    DbTable dbt = DbTable.getDbTable(tp);
     String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE
     };
     String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name()
@@ -786,15 +779,11 @@ public class CsvUtil {
         // The first row must be [tableProperties, secondaryKVSEntries]
         // The tableProperties json is easily had,
         // so first we must get the secondary entries.
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), tp.getBackingStoreType());
-        List<String> partitions = kvs.getAllPartitions(dbh.getReadableDatabase());
         // TODO sort out and handle appropriate closing of database
         // We do NOT want to include the table or column partitions.
         // partitions.remove(TableProperties.KVS_PARTITION);
         // partitions.remove(ColumnProperties.KVS_PARTITION);
-        List<OdkTablesKeyValueStoreEntry> kvsEntries = kvs.getEntriesForPartitions(
-            dbh.getReadableDatabase(), partitions);
+        List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries(tp.getBackingStoreType());
         // TODO sort out and handle appropriate closing of database
         String[] settingsRow;
         String strKvsEntries = null;

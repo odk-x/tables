@@ -27,6 +27,7 @@ import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -145,7 +146,7 @@ import android.util.Log;
  * @author sudar.sam@gmail.com
  *
  */
-public class KeyValueStoreManager {
+class KeyValueStoreManager {
 
   public static final String TAG = "KeyValueStoreManager";
 
@@ -163,20 +164,8 @@ public class KeyValueStoreManager {
     KeyValueStoreColumns.VALUE
   };
 
-  private DbHelper dbh;
 
-  // here is the actual manager.
-  private static KeyValueStoreManager kvsManager = null;
-
-  private KeyValueStoreManager(DbHelper dbh) {
-    this.dbh = dbh;
-  }
-
-  public static KeyValueStoreManager getKVSManager(DbHelper dbh) {
-    if (kvsManager == null) {
-      kvsManager = new KeyValueStoreManager(dbh);
-    }
-    return kvsManager;
+  public KeyValueStoreManager() {
   }
 
   /**
@@ -186,9 +175,9 @@ public class KeyValueStoreManager {
    * @return
    */
   public KeyValueStore getStoreForTable(String tableId,
-      KeyValueStore.Type typeOfStore) {
+      KeyValueStoreType typeOfStore) {
     String backingName = getBackingNameForStore(typeOfStore);
-    return new KeyValueStore(backingName, this.dbh, tableId);
+    return new KeyValueStore(backingName, tableId);
   }
 
   /**
@@ -198,7 +187,7 @@ public class KeyValueStoreManager {
    * @return
    */
   public KeyValueStoreSync getSyncStoreForTable(String tableId) {
-    return new KeyValueStoreSync(DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME, this.dbh, tableId);
+    return new KeyValueStoreSync(DataModelDatabaseHelper.KEY_VALULE_STORE_SYNC_TABLE_NAME, tableId);
   }
 
   /**
@@ -208,7 +197,7 @@ public class KeyValueStoreManager {
    * @return
    */
   public List<String> getAllIdsFromStore(SQLiteDatabase db,
-      KeyValueStore.Type typeOfStore) {
+      KeyValueStoreType typeOfStore) {
     String backingName = getBackingNameForStore(typeOfStore);
     Cursor c = null;
     try {
@@ -243,74 +232,12 @@ public class KeyValueStoreManager {
     }
   }
 
-  public List<String> getTableIdsForTableType(TableType tableType, SQLiteDatabase db,
-      KeyValueStore.Type typeOfStore) {
-    String backingName = getBackingNameForStore(typeOfStore);
-    Cursor c = null;
-    try {
-       c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
-           KeyValueStoreColumns.PARTITION + "=? AND " +
-           KeyValueStoreColumns.ASPECT + "=? AND " +
-           KeyValueStoreColumns.KEY + "=? AND " +
-           KeyValueStoreColumns.VALUE + "=?",
-           new String[] { "Table", "default", "tableType", tableType.name() },
-           null, null, null, null);
-       return getTableIdsFromCursor(c);
-    } finally {
-      if ( c != null && !c.isClosed() ) {
-         c.close();
-      }
-    }
-  }
-  /**
-   * Get the ids of all the data tables that have entries in the given store.
-   * <p>
-   * Does not close the database.
-   * {@link TableDefinitions.getTableIdsForType}
-   * @param db
-   * @param typeOfStore
-   * @return
-   */
-  public List<String> getDataTableIds(SQLiteDatabase db,
-      KeyValueStore.Type typeOfStore) {
-    return getTableIdsForTableType(TableType.data, db, typeOfStore);
-  }
-
-
-  /**
-   * Get the ids of all the security tables that have entries in the given
-   * <p>
-   * Does not close the database.
-   * {@link TableDefinitions.getTableIdsForType}
-   * @param db
-   * @param typeOfStore
-   * @return
-   */
-  public List<String> getSecurityTableIds(SQLiteDatabase db,
-      KeyValueStore.Type typeOfStore) {
-    return getTableIdsForTableType(TableType.security, db, typeOfStore);
-  }
-
-  /**
-   * Get the ids of all the data tables that have entries in the given store.
-   * <p>
-   * Does not close the database.
-   * {@link TableDefinitions.getTableIdsForType}
-   * @param db
-   * @param typeOfStore
-   * @return
-   */
-  public List<String> getShortcutTableIds(SQLiteDatabase db,
-      KeyValueStore.Type typeOfStore) {
-    return getTableIdsForTableType(TableType.shortcut, db, typeOfStore);
-  }
-
   /*
    * Return the database backing name for the given type of KVS. This is just
    * intended as a convenience method to avoid having switch statements all
    * over the place.
    */
-  private String getBackingNameForStore(KeyValueStore.Type typeOfStore) {
+  private String getBackingNameForStore(KeyValueStoreType typeOfStore) {
     switch (typeOfStore) {
     case ACTIVE:
       return DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME;
@@ -333,28 +260,24 @@ public class KeyValueStoreManager {
    * active<--default
    * @param tableId
    */
-  public void copyDefaultToActiveForTable(String tableId) {
+  void copyDefaultToActiveForTable(String tableId, SQLiteDatabase db) {
     // There is some weirdness here. Elsewhere "properties" have been
     // considered to be ONLY those keys that exist in the init columns of
     // TableProperties. ATM the file pointers for list and box views, etc,
     // are not included there. However, they should definitely be copied over
     // from the default table. Therefore all key value pairs that are in the
     // default store are copied over in this method.
-    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore activeKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.ACTIVE);
+	        KeyValueStoreType.ACTIVE);
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.DEFAULT);
+	        KeyValueStoreType.DEFAULT);
 	    activeKVS.clearKeyValuePairs(db);
 	    List<OdkTablesKeyValueStoreEntry> defaultEntries =
 	        defaultKVS.getEntries(db);
 	    activeKVS.clearKeyValuePairs(db);
 	    activeKVS.addEntriesToStore(db, defaultEntries);
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-      TableProperties.markStaleCache(dbh, KeyValueStore.Type.ACTIVE);
     }
   }
 
@@ -376,7 +299,7 @@ public class KeyValueStoreManager {
    * default<--MERGE--server
    * @param tableId
    */
-  public void mergeServerToDefaultForTable(String tableId) {
+  void mergeServerToDefaultForTable(String tableId, SQLiteDatabase db) {
     // We're going to use a TreeSet because we need each
     // OdkTablesKeyValueStoreEntry object to be dependent only on the
     // partition, aspect, and key. The value should be ignored in the merge.
@@ -385,12 +308,11 @@ public class KeyValueStoreManager {
     Set<OdkTablesKeyValueStoreEntry> newDefault =
         new TreeSet<OdkTablesKeyValueStoreEntry>(
              new SyncUtil.KVSEntryComparator() );
-    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.DEFAULT);
+	        KeyValueStoreType.DEFAULT);
 	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.SERVER);
+	        KeyValueStoreType.SERVER);
 	    List<OdkTablesKeyValueStoreEntry> oldDefaultEntries =
 	        defaultKVS.getEntries(db);
 	    List<OdkTablesKeyValueStoreEntry> serverEntries =
@@ -413,9 +335,6 @@ public class KeyValueStoreManager {
 	    defaultKVS.clearKeyValuePairs(db);
 	    defaultKVS.addEntriesToStore(db, defaultList);
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -429,24 +348,20 @@ public class KeyValueStoreManager {
    * active-->default
    * @param tableId
    */
-  public void setCurrentAsDefaultPropertiesForTable(String tableId) {
+  void setCurrentAsDefaultPropertiesForTable(String tableId, SQLiteDatabase db) {
     // Remove all the key values from the default key value store for the given
     // table and replace them with the key values from the active store.
-    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    KeyValueStore activeKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.ACTIVE);
+	        KeyValueStoreType.ACTIVE);
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.DEFAULT);
+	        KeyValueStoreType.DEFAULT);
 	    defaultKVS.clearKeyValuePairs(db);
 	    List<OdkTablesKeyValueStoreEntry> activeEntries =
 	        activeKVS.getEntries(db);
 	    defaultKVS.clearKeyValuePairs(db);
 	    defaultKVS.addEntriesToStore(db, activeEntries);
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-      TableProperties.markStaleCache(dbh, KeyValueStore.Type.DEFAULT);
     }
   }
 
@@ -470,23 +385,22 @@ public class KeyValueStoreManager {
    * default-->server
    * @param tableId
    */
-  public void copyDefaultToServerForTable(String tableId) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+  void copyDefaultToServerForTable(Context context, String appName, String tableId, SQLiteDatabase db) {
     try {
 	    int numClearedFromServerKVS;
 	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.DEFAULT);
+	        KeyValueStoreType.DEFAULT);
 	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-	        KeyValueStore.Type.SERVER);
+	        KeyValueStoreType.SERVER);
 	    numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
 	    List<OdkTablesKeyValueStoreEntry> defaultEntries =
 	        defaultKVS.getEntries(db);
 	    serverKVS.addEntriesToStore(db, defaultEntries);
 	    // and now add an entry to the sync KVS.
-	    addIsSetToSyncToSyncKVSForTable(tableId);
+	    addIsSetToSyncToSyncKVSForTable(tableId, db);
 	    // Now try to update the properties tag.
-	    TableProperties tp = TableProperties.getTablePropertiesForTable(dbh,
-	        tableId, KeyValueStore.Type.SERVER);
+	    TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName,
+	        tableId, KeyValueStoreType.SERVER);
 	    SyncTag syncTag = tp.getSyncTag();
 	    if (syncTag.getSchemaETag() == null ||
 	        syncTag.getPropertiesETag() == null ) {
@@ -499,9 +413,6 @@ public class KeyValueStoreManager {
 	      tp.setSyncState(SyncState.updating);
 	    }
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-      TableProperties.markStaleCache(dbh, null); // all are stale because of sync state change
     }
   }
 
@@ -511,9 +422,8 @@ public class KeyValueStoreManager {
    * exists in the sync KVS, nothing happens.
    * @param tableId
    */
-  public void addIsSetToSyncToSyncKVSForTable(String tableId) {
+  public void addIsSetToSyncToSyncKVSForTable(String tableId, SQLiteDatabase db) {
     KeyValueStore syncKVS = this.getSyncStoreForTable(tableId);
-    SQLiteDatabase db = dbh.getWritableDatabase();
     try {
 	    // Note! If there ever becomes another way to
 	    // add entries to the server key value store, you must be sure to add the
@@ -539,8 +449,6 @@ public class KeyValueStoreManager {
 	      syncKVS.addEntriesToStore(db, newKey);
 	    }
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
     }
   }
 

@@ -16,10 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.KeyValueStoreSync;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -54,13 +51,9 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
     int count = listView.getCount();
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
     for (int i = 0; i < count; i++) {
       TableProperties tp = (TableProperties) listView.getItemAtPosition(i);
-      // hilary's original
-      //if (tp.isSynchronized()) {
-      if (kvsm.getSyncStoreForTable(tp.getTableId()).isSetToSync()) {
+      if (tp.isSetToSync()) {
         listView.setItemChecked(i, true);
       }
     }
@@ -72,13 +65,11 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    * must also have an "isSetToSync" entry in the sync KVS.
    */
   private TableProperties[] getServerDataTables() {
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-
     TableProperties[] activeProps =
-        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.ACTIVE);
+        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.ACTIVE);
     // silently promote all active values to default if there is no default
     TableProperties[] defaultProps =
-        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.DEFAULT);
+        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.DEFAULT);
     for ( int i = 0 ; i < activeProps.length ; ++i ) {
       boolean found = false;
       for ( int j = 0 ; j < defaultProps.length ; ++j ) {
@@ -88,13 +79,12 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
         }
       }
       if ( !found ) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        kvsm.setCurrentAsDefaultPropertiesForTable(activeProps[i].getTableId());
+        activeProps[i].setCurrentAsDefaultPropertiesForTable();
       }
     }
     // silently promote all default values to server sync if there is no server sync
     TableProperties[] serverProps =
-        TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.SERVER);
+        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.SERVER);
     for ( int i = 0 ; i < defaultProps.length ; ++i ) {
       boolean found = false;
       for ( int j = 0 ; j < serverProps.length ; ++j ) {
@@ -104,13 +94,12 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
         }
       }
       if ( !found ) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        kvsm.copyDefaultToServerForTable(defaultProps[i].getTableId());
+        defaultProps[i].copyDefaultToServerForTable();
       }
     }
 
     // and return the server properties
-    return TableProperties.getTablePropertiesForDataTables(dbh, KeyValueStore.Type.SERVER);
+    return TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.SERVER);
   }
 
   @Override
@@ -118,17 +107,12 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
     ListView listView = getListView();
     TableProperties tp =
         (TableProperties) listView.getItemAtPosition(position);
-    // hilary's original
-    //tp.setSynchronized(listView.isItemChecked(position));
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(tp.getTableId());
     boolean wantToSync;
-    if (syncKVS.isSetToSync()) {
+    if (tp.isSetToSync()) {
       wantToSync = false;
     } else {
       wantToSync = true;
     }
-    syncKVS.setIsSetToSync(wantToSync);
+    tp.setIsSetToSync(wantToSync);
   }
 }

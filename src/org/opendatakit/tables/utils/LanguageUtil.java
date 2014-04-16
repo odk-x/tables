@@ -17,7 +17,6 @@ package org.opendatakit.tables.utils;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ConditionalRuler;
-import org.opendatakit.tables.data.TableType;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -26,20 +25,6 @@ import android.graphics.Color;
 public class LanguageUtil {
 
   private static final String TAG = "LanguageUtil";
-
-    public static String getTableTypeLabel(Context c, TableType tableType) {
-        switch (tableType) {
-        case data:
-            return c.getString(R.string.table_type_data);
-        case security:
-            return c.getString(R.string.table_type_access_control);
-        case shortcut:
-            return c.getString(R.string.table_type_sms_shortcuts);
-        default:
-            throw new RuntimeException("Invalid table type (" + tableType +
-                    ").");
-        }
-    }
 
 //    public static String getViewTypeLabel(int viewType) {
 //        switch (viewType) {

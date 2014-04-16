@@ -60,16 +60,16 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   private final String partition;
   private final KeyValueStore kvs;
-  private final DbHelper dbh;
+  private final TableProperties tp;
 
   /**
    * @param kvs
    * @param partition
    */
-  public KeyValueStoreHelper(KeyValueStore kvs, String partition) {
+  public KeyValueStoreHelper(KeyValueStore kvs, String partition, TableProperties tp) {
     this.partition = partition;
     this.kvs = kvs;
-    this.dbh = kvs.getDbHelper();
+    this.tp = tp;
   }
 
   /**
@@ -96,9 +96,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   public List<String> getAspectsForPartition() {
-    SQLiteDatabase db = dbh.getReadableDatabase();
+    SQLiteDatabase db = tp.getReadableDatabase();
     List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
-    // TODO: sort out and handle closing of the database.
     return aspects;
   }
 
@@ -229,7 +228,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setIntegerEntry(String aspect, String key, Integer value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
   }
@@ -240,7 +239,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setNumericEntry(String aspect, String key, Double value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
   }
@@ -251,7 +250,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   private void setObjectEntry(String aspect, String key, String jsonOfObject) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
   }
@@ -268,7 +267,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setBooleanEntry(String aspect, String key, Boolean value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.BOOLEAN.getLabel(),
         Integer.toString(SyncUtil.boolToInt(value)));
@@ -286,7 +285,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param value
    */
   private void setStringEntry(String aspect, String key, String value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.STRING.getLabel(), value);
   }
@@ -346,7 +345,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       Log.e(TAG, "problem parsing list to json, not updating key");
       return;
     }
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
   }
@@ -363,7 +362,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   private int removeEntry(String aspect, String key) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     return kvs.deleteKey(db, this.partition, aspect, key);
   }
 
@@ -383,7 +382,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   private OdkTablesKeyValueStoreEntry getEntry(String aspect, String key) {
-    SQLiteDatabase db = dbh.getReadableDatabase();
+    SQLiteDatabase db = tp.getReadableDatabase();
     List<String> keyList = new ArrayList<String>();
     keyList.add(key);
     List<OdkTablesKeyValueStoreEntry> entries =
@@ -496,9 +495,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
      * @return
      */
     public int deleteAllEntriesInThisAspect() {
-      SQLiteDatabase db = dbh.getWritableDatabase();
+      SQLiteDatabase db = tp.getWritableDatabase();
       int numDeleted = kvs.clearEntries(partition, aspect, db);
-      // TODO: handle the correct closing of the database.
       return numDeleted;
     }
 

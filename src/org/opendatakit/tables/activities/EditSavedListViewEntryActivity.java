@@ -20,10 +20,9 @@ import java.util.List;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
@@ -83,11 +82,11 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
    */
   private static final int RETURN_CODE_NEW_FILE = 0;
 
+  private String appName;
   // The table id to which this list view belongs.
   private String tableId;
   // The table properties object for the table to which it belongs.
   private TableProperties tp;
-  private DbHelper dbh;
   // These are the partition and aspect helpers for setting info in the KVS.
   private KeyValueStoreHelper kvsh;
   private AspectHelper aspectHelper;
@@ -99,14 +98,13 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
-    this.dbh = DbHelper.getDbHelper(this, appName);
     this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
-    this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
     this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(listViewName);
     if (kvsh.getAspectsForPartition().size() == 0) {
@@ -150,10 +148,10 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       @Override
       public boolean onPreferenceClick(Preference preference) {
         Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
-        filePickerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, dbh.getAppName());
+        filePickerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
         // Set the current filename.
         if (listViewFilename != null) {
-          File adjustedFile = new File(ODKFileUtils.getAppFolder(dbh.getAppName()),
+          File adjustedFile = new File(ODKFileUtils.getAppFolder(appName),
               listViewFilename);
           filePickerIntent.setData(
               Uri.parse("file://" + adjustedFile.getAbsolutePath()));

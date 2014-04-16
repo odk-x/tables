@@ -8,10 +8,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
@@ -107,7 +106,6 @@ public class TableActivity extends SherlockFragmentActivity
   private String mRowId;
 
   private DataUtil mDataUtil;
-  private DbHelper mDbh;
   private DbTable mDbTable;
   private Stack<String> mSearchText;
   private boolean mIsOverview;
@@ -150,10 +148,8 @@ public class TableActivity extends SherlockFragmentActivity
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
 
     // Initialize data objects.
-    mDbh = DbHelper.getDbHelper(this, mAppName);
     refreshDbTable(tableId);
-    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
-        mTableProperties);
+    mQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
 
     // Initialize layout fields.
     setSearchFieldText(mSearchText.peek());
@@ -192,8 +188,7 @@ public class TableActivity extends SherlockFragmentActivity
 
   public void init() {
     refreshDbTable(mTableProperties.getTableId());
-    mQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE,
-        mTableProperties);
+    mQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
     mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : mDbTable.getUserTable(mQuery);
@@ -252,10 +247,10 @@ public class TableActivity extends SherlockFragmentActivity
    * things, and a refactor should probably end up fixing this.
    */
   void refreshDbTable(String tableId) {
-    mTableProperties = TableProperties.getTablePropertiesForTable(mDbh,
+    mTableProperties = TableProperties.getTablePropertiesForTable(this, mAppName,
         tableId,
-        KeyValueStore.Type.ACTIVE);
-    mDbTable = DbTable.getDbTable(mDbh, mTableProperties);
+        KeyValueStoreType.ACTIVE);
+    mDbTable = DbTable.getDbTable(mTableProperties);
   }
 
   /**
@@ -602,7 +597,7 @@ public class TableActivity extends SherlockFragmentActivity
     for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(mDbh, KeyValueStore.Type.ACTIVE, mTableProperties);
+    Query currentQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
     currentQuery.loadFromUserQuery(getSearchText());
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

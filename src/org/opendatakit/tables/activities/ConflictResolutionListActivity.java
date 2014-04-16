@@ -2,9 +2,8 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.data.ConflictTable;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -40,11 +39,10 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     }
     String tableId =
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    DbHelper dbHelper = DbHelper.getDbHelper(this, appName);
     TableProperties tableProperties =
-        TableProperties.getTablePropertiesForTable(dbHelper, tableId,
-            KeyValueStore.Type.ACTIVE);
-    DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
+        TableProperties.getTablePropertiesForTable(this, appName, tableId,
+            KeyValueStoreType.ACTIVE);
+    DbTable dbTable = DbTable.getDbTable(tableProperties);
     this.mConflictTable = dbTable.getConflictTable();
     this.mAdapter = new ArrayAdapter<String>(
         getSupportActionBar().getThemedContext(),

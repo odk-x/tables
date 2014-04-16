@@ -18,11 +18,10 @@ package org.opendatakit.tables.activities;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -87,6 +86,7 @@ public class ListViewManager extends SherlockListActivity {
    */
   private ListViewAdapter adapter;
 
+  private String appName;
   /**
    * The id of the table for which we are displaying the list views.
    */
@@ -118,14 +118,13 @@ public class ListViewManager extends SherlockListActivity {
    * Get the fields up and running.
    */
   private void init() {
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
     this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-        KeyValueStore.Type.ACTIVE);
+    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
+        KeyValueStoreType.ACTIVE);
     this.kvsh =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
     this.listViewKvsh =

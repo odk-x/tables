@@ -25,9 +25,7 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.SyncProcessor;
@@ -127,8 +125,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     String displayName = (String) getListView().getItemAtPosition(position);
     String tableId = tableIds.get(position);
     String tableDefinitionUri = tableDefinitionUris.get(position);
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    String dbTableNameActive = NameUtil.createUniqueDbTableName(tableId,dbh);
+    String dbTableNameActive = NameUtil.createUniqueDbTableName(this, appName, tableId);
     DownloadTableTask task = new DownloadTableTask(prefs.getAccount(), tableId, dbTableNameActive, displayName, tableDefinitionUri);
     task.execute();
   }
@@ -244,7 +241,6 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
     @Override
     protected Void doInBackground(Void... params) {
       //android.os.Debug.waitForDebugger();
-      DbHelper dbh = DbHelper.getDbHelper(AggregateDownloadTableActivity.this, appName);
 
       Synchronizer synchronizer;
       try {
@@ -255,7 +251,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
-      SyncProcessor processor = new SyncProcessor(dbh, synchronizer,
+      SyncProcessor processor = new SyncProcessor(
+    		  AggregateDownloadTableActivity.this, appName, synchronizer,
           new SyncResult());
       // We're going to add a check here for the framework directory. If we
       // don't have it, you also have to sync app level files the first time.
@@ -273,8 +270,9 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
         return null;
       }
 
-      TableProperties[] props = TableProperties.getTablePropertiesForDataTables(dbh,
-                                      KeyValueStore.Type.SERVER);
+      TableProperties[] props = TableProperties.getTablePropertiesForAll(
+    		  	AggregateDownloadTableActivity.this, appName,
+                                      KeyValueStoreType.SERVER);
       TableProperties tpOriginal = null;
       boolean tablePresent = false;
       for ( TableProperties p : props ) {
@@ -330,10 +328,8 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       }
 
       // Now copy the properties from the server to the default to the active.
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      // TODO: this code not working. these two methods gone wrong.
-      kvsm.mergeServerToDefaultForTable(tableId);
-      kvsm.copyDefaultToActiveForTable(tableId);
+      tp.mergeServerToDefaultForTable();
+      tp.copyDefaultToServerForTable();
 
       return null;
     }

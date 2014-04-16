@@ -24,10 +24,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -90,7 +89,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     private static final String MENU_ITEM_MSG_EDIT_COLUMN_COLOR_RULES =
         "Edit Column Color Rules";
 
-    private DbHelper dbh;
+    private String appName;
     private Controller c;
     private UserTable table;
     private int indexedCol;
@@ -101,15 +100,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
         if ( appName == null ) {
           appName = TableFileUtils.getDefaultAppName();
         }
 
         // remove a title
         setTitle("");
-
-        dbh = DbHelper.getDbHelper(this, appName);
         c = new Controller(this, this, getIntent().getExtras());
     }
 
@@ -122,7 +119,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void init() {
       TableProperties tp = c.getTableProperties();
-      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, tp);
+      Query query = new Query(this, appName, KeyValueStoreType.ACTIVE, tp);
         query.loadFromUserQuery(c.getSearchText());
         // There are two options here. The first is that we get the data using
         // the {@link Query} object. The other is that we use a sql where
@@ -133,8 +130,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         if (sqlWhereClause != null) {
           String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
               Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-          DbTable dbTable = DbTable.getDbTable(dbh,
-              c.getTableProperties());
+          DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
           table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
         } else {
           // We use the query.
@@ -162,7 +158,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(dbh, KeyValueStore.Type.ACTIVE, table.getTableProperties());
+      Query query = new Query(this, appName, KeyValueStoreType.ACTIVE, table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String prime : c.getTableProperties().getPrimeColumns()) {
@@ -704,8 +700,9 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                  String tableId = joinColumn.getTableId();
       	                  String elementKey = joinColumn.getElementKey();
       	                  TableProperties joinedTable =
-                               TableProperties.getTablePropertiesForTable(dbh, tableId,
-                                   KeyValueStore.Type.ACTIVE);
+                               TableProperties.getTablePropertiesForTable(
+                            		   SpreadsheetDisplayActivity.this, appName, tableId,
+                                   KeyValueStoreType.ACTIVE);
       	                  String joinedColDisplayName =
       	                      joinedTable.getColumnByElementKey(elementKey)
       	                      .getDisplayName();

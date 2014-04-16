@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -74,8 +73,7 @@ public class SecurityUtil {
 
     public static boolean isValid(Context context, String appName, TableProperties tp,
             String phoneNum, String password) {
-        DbHelper dbh = DbHelper.getDbHelper(context, appName);
-        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        DbTable dbt = DbTable.getDbTable(tp);
         ArrayList<String> columns = new ArrayList<String>();
         columns.add(DataTableColumns.ID);
         UserTable table = dbt.getRaw(columns,

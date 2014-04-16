@@ -20,8 +20,7 @@ import java.io.File;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
@@ -74,8 +73,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	public static final int FILENAMEVAL_ID = 2;
 	public static final int EXPORTBUTTON_ID = 3;
 
-	private DbHelper dbh;
-
+	private String appName;
 	/* the list of table names */
 	private String[] tableNames;
 	/* the list of TableProperties */
@@ -99,11 +97,10 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
 		if ( appName == null ) {
 		  appName = TableFileUtils.getDefaultAppName();
 		}
-		dbh = DbHelper.getDbHelper(this, appName);
 		setContentView(getView());
 	}
 
@@ -121,8 +118,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(dbh,
-		    KeyValueStore.Type.ACTIVE);
+		tps = TableProperties.getTablePropertiesForAll(this, appName,
+		    KeyValueStoreType.ACTIVE);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
 		    tableNames[i] = tps[i].getDisplayName();
@@ -216,7 +213,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		v.addView(fn);
         pickFileButton = new Button(this);
         pickFileButton.setText(getString(R.string.export_choose_csv_file));
-        pickFileButton.setOnClickListener(new PickFileButtonListener(dbh.getAppName(), getString(R.string.export_choose_csv_file)));
+        pickFileButton.setOnClickListener(new PickFileButtonListener(appName, getString(R.string.export_choose_csv_file)));
         v.addView(pickFileButton);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
@@ -238,7 +235,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	 */
 	private void exportSubmission() {
         File file = ODKFileUtils.asAppFile(
-            dbh.getAppName(),
+            appName,
             filenameValField.getText().toString().trim()
         );
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
@@ -247,7 +244,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
         boolean incAC = incAccessControlCheck.isChecked();
         boolean incFI = incFormIdsCheck.isChecked();
         boolean incLo = incLocalesCheck.isChecked();
-        ExportTask task = new ExportTask(this, dbh.getAppName());
+        ExportTask task = new ExportTask(this, appName);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
         task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
 	}

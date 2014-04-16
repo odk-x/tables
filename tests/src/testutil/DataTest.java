@@ -201,11 +201,6 @@ public abstract class DataTest extends TestCase {
             KeyValueStore.Type.ACTIVE)).thenReturn(allTps);
         when(TableProperties.getTablePropertiesForDataTables(dbh,
             KeyValueStore.Type.ACTIVE)).thenReturn(tps[DATA_TABLES_INDEX]);
-        when(TableProperties.getTablePropertiesForSecurityTables(dbh,
-            KeyValueStore.Type.ACTIVE)).thenReturn(tps[SECURITY_TABLES_INDEX]);
-        when(TableProperties.getTablePropertiesForShortcutTables(dbh,
-            KeyValueStore.Type.ACTIVE)).thenReturn(
-                tps[SHORTCUT_TABLES_INDEX]);
     }
 
     private TableProperties buildTp(int type, int index) {

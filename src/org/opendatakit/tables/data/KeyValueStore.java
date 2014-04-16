@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 
 import android.content.ContentValues;
@@ -81,7 +80,6 @@ public class KeyValueStore {
       KeyValueStoreColumns.TABLE_ID + " = ? AND " +
       KeyValueStoreColumns.PARTITION + " in (";
 
-  protected final DbHelper dbh;
   protected final String tableId;
   // The name of the database table that backs the key value store
   protected final String dbBackingName;
@@ -102,18 +100,9 @@ public class KeyValueStore {
    * @param dbh a DbHelper
    * @param tableId id of the table you are after
    */
-  public KeyValueStore(String dbName, DbHelper dbh, String tableId) {
+  public KeyValueStore(String dbName, String tableId) {
     this.dbBackingName = dbName;
-    this.dbh = dbh;
     this.tableId = tableId;
-  }
-
-  /**
-   * Get the {@link DbHelper} associated with this key value store.
-   * @return
-   */
-  public DbHelper getDbHelper() {
-    return this.dbh;
   }
 
   /**
@@ -590,22 +579,6 @@ public class KeyValueStore {
     }
     holders = holders.substring(0, holders.length()-1);
     return holders;
-  }
-
-  public static enum Type {
-    ACTIVE(DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME),
-    DEFAULT(DataModelDatabaseHelper.KEY_VALUE_STORE_DEFAULT_TABLE_NAME),
-    SERVER(DataModelDatabaseHelper.KEY_VALUE_STORE_SERVER_TABLE_NAME);
-
-    private String backingName;
-
-    private Type(String backingName) {
-      this.backingName = backingName;
-    }
-
-    public String getBackingName() {
-      return backingName;
-    }
   }
 
 }

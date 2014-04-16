@@ -23,19 +23,18 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
 import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
@@ -142,7 +141,6 @@ public class Controller implements CustomViewCallbacks {
   private final SherlockActivity activity;
   private final String appName;
   private final DisplayActivity da;
-  private final DbHelper dbh;
   private TableProperties tp;
   private DbTable dbt;
   private final Stack<String> searchText;
@@ -182,7 +180,6 @@ public class Controller implements CustomViewCallbacks {
     }
     isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
     // initializing data objects
-    dbh = DbHelper.getDbHelper(activity, appName);
     refreshDbTable(tableId);
 
     // INITIALIZING VIEW OBJECTS
@@ -288,8 +285,8 @@ public class Controller implements CustomViewCallbacks {
    * this.
    */
   public void refreshDbTable(String tableId) {
-    tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
-    dbt = DbTable.getDbTable(dbh, tp);
+    tp = TableProperties.getTablePropertiesForTable(activity, appName, tableId, KeyValueStoreType.ACTIVE);
+    dbt = DbTable.getDbTable(tp);
   }
 
   /**
@@ -687,34 +684,34 @@ public class Controller implements CustomViewCallbacks {
         return true;
       case MENU_ITEM_ID_DISPLAY_PREFERENCES:
         Intent k = new Intent(activity, DisplayPrefsActivity.class);
-        k.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        k.putExtra(INTENT_KEY_APP_NAME, appName);
         k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivity(k);
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES: {
         Intent intent = new Intent(activity, TablePropertiesManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_TABLE_PROPERTIES_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS: {
         Intent intent = new Intent(activity, ManagePropertySetsManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS);
       }
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER: {
         Intent intent = new Intent(activity, ColumnManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER: {
         Intent intent = new Intent(activity, ListViewManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, dbh.getAppName());
+        intent.putExtra(INTENT_KEY_APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
       }
@@ -787,7 +784,7 @@ public class Controller implements CustomViewCallbacks {
       return;
     }
     TableProperties tpToReceiveAdd = TableProperties.getTablePropertiesForTable(
-        DbHelper.getDbHelper(activity, appName), tableId, KeyValueStore.Type.ACTIVE);
+        activity, appName, tableId, KeyValueStoreType.ACTIVE);
     CollectUtil.handleOdkCollectAddReturn(activity, appName, tpToReceiveAdd, returnCode, data);
   }
 

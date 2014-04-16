@@ -16,15 +16,12 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -42,7 +39,6 @@ import com.actionbarsherlock.app.SherlockActivity;
  */
 public class ManagePropertySetsManager extends SherlockActivity {
 
-  private DbHelper dbh;
   private TableProperties tp;
 
   private AlertDialog revertDialog;
@@ -61,8 +57,7 @@ public class ManagePropertySetsManager extends SherlockActivity {
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    dbh = DbHelper.getDbHelper(this, appName);
-    tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
 
     setTitle(getString(R.string.manage_property_sets_title, tp.getDisplayName()));
 
@@ -73,18 +68,14 @@ public class ManagePropertySetsManager extends SherlockActivity {
     builder.setCancelable(true);
     builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
-        SQLiteDatabase db = dbh.getWritableDatabase();
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStore defaultKVS = kvsm.getStoreForTable(tp.getTableId(),
-            KeyValueStore.Type.DEFAULT);
-        if (!defaultKVS.entriesExist(db)) {
+        if (!tp.hasMetaDataEntries(KeyValueStoreType.DEFAULT)) {
           AlertDialog.Builder noDefaultsDialog = new AlertDialog.Builder(
               ManagePropertySetsManager.this);
           noDefaultsDialog.setMessage(getString(R.string.no_default_no_changes));
           noDefaultsDialog.setNeutralButton(getString(R.string.ok), null);
           noDefaultsDialog.show();
         } else {
-          kvsm.copyDefaultToActiveForTable(tp.getTableId());
+          tp.copyDefaultToActiveForTable();
         }
       }
     });
@@ -100,8 +91,7 @@ public class ManagePropertySetsManager extends SherlockActivity {
     builder.setCancelable(true);
     builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        kvsm.setCurrentAsDefaultPropertiesForTable(tp.getTableId());
+        tp.setCurrentAsDefaultPropertiesForTable();
       }
     });
     builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -116,8 +106,7 @@ public class ManagePropertySetsManager extends SherlockActivity {
     builder.setCancelable(true);
     builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        kvsm.copyDefaultToServerForTable(tp.getTableId());
+        tp.copyDefaultToServerForTable();
       }
     });
     builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -133,8 +122,7 @@ public class ManagePropertySetsManager extends SherlockActivity {
     builder.setCancelable(true);
     builder.setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
       public void onClick(DialogInterface dialog, int id) {
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        kvsm.mergeServerToDefaultForTable(tp.getTableId());
+        tp.mergeServerToDefaultForTable();
       }
     });
     builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {

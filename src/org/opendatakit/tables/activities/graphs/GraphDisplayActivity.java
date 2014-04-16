@@ -18,10 +18,9 @@ package org.opendatakit.tables.activities.graphs;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -91,7 +90,6 @@ implements DisplayActivity {
 	private Query query;
 	private UserTable table;
 	private CustomGraphView view;
-	private DbHelper dbh;
 	private KeyValueStoreHelper kvsh;
 	private String graphName;
 	private String potentialGraphName;
@@ -104,7 +102,6 @@ implements DisplayActivity {
 	      appName = TableFileUtils.getDefaultAppName();
 	    }
 		setTitle("");
-		dbh = DbHelper.getDbHelper(this, appName);
 		this.graphName = getIntent().getStringExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
 		this.potentialGraphName = getIntent().getStringExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME);
 		if(graphName == null) {
@@ -114,7 +111,7 @@ implements DisplayActivity {
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
-		query = new Query(dbh, KeyValueStore.Type.ACTIVE, c.getTableProperties());
+		query = new Query(this, appName, KeyValueStoreType.ACTIVE, c.getTableProperties());
 	}
 
 	@Override
@@ -135,7 +132,7 @@ implements DisplayActivity {
       if (sqlWhereClause != null) {
         String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
             Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-        DbTable dbTable = DbTable.getDbTable(dbh, c.getTableProperties());
+        DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
         table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
       } else {
         // We use the query.

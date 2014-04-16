@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.opendatakit.submit.flags.BroadcastExtraKeys;
 import org.opendatakit.submit.flags.CommunicationState;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SynchronizationResult;
 import org.opendatakit.tables.sync.Synchronizer;
@@ -226,10 +225,9 @@ public class TablesCommunicationActionReceiver extends BroadcastReceiver {
       Log.e(TAG, "[SyncNowWithSubmitTask#doInBackground]");
       SynchronizationResult result = null;
       try {
-        DbHelper dbh = DbHelper.getDbHelper(mContext, mAppName);
         Synchronizer synchronizer =
             new AggregateSynchronizer(mAppName, mAggregateServerUri, mAuthToken);
-        SyncProcessor syncProcessor = new SyncProcessor(dbh, synchronizer,
+        SyncProcessor syncProcessor = new SyncProcessor(mContext, mAppName, synchronizer,
             new SyncResult());
         // This is going to use Submit in demo mode: only synching the files.
         // We will do app-level and non media files, and then ask Submit to do

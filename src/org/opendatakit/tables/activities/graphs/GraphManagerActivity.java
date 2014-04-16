@@ -20,11 +20,11 @@ import java.util.List;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.ListDisplayActivity;
-import org.opendatakit.tables.data.DbHelper;
+import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -151,9 +151,8 @@ public class GraphManagerActivity extends SherlockListActivity {
 		    getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
 		this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
 		    Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-		DbHelper dbh = DbHelper.getDbHelper(this, appName);
-		this.tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-				KeyValueStore.Type.ACTIVE);
+		this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
+				KeyValueStoreType.ACTIVE);
 		this.kvsh =
 				tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION_VIEWS);
 		this.graphViewKvsh =

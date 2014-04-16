@@ -40,11 +40,9 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.utils.CollectUtil;
@@ -111,8 +109,6 @@ public abstract class CustomView extends LinearLayout {
   protected final Activity mParentActivity;
   protected final String mAppName;
 
-  private DbHelper mDbHelper;
-
   private Map<String, TableProperties> tableIdToProperties;
   private CustomViewCallbacks mCallbacks;
 
@@ -122,7 +118,6 @@ public abstract class CustomView extends LinearLayout {
     this.mParentActivity = parentActivity;
     this.mAppName = appName;
     this.mCallbacks = callbacks;
-    this.mDbHelper = DbHelper.getDbHelper(mParentActivity, mAppName);
   }
 
   @SuppressLint("SetJavaScriptEnabled")
@@ -180,7 +175,7 @@ public abstract class CustomView extends LinearLayout {
     }
     tableIdToProperties = new HashMap<String, TableProperties>();
     TableProperties[] allTps = TableProperties.getTablePropertiesForAll(
-        DbHelper.getDbHelper(mParentActivity, mAppName), KeyValueStore.Type.ACTIVE);
+    		mParentActivity, mAppName, KeyValueStoreType.ACTIVE);
     for (TableProperties tp : allTps) {
       tableIdToProperties.put(tp.getTableId(), tp);
     }
@@ -212,7 +207,7 @@ public abstract class CustomView extends LinearLayout {
       // it.
       sqlWhereClause = "WHERE " + sqlWhereClause;
     }
-    DbTable dbTable = DbTable.getDbTable(mDbHelper, tp);
+    DbTable dbTable = DbTable.getDbTable(tp);
     UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
     TableData tableData = new TableData(getContainerActivity(), userTable);
     return tableData;
@@ -367,8 +362,7 @@ public abstract class CustomView extends LinearLayout {
     TableProperties tableProperties = getTablePropertiesById(tableId);
     String sqlQuery = "WHERE " + DataTableColumns.ID + " = ? ";
     String[] selectionArgs = { rowId };
-    DbHelper dbHelper = DbHelper.getDbHelper(getContext(), mAppName);
-    DbTable dbTable = DbTable.getDbTable(dbHelper, tableProperties);
+    DbTable dbTable = DbTable.getDbTable(tableProperties);
     UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs);
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " + "rowId: " + rowId);
@@ -1023,20 +1017,15 @@ public abstract class CustomView extends LinearLayout {
      * for refreshing the displayed information.
      *
      * @param isNewTable
-     * @param tableType
-     *          this is the string representation of TableType. It must
-     *          construct the correct value for {@link TableType.valueOf}.
      * @param tp
      * @param givenTableName
      */
-    public void alertForNewTableName(final boolean isNewTable, final String tableTypeStr,
+    public void alertForNewTableName(final boolean isNewTable,
         final TableProperties tp, String givenTableName) {
       Log.d(TAG, "alertForNewTableName called");
       Log.d(TAG, "isNewTable: " + Boolean.toString(isNewTable));
-      Log.d(TAG, "finalTableTypeStr: " + tableTypeStr);
       Log.d(TAG, "tp: " + tp);
       Log.d(TAG, "givenTableName: " + givenTableName);
-      final TableType tableType = TableType.valueOf(tableTypeStr);
       AlertDialog newTableAlert;
       AlertDialog.Builder alert = new AlertDialog.Builder(mActivity);
       alert.setTitle(mActivity.getString(R.string.name_of_new_table));
@@ -1059,7 +1048,9 @@ public abstract class CustomView extends LinearLayout {
                 toast.show();
               } else {
                 if (isNewTable) {
-                  addTable(newTableName, tableType);
+                  // TODO: prompt for this!
+                  String tableId = NameUtil.createUniqueTableId(getContext(), mAppName, newTableName);
+                  addTable(newTableName, tableId);
                 } else {
                   tp.setDisplayName(newTableName);
                 }
@@ -1080,13 +1071,13 @@ public abstract class CustomView extends LinearLayout {
       newTableAlert.show();
     }
 
-    private void addTable(String tableName, TableType tableType) {
+    private void addTable(String tableName, String tableId) {
       // TODO: if this avenue to create a table remains, we need to also
       // prompt them for a tableId name.
-      String dbTableName = NameUtil.createUniqueDbTableName(tableName, mDbHelper);
+      String dbTableName = NameUtil.createUniqueDbTableName(getContext(), mAppName, tableName);
       @SuppressWarnings("unused")
-      TableProperties tp = TableProperties.addTable(mDbHelper, dbTableName, tableName, tableType,
-          KeyValueStore.Type.ACTIVE);
+      TableProperties tp = TableProperties.addTable(getContext(), mAppName, dbTableName, tableName,
+          tableId, KeyValueStoreType.ACTIVE);
     }
   }
 

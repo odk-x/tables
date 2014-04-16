@@ -44,11 +44,10 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
@@ -1055,8 +1054,7 @@ public class CollectUtil {
       return false;
     }
     Map<String, String> values = CollectUtil.getMapForInsertion(context, tp, formValues);
-    DbHelper dbh = DbHelper.getDbHelper(context, appName);
-    DbTable dbTable = DbTable.getDbTable(dbh, tp);
+    DbTable dbTable = DbTable.getDbTable(tp);
     dbTable.updateRow(rowId, formValues.formId, formValues.locale, formValues.timestamp, formValues.savepointCreator, values);
     // If we made it here and there were no errors, then clear the row id
     // from the shared preferences. This is just a bit of housekeeping that
@@ -1130,7 +1128,7 @@ public class CollectUtil {
       return false;
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
-    DbTable dbTable = DbTable.getDbTable(DbHelper.getDbHelper(context, appName), tp);
+    DbTable dbTable = DbTable.getDbTable(tp);
     dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale, formValues.timestamp, formValues.savepointCreator, values );
     return true;
   }
@@ -1315,7 +1313,7 @@ public class CollectUtil {
     for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(DbHelper.getDbHelper(context, appName), KeyValueStore.Type.ACTIVE, tp);
+    Query currentQuery = new Query(context, appName, KeyValueStoreType.ACTIVE, tp);
     currentQuery.loadFromUserQuery(queryString);
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

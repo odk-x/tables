@@ -36,8 +36,8 @@ public class KeyValueStoreSync extends KeyValueStore {
   public static final String KVS_PARTITION = "Table";
   public static final String KVS_ASPECT = "global";
 
-  public KeyValueStoreSync(String dbName, DbHelper dbh, String tableId) {
-    super(dbName, dbh, tableId);
+  public KeyValueStoreSync(String dbName, String tableId) {
+    super(dbName, tableId);
   }
 
   /**
@@ -47,10 +47,8 @@ public class KeyValueStoreSync extends KeyValueStore {
    * this will return false. (Is this the right decision?)
    * @return
    */
-  public boolean isSetToSync() {
-    SQLiteDatabase db = null;
+  public boolean isSetToSync(SQLiteDatabase db) {
     try {
-	    db = this.dbh.getReadableDatabase();
 	    List<String> isSetToSyncKey = new ArrayList<String>();
 	    isSetToSyncKey.add(SyncPropertiesKeys.IS_SET_TO_SYNC.getKey());
 	    List<OdkTablesKeyValueStoreEntry> isSetToSyncEntry =
@@ -66,10 +64,6 @@ public class KeyValueStoreSync extends KeyValueStore {
 	      return false;
 	    }
     } finally {
-      // TODO: fix the when to close problem
-//   		if ( db != null ) {
-//   			db.close();
-//   		}
     }
   }
 
@@ -77,8 +71,7 @@ public class KeyValueStoreSync extends KeyValueStore {
    * Set in the sync KVS whether or not the table is set to be synched.
    * @param val
    */
-  public void setIsSetToSync(boolean val) {
-    SQLiteDatabase db = this.dbh.getWritableDatabase();
+  public void setIsSetToSync(boolean val, SQLiteDatabase db) {
     try {
 	    int newValue = SyncUtil.boolToInt(val);
 	    this.insertOrUpdateKey(db, KeyValueStoreSync.KVS_PARTITION,
@@ -87,8 +80,6 @@ public class KeyValueStoreSync extends KeyValueStore {
 	        ColumnType.INTEGER.name(),
 	        Integer.toString(newValue));
     } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
     }
   }
 

@@ -38,13 +38,9 @@ import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DataUtil;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.KeyValueStoreSync;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
@@ -54,6 +50,7 @@ import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.SyncResult;
 import android.util.Log;
 
@@ -77,10 +74,11 @@ public class SyncProcessor {
     mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
   }
 
+  private final Context context;
+  private final String appName;
   private final DataUtil du;
   private final SyncResult syncResult;
   private final Synchronizer synchronizer;
-  private final DbHelper dbh;
   /**
    * The results of the synchronization that we will pass back to the user. Note
    * that this is NOT the same as the {@link SyncResult} object, which is used
@@ -88,8 +86,9 @@ public class SyncProcessor {
    */
   private final SynchronizationResult mUserResult;
 
-  public SyncProcessor(DbHelper dbh, Synchronizer synchronizer, SyncResult syncResult) {
-    this.dbh = dbh;
+  public SyncProcessor(Context context, String appName, Synchronizer synchronizer, SyncResult syncResult) {
+    this.context = context;
+	this.appName = appName;
     this.du = DataUtil.getDefaultDataUtil();
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
@@ -152,8 +151,8 @@ public class SyncProcessor {
     // TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(dbh,
-        KeyValueStore.Type.SERVER);
+    TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(context, appName,
+        KeyValueStoreType.SERVER);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp, pushLocalTableNonMediaFiles, syncMediaFiles);
@@ -206,10 +205,10 @@ public class SyncProcessor {
     // tp.setSyncTag(null);
 
     // is this necessary?
-    tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
-        KeyValueStore.Type.SERVER);
+    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
+        KeyValueStoreType.SERVER);
 
-    DbTable table = DbTable.getDbTable(dbh, tp);
+    DbTable table = DbTable.getDbTable(tp);
     // used to get the above from the ACTIVE store. if things go wonky, maybe
     // check to see if it was ACTIVE rather than SERVER for a reason. can't
     // think of one. one thing is that if it fails you'll see a table but won't
@@ -236,7 +235,7 @@ public class SyncProcessor {
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
       // It is possible the table properties changed. Refresh just in case.
-      tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
+      tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
           tp.getBackingStoreType());
       if (success && tp != null) // null in case we deleted the tp.
         tp.setLastSyncTime(du.formatNowForDb());
@@ -375,7 +374,7 @@ public class SyncProcessor {
       return false;
     }
     // refresh the tp
-    tp = TableProperties.refreshTablePropertiesForTable(dbh, tp.getTableId(),
+    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
         tp.getBackingStoreType());
 
     // get changes that need to be pushed up to server
@@ -508,7 +507,7 @@ public class SyncProcessor {
       if ( tp.getSyncState() == SyncState.inserting ) {
         // we are creating data on the server
         // change our 'rest' state rows into 'inserting' rows
-        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        DbTable dbt = DbTable.getDbTable(tp);
         dbt.changeRestRowsToInserting();
         // we need to clear out the dataETag and propertiesETag so
         // that we will pull all server changes and sync our properties.
@@ -537,7 +536,7 @@ public class SyncProcessor {
         SyncTag syncTagProperties;
         try {
           syncTagProperties = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(),
-            syncTag, tp.getTableId(), getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER));
+            syncTag, tp.getTableId(), getAllKVSEntries(tp, KeyValueStoreType.SERVER));
         } catch (Exception e) {
           String msg = e.getMessage();
           if ( msg == null ) msg = e.toString();
@@ -585,7 +584,7 @@ public class SyncProcessor {
       if ( tp.getSyncState() == SyncState.inserting ) {
         // we are actually merging our data with a pre-existing table
         // on the server. Mark our 'rest' rows to be 'inserting' rows.
-        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        DbTable dbt = DbTable.getDbTable(tp);
         dbt.changeRestRowsToInserting();
         // we need to clear out the dataETag and propertiesETag so
         // that we will pull all server changes down first. I.e.,
@@ -630,7 +629,7 @@ public class SyncProcessor {
         // on the server and a create by another device.  Treat this as if
         // we are merging our data into the data already up on the server
         // change our 'rest' state rows into 'inserting' rows
-        DbTable dbt = DbTable.getDbTable(dbh, tp);
+        DbTable dbt = DbTable.getDbTable(tp);
         dbt.changeRestRowsToInserting();
         // we need to clear out the dataETag so that
         // we will pull all server changes and sync our properties.
@@ -689,7 +688,7 @@ public class SyncProcessor {
       SyncTag syncTag;
       try {
         syncTag = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(), tp.getSyncTag(), tp.getTableId(),
-                                getAllKVSEntries(tp.getTableId(), KeyValueStore.Type.SERVER));
+                                getAllKVSEntries(tp, KeyValueStoreType.SERVER));
       } catch (Exception e) {
         String msg = e.getMessage();
         if ( msg == null ) msg = e.toString();
@@ -1129,16 +1128,16 @@ public class SyncProcessor {
    * @throws JsonParseException
    * @throws SchemaMismatchException
    */
-  public TableProperties addTableFromDefinitionResource(TableDefinitionResource definitionResource,
-                                                        SyncTag syncTag) throws JsonParseException,
+  public TableProperties addTableFromDefinitionResource(
+		  TableDefinitionResource definitionResource, SyncTag syncTag) throws JsonParseException,
       JsonMappingException, IOException, SchemaMismatchException {
-    KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
-    TableProperties tp = TableProperties.refreshTablePropertiesForTable(dbh,
+    KeyValueStoreType kvsType = KeyValueStoreType.SERVER;
+    TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName,
         definitionResource.getTableId(), kvsType);
     if (tp == null) {
       tp = TableProperties
-          .addTable(dbh, definitionResource.getTableId(), definitionResource.getTableId(),
-              TableType.data, definitionResource.getTableId(), kvsType);
+          .addTable(context, appName, definitionResource.getTableId(), definitionResource.getTableId(),
+              definitionResource.getTableId(), kvsType);
       for (Column col : definitionResource.getColumns()) {
         // TODO: We aren't handling types correctly here. Need to have a mapping
         // on the server as well so that you can pull down the right thing.
@@ -1190,9 +1189,7 @@ public class SyncProcessor {
         }
       }
     }
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStoreSync syncKVS = kvsm.getSyncStoreForTable(definitionResource.getTableId());
-    syncKVS.setIsSetToSync(true);
+    tp.setIsSetToSync(true);
     tp.setSyncTag(syncTag);
     return tp;
   }
@@ -1220,11 +1217,7 @@ public class SyncProcessor {
    */
   private void resetKVSForPropertiesResource(TableProperties tp,
                                              PropertiesResource propertiesResource, SyncTag newTag) {
-    KeyValueStore.Type kvsType = KeyValueStore.Type.SERVER;
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore kvs = kvsm.getStoreForTable(tp.getTableId(), kvsType);
-    kvs.clearKeyValuePairs(dbh.getWritableDatabase());
-    kvs.addEntriesToStore(dbh.getWritableDatabase(), propertiesResource.getKeyValueStoreEntries());
+    tp.addMetaDataEntries(propertiesResource.getKeyValueStoreEntries(), KeyValueStoreType.SERVER, true);
     tp.setSyncTag(newTag);
   }
 
@@ -1236,12 +1229,9 @@ public class SyncProcessor {
    * @param typeOfStore
    * @return
    */
-  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(String tableId,
-                                                                  KeyValueStore.Type typeOfStore) {
-    KeyValueStore kvs = KeyValueStoreManager.getKVSManager(dbh).getStoreForTable(tableId,
-        typeOfStore);
-    ArrayList<OdkTablesKeyValueStoreEntry> allEntries = kvs.getEntries(dbh.getReadableDatabase());
-    return allEntries;
+  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(TableProperties tp,
+                                                                  KeyValueStoreType typeOfStore) {
+    return tp.getMetaDataEntries(typeOfStore);
   }
 
   /**

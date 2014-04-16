@@ -9,9 +9,8 @@ import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ConflictTable;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -61,7 +60,6 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
   private static final String BUNDLE_KEY_RESOLUTION_VALUES =
       "resolutionValues";
 
-  private DbHelper mDbHelper;
   private ConflictTable mConflictTable;
   private ConflictResolutionListAdapter mAdapter;
   /** The row number of the row in conflict within the {@link ConflictTable}.*/
@@ -106,7 +104,6 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    this.mDbHelper = DbHelper.getDbHelper(this, appName);
     this.setContentView(
         org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
     this.mTextViewDeletionMessage = (TextView)
@@ -130,9 +127,9 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
         getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
     this.mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
     TableProperties tableProperties =
-        TableProperties.getTablePropertiesForTable(mDbHelper, tableId,
-            KeyValueStore.Type.ACTIVE);
-    DbTable dbTable = DbTable.getDbTable(mDbHelper, tableProperties);
+        TableProperties.getTablePropertiesForTable(this, appName, tableId,
+            KeyValueStoreType.ACTIVE);
+    DbTable dbTable = DbTable.getDbTable(tableProperties);
     this.mConflictTable = dbTable.getConflictTable();
     this.mLocal = mConflictTable.getLocalTable();
     this.mServer = mConflictTable.getServerTable();
@@ -442,7 +439,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               // this will be a simple matter of deleting all the rows with the
               // same rowid on the local device.
               DbTable dbTable =
-                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+                  DbTable.getDbTable(mLocal.getTableProperties());
               dbTable.deleteRowActual(mRowId);
               ConflictResolutionRowActivity.this.finish();
               Log.d(TAG, "deleted local and server versions");
@@ -490,7 +487,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
               // takeServer was pressed. Then we're going to flag row as
               // deleted.
               DbTable dbTable =
-                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+                  DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getServerValue());
@@ -550,7 +547,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingTakeLocalDialog = false;
               DbTable dbTable =
-                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+                  DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getLocalValue());
@@ -597,7 +594,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingTakeServerDialog = false;
               DbTable dbTable =
-                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+                  DbTable.getDbTable(mLocal.getTableProperties());
               Map<String, String> valuesToUse = new HashMap<String, String>();
               for (ConflictColumn cc : mConflictColumns) {
                 valuesToUse.put(cc.getElementKey(), cc.getServerValue());
@@ -645,7 +642,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
             public void onClick(DialogInterface dialog, int which) {
               mIsShowingResolveDialog = false;
               DbTable dbTable =
-                  DbTable.getDbTable(mDbHelper, mLocal.getTableProperties());
+                  DbTable.getDbTable(mLocal.getTableProperties());
               if (!isResolvable()) {
                 // We should never have gotten here! Triz-ouble.
                 Log.e(TAG, "[onClick--positive button] the row is not " +

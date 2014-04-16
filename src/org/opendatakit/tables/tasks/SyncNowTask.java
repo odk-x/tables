@@ -18,7 +18,6 @@ package org.opendatakit.tables.tasks;
 import java.util.Arrays;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.sync.SyncProcessor;
 import org.opendatakit.tables.sync.SynchronizationResult;
@@ -72,12 +71,9 @@ public class SyncNowTask extends
   protected SynchronizationResult doInBackground(Void... params) {
     SynchronizationResult result = null;
     try {
-      DbHelper dbh = DbHelper.getDbHelper(context, appName);
-
       Synchronizer synchronizer = new AggregateSynchronizer(appName, prefs.getServerUri(),
           prefs.getAuthToken());
-      SyncProcessor processor = new SyncProcessor(dbh,
-          synchronizer, new SyncResult());
+      SyncProcessor processor = new SyncProcessor(context, appName, synchronizer, new SyncResult());
       // This is going to assume that we ALWAYS sync all three levels:
       // app, tableNonMedia, and tableMedia. This might have to be changed
       // and paramaterized using some user-input values in the future.

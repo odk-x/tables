@@ -24,37 +24,12 @@ import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 
+import android.content.Context;
+
 
 public class Query {
 
   private static final String TAG = "Query";
-
-  /**
-   * Used to lazily fetch the full list of all table definitions in the
-   * very rare cases where we are using a join.
-   *
-   * @author mitchellsundt@gmail.com
-   *
-   */
-  private static class TablePropertiesContainer {
-    private DbHelper dbh;
-    KeyValueStore.Type typeOfStore;
-    private TableProperties tps_global[] = null;
-
-    TablePropertiesContainer(DbHelper dbh, KeyValueStore.Type typeOfStore ) {
-      this.dbh = dbh;
-      this.typeOfStore = typeOfStore;
-    }
-
-    TableProperties[] getTableProperties() {
-      if ( tps_global == null) {
-        tps_global = TableProperties.getTablePropertiesForAll(dbh, typeOfStore);
-      }
-      return tps_global;
-    }
-  };
-
-  private TablePropertiesContainer tpc = null;
 
     public enum GroupQueryType { COUNT, AVERAGE, MINIMUM, MAXIMUM, SUM }
 
@@ -77,22 +52,23 @@ public class Query {
         private SortOrder() {};
     }
 
+    private Context context;
+    private String appName;
+    private KeyValueStoreType storeType;
     private TableProperties tp;
     private List<Constraint> constraints;
     private List<Join> joins;
     private String orderBy;
     private int sortOrder;
 
-    private Query(TablePropertiesContainer tpc, TableProperties tp) {
-      this.tpc = tpc;
+    public Query(Context context, String appName, KeyValueStoreType storeType, TableProperties tp) {
+    	this.context = context;
+    	this.appName = appName;
+      this.storeType = storeType;
       this.tp = tp;
       constraints = new ArrayList<Constraint>();
       joins = new ArrayList<Join>();
       orderBy = tp.getSortColumn();
-    }
-
-    public Query(DbHelper dbh, KeyValueStore.Type storeType, TableProperties tp) {
-      this(new TablePropertiesContainer(dbh, storeType), tp);
     }
 
     public int getConstraintCount() {
@@ -283,7 +259,7 @@ public class Query {
             if ( this.tp.getDisplayName().toLowerCase().equals(tableName.toLowerCase()) ) {
               joinTp = this.tp;
             } else {
-              TableProperties[] tps = tpc.getTableProperties();
+              TableProperties[] tps = TableProperties.getTablePropertiesForAll(context, tp.getAppName(), storeType);
               for (TableProperties tp : tps) {
                   if (tp.getDisplayName().toLowerCase().equals(
                         tableName.toLowerCase())) {
@@ -301,7 +277,7 @@ public class Query {
             }
             Query joinQuery = null;
             if (queryString != null) {
-                Query q = new Query(tpc, joinTp);
+                Query q = new Query(context, appName, storeType, joinTp);
                 if (q.loadFromUserQuery(queryString)) {
                     joinQuery = q;
                 }
@@ -880,7 +856,7 @@ public class Query {
                 String[] matchArgs) {
             this.tp = tp;
             if (query == null) {
-                this.query = new Query(tpc, tp);
+                this.query = new Query(context, appName, storeType, tp);
             } else {
                 this.query = query;
             }

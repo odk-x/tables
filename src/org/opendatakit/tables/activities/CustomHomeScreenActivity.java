@@ -16,8 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
@@ -179,8 +178,8 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
       }
       TableProperties tpToReceiveAdd =
           TableProperties.getTablePropertiesForTable(
-              DbHelper.getDbHelper(this, mAppName), tableId,
-              KeyValueStore.Type.ACTIVE);
+        		  this, mAppName, tableId,
+              KeyValueStoreType.ACTIVE);
       CollectUtil.handleOdkCollectAddReturn(this, mAppName, tpToReceiveAdd,
           resultCode, data);
       break;

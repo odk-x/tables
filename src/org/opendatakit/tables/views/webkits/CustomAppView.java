@@ -19,7 +19,6 @@ import java.io.File;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.data.DbHelper;
 
 import android.app.Activity;
 import android.view.ViewGroup;
@@ -39,7 +38,6 @@ public class CustomAppView extends CustomView {
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
 
-  private DbHelper mDbHelper;
   // The filename of the HTML you'll be displaying. Not the full path, just
   // the relative name.
   private String mFilename;
@@ -60,7 +58,6 @@ public class CustomAppView extends CustomView {
                        CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
     this.mFilename = filename;
-    this.mDbHelper = DbHelper.getDbHelper(activity, appName);
     this.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
                                                     LayoutParams.MATCH_PARENT));
   }
@@ -74,7 +71,7 @@ public class CustomAppView extends CustomView {
     File f = new File(mFilename);
     String uriFragment = ODKFileUtils.asUriFragment(mAppName, f);
     String fullPath = FileProvider.getAsWebViewUri(
-        mParentActivity, 
+        mParentActivity,
         mAppName,
         uriFragment);
     load(fullPath);

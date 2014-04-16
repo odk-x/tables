@@ -38,16 +38,11 @@ import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManag
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
-import org.opendatakit.tables.data.KeyValueStoreManager;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.tables.utils.FileUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri.Builder;
 import android.util.Log;
 
@@ -84,65 +79,6 @@ public class SyncUtilities {
     URI uri = uriBase.resolve(term).normalize();
     Log.d(TAG, "normalizeUri: " + uri.toString());
     return uri;
-  }
-  /**
-   * Pull the key value entries for a particular table from the server.
-   * <p>
-   * This is only the Server->Phone direction. It overwrites all the key value
-   * entries for the table.
-   * @param dbh
-   * @param appName
-   * @param aggregateUri
-   * @param authToken
-   * @param tp the tableProperties you should be modifying
-   */
-  public static void pullKeyValueEntriesForTable(AggregateSynchronizer sync, DbHelper dbh, String appName,
-      String aggregateUri, String authToken, TableProperties tp) {
-    String tableId = tp.getTableId();
-    List<OdkTablesKeyValueStoreEntry> allEntries =
-        getKeyValueEntries(aggregateUri, authToken, tableId);
-
-    // so now allEntries should have had their file entries updated.
-    // begin the database stuff.
-    SQLiteDatabase db = dbh.getWritableDatabase();
-    try {
-	    // So I'm a bit confused as to why I have the dbhelper and pass
-	    // it in here, and then just pass the db directly in? Hmm.
-	    // I guess the helper is ensuring that the correct table has
-	    // been asserted?
-	    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-	    db.beginTransaction();
-	    try {
-	      // TODO fix the order here. here you can download new files
-	      // but not get the values in the d.b. set. this is wrong.
-	      // I need to figure out the correct way to fail here.
-	      // I'm putting this w/in the transaction so if you change table
-	      // properties and things fail, you don't end up with the entries in
-	      // the key value store changed. You will still have downloaded the
-	      // files though.
-	      downloadFilesAndUpdateValues(sync, appName, allEntries);
-//	      KeyValueStore serverKVS = kvms.getStoreForTable(tableId,
-//	          KeyValueStore.Type.SERVER);
-	      KeyValueStore backingKVS = kvsm.getStoreForTable(tableId,
-	          tp.getBackingStoreType());
-	      // When the table properties are passed down from the server in the key
-	      // value store, we will want to clear the original entries and overwrite
-	      // them with the current state of the server. For now, however, we aren't
-	      // going to do that, b/c the properties aren't coming down from the
-	      // server via the manifest.
-	      //kvs.clearKeyValuePairs(db);
-	      backingKVS.addEntriesToStore(db, allEntries);
-	      db.setTransactionSuccessful();
-	    } catch (Exception e) {
-	      // TODO notify that the sync failed--resolve the file issue above
-	      e.printStackTrace();
-	    } finally {
-	      db.endTransaction();
-	    }
-    } finally {
-      // TODO: fix the when to close problem
-//    	db.close();
-    }
   }
 
   /**

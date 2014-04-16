@@ -414,9 +414,7 @@ public class ColumnProperties {
    * The fields that belong only to the object, and are not related to the
    * actual column itself.
    */
-  private final DbHelper dbh;
-  // The type of key value store from which these properties were drawn.
-  private final KeyValueStore.Type backingStore;
+  private final TableProperties tp;
   /*
    * The fields that reside in ColumnDefinitions
    */
@@ -460,13 +458,13 @@ public class ColumnProperties {
    * @param joins
    * @param backingStore
    */
-  private ColumnProperties(DbHelper dbh, String tableId, String elementKey, String elementName,
+  private ColumnProperties(TableProperties tp, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
       boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
-      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins, KeyValueStore.Type backingStore) {
-    this.dbh = dbh;
-    this.tableId = tableId;
+      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins) {
+    this.tp = tp;
+    this.tableId = tp.getTableId();
     this.elementKey = elementKey;
     this.elementName = elementName;
     this.elementType = elementType;
@@ -482,7 +480,6 @@ public class ColumnProperties {
     this.smsOut = smsOut;
     this.smsLabel = smsLabel;
     this.footerMode = footerMode;
-    this.backingStore = backingStore;
   }
 
   /**
@@ -493,15 +490,14 @@ public class ColumnProperties {
    * @param tableId
    * @return a map of elementKey to ColumnProperties for all columns.
    */
-  static Map<String, ColumnProperties> getColumnPropertiesForTable(DbHelper dbh, String tableId,
-      KeyValueStore.Type typeOfStore) {
+  static Map<String, ColumnProperties> getColumnPropertiesForTable(TableProperties tp) {
     SQLiteDatabase db = null;
     try {
-      db = dbh.getReadableDatabase();
-      List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tableId, db);
+      db = tp.getReadableDatabase();
+      List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tp.getTableId(), db);
       Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
-        ColumnProperties cp = getColumnProperties(dbh, tableId, elementKeys.get(i), typeOfStore);
+        ColumnProperties cp = getColumnProperties(tp, elementKeys.get(i));
         elementKeyToColumnProperties.put(elementKeys.get(i), cp);
       }
       return elementKeyToColumnProperties;
@@ -526,23 +522,20 @@ public class ColumnProperties {
    *          column properties
    * @return
    */
-  private static ColumnProperties getColumnProperties(DbHelper dbh, String tableId,
-      String elementKey, KeyValueStore.Type typeOfStore) {
+  private static ColumnProperties getColumnProperties(TableProperties tp, String elementKey) {
 
-    SQLiteDatabase db = dbh.getReadableDatabase();
+    SQLiteDatabase db = tp.getReadableDatabase();
 
     // Get the KVS values
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
+    KeyValueStore intendedKVS = tp.getStoreForTable();
     Map<String, String> kvsMap = intendedKVS.getKeyValues(ColumnProperties.KVS_PARTITION,
         elementKey, db);
 
     // Get the ColumnDefinition entries
-    Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(tableId,
+    Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(tp.getTableId(),
         elementKey, db);
 
-    return constructPropertiesFromMap(dbh, tableId, elementKey, columnDefinitionsMap, kvsMap,
-        typeOfStore);
+    return constructPropertiesFromMap(tp, elementKey, columnDefinitionsMap, kvsMap);
   }
 
   /**
@@ -559,9 +552,8 @@ public class ColumnProperties {
    * @param backingStore
    * @return
    */
-  private static ColumnProperties constructPropertiesFromMap(DbHelper dbh, String tableId,
-      String elementKey, Map<String, String> columnDefinitions, Map<String, String> kvsProps,
-      KeyValueStore.Type backingStore) {
+  private static ColumnProperties constructPropertiesFromMap(TableProperties tp,
+      String elementKey, Map<String, String> columnDefinitions, Map<String, String> kvsProps) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_SMS_IN
@@ -623,11 +615,11 @@ public class ColumnProperties {
       e.printStackTrace();
       throw new IllegalArgumentException("invalid db value: " + parseValue, e);
     }
-    return new ColumnProperties(dbh, tableId, elementKey,
+    return new ColumnProperties(tp, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
-        kvsProps.get(KEY_SMS_LABEL), footerMode, joins, backingStore);
+        kvsProps.get(KEY_SMS_LABEL), footerMode, joins);
   }
 
   /**
@@ -668,8 +660,7 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_JOINS, JoinColumn.toSerialization(joins)));
 
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+    KeyValueStore kvs = tp.getStoreForTable();
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
@@ -726,15 +717,15 @@ public class ColumnProperties {
    * @param typeOfStore
    * @return
    */
-  static ColumnProperties createNotPersisted(DbHelper dbh, String tableId,
+  static ColumnProperties createNotPersisted(TableProperties tp,
       String jsonStringifyDisplayName, String elementKey, String elementName, ColumnType columnType,
       List<String> listChildElementKeys, boolean isUnitOfRetention,
-      boolean displayVisible, KeyValueStore.Type typeOfStore) {
+      boolean displayVisible) {
 
-    ColumnProperties cp = new ColumnProperties(dbh, tableId, elementKey, elementName, columnType,
+    ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
         DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null, typeOfStore);
+        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null);
 
     return cp;
   }
@@ -751,8 +742,7 @@ public class ColumnProperties {
    */
   void deleteColumn(SQLiteDatabase db) {
     ColumnDefinitions.deleteColumnDefinition(tableId, elementKey, db);
-    KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-    KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+    KeyValueStore kvs = tp.getStoreForTable();
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
     // this is to clear all the color rules. If we didn't do this, you could
     // have old color rules build up, and worse still, if you deleted this
@@ -832,7 +822,7 @@ public class ColumnProperties {
    *          the new type
    */
   public void setColumnType(TableProperties tp, ColumnType columnType) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
       setStringProperty(db, ColumnDefinitionsColumns.ELEMENT_TYPE, columnType.name());
@@ -1217,8 +1207,8 @@ public class ColumnProperties {
    * @throws JsonMappingException
    * @throws IOException
    */
-  public static ColumnProperties constructColumnPropertiesFromJson(DbHelper dbh, String json,
-      KeyValueStore.Type typeOfStore) throws JsonParseException, JsonMappingException, IOException {
+  public static ColumnProperties constructColumnPropertiesFromJson(TableProperties tp, String json)
+      throws JsonParseException, JsonMappingException, IOException {
     Map<String, Object> jo;
     try {
       jo = mapper.readValue(json, Map.class);
@@ -1247,19 +1237,21 @@ public class ColumnProperties {
     ArrayList<String> listChoices = (joListChoices == null) ? new ArrayList<String>()
         : (ArrayList<String>) joListChoices;
 
-    ColumnProperties cp = new ColumnProperties(dbh, (String) jo.get(JSON_KEY_TABLE_ID),
+    if ( !((String) jo.get(JSON_KEY_TABLE_ID)).equals(tp.getTableId()) ) {
+      throw new IllegalStateException("TableId of json does not match TableProperties tableId!");
+    }
+    ColumnProperties cp = new ColumnProperties(tp,
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
         listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
         listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
-        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins,
-        typeOfStore);
+        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins);
 
     return cp;
   }
 
   private void setIntProperty(String property, int value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     try {
       setIntProperty(db, property, value);
     } finally {
@@ -1273,8 +1265,7 @@ public class ColumnProperties {
       ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
     } else {
       // or a kvs property?
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      KeyValueStore kvs = tp.getStoreForTable();
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
           ColumnType.INTEGER.name(), Integer.toString(value));
     }
@@ -1283,7 +1274,7 @@ public class ColumnProperties {
   }
 
   private void setStringProperty(String property, String value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     try {
       setStringProperty(db, property, value);
     } finally {
@@ -1298,8 +1289,7 @@ public class ColumnProperties {
       ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
     } else {
       // or a kvs property?
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      KeyValueStore kvs = tp.getStoreForTable();
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
           ColumnType.STRING.name(), value);
     }
@@ -1308,7 +1298,7 @@ public class ColumnProperties {
   }
 
   private void setBooleanProperty(String property, boolean value) {
-    SQLiteDatabase db = dbh.getWritableDatabase();
+    SQLiteDatabase db = tp.getWritableDatabase();
     try {
       setBooleanProperty(db, property, value);
     } finally {
@@ -1322,8 +1312,7 @@ public class ColumnProperties {
       ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
     } else {
       // or a kvs property?
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStore kvs = kvsm.getStoreForTable(tableId, backingStore);
+      KeyValueStore kvs = tp.getStoreForTable();
       kvs.insertOrUpdateKey(db, ColumnProperties.KVS_PARTITION, elementKey, property,
           ColumnType.BOOLEAN.name(), Boolean.toString(value));
     }

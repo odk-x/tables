@@ -76,49 +76,6 @@ public class SyncUtil {
     return (bool == null) ? true : bool.equalsIgnoreCase("true");
   }
 
-  public static org.opendatakit.tables.data.TableType transformServerTableType(
-      org.opendatakit.aggregate.odktables.rest.entity.TableType serverType) {
-    org.opendatakit.tables.data.TableType phoneType =
-        org.opendatakit.tables.data.TableType.data;
-    switch (serverType) {
-    case DATA:
-      phoneType = org.opendatakit.tables.data.TableType.data;
-      break;
-    case SHORTCUT:
-      phoneType = org.opendatakit.tables.data.TableType.shortcut;
-      break;
-    case SECURITY:
-      phoneType = org.opendatakit.tables.data.TableType.security;
-      break;
-    default:
-      Log.e(TAG, "unrecognized serverType: " + serverType);
-    }
-    return phoneType;
-  }
-
-  public static org.opendatakit.aggregate.odktables.rest.entity.TableType
-  transformClientTableType(org.opendatakit.tables.data.TableType clientType) {
-    org.opendatakit.aggregate.odktables.rest.entity.TableType serverType =
-        org.opendatakit.aggregate.odktables.rest.entity.TableType.DATA;
-    switch (clientType) {
-    case data:
-      serverType =
-          org.opendatakit.aggregate.odktables.rest.entity.TableType.DATA;
-      break;
-    case shortcut:
-      serverType =
-          org.opendatakit.aggregate.odktables.rest.entity.TableType.SHORTCUT;
-      break;
-    case security:
-      serverType =
-          org.opendatakit.aggregate.odktables.rest.entity.TableType.SECURITY;
-      break;
-    default:
-      Log.e(TAG, "unrecognized clientType: " + clientType);
-    }
-    return serverType;
-  }
-
   /**
    * Gets the name of the {@link TableResult#Status}.
    * @param context

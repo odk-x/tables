@@ -15,11 +15,10 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -92,27 +91,26 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
    */
   public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
 
+  private String appName;
   private Controller c;
   private Query query;
   private UserTable table;
   private CustomTableView view;
-  private DbHelper dbh;
   private KeyValueStoreHelper kvsh;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
     setTitle("");
-    dbh = DbHelper.getDbHelper(this, appName);
     c = new Controller(this, this, getIntent().getExtras());
     kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
     // TODO: why do we get all table properties here? this is an expensive
     // call. I don't think we should do it.
-    query = new Query(dbh, KeyValueStore.Type.ACTIVE, c.getTableProperties());
+    query = new Query(this, appName, KeyValueStoreType.ACTIVE, c.getTableProperties());
   }
 
   @Override
@@ -153,7 +151,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
     if (sqlWhereClause != null) {
       String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
           Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-      DbTable dbTable = DbTable.getDbTable(dbh, c.getTableProperties());
+      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
       table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
     } else {
       // we just use the query.
@@ -170,7 +168,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
         filename = getDefaultListFileName(table.getTableProperties());
       }
     }
-    view = CustomTableView.get(this, dbh.getAppName(), table, filename, c);
+    view = CustomTableView.get(this, appName, table, filename, c);
     // change the info bar text IF necessary
     c.setListViewInfoBarText();
     displayView();

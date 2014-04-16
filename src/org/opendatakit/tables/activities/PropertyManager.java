@@ -20,12 +20,11 @@ import java.util.ArrayList;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.FooterMode;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.SliderPreference;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -80,9 +79,8 @@ public class PropertyManager extends PreferenceActivity {
     // Column Name
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.elementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
-    DbHelper dbh = DbHelper.getDbHelper(this, appName);
-    tp = TableProperties.getTablePropertiesForTable(dbh, tableId,
-        KeyValueStore.Type.ACTIVE);
+    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
+        KeyValueStoreType.ACTIVE);
     this.columnKVSH =
         tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
     cp = tp.getColumnByElementKey(elementKey);
@@ -183,8 +181,8 @@ public class PropertyManager extends PreferenceActivity {
         cp.setJoins(joins);
       }
       String joinTableId = (joins != null && joins.size() == 1) ? joins.get(0).getTableId() : null;
-      TableProperties[] tps = TableProperties.getTablePropertiesForAll(
-          DbHelper.getDbHelper(this, appName), KeyValueStore.Type.ACTIVE);
+      TableProperties[] tps = TableProperties.getTablePropertiesForAll(this, appName,
+    		  KeyValueStoreType.ACTIVE);
       TableProperties selectedTp = null;
       String[] tableIds = new String[tps.length];
       String selectedTableId = tableIds[0] = null;

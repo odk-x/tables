@@ -19,10 +19,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.opendatakit.tables.data.DbHelper;
-import org.opendatakit.tables.data.KeyValueStore;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 
+import android.content.Context;
 import android.util.Log;
 
 /**
@@ -272,7 +272,7 @@ public class NameUtil {
    * {@link TableProperties}.
    * @return
    */
-  public static String createUniqueTableId(String proposedTableId, DbHelper dbh) {
+  public static String createUniqueTableId(Context context, String appName, String proposedTableId) {
 
     // a table id is just a user-friendly version of the display name without
     // any word characters.
@@ -282,17 +282,17 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
@@ -327,7 +327,7 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static String createUniqueDbTableName(String proposedDbTableName, DbHelper dbh) {
+  public static String createUniqueDbTableName(Context context, String appName, String proposedDbTableName) {
 
     // a table id is just a user-friendly version of the display name without
     // any word characters.
@@ -337,17 +337,17 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
@@ -461,21 +461,21 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static boolean tableIdAlreadyExists(String proposedTableId, DbHelper dbh) {
+  public static boolean tableIdAlreadyExists(Context context, String appName, String proposedTableId) {
 
     Set<String> existingIds = new HashSet<String>();
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
     }
@@ -492,21 +492,21 @@ public class NameUtil {
    * @param allTableProperties
    * @return
    */
-  public static boolean dbTableNameAlreadyExists(String proposedDbTableName, DbHelper dbh) {
+  public static boolean dbTableNameAlreadyExists(Context context, String appName, String proposedDbTableName) {
 
     Set<String> dbTableNames = new HashSet<String>();
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.ACTIVE);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
     for ( TableProperties tp : tableProps ) {
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.DEFAULT);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
     for ( TableProperties tp : tableProps ) {
       dbTableNames.add(tp.getDbTableName());
     }
-    tableProps = TableProperties.getTablePropertiesForAll(dbh, KeyValueStore.Type.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
     for ( TableProperties tp : tableProps ) {
       dbTableNames.add(tp.getDbTableName());
     }

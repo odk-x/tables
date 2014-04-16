@@ -57,11 +57,11 @@ public class DbTable {
    private static final String SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE =
        DataTableColumns.SYNC_STATE + " = ? AND "
        + DataTableColumns.CONFLICT_TYPE + " IN ( ?, ? )";
-   
+
    /**
     * The sql where clause to select a single row.
     */
-   private static final String SQL_WHERE_FOR_SINGLE_ROW = "WHERE " + 
+   private static final String SQL_WHERE_FOR_SINGLE_ROW = "WHERE " +
        DataTableColumns.ID + " = ?";
 
 
@@ -137,19 +137,17 @@ public class DbTable {
         + ", " + DataTableColumns.SAVEPOINT_CREATOR
         ;
 
-    private final DbHelper dbh;
     private final TableProperties tp;
 
-    public static DbTable getDbTable(DbHelper dbh, TableProperties tp) {
-        return new DbTable(dbh, tp);
+    public static DbTable getDbTable(TableProperties tp) {
+        return new DbTable(tp);
     }
 
     public static Map<String, ColumnType> getColumnsToSync() {
       return Collections.unmodifiableMap(COLUMNS_TO_SYNC);
     }
 
-    private DbTable(DbHelper dbh, TableProperties tp) {
-        this.dbh = dbh;
+    private DbTable(TableProperties tp) {
         this.tp = tp;
     }
 
@@ -240,7 +238,7 @@ public class DbTable {
         SQLiteDatabase db = null;
         Cursor c = null;
         try {
-           db = dbh.getReadableDatabase();
+           db = tp.getReadableDatabase();
            // here's where we actually have to be smart. If the user has
            // provided a sqlQuery, we use that. Otherwise we build the
            // selection up for them.
@@ -296,7 +294,7 @@ public class DbTable {
       try {
         String sqlQuery = "SELECT * FROM " + this.tp.getDbTableName() + " " +
             whereClause;
-        db = dbh.getReadableDatabase();
+        db = tp.getReadableDatabase();
         c = db.rawQuery(sqlQuery, selectionArgs);
         UserTable table = buildTable(c, tp, tp.getColumnOrder());
         String[] emptyFooter = getEmptyFooter();
@@ -308,7 +306,7 @@ public class DbTable {
         }
       }
     }
-    
+
     /**
      * Return an {@link UserTable} that will contain a single row.
      * @param rowId
@@ -385,7 +383,7 @@ public class DbTable {
         SQLiteDatabase db = null;
         Cursor c = null;
         try {
-        	db = dbh.getReadableDatabase();
+        	db = tp.getReadableDatabase();
         	String sqlStr = sd.getSql();
         	String[] selArgs = sd.getArgs();
         	c = db.rawQuery(sd.getSql(), sd.getArgs());
@@ -472,7 +470,7 @@ public class DbTable {
     	SQLiteDatabase db = null;
     	Cursor c = null;
     	try {
-    		db = dbh.getReadableDatabase();
+    		db = tp.getReadableDatabase();
 	        SqlData sd = query.toFooterSql(cp.getElementKey(), type);
 	        c = db.rawQuery(sd.getSql(), sd.getArgs());
 	        if ( c.getCount() == 1 ) {
@@ -562,7 +560,7 @@ public class DbTable {
           values.put(DataTableColumns.ROW_ETAG,
               DataTableColumns.DEFAULT_ROW_ETAG);
         }
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        SQLiteDatabase db = tp.getWritableDatabase();
         try {
 	        values.put(DataTableColumns.SAVEPOINT_TYPE, SavedStatus.COMPLETE.name());
 	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
@@ -579,7 +577,7 @@ public class DbTable {
      * are sync'd to the server.
      */
     public void changeRestRowsToInserting() {
-      SQLiteDatabase db = dbh.getWritableDatabase();
+      SQLiteDatabase db = tp.getWritableDatabase();
 
       StringBuilder b = new StringBuilder();
       b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
@@ -612,10 +610,7 @@ public class DbTable {
         // UPDATE: I have used the KeyValueStoreSync to return the same value
         // as hilary was originally using. However, this might have to be
         // updated.
-        KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-        KeyValueStoreSync syncKVSM =
-            kvsm.getSyncStoreForTable(tp.getTableId());
-        boolean isSetToSync = syncKVSM.isSetToSync();
+        boolean isSetToSync = tp.isSetToSync();
         // hilary's original
         //if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
         if (isSetToSync && getSyncState(rowId) == SyncState.rest)
@@ -650,7 +645,7 @@ public class DbTable {
 
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        SQLiteDatabase db = tp.getWritableDatabase();
         if ( !values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP) ) {
 	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
@@ -681,7 +676,7 @@ public class DbTable {
         }
         String[] updateWhereArgs = { rowId };
         String updateWhereSql = DataTableColumns.ID + " = ?";
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        SQLiteDatabase db = tp.getWritableDatabase();
         try {
 	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
 	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
@@ -699,10 +694,7 @@ public class DbTable {
      * deleted. Otherwise, actually deletes the row.
      */
     public void markDeleted(String rowId) {
-      KeyValueStoreManager kvsm = KeyValueStoreManager.getKVSManager(dbh);
-      KeyValueStoreSync syncKVSM =
-          kvsm.getSyncStoreForTable(tp.getTableId());
-      boolean isSetToSync = syncKVSM.isSetToSync();
+      boolean isSetToSync = tp.isSetToSync();
       // hilary's original
       //if (!tp.isSynchronized()) {
       if (!isSetToSync) {
@@ -715,7 +707,7 @@ public class DbTable {
           String[] whereArgs = { rowId };
           ContentValues values = new ContentValues();
           values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
-          SQLiteDatabase db = dbh.getWritableDatabase();
+          SQLiteDatabase db = tp.getWritableDatabase();
           try {
 	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	          values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
@@ -739,7 +731,7 @@ public class DbTable {
     }
 
     public void deleteRowActual(String whereClause, String[] whereArgs) {
-        SQLiteDatabase db = dbh.getWritableDatabase();
+        SQLiteDatabase db = tp.getWritableDatabase();
         try {
         	db.delete(tp.getDbTableName(), whereClause, whereArgs);
         } finally {
@@ -757,7 +749,7 @@ public class DbTable {
 		SQLiteDatabase db = null;
 		Cursor c = null;
 		try {
-	      db = dbh.getReadableDatabase();
+	      db = tp.getReadableDatabase();
 	      c = db.query(tp.getDbTableName(), new String[] { DataTableColumns.SYNC_STATE }, DataTableColumns.ID + " = ?",
 	          new String[] { rowId }, null, null, null);
 	      if (c.moveToFirst()) {

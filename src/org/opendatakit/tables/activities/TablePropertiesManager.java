@@ -25,18 +25,13 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DbHelper;
 import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStore;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
+import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableType;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
-import org.opendatakit.tables.utils.LanguageUtil;
-import org.opendatakit.tables.utils.SecurityUtil;
-import org.opendatakit.tables.utils.ShortcutUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
@@ -84,7 +79,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     AUTO_GENERATED
   }
 
-  private DbHelper dbh;
+  private String appName;
+  // private DbHelper dbh;
   private TableProperties tp;
 
 
@@ -92,7 +88,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -100,8 +96,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    dbh = DbHelper.getDbHelper(this, appName);
-    tp = TableProperties.getTablePropertiesForTable(dbh, tableId, KeyValueStore.Type.ACTIVE);
+    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
     setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
     init();
   }
@@ -131,40 +126,6 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     });
     genCat.addPreference(dnPref);
-
-    List<String> columnOrder = tp.getColumnOrder();
-    boolean canBeAccessTable = SecurityUtil.couldBeSecurityTable(columnOrder);
-    boolean canBeShortcutTable = ShortcutUtil.couldBeShortcutTable(columnOrder);
-    int tableTypeCount = 1 + (canBeAccessTable ? 1 : 0) + (canBeShortcutTable ? 1 : 0);
-    String[] tableTypeIds = new String[tableTypeCount];
-    String[] tableTypeNames = new String[tableTypeCount];
-    tableTypeIds[0] = TableType.data.name();
-    tableTypeNames[0] = LanguageUtil.getTableTypeLabel(this, TableType.data);
-    if (canBeAccessTable) {
-      tableTypeIds[1] = TableType.security.name();
-      tableTypeNames[1] = LanguageUtil.getTableTypeLabel(this, TableType.security);
-    }
-    if (canBeShortcutTable) {
-      int index = canBeAccessTable ? 2 : 1;
-      tableTypeIds[index] = TableType.shortcut.name();
-      tableTypeNames[index] = LanguageUtil.getTableTypeLabel(this, TableType.shortcut);
-    }
-    ListPreference tableTypePref = new ListPreference(this);
-    tableTypePref.setTitle(getString(R.string.table_type));
-    tableTypePref.setDialogTitle(getString(R.string.change_table_type));
-    tableTypePref.setEntryValues(tableTypeIds);
-    tableTypePref.setEntries(tableTypeNames);
-    tableTypePref.setValue(tp.getTableType().name());
-    tableTypePref.setSummary(LanguageUtil.getTableTypeLabel(this, tp.getTableType()));
-    tableTypePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        tp.setTableType(TableType.valueOf((String) newValue));
-        init();
-        return false;
-      }
-    });
-    genCat.addPreference(tableTypePref);
 
     // display category
 
@@ -237,112 +198,6 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     });
     displayCat.addPreference(statusColumnColorRulePref);
-
-    // security category
-
-    PreferenceCategory securityCat = new PreferenceCategory(this);
-    root.addPreference(securityCat);
-    securityCat.setTitle(getString(R.string.access_control_settings));
-
-    /*
-     * TODO: fix this -- there should probably be three access control tables
-     * for an entire 'application' (i.e., shared across all tables so as to
-     * centralize access control management).
-     *
-     * The schema for the 2 tables should probably be:
-     *
-     * User Access Control Table: target_table_id null -- table for which access
-     * control applies access_control_type not null -- create, read, modify,
-     * delete access user_id null -- e-mail or phone number (sms) (or null for
-     * everyone)
-     *
-     * Group Access Control Table: target_table_id null -- table for which
-     * access control applies access_control_type not null -- create, read,
-     * modify, delete access group_id not null -- group id from assignment table
-     *
-     * User-to-Group Assignment Table: user_id not null -- e-mail or phone
-     * number (sms) group_id not null -- group id, as referenced in Group Access
-     * Control Table.
-     */
-    TableProperties[] accessTps = TableProperties.getTablePropertiesForSecurityTables(dbh,
-        KeyValueStore.Type.ACTIVE);
-    int accessTableCount = (tp.getTableType() == TableType.security) ? (accessTps.length)
-        : accessTps.length + 1;
-    TableProperties readTp = null;
-    TableProperties writeTp = null;
-    String[] accessTableIds = new String[accessTableCount];
-    accessTableIds[0] = "-1";
-    String[] accessTableNames = new String[accessTableCount];
-    accessTableNames[0] = getString(R.string.none);
-    int index = 1;
-    for (TableProperties accessTp : accessTps) {
-      if (accessTp.getTableId().equals(tp.getTableId())) {
-        continue;
-      }
-      // TODO: fix this to handle access correctly. got altered during
-      // schema update.
-      // if ((tp.getReadSecurityTableId() != null) &&
-      // accessTp.getTableId().equals(
-      // tp.getReadSecurityTableId())) {
-      // readTp = accessTp;
-      // }
-      // if ((tp.getWriteSecurityTableId() != null) &&
-      // accessTp.getTableId().equals(
-      // tp.getWriteSecurityTableId())) {
-      // writeTp = accessTp;
-      // }
-      accessTableIds[index] = accessTp.getTableId();
-      accessTableNames[index] = accessTp.getDisplayName();
-      index++;
-    }
-
-    ListPreference readTablePref = new ListPreference(this);
-    readTablePref.setTitle("Read Access Table");
-    readTablePref.setDialogTitle("Change Read Access Table");
-    readTablePref.setEntryValues(accessTableIds);
-    readTablePref.setEntries(accessTableNames);
-    if (readTp == null) {
-      readTablePref.setValue("-1");
-      readTablePref.setSummary(getString(R.string.none));
-    } else {
-      readTablePref.setValue(readTp.getTableId());
-      readTablePref.setSummary(readTp.getDisplayName());
-    }
-    readTablePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        Log.d(TAG, "access stuff and .onPreferenceChange unimplented");
-        // TODO: fix this, currently does nothing
-        // tp.setReadSecurityTableId((String) newValue);
-        init();
-        return false;
-      }
-    });
-    securityCat.addPreference(readTablePref);
-
-    ListPreference writeTablePref = new ListPreference(this);
-    writeTablePref.setTitle("Write Access Table");
-    writeTablePref.setDialogTitle("Change Write Access Table");
-    writeTablePref.setEntryValues(accessTableIds);
-    writeTablePref.setEntries(accessTableNames);
-    if (writeTp == null) {
-      writeTablePref.setValue("-1");
-      writeTablePref.setSummary(getString(R.string.none));
-    } else {
-      writeTablePref.setValue(writeTp.getTableId());
-      writeTablePref.setSummary(writeTp.getDisplayName());
-    }
-    writeTablePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        Log.d(TAG, ".onPreferenceChange unimplented");
-        // TODO: fix this, currently does nothing
-        // tp.setWriteSecurityTableId((String) newValue);
-        init();
-        return false;
-      }
-    });
-    securityCat.addPreference(writeTablePref);
 
     setPreferenceScreen(root);
   }
@@ -674,7 +529,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       if (hasFilePicker()) {
         Intent intent = new Intent("org.openintents.action.PICK_FILE");
         if (getText() != null) {
-          File fullFile = ODKFileUtils.asAppFile(dbh.getAppName(), getText());
+          File fullFile = ODKFileUtils.asAppFile(appName, getText());
           try {
             intent.setData(Uri.parse("file://" + fullFile.getCanonicalPath()));
           } catch (IOException e) {
