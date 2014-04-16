@@ -1055,27 +1055,6 @@ public class TableProperties {
   }
 
   /**
-   * Return the element key based upon the abbreviation/sms label.
-   * <p>
-   * NB: This is currently not fully conceptualized, and should be used with
-   * caution.
-   *
-   * @param abbreviation
-   * @return
-   */
-  public ColumnProperties getColumnByAbbreviation(String abbreviation) {
-    if (this.mElementKeyToColumnProperties == null) {
-      refreshColumns();
-    }
-    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
-      if (cp.getSmsLabel().equals(abbreviation)) {
-        return cp;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Return the element key for the column based on the element path.
    * <p>
    * TODO: CURRENTLY A HACK!!!
@@ -1094,34 +1073,6 @@ public class TableProperties {
     }
     for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
       if (cp.getElementName().equals(elementName)) {
-        return cp;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Get the {@link ColumnProperties} for the column as specified by either the
-   * case-insensitive display name or the case insensitive sms label.
-   *
-   * @param name
-   * @return
-   */
-  /*
-   * Allowing the weird ignorecase thing because this is used by query, which at
-   * the moment is all legacy code.
-   */
-  public ColumnProperties getColumnByUserLabel(String name) {
-    Collection<ColumnProperties> cps = getDatabaseColumns().values();
-    for (ColumnProperties cp : cps) {
-      String cdn = cp.getDisplayName();
-      if (cdn.equalsIgnoreCase(name)) {
-        return cp;
-      }
-    }
-    for (ColumnProperties cp : cps) {
-      String ca = cp.getSmsLabel();
-      if ((ca != null) && ca.equalsIgnoreCase(name)) {
         return cp;
       }
     }

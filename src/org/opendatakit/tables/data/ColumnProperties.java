@@ -304,18 +304,6 @@ public class ColumnProperties {
    */
   public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
   /*
-   * Text, null. Fot future use.
-   */
-  public static final String KEY_SMS_IN = KeyValueStoreConstants.COLUMN_SMS_IN;
-  /*
-   * Integer, not null. As boolean. Allow incoming SMS to modify the column.
-   */
-  public static final String KEY_SMS_OUT = KeyValueStoreConstants.COLUMN_SMS_OUT;
-  /*
-   * Integer, not null. As boolean. Allow outgoing SMS to access this column.
-   */
-  public static final String KEY_SMS_LABEL = KeyValueStoreConstants.COLUMN_SMS_LABEL;
-  /*
    * Text null.
    */
   public static final String KEY_FOOTER_MODE = KeyValueStoreConstants.COLUMN_FOOTER_MODE;
@@ -330,21 +318,12 @@ public class ColumnProperties {
    ***********************************/
   public static final boolean DEFAULT_KEY_VISIBLE = true;
   public static final FooterMode DEFAULT_KEY_FOOTER_MODE = FooterMode.none;
-  public static final boolean DEFAULT_KEY_SMS_IN = true;
-  public static final boolean DEFAULT_KEY_SMS_OUT = true;
-  public static final String DEFAULT_KEY_SMS_LABEL = null;
   public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
   public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
 
   /***********************************
    * Keys for json.
    ***********************************/
-
-  // private static final String DB_SMS_IN = "smsIn"; /* (allow SMS incoming)
-  // default: 1 as boolean (true) */
-  // private static final String DB_SMS_OUT = "smsOut"; /* (allow SMS outgoing)
-  // default: 1 as boolean (true) */
-  // private static final String DB_SMS_LABEL = "smsLabel"; /* for SMS */
 
   // private static final String DB_FOOTER_MODE = "footerMode"; /* 0=none,
   // 1=count, 2=minimum, 3=maximum, 4=mean, 5=sum */
@@ -366,10 +345,6 @@ public class ColumnProperties {
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
   private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
   private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
-
-  private static final String JSON_KEY_SMS_IN = "smsIn";
-  private static final String JSON_KEY_SMS_OUT = "smsOut";
-  private static final String JSON_KEY_SMS_LABEL = "smsLabel";
 
   private static final String JSON_KEY_FOOTER_MODE = "footerMode";
 
@@ -432,9 +407,6 @@ public class ColumnProperties {
   private String displayName;
   private ArrayList<String> displayChoicesList;
   private String displayFormat;
-  private boolean smsIn;
-  private boolean smsOut;
-  private String smsLabel;
   private FooterMode footerMode;
   private ArrayList<JoinColumn> joins;
 
@@ -461,8 +433,8 @@ public class ColumnProperties {
   private ColumnProperties(TableProperties tp, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
       boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
-      ArrayList<String> displayChoicesList, String displayFormat, boolean smsIn, boolean smsOut,
-      String smsLabel, FooterMode footerMode, ArrayList<JoinColumn> joins) {
+      ArrayList<String> displayChoicesList, String displayFormat,
+      FooterMode footerMode, ArrayList<JoinColumn> joins) {
     this.tp = tp;
     this.tableId = tp.getTableId();
     this.elementKey = elementKey;
@@ -476,9 +448,6 @@ public class ColumnProperties {
     updateDisplayNameFromJsonStringifyDisplayName();
     this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
-    this.smsIn = smsIn;
-    this.smsOut = smsOut;
-    this.smsLabel = smsLabel;
     this.footerMode = footerMode;
   }
 
@@ -497,7 +466,7 @@ public class ColumnProperties {
       List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tp.getTableId(), db);
       Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
       for (int i = 0; i < elementKeys.size(); i++) {
-        ColumnProperties cp = getColumnProperties(tp, elementKeys.get(i));
+        ColumnProperties cp = getColumnProperties(tp, elementKeys.get(i), db);
         elementKeyToColumnProperties.put(elementKeys.get(i), cp);
       }
       return elementKeyToColumnProperties;
@@ -522,10 +491,7 @@ public class ColumnProperties {
    *          column properties
    * @return
    */
-  private static ColumnProperties getColumnProperties(TableProperties tp, String elementKey) {
-
-    SQLiteDatabase db = tp.getReadableDatabase();
-
+  private static ColumnProperties getColumnProperties(TableProperties tp, String elementKey, SQLiteDatabase db) {
     // Get the KVS values
     KeyValueStore intendedKVS = tp.getStoreForTable();
     Map<String, String> kvsMap = intendedKVS.getKeyValues(ColumnProperties.KVS_PARTITION,
@@ -556,12 +522,6 @@ public class ColumnProperties {
       String elementKey, Map<String, String> columnDefinitions, Map<String, String> kvsProps) {
     // First convert the non-string types to their appropriate types. This is
     // probably going to go away when the map becomes key->TypeValuePair.
-    // KEY_SMS_IN
-    String smsInStr = kvsProps.get(KEY_SMS_IN);
-    boolean smsIn = SyncUtil.stringToBool(smsInStr);
-    // KEY_SMS_OUT
-    String smsOutStr = kvsProps.get(KEY_SMS_OUT);
-    boolean smsOut = SyncUtil.stringToBool(smsOutStr);
     // KEY_DISPLAY_VISIBLE
     String displayVisibleStr = kvsProps.get(KEY_DISPLAY_VISIBLE);
     boolean displayVisible = SyncUtil.stringToBool(displayVisibleStr);
@@ -618,8 +578,8 @@ public class ColumnProperties {
     return new ColumnProperties(tp, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), smsIn, smsOut,
-        kvsProps.get(KEY_SMS_LABEL), footerMode, joins);
+        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT),
+        footerMode, joins);
   }
 
   /**
@@ -648,13 +608,6 @@ public class ColumnProperties {
         KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
-    // TODO: both the SMS entries should become booleans?
-    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey, KEY_SMS_IN,
-        smsIn));
-    values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey, KEY_SMS_OUT,
-        smsOut));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_SMS_LABEL, smsLabel));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_FOOTER_MODE, footerMode.name()));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
@@ -724,8 +677,8 @@ public class ColumnProperties {
 
     ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
-        DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, DEFAULT_KEY_SMS_IN,
-        DEFAULT_KEY_SMS_OUT, DEFAULT_KEY_SMS_LABEL, DEFAULT_KEY_FOOTER_MODE, null);
+        DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT,
+        DEFAULT_KEY_FOOTER_MODE, null);
 
     return cp;
   }
@@ -1066,60 +1019,6 @@ public class ColumnProperties {
   }
 
   /**
-   * @return the column's abbreviation (or null for no abbreviation)
-   */
-  public String getSmsLabel() {
-    return smsLabel;
-  }
-
-  /**
-   * Sets the column's abbreviation.
-   *
-   * @param abbreviation
-   *          the new abbreviation (or null for no abbreviation)
-   */
-  public void setSmsLabel(String abbreviation) {
-    setStringProperty(KEY_SMS_LABEL, abbreviation);
-    this.smsLabel = abbreviation;
-  }
-
-  /**
-   * @return the SMS-in setting
-   */
-  public boolean getSmsIn() {
-    return smsIn;
-  }
-
-  /**
-   * Sets the SMS-in setting.
-   *
-   * @param setting
-   *          the new SMS-in setting
-   */
-  public void setSmsIn(boolean setting) {
-    setBooleanProperty(KEY_SMS_IN, setting);
-    this.smsIn = setting;
-  }
-
-  /**
-   * @return the SMS-out setting
-   */
-  public boolean getSmsOut() {
-    return smsOut;
-  }
-
-  /**
-   * Sets the SMS-out setting.
-   *
-   * @param setting
-   *          the new SMS-out setting
-   */
-  public void setSmsOut(boolean setting) {
-    setBooleanProperty(KEY_SMS_OUT, setting);
-    this.smsOut = setting;
-  }
-
-  /**
    * @return an array of the multiple-choice options
    */
   public ArrayList<String> getDisplayChoicesList() {
@@ -1171,9 +1070,6 @@ public class ColumnProperties {
     jo.put(JSON_KEY_DISPLAY_NAME, jsonStringifyDisplayName);
     jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
     jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
-    jo.put(JSON_KEY_SMS_IN, smsIn);
-    jo.put(JSON_KEY_SMS_OUT, smsOut);
-    jo.put(JSON_KEY_SMS_LABEL, smsLabel);
 
     String toReturn = null;
     try {
@@ -1244,8 +1140,8 @@ public class ColumnProperties {
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
         listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), (Boolean) jo.get(JSON_KEY_SMS_IN),
-        (Boolean) jo.get(JSON_KEY_SMS_OUT), (String) jo.get(JSON_KEY_SMS_LABEL), footerMode, joins);
+        listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT),
+        footerMode, joins);
 
     return cp;
   }

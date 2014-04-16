@@ -103,12 +103,6 @@ public class PropertyManager extends PreferenceActivity {
     category.addPreference(createEditTextPreference("DISPLAY_NAME",
         "Display Name", "Change display name of column", displayName));
 
-    // SMS Label<EditText>
-    // Get the SMS abbreviation on this column.
-    String smsLabel = cp.getSmsLabel();
-    category.addPreference(createEditTextPreference("SMSLABEL", "SMS Label",
-        "Change SMS Label for Column", (smsLabel == null) ? "" : smsLabel));
-
     // Type<List>
     ArrayList<ColumnType> types = ColumnType.getAllColumnTypes();
     String[] typeLabels = new String[types.size()];
@@ -121,14 +115,6 @@ public class PropertyManager extends PreferenceActivity {
     String typeLabel = cp.getColumnType().label();
     String typeName = cp.getColumnType().name();
     category.addPreference(createListPreference("TYPE", "Type", typeLabel, typeName, typeLabels, typeNames));
-
-    // SMS-IN<CheckBox>
-    category
-        .addPreference(createCheckBoxPreference("SMSIN", "Get from Incoming", getSMSIn(elementKey)));
-
-    // SMS-OUT<CheckBox>
-    category
-        .addPreference(createCheckBoxPreference("SMSOUT", "Put in Outgoing", getSMSOut(elementKey)));
 
     // Footer Mode<List>
     FooterMode[] footerModes = FooterMode.values();
@@ -236,29 +222,13 @@ public class PropertyManager extends PreferenceActivity {
 
   }
 
-  // Check if this is SMS-IN column.
-  private boolean getSMSIn(String colName) {
-    return cp.getSmsIn();
-  }
-
-  // Check if this is SMS-OUT column.
-  private boolean getSMSOut(String colName) {
-    return cp.getSmsOut();
-  }
-
-
   // If any of fields change, direct the request to appropriate actions.
   public void onFieldChangeRouter(String key, String newVal) {
     // Get corresponding preference
     Preference pref = findPreference(key);
 
     // Routing
-    if (key.equals("SMSLABEL")) {
-      String boxVal = getEditBoxContent(pref);
-      if ( !boxVal.equals(cp.getSmsLabel()) ) {
-        cp.setSmsLabel(boxVal);
-      }
-    } else if (key.equals("TYPE")) {
+    if (key.equals("TYPE")) {
       for (ColumnType t : ColumnType.getAllColumnTypes()) {
         if (t.name().equals(newVal)) {
           cp.setColumnType(tp, t);
@@ -269,16 +239,6 @@ public class PropertyManager extends PreferenceActivity {
           }
           break;
         }
-      }
-    } else if (key.equals("SMSIN")) {
-      boolean checkVal = getCheckBoxContent(pref);
-      if ( cp.getSmsIn() != checkVal ) {
-        cp.setSmsIn(checkVal);
-      }
-    } else if (key.equals("SMSOUT")) {
-      boolean checkVal = getCheckBoxContent(pref);
-      if ( cp.getSmsOut() != checkVal ) {
-        cp.setSmsOut(checkVal);
       }
     } else if (key.equals("FOOTER")) {
       FooterMode[] footerModes = FooterMode.values();

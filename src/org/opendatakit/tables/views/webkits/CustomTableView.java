@@ -15,13 +15,10 @@
  */
 package org.opendatakit.tables.views.webkits;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
@@ -29,13 +26,12 @@ import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.webkit.WebViewClient;
 
-public class CustomTableView extends CustomView 
+public class CustomTableView extends CustomView
     implements ExtendedTableControl {
 
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
 
-  private Map<String, Integer> colIndexTable;
   private UserTable table;
   // IMPORTANT: hold a strong reference to control because Webkit holds a weak
   // reference
@@ -50,12 +46,11 @@ public class CustomTableView extends CustomView
                           CustomViewCallbacks callbacks) {
     super(activity, appName, callbacks);
     this.filename = filename;
-    colIndexTable = new HashMap<String, Integer>();
   }
 
-  public static CustomTableView get(Activity activity, String appName, 
+  public static CustomTableView get(Activity activity, String appName,
       UserTable table, String filename, CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+    CustomTableView ctv = new CustomTableView(activity, appName, filename,
         callbacks);
     ctv.set(table);
     return ctv;
@@ -63,27 +58,13 @@ public class CustomTableView extends CustomView
 
   private void set(UserTable table) {
     this.table = table;
-    colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = 
-        table.getTableProperties()
-        .getDatabaseColumns();
-    colIndexTable.putAll(table.getMapOfUserDataToIndex());
-    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
-      String smsLabel = cp.getSmsLabel();
-      if (smsLabel != null) {
-        // TODO: this doesn't look to ever be used, and ignores the
-        // possibility
-        // of conflicting element keys and sms labels.
-        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
-      }
-    }
   }
 
   // //////////////////////////// TEST ///////////////////////////////
 
-  public static CustomTableView get(Activity activity, String appName, 
+  public static CustomTableView get(Activity activity, String appName,
       UserTable table, String filename, int index, Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+    CustomTableView ctv = new CustomTableView(activity, appName, filename,
         controller);
     // Create a new table with only the row specified at index.
     // Create all of the arrays necessary to create a UserTable.
@@ -100,7 +81,7 @@ public class CustomTableView extends CustomView
       footers[i] = table.getFooter(i);
       metadata[0] = table.getAllMetadataForRow(i);
     }
-    UserTable singleRowTable = new UserTable(table.getTableProperties(), 
+    UserTable singleRowTable = new UserTable(table.getTableProperties(),
         rowIds, headers, data, table.getElementKeysForIndex(),
         table.getMapOfUserDataToIndex(), metadata,
         table.getMapOfMetadataToIndex(), footers);
@@ -110,7 +91,7 @@ public class CustomTableView extends CustomView
     ctv.set(singleRowTable);
     return ctv;
   }
-  
+
   /**
    * Return the {@link TableData} object backing this view.
    * @return
@@ -136,16 +117,16 @@ public class CustomTableView extends CustomView
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, String appName, 
-      UserTable table, String filename, List<Integer> indexes, 
+  public static CustomTableView get(Activity activity, String appName,
+      UserTable table, String filename, List<Integer> indexes,
       Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+    CustomTableView ctv = new CustomTableView(activity, appName, filename,
         controller);
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];
     String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata = 
+    String[][] metadata =
         new String[indexes.size()][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
@@ -183,16 +164,16 @@ public class CustomTableView extends CustomView
    *          them.
    * @return The custom view that represents the indexes in the table.
    */
-  public static CustomTableView get(Activity activity, String appName, 
-      UserTable table, String filename, List<Integer> indexes, 
+  public static CustomTableView get(Activity activity, String appName,
+      UserTable table, String filename, List<Integer> indexes,
       Fragment fragment, CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename, 
+    CustomTableView ctv = new CustomTableView(activity, appName, filename,
         callbacks);
     // Create all of the arrays necessary to create a UserTable.
     String[] rowIds = new String[indexes.size()];
     String[] headers = new String[table.getWidth()];
     String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata = 
+    String[][] metadata =
         new String[indexes.size()][table.getNumberOfMetadataColumns()];
     String[] footers = new String[table.getWidth()];
     // Set all the data for the table.
@@ -205,7 +186,7 @@ public class CustomTableView extends CustomView
       }
       footers[i] = table.getFooter(i);
     }
-    UserTable multiRowTable = 
+    UserTable multiRowTable =
         new UserTable(table.getTableProperties(), rowIds, headers, data,
             table.getElementKeysForIndex(),
             table.getMapOfUserDataToIndex(), metadata,
@@ -227,7 +208,7 @@ public class CustomTableView extends CustomView
     // clear the old data.
     control = new Control(mParentActivity);
     tableData = new TableData(table);
-    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), 
+    addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(),
         "control");
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(),
         "data");

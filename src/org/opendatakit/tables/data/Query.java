@@ -296,7 +296,7 @@ public class Query {
                 String[] split = matchSplit[j].split("/");
                 String matchKey = getColumnByUserString(split[0]);
                 ColumnProperties matchArgCp =
-                    joinTp.getColumnByUserLabel(split[1]);
+                    joinTp.getColumnByDisplayName(split[1]);
                 if ((matchKey == null) || (matchArgCp == null)) {
                     allValid = false;
                     continue;
@@ -318,7 +318,7 @@ public class Query {
     }
 
     private String getColumnByUserString(String us) {
-        ColumnProperties cp = tp.getColumnByUserLabel(us);
+        ColumnProperties cp = tp.getColumnByDisplayName(us);
         return (cp == null) ? null : cp.getElementKey();
     }
 

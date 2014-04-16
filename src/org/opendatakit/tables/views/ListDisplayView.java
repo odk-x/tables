@@ -114,9 +114,6 @@ public class ListDisplayView extends LinearLayout {
                 if (colIndex < 0) {
                     ColumnProperties cp = tp.getColumnByDisplayName(lineSplit[j]);
                     if (cp == null) {
-                    	cp = tp.getColumnByAbbreviation(lineSplit[j]);
-                    }
-                    if (cp == null) {
                     	colIndex = -1;
                     } else {
 	                    String colDbName = cp.getElementKey();

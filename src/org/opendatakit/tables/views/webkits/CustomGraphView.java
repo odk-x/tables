@@ -16,15 +16,12 @@
 package org.opendatakit.tables.views.webkits;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.data.UserTable;
@@ -38,7 +35,6 @@ public class CustomGraphView extends CustomView {
   private static final String DEFAULT_HTML = "<html><body>"
       + "<p>No filename has been specified.</p>" + "</body></html>";
 
-  private Map<String, Integer> colIndexTable;
   private UserTable table;
   private String filename;
   private String graphName;
@@ -60,7 +56,6 @@ public class CustomGraphView extends CustomView {
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
     Log.i("CustomGraphView", "IDDD: " + graphName);
-    colIndexTable = new HashMap<String, Integer>();
   }
 
   public static CustomGraphView get(Activity activity, String appName, UserTable table,
@@ -74,18 +69,6 @@ public class CustomGraphView extends CustomView {
 
   private void set(UserTable table) {
     this.table = table;
-    colIndexTable.clear();
-    Map<String, ColumnProperties> elementKeyToColumnProperties = table.getTableProperties()
-        .getDatabaseColumns();
-    colIndexTable.putAll(table.getMapOfUserDataToIndex());
-    for (ColumnProperties cp : elementKeyToColumnProperties.values()) {
-      String smsLabel = cp.getSmsLabel();
-      if (smsLabel != null) {
-        // TODO: this doesn't look to ever be used, and ignores the possibility
-        // of conflicting element keys and sms labels.
-        colIndexTable.put(smsLabel, colIndexTable.get(cp.getElementKey()));
-      }
-    }
     graphData = new GraphData(graphName);
   }
 
@@ -126,6 +109,7 @@ public class CustomGraphView extends CustomView {
    * are meant to be called through the JavaScript interface.
    */
   protected class GraphData {
+    private static final String TAG = "GraphData";
 
     // These are the partition and aspect helpers for setting info in the KVS.
     private KeyValueStoreHelper kvsh;
@@ -142,8 +126,6 @@ public class CustomGraphView extends CustomView {
     private static final String ITER_COUNTER = "iteration_counter";
     private static final String BOX_VALUES = "box_values";
     private static final String MODIFIABLE = "modifiable";
-
-    private static final String TAG = "GraphData";
 
     public GraphDataIf getJavascriptInterfaceWithWeakReference() {
       return new GraphDataIf(this);
