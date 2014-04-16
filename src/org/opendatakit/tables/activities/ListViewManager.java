@@ -158,20 +158,14 @@ public class ListViewManager extends SherlockListActivity {
             getListView().getItemAtPosition(position));
     String filenameOfSelectedView =
         aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-    // Check if there are prime columns. If there are, then we're using
+    // Check if there are group-by columns. If there are, then we're using
     // the collection view? This needs to be sorted out.
     // TODO: launch if something is a collection view correctly.
     // For example, right now there is an issue where you might be
     // selecting a collection list view but you're not viewing the
-    // table with a prime column, or vice versa, and this could create
+    // table with a group-by column, or vice versa, and this could create
     // an issue.
-    List<String> primeColumns = tp.getPrimeColumns();
-    boolean isOverview;
-    if (primeColumns == null || primeColumns.size() == 0) {
-      isOverview = false;
-    } else {
-      isOverview = true;
-    }
+    boolean isOverview = tp.hasGroupByColumns();
     Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
         null, isOverview, filenameOfSelectedView, null, null);
   }

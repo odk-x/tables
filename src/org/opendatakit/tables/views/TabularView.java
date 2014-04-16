@@ -78,7 +78,6 @@ class TabularView extends View {
   private final int defaultForegroundColor;
   private final int[] columnWidths;
   private final TableType type;
-  private final int fontSize;
   private final int rowHeight;
 
   private int totalHeight;
@@ -351,7 +350,6 @@ class TabularView extends View {
     this.defaultForegroundColor = defaultForegroundColor;
     this.columnWidths = columnWidths;
     this.type = type;
-    this.fontSize = fontSize;
     if (this.type == TableType.INDEX_DATA ||
         this.type == TableType.MAIN_DATA ||
         this.type == TableType.STATUS_DATA) {

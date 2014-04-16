@@ -53,7 +53,7 @@ import com.actionbarsherlock.view.MenuItem;
 
 /*
  * Activity that allows users to change table properties
- * such as colum orders, prime, and sort by. Also, users
+ * such as colum orders, group-by, and sort-by. Also, users
  * can create new columns and remove columns.
  *
  * @Author : YoonSung Hong (hys235@cs.washington.edu)
@@ -68,10 +68,10 @@ public class ColumnManager extends SherlockListActivity {
 	private static final String EMPTY_STRING = "";
 
 	// Menu IDs
-	public static final int SET_AS_PRIME = 1;
+	public static final int SET_AS_GROUP_BY = 1;
 	public static final int SET_AS_ORDER_BY = 2;
 	public static final int REMOVE_THIS_COLUMN = 3;
-	public static final int SET_AS_NONPRIME = 4;
+	public static final int SET_AS_NON_GROUP_BY = 4;
 
 	public static final int ADD_NEW_COL = 0;
 
@@ -185,26 +185,16 @@ public class ColumnManager extends SherlockListActivity {
 	@Override
 	public boolean onContextItemSelected(android.view.MenuItem item) {
 		switch(item.getItemId()) {
-		case SET_AS_PRIME:
-			List<String> aoldPrimes = tp.getPrimeColumns();
-			List<String> anewPrimes = new ArrayList<String>();
-			for (int i = 0; i < aoldPrimes.size(); i++) {
-				anewPrimes.add(aoldPrimes.get(i));
-			}
-			anewPrimes.add(currentCol);
-			tp.setPrimeColumns(anewPrimes);
+		case SET_AS_GROUP_BY:
+			List<String> anewGroupBys = tp.getGroupByColumns();
+			anewGroupBys.add(currentCol);
+			tp.setGroupByColumns(anewGroupBys);
 			onResume();
 			return true;
-		case SET_AS_NONPRIME:
-			List<String> roldPrimes = tp.getPrimeColumns();
-			List<String> rnewPrimes = new ArrayList<String>();
-			for (int i = 0; i < roldPrimes.size(); i++) {
-				if (roldPrimes.get(i).equals(currentCol)) {
-					continue;
-				}
-				rnewPrimes.add(roldPrimes.get(i));
-			}
-			tp.setPrimeColumns(rnewPrimes);
+		case SET_AS_NON_GROUP_BY:
+			List<String> rnewGroupBys = tp.getGroupByColumns();
+			rnewGroupBys.remove(currentCol);
+			tp.setGroupByColumns(rnewGroupBys);
 			onResume();
 			return true;
 		case SET_AS_ORDER_BY:
@@ -398,8 +388,8 @@ public class ColumnManager extends SherlockListActivity {
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);
 			String extStr = EMPTY_STRING;
-			if (tp.isColumnPrime(currentColName)) {
-				extStr += getString(R.string.collection_column);
+			if (tp.isGroupByColumn(currentColName)) {
+				extStr += getString(R.string.group_by_column);
 			} else if (currentColName.equals(tp.getSortColumn())) {
 				extStr += getString(R.string.sort_column);
 			}
@@ -418,11 +408,11 @@ public class ColumnManager extends SherlockListActivity {
 					currentCol = columnOrder.get(currentPosition);
 
 					// Options for each item on the list
-					if(tp.isColumnPrime(currentCol)) {
-						menu.add(0, SET_AS_NONPRIME, 0,
+					if(tp.isGroupByColumn(currentCol)) {
+						menu.add(0, SET_AS_NON_GROUP_BY, 0,
 								getString(R.string.unset_collection_view_column));
 					} else {
-						menu.add(0, SET_AS_PRIME, 0, getString(R.string.set_collection_view_column));
+						menu.add(0, SET_AS_GROUP_BY, 0, getString(R.string.set_collection_view_column));
 					}
 					menu.add(0, SET_AS_ORDER_BY, 0, getString(R.string.set_sort_column));
 					menu.add(0, REMOVE_THIS_COLUMN, 0, getString(R.string.delete_column));

@@ -264,7 +264,10 @@ public class UserTable {
   public boolean isGroupedBy() {
     // All this mess of terminology is incredibly confusing and frustrating.
     // This method comes from CustomView#TableData.
-    return !mTp.getPrimeColumns().isEmpty();
+
+    // Note: This is actually wrong -- we should use the current query's settings,
+    // not the settings stored within the database.
+    return mTp.hasGroupByColumns();
   }
 
   public String getDisplayTextOfData(Context context, int cellNum) {

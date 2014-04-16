@@ -443,11 +443,11 @@ public class Query {
      * @return a SqlData object, with the SQL string and an array of arguments
      */
     public SqlData toOverviewSql(List<String> arrayList) {
-        if (tp.getPrimeColumns().size() == 0) {
+        if (!tp.hasGroupByColumns()) {
             return toSql(arrayList);
         }
         StringBuilder primeList = new StringBuilder();
-        for (String prime : tp.getPrimeColumns()) {
+        for (String prime : tp.getGroupByColumns()) {
             primeList.append(", " + prime);
         }
         primeList.delete(0, 2);
@@ -469,7 +469,7 @@ public class Query {
             sd.appendSql("SELECT MAX(" + DataTableColumns.ID + ") AS " +
                     DataTableColumns.ID + " FROM ");
 
-            List<String> primes = tp.getPrimeColumns();
+            List<String> primes = tp.getGroupByColumns();
             String[] xCols = new String[primes.size()];
             String[] yCols = new String[primes.size() + 1];
             for (int i = 0; i < primes.size(); i++) {
@@ -494,12 +494,12 @@ public class Query {
             sd.appendArgs(ySqlData.getArgList());
 
             sd.appendSql(" ON x." + sort + " = y." + sort);
-            for (String prime : tp.getPrimeColumns()) {
+            for (String prime : tp.getGroupByColumns()) {
                 sd.appendSql(" AND x." + prime + " = y." + prime);
             }
             sd.appendSql(" GROUP BY ");
             StringBuilder xPrimeList = new StringBuilder();
-            for (String prime : tp.getPrimeColumns()) {
+            for (String prime : tp.getGroupByColumns()) {
                 xPrimeList.append(", x." + prime);
             }
             xPrimeList.delete(0, 2);

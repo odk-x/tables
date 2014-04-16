@@ -190,8 +190,7 @@ public class SyncProcessor {
   public void synchronizeTable(TableProperties tp,
                                boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
     // TODO the order of synching should probably be re-arranged so that you
-    // first
-    // get the table properties and column entries (ie the table definition) and
+    // first get the table properties and column entries (ie the table definition) and
     // THEN get the row data. This would make it more resilient to network
     // failures
     // during the process. along those lines, the same process should exist in
@@ -199,8 +198,8 @@ public class SyncProcessor {
     // table creation on the phone. or rather, THAT should try and follow the
     // same
     // order.
-    // TableProperties tp = TableProperties.addTable(dbh, dbTableName,
-    // displayName, TableType.data, tableId, KeyValueStore.Type.SERVER);
+    // TableProperties tp = TableProperties.addTable(context, appName, dbTableName,
+    // displayName, tableId, KeyValueStore.Type.SERVER);
     // tp.setSyncState(SyncState.rest);
     // tp.setSyncTag(null);
 

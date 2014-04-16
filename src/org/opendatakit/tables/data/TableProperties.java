@@ -87,7 +87,9 @@ public class TableProperties {
    ***********************************/
   public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
   public static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
-  public static final String KEY_PRIME_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
+
+  public static final String KEY_GROUP_BY_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
+
   public static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
   public static final String KEY_SORT_ORDER = KeyValueStoreConstants.TABLE_SORT_ORDER;
 
@@ -115,7 +117,7 @@ public class TableProperties {
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
   private static final String JSON_KEY_COLUMN_ORDER = "colOrder";
   private static final String JSON_KEY_COLUMNS = "columns";
-  private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
+  private static final String JSON_KEY_GROUP_BY_COLUMNS = "groupByCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
   private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
   private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
@@ -125,7 +127,7 @@ public class TableProperties {
    * KVS are moved to the respective classes that use them, these should go
    * there most likely.
    ***********************************/
-  public static final String DEFAULT_KEY_PRIME_COLUMNS = "";
+  public static final String DEFAULT_KEY_GROUP_BY_COLUMNS = "";
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_INDEX_COLUMN = "";
   public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.Spreadsheet.name();
@@ -136,11 +138,11 @@ public class TableProperties {
    * a table. In other words they should always exist in the key value store.
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
-      KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN };
+      KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN };
 
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
-      KEY_COLUMN_ORDER, KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
+      KEY_COLUMN_ORDER, KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
       KEY_INDEX_COLUMN });
 
   static {
@@ -358,7 +360,7 @@ public class TableProperties {
   private List<ColumnProperties> columnsInOrder = new ArrayList<ColumnProperties>();
 
   private List<String> columnOrder;
-  private List<String> primeColumns;
+  private List<String> groupByColumns;
   private String sortColumn;
   private String indexColumn;
   private TableViewType currentViewType;
@@ -366,7 +368,7 @@ public class TableProperties {
 
   private TableProperties(Context context, String appName, String tableId, String dbTableName,
       String displayName,
-      ArrayList<String> columnOrder, ArrayList<String> primeColumns, String sortColumn,
+      ArrayList<String> columnOrder, ArrayList<String> groupByColumns, String sortColumn,
       String indexColumn, SyncTag syncTag,
       String lastSyncTime,
       TableViewType currentViewType,
@@ -380,7 +382,7 @@ public class TableProperties {
     this.displayName = displayName;
     // columns = null;
     this.mElementKeyToColumnProperties = null;
-    this.primeColumns = primeColumns;
+    this.groupByColumns = groupByColumns;
     if (sortColumn == null || sortColumn.length() == 0) {
       this.sortColumn = null;
     } else {
@@ -544,8 +546,8 @@ public class TableProperties {
       if ( mapProps.get(KEY_COLUMN_ORDER) == null ) {
         mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
       }
-      if ( mapProps.get(KEY_PRIME_COLUMNS) == null ) {
-        mapProps.put(KEY_PRIME_COLUMNS, DEFAULT_KEY_PRIME_COLUMNS);
+      if ( mapProps.get(KEY_GROUP_BY_COLUMNS) == null ) {
+        mapProps.put(KEY_GROUP_BY_COLUMNS, DEFAULT_KEY_GROUP_BY_COLUMNS);
       }
       if ( mapProps.get(KEY_SORT_COLUMN) == null ) {
         mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
@@ -621,7 +623,7 @@ public class TableProperties {
       }
     }
 
-    String primeOrderValue = props.get(KEY_PRIME_COLUMNS);
+    String primeOrderValue = props.get(KEY_GROUP_BY_COLUMNS);
     if (primeOrderValue == null)
       primeOrderValue = "";
     ArrayList<String> primeList = new ArrayList<String>();
@@ -1409,19 +1411,18 @@ public class TableProperties {
    * @return a copy of the element names of the prime columns. Since is a copy,
    *         should cache when possible.
    */
-  public List<String> getPrimeColumns() {
+  public List<String> getGroupByColumns() {
     List<String> defensiveCopy = new ArrayList<String>();
-    defensiveCopy.addAll(this.primeColumns);
+    defensiveCopy.addAll(this.groupByColumns);
     return defensiveCopy;
   }
 
-  public boolean isColumnPrime(String colDbName) {
-    for (String prime : getPrimeColumns()) {
-      if (prime.equals(colDbName)) {
-        return true;
-      }
-    }
-    return false;
+  public boolean isGroupByColumn(String elementKey) {
+    return groupByColumns.contains(elementKey);
+  }
+
+  public boolean hasGroupByColumns() {
+    return !groupByColumns.isEmpty();
   }
 
   /**
@@ -1430,21 +1431,21 @@ public class TableProperties {
    * @param primes
    *          an array of the database names of the table's prime columns
    */
-  public void setPrimeColumns(List<String> primes) {
-    String primesStr;
+  public void setGroupByColumns(List<String> groupByCols) {
+    String groupByJsonStr;
     try {
-      primesStr = mapper.writeValueAsString(primes);
-      tableKVSH.setString(KEY_PRIME_COLUMNS, primesStr);
-      this.primeColumns = primes;
+      groupByJsonStr = mapper.writeValueAsString(groupByCols);
+      tableKVSH.setString(KEY_GROUP_BY_COLUMNS, groupByJsonStr);
+      this.groupByColumns = groupByCols;
     } catch (JsonParseException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
+      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
     } catch (JsonMappingException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
+      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + primes.toString(), e);
+      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
     }
   }
 
@@ -1603,10 +1604,6 @@ public class TableProperties {
       colOrder.add(cp.getElementKey());
       cols.add(cp.toJson());
     }
-    ArrayList<String> primes = new ArrayList<String>();
-    for (String prime : primeColumns) {
-      primes.add(prime);
-    }
     Map<String, Object> jo = new HashMap<String, Object>();
     jo.put(JSON_KEY_VERSION, 1);
     jo.put(JSON_KEY_TABLE_ID, tableId);
@@ -1614,7 +1611,7 @@ public class TableProperties {
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
     jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
     jo.put(JSON_KEY_COLUMNS, cols);
-    jo.put(JSON_KEY_PRIME_COLUMNS, primes);
+    jo.put(JSON_KEY_GROUP_BY_COLUMNS, getGroupByColumns());
     jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
     jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
     jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
@@ -1639,10 +1636,10 @@ public class TableProperties {
         return false;
       }
       ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
-      ArrayList<String> primes = (ArrayList<String>) jo.get(JSON_KEY_PRIME_COLUMNS);
+      ArrayList<String> groupByCols = (ArrayList<String>) jo.get(JSON_KEY_GROUP_BY_COLUMNS);
 
       setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
-      setPrimeColumns(primes);
+      setGroupByColumns(groupByCols);
       setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
       setIndexColumn((String) jo.get(JSON_KEY_INDEX_COLUMN));
       setCurrentViewType(TableViewType.valueOf((String) jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));

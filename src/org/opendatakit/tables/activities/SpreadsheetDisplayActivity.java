@@ -167,39 +167,26 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       Query query = new Query(this, appName, KeyValueStoreType.ACTIVE, table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
-        for (String prime : c.getTableProperties().getPrimeColumns()) {
+        for (String groupByColumn : c.getTableProperties().getGroupByColumns()) {
             ColumnProperties cp = c.getTableProperties()
-                    .getColumnByElementKey(prime);
-            int colNum = c.getTableProperties().getColumnIndex(prime);
+                    .getColumnByElementKey(groupByColumn);
+            int colNum = c.getTableProperties().getColumnIndex(groupByColumn);
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
                 query.toUserQuery(), false, null, null, c.getCurrentSearchText());
     }
 
-    void setColumnAsPrime(ColumnProperties cp) {
-    	List<String> oldPrimes = c.getTableProperties().getPrimeColumns();
-    	List<String> newPrimes = new ArrayList<String>();
-        newPrimes.add(cp.getElementKey());
-        for (int i = 0; i < oldPrimes.size(); i++) {
-            newPrimes.add(oldPrimes.get(i));
-        }
-        c.getTableProperties().setPrimeColumns(newPrimes);
+    void addGroupByColumn(ColumnProperties cp) {
+    	List<String> newPrimes = c.getTableProperties().getGroupByColumns();
+    	newPrimes.add(cp.getElementKey());
+      c.getTableProperties().setGroupByColumns(newPrimes);
     }
 
-    void unsetColumnAsPrime(ColumnProperties cp) {
-        List<String> oldPrimes = c.getTableProperties().getPrimeColumns();
-        if (oldPrimes.size() == 0) {
-            return;
-        }
-        List<String> newPrimes = new ArrayList<String>();
-        for (String prime : oldPrimes) {
-            if (prime.equals(cp.getElementKey())) {
-                continue;
-            }
-            newPrimes.add(prime);
-        }
-        c.getTableProperties().setPrimeColumns(newPrimes);
+    void removeGroupByColumn(ColumnProperties cp) {
+        List<String> newPrimes = c.getTableProperties().getGroupByColumns();
+        newPrimes.remove(cp.getElementKey());
+        c.getTableProperties().setGroupByColumns(newPrimes);
     }
 
     void setColumnAsSort(ColumnProperties cp) {
@@ -290,11 +277,11 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
        // launch ODK Collect
        return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
-         setColumnAsPrime(tp.getColumnByIndex(lastHeaderCellMenued));
+         addGroupByColumn(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
-         unsetColumnAsPrime(tp.getColumnByIndex(lastHeaderCellMenued));
+         removeGroupByColumn(tp.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
@@ -388,8 +375,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void prepRegularCellOccm(ContextMenu menu, int cellId) {
         lastDataCellMenued = cellId;
-        if (c.getIsOverview() &&
-                (c.getTableProperties().getPrimeColumns().size() > 0)) {
+        if (c.getIsOverview() && c.getTableProperties().hasGroupByColumns()) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN,
                     ContextMenu.NONE, "View Collection");
         }
@@ -406,7 +392,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         lastHeaderCellMenued = cellId;
         ColumnProperties cp =
             c.getTableProperties().getColumnByIndex(lastHeaderCellMenued);
-        if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
+        if (c.getTableProperties().isGroupByColumn(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
         } else if ((c.getTableProperties().getSortColumn() != null) &&
@@ -509,8 +495,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	    private void openCellMenu() {
 	        final List<Integer> itemIds = new ArrayList<Integer>();
 	        List<String> itemLabels = new ArrayList<String>();
-	        if (c.getIsOverview() &&
-	                (c.getTableProperties().getPrimeColumns().size() > 0)) {
+	        if (c.getIsOverview() && c.getTableProperties().hasGroupByColumns()) {
 	            itemIds.add(MENU_ITEM_ID_HISTORY_IN);
 	            itemLabels.add("View Collection");
 	        }

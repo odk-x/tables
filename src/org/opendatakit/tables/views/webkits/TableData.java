@@ -56,7 +56,7 @@ public class TableData {
        return mTable.isGroupedBy();
      }
 
-     // Initializes the colMap and primeColumns that provide methods quick
+     // Initializes the colMap and groupByColumns that provide methods quick
      // access to the current table's state.
      private void initMaps() {
         mElementKeyToColorRuleGroup =
