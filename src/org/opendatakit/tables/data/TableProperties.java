@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -86,18 +85,18 @@ public class TableProperties {
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
-  public static final String KEY_ACCESS_CONTROL_TABLE_ID = KeyValueStoreConstants.TABLE_ACCESS_CONTROL_TABLE_ID;
   public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
   public static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
-  public static final String KEY_PRIME_COLUMNS = KeyValueStoreConstants.TABLE_PRIME_COLS;
+  public static final String KEY_PRIME_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
   public static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
-  public static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
-  public static final String KEY_CURRENT_VIEW_TYPE = KeyValueStoreConstants.TABLE_CURRENT_VIEW_TYPE;
-  public static final String KEY_SUM_DISPLAY_FORMAT = KeyValueStoreConstants.TABLE_SUMMARY_DISPLAY_FORMAT;
+  public static final String KEY_SORT_ORDER = KeyValueStoreConstants.TABLE_SORT_ORDER;
 
-  // this should just be the saved query on a table. it isn't a property, it's
-  // just a key. The default is the empty string.
-  public static final String KEY_CURRENT_QUERY = KeyValueStoreConstants.TABLE_CURRENT_QUERY;
+  // INDEX_COL is held fixed during left/right pan
+  public static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
+
+  // this is not known by the server...
+  public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
+
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
    * can be added her just as a sanity check. Note that they are NOT guaranteed
@@ -114,14 +113,12 @@ public class TableProperties {
   private static final String JSON_KEY_TABLE_ID = "tableId";
   private static final String JSON_KEY_DB_TABLE_NAME = "dbTableName";
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
-  private static final String JSON_KEY_ACCESS_CONTROL_TABLE_ID = "accessControlTableId";
   private static final String JSON_KEY_COLUMN_ORDER = "colOrder";
   private static final String JSON_KEY_COLUMNS = "columns";
   private static final String JSON_KEY_PRIME_COLUMNS = "primeCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
   private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
   private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
-  private static final String JSON_KEY_SUM_DISPLAY_FORMAT = "summaryDisplayFormat";
 
   /***********************************
    * Default values for those keys which require them. TODO When the keys in the
@@ -132,24 +129,19 @@ public class TableProperties {
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_INDEX_COLUMN = "";
   public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.Spreadsheet.name();
-  public static final String DEFAULT_KEY_SUM_DISPLAY_FORMAT = "";
   public static final String DEFAULT_KEY_COLUMN_ORDER = "";
-  public static final String DEFAULT_KEY_CURRENT_QUERY = "";
 
   /*
    * These are the keys that exist in the key value store after the creation of
    * a table. In other words they should always exist in the key value store.
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
-      KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN,
-      KEY_CURRENT_QUERY, KEY_SUM_DISPLAY_FORMAT,
-      KEY_ACCESS_CONTROL_TABLE_ID };
+      KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN };
 
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
       KEY_COLUMN_ORDER, KEY_PRIME_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
-      KEY_INDEX_COLUMN,
-      KEY_SUM_DISPLAY_FORMAT, });
+      KEY_INDEX_COLUMN });
 
   static {
     mapper = new ObjectMapper();
@@ -347,7 +339,6 @@ public class TableProperties {
    */
   private final String tableId;
   private String dbTableName;
-  private String accessControls;
   private SyncTag syncTag;
   // TODO lastSyncTime should probably eventually be an int?
   // keeping as a string for now to minimize errors.
@@ -370,25 +361,16 @@ public class TableProperties {
   private List<String> primeColumns;
   private String sortColumn;
   private String indexColumn;
-  // private String readSecurityTableId;
-  // private String writeSecurityTableId;
   private TableViewType currentViewType;
-  // private TableViewType currentOverviewViewType;
-  // private TableViewType currentCollectionViewType;
-  // private String detailViewFilename;
-  private String sumDisplayFormat;
   private KeyValueStoreHelper tableKVSH;
 
   private TableProperties(Context context, String appName, String tableId, String dbTableName,
-      String displayName, String accessControls,
+      String displayName,
       ArrayList<String> columnOrder, ArrayList<String> primeColumns, String sortColumn,
       String indexColumn, SyncTag syncTag,
       String lastSyncTime,
       TableViewType currentViewType,
-      // TableViewType overviewViewType,
-      // TableViewType collectionViewType,
-      // String detailViewFilename,
-      String sumDisplayFormat, SyncState syncState, boolean transactioning,
+      SyncState syncState, boolean transactioning,
       KeyValueStoreType backingStore) {
     this.context = context;
     this.appName = appName;
@@ -396,7 +378,6 @@ public class TableProperties {
     this.tableId = tableId;
     this.dbTableName = dbTableName;
     this.displayName = displayName;
-    this.accessControls = accessControls;
     // columns = null;
     this.mElementKeyToColumnProperties = null;
     this.primeColumns = primeColumns;
@@ -410,14 +391,9 @@ public class TableProperties {
     } else {
       this.indexColumn = indexColumn;
     }
-    this.accessControls = accessControls;
     this.syncTag = syncTag;
     this.lastSyncTime = lastSyncTime;
     this.currentViewType = currentViewType;
-    // this.currentOverviewViewType = overviewViewType;
-    // this.currentCollectionViewType = collectionViewType;
-    // this.detailViewFilename = detailViewFilename;
-    this.sumDisplayFormat = sumDisplayFormat;
     this.syncState = syncState;
     this.transactioning = transactioning;
     this.backingStore = backingStore;
@@ -583,12 +559,6 @@ public class TableProperties {
       if ( mapProps.get(KEY_CURRENT_VIEW_TYPE) == null ) {
         mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
       }
-      if ( mapProps.get(KEY_SUM_DISPLAY_FORMAT) == null ) {
-        mapProps.put(KEY_SUM_DISPLAY_FORMAT, DEFAULT_KEY_SUM_DISPLAY_FORMAT);
-      }
-      if ( mapProps.get(KEY_CURRENT_QUERY) == null ) {
-        mapProps.put(KEY_CURRENT_QUERY, "");
-      }
       return mapProps;
     } finally {
       // TODO: fix the when to close problem
@@ -628,13 +598,6 @@ public class TableProperties {
         props.put(KEY_CURRENT_VIEW_TYPE, TableViewType.Spreadsheet.name());
       }
     }
-    // String overviewViewTypeStr = props.get(KEY_CURRENT_OVERVIEW_VIEW_TYPE);
-    // TableViewType overviewViewType =
-    // TableViewType.valueOf(overviewViewTypeStr);
-    // String collectionViewTypeStr =
-    // props.get(KEY_CURRENT_COLLECTION_VIEW_TYPE);
-    // TableViewType collectionViewType =
-    // TableViewType.valueOf(collectionViewTypeStr);
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
     // DB_PRIME_COLUMN values to be empty strings, not null. However, when
     // retrieving values from the key value store, empty strings are converted
@@ -680,15 +643,11 @@ public class TableProperties {
     return new TableProperties(context, appName, props.get(TableDefinitionsColumns.TABLE_ID),
         props.get(TableDefinitionsColumns.DB_TABLE_NAME),
         props.get(KEY_DISPLAY_NAME),
-        props.get(KEY_ACCESS_CONTROL_TABLE_ID),
         columnOrder, primeList,
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), currentViewType,
-        // overviewViewType,
-        // collectionViewType,
-        // props.get(KEY_DETAIL_VIEW_FILE),
-        props.get(KEY_SUM_DISPLAY_FORMAT), syncState, transactioning, backingStore);
+        syncState, transactioning, backingStore);
   }
 
   /*
@@ -1547,56 +1506,6 @@ public class TableProperties {
   }
 
   /**
-   * @return the ID of the read security table, or null if there is none
-   */
-  // public String getReadSecurityTableId() {
-  // return readSecurityTableId;
-  // }
-
-  public String getAccessControls() {
-    return accessControls;
-  }
-
-  public void setAccessControls(String accessControls) {
-    tableKVSH.setString(KEY_ACCESS_CONTROL_TABLE_ID, accessControls);
-    this.accessControls = accessControls;
-  }
-
-  // TODO: fix how these security tables are accessed. need to figure this out
-  // first.
-
-  // /**
-  // * Sets the table's read security table.
-  // *
-  // * @param tableId
-  // * the ID of the new read security table (or null to set no read
-  // * security table)
-  // */
-  // public void setReadSecurityTableId(String tableId) {
-  // setStringProperty(DB_READ_SECURITY_TABLE_ID, tableId);
-  // this.readSecurityTableId = tableId;
-  // }
-
-  // /**
-  // * @return the ID of the write security table, or null if there is none
-  // */
-  // public String getWriteSecurityTableId() {
-  // return writeSecurityTableId;
-  // }
-
-  /**
-   * Sets the table's write security table.
-   *
-   * @param tableId
-   *          the ID of the new write security table (or null to set no write
-   *          security table)
-   */
-  // public void setWriteSecurityTableId(String tableId) {
-  // setStringProperty(DB_WRITE_SECURITY_TABLE_ID, tableId);
-  // this.writeSecurityTableId = tableId;
-  // }
-
-  /**
    * @return the sync tag. Unsynched tables return the empty string.
    */
   public SyncTag getSyncTag() {
@@ -1638,24 +1547,6 @@ public class TableProperties {
     this.lastSyncTime = time;
     markStaleCache(null); // all are stale because of sync state change
     // TODO: figure out how to handle closing the db
-  }
-
-  /**
-   * @return the format for summary displays
-   */
-  public String getSummaryDisplayFormat() {
-    return sumDisplayFormat;
-  }
-
-  /**
-   * Sets the table's summary display format.
-   *
-   * @param format
-   *          the new summary display format
-   */
-  public void setSummaryDisplayFormat(String format) {
-    tableKVSH.setString(KEY_SUM_DISPLAY_FORMAT, format);
-    this.sumDisplayFormat = format;
   }
 
   /**
@@ -1721,14 +1612,12 @@ public class TableProperties {
     jo.put(JSON_KEY_TABLE_ID, tableId);
     jo.put(JSON_KEY_DB_TABLE_NAME, dbTableName);
     jo.put(JSON_KEY_DISPLAY_NAME, displayName);
-    jo.put(JSON_KEY_ACCESS_CONTROL_TABLE_ID, accessControls);
     jo.put(JSON_KEY_COLUMN_ORDER, colOrder);
     jo.put(JSON_KEY_COLUMNS, cols);
     jo.put(JSON_KEY_PRIME_COLUMNS, primes);
     jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
     jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
     jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
-    jo.put(JSON_KEY_SUM_DISPLAY_FORMAT, sumDisplayFormat);
 
     String toReturn = null;
     toReturn = mapper.writeValueAsString(jo);
@@ -1756,9 +1645,7 @@ public class TableProperties {
       setPrimeColumns(primes);
       setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
       setIndexColumn((String) jo.get(JSON_KEY_INDEX_COLUMN));
-      setAccessControls((String) jo.get(JSON_KEY_ACCESS_CONTROL_TABLE_ID));
       setCurrentViewType(TableViewType.valueOf((String) jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
-      setSummaryDisplayFormat((String) jo.get(JSON_KEY_SUM_DISPLAY_FORMAT));
 
       Set<String> columnElementKeys = new HashSet<String>();
       ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);

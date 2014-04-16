@@ -179,7 +179,7 @@ public class TableData {
         metadata[0][0] = "dummyMetadata";
         UserTable table = new UserTable(tp, rowId, header, data,
               elementKeyForIndex, indexOfDataMap, metadata,
-              indexOfMetadataMap, null);
+              indexOfMetadataMap);
         ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
         int foregroundColor;
         if (guide.didMatch()) {

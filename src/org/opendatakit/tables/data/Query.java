@@ -515,32 +515,6 @@ public class Query {
         return toSql(columns.toArray(new String[0]));
     }
 
-    public SqlData toFooterSql(String dataColumn, GroupQueryType type) {
-        String typeSql;
-        switch (type) {
-        case AVERAGE:
-            typeSql = "(SUM(" + dataColumn + ") / COUNT(" + dataColumn +
-                    "))";
-            break;
-        case COUNT:
-            typeSql = "COUNT(" + dataColumn + ")";
-            break;
-        case MAXIMUM:
-            typeSql = "MAX(" + dataColumn + ")";
-            break;
-        case MINIMUM:
-            typeSql = "MIN(" + dataColumn + ")";
-            break;
-        case SUM:
-            typeSql = "SUM(" + dataColumn + ")";
-            break;
-        default:
-            throw new RuntimeException();
-        }
-        SqlData sd = toSql(typeSql + " AS g");
-        return sd;
-    }
-
     public SqlData toGroupSql(String groupColumn, GroupQueryType type) {
         String typeSql;
         switch (type) {

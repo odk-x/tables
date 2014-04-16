@@ -39,8 +39,8 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 
 /**
- * A view similar to a spreadsheet. Builds TabularViews for the header, body,
- * and footer (builds two sets of these if a column is frozen to the left).
+ * A view similar to a spreadsheet. Builds TabularViews for the header and body
+ * (builds two sets of these if a column is frozen to the left).
  * <p>
  * SS: I made some changes to this to try and make scrolling
  * more efficient. I am leaving some of the seemingly unreferenced and now
@@ -92,17 +92,13 @@ public class SpreadsheetView extends LinearLayout
     private LockableScrollView mainScroll;
     private TabularView indexData;
     private TabularView indexHeader;
-    private TabularView indexFooter;
     private TabularView mainData;
     private TabularView mainHeader;
-    private TabularView mainFooter;
 
     private View.OnTouchListener mainDataCellClickListener;
     private View.OnTouchListener mainHeaderCellClickListener;
-    private View.OnTouchListener mainFooterCellClickListener;
     private View.OnTouchListener indexDataCellClickListener;
     private View.OnTouchListener indexHeaderCellClickListener;
-    private View.OnTouchListener indexFooterCellClickListener;
 
     private int lastLongClickedCellId;
 
@@ -143,11 +139,9 @@ public class SpreadsheetView extends LinearLayout
             buildIndexedTable(indexedCol);
             indexData.setOnTouchListener(indexDataCellClickListener);
             indexHeader.setOnTouchListener(indexHeaderCellClickListener);
-            indexFooter.setOnTouchListener(indexFooterCellClickListener);
         }
         mainData.setOnTouchListener(mainDataCellClickListener);
         mainHeader.setOnTouchListener(mainHeaderCellClickListener);
-        mainFooter.setOnTouchListener(mainFooterCellClickListener);
     }
 
     /**
@@ -225,39 +219,6 @@ public class SpreadsheetView extends LinearLayout
               takeLongClickAction(cellId, rawX, rawY);
             }
         };
-        mainFooterCellClickListener = new CellTouchListener() {
-            @Override
-            protected int figureCellId(int x, int y) {
-                int cellNum = mainFooter.getCellNumber(x, y);
-                if (indexedCol < 0) {
-                    return cellNum;
-                } else {
-                    int colNum = cellNum % (table.getWidth() - 1);
-                    return cellNum + ((colNum < indexedCol) ? 0 : 1);
-                }
-            }
-            @Override
-            protected void takeDownAction(int cellId) {}
-            @Override
-            protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
-                controller.footerCellClicked(cellId);
-            }
-            @Override
-            protected void takeLongClickAction(int cellId, int rawX,
-                    int rawY) {
-                lastLongClickedCellId = cellId;
-                controller.openContextMenu(mainFooter);
-            }
-            /**
-             * Make this do the same thing as long press.
-             */
-            @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
-                int rawY) {
-              takeLongClickAction(cellId, rawX, rawY);
-            }
-        };
         indexDataCellClickListener = new CellTouchListener() {
             @Override
             protected int figureCellId(int x, int y) {
@@ -305,33 +266,6 @@ public class SpreadsheetView extends LinearLayout
                     int rawY) {
                 lastLongClickedCellId = cellId;
                 controller.openContextMenu(indexHeader);
-            }
-            /**
-             * Do the same thing as a long click.
-             */
-            @Override
-            protected void takeDoubleClickAction(int cellId, int rawX,
-                int rawY) {
-              takeLongClickAction(cellId, rawX, rawY);
-            }
-        };
-        indexFooterCellClickListener = new CellTouchListener() {
-            @Override
-            protected int figureCellId(int x, int y) {
-                return indexedCol;
-            }
-            @Override
-            protected void takeDownAction(int cellId) {}
-            @Override
-            protected void takeClickAction(int cellId) {
-                mainData.highlight(-1);
-                controller.footerCellClicked(cellId);
-            }
-            @Override
-            protected void takeLongClickAction(int cellId, int rawX,
-                    int rawY) {
-                lastLongClickedCellId = cellId;
-                controller.openContextMenu(indexFooter);
             }
             /**
              * Do the same thing as a long click.
@@ -449,7 +383,7 @@ public class SpreadsheetView extends LinearLayout
      * entirety of an unindexed table.
      * @param indexedCol the column that is indexed (or -1)
      * @param isIndexed whether this table is for the indexed column
-     * @return a view including the header, body, and footer of the table
+     * @return a view including the header and body of the table
      */
     private View buildTable(int indexedCol, boolean isIndexed) {
 //      Log.i(TAG, "entering buildTable. indexedCol: " + indexedCol +
@@ -461,7 +395,6 @@ public class SpreadsheetView extends LinearLayout
         int[] completeColWidths = getColumnWidths();
         TabularView dataTable;
         TabularView headerTable;
-        TabularView footerTable;
         if (isIndexed) {
         	ColumnProperties cp = tp.getColumnByIndex(indexedCol);
             elementKeysToDisplay.add(cp.getElementKey());
@@ -472,10 +405,6 @@ public class SpreadsheetView extends LinearLayout
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
             headerTable = TabularView.getIndexHeaderTable(context,
-                this, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
-                this.mElementKeyToColorRuleGroup);
-            footerTable = TabularView.getIndexFooterTable(context,
                 this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
@@ -501,10 +430,6 @@ public class SpreadsheetView extends LinearLayout
                 this, table, elementKeysToDisplay, colWidths, fontSize,
                 this.mElementKeyToProperties,
                 this.mElementKeyToColorRuleGroup);
-            footerTable = TabularView.getMainFooterTable(context,
-                this, table, elementKeysToDisplay, colWidths, fontSize,
-                this.mElementKeyToProperties,
-                this.mElementKeyToColorRuleGroup);
         }
         dataScroll = new LockableScrollView(context);
         dataScroll.addView(dataTable, new ViewGroup.LayoutParams(
@@ -514,12 +439,10 @@ public class SpreadsheetView extends LinearLayout
         if (isIndexed) {
             indexData = dataTable;
             indexHeader = headerTable;
-            indexFooter = footerTable;
             indexScroll = dataScroll;
         } else {
             mainData = dataTable;
             mainHeader = headerTable;
-            mainFooter = footerTable;
             mainScroll = dataScroll;
         }
         LinearLayout wrapper = new LinearLayout(context);
@@ -531,8 +454,6 @@ public class SpreadsheetView extends LinearLayout
                 LinearLayout.LayoutParams.MATCH_PARENT);
         dataLp.weight = 1;
         wrapper.addView(dataScroll, dataLp);
-        wrapper.addView(footerTable, footerTable.getTableWidth(),
-                footerTable.getTableHeight());
         return wrapper;
     }
 
@@ -543,8 +464,6 @@ public class SpreadsheetView extends LinearLayout
         dummyHeaderElementKeys.add("header");
         List<String> dummyDataElementKeys = new ArrayList<String>();
         dummyDataElementKeys.add("data");
-        List<String> dummyFooterElementKeys = new ArrayList<String>();
-        dummyFooterElementKeys.add("footer");
         colWidths = new int[1];
         colWidths[0] = TabularView.DEFAULT_STATUS_COLUMN_WIDTH;
 
@@ -561,9 +480,6 @@ public class SpreadsheetView extends LinearLayout
         TabularView headerTable = TabularView.getStatusHeaderTable(context,
             this, table, colWidths, fontSize,
             this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
-        TabularView footerTable = TabularView.getStatusFooterTable(context,
-            this, table, colWidths, fontSize,
-            this.mElementKeyToProperties, this.mElementKeyToColorRuleGroup);
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
         wrapper.addView(headerTable, headerTable.getTableWidth(),
@@ -573,8 +489,6 @@ public class SpreadsheetView extends LinearLayout
                 LinearLayout.LayoutParams.MATCH_PARENT);
         dataLp.weight = 1;
         wrapper.addView(dataStatusScroll, dataLp);
-        wrapper.addView(footerTable, footerTable.getTableWidth(),
-                footerTable.getTableHeight());
         wrapper.setVerticalFadingEdgeEnabled(true);
         wrapper.setHorizontalFadingEdgeEnabled(true);
         return wrapper;
@@ -631,11 +545,6 @@ public class SpreadsheetView extends LinearLayout
     @Override
     public void onCreateHeaderContextMenu(ContextMenu menu) {
         controller.prepHeaderCellOccm(menu, lastLongClickedCellId);
-    }
-
-    @Override
-    public void onCreateFooterContextMenu(ContextMenu menu) {
-        controller.prepFooterCellOccm(menu, lastLongClickedCellId);
     }
 
     private abstract class CellTouchListener implements View.OnTouchListener {
@@ -697,8 +606,6 @@ public class SpreadsheetView extends LinearLayout
 
         public void headerCellClicked(int cellId);
 
-        public void footerCellClicked(int cellId);
-
         public void indexedColCellClicked(int cellId);
 
         public void regularCellLongClicked(int cellId, int rawX, int rawY,
@@ -717,8 +624,6 @@ public class SpreadsheetView extends LinearLayout
         public void prepRegularCellOccm(ContextMenu menu, int cellId);
 
         public void prepHeaderCellOccm(ContextMenu menu, int cellId);
-
-        public void prepFooterCellOccm(ContextMenu menu, int cellId);
 
         public void prepIndexedColCellOccm(ContextMenu menu, int cellId);
 

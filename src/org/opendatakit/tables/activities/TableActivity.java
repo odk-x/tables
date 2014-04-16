@@ -113,6 +113,8 @@ public class TableActivity extends SherlockFragmentActivity
 
   private String mAppName;
 
+  private String mCurrentSearchText;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -120,7 +122,6 @@ public class TableActivity extends SherlockFragmentActivity
     if ( mAppName == null ) {
       mAppName = TableFileUtils.getDefaultAppName();
     }
-    setContentView(R.layout.standard_table_layout);
 
     mActivity = this;
 
@@ -133,6 +134,8 @@ public class TableActivity extends SherlockFragmentActivity
       throw new RuntimeException("Table id was not passed in through the bundle.");
     }
 
+    setContentView(R.layout.standard_table_layout);
+
     // Add the search texts.
     mSearchText = new Stack<String>();
     if (getIntent().getExtras().containsKey(INTENT_KEY_SEARCH_STACK)) {
@@ -143,6 +146,12 @@ public class TableActivity extends SherlockFragmentActivity
     } else {
       String initialSearchText = getIntent().getExtras().getString(INTENT_KEY_SEARCH);
       mSearchText.add((initialSearchText == null) ? "" : initialSearchText);
+    }
+
+    if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_SEARCH) ) {
+      mCurrentSearchText = savedInstanceState.getString(INTENT_KEY_SEARCH);
+    } else {
+      mCurrentSearchText = null;
     }
 
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
@@ -186,6 +195,14 @@ public class TableActivity extends SherlockFragmentActivity
     mCurrentFragment = mMapFragment;
   }
 
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    if ( mCurrentSearchText != null ) {
+      outState.putString(INTENT_KEY_SEARCH, mCurrentSearchText);
+    }
+  }
+
   public void init() {
     refreshDbTable(mTableProperties.getTableId());
     mQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
@@ -199,7 +216,7 @@ public class TableActivity extends SherlockFragmentActivity
     // when you click the search button, save that query.
     KeyValueStoreHelper kvsh = mTableProperties
         .getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-    kvsh.setString(TableProperties.KEY_CURRENT_QUERY, getSearchFieldText());
+    mCurrentSearchText = getSearchFieldText();
     mCurrentFragment.onSearch();
   }
 
@@ -650,16 +667,16 @@ public class TableActivity extends SherlockFragmentActivity
     (new CellEditDialog(rowId, value, colIndex)).show();
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
+  public void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
     launchTableActivity(context, tp, null, null, isOverview, null);
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, String searchText,
+  public void launchTableActivity(Context context, TableProperties tp, String searchText,
       boolean isOverview) {
     launchTableActivity(context, tp, searchText, null, isOverview, null);
   }
 
-  private static void launchTableActivity(Activity context, TableProperties tp,
+  private void launchTableActivity(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview) {
     launchTableActivity(context, tp, null, searchStack, isOverview, null);
     context.finish();
@@ -671,7 +688,7 @@ public class TableActivity extends SherlockFragmentActivity
    * intended to be used to launch things like list view activities with a file
    * other than the default.
    */
-  public static void launchTableActivityWithFilename(Activity context, TableProperties tp,
+  public void launchTableActivityWithFilename(Activity context, TableProperties tp,
       Stack<String> searchStack, boolean isOverview, String filename) {
     launchTableActivity(context, tp, null, searchStack, isOverview, filename);
     context.finish();
@@ -681,11 +698,11 @@ public class TableActivity extends SherlockFragmentActivity
    * This method should launch the custom app view that is a generic user-
    * customizable home screen or html page for the app.
    */
-  public static void launchAppViewActivity(Context context) {
+  public void launchAppViewActivity(Context context) {
 
   }
 
-  private static void launchTableActivity(Context context, TableProperties tp, String searchText,
+  private void launchTableActivity(Context context, TableProperties tp, String searchText,
       Stack<String> searchStack, boolean isOverview, String filename) {
     // TODO: need to figure out how CollectionViewSettings should work.
     // make them work.
@@ -729,7 +746,7 @@ public class TableActivity extends SherlockFragmentActivity
       intent.putExtra(INTENT_KEY_SEARCH, searchText);
     } else if (searchText == null) {
       KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-      String savedQuery = kvsh.getString(TableProperties.KEY_CURRENT_QUERY);
+      String savedQuery = mCurrentSearchText;
       if (savedQuery == null) {
         savedQuery = "";
       }
@@ -739,7 +756,7 @@ public class TableActivity extends SherlockFragmentActivity
     context.startActivity(intent);
   }
 
-  public static void launchDetailActivity(Context context, TableProperties tp,
+  public void launchDetailActivity(Context context, TableProperties tp,
       UserTable table, int rowNum) {
     Intent intent = new Intent(context, DetailDisplayActivity.class);
     intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());

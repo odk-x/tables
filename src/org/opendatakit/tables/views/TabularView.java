@@ -38,7 +38,7 @@ import android.view.View;
 /**
  * A view that draws a single table. A single table is essentially a grid of
  * of cells filled with text. For instance a Spreadsheet might consist of a
- * header (labels for the columns), a table of data, and a footer. Each of
+ * header (labels for the columns) and a table of data. Each of
  * these would be an individual TabularView.
  *
  * @author sudar.sam@gmail.com
@@ -53,8 +53,8 @@ class TabularView extends View {
     // now just for ease of debugging if for some reason it matters in a way
     // I don't yet see. They will probably be safe to consolidate in the
     // future.
-    MAIN_DATA, MAIN_HEADER, MAIN_FOOTER, INDEX_DATA, INDEX_HEADER,
-    INDEX_FOOTER, STATUS_DATA, STATUS_HEADER, STATUS_FOOTER;
+    MAIN_DATA, MAIN_HEADER, INDEX_DATA, INDEX_HEADER,
+    STATUS_DATA, STATUS_HEADER;
   }
 
   /**
@@ -67,7 +67,6 @@ class TabularView extends View {
   private static final int DEFAULT_DATA_BACKGROUND_COLOR = Color.WHITE;
   private static final int DEFAULT_BORDER_COLOR = Color.GRAY;
   private static final int DEFAULT_HEADER_BACKGROUND_COLOR = Color.CYAN;
-  private static final int DEFAULT_FOOTER_BACKGROUND_COLOR = Color.GRAY;
 
   private static final int ROW_HEIGHT_PADDING = 14;
   private static final int HORIZONTAL_CELL_PADDING = 5;
@@ -124,7 +123,7 @@ class TabularView extends View {
   private int[] spans;
   // This is the number of rows represented by this TabularView. This will
   // change based on the TableType. For instance, data objects will be all the
-  // data rows of the table, header and footer will be one, etc.
+  // data rows of the table; the header has one row.
   private int mNumberOfRows;
 
   /**
@@ -186,35 +185,6 @@ class TabularView extends View {
   }
 
   /**
-   * Construct the footer of the main portion of the table. Default colors
-   * are applied.
-   * @see TabularView#TabularView(Context, Controller, TableProperties,
-   * UserTable, List, int, int, int, int[], TableType, int, Map, Map)
-   * @param context
-   * @param controller
-   * @param tp
-   * @param table
-   * @param elementKeysToDisplay
-   * @param columnWidths
-   * @param fontSize
-   * @param elementKeyToColumnProperties
-   * @param elementKeyToColorRuleGroup
-   * @return
-   */
-  public static TabularView getMainFooterTable(
-      Context context, Controller controller,
-      UserTable table, List<String> elementKeysToDisplay,
-      int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, table,
-        elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
-        DEFAULT_FOOTER_BACKGROUND_COLOR,
-        DEFAULT_BORDER_COLOR, columnWidths, TableType.MAIN_FOOTER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
-  }
-
-  /**
    * Construct the data portion of the indexed table. Default colors are
    * applied.
    * @see TabularView#TabularView(Context, Controller, TableProperties,
@@ -269,35 +239,6 @@ class TabularView extends View {
         elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
         DEFAULT_HEADER_BACKGROUND_COLOR,
         DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_HEADER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
-  }
-
-  /**
-   * Construct the footer table of the indexed portion of the table. Default
-   * colors are applied.
-   * @see TabularView#TabularView(Context, Controller, TableProperties,
-   * UserTable, List, int, int, int, int[], TableType, int, Map, Map)
-   * @param context
-   * @param controller
-   * @param tp
-   * @param table
-   * @param elementKeysToDisplay
-   * @param columnWidths
-   * @param fontSize
-   * @param elementKeyToColumnProperties
-   * @param elementKeyToColorRuleGroup
-   * @return
-   */
-  public static TabularView getIndexFooterTable(
-      Context context, Controller controller,
-      UserTable table, List<String> elementKeysToDisplay,
-      int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    return new TabularView(context, controller, table,
-        elementKeysToDisplay, DEFAULT_FOREGROUND_COLOR,
-        DEFAULT_FOOTER_BACKGROUND_COLOR,
-        DEFAULT_BORDER_COLOR, columnWidths, TableType.INDEX_FOOTER, fontSize,
         elementKeyToColumnProperties, elementKeyToColorRuleGroup);
   }
 
@@ -366,39 +307,6 @@ class TabularView extends View {
   }
 
   /**
-   * Construct a TabularView to represent the footer of the status table.
-   * Default colors are applied. No data from the table is displayed in the
-   * status column.
-   * @see TabularView#TabularView(Context, Controller, TableProperties,
-   * UserTable, List, int, int, int, int[], TableType, int, Map, Map)
-   * @param context
-   * @param controller
-   * @param tp
-   * @param table
-   * @param columnWidths
-   * @param fontSize
-   * @param elementKeyToColumnProperties
-   * @param elementKeyToColorRuleGroup
-   * @return
-   */
-  public static TabularView getStatusFooterTable(
-      Context context, Controller controller,
-      UserTable table,
-      int[] columnWidths, int fontSize,
-      Map<String, ColumnProperties> elementKeyToColumnProperties,
-      Map<String, ColorRuleGroup> elementKeyToColorRuleGroup) {
-    List<String> dummyElementKeys = new ArrayList<String>();
-    // We need to make this a size one so that the status table knows there's
-    // something to display.
-    dummyElementKeys.add("footer");
-    return new TabularView(context, controller, table,
-        dummyElementKeys, DEFAULT_FOREGROUND_COLOR,
-        DEFAULT_FOOTER_BACKGROUND_COLOR,
-        DEFAULT_BORDER_COLOR, columnWidths, TableType.STATUS_FOOTER, fontSize,
-        elementKeyToColumnProperties, elementKeyToColorRuleGroup);
-  }
-
-  /**
    * Construct a TabularView. Most uses will likely be able to use
    * one of the static factory methods.
    * <p>
@@ -448,10 +356,7 @@ class TabularView extends View {
         this.type == TableType.MAIN_DATA ||
         this.type == TableType.STATUS_DATA) {
       this.mNumberOfRows = this.mTable.getNumberOfRows();
-    } else if (this.type == TableType.INDEX_FOOTER ||
-        this.type == TableType.MAIN_FOOTER ||
-        this.type == TableType.STATUS_FOOTER ||
-        this.type == TableType.INDEX_HEADER ||
+    } else if (this.type == TableType.INDEX_HEADER ||
         this.type == TableType.MAIN_HEADER ||
         this.type == TableType.STATUS_HEADER) {
       this.mNumberOfRows = 1;
@@ -559,8 +464,8 @@ class TabularView extends View {
      * SS: I am going to try and fix this method. There are several things that
      * need to be considered. First, a spreadsheet view is composed of several
      * tabular views. The base case for an un-indexed table is composed of a
-     * main_header, main_data, main_footer. It can also include an
-     * index_header, index_data, and index_footer, if it is indexed.
+     * main_header, main_data. It can also include an
+     * index_header, index_data, if it is indexed.
      *
      * We want to support drawing this table efficiently. We are going to do
      * this as follows. The SpreadsheetView object contains methods to get the
@@ -569,8 +474,6 @@ class TabularView extends View {
      * confusing, so we will just think about them as individual entities.
      *
      * When we draw a table, we want always to draw the header at the top.
-     * Somehow the footer is taking care of itself. Atm I'm not sure how.
-     * Probably some sort of parameters happening in SpreadsheetView?
      *
      * We do not want to draw the whole spreadsheet, as this would be slower
      * and slower the more data you add. Instead we want to only draw the
@@ -582,8 +485,8 @@ class TabularView extends View {
      * In the diagram below, we have a phone (the asterisks) viewing a small
      * set of the table.
      * I am not bothering to draw all the rows that would fall between the
-     * header and footer. We want to draw as little as possible to still cover
-     * all that the phone would see.
+     * header and the end of table. We want to draw as little as possible to
+     * still cover all that the phone would see.
      *
      * The arrow marked "X,Y" points to the X and y offset returned by the
      * getMainScroll methods. X is it's displacement from the left, Y is from
@@ -688,8 +591,7 @@ class TabularView extends View {
      * |    L->|  *  |      |   *   |
      * |       |  *  |      |   *   |  | topBottommost
      * |_______|__*__|___R->|___*______V_____________________________
-     * |       |  *__|______|___*   | bottommost(from here to bottomBottommost)
-     * |       |  *  |footer|   *   |                                |
+     * |       |  *  |      |   *   | bottommost(from here to bottomBottommost)
      * |       |  ***************   |<-rightRightmostBorder          |
      * |_______|_____|______|_______|________________________________V____
      * |       |     |      |       |
@@ -723,18 +625,12 @@ class TabularView extends View {
     int bottomBottommost;
 
     // The first thing we must do is recognize that we have to undergo
-    // different procedures if we are dealing with a header. (also maybe a
-    // footer? Unsure at the moment. It seems to work with and without the
-    // footer check. I'm going to leave it with the footer check b/c it seems
-    // like it is more correct...)
+    // different procedures if we are dealing with a header.
     // First we will get the correct topmost row. If this is a header of any
     // sort, the first row should be 0.
     if (this.type == TableType.INDEX_HEADER ||
         this.type == TableType.MAIN_HEADER ||
-        this.type == TableType.INDEX_FOOTER ||
-        this.type == TableType.MAIN_FOOTER ||
-        this.type == TableType.STATUS_HEADER ||
-        this.type == TableType.STATUS_FOOTER) {
+        this.type == TableType.STATUS_HEADER) {
       topmost = 0;
       bottommost = 0;
     } else {
@@ -802,16 +698,12 @@ class TabularView extends View {
       for (int j = indexOfLeftmostColumn; j < indexOfRightmostColumn + 1; j++) {
         String datum;
         if (this.type == TableType.STATUS_DATA ||
-            this.type == TableType.STATUS_HEADER ||
-            this.type == TableType.STATUS_FOOTER) {
+            this.type == TableType.STATUS_HEADER) {
           datum = DEFAULT_STATUS_COLUMN_VALUE;
         } else if (this.type == TableType.INDEX_HEADER ||
                    this.type == TableType.MAIN_HEADER) {
           datum =
             this.mTable.getHeader(userDataIndex[j]);
-        } else if (this.type == TableType.INDEX_FOOTER ||
-                   this.type == TableType.MAIN_FOOTER) {
-          datum = this.mTable.getFooter(userDataIndex[j]);
         } else if (this.type == TableType.INDEX_DATA ||
                    this.type == TableType.MAIN_DATA) {
           datum =
@@ -931,10 +823,6 @@ class TabularView extends View {
     case INDEX_HEADER:
       controller.onCreateHeaderContextMenu(menu);
       return;
-    case MAIN_FOOTER:
-    case INDEX_FOOTER:
-      controller.onCreateFooterContextMenu(menu);
-      return;
     }
   }
 
@@ -950,8 +838,6 @@ class TabularView extends View {
     void onCreateIndexDataContextMenu(ContextMenu menu);
 
     void onCreateHeaderContextMenu(ContextMenu menu);
-
-    void onCreateFooterContextMenu(ContextMenu menu);
 
     /**
      * Gets the x translation of the scroll. This is in particular how far

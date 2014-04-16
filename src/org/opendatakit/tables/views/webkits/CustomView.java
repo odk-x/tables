@@ -529,7 +529,7 @@ public abstract class CustomView extends LinearLayout {
       }
       // We're not going to support search text from the js, so pass null.
       Controller.launchTableActivity(mActivity, tpToOpen, null, false, sqlWhereClause,
-          sqlSelectionArgs);
+          sqlSelectionArgs, null);
       return true;
     }
 
@@ -554,7 +554,7 @@ public abstract class CustomView extends LinearLayout {
       }
       // We're not supporting search text, so pass in null.
       Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp, null, null, false,
-          relativePath, sqlWhereClause, sqlSelectionArgs);
+          relativePath, sqlWhereClause, sqlSelectionArgs, null);
       return true;
     }
 
@@ -577,7 +577,7 @@ public abstract class CustomView extends LinearLayout {
       }
       Log.e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
       // We're not supporting search text, so pass in null.
-      Controller.launchMapView(mActivity, tp, null, null, false, sqlWhereClause, sqlSelectionArgs);
+      Controller.launchMapView(mActivity, tp, null, null, false, sqlWhereClause, sqlSelectionArgs, null);
       return true;
     }
 
@@ -601,7 +601,7 @@ public abstract class CustomView extends LinearLayout {
       }
       // We're not supporting search text, so pass in null.
       Controller.launchSpreadsheetView(mActivity, tp, null, null, false, sqlWhereClause,
-          sqlSelectionArgs);
+          sqlSelectionArgs, null);
       return true;
     }
 

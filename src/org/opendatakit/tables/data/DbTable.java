@@ -281,7 +281,6 @@ public class DbTable {
      * <p>
      * It performs SELECT * FROM table whereClause.
      * <p>
-     * Footers are all empty strings.
      * @param whereClause the whereClause for the selection, beginning with
      * "WHERE". Must include "?" instead of actual values, which are instead
      * passed in the selectionArgs.
@@ -297,8 +296,6 @@ public class DbTable {
         db = tp.getReadableDatabase();
         c = db.rawQuery(sqlQuery, selectionArgs);
         UserTable table = buildTable(c, tp, tp.getColumnOrder());
-        String[] emptyFooter = getEmptyFooter();
-        table.setFooter(emptyFooter);
         return table;
       } finally {
         if ( c != null && !c.isClosed() ) {
@@ -321,7 +318,6 @@ public class DbTable {
       List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toSql(desiredColumns));
-        table.setFooter(footerQuery(query));
         return table;
     }
 
@@ -329,7 +325,6 @@ public class DbTable {
       List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toSql(desiredColumns));
-        table.setFooter(footerQuery(query));
         return table;
     }
 
@@ -340,7 +335,6 @@ public class DbTable {
       List<String> desiredColumns = tp.getColumnOrder();
       desiredColumns.addAll(getAdminColumns());
         UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
-        table.setFooter(footerQuery(query));
         return table;
     }
 
@@ -412,80 +406,6 @@ public class DbTable {
     private UserTable buildTable(Cursor c, TableProperties tp,
         List<String> userColumnOrder) {
       return new UserTable(c, tp, userColumnOrder);
-    }
-
-    /**
-     * Returns an empty footer. Useful for things like {@link rawSqlQuery},
-     * which do not pass in the {@link Query} parameter that a footer requires.
-     * @return
-     */
-    private String[] getEmptyFooter() {
-      int numDisplayColumns = tp.getNumberOfDisplayColumns();
-      String[] footer = new String[numDisplayColumns];
-      for (int i = 0; i < footer.length; i++) {
-        footer[i] = "";
-      }
-      return footer;
-    }
-
-    private String[] footerQuery(Query query) {
-    	int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-        String[] footer = new String[numberOfDisplayColumns];
-        for (int i = 0; i < numberOfDisplayColumns; i++) {
-          ColumnProperties cp = tp.getColumnByIndex(i);
-            switch (cp.getFooterMode()) {
-            case count:
-                footer[i] = getFooterItem(query, cp,
-                        Query.GroupQueryType.COUNT);
-                break;
-            case maximum:
-                footer[i] = getFooterItem(query, cp,
-                        Query.GroupQueryType.MAXIMUM);
-                break;
-            case minimum:
-                footer[i] = getFooterItem(query, cp,
-                        Query.GroupQueryType.MINIMUM);
-                break;
-            case sum:
-                footer[i] = getFooterItem(query, cp,
-                        Query.GroupQueryType.SUM);
-                break;
-            case mean:
-                footer[i] = getFooterItem(query, cp,
-                        Query.GroupQueryType.AVERAGE);
-                break;
-            case none:
-                // we'll just do nothing?
-              break;
-            default:
-              Log.e(TAG, "unrecognized footer mode: " +
-                  cp.getFooterMode().name());
-            }
-        }
-        return footer;
-    }
-
-    private String getFooterItem(Query query, ColumnProperties cp,
-            Query.GroupQueryType type) {
-    	SQLiteDatabase db = null;
-    	Cursor c = null;
-    	try {
-    		db = tp.getReadableDatabase();
-	        SqlData sd = query.toFooterSql(cp.getElementKey(), type);
-	        c = db.rawQuery(sd.getSql(), sd.getArgs());
-	        if ( c.getCount() == 1 ) {
-		        int gColIndex = c.getColumnIndexOrThrow("g");
-		        c.moveToFirst();
-		        String value = c.getString(gColIndex);
-		        return value;
-	        } else {
-	        	return ""; // TODO: should this return null ???
-	        }
-    	} finally {
-    		if ( c != null && !c.isClosed() ) {
-				c.close();
-    		}
-    	}
     }
 
     /**

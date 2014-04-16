@@ -107,12 +107,18 @@ implements DisplayActivity {
 		if(graphName == null) {
 			graphName = potentialGraphName;
 		}
-		c = new Controller(this, this, getIntent().getExtras());
+		c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
 		query = new Query(this, appName, KeyValueStoreType.ACTIVE, c.getTableProperties());
 	}
+
+   @Override
+   protected void onSaveInstanceState(Bundle outState) {
+     super.onSaveInstanceState(outState);
+     c.onSaveInstanceState(outState);
+   }
 
 	@Override
 	protected void onResume() {

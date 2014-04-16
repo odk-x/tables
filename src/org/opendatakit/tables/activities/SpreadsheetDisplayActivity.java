@@ -107,7 +107,13 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
         // remove a title
         setTitle("");
-        c = new Controller(this, this, getIntent().getExtras());
+        c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+      super.onSaveInstanceState(outState);
+      c.onSaveInstanceState(outState);
     }
 
     @Override
@@ -168,7 +174,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false, null, null);
+                query.toUserQuery(), false, null, null, c.getCurrentSearchText());
     }
 
     void setColumnAsPrime(ColumnProperties cp) {
@@ -445,13 +451,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	}
 
 	@Override
-	public void footerCellClicked(int cellId) {
-		c.removeOverlay();
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void indexedColCellClicked(int cellId) {
 		c.removeOverlay();
 		// TODO Auto-generated method stub
@@ -465,36 +464,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      // also have to be the 5th row.
      int trueNum = cellId * table.getWidth() + indexedCol;
      c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
-	}
-
-	@Override
-	public void prepFooterCellOccm(ContextMenu menu, int cellId) {
-		lastHeaderCellMenued = cellId;
-		TableProperties tp = c.getTableProperties();
-		ColumnProperties cp = tp.getColumnByIndex(cellId);
-        if (c.getTableProperties().isColumnPrime(cp.getElementKey())) {
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
-                    ContextMenu.NONE, "Unset as Prime");
-        } else if ((c.getTableProperties().getSortColumn() != null) &&
-                c.getTableProperties().getSortColumn()
-                        .equals(cp.getElementKey())) {
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_SORT,
-                    ContextMenu.NONE, "Unset as Sort");
-        } else {
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_PRIME,
-                    ContextMenu.NONE, "Set as Prime");
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_COLUMN_AS_SORT,
-                    ContextMenu.NONE, "Set as Sort");
-        }
-        if (cellId == indexedCol) {
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_AS_INDEXED_COL,
-                    ContextMenu.NONE, "Unfreeze Column");
-        } else {
-            menu.add(ContextMenu.NONE, MENU_ITEM_ID_SET_AS_INDEXED_COL,
-                    ContextMenu.NONE, "Freeze Column");
-        }
-        menu.add(ContextMenu.NONE, MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER,
-                ContextMenu.NONE, "Manage Column Properties");
 	}
 
 	@Override
@@ -711,7 +680,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                  String queryText = "_id:" +
       	                      table.getData(cellId);
       	                    Controller.launchTableActivity(context, joinedTable,
-      	                        queryText, c.getIsOverview(), null, null);
+      	                        queryText, c.getIsOverview(), null, null, c.getCurrentSearchText());
       	                    c.removeOverlay();
                        }
                      }

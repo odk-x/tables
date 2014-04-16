@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.FooterMode;
 import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
@@ -115,20 +114,6 @@ public class PropertyManager extends PreferenceActivity {
     String typeLabel = cp.getColumnType().label();
     String typeName = cp.getColumnType().name();
     category.addPreference(createListPreference("TYPE", "Type", typeLabel, typeName, typeLabels, typeNames));
-
-    // Footer Mode<List>
-    FooterMode[] footerModes = FooterMode.values();
-    String footerModeLabels[] = new String[footerModes.length];
-    String footerModeNames[] = new String[footerModes.length];
-    for ( int i = 0 ; i < footerModes.length ; ++i ) {
-      footerModeLabels[i] = footerModes[i].toString();
-      footerModeNames[i] = footerModes[i].name();
-    }
-    String footerModeLabel = cp.getFooterMode().toString();
-    String footerModeName = cp.getFooterMode().name();
-
-    category.addPreference(createListPreference("FOOTER", "Footer Mode", footerModeLabel, footerModeName,
-        footerModeLabels, footerModeNames));
 
     SliderPreference colWidthPref = new SliderPreference(this);
     colWidthPref.setTitle("Column Width");
@@ -236,16 +221,6 @@ public class PropertyManager extends PreferenceActivity {
             loadPreferenceScreen();
           } else if (t == ColumnType.TABLE_JOIN) {
             loadPreferenceScreen();
-          }
-          break;
-        }
-      }
-    } else if (key.equals("FOOTER")) {
-      FooterMode[] footerModes = FooterMode.values();
-      for (int i = 0; i < footerModes.length; i++) {
-        if (footerModes[i].name().equals(newVal)) {
-          if ( !cp.getFooterMode().equals(footerModes[i]) ) {
-            cp.setFooterMode(footerModes[i]);
           }
           break;
         }

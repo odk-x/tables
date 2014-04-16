@@ -281,7 +281,7 @@ public class GraphManagerActivity extends SherlockListActivity {
 		if(item.getGroupId() == MENU_ITEM_ID_SEARCH_BUTTON) {
 			tp.setCurrentViewType(
 					TableViewType.getViewTypeFromId(item.getItemId()));
-			Controller.launchTableActivity(this, tp, "", true, null, null);
+			Controller.launchTableActivity(this, tp, "", true, null, null, null);
 			return true;
 		}
 		switch (item.getItemId()) {

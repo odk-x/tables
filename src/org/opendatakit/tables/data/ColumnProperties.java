@@ -303,13 +303,6 @@ public class ColumnProperties {
    * Text, null.
    */
   public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
-  /*
-   * Text null.
-   */
-  public static final String KEY_FOOTER_MODE = KeyValueStoreConstants.COLUMN_FOOTER_MODE;
-  /*
-   * What the footer should display.
-   */
 
   /***********************************
    * Default values for those keys which require them. TODO When the keys in the
@@ -317,16 +310,12 @@ public class ColumnProperties {
    * there most likely.
    ***********************************/
   public static final boolean DEFAULT_KEY_VISIBLE = true;
-  public static final FooterMode DEFAULT_KEY_FOOTER_MODE = FooterMode.none;
   public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
   public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
 
   /***********************************
    * Keys for json.
    ***********************************/
-
-  // private static final String DB_FOOTER_MODE = "footerMode"; /* 0=none,
-  // 1=count, 2=minimum, 3=maximum, 4=mean, 5=sum */
 
   // keys for JSON
   private static final String JSON_KEY_VERSION = "jVersion";
@@ -345,42 +334,6 @@ public class ColumnProperties {
   private static final String JSON_KEY_DISPLAY_NAME = "displayName";
   private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
   private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
-
-  private static final String JSON_KEY_FOOTER_MODE = "footerMode";
-
-  // the SQL where clause to use for selecting, updating,
-  // or deleting the row for a given column
-  // private static final String WHERE_SQL = DB_TABLE_ID + " = ? and "
-  // + DB_ELEMENT_KEY + " = ?";
-
-  // the columns to be selected when initializing ColumnProperties
-  // private static final String[] INIT_COLUMNS = {
-  // KeyValueStoreManager.TABLE_ID, DB_ELEMENT_KEY,
-  // DB_ELEMENT_NAME, DB_ELEMENT_TYPE, DB_LIST_CHILD_ELEMENT_KEYS, DB_JOINS,
-  // // DB_JOIN_TABLE_ID,
-  // // DB_JOIN_ELEMENT_KEY,
-  // DB_IS_UNIT_OF_RETENTION,
-
-  // DB_DISPLAY_VISIBLE,
-  // DB_DISPLAY_NAME,
-  // DB_DISPLAY_CHOICES_MAP,
-  // DB_DISPLAY_FORMAT,
-  // DB_SMS_IN,
-  // DB_SMS_OUT,
-  // DB_SMS_LABEL,
-  // DB_FOOTER_MODE
-  // };
-
-  // Has moved to FooterMode.java.
-  // public class FooterMode {
-  // public static final int NONE = 0;
-  // public static final int COUNT = 1;
-  // public static final int MINIMUM = 2;
-  // public static final int MAXIMUM = 3;
-  // public static final int MEAN = 4;
-  // public static final int SUM = 5;
-  // private FooterMode() {}
-  // }
 
   /***********************************
    * The fields that make up a ColumnProperties object.
@@ -407,13 +360,11 @@ public class ColumnProperties {
   private String displayName;
   private ArrayList<String> displayChoicesList;
   private String displayFormat;
-  private FooterMode footerMode;
   private ArrayList<JoinColumn> joins;
 
   /**
    *
-   * @param dbh
-   * @param tableId
+   * @param tp
    * @param elementKey
    * @param elementName
    * @param elementType
@@ -423,18 +374,13 @@ public class ColumnProperties {
    * @param jsonStringifyDisplayName -- wrapped via mapper.writeValueAsString()
    * @param displayChoicesList
    * @param displayFormat
-   * @param smsIn
-   * @param smsOut
-   * @param smsLabel
-   * @param footerMode
    * @param joins
-   * @param backingStore
    */
   private ColumnProperties(TableProperties tp, String elementKey, String elementName,
       ColumnType elementType, List<String> listChildElementKeys,
       boolean isUnitOfRetention, boolean displayVisible, String jsonStringifyDisplayName,
       ArrayList<String> displayChoicesList, String displayFormat,
-      FooterMode footerMode, ArrayList<JoinColumn> joins) {
+      ArrayList<JoinColumn> joins) {
     this.tp = tp;
     this.tableId = tp.getTableId();
     this.elementKey = elementKey;
@@ -448,7 +394,6 @@ public class ColumnProperties {
     updateDisplayNameFromJsonStringifyDisplayName();
     this.displayChoicesList = displayChoicesList;
     this.displayFormat = displayFormat;
-    this.footerMode = footerMode;
   }
 
   /**
@@ -525,13 +470,6 @@ public class ColumnProperties {
     // KEY_DISPLAY_VISIBLE
     String displayVisibleStr = kvsProps.get(KEY_DISPLAY_VISIBLE);
     boolean displayVisible = SyncUtil.stringToBool(displayVisibleStr);
-    // KEY_FOOTER_MODE
-    String footerModeStr = kvsProps.get(KEY_FOOTER_MODE);
-    // TODO don't forget that all of these value ofs for all these enums
-    // should eventually be surrounded with try/catch to support versioning
-    // when new values might come down from the server.
-    FooterMode footerMode = (footerModeStr == null) ? DEFAULT_KEY_FOOTER_MODE : FooterMode
-        .valueOf(footerModeStr);
     // KEY_JOINS
 
     // DB_IS_UNIT_OF_RETENTION
@@ -578,8 +516,7 @@ public class ColumnProperties {
     return new ColumnProperties(tp, elementKey,
         columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_NAME), columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, kvsProps.get(KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT),
-        footerMode, joins);
+        displayChoicesList, kvsProps.get(KEY_DISPLAY_FORMAT), joins);
   }
 
   /**
@@ -608,8 +545,6 @@ public class ColumnProperties {
         KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
-    values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_FOOTER_MODE, footerMode.name()));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_JOINS, JoinColumn.toSerialization(joins)));
 
@@ -677,8 +612,7 @@ public class ColumnProperties {
 
     ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
-        DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT,
-        DEFAULT_KEY_FOOTER_MODE, null);
+        DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, null);
 
     return cp;
   }
@@ -968,24 +902,6 @@ public class ColumnProperties {
   }
 
   /**
-   * @return the column's footer mode
-   */
-  public FooterMode getFooterMode() {
-    return footerMode;
-  }
-
-  /**
-   * Sets the column's footer mode.
-   *
-   * @param footerMode
-   *          the new footer mode
-   */
-  public void setFooterMode(FooterMode footerMode) {
-    setStringProperty(KEY_FOOTER_MODE, footerMode.name());
-    this.footerMode = footerMode;
-  }
-
-  /**
    * @return the join definition
    */
   public ArrayList<JoinColumn> getJoins() {
@@ -1063,7 +979,6 @@ public class ColumnProperties {
     jo.put(JSON_KEY_ELEMENT_NAME, elementName);
     jo.put(JSON_KEY_JOINS, JoinColumn.toSerialization(joins));
     jo.put(JSON_KEY_ELEMENT_TYPE, elementType.name());
-    jo.put(JSON_KEY_FOOTER_MODE, footerMode.name());
     jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
     jo.put(JSON_KEY_IS_UNIT_OF_RETENTION, isUnitOfRetention);
     jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
@@ -1122,9 +1037,6 @@ public class ColumnProperties {
     String joElType = (String) jo.get(JSON_KEY_ELEMENT_TYPE);
     ColumnType elementType = (joElType == null) ? ColumnType.NONE : ColumnType.valueOf(joElType);
 
-    String joFootMode = (String) jo.get(JSON_KEY_FOOTER_MODE);
-    FooterMode footerMode = (joFootMode == null) ? FooterMode.none : FooterMode.valueOf(joFootMode);
-
     ArrayList<JoinColumn> joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
     Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
     ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
@@ -1140,8 +1052,7 @@ public class ColumnProperties {
         (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
         listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
         (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT),
-        footerMode, joins);
+        listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), joins);
 
     return cp;
   }

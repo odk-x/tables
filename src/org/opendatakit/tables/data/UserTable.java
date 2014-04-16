@@ -46,10 +46,7 @@ import android.util.Log;
  * Each row comprises the user-defined columns, or data, as well as the
  * ODKTables-specified metadata.
  * <p>
- * This should be considered an immutable class, with the exception of the
- * footer. The footer is only important to the user when viewing a table in
- * certain conditions, and many other uses where the contents of a table need to
- * be accessed do not require the footer. For this reason it alone is mutable.
+ * This should be considered an immutable class.
  *
  * @author unknown
  * @author sudar.sam@gmail.com
@@ -60,7 +57,6 @@ public class UserTable {
   private static final String TAG = UserTable.class.getSimpleName();
 
   private final String[] header;
-  private String[] footer;
   private final ArrayList<Row> mRows;
   /**
    * The {@link TableProperties} associated with this table. Included so that
@@ -104,7 +100,7 @@ public class UserTable {
   public UserTable(TableProperties tp, String[] rowIds, String[] header,
       String[][] userDefinedData, String[] elementKeyForIndex,
       Map<String, Integer> dataElementKeyToIndex, String[][] odkTablesMetadata,
-      Map<String, Integer> metadataElementKeyToIndex, String[] footer) {
+      Map<String, Integer> metadataElementKeyToIndex) {
     buildFormatters();
     this.header = header;
     mRows = new ArrayList<Row>(userDefinedData.length);
@@ -113,7 +109,6 @@ public class UserTable {
       mRows.add(nextRow);
     }
     this.mTp = tp;
-    this.footer = footer;
     mDataKeyToIndex = dataElementKeyToIndex;
     mMetadataKeyToIndex = metadataElementKeyToIndex;
     mElementKeyForIndex = elementKeyForIndex;
@@ -175,7 +170,6 @@ public class UserTable {
         mRows.add(nextRow);
       } while (c.moveToNext());
     }
-    footer = null;
   }
 
   /**
@@ -360,14 +354,6 @@ public class UserTable {
    */
   public String getDataByElementKey(int rowNum, String elementKey) {
     return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
-  }
-
-  public String getFooter(int colNum) {
-    return footer[colNum];
-  }
-
-  public void setFooter(String[] footer) {
-    this.footer = footer;
   }
 
   /**

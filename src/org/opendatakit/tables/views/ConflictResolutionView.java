@@ -285,10 +285,6 @@ public class ConflictResolutionView extends HorizontalScrollView implements
 	public void onCreateHeaderContextMenu(ContextMenu menu) {
 	}
 
-	@Override
-	public void onCreateFooterContextMenu(ContextMenu menu) {
-	}
-
   @Override
   public int getMainScrollX() {
     return dataScroll.getScrollX();

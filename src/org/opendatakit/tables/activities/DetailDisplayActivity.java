@@ -83,7 +83,13 @@ public class DetailDisplayActivity extends SherlockActivity
         if (mTableId == null) {
           Log.e(TAG, "no table id was specified");
         }
-        c = new Controller(this, this, getIntent().getExtras());
+        c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+      super.onSaveInstanceState(outState);
+      c.onSaveInstanceState(outState);
     }
 
     @Override
@@ -168,7 +174,7 @@ public class DetailDisplayActivity extends SherlockActivity
     @Override
     public void onSearch() {
         Controller.launchTableActivity(this, c.getTableProperties(),
-                c.getSearchText(), c.getIsOverview(), null, null);
+                c.getSearchText(), c.getIsOverview(), null, null, c.getCurrentSearchText());
     }
 
     @Override
