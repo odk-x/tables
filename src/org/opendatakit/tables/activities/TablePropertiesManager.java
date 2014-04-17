@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -67,6 +68,22 @@ public class TablePropertiesManager extends PreferenceActivity {
   private static final int RC_DETAIL_VIEW_FILE = 0;
   private static final int RC_LIST_VIEW_FILE = 1;
   private static final int RC_MAP_LIST_VIEW_FILE = 2;
+
+  /** The key for the type of color rule to use on the map. */
+  public static final String KEY_COLOR_RULE_TYPE = "keyColorRuleType";
+  /**
+   * The key for, if the color rule is based off of a column, the column to use.
+   */
+  public static final String KEY_COLOR_RULE_COLUMN = "keyColorRuleColumn";
+
+  /** The constant if we want no color rules. */
+  public static final String COLOR_TYPE_NONE = "None";
+  /** The constant if we want the color rules based off of the table. */
+  public static final String COLOR_TYPE_TABLE = "Table Color Rules";
+  /** The constant if we want the color rules based off of the status column. */
+  public static final String COLOR_TYPE_STATUS = "Status Column Color Rules";
+  /** The constant if we want the color rules based off of a column. */
+  public static final String COLOR_TYPE_COLUMN = "Selectable Column Color Rules";
 
   private String appName;
   private TableProperties tp;
@@ -127,100 +144,33 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     // display category
 
+    {
     PreferenceCategory displayCat = new PreferenceCategory(this);
     root.addPreference(displayCat);
     displayCat.setTitle(getString(R.string.display_settings));
     addViewPreferences(displayCat);
+    }
+    PreferenceCategory displayListViewCat = new PreferenceCategory(this);
+    root.addPreference(displayListViewCat);
+    displayListViewCat.setTitle(getString(R.string.display_list_view_settings));
+    addListViewPreferences(displayListViewCat);
 
-    FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
-    detailViewPref.setTitle(getString(R.string.detail_view_file));
-    detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-    final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-    String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
-    detailViewPref.setText(detailViewFilename);
-    detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        // tp.setDetailViewFilename((String) newValue);
-        kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
-        init();
-        return false;
-      }
-    });
-    displayCat.addPreference(detailViewPref);
+    PreferenceCategory displayGraphViewCat = new PreferenceCategory(this);
+    root.addPreference(displayGraphViewCat);
+    displayGraphViewCat.setTitle(getString(R.string.display_graph_view_settings));
+    addGraphViewPreferences(displayGraphViewCat);
 
-    // Now let's add the pref for the Form.
-    EditFormDialogPreference formPref = new EditFormDialogPreference(this, tp);
-    displayCat.addPreference(formPref);
-    formPref.setTitle(getString(R.string.edit_default_form));
-    formPref.setDialogTitle(getString(R.string.edit_default_form));
+    PreferenceCategory displayMapViewCat = new PreferenceCategory(this);
+    root.addPreference(displayMapViewCat);
+    displayMapViewCat.setTitle(getString(R.string.display_map_view_settings));
+    addMapViewPreferences(displayMapViewCat);
 
-    Preference rowColorRulePrefs = new Preference(this);
-    rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
-    rowColorRulePrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-            ColorRuleManagerActivity.class);
-        rowColorRuleManagerIntent.putExtra(
-            Controller.INTENT_KEY_APP_NAME, tp.getAppName());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-            tp.getTableId());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-            ColorRuleGroup.Type.TABLE.name());
-        startActivity(rowColorRuleManagerIntent);
-        return true;
-      }
-
-    });
-    displayCat.addPreference(rowColorRulePrefs);
-
-    Preference statusColumnColorRulePref = new Preference(this);
-    statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
-    statusColumnColorRulePref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-            ColorRuleManagerActivity.class);
-        rowColorRuleManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
-            tp.getAppName());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-            tp.getTableId());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-            ColorRuleGroup.Type.STATUS_COLUMN.name());
-        startActivity(rowColorRuleManagerIntent);
-        return true;
-      }
-
-    });
-    displayCat.addPreference(statusColumnColorRulePref);
 
     setPreferenceScreen(root);
   }
 
   private void addViewPreferences(PreferenceCategory prefCat) {
 
-    final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
-    final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
-    final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
-    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
-    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
-        numberCols.add(cp);
-        if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
-          locationCols.add(cp);
-        }
-      } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
-        locationCols.add(cp);
-      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
-          || cp.getColumnType() == ColumnType.TIME) {
-        dateCols.add(cp);
-      } else if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
-        locationCols.add(cp);
-      }
-    }
 
     // int[] viewTypes = settings.getPossibleViewTypes();
     TableViewType[] viewTypes = tp.getPossibleViewTypes();
@@ -238,8 +188,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       viewTypeNames[i] = viewTypes[i].name();
     }
     ListPreference viewTypePref = new ListPreference(this);
-    viewTypePref.setTitle(getString(R.string.view_type));
-    viewTypePref.setDialogTitle(getString(R.string.change_view_type));
+    viewTypePref.setTitle(getString(R.string.default_view_type));
+    viewTypePref.setDialogTitle(getString(R.string.change_default_view_type));
     viewTypePref.setEntryValues(viewTypeIds);
     viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
@@ -270,8 +220,123 @@ public class TablePropertiesManager extends PreferenceActivity {
     });
     prefCat.addPreference(viewTypePref);
 
-    switch (tp.getDefaultViewType()) {
-    case List: {
+    // Now let's add the pref for the Form.
+    EditFormDialogPreference formPref = new EditFormDialogPreference(this, tp);
+    prefCat.addPreference(formPref);
+    formPref.setTitle(getString(R.string.default_survey_form));
+    formPref.setDialogTitle(getString(R.string.edit_default_form));
+
+    Preference rowColorRulePrefs = new Preference(this);
+    rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
+    rowColorRulePrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
+            ColorRuleManagerActivity.class);
+        rowColorRuleManagerIntent.putExtra(
+            Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+            tp.getTableId());
+        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+            ColorRuleGroup.Type.TABLE.name());
+        startActivity(rowColorRuleManagerIntent);
+        return true;
+      }
+
+    });
+    prefCat.addPreference(rowColorRulePrefs);
+
+    Preference statusColumnColorRulePref = new Preference(this);
+    statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
+    statusColumnColorRulePref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
+            ColorRuleManagerActivity.class);
+        rowColorRuleManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+            tp.getAppName());
+        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+            tp.getTableId());
+        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+            ColorRuleGroup.Type.STATUS_COLUMN.name());
+        startActivity(rowColorRuleManagerIntent);
+        return true;
+      }
+
+    });
+    prefCat.addPreference(statusColumnColorRulePref);
+
+    // Grab the key value store helper from the table activity.
+    final KeyValueStoreHelper kvsHelper = tp
+        .getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
+
+    // Color Options Preference!
+    String colorType = kvsHelper.getString(KEY_COLOR_RULE_TYPE);
+    if (colorType == null) {
+      kvsHelper.setString(KEY_COLOR_RULE_TYPE, COLOR_TYPE_NONE);
+      colorType = COLOR_TYPE_NONE;
+    }
+    ListPreference colorRulePref = new ListPreference(this);
+    colorRulePref.setTitle("Color Rule for Graph and Map Markers");
+    colorRulePref.setDialogTitle("Change which color rule markers adhere to.");
+    String[] colorRuleTypes = { COLOR_TYPE_NONE,
+        COLOR_TYPE_TABLE, COLOR_TYPE_STATUS, COLOR_TYPE_COLUMN };
+    colorRulePref.setEntryValues(colorRuleTypes);
+    colorRulePref.setEntries(colorRuleTypes);
+    colorRulePref.setValue(colorType);
+    colorRulePref.setSummary(colorType);
+    colorRulePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+      @Override
+      public boolean onPreferenceChange(Preference preference, Object newValue) {
+        kvsHelper.setString(KEY_COLOR_RULE_TYPE, (String) newValue);
+        init();
+        return false;
+      }
+    });
+    prefCat.addPreference(colorRulePref);
+
+    // If the color rule type is columns, add the preference to select the
+    // column.
+    if (colorType.equals(COLOR_TYPE_COLUMN)) {
+      int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+      String[] colorColDisplayNames = new String[numberOfDisplayColumns];
+      String[] colorColElementKeys = new String[numberOfDisplayColumns];
+      for (int i = 0; i < numberOfDisplayColumns; i++) {
+        ColumnProperties cp = tp.getColumnByIndex(i);
+        colorColDisplayNames[i] = cp.getDisplayName();
+        colorColElementKeys[i] = cp.getElementKey();
+      }
+
+      ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
+          .getString(KEY_COLOR_RULE_COLUMN));
+      if (colorColumn == null) {
+        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, tp.getColumnByIndex(0)
+            .getElementKey());
+        colorColumn = tp.getColumnByIndex(0);
+      }
+
+      ListPreference colorColumnPref = new ListPreference(this);
+      colorColumnPref.setTitle("Color Rule Column");
+      colorColumnPref.setDialogTitle("Change the column that applies the color rule.");
+      colorColumnPref.setEntryValues(colorColElementKeys);
+      colorColumnPref.setEntries(colorColDisplayNames);
+      colorColumnPref.setValue(colorColumn.getElementKey());
+      colorColumnPref.setSummary(colorColumn.getDisplayName());
+      colorColumnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+          kvsHelper.setString(KEY_COLOR_RULE_COLUMN, (String) newValue);
+          init();
+          return false;
+        }
+      });
+      prefCat.addPreference(colorColumnPref);
+    }
+  }
+
+  private void addListViewPreferences(PreferenceCategory prefCat) {
       Preference listViewPrefs = new Preference(this);
       listViewPrefs.setTitle(getString(R.string.list_view_manager));
       listViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -288,13 +353,86 @@ public class TablePropertiesManager extends PreferenceActivity {
 
       });
       prefCat.addPreference(listViewPrefs);
-    }
-      break;
-    case Graph:
-      Log.d(TAG, "Graph view type was selected");
-      break;
 
-    case Map:
+      FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
+      detailViewPref.setTitle(getString(R.string.detail_view_file));
+      detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
+      final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+      String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
+      detailViewPref.setText(detailViewFilename);
+      detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+          // tp.setDetailViewFilename((String) newValue);
+          kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
+          init();
+          return false;
+        }
+      });
+      prefCat.addPreference(detailViewPref);
+
+  }
+
+  private void addGraphViewPreferences(PreferenceCategory prefCat) {
+      Log.d(TAG, "Graph view type was selected");
+      final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
+      final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
+      final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
+      final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
+      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+        if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+          numberCols.add(cp);
+          if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
+            locationCols.add(cp);
+          }
+        } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
+          locationCols.add(cp);
+        } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
+            || cp.getColumnType() == ColumnType.TIME) {
+          dateCols.add(cp);
+        } else if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
+          locationCols.add(cp);
+        }
+      }
+      // TODO -- should we really do the graph manager here?
+      Preference graphViewPrefs = new Preference(this);
+      graphViewPrefs.setTitle(getString(R.string.graph_view_manager));
+      graphViewPrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+          Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
+              GraphManagerActivity.class);
+          selectGraphViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          selectGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+          startActivity(selectGraphViewIntent);
+          return true;
+        }
+
+      });
+      prefCat.addPreference(graphViewPrefs);
+  }
+
+  private void addMapViewPreferences(PreferenceCategory prefCat) {
+    final List<ColumnProperties> numberCols = new ArrayList<ColumnProperties>();
+    final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
+    final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
+    final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
+    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+        numberCols.add(cp);
+        if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
+          locationCols.add(cp);
+        }
+      } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
+        locationCols.add(cp);
+      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
+          || cp.getColumnType() == ColumnType.TIME) {
+        dateCols.add(cp);
+      } else if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
+        locationCols.add(cp);
+      }
+    }
       // Grab the key value store helper from the table activity.
       final KeyValueStoreHelper kvsHelper = tp
           .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
@@ -310,10 +448,10 @@ public class TablePropertiesManager extends PreferenceActivity {
             break;
           }
         }
-        if (latCol == null) {
+        if (latCol == null && !locationCols.isEmpty()) {
           latCol = locationCols.get(0);
         }
-        kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latCol.getElementKey());
+        kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (latCol == null) ? null : latCol.getElementKey());
       }
 
       // Try to find the longitude column in the store.
@@ -327,10 +465,10 @@ public class TablePropertiesManager extends PreferenceActivity {
             break;
           }
         }
-        if (longCol == null) {
+        if (longCol == null && !locationCols.isEmpty()) {
           longCol = locationCols.get(0);
         }
-        kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longCol.getElementKey());
+        kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (longCol == null) ? null : longCol.getElementKey());
       }
 
       // Add every location column to the list.
@@ -347,8 +485,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       mapLatPref.setDialogTitle(getString(R.string.change_map_view_latitude_column));
       mapLatPref.setEntryValues(locColElementKeys);
       mapLatPref.setEntries(locColDisplayNames);
-      mapLatPref.setValue(latCol.getElementKey());
-      mapLatPref.setSummary(latCol.getDisplayName());
+      mapLatPref.setValue((latCol == null) ? null : latCol.getElementKey());
+      mapLatPref.setSummary((latCol == null) ? null : latCol.getDisplayName());
       mapLatPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -365,8 +503,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       mapLongPref.setDialogTitle(getString(R.string.change_map_view_longitude_column));
       mapLongPref.setEntryValues(locColElementKeys);
       mapLongPref.setEntries(locColDisplayNames);
-      mapLongPref.setValue(longCol.getElementKey());
-      mapLongPref.setSummary(longCol.getDisplayName());
+      mapLongPref.setValue((longCol == null) ? null : longCol.getElementKey());
+      mapLongPref.setSummary((longCol == null) ? null : longCol.getDisplayName());
       mapLongPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -379,93 +517,11 @@ public class TablePropertiesManager extends PreferenceActivity {
 
       // ListView Preference!
       FileSelectorPreference listFilePref = new FileSelectorPreference(this, RC_MAP_LIST_VIEW_FILE);
-      listFilePref.setTitle(getString(R.string.list_view_file));
+      listFilePref.setTitle(getString(R.string.map_list_view_file));
       listFilePref.setDialogTitle(getString(R.string.change_map_view_list_view_file));
       String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
       listFilePref.setText(currentFilename);
       prefCat.addPreference(listFilePref);
-
-      // Color Options Preference!
-      String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
-      if (colorType == null) {
-        kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
-        colorType = TableMapFragment.COLOR_TYPE_NONE;
-      }
-      ListPreference colorRulePref = new ListPreference(this);
-      colorRulePref.setTitle("Map View Color Rule");
-      colorRulePref.setDialogTitle("Change which color rule markers adhere to.");
-      String[] colorRuleTypes = { TableMapFragment.COLOR_TYPE_NONE,
-          TableMapFragment.COLOR_TYPE_TABLE, TableMapFragment.COLOR_TYPE_STATUS,
-          TableMapFragment.COLOR_TYPE_COLUMN };
-      colorRulePref.setEntryValues(colorRuleTypes);
-      colorRulePref.setEntries(colorRuleTypes);
-      colorRulePref.setValue(colorType);
-      colorRulePref.setSummary(colorType);
-      colorRulePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, (String) newValue);
-          init();
-          return false;
-        }
-      });
-      prefCat.addPreference(colorRulePref);
-
-      // If the color rule type is columns, add the preference to select the
-      // column.
-      if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-        int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-        String[] colorColDisplayNames = new String[numberOfDisplayColumns];
-        String[] colorColElementKeys = new String[numberOfDisplayColumns];
-        for (int i = 0; i < numberOfDisplayColumns; i++) {
-          ColumnProperties cp = tp.getColumnByIndex(i);
-          colorColDisplayNames[i] = cp.getDisplayName();
-          colorColElementKeys[i] = cp.getElementKey();
-        }
-
-        ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
-            .getString(TableMapFragment.KEY_COLOR_RULE_COLUMN));
-        if (colorColumn == null) {
-          kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, tp.getColumnByIndex(0)
-              .getElementKey());
-          colorColumn = tp.getColumnByIndex(0);
-        }
-
-        ListPreference colorColumnPref = new ListPreference(this);
-        colorColumnPref.setTitle("Color Rule Column");
-        colorColumnPref.setDialogTitle("Change the column that applies the color rule.");
-        colorColumnPref.setEntryValues(colorColElementKeys);
-        colorColumnPref.setEntries(colorColDisplayNames);
-        colorColumnPref.setValue(colorColumn.getElementKey());
-        colorColumnPref.setSummary(colorColumn.getDisplayName());
-        colorColumnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-          @Override
-          public boolean onPreferenceChange(Preference preference, Object newValue) {
-            kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_COLUMN, (String) newValue);
-            init();
-            return false;
-          }
-        });
-        prefCat.addPreference(colorColumnPref);
-      }
-      break;
-    default:
-      Log.e(TAG, "unrecognized view type: " + tp.getDefaultViewType()
-          + ", resetting to spreadsheet");
-      SQLiteDatabase db = tp.getWritableDatabase();
-      try {
-        db.beginTransaction();
-        tp.setDefaultViewType(db, TableViewType.Spreadsheet);
-        db.setTransactionSuccessful();
-      } catch ( Exception e ) {
-        e.printStackTrace();
-        Log.e(TAG, "Unable to change default view type to Spreadsheet: " + e.toString());
-        Toast.makeText(getParent(), "Unable to change default view type to Spreadsheet", Toast.LENGTH_LONG).show();
-      } finally {
-        db.endTransaction();
-        db.close();
-      }
-    }
   }
 
   @Override

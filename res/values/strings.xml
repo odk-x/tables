@@ -171,7 +171,8 @@
 	<string name="confirm_delete_view_title">Confirm Delete List View</string>
 	<string name="are_you_sure_delete_view">Please confirm deletion of list view: %1$s</string>
 	<string name="set_as_default_list_view">%1$s is now the default list view.</string>
-	<string name="no_default_no_changes">There are no default settings! No changes have been made.</string>
+	<string name="set_as_default_graph_view">%1$s is now the default graph view.</string>
+		<string name="no_default_no_changes">There are no default settings! No changes have been made.</string>
 	<string name="are_you_sure_save_default_settings">Please confirm saving of these settings as default. Any modifications of the old default settings will be lost.</string>
 	<string name="are_you_sure_copy_default_settings_to_server_settings">Please confirm copying of default settings to server sync settings. Settings in the server sync set will be pushed to the server at next sync.</string>
 	<string name="are_you_sure_merge_server_settings_into_default_settings">Please confirm merging of server settings into default settings.</string>
@@ -194,7 +195,12 @@
 	<string name="set_as_shortcut_table">Set as SMS Shortcuts Table</string>
 	<string name="change_table_type">Change Table Type</string>
 	<string name="display_settings">Display Settings</string>
+	<string name="display_list_view_settings">List View Settings</string>
+	<string name="graph_view_manager">Graph View Manager</string>
+	<string name="display_graph_view_settings">Graph View Settings</string>
+	<string name="display_map_view_settings">Map View Settings</string>
 	<string name="detail_view_file">Detail View File</string>
+	<string name="default_survey_form">Default Survey Form</string>
 	<string name="change_detail_view_file">Change Detail View File</string>
 	<string name="edit_table_color_rules">Edit Table Color Rules</string>
 	<string name="edit_status_column_color_rules">Edit Status Column Color Rules</string>
@@ -203,6 +209,7 @@
 	<string name="status_column">Status Column</string>
 	<string name="color_rule_title_for">Color Rules for %1$s</string>
 	<string name="row_color_rule_title_for">Row Color Rules for %1$s</string>
+	<string name="map_list_view_file">Map List View File</string>
 	<string name="confirm_delete_color_rule">Confirm Delete Color Rule</string>
 	<string name="are_you_sure_delete_color_rule">Please confirm deletion of color rule: %1$s</string>
 	<string name="delete_color_rule">Delete this Color Rule</string>
@@ -215,7 +222,9 @@
 	<string name="copy_defaults_to_server">Copy Defaults to Server Sync Set</string>
 	<string name="merge_server_into_defaults">Merge Server Sync Set into Defaults</string>
 	<string name="change_view_type">Change View Type</string>
-	<string name="map_view_latitude_column">Map View Latitude Column</string>
+	<string name="change_default_view_type">Change Default View Type</string>
+	<string name="default_view_type">Default View Type</string>
+			<string name="map_view_latitude_column">Map View Latitude Column</string>
 	<string name="map_view_longitude_column">Map View Longitude Column</string>
 	<string name="change_map_view_latitude_column">Change Map View Latitude Column</string>
 	<string name="change_map_view_longitude_column">Change Map View Longitude Column</string>

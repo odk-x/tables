@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -42,7 +43,9 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockListActivity;
@@ -387,6 +390,31 @@ public class GraphManagerActivity extends SherlockListActivity {
       String filename = aspectHelper.getString(GraphDisplayActivity.GRAPH_TYPE);
       extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
+      final RadioButton radioButton = (RadioButton)
+          row.findViewById(org.opendatakit.tables.R.id.radio_button);
+      if (isDefault(listViewName)) {
+        radioButton.setChecked(true);
+      } else {
+        radioButton.setChecked(false);
+      }
+      radioButton.setVisibility(View.VISIBLE);
+      // Set the click listener to set as default.
+      radioButton.setOnClickListener(new OnClickListener() {
+
+        @Override
+        public void onClick(View v) {
+          if (isDefault(listViewName)) {
+            // Already set to default, do nothing.
+          } else {
+            setToDefault(listViewName);
+            radioButton.setChecked(true);
+            Toast.makeText(getContext(),
+               getString(R.string.set_as_default_graph_view, listViewName),
+                Toast.LENGTH_SHORT).show();
+          }
+        }
+
+      });
 
       // And now prepare the listener for the settings icon.
       final ImageView editView = (ImageView) row
@@ -425,4 +453,40 @@ public class GraphManagerActivity extends SherlockListActivity {
     return potentialName;
   }
 
+  /**
+   * Return true if the passed in name is defined as the default list view
+   * for this table.
+   * <p>
+   * Checks that the defaultListViewName might be null, and returns false in
+   * this case as if it is null it hasn't been defined.
+   * @param nameOfListView
+   * @return
+   */
+  private boolean isDefault(String nameOfListView) {
+    if (defaultGraphViewName == null) {
+      return false;
+    }
+    if (defaultGraphViewName.equals(nameOfListView)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Set the list view with name nameOfListView to be the default for this
+   * table. Updates the KVS as well as the global field in the activity.
+   * @param nameOfListView
+   */
+  private void setToDefault(String nameOfListView) {
+    graphViewKvsh.setString(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME,
+        nameOfListView);
+    defaultGraphViewName = nameOfListView;
+    adapter.notifyDataSetChanged();
+  }
+
+  public static String getDefaultGraphName(TableProperties tp) {
+    KeyValueStoreHelper graphViewKvsh = tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
+    return graphViewKvsh.getString(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME);
+  }
 }

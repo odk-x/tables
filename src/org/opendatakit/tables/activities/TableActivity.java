@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
@@ -747,16 +748,25 @@ public class TableActivity extends SherlockFragmentActivity
     switch (viewType) {
     // case TableViewSettings.Type.LIST:
     // TODO: figure out which of these graph was originally and update it.
-    case List:
-      intent = new Intent(context, ListDisplayActivity.class);
+    case List: {
       if (filename != null) {
+        intent = new Intent(context, ListDisplayActivity.class);
         intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      } else {
+        intent = new Intent(context, ListViewManager.class);
       }
+    }
       break;
-    case Graph:
-      intent = new Intent(context, GraphManagerActivity.class);
+    case Graph: {
+      String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
+      if ( defaultGraph != null ) {
+        intent = new Intent(context, GraphDisplayActivity.class);
+        intent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, defaultGraph);
+      } else {
+        intent = new Intent(context, GraphManagerActivity.class);
+      }
+    }
       break;
-    // case TableViewSettings.Type.MAP:
     case Map:
       intent = new Intent(context, TableActivity.class);
       break;

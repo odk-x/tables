@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DataUtil;
@@ -987,7 +988,14 @@ public class Controller implements CustomViewCallbacks {
   public static void launchGraphView(Context context, TableProperties tp, String searchText,
                                      Stack<String> searchStack, boolean isOverview,
                                      String sqlWhereClause, String[] sqlSelectionArgs, String currentSearchText) {
-    Intent intent = new Intent(context, GraphManagerActivity.class);
+    Intent intent;
+    String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
+    if ( defaultGraph != null ) {
+      intent = new Intent(context, GraphDisplayActivity.class);
+      intent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, defaultGraph);
+    } else {
+      intent = new Intent(context, GraphManagerActivity.class);
+    }
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
@@ -1039,14 +1047,24 @@ public class Controller implements CustomViewCallbacks {
     }
     Intent intent;
     switch (viewType) {
-    case List:
-      intent = new Intent(context, ListDisplayActivity.class);
+    case List: {
       if (filename != null) {
+        intent = new Intent(context, ListDisplayActivity.class);
         intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      } else {
+        intent = new Intent(context, ListViewManager.class);
       }
+    }
       break;
-    case Graph:
-      intent = new Intent(context, GraphManagerActivity.class);
+    case Graph: {
+      String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
+      if ( defaultGraph != null ) {
+        intent = new Intent(context, GraphDisplayActivity.class);
+        intent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, defaultGraph);
+      } else {
+        intent = new Intent(context, GraphManagerActivity.class);
+      }
+    }
       break;
     case Map:
       intent = new Intent(context, TableActivity.class);

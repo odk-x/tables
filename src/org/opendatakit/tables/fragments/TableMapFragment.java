@@ -31,21 +31,6 @@ public class TableMapFragment extends Fragment implements ITableFragment,
   public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
   /** The key to grab which file is being used for the list view. */
   public static final String KEY_FILENAME = "keyFilename";
-  /** The key for the type of color rule to use on the map. */
-  public static final String KEY_COLOR_RULE_TYPE = "keyColorRuleType";
-  /**
-   * The key for, if the color rule is based off of a column, the column to use.
-   */
-  public static final String KEY_COLOR_RULE_COLUMN = "keyColorRuleColumn";
-
-  /** The constant if we want no color rules. */
-  public static final String COLOR_TYPE_NONE = "None";
-  /** The constant if we want the color rules based off of the table. */
-  public static final String COLOR_TYPE_TABLE = "Table Color Rules";
-  /** The constant if we want the color rules based off of the status column. */
-  public static final String COLOR_TYPE_STATUS = "Status Column Color Rules";
-  /** The constant if we want the color rules based off of a column. */
-  public static final String COLOR_TYPE_COLUMN = "Selectable Column Color Rules";
 
   /** A tag to grab the list view fragment. */
   public static final String FRAGMENT_TAG_LIST = "fragmentTagList";

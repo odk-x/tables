@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
+import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
@@ -188,22 +189,22 @@ public class TableMapInnerFragment extends SherlockMapFragment {
 
     // Grab the key value store helper from the map fragment.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-    String colorType = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_TYPE);
+    String colorType = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_TYPE);
     if (colorType == null) {
-      kvsHelper.setString(TableMapFragment.KEY_COLOR_RULE_TYPE, TableMapFragment.COLOR_TYPE_NONE);
-      colorType = TableMapFragment.COLOR_TYPE_NONE;
+      kvsHelper.setString(TablePropertiesManager.KEY_COLOR_RULE_TYPE, TablePropertiesManager.COLOR_TYPE_NONE);
+      colorType = TablePropertiesManager.COLOR_TYPE_NONE;
     }
 
     // Create a guide depending on what type of color rule is selected.
     mColorGroup = null;
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_TABLE)) {
+    if (colorType.equals(TablePropertiesManager.COLOR_TYPE_TABLE)) {
       mColorGroup = ColorRuleGroup.getTableColorRuleGroup(tp);
     }
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_STATUS)) {
+    if (colorType.equals(TablePropertiesManager.COLOR_TYPE_STATUS)) {
       mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
     }
-    if (colorType.equals(TableMapFragment.COLOR_TYPE_COLUMN)) {
-      String colorColumnKey = kvsHelper.getString(TableMapFragment.KEY_COLOR_RULE_COLUMN);
+    if (colorType.equals(TablePropertiesManager.COLOR_TYPE_COLUMN)) {
+      String colorColumnKey = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
       if (colorColumnKey != null) {
         mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
       }

@@ -89,6 +89,7 @@ public class CustomGraphView extends CustomView {
   }
 
   public void createNewGraph(String graphName) {
+    // this may be a no-op if the graphName is null...
     graphData.saveGraphToName(graphName);
   }
 
@@ -137,7 +138,9 @@ public class CustomGraphView extends CustomView {
       this.kvsh = table.getTableProperties().getKeyValueStoreHelper(
           GraphDisplayActivity.KVS_PARTITION_VIEWS);
       this.aspectHelper = kvsh.getAspectHelper(this.graphString);
-      this.aspectHelper = saveGraphToName(potentialGraphName);
+      if ( potentialGraphName != null ) {
+        this.aspectHelper = saveGraphToName(potentialGraphName);
+      }
     }
 
     public boolean isModified() {
@@ -165,6 +168,9 @@ public class CustomGraphView extends CustomView {
     // with the new name
     // and the DEFAULT_GRAPH aspect and contents are deleted
     private AspectHelper saveGraphToName(String graphName) {
+      if ( graphName == null ) {
+        return null;
+      }
       AspectHelper newAspectHelper = kvsh.getAspectHelper(graphName);
       String graphType = aspectHelper.getString(GRAPH_TYPE);
       if (graphType != null) {
