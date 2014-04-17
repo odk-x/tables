@@ -15,17 +15,13 @@
  */
 package org.opendatakit.tables.data;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 
@@ -47,18 +43,8 @@ public class ColumnDefinitions {
 
   private static final String TAG = "ColumnDefinitions";
 
-  private static final String DB_BACKING_NAME =
-      DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME;
-
-  /***********************************
-   *  Default values for those columns which require them.
-   ***********************************/
-  public static final boolean DEFAULT_DB_IS_UNIT_OF_RETENTION = true;
-  public static final ColumnType DEFAULT_DB_ELEMENT_TYPE = ColumnType.NONE;
-  public static final String DEFAULT_LIST_CHILD_ELEMENT_KEYS = null;
-
   // A set of all the column names in this table.
-  public static final Set<String> columnNames;
+  private static final Set<String> columnNames;
 
   // Populate the set.
   static {
@@ -77,21 +63,19 @@ public class ColumnDefinitions {
   private static final String WHERE_SQL_FOR_ELEMENT =
       ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.ELEMENT_KEY + " = ?";
 
-  private static final String WHERE_SQL_FOR_TABLE_IS_UNIT_OF_RETENTION =
-      ColumnDefinitionsColumns.TABLE_ID + " = ? AND " + ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION + " = ?";
-
   private static final String WHERE_SQL_FOR_TABLE =
       ColumnDefinitionsColumns.TABLE_ID + " = ?";
 
+
   /**
-   * Return an unmodifiable set that holds all the names for the columns in
-   * DB_TABLENAME. Note that these are the column names of the actual table
-   * defined in ColumnDefinitions, NOT the user-defined column names that are
-   * defined in the ColumnDefinitions table.
+   * Predicate used to determine whether the column property is held in the
+   * ColumnDefinitions table or in the key-value aspect for that column.
+   *
+   * @param propertyName
    * @return
    */
-  public static Set<String> getColumnNames() {
-    return Collections.unmodifiableSet(columnNames);
+  public static final boolean contains(String propertyName) {
+    return columnNames.contains(propertyName);
   }
 
   /**
@@ -103,16 +87,15 @@ public class ColumnDefinitions {
    * enclosing element (e.g., lists of items).
    * <p>
    * Does not close the passed in database.
-   * @param tableId
    * @param db
+   * @param tableId
    * @return
    */
-  public static List<String> getAllColumnNamesForTable(String tableId,
-      SQLiteDatabase db) {
+  public static List<String> getAllColumnNamesForTable(SQLiteDatabase db, String tableId ) {
     Cursor c = null;
     List<String> elementKeys = new ArrayList<String>();
     try {
-      c = db.query(DB_BACKING_NAME,
+      c = db.query(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
           new String[] {ColumnDefinitionsColumns.ELEMENT_KEY}, // we only want the element key column
           WHERE_SQL_FOR_TABLE,
           new String[] {tableId}, null, null, null);
@@ -137,12 +120,13 @@ public class ColumnDefinitions {
    * elementKey.
    * TODO: perhaps this should become columnName->TypevValuePair like the rest
    * of these maps.
-   * @param tableId
    * @param db
+   * @param tableId
+   * @param elementKey
    * @return
    */
-  public static Map<String, String> getColumnDefinitionFields(String tableId,
-      String elementKey, SQLiteDatabase db) {
+  public static Map<String, String> getColumnDefinitionFields(SQLiteDatabase db,
+      String tableId, String elementKey) {
     Cursor c = null;
     Map<String, String> columnDefMap = new HashMap<String, String>();
     try {
@@ -152,7 +136,8 @@ public class ColumnDefinitions {
         arrColumnNames[i] = colName;
         i++;
       }
-      c = db.query(DB_BACKING_NAME, arrColumnNames, WHERE_SQL_FOR_ELEMENT,
+      c = db.query(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+          arrColumnNames, WHERE_SQL_FOR_ELEMENT,
           new String[] {tableId, elementKey}, null, null, null);
       int dbTableIdIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.TABLE_ID);
       int dbElementKeyIndex = c.getColumnIndexOrThrow(ColumnDefinitionsColumns.ELEMENT_KEY);
@@ -200,17 +185,18 @@ public class ColumnDefinitions {
    * passed in tableId and the passed in element Key.
    * <p>
    * Does not close the database.
+   * @param db
    * @param tableId
    * @param elementKey
    * @param columnName
    * @param newValue
-   * @param db
    */
-  public static void setValue(String tableId, String elementKey,
-      String columnName, String newValue, SQLiteDatabase db) {
+  public static void setValue(SQLiteDatabase db, String tableId, String elementKey,
+      String columnName, String newValue) {
     ContentValues values = new ContentValues();
     values.put(columnName, newValue);
-    db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+    db.update(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+        values, WHERE_SQL_FOR_ELEMENT,
         new String[] {tableId, elementKey});
   }
 
@@ -219,17 +205,18 @@ public class ColumnDefinitions {
    * passed in tableId and the passed in element Key.
    * <p>
    * Does not close the database.
+   * @param db
    * @param tableId
    * @param elementKey
    * @param columnName
    * @param newValue
-   * @param db
    */
-  public static void setValue(String tableId, String elementKey,
-      String columnName, int newValue, SQLiteDatabase db) {
+  public static void setValue(SQLiteDatabase db, String tableId, String elementKey,
+      String columnName, int newValue) {
     ContentValues values = new ContentValues();
     values.put(columnName, newValue);
-    db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+    db.update(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+        values, WHERE_SQL_FOR_ELEMENT,
         new String[] {tableId, elementKey});
   }
 
@@ -238,17 +225,18 @@ public class ColumnDefinitions {
    * passed in tableId and the passed in element Key.
    * <p>
    * Does not close the database.
+   * @param db
    * @param tableId
    * @param elementKey
    * @param columnName
    * @param newValue
-   * @param db
    */
-  public static void setValue(String tableId, String elementKey,
-      String columnName, boolean newValue, SQLiteDatabase db) {
+  public static void setValue(SQLiteDatabase db, String tableId, String elementKey,
+      String columnName, boolean newValue) {
     ContentValues values = new ContentValues();
     values.put(columnName, newValue ? 1 : 0);
-    db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+    db.update(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+        values, WHERE_SQL_FOR_ELEMENT,
         new String[] {tableId, elementKey});
   }
 
@@ -279,14 +267,10 @@ public class ColumnDefinitions {
    * @param listChild
    * @param isUnitOfRetention
    * @return a map of column names to fields for the new table
-   * @throws IOException
-   * @throws JsonMappingException
-   * @throws JsonGenerationException
    */
   public static void assertColumnDefinition(SQLiteDatabase db,
       String tableId, String elementKey, String elementName,
-      ColumnType elementType, String listChild, boolean isUnitOfRetention)
-          throws JsonGenerationException, JsonMappingException, IOException {
+      ColumnType elementType, String listChild, boolean isUnitOfRetention) {
     ContentValues values = new ContentValues();
     values.put(ColumnDefinitionsColumns.ELEMENT_NAME, elementName);
     values.put(ColumnDefinitionsColumns.ELEMENT_TYPE, elementType.name());
@@ -295,23 +279,25 @@ public class ColumnDefinitions {
 
     Cursor c = null;
     try {
-	    c = db.query(DB_BACKING_NAME, null, WHERE_SQL_FOR_ELEMENT,
-	                  new String[] {tableId, elementKey}, null, null, null);
+	    c = db.query(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+	                 null, WHERE_SQL_FOR_ELEMENT,
+	                 new String[] {tableId, elementKey}, null, null, null);
 	    int count = c.getCount();
 	    c.close();
 	    if ( count == 1 ) {
 	      // update...
-	      db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_ELEMENT,
+	      db.update(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+	          values, WHERE_SQL_FOR_ELEMENT,
 	          new String[] {tableId, elementKey});
 	    } else {
 	      if ( count > 1 ) {
 	        // remove and re-insert...
-	        deleteColumnDefinition(tableId, elementKey, db);
+	        deleteColumnDefinition(db, tableId, elementKey);
 	      }
 	      // insert...
 	      values.put(ColumnDefinitionsColumns.TABLE_ID, tableId);
 	      values.put(ColumnDefinitionsColumns.ELEMENT_KEY, elementKey);
-	      db.insert(DB_BACKING_NAME, null, values);
+	      db.insert(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME, null, values);
 	    }
     } finally {
     	if ( c != null && !c.isClosed()) {
@@ -323,15 +309,15 @@ public class ColumnDefinitions {
   /**
    * Delete the column definition from the column definitions table by using
    * its element key. This truly deletes the column.
+   * @param db
    * @param tableId
    * @param elementKey
-   * @param db
    * @return
    */
-  public static int deleteColumnDefinition(String tableId, String elementKey,
-      SQLiteDatabase db) {
-    int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_ELEMENT,
-        new String[] {tableId, elementKey});
+  public static int deleteColumnDefinition(SQLiteDatabase db,
+      String tableId, String elementKey ) {
+    int count = db.delete(DataModelDatabaseHelper.COLUMN_DEFINITIONS_TABLE_NAME,
+        WHERE_SQL_FOR_ELEMENT, new String[] {tableId, elementKey});
     if (count != 1) {
       Log.e(TAG, "deleteColumn() deleted " + count + " rows");
     }

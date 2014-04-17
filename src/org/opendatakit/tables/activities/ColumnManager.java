@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -30,7 +31,9 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -59,6 +62,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
 public class ColumnManager extends SherlockListActivity {
+  private static final String t = "ColumnManager";
 
 	private static final char UNDERSCORE_CHAR = '_';
 	private static final char SPACE_CHAR = ' ';
@@ -185,21 +189,66 @@ public class ColumnManager extends SherlockListActivity {
 	@Override
 	public boolean onContextItemSelected(android.view.MenuItem item) {
 		switch(item.getItemId()) {
-		case SET_AS_GROUP_BY:
+		case SET_AS_GROUP_BY: {
 			List<String> anewGroupBys = tp.getGroupByColumns();
 			anewGroupBys.add(currentCol);
-			tp.setGroupByColumns(anewGroupBys);
+         try {
+           SQLiteDatabase db = tp.getWritableDatabase();
+           db.beginTransaction();
+           try {
+             tp.setGroupByColumns(db, anewGroupBys);
+             db.setTransactionSuccessful();
+           } finally {
+             db.endTransaction();
+             db.close();
+           }
+         } catch ( Exception e ) {
+           e.printStackTrace();
+           Log.e(t, "Exception changing group-by columns: " + e.toString());
+           Toast.makeText(getParent(), "Error while revising group-by columns", Toast.LENGTH_LONG).show();
+         }
 			onResume();
+		}
 			return true;
-		case SET_AS_NON_GROUP_BY:
+		case SET_AS_NON_GROUP_BY: {
 			List<String> rnewGroupBys = tp.getGroupByColumns();
 			rnewGroupBys.remove(currentCol);
-			tp.setGroupByColumns(rnewGroupBys);
+         try {
+           SQLiteDatabase db = tp.getWritableDatabase();
+           db.beginTransaction();
+           try {
+             tp.setGroupByColumns(db, rnewGroupBys);
+             db.setTransactionSuccessful();
+           } finally {
+             db.endTransaction();
+             db.close();
+           }
+         } catch ( Exception e ) {
+           e.printStackTrace();
+           Log.e(t, "Exception changing group-by columns: " + e.toString());
+           Toast.makeText(getParent(), "Error while revising group-by columns", Toast.LENGTH_LONG).show();
+         }
 			onResume();
+		}
 			return true;
-		case SET_AS_ORDER_BY:
-			tp.setSortColumn(currentCol);
+		case SET_AS_ORDER_BY: {
+        try {
+            SQLiteDatabase db = tp.getWritableDatabase();
+            db.beginTransaction();
+            try {
+              tp.setSortColumn(db, currentCol);
+              db.setTransactionSuccessful();
+            } finally {
+              db.endTransaction();
+              db.close();
+            }
+        } catch ( Exception e ) {
+          e.printStackTrace();
+          Log.e(t, "Exception changing sort columns: " + e.toString());
+          Toast.makeText(getParent(), "Error while changing sort column", Toast.LENGTH_LONG).show();
+        }
 			onResume();
+		}
 			return true;
 		case REMOVE_THIS_COLUMN:
 			// Drop the column from 'data' table
@@ -213,7 +262,13 @@ public class ColumnManager extends SherlockListActivity {
          // OK Action => delete the column
          alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-              tp.deleteColumn(currentCol);
+              try {
+                tp.deleteColumn(currentCol);
+              } catch ( Exception e ) {
+                e.printStackTrace();
+                Log.e(t, "Exception while deleting column: " + e.toString());
+                Toast.makeText(getParent(), "Error while deleting column", Toast.LENGTH_LONG).show();
+              }
 
               // Update changes in other tables
               // To be done
@@ -286,7 +341,8 @@ public class ColumnManager extends SherlockListActivity {
 					  alertForNewColumnName(null);
 					} else {
 						// Create new column
-					  ColumnProperties cp = tp.addColumn(colName, null, null);
+					  ColumnProperties cp = tp.addColumn(colName, null, null,
+					        ColumnType.STRING, null, true);
 					  cps = new ColumnProperties[tp.getNumberOfDisplayColumns()];
 					  columnOrder.clear();
 					  for ( int i = 0 ; i < tp.getNumberOfDisplayColumns() ; ++ i) {
@@ -319,8 +375,7 @@ public class ColumnManager extends SherlockListActivity {
 
 	private void toastColumnNameError(String msg) {
 		Context context = getApplicationContext();
-		Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
-		toast.show();
+		Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
 	}
 
 	@Override
@@ -340,7 +395,18 @@ public class ColumnManager extends SherlockListActivity {
 			for (int i = 0; i < columnOrder.size(); i++) {
 				newOrder.add(columnOrder.get(i));
 			}
-			tp.setColumnOrder(newOrder);
+			SQLiteDatabase db = tp.getWritableDatabase();
+			try {
+			  db.beginTransaction();
+			  tp.setColumnOrder(db, newOrder);
+			  db.setTransactionSuccessful();
+			} catch ( Exception e ) {
+			  Toast.makeText(getParent(), "Error while changing column ordering", Toast.LENGTH_LONG).show();
+			} finally {
+			  db.endTransaction();
+			  db.close();
+			}
+			// reload from tp -- the ordering may or may not have changed
 			columnOrder.clear();
 			for ( int i = 0 ; i < tp.getNumberOfDisplayColumns() ; ++ i) {
 				cps[i] = tp.getColumnByIndex(i);

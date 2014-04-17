@@ -140,13 +140,6 @@ public class ListViewManager extends SherlockListActivity {
 
   @Override
   protected void onListItemClick(ListView l, View v, int position, long id) {
-    // Since at the moment we are counting on the Controller class to
-    // do the changing, we don't use the intent directly. If someone
-    // clicks on this view, that means they want to display the list
-    // view using this activity. Further, it means that they want to
-    // see the list view. To get this to work, we need to set the view
-    // type to list view
-    tp.setCurrentViewType(TableViewType.List);
     // This will help us access keys for the general partition. (We
     // need this to set this view as the default list view for the
     // table.)
@@ -167,7 +160,7 @@ public class ListViewManager extends SherlockListActivity {
     // an issue.
     boolean isOverview = tp.hasGroupByColumns();
     Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
-        null, isOverview, filenameOfSelectedView, null, null);
+        null, isOverview, filenameOfSelectedView, null, null, TableViewType.List);
   }
 
   @Override

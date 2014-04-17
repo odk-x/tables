@@ -173,8 +173,10 @@ public class DetailDisplayActivity extends SherlockActivity
 
     @Override
     public void onSearch() {
+      // search for something -- open in the default table view instead of in a detail view
         Controller.launchTableActivity(this, c.getTableProperties(),
-                c.getSearchText(), c.getIsOverview(), null, null, c.getCurrentSearchText());
+                c.getSearchText(), c.getIsOverview(), null, null, c.getCurrentSearchText(),
+                c.getTableProperties().getDefaultViewType());
     }
 
     @Override

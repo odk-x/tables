@@ -295,8 +295,7 @@ implements DisplayActivity {
 
 	private void toastGraphNameError(String msg) {
 		Context context = getApplicationContext();
-		Toast toast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
-		toast.show();
+		Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
 	}
 
 	public void handleOverwriteRequest(final String givenGraphName) {

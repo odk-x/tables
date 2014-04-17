@@ -29,6 +29,7 @@ import org.opendatakit.tables.data.JoinColumn;
 import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
@@ -37,6 +38,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,6 +48,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
@@ -174,29 +177,80 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
             query.addConstraint(cp, table.getData(rowNum, colNum));
         }
         Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false, null, null, c.getCurrentSearchText());
+                query.toUserQuery(), false, null, null, c.getCurrentSearchText(),
+                TableViewType.Spreadsheet);
     }
 
-    void addGroupByColumn(ColumnProperties cp) {
-    	List<String> newPrimes = c.getTableProperties().getGroupByColumns();
-    	newPrimes.add(cp.getElementKey());
-      c.getTableProperties().setGroupByColumns(newPrimes);
+    private void addGroupByColumn(ColumnProperties cp) {
+      TableProperties tp = c.getTableProperties();
+    	List<String> newGroupBys = tp.getGroupByColumns();
+    	newGroupBys.add(cp.getElementKey());
+    	SQLiteDatabase db = tp.getWritableDatabase();
+    	try {
+    	  db.beginTransaction();
+    	  tp.setGroupByColumns(db, newGroupBys);
+    	  db.setTransactionSuccessful();
+    	} catch ( Exception e ) {
+    	  e.printStackTrace();
+    	  Log.e(TAG, "Error while changing groupBy columns: " + e.toString());
+        Toast.makeText(getParent(), "Error while changing groupBy columns", Toast.LENGTH_LONG).show();
+    	} finally {
+    	  db.endTransaction();
+    	  db.close();
+    	}
     }
 
     void removeGroupByColumn(ColumnProperties cp) {
-        List<String> newPrimes = c.getTableProperties().getGroupByColumns();
-        newPrimes.remove(cp.getElementKey());
-        c.getTableProperties().setGroupByColumns(newPrimes);
+      TableProperties tp = c.getTableProperties();
+      List<String> newGroupBys = tp.getGroupByColumns();
+      newGroupBys.remove(cp.getElementKey());
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+        tp.setGroupByColumns(db, newGroupBys);
+        db.setTransactionSuccessful();
+      } catch ( Exception e ) {
+        e.printStackTrace();
+        Log.e(TAG, "Error while changing groupBy columns: " + e.toString());
+        Toast.makeText(getParent(), "Error while changing groupBy columns", Toast.LENGTH_LONG).show();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
     void setColumnAsSort(ColumnProperties cp) {
-        c.getTableProperties().setSortColumn(
-                (cp == null) ? null : cp.getElementKey());
+      TableProperties tp = c.getTableProperties();
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+        tp.setSortColumn(db, (cp == null) ? null : cp.getElementKey());
+        db.setTransactionSuccessful();
+      } catch ( Exception e ) {
+        e.printStackTrace();
+        Log.e(TAG, "Error while changing sort column: " + e.toString());
+        Toast.makeText(getParent(), "Error while changing sort column", Toast.LENGTH_LONG).show();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
     void setColumnAsIndexedCol(ColumnProperties cp) {
-      c.getTableProperties().setIndexColumn(
-          (cp == null) ? null : cp.getElementKey());
+      TableProperties tp = c.getTableProperties();
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+        tp.setIndexColumn(db, (cp == null) ? null : cp.getElementKey());
+        db.setTransactionSuccessful();
+      } catch ( Exception e ) {
+        e.printStackTrace();
+        Log.e(TAG, "Error while changing index column: " + e.toString());
+        Toast.makeText(getParent(), "Error while changing index column", Toast.LENGTH_LONG).show();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
     void openColumnPropertiesManager(ColumnProperties cp) {
@@ -665,7 +719,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                  String queryText = "_id:" +
       	                      table.getData(cellId);
       	                    Controller.launchTableActivity(context, joinedTable,
-      	                        queryText, c.getIsOverview(), null, null, c.getCurrentSearchText());
+      	                        queryText, c.getIsOverview(), null, null, c.getCurrentSearchText(), joinedTable.getDefaultViewType());
       	                    c.removeOverlay();
                        }
                      }

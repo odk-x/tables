@@ -62,6 +62,9 @@ public class TableActivity extends SherlockFragmentActivity
   public static final String INTENT_KEY_SEARCH = "search";
   public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
   public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
+
+  public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
+
   /** Key value store key for table activity. */
   public static final String KVS_PARTITION = "TableActivity";
 
@@ -114,6 +117,7 @@ public class TableActivity extends SherlockFragmentActivity
   private String mAppName;
 
   private String mCurrentSearchText;
+  private TableViewType mCurrentViewType;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -152,6 +156,14 @@ public class TableActivity extends SherlockFragmentActivity
       mCurrentSearchText = savedInstanceState.getString(INTENT_KEY_SEARCH);
     } else {
       mCurrentSearchText = null;
+    }
+
+    if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ) {
+      mCurrentViewType = TableViewType.valueOf(savedInstanceState.getString(INTENT_KEY_CURRENT_VIEW_TYPE));
+    } else if (getIntent().getExtras().containsKey(INTENT_KEY_CURRENT_VIEW_TYPE)) {
+      mCurrentViewType = TableViewType.valueOf(getIntent().getExtras().getString(INTENT_KEY_CURRENT_VIEW_TYPE));
+    } else {
+      mCurrentViewType = TableViewType.Map;
     }
 
     mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
@@ -201,6 +213,25 @@ public class TableActivity extends SherlockFragmentActivity
     if ( mCurrentSearchText != null ) {
       outState.putString(INTENT_KEY_SEARCH, mCurrentSearchText);
     }
+
+    if ( mCurrentViewType != null ) {
+      outState.putString(INTENT_KEY_CURRENT_VIEW_TYPE, mCurrentViewType.name());
+    }
+  }
+
+  public String getCurrentSearchText() {
+    return mCurrentSearchText;
+  }
+
+  public TableViewType getCurrentViewType() {
+    if ( mCurrentViewType == null ) {
+      mCurrentViewType = mTableProperties.getDefaultViewType();
+    }
+    return mCurrentViewType;
+  }
+
+  public void setCurrentViewType(TableViewType viewType) {
+    mCurrentViewType = viewType;
   }
 
   public void init() {
@@ -381,9 +412,8 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleTablePropertiesManagerReturn() {
-    TableViewType oldViewType = mTableProperties.getCurrentViewType();
     refreshDbTable(mTableProperties.getTableId());
-    if (oldViewType == mTableProperties.getCurrentViewType()) {
+    if (getCurrentViewType() == mTableProperties.getDefaultViewType()) {
       init();
     } else {
       launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
@@ -391,9 +421,8 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleManagePropertySetsReturn() {
-    TableViewType oldViewType = mTableProperties.getCurrentViewType();
     refreshDbTable(mTableProperties.getTableId());
-    if (oldViewType == mTableProperties.getCurrentViewType()) {
+    if (getCurrentViewType() == mTableProperties.getDefaultViewType()) {
       init();
     } else {
       launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
@@ -440,7 +469,7 @@ public class TableActivity extends SherlockFragmentActivity
       MenuItem item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
           viewTypes[i].name());
       // Mark the current viewType as selected.
-      if (mTableProperties.getCurrentViewType() == viewTypes[i]) {
+      if (getCurrentViewType() == viewTypes[i]) {
         item.setChecked(true);
       }
       // Disable list view if no file is specified
@@ -467,7 +496,7 @@ public class TableActivity extends SherlockFragmentActivity
     MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE,
         "Display Preferences").setEnabled(true);
     // Always disable DisplayPreferences if it is currently in list view
-    if (mTableProperties.getCurrentViewType() == TableViewType.List) {
+    if (getCurrentViewType() == TableViewType.List) {
       display.setEnabled(false);
     }
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
@@ -489,7 +518,7 @@ public class TableActivity extends SherlockFragmentActivity
     // If the item is part of the sub-menu for view type, set the view type
     // with its itemId else, handle accordingly.
     if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
-      mTableProperties.setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
+      setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
       launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
       return true;
     } else {
@@ -709,7 +738,10 @@ public class TableActivity extends SherlockFragmentActivity
     // TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() :
     // tp
     // .getCollectionViewSettings();
-    TableViewType viewType = tp.getCurrentViewType();
+    TableViewType viewType = getCurrentViewType();
+    if ( viewType == null ) {
+      viewType = tp.getDefaultViewType();
+    }
     Intent intent;
     // switch (tvs.getViewType()) {
     switch (viewType) {
@@ -753,6 +785,7 @@ public class TableActivity extends SherlockFragmentActivity
       intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
     }
     intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
+    intent.putExtra(INTENT_KEY_CURRENT_VIEW_TYPE, viewType.name());
     context.startActivity(intent);
   }
 

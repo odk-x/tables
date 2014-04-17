@@ -57,6 +57,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
@@ -529,7 +530,7 @@ public abstract class CustomView extends LinearLayout {
       }
       // We're not going to support search text from the js, so pass null.
       Controller.launchTableActivity(mActivity, tpToOpen, null, false, sqlWhereClause,
-          sqlSelectionArgs, null);
+          sqlSelectionArgs, null, tpToOpen.getDefaultViewType());
       return true;
     }
 
@@ -1043,16 +1044,27 @@ public abstract class CustomView extends LinearLayout {
             public void onClick(DialogInterface dialog, int which) {
               String newTableName = input.getText().toString().trim();
               if (newTableName == null || newTableName.equals("")) {
-                Toast toast = Toast.makeText(mActivity,
-                    mActivity.getString(R.string.error_table_name_empty), Toast.LENGTH_LONG);
-                toast.show();
+                Toast.makeText(mActivity, mActivity.getString(R.string.error_table_name_empty),
+                    Toast.LENGTH_LONG).show();
               } else {
                 if (isNewTable) {
                   // TODO: prompt for this!
                   String tableId = NameUtil.createUniqueTableId(getContext(), mAppName, newTableName);
                   addTable(newTableName, tableId);
                 } else {
-                  tp.setDisplayName(newTableName);
+                  SQLiteDatabase db = tp.getWritableDatabase();
+                  try {
+                    db.beginTransaction();
+                    tp.setDisplayName(db, newTableName);
+                    db.setTransactionSuccessful();
+                  } catch ( Exception e ) {
+                    e.printStackTrace();
+                    Log.e(TAG, "Unable to change display name: " + e.toString());
+                    Toast.makeText(CustomView.this.getContext(), "Unable to change display name", Toast.LENGTH_LONG).show();
+                  } finally {
+                    db.endTransaction();
+                    db.close();
+                  }
                 }
               }
             }

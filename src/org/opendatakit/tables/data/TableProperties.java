@@ -51,8 +51,10 @@ import org.opendatakit.tables.utils.NameUtil;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * A class for accessing and managing table properties.
@@ -85,19 +87,19 @@ public class TableProperties {
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
-  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
-  public static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
+  private static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
+  private static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
 
-  public static final String KEY_GROUP_BY_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
+  private static final String KEY_GROUP_BY_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
 
-  public static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
-  public static final String KEY_SORT_ORDER = KeyValueStoreConstants.TABLE_SORT_ORDER;
+  private static final String KEY_SORT_COLUMN = KeyValueStoreConstants.TABLE_SORT_COL;
+  private static final String KEY_SORT_ORDER = KeyValueStoreConstants.TABLE_SORT_ORDER;
 
   // INDEX_COL is held fixed during left/right pan
-  public static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
+  private static final String KEY_INDEX_COLUMN = KeyValueStoreConstants.TABLE_INDEX_COL;
 
   // this is not known by the server...
-  public static final String KEY_CURRENT_VIEW_TYPE = "currentViewType";
+  private static final String KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
 
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
@@ -120,7 +122,7 @@ public class TableProperties {
   private static final String JSON_KEY_GROUP_BY_COLUMNS = "groupByCols";
   private static final String JSON_KEY_SORT_COLUMN = "sortCol";
   private static final String JSON_KEY_INDEX_COLUMN = "indexCol";
-  private static final String JSON_KEY_CURRENT_VIEW_TYPE = "currentViewType";
+  private static final String JSON_KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
 
   /***********************************
    * Default values for those keys which require them. TODO When the keys in the
@@ -138,11 +140,11 @@ public class TableProperties {
    * a table. In other words they should always exist in the key value store.
    */
   private static final String[] INIT_KEYS = { KEY_DISPLAY_NAME, KEY_COLUMN_ORDER,
-      KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE, KEY_INDEX_COLUMN };
+      KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_DEFAULT_VIEW_TYPE, KEY_INDEX_COLUMN };
 
   // columns included in json properties
   private static final List<String> JSON_COLUMNS = Arrays.asList(new String[] { KEY_DISPLAY_NAME,
-      KEY_COLUMN_ORDER, KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_CURRENT_VIEW_TYPE,
+      KEY_COLUMN_ORDER, KEY_GROUP_BY_COLUMNS, KEY_SORT_COLUMN, KEY_DEFAULT_VIEW_TYPE,
       KEY_INDEX_COLUMN });
 
   static {
@@ -173,7 +175,7 @@ public class TableProperties {
       activeTableIdMap.clear();
       for ( String tableId : idsInActiveKVS ) {
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-        TableProperties tp = constructPropertiesFromMap(context, appName, propPairs, typeOfStore);
+        TableProperties tp = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
         if ( tp == null ) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
@@ -187,13 +189,10 @@ public class TableProperties {
   private static synchronized void ensureActiveTableIdMapLoaded(Context context, String appName, SQLiteDatabase db) {
     // A pre-requisite to having an update cache is to have agreement on
     // all the known table ids.
-    try {
-      List<String> allIds = TableDefinitions.getAllTableIds(db);
-      if ( staleActiveCache || allTableIds.size() != allIds.size() || !allTableIds.containsAll(allIds) ) {
-        allTableIds = allIds;
-        refreshActiveCache(context, appName, db);
-      }
-    } finally {
+    List<String> allIds = TableDefinitions.getAllTableIds(db);
+    if ( staleActiveCache || allTableIds.size() != allIds.size() || !allTableIds.containsAll(allIds) ) {
+      allTableIds = allIds;
+      refreshActiveCache(context, appName, db);
     }
   }
 
@@ -232,7 +231,7 @@ public class TableProperties {
       }
 
       Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      TableProperties tp = constructPropertiesFromMap(context, appName, mapProps, typeOfStore);
+      TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps, typeOfStore);
       if (tp != null && typeOfStore == KeyValueStoreType.ACTIVE) {
         // update the cache...
         activeTableIdMap.put(tp.getTableId(), tp);
@@ -250,7 +249,7 @@ public class TableProperties {
     SQLiteDatabase db = dh.getReadableDatabase();
     try {
       Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      TableProperties tp = constructPropertiesFromMap(context, appName, mapProps, typeOfStore);
+      TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps, typeOfStore);
       if (tp != null && typeOfStore == KeyValueStoreType.ACTIVE) {
         // update the cache...
         activeTableIdMap.put(tp.getTableId(), tp);
@@ -363,15 +362,15 @@ public class TableProperties {
   private List<String> groupByColumns;
   private String sortColumn;
   private String indexColumn;
-  private TableViewType currentViewType;
+  private TableViewType defaultViewType;
   private KeyValueStoreHelper tableKVSH;
 
-  private TableProperties(Context context, String appName, String tableId, String dbTableName,
+  private TableProperties(Context context, String appName, SQLiteDatabase db, String tableId, String dbTableName,
       String displayName,
       ArrayList<String> columnOrder, ArrayList<String> groupByColumns, String sortColumn,
       String indexColumn, SyncTag syncTag,
       String lastSyncTime,
-      TableViewType currentViewType,
+      TableViewType defaultViewType,
       SyncState syncState, boolean transactioning,
       KeyValueStoreType backingStore) {
     this.context = context;
@@ -395,12 +394,15 @@ public class TableProperties {
     }
     this.syncTag = syncTag;
     this.lastSyncTime = lastSyncTime;
-    this.currentViewType = currentViewType;
+    this.defaultViewType = defaultViewType;
     this.syncState = syncState;
     this.transactioning = transactioning;
     this.backingStore = backingStore;
     this.tableKVSH = this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-    refreshColumns();
+
+    // This should be OK even when we are creating a new database
+    // because there should be no column entries defined yet.
+    refreshColumns(db);
     if (columnOrder.size() == 0) {
 
       for (ColumnProperties cp : mElementKeyToColumnProperties.values()) {
@@ -533,7 +535,7 @@ public class TableProperties {
     try {
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
       KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
-      Map<String, String> tableDefinitionsMap = TableDefinitions.getFields(tableId, db);
+      Map<String, String> tableDefinitionsMap = TableDefinitions.getFields(db, tableId);
       Map<String, String> kvsMap = intendedKVS.getProperties(db);
       Map<String, String> mapProps = new HashMap<String, String>();
       // table definitions wins -- apply it 2nd
@@ -558,8 +560,8 @@ public class TableProperties {
       if ( mapProps.get(KEY_INDEX_COLUMN) == null ) {
         mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
       }
-      if ( mapProps.get(KEY_CURRENT_VIEW_TYPE) == null ) {
-        mapProps.put(KEY_CURRENT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
+      if ( mapProps.get(KEY_DEFAULT_VIEW_TYPE) == null ) {
+        mapProps.put(KEY_DEFAULT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
       }
       return mapProps;
     } finally {
@@ -575,7 +577,7 @@ public class TableProperties {
    * be acquired from the key value store.
    */
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
-      Map<String, String> props, KeyValueStoreType backingStore) {
+        SQLiteDatabase db, Map<String, String> props, KeyValueStoreType backingStore) {
     // first we have to get the appropriate type for the non-string fields.
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
     if ( syncStateStr == null ) {
@@ -587,17 +589,17 @@ public class TableProperties {
     int transactioningInt = Integer.parseInt(transactioningStr);
     boolean transactioning = SyncUtil.intToBool(transactioningInt);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
-    String currentViewTypeStr = props.get(KEY_CURRENT_VIEW_TYPE);
-    TableViewType currentViewType;
-    if (currentViewTypeStr == null) {
-      currentViewType = TableViewType.Spreadsheet;
-      props.put(KEY_CURRENT_VIEW_TYPE, TableViewType.Spreadsheet.name());
+    String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
+    TableViewType defaultViewType;
+    if (defaultViewTypeStr == null) {
+      defaultViewType = TableViewType.Spreadsheet;
+      props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.Spreadsheet.name());
     } else {
       try {
-        currentViewType = TableViewType.valueOf(currentViewTypeStr);
+        defaultViewType = TableViewType.valueOf(defaultViewTypeStr);
       } catch (Exception e) {
-        currentViewType = TableViewType.Spreadsheet;
-        props.put(KEY_CURRENT_VIEW_TYPE, TableViewType.Spreadsheet.name());
+        defaultViewType = TableViewType.Spreadsheet;
+        props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.Spreadsheet.name());
       }
     }
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
@@ -642,13 +644,13 @@ public class TableProperties {
       }
     }
 
-    return new TableProperties(context, appName, props.get(TableDefinitionsColumns.TABLE_ID),
+    return new TableProperties(context, appName, db, props.get(TableDefinitionsColumns.TABLE_ID),
         props.get(TableDefinitionsColumns.DB_TABLE_NAME),
         props.get(KEY_DISPLAY_NAME),
         columnOrder, primeList,
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
-        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), currentViewType,
+        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
         syncState, transactioning, backingStore);
   }
 
@@ -662,7 +664,7 @@ public class TableProperties {
     for (int i = 0; i < ids.size(); i++) {
       String tableId = ids.get(i);
       Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      allProps[i] = constructPropertiesFromMap(context, appName, propPairs, typeOfStore);
+      allProps[i] = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
       if ( allProps[i] == null ) {
         throw new IllegalStateException("Unexpectedly missing " + tableId);
       }
@@ -766,7 +768,7 @@ public class TableProperties {
         TableDefinitions.addTable(db, tableId, dbTableName);
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
         propPairs.put(KEY_DISPLAY_NAME, displayName);
-        tp = constructPropertiesFromMap(context, appName, propPairs, typeOfStore);
+        tp = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
         if ( tp == null ) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
@@ -889,8 +891,8 @@ public class TableProperties {
    * @param displayName
    *          the new display name
    */
-  public void setDisplayName(String displayName) {
-    tableKVSH.setString(KEY_DISPLAY_NAME, displayName);
+  public void setDisplayName(SQLiteDatabase db, String displayName) {
+    tableKVSH.setString(db, KEY_DISPLAY_NAME, displayName);
     this.displayName = displayName;
   }
 
@@ -899,8 +901,8 @@ public class TableProperties {
    *
    * @return
    */
-  public TableViewType getCurrentViewType() {
-    return this.currentViewType;
+  public TableViewType getDefaultViewType() {
+    return this.defaultViewType;
   }
 
   /**
@@ -908,9 +910,9 @@ public class TableProperties {
    *
    * @param viewType
    */
-  public void setCurrentViewType(TableViewType viewType) {
-    tableKVSH.setString(TableProperties.KEY_CURRENT_VIEW_TYPE, viewType.name());
-    this.currentViewType = viewType;
+  public void setDefaultViewType(SQLiteDatabase db, TableViewType viewType) {
+    tableKVSH.setString(db, TableProperties.KEY_DEFAULT_VIEW_TYPE, viewType.name());
+    this.defaultViewType = viewType;
   }
 
   /**
@@ -925,7 +927,7 @@ public class TableProperties {
    */
   public Map<String, ColumnProperties> getDatabaseColumns() {
     if (mElementKeyToColumnProperties == null) {
-      refreshColumns();
+      refreshColumnsFromDatabase();
     }
     Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
     for ( String col : mElementKeyToColumnProperties.keySet() ) {
@@ -949,7 +951,7 @@ public class TableProperties {
    */
   public Map<String, ColumnProperties> getAllColumns() {
     if (mElementKeyToColumnProperties == null) {
-      refreshColumns();
+      refreshColumnsFromDatabase();
     }
     Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
     for ( String col : mElementKeyToColumnProperties.keySet() ) {
@@ -959,12 +961,24 @@ public class TableProperties {
     return defensiveCopy;
   }
 
+  private void refreshColumnsFromDatabase() {
+   SQLiteDatabase db = null;
+   try {
+     db = getReadableDatabase();
+     refreshColumns(db);
+   } finally {
+     if ( db != null ) {
+       db.close();
+     }
+   }
+  }
+
   /**
    * Pulls the columns from the database into this TableProperties. Also updates
    * the maps of display name and sms label.
    */
-  public void refreshColumns() {
-    this.mElementKeyToColumnProperties = ColumnProperties.getColumnPropertiesForTable(this);
+  public void refreshColumns(SQLiteDatabase db) {
+    this.mElementKeyToColumnProperties = ColumnProperties.getColumnPropertiesForTable(db, this);
   }
 
   /**
@@ -988,7 +1002,7 @@ public class TableProperties {
 
   public ColumnProperties getColumnByElementKey(String elementKey) {
     if (this.mElementKeyToColumnProperties == null) {
-      refreshColumns();
+      refreshColumnsFromDatabase();
     }
     return mElementKeyToColumnProperties.get(elementKey);
   }
@@ -1005,7 +1019,7 @@ public class TableProperties {
    */
   public ColumnProperties getColumnByDisplayName(String displayName) {
     if (this.mElementKeyToColumnProperties == null) {
-      refreshColumns();
+      refreshColumnsFromDatabase();
     }
     for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
       if (cp.getDisplayName().equals(displayName)) {
@@ -1030,7 +1044,7 @@ public class TableProperties {
 
   public ColumnProperties getColumnByElementName(String elementName) {
     if (this.mElementKeyToColumnProperties == null) {
-      refreshColumns();
+      refreshColumnsFromDatabase();
     }
     for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
       if (cp.getElementName().equals(elementName)) {
@@ -1061,23 +1075,6 @@ public class TableProperties {
       }
       suffix++;
     }
-  }
-
-  /**
-   * Adds a column to the table.
-   * <p>
-   * The column is set to the default visibility. The column is added to the
-   * backing store.
-   * <p>
-   * The elementKey and elementName must be unique to a given table. If you are
-   * not ensuring this yourself, you should pass in null values and it will
-   * generate names based on the displayName via
-   * {@link ColumnProperties#createDbElementKey} and
-   * {@link ColumnProperties#createDbElementName}.
-   */
-  public ColumnProperties addColumn(String displayName, String elementKey, String elementName) {
-    return addColumn(displayName, elementKey, elementName,
-        ColumnDefinitions.DEFAULT_DB_ELEMENT_TYPE, null, ColumnDefinitions.DEFAULT_DB_IS_UNIT_OF_RETENTION);
   }
 
   /**
@@ -1134,7 +1131,7 @@ public class TableProperties {
     ColumnProperties cp = null;
     cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName,
         elementKey, elementName, columnType, listChildElementKeys, isUnitOfRetention,
-        ColumnProperties.DEFAULT_KEY_VISIBLE);
+        true);
 
     return addColumn(cp);
   }
@@ -1158,20 +1155,22 @@ public class TableProperties {
    * @param elementName
    *          should either be received from the server or null
    * @return ColumnProperties for the new table
+   * @throws SQLException
+   * @throws IllegalStateException
+   * @throws IllegalArgumentException
    */
-  public ColumnProperties addColumn(ColumnProperties cp) {
+  private ColumnProperties addColumn(ColumnProperties cp) throws SQLException, IllegalStateException, IllegalArgumentException {
     // ensuring columns is initialized
     // refreshColumns();
     // adding column
     boolean failure = false;
     SQLiteDatabase db = null;
     try {
-      DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
-      db = dh.getReadableDatabase();
+      db = getWritableDatabase();
       db.beginTransaction();
       try {
         // ensure that we have persisted this column's values
-        cp.persistColumn(db, tableId);
+        cp.persistColumn(db);
         db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \"" + cp.getElementKey() + "\"");
         // use a copy of columnOrder for roll-back purposes
         List<String> newColumnOrder = this.getColumnOrder();
@@ -1181,24 +1180,41 @@ public class TableProperties {
         mElementKeyToColumnProperties.put(cp.getElementKey(), cp);
         Log.d(t, "addColumn successful: " + cp.getElementKey());
         db.setTransactionSuccessful();
-      } catch (Exception e) {
-        failure = true;
-        e.printStackTrace();
-        Log.e(t, "error adding column: " + displayName);
+        return cp;
       } finally {
         db.endTransaction();
-        db.close();
       }
-      // newColumns[columns.length] = cp;
-      // columns = newColumns;
-      // returning new ColumnProperties
-      return cp;
+    } catch (SQLException e) {
+      failure = true;
+      e.printStackTrace();
+      throw e;
+    } catch (IllegalStateException e) {
+      failure = true;
+      e.printStackTrace();
+      throw e;
+    } catch (JsonGenerationException e) {
+      failure = true;
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] failed for: " + cp.getElementKey(), e);
+    } catch (JsonMappingException e) {
+      failure = true;
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] failed for: " + cp.getElementKey(), e);
+    } catch (IOException e) {
+      failure = true;
+      e.printStackTrace();
+      throw new IllegalArgumentException("[addColumn] failed for: " + cp.getElementKey(), e);
     } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-      // update this object.
+      if ( db != null ) {
+        try {
+          db.close();
+        } catch ( Exception e ) {
+          e.printStackTrace();
+          Log.e(t, "Error while closing database");
+        }
+      }
       if (failure) {
-        refreshColumns();
+        refreshColumnsFromDatabase();
       }
     }
   }
@@ -1208,8 +1224,13 @@ public class TableProperties {
    *
    * @param elementKey
    *          the elementKey of the column to delete
+   * @throws SQLException
+   * @throws IllegalStateException
+   * @throws JsonGenerationException
+   * @throws JsonMappingException
+   * @throws IOException
    */
-  public void deleteColumn(String elementKey) {
+  public void deleteColumn(String elementKey) throws SQLException, IllegalStateException, JsonGenerationException, JsonMappingException, IOException {
     // forming a comma-separated list of columns to keep
     ColumnProperties colToDelete = this.getColumnByElementKey(elementKey);
     if (colToDelete == null) {
@@ -1230,8 +1251,7 @@ public class TableProperties {
     // deleting the column
     SQLiteDatabase db = null;
     try {
-      DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
-      db = dh.getReadableDatabase();
+      db = getWritableDatabase();
       db.beginTransaction();
       try {
         // NOTE: this assumes mElementKeyToColumnProperties
@@ -1243,20 +1263,35 @@ public class TableProperties {
         this.setColumnOrder(db, newColumnOrder);
         colToDelete.deleteColumn(db);
         db.setTransactionSuccessful();
-      } catch (Exception e) {
+      } catch (SQLException e) {
         failure = true;
-        e.printStackTrace();
-        Log.e(t, "error deleting column: " + elementKey);
+        throw e;
+      } catch (IllegalStateException e) {
+        failure = true;
+        throw e;
+      } catch (JsonGenerationException e) {
+        failure = true;
+        throw e;
+      } catch (JsonMappingException e) {
+        failure = true;
+        throw e;
+      } catch (IOException e) {
+        failure = true;
+        throw e;
       } finally {
         db.endTransaction();
-        db.close();
       }
     } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-      // update this object.
+      if ( db != null ) {
+        try {
+          db.close();
+        } catch ( Exception e ) {
+          e.printStackTrace();
+          Log.e(t, "Error while closing database");
+        }
+      }
       if (failure) {
-        refreshColumns();
+        refreshColumnsFromDatabase();
       }
     }
   }
@@ -1372,36 +1407,9 @@ public class TableProperties {
     return defensiveCopy;
   }
 
-  /**
-   * Sets the column order. Must be element keys.
-   *
-   * @param colOrder
-   *          an ordered array of the database names of the table's columns
-   */
-  public void setColumnOrder(List<String> colOrder) {
-    SQLiteDatabase db = getWritableDatabase();
-    try {
-      setColumnOrder(db, colOrder);
-    } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-    }
-  }
-
-  private void setColumnOrder(SQLiteDatabase db, List<String> columnOrder) {
+  public void setColumnOrder(SQLiteDatabase db, List<String> columnOrder) throws JsonGenerationException, JsonMappingException, IOException {
     String colOrderList = null;
-    try {
-      colOrderList = mapper.writeValueAsString(columnOrder);
-    } catch (JsonParseException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setColumnOrder failed: " + columnOrder.toString(), e);
-    }
+    colOrderList = mapper.writeValueAsString(columnOrder);
     tableKVSH.setString(db, KEY_COLUMN_ORDER, colOrderList);
     this.columnOrder = columnOrder;
     this.staleColumnsInOrder = true;
@@ -1428,25 +1436,18 @@ public class TableProperties {
   /**
    * Sets the table's prime columns.
    *
-   * @param primes
+   * @param db
+   * @param groupByCols
    *          an array of the database names of the table's prime columns
+   * @throws IOException
+   * @throws JsonMappingException
+   * @throws JsonGenerationException
    */
-  public void setGroupByColumns(List<String> groupByCols) {
+  public void setGroupByColumns(SQLiteDatabase db, List<String> groupByCols) throws JsonGenerationException, JsonMappingException, IOException {
     String groupByJsonStr;
-    try {
-      groupByJsonStr = mapper.writeValueAsString(groupByCols);
-      tableKVSH.setString(KEY_GROUP_BY_COLUMNS, groupByJsonStr);
-      this.groupByColumns = groupByCols;
-    } catch (JsonParseException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("setPrimeColumns failed: " + groupByCols.toString(), e);
-    }
+    groupByJsonStr = mapper.writeValueAsString(groupByCols);
+    tableKVSH.setString(db, KEY_GROUP_BY_COLUMNS, groupByJsonStr);
+    this.groupByColumns = groupByCols;
   }
 
   /**
@@ -1463,11 +1464,11 @@ public class TableProperties {
    *          the database name of the new sort column (or null for no sort
    *          column)
    */
-  public void setSortColumn(String sortColumn) {
+  public void setSortColumn(SQLiteDatabase db, String sortColumn) {
     if ((sortColumn != null) && (sortColumn.length() == 0)) {
       sortColumn = null;
     }
-    tableKVSH.setString(KEY_SORT_COLUMN, sortColumn);
+    tableKVSH.setString(db, KEY_SORT_COLUMN, sortColumn);
     this.sortColumn = sortColumn;
   }
 
@@ -1498,11 +1499,11 @@ public class TableProperties {
    *
    * @param indexColumnElementKey
    */
-  public void setIndexColumn(String indexColumnElementKey) {
+  public void setIndexColumn(SQLiteDatabase db, String indexColumnElementKey) {
     if ((indexColumnElementKey == null)) {
       indexColumnElementKey = DEFAULT_KEY_INDEX_COLUMN;
     }
-    tableKVSH.setString(KEY_INDEX_COLUMN, indexColumnElementKey);
+    tableKVSH.setString(db, KEY_INDEX_COLUMN, indexColumnElementKey);
     this.indexColumn = indexColumnElementKey;
   }
 
@@ -1614,7 +1615,7 @@ public class TableProperties {
     jo.put(JSON_KEY_GROUP_BY_COLUMNS, getGroupByColumns());
     jo.put(JSON_KEY_SORT_COLUMN, sortColumn);
     jo.put(JSON_KEY_INDEX_COLUMN, indexColumn);
-    jo.put(JSON_KEY_CURRENT_VIEW_TYPE, currentViewType.name());
+    jo.put(JSON_KEY_DEFAULT_VIEW_TYPE, defaultViewType.name());
 
     String toReturn = null;
     toReturn = mapper.writeValueAsString(jo);
@@ -1638,11 +1639,13 @@ public class TableProperties {
       ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
       ArrayList<String> groupByCols = (ArrayList<String>) jo.get(JSON_KEY_GROUP_BY_COLUMNS);
 
-      setDisplayName((String) jo.get(JSON_KEY_DISPLAY_NAME));
-      setGroupByColumns(groupByCols);
-      setSortColumn((String) jo.get(JSON_KEY_SORT_COLUMN));
-      setIndexColumn((String) jo.get(JSON_KEY_INDEX_COLUMN));
-      setCurrentViewType(TableViewType.valueOf((String) jo.get(JSON_KEY_CURRENT_VIEW_TYPE)));
+      SQLiteDatabase db = getWritableDatabase();
+
+      setDisplayName(db, (String) jo.get(JSON_KEY_DISPLAY_NAME));
+      setGroupByColumns(db, groupByCols);
+      setSortColumn(db, (String) jo.get(JSON_KEY_SORT_COLUMN));
+      setIndexColumn(db, (String) jo.get(JSON_KEY_INDEX_COLUMN));
+      setDefaultViewType(db, TableViewType.valueOf((String) jo.get(JSON_KEY_DEFAULT_VIEW_TYPE)));
 
       Set<String> columnElementKeys = new HashSet<String>();
       ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
@@ -1662,11 +1665,11 @@ public class TableProperties {
           if (change == ColumnDefinitionChange.CHANGE_ELEMENT_TYPE) {
             ColumnType now = existing.getColumnType();
             ColumnType next = cp.getColumnType();
-            existing.setColumnType(this, next);
+            existing.setColumnType(db, this, next);
           }
           // persist the incoming definition
-          cp.persistColumn(getWritableDatabase(), tableId);
-          this.refreshColumns(); // to read in this new definition.
+          cp.persistColumn(db);
+          this.refreshColumns(db); // to read in this new definition.
         } else {
           this.addColumn(cp);
         }
@@ -1685,7 +1688,7 @@ public class TableProperties {
         deleteColumn(columnToDelete);
       }
 
-      setColumnOrder(colOrder);
+      setColumnOrder(db, colOrder);
       // orderColumns();
     } catch (JsonParseException e) {
       e.printStackTrace();

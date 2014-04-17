@@ -20,9 +20,11 @@ import java.util.List;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.TableProperties;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -39,14 +41,16 @@ import android.widget.TableRow;
 public class MultipleChoiceSettingDialog extends Dialog {
 
     private Context context;
+    private TableProperties tp;
     private ColumnProperties cp;
     private LinearLayout layout;
     private ArrayList<String> optionValues;
     private List<EditText> optionFields;
 
-    public MultipleChoiceSettingDialog(Context context, ColumnProperties cp) {
+    public MultipleChoiceSettingDialog(Context context, TableProperties tp, ColumnProperties cp) {
         super(context);
         this.context = context;
+        this.tp = tp;
         this.cp = cp;
         setTitle(context.getString(R.string.multiple_choice_options));
         layout = new LinearLayout(context);
@@ -112,7 +116,13 @@ public class MultipleChoiceSettingDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateValueList();
-                cp.setDisplayChoicesList(optionValues);
+                SQLiteDatabase db = null;
+                try {
+                  db = tp.getWritableDatabase();
+                  cp.setDisplayChoicesList(db, optionValues);
+                } finally {
+                  db.close();
+                }
                 dismiss();
             }
         });

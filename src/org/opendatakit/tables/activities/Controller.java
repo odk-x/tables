@@ -99,6 +99,8 @@ public class Controller implements CustomViewCallbacks {
    */
   public static final String INTENT_KEY_SQL_SELECTION_ARGS = "sqlSelectionArgs";
 
+  public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
+
   public static final int VIEW_ID_SEARCH_FIELD = 0;
   public static final int VIEW_ID_SEARCH_BUTTON = 1;
 
@@ -153,6 +155,8 @@ public class Controller implements CustomViewCallbacks {
   private View overlay;
   private RelativeLayout.LayoutParams overlayLp;
   private String mCurrentSearchText;
+  private TableViewType mCurrentViewType;
+
 
   public Controller(SherlockActivity activity, final DisplayActivity da, Bundle intentBundle, Bundle savedInstanceState) {
     du = DataUtil.getDefaultDataUtil();
@@ -184,6 +188,14 @@ public class Controller implements CustomViewCallbacks {
       mCurrentSearchText = savedInstanceState.getString(INTENT_KEY_SEARCH);
     } else {
       mCurrentSearchText = null;
+    }
+
+    if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ) {
+      mCurrentViewType = TableViewType.valueOf(savedInstanceState.getString(INTENT_KEY_CURRENT_VIEW_TYPE));
+    } else if (intentBundle.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE)) {
+      mCurrentViewType = TableViewType.valueOf(intentBundle.getString(INTENT_KEY_CURRENT_VIEW_TYPE));
+    } else {
+      mCurrentViewType = null;
     }
 
     isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
@@ -254,10 +266,25 @@ public class Controller implements CustomViewCallbacks {
     if ( mCurrentSearchText != null ) {
       outState.putString(INTENT_KEY_SEARCH, mCurrentSearchText);
     }
+
+    if ( mCurrentViewType != null ) {
+      outState.putString(INTENT_KEY_CURRENT_VIEW_TYPE, mCurrentViewType.name());
+    }
   }
 
   public String getCurrentSearchText() {
     return mCurrentSearchText;
+  }
+
+  public TableViewType getCurrentViewType() {
+    if ( mCurrentViewType == null ) {
+      mCurrentViewType = tp.getDefaultViewType();
+    }
+    return mCurrentViewType;
+  }
+
+  public void setCurrentViewType(TableViewType viewType) {
+    mCurrentViewType = viewType;
   }
 
   public void setSimpleInfoBarText() {
@@ -513,12 +540,12 @@ public class Controller implements CustomViewCallbacks {
     // is an overview of a collection view is stored here in Controller.
     // This should eventually move, if we decide to keep this architecture. but
     // for now I'm going to just hardcode in a solution.
-    TableViewType oldViewType = tp.getCurrentViewType();
+    TableViewType oldViewType = getCurrentViewType();
     refreshDbTable(tp.getTableId());
-    if (oldViewType == tp.getCurrentViewType()) {
+    if (oldViewType == tp.getDefaultViewType()) {
       da.init();
     } else {
-      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText);
+      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, tp.getDefaultViewType());
     }
   }
 
@@ -527,12 +554,12 @@ public class Controller implements CustomViewCallbacks {
     // is an overview of a collection view is stored here in Controller.
     // This should eventually move, if we decide to keep this architecture. but
     // for now I'm going to just hardcode in a solution.
-    TableViewType oldViewType = tp.getCurrentViewType();
+    TableViewType oldViewType = getCurrentViewType();
     refreshDbTable(tp.getTableId());
-    if (oldViewType == tp.getCurrentViewType()) {
+    if (oldViewType == tp.getDefaultViewType()) {
       da.init();
     } else {
-      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText);
+      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, tp.getDefaultViewType());
     }
   }
 
@@ -596,7 +623,7 @@ public class Controller implements CustomViewCallbacks {
       item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
           viewTypes[i].name());
       // mark the current viewType as selected
-      if (tp.getCurrentViewType() == viewTypes[i]) {
+      if (getCurrentViewType() == viewTypes[i]) {
         item.setChecked(true);
       }
       // disable list view if no file is specified
@@ -623,7 +650,7 @@ public class Controller implements CustomViewCallbacks {
     MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE,
         activity.getString(R.string.display_prefs)).setEnabled(enabled);
     // always disable DisplayPreferences if it is currently in list view
-    if (tp.getCurrentViewType() == TableViewType.List)
+    if (getCurrentViewType() == TableViewType.List)
       display.setEnabled(false);
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE,
         activity.getString(R.string.table_props)).setEnabled(enabled);
@@ -650,8 +677,8 @@ public class Controller implements CustomViewCallbacks {
     // its itemId
     // else, handle accordingly
     if (selectedItem.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
-      tp.setCurrentViewType(TableViewType.getViewTypeFromId(selectedItem.getItemId()));
-      Controller.launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText);
+      setCurrentViewType(TableViewType.getViewTypeFromId(selectedItem.getItemId()));
+      Controller.launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, getCurrentViewType());
       return true;
     } else {
       switch (itemId) {
@@ -809,19 +836,19 @@ public class Controller implements CustomViewCallbacks {
   }
 
   public static void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview, null, null, null, null);
+    Controller.launchTableActivity(context, tp, null, null, isOverview, null, null, null, null, tp.getDefaultViewType());
   }
 
   public static void launchTableActivity(Context context, TableProperties tp, String searchText,
                                          boolean isOverview, String sqlWhereClause,
-                                         String[] sqlSelectionArgs, String currentSearchText) {
+                                         String[] sqlSelectionArgs, String currentSearchText, TableViewType viewType) {
     Controller.launchTableActivity(context, tp, searchText, null, isOverview, null, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+        sqlSelectionArgs, currentSearchText, viewType);
   }
 
   private static void launchTableActivity(Activity context, TableProperties tp,
-                                          Stack<String> searchStack, boolean isOverview, String currentSearchText ) {
-    Controller.launchTableActivity(context, tp, null, searchStack, isOverview, null, null, null, currentSearchText);
+                                          Stack<String> searchStack, boolean isOverview, String currentSearchText, TableViewType viewType ) {
+    Controller.launchTableActivity(context, tp, null, searchStack, isOverview, null, null, null, currentSearchText, viewType);
     context.finish();
   }
 
@@ -840,9 +867,9 @@ public class Controller implements CustomViewCallbacks {
   public static void launchTableActivityWithFilename(Activity context, TableProperties tp,
                                                      Stack<String> searchStack, boolean isOverview,
                                                      String filename, String sqlWhereClause,
-                                                     String[] sqlSelectionArgs) {
+                                                     String[] sqlSelectionArgs, TableViewType viewType) {
     Controller.launchTableActivity(context, tp, null, searchStack, isOverview, filename,
-        sqlWhereClause, sqlSelectionArgs, null);
+        sqlWhereClause, sqlSelectionArgs, null, viewType);
     context.finish();
   }
 
@@ -1006,8 +1033,10 @@ public class Controller implements CustomViewCallbacks {
   private static void launchTableActivity(Context context, TableProperties tp, String searchText,
                                           Stack<String> searchStack, boolean isOverview,
                                           String filename, String sqlWhereClause,
-                                          String[] sqlSelectionArgs, String currentSearchText) {
-    TableViewType viewType = tp.getCurrentViewType();
+                                          String[] sqlSelectionArgs, String currentSearchText, TableViewType viewType) {
+    if ( viewType == null ) {
+      viewType = tp.getDefaultViewType();
+    }
     Intent intent;
     switch (viewType) {
     case List:

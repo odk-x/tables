@@ -98,12 +98,11 @@ public class TableDefinitions {
    * Return a map of columnName->Value for the row with the given table id.
    * TODO: perhaps this should become columnName->TypevValuePair like the rest
    * of these maps.
-   * @param tableId
    * @param db
+   * @param tableId
    * @return
    */
-  public static Map<String, String> getFields(String tableId,
-      SQLiteDatabase db) {
+  public static Map<String, String> getFields(SQLiteDatabase db, String tableId ) {
     Cursor c = null;
     Map<String, String> tableDefMap = new HashMap<String, String>();
     try {

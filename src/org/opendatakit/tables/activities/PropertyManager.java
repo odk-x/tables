@@ -32,6 +32,7 @@ import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -149,7 +150,6 @@ public class PropertyManager extends PreferenceActivity {
       ArrayList<JoinColumn> joins = cp.getJoins();
       if (joins == null) {
         joins = new ArrayList<JoinColumn>();
-        cp.setJoins(joins);
       }
       String joinTableId = (joins != null && joins.size() == 1) ? joins.get(0).getTableId() : null;
       TableProperties[] tps = TableProperties.getTablePropertiesForAll(this, appName,
@@ -212,47 +212,55 @@ public class PropertyManager extends PreferenceActivity {
     // Get corresponding preference
     Preference pref = findPreference(key);
 
-    // Routing
-    if (key.equals("TYPE")) {
-      for (ColumnType t : ColumnType.getAllColumnTypes()) {
-        if (t.name().equals(newVal)) {
-          cp.setColumnType(tp, t);
-          if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
-            loadPreferenceScreen();
-          } else if (t == ColumnType.TABLE_JOIN) {
-            loadPreferenceScreen();
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getWritableDatabase();
+      // Routing
+      if (key.equals("TYPE")) {
+        for (ColumnType t : ColumnType.getAllColumnTypes()) {
+          if (t.name().equals(newVal)) {
+            cp.setColumnType(db, tp, t);
+            if ((t == ColumnType.MC_OPTIONS) && !showingMcDialog) {
+              loadPreferenceScreen();
+            } else if (t == ColumnType.TABLE_JOIN) {
+              loadPreferenceScreen();
+            }
+            break;
           }
-          break;
+        }
+      } else if (key.equals("JOIN_TABLE")) {
+        // TODO: resolve the ifs here for joins
+        ArrayList<JoinColumn> oldJoins = cp.getJoins();
+        if ( oldJoins == null ) {
+          oldJoins = new ArrayList<JoinColumn>();
+        }
+        if ( oldJoins.size() == 0 ) {
+          oldJoins.add( new JoinColumn(newVal, JoinColumn.DEFAULT_NOT_SET_VALUE));
+        } else {
+          JoinColumn jc = oldJoins.get(0);
+          jc.setTableId(newVal);
+        }
+        cp.setJoins(db, oldJoins);
+      } else if (key.equals("JOIN_COLUMN")) {
+        ArrayList<JoinColumn> oldJoins = cp.getJoins();
+        if ( oldJoins == null ) {
+          oldJoins = new ArrayList<JoinColumn>();
+        }
+        if ( oldJoins.size() == 0 ) {
+          oldJoins.add( new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE, newVal));
+        } else {
+          JoinColumn jc = oldJoins.get(0);
+          jc.setElementKey(newVal);
+        }
+        cp.setJoins(db, oldJoins);
+      } else if (key.equals("DISPLAY_NAME")) {
+        if ( !newVal.equals(cp.getDisplayName()) ) {
+          cp.setDisplayName(db, tp.createDisplayName(newVal));
         }
       }
-    } else if (key.equals("JOIN_TABLE")) {
-      // TODO: resolve the ifs here for joins
-      ArrayList<JoinColumn> oldJoins = cp.getJoins();
-      if ( oldJoins == null ) {
-        oldJoins = new ArrayList<JoinColumn>();
-      }
-      if ( oldJoins.size() == 0 ) {
-        oldJoins.add( new JoinColumn(newVal, JoinColumn.DEFAULT_NOT_SET_VALUE));
-      } else {
-        JoinColumn jc = oldJoins.get(0);
-        jc.setTableId(newVal);
-      }
-      cp.setJoins(oldJoins);
-    } else if (key.equals("JOIN_COLUMN")) {
-      ArrayList<JoinColumn> oldJoins = cp.getJoins();
-      if ( oldJoins == null ) {
-        oldJoins = new ArrayList<JoinColumn>();
-      }
-      if ( oldJoins.size() == 0 ) {
-        oldJoins.add( new JoinColumn(JoinColumn.DEFAULT_NOT_SET_VALUE, newVal));
-      } else {
-        JoinColumn jc = oldJoins.get(0);
-        jc.setElementKey(newVal);
-      }
-      cp.setJoins(oldJoins);
-    } else if (key.equals("DISPLAY_NAME")) {
-      if ( !newVal.equals(cp.getDisplayName()) ) {
-        cp.setDisplayName(tp.createDisplayName(newVal));
+    } finally {
+      if ( db != null ) {
+        db.close();
       }
     }
 
@@ -393,7 +401,7 @@ public class PropertyManager extends PreferenceActivity {
 
     public McOptionSettingsDialogPreference(Context context) {
       super(context);
-      dialog = new MultipleChoiceSettingDialog(PropertyManager.this, cp);
+      dialog = new MultipleChoiceSettingDialog(PropertyManager.this, tp, cp);
       setTitle("Multiple Choice Settings");
     }
 

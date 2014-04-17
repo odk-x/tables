@@ -251,7 +251,7 @@ public class CsvUtil {
             if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, null, null);
+              cp = tp.addColumn(colName, null, null, ColumnType.STRING, null, true);
               dbName = cp.getElementKey();
             } else {
               reader.close();
@@ -387,7 +387,7 @@ public class CsvUtil {
             if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, null, null);
+              cp = tp.addColumn(colName, null, null, ColumnType.STRING, null, true);
               dbName = cp.getElementKey();
             } else {
               throw new IllegalStateException("column name " + colName

@@ -39,6 +39,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -67,23 +68,8 @@ public class TablePropertiesManager extends PreferenceActivity {
   private static final int RC_LIST_VIEW_FILE = 1;
   private static final int RC_MAP_LIST_VIEW_FILE = 2;
 
-  private enum ViewPreferenceType {
-    OVERVIEW_VIEW, COLLECTION_VIEW,
-    // At the point where you could specify different files for an overview
-    // and a collection list view, there were only the two constants
-    // OVERVIEW_VIEW and COLLECTION_VIEW in this enum. I am changing this
-    // to allow for only an unspecified view. The code seems to be checking
-    // whether or not something is an overview or collection somehow and
-    // storing the value in controller. I'm going to add a case for
-    // AUTO_GENERATED to try and reflect that.
-    AUTO_GENERATED
-  }
-
   private String appName;
-  // private DbHelper dbh;
   private TableProperties tp;
-
-
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -119,7 +105,19 @@ public class TablePropertiesManager extends PreferenceActivity {
     dnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        tp.setDisplayName((String) newValue);
+        SQLiteDatabase db = tp.getWritableDatabase();
+        try {
+          db.beginTransaction();
+          tp.setDisplayName(db, (String) newValue);
+          db.setTransactionSuccessful();
+        } catch ( Exception e ) {
+          e.printStackTrace();
+          Log.e(TAG, "Unable to change display name: " + e.toString());
+          Toast.makeText(getParent(), "Unable to change display name", Toast.LENGTH_LONG).show();
+        } finally {
+          db.endTransaction();
+          db.close();
+        }
         setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
         init();
         return false;
@@ -245,24 +243,34 @@ public class TablePropertiesManager extends PreferenceActivity {
     viewTypePref.setEntryValues(viewTypeIds);
     viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
-    viewTypePref.setValue(tp.getCurrentViewType().name());
+    viewTypePref.setValue(tp.getDefaultViewType().name());
     // TODO: currently throwing an error i think
     // viewTypePref.setSummary(LanguageUtil.getViewTypeLabel(
     // settings.getViewType()));
-    viewTypePref.setSummary(tp.getCurrentViewType().name());
+    viewTypePref.setSummary(tp.getDefaultViewType().name());
     viewTypePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
       @Override
       public boolean onPreferenceChange(Preference preference, Object newValue) {
-        // int viewType = Integer.valueOf((String) newValue);
-        // settings.setViewType(viewType);
-        tp.setCurrentViewType(TableViewType.valueOf((String) newValue));
+        SQLiteDatabase db = tp.getWritableDatabase();
+        try {
+          db.beginTransaction();
+          tp.setDefaultViewType(db, TableViewType.valueOf((String) newValue));
+          db.setTransactionSuccessful();
+        } catch ( Exception e ) {
+          e.printStackTrace();
+          Log.e(TAG, "Unable to change default view type: " + e.toString());
+          Toast.makeText(getParent(), "Unable to change default view type", Toast.LENGTH_LONG).show();
+        } finally {
+          db.endTransaction();
+          db.close();
+        }
         init();
         return false;
       }
     });
     prefCat.addPreference(viewTypePref);
 
-    switch (tp.getCurrentViewType()) {
+    switch (tp.getDefaultViewType()) {
     case List: {
       Preference listViewPrefs = new Preference(this);
       listViewPrefs.setTitle(getString(R.string.list_view_manager));
@@ -442,10 +450,21 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
       break;
     default:
-      Log.e(TAG, "unrecognized view type: " + tp.getCurrentViewType()
+      Log.e(TAG, "unrecognized view type: " + tp.getDefaultViewType()
           + ", resetting to spreadsheet");
-      tp.setCurrentViewType(TableViewType.Spreadsheet);
-
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+        tp.setDefaultViewType(db, TableViewType.Spreadsheet);
+        db.setTransactionSuccessful();
+      } catch ( Exception e ) {
+        e.printStackTrace();
+        Log.e(TAG, "Unable to change default view type to Spreadsheet: " + e.toString());
+        Toast.makeText(getParent(), "Unable to change default view type to Spreadsheet", Toast.LENGTH_LONG).show();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
   }
 
@@ -565,232 +584,4 @@ public class TablePropertiesManager extends PreferenceActivity {
     }
   }
 
-  // private class ConditionalRulerDialogPreference extends Preference {
-  //
-  // private final Dialog dialog;
-  //
-  // public ConditionalRulerDialogPreference(int[] values, String[] labels,
-  // Map<ColumnProperties, ConditionalRuler> rulerMap) {
-  // super(TablePropertiesManager.this);
-  // dialog = new ConditionalRulerDialog(values, labels, rulerMap);
-  // }
-  //
-  // @Override
-  // protected void onClick() {
-  // dialog.show();
-  // }
-  // }
-  // SS: this was commented out as TableViewSettings was removed. So whatever
-  // this is used for needs to be redone to use TableProperties rather than
-  // tvs.
-  // public class ConditionalRulerDialog extends Dialog {
-  //
-  // private final int[] values;
-  // private final String[] labels;
-  // private final Map<ColumnProperties, ConditionalRuler> rulerMap;
-  // private final ColumnProperties[] columns;
-  // private final String[] comparatorLabels;
-  // private final String[] columnDisplays;
-  // private LinearLayout ruleList;
-  //
-  // public ConditionalRulerDialog(int[] values, String[] labels,
-  // Map<ColumnProperties, ConditionalRuler> rulerMap) {
-  // super(TablePropertiesManager.this);
-  // this.values = values;
-  // this.labels = labels;
-  // this.rulerMap = rulerMap;
-  // columns = new ColumnProperties[tp.getColumns().length];
-  // comparatorLabels = new String[ConditionalRuler.Comparator.COUNT];
-  // for (int i = 0; i < comparatorLabels.length; i++) {
-  // comparatorLabels[i] =
-  // LanguageUtil.getTvsConditionalComparator(i);
-  // }
-  // columnDisplays = new String[tp.getColumns().length];
-  // for (int i = 0; i < tp.getColumns().length; i++) {
-  // ColumnProperties cp = tp.getColumns()[i];
-  // columns[i] = cp;
-  // columnDisplays[i] = cp.getDisplayName();
-  // }
-  // setContentView(buildView());
-  // }
-  //
-  // private View buildView() {
-  // ruleList = new LinearLayout(TablePropertiesManager.this);
-  // ruleList.setOrientation(LinearLayout.VERTICAL);
-  // String[] comparatorValues =
-  // new String[ConditionalRuler.Comparator.COUNT];
-  // String[] comparatorDisplays =
-  // new String[ConditionalRuler.Comparator.COUNT];
-  // for (int i = 0; i < ConditionalRuler.Comparator.COUNT; i++) {
-  // comparatorValues[i] = String.valueOf(i);
-  // comparatorDisplays[i] =
-  // LanguageUtil.getTvsConditionalComparator(i);
-  // }
-  // LinearLayout.LayoutParams rwLp = new LinearLayout.LayoutParams(
-  // LinearLayout.LayoutParams.FILL_PARENT,
-  // LinearLayout.LayoutParams.FILL_PARENT);
-  // Context context = TablePropertiesManager.this;
-  // for (ColumnProperties cp : tp.getColumns()) {
-  // ConditionalRuler cr = rulerMap.get(cp);
-  // for (int i = 0; i < cr.getRuleCount(); i++) {
-  // ruleList.addView(buildRuleView(cp, cr, i), rwLp);
-  // }
-  // }
-  // LinearLayout controlWrapper = new LinearLayout(context);
-  // Button addButton = new Button(context);
-  // addButton.setText("Add");
-  // addButton.setOnClickListener(new View.OnClickListener() {
-  // @Override
-  // public void onClick(View v) {
-  // ColumnProperties cp = columns[0];
-  // ConditionalRuler cr = rulerMap.get(cp);
-  // cr.addRule(ConditionalRuler.Comparator.EQUALS, "",
-  // values[0]);
-  // ruleList.addView(buildRuleView(cp, cr,
-  // cr.getRuleCount() - 1));
-  // }
-  // });
-  // controlWrapper.addView(addButton);
-  // Button closeButton = new Button(context);
-  // closeButton.setText("Close");
-  // closeButton.setOnClickListener(new View.OnClickListener() {
-  // @Override
-  // public void onClick(View v) {
-  // dismiss();
-  // }
-  // });
-  // controlWrapper.addView(closeButton);
-  // LinearLayout wrapper = new LinearLayout(context);
-  // wrapper.setOrientation(LinearLayout.VERTICAL);
-  // wrapper.addView(ruleList);
-  // wrapper.addView(controlWrapper);
-  // return wrapper;
-  // }
-  //
-  // private View buildRuleView(final ColumnProperties cp,
-  // final ConditionalRuler cr, final int ruleIndex) {
-  // Context context = TablePropertiesManager.this;
-  //
-  // final Spinner colSpinner = getSpinner(context, columnDisplays);
-  // int columnIndex = -1;
-  // for (int i = 0; i < columns.length; i++) {
-  // if (cp == columns[i]) {
-  // columnIndex = i;
-  // break;
-  // }
-  // }
-  // if (columnIndex == -1) {
-  // throw new RuntimeException();
-  // }
-  // colSpinner.setSelection(columnIndex);
-  //
-  // final Spinner settingSpinner = getSpinner(context, labels);
-  // int setting = cr.getRuleSetting(ruleIndex);
-  // int settingIndex = -1;
-  // for (int i = 0; i < values.length; i++) {
-  // if (setting == values[i]) {
-  // settingIndex = i;
-  // break;
-  // }
-  // }
-  // if (settingIndex == -1) {
-  // throw new RuntimeException();
-  // }
-  // settingSpinner.setSelection(settingIndex);
-  //
-  // final Spinner compSpinner = getSpinner(context, comparatorLabels);
-  // compSpinner.setSelection(cr.getRuleComparator(ruleIndex));
-  //
-  // final EditText valueEt = new EditText(context);
-  // valueEt.setText(cr.getRuleValue(ruleIndex));
-  //
-  // Button deleteButton = new Button(context);
-  // deleteButton.setText("Delete");
-  //
-  // colSpinner.setOnItemSelectedListener(
-  // new AdapterView.OnItemSelectedListener() {
-  // @Override
-  // public void onItemSelected(AdapterView<?> parent, View view,
-  // int position, long id) {
-  // ColumnProperties nextCp = columns[position];
-  // if (cp == nextCp) {
-  // return;
-  // }
-  // cr.deleteRule(ruleIndex);
-  // rulerMap.get(nextCp).addRule(
-  // compSpinner.getSelectedItemPosition(),
-  // valueEt.getText().toString(),
-  // values[settingSpinner.getSelectedItemPosition()]);
-  // setContentView(buildView());
-  // }
-  // @Override
-  // public void onNothingSelected(AdapterView<?> parent) {}
-  // });
-  // settingSpinner.setOnItemSelectedListener(
-  // new AdapterView.OnItemSelectedListener() {
-  // @Override
-  // public void onItemSelected(AdapterView<?> parent, View view,
-  // int position, long id) {
-  // if (cr.getRuleSetting(ruleIndex) == values[position]) {
-  // return;
-  // }
-  // cr.setRuleSetting(ruleIndex, values[position]);
-  // }
-  // @Override
-  // public void onNothingSelected(AdapterView<?> parent) {}
-  // });
-  // compSpinner.setOnItemSelectedListener(
-  // new AdapterView.OnItemSelectedListener() {
-  // @Override
-  // public void onItemSelected(AdapterView<?> parent, View view,
-  // int position, long id) {
-  // if (cr.getRuleComparator(ruleIndex) == position) {
-  // return;
-  // }
-  // cr.setRuleComparator(ruleIndex, position);
-  // }
-  // @Override
-  // public void onNothingSelected(AdapterView<?> parent) {}
-  // });
-  // valueEt.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-  // @Override
-  // public void onFocusChange(View v, boolean hasFocus) {
-  // if (hasFocus) {
-  // return;
-  // }
-  // cr.setRuleValue(ruleIndex, valueEt.getText().toString());
-  // }
-  // });
-  // deleteButton.setOnClickListener(new View.OnClickListener() {
-  // @Override
-  // public void onClick(View v) {
-  // cr.deleteRule(ruleIndex);
-  // setContentView(buildView());
-  // }
-  // });
-  //
-  // LinearLayout topRow = new LinearLayout(context);
-  // LinearLayout bottomRow = new LinearLayout(context);
-  // topRow.addView(colSpinner);
-  // topRow.addView(settingSpinner);
-  // bottomRow.addView(compSpinner);
-  // bottomRow.addView(valueEt);
-  // bottomRow.addView(deleteButton);
-  // LinearLayout rw = new LinearLayout(context);
-  // rw.setOrientation(LinearLayout.VERTICAL);
-  // rw.addView(topRow);
-  // rw.addView(bottomRow);
-  // return rw;
-  // }
-  //
-  // private Spinner getSpinner(Context context, String[] values) {
-  // Spinner spinner = new Spinner(context);
-  // ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
-  // android.R.layout.simple_spinner_item, values);
-  // adapter.setDropDownViewResource(
-  // android.R.layout.simple_spinner_dropdown_item);
-  // spinner.setAdapter(adapter);
-  // return spinner;
-  // }
-  // }
 }

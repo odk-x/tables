@@ -309,9 +309,9 @@ public class ColumnProperties {
    * KVS are moved to the respective classes that use them, these should go
    * there most likely.
    ***********************************/
-  public static final boolean DEFAULT_KEY_VISIBLE = true;
-  public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
-  public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
+//  public static final boolean DEFAULT_KEY_VISIBLE = true;
+//  public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
+//  public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
 
   /***********************************
    * Keys for json.
@@ -387,12 +387,12 @@ public class ColumnProperties {
     this.elementName = elementName;
     this.elementType = elementType;
     this.listChildElementKeys = listChildElementKeys;
-    this.joins = joins;
+    this.joins = (joins == null) ? new ArrayList<JoinColumn>() : joins;
     this.isUnitOfRetention = isUnitOfRetention;
     this.displayVisible = displayVisible;
     this.jsonStringifyDisplayName = jsonStringifyDisplayName;
     updateDisplayNameFromJsonStringifyDisplayName();
-    this.displayChoicesList = displayChoicesList;
+    this.displayChoicesList = (displayChoicesList == null) ? new ArrayList<String>() : displayChoicesList;
     this.displayFormat = displayFormat;
   }
 
@@ -400,28 +400,18 @@ public class ColumnProperties {
    * Return the ColumnProperties for all the columns in a table, whether or not
    * they are written to the database table.
    *
-   * @param dbh
-   * @param tableId
+   * @param db
+   * @param tp
    * @return a map of elementKey to ColumnProperties for all columns.
    */
-  static Map<String, ColumnProperties> getColumnPropertiesForTable(TableProperties tp) {
-    SQLiteDatabase db = null;
-    try {
-      db = tp.getReadableDatabase();
-      List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(tp.getTableId(), db);
-      Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
-      for (int i = 0; i < elementKeys.size(); i++) {
-        ColumnProperties cp = getColumnProperties(tp, elementKeys.get(i), db);
-        elementKeyToColumnProperties.put(elementKeys.get(i), cp);
-      }
-      return elementKeyToColumnProperties;
-    } finally {
-      // // TODO: we need to resolve how we are going to prevent closing the
-      // // db on callers. Removing this here, far far from ideal.
-      // // if ( db != null ) {
-      // // db.close();
-      // // }
+  static Map<String, ColumnProperties> getColumnPropertiesForTable(SQLiteDatabase db, TableProperties tp) {
+    List<String> elementKeys = ColumnDefinitions.getAllColumnNamesForTable(db, tp.getTableId());
+    Map<String, ColumnProperties> elementKeyToColumnProperties = new HashMap<String, ColumnProperties>();
+    for (int i = 0; i < elementKeys.size(); i++) {
+      ColumnProperties cp = getColumnProperties(db, tp, elementKeys.get(i));
+      elementKeyToColumnProperties.put(elementKeys.get(i), cp);
     }
+    return elementKeyToColumnProperties;
   }
 
   /**
@@ -436,15 +426,15 @@ public class ColumnProperties {
    *          column properties
    * @return
    */
-  private static ColumnProperties getColumnProperties(TableProperties tp, String elementKey, SQLiteDatabase db) {
+  private static ColumnProperties getColumnProperties(SQLiteDatabase db, TableProperties tp, String elementKey) {
     // Get the KVS values
     KeyValueStore intendedKVS = tp.getStoreForTable();
     Map<String, String> kvsMap = intendedKVS.getKeyValues(ColumnProperties.KVS_PARTITION,
         elementKey, db);
 
     // Get the ColumnDefinition entries
-    Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(tp.getTableId(),
-        elementKey, db);
+    Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(db,
+        tp.getTableId(), elementKey);
 
     return constructPropertiesFromMap(tp, elementKey, columnDefinitionsMap, kvsMap);
   }
@@ -528,13 +518,11 @@ public class ColumnProperties {
    *
    *
    * @param db
-   * @param tableId
    * @throws JsonGenerationException
    * @throws JsonMappingException
    * @throws IOException
    */
-  void persistColumn(SQLiteDatabase db, String tableId) throws JsonGenerationException,
-      JsonMappingException, IOException {
+  void persistColumn(SQLiteDatabase db) throws JsonGenerationException, JsonMappingException, IOException {
     // First prepare the entries for the key value store.
     List<OdkTablesKeyValueStoreEntry> values = new ArrayList<OdkTablesKeyValueStoreEntry>();
     values.add(createBooleanEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
@@ -612,7 +600,7 @@ public class ColumnProperties {
 
     ColumnProperties cp = new ColumnProperties(tp, elementKey, elementName, columnType,
         listChildElementKeys, isUnitOfRetention, displayVisible, jsonStringifyDisplayName,
-        DEFAULT_KEY_DISPLAY_CHOICES_MAP, DEFAULT_KEY_DISPLAY_FORMAT, null);
+        null, null, null);
 
     return cp;
   }
@@ -628,7 +616,7 @@ public class ColumnProperties {
    * @param db
    */
   void deleteColumn(SQLiteDatabase db) {
-    ColumnDefinitions.deleteColumnDefinition(tableId, elementKey, db);
+    ColumnDefinitions.deleteColumnDefinition(db, tableId, elementKey);
     KeyValueStore kvs = tp.getStoreForTable();
     kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
     // this is to clear all the color rules. If we didn't do this, you could
@@ -674,19 +662,6 @@ public class ColumnProperties {
     return entry;
   }
 
-  /**
-   * DB_ELEMENT_KEY, DB_ELEMENT_NAME, DB_ELEMENT_TYPE,
-   * DB_LIST_CHILD_ELEMENT_KEYS, DB_JOIN_TABLE_ID, DB_JOIN_ELEMENT_KEY,
-   * DB_IS_UNIT_OF_RETENTION,
-   *
-   * DB_DISPLAY_VISIBLE, DB_DISPLAY_NAME, DB_DISPLAY_CHOICES_MAP,
-   * DB_DISPLAY_FORMAT,
-   *
-   * DB_SMS_IN, DB_SMS_OUT, DB_SMS_LABEL,
-   *
-   * DB_FOOTER_MODE
-   */
-
   public String getElementKey() {
     return elementKey;
   }
@@ -708,7 +683,8 @@ public class ColumnProperties {
    * @param columnType
    *          the new type
    */
-  public void setColumnType(TableProperties tp, ColumnType columnType) {
+  public void setColumnType(SQLiteDatabase dbOuter, TableProperties tp, ColumnType columnType) {
+    // start a nested transaction...
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -720,7 +696,8 @@ public class ColumnProperties {
       db.endTransaction();
       this.elementType = columnType;
     } finally {
-      tp.refreshColumns();
+      db.close();
+      tp.refreshColumns(dbOuter);
     }
   }
 
@@ -728,13 +705,13 @@ public class ColumnProperties {
     return listChildElementKeys;
   }
 
-  public void setListChildElementKeys(ArrayList<String> listChildElementKeys) {
+  public void setListChildElementKeys(SQLiteDatabase db, ArrayList<String> listChildElementKeys) {
     try {
       String strListChildElementKeys = null;
       if (listChildElementKeys != null && listChildElementKeys.size() > 0) {
         strListChildElementKeys = mapper.writeValueAsString(listChildElementKeys);
       }
-      setStringProperty(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, strListChildElementKeys);
+      setStringProperty(db, ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, strListChildElementKeys);
       this.listChildElementKeys = listChildElementKeys;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -755,8 +732,8 @@ public class ColumnProperties {
     return isUnitOfRetention;
   }
 
-  public void setIsUnitOfRetention(boolean setting) {
-    setBooleanProperty(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, setting);
+  public void setIsUnitOfRetention(SQLiteDatabase db, boolean setting) {
+    setBooleanProperty(db, ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION, setting);
     this.isUnitOfRetention = setting;
   }
 
@@ -773,8 +750,8 @@ public class ColumnProperties {
    * @param setting
    *          the new display visibility setting
    */
-  public void setDisplayVisible(boolean setting) {
-    setBooleanProperty(KEY_DISPLAY_VISIBLE, setting);
+  public void setDisplayVisible(SQLiteDatabase db, boolean setting) {
+    setBooleanProperty(db, KEY_DISPLAY_VISIBLE, setting);
     this.displayVisible = setting;
   }
 
@@ -842,7 +819,7 @@ public class ColumnProperties {
    *          the new display name
    * @return the
    */
-  public void setDisplayName(String displayName) {
+  public void setDisplayName(SQLiteDatabase db, String displayName) {
     try {
       // error if displayName is not set...
       if ( displayName == null || displayName.length() == 0 ) {
@@ -854,20 +831,20 @@ public class ColumnProperties {
         if ( displayObject instanceof String ) {
           // just overwrite it...
           String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
-          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           ((Map) displayObject).put("default", displayName);
           String newJsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
-          setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+          setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         }
       } else {
         String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
-        setStringProperty(KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
+        setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
         this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
         this.displayName = displayName;
       }
@@ -896,8 +873,8 @@ public class ColumnProperties {
    * @param abbreviation
    *          the new abbreviation (or null for no abbreviation)
    */
-  public void setDisplayFormat(String format) {
-    setStringProperty(KEY_DISPLAY_FORMAT, format);
+  public void setDisplayFormat(SQLiteDatabase db, String format) {
+    setStringProperty(db, KEY_DISPLAY_FORMAT, format);
     this.displayFormat = format;
   }
 
@@ -917,10 +894,10 @@ public class ColumnProperties {
    *
    * @param joins
    */
-  public void setJoins(ArrayList<JoinColumn> joins) {
+  public void setJoins(SQLiteDatabase db, ArrayList<JoinColumn> joins) {
     try {
       String joinsStr = JoinColumn.toSerialization(joins);
-      setStringProperty(KEY_JOINS, joinsStr);
+      setStringProperty(db, KEY_JOINS, joinsStr);
       this.joins = joins;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -950,13 +927,13 @@ public class ColumnProperties {
    * @throws JsonMappingException
    * @throws JsonGenerationException
    */
-  public void setDisplayChoicesList(ArrayList<String> options) {
+  public void setDisplayChoicesList(SQLiteDatabase db, ArrayList<String> options) {
     try {
       String encoding = null;
       if (options != null && options.size() > 0) {
         encoding = mapper.writeValueAsString(options);
       }
-      setStringProperty(KEY_DISPLAY_CHOICES_LIST, encoding);
+      setStringProperty(db, KEY_DISPLAY_CHOICES_LIST, encoding);
       displayChoicesList = options;
     } catch (JsonGenerationException e) {
       e.printStackTrace();
@@ -1057,19 +1034,9 @@ public class ColumnProperties {
     return cp;
   }
 
-  private void setIntProperty(String property, int value) {
-    SQLiteDatabase db = tp.getWritableDatabase();
-    try {
-      setIntProperty(db, property, value);
-    } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-    }
-  }
-
   private void setIntProperty(SQLiteDatabase db, String property, int value) {
-    if (ColumnDefinitions.columnNames.contains(property)) {
-      ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
+    if (ColumnDefinitions.contains(property)) {
+      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
     } else {
       // or a kvs property?
       KeyValueStore kvs = tp.getStoreForTable();
@@ -1080,20 +1047,10 @@ public class ColumnProperties {
         + ", column " + elementKey);
   }
 
-  private void setStringProperty(String property, String value) {
-    SQLiteDatabase db = tp.getWritableDatabase();
-    try {
-      setStringProperty(db, property, value);
-    } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-    }
-  }
-
   private void setStringProperty(SQLiteDatabase db, String property, String value) {
     // is it a column definition property?
-    if (ColumnDefinitions.columnNames.contains(property)) {
-      ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
+    if (ColumnDefinitions.contains(property)) {
+      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
     } else {
       // or a kvs property?
       KeyValueStore kvs = tp.getStoreForTable();
@@ -1104,19 +1061,9 @@ public class ColumnProperties {
         + ", column " + elementKey);
   }
 
-  private void setBooleanProperty(String property, boolean value) {
-    SQLiteDatabase db = tp.getWritableDatabase();
-    try {
-      setBooleanProperty(db, property, value);
-    } finally {
-      // TODO: fix the when to close problem
-      // db.close();
-    }
-  }
-
   private void setBooleanProperty(SQLiteDatabase db, String property, boolean value) {
-    if (ColumnDefinitions.columnNames.contains(property)) {
-      ColumnDefinitions.setValue(tableId, elementKey, property, value, db);
+    if (ColumnDefinitions.contains(property)) {
+      ColumnDefinitions.setValue(db, tableId, elementKey, property, value);
     } else {
       // or a kvs property?
       KeyValueStore kvs = tp.getStoreForTable();
