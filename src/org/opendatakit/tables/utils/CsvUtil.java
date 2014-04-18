@@ -31,8 +31,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -48,7 +50,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
@@ -113,7 +114,7 @@ public class CsvUtil {
   public CsvUtil(Context context, String appName) {
 	this.context = context;
     this.appName = appName;
-    du = DataUtil.getDefaultDataUtil();
+    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
   }
 
   /**

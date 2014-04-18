@@ -6,12 +6,12 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opendatakit.tables.data.ColorGuide;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 
 import android.app.Activity;
 import android.util.Log;
@@ -182,7 +182,7 @@ public class TableData {
               indexOfMetadataMap);
         ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
         int foregroundColor;
-        if (guide.didMatch()) {
+        if (guide != null) {
            foregroundColor = guide.getForeground();
         } else {
            foregroundColor = -16777216; // this crazy value was found here

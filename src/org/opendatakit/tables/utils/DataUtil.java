@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.data;
+package org.opendatakit.tables.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +36,9 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.utils.UTMConverter;
+import org.opendatakit.tables.data.ColumnProperties;
+import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.tables.data.TableProperties;
 
 import android.content.Context;
 
@@ -120,25 +122,12 @@ public class DataUtil {
     private static final String USER_SHORT_FORMAT = "M/d h:mma";
     private static final String USER_LONG_FORMAT = "M/d/yyyy h:mm:ssa";
 
-    private static DataUtil du;
-
     private final Locale locale;
     private final DateTimeZone tz;
     private final DateTimeFormatter userFullParser;
     private final DateTimeFormatter[] userPartialParsers;
     private final DateTimeFormatter userShortFormatter;
     private final DateTimeFormatter userLongFormatter;
-
-    public static DataUtil getDefaultDataUtil() {
-        if (du == null) {
-            du = new DataUtil();
-        }
-        return du;
-    }
-
-    private DataUtil() {
-        this(Locale.ENGLISH, TimeZone.getDefault());
-    }
 
     public DataUtil(Locale locale, TimeZone tz) {
         this.locale = locale;

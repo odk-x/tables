@@ -16,12 +16,13 @@
 package org.opendatakit.tables.utils;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataUtil;
 
 import android.content.Context;
 import android.widget.AdapterView;
@@ -32,19 +33,19 @@ import android.widget.Spinner;
 
 
 public class InputScreenUtil {
-    
+
     private final Context context;
     private final DataUtil du;
-    
+
     public InputScreenUtil(Context context) {
         this.context = context;
-        du = DataUtil.getDefaultDataUtil();
+        du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     }
-    
+
     public InputView getInputView(ColumnProperties cp) {
         return getInputView(cp, null);
     }
-    
+
     public InputView getInputView(ColumnProperties cp, String value) {
         if ( cp.getColumnType() == ColumnType.DATE ) {
             return new DateInputView(context, value);
@@ -61,23 +62,23 @@ public class InputScreenUtil {
             return new GeneralInputView(context, value);
         }
     }
-    
+
     public abstract class InputView extends LinearLayout {
-        
+
         public InputView(Context context) {
             super(context);
             setOrientation(LinearLayout.VERTICAL);
         }
-        
+
         public abstract boolean isValidValue();
-        
+
         public abstract String getDbValue();
     }
-    
+
     private class GeneralInputView extends InputView {
-        
+
         private final EditText field;
-        
+
         public GeneralInputView(Context context, String value) {
             super(context);
             value = (value == null) ? "" : value;
@@ -85,20 +86,20 @@ public class InputScreenUtil {
             field.setText(value);
             addView(field);
         }
-        
+
         public boolean isValidValue() {
             return true;
         }
-        
+
         public String getDbValue() {
             return field.getText().toString();
         }
     }
-    
+
     private class DateInputView extends InputView {
-        
+
         private final EditText field;
-        
+
         public DateInputView(Context context, String value) {
             super(context);
             field = new EditText(context);
@@ -107,13 +108,13 @@ public class InputScreenUtil {
                 field.setText(du.formatLongDateTimeForUser(dt));
             }
         }
-        
+
         public boolean isValidValue() {
             String value = field.getText().toString();
             return (du.tryParseInstant(value) != null) ||
                 (du.tryParseInterval(value) != null);
         }
-        
+
         public String getDbValue() {
             String value = field.getText().toString();
             DateTime dt = du.tryParseInstant(value);
@@ -128,11 +129,11 @@ public class InputScreenUtil {
             }
         }
     }
-    
+
     private class DateTimeInputView extends InputView {
-        
+
         private final EditText field;
-        
+
         public DateTimeInputView(Context context, String value) {
             super(context);
             field = new EditText(context);
@@ -141,14 +142,14 @@ public class InputScreenUtil {
                 field.setText(du.formatLongDateTimeForUser(dt));
             }
         }
-        
+
         public boolean isValidValue() {
         	// TODO: does this need to be altered/revised vs. DateInputView
             String value = field.getText().toString();
             return (du.tryParseInstant(value) != null) ||
                 (du.tryParseInterval(value) != null);
         }
-        
+
         public String getDbValue() {
             String value = field.getText().toString();
             DateTime dt = du.tryParseInstant(value);
@@ -163,11 +164,11 @@ public class InputScreenUtil {
             }
         }
     }
-    
+
     private class TimeInputView extends InputView {
-        
+
         private final EditText field;
-        
+
         public TimeInputView(Context context, String value) {
             super(context);
             field = new EditText(context);
@@ -176,14 +177,14 @@ public class InputScreenUtil {
                 field.setText(du.formatLongDateTimeForUser(dt));
             }
         }
-        
+
         public boolean isValidValue() {
         	// TODO: does this need to be altered/revised vs. DateInputView
             String value = field.getText().toString();
             return (du.tryParseInstant(value) != null) ||
                 (du.tryParseInterval(value) != null);
         }
-        
+
         public String getDbValue() {
             String value = field.getText().toString();
             DateTime dt = du.tryParseInstant(value);
@@ -198,11 +199,11 @@ public class InputScreenUtil {
             }
         }
     }
-    
+
     private class DateRangeInputView extends InputView {
-        
+
         private final EditText field;
-        
+
         public DateRangeInputView(Context context, String value) {
             super(context);
             field = new EditText(context);
@@ -211,12 +212,12 @@ public class InputScreenUtil {
                 field.setText(du.formatLongIntervalForUser(interval));
             }
         }
-        
+
         public boolean isValidValue() {
             String value = field.getText().toString();
             return du.tryParseInterval(value) != null;
         }
-        
+
         public String getDbValue() {
             String value = field.getText().toString();
             Interval interval = du.tryParseInterval(value);
@@ -227,13 +228,13 @@ public class InputScreenUtil {
             }
         }
     }
-    
+
     private class McOptionsInputView extends InputView {
-        
+
         private final Spinner spinner;
         private final ArrayAdapter<String> adapter;
         private final String originalValue;
-        
+
         public McOptionsInputView(Context context, ArrayList<String> arrayList,
                 String value) {
             super(context);
@@ -255,12 +256,12 @@ public class InputScreenUtil {
             }
             addView(spinner);
         }
-        
+
         public boolean isValidValue() {
             return spinner.getSelectedItemPosition() !=
                 AdapterView.INVALID_POSITION;
         }
-        
+
         public String getDbValue() {
             int pos = spinner.getSelectedItemPosition();
             if (pos == AdapterView.INVALID_POSITION) {

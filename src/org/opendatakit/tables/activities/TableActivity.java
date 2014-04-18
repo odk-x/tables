@@ -1,14 +1,15 @@
 package org.opendatakit.tables.activities;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
+import java.util.TimeZone;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreType;
@@ -21,6 +22,7 @@ import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
@@ -131,7 +133,7 @@ public class TableActivity extends SherlockFragmentActivity
     mActivity = this;
 
     // Set up the data utility.
-    mDataUtil = DataUtil.getDefaultDataUtil();
+    mDataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
 
     // Find the table id.
     String tableId = getIntent().getExtras().getString(INTENT_KEY_TABLE_ID);

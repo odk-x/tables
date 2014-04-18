@@ -14,18 +14,18 @@ public enum TableViewType {
   List(1),
   Map(2),
   Graph(3);
-    
+
   private int id;
-  
-  public static String TAG = "TableViewType";
-  
+
+  public static final String TAG = "TableViewType";
+
   private TableViewType(int id) {
     this.id = id;
   }
-  
+
   /**
    * Get the id for this item. This is just an int, unique to each constant in
-   * this enum. It is intended to be mainly to be used just for menu item 
+   * this enum. It is intended to be mainly to be used just for menu item
    * selection, at least until the transition away from TableViewSettings is
    * more complete. (Dec14, 2012).
    * @return
@@ -33,16 +33,16 @@ public enum TableViewType {
   public int getId() {
     return id;
   }
-  
+
   public static TableViewType getViewTypeFromId(int id) {
     switch (id) {
     case 0:
       return Spreadsheet;
-    case 1: 
+    case 1:
       return List;
-    case 2: 
+    case 2:
       return Map;
-    case 3: 
+    case 3:
       return Graph;
     default:
       Log.e(TAG, "unrecognized view type: " + id + ", setting to spreadsheet");

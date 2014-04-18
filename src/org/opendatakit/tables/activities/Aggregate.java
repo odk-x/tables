@@ -19,11 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.submit.ServiceConnectionImpl;
-import org.opendatakit.tables.submit.TablesCommunicationActionReceiver;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.SynchronizationResult;
 import org.opendatakit.tables.sync.TableResult;
@@ -61,7 +57,7 @@ public class Aggregate extends SherlockActivity implements SyncNowCallback {
   private static final String ACCOUNT_TYPE_G = "com.google";
   private static final String URI_FIELD_EMPTY = "http://";
 
-  private static int AUTHORIZE_ACCOUNT_RESULT_ID = 1;
+  private static final int AUTHORIZE_ACCOUNT_RESULT_ID = 1;
 
   private EditText uriField;
   private Spinner accountListSpinner;
@@ -267,40 +263,6 @@ public class Aggregate extends SherlockActivity implements SyncNowCallback {
       syncTask.execute();
     }
     updateButtonsEnabled();
-  }
-
-
-  public void onClickSyncUsingSubmit(View v) {
-    Log.d(TAG, "in onClickSyncUsingSubmit");
-    String accountName = prefs.getAccount();
-    Log.e(TAG, "[onClickSyncNowUsingSubmit] timestamp: "
-        + System.currentTimeMillis());
-    if (accountName == null) {
-      Toast.makeText(this, getString(R.string.choose_account),
-          Toast.LENGTH_SHORT).show();
-    } else {
-      // we'll initialize the receiver correctly and then set up the receiver.
-      // the receiver's callback is the one that will say "oh yes, go ahead
-      // and do yo' bizness."
-      // The first thing we need to do is get the list of tables that is set
-      // to sync. Submit needs to know about this.
-      TableProperties[] tps =
-          TableProperties.getTablePropertiesForSynchronizedTables(this, appName,
-              KeyValueStoreType.SERVER);
-      List<String> tableIdsToSync = new ArrayList<String>();
-      for (TableProperties tp : tps) {
-        tableIdsToSync.add(tp.getTableId());
-      }
-      TablesCommunicationActionReceiver receiver =
-          TablesCommunicationActionReceiver.getInstance(
-              appName,
-              null, prefs.getServerUri(), tableIdsToSync, prefs.getAuthToken(),
-              getApplicationContext());
-      // We set up the receiver.
-      ServiceConnectionImpl serviceConnectionImpl =
-          new ServiceConnectionImpl(appName, this);
-
-    }
   }
 
   public static void invalidateAuthToken(String authToken, Context context, String appName) {

@@ -35,6 +35,7 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.utils.DataUtil;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -84,6 +85,7 @@ public class UserTable {
   private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
   private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
 
+  private final DataUtil du;
   private DateTimeZone tz;
   private DateTimeFormatter dateFormatter;
   private DateTimeFormatter dateTimeFormatter;
@@ -101,6 +103,7 @@ public class UserTable {
       String[][] userDefinedData, String[] elementKeyForIndex,
       Map<String, Integer> dataElementKeyToIndex, String[][] odkTablesMetadata,
       Map<String, Integer> metadataElementKeyToIndex) {
+    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     buildFormatters();
     this.header = header;
     mRows = new ArrayList<Row>(userDefinedData.length);
@@ -116,6 +119,7 @@ public class UserTable {
 
   public UserTable(Cursor c, TableProperties tableProperties,
       List<String> userColumnOrder) {
+    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     buildFormatters();
     mTp = tableProperties;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
@@ -306,15 +310,12 @@ public class UserTable {
       }
       return raw;
     } else if ( type == ColumnType.DATE ) {
-      DataUtil du = DataUtil.getDefaultDataUtil();
       DateTime d = du.parseDateTimeFromDb(raw);
       return dateFormatter.print(d);
     } else if ( type == ColumnType.DATETIME ) {
-      DataUtil du = DataUtil.getDefaultDataUtil();
       DateTime d = du.parseDateTimeFromDb(raw);
       return dateTimeFormatter.print(d);
     } else if ( type == ColumnType.TIME ) {
-      DataUtil du = DataUtil.getDefaultDataUtil();
       DateTime d = du.parseDateTimeFromDb(raw);
       return timeFormatter.print(d);
     } else if ( type == ColumnType.TABLE_JOIN ) {

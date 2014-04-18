@@ -50,10 +50,10 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
   private static final String TAG = ImportCSVActivity.class.getSimpleName();
 
 	/** view IDs (for use in testing) */
-	public static int NTNVAL_ID = 1;
-	public static int TABLESPIN_ID = 2;
-	public static int FILENAMEVAL_ID = 3;
-	public static int IMPORTBUTTON_ID = 4;
+	public static final int NTNVAL_ID = 1;
+	public static final int TABLESPIN_ID = 2;
+	public static final int FILENAMEVAL_ID = 3;
+	public static final int IMPORTBUTTON_ID = 4;
 
 	/* the appName context within which we are running */
 	private String appName;

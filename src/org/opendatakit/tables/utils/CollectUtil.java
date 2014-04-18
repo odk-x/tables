@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -43,7 +44,6 @@ import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
@@ -912,7 +912,7 @@ public class CollectUtil {
    */
   public static Map<String, String> getMapForInsertion(Context context, TableProperties tp,
       FormValues formValues) {
-    DataUtil du = DataUtil.getDefaultDataUtil();
+    DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     Map<String, String> values = new HashMap<String, String>();
     for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       // we want to use element key here

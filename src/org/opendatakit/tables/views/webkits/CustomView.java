@@ -28,7 +28,6 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -83,12 +82,11 @@ public abstract class CustomView extends LinearLayout {
   private static final String PLATFORM_INFO_KEY_BASE_URI = "baseUri";
   private static final String PLATFORM_INFO_KEY_LOG_LEVEL = "logLevel";
 
+  private static final TypeReference<HashMap<String, String>> MAP_REF =
+      new TypeReference<HashMap<String, String>>() {};
+
   protected static WebView webView;
   private static ViewGroup lastParent;
-
-  private static ObjectMapper MAPPER = new ObjectMapper();
-  private static TypeReference<HashMap<String, String>> MAP_REF =
-      new TypeReference<HashMap<String, String>>() {};
 
   private static Set<String> javascriptInterfaces = new HashSet<String>();
 
@@ -99,6 +97,9 @@ public abstract class CustomView extends LinearLayout {
 
   @SuppressLint("NewApi")
   private static void clearInterfaces() {
+    // recommended way of clearing everything...
+    webView.loadUrl("about:blank");
+    // and also...
     for (String str : javascriptInterfaces) {
       webView.addJavascriptInterface(null, str);
       if (Build.VERSION.SDK_INT >= 11) {
@@ -340,7 +341,7 @@ public abstract class CustomView extends LinearLayout {
   private Map<String, String> getMapFromJson(String jsonMap) {
     Map<String, String> map = null;
     try {
-      map = MAPPER.readValue(jsonMap, MAP_REF);
+      map = ODKFileUtils.mapper.readValue(jsonMap, MAP_REF);
     } catch (JsonParseException e) {
       e.printStackTrace();
     } catch (JsonMappingException e) {

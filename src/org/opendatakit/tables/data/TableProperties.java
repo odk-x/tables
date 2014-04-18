@@ -24,8 +24,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.JsonGenerationException;
@@ -46,6 +48,7 @@ import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.utils.ColorRuleUtil;
+import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.NameUtil;
 
 import android.content.ContentValues;
@@ -1347,7 +1350,7 @@ public class TableProperties {
       int idxId = c.getColumnIndex(DataTableColumns.ID);
       int idxTimestamp = c.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
       int idxKey = c.getColumnIndex(elementKey);
-      DataUtil du = DataUtil.getDefaultDataUtil();
+      DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
       while (c.moveToNext()) {
         if ( !c.isNull(idxKey) ) {
           String value = c.getString(idxKey);

@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Map.Entry;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -37,7 +39,6 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DataUtil;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
@@ -46,6 +47,7 @@ import org.opendatakit.tables.data.UserTable.Row;
 import org.opendatakit.tables.sync.TableResult.Status;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.sync.exceptions.SchemaMismatchException;
+import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -89,7 +91,7 @@ public class SyncProcessor {
   public SyncProcessor(Context context, String appName, Synchronizer synchronizer, SyncResult syncResult) {
     this.context = context;
 	this.appName = appName;
-    this.du = DataUtil.getDefaultDataUtil();
+    this.du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     this.syncResult = syncResult;
     this.synchronizer = synchronizer;
     this.mUserResult = new SynchronizationResult();

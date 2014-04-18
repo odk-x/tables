@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.tables.data.ColorGuide;
 import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -718,7 +718,7 @@ class TabularView extends View {
         if (type == TableType.INDEX_DATA ||
             type == TableType.MAIN_DATA) {
           // First we check for a row rule.
-          if (rowGuide.didMatch()) {
+          if (rowGuide != null) {
             foregroundColor = rowGuide.getForeground();
             backgroundColor = rowGuide.getBackground();
           }
@@ -726,13 +726,13 @@ class TabularView extends View {
               this.mElementKeys.get(j)).getColorGuide(
                   this.mTable.getRowAtIndex(i));
           // Override the role rule if a column rule matched.
-          if (columnGuide.didMatch()) {
+          if (columnGuide != null) {
             foregroundColor = columnGuide.getForeground();
             backgroundColor = columnGuide.getBackground();
           }
         }
         if (type == TableType.STATUS_DATA) {
-          if (rowGuide.didMatch()) {
+          if (rowGuide != null) {
             foregroundColor = rowGuide.getForeground();
             backgroundColor = rowGuide.getBackground();
           }

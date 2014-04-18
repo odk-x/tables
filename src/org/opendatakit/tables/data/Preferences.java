@@ -37,14 +37,6 @@ public class Preferences {
 
 	private static final int DEFAULT_FONT_SIZE = 16;
 
-	public class ViewType {
-		public static final int TABLE = 0;
-		public static final int LIST = 1;
-		public static final int LINE_GRAPH = 2;
-		public static final int MAP = 3;
-		public static final int COUNT = 4; // the number of types
-	}
-
 	private final String appName;
 
 	private final SharedPreferences prefs;
@@ -87,14 +79,15 @@ public class Preferences {
 		editor.commit();
 	}
 
-	public int getPreferredViewType(String tableId) {
-		return prefs.getInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId,
-				ViewType.TABLE);
+	public TableViewType getPreferredViewType(String tableId) {
+		return TableViewType.getViewTypeFromId(
+		    prefs.getInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId,
+				TableViewType.Spreadsheet.getId()));
 	}
 
-	public void setPreferredViewType(String tableId, int type) {
+	public void setPreferredViewType(String tableId, TableViewType type) {
 		SharedPreferences.Editor editor = prefs.edit();
-		editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type);
+		editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type.getId());
 		editor.commit();
 	}
 

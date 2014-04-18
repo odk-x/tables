@@ -26,7 +26,6 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.opendatakit.tables.data.UserTable.Row;
-import org.opendatakit.tables.utils.Constants;
 
 import android.util.Log;
 
@@ -65,6 +64,10 @@ public class ColorRuleGroup {
         mapper.getVisibilityChecker()
         .withCreatorVisibility(Visibility.ANY));
     typeFactory = mapper.getTypeFactory();
+  }
+
+  public enum Type {
+    COLUMN, TABLE, STATUS_COLUMN;
   }
 
   private final TableProperties tp;
@@ -286,59 +289,16 @@ public class ColorRuleGroup {
      * @param propertiesMapping a mapping of element key to
      * {@link ColumnProperties}. Necessary for knowing how to interpret the
      * row data (int, number, String, etc).
-     * @return If there was a matching rule in the group, {@link ColorGuide}
-     * with didMatch set to true and the appropriate foreground and background
-     * colors set to the row. Otherwise, the {@link ColorGuide} will have
-     * didMatch return false and meaningless default values set to the
-     * foreground and background colors.
-     *
+     * @return null or the matching rule in the group, {@link ColorGuide}.
      */
     public ColorGuide getColorGuide(Row row) {
       for (int i = 0; i < ruleList.size(); i++) {
         ColorRule cr = ruleList.get(i);
         if (cr.checkMatch(tp, row)) {
-          return new ColorGuide(true, cr.getForeground(),
-              cr.getBackground());
+          return new ColorGuide(cr.getForeground(), cr.getBackground());
         }
       }
-      return new ColorGuide(false, Constants.DEFAULT_TEXT_COLOR,
-          Constants.DEFAULT_BACKGROUND_COLOR);
-    }
-
-    /**
-     * Class for interpreting the result of a test of the rule group. When this
-     * is returned you are able to distinguish via the {@link didMatch} method
-     * whether or not the rule should apply.
-     * @author sudar.sam@gmail.com
-     *
-     */
-    public static final class ColorGuide {
-
-      private final int mForeground;
-      private final int mBackground;
-      private final boolean mMatched;
-
-      public ColorGuide(boolean matched, int foreground, int background) {
-        this.mMatched = matched;
-        this.mForeground = foreground;
-        this.mBackground = background;
-      }
-
-      public final boolean didMatch() {
-        return mMatched;
-      }
-
-      public final int getForeground() {
-        return mForeground;
-      }
-
-      public final int getBackground() {
-        return mBackground;
-      }
-    }
-
-    public enum Type {
-      COLUMN, TABLE, STATUS_COLUMN;
+      return null;
     }
 
 }

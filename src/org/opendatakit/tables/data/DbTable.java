@@ -73,12 +73,6 @@ public class DbTable {
      */
     private static final List<String> ADMIN_COLUMNS;
 
-    /**
-     * An unmodifiable list of the admin columns. Lazily cached in
-     * {@link #getAdminColumns()}.
-     */
-    private static List<String> mCachedAdminColumns = null;
-
     /*
      * These are the columns that we want to include in sync rows to sync up
      * to the server. This is a work in progress that is being added later, so
@@ -90,16 +84,18 @@ public class DbTable {
     private static final Map<String, ColumnType> COLUMNS_TO_SYNC;
 
     static {
-      ADMIN_COLUMNS = new ArrayList<String>();
-      ADMIN_COLUMNS.add(DataTableColumns.ID);
-      ADMIN_COLUMNS.add(DataTableColumns.ROW_ETAG);
-      ADMIN_COLUMNS.add(DataTableColumns.SYNC_STATE);
-      ADMIN_COLUMNS.add(DataTableColumns.CONFLICT_TYPE);
-      ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-      ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_CREATOR);
-      ADMIN_COLUMNS.add(DataTableColumns.SAVEPOINT_TYPE);
-      ADMIN_COLUMNS.add(DataTableColumns.FORM_ID);
-      ADMIN_COLUMNS.add(DataTableColumns.LOCALE);
+      ArrayList<String> adminColumns = new ArrayList<String>();
+      adminColumns.add(DataTableColumns.ID);
+      adminColumns.add(DataTableColumns.ROW_ETAG);
+      adminColumns.add(DataTableColumns.SYNC_STATE);
+      adminColumns.add(DataTableColumns.CONFLICT_TYPE);
+      adminColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      adminColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
+      adminColumns.add(DataTableColumns.SAVEPOINT_TYPE);
+      adminColumns.add(DataTableColumns.FORM_ID);
+      adminColumns.add(DataTableColumns.LOCALE);
+      ADMIN_COLUMNS = Collections.unmodifiableList(adminColumns);
+
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
       COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
@@ -114,10 +110,7 @@ public class DbTable {
      * @return
      */
     public static List<String> getAdminColumns() {
-      if (mCachedAdminColumns == null) {
-        mCachedAdminColumns = Collections.unmodifiableList(ADMIN_COLUMNS);
-      }
-      return mCachedAdminColumns;
+      return ADMIN_COLUMNS;
     }
 
     public enum SavedStatus {

@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities.settings;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -64,7 +65,7 @@ public class MainDisplaySettings extends Activity {
         adapter.setDropDownViewResource(
                 android.R.layout.simple_spinner_dropdown_item);
         viewTypeSpinner.setAdapter(adapter);
-        viewTypeSpinner.setSelection(prefs.getPreferredViewType(tableId));
+        viewTypeSpinner.setSelection(prefs.getPreferredViewType(tableId).getId());
         Button saveButton = (Button) findViewById(
                 R.id.settings_maindisplay_save);
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -86,6 +87,6 @@ public class MainDisplaySettings extends Activity {
 
     private void saveSettings() {
         prefs.setPreferredViewType(tableId,
-                viewTypeSpinner.getSelectedItemPosition());
+                TableViewType.getViewTypeFromId(viewTypeSpinner.getSelectedItemPosition()));
     }
 }

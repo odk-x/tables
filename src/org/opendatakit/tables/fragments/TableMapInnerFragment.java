@@ -11,8 +11,8 @@ import java.util.TreeMap;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
+import org.opendatakit.tables.data.ColorGuide;
 import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColorRuleGroup.ColorGuide;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
@@ -46,12 +46,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
  */
 public class TableMapInnerFragment extends SherlockMapFragment {
   /** Tag for debug statements. */
-  private static String TAG = "InnerMapFragment";
+  private static final String TAG = "InnerMapFragment";
 
   /** The default hue for markers if no color rules are applied. */
-  private static float DEFAULT_MARKER_HUE = BitmapDescriptorFactory.HUE_AZURE;
+  private static final float DEFAULT_MARKER_HUE = BitmapDescriptorFactory.HUE_AZURE;
   /** The default hue for markers if no color rules are applied. */
-  private static float DEFAULT_SELECTED_MARKER_HUE = BitmapDescriptorFactory.HUE_GREEN;
+  private static final float DEFAULT_SELECTED_MARKER_HUE = BitmapDescriptorFactory.HUE_GREEN;
 
   /**
    * The index of the currently selected marker. Used when saving the instance.
@@ -292,7 +292,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     if (mColorGroup != null) {
       ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
       // Based on if the guide matched or not, grab the hue.
-      if (guide != null && guide.didMatch()) {
+      if (guide != null) {
         float[] hsv = new float[3];
         Color.colorToHSV(guide.getBackground(), hsv);
         return hsv[0];
