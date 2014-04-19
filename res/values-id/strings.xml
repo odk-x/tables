@@ -150,7 +150,6 @@
 	<string name="change_font_size">Change Font Size</string>
 	<string name="display_prefs_for">Display Preferences for: %1$s</string>
 	<string name="sort_column">Sort Column</string>
-	<string name="collection_column">Collection Column</string>
 	<string name="edit_rule">Edit Rule</string>
 	<string name="compared_to_value">target comparison value</string>
 	<string name="error_in_use_list_view_name">List view name %1$s is already in use!</string>
@@ -271,7 +270,7 @@
 	<string name="color_rule_revert_are_you_sure">Revert to default color rules? All custom rules will be lost.</string>
 	<string name="use_collect_form">Use ODK Collect form</string>
 	<string name="use_survey_form">Use ODK Survey form</string>
-	
+
 	<string name="use_index_html">Use custom home screen</string>
 	<string name="no_index">No assets/index.html</string>
 </resources>

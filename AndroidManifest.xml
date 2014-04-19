@@ -77,8 +77,6 @@
         <activity android:name=".activities.ListDisplayActivity"/>
         <activity android:name=".activities.ListViewManager"/>
         <activity android:name=".activities.PropertyManager"/>
-        <activity android:name=".activities.SecurityManager"/>
-        <activity android:name=".activities.ShortcutsManager"/>
         <activity android:name=".activities.SpreadsheetDisplayActivity"
             android:hardwareAccelerated="false" />
         <activity android:name=".activities.TableActivity"/>

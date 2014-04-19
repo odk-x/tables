@@ -353,6 +353,9 @@ public class TableProperties {
     this.displayName = displayName;
     // columns = null;
     this.mElementKeyToColumnProperties = null;
+    if ( groupByColumns == null ) {
+    	groupByColumns = new ArrayList<String>();
+    }
     this.groupByColumns = groupByColumns;
     if (sortColumn == null || sortColumn.length() == 0) {
       this.sortColumn = null;
@@ -567,29 +570,28 @@ public class TableProperties {
       }
     }
 
-    String primeOrderValue = props.get(KEY_GROUP_BY_COLUMNS);
-    if (primeOrderValue == null)
-      primeOrderValue = "";
-    ArrayList<String> primeList = new ArrayList<String>();
-    if (primeOrderValue.length() != 0) {
+    String groupByColumnsJsonString = props.get(KEY_GROUP_BY_COLUMNS);
+    ArrayList<String> groupByCols = new ArrayList<String>();
+    if (groupByColumnsJsonString != null &&
+    	groupByColumnsJsonString.length() != 0) {
       try {
-        primeList = mapper.readValue(primeOrderValue, ArrayList.class);
+    	  groupByCols = mapper.readValue(groupByColumnsJsonString, ArrayList.class);
       } catch (JsonParseException e) {
         e.printStackTrace();
-        Log.e(t, "ignore invalid json: " + primeList);
+        Log.e(t, "ignore invalid json: " + groupByColumnsJsonString);
       } catch (JsonMappingException e) {
         e.printStackTrace();
-        Log.e(t, "ignore invalid json: " + primeList);
+        Log.e(t, "ignore invalid json: " + groupByColumnsJsonString);
       } catch (IOException e) {
         e.printStackTrace();
-        Log.e(t, "ignore invalid json: " + primeList);
+        Log.e(t, "ignore invalid json: " + groupByColumnsJsonString);
       }
     }
 
     return new TableProperties(context, appName, db, props.get(TableDefinitionsColumns.TABLE_ID),
         props.get(TableDefinitionsColumns.DB_TABLE_NAME),
         props.get(KEY_DISPLAY_NAME),
-        columnOrder, primeList,
+        columnOrder, groupByCols,
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
@@ -1376,6 +1378,9 @@ public class TableProperties {
    */
   public void setGroupByColumns(SQLiteDatabase db, List<String> groupByCols) throws JsonGenerationException, JsonMappingException, IOException {
     String groupByJsonStr;
+    if ( groupByCols == null ) {
+    	groupByCols = new ArrayList<String>();
+    }
     groupByJsonStr = mapper.writeValueAsString(groupByCols);
     tableKVSH.setString(db, KEY_GROUP_BY_COLUMNS, groupByJsonStr);
     this.groupByColumns = groupByCols;
@@ -1576,7 +1581,8 @@ public class TableProperties {
       setGroupByColumns(db, groupByCols);
       setSortColumn(db, (String) jo.get(JSON_KEY_SORT_COLUMN));
       setIndexColumn(db, (String) jo.get(JSON_KEY_INDEX_COLUMN));
-      setDefaultViewType(db, TableViewType.valueOf((String) jo.get(JSON_KEY_DEFAULT_VIEW_TYPE)));
+      String viewType = (String) jo.get(JSON_KEY_DEFAULT_VIEW_TYPE);
+      setDefaultViewType(db, viewType == null ? TableViewType.Spreadsheet : TableViewType.valueOf(viewType));
 
       Set<String> columnElementKeys = new HashSet<String>();
       ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
