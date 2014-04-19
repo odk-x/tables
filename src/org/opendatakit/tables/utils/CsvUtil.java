@@ -51,7 +51,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
@@ -181,7 +180,7 @@ public class CsvUtil {
         // string until we find it, but if there are other occurrences
         // of the tableId json key we will get into trouble. So, we must
         // deserialize it.
-        tp = TableProperties.addTableFromJson(c, appName, jsonProperties, KeyValueStoreType.ACTIVE);
+        tp = TableProperties.addTableFromJson(c, appName, jsonProperties);
         // we need to check if we need to import all the key value store
         // things as well.
         if (row.length > 1) {
@@ -192,11 +191,10 @@ public class CsvUtil {
             List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
                 new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
                 });
-            tp.addMetaDataEntries(recoveredEntries, KeyValueStoreType.ACTIVE, false);
+            tp.addMetaDataEntries(recoveredEntries, false);
             // Since the KVS has all the display properties for a table, we must
             // re-read everything to get them.
-            tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
-                tp.getBackingStoreType());
+            tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
             // TODO: sort out closing database appropriately.
           } catch (JsonGenerationException e) {
             e.printStackTrace();
@@ -218,8 +216,7 @@ public class CsvUtil {
         discoverColumnNames = false;
         row = reader.readNext();
       } else {
-        tp = TableProperties.addTable(c, appName, dbTableName, tableName, tableId,
-            KeyValueStoreType.ACTIVE);
+        tp = TableProperties.addTable(c, appName, dbTableName, tableName, tableId);
         discoverColumnNames = true;
       }
 
@@ -309,7 +306,7 @@ public class CsvUtil {
         // TODO: it might be that we do NOT want to overwrite an
         // existing
         // table's properties, in which case we shouldn't set from json.
-        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId, KeyValueStoreType.ACTIVE);
+        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId);
         if (tp.setFromJson(row[0])) {
           // OK the metadata is for this tableId, so we can proceed...
 
@@ -323,12 +320,11 @@ public class CsvUtil {
               List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
                   new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
                   });
-              tp.addMetaDataEntries(recoveredEntries, KeyValueStoreType.ACTIVE, false);
+              tp.addMetaDataEntries(recoveredEntries, false);
               // Since the KVS has all the display properties for a table, we
               // must
               // re-read everything to get them.
-              tp = TableProperties.refreshTablePropertiesForTable(c, appName, tp.getTableId(),
-                  tp.getBackingStoreType());
+              tp = TableProperties.refreshTablePropertiesForTable(c, appName, tp.getTableId());
               // TODO: sort out closing database appropriately.
             } catch (JsonGenerationException e) {
               e.printStackTrace();
@@ -351,7 +347,7 @@ public class CsvUtil {
         }
         row = reader.readNext();
       } else {
-        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId, KeyValueStoreType.ACTIVE);
+        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId);
         discoverColumnNames = true;
       }
 
@@ -784,7 +780,7 @@ public class CsvUtil {
         // We do NOT want to include the table or column partitions.
         // partitions.remove(TableProperties.KVS_PARTITION);
         // partitions.remove(ColumnProperties.KVS_PARTITION);
-        List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries(tp.getBackingStoreType());
+        List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
         // TODO sort out and handle appropriate closing of database
         String[] settingsRow;
         String strKvsEntries = null;

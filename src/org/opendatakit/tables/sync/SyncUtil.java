@@ -16,10 +16,8 @@
 package org.opendatakit.tables.sync;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.tables.R;
 import org.springframework.http.converter.ResourceHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
@@ -62,18 +60,6 @@ public class SyncUtil {
       escapedPaths.add(SyncUtil.formatPathForAggregate(path));
     }
     return escapedPaths;
-  }
-
-  public static boolean intToBool(int i) {
-    return i != 0;
-  }
-
-  public static int boolToInt(boolean b) {
-    return b ? 1 : 0;
-  }
-
-  public static boolean stringToBool(String bool) {
-    return (bool == null) ? true : bool.equalsIgnoreCase("true");
   }
 
   /**
@@ -227,37 +213,5 @@ public class SyncUtil {
 //    });
     return rt;
   }
-
-
-  /**
-   * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
-   * their partition, aspect, and key, in that order. Must be from the same
-   * table (i.e. have the same tableId) to have any meaning.
-   * @author sudar.sam@gmail.com
-   *
-   */
-  public static class KVSEntryComparator implements
-      Comparator<OdkTablesKeyValueStoreEntry> {
-
-    @Override
-    public int compare(OdkTablesKeyValueStoreEntry lhs,
-        OdkTablesKeyValueStoreEntry rhs) {
-      int partitionComparison = lhs.partition.compareTo(rhs.partition);
-      if (partitionComparison != 0) {
-        return partitionComparison;
-      }
-      int aspectComparison = lhs.aspect.compareTo(rhs.aspect);
-      if (aspectComparison != 0) {
-        return aspectComparison;
-      }
-      // Otherwise, we'll just return the value of the key, b/c if the key
-      // is also the same, we're equal.
-      int keyComparison = lhs.key.compareTo(rhs.key);
-      return keyComparison;
-    }
-
-  }
-
-
 
 }

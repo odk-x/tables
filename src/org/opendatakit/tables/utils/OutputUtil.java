@@ -12,7 +12,6 @@ import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.TableData;
@@ -82,7 +81,7 @@ public class OutputUtil {
   public static String getStringForControlObject(Context context, String appName) {
     Map<String, Object> controlMap = new HashMap<String, Object>();
     TableProperties[] allTableProperties = TableProperties.getTablePropertiesForAll(
-        context, appName, KeyValueStoreType.ACTIVE);
+        context, appName);
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
     for (TableProperties tableProperties : allTableProperties) {
@@ -148,8 +147,7 @@ public class OutputUtil {
    */
   public static String getStringForDataObject(Context context, String appName, String tableId,
       int numberOfRows) {
-    TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId,
-        KeyValueStoreType.ACTIVE);
+    TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
     UserTable userTable = dbTable.rawSqlQuery("", null);
 
@@ -286,8 +284,7 @@ public class OutputUtil {
    * @param numberOfRows
    */
   public static void writeAllDataObjects(Context context, String appName, int numberOfRows) {
-    TableProperties[] allDataTables = TableProperties.getTablePropertiesForAll(context, appName,
-        KeyValueStoreType.ACTIVE);
+    TableProperties[] allDataTables = TableProperties.getTablePropertiesForAll(context, appName);
     for (TableProperties tableProperties : allDataTables) {
       writeDataObject(context, appName, tableProperties.getTableId(), numberOfRows);
     }

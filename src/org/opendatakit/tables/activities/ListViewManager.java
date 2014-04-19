@@ -21,7 +21,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -123,8 +122,7 @@ public class ListViewManager extends SherlockListActivity {
       appName = TableFileUtils.getDefaultAppName();
     }
     this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
-        KeyValueStoreType.ACTIVE);
+    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     this.kvsh =
         tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
     this.listViewKvsh =

@@ -25,7 +25,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.sync.SyncProcessor;
@@ -271,8 +270,7 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       }
 
       TableProperties[] props = TableProperties.getTablePropertiesForAll(
-    		  	AggregateDownloadTableActivity.this, appName,
-                                      KeyValueStoreType.SERVER);
+    		  	AggregateDownloadTableActivity.this, appName);
       TableProperties tpOriginal = null;
       boolean tablePresent = false;
       for ( TableProperties p : props ) {
@@ -326,10 +324,6 @@ public class AggregateDownloadTableActivity extends SherlockListActivity {
       if ( results.size() == 1 ) {
         downloadResult = results.get(0);
       }
-
-      // Now copy the properties from the server to the default to the active.
-      tp.mergeServerToDefaultForTable();
-      tp.copyDefaultToServerForTable();
 
       return null;
     }

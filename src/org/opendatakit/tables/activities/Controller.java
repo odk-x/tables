@@ -27,14 +27,13 @@ import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -115,17 +114,15 @@ public class Controller implements CustomViewCallbacks {
   // Display preferences is used differently in SpreadsheetDisplayActivity
   public static final int MENU_ITEM_ID_DISPLAY_PREFERENCES = 4;
   private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
-  private static final int MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS = 6;
-  private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 7;
-  private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 8;
-  static final int FIRST_FREE_MENU_ITEM_ID = 9;
+  private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
+  private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
+  static final int FIRST_FREE_MENU_ITEM_ID = 8;
 
   public static final int RCODE_TABLE_PROPERTIES_MANAGER = 0;
   public static final int RCODE_COLUMN_MANAGER = 1;
   public static final int RCODE_ODK_COLLECT_ADD_ROW = 2;
   public static final int RCODE_ODK_COLLECT_EDIT_ROW = 3;
   public static final int RCODE_LIST_VIEW_MANAGER = 4;
-  public static final int RCODE_MANAGE_TABLE_PROPERTY_SETS = 5;
   /**
    * This is the return code for when Collect is called to add a row to a
    * table that is not the table held by the activity at the time of the
@@ -137,10 +134,10 @@ public class Controller implements CustomViewCallbacks {
    * {@link CollectUtil#launchCollectToAddRow(Activity, Intent, TableProperties)}
    * .
    */
-  public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 6;
-  public static final int RCODE_ODK_SURVEY_ADD_ROW = 7;
-  public static final int RCODE_ODK_SURVEY_EDIT_ROW = 8;
-  public static final int FIRST_FREE_RCODE = 9;
+  public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
+  public static final int RCODE_ODK_SURVEY_ADD_ROW = 6;
+  public static final int RCODE_ODK_SURVEY_EDIT_ROW = 7;
+  public static final int FIRST_FREE_RCODE = 8;
 
   private final DataUtil du;
   private final SherlockActivity activity;
@@ -331,7 +328,7 @@ public class Controller implements CustomViewCallbacks {
    * this.
    */
   public void refreshDbTable(String tableId) {
-    tp = TableProperties.getTablePropertiesForTable(activity, appName, tableId, KeyValueStoreType.ACTIVE);
+    tp = TableProperties.getTablePropertiesForTable(activity, appName, tableId);
     dbt = DbTable.getDbTable(tp);
   }
 
@@ -504,9 +501,6 @@ public class Controller implements CustomViewCallbacks {
     case RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
       return true;
-    case Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS:
-      handleManagePropertySetsReturn();
-      return true;
     case RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
       return true;
@@ -539,20 +533,6 @@ public class Controller implements CustomViewCallbacks {
   }
 
   private void handleTablePropertiesManagerReturn() {
-    // so for now I think that the boolean of whether or not the current view
-    // is an overview of a collection view is stored here in Controller.
-    // This should eventually move, if we decide to keep this architecture. but
-    // for now I'm going to just hardcode in a solution.
-    TableViewType oldViewType = getCurrentViewType();
-    refreshDbTable(tp.getTableId());
-    if (oldViewType == tp.getDefaultViewType()) {
-      da.init();
-    } else {
-      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, tp.getDefaultViewType());
-    }
-  }
-
-  private void handleManagePropertySetsReturn() {
     // so for now I think that the boolean of whether or not the current view
     // is an overview of a collection view is stored here in Controller.
     // This should eventually move, if we decide to keep this architecture. but
@@ -662,9 +642,6 @@ public class Controller implements CustomViewCallbacks {
     // Now an option for editing list views.
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
         Menu.NONE, activity.getString(R.string.list_view_manager)).setEnabled(true);
-
-    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS, Menu.NONE,
-        activity.getString(R.string.manage_table_property_sets)).setEnabled(enabled);
   }
 
   /**
@@ -739,13 +716,6 @@ public class Controller implements CustomViewCallbacks {
         intent.putExtra(INTENT_KEY_APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_TABLE_PROPERTIES_MANAGER);
-      }
-        return true;
-      case MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS: {
-        Intent intent = new Intent(activity, ManagePropertySetsManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, appName);
-        intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-        activity.startActivityForResult(intent, Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS);
       }
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER: {
@@ -830,7 +800,7 @@ public class Controller implements CustomViewCallbacks {
       return;
     }
     TableProperties tpToReceiveAdd = TableProperties.getTablePropertiesForTable(
-        activity, appName, tableId, KeyValueStoreType.ACTIVE);
+        activity, appName, tableId);
     CollectUtil.handleOdkCollectAddReturn(activity, appName, tpToReceiveAdd, returnCode, data);
   }
 

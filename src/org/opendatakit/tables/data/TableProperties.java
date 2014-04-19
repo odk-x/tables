@@ -45,7 +45,6 @@ import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
-import org.opendatakit.tables.sync.SyncUtil;
 import org.opendatakit.tables.sync.aggregate.SyncTag;
 import org.opendatakit.tables.utils.ColorRuleUtil;
 import org.opendatakit.tables.utils.DataUtil;
@@ -57,7 +56,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * A class for accessing and managing table properties.
@@ -171,14 +169,13 @@ public class TableProperties {
    */
   private static synchronized void refreshActiveCache(Context context, String appName, SQLiteDatabase db) {
     try {
-      KeyValueStoreType typeOfStore = KeyValueStoreType.ACTIVE;
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
-      idsInActiveKVS = kvsm.getAllIdsFromStore(db, typeOfStore);
+      idsInActiveKVS = kvsm.getAllIdsFromStore(db);
 
       activeTableIdMap.clear();
       for ( String tableId : idsInActiveKVS ) {
-        Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-        TableProperties tp = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
+        Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
+        TableProperties tp = constructPropertiesFromMap(context, appName, db, propPairs);
         if ( tp == null ) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
@@ -203,10 +200,8 @@ public class TableProperties {
    *
    * @param typeOfStore - null if everything
    */
-  public static synchronized void markStaleCache(KeyValueStoreType typeOfStore) {
-    if ( typeOfStore == null || typeOfStore == KeyValueStoreType.ACTIVE ) {
-      staleActiveCache = true;
-    }
+  public static synchronized void markStaleCache() {
+    staleActiveCache = true;
   }
 
   /**
@@ -220,40 +215,28 @@ public class TableProperties {
    *           do not use the cache; update it with a fresh pull
    * @return
    */
-  public static TableProperties getTablePropertiesForTable(Context context, String appName, String tableId,
-      KeyValueStoreType typeOfStore) {
+  public static TableProperties getTablePropertiesForTable(Context context, String appName, String tableId) {
 
 
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     SQLiteDatabase db = dh.getReadableDatabase();
     try {
       ensureActiveTableIdMapLoaded(context, appName, db);
-      if ( typeOfStore == KeyValueStoreType.ACTIVE ) {
-        // just use the cached value...
-        return activeTableIdMap.get(tableId);
-      }
-
-      Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps, typeOfStore);
-      if (tp != null && typeOfStore == KeyValueStoreType.ACTIVE) {
-        // update the cache...
-        activeTableIdMap.put(tp.getTableId(), tp);
-      }
-      return tp;
+      // just use the cached value...
+      return activeTableIdMap.get(tableId);
     } finally {
       db.close();
     }
   }
 
-  public static TableProperties refreshTablePropertiesForTable(Context context, String appName, String tableId,
-      KeyValueStoreType typeOfStore) {
+  public static TableProperties refreshTablePropertiesForTable(Context context, String appName, String tableId) {
 
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     SQLiteDatabase db = dh.getReadableDatabase();
     try {
-      Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps, typeOfStore);
-      if (tp != null && typeOfStore == KeyValueStoreType.ACTIVE) {
+      Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId);
+      TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps);
+      if (tp != null) {
         // update the cache...
         activeTableIdMap.put(tp.getTableId(), tp);
       }
@@ -271,20 +254,14 @@ public class TableProperties {
    *          the KVS from which to get the store
    * @return
    */
-  public static TableProperties[] getTablePropertiesForAll(Context context, String appName,
-      KeyValueStoreType typeOfStore) {
+  public static TableProperties[] getTablePropertiesForAll(Context context, String appName) {
     SQLiteDatabase db = null;
     try {
       DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
       db = dh.getReadableDatabase();
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
-      if (typeOfStore == KeyValueStoreType.ACTIVE) {
-        ensureActiveTableIdMapLoaded(context, appName, db);
-        return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
-      }
-      // don't do caching for other KVS's
-      List<String> allIds = kvsm.getAllIdsFromStore(db, typeOfStore);
-      return constructPropertiesFromIds(context, appName, allIds, db, typeOfStore);
+      ensureActiveTableIdMapLoaded(context, appName, db);
+      return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
     } finally {
       if ( db != null ) {
         db.close();
@@ -302,12 +279,7 @@ public class TableProperties {
    *          the KVS from which to get the properties
    * @return
    */
-  public static TableProperties[] getTablePropertiesForSynchronizedTables(Context context, String appName,
-		  KeyValueStoreType typeOfStore) {
-
-    if ( typeOfStore != KeyValueStoreType.SERVER ) {
-      throw new IllegalStateException("getTablePropertiesForSynchronizedTables Expecting SERVER store type");
-    }
+  public static TableProperties[] getTablePropertiesForSynchronizedTables(Context context, String appName) {
 
     SQLiteDatabase db = null;
     try {
@@ -316,7 +288,7 @@ public class TableProperties {
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
       // don't do caching for other KVS's
       List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
-      return constructPropertiesFromIds(context, appName, synchedIds, db, typeOfStore);
+      return constructPropertiesFromIds(context, appName, synchedIds, db);
     } finally {
        if ( db != null ) {
        db.close();
@@ -331,8 +303,6 @@ public class TableProperties {
    * The fields that belong only to the object, and are not related to the
    * actual table itself.
    */
-  // This is the Type of the key value store where the properties reside.
-  private final KeyValueStoreType backingStore;
 
   private final Context context;
   private final String appName;
@@ -374,8 +344,7 @@ public class TableProperties {
       String indexColumn, SyncTag syncTag,
       String lastSyncTime,
       TableViewType defaultViewType,
-      SyncState syncState, boolean transactioning,
-      KeyValueStoreType backingStore) {
+      SyncState syncState, boolean transactioning) {
     this.context = context;
     this.appName = appName;
     whereArgs = new String[] { tableId };
@@ -400,7 +369,6 @@ public class TableProperties {
     this.defaultViewType = defaultViewType;
     this.syncState = syncState;
     this.transactioning = transactioning;
-    this.backingStore = backingStore;
     this.tableKVSH = this.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
 
     // This should be OK even when we are creating a new database
@@ -425,30 +393,6 @@ public class TableProperties {
     this.staleColumnsInOrder = true;
   }
 
-  public void setCurrentAsDefaultPropertiesForTable() {
-    KeyValueStoreManager kvsm = getKeyValueStoreManager();
-    kvsm.setCurrentAsDefaultPropertiesForTable(getTableId(), getWritableDatabase());
-    markStaleCache(KeyValueStoreType.DEFAULT);
-  }
-
-  public void copyDefaultToActiveForTable() {
-    KeyValueStoreManager kvsm = getKeyValueStoreManager();
-    kvsm.copyDefaultToActiveForTable(getTableId(), getWritableDatabase());
-    markStaleCache(KeyValueStoreType.ACTIVE);
-  }
-
-  public void copyDefaultToServerForTable() {
-    KeyValueStoreManager kvsm = getKeyValueStoreManager();
-    kvsm.copyDefaultToServerForTable(context, appName, getTableId(), getWritableDatabase());
-    markStaleCache(null); // all are stale because of sync state change
-  }
-
-  public void mergeServerToDefaultForTable() {
-    KeyValueStoreManager kvsm = getKeyValueStoreManager();
-    kvsm.mergeServerToDefaultForTable(tableId, getWritableDatabase());
-    markStaleCache(KeyValueStoreType.DEFAULT);
-  }
-
   public KeyValueStoreSync getSyncStoreForTable() {
     KeyValueStoreManager kvsm = getKeyValueStoreManager();
     return kvsm.getSyncStoreForTable(getTableId());
@@ -465,26 +409,22 @@ public class TableProperties {
   }
 
   public KeyValueStore getStoreForTable() {
-    return getKeyValueStoreManager().getStoreForTable(this.tableId, this.backingStore);
+    return getKeyValueStoreManager().getStoreForTable(this.tableId);
   }
 
-  public KeyValueStore getStoreForTable(KeyValueStoreType typeOfStore) {
-    return getKeyValueStoreManager().getStoreForTable(this.tableId, typeOfStore);
-  }
-
-  public ArrayList<OdkTablesKeyValueStoreEntry> getMetaDataEntries(KeyValueStoreType typeOfStore) {
-    KeyValueStore kvs = getStoreForTable(typeOfStore);
+  public ArrayList<OdkTablesKeyValueStoreEntry> getMetaDataEntries() {
+    KeyValueStore kvs = getStoreForTable();
     ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = kvs.getEntries(getReadableDatabase());
     return kvsEntries;
   }
 
-  public boolean hasMetaDataEntries(KeyValueStoreType typeOfStore) {
-    KeyValueStore kvs = getStoreForTable(typeOfStore);
+  public boolean hasMetaDataEntries() {
+    KeyValueStore kvs = getStoreForTable();
     return kvs.entriesExist(getReadableDatabase());
   }
 
-  public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries, KeyValueStoreType typeOfStore, boolean clear) {
-    KeyValueStore kvs = getStoreForTable(typeOfStore);
+  public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries, boolean clear) {
+    KeyValueStore kvs = getStoreForTable();
     SQLiteDatabase db = getWritableDatabase();
     try {
       if ( clear ) {
@@ -533,11 +473,10 @@ public class TableProperties {
    *
    * @return
    */
-  private static Map<String, String> getMapOfPropertiesForTable(SQLiteDatabase db, String tableId,
-      KeyValueStoreType typeOfStore) {
+  private static Map<String, String> getMapOfPropertiesForTable(SQLiteDatabase db, String tableId) {
     try {
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
-      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId, typeOfStore);
+      KeyValueStore intendedKVS = kvsm.getStoreForTable(tableId);
       Map<String, String> tableDefinitionsMap = TableDefinitions.getFields(db, tableId);
       Map<String, String> kvsMap = intendedKVS.getProperties(db);
       Map<String, String> mapProps = new HashMap<String, String>();
@@ -580,7 +519,7 @@ public class TableProperties {
    * be acquired from the key value store.
    */
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
-        SQLiteDatabase db, Map<String, String> props, KeyValueStoreType backingStore) {
+        SQLiteDatabase db, Map<String, String> props) {
     // first we have to get the appropriate type for the non-string fields.
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
     if ( syncStateStr == null ) {
@@ -590,7 +529,7 @@ public class TableProperties {
     SyncState syncState = SyncState.valueOf(syncStateStr);
     String transactioningStr = props.get(TableDefinitionsColumns.TRANSACTIONING);
     int transactioningInt = Integer.parseInt(transactioningStr);
-    boolean transactioning = SyncUtil.intToBool(transactioningInt);
+    boolean transactioning = DataHelper.intToBool(transactioningInt);
     String columnOrderValue = props.get(KEY_COLUMN_ORDER);
     String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
     TableViewType defaultViewType;
@@ -654,7 +593,7 @@ public class TableProperties {
         props.get(KEY_SORT_COLUMN), props.get(KEY_INDEX_COLUMN),
         SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
         props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
-        syncState, transactioning, backingStore);
+        syncState, transactioning);
   }
 
   /*
@@ -662,12 +601,12 @@ public class TableProperties {
    * are collected from the intededStore.
    */
   private static TableProperties[] constructPropertiesFromIds(Context context, String appName,
-      List<String> ids, SQLiteDatabase db, KeyValueStoreType typeOfStore) {
+      List<String> ids, SQLiteDatabase db) {
     TableProperties[] allProps = new TableProperties[ids.size()];
     for (int i = 0; i < ids.size(); i++) {
       String tableId = ids.get(i);
-      Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
-      allProps[i] = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
+      Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
+      allProps[i] = constructPropertiesFromMap(context, appName, db, propPairs);
       if ( allProps[i] == null ) {
         throw new IllegalStateException("Unexpectedly missing " + tableId);
       }
@@ -693,8 +632,8 @@ public class TableProperties {
    *           conflict with any of the properties from the three key value
    *           stores. If so, nothing is done.
    */
-  public static TableProperties addTableFromJson(Context context, String appName, String json,
-      KeyValueStoreType typeOfStore) throws TableAlreadyExistsException {
+  public static TableProperties addTableFromJson(Context context, String appName, String json)
+      throws TableAlreadyExistsException {
     // we just need to reclaim the bare minimum that we need to call the other
     // methods.
     Map<String, Object> jo;
@@ -714,14 +653,10 @@ public class TableProperties {
     String dbTableName = (String) jo.get(JSON_KEY_DB_TABLE_NAME);
     String displayName = (String) jo.get(JSON_KEY_DISPLAY_NAME);
     // And now we need to check for conflicts that would mess up the database.
-    TableProperties[] activeProps = getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
-    TableProperties[] defaultProps = getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
-    TableProperties[] serverProps = getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
+    TableProperties[] activeProps = getTablePropertiesForAll(context, appName);
     // this arraylist will hold all the properties.
     ArrayList<TableProperties> listProps = new ArrayList<TableProperties>();
     listProps.addAll(Arrays.asList(activeProps));
-    listProps.addAll(Arrays.asList(defaultProps));
-    listProps.addAll(Arrays.asList(serverProps));
     if (NameUtil.dbTableNameAlreadyExists(context, appName, dbTableName)
         || NameUtil.tableIdAlreadyExists(context, appName, tableId)) {
       Log.e(t, "a table already exists with the dbTableName: " + dbTableName
@@ -730,7 +665,7 @@ public class TableProperties {
           + dbTableName + " or with the tableId: " + tableId);
     }
     TableProperties tp = addTable(context, appName, dbTableName, displayName,
-        tableId, typeOfStore);
+        tableId);
     if ( !tp.setFromJson(json) ) {
       throw new IllegalStateException("this should never happen");
     }
@@ -755,8 +690,7 @@ public class TableProperties {
    * @return
    */
   public static TableProperties addTable(Context context, String appName,
-      String dbTableName, String displayName, String tableId,
-      KeyValueStoreType typeOfStore) {
+      String dbTableName, String displayName, String tableId) {
     Log.e(t, "adding table with id: " + tableId);
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
@@ -769,9 +703,9 @@ public class TableProperties {
       db.beginTransaction();
       try {
         TableDefinitions.addTable(db, tableId, dbTableName);
-        Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId, typeOfStore);
+        Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
         propPairs.put(KEY_DISPLAY_NAME, displayName);
-        tp = constructPropertiesFromMap(context, appName, db, propPairs, typeOfStore);
+        tp = constructPropertiesFromMap(context, appName, db, propPairs);
         if ( tp == null ) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
@@ -840,9 +774,7 @@ public class TableProperties {
         }
         TableDefinitions.deleteTableFromTableDefinitions(tableId, db);
         KeyValueStoreManager kvsm = new KeyValueStoreManager();
-        kvsm.getStoreForTable(tableId, KeyValueStoreType.ACTIVE).clearKeyValuePairs(db);
-        kvsm.getStoreForTable(tableId, KeyValueStoreType.DEFAULT).clearKeyValuePairs(db);
-        kvsm.getStoreForTable(tableId, KeyValueStoreType.SERVER).clearKeyValuePairs(db);
+        kvsm.getStoreForTable(tableId).clearKeyValuePairs(db);
         // remove it from sync store
         kvsm.getSyncStoreForTable(tableId).clearKeyValuePairs(db);
         db.setTransactionSuccessful();
@@ -856,7 +788,7 @@ public class TableProperties {
     } finally {
       // TODO: fix the when to close problem
       // db.close();
-      markStaleCache(null);
+      markStaleCache();
     }
   }
 
@@ -1377,10 +1309,6 @@ public class TableProperties {
     db.execSQL("DROP TABLE backup_");
   }
 
-  public KeyValueStoreType getBackingStoreType() {
-    return this.backingStore;
-  }
-
   /**
    * Returns an unmodifiable list of the ColumnProperties in columnOrder.
    *
@@ -1527,7 +1455,7 @@ public class TableProperties {
     SQLiteDatabase db = getWritableDatabase();
     TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_TAG, syncTag.toString(), db);
     this.syncTag = syncTag;
-    markStaleCache(null); // all are stale because of sync state change
+    markStaleCache(); // all are stale because of sync state change
     // TODO: figure out how to handle closing the database
   }
 
@@ -1550,7 +1478,7 @@ public class TableProperties {
     SQLiteDatabase db = getWritableDatabase();
     TableDefinitions.setValue(tableId, TableDefinitionsColumns.LAST_SYNC_TIME, time, db);
     this.lastSyncTime = time;
-    markStaleCache(null); // all are stale because of sync state change
+    markStaleCache(); // all are stale because of sync state change
     // TODO: figure out how to handle closing the db
   }
 
@@ -1574,7 +1502,7 @@ public class TableProperties {
       TableDefinitions.setValue(tableId, TableDefinitionsColumns.SYNC_STATE, state.name(), db);
       this.syncState = state;
       // TODO: figure out how to handle closing the db
-      markStaleCache(null); // all are stale because of sync state change
+      markStaleCache(); // all are stale because of sync state change
     }
   }
 
@@ -1593,9 +1521,9 @@ public class TableProperties {
    */
   public void setTransactioning(boolean transactioning) {
     tableKVSH
-        .setInteger(TableDefinitionsColumns.TRANSACTIONING, SyncUtil.boolToInt(transactioning));
+        .setInteger(TableDefinitionsColumns.TRANSACTIONING, DataHelper.boolToInt(transactioning));
     this.transactioning = transactioning;
-    markStaleCache(null); // all are stale because of sync state change
+    markStaleCache(); // all are stale because of sync state change
   }
 
   public String toJson() throws JsonGenerationException, JsonMappingException, IOException {
@@ -1816,7 +1744,7 @@ public class TableProperties {
    */
   public KeyValueStoreHelper getKeyValueStoreHelper(String partition) {
     KeyValueStoreManager kvsm = new KeyValueStoreManager();
-    KeyValueStore backingStore = kvsm.getStoreForTable(this.tableId, this.backingStore);
+    KeyValueStore backingStore = kvsm.getStoreForTable(this.tableId);
     return new KeyValueStoreHelper(backingStore, partition, this);
   }
 

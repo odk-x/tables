@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 
@@ -57,7 +56,7 @@ public class KeyValueStoreSync extends KeyValueStore {
 	    if (isSetToSyncEntry.size() == 0)
 	      return false;
 	    // otherwise there is a single entry and it is the one we want.
-	    if (SyncUtil.intToBool(
+	    if (DataHelper.intToBool(
 	          Integer.parseInt(isSetToSyncEntry.get(0).value))) {
 	      return true;
 	    } else {
@@ -73,7 +72,7 @@ public class KeyValueStoreSync extends KeyValueStore {
    */
   public void setIsSetToSync(boolean val, SQLiteDatabase db) {
     try {
-	    int newValue = SyncUtil.boolToInt(val);
+	    int newValue = DataHelper.boolToInt(val);
 	    this.insertOrUpdateKey(db, KeyValueStoreSync.KVS_PARTITION,
 	        KeyValueStoreSync.KVS_ASPECT,
 	        SyncPropertiesKeys.IS_SET_TO_SYNC.getKey(),

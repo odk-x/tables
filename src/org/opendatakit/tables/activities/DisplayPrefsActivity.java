@@ -2,7 +2,6 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.SliderPreference;
@@ -45,7 +44,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
       generalPreferences();
     } else {
       // was called from controller so it is table specific
-      tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
+      tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
       kvsh = tp.getKeyValueStoreHelper("SpreadsheetView");
       customPreferences();
     }

@@ -20,7 +20,6 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -111,7 +110,7 @@ implements DisplayActivity {
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
 		// TODO: why do we get all table properties here? this is an expensive
 		// call. I don't think we should do it.
-		query = new Query(this, appName, KeyValueStoreType.ACTIVE, c.getTableProperties());
+		query = new Query(this, appName, c.getTableProperties());
 	}
 
    @Override

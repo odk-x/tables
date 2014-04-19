@@ -23,7 +23,6 @@ import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.EditColorPreference;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
@@ -107,8 +106,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
         INTENT_FLAG_NEW_RULE);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    this.mTp = TableProperties.getTablePropertiesForTable(this, mAppName, mTableId,
-        KeyValueStoreType.ACTIVE);
+    this.mTp = TableProperties.getTablePropertiesForTable(this, mAppName, mTableId);
     this.mKvsh =
         mTp.getKeyValueStoreHelper(ColorRuleGroup.KVS_PARTITION_COLUMN);
     this.mAspectHelper = mKvsh.getAspectHelper(mElementKey);

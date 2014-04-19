@@ -40,7 +40,6 @@ import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
@@ -177,7 +176,7 @@ public abstract class CustomView extends LinearLayout {
     }
     tableIdToProperties = new HashMap<String, TableProperties>();
     TableProperties[] allTps = TableProperties.getTablePropertiesForAll(
-    		mParentActivity, mAppName, KeyValueStoreType.ACTIVE);
+    		mParentActivity, mAppName);
     for (TableProperties tp : allTps) {
       tableIdToProperties.put(tp.getTableId(), tp);
     }
@@ -1090,7 +1089,7 @@ public abstract class CustomView extends LinearLayout {
       String dbTableName = NameUtil.createUniqueDbTableName(getContext(), mAppName, tableName);
       @SuppressWarnings("unused")
       TableProperties tp = TableProperties.addTable(getContext(), mAppName, dbTableName, tableName,
-          tableId, KeyValueStoreType.ACTIVE);
+          tableId);
     }
   }
 

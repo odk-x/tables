@@ -29,7 +29,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
-import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -459,12 +458,12 @@ public class ColumnProperties {
     // probably going to go away when the map becomes key->TypeValuePair.
     // KEY_DISPLAY_VISIBLE
     String displayVisibleStr = kvsProps.get(KEY_DISPLAY_VISIBLE);
-    boolean displayVisible = SyncUtil.stringToBool(displayVisibleStr);
+    boolean displayVisible = DataHelper.stringToBool(displayVisibleStr);
     // KEY_JOINS
 
     // DB_IS_UNIT_OF_RETENTION
     String isUnitOfRetentionStr = columnDefinitions.get(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
-    boolean isUnitOfRetention = SyncUtil.stringToBool(isUnitOfRetentionStr);
+    boolean isUnitOfRetention = DataHelper.stringToBool(isUnitOfRetentionStr);
     // DB_COLUMN_TYPE
     String columnTypeStr = columnDefinitions.get(ColumnDefinitionsColumns.ELEMENT_TYPE);
     ColumnType columnType = ColumnType.valueOf(columnTypeStr);

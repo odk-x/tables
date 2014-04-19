@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
@@ -110,7 +109,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
     kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
     // TODO: why do we get all table properties here? this is an expensive
     // call. I don't think we should do it.
-    query = new Query(this, appName, KeyValueStoreType.ACTIVE, c.getTableProperties());
+    query = new Query(this, appName, c.getTableProperties());
   }
 
   @Override

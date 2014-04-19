@@ -16,7 +16,6 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -65,41 +64,7 @@ public class AggregateChooseTablesActivity extends SherlockListActivity {
    * must also have an "isSetToSync" entry in the sync KVS.
    */
   private TableProperties[] getServerDataTables() {
-    TableProperties[] activeProps =
-        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.ACTIVE);
-    // silently promote all active values to default if there is no default
-    TableProperties[] defaultProps =
-        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.DEFAULT);
-    for ( int i = 0 ; i < activeProps.length ; ++i ) {
-      boolean found = false;
-      for ( int j = 0 ; j < defaultProps.length ; ++j ) {
-        if ( defaultProps[j].getTableId().equals(activeProps[i].getTableId()) ) {
-          found = true;
-          break;
-        }
-      }
-      if ( !found ) {
-        activeProps[i].setCurrentAsDefaultPropertiesForTable();
-      }
-    }
-    // silently promote all default values to server sync if there is no server sync
-    TableProperties[] serverProps =
-        TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.SERVER);
-    for ( int i = 0 ; i < defaultProps.length ; ++i ) {
-      boolean found = false;
-      for ( int j = 0 ; j < serverProps.length ; ++j ) {
-        if ( serverProps[j].getTableId().equals(defaultProps[i].getTableId()) ) {
-          found = true;
-          break;
-        }
-      }
-      if ( !found ) {
-        defaultProps[i].copyDefaultToServerForTable();
-      }
-    }
-
-    // and return the server properties
-    return TableProperties.getTablePropertiesForAll(this, appName, KeyValueStoreType.SERVER);
+    return TableProperties.getTablePropertiesForAll(this, appName);
   }
 
   @Override

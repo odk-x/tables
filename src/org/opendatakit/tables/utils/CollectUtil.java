@@ -47,7 +47,6 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
@@ -1313,7 +1312,7 @@ public class CollectUtil {
     for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(context, appName, KeyValueStoreType.ACTIVE, tp);
+    Query currentQuery = new Query(context, appName, tp);
     currentQuery.loadFromUserQuery(queryString);
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

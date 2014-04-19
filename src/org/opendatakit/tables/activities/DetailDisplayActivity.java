@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -137,8 +136,7 @@ public class DetailDisplayActivity extends SherlockActivity
         // null if not found, so we can just pass it right along into the view.
 
         TableProperties tableProperties =
-            TableProperties.getTablePropertiesForTable(this, mAppName, mTableId,
-                KeyValueStoreType.ACTIVE);
+            TableProperties.getTablePropertiesForTable(this, mAppName, mTableId);
         DbTable dbTable = DbTable.getDbTable(tableProperties);
         mTable = dbTable.getTableForSingleRow(mRowId);
         if (mTable.getNumberOfRows() > 1) {

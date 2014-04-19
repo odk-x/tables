@@ -27,7 +27,6 @@ import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.Query.SqlData;
-import org.opendatakit.tables.sync.SyncUtil;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -340,7 +339,7 @@ public class DbTable {
       // version will have its _conflict_type column set to either
       // LOCAL_DELETED_OLD_VALUES or LOCAL_UPDATED_UPDATED_VALUES. See the
       // lengthy discussion of these states and their implications at
-      // SyncUtil.ConflictType.
+      // ConflictType.
       String[] selectionKeys = new String[2];
       selectionKeys[0] = DataTableColumns.SYNC_STATE;
       selectionKeys[1] = DataTableColumns.CONFLICT_TYPE;
@@ -524,8 +523,6 @@ public class DbTable {
         // as hilary was originally using. However, this might have to be
         // updated.
         boolean isSetToSync = tp.isSetToSync();
-        // hilary's original
-        //if (tp.isSynchronized() && getSyncState(rowId) == SyncUtil.State.REST)
         if (isSetToSync && getSyncState(rowId) == SyncState.rest)
           cv.put(DataTableColumns.SYNC_STATE, SyncState.updating.name());
         for (String column : values.keySet()) {
@@ -655,7 +652,7 @@ public class DbTable {
 
     /**
      * @param rowId
-     * @return the sync state of the row (see {@link SyncUtil.State}), or -1 if
+     * @return the sync state of the row (see {@link SyncState}), or null if
      *         the row does not exist.
      */
     private SyncState getSyncState(String rowId) {

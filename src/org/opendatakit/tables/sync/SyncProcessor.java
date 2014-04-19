@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -39,8 +39,8 @@ import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.tables.data.DataHelper;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.data.UserTable.Row;
@@ -153,8 +153,7 @@ public class SyncProcessor {
     // TableProperties[] tps = dm.getSynchronizedTableProperties();
     // we want this call rather than just the getSynchronizedTableProperties,
     // because we only want to push the default to the server.
-    TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(context, appName,
-        KeyValueStoreType.SERVER);
+    TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(context, appName);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getDisplayName());
       synchronizeTable(tp, pushLocalTableNonMediaFiles, syncMediaFiles);
@@ -206,8 +205,7 @@ public class SyncProcessor {
     // tp.setSyncTag(null);
 
     // is this necessary?
-    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
-        KeyValueStoreType.SERVER);
+    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
 
     DbTable table = DbTable.getDbTable(tp);
     // used to get the above from the ACTIVE store. if things go wonky, maybe
@@ -236,8 +234,7 @@ public class SyncProcessor {
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
       }
       // It is possible the table properties changed. Refresh just in case.
-      tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
-          tp.getBackingStoreType());
+      tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
       if (success && tp != null) // null in case we deleted the tp.
         tp.setLastSyncTime(du.formatNowForDb());
     } finally {
@@ -375,8 +372,7 @@ public class SyncProcessor {
       return false;
     }
     // refresh the tp
-    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId(),
-        tp.getBackingStoreType());
+    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
 
     // get changes that need to be pushed up to server
     List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncState.inserting);
@@ -537,7 +533,7 @@ public class SyncProcessor {
         SyncTag syncTagProperties;
         try {
           syncTagProperties = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(),
-            syncTag, tp.getTableId(), getAllKVSEntries(tp, KeyValueStoreType.SERVER));
+            syncTag, tp.getTableId(), getAllKVSEntries(tp));
         } catch (Exception e) {
           String msg = e.getMessage();
           if ( msg == null ) msg = e.toString();
@@ -689,7 +685,7 @@ public class SyncProcessor {
       SyncTag syncTag;
       try {
         syncTag = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(), tp.getSyncTag(), tp.getTableId(),
-                                getAllKVSEntries(tp, KeyValueStoreType.SERVER));
+                                getAllKVSEntries(tp));
       } catch (Exception e) {
         String msg = e.getMessage();
         if ( msg == null ) msg = e.toString();
@@ -1132,13 +1128,12 @@ public class SyncProcessor {
   public TableProperties addTableFromDefinitionResource(
 		  TableDefinitionResource definitionResource, SyncTag syncTag) throws JsonParseException,
       JsonMappingException, IOException, SchemaMismatchException {
-    KeyValueStoreType kvsType = KeyValueStoreType.SERVER;
     TableProperties tp = TableProperties.refreshTablePropertiesForTable(context, appName,
-        definitionResource.getTableId(), kvsType);
+        definitionResource.getTableId());
     if (tp == null) {
       tp = TableProperties
           .addTable(context, appName, definitionResource.getTableId(), definitionResource.getTableId(),
-              definitionResource.getTableId(), kvsType);
+              definitionResource.getTableId());
       for (Column col : definitionResource.getColumns()) {
         // TODO: We aren't handling types correctly here. Need to have a mapping
         // on the server as well so that you can pull down the right thing.
@@ -1152,7 +1147,7 @@ public class SyncProcessor {
         }
         tp.addColumn(col.getElementKey(), col.getElementKey(), col.getElementName(),
             ColumnType.valueOf(col.getElementType()), listChildElementKeys,
-            SyncUtil.intToBool(col.getIsUnitOfRetention()));
+            DataHelper.intToBool(col.getIsUnitOfRetention()));
       }
     } else {
       // see if the server copy matches our local schema
@@ -1170,14 +1165,14 @@ public class SyncProcessor {
           // we can support modifying of schema via adding of columns
           tp.addColumn(col.getElementKey(), col.getElementKey(), col.getElementName(),
               ColumnType.valueOf(col.getElementType()), listChildElementKeys,
-              SyncUtil.intToBool(col.getIsUnitOfRetention()));
+              DataHelper.intToBool(col.getIsUnitOfRetention()));
         } else {
           List<String> cpListChildElementKeys = cp.getListChildElementKeys();
           if ( cpListChildElementKeys == null ) {
             cpListChildElementKeys = new ArrayList<String>();
           }
           if (!(cp.getElementName().equals(col.getElementName())
-            && cp.isUnitOfRetention() == SyncUtil.intToBool(col.getIsUnitOfRetention())
+            && cp.isUnitOfRetention() == DataHelper.intToBool(col.getIsUnitOfRetention())
             && cpListChildElementKeys.size() == listChildElementKeys.size()
             && cpListChildElementKeys.containsAll(listChildElementKeys) )) {
             throw new SchemaMismatchException("Server schema differs from local schema");
@@ -1218,7 +1213,7 @@ public class SyncProcessor {
    */
   private void resetKVSForPropertiesResource(TableProperties tp,
                                              PropertiesResource propertiesResource, SyncTag newTag) {
-    tp.addMetaDataEntries(propertiesResource.getKeyValueStoreEntries(), KeyValueStoreType.SERVER, true);
+    tp.addMetaDataEntries(propertiesResource.getKeyValueStoreEntries(), true);
     tp.setSyncTag(newTag);
   }
 
@@ -1230,9 +1225,8 @@ public class SyncProcessor {
    * @param typeOfStore
    * @return
    */
-  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(TableProperties tp,
-                                                                  KeyValueStoreType typeOfStore) {
-    return tp.getMetaDataEntries(typeOfStore);
+  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(TableProperties tp) {
+    return tp.getMetaDataEntries();
   }
 
   /**
@@ -1249,7 +1243,7 @@ public class SyncProcessor {
       String elementName = cp.getElementName();
       ColumnType colType = cp.getColumnType();
       List<String> listChildrenElements = cp.getListChildElementKeys();
-      int isUnitOfRetention = SyncUtil.boolToInt(cp.isUnitOfRetention());
+      int isUnitOfRetention = DataHelper.boolToInt(cp.isUnitOfRetention());
       String listChildElementKeysStr = null;
       try {
         listChildElementKeysStr = mapper.writeValueAsString(listChildrenElements);

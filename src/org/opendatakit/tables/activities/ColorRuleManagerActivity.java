@@ -24,7 +24,6 @@ import org.opendatakit.tables.data.ColorRule;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.ColorRuleUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -304,8 +303,7 @@ public class ColorRuleManagerActivity extends SherlockListActivity {
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mType = ColorRuleGroup.Type.valueOf(
         getIntent().getStringExtra(INTENT_KEY_RULE_GROUP_TYPE));
-    this.mTp = TableProperties.getTablePropertiesForTable(this, appName, mTableId,
-        KeyValueStoreType.ACTIVE);
+    this.mTp = TableProperties.getTablePropertiesForTable(this, appName, mTableId);
     switch (mType) {
     case COLUMN:
       this.mCp = mTp.getColumnByElementKey(mElementKey);

@@ -20,7 +20,6 @@ import java.io.File;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
@@ -118,8 +117,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// adding the table spinner
 		tableSpin = new Spinner(this);
 		tableSpin.setId(TABLESPIN_ID);
-		tps = TableProperties.getTablePropertiesForAll(this, appName,
-		    KeyValueStoreType.ACTIVE);
+		tps = TableProperties.getTablePropertiesForAll(this, appName);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
 		    tableNames[i] = tps[i].getDisplayName();

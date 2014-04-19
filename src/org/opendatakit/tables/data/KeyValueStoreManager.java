@@ -16,21 +16,15 @@
 package org.opendatakit.tables.data;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
-import org.opendatakit.common.android.provider.SyncState;
-import org.opendatakit.tables.sync.SyncUtil;
-import org.opendatakit.tables.sync.aggregate.SyncTag;
 
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 /**
  * October, 2012:
@@ -165,18 +159,46 @@ class KeyValueStoreManager {
   };
 
 
+  /**
+   * Compare the two {@link OdkTablesKeyValueStoreEntry} objects based on
+   * their partition, aspect, and key, in that order. Must be from the same
+   * table (i.e. have the same tableId) to have any meaning.
+   * @author sudar.sam@gmail.com
+   *
+   */
+  public static class KVSEntryComparator implements
+      Comparator<OdkTablesKeyValueStoreEntry> {
+
+    @Override
+    public int compare(OdkTablesKeyValueStoreEntry lhs,
+        OdkTablesKeyValueStoreEntry rhs) {
+      int partitionComparison = lhs.partition.compareTo(rhs.partition);
+      if (partitionComparison != 0) {
+        return partitionComparison;
+      }
+      int aspectComparison = lhs.aspect.compareTo(rhs.aspect);
+      if (aspectComparison != 0) {
+        return aspectComparison;
+      }
+      // Otherwise, we'll just return the value of the key, b/c if the key
+      // is also the same, we're equal.
+      int keyComparison = lhs.key.compareTo(rhs.key);
+      return keyComparison;
+    }
+
+  }
+
+
   public KeyValueStoreManager() {
   }
 
   /**
    * Return the typed key value store for the given table id.
    * @param tableId
-   * @param typeOfStore
    * @return
    */
-  public KeyValueStore getStoreForTable(String tableId,
-      KeyValueStoreType typeOfStore) {
-    String backingName = getBackingNameForStore(typeOfStore);
+  public KeyValueStore getStoreForTable(String tableId) {
+    String backingName = DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME;
     return new KeyValueStore(backingName, tableId);
   }
 
@@ -196,9 +218,8 @@ class KeyValueStoreManager {
    * @param typeOfStore
    * @return
    */
-  public List<String> getAllIdsFromStore(SQLiteDatabase db,
-      KeyValueStoreType typeOfStore) {
-    String backingName = getBackingNameForStore(typeOfStore);
+  public List<String> getAllIdsFromStore(SQLiteDatabase db) {
+    String backingName = DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME;
     Cursor c = null;
     try {
 	    c = db.query(true, backingName, new String[] {KeyValueStoreColumns.TABLE_ID},
@@ -229,190 +250,6 @@ class KeyValueStoreManager {
     	if ( c != null && !c.isClosed()) {
     		c.close();
     	}
-    }
-  }
-
-  /*
-   * Return the database backing name for the given type of KVS. This is just
-   * intended as a convenience method to avoid having switch statements all
-   * over the place.
-   */
-  private String getBackingNameForStore(KeyValueStoreType typeOfStore) {
-    switch (typeOfStore) {
-    case ACTIVE:
-      return DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME;
-    case DEFAULT:
-      return DataModelDatabaseHelper.KEY_VALUE_STORE_DEFAULT_TABLE_NAME;
-    case SERVER:
-      return DataModelDatabaseHelper.KEY_VALUE_STORE_SERVER_TABLE_NAME;
-    default:
-      Log.e(TAG, "nonexistent store rquested: " +
-          typeOfStore.name());
-      throw new IllegalArgumentException("nonexistent requested: "
-          + typeOfStore.name());
-    }
-  }
-
-  /**
-   * Remove all the key values from the active key value store and copy all the
-   * key value pairs from the default store into the active.
-   * <p>
-   * active<--default
-   * @param tableId
-   */
-  void copyDefaultToActiveForTable(String tableId, SQLiteDatabase db) {
-    // There is some weirdness here. Elsewhere "properties" have been
-    // considered to be ONLY those keys that exist in the init columns of
-    // TableProperties. ATM the file pointers for list and box views, etc,
-    // are not included there. However, they should definitely be copied over
-    // from the default table. Therefore all key value pairs that are in the
-    // default store are copied over in this method.
-    try {
-	    KeyValueStore activeKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.ACTIVE);
-	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.DEFAULT);
-	    activeKVS.clearKeyValuePairs(db);
-	    List<OdkTablesKeyValueStoreEntry> defaultEntries =
-	        defaultKVS.getEntries(db);
-	    activeKVS.clearKeyValuePairs(db);
-	    activeKVS.addEntriesToStore(db, defaultEntries);
-    } finally {
-    }
-  }
-
-  /**
-   * This merges the key values in the server store into the default store.
-   * "Merge" means that, for now (Oct 5, 2012), any keys that are in the both
-   * stores have their value overwritten to that of the server store.
-   * Additionally, any keys that are not in the default table, but are in the
-   * server table, will be added to the default table. For now, this is
-   * considered to be a "merge". Eventually this should encompass smarter
-   * logic about which values should be overwritten and which should be a true
-   * "merge", giving the user an opportunity to determine resolve which value
-   * should be kept.
-   * <p>
-   * In essence, then, the default becomes a union of the server and original
-   * default values, with the identical keys being overwritten to the server
-   * values.
-   * <p>
-   * default<--MERGE--server
-   * @param tableId
-   */
-  void mergeServerToDefaultForTable(String tableId, SQLiteDatabase db) {
-    // We're going to use a TreeSet because we need each
-    // OdkTablesKeyValueStoreEntry object to be dependent only on the
-    // partition, aspect, and key. The value should be ignored in the merge.
-    // If we didn't do this, then we would end up not overwriting values as
-    // expected.
-    Set<OdkTablesKeyValueStoreEntry> newDefault =
-        new TreeSet<OdkTablesKeyValueStoreEntry>(
-             new SyncUtil.KVSEntryComparator() );
-    try {
-	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.DEFAULT);
-	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.SERVER);
-	    List<OdkTablesKeyValueStoreEntry> oldDefaultEntries =
-	        defaultKVS.getEntries(db);
-	    List<OdkTablesKeyValueStoreEntry> serverEntries =
-	        serverKVS.getEntries(db);
-	    // First we get all the server entries as a set. We'll then add all the
-	    // default values. A set is unchanged if the entry is already there, so
-	    // the default entries that already have entries will simply be gone.
-	    for (OdkTablesKeyValueStoreEntry entry : serverEntries) {
-	      newDefault.add(entry);
-	    }
-	    for (OdkTablesKeyValueStoreEntry entry : oldDefaultEntries) {
-	      newDefault.add(entry);
-	    }
-	    List<OdkTablesKeyValueStoreEntry> defaultList =
-	        new ArrayList<OdkTablesKeyValueStoreEntry>();
-	    for (OdkTablesKeyValueStoreEntry entry : newDefault) {
-	      defaultList.add(entry);
-	    }
-	    // TA-DA! And now we have the merged entries. put them in the store.
-	    defaultKVS.clearKeyValuePairs(db);
-	    defaultKVS.addEntriesToStore(db, defaultList);
-    } finally {
-    }
-  }
-
-  /**
-   * Remove all the key values for the given table from the default key value
-   * store, and copy in all the key values from the active key value store.
-   * <p>
-   * This should be a privileged operation, as the defaults will be able to be
-   * pushed to the server.
-   * <p>
-   * active-->default
-   * @param tableId
-   */
-  void setCurrentAsDefaultPropertiesForTable(String tableId, SQLiteDatabase db) {
-    // Remove all the key values from the default key value store for the given
-    // table and replace them with the key values from the active store.
-    try {
-	    KeyValueStore activeKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.ACTIVE);
-	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.DEFAULT);
-	    defaultKVS.clearKeyValuePairs(db);
-	    List<OdkTablesKeyValueStoreEntry> activeEntries =
-	        activeKVS.getEntries(db);
-	    defaultKVS.clearKeyValuePairs(db);
-	    defaultKVS.addEntriesToStore(db, activeEntries);
-    } finally {
-    }
-  }
-
-  /**
-   * Copy all of the key value pairs from the default into the server store.
-   * First clears all the key values in the server table and then moves them
-   * into the server table. At the moment this should really only be called
-   * before the first sync. After that it will eventually probably be a
-   * privileged operation for an admin trying to push their table state up to
-   * the server? This is not yet determined, though.
-   * <p>
-   * It is also important to note that if an entry for the table does not exist
-   * in the sync key value store, the key isSetToSync will be added an
-   * initialized to 0. If there becomes a way to put entries into the server
-   * key value store that does NOT use this method, you must be sure to also
-   * add the isSetToSync key to the sync KVS.
-   * <p>
-   * Also increments the properties tag for the dataproperties and sets the
-   * table state to updating--both only if it has
-   * already been synched.
-   * default-->server
-   * @param tableId
-   */
-  void copyDefaultToServerForTable(Context context, String appName, String tableId, SQLiteDatabase db) {
-    try {
-	    int numClearedFromServerKVS;
-	    KeyValueStore defaultKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.DEFAULT);
-	    KeyValueStore serverKVS = this.getStoreForTable(tableId,
-	        KeyValueStoreType.SERVER);
-	    numClearedFromServerKVS = serverKVS.clearKeyValuePairs(db);
-	    List<OdkTablesKeyValueStoreEntry> defaultEntries =
-	        defaultKVS.getEntries(db);
-	    serverKVS.addEntriesToStore(db, defaultEntries);
-	    // and now add an entry to the sync KVS.
-	    addIsSetToSyncToSyncKVSForTable(tableId, db);
-	    // Now try to update the properties tag.
-	    TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName,
-	        tableId, KeyValueStoreType.SERVER);
-	    SyncTag syncTag = tp.getSyncTag();
-	    if (syncTag.getSchemaETag() == null ||
-	        syncTag.getPropertiesETag() == null ) {
-	      // Then it's not been synched and we can rely on it to first be inited
-	      // during the sync.
-	    } else {
-	      // We don't update the properties etag, which should only ever be set
-	      // from the server. The SyncState.updating flag is sufficient to mark
-	      // it as dirty.
-	      tp.setSyncState(SyncState.updating);
-	    }
-    } finally {
     }
   }
 
@@ -484,26 +321,11 @@ class KeyValueStoreManager {
   }
 
   /**
-   * The table creation SQL statement for the default store.
-   * @return
-   */
-  static String getDefaultTableCreateSql() {
-    return KeyValueStoreColumns.getTableCreateSql(DataModelDatabaseHelper.KEY_VALUE_STORE_DEFAULT_TABLE_NAME);
-  }
-
-  /**
    * The table creation SQL for the active store.
    * @return
    */
   static String getActiveTableCreateSql() {
 	return KeyValueStoreColumns.getTableCreateSql(DataModelDatabaseHelper.KEY_VALUE_STORE_ACTIVE_TABLE_NAME);
-  }
-
-  /**
-   * The table creation SQL for the server store.
-   */
-  static String getServerTableCreateSql() {
-	return KeyValueStoreColumns.getTableCreateSql(DataModelDatabaseHelper.KEY_VALUE_STORE_SERVER_TABLE_NAME);
   }
 
   /**

@@ -21,7 +21,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -76,7 +75,7 @@ public class Launcher extends Activity {
               startActivity(i);
           } else {
               TableProperties tp = TableProperties.getTablePropertiesForTable(
-                      this, appName, tableId, KeyValueStoreType.ACTIVE);
+                      this, appName, tableId);
               Controller.launchTableActivity(this, tp, true);
           }
         }

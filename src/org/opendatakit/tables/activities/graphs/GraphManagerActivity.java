@@ -23,13 +23,11 @@ import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -157,8 +155,7 @@ public class GraphManagerActivity extends SherlockListActivity {
     this.mSqlWhereClause = getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
     this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
         Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
-        KeyValueStoreType.ACTIVE);
+    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     this.kvsh = tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION_VIEWS);
     this.graphViewKvsh = tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
     this.defaultGraphViewName = graphViewKvsh.getString(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME);

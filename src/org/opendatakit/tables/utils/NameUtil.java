@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 
 import android.content.Context;
@@ -282,17 +281,7 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
@@ -337,17 +326,7 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
       dbTableNames.add(tp.getDbTableName());
@@ -467,15 +446,7 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
-    for ( TableProperties tp : tableProps ) {
-      existingIds.add(tp.getTableId());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName);
     for ( TableProperties tp : tableProps ) {
       existingIds.add(tp.getTableId());
     }
@@ -498,15 +469,7 @@ public class NameUtil {
 
     TableProperties[] tableProps;
 
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.ACTIVE);
-    for ( TableProperties tp : tableProps ) {
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.DEFAULT);
-    for ( TableProperties tp : tableProps ) {
-      dbTableNames.add(tp.getDbTableName());
-    }
-    tableProps = TableProperties.getTablePropertiesForAll(context, appName, KeyValueStoreType.SERVER);
+    tableProps = TableProperties.getTablePropertiesForAll(context, appName);
     for ( TableProperties tp : tableProps ) {
       dbTableNames.add(tp.getDbTableName());
     }

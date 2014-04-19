@@ -26,7 +26,6 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
@@ -128,7 +127,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void init() {
       TableProperties tp = c.getTableProperties();
-      Query query = new Query(this, appName, KeyValueStoreType.ACTIVE, tp);
+      Query query = new Query(this, appName, tp);
         query.loadFromUserQuery(c.getSearchText());
         // There are two options here. The first is that we get the data using
         // the {@link Query} object. The other is that we use a sql where
@@ -167,7 +166,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(this, appName, KeyValueStoreType.ACTIVE, table.getTableProperties());
+      Query query = new Query(this, appName, table.getTableProperties());
       query.clear();
         query.loadFromUserQuery(c.getSearchText());
         for (String groupByColumn : c.getTableProperties().getGroupByColumns()) {
@@ -709,8 +708,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                  String elementKey = joinColumn.getElementKey();
       	                  TableProperties joinedTable =
                                TableProperties.getTablePropertiesForTable(
-                            		   SpreadsheetDisplayActivity.this, appName, tableId,
-                                   KeyValueStoreType.ACTIVE);
+                            		   SpreadsheetDisplayActivity.this, appName, tableId);
       	                  String joinedColDisplayName =
       	                      joinedTable.getColumnByElementKey(elementKey)
       	                      .getDisplayName();

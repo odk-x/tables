@@ -12,7 +12,6 @@ import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
@@ -22,8 +21,8 @@ import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -84,8 +83,7 @@ public class TableActivity extends SherlockFragmentActivity
   private static final int MENU_ITEM_ID_OPEN_TABLE_PROPERTIES = 5;
   private static final int MENU_ITEM_ID_OPEN_COLUMN_MANAGER = 6;
   private static final int MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER = 7;
-  private static final int MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS = 8;
-  static final int FIRST_FREE_MENU_ITEM_ID = 8;
+  static final int FIRST_FREE_MENU_ITEM_ID = 7;
 
   /** The current fragment being displayed. */
   private ITableFragment mCurrentFragment;
@@ -173,7 +171,7 @@ public class TableActivity extends SherlockFragmentActivity
 
     // Initialize data objects.
     refreshDbTable(tableId);
-    mQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
+    mQuery = new Query(this, mAppName, mTableProperties);
 
     // Initialize layout fields.
     setSearchFieldText(mSearchText.peek());
@@ -239,7 +237,7 @@ public class TableActivity extends SherlockFragmentActivity
 
   public void init() {
     refreshDbTable(mTableProperties.getTableId());
-    mQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
+    mQuery = new Query(this, mAppName, mTableProperties);
     mQuery.clear();
     mQuery.loadFromUserQuery(mSearchText.peek());
     mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : mDbTable.getUserTable(mQuery);
@@ -299,8 +297,7 @@ public class TableActivity extends SherlockFragmentActivity
    */
   void refreshDbTable(String tableId) {
     mTableProperties = TableProperties.getTablePropertiesForTable(this, mAppName,
-        tableId,
-        KeyValueStoreType.ACTIVE);
+        tableId);
     mDbTable = DbTable.getDbTable(mTableProperties);
   }
 
@@ -381,9 +378,6 @@ public class TableActivity extends SherlockFragmentActivity
     case Controller.RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
       break;
-    case Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS:
-      handleManagePropertySetsReturn();
-      break;
     case Controller.RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
       break;
@@ -415,15 +409,6 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleTablePropertiesManagerReturn() {
-    refreshDbTable(mTableProperties.getTableId());
-    if (getCurrentViewType() == mTableProperties.getDefaultViewType()) {
-      init();
-    } else {
-      launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
-    }
-  }
-
-  private void handleManagePropertySetsReturn() {
     refreshDbTable(mTableProperties.getTableId());
     if (getCurrentViewType() == mTableProperties.getDefaultViewType()) {
       init();
@@ -504,8 +489,6 @@ public class TableActivity extends SherlockFragmentActivity
     }
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
         .setEnabled(true);
-    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS, Menu.NONE, "Manage Property Sets")
-    .setEnabled(true);
 
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
         .setEnabled(true);
@@ -556,14 +539,6 @@ public class TableActivity extends SherlockFragmentActivity
         tablePropertiesIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
         startActivityForResult(tablePropertiesIntent, Controller.RCODE_TABLE_PROPERTIES_MANAGER);
-        return true;
-      case MENU_ITEM_ID_OPEN_MANAGE_PROP_SETS:
-        Intent managePropertySetsIntent = new Intent(this, ManagePropertySetsManager.class);
-        managePropertySetsIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
-            mTableProperties.getAppName());
-        managePropertySetsIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
-            mTableProperties.getTableId());
-        startActivityForResult(managePropertySetsIntent, Controller.RCODE_MANAGE_TABLE_PROPERTY_SETS);
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
         Intent columnManagerIntent = new Intent(this, ColumnManager.class);
@@ -646,7 +621,7 @@ public class TableActivity extends SherlockFragmentActivity
     for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
       elementKeyToValue.put(cp.getElementKey(), "");
     }
-    Query currentQuery = new Query(this, mAppName, KeyValueStoreType.ACTIVE, mTableProperties);
+    Query currentQuery = new Query(this, mAppName, mTableProperties);
     currentQuery.loadFromUserQuery(getSearchText());
     for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
       Constraint constraint = currentQuery.getConstraint(i);

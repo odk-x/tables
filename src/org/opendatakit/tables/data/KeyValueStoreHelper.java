@@ -25,7 +25,6 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.tables.sync.SyncUtil;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -201,7 +200,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
           "key: " + key + ", but the corresponding entry in the store was " +
           "not of type: " + KeyValueStoreEntryType.BOOLEAN.getLabel());
     }
-    return SyncUtil.intToBool(Integer.parseInt(entry.value));
+    return DataHelper.intToBool(Integer.parseInt(entry.value));
   }
 
   @Override
@@ -270,7 +269,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     SQLiteDatabase db = tp.getWritableDatabase();
     kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.BOOLEAN.getLabel(),
-        Integer.toString(SyncUtil.boolToInt(value)));
+        Integer.toString(DataHelper.boolToInt(value)));
   }
 
   @Override

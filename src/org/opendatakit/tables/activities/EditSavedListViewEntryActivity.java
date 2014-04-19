@@ -22,7 +22,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
@@ -104,7 +103,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     }
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
-    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
+    this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(listViewName);
     if (kvsh.getAspectsForPartition().size() == 0) {

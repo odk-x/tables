@@ -22,7 +22,6 @@ import java.util.List;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.TouchListView;
@@ -97,8 +96,7 @@ public class ColumnManager extends SherlockListActivity {
 	     appName = TableFileUtils.getDefaultAppName();
 	   }
 		tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-		tp = TableProperties.getTablePropertiesForTable(this, appName, tableId,
-				KeyValueStoreType.ACTIVE);
+		tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
 		// We need to order the ColumnProperties appropriately
 		this.cps = new ColumnProperties[tp.getNumberOfDisplayColumns()];
 		columnOrder.clear();

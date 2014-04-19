@@ -54,17 +54,15 @@ public class Query {
 
     private Context context;
     private String appName;
-    private KeyValueStoreType storeType;
     private TableProperties tp;
     private List<Constraint> constraints;
     private List<Join> joins;
     private String orderBy;
     private int sortOrder;
 
-    public Query(Context context, String appName, KeyValueStoreType storeType, TableProperties tp) {
+    public Query(Context context, String appName, TableProperties tp) {
     	this.context = context;
     	this.appName = appName;
-      this.storeType = storeType;
       this.tp = tp;
       constraints = new ArrayList<Constraint>();
       joins = new ArrayList<Join>();
@@ -259,7 +257,7 @@ public class Query {
             if ( this.tp.getDisplayName().toLowerCase().equals(tableName.toLowerCase()) ) {
               joinTp = this.tp;
             } else {
-              TableProperties[] tps = TableProperties.getTablePropertiesForAll(context, tp.getAppName(), storeType);
+              TableProperties[] tps = TableProperties.getTablePropertiesForAll(context, tp.getAppName());
               for (TableProperties tp : tps) {
                   if (tp.getDisplayName().toLowerCase().equals(
                         tableName.toLowerCase())) {
@@ -277,7 +275,7 @@ public class Query {
             }
             Query joinQuery = null;
             if (queryString != null) {
-                Query q = new Query(context, appName, storeType, joinTp);
+                Query q = new Query(context, appName, joinTp);
                 if (q.loadFromUserQuery(queryString)) {
                     joinQuery = q;
                 }
@@ -830,7 +828,7 @@ public class Query {
                 String[] matchArgs) {
             this.tp = tp;
             if (query == null) {
-                this.query = new Query(context, appName, storeType, tp);
+                this.query = new Query(context, appName, tp);
             } else {
                 this.query = query;
             }

@@ -28,7 +28,6 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreType;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.fragments.TableMapFragment;
@@ -99,7 +98,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
-    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId, KeyValueStoreType.ACTIVE);
+    tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
     init();
   }
