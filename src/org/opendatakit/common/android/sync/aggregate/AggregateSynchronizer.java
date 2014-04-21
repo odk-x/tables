@@ -36,6 +36,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -194,11 +195,11 @@ public class AggregateSynchronizer implements Synchronizer {
 
     Map<String,String> mediaTypeParams;
     mediaTypeParams = new HashMap<String,String>();
-    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase());
+    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
     mediaTypeParams.put("q", "0.9");
     MediaType txmlUtf8 = new MediaType(MediaType.TEXT_XML.getType(), MediaType.TEXT_XML.getSubtype(), mediaTypeParams);
     mediaTypeParams = new HashMap<String,String>();
-    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase());
+    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase(Locale.ENGLISH));
     mediaTypeParams.put("q", "0.8");
     MediaType axmlUtf8 = new MediaType(MediaType.APPLICATION_WILDCARD_XML.getType(), MediaType.APPLICATION_WILDCARD_XML.getSubtype(), mediaTypeParams);
     mediaTypeParams = new HashMap<String,String>();
