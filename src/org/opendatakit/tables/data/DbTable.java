@@ -245,12 +245,12 @@ public class DbTable {
            UserTable table = buildTable(c, tp, projection, sqlQuery, selectionArgs,
                groupByArgs, havingClause, orderByElementKey, orderByDirection);
            return table;
-       } finally {
-         if ( c != null && !c.isClosed() ) {
-            c.close();
-         }
-         db.close();
-       }
+        } finally {
+          if ( c != null && !c.isClosed() ) {
+             c.close();
+          }
+          db.close();
+        }
     }
 
     /**
@@ -324,6 +324,9 @@ public class DbTable {
       } finally {
         if ( c != null && !c.isClosed() ) {
           c.close();
+        }
+        if ( db != null ) {
+          db.close();
         }
       }
     }
@@ -683,6 +686,7 @@ public class DbTable {
     		if ( c != null && !c.isClosed() ) {
     			c.close();
     		}
+    		db.close();
 	    }
     }
 

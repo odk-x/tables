@@ -411,7 +411,13 @@ public class TableProperties {
 
   public boolean isSetToSync() {
     KeyValueStoreSync syncKVS = getSyncStoreForTable();
-    return syncKVS.isSetToSync(getReadableDatabase());
+    SQLiteDatabase db = null;
+    try {
+      db = getReadableDatabase();
+      return syncKVS.isSetToSync(db);
+    } finally {
+      db.close();
+    }
   }
 
   public void setIsSetToSync(boolean value) {
@@ -433,13 +439,25 @@ public class TableProperties {
 
   public ArrayList<OdkTablesKeyValueStoreEntry> getMetaDataEntries() {
     KeyValueStore kvs = getStoreForTable();
-    ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = kvs.getEntries(getReadableDatabase());
-    return kvsEntries;
+    SQLiteDatabase db = null;
+    try {
+      db = getReadableDatabase();
+      ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries = kvs.getEntries(db);
+      return kvsEntries;
+    } finally {
+      db.close();
+    }
   }
 
   public boolean hasMetaDataEntries() {
     KeyValueStore kvs = getStoreForTable();
-    return kvs.entriesExist(getReadableDatabase());
+    SQLiteDatabase db = null;
+    try {
+      db = getReadableDatabase();
+      return kvs.entriesExist(db);
+    } finally {
+      db.close();
+    }
   }
 
   public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries, boolean clear) {
@@ -924,9 +942,7 @@ public class TableProperties {
      db = getReadableDatabase();
      refreshColumns(db);
    } finally {
-     if ( db != null ) {
-       db.close();
-     }
+     db.close();
    }
   }
 

@@ -95,9 +95,14 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   public List<String> getAspectsForPartition() {
-    SQLiteDatabase db = tp.getReadableDatabase();
-    List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
-    return aspects;
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getReadableDatabase();
+      List<String> aspects = this.kvs.getAspectsForPartition(db, this.partition);
+      return aspects;
+    } finally {
+      db.close();
+    }
   }
 
   @Override
@@ -431,22 +436,27 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @return
    */
   private OdkTablesKeyValueStoreEntry getEntry(String aspect, String key) {
-    SQLiteDatabase db = tp.getReadableDatabase();
     List<String> keyList = new ArrayList<String>();
     keyList.add(key);
-    List<OdkTablesKeyValueStoreEntry> entries =
-        kvs.getEntriesForKeys(db, this.partition, aspect, keyList);
-    // Do some sanity checking. There should only ever be one entry per key.
-    if (entries.size() > 1) {
-      Log.e(TAG, "request for key: " + key + " in KVS " +
-          kvs.getDbBackingName() +
-          " for table: " + kvs.getTableId() + " returned " + entries.size() +
-          "entries. It should return at most 1, as it is a key in a set.");
-    }
-    if (entries.size() == 0) {
-      return null;
-    } else {
-      return entries.get(0);
+    SQLiteDatabase db = null;
+    try {
+      db = tp.getReadableDatabase();
+      List<OdkTablesKeyValueStoreEntry> entries =
+          kvs.getEntriesForKeys(db, this.partition, aspect, keyList);
+      // Do some sanity checking. There should only ever be one entry per key.
+      if (entries.size() > 1) {
+        Log.e(TAG, "request for key: " + key + " in KVS " +
+            kvs.getDbBackingName() +
+            " for table: " + kvs.getTableId() + " returned " + entries.size() +
+            "entries. It should return at most 1, as it is a key in a set.");
+      }
+      if (entries.size() == 0) {
+        return null;
+      } else {
+        return entries.get(0);
+      }
+    } finally {
+      db.close();
     }
   }
 
