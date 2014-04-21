@@ -54,9 +54,8 @@ public class CustomAppView extends CustomView {
    * @param filename
    *          cannot be null
    */
-  public CustomAppView(Activity activity, String appName, String filename,
-                       CustomViewCallbacks callbacks) {
-    super(activity, appName, callbacks);
+  public CustomAppView(Activity activity, String appName, String filename) {
+    super(activity, appName);
     this.mFilename = filename;
     this.setLayoutParams(new ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT,
                                                     LayoutParams.MATCH_PARENT));

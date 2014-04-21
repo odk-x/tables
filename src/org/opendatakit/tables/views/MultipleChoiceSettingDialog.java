@@ -116,11 +116,13 @@ public class MultipleChoiceSettingDialog extends Dialog {
             @Override
             public void onClick(View v) {
                 updateValueList();
-                SQLiteDatabase db = null;
+                SQLiteDatabase db =  tp.getWritableDatabase();
                 try {
-                  db = tp.getWritableDatabase();
+                  db.beginTransaction();
                   cp.setDisplayChoicesList(db, optionValues);
+                  db.setTransactionSuccessful();
                 } finally {
+                  db.endTransaction();
                   db.close();
                 }
                 dismiss();

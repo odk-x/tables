@@ -15,10 +15,10 @@
  */
 package org.opendatakit.tables.views.webkits;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
@@ -42,16 +42,14 @@ public class CustomTableView extends CustomView
   private String filename;
   private Fragment mFragment;
 
-  private CustomTableView(Activity activity, String appName, String filename,
-                          CustomViewCallbacks callbacks) {
-    super(activity, appName, callbacks);
+  private CustomTableView(Activity activity, String appName, String filename) {
+    super(activity, appName);
     this.filename = filename;
   }
 
   public static CustomTableView get(Activity activity, String appName,
-      UserTable table, String filename, CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename,
-        callbacks);
+      UserTable table, String filename) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename);
     ctv.set(table);
     return ctv;
   }
@@ -63,26 +61,12 @@ public class CustomTableView extends CustomView
   // //////////////////////////// TEST ///////////////////////////////
 
   public static CustomTableView get(Activity activity, String appName,
-      UserTable table, String filename, int index, Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename,
-        controller);
-    // Create a new table with only the row specified at index.
-    // Create all of the arrays necessary to create a UserTable.
-    String[] rowIds = new String[1];
-    String[] headers = new String[table.getWidth()];
-    String[][] data = new String[1][table.getWidth()];
-    String[][] metadata = new String[1][table.getNumberOfMetadataColumns()];
-    // Set all the data for the table.
-    rowIds[0] = table.getRowAtIndex(index).getRowId();
-    for (int i = 0; i < table.getWidth(); i++) {
-      headers[i] = table.getHeader(i);
-      data[0][i] = table.getData(index, i);
-      metadata[0] = table.getAllMetadataForRow(i);
-    }
-    UserTable singleRowTable = new UserTable(table.getTableProperties(),
-        rowIds, headers, data, table.getElementKeysForIndex(),
-        table.getMapOfUserDataToIndex(), metadata,
-        table.getMapOfMetadataToIndex());
+      UserTable table, String filename, int index) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename);
+
+    ArrayList<Integer> indexes = new ArrayList<Integer>();
+    indexes.add(index);
+    UserTable singleRowTable = new UserTable(table, indexes);
 
     ctv.set(singleRowTable);
     return ctv;
@@ -114,29 +98,11 @@ public class CustomTableView extends CustomView
    * @return The custom view that represents the indexes in the table.
    */
   public static CustomTableView get(Activity activity, String appName,
-      UserTable table, String filename, List<Integer> indexes,
-      Controller controller) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename,
-        controller);
-    // Create all of the arrays necessary to create a UserTable.
-    String[] rowIds = new String[indexes.size()];
-    String[] headers = new String[table.getWidth()];
-    String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata =
-        new String[indexes.size()][table.getNumberOfMetadataColumns()];
-    // Set all the data for the table.
-    for (int i = 0; i < table.getWidth(); i++) {
-      headers[i] = table.getHeader(i);
-      for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
-        data[j][i] = table.getData(indexes.get(j), i);
-        metadata[j] = table.getAllMetadataForRow(indexes.get(j));
-      }
-    }
-    UserTable multiRowTable = new UserTable(table.getTableProperties(), rowIds,
-        headers, data, table.getElementKeysForIndex(),
-        table.getMapOfUserDataToIndex(), metadata,
-        table.getMapOfMetadataToIndex());
+      UserTable table, String filename, List<Integer> indexes) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename);
+
+    UserTable multiRowTable = new UserTable(table, indexes);
+
     ctv.set(multiRowTable);
     return ctv;
   }
@@ -160,29 +126,10 @@ public class CustomTableView extends CustomView
    */
   public static CustomTableView get(Activity activity, String appName,
       UserTable table, String filename, List<Integer> indexes,
-      Fragment fragment, CustomViewCallbacks callbacks) {
-    CustomTableView ctv = new CustomTableView(activity, appName, filename,
-        callbacks);
-    // Create all of the arrays necessary to create a UserTable.
-    String[] rowIds = new String[indexes.size()];
-    String[] headers = new String[table.getWidth()];
-    String[][] data = new String[indexes.size()][table.getWidth()];
-    String[][] metadata =
-        new String[indexes.size()][table.getNumberOfMetadataColumns()];
-    // Set all the data for the table.
-    for (int i = 0; i < table.getWidth(); i++) {
-      headers[i] = table.getHeader(i);
-      for (int j = 0; j < indexes.size(); j++) {
-        rowIds[j] = table.getRowAtIndex(indexes.get(j)).getRowId();
-        data[j][i] = table.getData(indexes.get(j), i);
-        metadata[j] = table.getAllMetadataForRow(indexes.get(j));
-      }
-    }
-    UserTable multiRowTable =
-        new UserTable(table.getTableProperties(), rowIds, headers, data,
-            table.getElementKeysForIndex(),
-            table.getMapOfUserDataToIndex(), metadata,
-            table.getMapOfMetadataToIndex());
+      Fragment fragment) {
+    CustomTableView ctv = new CustomTableView(activity, appName, filename);
+
+    UserTable multiRowTable = new UserTable(table, indexes);
 
     ctv.set(multiRowTable);
     ctv.mFragment = fragment;

@@ -76,7 +76,7 @@ public class Launcher extends Activity {
           } else {
               TableProperties tp = TableProperties.getTablePropertiesForTable(
                       this, appName, tableId);
-              Controller.launchTableActivity(this, tp, true);
+              Controller.launchTableActivity(this, tp, tp.getDefaultViewType());
           }
         }
         finish();

@@ -156,9 +156,8 @@ public class ListViewManager extends SherlockListActivity {
     // selecting a collection list view but you're not viewing the
     // table with a group-by column, or vice versa, and this could create
     // an issue.
-    boolean isOverview = tp.hasGroupByColumns();
     Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
-        null, isOverview, filenameOfSelectedView, null, null, TableViewType.List);
+        filenameOfSelectedView, TableViewType.List);
   }
 
   @Override

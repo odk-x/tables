@@ -254,8 +254,7 @@ public class GraphManagerActivity extends SherlockListActivity {
   public boolean onMenuItemSelected(int featureId, com.actionbarsherlock.view.MenuItem item) {
 
     if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
-      Controller.launchTableActivity(this, tp, "", true, null, null, null,
-          TableViewType.getViewTypeFromId(item.getItemId()));
+      Controller.launchTableActivity(this, tp, TableViewType.getViewTypeFromId(item.getItemId()));
       return true;
     }
     switch (item.getItemId()) {

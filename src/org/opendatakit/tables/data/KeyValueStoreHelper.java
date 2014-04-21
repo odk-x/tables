@@ -228,8 +228,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   private void setIntegerEntry(String aspect, String key, Integer value) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+          KeyValueStoreEntryType.INTEGER.getLabel(), Integer.toString(value));
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -239,8 +246,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   private void setNumericEntry(String aspect, String key, Double value) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+          KeyValueStoreEntryType.NUMBER.getLabel(), Double.toString(value));
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -250,8 +264,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
 
   private void setObjectEntry(String aspect, String key, String jsonOfObject) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+          KeyValueStoreEntryType.OBJECT.getLabel(), jsonOfObject);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -267,9 +288,16 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   private void setBooleanEntry(String aspect, String key, Boolean value) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
         KeyValueStoreEntryType.BOOLEAN.getLabel(),
         Integer.toString(DataHelper.boolToInt(value)));
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -285,8 +313,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   private void setStringEntry(String aspect, String key, String value) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.STRING.getLabel(), value);
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+          KeyValueStoreEntryType.STRING.getLabel(), value);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   /**
@@ -345,8 +380,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
       return;
     }
     SQLiteDatabase db = tp.getWritableDatabase();
-    kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-        KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
+    try {
+      db.beginTransaction();
+      kvs.insertOrUpdateKey(db, this.partition, aspect, key,
+          KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -362,7 +404,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    */
   private int removeEntry(String aspect, String key) {
     SQLiteDatabase db = tp.getWritableDatabase();
-    return kvs.deleteKey(db, this.partition, aspect, key);
+    try {
+      db.beginTransaction();
+      int deleteCount = kvs.deleteKey(db, this.partition, aspect, key);
+      db.setTransactionSuccessful();
+      return deleteCount;
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
   }
 
   @Override
@@ -495,8 +545,15 @@ public class KeyValueStoreHelper implements KeyValueHelper {
      */
     public int deleteAllEntriesInThisAspect() {
       SQLiteDatabase db = tp.getWritableDatabase();
-      int numDeleted = kvs.clearEntries(partition, aspect, db);
-      return numDeleted;
+      try {
+        db.beginTransaction();
+        int numDeleted = kvs.clearEntries(db, partition, aspect);
+        db.setTransactionSuccessful();
+        return numDeleted;
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
   }

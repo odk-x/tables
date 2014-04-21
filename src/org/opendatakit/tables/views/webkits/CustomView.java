@@ -110,15 +110,11 @@ public abstract class CustomView extends LinearLayout {
   protected final Activity mParentActivity;
   protected final String mAppName;
 
-  private Map<String, TableProperties> tableIdToProperties;
-  private CustomViewCallbacks mCallbacks;
-
-  public CustomView(Activity parentActivity, String appName, CustomViewCallbacks callbacks) {
+  public CustomView(Activity parentActivity, String appName) {
     super(parentActivity);
     initCommonWebView(parentActivity);
     this.mParentActivity = parentActivity;
     this.mAppName = appName;
-    this.mCallbacks = callbacks;
   }
 
   @SuppressLint("SetJavaScriptEnabled")
@@ -170,46 +166,15 @@ public abstract class CustomView extends LinearLayout {
     });
   }
 
-  private void initTpInfo() {
-    if (tableIdToProperties != null) {
-      return;
-    }
-    tableIdToProperties = new HashMap<String, TableProperties>();
-    TableProperties[] allTps = TableProperties.getTablePropertiesForAll(
-    		mParentActivity, mAppName);
-    for (TableProperties tp : allTps) {
-      tableIdToProperties.put(tp.getTableId(), tp);
-    }
-  }
-
-  private TableProperties getTablePropertiesById(String tableId) {
-    initTpInfo();
-    TableProperties tp = tableIdToProperties.get(tableId);
-    if (tp == null) {
-      Log.d(TAG, "table properties returning null for table id: " + tableId);
-    }
-    return tp;
-  }
-
   private TableData queryForTableData(String tableId, String sqlWhereClause,
-      String[] sqlSelectionArgs) {
-    TableProperties tp = getTablePropertiesById(tableId);
+      String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+    TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
     if (tp == null) {
       Log.e(TAG, "request for table with tableId [" + tableId + "] cannot be found.");
       return null;
     }
-    if (sqlWhereClause == null) {
-      // Then we need to say the selection is an empty string.
-      sqlWhereClause = "";
-    } else {
-      // We're going to handle this by passing it off to the DbTable
-      // rawSqlQuery(String whereClause, String[] selectionArgs) argument.
-      // Because this method expects a where, however, we're going to prepend
-      // it.
-      sqlWhereClause = "WHERE " + sqlWhereClause;
-    }
     DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
+    UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     TableData tableData = new TableData(getContainerActivity(), userTable);
     return tableData;
   }
@@ -360,11 +325,11 @@ public abstract class CustomView extends LinearLayout {
    * @return
    */
   private Map<String, String> getElementKeyToValues(String tableId, String rowId) {
-    TableProperties tableProperties = getTablePropertiesById(tableId);
-    String sqlQuery = "WHERE " + DataTableColumns.ID + " = ? ";
+    TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+    String sqlQuery = DataTableColumns.ID + " = ? ";
     String[] selectionArgs = { rowId };
-    DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs);
+    DbTable dbTable = DbTable.getDbTable(tp);
+    UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs, null, null, null, null);
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " + "rowId: " + rowId);
     } else if (userTable.getNumberOfRows() == 0) {
@@ -502,8 +467,8 @@ public abstract class CustomView extends LinearLayout {
      * @see {@link ControlIf#openDetailView(String, String, String)}
      */
     public boolean openDetailViewWithFile(String tableId, String rowId, String relativePath) {
-      TableProperties tableProperties = getTablePropertiesById(tableId);
-      if (tableProperties == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         Log.e(TAG, "table could not be found with id: " + tableId);
         return false;
       }
@@ -521,22 +486,23 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTable(String tableId, String sqlWhereClause, String[] sqlSelectionArgs) {
-      TableProperties tpToOpen = getTablePropertiesById(tableId);
+    public boolean helperOpenTable(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
+                      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementName, String sqlOrderByDirection) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       sqlWhereClause = getWhereSql(sqlWhereClause);
-      if (tpToOpen == null) {
+      if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
         return false;
       }
       // We're not going to support search text from the js, so pass null.
-      Controller.launchTableActivity(mActivity, tpToOpen, null, false, sqlWhereClause,
-          sqlSelectionArgs, null, tpToOpen.getDefaultViewType());
+      Controller.launchTableActivity(mActivity, tp, tp.getDefaultViewType(), sqlWhereClause,
+          sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementName, sqlOrderByDirection);
       return true;
     }
 
     /**
      * Actually open the table with the file. see
-     * {@link ControlIf#openTableToListViewWithFileAndSqlQuery(String, String, String, String[])}
+     * {@link ControlIf#launchListView(String, String, String, String[], String[], String, String, String)}
      *
      * @param tableId
      * @param relativePath
@@ -546,16 +512,15 @@ public abstract class CustomView extends LinearLayout {
      * @return
      */
     public boolean helperOpenTableWithFile(String tableId, String relativePath,
-        String sqlWhereClause, String[] sqlSelectionArgs) {
-      TableProperties tp = getTablePropertiesById(tableId);
-      sqlWhereClause = getWhereSql(sqlWhereClause);
+        String sqlWhereClause, String[] sqlSelectionArgs,
+        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
         return false;
       }
-      // We're not supporting search text, so pass in null.
-      Controller.launchListViewWithFilenameAndSqlQuery(mActivity, tp, null, null, false,
-          relativePath, sqlWhereClause, sqlSelectionArgs, null);
+      Controller.launchListView(mActivity, tp, relativePath,
+          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
       return true;
     }
 
@@ -568,17 +533,18 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTableToMapView(String tableId, String sqlWhereClause,
-        String[] sqlSelectionArgs, String relativePath) {
-      TableProperties tp = getTablePropertiesById(tableId);
-      sqlWhereClause = getWhereSql(sqlWhereClause);
+    public boolean helperOpenTableToMapView(String tableId, String relativePath,
+        String sqlWhereClause, String[] sqlSelectionArgs,
+        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableName [" + tableId + "] not in map");
         return false;
       }
       Log.e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
       // We're not supporting search text, so pass in null.
-      Controller.launchMapView(mActivity, tp, null, null, false, sqlWhereClause, sqlSelectionArgs, null);
+      Controller.launchMapView(mActivity, tp, relativePath,
+          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
       return true;
     }
 
@@ -591,18 +557,17 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTableToSpreadsheetView(String tableId, String sqlWhereClause,
-        String[] sqlSelectionArgs) {
-      initTpInfo();
-      TableProperties tp = tableIdToProperties.get(tableId);
-      sqlWhereClause = getWhereSql(sqlWhereClause);
+    public boolean helperOpenTableToSpreadsheetView(String tableId,
+        String sqlWhereClause, String[] sqlSelectionArgs,
+        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
         return false;
       }
       // We're not supporting search text, so pass in null.
-      Controller.launchSpreadsheetView(mActivity, tp, null, null, false, sqlWhereClause,
-          sqlSelectionArgs, null);
+      Controller.launchSpreadsheetView(mActivity, tp,
+          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
       return true;
     }
 
@@ -637,8 +602,8 @@ public abstract class CustomView extends LinearLayout {
      *          the display name of the table for which you want the columns to
      *          be returned.
      * @param whereClause
-     *          the where clause for the selection. Must begin with "WHERE", as
-     *          if it was appended immediately after "SELECT * FROM tableName ".
+     *          the where clause for the selection. This is the body of the "WHERE"
+     *          clause WITHOUT the "WHERE"
      *          References to other tables, e.g. for joins, in this statement
      *          must use the name of the table as returned by
      *          {@link getDbNameForTable}.
@@ -646,11 +611,11 @@ public abstract class CustomView extends LinearLayout {
      * @return
      */
     public TableData query(String tableId, String whereClause,
-        String[] selectionArgs) {
+        String[] selectionArgs, String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
       TableData tableData = queryForTableData(
           tableId,
-          whereClause,
-          selectionArgs);
+          whereClause, selectionArgs,
+          groupBy, having, orderByElementKey, orderByDirection);
       /**
        * IMPORTANT: remember the td. The interfaces will hold weak references
        * to them, so we need a strong reference to prevent GC.
@@ -663,8 +628,12 @@ public abstract class CustomView extends LinearLayout {
      * @see {@link ControlIf#getAllTableIds()}
      */
     public String getAllTableIds() {
-      Set<String> tableIdsSet = tableIdToProperties.keySet();
-      JSONArray result = new JSONArray(tableIdsSet);
+      TableProperties[] tpAll = TableProperties.getTablePropertiesForAll(getContext(), mAppName);
+      ArrayList<String> tableIdsList = new ArrayList<String>();
+      for ( TableProperties tp : tpAll ) {
+        tableIdsList.add(tp.getTableId());
+      }
+      JSONArray result = new JSONArray(tableIdsList);
       return result.toString();
     }
 
@@ -675,11 +644,11 @@ public abstract class CustomView extends LinearLayout {
      * @return
      */
     public String getElementKey(String tableId, String elementPath) {
-      TableProperties tableProperties = getTablePropertiesById(tableId);
-      if (tableProperties == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         return null;
       }
-      return tableProperties.getElementKeyFromElementPath(elementPath);
+      return tp.getElementKeyFromElementPath(elementPath);
     }
 
     /**
@@ -690,11 +659,11 @@ public abstract class CustomView extends LinearLayout {
      */
     public String getColumnDisplayName(String tableId, String elementPath) {
       String elementKey = this.getElementKey(tableId, elementPath);
-      TableProperties tableProperties = getTablePropertiesById(tableId);
-      if (tableProperties == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         return null;
       }
-      ColumnProperties columnProperties = tableProperties.getColumnByElementKey(elementKey);
+      ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
       if (columnProperties == null) {
         Log.e(TAG, "column with elementKey does not exist: " + elementKey);
         return null;
@@ -709,8 +678,8 @@ public abstract class CustomView extends LinearLayout {
      * @return
      */
     public String getTableDisplayName(String tableId) {
-      TableProperties tableProperties = getTablePropertiesById(tableId);
-      return tableProperties.getDisplayName();
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      return tp.getDisplayName();
     }
 
     /**
@@ -750,11 +719,11 @@ public abstract class CustomView extends LinearLayout {
      */
     public boolean columnExists(String tableId, String elementPath) {
       String elementKey = this.getElementKey(tableId, elementPath);
-      TableProperties tableProperties = getTablePropertiesById(tableId);
-      if (tableProperties == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         return false;
       }
-      ColumnProperties columnProperties = tableProperties.getColumnByElementKey(elementKey);
+      ColumnProperties columnProperties = tp.getColumnByElementKey(elementKey);
       return columnProperties != null;
     }
 
@@ -821,14 +790,14 @@ public abstract class CustomView extends LinearLayout {
     public boolean helperAddRowWithSurvey(String tableId, String formId, String screenPath,
         String jsonMap) {
       // does this "to receive add" call make sense with survey? unclear.
-      TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
-      if (tpToReceiveAdd == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         Log.e(TAG, "table [" + tableId + "] could not be found. " + "returning.");
         return false;
       }
       if (formId == null) {
         SurveyFormParameters surveyFormParameters = SurveyFormParameters
-            .ConstructSurveyFormParameters(tpToReceiveAdd);
+            .ConstructSurveyFormParameters(tp);
         formId = surveyFormParameters.getFormId();
       }
       Map<String, String> map = null;
@@ -842,7 +811,7 @@ public abstract class CustomView extends LinearLayout {
           return false;
         }
       }
-      CustomView.this.addRowWithSurveyAndSpecificForm(tableId, tpToReceiveAdd, formId, screenPath,
+      CustomView.this.addRowWithSurveyAndSpecificForm(tableId, tp, formId, screenPath,
           map);
       return true;
     }
@@ -868,8 +837,8 @@ public abstract class CustomView extends LinearLayout {
     public boolean helperAddRowWithCollect(String tableId, String formId,
         String formVersion, String formRootElement, String jsonMap) {
       // The first thing we need to do is get the correct TableProperties.
-      TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
-      if (tpToReceiveAdd == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         Log.e(TAG, "table [" + tableId + "] cannot have a row added"
             + " because it could not be found");
         return false;
@@ -883,7 +852,7 @@ public abstract class CustomView extends LinearLayout {
         }
       }
       CollectFormParameters formParameters =
-          CollectFormParameters.constructCollectFormParameters(tpToReceiveAdd);
+          CollectFormParameters.constructCollectFormParameters(tp);
       if (formId != null) {
         formParameters.setFormId(formId);
         if (formVersion != null) {
@@ -895,7 +864,7 @@ public abstract class CustomView extends LinearLayout {
       }
       this.prepopulateRowAndLaunchCollect(
           formParameters,
-          tpToReceiveAdd,
+          tp,
           map);
       return true;
     }
@@ -918,13 +887,11 @@ public abstract class CustomView extends LinearLayout {
       Intent addRowIntent;
       if (elKeyToValueToPrepopulate == null) {
         // The prepopulated values we need to get from the query string.
-        String currentQueryString = mCallbacks.getSearchString();
         addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
             CustomView.this.getContainerActivity(),
             mAppName,
             tp,
-            params,
-            currentQueryString);
+            params);
       } else {
         // We've received a map to prepopulate with.
         addRowIntent = CollectUtil.getIntentForOdkCollectAddRow(
@@ -951,14 +918,14 @@ public abstract class CustomView extends LinearLayout {
      */
     public boolean helperEditRowWithSurvey(String tableId, String rowId, String formId,
         String screenPath) {
-      TableProperties tableToReceiveAdd = getTablePropertiesById(tableId);
-      if (tableToReceiveAdd == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         Log.e(TAG, "table [" + tableId + "] cannot have a row edited with"
             + " survey because it cannot be found");
         return false;
       }
       CustomView.this
-          .editRowWithSurveyAndSpecificForm(tableToReceiveAdd, rowId, formId, screenPath);
+          .editRowWithSurveyAndSpecificForm(tp, rowId, formId, screenPath);
       return true;
     }
 
@@ -978,8 +945,8 @@ public abstract class CustomView extends LinearLayout {
      */
     public boolean helperEditRowWithCollect(String tableId, String rowId, String formId,
         String formVersion, String formRootElement) {
-      TableProperties tpToReceiveAdd = getTablePropertiesById(tableId);
-      if (tpToReceiveAdd == null) {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+      if (tp == null) {
         Log.e(TAG, "table [" + tableId + "] cannot have row edited, "
             + "because it cannot be found");
         return false;
@@ -988,14 +955,14 @@ public abstract class CustomView extends LinearLayout {
         // Then we want to construct the form parameters using default
         // values.
         CollectFormParameters formParameters = CollectFormParameters
-            .constructCollectFormParameters(tpToReceiveAdd);
+            .constructCollectFormParameters(tp);
         formId = formParameters.getFormId();
         formVersion = formParameters.getFormVersion();
         formRootElement = formParameters.getRootElement();
       }
       Map<String, String> elementKeyToValue = getElementKeyToValues(tableId, rowId);
       Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
-          CustomView.this.getContainerActivity(), tpToReceiveAdd, elementKeyToValue, formId,
+          CustomView.this.getContainerActivity(), tp, elementKeyToValue, formId,
           formVersion, formRootElement, rowId);
       if (editRowIntent == null) {
         Log.e(TAG, "the edit row with collect intent was null, returning " + "false");
@@ -1091,15 +1058,6 @@ public abstract class CustomView extends LinearLayout {
       TableProperties tp = TableProperties.addTable(getContext(), mAppName, dbTableName, tableName,
           tableId);
     }
-  }
-
-  public interface CustomViewCallbacks {
-    /**
-     * Get the string currently in the searchbox.
-     *
-     * @return
-     */
-    public String getSearchString();
   }
 
 }

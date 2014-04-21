@@ -20,7 +20,6 @@ import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
@@ -86,7 +85,6 @@ implements DisplayActivity {
 
 
 	private Controller c;
-	private Query query;
 	private UserTable table;
 	private CustomGraphView view;
 	private KeyValueStoreHelper kvsh;
@@ -108,9 +106,6 @@ implements DisplayActivity {
 		}
 		c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
 		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
-		// TODO: why do we get all table properties here? this is an expensive
-		// call. I don't think we should do it.
-		query = new Query(this, appName, c.getTableProperties());
 	}
 
    @Override
@@ -130,24 +125,34 @@ implements DisplayActivity {
 		// I hate having to do these two refreshes here, but with the code the
 		// way it is it seems the only way.
 		c.refreshDbTable(c.getTableProperties().getTableId());
-		query.clear();
-		query.loadFromUserQuery(c.getSearchText());
+
+		Bundle intentExtras = getIntent().getExtras();
       String sqlWhereClause =
-          getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
-      if (sqlWhereClause != null) {
-        String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+          intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+      String[] sqlSelectionArgs = null;
+      if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+         sqlSelectionArgs = intentExtras.getStringArray(
             Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-        DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-        table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
-      } else {
-        // We use the query.
-        table = c.getIsOverview() ?
-            c.getDbTable().getUserOverviewTable(query) :
-            c.getDbTable().getUserTable(query);
+      }
+      String[] sqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+      String sqlHaving = null;
+      if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
+        sqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+      }
+      String sqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+      String sqlOrderByDirection = null;
+      if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
+        sqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+        if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
+          sqlOrderByDirection = "ASC";
+        }
       }
 
+      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
+      table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+
       view = CustomGraphView.get(this, table.getTableProperties().getAppName(), table,
-	     graphName, potentialGraphName, c);
+	     graphName, potentialGraphName);
       c.setGraphViewInfoBarText(graphName);
       displayView();
 	}
@@ -160,7 +165,7 @@ implements DisplayActivity {
 
 	public void backPressedWhileInGraph() {
 		view.deleteDefaultGraph();
-		c.onBackPressed();
+		finish();
 	}
 
 	@Override
@@ -223,13 +228,6 @@ implements DisplayActivity {
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		return c.handleMenuItemSelection(item);
 	}
-
-	@Override
-	public void onSearch() {
-		c.recordSearch();
-		init();
-	}
-
 
 	private void alertForNewGraphName(String givenGraphName) {
 

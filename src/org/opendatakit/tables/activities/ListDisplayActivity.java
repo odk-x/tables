@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -92,7 +91,6 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
 
   private String appName;
   private Controller c;
-  private Query query;
   private UserTable table;
   private CustomTableView view;
   private KeyValueStoreHelper kvsh;
@@ -107,9 +105,6 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
     setTitle("");
     c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
     kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
-    // TODO: why do we get all table properties here? this is an expensive
-    // call. I don't think we should do it.
-    query = new Query(this, appName, c.getTableProperties());
   }
 
   @Override
@@ -148,21 +143,35 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
 
   @Override
   public void init() {
-    query.clear();
-    query.loadFromUserQuery(c.getSearchText());
-    // If a sql statement has been passed in the Intent, use that instead
-    // of the query.
-    String sqlWhereClause = getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
-    if (sqlWhereClause != null) {
-      String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
+    // I hate having to do these two refreshes here, but with the code the
+    // way it is it seems the only way.
+    c.refreshDbTable(c.getTableProperties().getTableId());
+
+    Bundle intentExtras = getIntent().getExtras();
+    String sqlWhereClause =
+        intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+    String[] sqlSelectionArgs = null;
+    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+       sqlSelectionArgs = intentExtras.getStringArray(
           Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-      table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
-    } else {
-      // we just use the query.
-      table = c.getIsOverview() ? c.getDbTable().getUserOverviewTable(query) : c.getDbTable()
-          .getUserTable(query);
     }
+    String[] sqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+    String sqlHaving = null;
+    if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
+      sqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+    }
+    String sqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+    String sqlOrderByDirection = null;
+    if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
+      sqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+      if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
+        sqlOrderByDirection = "ASC";
+      }
+    }
+
+    DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
+    table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+
     String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
     // The nameOfView can be null in some cases, like if the default list
     // view has been deleted. If this ever occurs, we should just say no
@@ -173,7 +182,7 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
         filename = getDefaultListFileName(table.getTableProperties());
       }
     }
-    view = CustomTableView.get(this, appName, table, filename, c);
+    view = CustomTableView.get(this, appName, table, filename);
     // change the info bar text IF necessary
     c.setListViewInfoBarText();
     displayView();
@@ -183,11 +192,6 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
     view.display();
     c.setDisplayView(view);
     setContentView(c.getContainerView());
-  }
-
-  @Override
-  public void onBackPressed() {
-    c.onBackPressed();
   }
 
   @Override
@@ -208,11 +212,5 @@ public class ListDisplayActivity extends SherlockActivity implements DisplayActi
   @Override
   public boolean onMenuItemSelected(int featureId, MenuItem item) {
     return c.handleMenuItemSelection(item);
-  }
-
-  @Override
-  public void onSearch() {
-    c.recordSearch();
-    init();
   }
 }

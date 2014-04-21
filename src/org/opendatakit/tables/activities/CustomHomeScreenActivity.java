@@ -24,7 +24,6 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
-import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -44,7 +43,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  */
 public class CustomHomeScreenActivity extends SherlockFragmentActivity
-    implements DisplayActivity, CustomViewCallbacks, InitializeTask.Callbacks {
+    implements DisplayActivity, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
 
@@ -127,15 +126,9 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // First we have to remove all the views--otherwise you end up with
     // multiple views and none seem to display.
     mContainerView.removeAllViews();
-    mView = new CustomAppView(this, mAppName, mFilename, this);
+    mView = new CustomAppView(this, mAppName, mFilename);
     mContainerView.addView(mView);
     mView.display();
-  }
-
-  @Override
-  public void onSearch() {
-    Log.e(TAG, "called onSearch, which is unimplemented");
-
   }
 
   // CREATE OPTION MENU
@@ -205,13 +198,6 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
       Log.e(TAG, "unrecognized MenuItem id: " + item.getItemId());
       return false;
     }
-  }
-
-  @Override
-  public String getSearchString() {
-    // "search" makes no sense on the homescreen, so just return an empty
-    // string.
-    return "";
   }
 
   /*

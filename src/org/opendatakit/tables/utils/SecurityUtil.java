@@ -78,7 +78,7 @@ public class SecurityUtil {
         columns.add(DataTableColumns.ID);
         UserTable table = dbt.getRaw(columns,
                 new String[] {DataTableColumns.SAVEPOINT_TYPE, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
-                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null);
+                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null, null, null, null);
         return (table.getNumberOfRows() > 0);
     }
 

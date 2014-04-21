@@ -728,7 +728,7 @@ public class SyncProcessor {
 
       UserTable allRowIds = table.getRaw(columns, new String[] { DataTableColumns.SAVEPOINT_TYPE
       }, new String[] { DbTable.SavedStatus.COMPLETE.name()
-      }, null);
+      }, null, null, null, null);
 
       // sort data changes into types
       List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
@@ -1050,7 +1050,8 @@ public class SyncProcessor {
     }
     UserTable rows = table.getRaw(columnsToSync,
         new String[] { DataTableColumns.SAVEPOINT_TYPE, DataTableColumns.SYNC_STATE },
-        new String[] { DbTable.SavedStatus.COMPLETE.name(), state.name() }, null);
+        new String[] { DbTable.SavedStatus.COMPLETE.name(), state.name() },
+        null, null, null, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
     int numRows = rows.getNumberOfRows();

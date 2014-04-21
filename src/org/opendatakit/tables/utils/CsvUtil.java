@@ -764,7 +764,7 @@ public class CsvUtil {
     };
     String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name()
     };
-    UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null);
+    UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null, null, null, null);
     // writing data
     OutputStreamWriter output = null;
     try {

@@ -1,19 +1,12 @@
 package org.opendatakit.tables.activities;
 
-import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Stack;
-import java.util.TimeZone;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
-import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
@@ -22,24 +15,17 @@ import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.utils.DataUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
-import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -55,16 +41,11 @@ import com.actionbarsherlock.view.SubMenu;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableActivity extends SherlockFragmentActivity
-    implements CustomViewCallbacks{
+public class TableActivity extends SherlockFragmentActivity {
 
   public static final String t = "TableActivity";
   // / Static Strings ///
   public static final String INTENT_KEY_TABLE_ID = "tableId";
-  public static final String INTENT_KEY_SEARCH = "search";
-  public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
-  public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
-
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
 
   /** Key value store key for table activity. */
@@ -94,30 +75,20 @@ public class TableActivity extends SherlockFragmentActivity
   /** Table that represents all of the data in the query. */
   private UserTable mTable;
 
-  public UserTable getTable() {
-    return mTable;
-  }
-
   /** The properties of the user table. */
   private TableProperties mTableProperties;
 
-  public TableProperties getTableProperties() {
-    return mTableProperties;
-  }
-
-  private Query mQuery;
-
-  private String mRowId;
-
-  private DataUtil mDataUtil;
   private DbTable mDbTable;
-  private Stack<String> mSearchText;
-  private boolean mIsOverview;
-  private Activity mActivity;
 
   private String mAppName;
+  private String mTableId;
+  private String mSqlWhereClause;
+  private String[] mSqlSelectionArgs;
+  private String[] mSqlGroupBy;
+  private String mSqlHaving;
+  private String mSqlOrderByElementKey;
+  private String mSqlOrderByDirection;
 
-  private String mCurrentSearchText;
   private TableViewType mCurrentViewType;
 
   @Override
@@ -128,35 +99,10 @@ public class TableActivity extends SherlockFragmentActivity
       mAppName = TableFileUtils.getDefaultAppName();
     }
 
-    mActivity = this;
-
-    // Set up the data utility.
-    mDataUtil = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
-
     // Find the table id.
-    String tableId = getIntent().getExtras().getString(INTENT_KEY_TABLE_ID);
-    if (tableId == null) {
+    mTableId = getIntent().getExtras().getString(INTENT_KEY_TABLE_ID);
+    if (mTableId == null) {
       throw new RuntimeException("Table id was not passed in through the bundle.");
-    }
-
-    setContentView(R.layout.standard_table_layout);
-
-    // Add the search texts.
-    mSearchText = new Stack<String>();
-    if (getIntent().getExtras().containsKey(INTENT_KEY_SEARCH_STACK)) {
-      String[] searchValues = getIntent().getExtras().getStringArray(INTENT_KEY_SEARCH_STACK);
-      for (String searchValue : searchValues) {
-        mSearchText.add(searchValue);
-      }
-    } else {
-      String initialSearchText = getIntent().getExtras().getString(INTENT_KEY_SEARCH);
-      mSearchText.add((initialSearchText == null) ? "" : initialSearchText);
-    }
-
-    if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_SEARCH) ) {
-      mCurrentSearchText = savedInstanceState.getString(INTENT_KEY_SEARCH);
-    } else {
-      mCurrentSearchText = null;
     }
 
     if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ) {
@@ -167,34 +113,15 @@ public class TableActivity extends SherlockFragmentActivity
       mCurrentViewType = TableViewType.Map;
     }
 
-    mIsOverview = getIntent().getExtras().getBoolean(INTENT_KEY_IS_OVERVIEW, false);
+    setContentView(R.layout.standard_table_layout);
 
     // Initialize data objects.
-    refreshDbTable(tableId);
-    mQuery = new Query(this, mAppName, mTableProperties);
+    refreshDbTable(mTableId);
 
     // Initialize layout fields.
-    setSearchFieldText(mSearchText.peek());
+    setSearchFieldText("");
     setInfoBarText("Table: " + mTableProperties.getDisplayName());
 
-    mQuery.clear();
-    mQuery.loadFromUserQuery(mSearchText.peek());
-
-    // There are two options here. The first is that we get the data using the
-    // {@link Query} object. The other is that we use a sql where clause. The
-    // two currently don't play nice together, so figure out which one. The
-    // sql statement gets precedence.
-    String sqlWhereClause =
-        getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
-    if (sqlWhereClause != null) {
-      String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
-          Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-      mTable = mDbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
-    } else {
-      // We use the query.
-      mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) :
-        mDbTable.getUserTable(mQuery);
-    }
 
     // Create the map fragment.
     if (savedInstanceState == null) {
@@ -211,17 +138,10 @@ public class TableActivity extends SherlockFragmentActivity
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    if ( mCurrentSearchText != null ) {
-      outState.putString(INTENT_KEY_SEARCH, mCurrentSearchText);
-    }
 
     if ( mCurrentViewType != null ) {
       outState.putString(INTENT_KEY_CURRENT_VIEW_TYPE, mCurrentViewType.name());
     }
-  }
-
-  public String getCurrentSearchText() {
-    return mCurrentSearchText;
   }
 
   public TableViewType getCurrentViewType() {
@@ -235,20 +155,20 @@ public class TableActivity extends SherlockFragmentActivity
     mCurrentViewType = viewType;
   }
 
+  public UserTable getTable() {
+    return mTable;
+  }
+
+  public TableProperties getTableProperties() {
+    return mTableProperties;
+  }
+
   public void init() {
     refreshDbTable(mTableProperties.getTableId());
-    mQuery = new Query(this, mAppName, mTableProperties);
-    mQuery.clear();
-    mQuery.loadFromUserQuery(mSearchText.peek());
-    mTable = mIsOverview ? mDbTable.getUserOverviewTable(mQuery) : mDbTable.getUserTable(mQuery);
     mCurrentFragment.init();
   }
 
   public void onSearchButtonClick(View v) {
-    // when you click the search button, save that query.
-    KeyValueStoreHelper kvsh = mTableProperties
-        .getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-    mCurrentSearchText = getSearchFieldText();
     mCurrentFragment.onSearch();
   }
 
@@ -264,13 +184,6 @@ public class TableActivity extends SherlockFragmentActivity
    */
   public void setSearchFieldText(String text) {
     ((ClearableEditText) findViewById(R.id.search_field)).getEditText().setText(text);
-  }
-
-  /**
-   * Appends the text to the search box.
-   */
-  public void appendToSearchBoxText(String text) {
-    setSearchFieldText((getSearchFieldText() + text).trim());
   }
 
   /**
@@ -299,6 +212,28 @@ public class TableActivity extends SherlockFragmentActivity
     mTableProperties = TableProperties.getTablePropertiesForTable(this, mAppName,
         tableId);
     mDbTable = DbTable.getDbTable(mTableProperties);
+
+    Bundle intentExtras = getIntent().getExtras();
+    mSqlWhereClause = intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+    mSqlSelectionArgs = null;
+    if (mSqlWhereClause != null && mSqlWhereClause.length() != 0) {
+      mSqlSelectionArgs = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+    }
+    mSqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+    mSqlHaving = null;
+    if ( mSqlGroupBy != null && mSqlGroupBy.length != 0 ) {
+      mSqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+    }
+    mSqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+    mSqlOrderByDirection = null;
+    if ( mSqlOrderByElementKey != null && mSqlOrderByElementKey.length() != 0 ) {
+      mSqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+      if ( mSqlOrderByDirection != null && mSqlOrderByDirection.length() == 0 ) {
+        mSqlOrderByDirection = "ASC";
+      }
+    }
+
+    mTable = mDbTable.rawSqlQuery(mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving, mSqlOrderByElementKey, mSqlOrderByDirection );
   }
 
   /**
@@ -306,21 +241,6 @@ public class TableActivity extends SherlockFragmentActivity
    */
   DbTable getDbTable() {
     return mDbTable;
-  }
-
-  /**
-   * @return True if this is an overview type, false if this is collection view
-   *         type
-   */
-  boolean getIsOverview() {
-    return mIsOverview;
-  }
-
-  /**
-   * @return String text currently in the search bar
-   */
-  String getSearchText() {
-    return mSearchText.peek();
   }
 
   /**
@@ -359,24 +279,14 @@ public class TableActivity extends SherlockFragmentActivity
     }
   }
 
-  void recordSearch() {
-    mSearchText.add(getSearchFieldText());
-  }
-
-  public void onBackPressed() {
-    if (mSearchText.size() == 1) {
-      finish();
-    } else {
-      mSearchText.pop();
-      setSearchFieldText(mSearchText.peek());
-    }
-  }
-
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
     case Controller.RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
+      break;
+    case Controller.RCODE_DISPLAY_PROPERTIES:
+      handleDisplayPropertiesReturn();
       break;
     case Controller.RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
@@ -409,16 +319,15 @@ public class TableActivity extends SherlockFragmentActivity
   }
 
   private void handleTablePropertiesManagerReturn() {
-    refreshDbTable(mTableProperties.getTableId());
-    if (getCurrentViewType() == mTableProperties.getDefaultViewType()) {
-      init();
-    } else {
-      launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
-    }
+    refreshDbTable(mTableId);
+  }
+
+  private void handleDisplayPropertiesReturn() {
+    refreshDbTable(mTableId);
   }
 
   private void handleColumnManagerReturn() {
-    refreshDbTable(mTableProperties.getTableId());
+    refreshDbTable(mTableId);
   }
 
   void deleteRow(String rowId) {
@@ -493,9 +402,8 @@ public class TableActivity extends SherlockFragmentActivity
     settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
         .setEnabled(true);
     // Now an option for editing list views.
-    MenuItem manageListViews = settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
+    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
         Menu.NONE, "List View Manager").setEnabled(true);
-    // TODO: add manageListViews to the menu?
     return true;
   }
 
@@ -505,7 +413,9 @@ public class TableActivity extends SherlockFragmentActivity
     // with its itemId else, handle accordingly.
     if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
       setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
-      launchTableActivity(this, mTableProperties, mSearchText, mIsOverview);
+      launchTableActivity(mTableProperties, TableViewType.getViewTypeFromId(item.getItemId()),
+          mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving,
+          mSqlOrderByElementKey, mSqlOrderByDirection);
       return true;
     } else {
       switch (item.getItemId()) {
@@ -518,11 +428,8 @@ public class TableActivity extends SherlockFragmentActivity
       case MENU_ITEM_ID_VIEW_TYPE_SUBMENU:
         return true;
       case MENU_ITEM_ID_ADD_ROW_BUTTON:
-        if (!getSearchText().equals("")) {
-          addRow(getMapFromLimitedQuery());
-        } else {
-          addRow(null);
-        }
+        // TODO: pre-initialize values based upon WHERE clause equality constraints
+        addRow(null);
         return true;
       case MENU_ITEM_ID_SETTINGS_SUBMENU:
         return true;
@@ -530,7 +437,7 @@ public class TableActivity extends SherlockFragmentActivity
         Intent k = new Intent(this, DisplayPrefsActivity.class);
         k.putExtra(Controller.INTENT_KEY_APP_NAME, mTableProperties.getAppName());
         k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, mTableProperties.getTableId());
-        startActivity(k);
+        startActivityForResult(k, Controller.RCODE_DISPLAY_PROPERTIES);
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
         Intent tablePropertiesIntent = new Intent(this, TablePropertiesManager.class);
@@ -563,6 +470,7 @@ public class TableActivity extends SherlockFragmentActivity
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(tableManagerIntent);
+        finish();
         return true;
       default:
         return false;
@@ -608,46 +516,18 @@ public class TableActivity extends SherlockFragmentActivity
     findViewById(R.id.control_wrap).setVisibility(visibility);
   }
 
-  private Map<String, String> getMapFromLimitedQuery() {
-    Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    // First add all empty strings. We will overwrite the ones that are
-    // queried
-    // for in the search box. We need this so that if an add is canceled, we
-    // can check for equality and know not to add it. If we didn't do this,
-    // but we've prepopulated an add with a query, when we return and don't
-    // do
-    // a check, we'll add a blank row b/c there are values in the key value
-    // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : mTableProperties.getDatabaseColumns().values()) {
-      elementKeyToValue.put(cp.getElementKey(), "");
-    }
-    Query currentQuery = new Query(this, mAppName, mTableProperties);
-    currentQuery.loadFromUserQuery(getSearchText());
-    for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
-      Constraint constraint = currentQuery.getConstraint(i);
-      // NB: This is predicated on their only ever being a single
-      // search value. I'm not sure how additional values could be
-      // added.
-      elementKeyToValue.put(constraint.getColumnDbName(), constraint.getValue(0));
-    }
-    return elementKeyToValue;
-  }
-
   private void handleOdkCollectAddReturn(int returnCode, Intent data) {
 	if (!CollectUtil.handleOdkCollectAddReturn(this, mAppName, mTableProperties, returnCode, data)) {
       return;
     }
-	// TODO: refresh display???
-	refreshDbTable(mTableProperties.getTableId());
+	refreshDbTable(mTableId);
   }
 
   private void handleOdkCollectEditReturn(int returnCode, Intent data) {
     if (!CollectUtil.handleOdkCollectEditReturn(this, mAppName, mTableProperties, returnCode, data)) {
       return;
     }
-    mRowId = null;
-    // TODO: refresh display???
-    refreshDbTable(mTableProperties.getTableId());
+    refreshDbTable(mTableId);
   }
 
   private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
@@ -655,8 +535,7 @@ public class TableActivity extends SherlockFragmentActivity
       Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }
-   // TODO: refresh display???
-   refreshDbTable(mTableProperties.getTableId());
+   refreshDbTable(mTableId);
   }
 
   private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
@@ -664,43 +543,8 @@ public class TableActivity extends SherlockFragmentActivity
       Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }
-    mRowId = null;
-    // TODO: refresh display???
-    refreshDbTable(mTableProperties.getTableId());
+    refreshDbTable(mTableId);
   }
-
-  /** TODO: What does this do? */
-  void openCellEditDialog(String rowId, String value, int colIndex) {
-    (new CellEditDialog(rowId, value, colIndex)).show();
-  }
-
-  public void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
-    launchTableActivity(context, tp, null, null, isOverview, null);
-  }
-
-  public void launchTableActivity(Context context, TableProperties tp, String searchText,
-      boolean isOverview) {
-    launchTableActivity(context, tp, searchText, null, isOverview, null);
-  }
-
-  private void launchTableActivity(Activity context, TableProperties tp,
-      Stack<String> searchStack, boolean isOverview) {
-    launchTableActivity(context, tp, null, searchStack, isOverview, null);
-    context.finish();
-  }
-
-  /**
-   * This is based on the other launch table activity methods. This one,
-   * however, allows a filename to be passed to the launching activity. This is
-   * intended to be used to launch things like list view activities with a file
-   * other than the default.
-   */
-  public void launchTableActivityWithFilename(Activity context, TableProperties tp,
-      Stack<String> searchStack, boolean isOverview, String filename) {
-    launchTableActivity(context, tp, null, searchStack, isOverview, filename);
-    context.finish();
-  }
-
   /**
    * This method should launch the custom app view that is a generic user-
    * customizable home screen or html page for the app.
@@ -709,141 +553,78 @@ public class TableActivity extends SherlockFragmentActivity
 
   }
 
-  private void launchTableActivity(Context context, TableProperties tp, String searchText,
-      Stack<String> searchStack, boolean isOverview, String filename) {
-    // TODO: need to figure out how CollectionViewSettings should work.
-    // make them work.
-    // TableViewSettings tvs = isOverview ? tp.getOverviewViewSettings() :
-    // tp
-    // .getCollectionViewSettings();
-    TableViewType viewType = getCurrentViewType();
+  public void launchTableActivity(TableProperties tp, TableViewType viewType,
+      String sqlWhereClause, String[] sqlSelectionArgs, String[] sqlGroupBy, String sqlHaving,
+      String sqlOrderByElementKey, String sqlOrderByDirection) {
     if ( viewType == null ) {
       viewType = tp.getDefaultViewType();
     }
     Intent intent;
-    // switch (tvs.getViewType()) {
     switch (viewType) {
-    // case TableViewSettings.Type.LIST:
-    // TODO: figure out which of these graph was originally and update it.
     case List: {
-      if (filename != null) {
-        intent = new Intent(context, ListDisplayActivity.class);
-        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+      String defaultListView = ListDisplayActivity.getDefaultListFileName(tp);
+      if (defaultListView != null) {
+        intent = new Intent(this, ListDisplayActivity.class);
+        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, defaultListView);
       } else {
-        intent = new Intent(context, ListViewManager.class);
+        intent = new Intent(this, ListViewManager.class);
       }
     }
       break;
     case Graph: {
       String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
       if ( defaultGraph != null ) {
-        intent = new Intent(context, GraphDisplayActivity.class);
+        intent = new Intent(this, GraphDisplayActivity.class);
         intent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, defaultGraph);
       } else {
-        intent = new Intent(context, GraphManagerActivity.class);
+        intent = new Intent(this, GraphManagerActivity.class);
       }
     }
       break;
     case Map:
-      intent = new Intent(context, TableActivity.class);
+      intent = new Intent(this, TableActivity.class);
       break;
     case Spreadsheet:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+      intent = new Intent(this, SpreadsheetDisplayActivity.class);
       break;
     default:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+      intent = new Intent(this, SpreadsheetDisplayActivity.class);
     }
     intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (searchStack != null) {
-      String[] stackValues = new String[searchStack.size()];
-      for (int i = 0; i < searchStack.size(); i++) {
-        stackValues[i] = searchStack.get(i);
+    intent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+    startActivity(intent);
+    finish();
+  }
+
+  /*
+   * A helper method that was introduced just to eliminate redundant code.
+   * Adds the appropriate extras to the intent.
+   */
+  private void prepareIntentForLaunch(Intent intent, TableProperties tp,
+                                             String sqlWhereClause, String[] sqlSelectionArgs,
+                                             String[] sqlGroupBy, String sqlHaving,
+                                             String sqlOrderByElementKey, String sqlOrderByDirection) {
+    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+      intent.putExtra(Controller.INTENT_KEY_SQL_WHERE, sqlWhereClause);
+      if (sqlSelectionArgs != null && sqlSelectionArgs.length != 0) {
+        intent.putExtra(Controller.INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
       }
-      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
-    } else if (searchText != null) {
-      intent.putExtra(INTENT_KEY_SEARCH, searchText);
-    } else if (searchText == null) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-      String savedQuery = mCurrentSearchText;
-      if (savedQuery == null) {
-        savedQuery = "";
+    }
+    if (sqlGroupBy != null && sqlGroupBy.length != 0) {
+      intent.putExtra(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS, sqlGroupBy);
+      if (sqlHaving != null && sqlHaving.length() != 0) {
+        intent.putExtra(Controller.INTENT_KEY_SQL_HAVING, sqlHaving);
       }
-      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
     }
-    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
-    intent.putExtra(INTENT_KEY_CURRENT_VIEW_TYPE, viewType.name());
-    context.startActivity(intent);
-  }
-
-  public void launchDetailActivity(Context context, TableProperties tp,
-      UserTable table, int rowNum) {
-    Intent intent = new Intent(context, DetailDisplayActivity.class);
-    intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID,
-        table.getRowAtIndex(rowNum).getRowId());
-    context.startActivity(intent);
-  }
-
-  private class CellEditDialog extends AlertDialog {
-    private final String rowId;
-    private final int colIndex;
-    private final String mColumnElementKey;
-    private final CellValueView.CellEditView cev;
-
-    public CellEditDialog(String rowId, String value, int colIndex) {
-      super(mActivity);
-
-      this.rowId = rowId;
-      this.colIndex = colIndex;
-      ColumnProperties cp = mTableProperties.getColumnByIndex(colIndex);
-      this.mColumnElementKey = cp.getElementKey();
-      cev = CellValueView.getCellEditView(mActivity, cp, value);
-      buildView(mActivity);
+    if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
+      intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
+      if ( sqlOrderByDirection != null ) {
+        intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
+      } else {
+        intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION, "ASC");
+      }
     }
-
-    private void buildView(Context context) {
-      Button setButton = new Button(context);
-      setButton.setText(getResources().getString(R.string.set));
-      setButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          String value = mDataUtil.validifyValue(
-              mTableProperties.getColumnByElementKey(mColumnElementKey),
-              cev.getValue());
-          if (value == null) {
-            // TODO: alert the user
-            return;
-          }
-          Map<String, String> values = new HashMap<String, String>();
-          values.put(mColumnElementKey, value);
-          // TODO: Update these nulls.
-          mDbTable.updateRow(rowId, "_cell_edit_", null, System.currentTimeMillis(), null, values);
-          dismiss();
-        }
-      });
-      Button cancelButton = new Button(context);
-      cancelButton.setText(getResources().getString(R.string.cancel));
-      cancelButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          dismiss();
-        }
-      });
-      LinearLayout buttonWrapper = new LinearLayout(context);
-      buttonWrapper.addView(setButton);
-      buttonWrapper.addView(cancelButton);
-      LinearLayout wrapper = new LinearLayout(context);
-      wrapper.setOrientation(LinearLayout.VERTICAL);
-      wrapper.addView(cev);
-      wrapper.addView(buttonWrapper);
-      setView(wrapper);
-    }
-  }
-
-  @Override
-  public String getSearchString() {
-    return getSearchFieldText();
   }
 }

@@ -26,12 +26,10 @@ import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
-import org.opendatakit.tables.data.Query.SqlData;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 /**
  * A class for accessing and modifying a user table.
@@ -60,7 +58,7 @@ public class DbTable {
    /**
     * The sql where clause to select a single row.
     */
-   private static final String SQL_WHERE_FOR_SINGLE_ROW = "WHERE " +
+   private static final String SQL_WHERE_FOR_SINGLE_ROW =
        DataTableColumns.ID + " = ?";
 
 
@@ -135,10 +133,6 @@ public class DbTable {
         return new DbTable(tp);
     }
 
-    public static Map<String, ColumnType> getColumnsToSync() {
-      return Collections.unmodifiableMap(COLUMNS_TO_SYNC);
-    }
-
     private DbTable(TableProperties tp) {
         this.tp = tp;
     }
@@ -179,22 +173,6 @@ public class DbTable {
     }
 
     /**
-     * See the doc at {@link DbTable#getRaw(List, String[], String[], String)}.
-     * All restrictions apply there. The difference with this method is that
-     * you can pass in more complicated queries (supporting things like sql
-     * IN operators).
-     * @param projection
-     * @param sqlQuery
-     * @param selectionArgs
-     * @param orderBy
-     * @return
-     */
-    public UserTable getRawWithSpecificQuery(List<String> projection,
-        String sqlQuery, String[] selectionArgs, String orderBy) {
-      return getRawHelper(projection, sqlQuery, null, selectionArgs, orderBy);
-    }
-
-    /**
      * Helper method for various of the other get raw methods. Handles null
      * arguments appropriately so that calls to the simpler getRaw* methods
      * can contain fewer parameters and be less confusing.
@@ -207,8 +185,9 @@ public class DbTable {
      * @param orderBy
      * @return
      */
-    private UserTable getRawHelper(List<String> projection, String sqlQuery,
-        String[] selectionKeys, String[] selectionArgs, String orderBy) {
+    public UserTable getRawHelper(List<String> projection, String sqlQuery,
+        String[] selectionKeys, String[] selectionArgs,
+        String[] groupByArgs, String havingClause, String orderByElementKey, String orderByDirection) {
       // The columns we will pass to the db to select. Must include the
       // columns parameter as well as all the metadata columns.
       List<String> columnsToSelect;
@@ -227,6 +206,29 @@ public class DbTable {
         for (int i = 0; i < columnsToSelect.size(); i++) {
             colArr[i + 1] = columnsToSelect.get(i);
         }
+
+        // build the group-by
+        String groupByClause = null;
+        if ( groupByArgs != null && groupByArgs.length != 0 ) {
+          StringBuilder b = new StringBuilder();
+          boolean first = true;
+          for ( String g : groupByArgs) {
+            if (!first) {
+              b.append(", ");
+            }
+            first = false;
+            b.append(g);
+          }
+          groupByClause = b.toString();
+        }
+        String orderByClause = null;
+        if ( orderByElementKey != null && orderByElementKey.length() != 0 ) {
+          if ( orderByDirection != null && orderByDirection.length() != 0 ) {
+            orderByClause = orderByElementKey + " " + orderByDirection;
+          } else {
+            orderByClause = orderByElementKey + " ASC";
+          }
+        }
         SQLiteDatabase db = null;
         Cursor c = null;
         try {
@@ -239,13 +241,15 @@ public class DbTable {
            } // else we just use the provided one.
            c = db.query(tp.getDbTableName(), colArr,
                    sqlQuery,
-                   selectionArgs, null, null, orderBy);
-           UserTable table = buildTable(c, tp, projection);
+                   selectionArgs, groupByClause, havingClause, orderByClause);
+           UserTable table = buildTable(c, tp, projection, sqlQuery, selectionArgs,
+               groupByArgs, havingClause, orderByElementKey, orderByDirection);
            return table;
        } finally {
          if ( c != null && !c.isClosed() ) {
             c.close();
          }
+         db.close();
        }
     }
 
@@ -262,9 +266,9 @@ public class DbTable {
      * @return a Table of the requested data
      */
     public UserTable getRaw(List<String> columns, String[] selectionKeys,
-            String[] selectionArgs, String orderBy) {
+            String[] selectionArgs, String[] groupByArgs, String havingClause, String orderByElementKey, String orderByDirection) {
       return getRawHelper(columns, null, selectionKeys, selectionArgs,
-          orderBy);
+          groupByArgs, havingClause, orderByElementKey, orderByDirection);
     }
 
     /**
@@ -279,15 +283,43 @@ public class DbTable {
      * @param selectionArgs the selection arguments for the where clause.
      * @return
      */
-    public UserTable rawSqlQuery(String whereClause, String[] selectionArgs) {
+    public UserTable rawSqlQuery(String whereClause, String[] selectionArgs,
+        String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
       SQLiteDatabase db = null;
       Cursor c = null;
       try {
-        String sqlQuery = "SELECT * FROM " + this.tp.getDbTableName() + " " +
-            whereClause;
+        StringBuilder s = new StringBuilder();
+        s.append("SELECT * FROM ").append(this.tp.getDbTableName());
+        if ( whereClause != null && whereClause.length() != 0 ) {
+          s.append(" WHERE ").append(whereClause);
+        }
+        if ( groupBy != null && groupBy.length != 0 ) {
+          s.append(" GROUP BY ");
+          boolean first = true;
+          for ( String elementKey : groupBy ) {
+            if (!first) {
+              s.append(", ");
+            }
+            first = false;
+            s.append(elementKey);
+          }
+          if ( having != null && having.length() != 0 ) {
+            s.append(" HAVING ").append(having);
+          }
+        }
+        if ( orderByElementKey != null && orderByElementKey.length() != 0 ) {
+          s.append(" ORDER BY ").append(orderByElementKey);
+          if ( orderByDirection != null && orderByDirection.length() != 0 ) {
+            s.append(" ").append(orderByDirection);
+          } else {
+            s.append(" ASC");
+          }
+        }
+        String sqlQuery = s.toString();
         db = tp.getReadableDatabase();
         c = db.rawQuery(sqlQuery, selectionArgs);
-        UserTable table = buildTable(c, tp, tp.getColumnOrder());
+        UserTable table = buildTable(c, tp, tp.getColumnOrder(),
+            whereClause, selectionArgs, groupBy, having, orderByElementKey, orderByDirection);
         return table;
       } finally {
         if ( c != null && !c.isClosed() ) {
@@ -303,31 +335,7 @@ public class DbTable {
      */
     public UserTable getTableForSingleRow(String rowId) {
       String[] sqlSelectionArgs = {rowId};
-      return rawSqlQuery(SQL_WHERE_FOR_SINGLE_ROW, sqlSelectionArgs);
-    }
-
-    public UserTable getRaw(Query query, String[] columns) {
-      List<String> desiredColumns = tp.getColumnOrder();
-      desiredColumns.addAll(getAdminColumns());
-        UserTable table = dataQuery(query.toSql(desiredColumns));
-        return table;
-    }
-
-    public UserTable getUserTable(Query query) {
-      List<String> desiredColumns = tp.getColumnOrder();
-      desiredColumns.addAll(getAdminColumns());
-        UserTable table = dataQuery(query.toSql(desiredColumns));
-        return table;
-    }
-
-    public UserTable getUserOverviewTable(Query query) {
-      // The element keys of the columns we want. We want to select both the
-      // user-defined and the admin columns--both the user-defined and
-      // ODKTables-specified information, in other words.
-      List<String> desiredColumns = tp.getColumnOrder();
-      desiredColumns.addAll(getAdminColumns());
-        UserTable table = dataQuery(query.toOverviewSql(desiredColumns));
-        return table;
+      return rawSqlQuery(SQL_WHERE_FOR_SINGLE_ROW, sqlSelectionArgs, null, null, null, null);
     }
 
     public ConflictTable getConflictTable() {
@@ -352,38 +360,17 @@ public class DbTable {
           Integer.toString(ConflictType.SERVER_DELETED_OLD_VALUES);
       String conflictTypeServerUpdatedStr = Integer.toString(
           ConflictType.SERVER_UPDATED_UPDATED_VALUES);
-      UserTable localTable = getRawWithSpecificQuery(userColumns,
-          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE,
+      UserTable localTable = getRawHelper(userColumns,
+          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeLocalDeletedStr,
-            conflictTypeLocalUpdatedStr},
-          DataTableColumns.ID);
-      UserTable serverTable = getRawWithSpecificQuery(userColumns,
-          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE,
+            conflictTypeLocalUpdatedStr}, null, null,
+          DataTableColumns.ID, null);
+      UserTable serverTable = getRawHelper(userColumns,
+          SQL_FOR_SYNC_STATE_AND_CONFLICT_STATE, null,
           new String[] {syncStateConflictStr, conflictTypeServerDeletedStr,
-            conflictTypeServerUpdatedStr},
-          DataTableColumns.ID);
+            conflictTypeServerUpdatedStr}, null, null,
+          DataTableColumns.ID, null);
       return new ConflictTable(localTable, serverTable);
-    }
-
-    private UserTable dataQuery(SqlData sd) {
-        SQLiteDatabase db = null;
-        Cursor c = null;
-        try {
-        	db = tp.getReadableDatabase();
-        	String sqlStr = sd.getSql();
-        	String[] selArgs = sd.getArgs();
-        	c = db.rawQuery(sd.getSql(), sd.getArgs());
-        	UserTable table = buildTable(c, tp, tp.getColumnOrder());
-         return table;
-        } catch (Exception e) {
-          Log.e(TAG, "error in dataQuery");
-          e.printStackTrace();
-          return null;
-        } finally {
-    		if ( c != null && !c.isClosed() ) {
-    			c.close();
-    		}
-        }
     }
 
     /**
@@ -396,8 +383,11 @@ public class DbTable {
      * @param userColumnOrder the user-specified column order
      */
     private UserTable buildTable(Cursor c, TableProperties tp,
-        List<String> userColumnOrder) {
-      return new UserTable(c, tp, userColumnOrder);
+        List<String> userColumnOrder,
+        String whereClause, String[] selectionArgs, String[] groupByArgs, String havingClause,
+        String orderByElementKey, String orderByDirection) {
+      return new UserTable(c, tp, userColumnOrder, whereClause, selectionArgs,
+          groupByArgs, havingClause, orderByElementKey, orderByDirection);
     }
 
     /**
@@ -474,11 +464,15 @@ public class DbTable {
         }
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
-	        values.put(DataTableColumns.SAVEPOINT_TYPE, SavedStatus.COMPLETE.name());
-	        long result = db.insertOrThrow(tp.getDbTableName(), null, values);
+          db.beginTransaction();
+	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavedStatus.COMPLETE.name());
+	       long result = db.insertOrThrow(tp.getDbTableName(), null, values);
+	       if ( result != -1 ) {
+	         db.setTransactionSuccessful();
+	       }
         } finally {
-          // TODO: fix the when to close problem
-//        	db.close();
+          db.endTransaction();
+          db.close();
         }
     }
 
@@ -489,7 +483,6 @@ public class DbTable {
      * are sync'd to the server.
      */
     public void changeRestRowsToInserting() {
-      SQLiteDatabase db = tp.getWritableDatabase();
 
       StringBuilder b = new StringBuilder();
       b.append("UPDATE ").append(tp.getDbTableName()).append(" SET ").append(DataTableColumns.SYNC_STATE)
@@ -499,7 +492,15 @@ public class DbTable {
           SyncState.inserting.name(),
           SyncState.rest.name()
       };
-      db.execSQL(sql, args);
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+        db.execSQL(sql, args);
+        db.setTransactionSuccessful();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
     /**
@@ -555,16 +556,18 @@ public class DbTable {
 
     private void actualUpdateRow(ContentValues values, String where,
             String[] whereArgs) {
-        SQLiteDatabase db = tp.getWritableDatabase();
         if ( !values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP) ) {
 	        values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
+        SQLiteDatabase db = tp.getWritableDatabase();
         try {
-	        values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
-	        db.update(tp.getDbTableName(), values, where, whereArgs);
+          db.beginTransaction();
+	       values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
+	       db.update(tp.getDbTableName(), values, where, whereArgs);
+	       db.setTransactionSuccessful();
         } finally {
-          // TODO: fix the when to close problem
-//        	db.close();
+          db.endTransaction();
+          db.close();
         }
     }
 
@@ -588,14 +591,16 @@ public class DbTable {
         String updateWhereSql = DataTableColumns.ID + " = ?";
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
+          db.beginTransaction();
 	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
 	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	        updateValues.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
 	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
 	                updateWhereArgs);
+	        db.setTransactionSuccessful();
         } finally {
-          // TODO: fix the when to close problem
-//        	db.close();
+          db.endTransaction();
+          db.close();
         }
     }
 
@@ -619,12 +624,14 @@ public class DbTable {
           values.put(DataTableColumns.SYNC_STATE, SyncState.deleting.name());
           SQLiteDatabase db = tp.getWritableDatabase();
           try {
+            db.beginTransaction();
 	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
 	          values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
 	          db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
+	          db.setTransactionSuccessful();
           } finally {
-            // TODO: fix the when to close problem
-//        	  db.close();
+            db.endTransaction();
+            db.close();
           }
         }
       }
@@ -641,13 +648,15 @@ public class DbTable {
     }
 
     public void deleteRowActual(String whereClause, String[] whereArgs) {
-        SQLiteDatabase db = tp.getWritableDatabase();
-        try {
-        	db.delete(tp.getDbTableName(), whereClause, whereArgs);
-        } finally {
-          // TODO: fix the when to close problem
-//        	db.close();
-        }
+      SQLiteDatabase db = tp.getWritableDatabase();
+      try {
+        db.beginTransaction();
+      	db.delete(tp.getDbTableName(), whereClause, whereArgs);
+      	db.setTransactionSuccessful();
+      } finally {
+        db.endTransaction();
+        db.close();
+      }
     }
 
     /**

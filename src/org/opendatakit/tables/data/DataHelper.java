@@ -1,7 +1,7 @@
 package org.opendatakit.tables.data;
 
 /**
- * Simple conversion utilities to intepret stored values.
+ * Simple conversion utilities to interpret stored values.
  *
  * @author mitchellsundt@gmail.com
  *

@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.data.ColorGuide;
 import org.opendatakit.tables.data.ColorRuleGroup;
 import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
@@ -54,6 +53,30 @@ public class TableData {
 
      public boolean isGroupedBy() {
        return mTable.isGroupedBy();
+     }
+
+     public String getWhereClause() {
+       return mTable.getWhereClause();
+     }
+
+     public String[] getSelectionArgs() {
+       return mTable.getSelectionArgs();
+     }
+
+     public String[] getGroupByArgs() {
+       return mTable.getGroupByArgs();
+     }
+
+     public String getHavingClause() {
+       return mTable.getHavingClause();
+     }
+
+     public String getOrderByElementKey() {
+       return mTable.getOrderByElementKey();
+     }
+
+     public String getOrderByDirection() {
+       return mTable.getOrderByDirection();
      }
 
      // Initializes the colMap and groupByColumns that provide methods quick
@@ -144,47 +167,9 @@ public class TableData {
       * @see {@link TableDataIf#getForegroundColor(String, String)}
       */
      public String getForegroundColor(String elementPath, String value) {
-        TableProperties tp = mTable.getTableProperties();
-        String elementKey =
-            tp.getElementKeyFromElementPath(elementPath);
-        if (elementKey == null) {
-          // Note that this currently cannot happen, because the implementation
-          // of getElementKeyFromElementPath is not real. It just does a string
-          // replace, which is incorrect. But we should have this case.
-          return null;
-        }
-        ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup
-              .get(elementPath);
-        if (colRul == null) {
-           // If it's not already there, cache it for future use.
-           colRul = ColorRuleGroup.getColumnColorRuleGroup(tp, elementKey);
-           this.mElementKeyToColorRuleGroup.put(elementPath, colRul);
-        }
-        // Rather than hand off the whole row data, we'll just dummy up the
-        // info requested, as this will be easier for the html programmer
-        // to use than to have to give in the whole row.
-        Map<String, Integer> indexOfDataMap = new HashMap<String, Integer>();
-        indexOfDataMap.put(elementKey, 0);
-        String[] elementKeyForIndex = new String[] { elementKey };
-        Map<String, Integer> indexOfMetadataMap =
-            new HashMap<String, Integer>();
-        indexOfMetadataMap.put(elementKey, 0);
-        // We need to construct a dummy UserTable for the ColorRule to
-        // interpret.
-        String[] header = new String[] { elementPath };
-        String[] rowId = new String[] { "dummyRowId" };
-        String[][] data = new String[1][1];
-        String[][] metadata = new String[1][1];
-        data[0][0] = value;
-        metadata[0][0] = "dummyMetadata";
-        UserTable table = new UserTable(tp, rowId, header, data,
-              elementKeyForIndex, indexOfDataMap, metadata,
-              indexOfMetadataMap);
-        ColorGuide guide = colRul.getColorGuide(table.getRowAtIndex(0));
-        int foregroundColor;
-        if (guide != null) {
-           foregroundColor = guide.getForeground();
-        } else {
+        Integer foregroundColor =
+            mTable.getForegroundColorOfData(elementPath, value);
+        if (foregroundColor == null) {
            foregroundColor = -16777216; // this crazy value was found here
         }
         // I think this formatting needs to take place for javascript

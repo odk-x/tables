@@ -64,6 +64,13 @@ public class UserTable {
    * more intelligent things can be done with regards to interpretation of type.
    */
   private final TableProperties mTp;
+  private final String mSqlWhereClause;
+  private final String[] mSqlSelectionArgs;
+  private final String[] mSqlGroupByArgs;
+  private final String mSqlHavingClause;
+  private final String mSqlOrderByElementKey;
+  private final String mSqlOrderByDirection;
+
   private final String[] mElementKeyForIndex;
   // array of ColumnProperties for these element keys
   // this can go stale when ColumnProperties are changed,
@@ -85,6 +92,14 @@ public class UserTable {
   private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
   private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
 
+  /**
+   * A simple cache of color rules so they're not recreated unnecessarily
+   * each time. Maps the column display name to {@link ColorRuleGroup} for
+   * that column.
+   */
+  private Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup =
+      new HashMap<String, ColorRuleGroup>();
+
   private final DataUtil du;
   private DateTimeZone tz;
   private DateTimeFormatter dateFormatter;
@@ -99,29 +114,41 @@ public class UserTable {
     timeFormatter = DateTimeFormat.forPattern(DateTimeFormat.patternForStyle("-L", l)).withZone(tz);
   }
 
-  public UserTable(TableProperties tp, String[] rowIds, String[] header,
-      String[][] userDefinedData, String[] elementKeyForIndex,
-      Map<String, Integer> dataElementKeyToIndex, String[][] odkTablesMetadata,
-      Map<String, Integer> metadataElementKeyToIndex) {
-    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+  public UserTable(UserTable table, List<Integer> indexes) {
+    du = table.du;
     buildFormatters();
-    this.header = header;
-    mRows = new ArrayList<Row>(userDefinedData.length);
-    for (int i = 0; i < userDefinedData.length; i++) {
-      Row nextRow = new Row(rowIds[i], userDefinedData[i], odkTablesMetadata[i]);
-      mRows.add(nextRow);
+    this.header = table.header;
+    mRows = new ArrayList<Row>(indexes.size());
+    for (int i = 0 ; i < indexes.size(); ++i) {
+      Row r = table.getRowAtIndex(i);
+      mRows.add(r);
     }
-    this.mTp = tp;
-    mDataKeyToIndex = dataElementKeyToIndex;
-    mMetadataKeyToIndex = metadataElementKeyToIndex;
-    mElementKeyForIndex = elementKeyForIndex;
+    this.mTp = table.getTableProperties();
+    this.mSqlWhereClause = table.mSqlWhereClause;
+    this.mSqlSelectionArgs = table.mSqlSelectionArgs;
+    this.mSqlGroupByArgs = table.mSqlGroupByArgs;
+    this.mSqlHavingClause = table.mSqlHavingClause;
+    this.mSqlOrderByElementKey = table.mSqlOrderByElementKey;
+    this.mSqlOrderByDirection = table.mSqlOrderByDirection;
+    this.mDataKeyToIndex = table.getMapOfUserDataToIndex();
+    this.mMetadataKeyToIndex = table.getMapOfMetadataToIndex();
+    this.mElementKeyForIndex = table.getElementKeysForIndex();
   }
 
   public UserTable(Cursor c, TableProperties tableProperties,
-      List<String> userColumnOrder) {
+      List<String> userColumnOrder,
+      String sqlWhereClause, String[] sqlSelectionArgs,
+      String[] sqlGroupByArgs, String sqlHavingClause,
+      String sqlOrderByElementKey, String sqlOrderByDirection) {
     du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     buildFormatters();
     mTp = tableProperties;
+    this.mSqlWhereClause = sqlWhereClause;
+    this.mSqlSelectionArgs = sqlSelectionArgs;
+    this.mSqlGroupByArgs = sqlGroupByArgs;
+    this.mSqlHavingClause = sqlHavingClause;
+    this.mSqlOrderByElementKey = sqlOrderByElementKey;
+    this.mSqlOrderByDirection = sqlOrderByDirection;
     List<String> adminColumnOrder = DbTable.getAdminColumns();
     int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
@@ -259,19 +286,66 @@ public class UserTable {
     return mRows.get(rowNum).getDataAtIndex(colNum);
   }
 
+  public String getWhereClause() {
+    return mSqlWhereClause;
+  }
+
+  public String[] getSelectionArgs() {
+    return mSqlSelectionArgs.clone();
+  }
+
   /**
-   * True if the table has been grouped by a value. This is referred to in some
-   * places of the code as an "indexed" table, which also and irritatingly
-   * means that a column has been set to "prime".
+   * True if the table has a group-by clause in its query
+   *
    * @return
    */
   public boolean isGroupedBy() {
-    // All this mess of terminology is incredibly confusing and frustrating.
-    // This method comes from CustomView#TableData.
+    return mSqlGroupByArgs != null && mSqlGroupByArgs.length != 0;
+  }
 
-    // Note: This is actually wrong -- we should use the current query's settings,
-    // not the settings stored within the database.
-    return mTp.hasGroupByColumns();
+  public String[] getGroupByArgs() {
+    return mSqlGroupByArgs.clone();
+  }
+
+  public String getHavingClause() {
+    return mSqlHavingClause;
+  }
+
+  public String getOrderByElementKey() {
+    return mSqlOrderByElementKey;
+  }
+
+  public String getOrderByDirection() {
+    return mSqlOrderByDirection;
+  }
+
+  public Integer getForegroundColorOfData(String elementPath, String value) {
+    String elementKey = mTp.getElementKeyFromElementPath(elementPath);
+    if (elementKey == null) {
+      // Note that this currently cannot happen, because the implementation
+      // of getElementKeyFromElementPath is not real. It just does a string
+      // replace, which is incorrect. But we should have this case.
+      return null;
+    }
+    ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup
+          .get(elementPath);
+    if (colRul == null) {
+       // If it's not already there, cache it for future use.
+       colRul = ColorRuleGroup.getColumnColorRuleGroup(mTp, elementKey);
+       this.mElementKeyToColorRuleGroup.put(elementPath, colRul);
+    }
+
+    // We need to construct a dummy Row for the ColorRule to interpret
+    String[] rowData = new String[this.mDataKeyToIndex.size()];
+    String[] rowMetadata = new String[this.mMetadataKeyToIndex.size()];
+    rowData[this.mDataKeyToIndex.get(elementKey)] = value;
+    Row row = new Row("dummyRowId", rowData, rowMetadata);
+    ColorGuide guide = colRul.getColorGuide(row);
+    if (guide != null) {
+      return guide.getForeground();
+    } else {
+      return null;
+    }
   }
 
   public String getDisplayTextOfData(Context context, int cellNum) {

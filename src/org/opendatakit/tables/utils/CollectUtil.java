@@ -47,8 +47,6 @@ import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.KeyValueHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.Query;
-import org.opendatakit.tables.data.Query.Constraint;
 import org.opendatakit.tables.data.TableProperties;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -1133,16 +1131,8 @@ public class CollectUtil {
   }
 
   public static Intent getIntentForOdkCollectAddRowByQuery(Context context, String appName, TableProperties tp,
-      CollectFormParameters params, String queryString) {
-    Intent intentAddRow;
-    if (queryString == null || queryString.length() == 0) {
-      intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params, null);
-    } else {
-      Map<String, String> elementKeyToValue =
-          CollectUtil.getMapFromQuery(context, appName, tp, queryString);
-      intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params,
-          elementKeyToValue);
-    }
+      CollectFormParameters params) {
+    Intent intentAddRow = CollectUtil.getIntentForOdkCollectAddRow(context, tp, params, null);
     return intentAddRow;
   }
 
@@ -1284,44 +1274,6 @@ public class CollectUtil {
         }
       }
     }
-  }
-
-  /**
-   * Construct a map based on the query string. The idea is that you can pass in
-   * the current query and get back a map of values that will represent the
-   * values that should prepopulate to the add row form.
-   * <p>
-   * If the user has searched for facility_code: 12345, for example, then if
-   * they choose to add a row, the facility_code should perhaps be pre-
-   * populated with 12345. This method provides the map of elementKey to value
-   * for the given query.
-   *
-   * @param query
-   * @return
-   */
-  private static Map<String, String> getMapFromQuery(Context context, String appName, TableProperties tp, String queryString) {
-    Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    // First add all empty strings. We will overwrite the ones that are
-    // queried
-    // for in the search box. We need this so that if an add is canceled, we
-    // can check for equality and know not to add it. If we didn't do this,
-    // but we've prepopulated an add with a query, when we return and don't
-    // do
-    // a check, we'll add a blank row b/c there are values in the key value
-    // pairs, even though they were our prepopulated values.
-    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-      elementKeyToValue.put(cp.getElementKey(), "");
-    }
-    Query currentQuery = new Query(context, appName, tp);
-    currentQuery.loadFromUserQuery(queryString);
-    for (int i = 0; i < currentQuery.getConstraintCount(); i++) {
-      Constraint constraint = currentQuery.getConstraint(i);
-      // NB: This is predicated on their only ever being a single
-      // search value. I'm not sure how additional values could be
-      // added.
-      elementKeyToValue.put(constraint.getColumnDbName(), constraint.getValue(0));
-    }
-    return elementKeyToValue;
   }
 
   /**

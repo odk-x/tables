@@ -16,6 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.opendatakit.common.android.provider.DataTableColumns;
@@ -26,7 +27,6 @@ import org.opendatakit.tables.data.ColumnProperties;
 import org.opendatakit.tables.data.ColumnType;
 import org.opendatakit.tables.data.DbTable;
 import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.Query;
 import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.data.TableViewType;
 import org.opendatakit.tables.data.UserTable;
@@ -126,36 +126,42 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 
     @Override
     public void init() {
-      TableProperties tp = c.getTableProperties();
-      Query query = new Query(this, appName, tp);
-        query.loadFromUserQuery(c.getSearchText());
-        // There are two options here. The first is that we get the data using
-        // the {@link Query} object. The other is that we use a sql where
-        // clause. The two currently don't play nice together, so figure out
-        // which one. The sql statement gets precedence.
-        String sqlWhereClause =
-            getIntent().getExtras().getString(Controller.INTENT_KEY_SQL_WHERE);
-        if (sqlWhereClause != null) {
-          String[] sqlSelectionArgs = getIntent().getExtras().getStringArray(
-              Controller.INTENT_KEY_SQL_SELECTION_ARGS);
-          DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-          table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs);
-        } else {
-          // We use the query.
-          table = c.getIsOverview() ?
-              c.getDbTable().getUserOverviewTable(query) :
-              c.getDbTable().getUserTable(query);
-        }
+      c.refreshDbTable(c.getTableProperties().getTableId());
 
-        String indexedColElementKey = c.getTableProperties().getIndexColumn();
-        indexedCol =
-            c.getTableProperties().getColumnIndex(indexedColElementKey);
-        // setting up the view
-        c.setDisplayView(buildView(tp));
-        setContentView(c.getContainerView());
+      Bundle intentExtras = getIntent().getExtras();
+      String sqlWhereClause =
+          intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+      String[] sqlSelectionArgs = null;
+      if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+         sqlSelectionArgs = intentExtras.getStringArray(
+            Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+      }
+      String[] sqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+      String sqlHaving = null;
+      if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
+        sqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+      }
+      String sqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+      String sqlOrderByDirection = null;
+      if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
+        sqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+        if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
+          sqlOrderByDirection = "ASC";
+        }
+      }
+
+      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
+      table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+
+      String indexedColElementKey = c.getTableProperties().getIndexColumn();
+      indexedCol =
+          c.getTableProperties().getColumnIndex(indexedColElementKey);
+      // setting up the view
+      c.setDisplayView(buildView());
+      setContentView(c.getContainerView());
     }
 
-    private View buildView(TableProperties tp) {
+    private View buildView() {
         if (table.getWidth() == 0) {
             TextView tv = new TextView(this);
             tv.setText("No data.");
@@ -166,18 +172,53 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     private void openCollectionView(int rowNum) {
-      Query query = new Query(this, appName, table.getTableProperties());
-      query.clear();
-        query.loadFromUserQuery(c.getSearchText());
-        for (String groupByColumn : c.getTableProperties().getGroupByColumns()) {
-            ColumnProperties cp = c.getTableProperties()
-                    .getColumnByElementKey(groupByColumn);
-            int colNum = c.getTableProperties().getColumnIndex(groupByColumn);
-            query.addConstraint(cp, table.getData(rowNum, colNum));
+
+      Bundle intentExtras = getIntent().getExtras();
+      String sqlWhereClause =
+          intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+      String[] sqlSelectionArgs = null;
+      if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
+         sqlSelectionArgs = intentExtras.getStringArray(
+            Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+      }
+      String[] sqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+      String sqlHaving = null;
+      if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
+        sqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+      }
+      String sqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+      String sqlOrderByDirection = null;
+      if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
+        sqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+        if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
+          sqlOrderByDirection = "ASC";
         }
-        Controller.launchTableActivity(this, c.getTableProperties(),
-                query.toUserQuery(), false, null, null, c.getCurrentSearchText(),
-                TableViewType.Spreadsheet);
+      }
+
+      if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
+        StringBuilder s = new StringBuilder();
+        if ( sqlWhereClause != null && sqlWhereClause.length() != 0) {
+          s.append("(").append(sqlWhereClause).append(") AND ");
+        }
+        List<String> newSelectionArgs = new ArrayList<String>();
+        if ( sqlSelectionArgs != null ) {
+          newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
+        }
+        boolean first = true;
+        for ( String groupByColumn : sqlGroupBy ) {
+          if ( !first ) {
+            s.append(", ");
+          }
+          first = false;
+          s.append(groupByColumn).append("=?");
+          int colNum = c.getTableProperties().getColumnIndex(groupByColumn);
+          newSelectionArgs.add(table.getData(rowNum, colNum));
+        }
+        sqlWhereClause = s.toString();
+        sqlSelectionArgs = newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
+      }
+      Controller.launchTableActivity(this, c.getTableProperties(), TableViewType.Spreadsheet,
+                sqlWhereClause, sqlSelectionArgs, null, null, sqlOrderByElementKey, sqlOrderByDirection);
     }
 
     private void addGroupByColumn(ColumnProperties cp) {
@@ -264,11 +305,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
     @Override
-    public void onBackPressed() {
-        c.onBackPressed();
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode,
             Intent data) {
         if (c.handleActivityReturn(requestCode, resultCode, data)) {
@@ -276,12 +312,6 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-
-    @Override
-	public void onSearch() {
-	    c.recordSearch();
-	    init();
-	}
 
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -428,7 +458,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     @Override
     public void prepRegularCellOccm(ContextMenu menu, int cellId) {
         lastDataCellMenued = cellId;
-        if (c.getIsOverview() && c.getTableProperties().hasGroupByColumns()) {
+        if (c.hasSqlGroupByClause()) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_HISTORY_IN,
                     ContextMenu.NONE, "View Collection");
         }
@@ -548,7 +578,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	    private void openCellMenu() {
 	        final List<Integer> itemIds = new ArrayList<Integer>();
 	        List<String> itemLabels = new ArrayList<String>();
-	        if (c.getIsOverview() && c.getTableProperties().hasGroupByColumns()) {
+	        if (c.hasSqlGroupByClause()) {
 	            itemIds.add(MENU_ITEM_ID_HISTORY_IN);
 	            itemLabels.add("View Collection");
 	        }
@@ -714,10 +744,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
       	                      .getDisplayName();
       	                  // I would prefer this kind of query to be set in another
       	                  // object, but alas, it looks like atm it is hardcoded.
-      	                  String queryText = "_id:" +
-      	                      table.getData(cellId);
-      	                    Controller.launchTableActivity(context, joinedTable,
-      	                        queryText, c.getIsOverview(), null, null, c.getCurrentSearchText(), joinedTable.getDefaultViewType());
+      	                  Controller.launchTableActivity(context, joinedTable, joinedTable.getDefaultViewType());
       	                    c.removeOverlay();
                        }
                      }

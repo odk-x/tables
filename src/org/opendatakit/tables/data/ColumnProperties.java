@@ -428,8 +428,8 @@ public class ColumnProperties {
   private static ColumnProperties getColumnProperties(SQLiteDatabase db, TableProperties tp, String elementKey) {
     // Get the KVS values
     KeyValueStore intendedKVS = tp.getStoreForTable();
-    Map<String, String> kvsMap = intendedKVS.getKeyValues(ColumnProperties.KVS_PARTITION,
-        elementKey, db);
+    Map<String, String> kvsMap = intendedKVS.getKeyValues(db, ColumnProperties.KVS_PARTITION,
+        elementKey);
 
     // Get the ColumnDefinition entries
     Map<String, String> columnDefinitionsMap = ColumnDefinitions.getColumnDefinitionFields(db,
@@ -617,12 +617,12 @@ public class ColumnProperties {
   void deleteColumn(SQLiteDatabase db) {
     ColumnDefinitions.deleteColumnDefinition(db, tableId, elementKey);
     KeyValueStore kvs = tp.getStoreForTable();
-    kvs.clearEntries(ColumnProperties.KVS_PARTITION, elementKey, db);
+    kvs.clearEntries(db, ColumnProperties.KVS_PARTITION, elementKey);
     // this is to clear all the color rules. If we didn't do this, you could
     // have old color rules build up, and worse still, if you deleted this
     // column and then added a new column whose element key ended up being the
     // same, you would have rules suddenly applying to them.
-    kvs.clearEntries(ColorRuleGroup.KVS_PARTITION_COLUMN, elementKey, db);
+    kvs.clearEntries(db, ColorRuleGroup.KVS_PARTITION_COLUMN, elementKey);
   }
 
   private static OdkTablesKeyValueStoreEntry createStringEntry(String tableId, String partition,
@@ -692,9 +692,9 @@ public class ColumnProperties {
       // form that SQLite will properly convert into the new datatype.
       tp.reformTable(db, this.elementKey);
       db.setTransactionSuccessful();
-      db.endTransaction();
       this.elementType = columnType;
     } finally {
+      db.endTransaction();
       db.close();
       tp.refreshColumns(dbOuter);
     }

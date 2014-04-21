@@ -159,22 +159,13 @@ public class DetailDisplayActivity extends SherlockActivity
           // If we recovered it, good, otherwise we leave as null.
           filename = recoveredFilename;
         }
-        mCustomTableView = CustomTableView.get(this,
-            mAppName, mTable, filename, c);
+        mCustomTableView = CustomTableView.get(this, mAppName, mTable, filename);
     }
 
     private void displayView() {
       mCustomTableView.display();
       c.setDisplayView(mCustomTableView);
       setContentView(c.getContainerView());
-    }
-
-    @Override
-    public void onSearch() {
-      // search for something -- open in the default table view instead of in a detail view
-        Controller.launchTableActivity(this, c.getTableProperties(),
-                c.getSearchText(), c.getIsOverview(), null, null, c.getCurrentSearchText(),
-                c.getTableProperties().getDefaultViewType());
     }
 
     @Override

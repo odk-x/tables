@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Stack;
 import java.util.TimeZone;
 
 import org.opendatakit.tables.R;
@@ -39,7 +38,6 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
-import org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -57,6 +55,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockActivity;
@@ -76,14 +75,13 @@ import com.actionbarsherlock.view.SubMenu;
  * class, which seemed undesirable since that would require that all of the
  * display activities be children of MapActivity for no good reason).
  */
-public class Controller implements CustomViewCallbacks {
+public class Controller {
 
   private static final String TAG = "Controller";
 
   public static final String INTENT_KEY_APP_NAME = "appName";
   public static final String INTENT_KEY_TABLE_ID = "tableId";
-  public static final String INTENT_KEY_SEARCH = "search";
-  public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
+ // public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
   public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
   /**
    * Key to the where clause if this list view is to be opened with a more
@@ -100,6 +98,23 @@ public class Controller implements CustomViewCallbacks {
    * @see INTENT_KEY_SQL_WHERE
    */
   public static final String INTENT_KEY_SQL_SELECTION_ARGS = "sqlSelectionArgs";
+  /**
+   * An array of strings giving the group by columns.
+   * What was formerly 'overview' mode is a non-null groupBy list.
+   */
+  public static final String INTENT_KEY_SQL_GROUP_BY_ARGS = "sqlGroupByArgs";
+  /**
+   * The having clause, if present
+   */
+  public static final String INTENT_KEY_SQL_HAVING = "sqlHavingClause";
+  /**
+   * The order by column. NOTE: restricted to a single column
+   */
+  public static final String INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY = "sqlOrderByElementKey";
+  /**
+   * The order by direction (ASC or DESC)
+   */
+  public static final String INTENT_KEY_SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
 
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
 
@@ -137,16 +152,24 @@ public class Controller implements CustomViewCallbacks {
   public static final int RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE = 5;
   public static final int RCODE_ODK_SURVEY_ADD_ROW = 6;
   public static final int RCODE_ODK_SURVEY_EDIT_ROW = 7;
-  public static final int FIRST_FREE_RCODE = 8;
+  public static final int RCODE_DISPLAY_PROPERTIES = 8;
+  public static final int FIRST_FREE_RCODE = 9;
 
   private final DataUtil du;
   private final SherlockActivity activity;
-  private final String appName;
   private final DisplayActivity da;
+
+  private final String appName;
+  private final String tableId;
+  private String sqlWhereClause;
+  private String[] sqlSelectionArgs;
+  private String[] sqlGroupBy;
+  private String sqlHaving;
+  private String sqlOrderByElementKey;
+  private String sqlOrderByDirection;
+
   private TableProperties tp;
   private DbTable dbt;
-  private final Stack<String> searchText;
-  private final boolean isOverview;
   private final RelativeLayout container;
   private LinearLayout controlWrap;
   private ClearableEditText searchField;
@@ -154,7 +177,6 @@ public class Controller implements CustomViewCallbacks {
   private final ViewGroup displayWrap;
   private View overlay;
   private RelativeLayout.LayoutParams overlayLp;
-  private String mCurrentSearchText;
   private TableViewType mCurrentViewType;
 
 
@@ -169,26 +191,17 @@ public class Controller implements CustomViewCallbacks {
     }
     this.da = da;
     // getting intent information
-    String tableId = intentBundle.getString(INTENT_KEY_TABLE_ID);
+    tableId = intentBundle.getString(INTENT_KEY_TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException();
     }
-    searchText = new Stack<String>();
-    if (intentBundle.containsKey(INTENT_KEY_SEARCH_STACK)) {
-      String[] searchValues = intentBundle.getStringArray(INTENT_KEY_SEARCH_STACK);
-      for (String searchValue : searchValues) {
-        searchText.add(searchValue);
-      }
-    } else {
-      String initialSearchText = intentBundle.getString(INTENT_KEY_SEARCH);
-      searchText.add((initialSearchText == null) ? "" : initialSearchText);
-    }
 
-    if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_SEARCH) ) {
-      mCurrentSearchText = savedInstanceState.getString(INTENT_KEY_SEARCH);
-    } else {
-      mCurrentSearchText = null;
-    }
+    sqlWhereClause = intentBundle.getString(INTENT_KEY_SQL_WHERE);
+    sqlSelectionArgs = intentBundle.getStringArray(INTENT_KEY_SQL_SELECTION_ARGS);
+    sqlGroupBy = intentBundle.getStringArray(INTENT_KEY_SQL_GROUP_BY_ARGS);
+    sqlHaving = intentBundle.getString(INTENT_KEY_SQL_HAVING);
+    sqlOrderByElementKey = intentBundle.getString(INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+    sqlOrderByDirection = intentBundle.getString(INTENT_KEY_SQL_ORDER_BY_DIRECTION);
 
     if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ) {
       mCurrentViewType = TableViewType.valueOf(savedInstanceState.getString(INTENT_KEY_CURRENT_VIEW_TYPE));
@@ -198,7 +211,6 @@ public class Controller implements CustomViewCallbacks {
       mCurrentViewType = null;
     }
 
-    isOverview = intentBundle.getBoolean(INTENT_KEY_IS_OVERVIEW, false);
     // initializing data objects
     refreshDbTable(tableId);
 
@@ -216,7 +228,8 @@ public class Controller implements CustomViewCallbacks {
     // controlWrap is initialized to be hidden. clicking Action Item, search,
     // will show/hide it
     searchField.setId(VIEW_ID_SEARCH_FIELD);
-    searchField.getEditText().setText(searchText.peek());
+    // TODO: use where clause to reconstruct this...
+    searchField.getEditText().setText("");
     ImageButton searchButton = new ImageButton(activity);
     searchButton.setId(VIEW_ID_SEARCH_BUTTON);
     searchButton.setImageResource(R.drawable.ic_action_search);
@@ -224,8 +237,7 @@ public class Controller implements CustomViewCallbacks {
       @Override
       public void onClick(View v) {
         // when you click the search button, save that query.
-        mCurrentSearchText = searchField.getEditText().getText().toString();
-        da.onSearch();
+        Toast.makeText(Controller.this.activity, "Unimplemented", Toast.LENGTH_LONG).show();
       }
     });
     LinearLayout.LayoutParams searchFieldParams = new LinearLayout.LayoutParams(
@@ -263,17 +275,9 @@ public class Controller implements CustomViewCallbacks {
   }
 
   public void onSaveInstanceState(Bundle outState) {
-    if ( mCurrentSearchText != null ) {
-      outState.putString(INTENT_KEY_SEARCH, mCurrentSearchText);
-    }
-
     if ( mCurrentViewType != null ) {
       outState.putString(INTENT_KEY_CURRENT_VIEW_TYPE, mCurrentViewType.name());
     }
-  }
-
-  public String getCurrentSearchText() {
-    return mCurrentSearchText;
   }
 
   public TableViewType getCurrentViewType() {
@@ -339,19 +343,32 @@ public class Controller implements CustomViewCallbacks {
     return dbt;
   }
 
-  /**
-   * @return True if this is an overview type, false if this is
-   *         collection view type
-   */
-  public boolean getIsOverview() {
-    return isOverview;
+  public String getSqlWhereClause() {
+    return this.sqlWhereClause;
   }
 
-  /**
-   * @return String text currently in the search bar
-   */
-  public String getSearchText() {
-    return searchText.peek();
+  public String[] getSqlSelectionArgs() {
+    return this.sqlSelectionArgs;
+  }
+
+  public boolean hasSqlGroupByClause() {
+    return this.sqlGroupBy != null && this.sqlGroupBy.length != 0;
+  }
+
+  public String[] getSqlGroupBy() {
+    return this.sqlGroupBy;
+  }
+
+  public String getSqlHaving() {
+    return this.sqlHaving;
+  }
+
+  public String getSqlOrderByElementKey() {
+    return this.sqlOrderByElementKey;
+  }
+
+  public String getSqlOrderByDirection() {
+    return this.sqlOrderByDirection;
   }
 
   /**
@@ -436,20 +453,6 @@ public class Controller implements CustomViewCallbacks {
     searchField.getEditText().setText((searchField.getEditText().getText() + text).trim());
   }
 
-  public void recordSearch() {
-    searchText.add(searchField.getEditText().getText().toString());
-  }
-
-  public void onBackPressed() {
-    if (searchText.size() == 1) {
-      activity.finish();
-    } else {
-      searchText.pop();
-      searchField.getEditText().setText(searchText.peek());
-      da.init();
-    }
-  }
-
   /**
    * This should launch Collect to edit the data for the row. If there is a
    * custom form defined for the table, its info should be loaded in params.
@@ -501,6 +504,9 @@ public class Controller implements CustomViewCallbacks {
     case RCODE_TABLE_PROPERTIES_MANAGER:
       handleTablePropertiesManagerReturn();
       return true;
+    case RCODE_DISPLAY_PROPERTIES:
+      handleDisplayPropertiesReturn();
+      return true;
     case RCODE_COLUMN_MANAGER:
       handleColumnManagerReturn();
       return true;
@@ -542,8 +548,14 @@ public class Controller implements CustomViewCallbacks {
     if (oldViewType == tp.getDefaultViewType()) {
       da.init();
     } else {
-      launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, tp.getDefaultViewType());
+      launchTableActivity(activity, tp, tp.getDefaultViewType(),
+          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     }
+  }
+
+  private void handleDisplayPropertiesReturn() {
+    refreshDbTable(tp.getTableId());
+    da.init();
   }
 
   private void handleColumnManagerReturn() {
@@ -658,7 +670,8 @@ public class Controller implements CustomViewCallbacks {
     // else, handle accordingly
     if (selectedItem.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
       setCurrentViewType(TableViewType.getViewTypeFromId(selectedItem.getItemId()));
-      Controller.launchTableActivity(activity, tp, searchText, isOverview, mCurrentSearchText, getCurrentViewType());
+      Controller.launchTableActivity(activity, tp, null, getCurrentViewType(),
+          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
       return true;
     } else {
       switch (itemId) {
@@ -680,12 +693,10 @@ public class Controller implements CustomViewCallbacks {
           // means that if there IS a join column, we'll throw an error!!!
           // So be careful.
           Intent intentAddRow =
-              CollectUtil.getIntentForOdkCollectAddRowByQuery(
+              CollectUtil.getIntentForOdkCollectAddRow(
                   activity,
-                  appName,
                   tp,
-                  params,
-                  getSearchText());
+                  params, null);
 
           if (intentAddRow != null) {
             Controller.this.activity
@@ -705,11 +716,12 @@ public class Controller implements CustomViewCallbacks {
         return true;
       case MENU_ITEM_ID_SETTINGS_SUBMENU:
         return true;
-      case MENU_ITEM_ID_DISPLAY_PREFERENCES:
-        Intent k = new Intent(activity, DisplayPrefsActivity.class);
-        k.putExtra(INTENT_KEY_APP_NAME, appName);
-        k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
-        activity.startActivity(k);
+      case MENU_ITEM_ID_DISPLAY_PREFERENCES: {
+        Intent intent = new Intent(activity, DisplayPrefsActivity.class);
+        intent.putExtra(INTENT_KEY_APP_NAME, appName);
+        intent.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
+        activity.startActivityForResult(intent, this.RCODE_DISPLAY_PROPERTIES);
+      }
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES: {
         Intent intent = new Intent(activity, TablePropertiesManager.class);
@@ -739,6 +751,7 @@ public class Controller implements CustomViewCallbacks {
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         activity.startActivity(tableManagerIntent);
+        activity.finish();
         return true;
       default:
         return false;
@@ -808,20 +821,12 @@ public class Controller implements CustomViewCallbacks {
     (new CellEditDialog(rowId, value, colIndex)).show();
   }
 
-  public static void launchTableActivity(Context context, TableProperties tp, boolean isOverview) {
-    Controller.launchTableActivity(context, tp, null, null, isOverview, null, null, null, null, tp.getDefaultViewType());
-  }
-
-  public static void launchTableActivity(Context context, TableProperties tp, String searchText,
-                                         boolean isOverview, String sqlWhereClause,
-                                         String[] sqlSelectionArgs, String currentSearchText, TableViewType viewType) {
-    Controller.launchTableActivity(context, tp, searchText, null, isOverview, null, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText, viewType);
-  }
-
-  private static void launchTableActivity(Activity context, TableProperties tp,
-                                          Stack<String> searchStack, boolean isOverview, String currentSearchText, TableViewType viewType ) {
-    Controller.launchTableActivity(context, tp, null, searchStack, isOverview, null, null, null, currentSearchText, viewType);
+  public static void launchTableActivity(Activity context, TableProperties tp, TableViewType viewType,
+                                          String sqlWhereClause, String[] sqlSelectionArgs,
+                                          String[] sqlGroupBy, String sqlHaving,
+                                          String sqlOrderByElementKey, String sqlOrderByDirection) {
+    Controller.launchTableActivity(context, tp, null, viewType,
+        sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.finish();
   }
 
@@ -838,12 +843,15 @@ public class Controller implements CustomViewCallbacks {
    * @param filename
    */
   public static void launchTableActivityWithFilename(Activity context, TableProperties tp,
-                                                     Stack<String> searchStack, boolean isOverview,
-                                                     String filename, String sqlWhereClause,
-                                                     String[] sqlSelectionArgs, TableViewType viewType) {
-    Controller.launchTableActivity(context, tp, null, searchStack, isOverview, filename,
-        sqlWhereClause, sqlSelectionArgs, null, viewType);
+                                                      String filename, TableViewType viewType) {
+    Controller.launchTableActivity(context, tp, filename, viewType,
+        null, null, tp.getGroupByColumns().toArray(new String[0]), null, tp.getSortColumn(), tp.getSortOrder());
     context.finish();
+  }
+
+  public static void launchTableActivity(Context context, TableProperties tp, TableViewType viewType) {
+    Controller.launchTableActivity(context, tp, null, viewType,
+        null, null, tp.getGroupByColumns().toArray(new String[0]), null, tp.getSortColumn(), tp.getSortOrder());
   }
 
   /**
@@ -868,48 +876,18 @@ public class Controller implements CustomViewCallbacks {
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchListViewWithFileName(Context context, TableProperties tp,
-                                                String searchText, Stack<String> searchStack,
-                                                boolean isOverview, String filename,
-                                                String sqlWhereClause, String[] sqlSelectionArgs, String currentSearchText) {
+  public static void launchListView(Context context, TableProperties tp, String filename,
+                                                String sqlWhereClause, String[] sqlSelectionArgs,
+                                                String[] sqlGroupBy, String sqlHaving,
+                                                String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
     }
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
-    context.startActivity(intent);
-  }
-
-  /**
-   * Open the table to the list view.
-   *
-   * @param context
-   * @param tp
-   * @param searchText
-   * @param searchStack
-   * @param isOverview
-   * @param filename
-   * @param sqlWhereClause
-   * @param sqlSelectionArgs
-   * @see DbTable#rawSqlQuery(String, String[])
-   */
-  public static void launchListViewWithFilenameAndSqlQuery(Context context, TableProperties tp,
-                                                           String searchText,
-                                                           Stack<String> searchStack,
-                                                           boolean isOverview, String filename,
-                                                           String sqlWhereClause,
-                                                           String[] sqlSelectionArgs, String currentSearchText) {
-    Intent intent = new Intent(context, ListDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (filename != null) {
-      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
-    }
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.startActivity(intent);
   }
 
@@ -925,25 +903,30 @@ public class Controller implements CustomViewCallbacks {
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchMapView(Context context, TableProperties tp, String searchText,
-                                   Stack<String> searchStack, boolean isOverview,
-                                   String sqlWhereClause, String[] sqlSelectionArgs, String currentSearchText) {
+  public static void launchMapView(Context context, TableProperties tp, String filename,
+                                    String sqlWhereClause, String[] sqlSelectionArgs,
+                                    String[] sqlGroupBy, String sqlHaving,
+                                    String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, TableActivity.class);
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+    if (filename != null) {
+      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+    }
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.startActivity(intent);
   }
 
-  public static void launchSpreadsheetView(Context context, TableProperties tp, String searchText,
-                                           Stack<String> searchStack, boolean isOverview,
-                                           String sqlWhereClause, String[] sqlSelectionArgs, String currentSearchText) {
+  public static void launchSpreadsheetView(Context context, TableProperties tp,
+                                          String sqlWhereClause, String[] sqlSelectionArgs,
+                                          String[] sqlGroupBy, String sqlHaving,
+                                          String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.startActivity(intent);
   }
 
@@ -957,9 +940,10 @@ public class Controller implements CustomViewCallbacks {
    * @param isOverview
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchGraphView(Context context, TableProperties tp, String searchText,
-                                     Stack<String> searchStack, boolean isOverview,
-                                     String sqlWhereClause, String[] sqlSelectionArgs, String currentSearchText) {
+  public static void launchGraphView(Context context, TableProperties tp,
+                                      String sqlWhereClause, String[] sqlSelectionArgs,
+                                      String[] sqlGroupBy, String sqlHaving,
+                                      String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent;
     String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
     if ( defaultGraph != null ) {
@@ -970,8 +954,8 @@ public class Controller implements CustomViewCallbacks {
     }
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.startActivity(intent);
   }
 
@@ -980,40 +964,37 @@ public class Controller implements CustomViewCallbacks {
    * Adds the appropriate extras to the intent.
    */
   private static void prepareIntentForLaunch(Intent intent, TableProperties tp,
-                                             Stack<String> searchStack, String searchText,
-                                             boolean isOverview, String sqlWhereClause,
-                                             String[] sqlSelectionArgs, String currentSearchText) {
+                                             String sqlWhereClause, String[] sqlSelectionArgs,
+                                             String[] sqlGroupBy, String sqlHaving,
+                                             String sqlOrderByElementKey, String sqlOrderByDirection) {
 
-    // TODO: should we blend the currentSearchText with the specified filters?
-    if (searchStack != null) {
-      String[] stackValues = new String[searchStack.size()];
-      for (int i = 0; i < searchStack.size(); i++) {
-        stackValues[i] = searchStack.get(i);
-      }
-      intent.putExtra(INTENT_KEY_SEARCH_STACK, stackValues);
-    } else if (searchText != null) {
-      intent.putExtra(INTENT_KEY_SEARCH, searchText);
-    } else if (searchText == null) {
-      KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(TableProperties.KVS_PARTITION);
-      String savedQuery = currentSearchText;
-      if (savedQuery == null) {
-        savedQuery = "";
-      }
-      intent.putExtra(INTENT_KEY_SEARCH, savedQuery);
-    }
-    intent.putExtra(INTENT_KEY_IS_OVERVIEW, isOverview);
-    if (sqlWhereClause != null) {
+    if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
       intent.putExtra(INTENT_KEY_SQL_WHERE, sqlWhereClause);
+      if (sqlSelectionArgs != null && sqlSelectionArgs.length != 0) {
+        intent.putExtra(INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+      }
     }
-    if (sqlSelectionArgs != null) {
-      intent.putExtra(INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+    if (sqlGroupBy != null && sqlGroupBy.length != 0) {
+      intent.putExtra(INTENT_KEY_SQL_GROUP_BY_ARGS, sqlGroupBy);
+      if (sqlHaving != null && sqlHaving.length() != 0) {
+        intent.putExtra(INTENT_KEY_SQL_HAVING, sqlHaving);
+      }
+    }
+    if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
+      intent.putExtra(INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
+      if ( sqlOrderByDirection != null ) {
+        intent.putExtra(INTENT_KEY_SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
+      } else {
+        intent.putExtra(INTENT_KEY_SQL_ORDER_BY_DIRECTION, "ASC");
+      }
     }
   }
 
-  private static void launchTableActivity(Context context, TableProperties tp, String searchText,
-                                          Stack<String> searchStack, boolean isOverview,
-                                          String filename, String sqlWhereClause,
-                                          String[] sqlSelectionArgs, String currentSearchText, TableViewType viewType) {
+  private static void launchTableActivity(Context context, TableProperties tp,
+                                          String filename, TableViewType viewType,
+                                          String sqlWhereClause, String[] sqlSelectionArgs,
+                                          String[] sqlGroupBy, String sqlHaving,
+                                          String sqlOrderByElementKey, String sqlOrderByDirection) {
     if ( viewType == null ) {
       viewType = tp.getDefaultViewType();
     }
@@ -1049,8 +1030,8 @@ public class Controller implements CustomViewCallbacks {
     }
     intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, searchStack, searchText, isOverview, sqlWhereClause,
-        sqlSelectionArgs, currentSearchText);
+    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     context.startActivity(intent);
   }
 
@@ -1141,14 +1122,4 @@ public class Controller implements CustomViewCallbacks {
     }
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.opendatakit.tables.views.webkits.CustomView.CustomViewCallbacks#
-   * getSearchString()
-   */
-  @Override
-  public String getSearchString() {
-    return this.getSearchText();
-  }
 }

@@ -212,6 +212,7 @@ public class PropertyManager extends PreferenceActivity {
     SQLiteDatabase db = null;
     try {
       db = tp.getWritableDatabase();
+      db.beginTransaction();
       // Routing
       if (key.equals("TYPE")) {
         for (ColumnType t : ColumnType.getAllColumnTypes()) {
@@ -255,10 +256,10 @@ public class PropertyManager extends PreferenceActivity {
           cp.setDisplayName(db, tp.createDisplayName(newVal));
         }
       }
+      db.setTransactionSuccessful();
     } finally {
-      if ( db != null ) {
-        db.close();
-      }
+      db.endTransaction();
+      db.close();
     }
 
     // Refresh

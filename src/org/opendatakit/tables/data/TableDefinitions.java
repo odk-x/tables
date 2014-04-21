@@ -147,8 +147,8 @@ public class TableDefinitions {
    * @param newValue
    * @param db
    */
-  public static void setValue(String tableId, String columnName, int newValue,
-      SQLiteDatabase db) {
+  public static void setValue(SQLiteDatabase db,
+      String tableId, String columnName, int newValue) {
     ContentValues values = new ContentValues();
     values.put(columnName, newValue);
     db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_TABLE,
@@ -165,8 +165,8 @@ public class TableDefinitions {
    * @param newValue
    * @param db
    */
-  public static void setValue(String tableId, String columnName,
-      String newValue, SQLiteDatabase db) {
+  public static void setValue(SQLiteDatabase db,
+      String tableId, String columnName, String newValue) {
     ContentValues values = new ContentValues();
     values.put(columnName, newValue);
     db.update(DB_BACKING_NAME, values, WHERE_SQL_FOR_TABLE,
@@ -228,8 +228,7 @@ public class TableDefinitions {
    * @param db
    * @return
    */
-  public static int deleteTableFromTableDefinitions(String tableId,
-      SQLiteDatabase db) {
+  public static int deleteTableFromTableDefinitions(SQLiteDatabase db, String tableId) {
     int count = db.delete(DB_BACKING_NAME, WHERE_SQL_FOR_TABLE,
         new String[] {tableId});
     if (count != 1) {

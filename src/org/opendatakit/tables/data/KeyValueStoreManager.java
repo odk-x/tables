@@ -259,7 +259,7 @@ class KeyValueStoreManager {
    * exists in the sync KVS, nothing happens.
    * @param tableId
    */
-  public void addIsSetToSyncToSyncKVSForTable(String tableId, SQLiteDatabase db) {
+  public void addIsSetToSyncToSyncKVSForTable(SQLiteDatabase db, String tableId) {
     KeyValueStore syncKVS = this.getSyncStoreForTable(tableId);
     try {
 	    // Note! If there ever becomes another way to

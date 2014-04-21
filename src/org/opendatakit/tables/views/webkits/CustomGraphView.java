@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.data.KeyValueStoreHelper;
 import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
@@ -50,8 +49,8 @@ public class CustomGraphView extends CustomView {
   private GraphData graphData;
 
   private CustomGraphView(Activity activity, String appName, String graphName,
-                          String potentialGraphName, CustomViewCallbacks callbacks) {
-    super(activity, appName, callbacks);
+                          String potentialGraphName) {
+    super(activity, appName);
     this.filename = TableFileUtils.getRelativePathToGraphFile(appName);
     this.graphName = graphName;
     this.potentialGraphName = potentialGraphName;
@@ -59,10 +58,8 @@ public class CustomGraphView extends CustomView {
   }
 
   public static CustomGraphView get(Activity activity, String appName, UserTable table,
-                                    String graphName, String potentialGraphName,
-                                    Controller controller) {
-    CustomGraphView ctv = new CustomGraphView(activity, appName, graphName, potentialGraphName,
-                                              controller);
+                                    String graphName, String potentialGraphName) {
+    CustomGraphView ctv = new CustomGraphView(activity, appName, graphName, potentialGraphName);
     ctv.set(table);
     return ctv;
   }

@@ -149,7 +149,7 @@ public class OutputUtil {
       int numberOfRows) {
     TableProperties tableProperties = TableProperties.getTablePropertiesForTable(context, appName, tableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable userTable = dbTable.rawSqlQuery("", null);
+    UserTable userTable = dbTable.rawSqlQuery(null, null, null, null, null, null);
 
     // TODO: This is broken w.r.t. elementKey != elementPath
     // TODO: HACKED HACKED HACKED HACKED

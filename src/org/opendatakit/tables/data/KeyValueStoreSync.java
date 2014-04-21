@@ -70,7 +70,7 @@ public class KeyValueStoreSync extends KeyValueStore {
    * Set in the sync KVS whether or not the table is set to be synched.
    * @param val
    */
-  public void setIsSetToSync(boolean val, SQLiteDatabase db) {
+  public void setIsSetToSync(SQLiteDatabase db, boolean val) {
     try {
 	    int newValue = DataHelper.boolToInt(val);
 	    this.insertOrUpdateKey(db, KeyValueStoreSync.KVS_PARTITION,

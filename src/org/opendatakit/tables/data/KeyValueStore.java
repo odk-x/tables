@@ -132,8 +132,7 @@ public class KeyValueStore {
    * @param db
    * @return
    */
-  public Map<String, String> getKeyValues(String partition, String aspect,
-      SQLiteDatabase db) {
+  public Map<String, String> getKeyValues(SQLiteDatabase db, String partition, String aspect) {
     Cursor c = null;
     try {
       c = db.query(this.dbBackingName,
@@ -156,7 +155,7 @@ public class KeyValueStore {
    * @param db
    * @return
    */
-  public int clearEntries(String partition, String aspect, SQLiteDatabase db) {
+  public int clearEntries(SQLiteDatabase db, String partition, String aspect) {
     int count = db.delete(dbBackingName, WHERE_SQL_FOR_PARTITION_ASPECT,
         new String[] {neverNull(this.tableId), neverNull(partition), neverNull(aspect)});
     return count;
