@@ -30,8 +30,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
 /**
  * Activity to authenticate against an account and generate a token into the
  * shared preferences.
@@ -40,7 +38,7 @@ import com.actionbarsherlock.app.SherlockActivity;
  * @author the.dylan.price@gmail.com (modified by)
  */
 
-public class AccountInfoActivity extends SherlockActivity {
+public class AccountInfoActivity extends Activity {
   public static final String INTENT_EXTRAS_ACCOUNT = "account";
 
   private final static int WAITING_ID = 1;

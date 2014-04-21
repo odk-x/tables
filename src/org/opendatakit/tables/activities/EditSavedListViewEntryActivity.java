@@ -110,7 +110,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       setToDefault(listViewName);
     }
     this.listViewFilename = aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
-    addPreferencesFromResource(org.opendatakit.tables.R.xml.preference_listview_entry);
+    addPreferencesFromResource(R.xml.preference_listview_entry);
   }
 
   @Override

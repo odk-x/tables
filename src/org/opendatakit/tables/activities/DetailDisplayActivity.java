@@ -23,14 +23,13 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
 
 
 /**
@@ -39,7 +38,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class DetailDisplayActivity extends SherlockActivity
+public class DetailDisplayActivity extends Activity
         implements DisplayActivity {
 
   private static final String TAG = "DetaiDisplayActivity";

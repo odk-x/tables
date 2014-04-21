@@ -19,14 +19,13 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.app.ListActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockListActivity;
-
-public class AggregateChooseTablesActivity extends SherlockListActivity {
+public class AggregateChooseTablesActivity extends ListActivity {
 
   private String appName;
   private ListView tablesView;

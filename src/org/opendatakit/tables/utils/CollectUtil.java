@@ -64,8 +64,6 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
 /**
  * Utility methods for using ODK Collect.
  *
@@ -1077,7 +1075,7 @@ public class CollectUtil {
    */
   public static boolean handleOdkCollectEditReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok, not inserting " + "edited data.");
       return false;
     }
@@ -1105,7 +1103,7 @@ public class CollectUtil {
    */
   public static boolean handleOdkCollectAddReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
       return false;
     }

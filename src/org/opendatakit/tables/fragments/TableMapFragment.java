@@ -6,10 +6,10 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -86,8 +86,9 @@ public class TableMapFragment extends Fragment implements ITableFragment,
     }
   }
 
+
   @Override
-  public void onSetIndexes(ArrayList<Integer> indexes) {
+  public void onSetInnerIndexes(ArrayList<Integer> indexes) {
     TableMapListFragment list = getList();
     if (list != null) {
       list.setMapListIndexes(indexes);

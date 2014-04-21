@@ -88,7 +88,7 @@ public class EditFormDialogPreference extends DialogPreference {
         (LayoutInflater) this.mContext.getSystemService(
             Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater.inflate(
-        org.opendatakit.tables.R.layout.edit_default_form_preference, null);
+        R.layout.edit_default_form_preference, null);
     mRadioChoice = (RadioGroup) view.findViewById(R.id.edit_def_form_choice);
     mFormId = (EditText) view.findViewById(R.id.edit_form_id);
     mFormXmlRootElementLabel = (TextView) view.findViewById(R.id.label_root_element);

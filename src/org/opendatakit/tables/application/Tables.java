@@ -62,6 +62,18 @@ public class Tables extends Application {
     }
   }
 
+  public String getVersionCodeString() {
+    try {
+      PackageInfo pinfo;
+      pinfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+      int versionNumber = pinfo.versionCode;
+      return Integer.toString(versionNumber);
+    } catch (NameNotFoundException e) {
+      e.printStackTrace();
+      return "";
+    }
+  }
+
   public String getVersionedAppName() {
     String versionDetail = "";
     try {
@@ -83,13 +95,11 @@ public class Tables extends Application {
    * @throws RuntimeException
    *           if there is no SDCard or the directory exists as a non directory
    */
-  public static boolean createODKDirs(String appName) throws RuntimeException {
+  public static void createODKDirs(String appName) throws RuntimeException {
 
     ODKFileUtils.verifyExternalStorageAvailability();
 
     ODKFileUtils.assertDirectoryStructure(appName);
-
-    return ODKFileUtils.isConfiguredApp(appName);
   }
 
   @Override

@@ -23,7 +23,7 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
 import android.app.Activity;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.webkit.WebViewClient;
 
 public class CustomTableView extends CustomView

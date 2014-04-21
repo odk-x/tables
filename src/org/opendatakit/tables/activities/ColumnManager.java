@@ -26,7 +26,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.TouchListView;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,6 +38,8 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -48,11 +52,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockListActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-
 /*
  * Activity that allows users to change table properties
  * such as colum orders, group-by, and sort-by. Also, users
@@ -60,7 +59,7 @@ import com.actionbarsherlock.view.MenuItem;
  *
  * @Author : YoonSung Hong (hys235@cs.washington.edu)
  */
-public class ColumnManager extends SherlockListActivity {
+public class ColumnManager extends ListActivity {
   private static final String t = "ColumnManager";
 
 	private static final char UNDERSCORE_CHAR = '_';
@@ -113,7 +112,7 @@ public class ColumnManager extends SherlockListActivity {
 		// Set title of activity
 		setTitle(getString(R.string.column_manager));
 		// set the app icon as an action to go home
-		ActionBar actionBar = getSupportActionBar();
+		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 	}
 

@@ -9,6 +9,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
+import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,8 +19,6 @@ import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
-
 /**
  * A TableMapListFragment displays data in a table in a list format. The format
  * is specified by a html file in the TablePropertiesManager Activity. This
@@ -28,7 +27,7 @@ import com.actionbarsherlock.app.SherlockFragment;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableMapListFragment extends SherlockFragment {
+public class TableMapListFragment extends Fragment {
   /** The key for saving the indexes that are currently being displayed. */
   private static final String SAVED_KEY_INDEXES = "savedKeyIndexes";
 

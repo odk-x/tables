@@ -37,6 +37,7 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -45,6 +46,9 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -54,12 +58,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
 
 /**
  * A controller for the elements common to the various table display activities.
@@ -154,7 +152,7 @@ public class Controller {
   public static final int FIRST_FREE_RCODE = 9;
 
   private final DataUtil du;
-  private final SherlockActivity activity;
+  private final Activity activity;
   private final DisplayActivity da;
 
   private final String appName;
@@ -178,7 +176,7 @@ public class Controller {
   private TableViewType mCurrentViewType;
 
 
-  public Controller(SherlockActivity activity, final DisplayActivity da, Bundle intentBundle, Bundle savedInstanceState) {
+  public Controller(Activity activity, final DisplayActivity da, Bundle intentBundle, Bundle savedInstanceState) {
     du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     this.activity = activity;
     String tmpAppName = intentBundle.getString(INTENT_KEY_APP_NAME);
@@ -390,7 +388,7 @@ public class Controller {
     overlayLp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                                                 ViewGroup.LayoutParams.WRAP_CONTENT);
     overlayLp.leftMargin = x;
-    overlayLp.topMargin = y - activity.getSupportActionBar().getHeight() - infoBar.getHeight();
+    overlayLp.topMargin = y - activity.getActionBar().getHeight() - infoBar.getHeight();
     overlayLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
     container.addView(overlay, overlayLp);
   }
@@ -405,7 +403,7 @@ public class Controller {
 
   void setOverlayLocation(int x, int y) {
     overlayLp.leftMargin = x;
-    overlayLp.topMargin = y - activity.getSupportActionBar().getHeight() - infoBar.getHeight();
+    overlayLp.topMargin = y - activity.getActionBar().getHeight() - infoBar.getHeight();
     container.requestLayout();
   }
 
@@ -435,14 +433,14 @@ public class Controller {
    */
   void invertSearchBoxColor(boolean invert) {
     if (invert) {
-      searchField.setBackgroundResource(R.color.abs__background_holo_light);
+      searchField.setBackgroundResource(android.R.color.background_light);
       searchField.getEditText().setTextColor(
-          searchField.getContext().getResources().getColor(R.color.abs__background_holo_dark));
+          searchField.getContext().getResources().getColor(android.R.color.background_dark));
       searchField.getClearButton().setBackgroundResource(R.drawable.content_remove_dark);
     } else {
-      searchField.setBackgroundResource(R.color.abs__background_holo_dark);
+      searchField.setBackgroundResource(android.R.color.background_dark);
       searchField.getEditText().setTextColor(
-          searchField.getContext().getResources().getColor(R.color.abs__background_holo_light));
+          searchField.getContext().getResources().getColor(android.R.color.background_light));
       searchField.getClearButton().setBackgroundResource(R.drawable.content_remove_light);
     }
   }
@@ -587,7 +585,7 @@ public class Controller {
    */
   void buildOptionsMenu(Menu menu, boolean enabled) {
     // set the app icon as an action to go home
-    ActionBar actionBar = activity.getSupportActionBar();
+    ActionBar actionBar = activity.getActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
 
     // search
@@ -776,7 +774,7 @@ public class Controller {
   }
 
   private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }
@@ -785,7 +783,7 @@ public class Controller {
   }
 
   private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(TAG, "return code wasn't sherlock_ok, edit not finalized and will not appear.");
       return;
     }

@@ -20,75 +20,75 @@ import android.widget.TextView;
 /**
  * A basic adapter for displaying things with sections. Based on the code from
  * the Google IO 2012 app:
- * 
+ *
  * https://code.google.com/p/iosched/
  * @author sudar.sam@gmail.com
  *
  */
 public class ConflictResolutionListAdapter extends BaseAdapter {
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       ConflictResolutionListAdapter.class.getSimpleName();
-  
+
   private static final int INVALID_POSITION = -1;
-  
+
   private UICallbacks mCallbacks;
   private LayoutInflater mLayoutInflater;
   private SparseArray<Section> mSections = new SparseArray<Section>();
-  private SparseArray<ConflictColumn> mConflictColumns = 
+  private SparseArray<ConflictColumn> mConflictColumns =
       new SparseArray<ConflictColumn>();
-  private SparseArray<ConcordantColumn> mConcordantColumns = 
+  private SparseArray<ConcordantColumn> mConcordantColumns =
       new SparseArray<ConcordantColumn>();
   /** Whether or not conflictColumns are enabled should be disabled. */
-  private boolean mConflictColumnsAreEnabled; 
-  /** 
+  private boolean mConflictColumnsAreEnabled;
+  /**
    * The decisions the user has made on the resolution of the conflict. Maps
-   * element key to resolution. 
+   * element key to resolution.
    */
-  private Map<String, Resolution> mResolutions = 
+  private Map<String, Resolution> mResolutions =
       new HashMap<String, Resolution>();
   /**
    * A map of element key to the user's chosen value for the column.
    */
   private Map<String, String> mResolvedValues;
-  
+
   /**
    * The choice made by the user.
    */
   public enum Resolution {
     LOCAL, SERVER;
   }
-  
+
   public interface UICallbacks {
     /**
-     * Called when the user has made a decision about which row to use. 
+     * Called when the user has made a decision about which row to use.
      */
     public void onDecisionMade();
   }
-  
-  /** 
+
+  /**
    * This is the padding on the left side of the text view for those items in
    * the adapter that aren't in a section.
    */
   private int mLeftPaddingOnTopLevel = -1;
-  
+
   public static class Section {
     int firstPosition;
     CharSequence title;
-    
+
     public Section(int firstPosition, CharSequence title) {
       this.firstPosition = firstPosition;
       this.title = title;
     }
-    
+
     public CharSequence getTitle() {
       return title;
     }
   }
-  
+
   /**
    * Represents a column that is in conflict--i.e. the contents differ between
-   * the server and local versions. 
+   * the server and local versions.
    * @author sudar.sam@gmail.com
    *
    */
@@ -97,31 +97,31 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     final String localValue;
     final String serverValue;
     final String elementKey;
-    
-    public ConflictColumn(int position, String elementKey, String localValue, 
+
+    public ConflictColumn(int position, String elementKey, String localValue,
         String serverValue) {
       this.position = position;
       this.elementKey = elementKey;
       this.localValue = localValue;
       this.serverValue = serverValue;
     }
-    
+
     public String getLocalValue() {
       return this.localValue;
     }
-    
+
     public String getServerValue() {
       return this.serverValue;
     }
-    
+
     public String getElementKey() {
       return this.elementKey;
     }
-    
+
   }
-  
+
   /**
-   * Represents a column that is not in conflict--i.e. one that has the same 
+   * Represents a column that is not in conflict--i.e. one that has the same
    * value locally and on the server.
    * @author sudar.sam@gmail.com
    *
@@ -129,13 +129,13 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   public static class ConcordantColumn {
     int position;
     String value;
-    
+
     public ConcordantColumn(int position, String value) {
       this.position = position;
       this.value = value;
     }
   }
-  
+
   public ConflictResolutionListAdapter(Context context, UICallbacks callbacks,
       List<Section> sections, List<ConcordantColumn> concordantColumns,
       List<ConflictColumn> conflictColumns) {
@@ -155,13 +155,13 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     }
     this.mConflictColumnsAreEnabled = true;
   }
-  
+
   public boolean isSectionHeaderPosition(int position) {
     return mSections.get(position) != null;
   }
-  
+
   /**
-   * Set the user choices backing this object. Intended to allow restoring of 
+   * Set the user choices backing this object. Intended to allow restoring of
    * state on things like screen rotation. Cannot rely on the framework to do
    * this for us because are programmatically creating views, and thus reusing
    * ids.
@@ -173,21 +173,21 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     this.mResolvedValues = chosenValues;
     this.mResolutions = chosenResolutions;
   }
-  
+
   public boolean isConflictColumnPosition(int position) {
     return mConflictColumns.get(position) != null;
   }
-  
+
   public boolean isConcordantColumnPosition(int position) {
     return mConcordantColumns.get(position) != null;
   }
 
   @Override
   public int getCount() {
-    return (mSections.size() + mConflictColumns.size() 
+    return (mSections.size() + mConflictColumns.size()
         + mConcordantColumns.size());
   }
-  
+
   @Override
   public Object getItem(int position) {
     // This position can be one of three types: a section, a concordant, or a
@@ -209,7 +209,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   public long getItemId(int position) {
     return Integer.MAX_VALUE - position;
   }
-  
+
   @Override
   public int getItemViewType(int position) {
     if (isSectionHeaderPosition(position)) {
@@ -224,7 +224,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       return -1;
     }
   }
-  
+
   @Override
   public boolean isEnabled(int position) {
     if (isSectionHeaderPosition(position)) {
@@ -243,23 +243,23 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       return false;
     }
   }
-  
+
   @Override
   public int getViewTypeCount() {
     return 3; // heading, conflict, concordant.
   }
-  
+
   @Override
   public boolean areAllItemsEnabled() {
-    // this might be false because this says in the spec something about 
-    // dividers returning true or false? Kind of a strange thing, but if 
+    // this might be false because this says in the spec something about
+    // dividers returning true or false? Kind of a strange thing, but if
     // you're wondering why, consider looking at that.
     return false;
   }
-  
+
   /**
    * Return a map of element key to the values chosen by the user. If a value
-   * isn't present, it hasn't been selected by the user. If it the column 
+   * isn't present, it hasn't been selected by the user. If it the column
    * wasn't in conflict, it cannot be selected by the user. When a decision
    * has been made for every conflict column, the row is resolvable.
    * @return
@@ -267,7 +267,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   public Map<String, String> getResolvedValues() {
     return this.mResolvedValues;
   }
-  
+
   /**
    * Sets whether or not the views returned by this adapter are clickable.
    * @param enabled
@@ -275,23 +275,23 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
   public void setConflictColumnsEnabled(boolean enabled) {
     this.mConflictColumnsAreEnabled = enabled;
   }
-  
+
   /**
-   * Return a map of element key to the {@link Resolution} indicating whether 
+   * Return a map of element key to the {@link Resolution} indicating whether
    * or not a user has made a decision.
    * @return
    */
   public Map<String, Resolution> getResolutions() {
     return this.mResolutions;
   }
-  
+
   /**
-   * Update the adapter's internal data structures to reflect the user's 
+   * Update the adapter's internal data structures to reflect the user's
    * choices.
    * @param position
    * @param decision
    */
-  private void setResolution(ConflictColumn conflictColumn, 
+  private void setResolution(ConflictColumn conflictColumn,
       Resolution decision) {
     this.mResolutions.put(conflictColumn.elementKey, decision);
     String chosenValue;
@@ -313,8 +313,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
     if (isSectionHeaderPosition(position)) {
       TextView view = (TextView) convertView;
       if (view == null) {
-        view = (TextView) mLayoutInflater.inflate(
-            org.opendatakit.tables.R.layout.list_item_section_heading, parent,
+        view = (TextView) mLayoutInflater.inflate(R.layout.list_item_section_heading, parent,
           false);
       }
       view.setText(mSections.get(position).title);
@@ -324,7 +323,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       LinearLayout view = (LinearLayout) convertView;
       if (view == null) {
         int layoutId; // the layout to use
-        layoutId = org.opendatakit.tables.R.layout.list_item_conflict_row;
+        layoutId = R.layout.list_item_conflict_row;
         view = (LinearLayout) mLayoutInflater.inflate(layoutId, parent, false);
       }
       // the text view displaying the local value
@@ -336,9 +335,9 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       serverTextView.setText(conflictColumn.serverValue);
       // The decision the user has made. May be null if it hasn't been set.
       Resolution userDecision = mResolutions.get(conflictColumn.elementKey);
-      RadioButton localButton = 
+      RadioButton localButton =
           (RadioButton) view.findViewById(R.id.list_item_local_radio_button);
-      RadioButton serverButton = 
+      RadioButton serverButton =
           (RadioButton) view.findViewById(R.id.list_item_server_radio_button);
       if (userDecision != null) {
         if (userDecision == Resolution.LOCAL) {
@@ -353,19 +352,19 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
         localButton.setChecked(false);
         serverButton.setChecked(false);
       }
-      // Alright. Now we need to set the click listeners. It's going to be a 
-      // little bit tricky. We want the list item as well to update the other 
-      // radiobutton as 
+      // Alright. Now we need to set the click listeners. It's going to be a
+      // little bit tricky. We want the list item as well to update the other
+      // radiobutton as
       // appropriate. In order to do this, we're going to add the entire view
-      // object, including itself, as the view's tag. That way we can get at 
+      // object, including itself, as the view's tag. That way we can get at
       // them to update appropriately.
-      LinearLayout localRow = (LinearLayout) 
+      LinearLayout localRow = (LinearLayout)
           view.findViewById(R.id.list_item_conflict_resolution_local_row);
       LinearLayout serverRow = (LinearLayout)
           view.findViewById(R.id.list_item_conflict_resolution_server_row);
       localRow.setTag(view);
       serverRow.setTag(view);
-      // We also need to add the position to each of the views, so that when 
+      // We also need to add the position to each of the views, so that when
       // it's clicked we'll be able to figure out to which row it was
       // referring. We'll use the parent id for the key.
       localRow.setTag(R.id.list_view_conflict_row, position);
@@ -374,8 +373,8 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       serverRow.setOnClickListener(new ResolutionOnClickListener());
       localRow.setEnabled(mConflictColumnsAreEnabled);
       serverRow.setEnabled(mConflictColumnsAreEnabled);
-      // We'll want the radio buttons to trigger their whole associated list 
-      // item to keep the UI the same. Otherwise you could press the radio 
+      // We'll want the radio buttons to trigger their whole associated list
+      // item to keep the UI the same. Otherwise you could press the radio
       // button and NOT have the whole row highlighted, which I find annoying.
       serverButton.setClickable(false);
       localButton.setClickable(false);
@@ -395,10 +394,10 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
       return null;
     }
   }
-  
+
   /**
    * The class that handles registering a user's choice and updating the view
-   * appropriately. The view that adds this as a click listener must have 
+   * appropriately. The view that adds this as a click listener must have
    * included the whole parent viewgroup as its tag.
    * @author sudar.sam@gmail.com
    *
@@ -435,7 +434,7 @@ public class ConflictResolutionListAdapter extends BaseAdapter {
         Log.e(TAG, "[onClick] wasn't a recognized id, not saving choice!");
       }
     }
-    
+
   }
 
 }

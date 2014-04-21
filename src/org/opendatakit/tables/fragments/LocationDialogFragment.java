@@ -9,14 +9,14 @@ import org.opendatakit.tables.activities.TableActivity;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 
 /**
  * The LocationDialogFragment is used when asking the user if they would like to
  * add a location to the map.
- * 
+ *
  * @author Chris Gelon (cgelon)
  */
 public class LocationDialogFragment extends DialogFragment {
@@ -31,7 +31,7 @@ public class LocationDialogFragment extends DialogFragment {
    * values.
    */
   public static final String ELEMENT_NAME_TO_VALUE_KEY = "elementnametovaluekey";
-  
+
   private String _location;
   private ArrayList<String> _mappingList;
 
@@ -57,7 +57,7 @@ public class LocationDialogFragment extends DialogFragment {
     }
     return null;
   }
-  
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);

@@ -25,13 +25,17 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -43,9 +47,6 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockListActivity;
-
 /**
  * This activity presents all the possible list views that might be displayed
  * for the given table.
@@ -56,7 +57,7 @@ import com.actionbarsherlock.app.SherlockListActivity;
  * @author sudar.sam@gmail.com
  *
  */
-public class ListViewManager extends SherlockListActivity {
+public class ListViewManager extends ListActivity {
 
   public static final String TAG = ListViewManager.class.getName();
 
@@ -163,10 +164,10 @@ public class ListViewManager extends SherlockListActivity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    setContentView(org.opendatakit.tables.R.layout.list_view_manager);
+    setContentView(R.layout.list_view_manager);
     setTitle(getString(R.string.list_view_manager));
     // Set the app icon as an action to go home.
-    ActionBar actionBar = getSupportActionBar();
+    ActionBar actionBar = getActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
@@ -178,19 +179,17 @@ public class ListViewManager extends SherlockListActivity {
   }
 
   @Override
-  public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+  public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
-    com.actionbarsherlock.view.MenuItem addItem = menu.add(0,
+    MenuItem addItem = menu.add(0,
         ADD_NEW_LIST_VIEW, 0, getString(R.string.add_list_view));
-    addItem.setIcon(org.opendatakit.tables.R.drawable.content_new);
-    addItem.setShowAsAction(
-        com.actionbarsherlock.view.MenuItem.SHOW_AS_ACTION_ALWAYS);
+    addItem.setIcon(R.drawable.content_new);
+    addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
     return true;
   }
 
   @Override
-  public boolean onMenuItemSelected(int featureId,
-      com.actionbarsherlock.view.MenuItem item) {
+  public boolean onMenuItemSelected(int featureId, MenuItem item) {
     switch (item.getItemId()) {
     case ADD_NEW_LIST_VIEW:
       // If this is the case we need to launch the edit activity.
@@ -224,7 +223,7 @@ public class ListViewManager extends SherlockListActivity {
   }
 
   @Override
-  public boolean onContextItemSelected(android.view.MenuItem item) {
+  public boolean onContextItemSelected(MenuItem item) {
     // We need this so we can get the position of the thing that was clicked.
     AdapterContextMenuInfo menuInfo =
         (AdapterContextMenuInfo) item.getMenuInfo();
@@ -314,7 +313,7 @@ public class ListViewManager extends SherlockListActivity {
      */
     ListViewAdapter() {
       super(ListViewManager.this,
-          org.opendatakit.tables.R.layout.touchlistview_row2,
+          R.layout.touchlistview_row2,
           listViewNames);
     }
 
@@ -333,27 +332,26 @@ public class ListViewManager extends SherlockListActivity {
       // It's possible that we weren't handed one and have to construct
       // it up from scratch.
       if (row == null) {
-        row = getLayoutInflater().inflate(
-            org.opendatakit.tables.R.layout.row_for_edit_view_entry,
+        row = getLayoutInflater().inflate(R.layout.row_for_edit_view_entry,
             parent, false);
       }
       final int currentPosition = position;
       final String listViewName = listViewNames.get(currentPosition);
       // Set the label of this row.
       TextView label =
-          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
+          (TextView) row.findViewById(R.id.row_label);
       label.setText(listViewName);
       // We can ignore the "ext" TextView, as there's not at this point any
       // other information we wish to be displaying.
       TextView extraString =
-          (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
+          (TextView) row.findViewById(R.id.row_ext);
       AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
       String filename =
           aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
       extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
       final RadioButton radioButton = (RadioButton)
-          row.findViewById(org.opendatakit.tables.R.id.radio_button);
+          row.findViewById(R.id.radio_button);
       if (isDefault(listViewName)) {
         radioButton.setChecked(true);
       } else {
@@ -379,7 +377,7 @@ public class ListViewManager extends SherlockListActivity {
       });
       // And now prepare the listener for the settings icon.
       final ImageView editView = (ImageView)
-          row.findViewById(org.opendatakit.tables.R.id.row_options);
+          row.findViewById(R.id.row_options);
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
         @Override

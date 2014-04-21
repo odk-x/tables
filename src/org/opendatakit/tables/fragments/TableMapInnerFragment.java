@@ -24,13 +24,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockMapFragment;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -44,7 +44,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableMapInnerFragment extends SherlockMapFragment {
+public class TableMapInnerFragment extends MapFragment {
   /** Tag for debug statements. */
   private static final String TAG = "InnerMapFragment";
 
@@ -82,7 +82,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
     void onSetIndex(int i);
 
     /** Called when we want to set the indexes of the list view. */
-    void onSetIndexes(ArrayList<Integer> indexes);
+    void onSetInnerIndexes(ArrayList<Integer> indexes);
   }
 
   /** The object that is listening in on events. */
@@ -462,7 +462,7 @@ public class TableMapInnerFragment extends SherlockMapFragment {
         checkMarkersOnMap();
         List<Marker> markers = organizeMarkersByDistance(mVisibleMarkers);
         ArrayList<Integer> indexes = getListOfIndexes(markers);
-        listener.onSetIndexes(indexes);
+        listener.onSetInnerIndexes(indexes);
       }
     };
   }

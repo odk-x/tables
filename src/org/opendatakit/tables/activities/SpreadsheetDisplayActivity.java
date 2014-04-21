@@ -33,6 +33,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,6 +43,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -49,10 +52,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-
-public class SpreadsheetDisplayActivity extends SherlockActivity
+public class SpreadsheetDisplayActivity extends Activity
         implements DisplayActivity, SpreadsheetView.Controller {
 
   private static final String TAG = "SpreadsheetDisplayActivity";
@@ -324,7 +324,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
     }
 
 	@Override
-	public boolean onOptionsItemSelected(com.actionbarsherlock.view.MenuItem item) {
+	public boolean onOptionsItemSelected(MenuItem item) {
 	  return true;
 	}
 
@@ -334,7 +334,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
 	 * accessible through the cell popout menu.
 	 */
 	@Override
-	public boolean onContextItemSelected(android.view.MenuItem item) {
+	public boolean onContextItemSelected(MenuItem item) {
      TableProperties tp = c.getTableProperties();
 
      switch (item.getItemId()) {
@@ -408,8 +408,7 @@ public class SpreadsheetDisplayActivity extends SherlockActivity
      * menus.
      */
     @Override
-    public boolean onMenuItemSelected(int featureId,
-        com.actionbarsherlock.view.MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
       return c.handleMenuItemSelection(item);
     }
 

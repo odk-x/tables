@@ -22,26 +22,25 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-
 /**
  * Renders the CustomGraphView for the specified graph.
  *
  */
-public class GraphDisplayActivity extends SherlockActivity
+public class GraphDisplayActivity extends Activity
 implements DisplayActivity {
 
 	private static final String TAG = "GraphDisplayActivity";

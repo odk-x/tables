@@ -29,6 +29,7 @@ import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,15 +43,13 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
 /**
  * An activity for downloading from and uploading to an ODK Aggregate instance.
  *
  * @author hkworden@gmail.com
  * @author the.dylan.price@gmail.com
  */
-public class Aggregate extends SherlockActivity implements SyncNowCallback {
+public class Aggregate extends Activity implements SyncNowCallback {
 
   public static final String TAG = "Aggregate--Activity";
 

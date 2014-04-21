@@ -39,6 +39,7 @@ import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
 
 import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SyncResult;
@@ -49,9 +50,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockListActivity;
-
-public class AggregateDownloadTableActivity extends SherlockListActivity {
+public class AggregateDownloadTableActivity extends ListActivity {
 
   private static final String TAG = AggregateDownloadTableActivity.class.getSimpleName();
 

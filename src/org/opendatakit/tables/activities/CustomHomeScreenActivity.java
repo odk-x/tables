@@ -26,16 +26,15 @@ import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
+import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
 
 /**
  * The Activity that will house the {@link CustomAppView} view for displaying
@@ -43,7 +42,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class CustomHomeScreenActivity extends SherlockFragmentActivity
+public class CustomHomeScreenActivity extends Activity
     implements DisplayActivity, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
@@ -94,7 +93,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
     // our callbacks.
     InitializeTaskDialogFragment initalizeTaskDialogFragment =
         (InitializeTaskDialogFragment)
-        getSupportFragmentManager().findFragmentByTag(
+        getFragmentManager().findFragmentByTag(
             InitializeTaskDialogFragment.TAG_FRAGMENT);
     if (initalizeTaskDialogFragment != null) {
       initalizeTaskDialogFragment.setCallbacks(this);
@@ -107,7 +106,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
         initalizeTaskDialogFragment.setCallbacks(this);
         initalizeTaskDialogFragment.setCancelable(false);
         initializeTask.setDialogFragment(initalizeTaskDialogFragment);
-        FragmentManager fragmentManager = this.getSupportFragmentManager();
+        FragmentManager fragmentManager = this.getFragmentManager();
         initalizeTaskDialogFragment.show(fragmentManager,
             InitializeTaskDialogFragment.TAG_FRAGMENT);
       }
@@ -187,8 +186,7 @@ public class CustomHomeScreenActivity extends SherlockFragmentActivity
   }
 
   @Override
-  public boolean onMenuItemSelected(int featureId,
-      com.actionbarsherlock.view.MenuItem item) {
+  public boolean onMenuItemSelected(int featureId, MenuItem item) {
     switch (item.getItemId()) {
     case MENU_ITEM_TABLE_MANAGER:
       Intent i = new Intent(this, TableManager.class);

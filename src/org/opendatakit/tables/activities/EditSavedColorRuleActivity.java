@@ -110,8 +110,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     this.mKvsh =
         mTp.getKeyValueStoreHelper(ColorRuleGroup.KVS_PARTITION_COLUMN);
     this.mAspectHelper = mKvsh.getAspectHelper(mElementKey);
-    addPreferencesFromResource(
-        org.opendatakit.tables.R.xml.preference_row_color_rule_entry);
+    addPreferencesFromResource(R.xml.preference_row_color_rule_entry);
     this.mHumanValues = ColorRule.RuleType.getValues();
     this.mEntryVales = ColorRule.RuleType.getValues();
     int numberOfDisplayColumns = mTp.getNumberOfDisplayColumns();

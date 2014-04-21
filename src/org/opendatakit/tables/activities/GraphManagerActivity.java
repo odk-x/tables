@@ -25,13 +25,18 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -43,12 +48,6 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockListActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
-
 /**
  * This activity presents all the possible list views that might be displayed
  * for the given table.
@@ -59,7 +58,7 @@ import com.actionbarsherlock.view.SubMenu;
  * @author sudar.sam@gmail.com
  *
  */
-public class GraphManagerActivity extends SherlockListActivity {
+public class GraphManagerActivity extends ListActivity {
 
   public static final String TAG = GraphManagerActivity.class.getName();
 
@@ -194,10 +193,10 @@ public class GraphManagerActivity extends SherlockListActivity {
   @Override
   public void onCreate(Bundle icicle) {
     super.onCreate(icicle);
-    setContentView(org.opendatakit.tables.R.layout.graph_view_manager);
+    setContentView(R.layout.graph_view_manager);
     setTitle(getString(R.string.graph_manager));
     // Set the app icon as an action to go home.
-    ActionBar actionBar = getSupportActionBar();
+    ActionBar actionBar = getActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     registerForContextMenu(getListView());
   }
@@ -209,7 +208,7 @@ public class GraphManagerActivity extends SherlockListActivity {
   }
 
   @Override
-  public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
+  public boolean onCreateOptionsMenu(Menu menu) {
     super.onCreateOptionsMenu(menu);
 
     final TableViewType[] viewTypes = tp.getPossibleViewTypes();
@@ -249,7 +248,7 @@ public class GraphManagerActivity extends SherlockListActivity {
   }
 
   @Override
-  public boolean onMenuItemSelected(int featureId, com.actionbarsherlock.view.MenuItem item) {
+  public boolean onMenuItemSelected(int featureId, MenuItem item) {
 
     if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
       Controller.launchTableActivity(this, tp, TableViewType.getViewTypeFromId(item.getItemId()));
@@ -267,7 +266,7 @@ public class GraphManagerActivity extends SherlockListActivity {
   }
 
   @Override
-  public boolean onContextItemSelected(android.view.MenuItem item) {
+  public boolean onContextItemSelected(MenuItem item) {
     // We need this so we can get the position of the thing that was clicked.
     AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
     final int position = menuInfo.position;
@@ -350,7 +349,7 @@ public class GraphManagerActivity extends SherlockListActivity {
      * Set this adapter to use the @listViewNames as its backing object.
      */
     GraphViewAdapter() {
-      super(GraphManagerActivity.this, org.opendatakit.tables.R.layout.touchlistview_row2,
+      super(GraphManagerActivity.this, R.layout.touchlistview_row2,
           graphViewNames);
     }
 
@@ -369,23 +368,23 @@ public class GraphManagerActivity extends SherlockListActivity {
       // It's possible that we weren't handed one and have to construct
       // it up from scratch.
       if (row == null) {
-        row = getLayoutInflater().inflate(org.opendatakit.tables.R.layout.row_for_edit_view_entry,
+        row = getLayoutInflater().inflate(R.layout.row_for_edit_view_entry,
             parent, false);
       }
       final int currentPosition = position;
       final String listViewName = graphViewNames.get(currentPosition);
       // Set the label of this row.
-      TextView label = (TextView) row.findViewById(org.opendatakit.tables.R.id.row_label);
+      TextView label = (TextView) row.findViewById(R.id.row_label);
       label.setText(listViewName);
       // We can ignore the "ext" TextView, as there's not at this point any
       // other information we wish to be displaying.
-      TextView extraString = (TextView) row.findViewById(org.opendatakit.tables.R.id.row_ext);
+      TextView extraString = (TextView) row.findViewById(R.id.row_ext);
       AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
       String filename = aspectHelper.getString(GraphDisplayActivity.GRAPH_TYPE);
       extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
       final RadioButton radioButton = (RadioButton)
-          row.findViewById(org.opendatakit.tables.R.id.radio_button);
+          row.findViewById(R.id.radio_button);
       if (isDefault(listViewName)) {
         radioButton.setChecked(true);
       } else {
@@ -412,7 +411,7 @@ public class GraphManagerActivity extends SherlockListActivity {
 
       // And now prepare the listener for the settings icon.
       final ImageView editView = (ImageView) row
-          .findViewById(org.opendatakit.tables.R.id.row_options);
+          .findViewById(R.id.row_options);
       final View holderView = row;
       editView.setOnClickListener(new OnClickListener() {
         @Override

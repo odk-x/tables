@@ -20,6 +20,7 @@ import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Res
 import org.opendatakit.tables.views.components.ConflictResolutionListAdapter.Section;
 
 import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.os.Bundle;
@@ -31,15 +32,13 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockListActivity;
-
 /**
  * Activity for resolving the conflicts in a row. This is the native version,
  * which presents a UI and does not support HTML or js rules.
  * @author sudar.sam@gmail.com
  *
  */
-public class ConflictResolutionRowActivity extends SherlockListActivity
+public class ConflictResolutionRowActivity extends ListActivity
     implements ConflictResolutionListAdapter.UICallbacks {
 
   private static final String TAG =
@@ -103,8 +102,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    this.setContentView(
-        org.opendatakit.tables.R.layout.conflict_resolution_row_activity);
+    this.setContentView(R.layout.conflict_resolution_row_activity);
     this.mTextViewDeletionMessage = (TextView)
         findViewById(R.id.conflict_resolution_deletion_message);
     this.mRadioGroupDeletion = (RadioGroup)
@@ -186,7 +184,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     // Now that we have the appropriate lists, we need to construct the
     // adapter that will display the information.
     this.mAdapter = new ConflictResolutionListAdapter(
-        this.getSupportActionBar().getThemedContext(), this, sections,
+        this.getActionBar().getThemedContext(), this, sections,
         noConflictColumns, mConflictColumns);
     this.setListAdapter(mAdapter);
     this.onDecisionMade();
@@ -424,7 +422,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     public void onClick(View v) {
       // We should do a popup.
       AlertDialog.Builder builder = new AlertDialog.Builder(
-          ConflictResolutionRowActivity.this.getSupportActionBar()
+          ConflictResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(
           getString(R.string.conflict_delete_local_confirmation_warning));
@@ -472,7 +470,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     public void onClick(View v) {
       // We should do a popup.
       AlertDialog.Builder builder = new AlertDialog.Builder(
-          ConflictResolutionRowActivity.this.getSupportActionBar()
+          ConflictResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(
           getString(R.string.conflict_delete_on_server_confirmation_warning));
@@ -535,7 +533,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     @Override
     public void onClick(View v) {
       AlertDialog.Builder builder = new AlertDialog.Builder(
-          ConflictResolutionRowActivity.this.getSupportActionBar()
+          ConflictResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.take_local_warning));
       builder.setPositiveButton(getString(R.string.yes),
@@ -582,7 +580,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     @Override
     public void onClick(View v) {
       AlertDialog.Builder builder = new AlertDialog.Builder(
-          ConflictResolutionRowActivity.this.getSupportActionBar()
+          ConflictResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.take_server_warning));
       builder.setPositiveButton(getString(R.string.yes),
@@ -630,7 +628,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
     @Override
     public void onClick(View v) {
       AlertDialog.Builder builder = new AlertDialog.Builder(
-          ConflictResolutionRowActivity.this.getSupportActionBar()
+          ConflictResolutionRowActivity.this.getActionBar()
           .getThemedContext());
       builder.setMessage(getString(R.string.resolve_row_warning));
       builder.setPositiveButton(getString(R.string.yes),
@@ -646,7 +644,7 @@ public class ConflictResolutionRowActivity extends SherlockListActivity
                 Log.e(TAG, "[onClick--positive button] the row is not " +
                 		"resolvable! The button shouldn't have been enabled.");
                 Toast.makeText(ConflictResolutionRowActivity.this
-                    .getSupportActionBar().getThemedContext(),
+                    .getActionBar().getThemedContext(),
                     getString(R.string.resolve_cannot_complete_message),
                     Toast.LENGTH_SHORT).show();
                 return;

@@ -6,20 +6,19 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.utils.TableFileUtils;
 
+import android.app.ListActivity;
 import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.actionbarsherlock.app.SherlockListActivity;
-
 /**
  * An activity for presenting a list of all the rows in conflict.
  * @author sudar.sam@gmail.com
  *
  */
-public class ConflictResolutionListActivity extends SherlockListActivity {
+public class ConflictResolutionListActivity extends ListActivity {
 
   private static final String TAG =
       ConflictResolutionListActivity.class.getSimpleName();
@@ -43,7 +42,7 @@ public class ConflictResolutionListActivity extends SherlockListActivity {
     DbTable dbTable = DbTable.getDbTable(tableProperties);
     this.mConflictTable = dbTable.getConflictTable();
     this.mAdapter = new ArrayAdapter<String>(
-        getSupportActionBar().getThemedContext(),
+        getActionBar().getThemedContext(),
         android.R.layout.simple_list_item_1);
     for (int i = 0; i < this.mConflictTable.getLocalTable().getNumberOfRows(); i++) {
       String localRowId = this.mConflictTable.getLocalTable()

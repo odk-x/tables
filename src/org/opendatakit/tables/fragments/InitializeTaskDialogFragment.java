@@ -6,10 +6,10 @@ import org.opendatakit.tables.tasks.InitializeTask;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.util.Log;
 
 /**

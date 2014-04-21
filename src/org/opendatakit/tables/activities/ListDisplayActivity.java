@@ -23,12 +23,11 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
+import android.view.Menu;
+import android.view.MenuItem;
 
 /**
  * This class is responsible for the list view of a table.
@@ -40,7 +39,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @author unknown
  *
  */
-public class ListDisplayActivity extends SherlockActivity implements DisplayActivity {
+public class ListDisplayActivity extends Activity implements DisplayActivity {
 
   private static final String TAG = "ListDisplayActivity";
 

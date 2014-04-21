@@ -18,20 +18,18 @@ import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.views.ClearableEditText;
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.TextView;
-
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
 
 /**
  * Base activity for all fragments that display information about a database.
@@ -39,7 +37,7 @@ import com.actionbarsherlock.view.SubMenu;
  *
  * @author Chris Gelon (cgelon)
  */
-public class TableActivity extends SherlockFragmentActivity {
+public class TableActivity extends Activity {
 
   public static final String t = "TableActivity";
   // / Static Strings ///
@@ -124,9 +122,9 @@ public class TableActivity extends SherlockFragmentActivity {
     // Create the map fragment.
     if (savedInstanceState == null) {
       mMapFragment = new TableMapFragment();
-      getSupportFragmentManager().beginTransaction().add(R.id.main, mMapFragment).commit();
+      getFragmentManager().beginTransaction().add(R.id.main, mMapFragment).commit();
     } else {
-      mMapFragment = (TableMapFragment) getSupportFragmentManager().findFragmentById(R.id.main);
+      mMapFragment = (TableMapFragment) getFragmentManager().findFragmentById(R.id.main);
     }
 
     // Set the current fragment.
@@ -265,14 +263,14 @@ public class TableActivity extends SherlockFragmentActivity {
   void invertSearchBoxColor(boolean invert) {
     ClearableEditText searchField = (ClearableEditText) findViewById(R.id.search_field);
     if (invert) {
-      searchField.setBackgroundResource(R.color.abs__background_holo_light);
+      searchField.setBackgroundResource(android.R.color.background_light);
       searchField.getEditText().setTextColor(
-          searchField.getContext().getResources().getColor(R.color.abs__background_holo_dark));
+          searchField.getContext().getResources().getColor(android.R.color.background_dark));
       searchField.getClearButton().setBackgroundResource(R.drawable.content_remove_dark);
     } else {
-      searchField.setBackgroundResource(R.color.abs__background_holo_dark);
+      searchField.setBackgroundResource(android.R.color.background_dark);
       searchField.getEditText().setTextColor(
-          searchField.getContext().getResources().getColor(R.color.abs__background_holo_light));
+          searchField.getContext().getResources().getColor(android.R.color.background_light));
       searchField.getClearButton().setBackgroundResource(R.drawable.content_remove_light);
     }
   }
@@ -307,7 +305,7 @@ public class TableActivity extends SherlockFragmentActivity {
     default:
       break;
     }
-    if (resultCode == SherlockActivity.RESULT_OK) {
+    if (resultCode == Activity.RESULT_OK) {
       init();
     }
   }
@@ -335,7 +333,7 @@ public class TableActivity extends SherlockFragmentActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Set the app icon as an action to go home.
-    ActionBar actionBar = getSupportActionBar();
+    ActionBar actionBar = getActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setTitle("");
 
@@ -529,7 +527,7 @@ public class TableActivity extends SherlockFragmentActivity {
   }
 
   private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }
@@ -537,7 +535,7 @@ public class TableActivity extends SherlockFragmentActivity {
   }
 
   private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
-    if (returnCode != SherlockActivity.RESULT_OK) {
+    if (returnCode != Activity.RESULT_OK) {
       Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
       return;
     }

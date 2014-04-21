@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -29,15 +30,13 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
 /**
  * An abstract parent class for import/export activities.
  *
  * @author sudar.sam@gmail.com
  * @author unknown
  */
-public abstract class AbstractImportExportActivity extends SherlockActivity {
+public abstract class AbstractImportExportActivity extends Activity {
 
 	/** dialog IDs */
 	public static final int CSVEXPORT_SUCCESS_DIALOG = 1;
