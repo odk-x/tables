@@ -252,8 +252,8 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
             Intent data) {
         if(resultCode == RESULT_CANCELED) {return;}
         Uri fileUri = data.getData();
-        String filepath = fileUri.getPath();
-        String relativePath = TableFileUtils.getRelativePath(filepath);
+        File filepath = new File(fileUri.getPath());
+        String relativePath = ODKFileUtils.asRelativePath(appName, filepath);
         filenameValField.setText(relativePath);
     }
 

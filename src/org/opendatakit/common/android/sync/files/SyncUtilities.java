@@ -30,7 +30,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntr
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utils.FileUtils;
 import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
@@ -273,7 +272,7 @@ public class SyncUtilities {
       // the FileOutputStream.
       int lastSlash = path.lastIndexOf(File.separator);
       String folderPath = path.substring(0, lastSlash);
-      FileUtils.createFolder(folderPath);
+      ODKFileUtils.createFolder(folderPath);
       File newFile = new File(path);
       if (!newFile.exists()) {
         // the file doesn't exist on the system
@@ -288,8 +287,7 @@ public class SyncUtilities {
         }
       } else {
         // file exists, see if it's up to date
-        String md5hash = FileUtils.getMd5Hash(newFile);
-        md5hash = "md5:" + md5hash;
+        String md5hash = ODKFileUtils.getMd5Hash(newFile);
         // so as it comes down from the manifest, the md5 hash includes a
         // "md5:" prefix. Add taht and then check.
         if (!md5hash.equals(fileEntry.md5hash)) {
@@ -348,8 +346,7 @@ public class SyncUtilities {
           }
         } else {
           // file exists, see if it's up to date
-          String md5hash = FileUtils.getMd5Hash(newFile);
-          md5hash = "md5:" + md5hash;
+          String md5hash = ODKFileUtils.getMd5Hash(newFile);
           // so as it comes down from the manifest, the md5 hash inclues a
           // "md5:" prefix. Add taht and then check.
           if (!md5hash.equals(fileEntry.md5hash)) {

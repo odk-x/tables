@@ -40,12 +40,6 @@ public class TableFileUtils {
   /** The default app name for ODK Tables */
   private static final String ODK_TABLES_APP_NAME = "tables";
 
-  /** The name of the output folder, where files are output from the app. */
-  public static final String OUTPUT_FOLDER_NAME = "output";
-
-  /** The name of the assets folder. */
-  public static final String ASSETS_FOLDER_NAME = "assets";
-
   /** The name of the folder where the debug objects are written. */
   public static final String DEBUG_FOLDER_NAME = "debug";
 
@@ -65,10 +59,6 @@ public class TableFileUtils {
   /** The response type expected from the server for a json object. */
   public static final String RESP_TYPE_JSON = "application/json; charset=utf-8";
 
-  /** The name of the directory holding the tables javascript. */
-  public static final String TABLES_JS_DIR = "js";
-  /** The name of the directory holding the graphing files. */
-  public static final String TABLES_GRAPH_DIR = "graph";
   /** The name of the base graphing file. */
   private static final String TABLES_GRAPH_BASE_FILE_NAME = "optionspane.html";
 
@@ -81,11 +71,6 @@ public class TableFileUtils {
     return ODK_TABLES_APP_NAME;
   }
 
-  public static final String extractAppName() {
-    Log.e("TableFileUtils", "TODO: figure out how to extract appName here");
-    Thread.dumpStack();
-    return ODK_TABLES_APP_NAME;
-  }
   /**
    * Get all the files under the given folder, excluding those directories that
    * are the concatenation of folder and a member of excluding. If the member
@@ -170,47 +155,6 @@ public class TableFileUtils {
   }
 
   /**
-   * Get the path of the file relative to the Tables app.
-   * @param absolutePath
-   * @return
-   */
-  public static String getRelativePath(String absolutePath) {
-    File file = new File(absolutePath);
-    String appName = ODKFileUtils.extractAppNameFromPath(file);
-    return ODKFileUtils.asRelativePath(appName, file);
-  }
-
-  /**
-   * Get the output folder for the given app.
-   * @param appName
-   * @return
-   */
-  public static String getOutputFolder(String appName) {
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String result = appFolder + File.separator + OUTPUT_FOLDER_NAME;
-    return result;
-  }
-
-  /**
-   * Get the assets folder for the given app.
-   * @param appName
-   * @return
-   */
-  public static String getAssetsFolder(String appName) {
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String result = appFolder + File.separator + ASSETS_FOLDER_NAME;
-    return result;
-  }
-
-  /**
-   * Get the path to the assets folder for the Tables app.
-   * @return
-   */
-  public static String getTablesAssetsFolder(String appName) {
-    return getAssetsFolder(appName);
-  }
-
-  /**
    * Get the path to the user-defined home screen file.
    * @param appName
    * @return
@@ -218,7 +162,7 @@ public class TableFileUtils {
   public static String getUserHomeScreenFile(String appName) {
     // We're going to assume that it is located at assets/index.html.
     String result =
-        getAssetsFolder(appName) +
+        ODKFileUtils.getAssetsFolder(appName) +
         File.separator +
         USER_HOME_SCREEN_FILE_NAME;
     return result;
@@ -230,7 +174,7 @@ public class TableFileUtils {
    * @return
    */
   public static String getConfigurationFile(String appName) {
-    String assetsFolder = getAssetsFolder(appName);
+    String assetsFolder = ODKFileUtils.getAssetsFolder(appName);
     String result =
         assetsFolder +
         File.separator +
@@ -277,7 +221,7 @@ public class TableFileUtils {
    * @return
    */
   public static String getTablesDebugObjectFolder(String appName) {
-    String outputFolder = getOutputFolder(appName);
+    String outputFolder = ODKFileUtils.getOutputFolder(appName);
     String result = outputFolder + File.separator + DEBUG_FOLDER_NAME;
     File debugOutputFolder = new File(result);
     debugOutputFolder.mkdirs();

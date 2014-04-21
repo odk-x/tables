@@ -214,7 +214,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
         // Get the relative path under the app directory. This is what Tables
         // uses internally, as opposed to the full path as returned by OI
         // file picker.
-        String relativePath = TableFileUtils.getRelativePath(newFilename);
+        String relativePath = ODKFileUtils.asRelativePath(appName, new File(newFilename));
         if (kvsh.getAspectsForPartition().size() == 0) {
           setToDefault(listViewName);
         }

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
@@ -48,7 +49,6 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
-import org.opendatakit.common.android.utils.FileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -74,8 +74,6 @@ import com.actionbarsherlock.app.SherlockActivity;
 public class CollectUtil {
 
   private static final String COLLECT_KEY_LAST_STATUS_CHANGE_DATE = "date";
-
-  private static final String UTF_8 = "UTF-8";
 
   private static final String TAG = "CollectUtil";
 
@@ -200,7 +198,7 @@ public class CollectUtil {
     OutputStreamWriter writer = null;
     try {
       FileOutputStream out = new FileOutputStream(file);
-      writer = new OutputStreamWriter(out, UTF_8);
+      writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
           + "xmlns:h=\"http://www.w3.org/1999/xhtml\" "
           + "xmlns:ev=\"http://www.w3.org/2001/xml-events\" "
@@ -312,7 +310,7 @@ public class CollectUtil {
     // Now get the reader.
     InputStreamReader isr = null;
     try {
-      isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+      isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
     } catch (UnsupportedCharsetException e) {
       Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
       isr = new InputStreamReader(is);
@@ -382,7 +380,7 @@ public class CollectUtil {
     OutputStreamWriter writer = null;
     try {
       FileOutputStream out = new FileOutputStream(getEditRowFormFile(tp, rowId));
-      writer = new OutputStreamWriter(out, UTF_8);
+      writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<?xml version='1.0' ?><");
       writer.write(params.getRootElement());
       writer.write(" id=\"");
@@ -1226,7 +1224,7 @@ public class CollectUtil {
     // Now get the reader.
     InputStreamReader isr;
     try {
-      isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+      isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
     } catch (UnsupportedCharsetException e) {
       Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
       isr = new InputStreamReader(is);

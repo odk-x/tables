@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
@@ -69,7 +70,6 @@ import org.opendatakit.common.android.sync.exceptions.RequestFailureException;
 import org.opendatakit.common.android.sync.files.SyncUtilities;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
-import org.opendatakit.common.android.utils.FileUtils;
 import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
@@ -194,11 +194,11 @@ public class AggregateSynchronizer implements Synchronizer {
 
     Map<String,String> mediaTypeParams;
     mediaTypeParams = new HashMap<String,String>();
-    mediaTypeParams.put("charset", "utf-8");
+    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase());
     mediaTypeParams.put("q", "0.9");
     MediaType txmlUtf8 = new MediaType(MediaType.TEXT_XML.getType(), MediaType.TEXT_XML.getSubtype(), mediaTypeParams);
     mediaTypeParams = new HashMap<String,String>();
-    mediaTypeParams.put("charset", "utf-8");
+    mediaTypeParams.put("charset", CharEncoding.UTF_8.toLowerCase());
     mediaTypeParams.put("q", "0.8");
     MediaType axmlUtf8 = new MediaType(MediaType.APPLICATION_WILDCARD_XML.getType(), MediaType.APPLICATION_WILDCARD_XML.getSubtype(), mediaTypeParams);
     mediaTypeParams = new HashMap<String,String>();
@@ -211,8 +211,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
     this.requestHeaders.setAccept(acceptableMediaTypes);
 
-    // set the response entity character set to UTF-8
-    this.requestHeaders.setAcceptCharset(Collections.singletonList(Charset.forName(ApiConstants.UTF8_ENCODE)));
+    // set the response entity character set to CharEncoding.UTF_8
+    this.requestHeaders.setAcceptCharset(Collections.singletonList(Charset.forName(CharEncoding.UTF_8)));
 
     this.resources = new HashMap<String, TableResource>();
 
@@ -796,7 +796,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // the FileOutputStream.
       int lastSlash = path.lastIndexOf(File.separator);
       String folderPath = path.substring(0, lastSlash);
-      FileUtils.createFolder(folderPath);
+      ODKFileUtils.createFolder(folderPath);
       File newFile = new File(path);
       if (!newFile.exists()) {
         // the file doesn't exist on the system
@@ -811,8 +811,7 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       } else {
         // file exists, see if it's up to date
-        String md5hash = FileUtils.getMd5Hash(newFile);
-        md5hash = "md5:" + md5hash;
+        String md5hash = ODKFileUtils.getMd5Hash(newFile);
         // so as it comes down from the manifest, the md5 hash includes a
         // "md5:" prefix. Add taht and then check.
         if (!md5hash.equals(entry.md5hash)) {

@@ -572,7 +572,7 @@ public class TablePropertiesManager extends PreferenceActivity {
    * @return
    */
   private String getRelativePathOfFile(String fullPath) {
-    String relativePath = TableFileUtils.getRelativePath(fullPath);
+    String relativePath = ODKFileUtils.asRelativePath(appName, new File(fullPath));
     return relativePath;
   }
 

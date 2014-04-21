@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
@@ -263,7 +264,7 @@ public class OutputUtil {
         + CONTROL_FILE_NAME;
     PrintWriter writer;
     try {
-      writer = new PrintWriter(fileName, "UTF-8");
+      writer = new PrintWriter(fileName, CharEncoding.UTF_8);
       Log.d(TAG, "writing control to: " + fileName);
       writer.print(controlString);
       writer.flush();
@@ -320,7 +321,7 @@ public class OutputUtil {
         + DATA_FILE_SUFFIX;
     PrintWriter writer;
     try {
-      writer = new PrintWriter(fileName, "UTF-8");
+      writer = new PrintWriter(fileName, CharEncoding.UTF_8);
       Log.d(TAG, "writing data object to: " + fileName);
       writer.print(dataString);
       writer.flush();

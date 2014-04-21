@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import org.apache.commons.lang3.CharEncoding;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -79,8 +80,6 @@ public class CsvUtil {
 
     public void importComplete(boolean outcome);
   }
-
-  private static final String UTF_8 = "UTF-8";
 
   private static final String TAG = CsvUtil.class.getSimpleName();
 
@@ -160,7 +159,7 @@ public class CsvUtil {
       // Now get the reader.
       InputStreamReader isr;
       try {
-        isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+        isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
       } catch (UnsupportedCharsetException e) {
         Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
         isr = new InputStreamReader(is);
@@ -289,7 +288,7 @@ public class CsvUtil {
       // Now get the reader.
       InputStreamReader isr;
       try {
-        isr = new InputStreamReader(is, Charset.forName(FileUtils.UTF8));
+        isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
       } catch (UnsupportedCharsetException e) {
         Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
         isr = new InputStreamReader(is);
@@ -472,7 +471,7 @@ public class CsvUtil {
     BufferedReader brProp = null;
     try {
       isProp = new FileInputStream(prop);
-      isrProp = new InputStreamReader(isProp, UTF_8);
+      isrProp = new InputStreamReader(isProp, CharEncoding.UTF_8);
       brProp = new BufferedReader(isrProp);
     } catch (FileNotFoundException e1) {
       throw new IllegalStateException(e1);
@@ -487,7 +486,7 @@ public class CsvUtil {
     BufferedReader brData = null;
     try {
       isData = new FileInputStream(data);
-      isrData = new InputStreamReader(isData, UTF_8);
+      isrData = new InputStreamReader(isData, CharEncoding.UTF_8);
       brData = new BufferedReader(isrData);
     } catch (FileNotFoundException e1) {
       throw new IllegalStateException(e1);
@@ -500,7 +499,7 @@ public class CsvUtil {
     OutputStreamWriter output = null;
     try {
       FileOutputStream out = new FileOutputStream(temp);
-      output = new OutputStreamWriter(out, UTF_8);
+      output = new OutputStreamWriter(out, CharEncoding.UTF_8);
 
       // read in each line and add to the temp file
       String line;
@@ -757,7 +756,7 @@ public class CsvUtil {
     OutputStreamWriter output = null;
     try {
       FileOutputStream out = new FileOutputStream(file);
-      output = new OutputStreamWriter(out, UTF_8);
+      output = new OutputStreamWriter(out, CharEncoding.UTF_8);
       CSVWriter cw = new CSVWriter(output, DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
       if (exportProperties) {
         // TODO: INSTEAD USE A TABLE DEFINITION PROBABLY?

@@ -195,7 +195,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	    String filepath = fileUri.getPath();
 	    // We have to first hand this off to account for the difference in
 	    // external storage directories on different versions of android.
-	    String relativePath = TableFileUtils.getRelativePath(filepath);
+	    String relativePath = ODKFileUtils.asRelativePath(appName, new File(filepath));
 	    Log.d(TAG, "relative path of import file: " + relativePath);
 	    filenameValField.setText(relativePath);
 	}
