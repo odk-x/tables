@@ -154,8 +154,6 @@ public class TableProperties {
     mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
   }
 
-  private static List<String> allTableIds = new ArrayList<String>();
-
   private static boolean staleActiveCache = true;
   private static List<String> idsInActiveKVS = new ArrayList<String>();
   private static Map<String, TableProperties> activeTableIdMap = new HashMap<String, TableProperties>();
@@ -191,8 +189,7 @@ public class TableProperties {
     // A pre-requisite to having an update cache is to have agreement on
     // all the known table ids.
     List<String> allIds = TableDefinitions.getAllTableIds(db);
-    if ( staleActiveCache || allTableIds.size() != allIds.size() || !allTableIds.containsAll(allIds) ) {
-      allTableIds = allIds;
+    if ( staleActiveCache || idsInActiveKVS.size() != allIds.size() ) {
       refreshActiveCache(context, appName, db);
     }
   }

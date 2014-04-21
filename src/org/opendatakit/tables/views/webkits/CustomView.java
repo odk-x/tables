@@ -489,7 +489,6 @@ public abstract class CustomView extends LinearLayout {
     public boolean helperOpenTable(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
                       String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementName, String sqlOrderByDirection) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      sqlWhereClause = getWhereSql(sqlWhereClause);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
         return false;
@@ -736,25 +735,6 @@ public abstract class CustomView extends LinearLayout {
       Uri contentUri = FileProvider.getWebViewContentUri(getContext());
       contentUri = Uri.withAppendedPath(contentUri, Uri.encode(mAppName));
       return contentUri.toString() + File.separator;
-    }
-
-    /**
-     * Handle the selection string coming in from the javascript. Essentially
-     * gets the string ready to go to be handed off to the java.
-     * <p>
-     * This is necessary at least for now because the DbTable rawQuery expects a
-     * string beginning with a WHERE, but the javascript api does not, so this
-     * wraps that up.
-     *
-     * @param sqlSelection
-     * @return
-     */
-    private String getWhereSql(String sqlSelection) {
-      if (sqlSelection == null) {
-        return null;
-      } else {
-        return "WHERE " + sqlSelection;
-      }
     }
 
     /**
