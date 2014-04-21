@@ -18,6 +18,7 @@ package org.opendatakit.common.android.sync.aggregate;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +36,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,7 +73,6 @@ import org.opendatakit.common.android.sync.exceptions.RequestFailureException;
 import org.opendatakit.common.android.sync.files.SyncUtilities;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.httpclientandroidlib.Header;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.HttpStatus;
@@ -109,6 +110,9 @@ public class AggregateSynchronizer implements Synchronizer {
 
   private static final String TAG = AggregateSynchronizer.class.getSimpleName();
   private static final String TOKEN_INFO = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
+
+  /** Timeout (in ms) we specify for each http request */
+  public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 
   private static final String FILE_MANIFEST_PATH = "/odktables/filemanifest/";
   /** Path to the file servlet on the Aggregate server. */
@@ -150,8 +154,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
     this.mHttpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = mHttpClient.getParams();
-    HttpConnectionParams.setConnectionTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
-    HttpConnectionParams.setSoTimeout(params, TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+    HttpConnectionParams.setConnectionTimeout(params, HTTP_REQUEST_TIMEOUT_MS);
+    HttpConnectionParams.setSoTimeout(params, HTTP_REQUEST_TIMEOUT_MS);
 
     URI fileManifestUri = SyncUtilities.normalizeUri(aggregateUri, FILE_MANIFEST_PATH + appName + "/");
     this.mFileManifestUri = fileManifestUri;
@@ -628,6 +632,89 @@ public class AggregateSynchronizer implements Synchronizer {
     return newTag;
   }
 
+  /**
+   * Get all the files under the given folder, excluding those directories that
+   * are the concatenation of folder and a member of excluding. If the member
+   * of excluding is a directory, none of its children will be synched either.
+   * <p>
+   * If the folder doesn't exist it returns an empty list.
+   * <p>
+   * If the file exists but is not a directory, logs an error and returns an
+   * empty list.
+   * @param folder
+   * @param excluding can be null--nothing will be excluded. Should be relative
+   * to the given folder.
+   * @param relativeTo the path to which the returned paths will be relative.
+   * A null value makes them relative to the folder parameter. If it is non
+   * null, folder must start with relativeTo, or else the files in
+   * folder could not possibly be relative to relativeTo. In this case will
+   * throw an IllegalArgumentException.
+   * @return the relative paths of the files under the folder--i.e. the paths
+   * after the folder parameter, not including the first separator
+   * @throws IllegalArgumentException if relativeTo is not a substring of
+   * folder.
+   */
+  public static List<String> getAllFilesUnderFolder(String folder,
+      final Set<String> excludingNamedItemsUnderFolder) {
+    final File baseFolder = new File(folder);
+    String appName = ODKFileUtils.extractAppNameFromPath(baseFolder);
+
+    // Return an empty list of the folder doesn't exist or is not a directory
+    if (!baseFolder.exists()) {
+      return new ArrayList<String>();
+    } else if (!baseFolder.isDirectory()) {
+      Log.e(TAG, "[getAllFilesUnderFolder] folder is not a directory: "
+          + folder);
+      return new ArrayList<String>();
+    }
+
+    // construct the set of starting directories and files to process
+    File[] partials = baseFolder.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        if ( excludingNamedItemsUnderFolder == null ) {
+          return true;
+        } else {
+          return !excludingNamedItemsUnderFolder.contains(pathname.getName());
+        }
+      }});
+
+    LinkedList<File> unexploredDirs = new LinkedList<File>();
+    List<File> nondirFiles = new ArrayList<File>();
+
+    // copy the starting set into a queue of unexploredDirs
+    // and a list of files to be sync'd
+    for ( int i = 0 ; i < partials.length ; ++i ) {
+      if ( partials[i].isDirectory() ) {
+        unexploredDirs.add(partials[i]);
+      } else {
+        nondirFiles.add(partials[i]);
+      }
+    }
+
+    while (!unexploredDirs.isEmpty()) {
+      File exploring = unexploredDirs.removeFirst();
+      File[] files = exploring.listFiles();
+      for (File f : files) {
+        if (f.isDirectory()) {
+          // we'll need to explore it
+          unexploredDirs.add(f);
+        } else {
+          // we'll add it to our list of files.
+          nondirFiles.add(f);
+        }
+      }
+    }
+
+    List<String> relativePaths = new ArrayList<String>();
+    // we want the relative path, so drop the necessary bets.
+    for (File f : nondirFiles) {
+      // +1 to exclude the separator.
+      relativePaths.add(ODKFileUtils.asRelativePath(appName, f));
+    }
+    return relativePaths;
+  }
+
   @Override
   public void syncAppLevelFiles(boolean pushLocalFiles) throws ResourceAccessException {
     List<OdkTablesFileManifestEntry> manifest = getAppLevelFileManifest();
@@ -638,7 +725,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // device but that do not exist on the manifest.
     Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
     String appFolder = ODKFileUtils.getAppFolder(appName);
-    List<String> relativePathsOnDevice = TableFileUtils.getAllFilesUnderFolder(appFolder,
+    List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
         dirsToExclude);
     List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
     Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " + relativePathsToUpload);
@@ -662,7 +749,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // device but that do not exist on the manifest.
     Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(false);
     String appFolder = ODKFileUtils.getAppFolder(appName);
-    List<String> relativePathsOnDevice = TableFileUtils.getAllFilesUnderFolder(appFolder,
+    List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
         dirsToExclude);
     List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
     // and then upload the files.
@@ -690,7 +777,7 @@ public class AggregateSynchronizer implements Synchronizer {
       // with a separate call.
       // tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
       tableDirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
-      List<String> relativePathsToAppFolderOnDevice = TableFileUtils.getAllFilesUnderFolder(
+      List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
           tableFolder, tableDirsToExclude);
       List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
           manifest);
@@ -1008,7 +1095,7 @@ public class AggregateSynchronizer implements Synchronizer {
     // continue straight on.
     String appFolder = ODKFileUtils.getAppFolder(appName);
     String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
-    List<String> relativePathsToAppFolderOnDevice = TableFileUtils.getAllFilesUnderFolder(
+    List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
         instancesFolderFullPath, null);
     List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
         manifest);

@@ -13,7 +13,7 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.views.webkits.TableData;
@@ -260,7 +260,7 @@ public class OutputUtil {
    */
   public static void writeControlObject(Context context, String appName) {
     String controlString = getStringForControlObject(context, appName);
-    String fileName = TableFileUtils.getTablesDebugObjectFolder(appName) + File.separator
+    String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator
         + CONTROL_FILE_NAME;
     PrintWriter writer;
     try {
@@ -317,7 +317,7 @@ public class OutputUtil {
       int numberOfRows) {
     String dataString = getStringForDataObject(context, appName, tableId, numberOfRows);
     if ( dataString == null ) return;
-    String fileName = TableFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
+    String fileName = ODKFileUtils.getTablesDebugObjectFolder(appName) + File.separator + tableId
         + DATA_FILE_SUFFIX;
     PrintWriter writer;
     try {

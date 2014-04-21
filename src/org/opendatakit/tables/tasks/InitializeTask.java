@@ -11,7 +11,6 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.CsvUtil;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
@@ -74,7 +73,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
 			Properties prop = new Properties();
 			try {
 			  String pathToConfigFile =
-			      TableFileUtils.getTablesConfigurationFile(mAppName);
+			      ODKFileUtils.getTablesConfigurationFile(mAppName);
 				File config = new File(pathToConfigFile);
 				prop.load(new FileInputStream(config));
 			} catch (IOException ex) {
@@ -101,7 +100,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
 			  // However, it still feels like a hack, and I wish the AsyncTask/
 			  // Fragment situation wasn't so damned irritating.
 				fileModifiedTime =
-				    new File(TableFileUtils.getTablesConfigurationFile(mAppName))
+				    new File(ODKFileUtils.getTablesConfigurationFile(mAppName))
 				    .lastModified();
 				ConfigurationUtil.updateTimeChanged(
 				    this.mDialogFragment.getPreferencesFromContext(),

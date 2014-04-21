@@ -3,7 +3,7 @@ package org.opendatakit.tables.utils;
 import java.io.File;
 
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 /**
  * Various utilities for initial configuration of tables
@@ -18,9 +18,9 @@ public class ConfigurationUtil {
      */
 	public static boolean isChanged(Preferences prefs) {
 
-		if (TableFileUtils.tablesConfigurationFileExists(prefs.getAppName())) {
-		  File configFile =
-		      new File(TableFileUtils.getTablesConfigurationFile(prefs.getAppName()));
+     File configFile =
+         new File(ODKFileUtils.getTablesConfigurationFile(prefs.getAppName()));
+		if (configFile.exists()) {
 			long timeLastConfig = prefs.getTimeLastConfig();
 			long timeLastMod = configFile.lastModified();
 			if (timeLastMod == timeLastConfig)

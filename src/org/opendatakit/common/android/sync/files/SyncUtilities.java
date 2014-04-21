@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -30,7 +31,6 @@ import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntr
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
@@ -40,6 +40,8 @@ import org.opendatakit.httpclientandroidlib.impl.conn.BasicClientConnectionManag
 import org.opendatakit.httpclientandroidlib.params.HttpConnectionParams;
 import org.opendatakit.httpclientandroidlib.params.HttpParams;
 import org.opendatakit.httpclientandroidlib.util.EntityUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
+import org.springframework.http.MediaType;
 
 import android.content.Context;
 import android.net.Uri.Builder;
@@ -60,6 +62,9 @@ public class SyncUtilities {
   public static final String TAG = "SyncUtilities";
 
   private static final ObjectMapper mapper = new ObjectMapper();
+
+  /** The url parameter name of the tableId. */
+  public static final String TABLE_ID_PARAM = "tableId";
 
   /** URI from base to get the manifest for a server. */
   public static final String MANIFEST_ADDR_URI = "/tableKeyValueManifest";
@@ -101,7 +106,7 @@ public class SyncUtilities {
       term = aggregateUri + MANIFEST_ADDR_URI;
     }
     builder.encodedPath(term);
-    builder.appendQueryParameter(TableFileUtils.TABLE_ID_PARAM, tableId);
+    builder.appendQueryParameter(TABLE_ID_PARAM, tableId);
     //UrlQuerySanitizer sanitizer = new UrlQuerySanitizer();
     //ParameterValuePair params =
       //  sanitizer.new ParameterValuePair(TableFileUtils.TABLE_ID_PARAM, tableId);
@@ -112,7 +117,8 @@ public class SyncUtilities {
       HttpEntity entity = resp.getEntity();
       // DURING DEBUG is coming back as html, not json.
       // make sure it is a json string.
-      if (!entity.getContentType().getValue().equals(TableFileUtils.RESP_TYPE_JSON)) {
+
+      if (!entity.getContentType().getValue().toLowerCase(Locale.ENGLISH).startsWith(MediaType.APPLICATION_JSON_VALUE)) {
         Log.d(TAG, "entity returned in manifest request was not type JSON");
         // if it's not of type JSON, just return an empty string that can
         // then be parsed to a list with no problems. Ultimately you might want
@@ -134,9 +140,9 @@ public class SyncUtilities {
     HttpClient httpClient = new DefaultHttpClient(new BasicClientConnectionManager());
     final HttpParams params = httpClient.getParams();
     HttpConnectionParams.setConnectionTimeout(params,
-        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+        AggregateSynchronizer.HTTP_REQUEST_TIMEOUT_MS);
     HttpConnectionParams.setSoTimeout(params,
-        TableFileUtils.HTTP_REQUEST_TIMEOUT_MS);
+        AggregateSynchronizer.HTTP_REQUEST_TIMEOUT_MS);
     return httpClient;
   }
 
@@ -203,40 +209,6 @@ public class SyncUtilities {
         }
       }
     }
-  }
-
-  /**
-   * Get only the file entries, leaving out the other entries.
-   * @param allEntries List of all the entries on the manifest
-   * @return a List of the OdkTablesFileManifestEntry objects
-   */
-  public static List<OdkTablesFileManifestEntry> getFileEntries(
-      List<OdkTablesKeyValueStoreEntry> allEntries) {
-    // first get all the entries, and retain only the file entries.
-    List<OdkTablesFileManifestEntry> fileEntries =
-        new ArrayList<OdkTablesFileManifestEntry>();
-    TypeReference<OdkTablesFileManifestEntry> typeRef =
-        new TypeReference<OdkTablesFileManifestEntry>() {};
-    for (OdkTablesKeyValueStoreEntry entry : allEntries) {
-      String entryType = entry.type;
-      String fileDesignation = Type.FILE.getTitle();
-      if (entryType.equals(fileDesignation)) {
-        String fileString = (String) entry.value;
-        try {
-          fileEntries.add((OdkTablesFileManifestEntry) mapper.readValue(
-              fileString, typeRef));
-        //TODO--throw the correct errors here! these are hacks.
-        } catch (JsonMappingException e) {
-          throw new IllegalStateException("problem mapping in getFileEntries");
-        } catch (JsonParseException e) {
-          throw new IllegalStateException("problem parsing in getFileEntries");
-        } catch (IOException e) {
-          throw new IllegalStateException("io trouble in getFileEntries");
-        }
-
-      }
-    }
-    return fileEntries;
   }
 
   /**

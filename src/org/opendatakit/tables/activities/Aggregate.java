@@ -22,10 +22,10 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.sync.SyncUtil;
 import org.opendatakit.common.android.sync.SynchronizationResult;
 import org.opendatakit.common.android.sync.TableResult;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.SyncNowTask;
 import org.opendatakit.tables.tasks.SyncNowTask.SyncNowCallback;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;

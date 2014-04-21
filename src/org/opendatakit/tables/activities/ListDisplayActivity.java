@@ -20,7 +20,7 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.content.Intent;

@@ -34,8 +34,8 @@ import org.opendatakit.common.android.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.common.android.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.NameUtil;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
 
 import android.app.AlertDialog;

@@ -20,10 +20,10 @@ import java.io.File;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Activity;
@@ -54,8 +54,8 @@ public class Launcher extends Activity {
         // First determine if we're supposed to use a custom home screen.
         // Do a check also to make sure the file actually exists.
         Preferences preferences = new Preferences(this, appName);
-        if (preferences.getUseHomeScreen() &&
-            TableFileUtils.tablesHomeScreenFileExists(appName)) {
+        File homeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(appName));
+        if (preferences.getUseHomeScreen() && homeScreen.exists()) {
           // launch it.
           Log.d(TAG, "homescreen file exists and is set to be used.");
           Intent i = new Intent(this, CustomHomeScreenActivity.class);

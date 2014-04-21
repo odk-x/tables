@@ -22,10 +22,10 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.ListDisplayActivity;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

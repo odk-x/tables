@@ -29,8 +29,8 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;

@@ -48,7 +48,7 @@ import org.opendatakit.common.android.sync.TableResult.Status;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.sync.exceptions.SchemaMismatchException;
 import org.opendatakit.common.android.utils.DataUtil;
-import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
 
 import android.content.ContentValues;

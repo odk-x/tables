@@ -91,6 +91,10 @@ public class CsvUtil {
 
   private static final String CSV_FILE_EXTENSION = ".csv";
 
+  /** TempFilename for a csv file used for joining files (?) */
+  private static final String ODK_TABLES_JOINING_CSV_FILENAME = "temp.csv";
+
+
   private static final String t = "CsvUtil";
 
   private static final String LAST_MOD_TIME_LABEL = "_last_mod_time";
@@ -464,7 +468,7 @@ public class CsvUtil {
 
   private File joinCSVs(File prop, File data) throws IOException {
     File temp = new File(ODKFileUtils.getAppFolder(appName),
-                         TableFileUtils.ODK_TABLES_JOINING_CSV_FILENAME);
+                         ODK_TABLES_JOINING_CSV_FILENAME);
 
     InputStream isProp = null;
     InputStreamReader isrProp = null;

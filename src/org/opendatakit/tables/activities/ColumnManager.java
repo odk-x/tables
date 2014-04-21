@@ -22,8 +22,8 @@ import java.util.List;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.TouchListView;
 
 import android.app.AlertDialog;

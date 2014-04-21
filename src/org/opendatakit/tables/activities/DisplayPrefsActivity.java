@@ -1,12 +1,15 @@
 package org.opendatakit.tables.activities;
 
+import java.io.File;
+
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.preferences.SliderPreference;
 import org.opendatakit.tables.utils.OutputUtil;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -80,7 +83,8 @@ public class DisplayPrefsActivity extends PreferenceActivity {
      *********************************/
     CheckBoxPreference useHomescreenPref = new CheckBoxPreference(this);
     useHomescreenPref.setChecked(prefs.getUseHomeScreen());
-    if (TableFileUtils.tablesHomeScreenFileExists(appName)) {
+    File homeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(appName));
+    if (homeScreen.exists()) {
       useHomescreenPref.setTitle(R.string.use_index_html);
       useHomescreenPref.setEnabled(true);
     } else {

@@ -28,11 +28,11 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
+import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
