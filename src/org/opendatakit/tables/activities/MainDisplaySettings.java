@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.activities.settings;
+package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;

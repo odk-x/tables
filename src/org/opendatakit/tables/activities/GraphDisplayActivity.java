@@ -13,14 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.opendatakit.tables.activities.graphs;
+package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.activities.DisplayActivity;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 

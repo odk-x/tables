@@ -8,8 +8,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
-import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
 import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;

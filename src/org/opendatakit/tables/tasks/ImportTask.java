@@ -3,7 +3,7 @@ package org.opendatakit.tables.tasks;
 import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
-import org.opendatakit.tables.activities.importexport.ImportCSVActivity;
+import org.opendatakit.tables.activities.ImportCSVActivity;
 
 import android.os.AsyncTask;
 
