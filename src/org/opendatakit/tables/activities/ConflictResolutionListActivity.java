@@ -1,10 +1,10 @@
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.data.ConflictTable;
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.data.ConflictTable;
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.common.android.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.util.Log;

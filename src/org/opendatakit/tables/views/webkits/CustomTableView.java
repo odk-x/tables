@@ -18,8 +18,8 @@ package org.opendatakit.tables.views.webkits;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 
 import android.app.Activity;

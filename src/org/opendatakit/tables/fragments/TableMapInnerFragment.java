@@ -8,16 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.opendatakit.common.android.data.ColorGuide;
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
-import org.opendatakit.tables.data.ColorGuide;
-import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
 
 import android.graphics.Color;
 import android.os.Bundle;

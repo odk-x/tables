@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.types;
 
-import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.common.android.data.KeyValueHelper;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 

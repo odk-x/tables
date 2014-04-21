@@ -1,13 +1,14 @@
 package org.opendatakit.tables.tasks;
 
+import org.opendatakit.common.android.exception.TableAlreadyExistsException;
+import org.opendatakit.common.android.utils.CsvUtil;
+import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.activities.importexport.ImportCSVActivity;
-import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
-import org.opendatakit.tables.utils.CsvUtil;
 
 import android.os.AsyncTask;
 
 public class ImportTask
-extends AsyncTask<ImportRequest, Integer, Boolean> {
+extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 
 	private final ImportCSVActivity importCSVActivity;
 	private final String appName;
@@ -42,6 +43,16 @@ extends AsyncTask<ImportRequest, Integer, Boolean> {
 					request.getTableId());
 		}
 	}
+
+	  @Override
+	  public void importComplete(boolean outcome) {
+	    problemImportingKVSEntries = !outcome;
+	  }
+
+	  @Override
+	  public void updateLineCount(String progressString) {
+	    // TODO present progressString in a dialog
+	  }
 
 	protected void onProgressUpdate(Integer... progress) {
 		// do nothing.

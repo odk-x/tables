@@ -18,9 +18,9 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.TableProperties;
 
 import android.app.Dialog;
 import android.content.Context;

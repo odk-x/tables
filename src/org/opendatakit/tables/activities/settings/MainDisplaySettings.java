@@ -15,11 +15,11 @@
  */
 package org.opendatakit.tables.activities.settings;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.os.Bundle;

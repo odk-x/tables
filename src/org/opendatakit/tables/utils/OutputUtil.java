@@ -8,12 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.activities.DetailDisplayActivity;
 import org.opendatakit.tables.activities.ListDisplayActivity;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;

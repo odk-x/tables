@@ -2,11 +2,11 @@ package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
 
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.os.Bundle;

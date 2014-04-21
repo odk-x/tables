@@ -18,13 +18,13 @@ package org.opendatakit.tables.views.webkits;
 import java.io.File;
 import java.util.List;
 
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
 import android.util.Log;

@@ -22,11 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
+import org.opendatakit.common.android.sync.SyncUtil;
+import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.common.android.sync.files.SyncUtilities;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.sync.SyncUtil;
-import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.files.SyncUtilities;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;

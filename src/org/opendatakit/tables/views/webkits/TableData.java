@@ -6,11 +6,11 @@ import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 
 import android.app.Activity;
 import android.util.Log;

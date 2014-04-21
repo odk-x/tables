@@ -19,18 +19,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.JoinColumn;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
 
 import android.app.AlertDialog;

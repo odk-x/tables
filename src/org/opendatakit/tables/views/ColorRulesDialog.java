@@ -18,10 +18,10 @@ package org.opendatakit.tables.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.ColorRule;
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColorRule.RuleType;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.ColorRule;
-import org.opendatakit.tables.data.ColorRule.RuleType;
-import org.opendatakit.tables.data.ColorRuleGroup;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

@@ -15,9 +15,9 @@
  */
 package org.opendatakit.tables.views;
 
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 
 import android.content.Context;
 import android.graphics.Canvas;

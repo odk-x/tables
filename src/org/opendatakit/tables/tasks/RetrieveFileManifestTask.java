@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
+import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.common.android.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 import org.springframework.web.client.ResourceAccessException;
 
 import android.app.ProgressDialog;

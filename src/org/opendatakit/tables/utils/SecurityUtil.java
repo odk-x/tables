@@ -18,10 +18,10 @@ package org.opendatakit.tables.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
 
 import android.content.Context;
 

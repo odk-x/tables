@@ -17,15 +17,15 @@ package org.opendatakit.tables.activities;
 
 import java.util.ArrayList;
 
-import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
-import org.opendatakit.tables.data.JoinColumn;
-import org.opendatakit.tables.data.KeyValueHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.data.JoinColumn;
+import org.opendatakit.common.android.data.KeyValueHelper;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.preferences.SliderPreference;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.MultipleChoiceSettingDialog;
 import org.opendatakit.tables.views.SpreadsheetView;
 

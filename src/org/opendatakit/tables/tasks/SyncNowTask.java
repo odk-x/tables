@@ -17,13 +17,13 @@ package org.opendatakit.tables.tasks;
 
 import java.util.Arrays;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.sync.SyncProcessor;
+import org.opendatakit.common.android.sync.SynchronizationResult;
+import org.opendatakit.common.android.sync.Synchronizer;
+import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
+import org.opendatakit.common.android.sync.exceptions.InvalidAuthTokenException;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.sync.SyncProcessor;
-import org.opendatakit.tables.sync.SynchronizationResult;
-import org.opendatakit.tables.sync.Synchronizer;
-import org.opendatakit.tables.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.tables.sync.exceptions.InvalidAuthTokenException;
 
 import android.app.ProgressDialog;
 import android.content.Context;

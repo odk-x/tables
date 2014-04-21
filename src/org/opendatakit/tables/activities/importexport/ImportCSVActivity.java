@@ -17,13 +17,13 @@ package org.opendatakit.tables.activities.importexport;
 
 import java.io.File;
 
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.Controller;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.tasks.ImportRequest;
 import org.opendatakit.tables.tasks.ImportTask;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
 import android.net.Uri;

@@ -18,14 +18,14 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 import java.util.List;
 
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;

@@ -15,12 +15,12 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.KeyValueStoreHelper.AspectHelper;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
-import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.content.Intent;

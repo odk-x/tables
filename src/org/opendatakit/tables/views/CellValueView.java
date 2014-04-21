@@ -17,8 +17,8 @@ package org.opendatakit.tables.views;
 
 import java.util.ArrayList;
 
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
 
 import android.content.Context;
 import android.widget.ArrayAdapter;

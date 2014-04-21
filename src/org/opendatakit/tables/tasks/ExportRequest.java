@@ -2,7 +2,7 @@ package org.opendatakit.tables.tasks;
 
 import java.io.File;
 
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.common.android.data.TableProperties;
 
 public class ExportRequest {
 

@@ -20,11 +20,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.opendatakit.tables.data.ColorGuide;
-import org.opendatakit.tables.data.ColorRuleGroup;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.UserTable;
+import org.opendatakit.common.android.data.ColorGuide;
+import org.opendatakit.common.android.data.ColorRuleGroup;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
 
 import android.content.Context;
 import android.graphics.Canvas;

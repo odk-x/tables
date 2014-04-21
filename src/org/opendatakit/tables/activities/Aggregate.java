@@ -18,14 +18,14 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.sync.SyncUtil;
+import org.opendatakit.common.android.sync.SynchronizationResult;
+import org.opendatakit.common.android.sync.TableResult;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.sync.SyncUtil;
-import org.opendatakit.tables.sync.SynchronizationResult;
-import org.opendatakit.tables.sync.TableResult;
 import org.opendatakit.tables.tasks.SyncNowTask;
 import org.opendatakit.tables.tasks.SyncNowTask.SyncNowCallback;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;

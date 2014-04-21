@@ -2,14 +2,15 @@ package org.opendatakit.tables.activities;
 
 import java.util.Map;
 
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.graphs.GraphDisplayActivity;
 import org.opendatakit.tables.activities.graphs.GraphManagerActivity;
-import org.opendatakit.tables.data.DbTable;
-import org.opendatakit.tables.data.KeyValueStoreHelper;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.data.TableViewType;
-import org.opendatakit.tables.data.UserTable;
 import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
@@ -17,7 +18,6 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.ClearableEditText;
 
 import android.content.Context;

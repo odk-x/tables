@@ -17,13 +17,13 @@ package org.opendatakit.tables.activities.util;
 
 import java.io.File;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableManager;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.TableProperties;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Activity;

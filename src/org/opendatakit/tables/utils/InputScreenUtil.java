@@ -21,8 +21,9 @@ import java.util.TimeZone;
 
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.opendatakit.tables.data.ColumnProperties;
-import org.opendatakit.tables.data.ColumnType;
+import org.opendatakit.common.android.data.ColumnProperties;
+import org.opendatakit.common.android.data.ColumnType;
+import org.opendatakit.common.android.utils.DataUtil;
 
 import android.content.Context;
 import android.widget.AdapterView;

@@ -7,20 +7,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.common.android.utils.CsvUtil;
+import org.opendatakit.common.android.utils.TableFileUtils;
+import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.exceptions.TableAlreadyExistsException;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.utils.ConfigurationUtil;
-import org.opendatakit.tables.utils.CsvUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
+public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements ImportListener {
 	private static final String EMPTY_STRING = "";
 
 	private static final String SPACE = " ";
@@ -182,10 +183,16 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> {
      }
    }
 
+	@Override
 	public void updateLineCount(String lineCount) {
 		this.lineCount = lineCount;
 		publishProgress();
 	}
+
+	  @Override
+	  public void importComplete(boolean outcome) {
+       problemImportingKVSEntries = !outcome;
+	  }
 
 	// dismiss ProgressDialog and create an AlertDialog with one
 	// button to confirm that the user read the postExecute message

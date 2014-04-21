@@ -2,7 +2,8 @@ package org.opendatakit.tables.utils;
 
 import java.io.File;
 
-import org.opendatakit.tables.data.Preferences;
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.utils.TableFileUtils;
 
 /**
  * Various utilities for initial configuration of tables

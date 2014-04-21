@@ -15,14 +15,14 @@
  */
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.utils.TableFileUtils;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.Preferences;
-import org.opendatakit.tables.data.TableProperties;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
 import android.content.Intent;

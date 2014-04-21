@@ -1,7 +1,7 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.data.Preferences;
 import org.opendatakit.tables.tasks.InitializeTask;
 
 import android.app.AlertDialog;

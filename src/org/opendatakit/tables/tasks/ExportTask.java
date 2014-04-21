@@ -1,12 +1,13 @@
 package org.opendatakit.tables.tasks;
 
+import org.opendatakit.common.android.utils.CsvUtil;
+import org.opendatakit.common.android.utils.CsvUtil.ExportListener;
 import org.opendatakit.tables.activities.importexport.ExportCSVActivity;
-import org.opendatakit.tables.utils.CsvUtil;
 
 import android.os.AsyncTask;
 
 public class ExportTask
-        extends AsyncTask<ExportRequest, Integer, Boolean> {
+        extends AsyncTask<ExportRequest, Integer, Boolean> implements ExportListener {
 
   /**
 	 *
@@ -24,7 +25,7 @@ public class ExportTask
 
 // This says whether or not the secondary entries in the key value store
   // were written successfully.
-  public boolean keyValueStoreSuccessful = true;
+  private boolean keyValueStoreSuccessful = true;
 
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
@@ -36,6 +37,11 @@ public class ExportTask
                 request.getIncludeFormIds(),
                 request.getIncludeLocales(),
                 request.getIncludeProperties());
+    }
+
+    @Override
+    public void exportComplete(boolean outcome) {
+      keyValueStoreSuccessful = outcome;
     }
 
     protected void onProgressUpdate(Integer... progress) {

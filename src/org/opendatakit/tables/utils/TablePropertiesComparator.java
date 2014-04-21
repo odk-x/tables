@@ -2,7 +2,7 @@ package org.opendatakit.tables.utils;
 
 import java.util.Comparator;
 
-import org.opendatakit.tables.data.TableProperties;
+import org.opendatakit.common.android.data.TableProperties;
 
 /**
  * Compares two {@link TableProperties} objects based on their display names.
