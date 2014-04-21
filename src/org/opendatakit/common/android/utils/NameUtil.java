@@ -414,7 +414,7 @@ public class NameUtil {
    * @param tp
    * @return
    */
-  public static boolean elementKeyAlreadyExists(String elementKey,
+  private static boolean elementKeyAlreadyExists(String elementKey,
       TableProperties tp) {
     return (tp.getColumnByElementKey(elementKey) != null);
   }
@@ -426,7 +426,7 @@ public class NameUtil {
    * @param tp
    * @return
    */
-  public static boolean elementNameAlreadyExists(String elementName,
+  private static boolean elementNameAlreadyExists(String elementName,
       TableProperties tp) {
     return (tp.getColumnByElementName(elementName) != null);
   }
