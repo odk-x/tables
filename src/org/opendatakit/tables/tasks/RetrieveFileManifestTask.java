@@ -38,7 +38,7 @@ import android.os.Debug;
 public class RetrieveFileManifestTask extends AsyncTask<Void, Void, List<OdkTablesFileManifestEntry>> {
 
   public enum RequestType {
-    ALL_FILES, APP_FILES, TABLE_FILES;
+    APP_FILES, TABLE_FILES;
   }
 
   private final String mAppId;
@@ -97,9 +97,6 @@ public class RetrieveFileManifestTask extends AsyncTask<Void, Void, List<OdkTabl
     List<OdkTablesFileManifestEntry> entries = new ArrayList<OdkTablesFileManifestEntry>();
     try {
     switch (mRequestType) {
-    case ALL_FILES:
-        entries = synchronizer.getFileManifestForAllFiles();
-      break;
     case APP_FILES:
       entries = synchronizer.getAppLevelFileManifest();
       break;

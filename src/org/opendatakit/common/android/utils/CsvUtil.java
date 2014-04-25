@@ -44,22 +44,29 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.joda.time.DateTime;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.exception.TableAlreadyExistsException;
+import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.provider.KeyValueStoreColumns;
+import org.opendatakit.common.android.provider.TableDefinitionsColumns;
+import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 
 import android.content.Context;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Various utilities for importing/exporting tables from/to CSV.
@@ -99,9 +106,6 @@ public class CsvUtil {
 
   private static final String LAST_MOD_TIME_LABEL = "_last_mod_time";
   private static final String ACCESS_CONTROL_LABEL = "_access_control";
-  private static final String FORM_ID_LABEL = DataTableColumns.FORM_ID;
-  private static final String LOCALE_LABEL = DataTableColumns.LOCALE;
-  private static final String ROW_ID_LABEL = DataTableColumns.ID;
 
   private static final char DELIMITING_CHAR = ',';
   private static final char QUOTE_CHAR = '\"';
@@ -230,19 +234,19 @@ public class CsvUtil {
         String colName = row[i];
         String dbName = null;
 
-        if (colName.equals(ROW_ID_LABEL)) {
+        if (colName.equals(DataTableColumns.ID)) {
           idxRowId = i;
           dbName = DataTableColumns.ID;
-        } else if (colName.equals(FORM_ID_LABEL)) {
+        } else if (colName.equals(DataTableColumns.FORM_ID)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
-        } else if (colName.equals(LOCALE_LABEL)) {
+        } else if (colName.equals(DataTableColumns.LOCALE)) {
           idxLocale = i;
           dbName = DataTableColumns.LOCALE;
-        } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
+        } else if (colName.equals(LAST_MOD_TIME_LABEL) || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
           idxTimestamp = i;
           dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
-        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
+        } else if (colName.equals(ACCESS_CONTROL_LABEL) || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
           idxSavepointCreator = i;
           dbName = DataTableColumns.SAVEPOINT_CREATOR;
         } else {
@@ -365,13 +369,13 @@ public class CsvUtil {
       for (int i = 0; i < row.length; ++i) {
         String colName = row[i];
         String dbName = null;
-        if (colName.equals(ROW_ID_LABEL)) {
+        if (colName.equals(DataTableColumns.ID)) {
           idxRowId = i;
           dbName = DataTableColumns.ID;
-        } else if (colName.equals(FORM_ID_LABEL)) {
+        } else if (colName.equals(DataTableColumns.FORM_ID)) {
           idxFormId = i;
           dbName = DataTableColumns.FORM_ID;
-        } else if (colName.equals(LOCALE_LABEL)) {
+        } else if (colName.equals(DataTableColumns.LOCALE)) {
           idxLocale = i;
           dbName = DataTableColumns.LOCALE;
         } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
@@ -582,8 +586,9 @@ public class CsvUtil {
         String lastModTime = idxSavepointTimestamp == -1 ? du.formatNowForDb() : row[idxSavepointTimestamp];
         DateTime t = du.parseDateTimeFromDb(lastModTime);
         String savepointCreator = idxSavepointCreator == -1 ? null : row[idxSavepointCreator];
-        dbt.addRow(rowId, formId, locale, t.getMillis(), savepointCreator, values);
-
+        dbt.addRow(rowId, formId, locale,
+            SavepointTypeManipulator.complete(), TableConstants.nanoSecondsFromMillis(t.getMillis()),
+            savepointCreator, null, null, null, values );
         if (rowCount % 30 == 0 && importListener != null) {
           importListener.updateLineCount(c.getString(R.string.import_thru_row, 1 + rowCount));
         }
@@ -607,229 +612,515 @@ public class CsvUtil {
   // ===========================================================================================
 
   /**
-   * Export the file.
-   * <p>
-   * If raw is false, it means that you DO export the settings. In this case the
-   * first row is: [json representation of table properties, json of list of kvs
-   * entries], and all the column headings are the column element keys or the
-   * names of the admin columns in the table.
+   * Export the given tableId.
+   * Exports two csv files to the output/csv directory under the appName:
+   * <ul>
+   * <li>tableid.fileQualifier.csv - data table</li>
+   * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
+   * </ul>
+   * If fileQualifier is null or an empty string, then it emits to
+   * <ul>
+   * <li>tableid.csv - data table</li>
+   * <li>tableid.properties.csv - metadata definition of this table</li>
+   * </ul>
    *
-   * @param exportTask
-   *          the exportTask to which a message is sent if writing key value
-   *          store settings fails. null safe.
-   * @param file
-   * @param tableId
-   * @param includeTimestamp
-   * @param includeAccessControl
-   * @param includeFormId
-   * @param includeLocale
-   * @param exportProperties
-   *          (automatically includes all the above fields)
+   * @param exportListener
+   * @param tp
+   * @param fileQualifier
    * @return
    */
-  public boolean export(ExportListener exportTask, File file, TableProperties tp,
-                        boolean includeTimestamp, boolean includeAccessControl,
-                        boolean includeFormId, boolean includeLocale, boolean exportProperties) {
+  public boolean exportSeparable(ExportListener exportListener, TableProperties tp, String fileQualifier) {
     // building array of columns to select and header row for output file
-    int columnCount = tp.getDatabaseColumns().size();
-    if (exportProperties) {
-      // then we are including all the metadata columns.
-      columnCount += DbTable.getAdminColumns().size();
-    } else {
-      if (includeTimestamp)
-        columnCount++;
-      if (includeAccessControl)
-        columnCount++;
-      if (includeFormId)
-        columnCount++;
-      if (includeLocale)
-        columnCount++;
-    }
-    int idxFirstUserColumns;
-    ArrayList<String> userColumns = new ArrayList<String>();
+    // then we are including all the metadata columns.
     ArrayList<String> columns = new ArrayList<String>();
-    ArrayList<String> headerRow = new ArrayList<String>();
-    int idxRowId = -1;
-    int idxTimestamp = -1;
-    int idxSavepointCreator = -1;
-    int idxFormId = -1;
-    int idxLocale = -1;
 
-    int index = 0;
-    if (exportProperties) {
-      // put the user-relevant metadata columns in leftmost columns
-      {
-        columns.add(DataTableColumns.ID);
-        headerRow.add(ROW_ID_LABEL);
-        idxRowId = index;
-        index++;
-      }
+    Log.i(TAG, "exportSeparable: tableId: " + tp.getTableId() + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
 
-      {
-        columns.add(DataTableColumns.FORM_ID);
-        headerRow.add(FORM_ID_LABEL);
-        idxFormId = index;
-        index++;
-      }
+    // put the user-relevant metadata columns in leftmost columns
+    columns.add(DataTableColumns.ID);
+    columns.add(DataTableColumns.FORM_ID);
+    columns.add(DataTableColumns.LOCALE);
+    columns.add(DataTableColumns.SAVEPOINT_TYPE);
+    columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+    columns.add(DataTableColumns.SAVEPOINT_CREATOR);
 
-      {
-        columns.add(DataTableColumns.LOCALE);
-        headerRow.add(LOCALE_LABEL);
-        idxLocale = index;
-        index++;
-      }
-
-      {
-        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-        headerRow.add(LAST_MOD_TIME_LABEL);
-        idxTimestamp = index;
-        index++;
-      }
-
-      {
-        columns.add(DataTableColumns.SAVEPOINT_CREATOR);
-        headerRow.add(ACCESS_CONTROL_LABEL);
-        idxSavepointCreator = index;
-        index++;
-      }
-
-      idxFirstUserColumns = index;
-      int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-      for (int i = 0; i < numberOfDisplayColumns; ++i) {
-        ColumnProperties cp = tp.getColumnByIndex(i);
-        String displayName = cp.getDisplayName();
-        userColumns.add(cp.getElementKey());
-        columns.add(cp.getElementKey());
-        headerRow.add(displayName);
-        index++;
-      }
-
-      // And now add all remaining metadata columns
-      for (String colName : DbTable.getAdminColumns()) {
-        if (columns.contains(colName)) {
-          continue;
-        }
-        String displayName = colName;
-        columns.add(colName);
-        headerRow.add(displayName);
-        index++;
-      }
-    } else {
-      if (includeFormId) {
-        columns.add(DataTableColumns.FORM_ID);
-        headerRow.add(FORM_ID_LABEL);
-        idxFormId = index;
-        index++;
-      }
-      if (includeLocale) {
-        columns.add(DataTableColumns.LOCALE);
-        headerRow.add(LOCALE_LABEL);
-        idxLocale = index;
-        index++;
-      }
-      if (includeTimestamp) {
-        columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-        headerRow.add(LAST_MOD_TIME_LABEL);
-        idxTimestamp = index;
-        index++;
-      }
-      if (includeAccessControl) {
-        columns.add(DataTableColumns.SAVEPOINT_CREATOR);
-        headerRow.add(ACCESS_CONTROL_LABEL);
-        idxSavepointCreator = index;
-        index++;
-      }
-
-      idxFirstUserColumns = index;
-      // export everything in the user columns
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-        userColumns.add(cp.getElementKey());
-        columns.add(cp.getElementKey());
-        headerRow.add(cp.getElementKey());
-        index++;
-      }
+    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+    for (int i = 0; i < numberOfDisplayColumns; ++i) {
+      ColumnProperties cp = tp.getColumnByIndex(i);
+      columns.add(cp.getElementKey());
     }
+
+    // And now add all remaining export columns
+    for (String colName : DbTable.getExportColumns()) {
+      if (columns.contains(colName)) {
+        continue;
+      }
+      columns.add(colName);
+    }
+
     // getting data
     DbTable dbt = DbTable.getDbTable(tp);
-    String[] selectionKeys = { DataTableColumns.SAVEPOINT_TYPE
-    };
-    String[] selectionArgs = { DbTable.SavedStatus.COMPLETE.name()
-    };
-    UserTable table = dbt.getRaw(userColumns, selectionKeys, selectionArgs, null, null, null, null);
+    String whereString = DataTableColumns.SAVEPOINT_TYPE + " IS NOT NULL AND (" +
+          DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
+          DataTableColumns.CONFLICT_TYPE + " = " +
+          Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) + ")";
+    UserTable table = dbt.rawSqlQuery(whereString, null, null, null, null, null);
     // writing data
     OutputStreamWriter output = null;
     try {
+      // both files go under the output/csv directory...
+      File outputCsv = new File(new File(ODKFileUtils.getOutputFolder(appName)), "csv");
+      outputCsv.mkdirs();
+
+      // emit data table...
+      File file = new File( outputCsv, tp.getTableId() +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".csv");
       FileOutputStream out = new FileOutputStream(file);
       output = new OutputStreamWriter(out, CharEncoding.UTF_8);
-      CSVWriter cw = new CSVWriter(output, DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
-      if (exportProperties) {
-        // TODO: INSTEAD USE A TABLE DEFINITION PROBABLY?
-        // The first row must be [tableProperties, secondaryKVSEntries]
-        // The tableProperties json is easily had,
-        // so first we must get the secondary entries.
-        // TODO sort out and handle appropriate closing of database
-        // We do NOT want to include the table or column partitions.
-        // partitions.remove(TableProperties.KVS_PARTITION);
-        // partitions.remove(ColumnProperties.KVS_PARTITION);
-        List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
-        // TODO sort out and handle appropriate closing of database
-        String[] settingsRow;
-        String strKvsEntries = null;
-        try {
-          strKvsEntries = mapper.writeValueAsString(kvsEntries);
-        } catch (JsonGenerationException e) {
-          e.printStackTrace();
-          if (exportTask != null) {
-            exportTask.exportComplete(false);
-          }
-        } catch (JsonMappingException e) {
-          e.printStackTrace();
-          if (exportTask != null) {
-            exportTask.exportComplete(false);
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
-          if (exportTask != null) {
-            exportTask.exportComplete(false);
-          }
-        }
-        if (strKvsEntries == null) {
-          // mapping failed
-          settingsRow = new String[] { tp.toJson()
-          };
-        } else {
-          // something was mapped
-          settingsRow = new String[] { tp.toJson(), strKvsEntries
-          };
-        }
-        cw.writeNext(settingsRow);
-      }
-      cw.writeNext(headerRow.toArray(new String[headerRow.size()]));
-      String[] row = new String[columnCount];
+      RFC4180CsvWriter cw = new RFC4180CsvWriter(output);
+      // don't have to worry about quotes in elementKeys...
+      cw.writeNext(columns.toArray(new String[columns.size()]));
+      String[] row = new String[columns.size()];
       for (int i = 0; i < table.getNumberOfRows(); i++) {
+        Row dataRow = table.getRowAtIndex(i);
         for (int j = 0; j < columns.size(); ++j) {
-          if (j >= idxFirstUserColumns && j < idxFirstUserColumns + userColumns.size()) {
-            row[j] = table.getData(i, j - idxFirstUserColumns);
-          } else {
-            row[j] = table.getMetadataByElementKey(i, columns.get(j));
-          }
-        }
-        if (idxTimestamp != -1) {
-          // reformat the timestamp to be a nice string
-          Long timestamp = TableConstants.milliSecondsFromNanos(row[idxTimestamp]);
-          DateTime dt = new DateTime(timestamp);
-          row[idxTimestamp] = du.formatDateTimeForDb(dt);
+          row[j] = dataRow.getDataOrMetadataByElementKey(columns.get(j));;
         }
         cw.writeNext(row);
       }
       cw.flush();
       cw.close();
+
+      // emit metadata table...
+      file = new File( outputCsv, tp.getTableId() +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
+      out = new FileOutputStream(file);
+      output = new OutputStreamWriter(out, CharEncoding.UTF_8);
+      cw = new RFC4180CsvWriter(output);
+
+      String[] blank = {};
+
+      // Emit TableDefinitions SyncTag
+      // I don't think we need anything else in the TableDefinitions??
+      ArrayList<String> tableDefHeaders = new ArrayList<String>();
+      tableDefHeaders.add(TableDefinitionsColumns.SYNC_TAG);
+
+      cw.writeNext(tableDefHeaders.toArray(new String[tableDefHeaders.size()]));
+      String[] tableDefRow = new String[tableDefHeaders.size()];
+      tableDefRow[0] = (tp.getSyncTag() == null) ? null : tp.getSyncTag().toString();
+      cw.writeNext(tableDefRow);
+
+      cw.writeNext(blank);
+
+      // Emit ColumnDefinitions
+
+      ArrayList<String> colDefHeaders = new ArrayList<String>();
+      colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_KEY);
+      colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_NAME);
+      colDefHeaders.add(ColumnDefinitionsColumns.ELEMENT_TYPE);
+      colDefHeaders.add(ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION);
+      colDefHeaders.add(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
+
+      cw.writeNext(colDefHeaders.toArray(new String[colDefHeaders.size()]));
+      String[] colDefRow = new String[colDefHeaders.size()];
+      for ( ColumnProperties cp : tp.getAllColumns().values() ) {
+        colDefRow[0] = cp.getElementKey();
+        colDefRow[1] = cp.getElementName();
+        colDefRow[2] = cp.getColumnType().toString();
+        colDefRow[3] = Boolean.toString(cp.isUnitOfRetention());
+        colDefRow[4] = ODKFileUtils.mapper.writeValueAsString(cp.getListChildElementKeys());
+        cw.writeNext(colDefRow);
+      }
+
+      cw.writeNext(blank);
+
+      // Emit KeyValueStore
+
+      ArrayList<String> kvsHeaders = new ArrayList<String>();
+      kvsHeaders.add(KeyValueStoreColumns.PARTITION);
+      kvsHeaders.add(KeyValueStoreColumns.ASPECT);
+      kvsHeaders.add(KeyValueStoreColumns.KEY);
+      kvsHeaders.add(KeyValueStoreColumns.VALUE_TYPE);
+      kvsHeaders.add(KeyValueStoreColumns.VALUE);
+
+      List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
+      cw.writeNext(kvsHeaders.toArray(new String[kvsHeaders.size()]));
+      String[] kvsRow = new String[kvsHeaders.size()];
+      for (int i = 0; i < kvsEntries.size(); i++) {
+        OdkTablesKeyValueStoreEntry entry = kvsEntries.get(i);
+        kvsRow[0] = entry.partition;
+        kvsRow[1] = entry.aspect;
+        kvsRow[2] = entry.key;
+        kvsRow[3] = entry.type;
+        kvsRow[4] = entry.value;
+        cw.writeNext(kvsRow);
+      }
+      cw.flush();
+      cw.close();
+
       return true;
     } catch (IOException e) {
       return false;
     } finally {
       try {
         output.close();
+      } catch (IOException e) {
+      }
+    }
+  }
+
+  private static class ColumnInfo {
+    String elementKey;
+    String displayName;
+    String elementName;
+    ColumnType elementType;
+    Boolean isUnitOfRetention;
+    List<String> listOfStringElementKeys = new ArrayList<String>();
+    List<OdkTablesKeyValueStoreEntry> kvsEntries = new ArrayList<OdkTablesKeyValueStoreEntry>();
+  };
+
+  public int countUpToLastNonNullElement(String[] row) {
+    for ( int i = row.length-1 ; i >= 0 ; --i ) {
+      if ( row[i] != null ) {
+        return (i+1);
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Export the given tableId.
+   * Exports two csv files to the output/csv directory under the appName:
+   * <ul>
+   * <li>tableid.fileQualifier.csv - data table</li>
+   * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
+   * </ul>
+   * If fileQualifier is null or an empty string, then it emits to
+   * <ul>
+   * <li>tableid.csv - data table</li>
+   * <li>tableid.properties.csv - metadata definition of this table</li>
+   * </ul>
+   *
+   * @param exportListener
+   * @param fileQualifier
+   * @param tp
+   * @return
+   */
+  public boolean createTableFromCsv(ImportListener importListener, String tableId, String fileQualifier) {
+
+    {
+      TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+      if ( tp != null ) {
+        throw new IllegalStateException("Unexpectedly found tableId already exists!");
+      }
+    }
+
+    Log.i(TAG, "createTableFromCsv: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
+
+
+    Map<String, ColumnInfo> columns = new HashMap<String, ColumnInfo>();
+
+    // reading data
+    InputStreamReader input = null;
+    try {
+      // both files are read from assets/csv directory...
+      File assetsCsv = new File(new File(ODKFileUtils.getAssetsFolder(appName)), "csv");
+
+      // read data table...
+      File file = new File( assetsCsv, tableId +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
+      FileInputStream in = new FileInputStream(file);
+      input = new InputStreamReader(in, CharEncoding.UTF_8);
+      RFC4180CsvReader cr = new RFC4180CsvReader(input);
+
+      String[] row;
+
+      // Read TableDefinitions SyncTag header
+      row = cr.readNext();
+      if ( row == null || countUpToLastNonNullElement(row) != 1  ) {
+        throw new IllegalStateException("Unexpected row length -- expected one cell on first line");
+      }
+
+      if ( !TableDefinitionsColumns.SYNC_TAG.equals(row[0]) ) {
+        throw new IllegalStateException("Expected " + TableDefinitionsColumns.SYNC_TAG);
+      }
+
+      row = cr.readNext();
+      // Read TableDefinitions SyncTag
+      SyncTag syncTag = SyncTag.valueOf(row[0]);
+
+      // blank
+      row = cr.readNext();
+
+      // Read ColumnDefinitions
+      // get the column headers
+      String[] colHeaders = cr.readNext();
+      int colHeadersLength = countUpToLastNonNullElement(colHeaders);
+      // get the first row
+      row = cr.readNext();
+      while ( row != null && countUpToLastNonNullElement(row) != 0 ) {
+        ColumnInfo ci = new ColumnInfo();
+
+        int rowLength = countUpToLastNonNullElement(row);
+        for ( int i = 0 ; i < rowLength ; ++i ) {
+          if ( i >= colHeadersLength ) {
+            throw new IllegalStateException("data beyond header row of ColumnDefinitions table");
+          }
+          if ( ColumnDefinitionsColumns.ELEMENT_KEY.equals(colHeaders[i]) ) {
+            ci.elementKey = row[i];
+          }
+          if ( ColumnDefinitionsColumns.ELEMENT_NAME.equals(colHeaders[i]) ) {
+            ci.elementName = row[i];
+          }
+          if ( ColumnDefinitionsColumns.ELEMENT_TYPE.equals(colHeaders[i]) ) {
+            ci.elementType = ColumnType.valueOf(row[i]);
+          }
+          if ( ColumnDefinitionsColumns.IS_UNIT_OF_RETENTION.equals(colHeaders[i]) ) {
+            ci.isUnitOfRetention = Boolean.valueOf(row[i]);
+          }
+          if ( ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS.equals(colHeaders[i]) ) {
+            ci.listOfStringElementKeys = ODKFileUtils.mapper.readValue(row[i], ArrayList.class );
+          }
+        }
+
+        if ( ci.elementKey == null || ci.elementType == null ) {
+          throw new IllegalStateException("ElementKey and ElementType must be specified");
+        }
+
+        columns.put(ci.elementKey, ci);
+
+        // get next row or blank to end...
+        row = cr.readNext();
+      }
+
+      // we already read the blank row to get here...
+
+      // Read KeyValueStore
+      // read the column headers
+      String[] kvsHeaders = cr.readNext();
+      int kvsHeadersLength = countUpToLastNonNullElement(kvsHeaders);
+      String displayName = null;
+      List<OdkTablesKeyValueStoreEntry> kvsEntries = new ArrayList<OdkTablesKeyValueStoreEntry>();
+      // read the first row
+      row = cr.readNext();
+      while ( row != null && countUpToLastNonNullElement(row)  != 0 ) {
+        OdkTablesKeyValueStoreEntry kvsEntry = new OdkTablesKeyValueStoreEntry();
+        kvsEntry.tableId = tableId;
+        int rowLength = countUpToLastNonNullElement(row);
+        for ( int i = 0 ; i < rowLength ; ++i ) {
+          if ( KeyValueStoreColumns.PARTITION.equals(kvsHeaders[i]) ) {
+            kvsEntry.partition = row[i];
+          }
+          if ( KeyValueStoreColumns.ASPECT.equals(kvsHeaders[i]) ) {
+            kvsEntry.aspect = row[i];
+          }
+          if ( KeyValueStoreColumns.KEY.equals(kvsHeaders[i]) ) {
+            kvsEntry.key = row[i];
+          }
+          if ( KeyValueStoreColumns.VALUE_TYPE.equals(kvsHeaders[i]) ) {
+            kvsEntry.type = row[i];
+          }
+          if ( KeyValueStoreColumns.VALUE.equals(kvsHeaders[i]) ) {
+            kvsEntry.value = row[i];
+          }
+        }
+        if ( ColumnProperties.KVS_PARTITION.equals(kvsEntry.partition) ) {
+          // column-specific
+          String column = kvsEntry.aspect;
+          ColumnInfo ci = columns.get(column);
+          if ( ci == null ) {
+            throw new IllegalStateException("Reference to non-existent column: " + column + " of tableId: " + tableId);
+          }
+          // look for the displayName
+          if ( ColumnProperties.KEY_DISPLAY_NAME.equals(kvsEntry.key) ) {
+            ci.displayName = kvsEntry.value;
+          } else {
+            ci.kvsEntries.add(kvsEntry);
+          }
+        } else {
+          // not column-specific
+          // see if we can find the displayName
+          if ( TableProperties.KVS_PARTITION.equals(kvsEntry.partition) &&
+               KeyValueStoreHelper.DEFAULT_ASPECT.equals(kvsEntry.aspect) &&
+               TableProperties.KEY_DISPLAY_NAME.equals(kvsEntry.key) ) {
+            displayName = kvsEntry.value;
+          } else {
+            kvsEntries.add(kvsEntry);
+          }
+        }
+        // get next row or blank to end...
+        row = cr.readNext();
+      }
+      cr.close();
+
+      TableProperties tp = TableProperties.addTable(context, appName,
+          tableId, (displayName == null ? tableId : displayName), tableId);
+
+      tp.addMetaDataEntries(kvsEntries, false);
+      for ( ColumnInfo ci : columns.values() ) {
+        ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
+            ci.elementType, ci.listOfStringElementKeys, ci.isUnitOfRetention);
+        cp.addMetaDataEntries(ci.kvsEntries);
+      }
+      tp.setSyncTag(syncTag);
+      return true;
+    } catch (IOException e) {
+      return false;
+    } finally {
+      try {
+        input.close();
+      } catch (IOException e) {
+      }
+    }
+  }
+
+  public boolean importSeparable(ImportListener importListener, String tableId, String fileQualifier, boolean createIfNotPresent) {
+
+    TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+    if ( tp == null ) {
+      if ( createIfNotPresent ) {
+        if ( !createTableFromCsv(importListener, tableId, fileQualifier) ) {
+          return false;
+        }
+        // and now load the TP we just defined...
+        tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+      } else {
+        return false;
+      }
+    }
+
+    Log.i(TAG, "createTableFromCsv: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
+
+    // building array of columns to select and header row for output file
+    // then we are including all the metadata columns.
+    ArrayList<String> columns = new ArrayList<String>();
+
+    // put the user-relevant metadata columns in leftmost columns
+    columns.add(DataTableColumns.ID);
+    columns.add(DataTableColumns.FORM_ID);
+    columns.add(DataTableColumns.LOCALE);
+    columns.add(DataTableColumns.SAVEPOINT_TYPE);
+    columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+    columns.add(DataTableColumns.SAVEPOINT_CREATOR);
+
+    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
+    for (int i = 0; i < numberOfDisplayColumns; ++i) {
+      ColumnProperties cp = tp.getColumnByIndex(i);
+      columns.add(cp.getElementKey());
+    }
+
+    // And now add all remaining metadata columns
+    for (String colName : DbTable.getExportColumns()) {
+      if (columns.contains(colName)) {
+        continue;
+      }
+      columns.add(colName);
+    }
+
+    // reading data
+    InputStreamReader input = null;
+    try {
+      // both files are read from assets/csv directory...
+      File assetsCsv = new File(new File(ODKFileUtils.getAssetsFolder(appName)), "csv");
+
+      // read data table...
+      File file = new File( assetsCsv, tp.getTableId() +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".csv");
+      FileInputStream in = new FileInputStream(file);
+      input = new InputStreamReader(in, CharEncoding.UTF_8);
+      RFC4180CsvReader cr = new RFC4180CsvReader(input);
+      // don't have to worry about quotes in elementKeys...
+      String[] columnsInFile = cr.readNext();
+      int columnsInFileLength = countUpToLastNonNullElement(columnsInFile);
+      DbTable dbTable = DbTable.getDbTable(tp);
+
+      String v_id;
+      String v_form_id;
+      String v_locale;
+      String v_savepoint_type;
+      String v_savepoint_creator;
+      String v_savepoint_timestamp;
+      String v_row_etag;
+      String v_filter_type;
+      String v_filter_value;
+
+      Map<String,String> valueMap = new HashMap<String,String>();
+
+      String[] row;
+      for (;;) {
+        row = cr.readNext();
+        if ( row == null || countUpToLastNonNullElement(row) == 0 ) {
+          break;
+        }
+        int rowLength = countUpToLastNonNullElement(row);
+
+        // default values for metadata columns if not provided
+        v_id = UUID.randomUUID().toString();
+        v_form_id = null;
+        v_locale = null;
+        v_savepoint_type = SavepointTypeManipulator.complete();
+        v_savepoint_creator = null;
+        v_savepoint_timestamp = TableConstants.nanoSecondsFromMillis(System.currentTimeMillis());
+        v_row_etag = null;
+        v_filter_type = null;
+        v_filter_value = null;
+        // clear value map
+        valueMap.clear();
+
+        for ( int i = 0 ; i < columnsInFileLength ; ++i ) {
+          if ( i > rowLength ) break;
+          String column = columnsInFile[i];
+          String tmp = row[i];
+          if ( DataTableColumns.ID.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_id = tmp;
+          }
+          if ( DataTableColumns.FORM_ID.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_form_id = tmp;
+          }
+          if ( DataTableColumns.LOCALE.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_locale = tmp;
+          }
+          if ( DataTableColumns.SAVEPOINT_TYPE.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_savepoint_type = tmp;
+          }
+          if ( DataTableColumns.SAVEPOINT_CREATOR.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_savepoint_creator = tmp;
+          }
+          if ( DataTableColumns.SAVEPOINT_TIMESTAMP.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_savepoint_timestamp = tmp;
+          }
+          if ( DataTableColumns.ROW_ETAG.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_row_etag = tmp;
+          }
+          if ( DataTableColumns.FILTER_TYPE.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_filter_type = tmp;
+          }
+          if ( DataTableColumns.FILTER_VALUE.equals(column) && (tmp != null && tmp.length() != 0) ) {
+            v_filter_value = tmp;
+          }
+          if ( tp.getColumnByElementKey(column) != null ) {
+            valueMap.put(column, tmp);
+          }
+        }
+
+        /**
+         * Insertion will set the SYNC_STATE to inserting.
+         *
+         * If the table is sync'd to the server, this will cause one
+         * sync interaction with the server to confirm that the server
+         * also has this record.
+         */
+        dbTable.addRow(v_id, v_form_id, v_locale,
+            v_savepoint_type, v_savepoint_timestamp, v_savepoint_creator,
+            v_row_etag, v_filter_type, v_filter_value, valueMap);
+      }
+      cr.close();
+      return true;
+    } catch (IOException e) {
+      return false;
+    } finally {
+      try {
+        input.close();
       } catch (IOException e) {
       }
     }

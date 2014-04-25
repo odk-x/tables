@@ -30,13 +30,8 @@ public class ExportTask
     protected Boolean doInBackground(ExportRequest... exportRequests) {
         ExportRequest request = exportRequests[0];
         CsvUtil cu = new CsvUtil(this.exportCSVActivity, appName);
-        return cu.export(this, request.getFile(),
-                request.getTableProperties(),
-                request.getIncludeTimestamps(),
-                request.getIncludeAccessControl(),
-                request.getIncludeFormIds(),
-                request.getIncludeLocales(),
-                request.getIncludeProperties());
+        // export goes to output/csv directory...
+        return cu.exportSeparable(this, request.getTableProperties(), request.getFileQualifier());
     }
 
     @Override

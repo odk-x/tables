@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
@@ -28,7 +29,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;

@@ -36,13 +36,13 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.data.ColumnProperties.ColumnDefinitionChange;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -88,7 +88,7 @@ public class TableProperties {
   /***********************************
    * The names of keys that are defaulted to exist in the key value store.
    ***********************************/
-  private static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
+  public static final String KEY_DISPLAY_NAME = KeyValueStoreConstants.TABLE_DISPLAY_NAME;
   private static final String KEY_COLUMN_ORDER = KeyValueStoreConstants.TABLE_COL_ORDER;
 
   private static final String KEY_GROUP_BY_COLUMNS = KeyValueStoreConstants.TABLE_GROUP_BY_COLS;
@@ -532,9 +532,6 @@ public class TableProperties {
       }
       if ( mapProps.get(KEY_SORT_COLUMN) == null ) {
         mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
-      }
-      if ( mapProps.get(KEY_COLUMN_ORDER) == null ) {
-        mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
       }
       if ( mapProps.get(KEY_INDEX_COLUMN) == null ) {
         mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
@@ -1017,7 +1014,8 @@ public class TableProperties {
       refreshColumnsFromDatabase();
     }
     for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
-      if (cp.getElementName().equals(elementName)) {
+      String colElementName = cp.getElementName();
+      if (colElementName != null && colElementName.equals(elementName)) {
         return cp;
       }
     }
@@ -1076,11 +1074,18 @@ public class TableProperties {
       throw new IllegalArgumentException("[addColumn] invalid element key: " +
           elementKey);
     }
-    if (elementName == null) {
-      elementName = NameUtil.createUniqueElementName(displayName, this);
-    } else if (!NameUtil.isValidUserDefinedDatabaseName(elementName)) {
-      throw new IllegalArgumentException("[addColumn] invalid element name: " +
-          elementName);
+    // it is OK for elementName to be null if it isn't a stored value.
+    // e.g., Array types and custom data types can have child elements
+    // with a null element name. The child element defines the underlying
+    // storage type of the value.
+    if ( isUnitOfRetention ) {
+      if (elementName == null) {
+        throw new IllegalArgumentException("[addColumn] null element name for elementKey: " +
+            elementKey);
+      } else if (!NameUtil.isValidUserDefinedDatabaseName(elementName)) {
+        throw new IllegalArgumentException("[addColumn] invalid element name: " +
+            elementName + " for elementKey: " + elementKey);
+      }
     }
     String jsonStringifyDisplayName = null;
     try {

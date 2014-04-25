@@ -39,6 +39,8 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
@@ -1076,7 +1078,7 @@ public class CollectUtil {
   public static boolean handleOdkCollectEditReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok, not inserting " + "edited data.");
+      Log.i(TAG, "return code wasn't OK not inserting " + "edited data.");
       return false;
     }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
@@ -1104,7 +1106,7 @@ public class CollectUtil {
   public static boolean handleOdkCollectAddReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
+      Log.i(TAG, "return code wasn't OK --not adding row");
       return false;
     }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
@@ -1124,7 +1126,11 @@ public class CollectUtil {
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
     DbTable dbTable = DbTable.getDbTable(tp);
-    dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale, formValues.timestamp, formValues.savepointCreator, values );
+
+    dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale,
+        SavepointTypeManipulator.complete(), TableConstants.nanoSecondsFromMillis(formValues.timestamp),
+        formValues.savepointCreator, null, null, null, values );
+
     return true;
   }
 

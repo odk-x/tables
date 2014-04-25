@@ -121,8 +121,11 @@ public class OutputUtil {
     Map<String, String> pathToKey = new HashMap<String, String>();
     Map<String, String> keyToDisplayName = new HashMap<String, String>();
     for (ColumnProperties columnProperties : tableProperties.getAllColumns().values()) {
-      pathToKey.put(columnProperties.getElementName(), columnProperties.getElementKey());
-      keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getDisplayName());
+      String elementName = columnProperties.getElementName();
+      if ( elementName != null ) {
+        pathToKey.put(columnProperties.getElementName(), columnProperties.getElementKey());
+        keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getDisplayName());
+      }
     }
     String defaultDetailFileName = DetailDisplayActivity.getDefaultDetailFileName(tableProperties);
     String defaultListFileName = ListDisplayActivity.getDefaultListFileName(tableProperties);

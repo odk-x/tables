@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
-import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.SyncState;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -70,6 +71,11 @@ public class DbTable {
      */
     private static final List<String> ADMIN_COLUMNS;
 
+    /**
+     * These are the columns that should be exported
+     */
+    private static final List<String> EXPORT_COLUMNS;
+
     /*
      * These are the columns that we want to include in sync rows to sync up
      * to the server. This is a work in progress that is being added later, so
@@ -84,21 +90,38 @@ public class DbTable {
       ArrayList<String> adminColumns = new ArrayList<String>();
       adminColumns.add(DataTableColumns.ID);
       adminColumns.add(DataTableColumns.ROW_ETAG);
-      adminColumns.add(DataTableColumns.SYNC_STATE);
-      adminColumns.add(DataTableColumns.CONFLICT_TYPE);
-      adminColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-      adminColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
-      adminColumns.add(DataTableColumns.SAVEPOINT_TYPE);
+      adminColumns.add(DataTableColumns.SYNC_STATE); // not exportable
+      adminColumns.add(DataTableColumns.CONFLICT_TYPE); // not exportable
+      adminColumns.add(DataTableColumns.FILTER_TYPE);
+      adminColumns.add(DataTableColumns.FILTER_VALUE);
       adminColumns.add(DataTableColumns.FORM_ID);
       adminColumns.add(DataTableColumns.LOCALE);
+      adminColumns.add(DataTableColumns.SAVEPOINT_TYPE);
+      adminColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      adminColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
       ADMIN_COLUMNS = Collections.unmodifiableList(adminColumns);
+
+      ArrayList<String> exportColumns = new ArrayList<String>();
+      exportColumns.add(DataTableColumns.ID);
+      exportColumns.add(DataTableColumns.ROW_ETAG);
+      exportColumns.add(DataTableColumns.FILTER_TYPE);
+      exportColumns.add(DataTableColumns.FILTER_VALUE);
+      exportColumns.add(DataTableColumns.FORM_ID);
+      exportColumns.add(DataTableColumns.LOCALE);
+      exportColumns.add(DataTableColumns.SAVEPOINT_TYPE);
+      exportColumns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
+      exportColumns.add(DataTableColumns.SAVEPOINT_CREATOR);
+      EXPORT_COLUMNS = Collections.unmodifiableList(exportColumns);
 
       // put the columns in to the to-sync map.
       COLUMNS_TO_SYNC = new HashMap<String, ColumnType>();
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
-      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_CREATOR, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.FILTER_TYPE, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.FILTER_VALUE, ColumnType.STRING);
       COLUMNS_TO_SYNC.put(DataTableColumns.FORM_ID, ColumnType.STRING);
       COLUMNS_TO_SYNC.put(DataTableColumns.LOCALE, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TYPE, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_TIMESTAMP, ColumnType.STRING);
+      COLUMNS_TO_SYNC.put(DataTableColumns.SAVEPOINT_CREATOR, ColumnType.STRING);
     }
 
     /**
@@ -110,16 +133,17 @@ public class DbTable {
       return ADMIN_COLUMNS;
     }
 
-    public enum SavedStatus {
-    	COMPLETE,
-    	INCOMPLETE
-    };
+    public static List<String> getExportColumns() {
+      return EXPORT_COLUMNS;
+    }
 
     public static final String DB_CSV_COLUMN_LIST =
         DataTableColumns.ID
         + ", " + DataTableColumns.ROW_ETAG
         + ", " + DataTableColumns.SYNC_STATE
         + ", " + DataTableColumns.CONFLICT_TYPE
+        + ", " + DataTableColumns.FILTER_TYPE
+        + ", " + DataTableColumns.FILTER_VALUE
         + ", " + DataTableColumns.FORM_ID
         + ", " + DataTableColumns.LOCALE
         + ", " + DataTableColumns.SAVEPOINT_TYPE
@@ -157,18 +181,19 @@ public class DbTable {
                 colListBuilder.append(" TEXT");
             }
         }
-        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "(" +
-            DataTableColumns.ID + " TEXT NOT NULL" +
-     ", " + DataTableColumns.ROW_ETAG + " TEXT NULL" +
-     ", " + DataTableColumns.SYNC_STATE + " TEXT NOT NULL" +
-     ", " + DataTableColumns.CONFLICT_TYPE + " INTEGER NULL" +
-     ", " + DataTableColumns.FORM_ID + " TEXT NULL" +
-     ", " + DataTableColumns.LOCALE + " TEXT NULL" +
-     ", " + DataTableColumns.SAVEPOINT_TYPE + " TEXT NULL" +
-     ", " + DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL" +
-     ", " + DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL" +
-     colListBuilder.toString() +
-     ")";
+        String toExecute = "CREATE TABLE " + tp.getDbTableName() + "("
+            + DataTableColumns.ID + " TEXT NOT NULL, "
+            + DataTableColumns.ROW_ETAG + " TEXT NULL, "
+            + DataTableColumns.SYNC_STATE + " TEXT NOT NULL, "
+            + DataTableColumns.CONFLICT_TYPE + " INTEGER NULL,"
+            + DataTableColumns.FILTER_TYPE + " TEXT NULL,"
+            + DataTableColumns.FILTER_VALUE + " TEXT NULL,"
+            + DataTableColumns.FORM_ID + " TEXT NULL,"
+            + DataTableColumns.LOCALE + " TEXT NULL,"
+            + DataTableColumns.SAVEPOINT_TYPE + " TEXT NOT NULL,"
+            + DataTableColumns.SAVEPOINT_TIMESTAMP + " TEXT NOT NULL,"
+            + DataTableColumns.SAVEPOINT_CREATOR + " TEXT NULL"
+            + colListBuilder.toString() + ")";
         db.execSQL(toExecute);
     }
 
@@ -402,11 +427,10 @@ public class DbTable {
      * server. I think it is only called when creating on the phone...
      */
     public void addRow(String rowId, String formId, String locale,
-          Long timestamp, String savepointCreator, Map<String, String> values ) {
+        String savepointType, String savepointTimestamp, String savepointCreator,
+        String rowETag, String filterType, String filterValue, Map<String, String> values ) {
 
-        if (timestamp == null) {
-        	timestamp = System.currentTimeMillis();
-        }
+
         ContentValues cv = new ContentValues();
         if (rowId != null) {
           cv.put(DataTableColumns.ID, rowId);
@@ -416,12 +440,17 @@ public class DbTable {
         		cv.put(column, values.get(column));
         	}
         }
+
         // The admin columns get added here and also in actualAddRow
         cv.put(DataTableColumns.SYNC_STATE, SyncState.inserting.name());
-        cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(timestamp));
-        cv.put(DataTableColumns.SAVEPOINT_CREATOR, savepointCreator);
         cv.put(DataTableColumns.FORM_ID, formId);
         cv.put(DataTableColumns.LOCALE, locale);
+        cv.put(DataTableColumns.SAVEPOINT_TYPE, savepointType);
+        cv.put(DataTableColumns.SAVEPOINT_TIMESTAMP, savepointTimestamp);
+        cv.put(DataTableColumns.SAVEPOINT_CREATOR, savepointCreator);
+        cv.put(DataTableColumns.ROW_ETAG, rowETag);
+        cv.put(DataTableColumns.FILTER_TYPE, filterType);
+        cv.put(DataTableColumns.FILTER_VALUE, filterValue);
         actualAddRow(cv);
     }
 
@@ -443,7 +472,8 @@ public class DbTable {
           String id = UUID.randomUUID().toString();
           values.put(DataTableColumns.ID, id);
         }
-        if (!values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
+        if (!values.containsKey(DataTableColumns.SAVEPOINT_TIMESTAMP) ||
+            values.get(DataTableColumns.SAVEPOINT_TIMESTAMP) == null) {
         	values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
         }
         // There is the possibility here that for whatever reason some of the
@@ -468,7 +498,7 @@ public class DbTable {
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();
-	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavedStatus.COMPLETE.name());
+	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
 	       long result = db.insertOrThrow(tp.getDbTableName(), null, values);
 	       if ( result != -1 ) {
 	         db.setTransactionSuccessful();
@@ -565,7 +595,7 @@ public class DbTable {
         SQLiteDatabase db = tp.getWritableDatabase();
         try {
           db.beginTransaction();
-	       values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
+	       values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
 	       db.update(tp.getDbTableName(), values, where, whereArgs);
 	       db.setTransactionSuccessful();
         } finally {
@@ -597,7 +627,7 @@ public class DbTable {
           db.beginTransaction();
 	        db.delete(tp.getDbTableName(), deleteSql, deleteWhereArgs);
 	        updateValues.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
-	        updateValues.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
+	        updateValues.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
 	        db.update(tp.getDbTableName(), updateValues, updateWhereSql,
 	                updateWhereArgs);
 	        db.setTransactionSuccessful();
@@ -629,7 +659,7 @@ public class DbTable {
           try {
             db.beginTransaction();
 	          values.put(DataTableColumns.SAVEPOINT_TIMESTAMP, TableConstants.nanoSecondsFromMillis(System.currentTimeMillis()));
-	          values.put(DataTableColumns.SAVEPOINT_TYPE, DbTable.SavedStatus.COMPLETE.name());
+	          values.put(DataTableColumns.SAVEPOINT_TYPE, SavepointTypeManipulator.complete());
 	          db.update(tp.getDbTableName(), values, DataTableColumns.ID + " = ?", whereArgs);
 	          db.setTransactionSuccessful();
           } finally {
@@ -704,44 +734,4 @@ public class DbTable {
         selBuilder.delete(0, 5);
         return selBuilder.toString();
     }
-
-//    public class ConflictTable {
-//
-//        private final String[] header;
-//        private final String[] rowIds;
-//        private final String[][] syncTags;
-//        private final String[][][] values;
-//
-//        private ConflictTable(String[] header, String[] rowIds,
-//                String[][] syncTags, String[][][] values) {
-//            this.header = header;
-//            this.rowIds = rowIds;
-//            this.syncTags = syncTags;
-//            this.values = values;
-//        }
-//
-//        public int getCount() {
-//            return rowIds.length;
-//        }
-//
-//        public int getWidth() {
-//            return header.length;
-//        }
-//
-//        public String getHeader(int colNum) {
-//            return header[colNum];
-//        }
-//
-//        public String getRowId(int index) {
-//            return rowIds[index];
-//        }
-//
-//        public String getSyncTag(int index, int rowNum) {
-//            return syncTags[index][rowNum];
-//        }
-//
-//        public String getValue(int index, int rowNum, int colNum) {
-//            return values[index][rowNum][colNum];
-//        }
-//    }
 }

@@ -30,7 +30,10 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
 		CsvUtil cu = new CsvUtil(this.importCSVActivity, appName);
-		if (request.getCreateTable()) {
+		if ( request.getFile() == null ) {
+		  return cu.importSeparable(this, request.getTableId(),
+		       request.getFileQualifier(), request.getCreateTable());
+		} else if (request.getCreateTable()) {
 			try {
 				return cu.importNewTable(importCSVActivity, this, request.getFile(),
 						request.getTableName());

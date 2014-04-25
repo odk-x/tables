@@ -395,6 +395,20 @@ public class ColumnProperties {
     this.displayFormat = displayFormat;
   }
 
+
+  public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries) {
+    KeyValueStore kvs = tp.getStoreForTable();
+    SQLiteDatabase db = tp.getWritableDatabase();
+    try {
+      db.beginTransaction();
+      kvs.addEntriesToStore(db, entries);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
+  }
+
   /**
    * Return the ColumnProperties for all the columns in a table, whether or not
    * they are written to the database table.
@@ -555,7 +569,11 @@ public class ColumnProperties {
    * @return
    */
   ColumnDefinitionChange compareColumnDefinitions(ColumnProperties cp) {
-    if (!this.getElementName().equals(cp.getElementName())) {
+    if ((this.getElementName() == null &&
+         cp.getElementName() != null) ||
+        (this.getElementName() != null &&
+         (cp.getElementName() == null ||
+           !this.getElementName().equals(cp.getElementName())))) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
@@ -770,7 +788,7 @@ public class ColumnProperties {
           this.displayName = (String)  displayObject;
           if ( this.displayName == null || this.displayName.length() == 0 ) {
           	// just use the elementName and fudge it back into the serialization
-          	this.jsonStringifyDisplayName = "\"" + this.elementName + "\"";
+          	this.jsonStringifyDisplayName = (this.elementName != null) ? "\"" + this.elementName + "\"" : "\"\"";
           	this.displayName = this.elementName;
           }
         } else if ( displayObject instanceof Map ) {

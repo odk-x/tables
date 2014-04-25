@@ -2,7 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <fragment android:name="com.actionbarsherlock.app.SherlockListFragment"
+    <fragment android:name="android.app.ListFragment"
         android:id="@+id/activity_table_manager_list_fragment"
         android:layout_height="match_parent"
         android:layout_width="match_parent" />

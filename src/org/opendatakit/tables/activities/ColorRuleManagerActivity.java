@@ -18,12 +18,12 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utils.ColorRuleUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;

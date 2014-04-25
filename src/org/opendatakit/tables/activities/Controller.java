@@ -775,7 +775,7 @@ public class Controller {
 
   private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
+      Log.i(TAG, "return code wasn't OK, add was not finalized and will not appear.");
       return;
     }
     // the add succeeded.
@@ -784,7 +784,7 @@ public class Controller {
 
   private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok, edit not finalized and will not appear.");
+      Log.i(TAG, "return code wasn't OK, edit not finalized and will not appear.");
       return;
     }
     // The update succeeded.

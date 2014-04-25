@@ -29,9 +29,13 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
+import org.opendatakit.aggregate.odktables.rest.entity.Scope;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.data.ColumnProperties;
@@ -41,9 +45,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.sync.TableResult.Status;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.sync.exceptions.SchemaMismatchException;
@@ -727,7 +729,7 @@ public class SyncProcessor {
       // Collect
 
       UserTable allRowIds = table.getRaw(columns, new String[] { DataTableColumns.SAVEPOINT_TYPE
-      }, new String[] { DbTable.SavedStatus.COMPLETE.name()
+      }, new String[] { SavepointTypeManipulator.complete()
       }, null, null, null, null);
 
       // sort data changes into types
@@ -1050,7 +1052,7 @@ public class SyncProcessor {
     }
     UserTable rows = table.getRaw(columnsToSync,
         new String[] { DataTableColumns.SAVEPOINT_TYPE, DataTableColumns.SYNC_STATE },
-        new String[] { DbTable.SavedStatus.COMPLETE.name(), state.name() },
+        new String[] { SavepointTypeManipulator.complete(), state.name() },
         null, null, null, null);
 
     List<SyncRow> changedRows = new ArrayList<SyncRow>();
@@ -1089,9 +1091,11 @@ public class SyncProcessor {
                                 false,
                                 rows.getMetadataByElementKey(i, DataTableColumns.FORM_ID),
                                 rows.getMetadataByElementKey(i, DataTableColumns.LOCALE),
-                                rows.getMetadataByElementKey(i,
-                                    DataTableColumns.SAVEPOINT_TIMESTAMP),
+                                rows.getMetadataByElementKey(i, DataTableColumns.SAVEPOINT_TYPE),
+                                rows.getMetadataByElementKey(i, DataTableColumns.SAVEPOINT_TIMESTAMP),
                                 rows.getMetadataByElementKey(i, DataTableColumns.SAVEPOINT_CREATOR),
+                                Scope.asScope(rows.getMetadataByElementKey(i, DataTableColumns.FILTER_TYPE),
+                                    rows.getMetadataByElementKey(i, DataTableColumns.FILTER_VALUE)),
                                 values);
       changedRows.add(row);
     }
@@ -1172,7 +1176,9 @@ public class SyncProcessor {
           if ( cpListChildElementKeys == null ) {
             cpListChildElementKeys = new ArrayList<String>();
           }
-          if (!(cp.getElementName().equals(col.getElementName())
+          if (!(
+              (cp.getElementName() == col.getElementName() ||
+               ((cp.getElementName() != null) && cp.getElementName().equals(col.getElementName())) )
             && cp.isUnitOfRetention() == DataHelper.intToBool(col.getIsUnitOfRetention())
             && cpListChildElementKeys.size() == listChildElementKeys.size()
             && cpListChildElementKeys.containsAll(listChildElementKeys) )) {

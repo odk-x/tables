@@ -17,6 +17,8 @@ package org.opendatakit.common.android.sync;
 
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.entity.Scope;
+
 /**
  * A SyncRow is an in-between class to map rows in the database to rows in the
  * cloud.
@@ -44,6 +46,16 @@ public class SyncRow {
   private String locale;
 
   /**
+   * Filtering field
+   */
+  private Scope filterScope;
+
+  /**
+   * The savepoint type of the file.
+   */
+  private String savepointType;
+
+  /**
    * OdkTables metadata column.
    */
   private String savepointTimestamp;
@@ -56,15 +68,18 @@ public class SyncRow {
   private Map<String, String> values;
 
   public SyncRow(final String rowId, final String rowETag, final boolean deleted,
-      final String formId, final String locale,
-      final String savepointTimestamp, final String savepointCreator, final Map<String, String> values) {
+      final String formId, final String locale, final String savepointType,
+      final String savepointTimestamp, final String savepointCreator,
+      final Scope filterScope, final Map<String, String> values) {
     this.rowId = rowId;
     this.rowETag = rowETag;
     this.deleted = deleted;
-    this.savepointCreator = savepointCreator;
     this.formId = formId;
     this.locale = locale;
+    this.savepointType = savepointType;
     this.savepointTimestamp = savepointTimestamp;
+    this.savepointCreator = savepointCreator;
+    this.filterScope = filterScope;
     this.values = values;
   }
 
@@ -106,6 +121,22 @@ public class SyncRow {
 
   public void setLocale(String locale) {
     this.locale = locale;
+  }
+
+  public Scope getFilterScope() {
+    return filterScope;
+  }
+
+  public void setFilterScope(Scope filterScope) {
+    this.filterScope = filterScope;
+  }
+
+  public String getSavepointType() {
+    return savepointType;
+  }
+
+  public void setSavepointType(String savepointType) {
+    this.savepointType = savepointType;
   }
 
   public String getSavepointTimestamp() {
@@ -151,10 +182,15 @@ public class SyncRow {
     if (this.isDeleted() != other.isDeleted())
       return false;
 
+    if (this.getFilterScope() != other.getFilterScope())
+      return false;
+
     // sync'd metadata
     if (this.getFormId() == null ? other.getFormId() != null : !this.getFormId().equals(other.getFormId()))
       return false;
     if (this.getLocale() == null ? other.getLocale() != null : !this.getLocale().equals(other.getLocale()))
+      return false;
+    if (this.getSavepointType() == null ? other.getSavepointType() != null : !this.getSavepointType().equals(other.getSavepointType()))
       return false;
     if (this.getSavepointTimestamp() == null ? other.getSavepointTimestamp() != null : !this.getSavepointTimestamp().equals(other.getSavepointTimestamp()))
       return false;
@@ -182,8 +218,10 @@ public class SyncRow {
     result = result * PRIME + (this.getRowETag() == null ? 0 : this.getRowETag().hashCode());
     result = result * PRIME + (this.isDeleted() ? 1231 : 1237);
     // sync'd metadata
+    result = result * PRIME + (this.getFilterScope() == null ? 0 : this.getFilterScope().hashCode());
     result = result * PRIME + (this.getFormId() == null ? 0 : this.getFormId().hashCode());
     result = result * PRIME + (this.getLocale() == null ? 0 : this.getLocale().hashCode());
+    result = result * PRIME + (this.getSavepointType() == null ? 0 : this.getSavepointType().hashCode());
     result = result * PRIME + (this.getSavepointTimestamp() == null ? 0 : this.getSavepointTimestamp().hashCode());
     result = result * PRIME + (this.getSavepointCreator() == null ? 0 : this.getSavepointCreator().hashCode());
     // data
@@ -195,8 +233,10 @@ public class SyncRow {
   public java.lang.String toString() {
     return "SyncRow[rowId=" + this.getRowId() + ", rowETag=" + this.getRowETag()
         + ", deleted="+ this.isDeleted()
+        + ", filterScope=" + this.getFilterScope().toString()
         + ", formId=" + this.getFormId()
         + ", locale=" + this.getLocale()
+        + ", savepointType=" + this.getSavepointType()
         + ", savepointTimestamp=" + this.getSavepointTimestamp()
         + ", savepointCreator=" + this.getSavepointCreator()
         + ", values=" + this.getValues()

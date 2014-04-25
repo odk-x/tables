@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.common.android.data.ConflictTable;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.provider.ConflictType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
