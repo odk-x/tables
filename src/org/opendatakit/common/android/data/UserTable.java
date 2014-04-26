@@ -165,7 +165,7 @@ public class UserTable {
       String elementKey = userColumnOrder.get(i);
       mElementKeyForIndex[i] = elementKey;
       mDataKeyToIndex.put(elementKey, i);
-      header[i] = mTp.getColumnByElementKey(elementKey).getDisplayName();
+      header[i] = mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
       userColumnCursorIndex[i] = c.getColumnIndex(elementKey);
     }
     mMetadataKeyToIndex = new HashMap<String, Integer>();

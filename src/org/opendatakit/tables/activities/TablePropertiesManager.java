@@ -98,7 +98,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
     tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
-    setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
+    setTitle(getString(R.string.table_manager_title, tp.getLocalizedDisplayName()));
     init();
   }
 
@@ -133,7 +133,7 @@ public class TablePropertiesManager extends PreferenceActivity {
           db.endTransaction();
           db.close();
         }
-        setTitle(getString(R.string.table_manager_title, tp.getDisplayName()));
+        setTitle(getString(R.string.table_manager_title, tp.getLocalizedDisplayName()));
         init();
         return false;
       }
@@ -303,7 +303,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       String[] colorColElementKeys = new String[numberOfDisplayColumns];
       for (int i = 0; i < numberOfDisplayColumns; i++) {
         ColumnProperties cp = tp.getColumnByIndex(i);
-        colorColDisplayNames[i] = cp.getDisplayName();
+        colorColDisplayNames[i] = cp.getLocalizedDisplayName();
         colorColElementKeys[i] = cp.getElementKey();
       }
 
@@ -321,7 +321,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       colorColumnPref.setEntryValues(colorColElementKeys);
       colorColumnPref.setEntries(colorColDisplayNames);
       colorColumnPref.setValue(colorColumn.getElementKey());
-      colorColumnPref.setSummary(colorColumn.getDisplayName());
+      colorColumnPref.setSummary(colorColumn.getLocalizedDisplayName());
       colorColumnPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -473,7 +473,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       String[] locColDisplayNames = new String[locationCols.size()];
       String[] locColElementKeys = new String[locationCols.size()];
       for (int i = 0; i < locationCols.size(); i++) {
-        locColDisplayNames[i] = locationCols.get(i).getDisplayName();
+        locColDisplayNames[i] = locationCols.get(i).getLocalizedDisplayName();
         locColElementKeys[i] = locationCols.get(i).getElementKey();
       }
 
@@ -484,7 +484,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       mapLatPref.setEntryValues(locColElementKeys);
       mapLatPref.setEntries(locColDisplayNames);
       mapLatPref.setValue((latCol == null) ? null : latCol.getElementKey());
-      mapLatPref.setSummary((latCol == null) ? null : latCol.getDisplayName());
+      mapLatPref.setSummary((latCol == null) ? null : latCol.getLocalizedDisplayName());
       mapLatPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {

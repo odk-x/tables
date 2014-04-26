@@ -166,7 +166,7 @@ public class PropertyManager extends PreferenceActivity {
         if (tp.getTableId().equals(joinTableId)) {
           selectedTp = tp;
           selectedTableId = tp.getTableId();
-          selectedDisplayName = tp.getDisplayName();
+          selectedDisplayName = tp.getLocalizedDisplayName();
         }
         index++;
       }

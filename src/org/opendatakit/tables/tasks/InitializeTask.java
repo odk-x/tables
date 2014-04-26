@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
@@ -30,8 +29,6 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
   private static final String COMMA = ",";
 
   private static final String KEY_SUFFIX_CSV_FILENAME = ".filename";
-
-  private static final String KEY_SUFFIX_TABLENAME = ".tablename";
 
   private static final String TAG = "InitializeTask";
 
@@ -110,13 +107,11 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
         fileCount = keys.length;
         curFileCount = 0;
 
-        String tablename;
         File file;
         CsvUtil cu = new CsvUtil(this.mContext, this.mAppName);
         for (String key : keys) {
           lineCount = mContext.getString(R.string.processing_file);
           curFileCount++;
-          tablename = prop.getProperty(key + KEY_SUFFIX_TABLENAME);
           filename = prop.getProperty(key + KEY_SUFFIX_CSV_FILENAME);
           this.importStatus.put(key, false);
           file = new File(ODKFileUtils.getAppFolder(mAppName), filename);
@@ -161,6 +156,7 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
               String fileQualifier = terms[1];
               request = new ImportRequest(tableId, fileQualifier);
             }
+
             if (request != null) {
               boolean success = false;
               success = cu.importSeparable(this, request.getTableId(), request.getFileQualifier(),
@@ -172,28 +168,9 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
             }
           }
 
-          if (request == null && tablename == null) {
+          if (request == null) {
             poorlyFormatedConfigFile = true;
             return false;
-          }
-
-          // .tablename is defined
-          if (request == null) {
-            request = new ImportRequest(true, null, tablename, file);
-
-            boolean success = false;
-            try {
-              success = cu.importConfigTables(mContext, this, request.getFile(), filename,
-                  request.getTableName());
-              mKeyToTableAlreadyExistsMap.put(key, false);
-            } catch (TableAlreadyExistsException e) {
-              mKeyToTableAlreadyExistsMap.put(key, true);
-              Log.e(TAG, "caught able already exists, setting " + "success to: " + success);
-            }
-            importStatus.put(key, success);
-            if (success) {
-              publishProgress();
-            }
           }
         }
       } else {

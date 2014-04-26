@@ -157,7 +157,7 @@ public class SyncProcessor {
     // because we only want to push the default to the server.
     TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(context, appName);
     for (TableProperties tp : tps) {
-      Log.i(TAG, "synchronizing table " + tp.getDisplayName());
+      Log.i(TAG, "synchronizing table " + tp.getTableId());
       synchronizeTable(tp, pushLocalTableNonMediaFiles, syncMediaFiles);
     }
     return mUserResult;
@@ -217,7 +217,7 @@ public class SyncProcessor {
     boolean success = false;
     // Prepare the tableResult. We'll start it as failure, and only update it
     // if we're successful at the end.
-    TableResult tableResult = new TableResult(tp.getDisplayName(), tp.getTableId());
+    TableResult tableResult = new TableResult(tp.getLocalizedDisplayName(), tp.getTableId());
     beginTableTransaction(tp);
     try {
       switch (tp.getSyncState()) {
@@ -277,7 +277,7 @@ public class SyncProcessor {
     // the hadLocalData changes might not strictly be true.
     tableResult.setHadLocalDataChanges(true);
     tableResult.setHadLocalPropertiesChanges(true);
-    Log.i(TAG, "DELETING " + tp.getDisplayName());
+    Log.i(TAG, "DELETING " + tableId);
     boolean success = false;
     try {
       synchronizer.deleteTable(tableId);
@@ -333,7 +333,7 @@ public class SyncProcessor {
                                        TableResult tableResult, boolean pushLocalNonMediaFiles,
                                        boolean syncMediaFiles) {
     String tableId = tp.getTableId();
-    Log.i(TAG, "REST " + tp.getDisplayName());
+    Log.i(TAG, "REST " + tableId);
 
     try {
       synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
@@ -459,7 +459,7 @@ public class SyncProcessor {
   private void resourceAccessException(String method, TableProperties tp,
                                        ResourceAccessException e, TableResult tableResult) {
     Log.e(TAG,
-        String.format("ResourceAccessException in %s for table: %s", method, tp.getDisplayName()),
+        String.format("ResourceAccessException in %s for table: %s", method, tp.getTableId()),
         e);
     tableResult.setStatus(Status.EXCEPTION);
     tableResult.setMessage(e.getMessage());
@@ -468,7 +468,7 @@ public class SyncProcessor {
 
   private void
       ioException(String method, TableProperties tp, IOException e, TableResult tableResult) {
-    Log.e(TAG, String.format("IOException in %s for table: %s", method, tp.getDisplayName()), e);
+    Log.e(TAG, String.format("IOException in %s for table: %s", method, tp.getTableId()), e);
     tableResult.setStatus(Status.EXCEPTION);
     tableResult.setMessage(e.getMessage());
     syncResult.stats.numIoExceptions++;
@@ -476,7 +476,7 @@ public class SyncProcessor {
 
   private void exception(String method, TableProperties tp, Exception e, TableResult tableResult) {
     Log.e(TAG,
-        String.format("Unexpected exception in %s on table: %s", method, tp.getDisplayName()), e);
+        String.format("Unexpected exception in %s on table: %s", method, tp.getTableId()), e);
     tableResult.setStatus(Status.EXCEPTION);
     tableResult.setMessage(e.getMessage());
   }

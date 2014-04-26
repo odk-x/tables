@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.views;
 
-import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 
@@ -68,8 +67,6 @@ public class ListDisplayView extends LinearLayout {
     }
 
     private void setFormatInfo() {
-// removed this when TableViewSettings was removed.
-//        String format = tvs.getListFormat();
       String format = null;
         if (format == null || format.length() == 0) {
             format = getDefaultFormat();
@@ -111,15 +108,6 @@ public class ListDisplayView extends LinearLayout {
             TableProperties tp = table.getTableProperties();
             for (int j = 1; j < lineSplit.length; j += 2) {
                 int colIndex = tp.getColumnIndex(lineSplit[j]);
-                if (colIndex < 0) {
-                    ColumnProperties cp = tp.getColumnByDisplayName(lineSplit[j]);
-                    if (cp == null) {
-                    	colIndex = -1;
-                    } else {
-	                    String colDbName = cp.getElementKey();
-	                    colIndex = tp.getColumnIndex(colDbName);
-                    }
-                }
                 lineColSpecs[i][j / 2] = colIndex;
             }
         }

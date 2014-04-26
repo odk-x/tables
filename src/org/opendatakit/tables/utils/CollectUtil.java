@@ -249,7 +249,7 @@ public class CollectUtil {
         writer.write(cp.getElementKey());
         writer.write(":label\">");
         writer.write("<value>");
-        writer.write(cp.getDisplayName());
+        writer.write(cp.getLocalizedDisplayName());
         writer.write("</value>");
         writer.write("</text>");
       }
@@ -711,14 +711,14 @@ public class CollectUtil {
     CollectUtil.deleteForm(resolver, params.getFormId());
     // First we want to write the file.
     boolean writeSuccessful = CollectUtil.buildBlankForm(getAddRowFormFile(tp),
-                  tp.getColumnsInOrder(), tp.getDisplayName(), params.getFormId());
+                  tp.getColumnsInOrder(), tp.getLocalizedDisplayName(), params.getFormId());
     if (!writeSuccessful) {
       Log.e(TAG, "problem writing file for add row");
       return false;
     }
     // Now we want to insert the file.
     Uri insertedFormUri = CollectUtil.insertFormIntoCollect(resolver, getAddRowFormFile(tp)
-        .getAbsolutePath(), tp.getDisplayName(), params.getFormId());
+        .getAbsolutePath(), tp.getLocalizedDisplayName(), params.getFormId());
     if (insertedFormUri == null) {
       Log.e(TAG, "problem inserting form into collect, return uri was null");
       return false;
@@ -1335,7 +1335,7 @@ public class CollectUtil {
 
     public static CollectFormParameters constructDefaultCollectFormParameters(TableProperties tp) {
       return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-          DEFAULT_ROOT_ELEMENT, tp.getDisplayName());
+          DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
     }
 
     /**
@@ -1358,7 +1358,7 @@ public class CollectUtil {
       String formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
       if (formId == null) {
         return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-            DEFAULT_ROOT_ELEMENT, tp.getDisplayName());
+            DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
       }
       // Else we know it is custom.
       String formVersion = aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
@@ -1366,7 +1366,7 @@ public class CollectUtil {
       if (rootElement == null) {
         rootElement = DEFAULT_ROOT_ELEMENT;
       }
-      return new CollectFormParameters(true, formId, formVersion, rootElement, tp.getDisplayName());
+      return new CollectFormParameters(true, formId, formVersion, rootElement, tp.getLocalizedDisplayName());
     }
 
     public void persist(TableProperties tp) {

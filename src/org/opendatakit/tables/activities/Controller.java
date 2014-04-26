@@ -288,19 +288,19 @@ public class Controller {
   }
 
   public void setSimpleInfoBarText() {
-    infoBar.setText(activity.getString(R.string.info_bar_plain_title, tp.getDisplayName()));
+    infoBar.setText(activity.getString(R.string.info_bar_plain_title, tp.getLocalizedDisplayName()));
   }
 
   public void setListViewInfoBarText() {
-    infoBar.setText(activity.getString(R.string.info_bar_list_title, tp.getDisplayName()));
+    infoBar.setText(activity.getString(R.string.info_bar_list_title, tp.getLocalizedDisplayName()));
   }
 
   public void setDetailViewInfoBarText() {
-    infoBar.setText(activity.getString(R.string.info_bar_detail_title, tp.getDisplayName()));
+    infoBar.setText(activity.getString(R.string.info_bar_detail_title, tp.getLocalizedDisplayName()));
   }
 
   public void setGraphViewInfoBarText(String graphName) {
-    infoBar.setText(activity.getString(R.string.info_bar_graph_title, tp.getDisplayName(),
+    infoBar.setText(activity.getString(R.string.info_bar_graph_title, tp.getLocalizedDisplayName(),
         graphName));
   }
 

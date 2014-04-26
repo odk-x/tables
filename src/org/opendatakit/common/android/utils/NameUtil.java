@@ -430,7 +430,7 @@ public class NameUtil {
    */
   private static boolean elementNameAlreadyExists(String elementName,
       TableProperties tp) {
-    return (tp.getColumnByElementName(elementName) != null);
+    return (tp.isLocalizedColumnDisplayNameInUse(elementName));
   }
 
   /**

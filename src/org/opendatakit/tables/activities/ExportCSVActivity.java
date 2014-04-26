@@ -105,7 +105,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		tps = TableProperties.getTablePropertiesForAll(this, appName);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
-		    tableNames[i] = tps[i].getDisplayName();
+		    tableNames[i] = tps[i].getLocalizedDisplayName();
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);

@@ -730,7 +730,6 @@ public class TableProperties {
     // TODO: this should check for duplicate names.
     TableProperties tp = null;
     SQLiteDatabase db;
-    KeyValueStoreManager kvms = new KeyValueStoreManager();
     try {
       DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
       db = dh.getReadableDatabase();
@@ -795,7 +794,7 @@ public class TableProperties {
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
     }
 
-    Map<String, ColumnProperties> columns = getDatabaseColumns();
+    Map<String, ColumnProperties> columns = getAllColumns();
     SQLiteDatabase db = null;
     try {
       DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
@@ -852,6 +851,38 @@ public class TableProperties {
    */
   public String getDisplayName() {
     return displayName;
+  }
+
+  public String getLocalizedDisplayName() {
+    Locale locale = Locale.getDefault();
+    String full_locale = locale.toString();
+    int underscore = full_locale.indexOf('_');
+    String lang_only_locale = (underscore == -1) ? full_locale : full_locale.substring(0, underscore);
+
+    if ( displayName.startsWith("\"") && displayName.endsWith("\"")) {
+      return displayName.substring(1,displayName.length()-1);
+    } else if ( displayName.startsWith("{") && displayName.endsWith("}")) {
+      try {
+        Map<String,Object> localeMap = ODKFileUtils.mapper.readValue(displayName, Map.class);
+        String candidate = (String) localeMap.get(full_locale);
+        if ( candidate != null ) return candidate;
+        candidate = (String) localeMap.get(lang_only_locale);
+        if ( candidate != null ) return candidate;
+        candidate = (String) localeMap.get("default");
+        if ( candidate != null ) return candidate;
+        return getTableId();
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for tableId: " + getTableId());
+      }
+    }
+    throw new IllegalStateException("bad displayName for tableId: " + getTableId());
   }
 
   /**
@@ -989,13 +1020,24 @@ public class TableProperties {
       refreshColumnsFromDatabase();
     }
     for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
-      if (cp.getDisplayName().equals(displayName)) {
+      if (cp.getLocalizedDisplayName().equals(displayName)) {
         return cp;
       }
     }
     return null;
   }
 
+  public boolean isLocalizedColumnDisplayNameInUse(String localizedName) {
+    if (this.mElementKeyToColumnProperties == null) {
+      refreshColumnsFromDatabase();
+    }
+    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
+      if (cp.getLocalizedDisplayName().equals(localizedName)) {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Return the element key for the column based on the element path.
    * <p>
@@ -1009,19 +1051,6 @@ public class TableProperties {
     return hackPath;
   }
 
-  public ColumnProperties getColumnByElementName(String elementName) {
-    if (this.mElementKeyToColumnProperties == null) {
-      refreshColumnsFromDatabase();
-    }
-    for (ColumnProperties cp : this.mElementKeyToColumnProperties.values()) {
-      String colElementName = cp.getElementName();
-      if (colElementName != null && colElementName.equals(elementName)) {
-        return cp;
-      }
-    }
-    return null;
-  }
-
   /**
    * Take the proposed display name and return a display name that has no
    * conflicts with other display names in the table. If there is a conflict,
@@ -1031,7 +1060,7 @@ public class TableProperties {
    * @return
    */
   public String createDisplayName(String proposedDisplayName) {
-    if (getColumnByDisplayName(proposedDisplayName) == null) {
+    if (!isLocalizedColumnDisplayNameInUse(proposedDisplayName)) {
       return proposedDisplayName;
     }
     // otherwise we need to create a non-conflicting name.
@@ -1089,7 +1118,12 @@ public class TableProperties {
     }
     String jsonStringifyDisplayName = null;
     try {
-      jsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+      if ( (displayName.startsWith("\"") && displayName.endsWith("\"")) ||
+           (displayName.startsWith("{") && displayName.endsWith("}")) ) {
+        jsonStringifyDisplayName = displayName;
+      } else {
+        jsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+      }
     } catch (JsonGenerationException e) {
       e.printStackTrace();
       throw new IllegalArgumentException("[addColumn] invalid display name: " +
@@ -1768,7 +1802,7 @@ public class TableProperties {
   }
 
   public boolean isLatitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    if ( endsWithIgnoreCase(cp.getDisplayName(), "latitude") ) return true;
+    if ( endsWithIgnoreCase(cp.getLocalizedDisplayName(), "latitude") ) return true;
     if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
     // TODO: HACK BROKEN HACK BROKEN
     if ( "latitude".equals(cp.getElementName()) ) return true;
@@ -1785,7 +1819,7 @@ public class TableProperties {
   }
 
   public boolean isLongitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    if ( endsWithIgnoreCase(cp.getDisplayName(), "longitude") ) return true;
+    if ( endsWithIgnoreCase(cp.getLocalizedDisplayName(), "longitude") ) return true;
     if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
     if ( "longitude".equals(cp.getElementName()) ) return true;
     // TODO: HACK BROKEN HACK BROKEN

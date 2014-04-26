@@ -87,7 +87,7 @@ public class OutputUtil {
     Map<String, String> tableIdToDisplayName = new HashMap<String, String>();
     Map<String, Map<String, Object>> tableIdToControlTable = new HashMap<String, Map<String, Object>>();
     for (TableProperties tableProperties : allTableProperties) {
-      tableIdToDisplayName.put(tableProperties.getTableId(), tableProperties.getDisplayName());
+      tableIdToDisplayName.put(tableProperties.getTableId(), tableProperties.getLocalizedDisplayName());
       Map<String, Object> controlTable = getMapForControlTable(context, tableProperties);
       tableIdToControlTable.put(tableProperties.getTableId(), controlTable);
     }
@@ -124,7 +124,7 @@ public class OutputUtil {
       String elementName = columnProperties.getElementName();
       if ( elementName != null ) {
         pathToKey.put(columnProperties.getElementName(), columnProperties.getElementKey());
-        keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getDisplayName());
+        keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getLocalizedDisplayName());
       }
     }
     String defaultDetailFileName = DetailDisplayActivity.getDefaultDetailFileName(tableProperties);

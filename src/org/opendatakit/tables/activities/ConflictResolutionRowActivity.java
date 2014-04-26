@@ -155,7 +155,7 @@ public class ConflictResolutionRowActivity extends ListActivity
     for (int i = 0; i < columnOrder.size(); i++) {
       String elementKey = columnOrder.get(i);
       String columnDisplayName =
-          tp.getColumnByElementKey(elementKey).getDisplayName();
+          tp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
       Section newSection = new Section(adapterOffset, columnDisplayName);
       ++adapterOffset;
       sections.add(newSection);

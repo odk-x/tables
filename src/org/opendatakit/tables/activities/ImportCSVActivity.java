@@ -116,7 +116,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
 		for (TableProperties tp : tps) {
-		    tableNames[counter] = tp.getDisplayName();
+		    tableNames[counter] = tp.getLocalizedDisplayName();
 		    counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,

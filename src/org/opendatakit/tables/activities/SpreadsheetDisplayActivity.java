@@ -740,7 +740,7 @@ public class SpreadsheetDisplayActivity extends Activity
                             		   SpreadsheetDisplayActivity.this, appName, tableId);
       	                  String joinedColDisplayName =
       	                      joinedTable.getColumnByElementKey(elementKey)
-      	                      .getDisplayName();
+      	                      .getElementKey();
       	                  // I would prefer this kind of query to be set in another
       	                  // object, but alas, it looks like atm it is hardcoded.
       	                  Controller.launchTableActivity(context, joinedTable, joinedTable.getDefaultViewType());
@@ -780,7 +780,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	              int columnIndex = cellId % table.getWidth();
 	              TableProperties tp = c.getTableProperties();
 	              ColumnProperties cp = tp.getColumnByIndex(columnIndex);
-	                String colName = cp.getDisplayName();
+	                String colName = cp.getElementKey();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.invertSearchBoxColor(false);
@@ -830,7 +830,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	              int colIndex = cellId % table.getWidth();
 	              TableProperties tp = c.getTableProperties();
 	              ColumnProperties cp = tp.getColumnByIndex(colIndex);
-	                String colName = cp.getDisplayName();
+	                String colName = cp.getElementKey();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.removeOverlay();

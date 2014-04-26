@@ -307,12 +307,12 @@ public class ColorRuleManagerActivity extends ListActivity {
       this.mCp = mTp.getColumnByElementKey(mElementKey);
       this.mColorRuler =
           ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
-      this.setTitle(getString(R.string.color_rule_title_for, mCp.getDisplayName()));
+      this.setTitle(getString(R.string.color_rule_title_for, mCp.getLocalizedDisplayName()));
       break;
     case TABLE:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getTableColorRuleGroup(mTp);
-      this.setTitle(getString(R.string.row_color_rule_title_for, mTp.getDisplayName()));
+      this.setTitle(getString(R.string.row_color_rule_title_for, mTp.getLocalizedDisplayName()));
       break;
     case STATUS_COLUMN:
       this.mCp = null;
@@ -405,7 +405,7 @@ public class ColorRuleManagerActivity extends ListActivity {
           }
         } else {
           description =
-              mTp.getColumnByElementKey(elementKey).getDisplayName();
+              mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
         }
       }
       if (!isMetadataRule) {

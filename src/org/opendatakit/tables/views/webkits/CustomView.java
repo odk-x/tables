@@ -583,7 +583,7 @@ public abstract class CustomView extends LinearLayout {
         Log.e(TAG, "column with elementKey does not exist: " + elementKey);
         return null;
       }
-      String displayName = columnProperties.getDisplayName();
+      String displayName = columnProperties.getLocalizedDisplayName();
       return displayName;
     }
 
@@ -594,7 +594,7 @@ public abstract class CustomView extends LinearLayout {
      */
     public String getTableDisplayName(String tableId) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      return tp.getDisplayName();
+      return tp.getLocalizedDisplayName();
     }
 
     /**

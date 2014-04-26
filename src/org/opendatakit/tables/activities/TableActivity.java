@@ -116,7 +116,7 @@ public class TableActivity extends Activity {
 
     // Initialize layout fields.
     setSearchFieldText("");
-    setInfoBarText("Table: " + mTableProperties.getDisplayName());
+    setInfoBarText("Table: " + mTableProperties.getLocalizedDisplayName());
 
 
     // Create the map fragment.

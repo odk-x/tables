@@ -252,13 +252,13 @@ public class CsvUtil {
         } else {
           Log.d(TAG, "processing column: " + colName);
 
-          ColumnProperties cp = tp.getColumnByDisplayName(colName);
+          ColumnProperties cp = tp.getColumnByElementKey(colName);
           if (cp == null) {
             // And now add all remaining metadata columns
             if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, null, null, ColumnType.STRING, null, true);
+              cp = tp.addColumn(colName, colName, colName, ColumnType.STRING, null, true);
               dbName = cp.getElementKey();
             } else {
               reader.close();
@@ -387,13 +387,13 @@ public class CsvUtil {
         } else {
           Log.d(TAG, "processing column: " + colName);
 
-          ColumnProperties cp = tp.getColumnByDisplayName(colName);
+          ColumnProperties cp = tp.getColumnByElementKey(colName);
           if (cp == null) {
             // And now add all remaining metadata columns
             if (DbTable.getAdminColumns().contains(colName)) {
               dbName = colName;
             } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, null, null, ColumnType.STRING, null, true);
+              cp = tp.addColumn(colName, colName, colName, ColumnType.STRING, null, true);
               dbName = cp.getElementKey();
             } else {
               throw new IllegalStateException("column name " + colName
@@ -727,7 +727,8 @@ public class CsvUtil {
         colDefRow[0] = cp.getElementKey();
         colDefRow[1] = cp.getElementName();
         colDefRow[2] = cp.getColumnType().toString();
-        colDefRow[3] = Boolean.toString(cp.isUnitOfRetention());
+        // Excel does upper case...
+        colDefRow[3] = Boolean.toString(cp.isUnitOfRetention()).toUpperCase(Locale.ENGLISH);
         colDefRow[4] = ODKFileUtils.mapper.writeValueAsString(cp.getListChildElementKeys());
         cw.writeNext(colDefRow);
       }
@@ -944,9 +945,9 @@ public class CsvUtil {
                KeyValueStoreHelper.DEFAULT_ASPECT.equals(kvsEntry.aspect) &&
                TableProperties.KEY_DISPLAY_NAME.equals(kvsEntry.key) ) {
             displayName = kvsEntry.value;
-          } else {
-            kvsEntries.add(kvsEntry);
           }
+          // still put it in the kvsEntries -- displayName is not stored???
+          kvsEntries.add(kvsEntry);
         }
         // get next row or blank to end...
         row = cr.readNext();
