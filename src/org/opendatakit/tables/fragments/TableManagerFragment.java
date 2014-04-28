@@ -1,7 +1,6 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.logic.PropertyManager;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
@@ -12,9 +11,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 
 public class TableManagerFragment extends ListFragment {
   
@@ -31,12 +31,14 @@ public class TableManagerFragment extends ListFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
+    this.setHasOptionsMenu(true);
+    this.setMenuVisibility(true);
   }
   
   @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-    Log.d(TAG, "[onActivityCreated]");
+  public boolean onOptionsItemSelected(MenuItem item) {
+    Log.d(TAG, "[onOptionsItemSelected] selecting an item");
+    return super.onOptionsItemSelected(item);
   }
   
   @Override
@@ -45,37 +47,44 @@ public class TableManagerFragment extends ListFragment {
       ViewGroup container,
       Bundle savedInstanceState) {
     Log.d(TAG, "[onCreateView]");
-    this.setHasOptionsMenu(true);
-    return super.onCreateView(inflater, container, savedInstanceState);
+    LinearLayout layout = (LinearLayout) 
+        inflater.inflate(R.layout.fragment_table_list, container);
+    return layout;
   }
   
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
     Log.d(TAG, "[onViewCreated]");
-    Log.d(TAG, "in onViewCreated get activity is: " + getActivity());
-    this.mTableList = TableProperties.getTablePropertiesForAll(
-        getActivity(),
-        TableFileUtils.getDefaultAppName());
+    this.mTableList = retrieveContentsToDisplay();
     TablePropertiesAdapter adapter = new TablePropertiesAdapter(
         getActivity(),
         R.layout.row_item_with_preference,
-        this.getTablePropertiesList());
+        this.getList());
     this.setListAdapter(adapter);
   }
   
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    Log.e(TAG, "XXXXX created menu XXXXX");
     inflater.inflate(R.menu.table_manager, menu);
     super.onCreateOptionsMenu(menu, inflater);
   }
   
   /**
-   * Get the {@link TableProperties} displayed by the object.
+   * Retrieve the contents that will be displayed in the list. This should be
+   * used to populate the list.
    * @return
    */
-  TableProperties[] getTablePropertiesList() {
+  TableProperties[] retrieveContentsToDisplay() {
+    return TableProperties.getTablePropertiesForAll(
+        getActivity(),
+        TableFileUtils.getDefaultAppName());
+  }
+  
+  /**
+   * Get the list currently displayed by the fragment.
+   * @return
+   */
+  TableProperties[] getList() {
     return this.mTableList;
   }
 
