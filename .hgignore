@@ -1,15 +1,13 @@
 ^bin
 ^tests/bin
 ^perftests/bin
-^gen
 tests/.classpath
 perftests/.classpath
 ^perftests/dbs
 syntax: glob
-.settings/org.eclipse.jdt.core.prefs
+.settings/
+bin/
+gen/
 db\.sql
 perftests/gen/org/opendatakit/tables/test/BuildConfig\.java
 perftests/project\.properties
-.settings/com.google.appengine.eclipse.core.prefs
-.settings/com.google.gdt.eclipse.core.prefs
-.settings/com.google.gwt.eclipse.core.prefs
