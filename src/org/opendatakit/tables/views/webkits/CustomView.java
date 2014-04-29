@@ -402,8 +402,14 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTable(String tableId, String sqlWhereClause, String[] sqlSelectionArgs,
-                      String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementName, String sqlOrderByDirection) {
+    public boolean helperOpenTable(
+        String tableId,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementName,
+        String sqlOrderByDirection) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
@@ -426,9 +432,15 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTableWithFile(String tableId, String relativePath,
-        String sqlWhereClause, String[] sqlSelectionArgs,
-        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+    public boolean helperOpenTableWithFile(
+        String tableId,
+        String relativePath,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementKey,
+        String sqlOrderByDirection) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
@@ -448,9 +460,15 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTableToMapView(String tableId, String relativePath,
-        String sqlWhereClause, String[] sqlSelectionArgs,
-        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+    public boolean helperOpenTableToMapView(
+        String tableId,
+        String relativePath,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementKey,
+        String sqlOrderByDirection) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableName [" + tableId + "] not in map");
@@ -472,9 +490,14 @@ public abstract class CustomView extends LinearLayout {
      * @param sqlSelectionArgs
      * @return
      */
-    public boolean helperOpenTableToSpreadsheetView(String tableId,
-        String sqlWhereClause, String[] sqlSelectionArgs,
-        String[] sqlGroupBy, String sqlHaving, String sqlOrderByElementKey, String sqlOrderByDirection) {
+    public boolean helperOpenTableToSpreadsheetView(
+        String tableId,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementKey,
+        String sqlOrderByDirection) {
       TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
       if (tp == null) {
         Log.e(TAG, "tableId [" + tableId + "] not in map");
