@@ -33,6 +33,10 @@ public class TableManagerFragment extends ListFragment {
     Log.d(TAG, "[onCreate]");
     this.setHasOptionsMenu(true);
     this.setMenuVisibility(true);
+    this.setListAdapter(new TablePropertiesAdapter(
+        getActivity(),
+        R.layout.row_item_with_preference,
+        new TableProperties[0]));
   }
   
   @Override
@@ -47,9 +51,11 @@ public class TableManagerFragment extends ListFragment {
       ViewGroup container,
       Bundle savedInstanceState) {
     Log.d(TAG, "[onCreateView]");
-    LinearLayout layout = (LinearLayout) 
-        inflater.inflate(R.layout.fragment_table_list, container);
-    return layout;
+    View view = inflater.inflate(
+        R.layout.fragment_table_list,
+        container,
+        false);
+    return view;
   }
   
   @Override
