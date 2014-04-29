@@ -312,10 +312,8 @@ public class AggregateDownloadTableActivity extends ListActivity {
       }
 
       tp.setSyncState(tablePresent ? SyncState.inserting : SyncState.rest);
-      // We're going to say DO NOT sync media or nonMedia files, as since we're
-      // downloading the table, there shouldn't be any. If for some crazy
-      // reason there were (e.g. if they were created in the download process),
-      // it shouldn't really matter.
+      // Sync the local media files with the server if the table
+      // existed locally before we attempted downloading it.
 
       processor.synchronizeTable(tp, false, tablePresent);
 

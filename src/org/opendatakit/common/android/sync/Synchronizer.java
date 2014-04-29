@@ -201,8 +201,10 @@ public interface Synchronizer {
    * of a form. I.e. those files that are considered data.
    *
    * @param tableId
+   * @param pushLocal
+   *          true if the local files should be pushed
    * @throws ResourceAccessException
    */
-  public void syncRowDataFiles(String tableId) throws ResourceAccessException;
+  public void syncRowDataFiles(String tableId, boolean pushLocal) throws ResourceAccessException;
 
 }

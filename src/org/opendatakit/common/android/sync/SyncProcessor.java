@@ -141,8 +141,8 @@ public class SyncProcessor {
    * </p>
    */
   public SynchronizationResult synchronize(boolean pushLocalAppLevelFiles,
-                                           boolean pushLocalTableNonMediaFiles,
-                                           boolean syncMediaFiles) {
+                                           boolean pushLocalTableLevelFiles,
+                                           boolean pushLocalInstanceFiles) {
     Log.i(TAG, "entered synchronize()");
     // First we're going to synchronize the app level files.
     try {
@@ -158,7 +158,7 @@ public class SyncProcessor {
     TableProperties[] tps = TableProperties.getTablePropertiesForSynchronizedTables(context, appName);
     for (TableProperties tp : tps) {
       Log.i(TAG, "synchronizing table " + tp.getTableId());
-      synchronizeTable(tp, pushLocalTableNonMediaFiles, syncMediaFiles);
+      synchronizeTable(tp, pushLocalTableLevelFiles, pushLocalInstanceFiles);
     }
     return mUserResult;
   }
@@ -182,16 +182,15 @@ public class SyncProcessor {
    *          flag saying whether or not the table is being downloaded for the
    *          first time. Only applies to tables have their sync state set to
    *          {@link SyncState#rest}.
-   * @param pushLocalNonMediaFiles
-   *          true if local non media files should be pushed--e.g. any html
-   *          files on the device should be pushed to the server
-   * @param syncMediaFiles
-   *          if media files should also be synchronized. Media files are
-   *          defined as files that are part of the actual data of a table, e.g.
-   *          pictures that have been collected.
+   * @param pushLocalTableLevelFiles
+   *          true if local table-level files should be pushed up to the server.
+   *          e.g. any html files on the device should be pushed to the server
+   * @param pushLocalInstanceFiles
+   *          if local media files associated with data rows should be pushed
+   *          up to the server. The data files on the server are always pulled down.
    */
   public void synchronizeTable(TableProperties tp,
-                               boolean pushLocalNonMediaFiles, boolean syncMediaFiles) {
+                               boolean pushLocalTableLevelFiles, boolean pushLocalInstanceFiles) {
     // TODO the order of synching should probably be re-arranged so that you
     // first get the table properties and column entries (ie the table definition) and
     // THEN get the row data. This would make it more resilient to network
@@ -230,7 +229,7 @@ public class SyncProcessor {
         // presume success...
         tableResult.setStatus(Status.SUCCESS);
         success = synchronizeTablePreserving(tp, table, tableResult,
-                          pushLocalNonMediaFiles, syncMediaFiles);
+                          pushLocalTableLevelFiles, pushLocalInstanceFiles);
         break;
       default:
         Log.e(TAG, "got unrecognized syncstate: " + tp.getSyncState());
@@ -330,13 +329,13 @@ public class SyncProcessor {
    * @return
    */
   private boolean synchronizeTablePreserving(TableProperties tp, DbTable table,
-                                       TableResult tableResult, boolean pushLocalNonMediaFiles,
-                                       boolean syncMediaFiles) {
+                                       TableResult tableResult, boolean pushLocalTableLevelFiles,
+                                       boolean pushLocalInstanceFiles) {
     String tableId = tp.getTableId();
     Log.i(TAG, "REST " + tableId);
 
     try {
-      synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalNonMediaFiles);
+      synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalTableLevelFiles);
     } catch (ResourceAccessException e) {
       resourceAccessException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
@@ -428,21 +427,17 @@ public class SyncProcessor {
       // And now update that we've pushed our changes to the server.
       tableResult.setPushedLocalData(true);
       // And now try to push up the media files, if necessary.
-      if (syncMediaFiles) {
-        try {
-          Log.d(TAG, "[synchronizeTableRest] synching media files");
-          synchronizer.syncRowDataFiles(tp.getTableId());
-        } catch (ResourceAccessException e) {
-          resourceAccessException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
-          Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
-          return false;
-        } catch (Exception e) {
-          exception("synchronizeTableRest--mediaFiles", tp, e, tableResult);
-          Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
-          return false;
-        }
-      } else {
-        Log.d(TAG, "[synchronizeTableRest] NOT synching media files");
+      try {
+        Log.d(TAG, "[synchronizeTableRest] synching media files");
+        synchronizer.syncRowDataFiles(tp.getTableId(), pushLocalInstanceFiles);
+      } catch (ResourceAccessException e) {
+        resourceAccessException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
+        Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
+        return false;
+      } catch (Exception e) {
+        exception("synchronizeTableRest--mediaFiles", tp, e, tableResult);
+        Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
+        return false;
       }
       success = true;
     } catch (IOException e) {

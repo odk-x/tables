@@ -813,12 +813,12 @@ public class AggregateSynchronizer implements Synchronizer {
       dirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
       List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
           tableFolder, dirsToExclude);
-      
+
       // mix in the assets files for this tableId, if any...
       relativePathsToAppFolderOnDevice.addAll(relativePathsToTableIdAssetsCsvOnDevice);
       List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
           manifest);
-      Log.e(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
+      Log.i(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
       // and then upload the files.
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
@@ -873,6 +873,21 @@ public class AggregateSynchronizer implements Synchronizer {
     FileSystemResource resource = new FileSystemResource(file);
     String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
     URI filesUri = SyncUtilities.normalizeUri(aggregateUri, getFilePathURI() + escapedPath);
+    Log.i(TAG, "[uploadFile] filePostUri: " + filesUri.toString());
+    RestTemplate rt = SyncUtil.getRestTemplateForFiles();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(this.baseUri, accessToken));
+    rt.setInterceptors(interceptors);
+    URI responseUri = rt.postForLocation(filesUri, resource);
+    // TODO: verify whether or not this worked.
+    return true;
+  }
+
+  private boolean uploadInstanceFile(String wholePathToFile, String tableId, String pathRelativeToInstancesFolder) {
+    File file = new File(wholePathToFile);
+    FileSystemResource resource = new FileSystemResource(file);
+    String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToInstancesFolder);
+    URI filesUri = SyncUtilities.normalizeUri(aggregateUri, getTablesUriFragment() + tableId + "/attachments/file/" + escapedPath);
     Log.i(TAG, "[uploadFile] filePostUri: " + filesUri.toString());
     RestTemplate rt = SyncUtil.getRestTemplateForFiles();
     List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
@@ -1094,7 +1109,7 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncRowDataFiles(String tableId) throws ResourceAccessException {
+  public void syncRowDataFiles(String tableId, boolean pushLocalInstanceFiles) throws ResourceAccessException {
     // There are two things to do here, really. The first is to get the
     // manifest for each instance--or each row of the table. And download all
     // the files on the manifest.
@@ -1112,29 +1127,43 @@ public class AggregateSynchronizer implements Synchronizer {
     // 4) remove those files that were on the manifest, as they can now be
     // assumed to be up to date.
     // 5) upload all the remaining files.
+    String pathPrefix = "tables/" + tableId + "/instances/";
 
     // 1) Get the manifest.
     // TODO: this is currently just getting the same table-level manifest as
     // syncNonMediaTableFiles(). In reality it should be making its own call.
-    List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
+    List<OdkTablesFileManifestEntry> manifest;
+
+    // get the list of all instance files (should not do this in production!)
+    URI instanceFileManifestUri = SyncUtilities.normalizeUri(aggregateUri, getTablesUriFragment() + tableId + "/attachments/manifest/" );
+    Uri.Builder uriBuilder = Uri.parse(instanceFileManifestUri.toString()).buildUpon();
+    ResponseEntity<OdkTablesFileManifest> responseEntity;
+      responseEntity = rt.exchange(uriBuilder.build().toString(),
+              HttpMethod.GET, null, OdkTablesFileManifest.class);
+    manifest = responseEntity.getBody().getEntries();
+
     for (OdkTablesFileManifestEntry entry : manifest) {
+      entry.filename = pathPrefix + entry.filename;
       compareAndDownloadFile(entry);
     }
-    // Then we actually do try and upload things. Otherwise we can just
-    // continue straight on.
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
-    List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
-        instancesFolderFullPath, null);
-    List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
-        manifest);
-    Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);
-    // and then upload the files.
-    Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
-    for (String relativePath : relativePathsToUpload) {
-      String wholePathToFile = appFolder + File.separator + relativePath;
-      successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
+
+    if ( pushLocalInstanceFiles ) {
+      // Then we actually do try and upload things. Otherwise we can just
+      // continue straight on.
+      String appFolder = ODKFileUtils.getAppFolder(appName);
+      String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
+      List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
+          instancesFolderFullPath, null);
+      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
+          manifest);
+      Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);
+      // and then upload the files.
+      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
+      for (String relativePath : relativePathsToUpload) {
+        String wholePathToFile = appFolder + File.separator + relativePath;
+        String partialPath = relativePath.substring(pathPrefix.length());
+        successfulUploads.put(relativePath, uploadInstanceFile(wholePathToFile, tableId, partialPath));
+      }
     }
   }
-
 }

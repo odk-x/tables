@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
@@ -737,6 +739,10 @@ public class TableProperties {
       try {
         TableDefinitions.addTable(db, tableId, dbTableName);
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
+        if ( !(displayName.startsWith("\"") || displayName.startsWith("{")) ) {
+          // wrap it so that it is a JSON string
+          displayName = ODKFileUtils.mapper.writeValueAsString(displayName);
+        }
         propPairs.put(KEY_DISPLAY_NAME, displayName);
         tp = constructPropertiesFromMap(context, appName, db, propPairs);
         if ( tp == null ) {
@@ -789,6 +795,49 @@ public class TableProperties {
     String tableDir = ODKFileUtils.getTablesFolder(appName, tableId);
     try {
       FileUtils.deleteDirectory(new File(tableDir));
+    } catch (IOException e1) {
+      e1.printStackTrace();
+      throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
+    }
+
+    String assetsCsvDir = ODKFileUtils.getAssetsFolder(appName) + "/csv";
+    try {
+      Collection<File> files = FileUtils.listFiles(new File(assetsCsvDir), new IOFileFilter() {
+
+        @Override
+        public boolean accept(File file) {
+          String[] parts = file.getName().split("\\.");
+          return ( parts[0].equals(tableId) && parts[parts.length-1].equals("csv") &&
+                  (parts.length == 2 ||
+                   parts.length == 3 ||
+                   (parts.length == 4 && parts[parts.length-2].equals("properties"))) );
+        }
+
+        @Override
+        public boolean accept(File dir, String name) {
+          String[] parts = name.split("\\.");
+          return ( parts[0].equals(tableId) && parts[parts.length-1].equals("csv") &&
+                  (parts.length == 2 ||
+                   parts.length == 3 ||
+                   (parts.length == 4 && parts[parts.length-2].equals("properties"))) );
+        }}, new IOFileFilter() {
+
+        // don't traverse into directories
+        @Override
+        public boolean accept(File arg0) {
+          return false;
+        }
+
+        // don't traverse into directories
+        @Override
+        public boolean accept(File arg0, String arg1) {
+          return false;
+        }});
+
+      FileUtils.deleteDirectory(new File(tableDir));
+      for ( File f : files ) {
+        FileUtils.deleteQuietly(f);
+      }
     } catch (IOException e1) {
       e1.printStackTrace();
       throw new IllegalStateException("Unable to delete the " + tableDir + " directory", e1);
@@ -882,7 +931,8 @@ public class TableProperties {
         throw new IllegalStateException("bad displayName for tableId: " + getTableId());
       }
     }
-    throw new IllegalStateException("bad displayName for tableId: " + getTableId());
+    return displayName;
+    // throw new IllegalStateException("bad displayName for tableId: " + getTableId());
   }
 
   /**
