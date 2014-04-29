@@ -7,8 +7,13 @@ import java.util.HashMap;
 import org.opendatakit.common.android.database.DataModelDatabaseHelper;
 import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.MainActivity;
+import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowEnvironment;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.os.Environment;
 
 /**
@@ -24,6 +29,16 @@ public class TestCaseUtils {
    */
   public static void setExternalStorageMounted() {
     ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
+  }
+  
+  public static void startFragmentForMainActivity(Fragment fragment) {
+    MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class)
+        .create().start().resume().attach().get();
+    FragmentManager fm = mainActivity.getFragmentManager();
+    fm.beginTransaction().replace(
+        R.id.main_activity_frame_layout,
+        fragment,
+        "TEST_TAG").commit();
   }
   
   /**

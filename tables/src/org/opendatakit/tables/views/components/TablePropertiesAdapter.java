@@ -1,12 +1,17 @@
 package org.opendatakit.tables.views.components;
 
+import java.util.List;
+
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.view.View;
+import android.widget.BaseAdapter;
+import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -15,30 +20,34 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class TablePropertiesAdapter extends ArrayAdapter<TableProperties> {
+public class TablePropertiesAdapter extends BaseAdapter 
+    implements ListAdapter {
   
-  private int mLayoutId;
-  private TableProperties[] mArray;
+  private static final String TAG = 
+      TablePropertiesAdapter.class.getSimpleName();
   
-  public TablePropertiesAdapter(
-      Context context,
-      int resource,
-      TableProperties[] objects) {
-    super(context, resource, objects);
-    this.mLayoutId = resource;
-    this.mArray = objects;
+  private List<TableProperties> mTableList;
+  
+  public TablePropertiesAdapter(List<TableProperties> list) {
+    this.mTableList = list;
   }
 
-  public android.view.View getView(
+  @Override
+  public View getView(
       int position,
       android.view.View convertView,
       android.view.ViewGroup parent) {
+    Log.e(TAG, "getView called");
     RelativeLayout view = convertView == null ? 
         createView(parent) : 
         (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    textView.setText(this.mArray[position].getDisplayName());
+    textView.setText(this.getList().get(position).getDisplayName());
     return view;
+  }
+  
+  List<TableProperties> getList() {
+    return this.mTableList;
   }
   
   private RelativeLayout createView(ViewGroup parent) {
@@ -46,7 +55,26 @@ public class TablePropertiesAdapter extends ArrayAdapter<TableProperties> {
         (LayoutInflater) parent
             .getContext()
             .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    return (RelativeLayout) layoutInflater.inflate(mLayoutId, parent, false);
+    return (RelativeLayout) layoutInflater.inflate(
+        R.layout.row_item_with_preference,
+        parent,
+        false);
+  }
+
+  @Override
+  public int getCount() {
+    Log.e(TAG, "getCount returns: " + this.getList().size());
+    return this.getList().size();
+  }
+
+  @Override
+  public Object getItem(int position) {
+    return this.getList().get(position);
+  }
+
+  @Override
+  public long getItemId(int position) {
+    return 0;
   }
 
 }

@@ -6,12 +6,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowDrawable;
@@ -35,13 +37,10 @@ public class TablePropertiesAdapterTest {
     TableProperties tp2 = mock(TableProperties.class);
     when(tp1.getDisplayName()).thenReturn("alpha");
     when(tp2.getDisplayName()).thenReturn("beta");
-    this.mAdapter = new TablePropertiesAdapter(
-        Robolectric.application,
-        R.layout.row_item_with_preference,
-        new TableProperties[] {
-            tp1,
-            tp2
-        });
+    List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
+    listOfMocks.add(tp1);
+    listOfMocks.add(tp2);
+    this.mAdapter = new TablePropertiesAdapter(listOfMocks);
   }
   
   @Test

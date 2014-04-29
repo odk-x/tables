@@ -1,5 +1,9 @@
 package org.opendatakit.tables.fragments;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -14,14 +18,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 public class TableManagerFragment extends ListFragment {
   
   private static final String TAG = TableManagerFragment.class.getSimpleName();
   
   /** All the TableProperties that should be visible to the user. */
-  private TableProperties[] mTableList;
+  private List<TableProperties> mTableList;
+  
+  private TablePropertiesAdapter mTpAdapter;
   
   public TableManagerFragment() {
     // empty constructor required for fragments.
@@ -31,12 +36,9 @@ public class TableManagerFragment extends ListFragment {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.d(TAG, "[onCreate]");
+    this.mTableList = new ArrayList<TableProperties>();
     this.setHasOptionsMenu(true);
     this.setMenuVisibility(true);
-    this.setListAdapter(new TablePropertiesAdapter(
-        getActivity(),
-        R.layout.row_item_with_preference,
-        new TableProperties[0]));
   }
   
   @Override
@@ -59,14 +61,15 @@ public class TableManagerFragment extends ListFragment {
   }
   
   @Override
-  public void onViewCreated(View view, Bundle savedInstanceState) {
-    Log.d(TAG, "[onViewCreated]");
-    this.mTableList = retrieveContentsToDisplay();
-    TablePropertiesAdapter adapter = new TablePropertiesAdapter(
-        getActivity(),
-        R.layout.row_item_with_preference,
-        this.getList());
-    this.setListAdapter(adapter);
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    // call this here because we need a context.
+    List<TableProperties> newProperties = this.retrieveContentsToDisplay();
+    Log.e(TAG, "got newProperties list of size: " + newProperties.size());
+    this.setPropertiesList(newProperties);
+    this.mTpAdapter = new TablePropertiesAdapter(this.getPropertiesList());
+    this.setListAdapter(this.mTpAdapter);
+    this.mTpAdapter.notifyDataSetChanged();    
   }
   
   @Override
@@ -80,18 +83,32 @@ public class TableManagerFragment extends ListFragment {
    * used to populate the list.
    * @return
    */
-  TableProperties[] retrieveContentsToDisplay() {
-    return TableProperties.getTablePropertiesForAll(
+  List<TableProperties> retrieveContentsToDisplay() {
+    TableProperties[] tpArray = TableProperties.getTablePropertiesForAll(
         getActivity(),
         TableFileUtils.getDefaultAppName());
+    List<TableProperties> tpList = Arrays.asList(tpArray);
+    return tpList;
   }
   
   /**
    * Get the list currently displayed by the fragment.
    * @return
    */
-  TableProperties[] getList() {
+  List<TableProperties> getPropertiesList() {
     return this.mTableList;
   }
-
+  
+  /**
+   * Update the contents of the list with the this new list.
+   * @param list
+   */
+  void setPropertiesList(List<TableProperties> list) {
+    // We can't change the reference, which is held by the adapter.
+    this.getPropertiesList().clear();
+    for (TableProperties tp : list) {
+      this.getPropertiesList().add(tp);
+    }
+  }
+  
 }

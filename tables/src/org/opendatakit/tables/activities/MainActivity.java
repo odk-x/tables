@@ -1,5 +1,6 @@
 package org.opendatakit.tables.activities;
 
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 
 import android.app.Activity;
@@ -16,11 +17,14 @@ public class MainActivity extends Activity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    this.setContentView(
+        org.opendatakit.tables.R.layout.activity_main_activity);
     TableManagerFragment tmf = (TableManagerFragment)
         this.getFragmentManager().findFragmentByTag("fr_tm");
     if (tmf == null) {
       tmf = new TableManagerFragment();
-      this.getFragmentManager().beginTransaction().add(tmf, "fr_tm").commit();
+      this.getFragmentManager().beginTransaction()
+          .add(R.id.main_activity_frame_layout, tmf, "fr_tm").commit();
     }
   }
 
