@@ -38,7 +38,6 @@ public class TableManagerFragment extends ListFragment {
     Log.d(TAG, "[onCreate]");
     this.mTableList = new ArrayList<TableProperties>();
     this.setHasOptionsMenu(true);
-    this.setMenuVisibility(true);
   }
   
   @Override

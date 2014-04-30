@@ -71,9 +71,8 @@ public class TableManagerFragmentTest {
    * @return
    */
   private TableManagerFragment getSpy(List<TableProperties> toDisplay) {
-     TableManagerFragment spy = spy(new TableManagerFragment());
-     doReturn(toDisplay).when(spy).retrieveContentsToDisplay();
-     return spy;
+    TableManagerFragment stub = new TableManagerFragmentStub(toDisplay);
+    return stub;
   }
     
   @Test
