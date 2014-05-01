@@ -6,18 +6,28 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ListFragment;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
 
 public class TableManagerFragment extends ListFragment {
   
@@ -68,7 +78,26 @@ public class TableManagerFragment extends ListFragment {
     this.setPropertiesList(newProperties);
     this.mTpAdapter = new TablePropertiesAdapter(this.getPropertiesList());
     this.setListAdapter(this.mTpAdapter);
-    this.mTpAdapter.notifyDataSetChanged();    
+    this.mTpAdapter.notifyDataSetChanged();
+    this.registerForContextMenu(getListView());
+  }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
+    ListView lv = this.getListView();
+    int childcount = lv.getChildCount();
+  }
+  
+  @Override
+  public void onListItemClick(ListView l, View v, int position, long id) {
+    // There are two cases here: if it is the preferences icon, or if it is
+    // the main view.
+    if (v.getId() == R.id.row_item_icon) {
+      Log.e(TAG, "was the icon");
+    } else {
+      Log.e(TAG, "was the main item");
+    }
   }
   
   @Override
@@ -76,6 +105,66 @@ public class TableManagerFragment extends ListFragment {
     inflater.inflate(R.menu.table_manager, menu);
     super.onCreateOptionsMenu(menu, inflater);
   }
+  
+  @Override
+  public void onCreateContextMenu(
+      ContextMenu menu,
+      View v,
+      ContextMenu.ContextMenuInfo menuInfo) {
+    MenuInflater menuInflater = this.getActivity().getMenuInflater();
+    menuInflater.inflate(R.menu.table_manager_context, menu);
+  };
+  
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    AdapterView.AdapterContextMenuInfo menuInfo = 
+        (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+    final TableProperties tpOfSelectedItem = 
+        this.getPropertiesList().get(menuInfo.position);
+    switch (item.getItemId()) {
+    case R.id.table_manager_delete_table:
+      AlertDialog confirmDeleteAlert;
+      // Prompt an alert box
+      AlertDialog.Builder alert = new AlertDialog.Builder(this.getActivity());
+      if (tpOfSelectedItem.isSharedTable()) {
+        alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
+            getString(
+                R.string.are_you_sure_remove_table,
+                tpOfSelectedItem.getDisplayName()));
+      } else {
+        alert.setTitle(getString(R.string.confirm_delete_table)).setMessage(
+            getString(R.string.are_you_sure_delete_table,
+                tpOfSelectedItem.getDisplayName()));
+      }
+      // OK Action => delete the table
+      alert.setPositiveButton(getString(R.string.yes), 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+          // treat delete as a local removal -- not a server side deletion
+          tpOfSelectedItem.deleteTable();
+          // Now dleete the list.
+          TableManagerFragment.this.setPropertiesList(
+              retrieveContentsToDisplay());
+        }
+      });
+
+      // Cancel Action
+      alert.setNegativeButton(getString(R.string.cancel), 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int whichButton) {
+          // Canceled.
+        }
+      });
+      // show the dialog
+      confirmDeleteAlert = alert.create();
+      confirmDeleteAlert.show();
+      return true;
+    case R.id.table_manager_edit_table_properties:
+      // TODO: put in the preferences fragment.
+      return true;
+    }
+    return false;
+  };
   
   /**
    * Retrieve the contents that will be displayed in the list. This should be

@@ -67,6 +67,7 @@ public class Launcher extends Activity {
           // Launch the TableManager.
           String tableId = (new Preferences(this, appName)).getDefaultTableId();
           if (tableId == null) {
+//              Intent i = new Intent(this, TableManager.class);
               Intent i = new Intent(this, MainActivity.class);
               i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
               startActivity(i);

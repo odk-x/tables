@@ -7,7 +7,9 @@ import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -78,6 +80,32 @@ public class TablePropertiesAdapterTest {
         null); 
     View view = this.getView(0, existingView);
     assertThat(view).isSameAs(existingView);
+  }
+  
+  @Test
+  public void getView_iconClickPerformsLongClickOnParent() {
+    View view = this.getView(1, null);
+    ImageView icon = (ImageView) view.findViewById(R.id.row_item_icon);
+    // We're going to test that this works just by adding a longClick listener.
+    // Because we have to use final, we can't do a simple ++. Going to modify
+    // an object.
+    final String key = "key";
+    final Map<String, Integer> buttonClicks = new HashMap<String, Integer>();
+    buttonClicks.put(key, 0);
+    view.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View arg0) {
+        int oldValue = buttonClicks.get(key);
+        int newValue = oldValue + 1;
+        buttonClicks.put(key, newValue);
+        return true;
+      }
+    });
+    // Before the click, it should be 0.
+    assertEquals((Integer) 0, buttonClicks.get(key));
+    // Do the click.
+    icon.performClick();
+    assertEquals((Integer) 1, buttonClicks.get(key));
   }
   
   @Test

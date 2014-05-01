@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.View;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -38,11 +39,21 @@ public class TablePropertiesAdapter extends BaseAdapter
       android.view.View convertView,
       android.view.ViewGroup parent) {
     Log.e(TAG, "getView called");
-    RelativeLayout view = convertView == null ? 
+    final RelativeLayout view = convertView == null ? 
         createView(parent) : 
         (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
     textView.setText(this.getList().get(position).getDisplayName());
+    ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
+    imageView.setOnClickListener(new View.OnClickListener() {
+      
+      @Override
+      public void onClick(View v) {
+        // We want to pop open the context menu. Therefore anything using this
+        // must have registered the item for a click.
+        view.performLongClick();
+      }
+    });
     return view;
   }
   

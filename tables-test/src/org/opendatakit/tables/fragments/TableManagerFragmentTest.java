@@ -1,9 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
 import static org.robolectric.util.FragmentTestUtil.startFragment;
@@ -11,24 +9,36 @@ import static org.robolectric.util.FragmentTestUtil.startFragment;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestContextMenu;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
+import org.robolectric.shadows.ShadowAlertDialog;
+import org.robolectric.shadows.ShadowListView;
 import org.robolectric.shadows.ShadowLog;
+import org.robolectric.tester.android.view.TestMenuItem;
 import org.robolectric.util.ActivityController;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableManagerFragmentTest {
+  
+  String mockTableName1 = "alpha";
+  String mockTableName2 = "beta";
   
   private TableManagerFragment fragment;
   private Activity parentActivity;
@@ -41,8 +51,8 @@ public class TableManagerFragmentTest {
   public void setupFragmentWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getDisplayName()).thenReturn("alpha");
-    when(tp2.getDisplayName()).thenReturn("beta");
+    when(tp1.getDisplayName()).thenReturn(mockTableName1);
+    when(tp2.getDisplayName()).thenReturn(mockTableName2);
     List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
     listOfMocks.add(tp1);
     listOfMocks.add(tp2);
@@ -119,6 +129,50 @@ public class TableManagerFragmentTest {
       .hasItem(R.id.menu_table_manager_sync)
       .hasItem(R.id.menu_table_manager_preferences);
   }
+  
+  @Test
+  public void contextMenuHasCorrectItems() {
+    setupFragmentWithTwoItems();
+    ContextMenu contextMenu = new TestContextMenu();
+    this.fragment.onCreateContextMenu(contextMenu, null, null);
+    assertThat(contextMenu)
+        .hasSize(2)
+        .hasItem(R.id.table_manager_delete_table)
+        .hasItem(R.id.table_manager_edit_table_properties);
+  }
+  
+  @Test
+  public void clickingDeleteTableCreatesDialog() {
+    setupFragmentWithTwoItems();
+    ContextMenu contextMenu = new TestContextMenu();
+    ListView listView = this.fragment.getListView();
+    View view1 = listView.getAdapter().getView(
+        1,
+        null,
+        new LinearLayout(Robolectric.application));
+//    int firstPosition = listView.getFirstVisiblePosition();
+//    View view = listView.getChildAt(firstPosition);
+//    listView.showContextMenuForChild(view);
+//    shadowListView.
+//    AdapterContextMenuInfo menuInfo = new AdapterContextMenuInfo(
+//         view,
+//         0,
+//         1);
+//    this.fragment.onCreateContextMenu(contextMenu, listView, menuInfo);
+    view1.createContextMenu(contextMenu);
+    assertThat(contextMenu).hasSize(2);
+    MenuItem deleteItem = 
+        contextMenu.findItem(R.id.table_manager_delete_table);
+    TestMenuItem tmi = new TestMenuItem();
+    assertThat(deleteItem).isNotNull();
+    this.fragment.onContextItemSelected(deleteItem);
+    // This should have created a dialog.
+    AlertDialog dialog = ShadowAlertDialog.getLatestAlertDialog();
+    assertThat(dialog).isNotNull();
+  }
+  
+  // TODO: there should really be a "long-pressing creates a context menu"
+  // test, but I'm not sure how to do it.
 
 
 }

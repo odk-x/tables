@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <item 
+        android:id="@+id/table_manager_delete_table"
+        android:title="@string/delete_table"/>
+    
+    <item
+        android:id="@+id/table_manager_edit_table_properties"
+        android:title="@string/edit_table_props" />
+
+</menu>

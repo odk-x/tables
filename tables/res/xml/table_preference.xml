@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <PreferenceCategory 
+        android:title="@string/general_settings">
+        
+        <EditTextPreference 
+            android:key="table_pref_display_name"
+            android:persistent="false"
+            android:enabled="false" />
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
+        android:title="@string/display_settings" >
+        
+        <ListPreference
+            android:key="table_pref_default_view_type"
+            android:persistent="false"
+            android:title="@string/change_default_view_type"
+            android:entries="@array/table_view_types"
+            android:entryValues="@array/table_view_types">
+        </ListPreference>
+        
+        <!-- Default form -->
+        
+        <!-- Edit table color rules -->
+        
+        <!-- Edit status column color rules -->
+        
+        <ListPreference 
+            android:key="table_pref_map_color_rule"
+            android:persistent="false"
+            android:title="@string/color_rule_for_map" 
+            android:entries="@array/color_rule_types"
+            android:entryValues="@array/color_rule_type_values" />
+        
+        <!-- Individual columns -->
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
+        android:title="@string/list_view_settings">
+        
+        <Preference 
+            android:key="table_pref_list_view_manager"
+            android:persistent="false"
+            android:title="@string/list_view_manager"/>
+        
+        <Preference 
+            android:key="table_pref_detail_view"
+            android:persistent="false"
+            android:title="@string/detail_view_file"/>
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
+        android:title="@string/graph_view_settings">
+        
+        <Preference
+            android:key="table_pref_graph_view_manager"
+            android:persistent="false"
+            android:title="@string/graph_view_manager" />
+        
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
+        android:title="@string/map_view_settings">
+        
+        <!-- Shoudl select from a list of columns somehow -->
+        
+        <!-- list of columns -->
+        
+        <!-- map list view file -->
+        
+    </PreferenceCategory>
+    
+
+</PreferenceScreen>

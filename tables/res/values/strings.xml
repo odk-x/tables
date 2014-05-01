@@ -24,6 +24,7 @@
 	<string name="sync">Sync</string>
 	<string name="preferences">Preferences</string>
 	<!-- For color rule things -->
+	<string name="color_rule_for_map">Color Rule for Map</string>
 	<string name="comparison_type">Comparison Type</string>
 	<string name="value">Value</string>
 	<string name="text_color">Text Color</string>
@@ -54,6 +55,7 @@
 	<string name="sync_no_tables_ready">There are no tables ready to be synched with the server.</string>
 	<string name="press_to_add_color_rule">Press + to add a color rule</string>
 	<string name="press_to_add_graph">Press + to add a graph.</string>
+	<string name="list_view_settings">List View Settings</string>
 	<string name="press_to_add_list_view">Press + to add a list view.</string>
 	<string name="open_new_spreadsheet">Open New Spreadsheet File</string>
 	<string name="no_data">No data</string>
@@ -200,7 +202,9 @@
 	<string name="display_settings">Display Settings</string>
 	<string name="display_list_view_settings">List View Settings</string>
 	<string name="graph_view_manager">Graph View Manager</string>
+	<string name="graph_view_settings">Graph View Settings</string>
 	<string name="display_graph_view_settings">Graph View Settings</string>
+	<string name="map_view_settings">Map View Settings</string>
 	<string name="display_map_view_settings">Map View Settings</string>
 	<string name="detail_view_file">Detail View File</string>
 	<string name="default_survey_form">Default Survey Form</string>
@@ -284,6 +288,7 @@
 	<string name="edit_row">Edit Row</string>
 	<string name="delete_table">Delete this Table</string>
 	<string name="confirm_delete_table">Confirm Delete Table</string>
+	<string name="cannot_delete_table">Cannot Delete Table</string>
 	<string name="confirm_remove_table">Confirm Remove Table from Device</string>
 	<string name="are_you_sure_delete_table">Please confirm deletion of table: %1$s</string>
 	<string name="are_you_sure_remove_table">Please confirm removal of table: %1$s from device</string>

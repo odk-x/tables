@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- The various views you can have onto a table. -->
+    <string-array
+        name="table_view_types">
+        <item>Spreadsheet</item>
+        <item>List</item>
+        <item>Graph</item>
+        <item>Map</item>
+    </string-array>
+    
+    <string-array
+        name="color_rule_types">
+        <item>None</item>
+        <item>Table Color Rules</item>
+        <item>Status Column Color Rules</item>
+        <item>Selectable Column Color Rules</item>
+    </string-array>
+    
+    <string-array
+        name="color_rule_type_values">
+        <item>none</item>
+        <item>table</item>
+        <item>status</item>
+        <item>selectable</item>
+    </string-array>
+        
+</resources>
