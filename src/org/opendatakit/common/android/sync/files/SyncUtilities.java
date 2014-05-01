@@ -15,7 +15,6 @@
  */
 package org.opendatakit.common.android.sync.files;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -27,10 +26,8 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.sync.aggregate.AggregateSynchronizer;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.httpclientandroidlib.HttpEntity;
 import org.opendatakit.httpclientandroidlib.HttpResponse;
 import org.opendatakit.httpclientandroidlib.client.HttpClient;
@@ -43,7 +40,6 @@ import org.opendatakit.httpclientandroidlib.util.EntityUtils;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.http.MediaType;
 
-import android.content.Context;
 import android.net.Uri.Builder;
 import android.util.Log;
 
@@ -171,169 +167,6 @@ public class SyncUtilities {
       throw new IllegalStateException("problem parsing in getKeyValueEntries");
     } catch (IOException e) {
       throw new IllegalStateException("io trouble in getKeyValueEntries");
-    }
-  }
-
-  public static void downloadFilesAndUpdateValues(AggregateSynchronizer sync, String appName,
-      List<OdkTablesKeyValueStoreEntry> allEntries) {
-    // If the entry is a file, we see if we need to download it and update
-    // the value with the path to the file. Otherwise, we leave the entry.
-    TypeReference<OdkTablesFileManifestEntry> typeRef =
-        new TypeReference<OdkTablesFileManifestEntry>() {};
-    for (OdkTablesKeyValueStoreEntry entry : allEntries) {
-      String entryType = entry.type;
-      String fileDesignation = Type.FILE.getTitle();
-      if (entryType.equals(fileDesignation)) {
-        String fileString = entry.value;
-        String tableId = entry.tableId;
-        try {
-          OdkTablesFileManifestEntry fileEntry = mapper.readValue(
-              fileString, typeRef);
-          if (compareAndDownloadFile(sync, appName, tableId, entry.key, fileEntry)) {
-            String basePath = ODKFileUtils.getTablesFolder(appName, tableId);
-            String path = basePath + File.separator + fileEntry.filename;
-            entry.value = path;
-          } else {
-            // TODO:
-            // there was an error downloading the file. remove the entry.
-            // IS THIS A SAFE WAY TO DO IT?
-            allEntries.remove(entry);
-          }
-        //TODO--throw the correct errors here! these are hacks.
-        } catch (JsonMappingException e) {
-          throw new IllegalStateException("problem mapping in getFileEntries");
-        } catch (JsonParseException e) {
-          throw new IllegalStateException("problem parsing in getFileEntries");
-        } catch (IOException e) {
-          throw new IllegalStateException("io trouble in getFileEntries");
-        }
-      }
-    }
-  }
-
-  /**
-   * Compares a single file to the information contained in an
-   * OdkTablesFileManifestEntry and downloads the new file if necessary.
-   * Returns true if the file was successfully downloaded and there were no
-   * errors, or if the current version of the file already exists at the
-   * given path externalFilesDir/tableId/filename.
-   * @param context
-   * @param tableId
-   * @param key the key for the entry
-   * @param fileEntry
-   * @return
-   */
-  public static boolean compareAndDownloadFile(AggregateSynchronizer sync, String appName, String tableId,
-      String key, OdkTablesFileManifestEntry fileEntry) {
-    Log.d(TAG, "in compareAndDownloadFile");
-    // the path for the base of where the app can save its files.
-    String basePath =  ODKFileUtils.getTablesFolder(appName, tableId);
-    // now we need to look through the manifest and see where the files are
-    // supposed to be stored.
-      // make sure you don't return a bad string.
-    if (fileEntry.filename.equals("") || fileEntry.filename == null) {
-      Log.i(TAG, "returned a null or empty filename");
-      return false;
-     } else {
-      // filename is the unrooted path of the file, so append the tableId
-      // and the basepath.
-      String path = basePath + File.separator + fileEntry.filename;
-      // Before we try dl'ing the file, we have to make the folder,
-      // b/c otherwise if the folders down to the path have too many non-
-      // existent folders, we'll get a FileNotFoundException when we open
-      // the FileOutputStream.
-      int lastSlash = path.lastIndexOf(File.separator);
-      String folderPath = path.substring(0, lastSlash);
-      ODKFileUtils.createFolder(folderPath);
-      File newFile = new File(path);
-      if (!newFile.exists()) {
-        // the file doesn't exist on the system
-        //filesToDL.add(newFile);
-        try {
-          sync.downloadFile(newFile, fileEntry.downloadUrl);
-          return true;
-        } catch (Exception e) {
-          e.printStackTrace();
-          Log.e(TAG, "trouble downloading file for first time");
-          return false;
-        }
-      } else {
-        // file exists, see if it's up to date
-        String md5hash = ODKFileUtils.getMd5Hash(newFile);
-        // so as it comes down from the manifest, the md5 hash includes a
-        // "md5:" prefix. Add taht and then check.
-        if (!md5hash.equals(fileEntry.md5hash)) {
-          // it's not up to date, we need to download it.
-          try {
-            sync.downloadFile(newFile, fileEntry.downloadUrl);
-            return true;
-          } catch (Exception e) {
-            e.printStackTrace();
-            // TODO throw correct exception
-            Log.e(TAG, "trouble downloading new version of existing file");
-            return false;
-          }
-        } else {
-          return true;
-        }
-      }
-    }
-  }
-
-  /**
-   * Make sure the files on the phone are up to date. Downloads the files
-   * to the directory:
-   *
-   *   ODKFileUtils.getTablesFolder(appName, tableId) +
-   *    File.separator + fileEntry.filename
-   *
-   * @param context
-   * @param manFiles
-   * @return a List of files that need to be downloaded.
-   */
-  public static void compareAndDownloadFiles(Context context, AggregateSynchronizer sync, String appName, String tableId,
-      List<OdkTablesFileManifestEntry> manFiles) {
-    Log.d(TAG, "in compareAndDownloadFiles");
-    // the path for the base of where the app can save its files.
-    String basePath =  ODKFileUtils.getTablesFolder(appName, tableId);
-    // now we need to look through the manifest and see where the files are
-    // supposed to be stored.
-    for (OdkTablesFileManifestEntry fileEntry : manFiles) {
-      // make sure you don't return a bad string.
-      if (fileEntry.filename.equals("") || fileEntry.filename == null) {
-        Log.i(TAG, "returned a null or empty filename");
-      } else {
-        // filename is the unrooted path of the file, so append the tableId
-        // and the basepath.
-        String path = basePath + File.separator + fileEntry.filename;
-        File newFile = new File(path);
-        if (!newFile.exists()) {
-          // the file doesn't exist on the system
-          //filesToDL.add(newFile);
-          try {
-            sync.downloadFile(newFile, fileEntry.downloadUrl);
-          } catch (Exception e) {
-            e.printStackTrace();
-            Log.e(TAG, "trouble downloading file for first time");
-          }
-        } else {
-          // file exists, see if it's up to date
-          String md5hash = ODKFileUtils.getMd5Hash(newFile);
-          // so as it comes down from the manifest, the md5 hash inclues a
-          // "md5:" prefix. Add taht and then check.
-          if (!md5hash.equals(fileEntry.md5hash)) {
-            // it's not up to date, we need to download it.
-            try {
-              sync.downloadFile(newFile, fileEntry.downloadUrl);
-            } catch (Exception e) {
-              e.printStackTrace();
-              // TODO throw correct exception
-              Log.e(TAG, "trouble downloading new version of existing file");
-              throw new IllegalStateException("trouble dl'ing file");
-            }
-          }
-        }
-      }
     }
   }
 

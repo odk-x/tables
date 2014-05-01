@@ -15,35 +15,22 @@
  */
 package org.opendatakit.common.android.utils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.lang3.CharEncoding;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
-import org.joda.time.DateTime;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
@@ -51,22 +38,20 @@ import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEnt
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.KeyValueStoreEntryType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
 
 import android.content.Context;
 import android.util.Log;
-import au.com.bytecode.opencsv.CSVReader;
 
 /**
  * Various utilities for importing/exporting tables from/to CSV.
@@ -90,521 +75,12 @@ public class CsvUtil {
 
   private static final String TAG = CsvUtil.class.getSimpleName();
 
-  private static final String NEW_LINE = "\n";
-
-  private static final String OPEN_CURLY_BRACKET = "{";
-
-  private static final String PROPERTIES_CSV_FILE_EXTENSION = ".properties.csv";
-
-  private static final String CSV_FILE_EXTENSION = ".csv";
-
-  /** TempFilename for a csv file used for joining files (?) */
-  private static final String ODK_TABLES_JOINING_CSV_FILENAME = "temp.csv";
-
-
-  private static final String t = "CsvUtil";
-
-  private static final String LAST_MOD_TIME_LABEL = "_last_mod_time";
-  private static final String ACCESS_CONTROL_LABEL = "_access_control";
-
-  private static final char DELIMITING_CHAR = ',';
-  private static final char QUOTE_CHAR = '\"';
-  private static final char ESCAPE_CHAR = '\\';
-
-  private static final ObjectMapper mapper;
-
-  static {
-    mapper = new ObjectMapper();
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-  }
-
-  private final DataUtil du;
   private final Context context;
   private final String appName;
 
   public CsvUtil(Context context, String appName) {
 	this.context = context;
     this.appName = appName;
-    du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
-  }
-
-  /**
-   * Import a table to the database.
-   * <p>
-   * Tables imported through this function are added to the active key value
-   * store. Doing it another way would give users a workaround to add tables to
-   * the server database.
-   *
-   * @param importTask
-   *          the ImportTask calling this method. It is used to pass messages to
-   *          the user in case of error. Null safe.
-   * @param file
-   * @param tableName
-   * @return
-   * @throws TableAlreadyExistsException
-   */
-  public boolean importNewTable(Context c, ImportListener importTask, File file, String tableName) throws TableAlreadyExistsException {
-
-    String dbTableName = NameUtil.createUniqueDbTableName(c, appName, tableName);
-    String tableId = NameUtil.createUniqueTableId(c, appName, dbTableName);
-    TableProperties tp;
-    try {
-      boolean includesProperties = false;
-      // columns contains all columns in the csv file...
-      List<String> columns = new ArrayList<String>();
-      int idxRowId = -1;
-      int idxFormId = -1;
-      int idxLocale = -1;
-      int idxTimestamp = -1;
-      int idxSavepointCreator = -1;
-
-      InputStream is;
-      try {
-        is = new FileInputStream(file);
-      } catch (FileNotFoundException e) {
-        throw new IllegalStateException(e);
-      }
-      // Now get the reader.
-      InputStreamReader isr;
-      try {
-        isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
-      } catch (UnsupportedCharsetException e) {
-        Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
-        isr = new InputStreamReader(is);
-      }
-
-      CSVReader reader = new CSVReader(isr, DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
-      String[] row = reader.readNext();
-      if (row.length == 0) {
-        reader.close();
-        return true;
-      }
-      // adding columns
-      boolean discoverColumnNames = false;
-      if (row[0].startsWith(OPEN_CURLY_BRACKET)) {
-        // has been exported with properties.
-        includesProperties = true;
-        String jsonProperties = row[0];
-        // now we need the tableId. It is tempting to just scan the
-        // string until we find it, but if there are other occurrences
-        // of the tableId json key we will get into trouble. So, we must
-        // deserialize it.
-        tp = TableProperties.addTableFromJson(c, appName, jsonProperties);
-        // we need to check if we need to import all the key value store
-        // things as well.
-        if (row.length > 1) {
-          // This is, by convention, the key value store entries in
-          // list
-          // form.
-          try {
-            List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
-                new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
-                });
-            tp.addMetaDataEntries(recoveredEntries, false);
-            // Since the KVS has all the display properties for a table, we must
-            // re-read everything to get them.
-            tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
-            // TODO: sort out closing database appropriately.
-          } catch (JsonGenerationException e) {
-            e.printStackTrace();
-            if (importTask != null) {
-              importTask.importComplete(false);
-            }
-          } catch (JsonMappingException e) {
-            e.printStackTrace();
-            if (importTask != null) {
-              importTask.importComplete(false);
-            }
-          } catch (IOException e) {
-            e.printStackTrace();
-            if (importTask != null) {
-              importTask.importComplete(false);
-            }
-          }
-        }
-        discoverColumnNames = false;
-        row = reader.readNext();
-      } else {
-        tp = TableProperties.addTable(c, appName, dbTableName, tableName, tableId);
-        discoverColumnNames = true;
-      }
-
-      // now collect all the headings.
-      for (int i = 0; i < row.length; ++i) {
-        String colName = row[i];
-        String dbName = null;
-
-        if (colName.equals(DataTableColumns.ID)) {
-          idxRowId = i;
-          dbName = DataTableColumns.ID;
-        } else if (colName.equals(DataTableColumns.FORM_ID)) {
-          idxFormId = i;
-          dbName = DataTableColumns.FORM_ID;
-        } else if (colName.equals(DataTableColumns.LOCALE)) {
-          idxLocale = i;
-          dbName = DataTableColumns.LOCALE;
-        } else if (colName.equals(LAST_MOD_TIME_LABEL) || colName.equals(DataTableColumns.SAVEPOINT_TIMESTAMP)) {
-          idxTimestamp = i;
-          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
-        } else if (colName.equals(ACCESS_CONTROL_LABEL) || colName.equals(DataTableColumns.SAVEPOINT_CREATOR)) {
-          idxSavepointCreator = i;
-          dbName = DataTableColumns.SAVEPOINT_CREATOR;
-        } else {
-          Log.d(TAG, "processing column: " + colName);
-
-          ColumnProperties cp = tp.getColumnByElementKey(colName);
-          if (cp == null) {
-            // And now add all remaining metadata columns
-            if (DbTable.getAdminColumns().contains(colName)) {
-              dbName = colName;
-            } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, colName, colName, ColumnType.STRING, null, true);
-              dbName = cp.getElementKey();
-            } else {
-              reader.close();
-              throw new IllegalStateException("column name " + colName
-                  + " should have been defined in metadata");
-            }
-          } else {
-            dbName = cp.getElementKey();
-          }
-        }
-        columns.add(dbName);
-      }
-      return importTable(c, importTask, reader, tp, columns, idxRowId, idxFormId, idxLocale, idxTimestamp,
-          idxSavepointCreator, includesProperties);
-    } catch (FileNotFoundException e) {
-      return false;
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  public boolean importAddToTable(Context c, ImportListener importTask, File file, String tableId) {
-    try {
-      // This flag indicates if the table was exported with the
-      // properties.
-      // If so, then we know that it includes the admin/metadata columns.
-      boolean includesProperties = false;
-
-      InputStream is;
-      try {
-        is = new FileInputStream(file);
-      } catch (FileNotFoundException e) {
-        throw new IllegalStateException(e);
-      }
-      // Now get the reader.
-      InputStreamReader isr;
-      try {
-        isr = new InputStreamReader(is, Charset.forName(CharEncoding.UTF_8));
-      } catch (UnsupportedCharsetException e) {
-        Log.w(TAG, "UTF-8 wasn't supported--trying with default charset");
-        isr = new InputStreamReader(is);
-      }
-
-      CSVReader reader = new CSVReader(isr, DELIMITING_CHAR, QUOTE_CHAR, ESCAPE_CHAR);
-      String[] row = reader.readNext();
-      if (row.length == 0) {
-        reader.close();
-        return true;
-      }
-      TableProperties tp;
-      boolean discoverColumnNames = true;
-      if (row[0].startsWith(OPEN_CURLY_BRACKET)) {
-        includesProperties = true;
-        // TODO: it might be that we do NOT want to overwrite an
-        // existing
-        // table's properties, in which case we shouldn't set from json.
-        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId);
-        if (tp.setFromJson(row[0])) {
-          // OK the metadata is for this tableId, so we can proceed...
-
-          // we need to check if we need to import all the key value store
-          // things as well.
-          if (row.length > 1) {
-            // This is, by convention, the key value store entries in
-            // list
-            // form.
-            try {
-              List<OdkTablesKeyValueStoreEntry> recoveredEntries = mapper.readValue(row[1],
-                  new TypeReference<List<OdkTablesKeyValueStoreEntry>>() {
-                  });
-              tp.addMetaDataEntries(recoveredEntries, false);
-              // Since the KVS has all the display properties for a table, we
-              // must
-              // re-read everything to get them.
-              tp = TableProperties.refreshTablePropertiesForTable(c, appName, tp.getTableId());
-              // TODO: sort out closing database appropriately.
-            } catch (JsonGenerationException e) {
-              e.printStackTrace();
-              if (importTask != null) {
-                importTask.importComplete(false);
-              }
-            } catch (JsonMappingException e) {
-              e.printStackTrace();
-              if (importTask != null) {
-                importTask.importComplete(false);
-              }
-            } catch (IOException e) {
-              e.printStackTrace();
-              if (importTask != null) {
-                importTask.importComplete(false);
-              }
-            }
-          }
-          discoverColumnNames = false;
-        }
-        row = reader.readNext();
-      } else {
-        tp = TableProperties.getTablePropertiesForTable(c, appName, tableId);
-        discoverColumnNames = true;
-      }
-
-      ArrayList<String> columns = new ArrayList<String>();
-      int idxRowId = -1;
-      int idxTimestamp = -1;
-      int idxSavepointCreator = -1;
-      int idxFormId = -1;
-      int idxLocale = -1;
-      for (int i = 0; i < row.length; ++i) {
-        String colName = row[i];
-        String dbName = null;
-        if (colName.equals(DataTableColumns.ID)) {
-          idxRowId = i;
-          dbName = DataTableColumns.ID;
-        } else if (colName.equals(DataTableColumns.FORM_ID)) {
-          idxFormId = i;
-          dbName = DataTableColumns.FORM_ID;
-        } else if (colName.equals(DataTableColumns.LOCALE)) {
-          idxLocale = i;
-          dbName = DataTableColumns.LOCALE;
-        } else if (colName.equals(LAST_MOD_TIME_LABEL)) {
-          idxTimestamp = i;
-          dbName = DataTableColumns.SAVEPOINT_TIMESTAMP;
-        } else if (colName.equals(ACCESS_CONTROL_LABEL)) {
-          idxSavepointCreator = i;
-          dbName = DataTableColumns.SAVEPOINT_CREATOR;
-        } else {
-          Log.d(TAG, "processing column: " + colName);
-
-          ColumnProperties cp = tp.getColumnByElementKey(colName);
-          if (cp == null) {
-            // And now add all remaining metadata columns
-            if (DbTable.getAdminColumns().contains(colName)) {
-              dbName = colName;
-            } else if (discoverColumnNames) {
-              cp = tp.addColumn(colName, colName, colName, ColumnType.STRING, null, true);
-              dbName = cp.getElementKey();
-            } else {
-              throw new IllegalStateException("column name " + colName
-                  + " should have been defined in metadata");
-            }
-          } else {
-            dbName = cp.getElementKey();
-          }
-          // dbName = cp.getElementKey();
-        }
-        columns.add(dbName);
-      }
-
-      return importTable(c, importTask, reader, tp, columns, idxRowId, idxFormId, idxLocale, idxTimestamp,
-          idxSavepointCreator, includesProperties);
-    } catch (FileNotFoundException e) {
-      return false;
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  /**
-   * Used by InitializeTask
-   *
-   * @param InitializeTask
-   *          calling this method
-   * @param File
-   *          .csv file
-   * @param String
-   *          tablename
-   * @return boolean true if successful
-   * @throws TableAlreadyExistsException
-   */
-  public boolean importConfigTables(Context c, ImportListener it, File file, String filename,
-                                    String tablename) throws TableAlreadyExistsException {
-
-    if (filename != null) {
-
-      String baseName = null; // the filename without the .csv
-      // split on ".csv" to get the filename without extension
-      if (filename.endsWith(CSV_FILE_EXTENSION)) {
-        // create the file name/path of a .properties.csv file
-        // and check if it exits
-        String[] tokens = filename.split(CSV_FILE_EXTENSION);
-        StringBuffer s = new StringBuffer();
-        for (int i = 0; i < tokens.length; i++) {
-          s.append(tokens[i]);
-        }
-        baseName = s.toString();
-      }
-      String propFilename = baseName += PROPERTIES_CSV_FILE_EXTENSION;
-
-      File csvProp = new File(ODKFileUtils.getAppFolder(appName), propFilename);
-
-      if (csvProp.exists()) {
-        try {
-          File temp = joinCSVs(csvProp, file);
-          boolean success = this.importNewTable(c, null, temp, tablename);
-          // delete temporary file
-          temp.delete();
-          return success;
-        } catch (IOException e) {
-          e.printStackTrace();
-          return false;
-        }
-      } else {
-        // try {
-        return this.importNewTable(c, null, file, tablename);
-      }
-    } else {
-      Log.e(t, "bad filename");
-      return false;
-    }
-  }
-
-  private File joinCSVs(File prop, File data) throws IOException {
-    File temp = new File(ODKFileUtils.getAppFolder(appName),
-                         ODK_TABLES_JOINING_CSV_FILENAME);
-
-    InputStream isProp = null;
-    InputStreamReader isrProp = null;
-    BufferedReader brProp = null;
-    try {
-      isProp = new FileInputStream(prop);
-      isrProp = new InputStreamReader(isProp, CharEncoding.UTF_8);
-      brProp = new BufferedReader(isrProp);
-    } catch (FileNotFoundException e1) {
-      throw new IllegalStateException(e1);
-    } catch (UnsupportedEncodingException uee) {
-      Log.w(t, "UTF 8 encoding unavailable, trying default encoding");
-      isrProp = new InputStreamReader(isProp);
-      brProp = new BufferedReader(isrProp);
-    }
-
-    InputStream isData = null;
-    InputStreamReader isrData = null;
-    BufferedReader brData = null;
-    try {
-      isData = new FileInputStream(data);
-      isrData = new InputStreamReader(isData, CharEncoding.UTF_8);
-      brData = new BufferedReader(isrData);
-    } catch (FileNotFoundException e1) {
-      throw new IllegalStateException(e1);
-    } catch (UnsupportedEncodingException uee) {
-      Log.w(t, "UTF 8 encoding unavailable, trying default encoding");
-      isrData = new InputStreamReader(isData);
-      brData = new BufferedReader(isrData);
-    }
-
-    OutputStreamWriter output = null;
-    try {
-      FileOutputStream out = new FileOutputStream(temp);
-      output = new OutputStreamWriter(out, CharEncoding.UTF_8);
-
-      // read in each line and add to the temp file
-      String line;
-      while ((line = brProp.readLine()) != null) {
-        output.write(line);
-        output.write(NEW_LINE);
-      }
-      while ((line = brData.readLine()) != null) {
-        output.write(line);
-        output.write(NEW_LINE);
-      }
-
-      output.flush();
-      output.close();
-      Log.i(t, "Temp file made");
-      return temp;
-    } finally {
-      try {
-        brProp.close();
-        isrProp.close();
-      } catch (IOException e) {
-      }
-      try {
-        brData.close();
-        isrData.close();
-      } catch (IOException e) {
-      }
-    }
-  }
-
-  private boolean importTable(Context c, ImportListener importListener, CSVReader reader, TableProperties tableProperties,
-                              List<String> columns, int idxRowId, int idxFormId, int idxLocale,
-                              int idxSavepointTimestamp, int idxSavepointCreator,
-                              boolean exportedWithProperties) {
-
-    DbTable dbt = DbTable.getDbTable(tableProperties);
-
-    try {
-      Set<Integer> idxMetadata = new HashSet<Integer>();
-      idxMetadata.add(idxRowId);
-      idxMetadata.add(idxFormId);
-      idxMetadata.add(idxLocale);
-      idxMetadata.add(idxSavepointTimestamp);
-      idxMetadata.add(idxSavepointCreator);
-      ColumnProperties[] cps = new ColumnProperties[columns.size()];
-      for (int i = 0; i < columns.size(); ++i) {
-        if (!idxMetadata.contains(i)) {
-          cps[i] = tableProperties.getColumnByElementKey(columns.get(i));
-        } else {
-          cps[i] = null;
-        }
-      }
-
-      String[] row = reader.readNext();
-      int rowCount = 0;
-      while (row != null) {
-        String rowId = idxRowId == -1 ? null : row[idxRowId];
-        if (rowId == null) {
-          rowId = UUID.randomUUID().toString();
-        }
-        Map<String, String> values = new HashMap<String, String>();
-        for (int i = 0; i < columns.size(); i++) {
-          if (cps[i] != null) {
-            String value = du.validifyValue(cps[i], row[i]);
-            values.put(columns.get(i), value);
-            ColumnType type = cps[i].getColumnType();
-            if (type == ColumnType.IMAGEURI || type == ColumnType.AUDIOURI
-                || type == ColumnType.VIDEOURI || type == ColumnType.MIMEURI) {
-              value = du.serializeAsMimeUri(c, tableProperties, rowId, type.baseContentType(),
-                  value);
-            }
-          }
-        }
-        String formId = idxFormId == -1 ? null : row[idxFormId];
-        String locale = idxLocale == -1 ? null : row[idxLocale];
-        String lastModTime = idxSavepointTimestamp == -1 ? du.formatNowForDb() : row[idxSavepointTimestamp];
-        DateTime t = du.parseDateTimeFromDb(lastModTime);
-        String savepointCreator = idxSavepointCreator == -1 ? null : row[idxSavepointCreator];
-        dbt.addRow(rowId, formId, locale,
-            SavepointTypeManipulator.complete(), TableConstants.nanoSecondsFromMillis(t.getMillis()),
-            savepointCreator, null, null, null, values );
-        if (rowCount % 30 == 0 && importListener != null) {
-          importListener.updateLineCount(c.getString(R.string.import_thru_row, 1 + rowCount));
-        }
-        values.clear();
-        rowCount++;
-        row = reader.readNext();
-      }
-      reader.close();
-      return true;
-    } catch (IOException e) {
-      e.printStackTrace();
-      return false;
-    } catch (IllegalArgumentException e) { // validifyValue
-      e.printStackTrace();
-      return false;
-    }
   }
 
   // ===========================================================================================
@@ -613,15 +89,17 @@ public class CsvUtil {
 
   /**
    * Export the given tableId.
-   * Exports two csv files to the output/csv directory under the appName:
+   * Exports three csv files to the output/csv directory under the appName:
    * <ul>
    * <li>tableid.fileQualifier.csv - data table</li>
-   * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
+   * <li>tableid.fileQualifier.definition.csv - data table column definition</li>
+   * <li>tableid.fileQualifier.properties.csv - key-value store of this table</li>
    * </ul>
    * If fileQualifier is null or an empty string, then it emits to
    * <ul>
    * <li>tableid.csv - data table</li>
-   * <li>tableid.properties.csv - metadata definition of this table</li>
+   * <li>tableid.definition.csv - data table column definition</li>
+   * <li>tableid.properties.csv - key-value store of this table</li>
    * </ul>
    *
    * @param exportListener
@@ -658,19 +136,29 @@ public class CsvUtil {
       columns.add(colName);
     }
 
-    // getting data
-    DbTable dbt = DbTable.getDbTable(tp);
-    String whereString = DataTableColumns.SAVEPOINT_TYPE + " IS NOT NULL AND (" +
-          DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
-          DataTableColumns.CONFLICT_TYPE + " = " +
-          Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) + ")";
-    UserTable table = dbt.rawSqlQuery(whereString, null, null, null, null, null);
-    // writing data
     OutputStreamWriter output = null;
     try {
       // both files go under the output/csv directory...
       File outputCsv = new File(new File(ODKFileUtils.getOutputFolder(appName)), "csv");
       outputCsv.mkdirs();
+
+      // emit properties files
+      File definitionCsv = new File( outputCsv, tp.getTableId() +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".definition.csv");
+      File propertiesCsv = new File( outputCsv, tp.getTableId() +
+          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
+
+      if ( !writePropertiesCsv(tp, definitionCsv, propertiesCsv) ) {
+        return false;
+      }
+
+      // getting data
+      DbTable dbt = DbTable.getDbTable(tp);
+      String whereString = DataTableColumns.SAVEPOINT_TYPE + " IS NOT NULL AND (" +
+            DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
+            DataTableColumns.CONFLICT_TYPE + " = " +
+            Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) + ")";
+      UserTable table = dbt.rawSqlQuery(whereString, null, null, null, null, null);
 
       // emit data table...
       File file = new File( outputCsv, tp.getTableId() +
@@ -691,26 +179,62 @@ public class CsvUtil {
       cw.flush();
       cw.close();
 
-      // emit metadata table...
-      file = new File( outputCsv, tp.getTableId() +
-          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
-      out = new FileOutputStream(file);
+      return true;
+    } catch (IOException e) {
+      return false;
+    } finally {
+      try {
+        output.close();
+      } catch (IOException e) {
+      }
+    }
+  }
+
+  /**
+   * Writes the definition and properties files for the given tableId.
+   * This is written to:
+   * <ul>
+   * <li>tables/tableId/definition.csv - data table column definition</li>
+   * <li>tables/tableId/properties.csv - key-value store of this table</li>
+   * </ul>
+   * The definition.csv file contains the schema definition.
+   * md5hash of it corresponds to the former schemaETag.
+   *
+   * The properties.csv file contains the table-level metadata
+   * (key-value store). The md5hash of it corresponds to the
+   * propertiesETag.
+   *
+   * For use by the sync mechanism.
+   *
+   * @param tp
+   * @return
+   */
+  public boolean writePropertiesCsv(TableProperties tp) {
+    File definitionCsv = new File( new File(ODKFileUtils.getTablesFolder(appName,  tp.getTableId())), "definition.csv");
+    File propertiesCsv = new File( new File(ODKFileUtils.getTablesFolder(appName,  tp.getTableId())), "properties.csv");
+    return writePropertiesCsv(tp, definitionCsv, propertiesCsv);
+  }
+
+  /**
+   * Common routine to write the definition and properties files.
+   *
+   * @param tp
+   * @param definitionCsv
+   * @param propertiesCsv
+   * @return
+   */
+  public boolean writePropertiesCsv(TableProperties tp, File definitionCsv, File propertiesCsv) {
+    Log.i(TAG, "writePropertiesCsv: tableId: " + tp.getTableId());
+
+    // writing metadata
+    FileOutputStream out;
+    RFC4180CsvWriter cw;
+    OutputStreamWriter output = null;
+    try {
+      // emit definition.csv table...
+      out = new FileOutputStream(definitionCsv);
       output = new OutputStreamWriter(out, CharEncoding.UTF_8);
       cw = new RFC4180CsvWriter(output);
-
-      String[] blank = {};
-
-      // Emit TableDefinitions SyncTag
-      // I don't think we need anything else in the TableDefinitions??
-      ArrayList<String> tableDefHeaders = new ArrayList<String>();
-      tableDefHeaders.add(TableDefinitionsColumns.SYNC_TAG);
-
-      cw.writeNext(tableDefHeaders.toArray(new String[tableDefHeaders.size()]));
-      String[] tableDefRow = new String[tableDefHeaders.size()];
-      tableDefRow[0] = (tp.getSyncTag() == null) ? null : tp.getSyncTag().toString();
-      cw.writeNext(tableDefRow);
-
-      cw.writeNext(blank);
 
       // Emit ColumnDefinitions
 
@@ -723,7 +247,20 @@ public class CsvUtil {
 
       cw.writeNext(colDefHeaders.toArray(new String[colDefHeaders.size()]));
       String[] colDefRow = new String[colDefHeaders.size()];
-      for ( ColumnProperties cp : tp.getAllColumns().values() ) {
+
+      /**
+       * Since the md5Hash of the file identifies identical schemas,
+       * ensure that the list of columns is in alphabetical order.
+       */
+      ArrayList<ColumnProperties> orderedList = new ArrayList<ColumnProperties>();
+      orderedList.addAll(tp.getAllColumns().values());
+      Collections.sort(orderedList, new Comparator<ColumnProperties>(){
+        @Override
+        public int compare(ColumnProperties lhs, ColumnProperties rhs) {
+          return lhs.getElementKey().compareTo(rhs.getElementKey());
+        }});
+
+      for ( ColumnProperties cp : orderedList ) {
         colDefRow[0] = cp.getElementKey();
         colDefRow[1] = cp.getElementName();
         colDefRow[2] = cp.getColumnType().toString();
@@ -733,7 +270,13 @@ public class CsvUtil {
         cw.writeNext(colDefRow);
       }
 
-      cw.writeNext(blank);
+      cw.flush();
+      cw.close();
+
+      // emit properties.csv...
+      out = new FileOutputStream(propertiesCsv);
+      output = new OutputStreamWriter(out, CharEncoding.UTF_8);
+      cw = new RFC4180CsvWriter(output);
 
       // Emit KeyValueStore
 
@@ -744,7 +287,48 @@ public class CsvUtil {
       kvsHeaders.add(KeyValueStoreColumns.VALUE_TYPE);
       kvsHeaders.add(KeyValueStoreColumns.VALUE);
 
+      /**
+       * Since the md5Hash of the file identifies identical properties,
+       * ensure that the list of KVS entries is in alphabetical order.
+       */
       List<OdkTablesKeyValueStoreEntry> kvsEntries = tp.getMetaDataEntries();
+      Collections.sort(kvsEntries, new Comparator<OdkTablesKeyValueStoreEntry>(){
+
+        @Override
+        public int compare(OdkTablesKeyValueStoreEntry lhs, OdkTablesKeyValueStoreEntry rhs) {
+          int outcome;
+          if ( lhs.partition == null && rhs.partition == null ) {
+            outcome = 0;
+          } else if ( lhs.partition == null ) {
+            return -1;
+          } else if ( rhs.partition == null ) {
+            return 1;
+          } else {
+            outcome = lhs.partition.compareTo(rhs.partition);
+          }
+          if ( outcome != 0 ) return outcome;
+          if ( lhs.aspect == null && rhs.aspect == null ) {
+            outcome = 0;
+          } else if ( lhs.aspect == null ) {
+            return -1;
+          } else if ( rhs.aspect == null ) {
+            return 1;
+          } else {
+            outcome = lhs.aspect.compareTo(rhs.aspect);
+          }
+          if ( outcome != 0 ) return outcome;
+          if ( lhs.key == null && rhs.key == null ) {
+            outcome = 0;
+          } else if ( lhs.key == null ) {
+            return -1;
+          } else if ( rhs.key == null ) {
+            return 1;
+          } else {
+            outcome = lhs.key.compareTo(rhs.key);
+          }
+          return outcome;
+        }});
+
       cw.writeNext(kvsHeaders.toArray(new String[kvsHeaders.size()]));
       String[] kvsRow = new String[kvsHeaders.size()];
       for (int i = 0; i < kvsEntries.size(); i++) {
@@ -790,68 +374,39 @@ public class CsvUtil {
   }
 
   /**
-   * Export the given tableId.
-   * Exports two csv files to the output/csv directory under the appName:
+   * Update tableId from
    * <ul>
-   * <li>tableid.fileQualifier.csv - data table</li>
-   * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
-   * </ul>
-   * If fileQualifier is null or an empty string, then it emits to
-   * <ul>
-   * <li>tableid.csv - data table</li>
-   * <li>tableid.properties.csv - metadata definition of this table</li>
+   * <li>tables/tableId/properties.csv</li>
+   * <li>tables/tableId/definition.csv</li>
    * </ul>
    *
-   * @param exportListener
-   * @param fileQualifier
-   * @param tp
+   * This will either create a table, or verify that the table structure
+   * matches that defined in the csv. It will then override all the KVS
+   * entries with those present in the file.
+   *
+   * @param importListener
+   * @param tableId
    * @return
    */
-  public boolean createTableFromCsv(ImportListener importListener, String tableId, String fileQualifier) {
+  public boolean updateTablePropertiesFromCsv(ImportListener importListener, String tableId) {
 
-    {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
-      if ( tp != null ) {
-        throw new IllegalStateException("Unexpectedly found tableId already exists!");
-      }
-    }
-
-    Log.i(TAG, "createTableFromCsv: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
+    Log.i(TAG, "updateTablePropertiesFromCsv: tableId: " + tableId );
 
 
     Map<String, ColumnInfo> columns = new HashMap<String, ColumnInfo>();
 
     // reading data
+    File file = null;
+    FileInputStream in = null;
     InputStreamReader input = null;
+    RFC4180CsvReader cr = null;
     try {
-      // both files are read from assets/csv directory...
-      File assetsCsv = new File(new File(ODKFileUtils.getAssetsFolder(appName)), "csv");
-
-      // read data table...
-      File file = new File( assetsCsv, tableId +
-          ((fileQualifier != null && fileQualifier.length() != 0) ? ("." + fileQualifier) : "") + ".properties.csv");
-      FileInputStream in = new FileInputStream(file);
+      file = new File(new File(ODKFileUtils.getTablesFolder(appName, tableId)), "definition.csv");
+      in = new FileInputStream(file);
       input = new InputStreamReader(in, CharEncoding.UTF_8);
-      RFC4180CsvReader cr = new RFC4180CsvReader(input);
+      cr = new RFC4180CsvReader(input);
 
       String[] row;
-
-      // Read TableDefinitions SyncTag header
-      row = cr.readNext();
-      if ( row == null || countUpToLastNonNullElement(row) != 1  ) {
-        throw new IllegalStateException("Unexpected row length -- expected one cell on first line");
-      }
-
-      if ( !TableDefinitionsColumns.SYNC_TAG.equals(row[0]) ) {
-        throw new IllegalStateException("Expected " + TableDefinitionsColumns.SYNC_TAG);
-      }
-
-      row = cr.readNext();
-      // Read TableDefinitions SyncTag
-      SyncTag syncTag = SyncTag.valueOf(row[0]);
-
-      // blank
-      row = cr.readNext();
 
       // Read ColumnDefinitions
       // get the column headers
@@ -894,8 +449,20 @@ public class CsvUtil {
         row = cr.readNext();
       }
 
-      // we already read the blank row to get here...
+      cr.close();
+      try {
+        input.close();
+      } catch (IOException e) {
+      }
+      try {
+        in.close();
+      } catch (IOException e) {
+      }
 
+      file = new File(new File(ODKFileUtils.getTablesFolder(appName, tableId)), "properties.csv");
+      in = new FileInputStream(file);
+      input = new InputStreamReader(in, CharEncoding.UTF_8);
+      cr = new RFC4180CsvReader(input);
       // Read KeyValueStore
       // read the column headers
       String[] kvsHeaders = cr.readNext();
@@ -953,17 +520,72 @@ public class CsvUtil {
         row = cr.readNext();
       }
       cr.close();
-
-      TableProperties tp = TableProperties.addTable(context, appName,
-          tableId, (displayName == null ? tableId : displayName), tableId);
-
-      tp.addMetaDataEntries(kvsEntries, false);
-      for ( ColumnInfo ci : columns.values() ) {
-        ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
-            ci.elementType, ci.listOfStringElementKeys, ci.isUnitOfRetention);
-        cp.addMetaDataEntries(ci.kvsEntries);
+      try {
+        input.close();
+      } catch (IOException e) {
       }
-      tp.setSyncTag(syncTag);
+      try {
+        in.close();
+      } catch (IOException e) {
+      }
+
+      TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+      if ( tp != null ) {
+        // confirm that the column definitions are unchanged...
+        if ( tp.getAllColumns().size() != columns.size() ) {
+          throw new IllegalStateException("Unexpectedly found tableId with different column definitions that already exists!");
+        }
+        for ( ColumnInfo ci : columns.values() ) {
+          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
+          if ( cp == null ) {
+            throw new IllegalStateException("Unexpectedly failed to match elementKey: " + ci.elementKey);
+          }
+          if ( !cp.getElementName().equals(ci.elementName) ) {
+            throw new IllegalStateException("Unexpected mis-match of elementName for elementKey: " + ci.elementKey);
+          }
+          if ( cp.isUnitOfRetention() != ci.isUnitOfRetention ) {
+            throw new IllegalStateException("Unexpected mis-match of isUnitOfRetention for elementKey: " + ci.elementKey);
+          }
+          List<String> refList = cp.getListChildElementKeys();
+          if ( refList.size() != ci.listOfStringElementKeys.size() ) {
+            throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys for elementKey: " + ci.elementKey);
+          }
+          for ( int i = 0 ; i < refList.size() ; ++i ) {
+            if ( !refList.get(i).equals(ci.listOfStringElementKeys.get(i)) ) {
+              throw new IllegalStateException("Unexpected mis-match of listOfStringElementKeys[" + i + "] for elementKey: " + ci.elementKey);
+            }
+          }
+          if ( cp.getColumnType() != ci.elementType ) {
+            throw new IllegalStateException("Unexpected mis-match of elementType for elementKey: " + ci.elementKey);
+          }
+        }
+        // OK -- we have matching table definition
+        // now just clear and update the properties...
+        tp.addMetaDataEntries(kvsEntries, true);
+        for ( ColumnInfo ci : columns.values() ) {
+          ColumnProperties cp = tp.getColumnByElementKey(ci.elementKey);
+          // put the displayName into the KVS
+          OdkTablesKeyValueStoreEntry entry = new OdkTablesKeyValueStoreEntry();
+          entry.tableId = tableId;
+          entry.partition = ColumnProperties.KVS_PARTITION;
+          entry.aspect = ci.elementKey;
+          entry.key = ColumnProperties.KEY_DISPLAY_NAME;
+          entry.type = KeyValueStoreEntryType.OBJECT.name();
+          entry.value = ci.displayName;
+          ci.kvsEntries.add(entry);
+          cp.addMetaDataEntries(ci.kvsEntries);
+        }
+      } else {
+        tp = TableProperties.addTable(context, appName,
+            tableId, (displayName == null ? tableId : displayName), tableId);
+
+        tp.addMetaDataEntries(kvsEntries, false);
+        for ( ColumnInfo ci : columns.values() ) {
+          ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
+              ci.elementType, ci.listOfStringElementKeys, ci.isUnitOfRetention);
+          cp.addMetaDataEntries(ci.kvsEntries);
+        }
+      }
       return true;
     } catch (IOException e) {
       return false;
@@ -975,22 +597,45 @@ public class CsvUtil {
     }
   }
 
+
+  /**
+   * Imports data from a csv file with elementKey headings.
+   * This csv file is assumed to be under:
+   * <ul>
+   * <li>assets/csv/tableId.fileQualifier.csv</li>
+   * </ul>
+   * If the table does not exist, it attempts to create it
+   * using the schema and metadata located here:
+   * <ul>
+   * <li>tables/tableId/definition.csv - data table definition</li>
+   * <li>tables/tableId/properties.csv - key-value store</li>
+   * </ul>
+   *
+   * @param importListener
+   * @param tableId
+   * @param fileQualifier
+   * @param createIfNotPresent -- true if we should try to create the table.
+   * @return
+   */
   public boolean importSeparable(ImportListener importListener, String tableId, String fileQualifier, boolean createIfNotPresent) {
 
     TableProperties tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
     if ( tp == null ) {
       if ( createIfNotPresent ) {
-        if ( !createTableFromCsv(importListener, tableId, fileQualifier) ) {
+        if ( !updateTablePropertiesFromCsv(importListener, tableId) ) {
           return false;
         }
         // and now load the TP we just defined...
         tp = TableProperties.getTablePropertiesForTable(context, appName, tableId);
+        if ( tp == null ) {
+          return false;
+        }
       } else {
         return false;
       }
     }
 
-    Log.i(TAG, "createTableFromCsv: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
+    Log.i(TAG, "importSeparable: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
 
     // building array of columns to select and header row for output file
     // then we are including all the metadata columns.

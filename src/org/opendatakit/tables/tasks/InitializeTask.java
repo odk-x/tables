@@ -118,11 +118,11 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
           this.mKeyToFileMap.put(key, filename);
           if (!file.exists()) {
             this.mKeyToFileNotFoundMap.put(key, true);
-            Log.e(TAG, "putting in file not found map true: " + key);
+            Log.i(TAG, "putting in file not found map true: " + key);
             continue;
           } else {
             this.mKeyToFileNotFoundMap.put(key, false);
-            Log.e(TAG, "putting in file not found map false: " + key);
+            Log.i(TAG, "putting in file not found map false: " + key);
             // and proceed.
           }
 

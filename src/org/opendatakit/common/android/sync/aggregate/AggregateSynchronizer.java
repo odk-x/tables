@@ -116,12 +116,6 @@ public class AggregateSynchronizer implements Synchronizer {
   public static final int HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
   /** Path to the file servlet on the Aggregate server. */
 
-  private static final String FILE_MANIFEST_PARAM_APP_ID = "app_id";
-  private static final String FILE_MANIFEST_PARAM_TABLE_ID = "table_id";
-  private static final String FILE_MANIFEST_PARAM_APP_LEVEL_FILES = "app_level_files";
-  /** Value for {@link #FILE_MANIFEST_PARAM_APP_LEVEL_FILES}. */
-  private static final String VALUE_TRUE = "true";
-
   private final String appName;
   private final String aggregateUri;
   private final String accessToken;
@@ -649,7 +643,7 @@ public class AggregateSynchronizer implements Synchronizer {
     return newTag;
   }
 
-  public static List<String> filterOutTableIdFiles(List<String> relativePaths) {
+  public static List<String> filterOutTableIdAssetFiles(List<String> relativePaths) {
     List<String> newList = new ArrayList<String>();
     for ( String relativePath : relativePaths ) {
       if ( relativePath.startsWith("assets/csv/") ) {
@@ -768,17 +762,18 @@ public class AggregateSynchronizer implements Synchronizer {
     for (OdkTablesFileManifestEntry entry : manifest) {
       compareAndDownloadFile(entry);
     }
-    // And now get the files to upload. We only want those that exist on the
-    // device but that do not exist on the manifest.
-    Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
-    String appFolder = ODKFileUtils.getAppFolder(appName);
-    List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
-        dirsToExclude);
-    relativePathsOnDevice = filterOutTableIdFiles(relativePathsOnDevice);
-    List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
-    Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " + relativePathsToUpload);
-    // and then upload the files.
+
     if (pushLocalFiles) {
+      // And now get the files to upload. We only want those that exist on the
+      // device but that do not exist on the manifest.
+      Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
+      String appFolder = ODKFileUtils.getAppFolder(appName);
+      List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
+          dirsToExclude);
+      relativePathsOnDevice = filterOutTableIdAssetFiles(relativePathsOnDevice);
+      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
+      Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " + relativePathsToUpload);
+      // and then upload the files.
       Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
       for (String relativePath : relativePathsToUpload) {
         String wholePathToFile = appFolder + File.separator + relativePath;
@@ -788,11 +783,24 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws ResourceAccessException {
+  public void syncTableLevelFiles(String tableId, OnTablePropertiesChanged onChange, boolean pushLocal) throws ResourceAccessException {
+    String tableIdPropertiesFile = "tables" + File.separator + tableId + File.separator + "properties.csv";
+
+    boolean tablePropertiesChanged = false;
     List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
     for (OdkTablesFileManifestEntry entry : manifest) {
-      compareAndDownloadFile(entry);
+      boolean outcome = compareAndDownloadFile(entry);
+      // and if it was the table properties file, remember whether it changed.
+      if ( entry.filename.equals(tableIdPropertiesFile) ) {
+        tablePropertiesChanged = outcome;
+      }
     }
+
+    if ( tablePropertiesChanged && (onChange != null) ) {
+      // update this table's KVS values...
+      onChange.onTablePropertiesChanged(tableId);
+    }
+
     if (pushLocal) {
       // Then we actually do try and upload things. Otherwise we can just
       // continue straight on.
@@ -910,6 +918,11 @@ public class AggregateSynchronizer implements Synchronizer {
     return filesUri;
   }
 
+  /**
+   *
+   * @param entry
+   * @return
+   */
   private boolean compareAndDownloadFile(OdkTablesFileManifestEntry entry) {
     String basePath = ODKFileUtils.getAppFolder(appName);
     // now we need to look through the manifest and see where the files are
@@ -919,23 +932,20 @@ public class AggregateSynchronizer implements Synchronizer {
       Log.i(TAG, "returned a null or empty filename");
       return false;
     } else {
-      // filename is the unrooted path of the file, so append the tableId
-      // and the basepath.
+      // filename is the unrooted path of the file, so prepend the basepath.
       String path = basePath + File.separator + entry.filename;
       // Before we try dl'ing the file, we have to make the folder,
       // b/c otherwise if the folders down to the path have too many non-
       // existent folders, we'll get a FileNotFoundException when we open
       // the FileOutputStream.
-      int lastSlash = path.lastIndexOf(File.separator);
-      String folderPath = path.substring(0, lastSlash);
-      ODKFileUtils.createFolder(folderPath);
       File newFile = new File(path);
+      String folderPath = newFile.getParent();
+      ODKFileUtils.createFolder(folderPath);
       if (!newFile.exists()) {
         // the file doesn't exist on the system
         // filesToDL.add(newFile);
         try {
-          downloadFile(newFile, entry.downloadUrl);
-          return true;
+          return downloadFile(newFile, entry.downloadUrl);
         } catch (Exception e) {
           e.printStackTrace();
           Log.e(TAG, "trouble downloading file for first time");
@@ -958,13 +968,21 @@ public class AggregateSynchronizer implements Synchronizer {
             return false;
           }
         } else {
-          return true;
+          // no change
+          return false;
         }
       }
     }
   }
 
-  public void downloadFile(File f, String downloadUrl) throws Exception {
+  /**
+   *
+   * @param destFile
+   * @param downloadUrl
+   * @return true if the download was successful
+   * @throws Exception
+   */
+  public boolean downloadFile(File destFile, String downloadUrl) throws Exception {
     URI uri = null;
     try {
       Log.i(TAG, "[downloadFile] downloading at url: " + downloadUrl);
@@ -1018,6 +1036,7 @@ public class AggregateSynchronizer implements Synchronizer {
           throw new Exception("status wasn't SC_OK when dl'ing file: " + downloadUrl);
         }
 
+        File tmp = new File(destFile.getParentFile(), destFile.getName() + ".tmp");
         // write connection to file
         BufferedInputStream is = null;
         BufferedOutputStream os = null;
@@ -1040,7 +1059,7 @@ public class AggregateSynchronizer implements Synchronizer {
           }
 
           is = new BufferedInputStream(isRaw);
-          os = new BufferedOutputStream(new FileOutputStream(f));
+          os = new BufferedOutputStream(new FileOutputStream(tmp));
           byte buf[] = new byte[8096];
           int len;
           while ((len = is.read(buf)) >= 0) {
@@ -1051,7 +1070,7 @@ public class AggregateSynchronizer implements Synchronizer {
           os.flush();
           os.close();
           os = null;
-          success = true;
+          success = tmp.renameTo(destFile);
         } finally {
           if (os != null) {
             try {
@@ -1072,6 +1091,9 @@ public class AggregateSynchronizer implements Synchronizer {
             } catch (Exception e) {
             }
           }
+          if ( tmp.exists() ) {
+            tmp.delete();
+          }
         }
 
       } catch (Exception e) {
@@ -1081,6 +1103,7 @@ public class AggregateSynchronizer implements Synchronizer {
         }
       }
     }
+    return success;
   }
 
   /**

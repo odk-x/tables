@@ -46,9 +46,11 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.sync.Synchronizer.OnTablePropertiesChanged;
 import org.opendatakit.common.android.sync.TableResult.Status;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.sync.exceptions.SchemaMismatchException;
+import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.springframework.web.client.ResourceAccessException;
@@ -221,8 +223,7 @@ public class SyncProcessor {
     try {
       switch (tp.getSyncState()) {
       case deleting:
-        success = synchronizeTableDeleting(tp, table, tableResult);
-        break;
+        throw new IllegalStateException("Unexpected deleting status for tableProperties!");
       case inserting:
       case updating:
       case rest:
@@ -253,54 +254,6 @@ public class SyncProcessor {
       }
       mUserResult.addTableResult(tableResult);
     }
-  }
-
-  /**
-   * This is broken -- we can delete tables locally without deleting them on the
-   * server. We need a new mechanism.
-   *
-   * @param tp
-   * @param table
-   * @param tableResult
-   * @return
-   */
-  private boolean synchronizeTableDeleting(TableProperties tp, DbTable table,
-                                           TableResult tableResult) {
-    String tableId = tp.getTableId();
-    // Set the tableResult action so we can inform the user what we tried to
-    // do.
-    tableResult.setTableAction(SyncState.deleting);
-    // We'll set both the local data and properties changes to true, b/c we're
-    // going to blow away whatever is on the server. Note that this might be
-    // true even if there are no rows on the server or the phone, in which case
-    // the hadLocalData changes might not strictly be true.
-    tableResult.setHadLocalDataChanges(true);
-    tableResult.setHadLocalPropertiesChanges(true);
-    Log.i(TAG, "DELETING " + tableId);
-    boolean success = false;
-    try {
-      synchronizer.deleteTable(tableId);
-      // If we didn't error, then we know we pushed our changes, b/c we changed
-      // what was on the server.
-      tableResult.setPushedLocalData(true);
-      tableResult.setPushedLocalProperties(true);
-      tp.deleteTable();
-      // If this worked, then we were successful. No field currently exists for
-      // "updated local db" without there being incoming data changes from the
-      // server, so we'll rely on an action of deleting and a status of
-      // success to mean that yes we deleted it. But, we'll also include a
-      // message.
-      tableResult.setMessage(MSG_DELETED_LOCAL_TABLE);
-      syncResult.stats.numDeletes++;
-      syncResult.stats.numEntries++;
-    } catch (IOException e) {
-      ioException("synchronizeTableDeleting", tp, e, tableResult);
-      success = false;
-    } catch (Exception e) {
-      exception("synchronizeTableDeleting", tp, e, tableResult);
-      success = false;
-    }
-    return success;
   }
 
   /**
@@ -335,7 +288,16 @@ public class SyncProcessor {
     Log.i(TAG, "REST " + tableId);
 
     try {
-      synchronizer.syncNonRowDataTableFiles(tp.getTableId(), pushLocalTableLevelFiles);
+
+      final CsvUtil utils = new CsvUtil(context, appName);
+      // write the current schema and properties set.
+      utils.writePropertiesCsv(tp);
+
+      synchronizer.syncTableLevelFiles(tp.getTableId(), new OnTablePropertiesChanged() {
+        @Override
+        public void onTablePropertiesChanged(String tableId) {
+          utils.updateTablePropertiesFromCsv(null, tableId);
+        }}, pushLocalTableLevelFiles);
     } catch (ResourceAccessException e) {
       resourceAccessException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");

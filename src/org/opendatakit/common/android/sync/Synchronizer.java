@@ -37,6 +37,10 @@ import org.springframework.web.client.ResourceAccessException;
  */
 public interface Synchronizer {
 
+  public interface OnTablePropertiesChanged {
+    void onTablePropertiesChanged(String tableId);
+  }
+
   /**
    * Get a list of all tables in the server.
    *
@@ -189,11 +193,13 @@ public interface Synchronizer {
    * sync any media files associated with individual rows of the table.
    *
    * @param tableId
+   * @param onChange
+   *          callback if the assets/csv/tableId.properties.csv file changes
    * @param pushLocal
    *          true if the local files should be pushed
    * @throws ResourceAccessException
    */
-  public void syncNonRowDataTableFiles(String tableId, boolean pushLocal) throws ResourceAccessException;
+  public void syncTableLevelFiles(String tableId, OnTablePropertiesChanged onChange, boolean pushLocal) throws ResourceAccessException;
 
   /**
    * Sync only the media files associated with individual rows of a table.
