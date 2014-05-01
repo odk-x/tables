@@ -15,6 +15,8 @@
  */
 package org.opendatakit.common.android.data;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,11 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -640,8 +644,9 @@ public class DbTable {
     /**
      * If table is synchronized and not in an INSERTING state, marks row as
      * deleted. Otherwise, actually deletes the row.
+     * @throws IOException
      */
-    public void markDeleted(String rowId) {
+    public void markDeleted(String rowId) throws IOException {
       boolean isSetToSync = tp.isSetToSync();
       // hilary's original
       //if (!tp.isSynchronized()) {
@@ -673,11 +678,14 @@ public class DbTable {
         /**
          * Actually deletes a row from the table.
        * @param rowId the ID of the row to delete
+         * @throws IOException
      */
-    public void deleteRowActual(String rowId) {
+    public void deleteRowActual(String rowId) throws IOException {
         String[] whereArgs = { rowId };
         String whereClause = DataTableColumns.ID + " = ?";
         deleteRowActual(whereClause, whereArgs);
+        File instanceFolder = new File(ODKFileUtils.getInstanceFolder(tp.getAppName(), tp.getTableId(), rowId));
+        FileUtils.deleteDirectory(instanceFolder);
     }
 
     public void deleteRowActual(String whereClause, String[] whereArgs) {

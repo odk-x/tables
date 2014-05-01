@@ -49,14 +49,11 @@ import org.opendatakit.aggregate.odktables.rest.ApiConstants;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifest;
 import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesFileManifestEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.Row;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResource;
 import org.opendatakit.aggregate.odktables.rest.entity.RowResourceList;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinition;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
-import org.opendatakit.aggregate.odktables.rest.entity.TableProperties;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResourceList;
 import org.opendatakit.aggregate.odktables.rest.interceptor.AggregateRequestInterceptor;
@@ -604,45 +601,6 @@ public class AggregateSynchronizer implements Synchronizer {
     return new RowModification(rowToDelete.getRowId(), null, syncTag);
   }
 
-  @Override
-  public PropertiesResource getTablePropertiesResource(String propertiesUri, SyncTag currentTag) throws IOException {
-    PropertiesResource propsResource;
-    try {
-      propsResource = rt.getForObject(propertiesUri, PropertiesResource.class);
-    } catch (ResourceAccessException e) {
-      throw new IOException(e.getMessage());
-    }
-
-    verifyResource(propsResource.getTableId(), propsResource.getPropertiesETag(), propsResource.getSchemaETag());
-
-    return propsResource;
-  }
-
-  @Override
-  public SyncTag setTablePropertiesResource(String propertiesUri, SyncTag currentTag, String tableId,
-                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException {
-
-    // put new properties
-    TableProperties properties = new TableProperties(currentTag.getSchemaETag(), currentTag.getPropertiesETag(), tableId,
-                                                     kvsEntries);
-    HttpEntity<TableProperties> entity = new HttpEntity<TableProperties>(properties, requestHeaders);
-    ResponseEntity<PropertiesResource> updatedEntity;
-    try {
-      updatedEntity = rt.exchange(propertiesUri, HttpMethod.PUT, entity,
-          PropertiesResource.class);
-    } catch (ResourceAccessException e) {
-      throw new IOException(e.getMessage());
-    }
-    PropertiesResource propsResource = updatedEntity.getBody();
-
-    SyncTag newTag = new SyncTag(currentTag.getDataETag(), propsResource.getPropertiesETag(),
-                                  propsResource.getSchemaETag());
-
-    updateResource(propsResource.getTableId(), newTag);
-
-    return newTag;
-  }
-
   public static List<String> filterOutTableIdAssetFiles(List<String> relativePaths) {
     List<String> newList = new ArrayList<String>();
     for ( String relativePath : relativePaths ) {
@@ -758,81 +716,187 @@ public class AggregateSynchronizer implements Synchronizer {
 
   @Override
   public void syncAppLevelFiles(boolean pushLocalFiles) throws ResourceAccessException {
+    // Get the app-level files on the server.
     List<OdkTablesFileManifestEntry> manifest = getAppLevelFileManifest();
-    for (OdkTablesFileManifestEntry entry : manifest) {
-      compareAndDownloadFile(entry);
-    }
 
-    if (pushLocalFiles) {
-      // And now get the files to upload. We only want those that exist on the
-      // device but that do not exist on the manifest.
-      Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
-      String appFolder = ODKFileUtils.getAppFolder(appName);
-      List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
-          dirsToExclude);
-      relativePathsOnDevice = filterOutTableIdAssetFiles(relativePathsOnDevice);
-      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsOnDevice, manifest);
-      Log.e(TAG, "[syncAppLevelFiles] relativePathsToUpload: " + relativePathsToUpload);
-      // and then upload the files.
-      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
-      for (String relativePath : relativePathsToUpload) {
-        String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
+    // Get the app-level files on our device.
+    Set<String> dirsToExclude = ODKFileUtils.getDirectoriesToExcludeFromSync(true);
+    String appFolder = ODKFileUtils.getAppFolder(appName);
+    List<String> relativePathsOnDevice = getAllFilesUnderFolder(appFolder,
+        dirsToExclude);
+    relativePathsOnDevice = filterOutTableIdAssetFiles(relativePathsOnDevice);
+
+    if ( pushLocalFiles ) {
+      // if we are pushing, we want to push the local files that are different
+      // up to the server, then remove the files on the server that are not
+      // in the local set.
+      List<String> serverFilesToDelete = new ArrayList<String>();
+
+      for (OdkTablesFileManifestEntry entry : manifest) {
+        File localFile = ODKFileUtils.asAppFile(appName, entry.filename);
+        if ( !localFile.exists() || !localFile.isFile() ) {
+          // we need to delete this file from the server.
+          serverFilesToDelete.add(entry.filename);
+        } else if ( ODKFileUtils.getMd5Hash(localFile).equals(entry.md5hash) ) {
+          // we are ok -- no need to upload or delete
+          relativePathsOnDevice.remove(entry.filename);
+        }
       }
+
+      boolean success = true;
+      for (String relativePath : relativePathsOnDevice) {
+        File localFile = ODKFileUtils.asAppFile(appName, relativePath);
+        String wholePathToFile = localFile.getAbsolutePath();
+        if ( !uploadFile(wholePathToFile, relativePath)) {
+          success = false;
+          Log.e(TAG, "Unable to upload file to server: " + relativePath);
+        }
+      }
+
+      for ( String relativePath : serverFilesToDelete ) {
+        if ( !deleteFile(relativePath) ) {
+          success = false;
+          Log.e(TAG, "Unable to delete file on server: " +  relativePath);
+        }
+      }
+
+      if ( !success ) {
+        Log.i(TAG, "unable to delete one or more files!");
+      }
+
+    } else {
+      // if we are pulling, we want to pull the server files that are different
+      // down from the server, then remove the local files that are not present
+      // on the server.
+
+      for (OdkTablesFileManifestEntry entry : manifest) {
+        // make sure our copy is current
+        compareAndDownloadFile(entry);
+        // remove it from the set of app-level files we found before the sync
+        relativePathsOnDevice.remove(entry.filename);
+      }
+
+      boolean success = true;
+      for ( String relativePath : relativePathsOnDevice ) {
+        // and remove any remaining files, as these do not match anything on
+        // the server.
+        File f = ODKFileUtils.asAppFile(appName, relativePath);
+        if ( !f.delete() ) {
+          success = false;
+          Log.e(TAG, "Unable to delete " +  f.getAbsolutePath());
+        }
+      }
+
+      if ( !success ) {
+        Log.i(TAG, "unable to delete one or more files!");
+      }
+
+      // should we return our status?
     }
   }
 
   @Override
-  public void syncTableLevelFiles(String tableId, OnTablePropertiesChanged onChange, boolean pushLocal) throws ResourceAccessException {
+  public void syncTableLevelFiles(String tableId, OnTablePropertiesChanged onChange, boolean pushLocalFiles) throws ResourceAccessException {
+
     String tableIdPropertiesFile = "tables" + File.separator + tableId + File.separator + "properties.csv";
 
     boolean tablePropertiesChanged = false;
+
+    // Get any assets/csv files that begin with tableId
+    Set<String> dirsToExclude = new HashSet<String>();
+    String assetsCsvFolder = ODKFileUtils.getAssetsFolder(appName) + "/csv";
+    List<String> relativePathsToTableIdAssetsCsvOnDevice = getAllFilesUnderFolder(
+        assetsCsvFolder, dirsToExclude);
+    relativePathsToTableIdAssetsCsvOnDevice = filterInTableIdFiles(relativePathsToTableIdAssetsCsvOnDevice, tableId);
+
+    // We don't want to sync anything in the instances directory, because this
+    // contains things like media attachments.
+    String tableFolder = ODKFileUtils.getTablesFolder(appName, tableId);
+    dirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
+    List<String> relativePathsOnDevice = getAllFilesUnderFolder(
+        tableFolder, dirsToExclude);
+
+    // mix in the assets files for this tableId, if any...
+    relativePathsOnDevice.addAll(relativePathsToTableIdAssetsCsvOnDevice);
+
+    // get the table files on the server
     List<OdkTablesFileManifestEntry> manifest = getTableLevelFileManifest(tableId);
-    for (OdkTablesFileManifestEntry entry : manifest) {
-      boolean outcome = compareAndDownloadFile(entry);
-      // and if it was the table properties file, remember whether it changed.
-      if ( entry.filename.equals(tableIdPropertiesFile) ) {
-        tablePropertiesChanged = outcome;
+
+    if ( pushLocalFiles ) {
+      // if we are pushing, we want to push the local files that are different
+      // up to the server, then remove the files on the server that are not
+      // in the local set.
+      List<String> serverFilesToDelete = new ArrayList<String>();
+
+      for (OdkTablesFileManifestEntry entry : manifest) {
+        File localFile = ODKFileUtils.asAppFile(appName, entry.filename);
+        if ( !localFile.exists() || !localFile.isFile() ) {
+          // we need to delete this file from the server.
+          serverFilesToDelete.add(entry.filename);
+        } else if ( ODKFileUtils.getMd5Hash(localFile).equals(entry.md5hash) ) {
+          // we are ok -- no need to upload or delete
+          relativePathsOnDevice.remove(entry.filename);
+        }
       }
-    }
 
-    if ( tablePropertiesChanged && (onChange != null) ) {
-      // update this table's KVS values...
-      onChange.onTablePropertiesChanged(tableId);
-    }
-
-    if (pushLocal) {
-      // Then we actually do try and upload things. Otherwise we can just
-      // continue straight on.
-      String appFolder = ODKFileUtils.getAppFolder(appName);
-      String tableFolder = ODKFileUtils.getTablesFolder(appName, tableId);
-
-      // Get any assets/csv files that begin with tableId
-      Set<String> dirsToExclude = new HashSet<String>();
-      String assetsCsvFolder = ODKFileUtils.getAssetsFolder(appName) + "/csv";
-      List<String> relativePathsToTableIdAssetsCsvOnDevice = getAllFilesUnderFolder(
-          assetsCsvFolder, dirsToExclude);
-      relativePathsToTableIdAssetsCsvOnDevice = filterInTableIdFiles(relativePathsToTableIdAssetsCsvOnDevice, tableId);
-
-      // We don't want to sync anything in the instances directory, because this
-      // contains things like media attachments. These should instead be synched
-      // with a separate call.
-      // tableDirsToExclude.add(TableFileUtils.DIR_INSTANCES);
-      dirsToExclude.add(ODKFileUtils.INSTANCES_FOLDER_NAME);
-      List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
-          tableFolder, dirsToExclude);
-
-      // mix in the assets files for this tableId, if any...
-      relativePathsToAppFolderOnDevice.addAll(relativePathsToTableIdAssetsCsvOnDevice);
-      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
-          manifest);
-      Log.i(TAG, "[syncNonMediaTableFiles] files to upload: " + relativePathsToUpload);
-      // and then upload the files.
-      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
-      for (String relativePath : relativePathsToUpload) {
-        String wholePathToFile = appFolder + File.separator + relativePath;
-        successfulUploads.put(relativePath, uploadFile(wholePathToFile, relativePath));
+      boolean success = true;
+      for (String relativePath : relativePathsOnDevice) {
+        File localFile = ODKFileUtils.asAppFile(appName, relativePath);
+        String wholePathToFile = localFile.getAbsolutePath();
+        if ( !uploadFile(wholePathToFile, relativePath)) {
+          success = false;
+          Log.e(TAG, "Unable to upload file to server: " + relativePath);
+        }
       }
+
+      for ( String relativePath : serverFilesToDelete ) {
+        if ( !deleteFile(relativePath) ) {
+          success = false;
+          Log.e(TAG, "Unable to delete file on server: " +  relativePath);
+        }
+      }
+
+      if ( !success ) {
+        Log.i(TAG, "unable to delete one or more files!");
+      }
+
+    } else {
+      // if we are pulling, we want to pull the server files that are different
+      // down from the server, then remove the local files that are not present
+      // on the server.
+
+      for (OdkTablesFileManifestEntry entry : manifest) {
+        // make sure our copy is current
+        boolean outcome = compareAndDownloadFile(entry);
+        // and if it was the table properties file, remember whether it changed.
+        if ( entry.filename.equals(tableIdPropertiesFile) ) {
+          tablePropertiesChanged = outcome;
+        }
+        // remove it from the set of app-level files we found before the sync
+        relativePathsOnDevice.remove(entry.filename);
+      }
+
+      boolean success = true;
+      for ( String relativePath : relativePathsOnDevice ) {
+        // and remove any remaining files, as these do not match anything on
+        // the server.
+        File f = ODKFileUtils.asAppFile(appName, relativePath);
+        if ( !f.delete() ) {
+          success = false;
+          Log.e(TAG, "Unable to delete " +  f.getAbsolutePath());
+        }
+      }
+
+      if ( tablePropertiesChanged && (onChange != null) ) {
+        // update this table's KVS values...
+        onChange.onTablePropertiesChanged(tableId);
+      }
+
+      if ( !success ) {
+        Log.i(TAG, "unable to delete one or more files!");
+      }
+
+      // should we return our status?
     }
   }
 
@@ -874,6 +938,19 @@ public class AggregateSynchronizer implements Synchronizer {
     List<String> fileList = new ArrayList<String>();
     fileList.addAll(filesToRetain);
     return fileList;
+  }
+
+  private boolean deleteFile(String pathRelativeToAppFolder) {
+    String escapedPath = SyncUtil.formatPathForAggregate(pathRelativeToAppFolder);
+    URI filesUri = SyncUtilities.normalizeUri(aggregateUri, getFilePathURI() + escapedPath);
+    Log.i(TAG, "[deleteFile] fileDeleteUri: " + filesUri.toString());
+    RestTemplate rt = SyncUtil.getRestTemplateForFiles();
+    List<ClientHttpRequestInterceptor> interceptors = new ArrayList<ClientHttpRequestInterceptor>();
+    interceptors.add(new AggregateRequestInterceptor(this.baseUri, accessToken));
+    rt.setInterceptors(interceptors);
+    rt.delete(filesUri);
+    // TODO: verify whether or not this worked.
+    return true;
   }
 
   private boolean uploadFile(String wholePathToFile, String pathRelativeToAppFolder) {
@@ -1132,61 +1209,106 @@ public class AggregateSynchronizer implements Synchronizer {
   }
 
   @Override
-  public void syncRowDataFiles(String tableId, boolean pushLocalInstanceFiles) throws ResourceAccessException {
-    // There are two things to do here, really. The first is to get the
-    // manifest for each instance--or each row of the table. And download all
-    // the files on the manifest.
-    // TODO: handle deletion of files appropiately.
-    // The second is to then upload the files in the instances folder to the
-    // server.
-    //
-    // The implementation of this method will be very similar to the
-    // implementation of syncNonMediaTableFiles when pushLocal==true.
-    // The main logic is as follows:
-    // 1) request the manifest.
-    // 2) compare hashes of the files existing on the phone, downloading those
-    // that do not exist or that have differing hashes.
-    // 3) get all the files under the INSTANCES directory.
-    // 4) remove those files that were on the manifest, as they can now be
-    // assumed to be up to date.
-    // 5) upload all the remaining files.
-    String pathPrefix = "tables/" + tableId + "/instances/";
+  public boolean getFileAttachments(String tableId, SyncRow row) {
 
-    // 1) Get the manifest.
-    // TODO: this is currently just getting the same table-level manifest as
-    // syncNonMediaTableFiles(). In reality it should be making its own call.
-    List<OdkTablesFileManifestEntry> manifest;
+    boolean success = true;
+    try {
+      // 1) Get the manifest of all files under this row's instanceId (rowId)
+      List<OdkTablesFileManifestEntry> manifest;
+      String escapedInstanceId = SyncUtil.formatPathForAggregate(row.getRowId());
+      URI instanceFileManifestUri = SyncUtilities.normalizeUri(aggregateUri, getTablesUriFragment() + tableId + "/attachments/manifest/" + escapedInstanceId );
+      Uri.Builder uriBuilder = Uri.parse(instanceFileManifestUri.toString()).buildUpon();
+      ResponseEntity<OdkTablesFileManifest> responseEntity;
+        responseEntity = rt.exchange(uriBuilder.build().toString(),
+                HttpMethod.GET, null, OdkTablesFileManifest.class);
+      manifest = responseEntity.getBody().getEntries();
 
-    // get the list of all instance files (should not do this in production!)
-    URI instanceFileManifestUri = SyncUtilities.normalizeUri(aggregateUri, getTablesUriFragment() + tableId + "/attachments/manifest/" );
-    Uri.Builder uriBuilder = Uri.parse(instanceFileManifestUri.toString()).buildUpon();
-    ResponseEntity<OdkTablesFileManifest> responseEntity;
-      responseEntity = rt.exchange(uriBuilder.build().toString(),
-              HttpMethod.GET, null, OdkTablesFileManifest.class);
-    manifest = responseEntity.getBody().getEntries();
+      // TODO: scan the row and pick apart the elements that specify a file.
 
-    for (OdkTablesFileManifestEntry entry : manifest) {
-      entry.filename = pathPrefix + entry.filename;
-      compareAndDownloadFile(entry);
-    }
-
-    if ( pushLocalInstanceFiles ) {
-      // Then we actually do try and upload things. Otherwise we can just
-      // continue straight on.
-      String appFolder = ODKFileUtils.getAppFolder(appName);
-      String instancesFolderFullPath = ODKFileUtils.getInstancesFolder(appName, tableId);
+      // 2) Get the local files
+      String instancesFolderFullPath = ODKFileUtils.getInstanceFolder(appName, tableId, row.getRowId());
       List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
           instancesFolderFullPath, null);
-      List<String> relativePathsToUpload = getFilesToBeUploaded(relativePathsToAppFolderOnDevice,
-          manifest);
-      Log.e(TAG, "[syncRowDataFiles] relativePathsToUpload: " + relativePathsToUpload);
-      // and then upload the files.
-      Map<String, Boolean> successfulUploads = new HashMap<String, Boolean>();
-      for (String relativePath : relativePathsToUpload) {
-        String wholePathToFile = appFolder + File.separator + relativePath;
-        String partialPath = relativePath.substring(pathPrefix.length());
-        successfulUploads.put(relativePath, uploadInstanceFile(wholePathToFile, tableId, partialPath));
+
+      String pathPrefix = "tables/" + tableId + "/instances/";
+      // we are getting files. So iterate over the remote files...
+      for ( OdkTablesFileManifestEntry entry : manifest ) {
+        String relativePath = pathPrefix + entry.filename;
+        File localFile = ODKFileUtils.asAppFile(appName, relativePath);
+
+        if ( !localFile.exists() ) {
+          if ( !downloadFile(localFile, entry.downloadUrl) ) {
+            success = false;
+          }
+        } else if ( !entry.md5hash.equals(ODKFileUtils.getMd5Hash(localFile)) ) {
+          Log.e(TAG, "File " + localFile.getAbsolutePath() + " MD5Hash has changed from that on server -- this is not supposed to happen!");
+          success = false;
+        }
+        relativePathsToAppFolderOnDevice.remove(relativePath);
       }
+
+      for ( String relativePath : relativePathsToAppFolderOnDevice ) {
+        // remove local files that are  not on server...
+        File localFile = ODKFileUtils.asAppFile(appName, relativePath);
+        if ( !localFile.delete() ) {
+          success = false;
+        }
+      }
+      return success;
+    } catch ( Exception e ) {
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  @Override
+  public boolean putFileAttachments(String tableId, SyncRow row) {
+
+    boolean success = true;
+    try {
+      // 1) Get the manifest of all files under this row's instanceId (rowId)
+      List<OdkTablesFileManifestEntry> manifest;
+      String escapedInstanceId = SyncUtil.formatPathForAggregate(row.getRowId());
+      URI instanceFileManifestUri = SyncUtilities.normalizeUri(aggregateUri, getTablesUriFragment() + tableId + "/attachments/manifest/" + escapedInstanceId );
+      Uri.Builder uriBuilder = Uri.parse(instanceFileManifestUri.toString()).buildUpon();
+      ResponseEntity<OdkTablesFileManifest> responseEntity;
+        responseEntity = rt.exchange(uriBuilder.build().toString(),
+                HttpMethod.GET, null, OdkTablesFileManifest.class);
+      manifest = responseEntity.getBody().getEntries();
+
+      // TODO: scan the row and pick apart the elements that specify a file.
+
+      // 2) Get the local files
+      String instancesFolderFullPath = ODKFileUtils.getInstanceFolder(appName, tableId, row.getRowId());
+      List<String> relativePathsToAppFolderOnDevice = getAllFilesUnderFolder(
+          instancesFolderFullPath, null);
+
+      String pathPrefix = "tables/" + tableId + "/instances/";
+      // we are putting files. So iterate over the local files...
+      for ( String relativePath : relativePathsToAppFolderOnDevice ) {
+        File localFile = ODKFileUtils.asAppFile(appName, relativePath);
+        String partialPath = relativePath.substring(pathPrefix.length());
+        OdkTablesFileManifestEntry entry = null;
+        for ( OdkTablesFileManifestEntry e : manifest ) {
+          if ( e.filename.equals(partialPath) ) {
+            entry = e;
+            break;
+          }
+        }
+        if ( entry == null ) {
+          // upload the file
+          boolean outcome = uploadInstanceFile(localFile.getAbsolutePath(), tableId, partialPath);
+          if ( !outcome ) {
+            success = false;
+          }
+        } else if ( !entry.md5hash.equals(ODKFileUtils.getMd5Hash(localFile)) ) {
+          success = false;
+          Log.e(TAG, "File " + localFile.getAbsolutePath() + " MD5Hash has changed from that on server -- this is not supposed to happen!");
+        }
+      }
+      return success;
+    } catch ( Exception e ) {
+      return false;
     }
   }
 }

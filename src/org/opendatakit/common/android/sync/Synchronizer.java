@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
 import org.opendatakit.common.android.data.ColumnType;
@@ -100,39 +98,6 @@ public interface Synchronizer {
   public void deleteTable(String tableId) throws IOException;
 
   /**
-   * Sets the table display name and table properties on the server.
-   *
-   * @param propertiesUri
-   *          the URI to this table's properties on the server
-   * @param currentSyncTag
-   *          the last value that was stored as the syncTag
-   * @return
-   *          all the properties for the given table
-   *
-   * @throws IOException
-   */
-  public PropertiesResource getTablePropertiesResource(String propertiesUri, SyncTag currentSyncTag) throws IOException;
-
-
-  /**
-   * Sets the table display name and table properties on the server.
-   *
-   * @param propertiesUri
-   *          the URI to this table's properties on the server
-   * @param currentSyncTag
-   *          the last value that was stored as the syncTag
-   * @param tableId
-   *          the tableId of this table
-   * @param kvsEntries
-   *          all the entries in the key value store for this table. Should
-   *          be of the server kvs, since this is for synchronization.
-   * @return the syncTag of the table
-   * @throws IOException
-   */
-  public SyncTag setTablePropertiesResource(String propertiesUri, SyncTag currentSyncTag, String tableId,
-                                   ArrayList<OdkTablesKeyValueStoreEntry> kvsEntries) throws IOException;
-
-  /**
    * Retrieve changes in the server state since the last synchronization.
    *
    * @param tableId
@@ -201,16 +166,25 @@ public interface Synchronizer {
    */
   public void syncTableLevelFiles(String tableId, OnTablePropertiesChanged onChange, boolean pushLocal) throws ResourceAccessException;
 
+
   /**
-   * Sync only the media files associated with individual rows of a table.
-   * This includes things like any pictures that have been collected as part
-   * of a form. I.e. those files that are considered data.
+   * Ensure that the file attachments for the indicated row values are pulled down
+   * to the local system. All other files in the instance folder should be removed.
    *
    * @param tableId
-   * @param pushLocal
-   *          true if the local files should be pushed
-   * @throws ResourceAccessException
+   * @param row
+   * @return true if successful
    */
-  public void syncRowDataFiles(String tableId, boolean pushLocal) throws ResourceAccessException;
+  public boolean getFileAttachments(String tableId, SyncRow row);
 
+  /**
+   * Ensure that the file attachments for the indicated row values exist on the
+   * server. File attachments are immutable on the server -- never updated and
+   * never destroyed.
+   *
+   * @param tableId
+   * @param row
+   * @return true if successful
+   */
+  public boolean putFileAttachments(String tableId, SyncRow row);
 }

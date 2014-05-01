@@ -33,8 +33,6 @@ import org.opendatakit.aggregate.odktables.rest.ConflictType;
 import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.aggregate.odktables.rest.entity.Column;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-import org.opendatakit.aggregate.odktables.rest.entity.PropertiesResource;
 import org.opendatakit.aggregate.odktables.rest.entity.Scope;
 import org.opendatakit.aggregate.odktables.rest.entity.TableDefinitionResource;
 import org.opendatakit.aggregate.odktables.rest.entity.TableResource;
@@ -289,6 +287,10 @@ public class SyncProcessor {
 
     try {
 
+      // Confirm that the local schema matches that on the server...
+      // If we are pushing to the server, create it on the server.
+      assertMatchingSchemas(tp, pushLocalTableLevelFiles, tableResult);
+
       final CsvUtil utils = new CsvUtil(context, appName);
       // write the current schema and properties set.
       utils.writePropertiesCsv(tp);
@@ -298,6 +300,251 @@ public class SyncProcessor {
         public void onTablePropertiesChanged(String tableId) {
           utils.updateTablePropertiesFromCsv(null, tableId);
         }}, pushLocalTableLevelFiles);
+
+      ////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // and now sync the data rows...
+
+      // we found the matching resource on the server and we have set up our
+      // local table to be ready for any data merge with the server's table.
+
+      // we should be up-to-date on the schema and properties
+      // now fetch all the changed rows...
+
+      // refresh the tp
+      tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
+      List<String> userColumns = tp.getColumnOrder();
+
+      IncomingRowModifications modification;
+      try {
+        modification = synchronizer.getUpdates(tp.getTableId(), tp.getSyncTag());
+      } catch (Exception e) {
+        String msg = e.getMessage();
+        if ( msg == null ) msg = e.toString();
+        tableResult.setMessage(msg);
+        tableResult.setStatus(Status.EXCEPTION);
+        return false;
+      }
+
+      /**************************
+       * PART 2: UPDATE THE DATA
+       **************************/
+      if (modification.hasTableDataChanged()) {
+        Log.d(TAG, "updateDbFromServer setServerHadDataChanges(true)");
+        tableResult.setServerHadDataChanges(true);
+
+        Map<String, SyncRow> rows = modification.getRows();
+
+        UserTable allRowIds = table.getRaw(userColumns, new String[] { DataTableColumns.SAVEPOINT_TYPE
+        }, new String[] { SavepointTypeManipulator.complete()
+        }, null, null, null, null);
+
+        // sort data changes into types
+        List<SyncRow> rowsToConflict = new ArrayList<SyncRow>();
+        List<SyncRow> rowsToUpdate = new ArrayList<SyncRow>();
+        List<SyncRow> rowsToInsert = new ArrayList<SyncRow>();
+        List<String> rowIdsToDelete = new ArrayList<String>();
+        // map of rowId to the local row that must transition to state conflicting.
+        Map<String, Row> localVersionsOfLocalConflictRows = new HashMap<String, Row>();
+        // list of rows that are the server conflict row which must be
+        // deleted and replaced with the updated record from the server
+        List<Row> localVersionsOfServerConflictRows = new ArrayList<Row>();
+
+        // loop through the local database
+        for (int i = 0; i < allRowIds.getNumberOfRows(); i++) {
+          String rowId = allRowIds.getRowAtIndex(i).getRowId();
+
+          SyncRow row = rows.get(rowId);
+          if ( row == null ) {
+            // the local record wasn't impacted by a server change -- skip it
+            continue;
+          }
+
+          String stateStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.SYNC_STATE);
+          SyncState state = SyncState.valueOf(stateStr);
+          int localRowConflictTypeBeforeSync = -1;
+          if ( state == SyncState.conflicting ) {
+            // we need to remove the conflicting records that refer to the prior state of the server
+            String localRowConflictTypeBeforeSyncStr = allRowIds.getMetadataByElementKey(i, DataTableColumns.CONFLICT_TYPE);
+            localRowConflictTypeBeforeSync = Integer.parseInt(localRowConflictTypeBeforeSyncStr);
+            if ( localRowConflictTypeBeforeSync == ConflictType.SERVER_DELETED_OLD_VALUES ||
+                 localRowConflictTypeBeforeSync == ConflictType.SERVER_UPDATED_UPDATED_VALUES ) {
+              localVersionsOfServerConflictRows.add(allRowIds.getRowAtIndex(i));
+              continue;
+            }
+          }
+
+          // OK the record is either a simple local record or a local conflict record
+
+          if (state == SyncState.rest) {
+            // no need to worry about server conflict records
+            rows.remove(rowId);
+
+            if (row.isDeleted()) {
+              rowIdsToDelete.add(rowId);
+            } else {
+              rowsToUpdate.add(row);
+            }
+          } else if (row.isDeleted() && (state == SyncState.deleting ||
+              (state == SyncState.conflicting &&
+               localRowConflictTypeBeforeSync == ConflictType.LOCAL_DELETED_OLD_VALUES))) {
+            // this occurs if
+            // (1) a deleting request was never ACKed but it was performed on the server.
+            // (2) if there is an unresolved conflict held locally with the local action
+            //     being to delete the record, and the prior server state being a value
+            //     change, but the newly sync'd state now reflects a deletion by another
+            //     party.
+            //
+
+            // no need to worry about server conflict records.
+            rows.remove(rowId);
+
+            // any server conflict rows will be deleted during the delete step
+            rowIdsToDelete.add(rowId);
+          } else {
+            // SyncState.deleting  and server is not deleting
+            // SyncState.inserting and record exists on server
+            // SyncState.updating and new change on server
+            // SyncState.conflicting and new change on server
+
+            if ( state != SyncState.conflicting ) {
+              // no need to worry about server conflict records
+              rows.remove(rowId);
+            }
+
+            // if we already processed the server
+            localVersionsOfLocalConflictRows.put(rowId, allRowIds.getRowAtIndex(i));
+            rowsToConflict.add(row);
+          }
+        }
+
+        // OK we have captured the updating, deleting and conflicting
+        // records from the server, and in the process we have shrunk
+        // the set of records in the rows map.
+
+        // Now, go through the rows map. Anything not matching a rowId
+        // in the localVersionsOfConflictingRows map and which is not
+        // a row-deletion record should be inserted.
+        for ( String rowId : rows.keySet() ) {
+          boolean isDeleted = rows.get(rowId).isDeleted();
+          if ( !isDeleted && !localVersionsOfLocalConflictRows.containsKey(rowId) ) {
+            rowsToInsert.add(rows.get(rowId));
+          }
+        }
+
+        // perform data changes
+        deleteRowsInDb(tp, table, rowIdsToDelete);
+        insertRowsInDb(tp, table, rowsToInsert);
+        updateRowsInDb(tp, table, rowsToUpdate);
+        conflictRowsInDb(tp, table, rowsToConflict, localVersionsOfLocalConflictRows, localVersionsOfServerConflictRows);
+
+        // If we made it here and there was data, then we successfully updated the
+        // data from the server.
+        if (rows.size() > 0) {
+          tableResult.setPulledServerData(true);
+        }
+
+        // We have to set this synctag here so that the server knows we saw its
+        // changes. Otherwise it won't let us put up new information.
+        tp.setSyncTag(modification.getTableSyncTag());
+      }
+
+      // get changes that need to be pushed up to server
+      List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncState.inserting);
+      List<SyncRow> rowsToUpdate = getRowsToPushToServer(table, userColumns, SyncState.updating);
+      List<SyncRow> rowsToDelete = getRowsToPushToServer(table, userColumns, SyncState.deleting);
+
+      if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 || rowsToDelete.size() != 0) {
+        if (tableResult.hadLocalDataChanges()) {
+          Log.e(TAG, "synchronizeTableRest hadLocalDataChanges() returned "
+              + "true, and we're about to set it to true again. Odd.");
+        }
+        tableResult.setHadLocalDataChanges(true);
+      }
+
+      // push the changes up to the server
+      boolean success = false;
+      try {
+        SyncTag revisedTag = tp.getSyncTag();
+        for (SyncRow syncRow : rowsToInsert) {
+          RowModification rm = synchronizer.insertOrUpdateRow(tableId, revisedTag, syncRow);
+
+          ContentValues values = new ContentValues();
+          values.put(DataTableColumns.ROW_ETAG, rm.getRowETag());
+          values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+          table.actualUpdateRowByRowId(rm.getRowId(), values);
+          syncResult.stats.numInserts++;
+          syncResult.stats.numEntries++;
+
+          boolean outcome = synchronizer.putFileAttachments(tp.getTableId(), syncRow);
+          if ( !outcome ) {
+            // revert to rest-without-files state
+            values.clear();
+            values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+            table.actualUpdateRowByRowId(syncRow.getRowId(), values);
+          }
+
+          revisedTag = rm.getTableSyncTag();
+          tp.setSyncTag(revisedTag);
+        }
+        for (SyncRow syncRow : rowsToUpdate) {
+          RowModification rm = synchronizer.insertOrUpdateRow(tableId, revisedTag, syncRow);
+
+          ContentValues values = new ContentValues();
+          values.put(DataTableColumns.ROW_ETAG, rm.getRowETag());
+          values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+          table.actualUpdateRowByRowId(rm.getRowId(), values);
+          syncResult.stats.numUpdates++;
+          syncResult.stats.numEntries++;
+
+          boolean outcome = synchronizer.putFileAttachments(tp.getTableId(), syncRow);
+          if ( !outcome ) {
+            // revert to rest-without-files state
+            values.clear();
+            values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+            table.actualUpdateRowByRowId(syncRow.getRowId(), values);
+          }
+
+          revisedTag = rm.getTableSyncTag();
+          tp.setSyncTag(revisedTag);
+        }
+        for (SyncRow syncRow : rowsToDelete) {
+          RowModification rm = synchronizer.deleteRow(tableId, revisedTag, syncRow);
+          table.deleteRowActual(rm.getRowId());
+          syncResult.stats.numDeletes++;
+          syncResult.stats.numEntries++;
+          revisedTag = rm.getTableSyncTag();
+          tp.setSyncTag(revisedTag);
+        }
+        // And now update that we've pushed our changes to the server.
+        tableResult.setPushedLocalData(true);
+        success = true;
+      } catch (IOException e) {
+        ioException("synchronizeTableRest", tp, e, tableResult);
+        success = false;
+      } catch (Exception e) {
+        exception("synchronizeTableRest", tp, e, tableResult);
+        success = false;
+      }
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      // RESTRUCTURE THIS FOR FILE ATTACHMENTS!!!
+      ////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////
+
+      return success;
+
     } catch (ResourceAccessException e) {
       resourceAccessException("synchronizeTableRest--nonMediaFiles", tp, e, tableResult);
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
@@ -307,110 +554,6 @@ public class SyncProcessor {
       Log.e(TAG, "[synchronizeTableRest] error synchronizing table files");
       return false;
     }
-
-    // It's possible that the call to this method follows a call to
-    // synchronizeTableUpdating. For that reason we can't assume there are no
-    // properties changes. Thus rely on the fact that the
-    // hadLocalPropertiesChanges value in TableResult inits to false, and on
-    // the fact that the appropriate method will have updated it to true if
-    // necessary. And then don't set anything.
-
-    List<String> userColumns = tp.getColumnOrder();
-
-    // get updates from server
-    // if we fail here we don't try to continue
-    // (do this first because the updates could affect the state of the rows
-    // in the db when we query for them in the next step, e.g. turn an INSERTING
-    // row into CONFLICTING)
-    try {
-      updateDbFromServer(tp, table, tableResult);
-      if ( tableResult.getStatus() != Status.SUCCESS ) {
-        return false;
-      }
-    } catch (IOException e) {
-      ioException("synchronizeTableRest", tp, e, tableResult);
-      return false;
-    } catch (Exception e) {
-      exception("synchronizeTableRest", tp, e, tableResult);
-      return false;
-    }
-    // refresh the tp
-    tp = TableProperties.refreshTablePropertiesForTable(context, appName, tp.getTableId());
-
-    // get changes that need to be pushed up to server
-    List<SyncRow> rowsToInsert = getRowsToPushToServer(table, userColumns, SyncState.inserting);
-    List<SyncRow> rowsToUpdate = getRowsToPushToServer(table, userColumns, SyncState.updating);
-    List<SyncRow> rowsToDelete = getRowsToPushToServer(table, userColumns, SyncState.deleting);
-
-    if (rowsToInsert.size() != 0 || rowsToUpdate.size() != 0 || rowsToDelete.size() != 0) {
-      if (tableResult.hadLocalDataChanges()) {
-        Log.e(TAG, "synchronizeTableRest hadLocalDataChanges() returned "
-            + "true, and we're about to set it to true again. Odd.");
-      }
-      tableResult.setHadLocalDataChanges(true);
-    }
-
-    // push the changes up to the server
-    boolean success = false;
-    try {
-      SyncTag revisedTag = tp.getSyncTag();
-      for (SyncRow syncRow : rowsToInsert) {
-        RowModification rm = synchronizer.insertOrUpdateRow(tableId, revisedTag, syncRow);
-
-        ContentValues values = new ContentValues();
-        values.put(DataTableColumns.ROW_ETAG, rm.getRowETag());
-        values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
-        table.actualUpdateRowByRowId(rm.getRowId(), values);
-        syncResult.stats.numInserts++;
-        syncResult.stats.numEntries++;
-        revisedTag = rm.getTableSyncTag();
-        tp.setSyncTag(revisedTag);
-      }
-      for (SyncRow syncRow : rowsToUpdate) {
-        RowModification rm = synchronizer.insertOrUpdateRow(tableId, revisedTag, syncRow);
-
-        ContentValues values = new ContentValues();
-        values.put(DataTableColumns.ROW_ETAG, rm.getRowETag());
-        values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
-        table.actualUpdateRowByRowId(rm.getRowId(), values);
-        syncResult.stats.numUpdates++;
-        syncResult.stats.numEntries++;
-        revisedTag = rm.getTableSyncTag();
-        tp.setSyncTag(revisedTag);
-      }
-      for (SyncRow syncRow : rowsToDelete) {
-        RowModification rm = synchronizer.deleteRow(tableId, revisedTag, syncRow);
-        table.deleteRowActual(rm.getRowId());
-        syncResult.stats.numDeletes++;
-        syncResult.stats.numEntries++;
-        revisedTag = rm.getTableSyncTag();
-        tp.setSyncTag(revisedTag);
-      }
-      // And now update that we've pushed our changes to the server.
-      tableResult.setPushedLocalData(true);
-      // And now try to push up the media files, if necessary.
-      try {
-        Log.d(TAG, "[synchronizeTableRest] synching media files");
-        synchronizer.syncRowDataFiles(tp.getTableId(), pushLocalInstanceFiles);
-      } catch (ResourceAccessException e) {
-        resourceAccessException("synchronizeTableRest--mediaFiles", tp, e, tableResult);
-        Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
-        return false;
-      } catch (Exception e) {
-        exception("synchronizeTableRest--mediaFiles", tp, e, tableResult);
-        Log.e(TAG, "[synchronizeTableRest] error synchronizing media files");
-        return false;
-      }
-      success = true;
-    } catch (IOException e) {
-      ioException("synchronizeTableRest", tp, e, tableResult);
-      success = false;
-    } catch (Exception e) {
-      exception("synchronizeTableRest", tp, e, tableResult);
-      success = false;
-    }
-
-    return success;
   }
 
   private void resourceAccessException(String method, TableProperties tp,
@@ -448,7 +591,7 @@ public class SyncProcessor {
    *          whether or not the table is being downloaded for the first time.
    * @throws IOException
    */
-  private void updateDbFromServer(TableProperties tp, DbTable table,
+  private void assertMatchingSchemas(TableProperties tp, boolean pushTableDefinition,
                                   TableResult tableResult) throws IOException {
 
     // retrieve updates TODO: after adding editing a row and a color rule, then
@@ -458,81 +601,60 @@ public class SyncProcessor {
     tableResult.setTableAction(SyncState.inserting);
     TableResource resource = synchronizer.getTableOrNull(tp.getTableId());
 
-    if ( resource == null || resource.getPropertiesETag() == null ) {
-      // the insert of the table was incomplete -- try again
-      if ( tp.getSyncState() == SyncState.inserting ) {
-        // we are creating data on the server
-        // change our 'rest' state rows into 'inserting' rows
-        DbTable dbt = DbTable.getDbTable(tp);
-        dbt.changeRestRowsToInserting();
-        // we need to clear out the dataETag and propertiesETag so
-        // that we will pull all server changes and sync our properties.
-        SyncTag newSyncTag = new SyncTag(null, null, tp.getSyncTag().getSchemaETag());
-        tp.setSyncTag(newSyncTag);
-        /**************************
-         * PART 1A: CREATE THE TABLE First we need to create the table on the
-         * server. This comes in two parts--the definition and the properties.
-         **************************/
-        // First create the table definition on the server.
-        try {
-          resource = synchronizer.createTable(tp.getTableId(), newSyncTag,
-                                                    getColumnsForTable(tp));
-        } catch (Exception e) {
-          String msg = e.getMessage();
-          if ( msg == null ) msg = e.toString();
-          tableResult.setMessage(msg);
-          tableResult.setStatus(Status.EXCEPTION);
-          return;
-        }
+    if ( resource == null ) {
 
-        /***************************
-         * PART 1B: SET PROPERTIES Set the table properties on the server
-         * *************************/
-        SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(), resource.getSchemaETag());
-        SyncTag syncTagProperties;
-        try {
-          syncTagProperties = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(),
-            syncTag, tp.getTableId(), getAllKVSEntries(tp));
-        } catch (Exception e) {
-          String msg = e.getMessage();
-          if ( msg == null ) msg = e.toString();
-          tableResult.setMessage(msg);
-          tableResult.setStatus(Status.EXCEPTION);
-          return;
-        }
-
-        // and update local tp to reflect that we have the same values as the server
-        newSyncTag = new SyncTag(null, syncTagProperties.getPropertiesETag(), syncTagProperties.getSchemaETag());
-        tp.setSyncTag(newSyncTag);
-
-        // If we make it here we've set both the definition and the properties,
-        // so we can say yes we've added the table to the server.
-        tableResult.setPushedLocalProperties(true);
-
-        // refresh the resource
-        try {
-          resource = synchronizer.getTableOrNull(tp.getTableId());
-        } catch (Exception e) {
-          String msg = e.getMessage();
-          if ( msg == null ) msg = e.toString();
-          tableResult.setMessage(msg);
-          tableResult.setStatus(Status.EXCEPTION);
-          return;
-        }
-
-        if ( resource == null || resource.getPropertiesETag() == null) {
-          tableResult.setMessage("Unexpected error -- table should have been created!");
-          tableResult.setStatus(Status.FAILURE);
-          return;
-        }
-
-        // otherwise drop through and continue with insert...
-      } else {
+      if ( !pushTableDefinition ) {
         // the table on the server is missing. Need to ask user what to do...
         tableResult.setServerHadSchemaChanges(true);
         tableResult.setMessage("Server no longer has table! Marking it as insert locally. Re-sync to upload.");
         tableResult.setStatus(Status.FAILURE);
         tp.setSyncState(SyncState.inserting);
+        return;
+      }
+
+      // the insert of the table was incomplete -- try again
+
+      // we are creating data on the server
+      // change our 'rest' state rows into 'inserting' rows
+      DbTable dbt = DbTable.getDbTable(tp);
+      dbt.changeRestRowsToInserting();
+      // we need to clear out the dataETag and propertiesETag so
+      // that we will pull all server changes and sync our properties.
+      SyncTag newSyncTag = new SyncTag(null, null, tp.getSyncTag().getSchemaETag());
+      tp.setSyncTag(newSyncTag);
+      /**************************
+       * PART 1A: CREATE THE TABLE First we need to create the table on the
+       * server. This comes in two parts--the definition and the properties.
+       **************************/
+      // First create the table definition on the server.
+      try {
+        resource = synchronizer.createTable(tp.getTableId(), newSyncTag,
+                                                  getColumnsForTable(tp));
+      } catch (Exception e) {
+        String msg = e.getMessage();
+        if ( msg == null ) msg = e.toString();
+        tableResult.setMessage(msg);
+        tableResult.setStatus(Status.EXCEPTION);
+        return;
+      }
+
+      SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(), resource.getSchemaETag());
+      tp.setSyncTag(syncTag);
+
+      // refresh the resource
+      try {
+        resource = synchronizer.getTableOrNull(tp.getTableId());
+      } catch (Exception e) {
+        String msg = e.getMessage();
+        if ( msg == null ) msg = e.toString();
+        tableResult.setMessage(msg);
+        tableResult.setStatus(Status.EXCEPTION);
+        return;
+      }
+
+      if ( resource == null || resource.getPropertiesETag() == null) {
+        tableResult.setMessage("Unexpected error -- table should have been created!");
+        tableResult.setStatus(Status.FAILURE);
         return;
       }
     } else {
@@ -605,60 +727,34 @@ public class SyncProcessor {
         return;
       }
     }
+  }
 
-    /**************************
-     * PART 1B: UPDATE THE TABLE PROPERTIES (i.e., the key value store).
-     * We only do this if necessary. Do this before updating data.
-     **************************/
-    if (!resource.getPropertiesETag().equals(tp.getSyncTag().getPropertiesETag()) ) {
+  /**
+   * Update the database based on the server.
+   *
+   * @param tp
+   *          modified in place if the table properties are changed
+   * @param table
+   * @param downloadingTable
+   *          whether or not the table is being downloaded for the first time.
+   * @throws IOException
+   */
+  private void updateRowsFromServer(TableProperties tp, DbTable table,
+                                  TableResult tableResult) throws IOException {
 
-      Log.d(TAG, "updateDbFromServer setServerHadPropertiesChanges(true)");
-      tableResult.setServerHadPropertiesChanges(true);
+    // retrieve updates TODO: after adding editing a row and a color rule, then
+    // synching, then copying the kvs into the server set and synching, this
+    // returned true that tp had changed and that i had a new sync row (the old
+    // row). this shouldn't do that.
+    tableResult.setTableAction(SyncState.inserting);
+    TableResource resource = synchronizer.getTableOrNull(tp.getTableId());
 
-      SyncTag resourceSyncTag = new SyncTag( resource.getDataETag(),
-                    resource.getPropertiesETag(), resource.getSchemaETag());
-      // We have two things to worry about. One is if the table definition
-      // (i.e. the table datastructure or the table's columns' datastructure)
-      // has changed. The other is if the key value store has changed.
-      // We'll get both pieces of information from the properties resource.
-      PropertiesResource propertiesResource;
-      try {
-        propertiesResource = synchronizer.getTablePropertiesResource(resource.getPropertiesUri(), resourceSyncTag);
-      } catch (Exception e) {
-        String msg = e.getMessage();
-        if ( msg == null ) msg = e.toString();
-        tableResult.setMessage(msg);
-        tableResult.setStatus(Status.EXCEPTION);
-        return;
-      }
-
-      tableResult.setPulledServerProperties(true);
-
-      SyncTag newSyncTag = new SyncTag( tp.getSyncTag().getDataETag(), resource.getPropertiesETag(), resource.getSchemaETag());
-      resetKVSForPropertiesResource(tp, propertiesResource, newSyncTag);
-
-    } else if ( tp.getSyncState() != SyncState.rest ) {
-
-      // we have table properties that have changed.
-      // try to push these up to the server.
-      SyncTag syncTag;
-      try {
-        syncTag = synchronizer.setTablePropertiesResource(resource.getPropertiesUri(), tp.getSyncTag(), tp.getTableId(),
-                                getAllKVSEntries(tp));
-      } catch (Exception e) {
-        String msg = e.getMessage();
-        if ( msg == null ) msg = e.toString();
-        tableResult.setMessage(msg);
-        tableResult.setStatus(Status.EXCEPTION);
-        return;
-      }
-
-      SyncTag newSyncTag = new SyncTag( tp.getSyncTag().getDataETag(), syncTag.getPropertiesETag(), syncTag.getSchemaETag());
-      tp.setSyncTag(newSyncTag);
-      tp.setSyncState(SyncState.rest);
-      // We've updated the server.
-      tableResult.setPushedLocalProperties(true);
+    if ( resource == null ) {
+      throw new IllegalStateException("There should be a resource by now!");
     }
+
+    // we found the matching resource on the server and we have set up our
+    // local table to be ready for any data merge with the server's table.
 
     // we should be up-to-date on the schema and properties
     // now fetch all the changed rows...
@@ -783,10 +879,10 @@ public class SyncProcessor {
       }
 
       // perform data changes
-      deleteRowsInDb(table, rowIdsToDelete);
-      insertRowsInDb(table, rowsToInsert);
-      updateRowsInDb(table, rowsToUpdate);
-      conflictRowsInDb(table, rowsToConflict, localVersionsOfLocalConflictRows, localVersionsOfServerConflictRows);
+      deleteRowsInDb(tp, table, rowIdsToDelete);
+      insertRowsInDb(tp, table, rowsToInsert);
+      updateRowsInDb(tp, table, rowsToUpdate);
+      conflictRowsInDb(tp, table, rowsToConflict, localVersionsOfLocalConflictRows, localVersionsOfServerConflictRows);
 
       // If we made it here and there was data, then we successfully updated the
       // data from the server.
@@ -800,8 +896,8 @@ public class SyncProcessor {
     }
   }
 
-  private void conflictRowsInDb(DbTable table, List<SyncRow> rows,
-                                Map<String, Row> localVersionsOfConflictingRows, List<Row> localVersionsOfServerConflictingRows) {
+  private void conflictRowsInDb(TableProperties tp, DbTable table, List<SyncRow> rows,
+                                Map<String, Row> localVersionsOfConflictingRows, List<Row> localVersionsOfServerConflictingRows) throws IOException {
 
     // delete the conflicting rows that are for the server
     for ( Row row : localVersionsOfServerConflictingRows ) {
@@ -919,11 +1015,21 @@ public class SyncProcessor {
 
         syncResult.stats.numConflictDetectedExceptions++;
         syncResult.stats.numEntries += 2;
+
+
+        // ensure we have the file attachments for the conflicting row
+        boolean outcome = synchronizer.getFileAttachments(tp.getTableId(), row);
+        if ( !outcome ) {
+          // revert to rest-without-files state
+          values.clear();
+          values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+          table.actualUpdateRowByRowId(row.getRowId(), values);
+        }
       }
     }
   }
 
-  private void insertRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void insertRowsInDb(TableProperties tp, DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
@@ -943,10 +1049,19 @@ public class SyncProcessor {
       table.actualAddRow(values);
       syncResult.stats.numInserts++;
       syncResult.stats.numEntries++;
+
+      // ensure we have the file attachments for the inserted row
+      boolean outcome = synchronizer.getFileAttachments(tp.getTableId(), row);
+      if ( !outcome ) {
+        // revert to rest-without-files state
+        values.clear();
+        values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+        table.actualUpdateRowByRowId(row.getRowId(), values);
+      }
     }
   }
 
-  private void updateRowsInDb(DbTable table, List<SyncRow> rows) {
+  private void updateRowsInDb(TableProperties tp, DbTable table, List<SyncRow> rows) {
     for (SyncRow row : rows) {
       ContentValues values = new ContentValues();
 
@@ -965,10 +1080,18 @@ public class SyncProcessor {
       table.actualUpdateRowByRowId(row.getRowId(), values);
       syncResult.stats.numUpdates++;
       syncResult.stats.numEntries++;
+
+      boolean outcome = synchronizer.getFileAttachments(tp.getTableId(), row);
+      if ( !outcome ) {
+        // revert to rest-without-files state
+        values.clear();
+        values.put(DataTableColumns.SYNC_STATE, SyncState.rest.name());
+        table.actualUpdateRowByRowId(row.getRowId(), values);
+      }
     }
   }
 
-  private void deleteRowsInDb(DbTable table, List<String> rowIds) {
+  private void deleteRowsInDb(TableProperties tp, DbTable table, List<String> rowIds) throws IOException {
     for (String rowId : rowIds) {
       table.deleteRowActual(rowId);
       syncResult.stats.numDeletes++;
@@ -1165,32 +1288,6 @@ public class SyncProcessor {
     tp.setSyncState(SyncState.rest);
 
     return tp;
-  }
-
-  /**
-   * Wipe all of the existing key value entries in the server kvs and replace
-   * them with the entries in the {@link PropertiesResource}.
-   *
-   * @param tp
-   * @param propertiesResource
-   * @param newTag -- the tag correlated with these changes
-   */
-  private void resetKVSForPropertiesResource(TableProperties tp,
-                                             PropertiesResource propertiesResource, SyncTag newTag) {
-    tp.addMetaDataEntries(propertiesResource.getKeyValueStoreEntries(), true);
-    tp.setSyncTag(newTag);
-  }
-
-  /**
-   * Return a list of all the entries in the key value store for the given table
-   * and type.
-   *
-   * @param tableId
-   * @param typeOfStore
-   * @return
-   */
-  private ArrayList<OdkTablesKeyValueStoreEntry> getAllKVSEntries(TableProperties tp) {
-    return tp.getMetaDataEntries();
   }
 
   /**
