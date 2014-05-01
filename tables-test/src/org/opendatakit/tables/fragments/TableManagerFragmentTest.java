@@ -141,35 +141,8 @@ public class TableManagerFragmentTest {
         .hasItem(R.id.table_manager_edit_table_properties);
   }
   
-  @Test
-  public void clickingDeleteTableCreatesDialog() {
-    setupFragmentWithTwoItems();
-    ContextMenu contextMenu = new TestContextMenu();
-    ListView listView = this.fragment.getListView();
-    View view1 = listView.getAdapter().getView(
-        1,
-        null,
-        new LinearLayout(Robolectric.application));
-//    int firstPosition = listView.getFirstVisiblePosition();
-//    View view = listView.getChildAt(firstPosition);
-//    listView.showContextMenuForChild(view);
-//    shadowListView.
-//    AdapterContextMenuInfo menuInfo = new AdapterContextMenuInfo(
-//         view,
-//         0,
-//         1);
-//    this.fragment.onCreateContextMenu(contextMenu, listView, menuInfo);
-    view1.createContextMenu(contextMenu);
-    assertThat(contextMenu).hasSize(2);
-    MenuItem deleteItem = 
-        contextMenu.findItem(R.id.table_manager_delete_table);
-    TestMenuItem tmi = new TestMenuItem();
-    assertThat(deleteItem).isNotNull();
-    this.fragment.onContextItemSelected(deleteItem);
-    // This should have created a dialog.
-    AlertDialog dialog = ShadowAlertDialog.getLatestAlertDialog();
-    assertThat(dialog).isNotNull();
-  }
+  // TODO: Should probably also test that the context menu creates a dialog,
+  // but it's not clear how to gain access to it to test.
   
   // TODO: there should really be a "long-pressing creates a context menu"
   // test, but I'm not sure how to do it.
