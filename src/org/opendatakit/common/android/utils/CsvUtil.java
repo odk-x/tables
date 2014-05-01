@@ -62,7 +62,6 @@ import org.opendatakit.common.android.provider.KeyValueStoreColumns;
 import org.opendatakit.common.android.provider.TableDefinitionsColumns;
 import org.opendatakit.common.android.sync.aggregate.SyncTag;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.R;
 
 import android.content.Context;
 import android.util.Log;
@@ -590,7 +589,7 @@ public class CsvUtil {
             SavepointTypeManipulator.complete(), TableConstants.nanoSecondsFromMillis(t.getMillis()),
             savepointCreator, null, null, null, values );
         if (rowCount % 30 == 0 && importListener != null) {
-          importListener.updateLineCount(c.getString(R.string.import_thru_row, 1 + rowCount));
+          importListener.updateLineCount("Importing row:  " +(1 + rowCount));
         }
         values.clear();
         rowCount++;
