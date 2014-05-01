@@ -17,8 +17,6 @@ package org.opendatakit.common.android.data;
 
 import java.util.ArrayList;
 
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-
 /**
  * Defines various methods used for getting and setting keys in the key value
  * store. The key value store holds various persistent information about a

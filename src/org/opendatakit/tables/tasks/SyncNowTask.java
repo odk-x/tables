@@ -42,6 +42,7 @@ public class SyncNowTask extends
 
   private final Context context;
   private final String appName;
+  private final boolean pushToServer;
   private final SyncNowCallback callback;
 
   private ProgressDialog pd;
@@ -50,9 +51,10 @@ public class SyncNowTask extends
   private String message;
   private Preferences prefs;
 
-  public SyncNowTask(Context context, String appName, SyncNowCallback callback) {
+  public SyncNowTask(Context context, String appName, boolean pushToServer, SyncNowCallback callback) {
     this.context = context;
     this.appName = appName;
+    this.pushToServer = pushToServer;
     this.callback = callback;
 
     prefs = new Preferences(context, appName);
@@ -74,10 +76,9 @@ public class SyncNowTask extends
       Synchronizer synchronizer = new AggregateSynchronizer(appName, prefs.getServerUri(),
           prefs.getAuthToken());
       SyncProcessor processor = new SyncProcessor(context, appName, synchronizer, new SyncResult());
-      // This is going to assume that we ALWAYS sync all three levels:
-      // app, tableNonMedia, and tableMedia. This might have to be changed
-      // and paramaterized using some user-input values in the future.
-      result = processor.synchronize(true, true, true);
+      // The user should specify whether it is a push or a pull during
+      // a sync. We always sync the data.
+      result = processor.synchronize(pushToServer, pushToServer, true);
       success = true;
       Log.e(t, "[SyncNowTask#doInBackground] timestamp: " +
           System.currentTimeMillis());

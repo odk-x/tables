@@ -620,7 +620,7 @@ public class SyncProcessor {
       dbt.changeRestRowsToInserting();
       // we need to clear out the dataETag and propertiesETag so
       // that we will pull all server changes and sync our properties.
-      SyncTag newSyncTag = new SyncTag(null, null, tp.getSyncTag().getSchemaETag());
+      SyncTag newSyncTag = new SyncTag(null, tp.getSyncTag().getSchemaETag());
       tp.setSyncTag(newSyncTag);
       /**************************
        * PART 1A: CREATE THE TABLE First we need to create the table on the
@@ -638,7 +638,7 @@ public class SyncProcessor {
         return;
       }
 
-      SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(), resource.getSchemaETag());
+      SyncTag syncTag = new SyncTag(resource.getDataETag(), resource.getSchemaETag());
       tp.setSyncTag(syncTag);
 
       // refresh the resource
@@ -652,7 +652,7 @@ public class SyncProcessor {
         return;
       }
 
-      if ( resource == null || resource.getPropertiesETag() == null) {
+      if ( resource == null ) {
         tableResult.setMessage("Unexpected error -- table should have been created!");
         tableResult.setStatus(Status.FAILURE);
         return;
@@ -667,7 +667,7 @@ public class SyncProcessor {
         // we need to clear out the dataETag and propertiesETag so
         // that we will pull all server changes down first. I.e.,
         // do not presume that we are the authority.
-        SyncTag newSyncTag = new SyncTag(null, null, tp.getSyncTag().getSchemaETag());
+        SyncTag newSyncTag = new SyncTag(null, tp.getSyncTag().getSchemaETag());
         tp.setSyncTag(newSyncTag);
       }
       tableResult.setTableAction(tp.getSyncState());
@@ -700,7 +700,7 @@ public class SyncProcessor {
       // record that we have pulled it
       tableResult.setPulledServerSchema(true);
       try {
-        SyncTag newSyncTag = new SyncTag( tp.getSyncTag().getDataETag(), tp.getSyncTag().getPropertiesETag(), definitionResource.getSchemaETag());
+        SyncTag newSyncTag = new SyncTag( tp.getSyncTag().getDataETag(), definitionResource.getSchemaETag());
         // apply changes
         tp = addTableFromDefinitionResource(definitionResource, newSyncTag);
         // schema changes are indistinguishable from a delete of the table
@@ -711,7 +711,7 @@ public class SyncProcessor {
         dbt.changeRestRowsToInserting();
         // we need to clear out the dataETag so that
         // we will pull all server changes and sync our properties.
-        newSyncTag = new SyncTag(null, tp.getSyncTag().getPropertiesETag(), definitionResource.getSchemaETag());
+        newSyncTag = new SyncTag(null, definitionResource.getSchemaETag());
         tp.setSyncTag(newSyncTag);
         // on the off-chance that this has changed
         resource.setSchemaETag(definitionResource.getSchemaETag());
@@ -1282,7 +1282,7 @@ public class SyncProcessor {
     TableDefinitionResource definitionResource = synchronizer
         .getTableDefinition(tableDefinitionUri);
 
-    SyncTag newTag = new SyncTag(null, null, definitionResource.getSchemaETag());
+    SyncTag newTag = new SyncTag(null, definitionResource.getSchemaETag());
 
     TableProperties tp = addTableFromDefinitionResource(definitionResource, newTag);
     tp.setSyncState(SyncState.rest);

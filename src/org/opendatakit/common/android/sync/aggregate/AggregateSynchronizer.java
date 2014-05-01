@@ -325,8 +325,8 @@ public class AggregateSynchronizer implements Synchronizer {
 
       @Override
       public int compare(TableResource lhs, TableResource rhs) {
-        if ( lhs.getDisplayName() != null ) {
-          return lhs.getDisplayName().compareTo(rhs.getDisplayName());
+        if ( lhs.getTableId() != null ) {
+          return lhs.getTableId().compareTo(rhs.getTableId());
         }
         return -1;
       }});
@@ -336,12 +336,6 @@ public class AggregateSynchronizer implements Synchronizer {
   private void verifyResource( String tableId, String propertiesETag, String schemaETag ) {
     TableResource tr = resources.get(tableId);
     if ( tr == null ) return;
-    if (!( tr.getPropertiesETag() == propertiesETag ||
-          (tr.getPropertiesETag() != null && tr.getPropertiesETag().equals(propertiesETag))) ) {
-      // dataETag is stale...
-      resources.remove(tableId);
-      return;
-    }
     if (!( tr.getSchemaETag() == schemaETag ||
           (tr.getSchemaETag() != null && tr.getSchemaETag().equals(schemaETag))) ) {
       // dataETag is stale...
@@ -356,12 +350,6 @@ public class AggregateSynchronizer implements Synchronizer {
     if (!( tr.getSchemaETag() == syncTag.getSchemaETag() ||
           (tr.getSchemaETag() != null && tr.getSchemaETag().equals(syncTag.getSchemaETag()))) ) {
       // schemaETag is stale...
-      resources.remove(tableId);
-      return;
-    }
-    if (!( tr.getPropertiesETag() == syncTag.getPropertiesETag() ||
-        (tr.getPropertiesETag() != null && tr.getPropertiesETag().equals(syncTag.getPropertiesETag()))) ) {
-      // propertiesETag is stale...
       resources.remove(tableId);
       return;
     }
@@ -486,7 +474,7 @@ public class AggregateSynchronizer implements Synchronizer {
 
     // get current and new sync tags
     // This tag is ultimately returned. May8--make sure it works.
-    SyncTag newTag = new SyncTag(resource.getDataETag(), resource.getPropertiesETag(),
+    SyncTag newTag = new SyncTag(resource.getDataETag(),
                                  resource.getSchemaETag());
 
     // TODO: need to loop here to process segments of change
@@ -540,7 +528,7 @@ public class AggregateSynchronizer implements Synchronizer {
   public RowModification insertOrUpdateRow(String tableId, SyncTag currentSyncTag, SyncRow rowToInsertOrUpdate)
       throws IOException {
         TableResource resource = getTable(tableId);
-        SyncTag lastKnownServerSyncTag = new SyncTag(currentSyncTag.getDataETag(), currentSyncTag.getPropertiesETag(), currentSyncTag.getSchemaETag());
+        SyncTag lastKnownServerSyncTag = new SyncTag(currentSyncTag.getDataETag(), currentSyncTag.getSchemaETag());
 
         Row row = Row.forUpdate(rowToInsertOrUpdate.getRowId(), rowToInsertOrUpdate.getRowETag(),
             rowToInsertOrUpdate.getFormId(), rowToInsertOrUpdate.getLocale(),

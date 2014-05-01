@@ -40,6 +40,8 @@
 	<string name="choose_sync_set">Choose set of tables to sync</string>
 	<string name="download_table">Download table from server</string>
 	<string name="sync_now">Sync now</string>
+	<string name="sync_now_push">Reset App Server</string>
+	<string name="sync_now_pull">Sync now</string>
 	<string name="sync_files_now">Sync files now</string>
 	<string name="server_url">Aggregate URL:</string>
 	<string name="default_server_url">http://opendatakit-2.appspot.com</string>

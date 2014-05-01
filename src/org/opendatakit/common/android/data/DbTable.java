@@ -35,6 +35,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 /**
  * A class for accessing and modifying a user table.
@@ -644,9 +645,8 @@ public class DbTable {
     /**
      * If table is synchronized and not in an INSERTING state, marks row as
      * deleted. Otherwise, actually deletes the row.
-     * @throws IOException
      */
-    public void markDeleted(String rowId) throws IOException {
+    public void markDeleted(String rowId) {
       boolean isSetToSync = tp.isSetToSync();
       // hilary's original
       //if (!tp.isSynchronized()) {
@@ -675,17 +675,22 @@ public class DbTable {
       }
     }
 
-        /**
-         * Actually deletes a row from the table.
-       * @param rowId the ID of the row to delete
-         * @throws IOException
+    /**
+     * Actually deletes a row from the table.
+     * @param rowId the ID of the row to delete
      */
-    public void deleteRowActual(String rowId) throws IOException {
+    public void deleteRowActual(String rowId) {
         String[] whereArgs = { rowId };
         String whereClause = DataTableColumns.ID + " = ?";
         deleteRowActual(whereClause, whereArgs);
         File instanceFolder = new File(ODKFileUtils.getInstanceFolder(tp.getAppName(), tp.getTableId(), rowId));
-        FileUtils.deleteDirectory(instanceFolder);
+        try {
+          FileUtils.deleteDirectory(instanceFolder);
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+          Log.e(TAG, "Unable to delete this directory: " + instanceFolder.getAbsolutePath());
+        }
     }
 
     public void deleteRowActual(String whereClause, String[] whereArgs) {

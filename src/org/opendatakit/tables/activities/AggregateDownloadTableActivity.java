@@ -60,7 +60,6 @@ public class AggregateDownloadTableActivity extends ListActivity {
   private String aggregateUrl;
   private String authToken;
   private List<String> tableIds;
-  private List<String> tableNames;
   private List<String> tableDefinitionUris;
 
   @Override
@@ -95,15 +94,13 @@ public class AggregateDownloadTableActivity extends ListActivity {
       finishDialog.show();
     } else {
       tableIds = new ArrayList<String>();
-      tableNames = new ArrayList<String>();
       tableDefinitionUris = new ArrayList<String>();
       for (TableResource table : tablesFromServer) {
         tableIds.add(table.getTableId());
-        tableNames.add(table.getDisplayName());
         tableDefinitionUris.add(table.getDefinitionUri());
       }
       setListAdapter(new ArrayAdapter<String>(this,
-          android.R.layout.simple_list_item_1, tableNames));
+          android.R.layout.simple_list_item_1, tableIds));
     }
   }
 
@@ -276,7 +273,7 @@ public class AggregateDownloadTableActivity extends ListActivity {
         if ( p.getTableId().equals(tableId) ) {
           tablePresent = true;
           tpOriginal = p;
-          tpOriginal.setSyncTag(new SyncTag(null, null, null));
+          tpOriginal.setSyncTag(new SyncTag(null, null));
           break;
         }
       }

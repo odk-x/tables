@@ -138,7 +138,8 @@ public class Aggregate extends Activity implements SyncNowCallback {
     findViewById(R.id.aggregate_activity_authorize_account_button).setEnabled(authorizeAccount);
     findViewById(R.id.aggregate_activity_choose_tables_button).setEnabled(restOfButtons);
     findViewById(R.id.aggregate_activity_get_table_button).setEnabled(restOfButtons);
-    findViewById(R.id.aggregate_activity_sync_now_button).setEnabled(restOfButtons);
+    findViewById(R.id.aggregate_activity_sync_now_push_button).setEnabled(restOfButtons);
+    findViewById(R.id.aggregate_activity_sync_now_pull_button).setEnabled(restOfButtons);
 //    findViewById(R.id.aggregate_activity_sync_using_submit_button).setEnabled(restOfButtons);
   }
 
@@ -250,7 +251,7 @@ public class Aggregate extends Activity implements SyncNowCallback {
   /**
    * Hooked to syncNowButton's onClick in aggregate_activity.xml
    */
-  public void onClickSyncNow(View v) {
+  public void onClickSyncNowPush(View v) {
     Log.d(TAG, "in onClickSyncNow");
     // ask whether to sync app files and table-level files
     String accountName = prefs.getAccount();
@@ -258,7 +259,24 @@ public class Aggregate extends Activity implements SyncNowCallback {
     if (accountName == null) {
       Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
     } else {
-      SyncNowTask syncTask = new SyncNowTask(this, appName, this);
+      SyncNowTask syncTask = new SyncNowTask(this, appName, true, this);
+      syncTask.execute();
+    }
+    updateButtonsEnabled();
+  }
+
+  /**
+   * Hooked to syncNowButton's onClick in aggregate_activity.xml
+   */
+  public void onClickSyncNowPull(View v) {
+    Log.d(TAG, "in onClickSyncNow");
+    // ask whether to sync app files and table-level files
+    String accountName = prefs.getAccount();
+    Log.e(TAG, "[onClickSyncNow] timestamp: " + System.currentTimeMillis());
+    if (accountName == null) {
+      Toast.makeText(this, getString(R.string.choose_account), Toast.LENGTH_SHORT).show();
+    } else {
+      SyncNowTask syncTask = new SyncNowTask(this, appName, false, this);
       syncTask.execute();
     }
     updateButtonsEnabled();

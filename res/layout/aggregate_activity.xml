@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true" >
-<LinearLayout 
+<LinearLayout
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical" >
@@ -62,12 +62,20 @@
         android:text="@+string/download_table" />
 
     <Button
-        android:id="@+id/aggregate_activity_sync_now_button"
+        android:id="@+id/aggregate_activity_sync_now_pull_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:onClick="onClickSyncNow"
-        android:text="@+string/sync_now" />
+        android:onClick="onClickSyncNowPull"
+        android:text="@+string/sync_now_pull" />
+
+    <Button
+        android:id="@+id/aggregate_activity_sync_now_push_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:onClick="onClickSyncNowPush"
+        android:text="@+string/sync_now_push" />
 
 <!--     <Button
         android:id="@+id/aggregate_activity_sync_using_submit_button"
