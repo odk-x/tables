@@ -25,6 +25,7 @@ import org.opendatakit.common.android.sync.TableResult;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.SyncNowTask;
 import org.opendatakit.tables.tasks.SyncNowTask.SyncNowCallback;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.accounts.Account;
@@ -68,7 +69,7 @@ public class Aggregate extends Activity implements SyncNowCallback {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -222,7 +223,7 @@ public class Aggregate extends Activity implements SyncNowCallback {
   public void onClickAuthorizeAccount(View v) {
     Intent i = new Intent(this, AccountInfoActivity.class);
     Account account = new Account(prefs.getAccount(), ACCOUNT_TYPE_G);
-    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+    i.putExtra(Constants.IntentKeys.APP_NAME, appName);
     i.putExtra(AccountInfoActivity.INTENT_EXTRAS_ACCOUNT, account);
     startActivityForResult(i, AUTHORIZE_ACCOUNT_RESULT_ID);
   }
@@ -232,7 +233,7 @@ public class Aggregate extends Activity implements SyncNowCallback {
    */
   public void onClickChooseTables(View v) {
     Intent i = new Intent(this, AggregateChooseTablesActivity.class);
-    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+    i.putExtra(Constants.IntentKeys.APP_NAME, appName);
     startActivity(i);
     updateButtonsEnabled();
   }
@@ -242,7 +243,7 @@ public class Aggregate extends Activity implements SyncNowCallback {
    */
   public void onClickDownloadTableFromServer(View v) {
     Intent i = new Intent(this, AggregateDownloadTableActivity.class);
-    i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+    i.putExtra(Constants.IntentKeys.APP_NAME, appName);
     startActivity(i);
     updateButtonsEnabled();
   }

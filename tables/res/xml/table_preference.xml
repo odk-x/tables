@@ -6,8 +6,17 @@
         
         <EditTextPreference 
             android:key="table_pref_display_name"
+            android:title="@string/display_name"
             android:persistent="false"
+            android:selectable="false"
             android:enabled="false" />
+        
+        <EditTextPreference 
+            android:key="table_pref_table_id"
+            android:title="@string/table_id"
+            android:selectable="false"
+            android:persistent="false"
+            android:enabled="false"/>
         
     </PreferenceCategory>
     
@@ -23,10 +32,23 @@
         </ListPreference>
         
         <!-- Default form -->
+        <org.opendatakit.tables.preferences.EditFormDialogPreference
+            android:key="table_pref_default_form"
+            android:persistent="false"
+            android:title="@string/default_form"
+            android:dialogTitle="@string/default_form" />
         
         <!-- Edit table color rules -->
+        <Preference
+            android:key="table_pref_table_color_rules"
+            android:persistent="false"
+            android:title="@string/edit_table_color_rules" />
         
         <!-- Edit status column color rules -->
+        <Preference
+            android:key="table_pref_status_column_color_rules"
+            android:persistent="false"
+            android:title="@string/edit_status_column_color_rules" />
         
         <ListPreference 
             android:key="table_pref_map_color_rule"
@@ -43,12 +65,12 @@
         android:title="@string/list_view_settings">
         
         <Preference 
-            android:key="table_pref_list_view_manager"
+            android:key="table_pref_list_file"
             android:persistent="false"
-            android:title="@string/list_view_manager"/>
+            android:title="@string/list_view_file"/>
         
         <Preference 
-            android:key="table_pref_detail_view"
+            android:key="table_pref_detail_file"
             android:persistent="false"
             android:title="@string/detail_view_file"/>
         

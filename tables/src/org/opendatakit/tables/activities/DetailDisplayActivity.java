@@ -20,6 +20,7 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
@@ -68,7 +69,7 @@ public class DetailDisplayActivity extends Activity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
         if ( mAppName == null ) {
           mAppName = TableFileUtils.getDefaultAppName();
         }

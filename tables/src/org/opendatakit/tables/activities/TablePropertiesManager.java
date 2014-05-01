@@ -31,6 +31,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
@@ -89,7 +90,7 @@ public class TablePropertiesManager extends PreferenceActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -233,7 +234,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
             ColorRuleManagerActivity.class);
         rowColorRuleManagerIntent.putExtra(
-            Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+            Constants.IntentKeys.APP_NAME, tp.getAppName());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
             tp.getTableId());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
@@ -253,7 +254,7 @@ public class TablePropertiesManager extends PreferenceActivity {
       public boolean onPreferenceClick(Preference preference) {
         Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
             ColorRuleManagerActivity.class);
-        rowColorRuleManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+        rowColorRuleManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
             tp.getAppName());
         rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
             tp.getTableId());
@@ -343,7 +344,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         public boolean onPreferenceClick(Preference preference) {
           Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
               ListViewManager.class);
-          selectListViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
           selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
           startActivity(selectListViewIntent);
           return true;
@@ -401,7 +402,7 @@ public class TablePropertiesManager extends PreferenceActivity {
         public boolean onPreferenceClick(Preference preference) {
           Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
               GraphManagerActivity.class);
-          selectGraphViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
           selectGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
           startActivity(selectGraphViewIntent);
           return true;

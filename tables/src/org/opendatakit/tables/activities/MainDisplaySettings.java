@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.Activity;
@@ -45,7 +46,7 @@ public class MainDisplaySettings extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
         if ( appName == null ) {
           appName = TableFileUtils.getDefaultAppName();
         }

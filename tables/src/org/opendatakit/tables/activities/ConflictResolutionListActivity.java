@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.ConflictTable;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.provider.DataTableColumns;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ListActivity;
@@ -31,7 +32,7 @@ public class ConflictResolutionListActivity extends ListActivity {
     super.onResume();
     // Do this in on resume so that if we resolve a row it will be refreshed
     // when we come back.
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -63,7 +64,7 @@ public class ConflictResolutionListActivity extends ListActivity {
   protected void onListItemClick(ListView l, View v, int position, long id) {
     Log.e(TAG, "[onListItemClick] clicked position: " + position);
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
-    i.putExtra(Controller.INTENT_KEY_APP_NAME,
+    i.putExtra(Constants.IntentKeys.APP_NAME,
         mConflictTable.getLocalTable().getTableProperties().getAppName());
     i.putExtra(Controller.INTENT_KEY_TABLE_ID,
         mConflictTable.getLocalTable().getTableProperties().getTableId());

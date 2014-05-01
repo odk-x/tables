@@ -23,6 +23,7 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.TouchListView;
 
@@ -90,7 +91,7 @@ public class ColumnManager extends ListActivity {
 
 	// Initialize fields.
 	private void init() {
-	   appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+	   appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
 	   if ( appName == null ) {
 	     appName = TableFileUtils.getDefaultAppName();
 	   }
@@ -176,7 +177,7 @@ public class ColumnManager extends ListActivity {
 			return true;
 		case android.R.id.home:
 	      Intent i = new Intent(this, TableManager.class);
-	      i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+	      i.putExtra(Constants.IntentKeys.APP_NAME, appName);
 			startActivity(i);
 			return true;
 		}
@@ -294,7 +295,7 @@ public class ColumnManager extends ListActivity {
 	// Load Column Property Manager Activity.
 	private void loadColumnPropertyManager(String elementKey) {
 		Intent cpm = new Intent(this, PropertyManager.class);
-		cpm.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+		cpm.putExtra(Constants.IntentKeys.APP_NAME, appName);
 		cpm.putExtra(PropertyManager.INTENT_KEY_TABLE_ID, tableId);
       cpm.putExtra(PropertyManager.INTENT_KEY_ELEMENT_KEY, elementKey);
 		startActivity(cpm);

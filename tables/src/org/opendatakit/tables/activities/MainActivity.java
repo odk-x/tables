@@ -12,7 +12,7 @@ import android.os.Bundle;
  * @author sudar.sam@gmail.com
  *
  */
-public class MainActivity extends Activity {
+public class MainActivity extends AbsBaseActivity {
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {

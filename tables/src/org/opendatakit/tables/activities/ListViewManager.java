@@ -19,10 +19,11 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
-import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ActionBar;
@@ -118,7 +119,7 @@ public class ListViewManager extends ListActivity {
    * Get the fields up and running.
    */
   private void init() {
-    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -205,7 +206,7 @@ public class ListViewManager extends ListActivity {
       Intent newListViewIntent =
           new Intent(this, EditSavedListViewEntryActivity.class);
       newListViewIntent.putExtra(
-          Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          Constants.IntentKeys.APP_NAME, tp.getAppName());
       newListViewIntent.putExtra(
           Controller.INTENT_KEY_TABLE_ID, tableId);
       newListViewIntent.putExtra(
@@ -215,7 +216,7 @@ public class ListViewManager extends ListActivity {
       return true;
     case android.R.id.home:
       Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+      i.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
       startActivity(i);
       return true;
     }
@@ -275,7 +276,7 @@ public class ListViewManager extends ListActivity {
       Intent editListViewIntent = new Intent(ListViewManager.this,
       EditSavedListViewEntryActivity.class);
       editListViewIntent.putExtra(
-          Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+          Constants.IntentKeys.APP_NAME, tp.getAppName());
       editListViewIntent.putExtra(
           EditSavedListViewEntryActivity.INTENT_KEY_TABLE_ID, tableId);
       editListViewIntent.putExtra(

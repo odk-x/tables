@@ -99,7 +99,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    this.mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    this.mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     this.mTableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.mElementKey = getIntent().getStringExtra(INTENT_KEY_ELEMENT_KEY);
     this.mRulePosition = getIntent().getIntExtra(INTENT_KEY_RULE_POSITION,

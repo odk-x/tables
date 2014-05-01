@@ -22,6 +22,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.tasks.ExportRequest;
 import org.opendatakit.tables.tasks.ExportTask;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.Intent;
@@ -95,7 +96,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+		appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
 		if ( appName == null ) {
 		  appName = TableFileUtils.getDefaultAppName();
 		}

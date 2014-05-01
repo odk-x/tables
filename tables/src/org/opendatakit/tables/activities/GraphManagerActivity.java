@@ -23,6 +23,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ActionBar;
@@ -144,7 +145,7 @@ public class GraphManagerActivity extends ListActivity {
    * Get the fields up and running.
    */
   private void init() {
-    this.appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    this.appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if (appName == null) {
       this.appName = TableFileUtils.getDefaultAppName();
     }
@@ -174,7 +175,7 @@ public class GraphManagerActivity extends ListActivity {
     // an issue.
     String graphName = (String) getListView().getItemAtPosition(position);
     Intent newGraphViewIntent = new Intent(this, GraphDisplayActivity.class);
-    newGraphViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+    newGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
     newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
     newGraphViewIntent
         .putExtra(Controller.INTENT_KEY_CURRENT_VIEW_TYPE, TableViewType.Graph.name());
@@ -313,7 +314,7 @@ public class GraphManagerActivity extends ListActivity {
     case MENU_EDIT_ENTRY:
       menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
       Intent editGraphViewIntent = new Intent(GraphManagerActivity.this, GraphDisplayActivity.class);
-      editGraphViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+      editGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
       editGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tableId);
       editGraphViewIntent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, entryName);
       editGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
@@ -428,7 +429,7 @@ public class GraphManagerActivity extends ListActivity {
 
   private void createNewGraph() {
     Intent newGraphViewIntent = new Intent(this, GraphDisplayActivity.class);
-    newGraphViewIntent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+    newGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
     newGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
         getPotentialGraphName());

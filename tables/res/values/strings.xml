@@ -106,6 +106,7 @@
 	<string name="list_view_file_not_set">List view file is not set!</string>
 	<string name="list_view_file">List View File</string>
 	<string name="edit_default_form">Edit Default Form</string>
+	<string name="default_form">Default Form</string>
 	<string name="table_manager_title">Table Manager > %1$s</string>
 	<string name="manage_property_sets_title">Manage Property Sets > %1$s</string>
 		<string name="revert_warning">Revert to default settings? Any modifications you have made will be lost.</string>
@@ -186,6 +187,8 @@
 	<string name="developer">Developer</string>
 	<string name="general_settings">General Settings</string>
 	<string name="table_display_name">Display Name</string>
+	<string name="display_name">Display Name</string>
+	<string name="table_id">Table ID</string>
 	<string name="change_table_display_name">Change Table Display Name</string>
 	<string name="table_type">Table Type</string>
 	<string name="table_type_data">Data Table</string>

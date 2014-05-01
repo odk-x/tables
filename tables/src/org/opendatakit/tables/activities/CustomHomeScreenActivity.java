@@ -23,6 +23,7 @@ import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.ConfigurationUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
@@ -69,7 +70,7 @@ public class CustomHomeScreenActivity extends Activity
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( mAppName == null ) {
       mAppName = TableFileUtils.getDefaultAppName();
     }
@@ -190,7 +191,7 @@ public class CustomHomeScreenActivity extends Activity
     switch (item.getItemId()) {
     case MENU_ITEM_TABLE_MANAGER:
       Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Controller.INTENT_KEY_APP_NAME, mAppName);
+      i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
       startActivity(i);
       return true;
     default:

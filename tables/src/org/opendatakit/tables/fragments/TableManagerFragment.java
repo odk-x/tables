@@ -6,19 +6,19 @@ import java.util.List;
 
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableManager;
+import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.ListFragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,7 +27,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
 
 public class TableManagerFragment extends ListFragment {
   
@@ -160,7 +159,16 @@ public class TableManagerFragment extends ListFragment {
       confirmDeleteAlert.show();
       return true;
     case R.id.table_manager_edit_table_properties:
-      // TODO: put in the preferences fragment.
+      Intent intent = 
+          ((AbsBaseActivity) getActivity()).createNewIntentWithAppName();
+      // We also need to add the table id to the intent.
+      intent.putExtra(
+          Constants.IntentKeys.TABLE_ID,
+          tpOfSelectedItem.getTableId());
+      intent.setClass(
+          getActivity(),
+          TableLevelPreferencesActivity.class);
+      getActivity().startActivity(intent);
       return true;
     }
     return false;

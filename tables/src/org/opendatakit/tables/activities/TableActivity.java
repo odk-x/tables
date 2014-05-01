@@ -12,10 +12,11 @@ import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.ClearableEditText;
 
 import android.app.ActionBar;
@@ -90,7 +91,7 @@ public class TableActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    mAppName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    mAppName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( mAppName == null ) {
       mAppName = TableFileUtils.getDefaultAppName();
     }
@@ -431,13 +432,13 @@ public class TableActivity extends Activity {
         return true;
       case MENU_ITEM_ID_DISPLAY_PREFERENCES:
         Intent k = new Intent(this, DisplayPrefsActivity.class);
-        k.putExtra(Controller.INTENT_KEY_APP_NAME, mTableProperties.getAppName());
+        k.putExtra(Constants.IntentKeys.APP_NAME, mTableProperties.getAppName());
         k.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, mTableProperties.getTableId());
         startActivityForResult(k, Controller.RCODE_DISPLAY_PROPERTIES);
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES:
         Intent tablePropertiesIntent = new Intent(this, TablePropertiesManager.class);
-        tablePropertiesIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+        tablePropertiesIntent.putExtra(Constants.IntentKeys.APP_NAME,
             mTableProperties.getAppName());
         tablePropertiesIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
@@ -445,7 +446,7 @@ public class TableActivity extends Activity {
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER:
         Intent columnManagerIntent = new Intent(this, ColumnManager.class);
-        columnManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+        columnManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
             mTableProperties.getAppName());
         columnManagerIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
@@ -453,7 +454,7 @@ public class TableActivity extends Activity {
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER:
         Intent listViewManagerIntent = new Intent(this, ListViewManager.class);
-        listViewManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME,
+        listViewManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
             mTableProperties.getAppName());
         listViewManagerIntent.putExtra(Controller.INTENT_KEY_TABLE_ID,
             mTableProperties.getTableId());
@@ -461,7 +462,7 @@ public class TableActivity extends Activity {
         return true;
       case android.R.id.home:
         Intent tableManagerIntent = new Intent(this, TableManager.class);
-        tableManagerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, mTableProperties.getAppName());
+        tableManagerIntent.putExtra(Constants.IntentKeys.APP_NAME, mTableProperties.getAppName());
         // Add this flag so that you don't back from TableManager back
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -586,7 +587,7 @@ public class TableActivity extends Activity {
     default:
       intent = new Intent(this, SpreadsheetDisplayActivity.class);
     }
-    intent.putExtra(Controller.INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, sqlWhereClause,
         sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);

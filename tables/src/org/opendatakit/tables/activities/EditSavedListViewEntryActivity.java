@@ -25,6 +25,7 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.preferences.EditNameDialogPreference;
 import org.opendatakit.tables.preferences.EditSavedViewEntryHandler;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.content.ActivityNotFoundException;
@@ -97,7 +98,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -147,7 +148,7 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
       @Override
       public boolean onPreferenceClick(Preference preference) {
         Intent filePickerIntent = new Intent(OI_FILE_PICKER_INTENT_STRING);
-        filePickerIntent.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+        filePickerIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         // Set the current filename.
         if (listViewFilename != null) {
           File adjustedFile = new File(ODKFileUtils.getAppFolder(appName),

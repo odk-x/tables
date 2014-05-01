@@ -20,6 +20,7 @@ import java.io.File;
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomView;
 
@@ -36,7 +37,7 @@ public class Launcher extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
         if ( appName == null ) {
           appName = TableFileUtils.getDefaultAppName();
         }
@@ -56,7 +57,7 @@ public class Launcher extends Activity {
           // launch it.
           Log.d(TAG, "homescreen file exists and is set to be used.");
           Intent i = new Intent(this, CustomHomeScreenActivity.class);
-          i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+          i.putExtra(Constants.IntentKeys.APP_NAME, appName);
           startActivity(i);
         } else {
           Log.d(TAG, "no homescreen file found, launching TableManager");
@@ -69,7 +70,7 @@ public class Launcher extends Activity {
           if (tableId == null) {
 //              Intent i = new Intent(this, TableManager.class);
               Intent i = new Intent(this, MainActivity.class);
-              i.putExtra(Controller.INTENT_KEY_APP_NAME, appName);
+              i.putExtra(Constants.IntentKeys.APP_NAME, appName);
               startActivity(i);
           } else {
               TableProperties tp = TableProperties.getTablePropertiesForTable(

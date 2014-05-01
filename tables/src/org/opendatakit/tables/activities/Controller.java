@@ -30,6 +30,7 @@ import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
@@ -75,7 +76,7 @@ public class Controller {
 
   private static final String TAG = "Controller";
 
-  public static final String INTENT_KEY_APP_NAME = "appName";
+//  public static final String INTENT_KEY_APP_NAME = "appName";
   public static final String INTENT_KEY_TABLE_ID = "tableId";
  // public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
   public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
@@ -179,7 +180,7 @@ public class Controller {
   public Controller(Activity activity, final DisplayActivity da, Bundle intentBundle, Bundle savedInstanceState) {
     du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
     this.activity = activity;
-    String tmpAppName = intentBundle.getString(INTENT_KEY_APP_NAME);
+    String tmpAppName = intentBundle.getString(Constants.IntentKeys.APP_NAME);
     if (tmpAppName == null) {
       this.appName = TableFileUtils.getDefaultAppName();
     } else {
@@ -714,35 +715,35 @@ public class Controller {
         return true;
       case MENU_ITEM_ID_DISPLAY_PREFERENCES: {
         Intent intent = new Intent(activity, DisplayPrefsActivity.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, appName);
+        intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         intent.putExtra(DisplayPrefsActivity.INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, this.RCODE_DISPLAY_PROPERTIES);
       }
         return true;
       case MENU_ITEM_ID_OPEN_TABLE_PROPERTIES: {
         Intent intent = new Intent(activity, TablePropertiesManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, appName);
+        intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_TABLE_PROPERTIES_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_COLUMN_MANAGER: {
         Intent intent = new Intent(activity, ColumnManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, appName);
+        intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_COLUMN_MANAGER);
       }
         return true;
       case MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER: {
         Intent intent = new Intent(activity, ListViewManager.class);
-        intent.putExtra(INTENT_KEY_APP_NAME, appName);
+        intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
         activity.startActivityForResult(intent, RCODE_LIST_VIEW_MANAGER);
       }
         return true;
       case android.R.id.home:
         Intent tableManagerIntent = new Intent(activity, TableManager.class);
-        tableManagerIntent.putExtra(INTENT_KEY_APP_NAME, appName);
+        tableManagerIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
         // Add this flag so that you don't back from TableManager back
         // into the table.
         tableManagerIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -877,7 +878,7 @@ public class Controller {
                                                 String[] sqlGroupBy, String sqlHaving,
                                                 String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, ListDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
@@ -904,7 +905,7 @@ public class Controller {
                                     String[] sqlGroupBy, String sqlHaving,
                                     String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, TableActivity.class);
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     if (filename != null) {
       intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
@@ -919,7 +920,7 @@ public class Controller {
                                           String[] sqlGroupBy, String sqlHaving,
                                           String sqlOrderByElementKey, String sqlOrderByDirection) {
     Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, sqlWhereClause,
         sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
@@ -948,7 +949,7 @@ public class Controller {
     } else {
       intent = new Intent(context, GraphManagerActivity.class);
     }
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, sqlWhereClause,
         sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
@@ -1024,7 +1025,7 @@ public class Controller {
     default:
       intent = new Intent(context, SpreadsheetDisplayActivity.class);
     }
-    intent.putExtra(INTENT_KEY_APP_NAME, tp.getAppName());
+    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
     prepareIntentForLaunch(intent, tp, sqlWhereClause,
         sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
@@ -1045,7 +1046,7 @@ public class Controller {
   public static void launchDetailActivity(Activity activity,
       String appName, String tableId, String rowId, String filename) {
     Intent intent = new Intent(activity, DetailDisplayActivity.class);
-    intent.putExtra(INTENT_KEY_APP_NAME, appName);
+    intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
     intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
     intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
     if (filename != null) {

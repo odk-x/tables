@@ -30,6 +30,7 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.SpreadsheetView;
 
@@ -102,7 +103,7 @@ public class SpreadsheetDisplayActivity extends Activity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+        appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
         if ( appName == null ) {
           appName = TableFileUtils.getDefaultAppName();
         }
@@ -295,7 +296,7 @@ public class SpreadsheetDisplayActivity extends Activity
 
     void openColumnPropertiesManager(ColumnProperties cp) {
         Intent intent = new Intent(this, PropertyManager.class);
-        intent.putExtra(Controller.INTENT_KEY_APP_NAME,
+        intent.putExtra(Constants.IntentKeys.APP_NAME,
             c.getTableProperties().getAppName());
         intent.putExtra(PropertyManager.INTENT_KEY_TABLE_ID,
                 c.getTableProperties().getTableId());
@@ -389,7 +390,7 @@ public class SpreadsheetDisplayActivity extends Activity
      case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
        Intent i = new Intent(this, ColorRuleManagerActivity.class);
        i.putExtra(
-           Controller.INTENT_KEY_APP_NAME, table.getTableProperties().getAppName());
+           Constants.IntentKeys.APP_NAME, table.getTableProperties().getAppName());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
            tp.getColumnByIndex(lastHeaderCellMenued).getElementKey());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
@@ -647,7 +648,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	                  // We'll just launch the resolve activity.
 	                  Intent i = new Intent(context,
 	                      ConflictResolutionRowActivity.class);
-                     i.putExtra(Controller.INTENT_KEY_APP_NAME,
+                     i.putExtra(Constants.IntentKeys.APP_NAME,
                          table.getTableProperties().getAppName());
 	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID,
 	                      table.getTableProperties().getTableId());

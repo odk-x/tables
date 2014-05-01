@@ -26,6 +26,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utils.ColorRuleUtil;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ActionBar;
@@ -116,7 +117,7 @@ public class ColorRuleManagerActivity extends ListActivity {
       Intent newColorRuleIntent =
           new Intent(this, EditSavedColorRuleActivity.class);
       newColorRuleIntent.putExtra(
-          Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+          Constants.IntentKeys.APP_NAME, mTp.getAppName());
       newColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       newColorRuleIntent.putExtra(
@@ -160,7 +161,7 @@ public class ColorRuleManagerActivity extends ListActivity {
       return true;
     case android.R.id.home:
       Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+      i.putExtra(Constants.IntentKeys.APP_NAME, mTp.getAppName());
       startActivity(i);
       return true;
     }
@@ -261,7 +262,7 @@ public class ColorRuleManagerActivity extends ListActivity {
       Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
           EditSavedColorRuleActivity.class);
       editColorRuleIntent.putExtra(
-          Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+          Constants.IntentKeys.APP_NAME, mTp.getAppName());
       editColorRuleIntent.putExtra(
           EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
       editColorRuleIntent.putExtra(
@@ -293,7 +294,7 @@ public class ColorRuleManagerActivity extends ListActivity {
   }
 
   private void init() {
-    String appName = getIntent().getStringExtra(Controller.INTENT_KEY_APP_NAME);
+    String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
@@ -344,7 +345,7 @@ public class ColorRuleManagerActivity extends ListActivity {
     Intent editColorRuleIntent = new Intent(ColorRuleManagerActivity.this,
         EditSavedColorRuleActivity.class);
     editColorRuleIntent.putExtra(
-        Controller.INTENT_KEY_APP_NAME, mTp.getAppName());
+        Constants.IntentKeys.APP_NAME, mTp.getAppName());
     editColorRuleIntent.putExtra(
         EditSavedColorRuleActivity.INTENT_KEY_TABLE_ID, mTableId);
     editColorRuleIntent.putExtra(

@@ -9,11 +9,14 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowEnvironment;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.os.Environment;
 
 /**
@@ -22,6 +25,24 @@ import android.os.Environment;
  *
  */
 public class TestCaseUtils {
+  
+  /**
+   * The default app name for tables. Using this rather than the
+   * getDefaultAppName method because that dumps the stack trace.
+   */
+  public static final String TABLES_DEFAULT_APP_NAME = "tables";
+  
+  /**
+   * Get an intent with the app name set to {@link #TABLES_DEFAULT_APP_NAME}.
+   * @return
+   */
+  public static Intent getIntentWithAppNameTables() {
+    Intent result = new Intent();
+    result.putExtra(
+        Constants.IntentKeys.APP_NAME,
+        TABLES_DEFAULT_APP_NAME);
+    return result;    
+  }
   
   /**
    * Make the external storage as mounted. This is required by classes that
