@@ -677,6 +677,10 @@ public class DbTable {
 
     /**
      * Actually deletes a row from the table.
+     * This will delete any server conflict rows too,
+     * so we don't have to worry about cleaning those
+     * up separately.
+     *
      * @param rowId the ID of the row to delete
      */
     public void deleteRowActual(String rowId) {
