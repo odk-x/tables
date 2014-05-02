@@ -393,6 +393,9 @@ public class ColorRuleManagerActivity extends ListActivity {
           } else if (targetState == SyncState.rest) {
             description =
                 getString(R.string.sync_state_equals_rest_message);
+          } else if (targetState == SyncState.rest_pending_files) {
+            description =
+                getString(R.string.sync_state_equals_rest_pending_files_message);
           } else if (targetState == SyncState.deleting) {
             description =
                 getString(R.string.sync_state_equals_deleting_message);
