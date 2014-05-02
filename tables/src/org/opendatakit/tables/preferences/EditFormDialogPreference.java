@@ -2,10 +2,12 @@ package org.opendatakit.tables.preferences;
 
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
@@ -46,39 +48,18 @@ public class EditFormDialogPreference extends DialogPreference {
     super(context, attrs);
     this.mContext = context;
   }
-
-  public EditFormDialogPreference(Context context, TableProperties tp) {
-    super(context, null);
-    this.mContext = context;
-    this.mTp = tp;
-    this.mFormType = FormType.constructFormType(mTp);
-  }
-
-  /**
-   * Set the calling activity as well as the listview name for this dialog.
-   * @param callingActivity
-   */
-  public void setCallingActivity(EditSavedViewEntryHandler
-      callingActivity) {
-    this.callingActivity = callingActivity;
-    mText = callingActivity.getCurrentViewName();
-    // Display the name to the user.
-    this.setSummary(mText);
-  }
-
-  @Override
-  protected void onBindDialogView(View view) {
-    super.onBindDialogView(view);
-    Log.d(TAG, "in onBindDIalogView");
-  }
-
-  /**
-   * Return the String that is currently in the dialog. NOT necessarily
-   * what is in the EditText.
-   * @return
-   */
-  public String getText() {
-    return mText;
+  
+  TableProperties retrieveTableProperties() {
+    // We're going to get this by assuming that we're operating inside of an
+    // AbsTableActivity.
+    Activity activity = (Activity) getContext();
+    if (!(activity instanceof AbsTableActivity)) {
+      throw new IllegalArgumentException("EditFormDialogPreference must " +
+      		"be associated with an AbsTableActivity");
+    }
+    AbsTableActivity tableActivity = (AbsTableActivity) activity;
+    TableProperties tableProperties = tableActivity.getTableProperties();
+    return tableProperties;
   }
 
   @Override
@@ -89,6 +70,8 @@ public class EditFormDialogPreference extends DialogPreference {
             Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater.inflate(
         R.layout.edit_default_form_preference, null);
+    this.mTp = retrieveTableProperties();
+    this.mFormType = FormType.constructFormType(this.mTp);
     mRadioChoice = (RadioGroup) view.findViewById(R.id.edit_def_form_choice);
     mFormId = (EditText) view.findViewById(R.id.edit_form_id);
     mFormXmlRootElementLabel = (TextView) view.findViewById(R.id.label_root_element);

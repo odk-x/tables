@@ -219,11 +219,11 @@ public class TablePropertiesManager extends PreferenceActivity {
     });
     prefCat.addPreference(viewTypePref);
 
-    // Now let's add the pref for the Form.
-    EditFormDialogPreference formPref = new EditFormDialogPreference(this, tp);
-    prefCat.addPreference(formPref);
-    formPref.setTitle(getString(R.string.default_survey_form));
-    formPref.setDialogTitle(getString(R.string.edit_default_form));
+//    // Now let's add the pref for the Form.
+//    EditFormDialogPreference formPref = new EditFormDialogPreference(this, tp);
+//    prefCat.addPreference(formPref);
+//    formPref.setTitle(getString(R.string.default_survey_form));
+//    formPref.setDialogTitle(getString(R.string.edit_default_form));
 
     Preference rowColorRulePrefs = new Preference(this);
     rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
