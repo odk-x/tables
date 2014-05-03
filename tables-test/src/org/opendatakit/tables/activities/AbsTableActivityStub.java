@@ -1,7 +1,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.testutils.TestCaseUtils;
+import org.opendatakit.testutils.TestConstants;
 
 /**
  * Basic implementation of a TableActivity for testing. More complicated
@@ -12,12 +12,12 @@ import org.opendatakit.testutils.TestCaseUtils;
  * @author sudar.sam@gmail.com
  *
  */
-public class TableActivityStub extends AbsTableActivity {
+public class AbsTableActivityStub extends AbsTableActivity {
   
   // If modified during tests, the APP_NAME and TABLE_PROPERTIES objects should
   // be reset to these default values so that tests begin in a known state.
   public static final String DEFAULT_APP_NAME = 
-      TestCaseUtils.TABLES_DEFAULT_APP_NAME;
+      TestConstants.TABLES_DEFAULT_APP_NAME;
   public static final TableProperties DEFAULT_TABLE_PROPERTIES = null;
   public static final String DEFAULT_TABLE_ID = "testTableId";
   

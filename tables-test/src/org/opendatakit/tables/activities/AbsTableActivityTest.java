@@ -21,31 +21,31 @@ public class AbsTableActivityTest {
   @After
   public void after() {
     // Reset all these values in case they were changed.
-    TableActivityStub.APP_NAME = TableActivityStub.DEFAULT_APP_NAME;
-    TableActivityStub.TABLE_PROPERTIES =
-        TableActivityStub.DEFAULT_TABLE_PROPERTIES;
-    TableActivityStub.TABLE_ID = TableActivityStub.DEFAULT_TABLE_ID;
+    AbsTableActivityStub.APP_NAME = AbsTableActivityStub.DEFAULT_APP_NAME;
+    AbsTableActivityStub.TABLE_PROPERTIES =
+        AbsTableActivityStub.DEFAULT_TABLE_PROPERTIES;
+    AbsTableActivityStub.TABLE_ID = AbsTableActivityStub.DEFAULT_TABLE_ID;
   }
   
   @Test(expected=IllegalArgumentException.class)
   public void noTableIdThrowsIllegalArgument() {
     // We should get this if we create the activity without a table id.
-    TableActivityStub.TABLE_ID = null;
-    TableActivityStub.TABLE_PROPERTIES = mock(TableProperties.class);
+    AbsTableActivityStub.TABLE_ID = null;
+    AbsTableActivityStub.TABLE_PROPERTIES = mock(TableProperties.class);
     this.buildActivity();
   }
   
   @Test(expected=IllegalArgumentException.class)
   public void noTablePropertiesThrowsIllegalArgument() {
-    TableActivityStub.TABLE_PROPERTIES = null;
+    AbsTableActivityStub.TABLE_PROPERTIES = null;
     this.buildActivity();
   }
   
   @Test
   public void tablePropertiesSetCorrectly() {
     TableProperties mockTp = mock(TableProperties.class);
-    TableActivityStub.TABLE_PROPERTIES = mockTp;
-    TableActivityStub activity = this.buildActivity();
+    AbsTableActivityStub.TABLE_PROPERTIES = mockTp;
+    AbsTableActivityStub activity = this.buildActivity();
     TableProperties retrievedTp = activity.getTableProperties();
     org.fest.assertions.api.Assertions.assertThat(retrievedTp)
         .isNotNull()
@@ -57,9 +57,9 @@ public class AbsTableActivityTest {
    * and call visible. Then returns the activity.
    * @return
    */
-  TableActivityStub buildActivity() {
-    TableActivityStub result = 
-        Robolectric.buildActivity(TableActivityStub.class)
+  AbsTableActivityStub buildActivity() {
+    AbsTableActivityStub result = 
+        Robolectric.buildActivity(AbsTableActivityStub.class)
           .create()
           .start()
           .resume()

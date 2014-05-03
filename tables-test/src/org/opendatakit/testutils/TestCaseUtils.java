@@ -28,28 +28,15 @@ import android.os.Environment;
  */
 public class TestCaseUtils {
   
-  public static boolean FORM_IS_USER_DEFINED = false;
-  public static String FORM_ID = "testFormId";
-  public static String FORM_VERSION = "testFormVersion";
-  public static String ROOT_ELEMENT = "testRootElement";
-  public static String ROW_NAME = "testRowName";
-  public static String SCREEN_PATH = "?testKey=testValue";
-  
   /**
-   * The default app name for tables. Using this rather than the
-   * getDefaultAppName method because that dumps the stack trace.
-   */
-  public static final String TABLES_DEFAULT_APP_NAME = "tables";
-  
-  /**
-   * Get an intent with the app name set to {@link #TABLES_DEFAULT_APP_NAME}.
+   * Get an intent with the app name set to {@link TestConstants#TABLES_DEFAULT_APP_NAME}.
    * @return
    */
   public static Intent getIntentWithAppNameTables() {
     Intent result = new Intent();
     result.putExtra(
         Constants.IntentKeys.APP_NAME,
-        TABLES_DEFAULT_APP_NAME);
+        TestConstants.TABLES_DEFAULT_APP_NAME);
     return result;    
   }
   
@@ -82,18 +69,18 @@ public class TestCaseUtils {
    */
   public static CollectFormParameters getCollectFormParameters() {
     return new CollectFormParameters(
-        FORM_IS_USER_DEFINED,
-        FORM_ID,
-        FORM_VERSION,
-        ROOT_ELEMENT,
-        ROW_NAME);
+        TestConstants.FORM_IS_USER_DEFINED,
+        TestConstants.FORM_ID,
+        TestConstants.FORM_VERSION,
+        TestConstants.ROOT_ELEMENT,
+        TestConstants.ROW_NAME);
   }
   
   public static SurveyFormParameters getSurveyFormParameters() {
     return new SurveyFormParameters(
-        FORM_IS_USER_DEFINED,
-        FORM_ID,
-        SCREEN_PATH);
+        TestConstants.FORM_IS_USER_DEFINED,
+        TestConstants.FORM_ID,
+        TestConstants.SCREEN_PATH);
   }
   
   /**
