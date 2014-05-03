@@ -42,11 +42,12 @@ public class EditFormDialogPreference extends DialogPreference {
     super(context, attrs);
     this.mContext = context;
   }
-
-  public EditFormDialogPreference(Context context, AttributeSet attrs,
-      EditSavedViewEntryHandler callingActivity) {
-    super(context, attrs);
-    this.mContext = context;
+  
+  /**
+   * A wrapper around {@link DialogPreference#showDialog}. For use in testing.
+   */
+  void showDialog() {
+    this.showDialog(getExtras());
   }
   
   TableProperties retrieveTableProperties() {
@@ -61,17 +62,25 @@ public class EditFormDialogPreference extends DialogPreference {
     TableProperties tableProperties = tableActivity.getTableProperties();
     return tableProperties;
   }
+  
+  /**
+   * Retrieve the {@link FormType} for the table.
+   * @return
+   */
+  FormType retrieveFormType() {
+    return FormType.constructFormType(this.mTp);
+  }
 
   @Override
   protected View onCreateDialogView() {
     Log.d(TAG, "in onCreateDialogView");
+    this.mTp = retrieveTableProperties();
+    this.mFormType = retrieveFormType();
     LayoutInflater inflater =
         (LayoutInflater) this.mContext.getSystemService(
             Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout view = (LinearLayout) inflater.inflate(
         R.layout.edit_default_form_preference, null);
-    this.mTp = retrieveTableProperties();
-    this.mFormType = FormType.constructFormType(this.mTp);
     mRadioChoice = (RadioGroup) view.findViewById(R.id.edit_def_form_choice);
     mFormId = (EditText) view.findViewById(R.id.edit_form_id);
     mFormXmlRootElementLabel = (TextView) view.findViewById(R.id.label_root_element);

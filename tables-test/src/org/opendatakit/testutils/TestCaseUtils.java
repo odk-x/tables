@@ -11,6 +11,8 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowEnvironment;
 
@@ -25,6 +27,13 @@ import android.os.Environment;
  *
  */
 public class TestCaseUtils {
+  
+  public static boolean FORM_IS_USER_DEFINED = false;
+  public static String FORM_ID = "testFormId";
+  public static String FORM_VERSION = "testFormVersion";
+  public static String ROOT_ELEMENT = "testRootElement";
+  public static String ROW_NAME = "testRowName";
+  public static String SCREEN_PATH = "?testKey=testValue";
   
   /**
    * The default app name for tables. Using this rather than the
@@ -60,6 +69,31 @@ public class TestCaseUtils {
         R.id.main_activity_frame_layout,
         fragment,
         "TEST_TAG").commit();
+  }
+  
+  /**
+   * Retrieve a {@link CollectFormParameters} object for use in testing.
+   * @param isCustom
+   * @param FORM_ID
+   * @param FORM_VERSION
+   * @param formXMLRootElement
+   * @param rowDisplayName
+   * @return
+   */
+  public static CollectFormParameters getCollectFormParameters() {
+    return new CollectFormParameters(
+        FORM_IS_USER_DEFINED,
+        FORM_ID,
+        FORM_VERSION,
+        ROOT_ELEMENT,
+        ROW_NAME);
+  }
+  
+  public static SurveyFormParameters getSurveyFormParameters() {
+    return new SurveyFormParameters(
+        FORM_IS_USER_DEFINED,
+        FORM_ID,
+        SCREEN_PATH);
   }
   
   /**

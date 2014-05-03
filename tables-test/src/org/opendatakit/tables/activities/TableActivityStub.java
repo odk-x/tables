@@ -39,5 +39,15 @@ public class TableActivityStub extends AbsTableActivity {
   String retrieveTableIdFromIntent() {
     return TABLE_ID;
   }
+  
+  /**
+   * Reset the stub's state to the default values. Should be called after each
+   * test modifying the object.
+   */
+  public static void resetState() {
+    APP_NAME = DEFAULT_APP_NAME;
+    TABLE_ID = DEFAULT_TABLE_ID;
+    TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
+  }
 
 }

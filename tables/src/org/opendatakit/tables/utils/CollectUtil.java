@@ -1300,11 +1300,11 @@ public class CollectUtil {
     private String mRowDisplayName;
     private boolean mIsCustom;
 
-    /*
-     * Just putting this here in case it needs to be serialized at some point
-     * and someone forgets about this requirement.
-     */
+
+    @SuppressWarnings("unused")
     private CollectFormParameters() {
+      // Just putting this here in case it needs to be serialized at some point
+      // and someone forgets about this requirement.
     }
 
     /**
@@ -1318,7 +1318,7 @@ public class CollectUtil {
      * @param formVersion
      * @param formXMLRootElement
      */
-    private CollectFormParameters(boolean isCustom, String formId, String formVersion,
+    public CollectFormParameters(boolean isCustom, String formId, String formVersion,
         String formXMLRootElement, String rowDisplayName) {
       this.mIsCustom = isCustom;
       this.mFormId = formId;
