@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
+
 import android.graphics.Color;
 
 /**
@@ -36,6 +38,11 @@ public class Constants {
   public static class IntentKeys {
     public static final String TABLE_ID = "tableId";
     public static final String APP_NAME = "appName";
+  }
+  
+  public static class FragmentTags {
+    /** Tag for {@link TopLevelTableMenuFragment} */
+    public static final String TABLE_MENU = "tableMenuFragment";
   }
 
   public static class PreferenceKeys {

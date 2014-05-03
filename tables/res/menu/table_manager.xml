@@ -9,7 +9,7 @@
         android:id="@+id/menu_table_manager_export"
         android:icon="@drawable/ic_action_av_upload"
         android:title="@string/export"
-        android:showAsAction="ifRoom" />
+        android:showAsAction="always" />
     <item
         android:id="@+id/menu_table_manager_sync"
         android:icon="@drawable/sync_icon"

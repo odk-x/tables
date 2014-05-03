@@ -1,10 +1,12 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.tables.R;
+
 import android.app.Fragment;
 import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 
 /**
  * Displays the common menu shared across all top level views onto a table.
@@ -15,17 +17,23 @@ import android.view.ContextMenu.ContextMenuInfo;
  */
 public class TopLevelTableMenuFragment extends Fragment {
   
+  private static final String TAG = 
+      TopLevelTableMenuFragment.class.getSimpleName();
+  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d(TAG, "[onCreate]");
     // The whole point of this class is to display the menus.
     this.setHasOptionsMenu(true);
   }
   
   @Override
-  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-    // TODO Auto-generated method stub
-    super.onCreateContextMenu(menu, v, menuInfo);
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    super.onCreateOptionsMenu(menu, inflater);
+    inflater.inflate(
+        R.menu.top_level_table_menu,
+        menu);
   }
 
 }
