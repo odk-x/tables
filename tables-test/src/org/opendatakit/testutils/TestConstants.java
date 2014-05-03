@@ -18,6 +18,10 @@ public class TestConstants {
   public static String ROW_NAME = "testRowName";
   public static String SCREEN_PATH = "?testKey=testValue";
   
+  public static final String DEFAULT_FRAGMENT_TAG = "testFragmentTag";
+  
+  public static final int DEFAULT_FRAGMENT_ID = 12345;
+  
   /**
    * The default app name for tables. Using this rather than the
    * getDefaultAppName method because that dumps the stack trace.
