@@ -7,7 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsTableActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.robolectric.RobolectricTestRunner;
@@ -26,47 +28,80 @@ import android.view.SubMenu;
 @RunWith(RobolectricTestRunner.class)
 public class TopLevelTableMenuFragmentTest {
   
-  TopLevelTableMenuFragment fragment;
+  TopLevelTableMenuFragmentStub fragment;
   Activity activity;
   Menu menu;
   
-  @Before
-  public void setup() {
-    ShadowLog.stream = System.out;
-    // We need a table activity because we're going to be disabling things on
-    this.fragment = new TopLevelTableMenuFragment();
+  private void setupStateWithDefaults() {
+    this.setupState(new TopLevelTableMenuFragmentStub());
+  }
+  
+  private void setupStateWithCustomPossibleViewTypes(
+      PossibleTableViewTypes viewTypes) {
+    TopLevelTableMenuFragmentStub stub = this.getStubWithViewTypes(viewTypes);
+    this.setupState(stub);
+  }
+  
+  private void setupState(TopLevelTableMenuFragmentStub fragmentStub) {
+    this.fragment = fragmentStub;
     ODKFragmentTestUtil.startFragmentForTableActivity(
-        TableDisplayActivityStub.class,
+        AbsTableActivityStub.class,
         this.fragment,
         null);
     this.activity = this.fragment.getActivity();
     this.menu = shadowOf(this.activity).getOptionsMenu();
   }
   
+  @Before
+  public void setup() {
+    ShadowLog.stream = System.out;
+  }
+  
+  /**
+   * Get a stub for testing. 
+   * {@link TopLevelTableMenuFragmentStub#getPossibleViewTypes()} will return
+   * the viewTypes passed in, unless it is null, in which case the default
+   * value will be used.
+   * @param viewTypes
+   * @return
+   */
+  private TopLevelTableMenuFragmentStub getStubWithViewTypes(
+      PossibleTableViewTypes viewTypes) {
+    if (viewTypes != null) {
+      TopLevelTableMenuFragmentStub.POSSIBLE_VIEW_TYPES = viewTypes;
+    }
+    return new TopLevelTableMenuFragmentStub();
+  }
+  
   @After
   public void after() {
     TableDisplayActivityStub.resetState();
+    TopLevelTableMenuFragmentStub.resetState();
   }
   
   @Test
   public void assertNotNull() {
+    this.setupStateWithDefaults();
     assertThat(this.fragment).isNotNull();
   }
   
   @Test
   public void menuHasAdd() {
+    this.setupStateWithDefaults();
     MenuItem addItem = this.menu.findItem(R.id.top_level_table_menu_add);
     assertThat(addItem).isNotNull();
   }
   
   @Test
   public void menuHasSelectView() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     assertThat(selectView).isNotNull();
   }
   
   @Test
   public void selectViewIsSubMenu() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     // The submenu shouldn't return null if it is a submenu, as it should be.
     assertThat(selectView.getSubMenu()).isNotNull();
@@ -74,6 +109,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void selectViewSubMenuHasSpreadsheet() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     SubMenu subMenu = selectView.getSubMenu();
     MenuItem spreadsheetItem = 
@@ -83,6 +119,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void selectViewSubMenuHasList() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     SubMenu subMenu = selectView.getSubMenu();
     MenuItem listItem = 
@@ -92,6 +129,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void selectViewSubMenuHasGraph() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     SubMenu subMenu = selectView.getSubMenu();
     MenuItem graphItem = 
@@ -101,6 +139,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void selectViewSubMenuHasMap() {
+    this.setupStateWithDefaults();
     MenuItem selectView = this.getSelectViewItem();
     SubMenu subMenu = selectView.getSubMenu();
     MenuItem mapItem = 
@@ -110,6 +149,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void menuHasPreferences() {
+    this.setupStateWithDefaults();
     MenuItem preferenceItem = 
         this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
     assertThat(preferenceItem).isNotNull();
@@ -117,6 +157,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void preferencesHasSubMenu() {
+    this.setupStateWithDefaults();
     MenuItem preferenceItem = 
         this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
     SubMenu subMenu = preferenceItem.getSubMenu();
@@ -125,6 +166,7 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void preferencesSubMenuHasTableProperties() {
+    this.setupStateWithDefaults();
     MenuItem preferenceItem = 
         this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
     SubMenu subMenu = preferenceItem.getSubMenu();
@@ -135,12 +177,139 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void preferencesSubMenuHasPropertySets() {
+    this.setupStateWithDefaults();
     MenuItem preferenceItem = 
         this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
     SubMenu subMenu = preferenceItem.getSubMenu();
     MenuItem propertiesSets = 
         subMenu.findItem(R.id.top_level_table_menu_manage_property_sets);
     assertThat(propertiesSets).isNotNull();
+  }
+  
+  @Test
+  public void listViewDisablesCorrectly() {
+    PossibleTableViewTypes viewTypes = new PossibleTableViewTypes(
+        true,
+        false,
+        true,
+        true);
+    this.setupStateWithCustomPossibleViewTypes(viewTypes);
+    this.assertEnabledOnItems(true, false, true, true);
+  }
+  
+  @Test
+  public void spreadsheetViewDisablesCorrectly() {
+    PossibleTableViewTypes viewTypes = new PossibleTableViewTypes(
+        false,
+        true,
+        true,
+        true);
+    this.setupStateWithCustomPossibleViewTypes(viewTypes);
+    this.assertEnabledOnItems(false, true, true, true);
+  }
+  
+  @Test
+  public void graphViewDisablesCorrectly() {
+    PossibleTableViewTypes viewTypes = new PossibleTableViewTypes(
+        true,
+        true,
+        true,
+        false);
+    this.setupStateWithCustomPossibleViewTypes(viewTypes);
+    this.assertEnabledOnItems(true, true, true, false);
+  }
+  
+  @Test
+  public void mapViewDisablesCorrectly() {
+    PossibleTableViewTypes viewTypes = new PossibleTableViewTypes(
+        true,
+        true,
+        false,
+        true);
+    this.setupStateWithCustomPossibleViewTypes(viewTypes);
+    this.assertEnabledOnItems(true, true, false, true);
+  }
+  
+  @Test
+  public void multipleItemsDisableCorrectly() {
+    PossibleTableViewTypes viewTypes = new PossibleTableViewTypes(
+        true,
+        false,
+        false,
+        false);
+    this.setupStateWithCustomPossibleViewTypes(viewTypes);
+    this.assertEnabledOnItems(true, false, false, false);
+  }
+  
+  private void assertEnabledOnItems(
+      boolean spreadsheetEnabled,
+      boolean listEnabled,
+      boolean mapEnabled,
+      boolean graphEnabled) {
+    MenuItem spreadsheetItem = this.getSpreadsheetViewMenuItem();
+    MenuItem listItem = this.getListViewMenuItem();
+    MenuItem graphItem = this.getGraphViewMenuItem();
+    MenuItem mapItem = this.getMapViewMenuItem();
+    if (spreadsheetEnabled) {
+      assertThat(spreadsheetItem).isEnabled();
+    } else {
+      assertThat(spreadsheetItem).isDisabled();
+    }
+    if (listEnabled) {
+      assertThat(listItem).isEnabled();
+    } else {
+      assertThat(listItem).isDisabled();
+    }
+    if (graphEnabled) {
+      assertThat(graphItem).isEnabled();
+    } else {
+      assertThat(graphItem).isDisabled();
+    }
+    if (mapEnabled) {
+      assertThat(mapItem).isEnabled();
+    } else {
+      assertThat(mapItem).isDisabled();
+    }
+  }
+  
+  /**
+   * Get the spreadsheet view menu item.
+   * @return
+   */
+  MenuItem getSpreadsheetViewMenuItem() {
+    MenuItem result = 
+        this.menu.findItem(R.id.top_level_table_menu_view_spreadsheet_view);
+    return result;
+  }
+  
+  /**
+   * Get the list view menu item.
+   * @return
+   */
+  MenuItem getListViewMenuItem() {
+    MenuItem result = 
+        this.menu.findItem(R.id.top_level_table_menu_view_list_view);
+    return result;
+  }
+  
+  /**
+   * Get the graph view menu item.
+   * @return
+   */
+  MenuItem getGraphViewMenuItem() {
+    MenuItem result = 
+        this.menu.findItem(R.id.top_level_table_menu_view_graph_view);
+    return result;
+  }
+  
+  /**
+   * Get the map view menu item.
+   * @return
+   */
+  MenuItem getMapViewMenuItem() {
+    MenuItem result = 
+        this.menu.findItem(R.id.top_level_table_menu_view_map_view);
+    return result;
   }
   
   /**

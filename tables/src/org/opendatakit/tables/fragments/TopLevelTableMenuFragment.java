@@ -1,7 +1,5 @@
 package org.opendatakit.tables.fragments;
 
-import java.util.Set;
-
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
@@ -15,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 
 /**
  * Displays the common menu shared across all top level views onto a table.
@@ -25,15 +24,28 @@ import android.view.MenuInflater;
  */
 public class TopLevelTableMenuFragment extends Fragment {
   
+  public interface ITopLevelTableMenuActivity {
+    /**
+     * Get the fragment type that is currently being displayed by the activity.
+     * Informs rendering of the menu.
+     * @return
+     */
+    public TableDisplayActivity.ViewFragmentType getCurrentFragmentType();
+  }
+  
   private static final String TAG = 
       TopLevelTableMenuFragment.class.getSimpleName();
   
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
-    if (!(activity instanceof TableDisplayActivity)) {
+    if (!(activity instanceof AbsTableActivity)) {
       throw new IllegalStateException("This fragment must be attached to " +
-      		"a " + AbsTableActivity.class.getSimpleName());
+      		"an " + AbsTableActivity.class.getSimpleName());
+    }
+    if (!(activity instanceof ITopLevelTableMenuActivity)) {
+      throw new IllegalStateException("This fragment must be attached to " +
+      		"an " + ITopLevelTableMenuActivity.class.getSimpleName());
     }
   }
   
@@ -51,6 +63,10 @@ public class TopLevelTableMenuFragment extends Fragment {
     inflater.inflate(
         R.menu.top_level_table_menu,
         menu);
+    PossibleTableViewTypes viewTypes = this.getPossibleViewTypes();
+    enableAndDisableViewTypes(
+        viewTypes,
+        menu);
   }
   
   /**
@@ -58,7 +74,7 @@ public class TopLevelTableMenuFragment extends Fragment {
    * associated with the {@link TableDisplayActivity}.
    * @return
    */
-  PossibleTableViewTypes getValidViewTypes() {
+  PossibleTableViewTypes getPossibleViewTypes() {
     return this.getTableProperties().getPossibleViewTypes();
   }
   
@@ -80,9 +96,20 @@ public class TopLevelTableMenuFragment extends Fragment {
    * @param inflatedMenu
    */
   private void enableAndDisableViewTypes(
-      Set<TableViewType> validViewTypes,
+      PossibleTableViewTypes possibleViews,
       Menu inflatedMenu) {
-    // TODO: this.
+    MenuItem spreadsheetItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_spreadsheet_view);
+    MenuItem listItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_list_view);
+    MenuItem mapItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_map_view);
+    MenuItem graphItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_graph_view);
+    spreadsheetItem.setEnabled(possibleViews.spreadsheetViewIsPossible());
+    listItem.setEnabled(possibleViews.listViewIsPossible());
+    mapItem.setEnabled(possibleViews.mapViewIsPossible());
+    graphItem.setEnabled(possibleViews.graphViewIsPossible());
   }
   
 

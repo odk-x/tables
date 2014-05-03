@@ -1,6 +1,7 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
+import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.Constants;
 
 import android.app.FragmentManager;
@@ -12,7 +13,21 @@ import android.os.Bundle;
  * @author sudar.sam@gmail.com
  *
  */
-public class TableDisplayActivity extends AbsTableActivity {
+public class TableDisplayActivity extends AbsTableActivity
+    implements ITopLevelTableMenuActivity {
+  
+  /**
+   * The fragment types this activity could be displaying.
+   * @author sudar.sam@gmail.com
+   *
+   */
+  public enum ViewFragmentType {
+    SPREADSHEET,
+    LIST,
+    MAP,
+    GRAPH,
+    DETAIL;
+  }
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +41,12 @@ public class TableDisplayActivity extends AbsTableActivity {
     fragmentManager.beginTransaction().add(
         menuFragment,
         Constants.FragmentTags.TABLE_MENU).commit();
+  }
+
+  @Override
+  public ViewFragmentType getCurrentFragmentType() {
+    // TODO: return the right thing.
+    return ViewFragmentType.SPREADSHEET;
   }
 
 }

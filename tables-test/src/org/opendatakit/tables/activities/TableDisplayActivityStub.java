@@ -10,7 +10,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static final String DEFAULT_APP_NAME = 
       TestConstants.TABLES_DEFAULT_APP_NAME;
   public static final TableProperties DEFAULT_TABLE_PROPERTIES = 
-      TestConstants.TABLE_PROPERTIES_MOCK;
+      TestConstants.getTablePropertiesMock();
   public static final String DEFAULT_TABLE_ID = "testTableId";
   
   public static String APP_NAME = DEFAULT_APP_NAME;

@@ -1,8 +1,14 @@
 package org.opendatakit.testutils;
 
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.TableViewType;
 
 /**
  * Constants for use in tests.
@@ -35,4 +41,26 @@ public class TestConstants {
    */
   public static final TableProperties TABLE_PROPERTIES_MOCK = 
       mock(TableProperties.class);
+  
+  public static TableProperties getTablePropertiesMock() {
+    TableProperties tpMock = mock(TableProperties.class);
+    doReturn(getAllValidPossibleTableViewTypes())
+        .when(tpMock).getPossibleViewTypes();
+    return tpMock;
+  }
+  
+  public static PossibleTableViewTypes getAllValidPossibleTableViewTypes() {
+    PossibleTableViewTypes allValid = mock(PossibleTableViewTypes.class);
+    doReturn(true).when(allValid).spreadsheetViewIsPossible();
+    doReturn(true).when(allValid).listViewIsPossible();
+    doReturn(true).when(allValid).mapViewIsPossible();
+    doReturn(true).when(allValid).graphViewIsPossible();
+    Set<TableViewType> allViewTypes = new HashSet<TableViewType>();
+    allViewTypes.add(TableViewType.SPREADSHEET);
+    allViewTypes.add(TableViewType.LIST);
+    allViewTypes.add(TableViewType.MAP);
+    allViewTypes.add(TableViewType.GRAPH);
+    doReturn(allViewTypes).when(allValid).getAllPossibleViewTypes();
+    return allValid;
+  }
 }
