@@ -3,10 +3,8 @@
 	<name>ODK Tables</name>
 	<comment></comment>
 	<projects>
-		<project>actionbarsherlock</project>
-		<project>androidcommon</project>
-		<project>ODKSubmit</project>
-		<project>playservices</project>
+		<project>opendatakit.androidcommon</project>
+		<project>opendatakit.playservices</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

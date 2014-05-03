@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -27,8 +28,8 @@ import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -395,6 +396,20 @@ public class ColumnProperties {
     this.displayFormat = displayFormat;
   }
 
+
+  public void addMetaDataEntries(List<OdkTablesKeyValueStoreEntry> entries) {
+    KeyValueStore kvs = tp.getStoreForTable();
+    SQLiteDatabase db = tp.getWritableDatabase();
+    try {
+      db.beginTransaction();
+      kvs.addEntriesToStore(db, entries);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      db.close();
+    }
+  }
+
   /**
    * Return the ColumnProperties for all the columns in a table, whether or not
    * they are written to the database table.
@@ -555,7 +570,11 @@ public class ColumnProperties {
    * @return
    */
   ColumnDefinitionChange compareColumnDefinitions(ColumnProperties cp) {
-    if (!this.getElementName().equals(cp.getElementName())) {
+    if ((this.getElementName() == null &&
+         cp.getElementName() != null) ||
+        (this.getElementName() != null &&
+         (cp.getElementName() == null ||
+           !this.getElementName().equals(cp.getElementName())))) {
       return ColumnDefinitionChange.INCOMPATIBLE;
     }
     if (!this.getListChildElementKeys().equals(cp.getListChildElementKeys())) {
@@ -761,6 +780,38 @@ public class ColumnProperties {
     return displayName;
   }
 
+  public String getLocalizedDisplayName() {
+    Locale locale = Locale.getDefault();
+    String full_locale = locale.toString();
+    int underscore = full_locale.indexOf('_');
+    String lang_only_locale = (underscore == -1) ? full_locale : full_locale.substring(0, underscore);
+
+    if ( jsonStringifyDisplayName.startsWith("\"") && jsonStringifyDisplayName.endsWith("\"")) {
+      return jsonStringifyDisplayName.substring(1,jsonStringifyDisplayName.length()-1);
+    } else if ( jsonStringifyDisplayName.startsWith("{") && jsonStringifyDisplayName.endsWith("}")) {
+      try {
+        Map<String,Object> localeMap = ODKFileUtils.mapper.readValue(jsonStringifyDisplayName, Map.class);
+        String candidate = (String) localeMap.get(full_locale);
+        if ( candidate != null ) return candidate;
+        candidate = (String) localeMap.get(lang_only_locale);
+        if ( candidate != null ) return candidate;
+        candidate = (String) localeMap.get("default");
+        if ( candidate != null ) return candidate;
+        return getElementKey();
+      } catch (JsonParseException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for elementKey: " + getElementKey());
+      } catch (JsonMappingException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for elementKey: " + getElementKey());
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new IllegalStateException("bad displayName for elementKey: " + getElementKey());
+      }
+    }
+    throw new IllegalStateException("bad displayName for elementKey: " + getElementKey());
+  }
+
   private void updateDisplayNameFromJsonStringifyDisplayName() {
     try {
       this.displayName = null;
@@ -770,7 +821,7 @@ public class ColumnProperties {
           this.displayName = (String)  displayObject;
           if ( this.displayName == null || this.displayName.length() == 0 ) {
           	// just use the elementName and fudge it back into the serialization
-          	this.jsonStringifyDisplayName = "\"" + this.elementName + "\"";
+          	this.jsonStringifyDisplayName = (this.elementName != null) ? "\"" + this.elementName + "\"" : "\"\"";
           	this.displayName = this.elementName;
           }
         } else if ( displayObject instanceof Map ) {

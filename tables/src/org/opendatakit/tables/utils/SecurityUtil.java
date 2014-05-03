@@ -18,6 +18,7 @@ package org.opendatakit.tables.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
@@ -78,7 +79,7 @@ public class SecurityUtil {
         columns.add(DataTableColumns.ID);
         UserTable table = dbt.getRaw(columns,
                 new String[] {DataTableColumns.SAVEPOINT_TYPE, PHONENUM_COLUMN_NAME, PASSWORD_COLUMN_NAME},
-                new String[] {DbTable.SavedStatus.COMPLETE.name(), phoneNum, password}, null, null, null, null);
+                new String[] {SavepointTypeManipulator.complete(), phoneNum, password}, null, null, null, null);
         return (table.getNumberOfRows() > 0);
     }
 

@@ -1,6 +1,5 @@
 package org.opendatakit.tables.tasks;
 
-import org.opendatakit.common.android.exception.TableAlreadyExistsException;
 import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.activities.ImportCSVActivity;
@@ -30,18 +29,8 @@ extends AsyncTask<ImportRequest, Integer, Boolean> implements ImportListener {
 	protected Boolean doInBackground(ImportRequest... importRequests) {
 		ImportRequest request = importRequests[0];
 		CsvUtil cu = new CsvUtil(this.importCSVActivity, appName);
-		if (request.getCreateTable()) {
-			try {
-				return cu.importNewTable(importCSVActivity, this, request.getFile(),
-						request.getTableName());
-			} catch (TableAlreadyExistsException e) {
-				caughtDuplicateTableException = true;
-				return false;
-			}
-		} else {
-			return cu.importAddToTable(importCSVActivity, this, request.getFile(),
-					request.getTableId());
-		}
+		  return cu.importSeparable(this, request.getTableId(),
+		       request.getFileQualifier(), request.getCreateTable());
 	}
 
 	  @Override

@@ -31,6 +31,7 @@
 	<string name="background_color">Background Color</string>
 	<string name="column">Column</string>
 	<string name="sync_state_equals_rest_message">Was up to date after last sync.</string>
+	<string name="sync_state_equals_rest_pending_files_message">Files need to be synched.</string>
 	<string name="sync_state_equals_inserting_message">Has never been synched.</string>
 	<string name="sync_state_equals_deleting_message">Will be deleted during sync.</string>
 	<string name="sync_state_equals_conflicting_message">Conflicts with server version.</string>
@@ -44,6 +45,8 @@
 	<string name="choose_sync_set">Choose set of tables to sync</string>
 	<string name="download_table">Download table from server</string>
 	<string name="sync_now">Sync now</string>
+	<string name="sync_now_push">Reset App Server</string>
+	<string name="sync_now_pull">Sync now</string>
 	<string name="sync_files_now">Sync files now</string>
 	<string name="server_url">Aggregate URL:</string>
 	<string name="default_server_url">http://opendatakit-2.appspot.com</string>
@@ -345,4 +348,5 @@
 	<string name="use_index_html">Use custom home screen</string>
 	<string name="no_index">No assets/index.html</string>
 	<string name="failed_download_table">Failed to download table %1$s. Error: %2$s</string>
+	<string name="export_file_qualifier">Qualifier for exported csv files:</string>
 </resources>

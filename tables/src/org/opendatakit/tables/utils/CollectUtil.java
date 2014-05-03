@@ -39,6 +39,8 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.kxml2.kdom.Node;
+import org.opendatakit.aggregate.odktables.rest.SavepointTypeManipulator;
+import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
@@ -247,7 +249,7 @@ public class CollectUtil {
         writer.write(cp.getElementKey());
         writer.write(":label\">");
         writer.write("<value>");
-        writer.write(cp.getDisplayName());
+        writer.write(cp.getLocalizedDisplayName());
         writer.write("</value>");
         writer.write("</text>");
       }
@@ -709,14 +711,14 @@ public class CollectUtil {
     CollectUtil.deleteForm(resolver, params.getFormId());
     // First we want to write the file.
     boolean writeSuccessful = CollectUtil.buildBlankForm(getAddRowFormFile(tp),
-                  tp.getColumnsInOrder(), tp.getDisplayName(), params.getFormId());
+                  tp.getColumnsInOrder(), tp.getLocalizedDisplayName(), params.getFormId());
     if (!writeSuccessful) {
       Log.e(TAG, "problem writing file for add row");
       return false;
     }
     // Now we want to insert the file.
     Uri insertedFormUri = CollectUtil.insertFormIntoCollect(resolver, getAddRowFormFile(tp)
-        .getAbsolutePath(), tp.getDisplayName(), params.getFormId());
+        .getAbsolutePath(), tp.getLocalizedDisplayName(), params.getFormId());
     if (insertedFormUri == null) {
       Log.e(TAG, "problem inserting form into collect, return uri was null");
       return false;
@@ -1076,7 +1078,7 @@ public class CollectUtil {
   public static boolean handleOdkCollectEditReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok, not inserting " + "edited data.");
+      Log.i(TAG, "return code wasn't OK not inserting " + "edited data.");
       return false;
     }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
@@ -1104,7 +1106,7 @@ public class CollectUtil {
   public static boolean handleOdkCollectAddReturn(Context context, String appName, TableProperties tp,
       int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(TAG, "return code wasn't sherlock_ok--not adding row");
+      Log.i(TAG, "return code wasn't OK --not adding row");
       return false;
     }
     int instanceId = Integer.valueOf(data.getData().getLastPathSegment());
@@ -1124,7 +1126,11 @@ public class CollectUtil {
     }
     Map<String, String> values = getMapForInsertion(context, tp, formValues);
     DbTable dbTable = DbTable.getDbTable(tp);
-    dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale, formValues.timestamp, formValues.savepointCreator, values );
+
+    dbTable.addRow(formValues.instanceID, formValues.formId, formValues.locale,
+        SavepointTypeManipulator.complete(), TableConstants.nanoSecondsFromMillis(formValues.timestamp),
+        formValues.savepointCreator, null, null, null, values );
+
     return true;
   }
 
@@ -1329,7 +1335,7 @@ public class CollectUtil {
 
     public static CollectFormParameters constructDefaultCollectFormParameters(TableProperties tp) {
       return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-          DEFAULT_ROOT_ELEMENT, tp.getDisplayName());
+          DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
     }
 
     /**
@@ -1352,7 +1358,7 @@ public class CollectUtil {
       String formId = aspectHelper.getString(CollectUtil.KEY_FORM_ID);
       if (formId == null) {
         return new CollectFormParameters(false, getDefaultAddRowFormId(tp), null,
-            DEFAULT_ROOT_ELEMENT, tp.getDisplayName());
+            DEFAULT_ROOT_ELEMENT, tp.getLocalizedDisplayName());
       }
       // Else we know it is custom.
       String formVersion = aspectHelper.getString(CollectUtil.KEY_FORM_VERSION);
@@ -1360,7 +1366,7 @@ public class CollectUtil {
       if (rootElement == null) {
         rootElement = DEFAULT_ROOT_ELEMENT;
       }
-      return new CollectFormParameters(true, formId, formVersion, rootElement, tp.getDisplayName());
+      return new CollectFormParameters(true, formId, formVersion, rootElement, tp.getLocalizedDisplayName());
     }
 
     public void persist(TableProperties tp) {

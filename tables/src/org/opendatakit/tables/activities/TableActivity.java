@@ -117,7 +117,7 @@ public class TableActivity extends Activity {
 
     // Initialize layout fields.
     setSearchFieldText("");
-    setInfoBarText("Table: " + mTableProperties.getDisplayName());
+    setInfoBarText("Table: " + mTableProperties.getLocalizedDisplayName());
 
 
     // Create the map fragment.
@@ -529,7 +529,7 @@ public class TableActivity extends Activity {
 
   private void handleOdkSurveyAddReturn(int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
+      Log.i(t, "return code wasn't OK, add was not finalized and will not appear.");
       return;
     }
    refreshDbTable(mTableId);
@@ -537,7 +537,7 @@ public class TableActivity extends Activity {
 
   private void handleOdkSurveyEditReturn(int returnCode, Intent data) {
     if (returnCode != Activity.RESULT_OK) {
-      Log.i(t, "return code wasn't sherlock_ok, add was not finalized and will not appear.");
+      Log.i(t, "return code wasn't OK, add was not finalized and will not appear.");
       return;
     }
     refreshDbTable(mTableId);

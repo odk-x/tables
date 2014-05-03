@@ -13,8 +13,8 @@ public class TablePropertiesComparator implements Comparator<TableProperties> {
 
   @Override
   public int compare(TableProperties lhs, TableProperties rhs) {
-    return String.CASE_INSENSITIVE_ORDER.compare(lhs.getDisplayName(), 
-        rhs.getDisplayName());
+    return String.CASE_INSENSITIVE_ORDER.compare(lhs.getLocalizedDisplayName(),
+        rhs.getLocalizedDisplayName());
   }
 
 }

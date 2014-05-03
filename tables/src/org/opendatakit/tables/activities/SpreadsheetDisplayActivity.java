@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
@@ -28,7 +29,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.provider.DataTableColumns;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -741,7 +741,7 @@ public class SpreadsheetDisplayActivity extends Activity
                             		   SpreadsheetDisplayActivity.this, appName, tableId);
       	                  String joinedColDisplayName =
       	                      joinedTable.getColumnByElementKey(elementKey)
-      	                      .getDisplayName();
+      	                      .getElementKey();
       	                  // I would prefer this kind of query to be set in another
       	                  // object, but alas, it looks like atm it is hardcoded.
       	                  Controller.launchTableActivity(context, joinedTable, joinedTable.getDefaultViewType());
@@ -781,7 +781,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	              int columnIndex = cellId % table.getWidth();
 	              TableProperties tp = c.getTableProperties();
 	              ColumnProperties cp = tp.getColumnByIndex(columnIndex);
-	                String colName = cp.getDisplayName();
+	                String colName = cp.getElementKey();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.invertSearchBoxColor(false);
@@ -831,7 +831,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	              int colIndex = cellId % table.getWidth();
 	              TableProperties tp = c.getTableProperties();
 	              ColumnProperties cp = tp.getColumnByIndex(colIndex);
-	                String colName = cp.getDisplayName();
+	                String colName = cp.getElementKey();
 	                String value = table.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.removeOverlay();

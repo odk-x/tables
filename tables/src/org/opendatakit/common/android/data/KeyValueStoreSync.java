@@ -18,8 +18,6 @@ package org.opendatakit.common.android.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendatakit.aggregate.odktables.rest.entity.OdkTablesKeyValueStoreEntry;
-
 import android.database.sqlite.SQLiteDatabase;
 
 /**

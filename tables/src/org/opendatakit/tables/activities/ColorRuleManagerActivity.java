@@ -18,12 +18,12 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opendatakit.aggregate.odktables.rest.SyncState;
 import org.opendatakit.common.android.data.ColorRule;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.provider.SyncState;
 import org.opendatakit.common.android.utils.ColorRuleUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
@@ -308,12 +308,12 @@ public class ColorRuleManagerActivity extends ListActivity {
       this.mCp = mTp.getColumnByElementKey(mElementKey);
       this.mColorRuler =
           ColorRuleGroup.getColumnColorRuleGroup(mTp, mElementKey);
-      this.setTitle(getString(R.string.color_rule_title_for, mCp.getDisplayName()));
+      this.setTitle(getString(R.string.color_rule_title_for, mCp.getLocalizedDisplayName()));
       break;
     case TABLE:
       this.mCp = null;
       this.mColorRuler = ColorRuleGroup.getTableColorRuleGroup(mTp);
-      this.setTitle(getString(R.string.row_color_rule_title_for, mTp.getDisplayName()));
+      this.setTitle(getString(R.string.row_color_rule_title_for, mTp.getLocalizedDisplayName()));
       break;
     case STATUS_COLUMN:
       this.mCp = null;
@@ -394,6 +394,9 @@ public class ColorRuleManagerActivity extends ListActivity {
           } else if (targetState == SyncState.rest) {
             description =
                 getString(R.string.sync_state_equals_rest_message);
+          } else if (targetState == SyncState.rest_pending_files) {
+            description =
+                getString(R.string.sync_state_equals_rest_pending_files_message);
           } else if (targetState == SyncState.deleting) {
             description =
                 getString(R.string.sync_state_equals_deleting_message);
@@ -406,7 +409,7 @@ public class ColorRuleManagerActivity extends ListActivity {
           }
         } else {
           description =
-              mTp.getColumnByElementKey(elementKey).getDisplayName();
+              mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
         }
       }
       if (!isMetadataRule) {

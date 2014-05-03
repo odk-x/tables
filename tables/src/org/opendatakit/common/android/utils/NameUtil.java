@@ -63,6 +63,8 @@ public class NameUtil {
     reservedNames.add("SAVEPOINT_TIMESTAMP");
     reservedNames.add("SAVEPOINT_CREATOR");
     reservedNames.add("SAVEPOINT_TYPE");
+    reservedNames.add("FILTER_TYPE");
+    reservedNames.add("FILTER_VALUE");
     reservedNames.add("FORM_ID");
     reservedNames.add("LOCALE");
 
@@ -428,7 +430,7 @@ public class NameUtil {
    */
   private static boolean elementNameAlreadyExists(String elementName,
       TableProperties tp) {
-    return (tp.getColumnByElementName(elementName) != null);
+    return (tp.isLocalizedColumnDisplayNameInUse(elementName));
   }
 
   /**

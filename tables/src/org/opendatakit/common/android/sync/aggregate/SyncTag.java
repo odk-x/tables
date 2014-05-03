@@ -27,7 +27,6 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 public class SyncTag {
 
   private String dataETag;
-  private String propertiesETag;
   private String schemaETag;
 
   /**
@@ -37,7 +36,6 @@ public class SyncTag {
    */
   public SyncTag(SyncTag syncTag) {
     this.dataETag = syncTag.dataETag;
-    this.propertiesETag = syncTag.propertiesETag;
     this.schemaETag = syncTag.schemaETag;
   }
 
@@ -45,21 +43,15 @@ public class SyncTag {
    * Construct a sync tag with the given parameters
    *
    * @param dataETag
-   * @param propertiesETag
    * @param schemaETag
    */
-  public SyncTag(String dataETag, String propertiesETag, String schemaETag) {
+  public SyncTag(String dataETag, String schemaETag) {
     this.dataETag = dataETag;
-    this.propertiesETag = propertiesETag;
     this.schemaETag = schemaETag;
   }
 
   public String getDataETag() {
     return dataETag;
-  }
-
-  public String getPropertiesETag() {
-    return propertiesETag;
   }
 
   public String getSchemaETag() {
@@ -68,10 +60,6 @@ public class SyncTag {
 
   public void setSchemaETag(String schemaETag) {
     this.schemaETag = schemaETag;
-  }
-
-  public void setPropertiesETag(String propertiesETag) {
-    this.propertiesETag = propertiesETag;
   }
 
   public void setDataETag(String dataETag) {
@@ -88,7 +76,6 @@ public class SyncTag {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((dataETag == null) ? 1 : dataETag.hashCode());
-    result = prime * result + ((propertiesETag == null) ? 1 : propertiesETag.hashCode());
     result = prime * result + ((schemaETag == null) ? 1 : schemaETag.hashCode());
     return result;
   }
@@ -108,20 +95,16 @@ public class SyncTag {
     SyncTag other = (SyncTag) obj;
     boolean sameDataTag =  dataETag == null ?
         other.dataETag == null : dataETag.equals(other.dataETag);
-    boolean samePropertiesTag = propertiesETag == null ?
-        other.propertiesETag == null :
-          propertiesETag.equals(other.propertiesETag);
     boolean sameSchemaTag = schemaETag == null ?
         other.schemaETag == null :
           schemaETag.equals(other.schemaETag);
-    return sameDataTag && samePropertiesTag && sameSchemaTag;
+    return sameDataTag && sameSchemaTag;
   }
 
   @Override
   public String toString() {
     HashMap<String,String> map = new HashMap<String,String>();
     map.put("dataETag", dataETag);
-    map.put("propertiesETag", propertiesETag);
     map.put("schemaETag", schemaETag);
     try {
       return ODKFileUtils.mapper.writeValueAsString(map);
@@ -140,7 +123,7 @@ public class SyncTag {
   @SuppressWarnings("unchecked")
   public static SyncTag valueOf(String syncTag) {
     if ( syncTag == null || syncTag.length() == 0 ) {
-      return new SyncTag(null, null, null);
+      return new SyncTag(null, null);
     }
     HashMap<String, String> map;
     try {
@@ -157,8 +140,7 @@ public class SyncTag {
     }
 
     String dataETag = map.get("dataETag");
-    String propertiesETag = map.get("propertiesETag");
     String schemaETag = map.get("schemaETag");
-    return new SyncTag(dataETag, propertiesETag, schemaETag);
+    return new SyncTag(dataETag, schemaETag);
   }
 }

@@ -66,9 +66,6 @@
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.AccountInfoActivity" />
-        <activity android:name=".activities.Aggregate" />
-        <activity android:name=".activities.AggregateChooseTablesActivity" />
-        <activity android:name=".activities.AggregateDownloadTableActivity" />
         <activity android:name=".activities.ColorRuleManagerActivity"/>
         <activity android:name=".activities.ColumnManager"/>
         <activity android:name=".activities.CustomHomeScreenActivity"/>

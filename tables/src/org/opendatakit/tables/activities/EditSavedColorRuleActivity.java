@@ -118,7 +118,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     this.mColumnElementKeys = new CharSequence[numberOfDisplayColumns];
     for (int i = 0; i < numberOfDisplayColumns; i++) {
       ColumnProperties cp = mTp.getColumnByIndex(i);
-      mColumnDisplayNames[i] = cp.getDisplayName();
+      mColumnDisplayNames[i] = cp.getLocalizedDisplayName();
       mColumnElementKeys[i] = cp.getElementKey();
     }
     this.setTitle(getString(R.string.edit_rule));
@@ -172,7 +172,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
       if (mRulePosition != INTENT_FLAG_NEW_RULE) {
         String displayName =
             mTp.getColumnByElementKey(mColorRules.get(mRulePosition)
-                .getColumnElementKey()).getDisplayName();
+                .getColumnElementKey()).getLocalizedDisplayName();
         columnPreference.setSummary(displayName);
         columnPreference.setValueIndex(
             columnPreference.findIndexOfValue(mElementKey));
@@ -186,7 +186,7 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
               + newValue);
           mElementKey = (String) newValue;
           String displayName =
-              mTp.getColumnByElementKey(mElementKey).getDisplayName();
+              mTp.getColumnByElementKey(mElementKey).getLocalizedDisplayName();
           columnPreference.setSummary(displayName);
           columnPreference.setValueIndex(
               columnPreference.findIndexOfValue(mElementKey));

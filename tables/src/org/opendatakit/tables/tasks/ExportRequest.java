@@ -1,57 +1,39 @@
 package org.opendatakit.tables.tasks;
 
-import java.io.File;
-
 import org.opendatakit.common.android.data.TableProperties;
 
 public class ExportRequest {
 
     private final TableProperties tp;
-    private final File file;
-    private final boolean includeProperties;
-    private final boolean includeTimestamps;
-    private final boolean includeAccessControl;
-    private final boolean includeFormIds;
-    private final boolean includeLocales;
+    private final String fileQualifier;
 
-    public ExportRequest(TableProperties tp, File file,
-    		boolean includeTimestamps, boolean includeAccessControl,
-    		boolean includeFormIds,	boolean includeLocales,
-            boolean includeProperties ) {
-        this.tp = tp;
-        this.file = file;
-        this.includeProperties = includeProperties;
-        this.includeTimestamps = includeTimestamps;
-        this.includeAccessControl = includeAccessControl;
-        this.includeFormIds = includeFormIds;
-        this.includeLocales = includeLocales;
+    /**
+     * New style CSV export.
+     * Exports two csv files to the output/csv directory under the appName:
+     * <ul>
+     * <li>tableid.fileQualifier.csv - data table</li>
+     * <li>tableid.fileQualifier.properties.csv - metadata definition of this table</li>
+     * </ul>
+     * If fileQualifier is null or an empty string, then it emits to
+     * <ul>
+     * <li>tableid.csv - data table</li>
+     * <li>tableid.properties.csv - metadata definition of this table</li>
+     * </ul>
+     *
+     * @param tp
+     * @param directory
+     * @param fileQualifier
+     */
+    public ExportRequest(TableProperties tp, String fileQualifier) {
+      this.tp = tp;
+      this.fileQualifier = fileQualifier;
     }
 
     public TableProperties getTableProperties() {
         return tp;
     }
 
-    public File getFile() {
-        return file;
-    }
-
-    public boolean getIncludeProperties() {
-        return includeProperties;
-    }
-
-    public boolean getIncludeTimestamps() {
-        return includeTimestamps;
-    }
-
-    public boolean getIncludeAccessControl() {
-        return includeAccessControl;
-    }
-
-    public boolean getIncludeFormIds() {
-        return includeFormIds;
-    }
-
-    public boolean getIncludeLocales() {
-        return includeLocales;
+    public String getFileQualifier() {
+      return fileQualifier;
     }
 }

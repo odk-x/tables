@@ -256,7 +256,7 @@ public class ColumnManager extends ListActivity {
          new AlertDialog.Builder(ColumnManager.this);
          alert.setTitle(getString(R.string.confirm_delete_column))
          .setMessage(getString(R.string.are_you_sure_delete_column,
-             tp.getColumnByElementKey(currentCol).getDisplayName()));
+             tp.getColumnByElementKey(currentCol).getLocalizedDisplayName()));
          // OK Action => delete the column
          alert.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
@@ -334,7 +334,7 @@ public class ColumnManager extends ListActivity {
 					if (colName == null || colName.equals(EMPTY_STRING)) {
 						toastColumnNameError(getString(R.string.error_empty_column_name));
 						alertForNewColumnName(null);
-					} else if (tp.getColumnByDisplayName(colName) != null) {
+					} else if (tp.isLocalizedColumnDisplayNameInUse(colName)) {
 					  toastColumnNameError(getString(R.string.error_display_name_in_use_column_name, colName));
 					  alertForNewColumnName(null);
 					} else {
@@ -447,7 +447,7 @@ public class ColumnManager extends ListActivity {
 
 			// Register name of colunm at each row in the list view
 			TextView label = (TextView)row.findViewById(R.id.row_label);
-			label.setText(cps[position].getDisplayName());
+			label.setText(cps[position].getLocalizedDisplayName());
 
 			// Register ext info for columns
 			TextView ext = (TextView)row.findViewById(R.id.row_ext);

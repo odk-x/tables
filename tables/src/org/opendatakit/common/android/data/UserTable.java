@@ -165,8 +165,8 @@ public class UserTable {
       String elementKey = userColumnOrder.get(i);
       mElementKeyForIndex[i] = elementKey;
       mDataKeyToIndex.put(elementKey, i);
-      header[i] = mTp.getColumnByElementKey(elementKey).getDisplayName();
-      userColumnCursorIndex[i] = c.getColumnIndexOrThrow(elementKey);
+      header[i] = mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
+      userColumnCursorIndex[i] = c.getColumnIndex(elementKey);
     }
     mMetadataKeyToIndex = new HashMap<String, Integer>();
     int[] adminColumnCursorIndex = new int[adminColumnOrder.size()];
@@ -175,7 +175,7 @@ public class UserTable {
       // metadata in here. hmm.
       String elementKey = adminColumnOrder.get(i);
       mMetadataKeyToIndex.put(elementKey, i);
-      adminColumnCursorIndex[i] = c.getColumnIndexOrThrow(elementKey);
+      adminColumnCursorIndex[i] = c.getColumnIndex(elementKey);
     }
 
     c.moveToFirst();
@@ -216,6 +216,7 @@ public class UserTable {
   @SuppressLint("NewApi")
   private static final String getIndexAsString(Cursor c, int i) {
     // If you add additional return types here be sure to modify the javadoc.
+    if ( i == -1 ) return null;
     int version = android.os.Build.VERSION.SDK_INT;
     if (version < 11) {
       // getType() is not yet supported.
@@ -421,7 +422,11 @@ public class UserTable {
    * @return
    */
   public String getMetadataByElementKey(int rowNum, String elementKey) {
-    return mRows.get(rowNum).getMetadataAtIndex(mMetadataKeyToIndex.get(elementKey));
+    Integer idx = mMetadataKeyToIndex.get(elementKey);
+    if ( idx == null ) {
+      return null;
+    }
+    return mRows.get(rowNum).getMetadataAtIndex(idx);
   }
 
   /**

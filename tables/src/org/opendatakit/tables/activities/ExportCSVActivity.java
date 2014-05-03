@@ -33,7 +33,6 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -81,18 +80,6 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 	private Spinner tableSpin;
 	/* the text field for getting the filename */
 	private EditText filenameValField;
-	/* the checkbox for including properties */
-	private CheckBox incAllPropertiesCheck;
-	/* the checkbox for including access control field */
-	private CheckBox incAccessControlCheck;
-	/* the checkbox for including timestamps */
-	private CheckBox incTimestampsCheck;
-	/* the checkbox for including form ids */
-	private CheckBox incFormIdsCheck;
-	/* the checkbox for including locales */
-	private CheckBox incLocalesCheck;
-	/* the pick file button */
-	private Button pickFileButton;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -112,7 +99,6 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// selecting table
 		TextView est = new TextView(this);
 		est.setText(getString(R.string.export_csv));
-		est.setTextColor(getResources().getColor(R.color.white));
 		v.addView(est);
 		// adding the table spinner
 		tableSpin = new Spinner(this);
@@ -120,7 +106,7 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		tps = TableProperties.getTablePropertiesForAll(this, appName);
 		tableNames = new String[tps.length];
 		for (int i = 0; i < tps.length; i++) {
-		    tableNames[i] = tps[i].getDisplayName();
+		    tableNames[i] = tps[i].getLocalizedDisplayName();
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, tableNames);
@@ -132,87 +118,13 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
 		// Horizontal divider
 		View ruler1 = new View(this); ruler1.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler1, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
-		// options
-		TextView opt = new TextView(this);
-		opt.setText(getString(R.string.export_options));
-		opt.setTextColor(getResources().getColor(R.color.white));
-		v.addView(opt);
-		// adding the include properties checkbox
-		LinearLayout incProps = new LinearLayout(this);
-		incAllPropertiesCheck = new CheckBox(this);
-		incAllPropertiesCheck.setChecked(true);
-		incProps.addView(incAllPropertiesCheck);
-		TextView incPropsLabel = new TextView(this);
-        incPropsLabel.setTextColor(getResources().getColor(R.color.white));
-		incPropsLabel.setText(getString(R.string.export_opt_include_metadata));
-		incProps.addView(incPropsLabel);
-		v.addView(incProps);
-		// adding the include user id checkbox
-		{
-			LinearLayout incUI = new LinearLayout(this);
-			incAccessControlCheck = new CheckBox(this);
-			incAccessControlCheck.setChecked(true);
-			incUI.addView(incAccessControlCheck);
-			TextView incUILabel = new TextView(this);
-			incUILabel.setText(getString(R.string.export_opt_include_user_id));
-			incUILabel.setTextColor(getResources().getColor(R.color.white));
-			incUI.addView(incUILabel);
-			v.addView(incUI);
-		}
-		// adding the include timestamps checkbox
-		{
-			LinearLayout incTS = new LinearLayout(this);
-			incTimestampsCheck = new CheckBox(this);
-			incTimestampsCheck.setChecked(true);
-			incTS.addView(incTimestampsCheck);
-			TextView incTSLabel = new TextView(this);
-			incTSLabel.setText(getString(R.string.export_opt_include_modification_datetime));
-			incTSLabel.setTextColor(getResources().getColor(R.color.white));
-			incTS.addView(incTSLabel);
-			v.addView(incTS);
-		}
-		// adding the include form id checkbox
-		{
-			LinearLayout incFI = new LinearLayout(this);
-			incFormIdsCheck = new CheckBox(this);
-			incFormIdsCheck.setChecked(true);
-			incFI.addView(incFormIdsCheck);
-			TextView incFILabel = new TextView(this);
-			incFILabel.setText(getString(R.string.export_opt_include_form_id));
-			incFILabel.setTextColor(getResources().getColor(R.color.white));
-			incFI.addView(incFILabel);
-			v.addView(incFI);
-		}
-		// adding the include locale checkbox
-		{
-			LinearLayout incLO = new LinearLayout(this);
-			incLocalesCheck = new CheckBox(this);
-			incLocalesCheck.setChecked(true);
-			incLO.addView(incLocalesCheck);
-			TextView incLOLabel = new TextView(this);
-			incLOLabel.setText(getString(R.string.export_opt_include_locale));
-			incLOLabel.setTextColor(getResources().getColor(R.color.white));
-			incLO.addView(incLOLabel);
-			v.addView(incLO);
-		}
-		// Horizontal divider
-		View ruler2 = new View(this); ruler2.setBackgroundColor(getResources().getColor(R.color.black));
-		v.addView(ruler2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
 		// adding the filename field
-		LinearLayout fn = new LinearLayout(this);
-		fn.setOrientation(LinearLayout.VERTICAL);
 		TextView fnLabel = new TextView(this);
-		fnLabel.setText(getString(R.string.export_csv_file));
-		fnLabel.setTextColor(getResources().getColor(R.color.white));
-		fn.addView(fnLabel);
+		fnLabel.setText(getString(R.string.export_file_qualifier));
+		v.addView(fnLabel);
 		filenameValField = new EditText(this);
 		filenameValField.setId(FILENAMEVAL_ID);
-		fn.addView(filenameValField);
-		v.addView(fn);
-        pickFileButton = new Button(this);
-        pickFileButton.setText(getString(R.string.export_choose_csv_file));
-        pickFileButton.setOnClickListener(new PickFileButtonListener(appName, getString(R.string.export_choose_csv_file)));
-        v.addView(pickFileButton);
+		v.addView(filenameValField);
 		// Horizontal divider
 		View ruler3 = new View(this); ruler3.setBackgroundColor(getResources().getColor(R.color.black));
 		v.addView(ruler3, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2));
@@ -237,14 +149,9 @@ public class ExportCSVActivity extends AbstractImportExportActivity {
             filenameValField.getText().toString().trim()
         );
         TableProperties tp = tps[tableSpin.getSelectedItemPosition()];
-        boolean incProps = incAllPropertiesCheck.isChecked();
-        boolean incTs = incTimestampsCheck.isChecked();
-        boolean incAC = incAccessControlCheck.isChecked();
-        boolean incFI = incFormIdsCheck.isChecked();
-        boolean incLo = incLocalesCheck.isChecked();
         ExportTask task = new ExportTask(this, appName);
         showDialog(EXPORT_IN_PROGRESS_DIALOG);
-        task.execute(new ExportRequest(tp, file, incTs, incAC, incFI, incLo, incProps));
+        task.execute(new ExportRequest(tp, filenameValField.getText().toString().trim()));
 	}
 
 	@Override

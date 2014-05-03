@@ -117,7 +117,7 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		tableNames[0] = getString(R.string.import_new_table);
 		int counter = 1;
 		for (TableProperties tp : tps) {
-		    tableNames[counter] = tp.getDisplayName();
+		    tableNames[counter] = tp.getLocalizedDisplayName();
 		    counter++;
 		}
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -161,6 +161,36 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 	 * Attempts to import a CSV file.
 	 */
 	private void importSubmission() {
+     showDialog(IMPORT_IN_PROGRESS_DIALOG);
+
+	  String filenamePath = filenameValField.getText().toString().trim();
+
+	  ImportRequest request = null;
+     String[] pathParts = filenamePath.split("/");
+     if ( (pathParts.length == 3) &&
+         pathParts[0].equals("assets") &&
+         pathParts[1].equals("csv") ) {
+       String[] terms = pathParts[2].split("\\.");
+       if ( terms.length == 2 && terms[1].equals("csv")) {
+         String tableId = terms[0];
+         String fileQualifier = null;
+         request = new ImportRequest(tableId, fileQualifier);
+       } else if ( terms.length == 3 && terms[1].equals("properties") && terms[2].equals("csv")) {
+         String tableId = terms[0];
+         String fileQualifier = null;
+         request = new ImportRequest(tableId, fileQualifier);
+       } else if ( terms.length == 3 && terms[2].equals("csv")) {
+         String tableId = terms[0];
+         String fileQualifier = terms[1];
+         request = new ImportRequest(tableId, fileQualifier);
+       } else if ( terms.length == 4 && terms[2].equals("properties") && terms[3].equals("csv")) {
+         String tableId = terms[0];
+         String fileQualifier = terms[1];
+         request = new ImportRequest(tableId, fileQualifier);
+       }
+     }
+
+     if ( request == null ) {
 	   File file = ODKFileUtils.asAppFile(
 	          appName,
 	          filenameValField.getText().toString().trim()
@@ -168,16 +198,17 @@ public class ImportCSVActivity extends AbstractImportExportActivity {
 		String tableName = null;
 		TableProperties tp = null;
 		int pos = tableSpin.getSelectedItemPosition();
-		ImportTask task = new ImportTask(this, appName);
 		if(pos == 0) {
 			tableName = ntnValField.getText().toString();
-            showDialog(IMPORT_IN_PROGRESS_DIALOG);
-			task.execute(new ImportRequest(true, null, tableName, file));
+			request = new ImportRequest(true, null, tableName, file);
 		} else {
 		    tp = tps[pos - 1];
-            showDialog(IMPORT_IN_PROGRESS_DIALOG);
-		    task.execute(new ImportRequest(false, tp.getTableId(), null, file));
+		    request = new ImportRequest(false, tp.getTableId(), null, file);
 		}
+     }
+
+     ImportTask task = new ImportTask(this, appName);
+     task.execute(request);
 		/**
 		Handler iHandler = new ImporterHandler();
 		ImporterThread iThread = new ImporterThread(iHandler, tableName, tp,
