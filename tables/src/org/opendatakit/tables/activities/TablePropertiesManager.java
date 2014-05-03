@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
@@ -30,7 +31,6 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.TableMapFragment;
-import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 
@@ -172,25 +172,27 @@ public class TablePropertiesManager extends PreferenceActivity {
 
 
     // int[] viewTypes = settings.getPossibleViewTypes();
-    TableViewType[] viewTypes = tp.getPossibleViewTypes();
-    String[] viewTypeIds = new String[viewTypes.length];
-    String[] viewTypeNames = new String[viewTypes.length];
-    // for (int i = 0; i < viewTypes.length; i++) {
-    // int viewType = viewTypes[i];
-    // viewTypeIds[i] = String.valueOf(viewType);
-    // viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
-    // }
-    // so now we need to populate the actual menu with the thing to save
-    // and to the human-readable labels.
-    for (int i = 0; i < viewTypes.length; i++) {
-      viewTypeIds[i] = viewTypes[i].name();
-      viewTypeNames[i] = viewTypes[i].name();
-    }
+    
+    // This code got all commented out with the rewrite of TableViewType.
+//    Set<TableViewType> viewTypes = tp.getPossibleViewTypes();
+//    String[] viewTypeIds = new String[viewTypes.length];
+//    String[] viewTypeNames = new String[viewTypes.length];
+//    // for (int i = 0; i < viewTypes.length; i++) {
+//    // int viewType = viewTypes[i];
+//    // viewTypeIds[i] = String.valueOf(viewType);
+//    // viewTypeNames[i] = LanguageUtil.getViewTypeLabel(viewType);
+//    // }
+//    // so now we need to populate the actual menu with the thing to save
+//    // and to the human-readable labels.
+//    for (int i = 0; i < viewTypes.length; i++) {
+//      viewTypeIds[i] = viewTypes[i].name();
+//      viewTypeNames[i] = viewTypes[i].name();
+//    }
     ListPreference viewTypePref = new ListPreference(this);
     viewTypePref.setTitle(getString(R.string.default_view_type));
     viewTypePref.setDialogTitle(getString(R.string.change_default_view_type));
-    viewTypePref.setEntryValues(viewTypeIds);
-    viewTypePref.setEntries(viewTypeNames);
+//    viewTypePref.setEntryValues(viewTypeIds);
+//    viewTypePref.setEntries(viewTypeNames);
     // viewTypePref.setValue(String.valueOf(settings.getViewType()));
     viewTypePref.setValue(tp.getDefaultViewType().name());
     // TODO: currently throwing an error i think

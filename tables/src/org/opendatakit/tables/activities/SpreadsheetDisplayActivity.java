@@ -218,7 +218,7 @@ public class SpreadsheetDisplayActivity extends Activity
         sqlWhereClause = s.toString();
         sqlSelectionArgs = newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
       }
-      Controller.launchTableActivity(this, c.getTableProperties(), TableViewType.Spreadsheet,
+      Controller.launchTableActivity(this, c.getTableProperties(), TableViewType.SPREADSHEET,
                 sqlWhereClause, sqlSelectionArgs, null, null, sqlOrderByElementKey, sqlOrderByDirection);
     }
 
@@ -316,7 +316,7 @@ public class SpreadsheetDisplayActivity extends Activity
 
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        c.buildOptionsMenu(menu);
+//        c.buildOptionsMenu(menu);
         // TODO:
 //        MenuItem displayPref = menu.getItem(Controller.MENU_ITEM_ID_DISPLAY_PREFERENCES);
 //        if (displayPref != null)

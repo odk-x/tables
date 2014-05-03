@@ -135,7 +135,7 @@ public class TableProperties {
   public static final String DEFAULT_KEY_GROUP_BY_COLUMNS = "";
   public static final String DEFAULT_KEY_SORT_COLUMN = "";
   public static final String DEFAULT_KEY_INDEX_COLUMN = "";
-  public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.Spreadsheet.name();
+  public static final String DEFAULT_KEY_CURRENT_VIEW_TYPE = TableViewType.SPREADSHEET.name();
   public static final String DEFAULT_KEY_COLUMN_ORDER = "";
 
   /*
@@ -569,14 +569,14 @@ public class TableProperties {
     String defaultViewTypeStr = props.get(KEY_DEFAULT_VIEW_TYPE);
     TableViewType defaultViewType;
     if (defaultViewTypeStr == null) {
-      defaultViewType = TableViewType.Spreadsheet;
-      props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.Spreadsheet.name());
+      defaultViewType = TableViewType.SPREADSHEET;
+      props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.SPREADSHEET.name());
     } else {
       try {
         defaultViewType = TableViewType.valueOf(defaultViewTypeStr);
       } catch (Exception e) {
-        defaultViewType = TableViewType.Spreadsheet;
-        props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.Spreadsheet.name());
+        defaultViewType = TableViewType.SPREADSHEET;
+        props.put(KEY_DEFAULT_VIEW_TYPE, TableViewType.SPREADSHEET.name());
       }
     }
     // for legacy reasons, the code expects the DB_COLUMN_ORDER and
@@ -1732,7 +1732,7 @@ public class TableProperties {
         setSortOrder(db, (String) jo.get(JSON_KEY_SORT_ORDER));
         setIndexColumn(db, (String) jo.get(JSON_KEY_INDEX_COLUMN));
         String viewType = (String) jo.get(JSON_KEY_DEFAULT_VIEW_TYPE);
-        setDefaultViewType(db, viewType == null ? TableViewType.Spreadsheet : TableViewType.valueOf(viewType));
+        setDefaultViewType(db, viewType == null ? TableViewType.SPREADSHEET : TableViewType.valueOf(viewType));
 
         Set<String> columnElementKeys = new HashSet<String>();
         ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
@@ -1795,46 +1795,32 @@ public class TableProperties {
   }
 
   /**
-   * Get the possible view types for this table. This is modeled after a method
-   * in TableViewSettings. It used to perform checks on column types, but for
-   * now it just returns spreadsheet, list, and graph views. It does not return
-   * map.
-   *
-   * @return
+   * Get the possible view types for this table.
+   * @return a {@link Set} containing the possible view types in the table.
    */
-  public TableViewType[] getPossibleViewTypes() {
-    int numericColCount = 0;
+  public Set<TableViewType> getPossibleViewTypes() {
     int locationColCount = 0;
-    int dateColCount = 0;
     Map<String, ColumnProperties> columnProperties = this.getDatabaseColumns();
     List<ColumnProperties> geoPoints = getGeopointColumns();
     for (ColumnProperties cp : columnProperties.values()) {
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
-        numericColCount++;
         if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
           locationColCount++;
         }
       } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
         locationColCount += 2;// latitude and longitude
-      } else if (cp.getColumnType() == ColumnType.DATE || cp.getColumnType() == ColumnType.DATETIME
-          || cp.getColumnType() == ColumnType.TIME) {
-        dateColCount++;
       } else if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
         locationColCount++;
       }
     }
-    List<TableViewType> list = new ArrayList<TableViewType>();
-    list.add(TableViewType.Spreadsheet);
-    list.add(TableViewType.List);
-    list.add(TableViewType.Graph);
+    Set<TableViewType> viewTypes = new HashSet<TableViewType>();
+    viewTypes.add(TableViewType.SPREADSHEET);
+    viewTypes.add(TableViewType.LIST);
+    viewTypes.add(TableViewType.GRAPH);
     if (locationColCount >= 1) {
-      list.add(TableViewType.Map);
+      viewTypes.add(TableViewType.MAP);
     }
-    TableViewType[] arr = new TableViewType[list.size()];
-    for (int i = 0; i < list.size(); i++) {
-      arr[i] = list.get(i);
-    }
-    return arr;
+    return viewTypes;
   }
 
   public List<ColumnProperties> getGeopointColumns() {

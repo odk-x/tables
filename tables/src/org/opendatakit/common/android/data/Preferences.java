@@ -80,14 +80,18 @@ public class Preferences {
 	}
 
 	public TableViewType getPreferredViewType(String tableId) {
-		return TableViewType.getViewTypeFromId(
-		    prefs.getInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId,
-				TableViewType.Spreadsheet.getId()));
+	  String retrievedString = prefs.getString(
+	      PREFERRED_VIEW_TYPE_BASE_KEY + tableId, null);
+	  if (retrievedString == null) {
+	    return TableViewType.SPREADSHEET;
+	  } else {
+	    return TableViewType.valueOf(retrievedString);
+	  }
 	}
 
 	public void setPreferredViewType(String tableId, TableViewType type) {
 		SharedPreferences.Editor editor = prefs.edit();
-		editor.putInt(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type.getId());
+		editor.putString(PREFERRED_VIEW_TYPE_BASE_KEY + tableId, type.name());
 		editor.commit();
 	}
 

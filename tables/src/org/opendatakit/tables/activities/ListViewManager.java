@@ -159,7 +159,7 @@ public class ListViewManager extends ListActivity {
     // table with a group-by column, or vice versa, and this could create
     // an issue.
     Controller.launchTableActivityWithFilename(ListViewManager.this, tp,
-        filenameOfSelectedView, TableViewType.List);
+        filenameOfSelectedView, TableViewType.LIST);
   }
 
   @Override

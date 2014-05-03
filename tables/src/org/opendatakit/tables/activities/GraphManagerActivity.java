@@ -178,7 +178,7 @@ public class GraphManagerActivity extends ListActivity {
     newGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
     newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
     newGraphViewIntent
-        .putExtra(Controller.INTENT_KEY_CURRENT_VIEW_TYPE, TableViewType.Graph.name());
+        .putExtra(Controller.INTENT_KEY_CURRENT_VIEW_TYPE, TableViewType.GRAPH.name());
     newGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
         getPotentialGraphName());
     newGraphViewIntent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, graphName);
@@ -208,63 +208,63 @@ public class GraphManagerActivity extends ListActivity {
     init();
   }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    super.onCreateOptionsMenu(menu);
+//  @Override
+//  public boolean onCreateOptionsMenu(Menu menu) {
+//    super.onCreateOptionsMenu(menu);
+//
+//    final TableViewType[] viewTypes = tp.getPossibleViewTypes();
+//    // -build a checkable submenu to select the view type
+//    SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE,
+//        getString(R.string.view_type));
+//    MenuItem viewType = viewTypeSubMenu.getItem();
+//    viewType.setIcon(R.drawable.view);
+//    viewType.setEnabled(true);
+//    viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//    MenuItem item;
+//    // This will be the name of the default list view, which if exists
+//    // means we should display the list view as an option.
+//    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//    String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+//    for (int i = 0; i < viewTypes.length; i++) {
+//      item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
+//          viewTypes[i].name());
+//      // fake it: mark the Graph viewType as selected
+//      if (TableViewType.Graph == viewTypes[i]) {
+//        item.setChecked(true);
+//      }
+//      // disable list view if no file is specified
+//      if (viewTypes[i] == TableViewType.List && nameOfView == null) {
+//        item.setEnabled(false);
+//      }
+//    }
+//
+//    viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, true, true);
+//
+//    MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW, Menu.NONE,
+//        getString(R.string.add_new_graph)).setEnabled(true);
+//    addItem.setIcon(R.drawable.content_new);
+//    addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//
+//    return true;
+//  }
 
-    final TableViewType[] viewTypes = tp.getPossibleViewTypes();
-    // -build a checkable submenu to select the view type
-    SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE,
-        getString(R.string.view_type));
-    MenuItem viewType = viewTypeSubMenu.getItem();
-    viewType.setIcon(R.drawable.view);
-    viewType.setEnabled(true);
-    viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-    MenuItem item;
-    // This will be the name of the default list view, which if exists
-    // means we should display the list view as an option.
-    KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-    String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
-    for (int i = 0; i < viewTypes.length; i++) {
-      item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
-          viewTypes[i].name());
-      // fake it: mark the Graph viewType as selected
-      if (TableViewType.Graph == viewTypes[i]) {
-        item.setChecked(true);
-      }
-      // disable list view if no file is specified
-      if (viewTypes[i] == TableViewType.List && nameOfView == null) {
-        item.setEnabled(false);
-      }
-    }
-
-    viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, true, true);
-
-    MenuItem addItem = menu.add(Menu.NONE, ADD_NEW_GRAPH_VIEW, Menu.NONE,
-        getString(R.string.add_new_graph)).setEnabled(true);
-    addItem.setIcon(R.drawable.content_new);
-    addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-    return true;
-  }
-
-  @Override
-  public boolean onMenuItemSelected(int featureId, MenuItem item) {
-
-    if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
-      Controller.launchTableActivity(this, tp, TableViewType.getViewTypeFromId(item.getItemId()));
-      return true;
-    }
-    switch (item.getItemId()) {
-    case MENU_ITEM_ID_VIEW_TYPE_SUBMENU:
-      // let system handle displaying the sub-menu
-      return true;
-    case ADD_NEW_GRAPH_VIEW:
-      createNewGraph();
-      return true;
-    }
-    return false;
-  }
+//  @Override
+//  public boolean onMenuItemSelected(int featureId, MenuItem item) {
+//
+//    if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
+//      Controller.launchTableActivity(this, tp, TableViewType.getViewTypeFromId(item.getItemId()));
+//      return true;
+//    }
+//    switch (item.getItemId()) {
+//    case MENU_ITEM_ID_VIEW_TYPE_SUBMENU:
+//      // let system handle displaying the sub-menu
+//      return true;
+//    case ADD_NEW_GRAPH_VIEW:
+//      createNewGraph();
+//      return true;
+//    }
+//    return false;
+//  }
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {

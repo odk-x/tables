@@ -170,7 +170,7 @@ public class DetailDisplayActivity extends Activity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        c.buildOptionsMenu(menu, false);
+//        c.buildOptionsMenu(menu, false);
         // We want to be able to edit a row from the detail view. Rather than
         // add a new button, we're just going to hook onto the add row
         // button, change the png.

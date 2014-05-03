@@ -107,7 +107,7 @@ public class TableActivity extends Activity {
     } else if (getIntent().getExtras().containsKey(INTENT_KEY_CURRENT_VIEW_TYPE)) {
       mCurrentViewType = TableViewType.valueOf(getIntent().getExtras().getString(INTENT_KEY_CURRENT_VIEW_TYPE));
     } else {
-      mCurrentViewType = TableViewType.Map;
+      mCurrentViewType = TableViewType.MAP;
     }
 
     setContentView(R.layout.standard_table_layout);
@@ -331,88 +331,89 @@ public class TableActivity extends Activity {
     mDbTable.markDeleted(rowId);
   }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    // Set the app icon as an action to go home.
-    ActionBar actionBar = getActionBar();
-    actionBar.setDisplayHomeAsUpEnabled(true);
-    actionBar.setTitle("");
-
-    // Search
-    MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE, "Search");
-    searchItem.setIcon(R.drawable.ic_action_search);
-    searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-    searchItem.setEnabled(true);
-
-    // View type submenu
-    // -determine the possible view types
-    final TableViewType[] viewTypes = mTableProperties.getPossibleViewTypes();
-    // -build a checkable submenu to select the view type
-    SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE,
-        "ViewType");
-    MenuItem viewType = viewTypeSubMenu.getItem();
-    viewType.setIcon(R.drawable.view);
-    viewType.setEnabled(true);
-    viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-    // This will be the name of the default list view, which if exists
-    // means we should display the list view as an option.
-    KeyValueStoreHelper kvsh = mTableProperties
-        .getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-    String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
-    for (int i = 0; i < viewTypes.length; i++) {
-      MenuItem item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
-          viewTypes[i].name());
-      // Mark the current viewType as selected.
-      if (getCurrentViewType() == viewTypes[i]) {
-        item.setChecked(true);
-      }
-      // Disable list view if no file is specified
-      if (viewTypes[i] == TableViewType.List && nameOfView == null) {
-        item.setEnabled(false);
-      }
-    }
-
-    viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, true, true);
-
-    // Add Row
-    MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE, "Add Row")
-        .setEnabled(true);
-    addItem.setIcon(R.drawable.content_new);
-    addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-    // Settings submenu
-    SubMenu settings = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, Menu.NONE,
-        "Settings");
-    MenuItem settingsItem = settings.getItem();
-    settingsItem.setIcon(R.drawable.settings_icon2);
-    settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-
-    MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE,
-        "Display Preferences").setEnabled(true);
-    // Always disable DisplayPreferences if it is currently in list view
-    if (getCurrentViewType() == TableViewType.List) {
-      display.setEnabled(false);
-    }
-    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
-        .setEnabled(true);
-
-    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
-        .setEnabled(true);
-    // Now an option for editing list views.
-    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
-        Menu.NONE, "List View Manager").setEnabled(true);
-    return true;
-  }
+//  @Override
+//  public boolean onCreateOptionsMenu(Menu menu) {
+//    // Set the app icon as an action to go home.
+//    ActionBar actionBar = getActionBar();
+//    actionBar.setDisplayHomeAsUpEnabled(true);
+//    actionBar.setTitle("");
+//
+//    // Search
+//    MenuItem searchItem = menu.add(Menu.NONE, MENU_ITEM_ID_SEARCH_BUTTON, Menu.NONE, "Search");
+//    searchItem.setIcon(R.drawable.ic_action_search);
+//    searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//    searchItem.setEnabled(true);
+//
+//    // View type submenu
+//    // -determine the possible view types
+//    final TableViewType[] viewTypes = mTableProperties.getPossibleViewTypes();
+//    // -build a checkable submenu to select the view type
+//    SubMenu viewTypeSubMenu = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_VIEW_TYPE_SUBMENU, Menu.NONE,
+//        "ViewType");
+//    MenuItem viewType = viewTypeSubMenu.getItem();
+//    viewType.setIcon(R.drawable.view);
+//    viewType.setEnabled(true);
+//    viewType.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//    // This will be the name of the default list view, which if exists
+//    // means we should display the list view as an option.
+//    KeyValueStoreHelper kvsh = mTableProperties
+//        .getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+//    String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+//    for (int i = 0; i < viewTypes.length; i++) {
+//      MenuItem item = viewTypeSubMenu.add(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, viewTypes[i].getId(), i,
+//          viewTypes[i].name());
+//      // Mark the current viewType as selected.
+//      if (getCurrentViewType() == viewTypes[i]) {
+//        item.setChecked(true);
+//      }
+//      // Disable list view if no file is specified
+//      if (viewTypes[i] == TableViewType.List && nameOfView == null) {
+//        item.setEnabled(false);
+//      }
+//    }
+//
+//    viewTypeSubMenu.setGroupCheckable(MENU_ITEM_ID_VIEW_TYPE_SUBMENU, true, true);
+//
+//    // Add Row
+//    MenuItem addItem = menu.add(Menu.NONE, MENU_ITEM_ID_ADD_ROW_BUTTON, Menu.NONE, "Add Row")
+//        .setEnabled(true);
+//    addItem.setIcon(R.drawable.content_new);
+//    addItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//
+//    // Settings submenu
+//    SubMenu settings = menu.addSubMenu(Menu.NONE, MENU_ITEM_ID_SETTINGS_SUBMENU, Menu.NONE,
+//        "Settings");
+//    MenuItem settingsItem = settings.getItem();
+//    settingsItem.setIcon(R.drawable.settings_icon2);
+//    settingsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//
+//    MenuItem display = settings.add(Menu.NONE, MENU_ITEM_ID_DISPLAY_PREFERENCES, Menu.NONE,
+//        "Display Preferences").setEnabled(true);
+//    // Always disable DisplayPreferences if it is currently in list view
+//    if (getCurrentViewType() == TableViewType.List) {
+//      display.setEnabled(false);
+//    }
+//    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_TABLE_PROPERTIES, Menu.NONE, "Table Properties")
+//        .setEnabled(true);
+//
+//    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_COLUMN_MANAGER, Menu.NONE, "Column Manager")
+//        .setEnabled(true);
+//    // Now an option for editing list views.
+//    settings.add(Menu.NONE, MENU_ITEM_ID_OPEN_LIST_VIEW_MANAGER,
+//        Menu.NONE, "List View Manager").setEnabled(true);
+//    return true;
+//  }
 
   @Override
   public boolean onMenuItemSelected(int featureId, MenuItem item) {
     // If the item is part of the sub-menu for view type, set the view type
     // with its itemId else, handle accordingly.
     if (item.getGroupId() == MENU_ITEM_ID_VIEW_TYPE_SUBMENU) {
-      setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
-      launchTableActivity(mTableProperties, TableViewType.getViewTypeFromId(item.getItemId()),
-          mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving,
-          mSqlOrderByElementKey, mSqlOrderByDirection);
+      // TableViewType broke
+//      setCurrentViewType(TableViewType.getViewTypeFromId(item.getItemId()));
+//      launchTableActivity(mTableProperties, TableViewType.getViewTypeFromId(item.getItemId()),
+//          mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving,
+//          mSqlOrderByElementKey, mSqlOrderByDirection);
       return true;
     } else {
       switch (item.getItemId()) {
@@ -558,7 +559,7 @@ public class TableActivity extends Activity {
     }
     Intent intent;
     switch (viewType) {
-    case List: {
+    case LIST: {
       String defaultListView = ListDisplayActivity.getDefaultListFileName(tp);
       if (defaultListView != null) {
         intent = new Intent(this, ListDisplayActivity.class);
@@ -568,7 +569,7 @@ public class TableActivity extends Activity {
       }
     }
       break;
-    case Graph: {
+    case GRAPH: {
       String defaultGraph = GraphManagerActivity.getDefaultGraphName(tp);
       if ( defaultGraph != null ) {
         intent = new Intent(this, GraphDisplayActivity.class);
@@ -578,10 +579,10 @@ public class TableActivity extends Activity {
       }
     }
       break;
-    case Map:
+    case MAP:
       intent = new Intent(this, TableActivity.class);
       break;
-    case Spreadsheet:
+    case SPREADSHEET:
       intent = new Intent(this, SpreadsheetDisplayActivity.class);
       break;
     default:

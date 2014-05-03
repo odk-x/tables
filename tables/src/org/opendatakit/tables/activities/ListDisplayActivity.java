@@ -205,7 +205,7 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    c.buildOptionsMenu(menu);
+//    c.buildOptionsMenu(menu);
     return true;
   }
 
