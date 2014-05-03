@@ -102,6 +102,14 @@ public class TableProperties {
 
   // this is not known by the server...
   private static final String KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
+  
+  /** The file name for the list view that has been set on the table. */
+  private static final String KEY_LIST_VIEW_FILE_NAME = 
+      "listViewFileName";
+  
+  /** The file name for the detail view that has been set on the table. */
+  private static final String KEY_DETAIL_VIEW_FILE_NAME =
+      "detailViewFileName";
 
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
@@ -1798,7 +1806,40 @@ public class TableProperties {
    * Get the possible view types for this table.
    * @return a {@link Set} containing the possible view types in the table.
    */
-  public Set<TableViewType> getPossibleViewTypes() {
+  public PossibleTableViewTypes getPossibleViewTypes() {
+    boolean spreadsheetValid = this.spreadsheetViewIsPossible();
+    boolean listValid = this.listViewIsPossible();
+    boolean graphValid = this.graphViewIsPossible();
+    boolean mapValid = this.mapViewIsPossible();
+    PossibleTableViewTypes result = new PossibleTableViewTypes(
+        spreadsheetValid,
+        listValid,
+        mapValid,
+        graphValid);
+    return result;
+  }
+  
+  /**
+   * @return true if a list view can be displayed for this table.
+   */
+  private boolean listViewIsPossible() {
+    return getListViewFileName() != null;
+  }
+  
+  /**
+   * Return true if a spreadsheet view can be displayed for this table.
+   * @return
+   */
+  private boolean spreadsheetViewIsPossible() {
+    // Always true for now.
+    return true;
+  }
+  
+  /**
+   * 
+   * @return true if a map view can be displayed for the table.
+   */
+  private boolean mapViewIsPossible() {
     int locationColCount = 0;
     Map<String, ColumnProperties> columnProperties = this.getDatabaseColumns();
     List<ColumnProperties> geoPoints = getGeopointColumns();
@@ -1813,14 +1854,45 @@ public class TableProperties {
         locationColCount++;
       }
     }
-    Set<TableViewType> viewTypes = new HashSet<TableViewType>();
-    viewTypes.add(TableViewType.SPREADSHEET);
-    viewTypes.add(TableViewType.LIST);
-    viewTypes.add(TableViewType.GRAPH);
-    if (locationColCount >= 1) {
-      viewTypes.add(TableViewType.MAP);
-    }
-    return viewTypes;
+    return locationColCount > 0;
+  }
+  
+  /**
+   * 
+   * @return true is a graph view can be displayed on the table.
+   */
+  private boolean graphViewIsPossible() {
+    // always true
+    return true;
+  }
+  
+  /**
+   * @return true if a detail view can be displayed for this table.
+   */
+  private boolean detailViewIsPossible() {
+    return getDetailViewFileName() != null;
+  }
+  
+  /**
+   * Return the filename for the list view that has been set on this table.
+   * @return the filename of the list view, or null if none exists.
+   */
+  public String getListViewFileName() {
+    KeyValueStoreHelper kvsh = 
+        this.getKeyValueStoreHelper(KVS_PARTITION);
+    String listFileName = kvsh.getString(KEY_LIST_VIEW_FILE_NAME);
+    return listFileName;
+  }
+  
+  /**
+   * Return the file name for the detail view that has been set on this table.
+   * @return the filename for the detail view, or null if none exists.
+   */
+  public String getDetailViewFileName() {
+    KeyValueStoreHelper kvsh = 
+        this.getKeyValueStoreHelper(KVS_PARTITION);
+    String detailFileName = kvsh.getString(KEY_DETAIL_VIEW_FILE_NAME);
+    return detailFileName;
   }
 
   public List<ColumnProperties> getGeopointColumns() {

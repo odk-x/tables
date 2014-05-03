@@ -17,9 +17,10 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomTableView;
@@ -50,45 +51,6 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
    */
   public static final String INTENT_KEY_FILENAME = "filename";
 
-  /**************************
-   * Strings necessary for the key value store.
-   **************************/
-  /**
-   * The general partition in which table-wide ListDisplayActivity information
-   * is stored. An example might be the current list view for a table.
-   */
-  public static final String KVS_PARTITION = "ListDisplayActivity";
-  /**
-   * The partition under which actual individual view information is stored. For
-   * instance if a user added a list view named "Doctor", the partition would be
-   * KVS_PARTITION_VIEWS, and all the keys relating to this view would fall
-   * within this partition and a particular aspect. (Perhaps the name "Doctor"?)
-   */
-  public static final String KVS_PARTITION_VIEWS = KVS_PARTITION + ".views";
-
-  /**
-   * This is the default aspect for the list view. This should be all that is
-   * used until we allow multiple list views for a single file.
-   */
-  public static final String KVS_ASPECT_DEFAULT = "default";
-
-  /**
-   * This key holds the filename associated with the view.
-   */
-  public static final String KEY_FILENAME = "filename";
-
-  /**
-   * This key holds the name of the list view. In the default aspect the idea is
-   * that this will then give the value of the aspect for which the default list
-   * view is set.
-   * <p>
-   * E.g. partition=KVS_PARTITION, aspect=KVS_ASPECT_DEFAULT,
-   * key="KEY_LIST_VIEW_NAME", value="My Custom List View" would mean that
-   * "My Custom List View" was an aspect under the KVS_PARTITION_VIEWS partition
-   * that had the information regarding a custom list view.
-   */
-  public static final String KEY_LIST_VIEW_NAME = "nameOfListView";
-
   private String appName;
   private Controller c;
   private UserTable table;
@@ -104,7 +66,8 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     }
     setTitle("");
     c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
-    kvsh = c.getTableProperties().getKeyValueStoreHelper(KVS_PARTITION);
+    kvsh = c.getTableProperties().getKeyValueStoreHelper(
+        LocalKeyValueStoreConstants.ListViews.PARTITION);
   }
 
   @Override
@@ -128,16 +91,20 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
    * @return
    */
   public static String getDefaultListFileName(TableProperties tableProperties) {
-    KeyValueStoreHelper kvsh = tableProperties.getKeyValueStoreHelper(KVS_PARTITION);
-    String nameOfView = kvsh.getString(KEY_LIST_VIEW_NAME);
+    KeyValueStoreHelper kvsh = tableProperties.getKeyValueStoreHelper(
+        LocalKeyValueStoreConstants.ListViews.PARTITION);
+    String nameOfView = kvsh.getString(
+        LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME);
     if (nameOfView == null) {
       // Then none has been set.
       return null;
     }
     KeyValueStoreHelper namedListViewsPartitionKvsh = tableProperties
-        .getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+        .getKeyValueStoreHelper(
+            LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
     AspectHelper viewAspectHelper = namedListViewsPartitionKvsh.getAspectHelper(nameOfView);
-    String filename = viewAspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+    String filename = viewAspectHelper.getString(
+        LocalKeyValueStoreConstants.ListViews.KEY_FILENAME);
     return filename;
   }
 
@@ -172,7 +139,8 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
     table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
 
-    String nameOfView = kvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+    String nameOfView = kvsh.getString(
+        LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME);
     // The nameOfView can be null in some cases, like if the default list
     // view has been deleted. If this ever occurs, we should just say no
     // filename specified and make them choose one.

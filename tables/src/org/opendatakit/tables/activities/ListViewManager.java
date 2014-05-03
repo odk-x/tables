@@ -20,6 +20,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
+import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
@@ -126,11 +127,14 @@ public class ListViewManager extends ListActivity {
     this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
     this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     this.kvsh =
-        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+        tp.getKeyValueStoreHelper(
+            LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
     this.listViewKvsh =
-        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+        tp.getKeyValueStoreHelper(
+            LocalKeyValueStoreConstants.ListViews.PARTITION);
     this.defaultListViewName =
-        listViewKvsh.getString(ListDisplayActivity.KEY_LIST_VIEW_NAME);
+        listViewKvsh.getString(
+            LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME);
     this.listViewNames = kvsh.getAspectsForPartition();
     Log.d(TAG, "listViewNames: " + listViewNames);
     // Set the adapter. It adds the list view itself.
@@ -144,13 +148,15 @@ public class ListViewManager extends ListActivity {
     // need this to set this view as the default list view for the
     // table.)
     KeyValueStoreHelper kvshListViewPartition =
-        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+        tp.getKeyValueStoreHelper(
+            LocalKeyValueStoreConstants.ListViews.PARTITION);
     // We need this to get the filename of the current list view.
     KeyValueHelper aspectHelper =
         kvsh.getAspectHelper((String)
             getListView().getItemAtPosition(position));
     String filenameOfSelectedView =
-        aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+        aspectHelper.getString(
+            LocalKeyValueStoreConstants.ListViews.KEY_FILENAME);
     // Check if there are group-by columns. If there are, then we're using
     // the collection view? This needs to be sorted out.
     // TODO: launch if something is a collection view correctly.
@@ -250,9 +256,10 @@ public class ListViewManager extends ListActivity {
           aspectHelper.deleteAllEntriesInThisAspect();
           if (entryName.equals(defaultListViewName)) {
             KeyValueStoreHelper generalViewHelper =
-                tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
+                tp.getKeyValueStoreHelper(
+                    LocalKeyValueStoreConstants.ListViews.PARTITION);
             generalViewHelper.removeKey(
-                ListDisplayActivity.KEY_LIST_VIEW_NAME);
+                LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME);
           }
           defaultListViewName = null;
           // Now remove it from the list view.
@@ -348,7 +355,8 @@ public class ListViewManager extends ListActivity {
           (TextView) row.findViewById(R.id.row_ext);
       AspectHelper aspectHelper = kvsh.getAspectHelper(listViewName);
       String filename =
-          aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+          aspectHelper.getString(
+              LocalKeyValueStoreConstants.ListViews.KEY_FILENAME);
       extraString.setText(filename);
       // The radio button showing whether or not this is the default list view.
       final RadioButton radioButton = (RadioButton)
@@ -418,7 +426,8 @@ public class ListViewManager extends ListActivity {
      * @param nameOfListView
      */
     private void setToDefault(String nameOfListView) {
-      listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME,
+      listViewKvsh.setString(
+          LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME,
           nameOfListView);
       defaultListViewName = nameOfListView;
       adapter.notifyDataSetChanged();

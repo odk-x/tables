@@ -26,6 +26,7 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.KeyValueHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -550,11 +551,14 @@ public class TablePropertiesManager extends PreferenceActivity {
       // We need to get the relative path under the app name.
       relativePath = getRelativePathOfFile(filename);
       // Trying to get the new name to the _VIEWS partition.
-      kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+      kvsh = tp.getKeyValueStoreHelper(
+          LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
       // Set the name here statically, just to test. Later will want to
       // allow custom naming, checking for redundancy, etc.
       KeyValueHelper aspectHelper = kvsh.getAspectHelper("List View 1");
-      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
+      aspectHelper.setString(
+          LocalKeyValueStoreConstants.ListViews.KEY_FILENAME,
+          relativePath);
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:

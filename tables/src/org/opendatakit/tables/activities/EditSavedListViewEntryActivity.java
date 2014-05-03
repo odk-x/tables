@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.List;
 
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.LocalKeyValueStoreConstants;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -105,12 +106,14 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     this.tableId = getIntent().getStringExtra(INTENT_KEY_TABLE_ID);
     this.listViewName = getIntent().getStringExtra(INTENT_KEY_LISTVIEW_NAME);
     this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
-    this.kvsh = tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION_VIEWS);
+    this.kvsh = tp.getKeyValueStoreHelper(
+        LocalKeyValueStoreConstants.ListViews.PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(listViewName);
     if (kvsh.getAspectsForPartition().size() == 0) {
       setToDefault(listViewName);
     }
-    this.listViewFilename = aspectHelper.getString(ListDisplayActivity.KEY_FILENAME);
+    this.listViewFilename = aspectHelper.getString(
+        LocalKeyValueStoreConstants.ListViews.KEY_FILENAME);
     addPreferencesFromResource(R.xml.preference_listview_entry);
   }
 
@@ -197,7 +200,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
     aspectHelper = kvsh.getAspectHelper(listViewName);
     // If a filename exists, set it.
     if (listViewFilename != null && !listViewFilename.equals("")) {
-      aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, listViewFilename);
+      aspectHelper.setString(
+          LocalKeyValueStoreConstants.ListViews.KEY_FILENAME,
+          listViewFilename);
     }
     namePreference.setSummary(listViewName);
   }
@@ -219,7 +224,9 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
         if (kvsh.getAspectsForPartition().size() == 0) {
           setToDefault(listViewName);
         }
-        aspectHelper.setString(ListDisplayActivity.KEY_FILENAME, relativePath);
+        aspectHelper.setString(
+            LocalKeyValueStoreConstants.ListViews.KEY_FILENAME,
+            relativePath);
         listViewFilename = relativePath;
       } else {
         Log.d(TAG, "received null or empty string from file picker: " + newFilename);
@@ -232,8 +239,10 @@ public class EditSavedListViewEntryActivity extends PreferenceActivity implement
 
   private void setToDefault(String nameOfListView) {
     KeyValueStoreHelper listViewKvsh =
-        tp.getKeyValueStoreHelper(ListDisplayActivity.KVS_PARTITION);
-    listViewKvsh.setString(ListDisplayActivity.KEY_LIST_VIEW_NAME,
+        tp.getKeyValueStoreHelper(
+            LocalKeyValueStoreConstants.ListViews.PARTITION);
+    listViewKvsh.setString(
+        LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME,
         nameOfListView);
   }
 
