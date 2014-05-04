@@ -169,12 +169,6 @@ public class TableManagerFragmentTest {
     org.fest.assertions.api.Assertions.assertThat(intentComponent)
         .isNotNull()
         .isEqualTo(target);
-    // There should also be a table id in the intent.
-    String tableIdExtra = intent.intent.getStringExtra(
-        Constants.IntentKeys.TABLE_ID);
-    org.fest.assertions.api.Assertions.assertThat(tableIdExtra)
-        .isNotNull()
-        .isEqualTo(mockTableId1);
   }
   
   // TODO: Should probably also test that the context menu creates a dialog,

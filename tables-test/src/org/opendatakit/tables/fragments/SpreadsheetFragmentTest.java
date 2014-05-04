@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
+import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
@@ -45,6 +46,16 @@ public class SpreadsheetFragmentTest {
     // Make the UserTable show width 0.
     UserTable userTableMock = mock(UserTable.class);
     doReturn(0).when(userTableMock).getWidth();
+    TableDisplayActivityStub.USER_TABLE = userTableMock;
+    doGlobalSetup();
+  }
+  
+  private void setupWithData() {
+    // For the hell of it we'll make 10 columns.
+    int numColumns = 10;
+    UserTable userTableMock = mock(UserTable.class);
+    doReturn(numColumns).when(userTableMock).getWidth();
+    TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();
   }
   
@@ -54,12 +65,22 @@ public class SpreadsheetFragmentTest {
   }
   
   @Test
-  public void buildViewWithWidthZeroIsTextView() {
+  public void viewWithWidthZeroIsTextView() {
     this.setupWithNoData();
     View fragmentView = this.fragment.getView();
     assertThat(fragmentView)
         .isNotNull()
         .isInstanceOf(TextView.class);
   }
+  
+  // this mofo is super complicated atm.
+//  @Test
+//  public void viewWithDataIsSpreadsheetView() {
+//    this.setupWithData();
+//    View fragmentView = this.fragment.getView();
+//    assertThat(fragmentView)
+//        .isNotNull()
+//        .isInstanceOf(SpreadsheetView.class);
+//  }
 
 }

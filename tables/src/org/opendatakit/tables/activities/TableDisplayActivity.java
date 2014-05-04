@@ -1,9 +1,10 @@
 package org.opendatakit.tables.activities;
 
-import org.apache.commons.math.analysis.solvers.MullerSolver;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.Constants;
@@ -13,6 +14,8 @@ import org.opendatakit.tables.utils.SQLQueryStruct;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ViewTreeObserver;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -22,6 +25,8 @@ import android.os.Bundle;
  */
 public class TableDisplayActivity extends AbsTableActivity
     implements ITopLevelTableMenuActivity {
+  
+  private static final String TAG = TableDisplayActivity.class.getSimpleName();
   
   /**
    * The fragment types this activity could be displaying.
@@ -46,6 +51,93 @@ public class TableDisplayActivity extends AbsTableActivity
     super.onCreate(savedInstanceState);
     this.initializeBackingTable();
     this.initializeMenuFragment();
+    this.initializeDisplayFragment();
+  }
+  
+  /**
+   * Initialize the correct display fragment based on the result of
+   * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none
+   * is present in Intent.
+   */
+  protected void initializeDisplayFragment() {
+    ViewFragmentType viewFragmentType = this.retrieveFragmentTypeToDisplay();
+    switch (viewFragmentType) {
+    case SPREADSHEET:
+      this.showSpreadsheetFragment();
+      break;
+    case DETAIL:
+      break;
+    case GRAPH:
+      break;
+    case LIST:
+      break;
+    case MAP:
+      break;
+    default:
+      Log.e(TAG, "ViewFragmentType not recognized: " + viewFragmentType);
+      break;
+    }
+  }
+  
+  /**
+   * @return the {@link ViewFragmentType} that was passed in the intent,
+   * or null if none exists.
+   */
+  protected ViewFragmentType retrieveViewFragmentTypeFromIntent() {
+    if (this.getIntent().getExtras() == null) {
+      return null;
+    }
+    String viewFragmentTypeStr = this.getIntent().getExtras().getString(
+        Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+    if (viewFragmentTypeStr == null) {
+      return null;
+    } else {
+      ViewFragmentType result = ViewFragmentType.valueOf(viewFragmentTypeStr);
+      return result;
+    }
+  }
+  
+  /**
+   * Get the {@link ViewFragmentType} that should be displayed. Any type that
+   * was passed in the Intent gets precedent. If none is present, the value
+   * corresponding to {@link TableProperties#getDefaultViewType()} wins. If
+   * none is present, returns {@link ViewFragmentType#SPREADSHEET}.
+   * @return
+   */
+  protected ViewFragmentType retrieveFragmentTypeToDisplay() {
+    ViewFragmentType result = retrieveViewFragmentTypeFromIntent();
+    if (result == null) {
+      TableViewType viewType = 
+          this.getUserTable().getTableProperties().getDefaultViewType();
+      result = this.getViewFragmentTypeFromViewType(viewType);
+    }
+    if (result == null) {
+      result = ViewFragmentType.SPREADSHEET;
+    }
+    return result;
+  }
+  
+  /**
+   * Get the {@link ViewFragmentType} that corresponds to
+   * {@link TableViewType}. If no match is found, returns null.
+   * @param viewType
+   * @return
+   */
+  protected ViewFragmentType getViewFragmentTypeFromViewType(
+      TableViewType viewType) {
+    switch (viewType) {
+    case SPREADSHEET:
+      return ViewFragmentType.SPREADSHEET;
+    case MAP:
+      return ViewFragmentType.MAP;
+    case GRAPH:
+      return ViewFragmentType.GRAPH;
+    case LIST:
+      return ViewFragmentType.LIST;
+    default:
+      Log.e(TAG, "viewType " + viewType + " not recognized.");
+      return null;
+    }
   }
   
   /**
@@ -107,6 +199,24 @@ public class TableDisplayActivity extends AbsTableActivity
     fragmentManager.beginTransaction().add(
         menuFragment,
         Constants.FragmentTags.TABLE_MENU).commit();
+  }
+  
+  /**
+   * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
+   */
+  protected void showSpreadsheetFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    // Try to retrieve one already there.
+    SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
+    if (spreadsheetFragment != null) {
+      fragmentManager.beginTransaction().show(spreadsheetFragment).commit();
+    }
+    // Otherwise create a new one.
+    spreadsheetFragment = new SpreadsheetFragment();
+    fragmentManager.beginTransaction().add(
+        spreadsheetFragment,
+        Constants.FragmentTags.SPREADSHEET).commit();
   }
 
   /**
