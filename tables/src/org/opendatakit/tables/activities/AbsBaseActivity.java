@@ -42,7 +42,7 @@ public abstract class AbsBaseActivity extends Activity {
    * Get the app name that has been set for this activity.
    * @return
    */
-  String getAppName() {
+  public String getAppName() {
     return this.mAppName;
   }
   

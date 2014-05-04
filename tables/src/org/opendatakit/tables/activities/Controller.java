@@ -31,6 +31,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
@@ -80,39 +81,6 @@ public class Controller {
   public static final String INTENT_KEY_TABLE_ID = "tableId";
  // public static final String INTENT_KEY_SEARCH_STACK = "searchStack";
   public static final String INTENT_KEY_IS_OVERVIEW = "isOverview";
-  /**
-   * Key to the where clause if this list view is to be opened with a more
-   * complex query than permissible by the simple query object. Must conform
-   * to the expectations of {@link DbTable#rawSqlQuery} and
-   * {@link CustomView$Control#queryWithSql}.
-   *
-   * @see INTENT_KEY_SQL_SELECTION_ARGS
-   */
-  public static final String INTENT_KEY_SQL_WHERE = "sqlWhereClause";
-  /**
-   * An array of strings for restricting the rows displayed in the table.
-   *
-   * @see INTENT_KEY_SQL_WHERE
-   */
-  public static final String INTENT_KEY_SQL_SELECTION_ARGS = "sqlSelectionArgs";
-  /**
-   * An array of strings giving the group by columns.
-   * What was formerly 'overview' mode is a non-null groupBy list.
-   */
-  public static final String INTENT_KEY_SQL_GROUP_BY_ARGS = "sqlGroupByArgs";
-  /**
-   * The having clause, if present
-   */
-  public static final String INTENT_KEY_SQL_HAVING = "sqlHavingClause";
-  /**
-   * The order by column. NOTE: restricted to a single column
-   */
-  public static final String INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY = "sqlOrderByElementKey";
-  /**
-   * The order by direction (ASC or DESC)
-   */
-  public static final String INTENT_KEY_SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
-
   public static final String INTENT_KEY_CURRENT_VIEW_TYPE = "currentViewType";
 
   public static final int VIEW_ID_SEARCH_FIELD = 0;
@@ -193,12 +161,12 @@ public class Controller {
       throw new RuntimeException();
     }
 
-    sqlWhereClause = intentBundle.getString(INTENT_KEY_SQL_WHERE);
-    sqlSelectionArgs = intentBundle.getStringArray(INTENT_KEY_SQL_SELECTION_ARGS);
-    sqlGroupBy = intentBundle.getStringArray(INTENT_KEY_SQL_GROUP_BY_ARGS);
-    sqlHaving = intentBundle.getString(INTENT_KEY_SQL_HAVING);
-    sqlOrderByElementKey = intentBundle.getString(INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
-    sqlOrderByDirection = intentBundle.getString(INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+    sqlWhereClause = intentBundle.getString(IntentKeys.SQL_WHERE);
+    sqlSelectionArgs = intentBundle.getStringArray(IntentKeys.SQL_SELECTION_ARGS);
+    sqlGroupBy = intentBundle.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
+    sqlHaving = intentBundle.getString(IntentKeys.SQL_HAVING);
+    sqlOrderByElementKey = intentBundle.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
+    sqlOrderByDirection = intentBundle.getString(IntentKeys.SQL_ORDER_BY_DIRECTION);
 
     if ( savedInstanceState != null && savedInstanceState.containsKey(INTENT_KEY_CURRENT_VIEW_TYPE) ) {
       mCurrentViewType = TableViewType.valueOf(savedInstanceState.getString(INTENT_KEY_CURRENT_VIEW_TYPE));
@@ -967,23 +935,23 @@ public class Controller {
                                              String sqlOrderByElementKey, String sqlOrderByDirection) {
 
     if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-      intent.putExtra(INTENT_KEY_SQL_WHERE, sqlWhereClause);
+      intent.putExtra(IntentKeys.SQL_WHERE, sqlWhereClause);
       if (sqlSelectionArgs != null && sqlSelectionArgs.length != 0) {
-        intent.putExtra(INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+        intent.putExtra(IntentKeys.SQL_SELECTION_ARGS, sqlSelectionArgs);
       }
     }
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
-      intent.putExtra(INTENT_KEY_SQL_GROUP_BY_ARGS, sqlGroupBy);
+      intent.putExtra(IntentKeys.SQL_GROUP_BY_ARGS, sqlGroupBy);
       if (sqlHaving != null && sqlHaving.length() != 0) {
-        intent.putExtra(INTENT_KEY_SQL_HAVING, sqlHaving);
+        intent.putExtra(IntentKeys.SQL_HAVING, sqlHaving);
       }
     }
     if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
-      intent.putExtra(INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
+      intent.putExtra(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
       if ( sqlOrderByDirection != null ) {
-        intent.putExtra(INTENT_KEY_SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
+        intent.putExtra(IntentKeys.SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
       } else {
-        intent.putExtra(INTENT_KEY_SQL_ORDER_BY_DIRECTION, "ASC");
+        intent.putExtra(IntentKeys.SQL_ORDER_BY_DIRECTION, "ASC");
       }
     }
   }

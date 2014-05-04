@@ -15,6 +15,7 @@
  */
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 
 import android.graphics.Color;
@@ -38,6 +39,38 @@ public class Constants {
   public static class IntentKeys {
     public static final String TABLE_ID = "tableId";
     public static final String APP_NAME = "appName";
+    /**
+     * Key to the where clause if this list view is to be opened with a more
+     * complex query than permissible by the simple query object. Must conform
+     * to the expectations of {@link DbTable#rawSqlQuery} and
+     * {@link CustomView$Control#queryWithSql}.
+     *
+     * @see INTENT_KEY_SQL_SELECTION_ARGS
+     */
+    public static final String SQL_WHERE = "sqlWhereClause";
+    /**
+     * An array of strings for restricting the rows displayed in the table.
+     *
+     * @see INTENT_KEY_SQL_WHERE
+     */
+    public static final String SQL_SELECTION_ARGS = "sqlSelectionArgs";
+    /**
+     * An array of strings giving the group by columns.
+     * What was formerly 'overview' mode is a non-null groupBy list.
+     */
+    public static final String SQL_GROUP_BY_ARGS = "sqlGroupByArgs";
+    /**
+     * The having clause, if present
+     */
+    public static final String SQL_HAVING = "sqlHavingClause";
+    /**
+     * The order by column. NOTE: restricted to a single column
+     */
+    public static final String SQL_ORDER_BY_ELEMENT_KEY = "sqlOrderByElementKey";
+    /**
+     * The order by direction (ASC or DESC)
+     */
+    public static final String SQL_ORDER_BY_DIRECTION = "sqlOrderByDirection";
   }
   
   public static class FragmentTags {

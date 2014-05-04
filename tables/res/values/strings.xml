@@ -68,6 +68,9 @@
 	<string name="read_access_control_group">Read Access Control Group:</string>
 	<string name="select_view">Select View</string>
 	<string name="spreadsheet">Spreadsheet</string>
+	<string name="error_while_changing_group_by_columns">Error while changing group by columns</string>
+	<string name="error_while_changing_sort_column">Error while changing sort column</string>
+	<string name="error_while_changing_index_column">Error while changing index column</string>
 	<string name="list">List</string>
 	<string name="graph">Graph</string>
 	<string name="map">Map</string>

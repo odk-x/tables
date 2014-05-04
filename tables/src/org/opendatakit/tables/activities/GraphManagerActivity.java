@@ -24,6 +24,7 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ActionBar;
@@ -150,9 +151,9 @@ public class GraphManagerActivity extends ListActivity {
       this.appName = TableFileUtils.getDefaultAppName();
     }
     this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
-    this.mSqlWhereClause = getIntent().getStringExtra(Controller.INTENT_KEY_SQL_WHERE);
+    this.mSqlWhereClause = getIntent().getStringExtra(IntentKeys.SQL_WHERE);
     this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
-        Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+        IntentKeys.SQL_SELECTION_ARGS);
     this.tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     this.kvsh = tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION_VIEWS);
     this.graphViewKvsh = tp.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
@@ -184,8 +185,8 @@ public class GraphManagerActivity extends ListActivity {
     newGraphViewIntent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, graphName);
     // Now put the sql ones if they exist.
     if (this.mSqlWhereClause != null) {
-      newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_WHERE, mSqlWhereClause);
-      newGraphViewIntent.putExtra(Controller.INTENT_KEY_SQL_SELECTION_ARGS, mSqlSelectionArgs);
+      newGraphViewIntent.putExtra(IntentKeys.SQL_WHERE, mSqlWhereClause);
+      newGraphViewIntent.putExtra(IntentKeys.SQL_SELECTION_ARGS, mSqlSelectionArgs);
     }
     // TODO: shouldn't this be start-activity-for-result?
     startActivity(newGraphViewIntent);

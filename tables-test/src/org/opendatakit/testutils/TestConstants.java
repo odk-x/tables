@@ -9,6 +9,8 @@ import java.util.Set;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.utils.SQLQueryStruct;
 
 /**
  * Constants for use in tests.
@@ -47,6 +49,16 @@ public class TestConstants {
     doReturn(getAllValidPossibleTableViewTypes())
         .when(tpMock).getPossibleViewTypes();
     return tpMock;
+  }
+  
+  public static SQLQueryStruct getSQLQueryStructMock() {
+    SQLQueryStruct mock = mock(SQLQueryStruct.class);
+    return mock;
+  }
+  
+  public static UserTable getUserTableMock() {
+    UserTable mock = mock(UserTable.class);
+    return mock;
   }
   
   public static PossibleTableViewTypes getAllValidPossibleTableViewTypes() {

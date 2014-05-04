@@ -20,6 +20,7 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomGraphView;
 
@@ -126,21 +127,21 @@ implements DisplayActivity {
 
 		Bundle intentExtras = getIntent().getExtras();
       String sqlWhereClause =
-          intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+          intentExtras.getString(IntentKeys.SQL_WHERE);
       String[] sqlSelectionArgs = null;
       if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
          sqlSelectionArgs = intentExtras.getStringArray(
-            Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+            IntentKeys.SQL_SELECTION_ARGS);
       }
-      String[] sqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+      String[] sqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
       String sqlHaving = null;
       if ( sqlGroupBy != null && sqlGroupBy.length != 0 ) {
-        sqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+        sqlHaving = intentExtras.getString(IntentKeys.SQL_HAVING);
       }
-      String sqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+      String sqlOrderByElementKey = intentExtras.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
       String sqlOrderByDirection = null;
       if ( sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0 ) {
-        sqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+        sqlOrderByDirection = intentExtras.getString(IntentKeys.SQL_ORDER_BY_DIRECTION);
         if ( sqlOrderByDirection == null || sqlOrderByDirection.length() == 0 ) {
           sqlOrderByDirection = "ASC";
         }

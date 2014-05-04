@@ -1,6 +1,8 @@
 package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.testutils.TestConstants;
 
 public class TableDisplayActivityStub extends TableDisplayActivity {
@@ -11,11 +13,17 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
       TestConstants.TABLES_DEFAULT_APP_NAME;
   public static final TableProperties DEFAULT_TABLE_PROPERTIES = 
       TestConstants.getTablePropertiesMock();
-  public static final String DEFAULT_TABLE_ID = "testTableId";
+  public static final String DEFAULT_TABLE_ID = TestConstants.DEFAULT_TABLE_ID;
+  public static final SQLQueryStruct DEFAULT_SQL_QUERY_STRUCT = 
+      TestConstants.getSQLQueryStructMock();
+  public static final UserTable DEFAULT_USER_TABLE = 
+      TestConstants.getUserTableMock();
   
   public static String APP_NAME = DEFAULT_APP_NAME;
   public static TableProperties TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   public static String TABLE_ID = DEFAULT_TABLE_ID;
+  public static SQLQueryStruct SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
+  public static UserTable USER_TABLE = DEFAULT_USER_TABLE;
   
   @Override
   TableProperties retrieveTablePropertiesForId(String tableId) {
@@ -32,6 +40,16 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     return TABLE_ID;
   }
   
+  @Override
+  SQLQueryStruct retrieveSQLQueryStatStructFromIntent() {
+    return SQL_QUERY_STRUCT;
+  }
+  
+  @Override
+  UserTable retrieveUserTable() {
+    return USER_TABLE;
+  }
+  
   /**
    * Reset the stub's state to the default values. Should be called after each
    * test modifying the object.
@@ -40,6 +58,8 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     APP_NAME = DEFAULT_APP_NAME;
     TABLE_ID = DEFAULT_TABLE_ID;
     TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
+    SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
+    USER_TABLE = DEFAULT_USER_TABLE;
   }
 
 }

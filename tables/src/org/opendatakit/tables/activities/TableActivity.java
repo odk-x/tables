@@ -14,6 +14,7 @@ import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -211,20 +212,20 @@ public class TableActivity extends Activity {
     mDbTable = DbTable.getDbTable(mTableProperties);
 
     Bundle intentExtras = getIntent().getExtras();
-    mSqlWhereClause = intentExtras.getString(Controller.INTENT_KEY_SQL_WHERE);
+    mSqlWhereClause = intentExtras.getString(IntentKeys.SQL_WHERE);
     mSqlSelectionArgs = null;
     if (mSqlWhereClause != null && mSqlWhereClause.length() != 0) {
-      mSqlSelectionArgs = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_SELECTION_ARGS);
+      mSqlSelectionArgs = intentExtras.getStringArray(IntentKeys.SQL_SELECTION_ARGS);
     }
-    mSqlGroupBy = intentExtras.getStringArray(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS);
+    mSqlGroupBy = intentExtras.getStringArray(IntentKeys.SQL_GROUP_BY_ARGS);
     mSqlHaving = null;
     if ( mSqlGroupBy != null && mSqlGroupBy.length != 0 ) {
-      mSqlHaving = intentExtras.getString(Controller.INTENT_KEY_SQL_HAVING);
+      mSqlHaving = intentExtras.getString(IntentKeys.SQL_HAVING);
     }
-    mSqlOrderByElementKey = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY);
+    mSqlOrderByElementKey = intentExtras.getString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY);
     mSqlOrderByDirection = null;
     if ( mSqlOrderByElementKey != null && mSqlOrderByElementKey.length() != 0 ) {
-      mSqlOrderByDirection = intentExtras.getString(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION);
+      mSqlOrderByDirection = intentExtras.getString(IntentKeys.SQL_ORDER_BY_DIRECTION);
       if ( mSqlOrderByDirection != null && mSqlOrderByDirection.length() == 0 ) {
         mSqlOrderByDirection = "ASC";
       }
@@ -605,23 +606,23 @@ public class TableActivity extends Activity {
                                              String[] sqlGroupBy, String sqlHaving,
                                              String sqlOrderByElementKey, String sqlOrderByDirection) {
     if (sqlWhereClause != null && sqlWhereClause.length() != 0) {
-      intent.putExtra(Controller.INTENT_KEY_SQL_WHERE, sqlWhereClause);
+      intent.putExtra(IntentKeys.SQL_WHERE, sqlWhereClause);
       if (sqlSelectionArgs != null && sqlSelectionArgs.length != 0) {
-        intent.putExtra(Controller.INTENT_KEY_SQL_SELECTION_ARGS, sqlSelectionArgs);
+        intent.putExtra(IntentKeys.SQL_SELECTION_ARGS, sqlSelectionArgs);
       }
     }
     if (sqlGroupBy != null && sqlGroupBy.length != 0) {
-      intent.putExtra(Controller.INTENT_KEY_SQL_GROUP_BY_ARGS, sqlGroupBy);
+      intent.putExtra(IntentKeys.SQL_GROUP_BY_ARGS, sqlGroupBy);
       if (sqlHaving != null && sqlHaving.length() != 0) {
-        intent.putExtra(Controller.INTENT_KEY_SQL_HAVING, sqlHaving);
+        intent.putExtra(IntentKeys.SQL_HAVING, sqlHaving);
       }
     }
     if (sqlOrderByElementKey != null && sqlOrderByElementKey.length() != 0) {
-      intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
+      intent.putExtra(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, sqlOrderByElementKey);
       if ( sqlOrderByDirection != null ) {
-        intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
+        intent.putExtra(IntentKeys.SQL_ORDER_BY_DIRECTION, sqlOrderByDirection);
       } else {
-        intent.putExtra(Controller.INTENT_KEY_SQL_ORDER_BY_DIRECTION, "ASC");
+        intent.putExtra(IntentKeys.SQL_ORDER_BY_DIRECTION, "ASC");
       }
     }
   }
