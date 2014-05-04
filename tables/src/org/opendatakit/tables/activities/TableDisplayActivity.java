@@ -214,7 +214,8 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     // Otherwise create a new one.
     spreadsheetFragment = new SpreadsheetFragment();
-    fragmentManager.beginTransaction().add(
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET).commit();
   }

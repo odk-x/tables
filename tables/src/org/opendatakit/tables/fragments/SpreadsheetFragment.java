@@ -110,6 +110,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       android.view.LayoutInflater inflater,
       ViewGroup container,
       Bundle savedInstanceState) {
+    this.mIndexedColumnElementKey = retrieveIndexedColumnElementKey();
+    this.mIndexedColumnOffset = retrieveIndexedColumnOffset();
     return buildView();
   };
   
@@ -130,7 +132,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   SpreadsheetView buildSpreadsheetView() {
     return new SpreadsheetView(
         this.getActivity(),
-        null,
+        SpreadsheetFragment.this,
         this.getUserTable(),
         this.mIndexedColumnOffset);
   }
