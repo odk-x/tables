@@ -7,6 +7,7 @@ import java.util.List;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -14,6 +15,7 @@ import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
 import android.app.AlertDialog;
 import android.app.ListFragment;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -80,14 +82,7 @@ public class TableManagerFragment extends ListFragment {
     this.mTpAdapter.notifyDataSetChanged();
     this.registerForContextMenu(getListView());
   }
-  
-  @Override
-  public void onResume() {
-    super.onResume();
-    ListView lv = this.getListView();
-    int childcount = lv.getChildCount();
-  }
-  
+
   @Override
   public void onListItemClick(ListView l, View v, int position, long id) {
     // There are two cases here: if it is the preferences icon, or if it is
@@ -95,7 +90,19 @@ public class TableManagerFragment extends ListFragment {
     if (v.getId() == R.id.row_item_icon) {
       Log.e(TAG, "was the icon");
     } else {
-      Log.e(TAG, "was the main item");
+      AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
+      Intent intent = baseActivity.createNewIntentWithAppName();
+      // Set the tableId.
+      TableProperties tableProperties = 
+          (TableProperties) this.getListView().getItemAtPosition(position);
+      intent.putExtra(
+          Constants.IntentKeys.TABLE_ID,
+          tableProperties.getTableId());
+      ComponentName componentName = new ComponentName(
+          baseActivity,
+          TableDisplayActivity.class);
+      intent.setComponent(componentName);
+      startActivityForResult(intent, Constants.RequestCodes.DISPLAY_VIEW);
     }
   }
   
@@ -112,7 +119,7 @@ public class TableManagerFragment extends ListFragment {
       ContextMenu.ContextMenuInfo menuInfo) {
     MenuInflater menuInflater = this.getActivity().getMenuInflater();
     menuInflater.inflate(R.menu.table_manager_context, menu);
-  };
+  }
   
   @Override
   public boolean onContextItemSelected(MenuItem item) {

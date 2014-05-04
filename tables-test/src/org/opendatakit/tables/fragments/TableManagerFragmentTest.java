@@ -13,32 +13,32 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivityStub;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestContextMenu;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
-import org.robolectric.shadows.ShadowAlertDialog;
-import org.robolectric.shadows.ShadowListView;
+import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import org.robolectric.shadows.ShadowLog;
-import org.robolectric.tester.android.view.TestMenuItem;
 import org.robolectric.util.ActivityController;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.view.ContextMenu;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.RelativeLayout;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableManagerFragmentTest {
   
   String mockTableName1 = "alpha";
   String mockTableName2 = "beta";
+  String mockTableId1 = "firstTableId";
+  String mockTableId2 = "secondTableId";
   
   private TableManagerFragment fragment;
   private Activity parentActivity;
@@ -53,6 +53,8 @@ public class TableManagerFragmentTest {
     TableProperties tp2 = mock(TableProperties.class);
     when(tp1.getDisplayName()).thenReturn(mockTableName1);
     when(tp2.getDisplayName()).thenReturn(mockTableName2);
+    when(tp1.getTableId()).thenReturn(mockTableId1);
+    when(tp2.getTableId()).thenReturn(mockTableId2);
     List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
     listOfMocks.add(tp1);
     listOfMocks.add(tp2);
@@ -67,11 +69,11 @@ public class TableManagerFragmentTest {
     ShadowLog.stream = System.out;
     // We need external storage available for accessing the database.
     TestCaseUtils.setExternalStorageMounted();
-    startFragment(this.fragment);
+    ODKFragmentTestUtil.startFragmentForTableActivity(
+        AbsBaseActivityStub.class,
+        fragment,
+        null);
     this.parentActivity = this.fragment.getActivity();
-    // Have to call visible to get the fragment to think its been attached to
-    // a window.
-    ActivityController.of(this.parentActivity).visible();
   }
     
   /**
@@ -139,6 +141,36 @@ public class TableManagerFragmentTest {
         .hasSize(2)
         .hasItem(R.id.table_manager_delete_table)
         .hasItem(R.id.table_manager_edit_table_properties);
+  }
+  
+  @Test
+  public void onItemClickLaunchesTableDisplayActivityWithCorrectIntent() {
+    int position = 0;
+    this.setupFragmentWithTwoItems();
+    View firstItemView = this.fragment.getListAdapter().getView(
+        position,
+        null,
+        new RelativeLayout(this.parentActivity));
+    assertThat(firstItemView).isNotNull();
+    this.fragment.getListView().performItemClick(
+        firstItemView,
+        position,
+        this.fragment.getListAdapter().getItemId(position));
+    ShadowActivity shadowActivity = shadowOf(this.parentActivity);
+    IntentForResult intent = shadowActivity.peekNextStartedActivityForResult();
+    ComponentName target = new ComponentName(
+        this.parentActivity,
+        TableDisplayActivity.class);
+    ComponentName intentComponent = intent.intent.getComponent();
+    org.fest.assertions.api.Assertions.assertThat(intentComponent)
+        .isNotNull()
+        .isEqualTo(target);
+    // There should also be a table id in the intent.
+    String tableIdExtra = intent.intent.getStringExtra(
+        Constants.IntentKeys.TABLE_ID);
+    org.fest.assertions.api.Assertions.assertThat(tableIdExtra)
+        .isNotNull()
+        .isEqualTo(mockTableId1);
   }
   
   // TODO: Should probably also test that the context menu creates a dialog,
