@@ -16,6 +16,7 @@
 package org.opendatakit.tables.utils;
 
 import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 
 import android.graphics.Color;
@@ -39,6 +40,12 @@ public class Constants {
   public static class IntentKeys {
     public static final String TABLE_ID = "tableId";
     public static final String APP_NAME = "appName";
+    /**
+     * Tells {@link TableDisplayActivity} what time of view it should be
+     * displaying.
+     */
+    public static final String TABLE_DISPLAY_VIEW_TYPE = 
+        "tableDisplayViewType";
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
@@ -98,6 +105,10 @@ public class Constants {
       public static String DETAIL_FILE = "table_pref_detail_file";
       public static String GRAPH_MANAGER = "table_pref_graph_view_manager";
     }
+  }
+  
+  public static class RequestCodes {
+    public static int DISPLAY_VIEW = 1;
   }
 
 }

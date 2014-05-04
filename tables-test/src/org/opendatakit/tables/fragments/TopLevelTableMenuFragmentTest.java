@@ -10,12 +10,18 @@ import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivityStub;
+import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowActivity;
+import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -239,6 +245,88 @@ public class TopLevelTableMenuFragmentTest {
         false);
     this.setupStateWithCustomPossibleViewTypes(viewTypes);
     this.assertEnabledOnItems(true, false, false, false);
+  }
+  
+  @Test
+  public void spreadsheetItemStartsActivityCorrectly() {
+    this.setupStateWithDefaults();
+    MenuItem item = this.getSpreadsheetViewMenuItem();
+    this.fragment.onOptionsItemSelected(item);
+    ShadowActivity shadow = shadowOf(this.activity);
+    IntentForResult intent = shadow.peekNextStartedActivityForResult();
+    assertThat(intent.intent).isNotNull();
+    this.assertIntentStartsTableDisplayActivity(intent.intent);
+    // Now make sure we have the right view type.
+    String viewTypeExtra = intent.intent.getExtras().getString(
+        Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+    org.fest.assertions.api.Assertions.assertThat(viewTypeExtra)
+        .isNotNull()
+        .isEqualTo(TableDisplayActivity.ViewFragmentType.SPREADSHEET.name());
+  }
+  
+  @Test
+  public void listItemStartsActivityCorrectly() {
+    this.setupStateWithDefaults();
+    MenuItem item = this.getListViewMenuItem();
+    this.fragment.onOptionsItemSelected(item);
+    ShadowActivity shadow = shadowOf(this.activity);
+    IntentForResult intent = shadow.peekNextStartedActivityForResult();
+    assertThat(intent.intent).isNotNull();
+    this.assertIntentStartsTableDisplayActivity(intent.intent);
+    // Now make sure we have the right view type.
+    String viewTypeExtra = intent.intent.getExtras().getString(
+        Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+    org.fest.assertions.api.Assertions.assertThat(viewTypeExtra)
+        .isNotNull()
+        .isEqualTo(TableDisplayActivity.ViewFragmentType.LIST.name());
+  }
+  
+  @Test
+  public void mapItemStartsActivityCorrectly() {
+    this.setupStateWithDefaults();
+    MenuItem item = this.getMapViewMenuItem();
+    this.fragment.onOptionsItemSelected(item);
+    ShadowActivity shadow = shadowOf(this.activity);
+    IntentForResult intent = shadow.peekNextStartedActivityForResult();
+    assertThat(intent.intent).isNotNull();
+    this.assertIntentStartsTableDisplayActivity(intent.intent);
+    // Now make sure we have the right view type.
+    String viewTypeExtra = intent.intent.getExtras().getString(
+        Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+    org.fest.assertions.api.Assertions.assertThat(viewTypeExtra)
+        .isNotNull()
+        .isEqualTo(TableDisplayActivity.ViewFragmentType.MAP.name());
+  }
+  
+  @Test
+  public void graphItemStartsActivityCorrectly() {
+    this.setupStateWithDefaults();
+    MenuItem item = this.getGraphViewMenuItem();
+    this.fragment.onOptionsItemSelected(item);
+    ShadowActivity shadow = shadowOf(this.activity);
+    IntentForResult intent = shadow.peekNextStartedActivityForResult();
+    assertThat(intent.intent).isNotNull();
+    this.assertIntentStartsTableDisplayActivity(intent.intent);
+    // Now make sure we have the right view type.
+    String viewTypeExtra = intent.intent.getExtras().getString(
+        Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE);
+    org.fest.assertions.api.Assertions.assertThat(viewTypeExtra)
+        .isNotNull()
+        .isEqualTo(TableDisplayActivity.ViewFragmentType.GRAPH.name());
+  }
+  
+  /**
+   * A helper method that asserts that intent was going to start with
+   * {@link TableDisplayActivity}.
+   * @param intent
+   */
+  public void assertIntentStartsTableDisplayActivity(Intent intent) {
+    ComponentName intentComponent = intent.getComponent();
+    ComponentName target = new ComponentName(
+        this.activity,
+        TableDisplayActivity.class);
+    org.fest.assertions.api.Assertions.assertThat(intentComponent)
+        .isEqualTo(target);
   }
   
   private void assertEnabledOnItems(

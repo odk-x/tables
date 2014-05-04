@@ -6,9 +6,11 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.utils.Constants;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -68,6 +70,49 @@ public class TopLevelTableMenuFragment extends Fragment {
         viewTypes,
         menu);
   }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    Intent tableDisplayActivityIntent = new Intent(
+        getActivity(),
+        TableDisplayActivity.class);
+    switch (item.getItemId()) {
+    case R.id.top_level_table_menu_view_spreadsheet_view:
+      tableDisplayActivityIntent.putExtra(
+          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
+          TableDisplayActivity.ViewFragmentType.SPREADSHEET.name());
+      this.startActivityForResult(
+          tableDisplayActivityIntent,
+          Constants.RequestCodes.DISPLAY_VIEW);
+      return true;
+    case R.id.top_level_table_menu_view_list_view:
+      tableDisplayActivityIntent.putExtra(
+          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
+          TableDisplayActivity.ViewFragmentType.LIST.name());
+      this.startActivityForResult(
+          tableDisplayActivityIntent,
+          Constants.RequestCodes.DISPLAY_VIEW);
+      return true;
+    case R.id.top_level_table_menu_view_graph_view:
+      tableDisplayActivityIntent.putExtra(
+          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
+          TableDisplayActivity.ViewFragmentType.GRAPH.name());
+      this.startActivityForResult(
+          tableDisplayActivityIntent,
+          Constants.RequestCodes.DISPLAY_VIEW);
+      return true;
+    case R.id.top_level_table_menu_view_map_view:
+      tableDisplayActivityIntent.putExtra(
+          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
+          TableDisplayActivity.ViewFragmentType.MAP.name());
+      this.startActivityForResult(
+          tableDisplayActivityIntent,
+          Constants.RequestCodes.DISPLAY_VIEW);
+      return true;
+    default:
+      return super.onOptionsItemSelected(item);
+    }
+  };
   
   /**
    * Retrieve the {@link TableViewType}s that are valid for the table
