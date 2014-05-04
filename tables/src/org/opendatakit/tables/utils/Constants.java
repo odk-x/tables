@@ -84,6 +84,9 @@ public class Constants {
     /** Tag for {@link TopLevelTableMenuFragment} */
     public static final String TABLE_MENU = "tagTableMenuFragment";
     public static final String SPREADSHEET = "tagSpreadsheetFragment";
+    public static final String MAP = "tagMapFragment";
+    public static final String LIST = "tagListFragment";
+    public static final String GRAPH = "tagGraphFragment";
   }
 
   public static class PreferenceKeys {

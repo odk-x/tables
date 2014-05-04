@@ -6,6 +6,7 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 
 import android.app.Activity;
@@ -33,6 +34,10 @@ public class TopLevelTableMenuFragment extends Fragment {
      * @return
      */
     public TableDisplayActivity.ViewFragmentType getCurrentFragmentType();
+    public void showSpreadsheetFragment();
+    public void showMapFragment();
+    public void showListFragment();
+    public void showGraphFragment();
   }
   
   private static final String TAG = 
@@ -69,45 +74,76 @@ public class TopLevelTableMenuFragment extends Fragment {
     enableAndDisableViewTypes(
         viewTypes,
         menu);
+    selectCorrectViewType(retrieveInterfaceImpl(), menu);
+  }
+  
+  /**
+   * Selects the correct view type that is being displayed by the
+   * {@link ITopLevelTableMenuActivity}.
+   * @param impl
+   * @param inflatedMenu
+   */
+  private void selectCorrectViewType(
+      ITopLevelTableMenuActivity impl,
+      Menu inflatedMenu) {
+    ViewFragmentType currentFragment = impl.getCurrentFragmentType();
+    if (currentFragment == null) {
+      Log.e(TAG, "did not find a current fragment type. Not selecting view.");
+      return;
+    }
+    MenuItem menuItem = null;
+    switch (currentFragment) {
+    case SPREADSHEET:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_spreadsheet_view);
+      menuItem.setChecked(true);
+      break;
+    case LIST:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_list_view);
+      menuItem.setChecked(true);
+      break;
+    case GRAPH:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_graph_view);
+      menuItem.setChecked(true);
+      break;
+    case MAP:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_map_view);
+      menuItem.setChecked(true);
+      break;
+    default:
+      Log.e(TAG, "view type not recognized: " + currentFragment);
+    }
+  }
+  
+  /**
+   * Retrieve the implementation of {@link ITopLevelTableMenuActivity} this
+   * object is plugged into.
+   * @return
+   */
+  ITopLevelTableMenuActivity retrieveInterfaceImpl() {
+    ITopLevelTableMenuActivity impl = 
+        (ITopLevelTableMenuActivity) getActivity();
+    return impl;
   }
   
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    Intent tableDisplayActivityIntent = new Intent(
-        getActivity(),
-        TableDisplayActivity.class);
+    ITopLevelTableMenuActivity interfaceImpl = retrieveInterfaceImpl();
     switch (item.getItemId()) {
     case R.id.top_level_table_menu_view_spreadsheet_view:
-      tableDisplayActivityIntent.putExtra(
-          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
-          TableDisplayActivity.ViewFragmentType.SPREADSHEET.name());
-      this.startActivityForResult(
-          tableDisplayActivityIntent,
-          Constants.RequestCodes.DISPLAY_VIEW);
+      interfaceImpl.showSpreadsheetFragment();
       return true;
     case R.id.top_level_table_menu_view_list_view:
-      tableDisplayActivityIntent.putExtra(
-          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
-          TableDisplayActivity.ViewFragmentType.LIST.name());
-      this.startActivityForResult(
-          tableDisplayActivityIntent,
-          Constants.RequestCodes.DISPLAY_VIEW);
+      interfaceImpl.showListFragment();
       return true;
     case R.id.top_level_table_menu_view_graph_view:
-      tableDisplayActivityIntent.putExtra(
-          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
-          TableDisplayActivity.ViewFragmentType.GRAPH.name());
-      this.startActivityForResult(
-          tableDisplayActivityIntent,
-          Constants.RequestCodes.DISPLAY_VIEW);
+      interfaceImpl.showGraphFragment();
       return true;
     case R.id.top_level_table_menu_view_map_view:
-      tableDisplayActivityIntent.putExtra(
-          Constants.IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
-          TableDisplayActivity.ViewFragmentType.MAP.name());
-      this.startActivityForResult(
-          tableDisplayActivityIntent,
-          Constants.RequestCodes.DISPLAY_VIEW);
+      interfaceImpl.showMapFragment();
       return true;
     default:
       return super.onOptionsItemSelected(item);

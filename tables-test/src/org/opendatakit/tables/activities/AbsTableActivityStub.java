@@ -62,4 +62,28 @@ public class AbsTableActivityStub extends AbsTableActivity implements
     return FRAGMENT_TYPE;
   }
 
+  @Override
+  public void showSpreadsheetFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void showMapFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void showListFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void showGraphFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
 }

@@ -5,17 +5,18 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
+import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ViewTreeObserver;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -72,6 +73,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case LIST:
       break;
     case MAP:
+      this.showMapFragment();
       break;
     default:
       Log.e(TAG, "ViewFragmentType not recognized: " + viewFragmentType);
@@ -204,7 +206,7 @@ public class TableDisplayActivity extends AbsTableActivity
   /**
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
-  protected void showSpreadsheetFragment() {
+  public void showSpreadsheetFragment() {
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
@@ -219,14 +221,62 @@ public class TableDisplayActivity extends AbsTableActivity
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET).commit();
   }
+  
+  public void showMapFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    TableMapFragment mapFragment = (TableMapFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP);
+    if (mapFragment != null) {
+      fragmentManager.beginTransaction().show(mapFragment).commit();
+    }
+    // Otherwise we need to create one.
+    mapFragment = new TableMapFragment();
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        mapFragment,
+        Constants.FragmentTags.MAP).commit();
+  }
 
   /**
    * Return the {@link ViewFragmentType} that is currently being displayed.
    */
   @Override
   public ViewFragmentType getCurrentFragmentType() {
-    // TODO: return the right thing.
-    return ViewFragmentType.SPREADSHEET;
+    FragmentManager fragmentManager = this.getFragmentManager();
+    Fragment fragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.SPREADSHEET);
+    if (fragment != null && fragment.isVisible()) {
+      return ViewFragmentType.SPREADSHEET;
+    }
+    fragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.LIST);
+    if (fragment != null && fragment.isVisible()) {
+      return ViewFragmentType.LIST;
+    }
+    fragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.MAP);
+    if (fragment != null && fragment.isVisible()) {
+      return ViewFragmentType.MAP;
+    }
+    fragment = fragmentManager.findFragmentByTag(
+        Constants.FragmentTags.GRAPH);
+    if (fragment != null && fragment.isVisible()) {
+      return ViewFragmentType.GRAPH;
+    }
+    Log.e(TAG, "didn't find any of the main views visible. Returning null.");
+    return null;
+  }
+
+  @Override
+  public void showListFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public void showGraphFragment() {
+    // TODO Auto-generated method stub
+    
   }
 
 }
