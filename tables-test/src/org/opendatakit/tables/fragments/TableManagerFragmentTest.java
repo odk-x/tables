@@ -4,11 +4,11 @@ import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
-import static org.robolectric.util.FragmentTestUtil.startFragment;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.TableProperties;
@@ -23,7 +23,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowActivity.IntentForResult;
 import org.robolectric.shadows.ShadowLog;
-import org.robolectric.util.ActivityController;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -42,6 +41,11 @@ public class TableManagerFragmentTest {
   
   private TableManagerFragment fragment;
   private Activity parentActivity;
+  
+  @After
+  public void after() {
+    AbsBaseActivityStub.resetState();
+  }
   
   public void setupFragmentWithNoItems() {
     this.fragment = getSpy(new ArrayList<TableProperties>());

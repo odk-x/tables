@@ -105,6 +105,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         this.mIndexedColumnElementKey);
   }
   
+  @Override
+  public View onCreateView(
+      android.view.LayoutInflater inflater,
+      ViewGroup container,
+      Bundle savedInstanceState) {
+    return buildView();
+  };
+  
   View buildView() {
     if (this.getUserTable().getWidth() == 0) {
       TextView textView = new TextView(getActivity());

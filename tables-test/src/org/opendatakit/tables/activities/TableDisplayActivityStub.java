@@ -25,6 +25,13 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static SQLQueryStruct SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
   public static UserTable USER_TABLE = DEFAULT_USER_TABLE;
   
+  public static final boolean DEFAULT_BUILD_MENU_FRAGMENT = true;
+  /**
+   *  True if the menu fragment should be initialized with the rest of the
+   *  state setup.
+   */
+  public static boolean BUILD_MENU_FRAGMENT = DEFAULT_BUILD_MENU_FRAGMENT;
+  
   @Override
   TableProperties retrieveTablePropertiesForId(String tableId) {
     return TABLE_PROPERTIES;
@@ -50,6 +57,13 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     return USER_TABLE;
   }
   
+  @Override
+  protected void initializeMenuFragment() {
+    if (BUILD_MENU_FRAGMENT) {
+      super.initializeMenuFragment();
+    }
+  }
+  
   /**
    * Reset the stub's state to the default values. Should be called after each
    * test modifying the object.
@@ -60,6 +74,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
     SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
     USER_TABLE = DEFAULT_USER_TABLE;
+    BUILD_MENU_FRAGMENT = DEFAULT_BUILD_MENU_FRAGMENT;
   }
 
 }

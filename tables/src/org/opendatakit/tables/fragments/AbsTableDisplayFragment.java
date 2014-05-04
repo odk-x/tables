@@ -18,6 +18,7 @@ public abstract class AbsTableDisplayFragment extends Fragment {
   
   @Override
   public void onAttach(Activity activity) {
+    super.onAttach(activity);
     if (!(activity instanceof TableDisplayActivity)) {
       throw new IllegalStateException("fragment must be attached to a " +
           TableDisplayActivity.class.getSimpleName());

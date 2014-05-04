@@ -45,7 +45,7 @@ public class TableDisplayActivity extends AbsTableActivity
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     this.initializeBackingTable();
-    this.initializeFragments();
+    this.initializeMenuFragment();
   }
   
   /**
@@ -101,7 +101,7 @@ public class TableDisplayActivity extends AbsTableActivity
     return result;
   }
   
-  protected void initializeFragments() {
+  protected void initializeMenuFragment() {
     FragmentManager fragmentManager = this.getFragmentManager();
     TopLevelTableMenuFragment menuFragment = new TopLevelTableMenuFragment();
     fragmentManager.beginTransaction().add(
