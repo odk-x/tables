@@ -8,7 +8,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.fragments.ITableFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
@@ -65,7 +64,7 @@ public class TableActivity extends Activity {
   static final int FIRST_FREE_MENU_ITEM_ID = 7;
 
   /** The current fragment being displayed. */
-  private ITableFragment mCurrentFragment;
+  private TableMapFragment mCurrentFragment;
 
   /** The fragment that contains map information. */
   private TableMapFragment mMapFragment;
@@ -165,11 +164,7 @@ public class TableActivity extends Activity {
     refreshDbTable(mTableProperties.getTableId());
     mCurrentFragment.init();
   }
-
-  public void onSearchButtonClick(View v) {
-    mCurrentFragment.onSearch();
-  }
-
+  
   /**
    * @return The text in the search field.
    */

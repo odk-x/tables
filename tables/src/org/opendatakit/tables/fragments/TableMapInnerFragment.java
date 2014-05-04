@@ -16,7 +16,7 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
 
 import android.graphics.Color;
@@ -165,7 +165,8 @@ public class TableMapInnerFragment extends MapFragment {
    * Sets up the color properties used for color rules.
    */
   public void resetColorProperties() {
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    TableProperties tp = ((TableDisplayActivity)
+        getActivity()).getTableProperties();
     // Now let's set up the color rule things.
     Map<String, Integer> indexMap = new HashMap<String, Integer>();
     Map<String, ColumnProperties> propertiesMap = new HashMap<String, ColumnProperties>();
@@ -185,7 +186,8 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private void findColorGroup() {
     // Grab the color group
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    TableProperties tp = ((TableDisplayActivity) getActivity())
+        .getTableProperties();
 
     // Grab the key value store helper from the map fragment.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
@@ -234,8 +236,9 @@ public class TableMapInnerFragment extends MapFragment {
       return;
     }
 
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
-    UserTable table = ((TableActivity) getActivity()).getTable();
+    TableProperties tp = 
+        ((TableDisplayActivity) getActivity()).getTableProperties();
+    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
 
     // Try to find the map columns in the store.
     ColumnProperties latitudeColumn = tp.getColumnByElementKey(latitudeElementKey);
@@ -287,7 +290,7 @@ public class TableMapInnerFragment extends MapFragment {
    *         marker color if no rules apply to the row.
    */
   private float getHueForRow(int index) {
-    UserTable table = ((TableActivity) getActivity()).getTable();
+    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
     // Create a guide depending on the color group.
     if (mColorGroup != null) {
       ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
@@ -303,7 +306,8 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLatitudeElementKey() {
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    TableProperties tp = 
+        ((TableDisplayActivity) getActivity()).getTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
@@ -324,7 +328,8 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLongitudeElementKey() {
-    TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+    TableProperties tp = 
+        ((TableDisplayActivity) getActivity()).getTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
@@ -405,7 +410,8 @@ public class TableMapInnerFragment extends MapFragment {
       public void onMapLongClick(LatLng location) {
         // Create a mapping from the lat and long columns to the
         // values in the location.
-        TableProperties tp = ((TableActivity) getActivity()).getTableProperties();
+        TableProperties tp = 
+            ((TableDisplayActivity) getActivity()).getTableProperties();
         Map<String, String> elementNameToValue = new HashMap<String, String>();
         for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
           elementNameToValue.put(cp.getElementName(), "");
@@ -594,7 +600,7 @@ public class TableMapInnerFragment extends MapFragment {
    * Focuses the camera on the marker associated with the row id.
    */
   public void focusOnMarker(String rowId) {
-    UserTable table = ((TableActivity) getActivity()).getTable();
+    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
     int index = table.getRowNumFromId(rowId);
     for (final Marker marker : mMarkerIds.keySet()) {
       if (index == mMarkerIds.get(marker)) {
