@@ -27,11 +27,24 @@ public class TestConstants {
   public static String ROW_NAME = "testRowName";
   public static String SCREEN_PATH = "?testKey=testValue";
   
+  public static String DEFAULT_SQL_WHERE_CALUSE = "dudeWhereIsMyCar";
+  public static String[] DEFAULT_SQL_SELECTION_ARGS =
+      new String[] { "one", "two" };
+  public static String[] DEFAULT_SQL_GROUP_BY =
+      new String[] { "group one", "group two" };
+  public static String DEFAULT_SQL_HAVING = "anyOldHaving";
+  public static String DEFAULT_SQL_ORDER_BY_ELEMENT_KEY =
+      "elementKeyByWhichToOrder";
+  public static String DEFAULT_SQL_ORDER_BY_DIRECTION =
+      "directionByWhichToOrder";
+  
   public static final String DEFAULT_FRAGMENT_TAG = "testFragmentTag";
   
   public static final int DEFAULT_FRAGMENT_ID = 12345;
   
   public static final String DEFAULT_FILE_NAME = "test/File/Name";
+  
+  public static final String DEFAULT_ROW_ID = "testRowId";
   
   /**
    * The default app name for tables. Using this rather than the

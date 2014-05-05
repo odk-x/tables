@@ -41,12 +41,16 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.CustomHomeScreenActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.Constants.RequestCodes;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
@@ -59,6 +63,7 @@ import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -113,10 +118,6 @@ public abstract class CustomView extends LinearLayout {
 
   public CustomView(Activity parentActivity, String appName) {
     super(parentActivity);
-//    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-//        LayoutParams.MATCH_PARENT, 
-//        LayoutParams.WRAP_CONTENT);
-//    this.setLayoutParams(layoutParams);
     this.setOrientation(LinearLayout.VERTICAL);
     this.setWeightSum(6f);
     initCommonWebView(parentActivity);
@@ -214,43 +215,6 @@ public abstract class CustomView extends LinearLayout {
   protected Activity getContainerActivity() {
     return this.mParentActivity;
   }
-
-  /**
-   * Add a row using Collect. This is the hook into the javascript. The activity
-   * holding this view must have implemented the onActivityReturn method
-   * appropriately to handle the result.
-   * <p>
-   * It allows you to specify a form other than that which may be the default
-   * for the table. It differs in {@link #addRow(String)} in that it lets you
-   * add the row using an arbitrary form.
-   *
-   * @param tableName
-   * @param formId
-   * @param formVersion
-   * @param formRootElement
-   * @param tp
-   * @param prepopulateValues
-   *          a map of elementKey to value for the rows with which you want to
-   *          prepopulate the add row.
-   */
-//  private void addRowWithCollectAndSpecificForm(String tableName,
-//      String formId, String formVersion, String formRootElement,
-//      TableProperties tp, Map<String, String> prepopulateValues) {
-//    CollectFormParameters formParameters =
-//        CollectFormParameters.constructCollectFormParameters(tp);
-//    if (formId != null && !formId.equals("")) {
-//      formParameters.setFormId(formId);
-//    }
-//    if (formVersion != null && !formVersion.equals("")) {
-//      formParameters.setFormVersion(formVersion);
-//    }
-//    if (formRootElement != null && !formRootElement.equals("")) {
-//      formParameters.setRootElement(formRootElement);
-//    }
-//    prepopulateRowAndLaunchCollect(formParameters, tp, prepopulateValues);
-//  }
-
-
 
   /**
    * Actually acquire the Intents and launch the forms.
@@ -385,18 +349,53 @@ public abstract class CustomView extends LinearLayout {
       this.mActivity = activity;
       Log.d(TAG, "calling Control Constructor");
     }
+    
+    /**
+     * Start the detail view.
+     * @param tableId
+     * @param rowId
+     * @param relativePath
+     * @return
+     */
+    boolean helperLaunchDetailView(
+        String tableId,
+        String rowId,
+        String relativePath) {
+      Bundle bundle = new Bundle();
+      String appName = retrieveAppName();
+      IntentUtil.addDetailViewKeysToIntent(
+          bundle,
+          appName,
+          tableId,
+          rowId,
+          relativePath);
+      Intent intent = this.getTableDisplayActivityIntentWithBundle(bundle);
+      this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
+      return true;
+    }
+        
+    /**
+     * Retrieve the app name that should be used from the parent activity.
+     * @return
+     */
+    String retrieveAppName() {
+      if (!(this.mActivity instanceof AbsBaseActivity)) {
+        throw new IllegalStateException("CustomView must be have an " +
+        		AbsBaseActivity.class.getSimpleName());
+      }
+      AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
+      return baseActivity.getAppName();
+    }
+    
 
     /**
      * @see {@link ControlIf#openDetailView(String, String, String)}
      */
-    public boolean openDetailViewWithFile(String tableId, String rowId, String relativePath) {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      if (tp == null) {
-        Log.e(TAG, "table could not be found with id: " + tableId);
-        return false;
-      }
-      Controller.launchDetailActivity(mActivity, mAppName, tableId, rowId, relativePath);
-      return true;
+    public boolean openDetailViewWithFile(
+        String tableId,
+        String rowId,
+        String relativePath) {
+      return this.helperLaunchDetailView(tableId, rowId, relativePath);
     }
 
     /**
@@ -417,16 +416,122 @@ public abstract class CustomView extends LinearLayout {
         String sqlHaving,
         String sqlOrderByElementName,
         String sqlOrderByDirection) {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      if (tp == null) {
-        Log.e(TAG, "tableId [" + tableId + "] not in map");
-        return false;
-      }
+//      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+//      if (tp == null) {
+//        Log.e(TAG, "tableId [" + tableId + "] not in map");
+//        return false;
+//      }
       // We're not going to support search text from the js, so pass null.
-      Controller.launchTableActivity(mActivity, tp, tp.getDefaultViewType(), sqlWhereClause,
-          sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementName, sqlOrderByDirection);
+//      Controller.launchTableActivity(mActivity, tp, tp.getDefaultViewType(), sqlWhereClause,
+//          sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementName, sqlOrderByDirection);
+//      return true;
+      return this.helperLaunchDefaultView(
+          tableId,
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementName,
+          sqlOrderByDirection);
+    }
+    
+    /**
+     * Actually open the table. The sql-related parameters are null safe, so
+     * only pass them in if necessary.
+     *
+     * @see {@link ControlIf#openTableWithSqlQuery(String, String, String[])}
+     * @param tableId
+     * @param sqlWhereClause
+     * @param sqlSelectionArgs
+     * @return
+     */
+    boolean helperLaunchDefaultView(
+        String tableId,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementKey,
+        String sqlOrderByDirection) {
+      return this.helperLaunchView(
+          tableId,
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementKey,
+          sqlOrderByDirection,
+          null,
+          null);
+    }
+    
+    /**
+     * Open the table to the given view type. The relativePath parameter is
+     * null safe, and if not present will not be added. The default behavior
+     * of the corresponding fragment will be followed, which should be to try
+     * and use a default file.
+     * @param tableId
+     * @param sqlWhereClause
+     * @param sqlSelectionArgs
+     * @param sqlGroupBy
+     * @param sqlHaving
+     * @param sqlOrderByElementKey
+     * @param sqlOrderByDirection
+     * @param viewType the view type. Cannot be
+     *  {@link ViewFragmentType#DETAIL}, which has its own method,
+     *  {@link #helperLaunchDefaultView(String, String, String[], String[], String, String, String)}
+     *  with additional parameters.
+     * @param relativePath
+     * @return
+     * @throws IllegalArgumentException if viewType is
+     *  {@link ViewFragmentType#DETAIL}.
+     */
+    boolean helperLaunchView(
+        String tableId,
+        String sqlWhereClause,
+        String[] sqlSelectionArgs,
+        String[] sqlGroupBy,
+        String sqlHaving,
+        String sqlOrderByElementKey,
+        String sqlOrderByDirection,
+        ViewFragmentType viewType,
+        String relativePath) {
+      if (viewType == ViewFragmentType.DETAIL) {
+        throw new IllegalArgumentException("Cannot use this method to " +
+        		"launch a detail view. Use helperLaunchDetailView instead.");
+      }
+      Bundle bundle = new Bundle();
+      IntentUtil.addSQLKeysToBundle(
+          bundle, 
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementKey,
+          sqlOrderByDirection);
+      IntentUtil.addTableIdToBundle(bundle, tableId);
+      IntentUtil.addFragmentViewTypeToBundle(bundle, viewType);
+      IntentUtil.addFileNameToBundle(bundle, relativePath);
+      Intent intent = getTableDisplayActivityIntentWithBundle(bundle);
+      this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
       return true;
     }
+    
+    /**
+     * Create a new {@link Intent} to launch {@link TableDisplayActivity} with
+     * the contents of bundle added to the intent's extras. The appName is
+     * already added to the bundle.
+     * @param bundle
+     * @return
+     */
+    private Intent getTableDisplayActivityIntentWithBundle(Bundle bundle) {
+      Intent intent = new Intent(this.mActivity, TableDisplayActivity.class);
+      intent.putExtras(bundle);
+      String appName = retrieveAppName();
+      IntentUtil.addAppNameToBundle(intent.getExtras(), appName);
+      return intent;
+    }
+
 
     /**
      * Actually open the table with the file. see
@@ -448,14 +553,26 @@ public abstract class CustomView extends LinearLayout {
         String sqlHaving,
         String sqlOrderByElementKey,
         String sqlOrderByDirection) {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      if (tp == null) {
-        Log.e(TAG, "tableId [" + tableId + "] not in map");
-        return false;
-      }
-      Controller.launchListView(mActivity, tp, relativePath,
-          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-      return true;
+//      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+//      if (tp == null) {
+//        Log.e(TAG, "tableId [" + tableId + "] not in map");
+//        return false;
+//      }
+      // ViewFragmentType.LIST displays a file with information about the
+      // entire table, so we use that here.
+      return this.helperLaunchView(
+          tableId,
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementKey,
+          sqlOrderByDirection,
+          ViewFragmentType.LIST,
+          relativePath);
+//      Controller.launchListView(mActivity, tp, relativePath,
+//          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//      return true;
     }
 
     /**
@@ -476,16 +593,26 @@ public abstract class CustomView extends LinearLayout {
         String sqlHaving,
         String sqlOrderByElementKey,
         String sqlOrderByDirection) {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      if (tp == null) {
-        Log.e(TAG, "tableName [" + tableId + "] not in map");
-        return false;
-      }
+//      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+//      if (tp == null) {
+//        Log.e(TAG, "tableName [" + tableId + "] not in map");
+//        return false;
+//      }
       Log.e(TAG, "NOTE THAT THE SPECIFIC MAP VIEW FILE IS NOT SUPPORTED");
+      return this.helperLaunchView(
+          tableId,
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementKey,
+          sqlOrderByDirection,
+          ViewFragmentType.MAP,
+          relativePath);
       // We're not supporting search text, so pass in null.
-      Controller.launchMapView(mActivity, tp, relativePath,
-          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-      return true;
+//      Controller.launchMapView(mActivity, tp, relativePath,
+//          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//      return true;
     }
 
     /**
@@ -505,15 +632,25 @@ public abstract class CustomView extends LinearLayout {
         String sqlHaving,
         String sqlOrderByElementKey,
         String sqlOrderByDirection) {
-      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-      if (tp == null) {
-        Log.e(TAG, "tableId [" + tableId + "] not in map");
-        return false;
-      }
-      // We're not supporting search text, so pass in null.
-      Controller.launchSpreadsheetView(mActivity, tp,
-          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-      return true;
+//      TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+//      if (tp == null) {
+//        Log.e(TAG, "tableId [" + tableId + "] not in map");
+//        return false;
+//      }
+      // No relativePath for spreadsheet.
+      return this.helperLaunchView(
+          tableId,
+          sqlWhereClause,
+          sqlSelectionArgs,
+          sqlGroupBy,
+          sqlHaving,
+          sqlOrderByElementKey,
+          sqlOrderByDirection,
+          ViewFragmentType.SPREADSHEET,
+          null);
+//      Controller.launchSpreadsheetView(mActivity, tp,
+//          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//      return true;
     }
 
     /**

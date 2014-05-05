@@ -1,7 +1,9 @@
 package org.opendatakit.tables.utils;
 
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 /**
@@ -63,6 +65,238 @@ public class IntentUtil {
     }
     String fileName = bundle.getString(Constants.IntentKeys.FILE_NAME);
     return fileName;
+  }
+  
+  /**
+   * Return the table id from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link Constants.IntentKeys#TABLE_ID}.
+   * @param bundle
+   * @return the table id, null if it does not exist or if bundle is null
+   */
+  public static String retrieveTableIdFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String tableId = bundle.getString(IntentKeys.TABLE_ID);
+    return tableId;
+  }
+  
+  /**
+   * Return the row id from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link Constants.IntentKeys#ROW_ID}.
+   * @param bundle
+   * @return the row id, null if it does not exist or if bundle is null
+   */
+  public static String retrieveRowIdFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String rowId = bundle.getString(IntentKeys.ROW_ID);
+    return rowId;
+  }
+  
+  /**
+   * Add values to intent to prepare to launch a detail view. Convenience
+   * method for calling the corresponding methods in this class, including
+   * {@link #addFragmentViewTypeToBundle(Bundle, ViewFragmentType)} with
+   * {@link ViewFragmentType#DETAIL}.
+   * @param intent
+   * @param appName
+   * @param tableId
+   * @param rowId
+   * @param fileName
+   */
+  public static void addDetailViewKeysToIntent(
+      Bundle bundle,
+      String appName,
+      String tableId,
+      String rowId,
+      String fileName) {
+    addAppNameToBundle(bundle, appName);
+    addTableIdToBundle(bundle, tableId);
+    addRowIdToBundle(bundle, rowId);
+    addFileNameToBundle(bundle, fileName);
+    addFragmentViewTypeToBundle(bundle, ViewFragmentType.DETAIL);
+  }
+  
+  /**
+   * Add viewFragmentType's {@link ViewFragmentType#name()} to bundle. If
+   * bundle or viewFragmentType is null, does nothing.
+   * @param bundle
+   * @param viewFragmentType
+   */
+  public static void addFragmentViewTypeToBundle(
+      Bundle bundle,
+      ViewFragmentType viewFragmentType) {
+    if (bundle != null && viewFragmentType != null) {
+      bundle.putString(
+          IntentKeys.TABLE_DISPLAY_VIEW_TYPE,
+          viewFragmentType.name());
+    }
+  }
+  
+  /**
+   * Add the sql keys to the bundle. Convenience method for calling the
+   * corresponding add methods in this class.
+   * @param bundle
+   * @param whereClause
+   * @param selectionArgs
+   * @param groupBy
+   * @param having
+   * @param orderByElementKey
+   * @param orderByDirection
+   */
+  public static void addSQLKeysToBundle(
+      Bundle bundle,
+      String whereClause,
+      String[] selectionArgs,
+      String[] groupBy,
+      String having,
+      String orderByElementKey,
+      String orderByDirection) {
+    addWhereClauseToBundle(bundle, whereClause);
+    addSelectionArgsToBundle(bundle, selectionArgs);
+    addGroupByToBundle(bundle, groupBy);
+    addHavingToBundle(bundle, having);
+    addOrderByElementKeyToBundle(bundle, orderByElementKey);
+    addOrderByDirectionToBundle(bundle, orderByDirection);
+  }
+  
+  /**
+   * Add orderByElementKey to bundle keyed to
+   *  {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
+   * If bundle or orderByElementKey is null, does nothing.
+   * @param bundle
+   * @param whereClause
+   */
+  public static void addOrderByElementKeyToBundle(
+      Bundle bundle,
+      String orderByElementKey) {
+    if (bundle != null && orderByElementKey != null) {
+      bundle.putString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
+    }
+  }
+  
+  /**
+   * Add orderByDirection to bundle keyed to
+   *  {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
+   * If bundle or orderByDirection is null, does nothing.
+   * @param bundle
+   * @param orderByDirection
+   */
+  public static void addOrderByDirectionToBundle(
+      Bundle bundle,
+      String orderByDirection) {
+    if (bundle != null && orderByDirection != null) {
+      bundle.putString(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
+    }
+  }
+  
+  /**
+   * Add whereClause to bundle keyed to {@link IntentKeys#SQL_WHERE}.
+   * If bundle or whereClause is null, does nothing.
+   * @param bundle
+   * @param whereClause
+   */
+  public static void addWhereClauseToBundle(
+      Bundle bundle,
+      String whereClause) {
+    if (bundle != null && whereClause != null) {
+      bundle.putString(IntentKeys.SQL_WHERE, whereClause);
+    }
+  }
+  
+  /**
+   * Add selectionArgs to bundle keyed to
+   * {@link IntentKeys#SQL_SELECTION_ARGS}.
+   * If bundle or selectionArgs is null, does nothing.
+   * @param bundle
+   * @param selectionArgs
+   */
+  public static void addSelectionArgsToBundle(
+      Bundle bundle,
+      String[] selectionArgs) {
+    if (bundle != null && selectionArgs != null) {
+      bundle.putStringArray(IntentKeys.SQL_SELECTION_ARGS, selectionArgs);
+    }
+  }
+  
+  /**
+   * Add having to bundle keyed to
+   * {@link IntentKeys#SQL_HAVING}.
+   * If bundle or having is null, does nothing.
+   * @param bundle
+   * @param having
+   */
+  public static void addHavingToBundle(Bundle bundle, String having) {
+    if (bundle != null && having != null) {
+      bundle.putString(IntentKeys.SQL_HAVING, having);
+    }
+  }
+  
+  /**
+   * Add groupBy to bundle keyed to
+   * {@link IntentKeys#SQL_GROUP_BY_ARGS}.
+   * If bundle or groupBy is null, does nothing.
+   * @param bundle
+   * @param groupBy
+   */
+  public static void addGroupByToBundle(
+      Bundle bundle,
+      String[] groupBy) {
+    if (bundle != null && groupBy != null) {
+      bundle.putStringArray(IntentKeys.SQL_GROUP_BY_ARGS, groupBy);
+    }
+  }
+  
+  /**
+   * Add appName to the bundle keyed to {@link Constants.IntentKeys#APP_NAME}.
+   * If bundle or appName is null, does nothing.
+   * @param bundle
+   * @param appName
+   */
+  public static void addAppNameToBundle(Bundle bundle, String appName) {
+    if (bundle != null && appName != null) {
+      bundle.putString(Constants.IntentKeys.APP_NAME, appName);
+    }
+  }
+  
+  /**
+   * Add tableId to bundle keyed to {@link Constants.IntentKeys#TABLE_ID}.
+   * If bundle or appName is null, does nothing.
+   * @param bundle
+   * @param tableId
+   */
+  public static void addTableIdToBundle(Bundle bundle, String tableId) {
+    if (bundle != null && tableId != null) {
+      bundle.putString(Constants.IntentKeys.TABLE_ID, tableId);
+    }
+  }
+  
+  /**
+   * Add rowId to bundle keyed to {@link Constants.IntentKeys#ROW_ID}.
+   * If bundle or rowId is null, does nothing.
+   * @param bundle
+   * @param rowId
+   */
+  public static void addRowIdToBundle(Bundle bundle, String rowId) {
+    if (bundle != null && rowId != null) {
+      bundle.putString(Constants.IntentKeys.ROW_ID, rowId);
+    }
+  }
+  
+  /**
+   * Add fileName to bundle keyed to {@link Constants.IntentKeys#FILE_NAME}.
+   * If bundle or fileName is null, does nothing.
+   * @param bundle
+   * @param fileName
+   */
+  public static void addFileNameToBundle(Bundle bundle, String fileName) {
+    if (bundle != null && fileName != null) {
+      bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
+    }
   }
 
 }

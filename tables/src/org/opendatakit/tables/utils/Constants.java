@@ -120,6 +120,8 @@ public class Constants {
     public static final int CHOOSE_DETAIL_FILE = 2;
     public static final int CHOOSE_LIST_FILE = 3;
     public static final int CHOOSE_MAP_FILE = 4;
+    /** A generic code for now. Can refactor to make more specific if needed.*/
+    public static final int LAUNCH_VIEW = 5;
   }
 
 }
