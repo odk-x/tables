@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 import org.opendatakit.tables.views.webkits.CustomView;
 
@@ -35,7 +36,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
      super.onCreate(savedInstanceState);
-     String retrievedRowId = this.retrieveRowIdFromBundle(savedInstanceState);
+     String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
      this.mRowId = retrievedRowId;
   }
   
@@ -108,7 +109,7 @@ public class DetailViewFragment extends AbsWebTableFragment {
    * @return
    */
   String retrieveRowIdFromBundle(Bundle bundle) {
-    String rowId = bundle.getString(Constants.IntentKeys.ROW_ID);
+    String rowId = IntentUtil.retrieveRowIdFromBundle(bundle);
     return rowId;
   }
   

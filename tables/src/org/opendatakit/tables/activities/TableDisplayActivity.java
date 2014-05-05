@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
@@ -68,6 +69,7 @@ public class TableDisplayActivity extends AbsTableActivity
       this.showSpreadsheetFragment();
       break;
     case DETAIL:
+      this.showDetailFragment();
       break;
     case GRAPH:
       this.showGraphFragment();
@@ -276,6 +278,38 @@ public class TableDisplayActivity extends AbsTableActivity
   public void showGraphFragment() {
     // TODO Auto-generated method stub
     
+  }
+  
+  
+  public void showDetailFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    String fileName = IntentUtil.retrieveFileNameFromBundle(
+        this.getIntent().getExtras());
+    // Try and use the default.
+    if (fileName == null) {
+      Log.d(TAG, "[showDetailFragment] fileName not found in Intent");
+      fileName = this.getTableProperties().getDetailViewFileName();
+    }
+    String rowId = IntentUtil.retrieveRowIdFromBundle(
+        this.getIntent().getExtras());
+    // Try to retrieve one that already exists.
+    DetailViewFragment detailViewFragment = (DetailViewFragment) 
+        fragmentManager.findFragmentByTag(
+            Constants.FragmentTags.DETAIL_FRAGMENT);
+    if (detailViewFragment == null) {
+      detailViewFragment = new DetailViewFragment();
+      Bundle bundle = new Bundle();
+      IntentUtil.addRowIdToBundle(bundle, rowId);
+      IntentUtil.addFileNameToBundle(bundle, fileName);
+      detailViewFragment.setArguments(bundle);
+    }
+    if (!detailViewFragment.isResumed()) {
+      fragmentManager.beginTransaction().replace(
+          android.R.id.content,
+          detailViewFragment,
+          Constants.FragmentTags.DETAIL_FRAGMENT).commit();
+    }
+    this.invalidateOptionsMenu();
   }
 
 
