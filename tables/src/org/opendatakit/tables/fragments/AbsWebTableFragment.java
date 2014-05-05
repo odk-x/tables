@@ -6,6 +6,7 @@ import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,8 @@ import android.view.ViewGroup;
  */
 public abstract class AbsWebTableFragment extends AbsTableDisplayFragment 
     implements IWebFragment {
+  
+  private static final String TAG = AbsWebTableFragment.class.getSimpleName();
   
   /** The file name this fragment is displaying. */
   protected String mFileName;
@@ -35,6 +38,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d(TAG, "[onCreate]");
     // Get the file name if it was there.
     String retrievedFileName = retrieveFileNameFromBundle(savedInstanceState);
     if (retrievedFileName == null) {
@@ -49,6 +53,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       LayoutInflater inflater,
       ViewGroup container,
       Bundle savedInstanceState) {
+    Log.d(TAG, "[onCreateView]");
     return this.buildView();
   }
   

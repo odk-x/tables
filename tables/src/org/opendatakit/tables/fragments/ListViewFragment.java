@@ -5,6 +5,7 @@ import org.opendatakit.tables.views.webkits.CustomTableView;
 import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Fragment;
+import android.util.Log;
 
 /**
  * {@link Fragment} for displaying a List view.
@@ -12,9 +13,12 @@ import android.app.Fragment;
  *
  */
 public class ListViewFragment extends AbsWebTableFragment {
+  
+  private static final String TAG = ListViewFragment.class.getSimpleName();
 
   @Override
   public CustomView buildView() {
+    Log.d(TAG, "[buildView]");
     CustomView result = CustomTableView.get(
         getActivity(),
         getAppName(),

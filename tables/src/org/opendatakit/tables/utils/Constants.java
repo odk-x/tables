@@ -116,7 +116,10 @@ public class Constants {
   }
   
   public static class RequestCodes {
-    public static int DISPLAY_VIEW = 1;
+    public static final int DISPLAY_VIEW = 1;
+    public static final int CHOOSE_DETAIL_FILE = 2;
+    public static final int CHOOSE_LIST_FILE = 3;
+    public static final int CHOOSE_MAP_FILE = 4;
   }
 
 }

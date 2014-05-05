@@ -64,12 +64,12 @@
     <PreferenceCategory 
         android:title="@string/list_view_settings">
         
-        <Preference 
+        <org.opendatakit.tables.preferences.FileSelectorPreference 
             android:key="table_pref_list_file"
             android:persistent="false"
             android:title="@string/list_view_file"/>
         
-        <Preference 
+        <org.opendatakit.tables.preferences.FileSelectorPreference 
             android:key="table_pref_detail_file"
             android:persistent="false"
             android:title="@string/detail_view_file"/>

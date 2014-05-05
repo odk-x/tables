@@ -1,13 +1,23 @@
 package org.opendatakit.tables.fragments;
 
+import java.io.File;
+
+import org.opendatakit.common.android.data.KeyValueStoreHelper;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
+import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.util.Log;
 import android.view.ContextMenu;
 
 /**
@@ -16,6 +26,9 @@ import android.view.ContextMenu;
  *
  */
 public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
+  
+  private static final String TAG =
+      TablePreferenceFragment.class.getSimpleName();
   
   public TablePreferenceFragment() {
     // required by fragments.
@@ -31,10 +44,66 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
+  }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
     // Verify that we're attaching to the right activity.
     // Now we have to do the various initialization required for the different
     // preferences.
     this.initializeAllPreferences();
+  }
+  
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    String fullPath = null;
+    String relativePath = null;
+    Log.d(TAG, "[onActivityResult]");
+    switch (requestCode) {
+    case Constants.RequestCodes.CHOOSE_LIST_FILE:
+      fullPath = getFullPathFromIntent(data);
+      relativePath = getRelativePathOfFile(fullPath);
+      this.setListViewFileName(relativePath);
+      break;
+    case Constants.RequestCodes.CHOOSE_DETAIL_FILE:
+      fullPath = getFullPathFromIntent(data);
+      relativePath = getRelativePathOfFile(fullPath);
+      this.setDetailViewFileName(relativePath);
+      break;
+    }
+    super.onActivityResult(requestCode, resultCode, data);
+  }
+  
+  /**
+   * Return the full path of the file selected from the intent.
+   * @param intent
+   * @return
+   */
+  private String getFullPathFromIntent(Intent intent) {
+    Uri uri = intent.getData();
+    String fullPath = uri.getPath();
+    return fullPath;
+  }
+  
+  /**
+   * Sets the file name for the list view of this table.
+   * @param relativePath
+   */
+  void setListViewFileName(String relativePath) {
+    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+        TableProperties.KVS_PARTITION);
+    kvsh.setString(TableProperties.KEY_LIST_VIEW_FILE_NAME, relativePath);
+  }
+  
+  /**
+   * Sets the file name for the detail view of this table.
+   * @param relativePath
+   */
+  void setDetailViewFileName(String relativePath) {
+    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+        TableProperties.KVS_PARTITION);
+    kvsh.setString(TableProperties.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
   }
   
   /**
@@ -50,6 +119,8 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeTableColorRules();
     this.initializeStatusColorRules();
     this.initializeMapColorRule();
+    this.initializeDetailFile();
+    this.initializeListFile();
   }
 
   private void initializeDisplayNamePreference() {
@@ -84,6 +155,28 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     // TODO:
   }
   
+  private void initializeListFile() {
+    FileSelectorPreference listPref = (FileSelectorPreference)
+        this.findPreference(Constants.PreferenceKeys.Table.LIST_FILE);
+    listPref.setFields(
+        this, 
+        Constants.RequestCodes.CHOOSE_LIST_FILE,
+        ((AbsBaseActivity) getActivity()).getAppName());
+    TableProperties tableProperties = getTableProperties();
+    listPref.setSummary(tableProperties.getListViewFileName());
+  }
+  
+  private void initializeDetailFile() {
+    FileSelectorPreference detailPref = (FileSelectorPreference)
+        this.findPreference(Constants.PreferenceKeys.Table.DETAIL_FILE);
+    detailPref.setFields(
+        this,
+        Constants.RequestCodes.CHOOSE_DETAIL_FILE,
+        ((AbsBaseActivity) getActivity()).getAppName());
+    TableProperties tableProperties = getTableProperties();
+    detailPref.setSummary(tableProperties.getDetailViewFileName());
+  }
+  
   private void initializeStatusColorRules() {
     Preference statusColorPref = this.findPreference(
         Constants.PreferenceKeys.Table.STATUS_COLOR_RULES);
@@ -94,6 +187,13 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     ListPreference mapColorPref = this.findListPreference(
         Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
     // TODO:
+  }
+  
+  private String getRelativePathOfFile(String fullPath) {
+    String relativePath = ODKFileUtils.asRelativePath(
+        ((AbsBaseActivity) getActivity()).getAppName(),
+        new File(fullPath));
+    return relativePath;
   }
   
   

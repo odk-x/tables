@@ -4,6 +4,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
@@ -69,8 +70,10 @@ public class TableDisplayActivity extends AbsTableActivity
     case DETAIL:
       break;
     case GRAPH:
+      this.showGraphFragment();
       break;
     case LIST:
+      this.showListFragment();
       break;
     case MAP:
       this.showMapFragment();
@@ -220,6 +223,7 @@ public class TableDisplayActivity extends AbsTableActivity
         android.R.id.content,
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET).commit();
+    this.invalidateOptionsMenu();
   }
   
   public void showMapFragment() {
@@ -235,7 +239,41 @@ public class TableDisplayActivity extends AbsTableActivity
         android.R.id.content,
         mapFragment,
         Constants.FragmentTags.MAP).commit();
+    this.invalidateOptionsMenu();
   }
+  
+
+  @Override
+  public void showListFragment() {
+    // Try to use a passed file name. If one doesn't exist, try to use the
+    // default.
+    String fileName =
+        IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
+    if (fileName == null) {
+      fileName = getTableProperties().getListViewFileName();
+    }
+    FragmentManager fragmentManager = this.getFragmentManager();
+    ListViewFragment listViewFragment = (ListViewFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
+    if (listViewFragment == null) {
+      listViewFragment = new ListViewFragment();
+    }
+    Bundle bundle = new Bundle();
+    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
+    listViewFragment.setArguments(bundle);
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        listViewFragment,
+        Constants.FragmentTags.LIST).commit();
+    this.invalidateOptionsMenu();
+  }
+
+  @Override
+  public void showGraphFragment() {
+    // TODO Auto-generated method stub
+    
+  }
+
 
   /**
    * Return the {@link ViewFragmentType} that is currently being displayed.
@@ -265,18 +303,6 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     Log.e(TAG, "didn't find any of the main views visible. Returning null.");
     return null;
-  }
-
-  @Override
-  public void showListFragment() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void showGraphFragment() {
-    // TODO Auto-generated method stub
-    
   }
 
 }

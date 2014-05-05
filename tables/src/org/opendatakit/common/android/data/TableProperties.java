@@ -104,11 +104,11 @@ public class TableProperties {
   private static final String KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
   
   /** The file name for the list view that has been set on the table. */
-  private static final String KEY_LIST_VIEW_FILE_NAME = 
+  public static final String KEY_LIST_VIEW_FILE_NAME = 
       "listViewFileName";
   
   /** The file name for the detail view that has been set on the table. */
-  private static final String KEY_DETAIL_VIEW_FILE_NAME =
+  public static final String KEY_DETAIL_VIEW_FILE_NAME =
       "detailViewFileName";
 
   /*
