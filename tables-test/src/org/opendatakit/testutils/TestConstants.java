@@ -10,6 +10,7 @@ import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.tables.views.webkits.CustomView;
 
@@ -64,6 +65,8 @@ public class TestConstants {
     TableProperties tpMock = mock(TableProperties.class);
     doReturn(getAllValidPossibleTableViewTypes())
         .when(tpMock).getPossibleViewTypes();
+    doReturn(TableViewType.SPREADSHEET)
+        .when(tpMock).getDefaultViewType();
     return tpMock;
   }
   

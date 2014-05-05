@@ -30,6 +30,8 @@ public class TableDisplayActivity extends AbsTableActivity
     implements ITopLevelTableMenuActivity {
   
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
+  private static final String INTENT_KEY_CURRENT_FRAGMENT = 
+      "saveInstanceCurrentFragment";
   
   /**
    * The fragment types this activity could be displaying.
@@ -48,18 +50,55 @@ public class TableDisplayActivity extends AbsTableActivity
    * The {@link UserTable} that is being displayed in this activity.
    */
   private UserTable mUserTable;
+  /**
+   *  The type of fragment that is currently being displayed.
+   */
+  private ViewFragmentType mCurrentFragmentType;
   
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    // see if we saved the state
     this.initializeBackingTable();
+    this.mCurrentFragmentType = 
+        this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.initializeMenuFragment();
+  }
+  
+  @Override
+  protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    super.onRestoreInstanceState(savedInstanceState);
+    this.mCurrentFragmentType =
+        this.retrieveFragmentTypeToDisplay(savedInstanceState);
+    Log.i(TAG, "[onRestoreInstanceState] current fragment type: " +
+        this.mCurrentFragmentType);
+  }
+  
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    if (this.mCurrentFragmentType != null) {
+      Log.i(TAG, "[onSaveInstanceState] saving current fragment type: " 
+          + this.mCurrentFragmentType.name());
+      outState.putString(
+          INTENT_KEY_CURRENT_FRAGMENT,
+          this.mCurrentFragmentType.name());
+    } else {
+      Log.i(TAG, "[onSaveInstanceState] no current fragment type to save");
+    }
   }
   
   @Override
   protected void onResume() {
     super.onResume();
+    Log.i(TAG, "[onResume]");
     this.initializeDisplayFragment();
+  }
+  
+  @Override
+  protected void onStart() {
+     super.onStart();
+     Log.i(TAG, "[onStart]");
   }
   
   /**
@@ -68,8 +107,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * is present in Intent.
    */
   protected void initializeDisplayFragment() {
-    ViewFragmentType viewFragmentType = this.retrieveFragmentTypeToDisplay();
-    switch (viewFragmentType) {
+    switch (this.mCurrentFragmentType) {
     case SPREADSHEET:
       this.showSpreadsheetFragment();
       break;
@@ -86,9 +124,18 @@ public class TableDisplayActivity extends AbsTableActivity
       this.showMapFragment();
       break;
     default:
-      Log.e(TAG, "ViewFragmentType not recognized: " + viewFragmentType);
+      Log.e(TAG, "ViewFragmentType not recognized: " +
+          this.mCurrentFragmentType);
       break;
     }
+  }
+  
+  /**
+   * Set the current type of fragment that is being displayed.
+   * @param currentType
+   */
+  protected void setCurrentFragmentType(ViewFragmentType currentType) {
+    this.mCurrentFragmentType = currentType;
   }
   
   /**
@@ -110,20 +157,39 @@ public class TableDisplayActivity extends AbsTableActivity
   }
   
   /**
-   * Get the {@link ViewFragmentType} that should be displayed. Any type that
-   * was passed in the Intent gets precedent. If none is present, the value
+   * Get the {@link ViewFragmentType} that should be displayed. Any type in
+   * the passed in bundle takes precedence, on the assumption that is was from
+   * a saved instance state. Next is any type that
+   * was passed in the Intent. If neither is present, the value
    * corresponding to {@link TableProperties#getDefaultViewType()} wins. If
    * none is present, returns {@link ViewFragmentType#SPREADSHEET}.
    * @return
    */
-  protected ViewFragmentType retrieveFragmentTypeToDisplay() {
+  protected ViewFragmentType retrieveFragmentTypeToDisplay(
+      Bundle savedInstanceState) {
+    // 1) First check the passed in bundle.
+    if (savedInstanceState != null &&
+        savedInstanceState.containsKey(INTENT_KEY_CURRENT_FRAGMENT)) {
+      String instanceTypeStr =
+          savedInstanceState.getString(INTENT_KEY_CURRENT_FRAGMENT);
+      Log.i(TAG, "[retrieveFragmentTypeToDisplay] found type in saved instance" +
+          " state: " + instanceTypeStr);
+      return ViewFragmentType.valueOf(instanceTypeStr);
+    }
+    Log.i(TAG, "[retrieveFragmentTypeToDisplay] didn't find fragment type " +
+    		"in saved instance state");
+    // 2) then check the intent
     ViewFragmentType result = retrieveViewFragmentTypeFromIntent();
     if (result == null) {
+      // 3) then use the default
       TableViewType viewType = 
-          this.getUserTable().getTableProperties().getDefaultViewType();
+          this.getTableProperties().getDefaultViewType();
       result = this.getViewFragmentTypeFromViewType(viewType);
     }
     if (result == null) {
+      // 4) last case, do spreadsheet
+      Log.i(TAG, "[retrieveFragmentTypeToDisplay] no view type found, " +
+      		"defaulting to spreadsheet");
       result = ViewFragmentType.SPREADSHEET;
     }
     return result;
@@ -217,6 +283,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
   public void showSpreadsheetFragment() {
+    this.setCurrentFragmentType(ViewFragmentType.SPREADSHEET);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
@@ -234,6 +301,7 @@ public class TableDisplayActivity extends AbsTableActivity
   }
   
   public void showMapFragment() {
+    this.setCurrentFragmentType(ViewFragmentType.MAP);
     FragmentManager fragmentManager = this.getFragmentManager();
     TableMapFragment mapFragment = (TableMapFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP);
@@ -252,6 +320,7 @@ public class TableDisplayActivity extends AbsTableActivity
 
   @Override
   public void showListFragment() {
+    this.setCurrentFragmentType(ViewFragmentType.LIST);
     // Try to use a passed file name. If one doesn't exist, try to use the
     // default.
     String fileName =
@@ -279,12 +348,14 @@ public class TableDisplayActivity extends AbsTableActivity
 
   @Override
   public void showGraphFragment() {
+    this.setCurrentFragmentType(ViewFragmentType.GRAPH);
     // TODO Auto-generated method stub
     
   }
   
   
   public void showDetailFragment() {
+    this.setCurrentFragmentType(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         this.getIntent().getExtras());

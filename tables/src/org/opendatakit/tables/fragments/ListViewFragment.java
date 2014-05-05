@@ -27,6 +27,14 @@ public class ListViewFragment extends AbsWebTableFragment {
     result.display();
     return result;
   }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
+    Log.i(TAG, "[onResume]");
+    // Have to do this because of how stupid CustomTableView is.
+    ((CustomTableView) getView()).display();
+  }
 
   @Override
   public ViewFragmentType getFragmentType() {

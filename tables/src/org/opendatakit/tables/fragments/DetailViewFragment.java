@@ -59,6 +59,13 @@ public class DetailViewFragment extends AbsWebTableFragment {
     return result;
   }
   
+  @Override
+  public void onResume() {
+    super.onResume();
+    // Have to do this because CustomTableView is so stupid.
+    ((CustomTableView) getView()).display();
+  }
+  
   private void initializeTable() {
     UserTable retrievedTable = this.retrieveSingleRowTable();
     this.mSingleRowTable = retrievedTable;
