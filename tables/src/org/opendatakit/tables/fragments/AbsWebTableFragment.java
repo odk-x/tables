@@ -54,7 +54,8 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       ViewGroup container,
       Bundle savedInstanceState) {
     Log.d(TAG, "[onCreateView]");
-    return this.buildView();
+    CustomView customView = this.buildView();
+    return customView;
   }
   
   @Override

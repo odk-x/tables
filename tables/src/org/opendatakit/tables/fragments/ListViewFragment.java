@@ -19,11 +19,12 @@ public class ListViewFragment extends AbsWebTableFragment {
   @Override
   public CustomView buildView() {
     Log.d(TAG, "[buildView]");
-    CustomView result = CustomTableView.get(
+    CustomTableView result = CustomTableView.get(
         getActivity(),
         getAppName(),
         getUserTable(),
         getFileName());
+    result.display();
     return result;
   }
 

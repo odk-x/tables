@@ -113,6 +113,12 @@ public abstract class CustomView extends LinearLayout {
 
   public CustomView(Activity parentActivity, String appName) {
     super(parentActivity);
+//    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+//        LayoutParams.MATCH_PARENT, 
+//        LayoutParams.WRAP_CONTENT);
+//    this.setLayoutParams(layoutParams);
+    this.setOrientation(LinearLayout.VERTICAL);
+    this.setWeightSum(6f);
     initCommonWebView(parentActivity);
     this.mParentActivity = parentActivity;
     this.mAppName = appName;

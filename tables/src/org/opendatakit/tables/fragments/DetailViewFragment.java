@@ -49,11 +49,12 @@ public class DetailViewFragment extends AbsWebTableFragment {
   public CustomView buildView() {
     // First we need to construct the single row table.
     this.initializeTable();
-    CustomView result = CustomTableView.get(
+    CustomTableView result = CustomTableView.get(
         getActivity(),
         getAppName(),
         getSingleRowTable(),
         getFileName());
+    result.display();
     return result;
   }
   
