@@ -54,6 +54,11 @@ public class TableDisplayActivity extends AbsTableActivity
     super.onCreate(savedInstanceState);
     this.initializeBackingTable();
     this.initializeMenuFragment();
+  }
+  
+  @Override
+  protected void onResume() {
+    super.onResume();
     this.initializeDisplayFragment();
   }
   
