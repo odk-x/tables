@@ -190,8 +190,10 @@ public class CustomHomeScreenActivity extends Activity
   public boolean onMenuItemSelected(int featureId, MenuItem item) {
     switch (item.getItemId()) {
     case MENU_ITEM_TABLE_MANAGER:
-      Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
+      Intent i = new Intent(this, MainActivity.class);
+      i.putExtra(Constants.IntentKeys.APP_NAME, this.mAppName);
+//      Intent i = new Intent(this, TableManager.class);
+//      i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
       startActivity(i);
       return true;
     default:

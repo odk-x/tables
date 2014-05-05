@@ -92,6 +92,8 @@ public class Constants {
     public static final String MAP_INNER_MAP = "tagInnerMapFragment";
     public static final String MAP_LIST = "tagMapListFragment";
     public static final String DETAIL_FRAGMENT = "tagDetailFragment";
+    public static final String INITIALIZE_TASK_DIALOG = "tagInitializeTask";
+    public static final String TABLE_MANAGER = "tagFragmentManager";
   }
 
   public static class PreferenceKeys {
