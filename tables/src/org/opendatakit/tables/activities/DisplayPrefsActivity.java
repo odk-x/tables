@@ -8,9 +8,8 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.preferences.SliderPreference;
-import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.OutputUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -35,9 +34,10 @@ public class DisplayPrefsActivity extends PreferenceActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
-    if ( appName == null ) {
-      appName = TableFileUtils.getDefaultAppName();
+    appName = IntentUtil.retrieveAppNameFromBundle(
+        this.getIntent().getExtras());
+    if (appName == null) {
+      throw new IllegalStateException("App name not passed to activitity.");
     }
     prefs = new Preferences(this, appName);
     // check if this activity was called from Controller, in which case it

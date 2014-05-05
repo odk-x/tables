@@ -123,6 +123,9 @@ public class Constants {
     public static final int CHOOSE_MAP_FILE = 4;
     /** A generic code for now. Can refactor to make more specific if needed.*/
     public static final int LAUNCH_VIEW = 5;
+    public static final int LAUNCH_DISPLAY_PREFS = 6;
+    public static final int LAUNCH_IMPORT_EXPORT = 7;
+    public static final int LAUNCH_SYNC = 8;
   }
 
 }

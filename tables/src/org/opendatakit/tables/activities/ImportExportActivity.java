@@ -18,6 +18,7 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.TabActivity;
@@ -32,9 +33,10 @@ public class ImportExportActivity extends TabActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		String appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+		String appName = IntentUtil.retrieveAppNameFromBundle(
+		    this.getIntent().getExtras());
 		if ( appName == null ) {
-		  appName = TableFileUtils.getDefaultAppName();
+		  throw new IllegalStateException("appName was not present in bundle");
 		}
 		setContentView(R.layout.importexport_view);
 		TabHost th = getTabHost();

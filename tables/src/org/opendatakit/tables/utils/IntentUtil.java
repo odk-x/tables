@@ -83,6 +83,21 @@ public class IntentUtil {
   }
   
   /**
+   * Return the app name from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link Constants.IntentKeys#APP_NAME}.
+   * @param bundle
+   * @return the app name, null if it does not exist or if bundle is null
+   */
+  public static String retrieveAppNameFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String appName = bundle.getString(IntentKeys.APP_NAME);
+    return appName;
+  }
+  
+  /**
    * Return the row id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
    * {@link Constants.IntentKeys#ROW_ID}.

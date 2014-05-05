@@ -7,9 +7,12 @@ import java.util.List;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.DisplayPrefsActivity;
+import org.opendatakit.tables.activities.ImportExportActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.components.TablePropertiesAdapter;
 
@@ -54,7 +57,44 @@ public class TableManagerFragment extends ListFragment {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     Log.d(TAG, "[onOptionsItemSelected] selecting an item");
-    return super.onOptionsItemSelected(item);
+    AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
+    String appName = baseActivity.getAppName();
+    Bundle bundle = new Bundle();
+    IntentUtil.addAppNameToBundle(bundle, appName);
+    switch (item.getItemId()) {
+    case R.id.menu_table_manager_preferences:
+      Intent preferenceIntent = new Intent(
+          baseActivity,
+          DisplayPrefsActivity.class);
+      preferenceIntent.putExtras(bundle);
+      baseActivity.startActivityForResult(
+          preferenceIntent,
+          Constants.RequestCodes.LAUNCH_DISPLAY_PREFS);
+      return true;
+    case R.id.menu_table_manager_export:
+    case R.id.menu_table_manager_import:
+      Intent importExportIntent = new Intent(
+          baseActivity,
+          ImportExportActivity.class);
+      importExportIntent.putExtras(bundle);
+      baseActivity.startActivityForResult(
+          importExportIntent,
+          Constants.RequestCodes.LAUNCH_IMPORT_EXPORT);
+      return true;
+    case R.id.menu_table_manager_sync:
+      Intent syncIntent = new Intent();
+      syncIntent.setComponent(new ComponentName(
+          "org.opendatakit.sync",
+          "org.opendatakit.sync.activities.Aggregate"));
+      syncIntent.setAction(Intent.ACTION_DEFAULT);
+      syncIntent.putExtras(bundle);
+      baseActivity.startActivityForResult(
+          syncIntent,
+          Constants.RequestCodes.LAUNCH_SYNC);
+      return true;
+    default:
+      return super.onOptionsItemSelected(item);
+    }
   }
   
   @Override
