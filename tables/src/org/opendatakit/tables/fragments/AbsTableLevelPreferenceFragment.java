@@ -1,6 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.utils.Constants;
 
@@ -38,6 +39,11 @@ public abstract class AbsTableLevelPreferenceFragment
     // We know this will succeed because we've checked it in onActivityCreated.
     AbsTableActivity activity = (AbsTableActivity) this.getActivity();
     return activity.getTableProperties();
+  }
+  
+  String getAppName() {
+    AbsTableActivity activity = (AbsTableActivity) this.getActivity();
+    return activity.getAppName();
   }
   
   /**

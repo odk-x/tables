@@ -8,6 +8,9 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.activities.GraphManagerActivity;
+import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
@@ -21,6 +24,7 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.util.Log;
 import android.view.ContextMenu;
 
@@ -125,6 +129,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeMapColorRule();
     this.initializeDetailFile();
     this.initializeListFile();
+    this.initializeGraphManager();
   }
 
   private void initializeDisplayNamePreference() {
@@ -205,6 +210,28 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     ListPreference mapColorPref = this.findListPreference(
         Constants.PreferenceKeys.Table.MAP_COLOR_RULE);
     // TODO:
+  }
+  
+  private void initializeGraphManager() {
+    Preference graphPref = this.findPreference(
+        Constants.PreferenceKeys.Table.GRAPH_MANAGER);
+    graphPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        Intent selectGraphViewIntent = new Intent(
+            getActivity(),
+            GraphManagerActivity.class);
+        selectGraphViewIntent.putExtra(
+            Constants.IntentKeys.APP_NAME, getAppName());
+        selectGraphViewIntent.putExtra(
+            Constants.IntentKeys.TABLE_ID,
+            getTableProperties().getTableId());
+        startActivity(selectGraphViewIntent);
+        return true;
+      }
+
+    });
   }
   
   private String getRelativePathOfFile(String fullPath) {

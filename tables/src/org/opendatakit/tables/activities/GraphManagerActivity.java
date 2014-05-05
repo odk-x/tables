@@ -25,6 +25,7 @@ import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.ActionBar;
@@ -146,11 +147,12 @@ public class GraphManagerActivity extends ListActivity {
    * Get the fields up and running.
    */
   private void init() {
-    this.appName = getIntent().getStringExtra(Constants.IntentKeys.APP_NAME);
+    this.appName = IntentUtil.retrieveAppNameFromBundle(
+        this.getIntent().getExtras());
     if (appName == null) {
       this.appName = TableFileUtils.getDefaultAppName();
     }
-    this.tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+    this.tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     this.mSqlWhereClause = getIntent().getStringExtra(IntentKeys.SQL_WHERE);
     this.mSqlSelectionArgs = getIntent().getStringArrayExtra(
         IntentKeys.SQL_SELECTION_ARGS);
