@@ -123,19 +123,19 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public ArrayList<Object> getList(String key) {
-    return getList(DEFAULT_ASPECT, key);
+  public ArrayList<Object> getArray(String key) {
+    return getArray(DEFAULT_ASPECT, key);
   }
 
-  private ArrayList<Object> getList(String aspect, String key) {
+  private ArrayList<Object> getArray(String aspect, String key) {
     OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
     }
-    if (!entry.type.equals(KeyValueStoreEntryType.ARRAYLIST.getLabel())) {
+    if (!entry.type.equals(KeyValueStoreEntryType.ARRAY.getLabel())) {
       throw new IllegalArgumentException("requested list entry for " +
           "key: " + key + ", but the corresponding entry in the store was " +
-          "not of type: " + KeyValueStoreEntryType.ARRAYLIST.getLabel());
+          "not of type: " + KeyValueStoreEntryType.ARRAY.getLabel());
     }
     ArrayList<Object> result = null;
     try {
@@ -208,11 +208,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public Double getNumeric(String key) {
-    return getNumeric(DEFAULT_ASPECT, key);
+  public Double getNumber(String key) {
+    return getNumber(DEFAULT_ASPECT, key);
   }
 
-  private Double getNumeric(String aspect, String key) {
+  private Double getNumber(String aspect, String key) {
     OdkTablesKeyValueStoreEntry entry = getEntry(aspect, key);
     if (entry == null) {
       return null;
@@ -244,11 +244,11 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setNumeric(String key, Double value) {
-    setNumericEntry(DEFAULT_ASPECT, key, value);
+  public void setNumber(String key, Double value) {
+    setNumberEntry(DEFAULT_ASPECT, key, value);
   }
 
-  private void setNumericEntry(String aspect, String key, Double value) {
+  private void setNumberEntry(String aspect, String key, Double value) {
     SQLiteDatabase db = tp.getWritableDatabase();
     try {
       db.beginTransaction();
@@ -353,8 +353,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
   }
 
   @Override
-  public void setList(String key, ArrayList<Object> value) {
-    setListEntry(DEFAULT_ASPECT, key, value);
+  public void setArray(String key, ArrayList<Object> value) {
+    setArrayEntry(DEFAULT_ASPECT, key, value);
   }
 
   /**
@@ -363,7 +363,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
    * @param key
    * @param value
    */
-  private void setListEntry(String aspect, String key,
+  private void setArrayEntry(String aspect, String key,
       ArrayList<Object> value) {
     String entryValue = null;
     try {
@@ -387,7 +387,7 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     try {
       db.beginTransaction();
       kvs.insertOrUpdateKey(db, this.partition, aspect, key,
-          KeyValueStoreEntryType.ARRAYLIST.getLabel(), entryValue);
+          KeyValueStoreEntryType.ARRAY.getLabel(), entryValue);
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
@@ -484,8 +484,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public ArrayList<Object> getList(String key) {
-      return KeyValueStoreHelper.this.getList(aspect, key);
+    public ArrayList<Object> getArray(String key) {
+      return KeyValueStoreHelper.this.getArray(aspect, key);
     }
 
     @Override
@@ -504,8 +504,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public Double getNumeric(String key) {
-      return KeyValueStoreHelper.this.getNumeric(aspect, key);
+    public Double getNumber(String key) {
+      return KeyValueStoreHelper.this.getNumber(aspect, key);
     }
 
     @Override
@@ -514,8 +514,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public void setNumeric(String key, Double value) {
-      KeyValueStoreHelper.this.setNumericEntry(aspect, key, value);
+    public void setNumber(String key, Double value) {
+      KeyValueStoreHelper.this.setNumberEntry(aspect, key, value);
     }
 
     @Override
@@ -534,8 +534,8 @@ public class KeyValueStoreHelper implements KeyValueHelper {
     }
 
     @Override
-    public void setList(String key, ArrayList<Object> value) {
-      KeyValueStoreHelper.this.setListEntry(aspect, key, value);
+    public void setArray(String key, ArrayList<Object> value) {
+      KeyValueStoreHelper.this.setArrayEntry(aspect, key, value);
     }
 
     @Override
