@@ -5,9 +5,19 @@
     <string-array
         name="table_view_types">
         <item>Spreadsheet</item>
-        <item>List</item>
-        <item>Graph</item>
-        <item>Map</item>
+        <item>@string/list</item>
+        <item>@string/graph</item>
+        <item>@string/map</item>
+    </string-array>
+    
+    <!-- The values that are saved for the preference. Must be equivalent
+    to TableViewType.name() -->
+    <string-array
+        name="table_view_types_values" >
+        <item>SPREADSHEET</item>
+        <item>LIST</item>
+        <item>GRAPH</item>
+        <item>MAP</item>
     </string-array>
     
     <string-array

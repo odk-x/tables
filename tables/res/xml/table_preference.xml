@@ -23,13 +23,15 @@
     <PreferenceCategory 
         android:title="@string/display_settings" >
         
-        <ListPreference
+        <!-- <ListPreference -->
+        <org.opendatakit.tables.preferences.DefaultViewTypePreference
             android:key="table_pref_default_view_type"
             android:persistent="false"
             android:title="@string/change_default_view_type"
             android:entries="@array/table_view_types"
-            android:entryValues="@array/table_view_types">
-        </ListPreference>
+            android:entryValues="@array/table_view_types_values" />
+        
+        <!-- </ListPreference> -->
         
         <!-- Default form -->
         <org.opendatakit.tables.preferences.EditFormDialogPreference
