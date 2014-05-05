@@ -49,5 +49,20 @@ public class IntentUtil {
         sqlOrderByDirection);
     return result;
   }
+  
+  /**
+   * Return the file name from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link Constants.IntentKeys#FILE_NAME}.
+   * @param bundle
+   * @return the file name, null if it does not exist or if bundle is null
+   */
+  public static String retrieveFileNameFromBundle(Bundle bundle) {
+    if (bundle == null) {
+      return null;
+    }
+    String fileName = bundle.getString(Constants.IntentKeys.FILE_NAME);
+    return fileName;
+  }
 
 }

@@ -46,6 +46,8 @@ public class Constants {
      */
     public static final String TABLE_DISPLAY_VIEW_TYPE = 
         "tableDisplayViewType";
+    public static final String FILE_NAME = "filename";
+    public static final String ROW_ID = "rowId";
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform

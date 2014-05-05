@@ -11,6 +11,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.views.webkits.CustomView;
 
 /**
  * Constants for use in tests.
@@ -29,6 +30,8 @@ public class TestConstants {
   public static final String DEFAULT_FRAGMENT_TAG = "testFragmentTag";
   
   public static final int DEFAULT_FRAGMENT_ID = 12345;
+  
+  public static final String DEFAULT_FILE_NAME = "test/File/Name";
   
   /**
    * The default app name for tables. Using this rather than the
@@ -74,5 +77,9 @@ public class TestConstants {
     allViewTypes.add(TableViewType.GRAPH);
     doReturn(allViewTypes).when(allValid).getAllPossibleViewTypes();
     return allValid;
+  }
+  
+  public static CustomView getCustomViewMock() {
+    return mock(CustomView.class);
   }
 }
