@@ -256,11 +256,11 @@ public class TableDisplayActivity extends AbsTableActivity
     // default.
     String fileName =
         IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
-    Bundle bundle = new Bundle();
-    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
     if (fileName == null) {
       fileName = getTableProperties().getListViewFileName();
     }
+    Bundle bundle = new Bundle();
+    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
     FragmentManager fragmentManager = this.getFragmentManager();
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);

@@ -27,7 +27,6 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -43,7 +42,7 @@ import android.widget.LinearLayout;
  * @author sudar.sam@gmail.com
  *
  */
-public class CustomHomeScreenActivity extends Activity
+public class CustomHomeScreenActivity extends AbsBaseActivity
     implements DisplayActivity, InitializeTask.Callbacks {
 
   private static final String TAG = CustomHomeScreenActivity.class.getName();
