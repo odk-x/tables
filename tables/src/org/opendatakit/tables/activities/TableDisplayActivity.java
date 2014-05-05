@@ -255,6 +255,10 @@ public class TableDisplayActivity extends AbsTableActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
+    if (listViewFragment != null && listViewFragment.isResumed()) {
+      // don't do anything, already active.
+      return;
+    }
     if (listViewFragment == null) {
       listViewFragment = new ListViewFragment();
     }
