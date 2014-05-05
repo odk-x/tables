@@ -256,22 +256,20 @@ public class TableDisplayActivity extends AbsTableActivity
     // default.
     String fileName =
         IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
+    Bundle bundle = new Bundle();
+    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
     if (fileName == null) {
       fileName = getTableProperties().getListViewFileName();
     }
     FragmentManager fragmentManager = this.getFragmentManager();
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
-    if (listViewFragment != null && listViewFragment.isResumed()) {
-      // don't do anything, already active.
-      return;
-    }
-    if (listViewFragment == null) {
+    if (listViewFragment != null) {
+      listViewFragment.getArguments().putAll(bundle);
+    } else {
       listViewFragment = new ListViewFragment();
+      listViewFragment.setArguments(bundle);
     }
-    Bundle bundle = new Bundle();
-    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
-    listViewFragment.setArguments(bundle);
     fragmentManager.beginTransaction().replace(
         android.R.id.content,
         listViewFragment,

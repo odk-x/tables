@@ -38,7 +38,7 @@ public interface KeyValueHelper {
   public Integer getInteger(String key);
 
   /**
-   * Retrieve a value of type {@link KeyValueStoreEntryType.ARRAYLIST} mapping
+   * Retrieve a value of type {@link KeyValueStoreEntryType.ARRAY} mapping
    * to
    * the given key. The caller must know what type of Object exists in the
    * list, and must ensure that the objects can be parsed and read by the JSON
@@ -51,10 +51,10 @@ public interface KeyValueHelper {
    * @return
    * @throws IllegalArgumentException if the type of the entry does not match
    */
-  public ArrayList<Object> getList(String key);
+  public ArrayList<Object> getArray(String key);
 
   /**
-   * Retrieve a value of type {@link KeyValueStoreEntryType.TEXT} mapping to
+   * Retrieve a value of type {@link KeyValueStoreEntryType.STRING} mapping to
    * the given key.
    * <p>
    * If the key does not exist it returns null.
@@ -96,7 +96,7 @@ public interface KeyValueHelper {
    * @return
    * @throws IllegalArgumentException if the type of the entry does not match
    */
-  public Double getNumeric(String key);
+  public Double getNumber(String key);
 
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.INTEGER} in the key
@@ -112,12 +112,12 @@ public interface KeyValueHelper {
    * @param key
    * @param value
    */
-  public void setNumeric(String key, Double value);
+  public void setNumber(String key, Double value);
 
   /**
    * Set an entry of type {@link KeyValueSToreEntryType.OBJECT} in the key
-   * value store. The Object must be written to a String in a way such that
-   * future callers will be able to reclaim the Object.
+   * value store. The value is a JSON serialization. The caller is responsible
+   * for providing and interpreting it.
    * @param key
    * @param value
    */
@@ -140,14 +140,16 @@ public interface KeyValueHelper {
   public void setString(String key, String value);
 
   /**
-   * Set an entry of type {@link KeyValueSToreEntryType.ARRAYLIST} in the key
-   * value store. The value will be converted to a String. Consequently, the
-   * caller must ensure that the ArrayList and all the objects
-   * therein can be parsed and written correctly by the JSON libraries.
+   * Set an entry of type {@link KeyValueSToreEntryType.ARRAY} in the key
+   * value store. The value will be converted to a String via a JSON
+   * serialization. Unlike setJson, the assumption here is that the
+   * list contains items of the same type. If you need a more generic
+   * storage mechanism, use setJson and do the serialization yourself.
+   *
    * @param key
    * @param value
    */
-  public void setList(String key, ArrayList<Object> value);
+  public void setArray(String key, ArrayList<Object> value);
 
   /**
    * Remove the given key from the key value store.
