@@ -692,8 +692,14 @@ public abstract class CustomView extends LinearLayout {
      * @param selectionArgs
      * @return
      */
-    public TableData query(String tableId, String whereClause,
-        String[] selectionArgs, String[] groupBy, String having, String orderByElementKey, String orderByDirection) {
+    public TableData query(
+        String tableId,
+        String whereClause,
+        String[] selectionArgs,
+        String[] groupBy,
+        String having,
+        String orderByElementKey,
+        String orderByDirection) {
       TableData tableData = queryForTableData(
           tableId,
           whereClause, selectionArgs,
