@@ -5,7 +5,6 @@
 	<classpathentry kind="lib" path="libs/fest-android-1.0.7.jar"/>
 	<classpathentry kind="lib" path="libs/fest-assert-core-2.0M10.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="/usr/local/var/lib/android-sdk/platforms/android-19/android.jar" sourcepath="/usr/local/var/lib/android-sdk/sources/android-19"/>
 	<classpathentry kind="lib" path="libs/mockito-all-1.9.5.jar"/>
 	<classpathentry kind="lib" path="libs/robolectric-2.3-20140425.145412-162-jar-with-dependencies.jar" sourcepath="libs/robolectric-2.3-20140425.145412-162-sources.jar">
 		<attributes>
@@ -13,5 +12,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/ODK Tables"/>
+	<classpathentry kind="lib" path="libs/android.19.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
