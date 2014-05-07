@@ -223,10 +223,16 @@ public abstract class CustomView extends LinearLayout {
    * @param surveyFormParameters
    * @param elementKeyToValueToPrepopulate
    */
-  private void prepopulateRowAndLaunchSurveyToAddRow(TableProperties tp,
-      SurveyFormParameters surveyFormParameters, Map<String, String> elementKeyToValueToPrepopulate) {
-    Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(getContainerActivity(), tp,
-        mAppName, surveyFormParameters, elementKeyToValueToPrepopulate);
+  private void prepopulateRowAndLaunchSurveyToAddRow(
+      TableProperties tp,
+      SurveyFormParameters surveyFormParameters,
+      Map<String, String> elementKeyToValueToPrepopulate) {
+    Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
+        getContainerActivity(),
+        tp,
+        mAppName,
+        surveyFormParameters,
+        elementKeyToValueToPrepopulate);
     SurveyUtil.launchSurveyToAddRow(getContainerActivity(), addRowIntent, tp);
   }
 
@@ -242,10 +248,18 @@ public abstract class CustomView extends LinearLayout {
    * @param refId
    * @param prepopulateValues
    */
-  private void addRowWithSurveyAndSpecificForm(String tableName, TableProperties tp, String formId,
-      String screenPath, Map<String, String> prepopulateValues) {
-    SurveyFormParameters surveyFormParameters = new SurveyFormParameters(true, formId, screenPath);
-    prepopulateRowAndLaunchSurveyToAddRow(tp, surveyFormParameters, prepopulateValues);
+  private void addRowWithSurveyAndSpecificForm(
+      String tableName,
+      TableProperties tp,
+      String formId,
+      String screenPath,
+      Map<String, String> prepopulateValues) {
+    SurveyFormParameters surveyFormParameters =
+        new SurveyFormParameters(true, formId, screenPath);
+    prepopulateRowAndLaunchSurveyToAddRow(
+        tp,
+        surveyFormParameters,
+        prepopulateValues);
   }
 
   /**
@@ -327,7 +341,8 @@ public abstract class CustomView extends LinearLayout {
   protected class Control {
 
     public Object getJavascriptInterfaceWithWeakReference() {
-      return new ControlIf(this);
+//      return new ControlIf(this);
+      return null;
     }
 
     private static final String TAG = "CustomView.Control";
@@ -866,7 +881,7 @@ public abstract class CustomView extends LinearLayout {
       }
       if (formId == null) {
         SurveyFormParameters surveyFormParameters = SurveyFormParameters
-            .ConstructSurveyFormParameters(tp);
+            .constructSurveyFormParameters(tp);
         formId = surveyFormParameters.getFormId();
       }
       Map<String, String> map = null;

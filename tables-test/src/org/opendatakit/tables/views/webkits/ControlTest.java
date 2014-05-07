@@ -13,7 +13,7 @@ import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.views.webkits.CustomView.Control;
+import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -31,7 +31,6 @@ import android.content.ComponentName;
 @RunWith(RobolectricTestRunner.class)
 public class ControlTest {
   
-  CustomViewStub customView;
   Control control;
   Activity activity;
   
@@ -44,11 +43,7 @@ public class ControlTest {
           .resume()
           .visible()
           .get();
-    CustomViewStub customViewStub = new CustomViewStub(
-        activityStub,
-        activityStub.getAppName());
-    Control control = customViewStub.new Control(activityStub);
-    this.customView = customViewStub;
+    Control control = new Control(activityStub);
     this.activity = activityStub;
     this.control = control;
   }
@@ -59,7 +54,6 @@ public class ControlTest {
     // null them out just to make sure.
     this.activity = null;
     this.control = null;
-    this.customView = null;
   }
   
   @Test

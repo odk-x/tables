@@ -315,6 +315,63 @@ public class SurveyUtil {
     Log.e(TAG, "[launchSurveyToAddRow] not currently waiting for return");
     activityToAwaitReturn.startActivity(surveyAddIntent);
   }
+  
+  /**
+   * Add a row with Survey. Convenience method for calling
+   * {@link #getIntentForOdkSurveyAddRow(Context, TableProperties, String,
+   *  SurveyFormParameters, Map)} followed by
+   *  {@link #launchSurveyToAddRow(Activity, Intent, TableProperties)}.
+   * @param activity activity to await activity return
+   * @param appName
+   * @param tableProperties
+   * @param surveyFormParameters
+   * @param prepopulatedValues values you want to prepopulate the form with.
+   * Should be element key to value.
+   */
+  public static void addRowWithSurvey(
+      Activity activity,
+      String appName,
+      TableProperties tableProperties,
+      SurveyFormParameters surveyFormParameters,
+      Map<String, String> prepopulatedValues) {
+    Intent addRowIntent = SurveyUtil.getIntentForOdkSurveyAddRow(
+        activity,
+        tableProperties,
+        appName,
+        surveyFormParameters,
+        prepopulatedValues);
+    SurveyUtil.launchSurveyToAddRow(activity, addRowIntent, tableProperties);
+  }
+  
+  /**
+   * Launch survey to edit a row. Convenience method for calling
+   * {@link #getIntentForOdkSurveyEditRow(Context, TableProperties, String,
+   *  SurveyFormParameters, String)} followed by
+   * {@link #launchSurveyToEditRow(Activity, Intent, TableProperties, String)}.
+   * @param activity activity to await the return of the launch
+   * @param appName
+   * @param instanceId id of the row to edit
+   * @param tableProperties
+   * @param surveyFormParameters
+   */
+  public static void editRowWithSurvey(
+      Activity activity,
+      String appName,
+      String instanceId,
+      TableProperties tableProperties,
+      SurveyFormParameters surveyFormParameters) {
+    Intent editRowIntent = SurveyUtil.getIntentForOdkSurveyEditRow(
+        activity,
+        tableProperties,
+        appName,
+        surveyFormParameters,
+        instanceId);
+    SurveyUtil.launchSurveyToEditRow(
+        activity,
+        editRowIntent,
+        tableProperties,
+        instanceId);
+  }
 
   /**
    * TODO: eventually launch with the correct return code. For now, just starts
@@ -360,19 +417,6 @@ public class SurveyUtil {
     @SuppressWarnings("unused")
     private SurveyFormParameters() {
       // including this in case it needs to be serialized to json.
-    }
-    
-    /**
-     * This is an un-implemented method meant only to mirror the way that
-     * {@link CollectUtil.CollectFormParameters#constructCollectFormParameters(TableProperties)}.
-     * It is tbd if this is the right way to do it.
-     * @param tableProperties
-     */
-    public static SurveyFormParameters ConstructSurveyFormParameters(
-        TableProperties tableProperties) {
-      // TODO: support default forms for survey, and persisted survey forms.
-      Log.e(TAG, "ConstructSurveyFormParameters is unimplemented");
-      return null;
     }
 
     public SurveyFormParameters(boolean isUserDefined, String formId, String screenPath) {
