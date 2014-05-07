@@ -22,7 +22,16 @@ import java.util.Map;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.type.TypeReference;
+import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.util.Log;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class CustomViewUtil {
   
@@ -57,6 +66,79 @@ public class CustomViewUtil {
       e.printStackTrace();
     }
     return map;
+  }
+  
+  /**
+   * Get a {@link WebView} that is ready to be used for ODK settings. This
+   * includes, e.g., having attached a logger and enabling javascript.
+   * @return
+   */
+  @SuppressLint("SetJavaScriptEnabled")
+  public static WebView getODKCompliantWebView(Context context) {
+    WebView result = new WebView(context);
+    final String webViewTag = "ODKCompliantWebView";
+    result.getSettings().setJavaScriptEnabled(true);
+    result.setWebViewClient(new WebViewClient() {
+        
+        @Override
+        public void onReceivedError(
+            WebView view,
+            int errorCode,
+            String description,
+            String failingUrl) {
+          super.onReceivedError(view, errorCode, description, failingUrl);
+          Log.e(
+              webViewTag,
+              "[onReceivedError] errorCode: " +
+              errorCode +
+              "; description: "
+              + description + 
+              "; failingUrl: " +
+              failingUrl);
+        }
+    });
+    result.setWebChromeClient(new WebChromeClient() {
+      
+      @Override
+      public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+        Log.i(
+            webViewTag,
+            "[onConsoleMessage] level: " +
+            consoleMessage.messageLevel().name() +
+            consoleMessage.message());
+        return super.onConsoleMessage(consoleMessage);
+      }
+      
+    });
+    return result;
+  }
+  
+  /**
+   * Display the file in the WebView.
+   * @param context
+   * @param appName
+   * @param webView the WebView in which the file should be displayed
+   * @param fileName the relativePath to the file. If null, a no file specified
+   * message is displayed.
+   */
+  public static void displayFileInWebView(
+      Context context,
+      String appName,
+      WebView webView,
+      String fileName) {
+    if (fileName != null) {
+      String webUrl = FileProvider.getAsWebViewUri(
+          context,
+          appName,
+          fileName);
+      webView.loadUrl(webUrl);
+    } else {
+      // load the no file found html.
+      webView.loadData(
+          Constants.HTML.NO_FILE_NAME,
+          Constants.MimeTypes.TEXT_HTML,
+          null);
+    }
   }
   
 }

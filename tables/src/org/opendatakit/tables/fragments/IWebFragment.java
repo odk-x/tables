@@ -1,9 +1,11 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.webkit.WebView;
 
 /**
  * Interface defining behavior for those {@link Fragment}s that display a
@@ -30,7 +32,13 @@ public interface IWebFragment {
    */
   public void putFileNameInBundle(Bundle bundle);
   
-  public CustomView buildView();
+  /**
+   * Create and return the {@link WebView} that will be added to this fragment.
+   * Any JavaScript interfaces that will be added should be added to the
+   * view before it is returned.
+   * @return
+   */
+  public WebView buildView();
   
   /**
    * Get the file name that is being displayed.

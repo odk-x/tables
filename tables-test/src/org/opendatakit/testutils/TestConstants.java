@@ -10,9 +10,10 @@ import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.TableData;
+
+import android.webkit.WebView;
 
 /**
  * Constants for use in tests.
@@ -95,7 +96,11 @@ public class TestConstants {
     return allValid;
   }
   
-  public static CustomView getCustomViewMock() {
-    return mock(CustomView.class);
+  public static WebView getWebViewMock() {
+    return mock(WebView.class);
+  }
+  
+  public static TableData getTableDataMock() {
+    return mock(TableData.class);
   }
 }

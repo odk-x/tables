@@ -35,9 +35,6 @@ import android.view.ViewGroup;
  */
 public class CustomAppView extends CustomView {
 
-  private static final String DEFAULT_HTML = "<html><body>"
-      + "<p>No filename has been specified.</p>" + "</body></html>";
-
   // The filename of the HTML you'll be displaying. Not the full path, just
   // the relative name.
   private String mFilename;

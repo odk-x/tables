@@ -4,16 +4,15 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.CustomViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.views.webkits.CustomTableView;
-import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.webkit.WebView;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -41,29 +40,24 @@ public class DetailViewFragment extends AbsWebTableFragment {
   }
   
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    // TODO Auto-generated method stub
-    return this.buildView();
-  }
-
-  @Override
-  public CustomView buildView() {
+  public WebView buildView() {
     // First we need to construct the single row table.
     this.initializeTable();
-    CustomTableView result = CustomTableView.get(
+    WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
+    Control control = this.createControlObject();
+    result.addJavascriptInterface(
+        control.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.CONTROL);
+    TableData tableData = this.createDataObject();
+    result.addJavascriptInterface(
+        tableData.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.DATA);
+    CustomViewUtil.displayFileInWebView(
         getActivity(),
         getAppName(),
-        getSingleRowTable(),
+        result,
         getFileName());
-    result.display();
     return result;
-  }
-  
-  @Override
-  public void onResume() {
-    super.onResume();
-    // Have to do this because CustomTableView is so stupid.
-    ((CustomTableView) getView()).display();
   }
   
   private void initializeTable() {
@@ -122,9 +116,15 @@ public class DetailViewFragment extends AbsWebTableFragment {
   
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    // TODO Auto-generated method stub
     super.onSaveInstanceState(outState);
     outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
+  }
+
+  @Override
+  protected TableData createDataObject() {
+    UserTable singleRowTable = this.retrieveSingleRowTable();
+    TableData result = new TableData(singleRowTable);
+    return result;
   }
 
 }

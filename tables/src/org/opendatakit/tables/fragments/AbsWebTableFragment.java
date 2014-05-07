@@ -1,8 +1,12 @@
 package org.opendatakit.tables.fragments;
 
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.CustomViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -10,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 
 /**
  * Base class for {@link Fragment}s that display information about a table
@@ -54,9 +59,25 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
       ViewGroup container,
       Bundle savedInstanceState) {
     Log.d(TAG, "[onCreateView]");
-    CustomView customView = this.buildView();
-    return customView;
+    WebView webView = this.buildView();
+    return webView;
   }
+  
+  /**
+   * Create a {@link Control} object that can be added to this webview.
+   * @return
+   */
+  protected Control createControlObject() {
+    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
+    Control result = new Control(activity);
+    return result;
+  }
+  
+  /**
+   * Create a {@link TableData} object that can be added toe the webview.
+   * @return
+   */
+  protected abstract TableData createDataObject();
   
   @Override
   public void putFileNameInBundle(Bundle bundle) {
@@ -70,7 +91,10 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * @return
    */
   @Override
-  public abstract CustomView buildView();
+  public WebView buildView() {
+    WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
+    return result;
+  }
   
   /**
    * Get the file name this fragment is displaying.

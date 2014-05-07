@@ -57,7 +57,6 @@ public class Control {
     return new ControlIf(this);
   }
 
-
   // hold onto references to all the results returned to the WebKit
   private LinkedList<TableData> queryResults = new LinkedList<TableData>();
 

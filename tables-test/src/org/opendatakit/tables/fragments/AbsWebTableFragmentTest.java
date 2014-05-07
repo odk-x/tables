@@ -1,7 +1,6 @@
 package org.opendatakit.tables.fragments;
 
 import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.mockito.Mockito.mock;
 
 import org.junit.After;
 import org.junit.Before;
@@ -9,14 +8,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.views.webkits.CustomView;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
+import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.WebView;
 
 @RunWith(RobolectricTestRunner.class)
 public class AbsWebTableFragmentTest {
@@ -68,11 +68,11 @@ public class AbsWebTableFragmentTest {
   
   @Test
   public void setsTheViewReturnedByBuildCustomView() {
-    CustomView mockCustomView = mock(CustomView.class);
-    AbsWebTableFragmentStub.CUSTOM_VIEW = mockCustomView;
+    WebView mockWebView = TestConstants.getWebViewMock();
+    AbsWebTableFragmentStub.WEB_VIEW = mockWebView;
     this.setupFragmentWithFileName("testFileName");
     View fragmentView = this.fragment.getView();
-    assertThat(fragmentView).isSameAs(mockCustomView);
+    assertThat(fragmentView).isSameAs(mockWebView);
   }
 
 }
