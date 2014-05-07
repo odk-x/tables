@@ -6,16 +6,12 @@ import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
-import org.opendatakit.tables.utils.PreferenceUtil;
 import org.opendatakit.tables.views.components.TableViewTypeAdapter;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListAdapter;
 
 public class DefaultViewTypePreference extends ListPreference {
@@ -25,12 +21,12 @@ public class DefaultViewTypePreference extends ListPreference {
   private PossibleTableViewTypes mPossibleViewTypes;
   private Context mContext;
   private CharSequence[] mEntryValues;
-  
+
   public DefaultViewTypePreference(Context context, AttributeSet attrs) {
     super(context, attrs);
     this.mContext = context;
   }
-  
+
   public void setFields(TableProperties tableProperties) {
     this.mTableProperties = tableProperties;
     this.mPossibleViewTypes = tableProperties.getPossibleViewTypes();
@@ -47,7 +43,7 @@ public class DefaultViewTypePreference extends ListPreference {
       this.setValueIndex(index);
     }
   }
-  
+
   @Override
   protected void onPrepareDialogBuilder(Builder builder) {
     // We want to enable/disable the correct list.
@@ -60,7 +56,7 @@ public class DefaultViewTypePreference extends ListPreference {
     builder.setAdapter(adapter, this);
     super.onPrepareDialogBuilder(builder);
   }
-  
-  
+
+
 
 }

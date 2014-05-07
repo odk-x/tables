@@ -3,7 +3,6 @@ package org.opendatakit.tables.fragments;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 
 import android.app.Activity;
@@ -15,7 +14,7 @@ import android.app.Fragment;
  *
  */
 public abstract class AbsTableDisplayFragment extends Fragment {
-  
+
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -24,7 +23,7 @@ public abstract class AbsTableDisplayFragment extends Fragment {
           TableDisplayActivity.class.getSimpleName());
     }
   }
-  
+
   /**
    * Get the {@link TableProperties} backing the {@link UserTable}.
    * @return
@@ -33,7 +32,7 @@ public abstract class AbsTableDisplayFragment extends Fragment {
     TableProperties result = this.getUserTable().getTableProperties();
     return result;
   }
-  
+
   /**
    * Get the {@link UserTable} being held by the {@link TableDisplayActivity}.
    * @return
@@ -43,7 +42,7 @@ public abstract class AbsTableDisplayFragment extends Fragment {
     UserTable result = activity.getUserTable();
     return result;
   }
-  
+
   /**
    * get the app name held by the {@link AbsBaseActivity}.
    * @return
@@ -52,7 +51,7 @@ public abstract class AbsTableDisplayFragment extends Fragment {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     return activity.getAppName();
   }
-  
+
   /** Return the type of this fragment. */
   public abstract TableDisplayActivity.ViewFragmentType getFragmentType();
 

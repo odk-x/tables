@@ -102,14 +102,12 @@ public class TableProperties {
 
   // this is not known by the server...
   private static final String KEY_DEFAULT_VIEW_TYPE = "defaultViewType";
-  
+
   /** The file name for the list view that has been set on the table. */
-  public static final String KEY_LIST_VIEW_FILE_NAME = 
-      "listViewFileName";
-  
+  public static final String KEY_LIST_VIEW_FILE_NAME = "listViewFileName";
+
   /** The file name for the detail view that has been set on the table. */
-  public static final String KEY_DETAIL_VIEW_FILE_NAME =
-      "detailViewFileName";
+  public static final String KEY_DETAIL_VIEW_FILE_NAME = "detailViewFileName";
 
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
@@ -175,16 +173,17 @@ public class TableProperties {
    *          the KVS from which to get the store
    * @return
    */
-  private static synchronized void refreshActiveCache(Context context, String appName, SQLiteDatabase db) {
+  private static synchronized void refreshActiveCache(Context context, String appName,
+      SQLiteDatabase db) {
     try {
       KeyValueStoreManager kvsm = new KeyValueStoreManager();
       idsInActiveKVS = kvsm.getAllIdsFromStore(db);
 
       activeTableIdMap.clear();
-      for ( String tableId : idsInActiveKVS ) {
+      for (String tableId : idsInActiveKVS) {
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
         TableProperties tp = constructPropertiesFromMap(context, appName, db, propPairs);
-        if ( tp == null ) {
+        if (tp == null) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
         activeTableIdMap.put(tp.getTableId(), tp);
@@ -194,18 +193,20 @@ public class TableProperties {
     }
   }
 
-  private static synchronized void ensureActiveTableIdMapLoaded(Context context, String appName, SQLiteDatabase db) {
+  private static synchronized void ensureActiveTableIdMapLoaded(Context context, String appName,
+      SQLiteDatabase db) {
     // A pre-requisite to having an update cache is to have agreement on
     // all the known table ids.
     List<String> allIds = TableDefinitions.getAllTableIds(db);
-    if ( staleActiveCache || idsInActiveKVS.size() != allIds.size() ) {
+    if (staleActiveCache || idsInActiveKVS.size() != allIds.size()) {
       refreshActiveCache(context, appName, db);
     }
   }
 
   /**
    *
-   * @param typeOfStore - null if everything
+   * @param typeOfStore
+   *          - null if everything
    */
   public static synchronized void markStaleCache() {
     staleActiveCache = true;
@@ -219,11 +220,11 @@ public class TableProperties {
    * @param typeOfStore
    *          the store from which to get the properties
    * @param forceRefresh
-   *           do not use the cache; update it with a fresh pull
+   *          do not use the cache; update it with a fresh pull
    * @return
    */
-  public static TableProperties getTablePropertiesForTable(Context context, String appName, String tableId) {
-
+  public static TableProperties getTablePropertiesForTable(Context context, String appName,
+      String tableId) {
 
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     SQLiteDatabase db = dh.getReadableDatabase();
@@ -236,7 +237,8 @@ public class TableProperties {
     }
   }
 
-  public static TableProperties refreshTablePropertiesForTable(Context context, String appName, String tableId) {
+  public static TableProperties refreshTablePropertiesForTable(Context context, String appName,
+      String tableId) {
 
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     SQLiteDatabase db = dh.getReadableDatabase();
@@ -270,7 +272,7 @@ public class TableProperties {
       ensureActiveTableIdMapLoaded(context, appName, db);
       return activeTableIdMap.values().toArray(new TableProperties[activeTableIdMap.size()]);
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         db.close();
       }
     }
@@ -286,7 +288,8 @@ public class TableProperties {
    *          the KVS from which to get the properties
    * @return
    */
-  public static TableProperties[] getTablePropertiesForSynchronizedTables(Context context, String appName) {
+  public static TableProperties[] getTablePropertiesForSynchronizedTables(Context context,
+      String appName) {
 
     SQLiteDatabase db = null;
     try {
@@ -297,9 +300,9 @@ public class TableProperties {
       List<String> synchedIds = kvsm.getSynchronizedTableIds(db);
       return constructPropertiesFromIds(context, appName, db, synchedIds);
     } finally {
-       if ( db != null ) {
-       db.close();
-       }
+      if (db != null) {
+        db.close();
+      }
     }
   }
 
@@ -346,14 +349,11 @@ public class TableProperties {
   private TableViewType defaultViewType;
   private KeyValueStoreHelper tableKVSH;
 
-  private TableProperties(Context context, String appName, SQLiteDatabase db, String tableId, String dbTableName,
-      String displayName,
-      ArrayList<String> columnOrder, ArrayList<String> groupByColumns, String sortColumn,
-      String sortOrder,
-      String indexColumn, SyncTag syncTag,
-      String lastSyncTime,
-      TableViewType defaultViewType,
-      SyncState syncState, boolean transactioning) {
+  private TableProperties(Context context, String appName, SQLiteDatabase db, String tableId,
+      String dbTableName, String displayName, ArrayList<String> columnOrder,
+      ArrayList<String> groupByColumns, String sortColumn, String sortOrder, String indexColumn,
+      SyncTag syncTag, String lastSyncTime, TableViewType defaultViewType, SyncState syncState,
+      boolean transactioning) {
     this.context = context;
     this.appName = appName;
     whereArgs = new String[] { tableId };
@@ -362,8 +362,8 @@ public class TableProperties {
     this.displayName = displayName;
     // columns = null;
     this.mElementKeyToColumnProperties = null;
-    if ( groupByColumns == null ) {
-    	groupByColumns = new ArrayList<String>();
+    if (groupByColumns == null) {
+      groupByColumns = new ArrayList<String>();
     }
     this.groupByColumns = groupByColumns;
     if (sortColumn == null || sortColumn.length() == 0) {
@@ -394,7 +394,7 @@ public class TableProperties {
     if (columnOrder.size() == 0) {
 
       for (ColumnProperties cp : mElementKeyToColumnProperties.values()) {
-        if  ( cp.isUnitOfRetention() ) {
+        if (cp.isUnitOfRetention()) {
           columnOrder.add(cp.getElementKey());
         }
       }
@@ -471,7 +471,7 @@ public class TableProperties {
     SQLiteDatabase db = getWritableDatabase();
     try {
       db.beginTransaction();
-      if ( clear ) {
+      if (clear) {
         kvs.clearKeyValuePairs(db);
       }
       kvs.addEntriesToStore(db, entries);
@@ -483,7 +483,7 @@ public class TableProperties {
   }
 
   public KeyValueStoreManager getKeyValueStoreManager() {
-	  return new KeyValueStoreManager();
+    return new KeyValueStoreManager();
   }
 
   public SQLiteDatabase getReadableDatabase() {
@@ -495,6 +495,7 @@ public class TableProperties {
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     return dh.getWritableDatabase();
   }
+
   /*
    * Return the map of all the properties for the given table. The properties
    * include both the values of this table's row in TableDefinition and the
@@ -508,8 +509,8 @@ public class TableProperties {
    * through both the key value store and the TableDefinitions table.
    *
    * NOTE: this routine now supplies valid default values should the database
-   * not contain the appropriate default settings for a particular value.
-   * This provides a degree of upgrade-ability.
+   * not contain the appropriate default settings for a particular value. This
+   * provides a degree of upgrade-ability.
    *
    * @param dbh
    *
@@ -530,22 +531,22 @@ public class TableProperties {
       mapProps.putAll(kvsMap);
       mapProps.putAll(tableDefinitionsMap);
 
-      if ( mapProps.get(KEY_DISPLAY_NAME) == null ) {
+      if (mapProps.get(KEY_DISPLAY_NAME) == null) {
         mapProps.put(KEY_DISPLAY_NAME, tableId);
       }
-      if ( mapProps.get(KEY_COLUMN_ORDER) == null ) {
+      if (mapProps.get(KEY_COLUMN_ORDER) == null) {
         mapProps.put(KEY_COLUMN_ORDER, DEFAULT_KEY_COLUMN_ORDER);
       }
-      if ( mapProps.get(KEY_GROUP_BY_COLUMNS) == null ) {
+      if (mapProps.get(KEY_GROUP_BY_COLUMNS) == null) {
         mapProps.put(KEY_GROUP_BY_COLUMNS, DEFAULT_KEY_GROUP_BY_COLUMNS);
       }
-      if ( mapProps.get(KEY_SORT_COLUMN) == null ) {
+      if (mapProps.get(KEY_SORT_COLUMN) == null) {
         mapProps.put(KEY_SORT_COLUMN, DEFAULT_KEY_SORT_COLUMN);
       }
-      if ( mapProps.get(KEY_INDEX_COLUMN) == null ) {
+      if (mapProps.get(KEY_INDEX_COLUMN) == null) {
         mapProps.put(KEY_INDEX_COLUMN, DEFAULT_KEY_INDEX_COLUMN);
       }
-      if ( mapProps.get(KEY_DEFAULT_VIEW_TYPE) == null ) {
+      if (mapProps.get(KEY_DEFAULT_VIEW_TYPE) == null) {
         mapProps.put(KEY_DEFAULT_VIEW_TYPE, DEFAULT_KEY_CURRENT_VIEW_TYPE);
       }
       return mapProps;
@@ -562,10 +563,10 @@ public class TableProperties {
    * be acquired from the key value store.
    */
   private static TableProperties constructPropertiesFromMap(Context context, String appName,
-        SQLiteDatabase db, Map<String, String> props) {
+      SQLiteDatabase db, Map<String, String> props) {
     // first we have to get the appropriate type for the non-string fields.
     String syncStateStr = props.get(TableDefinitionsColumns.SYNC_STATE);
-    if ( syncStateStr == null ) {
+    if (syncStateStr == null) {
       // we don't have any entry for this table
       return null;
     }
@@ -612,10 +613,9 @@ public class TableProperties {
 
     String groupByColumnsJsonString = props.get(KEY_GROUP_BY_COLUMNS);
     ArrayList<String> groupByCols = new ArrayList<String>();
-    if (groupByColumnsJsonString != null &&
-    	groupByColumnsJsonString.length() != 0) {
+    if (groupByColumnsJsonString != null && groupByColumnsJsonString.length() != 0) {
       try {
-    	  groupByCols = mapper.readValue(groupByColumnsJsonString, ArrayList.class);
+        groupByCols = mapper.readValue(groupByColumnsJsonString, ArrayList.class);
       } catch (JsonParseException e) {
         e.printStackTrace();
         Log.e(t, "ignore invalid json: " + groupByColumnsJsonString);
@@ -629,14 +629,11 @@ public class TableProperties {
     }
 
     return new TableProperties(context, appName, db, props.get(TableDefinitionsColumns.TABLE_ID),
-        props.get(TableDefinitionsColumns.DB_TABLE_NAME),
-        props.get(KEY_DISPLAY_NAME),
-        columnOrder, groupByCols,
-        props.get(KEY_SORT_COLUMN), props.get(KEY_SORT_ORDER),
-        props.get(KEY_INDEX_COLUMN),
-        SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
-        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType,
-        syncState, transactioning);
+        props.get(TableDefinitionsColumns.DB_TABLE_NAME), props.get(KEY_DISPLAY_NAME), columnOrder,
+        groupByCols, props.get(KEY_SORT_COLUMN), props.get(KEY_SORT_ORDER),
+        props.get(KEY_INDEX_COLUMN), SyncTag.valueOf(props.get(TableDefinitionsColumns.SYNC_TAG)),
+        props.get(TableDefinitionsColumns.LAST_SYNC_TIME), defaultViewType, syncState,
+        transactioning);
   }
 
   /*
@@ -650,7 +647,7 @@ public class TableProperties {
       String tableId = ids.get(i);
       Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
       allProps[i] = constructPropertiesFromMap(context, appName, db, propPairs);
-      if ( allProps[i] == null ) {
+      if (allProps[i] == null) {
         throw new IllegalStateException("Unexpectedly missing " + tableId);
       }
     }
@@ -707,9 +704,8 @@ public class TableProperties {
       throw new TableAlreadyExistsException("a table already exists with the" + " dbTableName: "
           + dbTableName + " or with the tableId: " + tableId);
     }
-    TableProperties tp = addTable(context, appName, dbTableName, displayName,
-        tableId);
-    if ( !tp.setFromJson(json) ) {
+    TableProperties tp = addTable(context, appName, dbTableName, displayName, tableId);
+    if (!tp.setFromJson(json)) {
       throw new IllegalStateException("this should never happen");
     }
     return tp;
@@ -722,7 +718,8 @@ public class TableProperties {
    * NB: Currently adds all the keys defined in this class to the key value
    * store as well. This should likely change.
    * <p>
-   * NB: Sets the db_table_name in TableDefinitions to the dbTableName parameter.
+   * NB: Sets the db_table_name in TableDefinitions to the dbTableName
+   * parameter.
    *
    * @param context
    * @param appName
@@ -732,8 +729,8 @@ public class TableProperties {
    * @param typeOfStore
    * @return
    */
-  public static TableProperties addTable(Context context, String appName,
-      String dbTableName, String displayName, String tableId) {
+  public static TableProperties addTable(Context context, String appName, String dbTableName,
+      String displayName, String tableId) {
     Log.e(t, "adding table with id: " + tableId);
     // First we will add the entry in TableDefinitions.
     // TODO: this should check for duplicate names.
@@ -746,13 +743,13 @@ public class TableProperties {
       try {
         TableDefinitions.addTable(db, tableId, dbTableName);
         Map<String, String> propPairs = getMapOfPropertiesForTable(db, tableId);
-        if ( !(displayName.startsWith("\"") || displayName.startsWith("{")) ) {
+        if (!(displayName.startsWith("\"") || displayName.startsWith("{"))) {
           // wrap it so that it is a JSON string
           displayName = ODKFileUtils.mapper.writeValueAsString(displayName);
         }
         propPairs.put(KEY_DISPLAY_NAME, displayName);
         tp = constructPropertiesFromMap(context, appName, db, propPairs);
-        if ( tp == null ) {
+        if (tp == null) {
           throw new IllegalStateException("Unexpectedly missing " + tableId);
         }
         Log.d(t, "adding table: " + dbTableName);
@@ -764,10 +761,10 @@ public class TableProperties {
         db.setTransactionSuccessful();
       } catch (Exception e) {
         e.printStackTrace();
-        if ( e instanceof IllegalStateException ) {
-        	throw (IllegalStateException) e;
+        if (e instanceof IllegalStateException) {
+          throw (IllegalStateException) e;
         } else {
-        	throw new IllegalStateException("TableProperties could not be created", e);
+          throw new IllegalStateException("TableProperties could not be created", e);
         }
       } finally {
         db.endTransaction();
@@ -814,20 +811,19 @@ public class TableProperties {
         @Override
         public boolean accept(File file) {
           String[] parts = file.getName().split("\\.");
-          return ( parts[0].equals(tableId) && parts[parts.length-1].equals("csv") &&
-                  (parts.length == 2 ||
-                   parts.length == 3 ||
-                   (parts.length == 4 && parts[parts.length-2].equals("properties"))) );
+          return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
+              || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
+              .equals("properties"))));
         }
 
         @Override
         public boolean accept(File dir, String name) {
           String[] parts = name.split("\\.");
-          return ( parts[0].equals(tableId) && parts[parts.length-1].equals("csv") &&
-                  (parts.length == 2 ||
-                   parts.length == 3 ||
-                   (parts.length == 4 && parts[parts.length-2].equals("properties"))) );
-        }}, new IOFileFilter() {
+          return (parts[0].equals(tableId) && parts[parts.length - 1].equals("csv") && (parts.length == 2
+              || parts.length == 3 || (parts.length == 4 && parts[parts.length - 2]
+              .equals("properties"))));
+        }
+      }, new IOFileFilter() {
 
         // don't traverse into directories
         @Override
@@ -839,10 +835,11 @@ public class TableProperties {
         @Override
         public boolean accept(File arg0, String arg1) {
           return false;
-        }});
+        }
+      });
 
       FileUtils.deleteDirectory(new File(tableDir));
-      for ( File f : files ) {
+      for (File f : files) {
         FileUtils.deleteQuietly(f);
       }
     } catch (IOException e1) {
@@ -886,8 +883,9 @@ public class TableProperties {
   }
 
   /**
-   * This is the user-defined string that is not translated and uniquely identifies
-   * this data table. Begins as the cleaned up display name of the table.
+   * This is the user-defined string that is not translated and uniquely
+   * identifies this data table. Begins as the cleaned up display name of the
+   * table.
    *
    * @return
    */
@@ -913,19 +911,23 @@ public class TableProperties {
     Locale locale = Locale.getDefault();
     String full_locale = locale.toString();
     int underscore = full_locale.indexOf('_');
-    String lang_only_locale = (underscore == -1) ? full_locale : full_locale.substring(0, underscore);
+    String lang_only_locale = (underscore == -1) ? full_locale : full_locale.substring(0,
+        underscore);
 
-    if ( displayName.startsWith("\"") && displayName.endsWith("\"")) {
-      return displayName.substring(1,displayName.length()-1);
-    } else if ( displayName.startsWith("{") && displayName.endsWith("}")) {
+    if (displayName.startsWith("\"") && displayName.endsWith("\"")) {
+      return displayName.substring(1, displayName.length() - 1);
+    } else if (displayName.startsWith("{") && displayName.endsWith("}")) {
       try {
-        Map<String,Object> localeMap = ODKFileUtils.mapper.readValue(displayName, Map.class);
+        Map<String, Object> localeMap = ODKFileUtils.mapper.readValue(displayName, Map.class);
         String candidate = (String) localeMap.get(full_locale);
-        if ( candidate != null ) return candidate;
+        if (candidate != null)
+          return candidate;
         candidate = (String) localeMap.get(lang_only_locale);
-        if ( candidate != null ) return candidate;
+        if (candidate != null)
+          return candidate;
         candidate = (String) localeMap.get("default");
-        if ( candidate != null ) return candidate;
+        if (candidate != null)
+          return candidate;
         return getTableId();
       } catch (JsonParseException e) {
         e.printStackTrace();
@@ -939,7 +941,8 @@ public class TableProperties {
       }
     }
     return displayName;
-    // throw new IllegalStateException("bad displayName for tableId: " + getTableId());
+    // throw new IllegalStateException("bad displayName for tableId: " +
+    // getTableId());
   }
 
   /**
@@ -973,36 +976,12 @@ public class TableProperties {
   }
 
   /**
-   * Return a map of elementKey to columns as represented by their
-   * {@link ColumnProperties}. If something has happened to a column that did
-   * not go through TableProperties, update row also needs to be called.
-   * <p>
-   * If used repeatedly, this value should be cached by the caller.
-   *
-   * @return a map of the table's columns as represented by their
-   *         {@link ColumnProperties}.
-   */
-  public Map<String, ColumnProperties> getDatabaseColumns() {
-    if (mElementKeyToColumnProperties == null) {
-      refreshColumnsFromDatabase();
-    }
-    Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
-    for ( String col : mElementKeyToColumnProperties.keySet() ) {
-      ColumnProperties cp = mElementKeyToColumnProperties.get(col);
-      if ( cp.isUnitOfRetention() ) {
-        defensiveCopy.put(col, cp);
-      }
-    }
-    return defensiveCopy;
-  }
-
-  /**
-   * Return all the columns for the given table.  These will be
-   * the element keys that are 'units of retention' (stored as columns in
-   * the database) AND the element keys that define super- or sub- structural
-   * elements such as composite types whose sub-elements are written
-   * individually to the database (e.g., geopoint) or subsumed by the
-   * enclosing element (e.g., lists of items).
+   * Return all the columns for the given table. These will be the element keys
+   * that are 'units of retention' (stored as columns in the database) AND the
+   * element keys that define super- or sub- structural elements such as
+   * composite types whose sub-elements are written individually to the database
+   * (e.g., geopoint) or subsumed by the enclosing element (e.g., lists of
+   * items).
    *
    * @return map of all the columns in the table
    */
@@ -1011,7 +990,7 @@ public class TableProperties {
       refreshColumnsFromDatabase();
     }
     Map<String, ColumnProperties> defensiveCopy = new HashMap<String, ColumnProperties>();
-    for ( String col : mElementKeyToColumnProperties.keySet() ) {
+    for (String col : mElementKeyToColumnProperties.keySet()) {
       ColumnProperties cp = mElementKeyToColumnProperties.get(col);
       defensiveCopy.put(col, cp);
     }
@@ -1019,13 +998,13 @@ public class TableProperties {
   }
 
   private void refreshColumnsFromDatabase() {
-   SQLiteDatabase db = null;
-   try {
-     db = getReadableDatabase();
-     refreshColumns(db);
-   } finally {
-     db.close();
-   }
+    SQLiteDatabase db = null;
+    try {
+      db = getReadableDatabase();
+      refreshColumns(db);
+    } finally {
+      db.close();
+    }
   }
 
   /**
@@ -1034,17 +1013,6 @@ public class TableProperties {
    */
   public void refreshColumns(SQLiteDatabase db) {
     this.mElementKeyToColumnProperties = ColumnProperties.getColumnPropertiesForTable(db, this);
-  }
-
-  /**
-   * Return the index of the elementKey in the columnOrder, or -1 if it is not
-   * present.
-   *
-   * @param elementKey
-   * @return
-   */
-  public int getColumnIndex(String elementKey) {
-    return columnOrder.indexOf(elementKey);
   }
 
   public int getNumberOfDisplayColumns() {
@@ -1095,10 +1063,12 @@ public class TableProperties {
     }
     return false;
   }
+
   /**
    * Return the element key for the column based on the element path.
    * <p>
    * TODO: CURRENTLY A HACK!!!
+   *
    * @param elementPath
    * @return
    */
@@ -1151,53 +1121,53 @@ public class TableProperties {
    *          should either be received from the server or null
    * @return ColumnProperties for the new table
    */
-  public ColumnProperties addColumn(String displayName, String elementKey,
-      String elementName, ColumnType columnType,
-      List<String> listChildElementKeys, boolean isUnitOfRetention) {
+  public ColumnProperties addColumn(String displayName, String elementKey, String elementName,
+      ColumnType columnType, List<String> listChildElementKeys, boolean isUnitOfRetention) {
     if (elementKey == null) {
       elementKey = NameUtil.createUniqueElementKey(displayName, this);
     } else if (!NameUtil.isValidUserDefinedDatabaseName(elementKey)) {
-      throw new IllegalArgumentException("[addColumn] invalid element key: " +
-          elementKey);
+      throw new IllegalArgumentException("[addColumn] invalid element key: " + elementKey);
     }
     // it is OK for elementName to be null if it isn't a stored value.
     // e.g., Array types and custom data types can have child elements
     // with a null element name. The child element defines the underlying
     // storage type of the value.
-    if ( isUnitOfRetention ) {
+    if (isUnitOfRetention) {
       if (elementName == null) {
-        throw new IllegalArgumentException("[addColumn] null element name for elementKey: " +
-            elementKey);
+        throw new IllegalArgumentException("[addColumn] null element name for elementKey: "
+            + elementKey);
       } else if (!NameUtil.isValidUserDefinedDatabaseName(elementName)) {
-        throw new IllegalArgumentException("[addColumn] invalid element name: " +
-            elementName + " for elementKey: " + elementKey);
+        throw new IllegalArgumentException("[addColumn] invalid element name: " + elementName
+            + " for elementKey: " + elementKey);
       }
     }
     String jsonStringifyDisplayName = null;
     try {
-      if ( (displayName.startsWith("\"") && displayName.endsWith("\"")) ||
-           (displayName.startsWith("{") && displayName.endsWith("}")) ) {
+      if (displayName == null) {
+        displayName = mapper.writeValueAsString(elementKey.replaceAll("_", " "));
+      }
+      if ((displayName.startsWith("\"") && displayName.endsWith("\""))
+          || (displayName.startsWith("{") && displayName.endsWith("}"))) {
         jsonStringifyDisplayName = displayName;
       } else {
         jsonStringifyDisplayName = mapper.writeValueAsString(displayName);
       }
     } catch (JsonGenerationException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("[addColumn] invalid display name: " +
-          displayName + " for: " + elementName);
+      throw new IllegalArgumentException("[addColumn] invalid display name: " + displayName
+          + " for: " + elementName);
     } catch (JsonMappingException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("[addColumn] invalid display name: " +
-          displayName + " for: " + elementName);
+      throw new IllegalArgumentException("[addColumn] invalid display name: " + displayName
+          + " for: " + elementName);
     } catch (IOException e) {
       e.printStackTrace();
-      throw new IllegalArgumentException("[addColumn] invalid display name: " +
-          displayName + " for: " + elementName);
+      throw new IllegalArgumentException("[addColumn] invalid display name: " + displayName
+          + " for: " + elementName);
     }
     ColumnProperties cp = null;
-    cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName,
-        elementKey, elementName, columnType, listChildElementKeys, isUnitOfRetention,
-        true);
+    cp = ColumnProperties.createNotPersisted(this, jsonStringifyDisplayName, elementKey,
+        elementName, columnType, listChildElementKeys, isUnitOfRetention, true);
 
     return addColumn(cp);
   }
@@ -1225,7 +1195,8 @@ public class TableProperties {
    * @throws IllegalStateException
    * @throws IllegalArgumentException
    */
-  private ColumnProperties addColumn(ColumnProperties cp) throws SQLException, IllegalStateException, IllegalArgumentException {
+  private ColumnProperties addColumn(ColumnProperties cp) throws SQLException,
+      IllegalStateException, IllegalArgumentException {
     // ensuring columns is initialized
     // refreshColumns();
     // adding column
@@ -1240,8 +1211,11 @@ public class TableProperties {
         db.execSQL("ALTER TABLE \"" + dbTableName + "\" ADD COLUMN \"" + cp.getElementKey() + "\"");
         // use a copy of columnOrder for roll-back purposes
         List<String> newColumnOrder = this.getColumnOrder();
-        newColumnOrder.add(cp.getElementKey());
-        setColumnOrder(db, newColumnOrder);
+        if (cp.getDisplayVisible()) {
+          // only add it if the column is visible...
+          newColumnOrder.add(cp.getElementKey());
+          setColumnOrder(db, newColumnOrder);
+        }
 
         mElementKeyToColumnProperties.put(cp.getElementKey(), cp);
         Log.d(t, "addColumn successful: " + cp.getElementKey());
@@ -1289,7 +1263,8 @@ public class TableProperties {
    * @throws JsonMappingException
    * @throws IOException
    */
-  public void deleteColumn(String elementKey) throws SQLException, IllegalStateException, JsonGenerationException, JsonMappingException, IOException {
+  public void deleteColumn(String elementKey) throws SQLException, IllegalStateException,
+      JsonGenerationException, JsonMappingException, IOException {
     // forming a comma-separated list of columns to keep
     ColumnProperties colToDelete = this.getColumnByElementKey(elementKey);
     if (colToDelete == null) {
@@ -1341,10 +1316,10 @@ public class TableProperties {
         db.endTransaction();
       }
     } finally {
-      if ( db != null ) {
+      if (db != null) {
         try {
           db.close();
-        } catch ( Exception e ) {
+        } catch (Exception e) {
           e.printStackTrace();
           Log.e(t, "Error while closing database");
         }
@@ -1376,22 +1351,19 @@ public class TableProperties {
    */
   public void reformTable(SQLiteDatabase db, String elementKey) {
     StringBuilder csvBuilder = new StringBuilder(DbTable.DB_CSV_COLUMN_LIST);
-    Map<String, ColumnProperties> cols = getDatabaseColumns();
     ColumnProperties cpKey = null;
     ColumnType elementType = null;
     boolean needsConversion = false;
-    for (String col : cols.keySet()) {
-      ColumnProperties cp = cols.get(col);
+    for (String col : getPersistedColumns()) {
+      ColumnProperties cp = getColumnByElementKey(elementKey);
       if (cp.isUnitOfRetention()) {
         csvBuilder.append(", " + col);
         if (cp.getElementKey().equals(elementKey)) {
           cpKey = cp;
           elementType = cp.getColumnType();
           needsConversion = (elementType == ColumnType.DATE)
-              || (elementType == ColumnType.DATETIME)
-              || (elementType == ColumnType.NUMBER)
-              || (elementType == ColumnType.INTEGER)
-              || (elementType == ColumnType.TIME)
+              || (elementType == ColumnType.DATETIME) || (elementType == ColumnType.NUMBER)
+              || (elementType == ColumnType.INTEGER) || (elementType == ColumnType.TIME)
               || (elementType == ColumnType.DATE_RANGE);
         }
       }
@@ -1408,7 +1380,7 @@ public class TableProperties {
       int idxKey = c.getColumnIndex(elementKey);
       DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
       while (c.moveToNext()) {
-        if ( !c.isNull(idxKey) ) {
+        if (!c.isNull(idxKey)) {
           String value = c.getString(idxKey);
           String update = du.validifyValue(cpKey, value);
           if (update == null) {
@@ -1423,8 +1395,8 @@ public class TableProperties {
         ContentValues cv = new ContentValues();
         cv.put(elementKey, ru.value);
         db.update("backup_", cv, DataTableColumns.ID + "=? and "
-            + DataTableColumns.SAVEPOINT_TIMESTAMP + "=?",
-            new String[] { ru.id, ru.savepointTimestamp });
+            + DataTableColumns.SAVEPOINT_TIMESTAMP + "=?", new String[] { ru.id,
+            ru.savepointTimestamp });
       }
     }
     db.execSQL("DROP TABLE " + dbTableName);
@@ -1462,7 +1434,27 @@ public class TableProperties {
     return defensiveCopy;
   }
 
-  public void setColumnOrder(SQLiteDatabase db, List<String> columnOrder) throws JsonGenerationException, JsonMappingException, IOException {
+  /**
+   * Get the columns that are actually stored in the database
+   *
+   * @return
+   */
+  public List<String> getPersistedColumns() {
+    List<String> persistedColumns = new ArrayList<String>();
+    if (mElementKeyToColumnProperties == null) {
+      refreshColumnsFromDatabase();
+    }
+    for (String elementKey : mElementKeyToColumnProperties.keySet()) {
+      ColumnProperties cp = mElementKeyToColumnProperties.get(elementKey);
+      if (cp.isUnitOfRetention()) {
+        persistedColumns.add(elementKey);
+      }
+    }
+    return persistedColumns;
+  }
+
+  public void setColumnOrder(SQLiteDatabase db, List<String> columnOrder)
+      throws JsonGenerationException, JsonMappingException, IOException {
     String colOrderList = null;
     colOrderList = mapper.writeValueAsString(columnOrder);
     tableKVSH.setString(db, KEY_COLUMN_ORDER, colOrderList);
@@ -1498,10 +1490,11 @@ public class TableProperties {
    * @throws JsonMappingException
    * @throws JsonGenerationException
    */
-  public void setGroupByColumns(SQLiteDatabase db, List<String> groupByCols) throws JsonGenerationException, JsonMappingException, IOException {
+  public void setGroupByColumns(SQLiteDatabase db, List<String> groupByCols)
+      throws JsonGenerationException, JsonMappingException, IOException {
     String groupByJsonStr;
-    if ( groupByCols == null ) {
-    	groupByCols = new ArrayList<String>();
+    if (groupByCols == null) {
+      groupByCols = new ArrayList<String>();
     }
     groupByJsonStr = mapper.writeValueAsString(groupByCols);
     tableKVSH.setString(db, KEY_GROUP_BY_COLUMNS, groupByJsonStr);
@@ -1547,11 +1540,11 @@ public class TableProperties {
    * Unimplemented.
    * <p>
    * Should set the table id. First should verify uniqueness, etc.
+   *
    * @param newTableId
    */
   public void setTableId(String newTableId) {
-    throw new UnsupportedOperationException(
-        "setTableId is not yet implemented.");
+    throw new UnsupportedOperationException("setTableId is not yet implemented.");
   }
 
   /**
@@ -1678,20 +1671,19 @@ public class TableProperties {
    *          the new transactioning status
    */
   public void setTransactioning(boolean transactioning) {
-    tableKVSH
-        .setInteger(TableDefinitionsColumns.TRANSACTIONING, DataHelper.boolToInt(transactioning));
+    tableKVSH.setInteger(TableDefinitionsColumns.TRANSACTIONING,
+        DataHelper.boolToInt(transactioning));
     this.transactioning = transactioning;
     markStaleCache(); // all are stale because of sync state change
   }
 
   public String toJson() throws JsonGenerationException, JsonMappingException, IOException {
-    Map<String, ColumnProperties> columnsMap = getDatabaseColumns(); // ensuring columns
-                                                             // is initialized
     // I think this removes exceptions from not having getters/setters...
     ArrayList<String> colOrder = new ArrayList<String>();
     ArrayList<Object> cols = new ArrayList<Object>();
-    for (ColumnProperties cp : columnsMap.values()) {
-      colOrder.add(cp.getElementKey());
+    for (String elementKey : getPersistedColumns()) {
+      ColumnProperties cp = getColumnByElementKey(elementKey);
+      colOrder.add(elementKey);
       cols.add(cp.toJson());
     }
     Map<String, Object> jo = new HashMap<String, Object>();
@@ -1723,7 +1715,7 @@ public class TableProperties {
     try {
       jo = mapper.readValue(json, Map.class);
 
-      if ( !((String) jo.get(JSON_KEY_TABLE_ID)).equals(this.getTableId()) ) {
+      if (!((String) jo.get(JSON_KEY_TABLE_ID)).equals(this.getTableId())) {
         return false;
       }
       ArrayList<String> colOrder = (ArrayList<String>) jo.get(JSON_KEY_COLUMN_ORDER);
@@ -1740,7 +1732,8 @@ public class TableProperties {
         setSortOrder(db, (String) jo.get(JSON_KEY_SORT_ORDER));
         setIndexColumn(db, (String) jo.get(JSON_KEY_INDEX_COLUMN));
         String viewType = (String) jo.get(JSON_KEY_DEFAULT_VIEW_TYPE);
-        setDefaultViewType(db, viewType == null ? TableViewType.SPREADSHEET : TableViewType.valueOf(viewType));
+        setDefaultViewType(db,
+            viewType == null ? TableViewType.SPREADSHEET : TableViewType.valueOf(viewType));
 
         Set<String> columnElementKeys = new HashSet<String>();
         ArrayList<Object> colJArr = (ArrayList<Object>) jo.get(JSON_KEY_COLUMNS);
@@ -1771,9 +1764,9 @@ public class TableProperties {
         }
 
         // Collect the columns that are not in the newly defined set
-        for (String column : this.getDatabaseColumns().keySet()) {
-          if (!columnElementKeys.contains(column)) {
-            columnsToDelete.add(column);
+        for (String elementKey : getPersistedColumns()) {
+          if (!columnElementKeys.contains(elementKey)) {
+            columnsToDelete.add(elementKey);
           }
         }
 
@@ -1818,126 +1811,133 @@ public class TableProperties {
         graphValid);
     return result;
   }
-  
+
   /**
    * @return true if a list view can be displayed for this table.
    */
   private boolean listViewIsPossible() {
     return getListViewFileName() != null;
   }
-  
+
   /**
    * Return true if a spreadsheet view can be displayed for this table.
+   *
    * @return
    */
   private boolean spreadsheetViewIsPossible() {
     // Always true for now.
     return true;
   }
-  
+
   /**
-   * 
+   *
    * @return true if a map view can be displayed for the table.
    */
   private boolean mapViewIsPossible() {
-    int locationColCount = 0;
-    Map<String, ColumnProperties> columnProperties = this.getDatabaseColumns();
+       int locationColCount = 0;
+    Map<String, ColumnProperties> columnProperties = this.getAllColumns();
     List<ColumnProperties> geoPoints = getGeopointColumns();
     for (ColumnProperties cp : columnProperties.values()) {
-      if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
-        if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
-          locationColCount++;
-        }
-      } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
-        locationColCount += 2;// latitude and longitude
-      } else if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
-        locationColCount++;
-      }
-    }
+        if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
+           if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
+             locationColCount++;
+           }
+         } else if (cp.getColumnType() == ColumnType.GEOPOINT) {
+           locationColCount += 2;// latitude and longitude
+         } else if (isLatitudeColumn(geoPoints, cp) || isLongitudeColumn(geoPoints, cp)) {
+           locationColCount++;
+         }
+       }
     return locationColCount > 0;
   }
-  
+
   /**
-   * 
+   *
    * @return true is a graph view can be displayed on the table.
    */
   private boolean graphViewIsPossible() {
     // always true
     return true;
   }
-  
+
   /**
    * @return true if a detail view can be displayed for this table.
    */
   private boolean detailViewIsPossible() {
     return getDetailViewFileName() != null;
   }
-  
+
   /**
    * Return the filename for the list view that has been set on this table.
    * @return the filename of the list view, or null if none exists.
    */
   public String getListViewFileName() {
-    KeyValueStoreHelper kvsh = 
+    KeyValueStoreHelper kvsh =
         this.getKeyValueStoreHelper(KVS_PARTITION);
     String listFileName = kvsh.getString(KEY_LIST_VIEW_FILE_NAME);
     return listFileName;
   }
-  
+
   /**
    * Return the file name for the detail view that has been set on this table.
    * @return the filename for the detail view, or null if none exists.
-   */
+  */
   public String getDetailViewFileName() {
-    KeyValueStoreHelper kvsh = 
+    KeyValueStoreHelper kvsh =
         this.getKeyValueStoreHelper(KVS_PARTITION);
-    String detailFileName = kvsh.getString(KEY_DETAIL_VIEW_FILE_NAME);
+   String detailFileName = kvsh.getString(KEY_DETAIL_VIEW_FILE_NAME);
     return detailFileName;
-  }
+   }
 
   public List<ColumnProperties> getGeopointColumns() {
     Map<String, ColumnProperties> allColumns = this.getAllColumns();
     List<ColumnProperties> cpList = new ArrayList<ColumnProperties>();
     // TODO: HACK BROKEN HACK BROKEN
     // this is all entirely broken
-//    for ( ColumnProperties cp : allColumns.values()) {
-//      if ( cp.getColumnType() == ColumnType.GEOPOINT ) {
-//        cpList.add(cp);
-//      }
-//    }
+    // for ( ColumnProperties cp : allColumns.values()) {
+    // if ( cp.getColumnType() == ColumnType.GEOPOINT ) {
+    // cpList.add(cp);
+    // }
+    // }
     return cpList;
   }
 
   public boolean isLatitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    if ( endsWithIgnoreCase(cp.getLocalizedDisplayName(), "latitude") ) return true;
-    if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
+    if (endsWithIgnoreCase(cp.getLocalizedDisplayName(), "latitude"))
+      return true;
+    if (cp.getColumnType() != ColumnType.NUMBER)
+      return false;
     // TODO: HACK BROKEN HACK BROKEN
-    if ( "latitude".equals(cp.getElementName()) ) return true;
-//
-//    for ( ColumnProperties geoPoint : geoPointList ) {
-//      List<String> children = geoPoint.getListChildElementKeys();
-//      for ( String elementKey : children ) {
-//        if ( elementKey.equals(cp.getElementKey()) ) {
-//          return cp.getElementName().equals("latitude");
-//        }
-//      }
-//    }
+    if ("latitude".equals(cp.getElementName()))
+      return true;
+    //
+    // for ( ColumnProperties geoPoint : geoPointList ) {
+    // List<String> children = geoPoint.getListChildElementKeys();
+    // for ( String elementKey : children ) {
+    // if ( elementKey.equals(cp.getElementKey()) ) {
+    // return cp.getElementName().equals("latitude");
+    // }
+    // }
+    // }
     return false;
   }
 
   public boolean isLongitudeColumn(List<ColumnProperties> geoPointList, ColumnProperties cp) {
-    if ( endsWithIgnoreCase(cp.getLocalizedDisplayName(), "longitude") ) return true;
-    if ( cp.getColumnType() != ColumnType.NUMBER ) return false;
-    if ( "longitude".equals(cp.getElementName()) ) return true;
+    if (endsWithIgnoreCase(cp.getLocalizedDisplayName(), "longitude"))
+      return true;
+    if (cp.getColumnType() != ColumnType.NUMBER)
+      return false;
+    if ("longitude".equals(cp.getElementName()))
+      return true;
     // TODO: HACK BROKEN HACK BROKEN
-//    for ( ColumnProperties geoPoint : geoPointList ) {
-//      List<String> children = geoPoint.getListChildElementKeys();
-//      for ( String elementKey : children ) {
-//        if ( elementKey.equals(cp.getElementKey()) ) {
-//          return cp.getElementName().equals("longitude");
-//        }
-//      }
-//    }
+    // for ( ColumnProperties geoPoint : geoPointList ) {
+    // List<String> children = geoPoint.getListChildElementKeys();
+    // for ( String elementKey : children ) {
+    // if ( elementKey.equals(cp.getElementKey()) ) {
+    // return cp.getElementName().equals("longitude");
+    // }
+    // }
+    // }
     return false;
   }
 

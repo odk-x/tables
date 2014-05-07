@@ -2,6 +2,8 @@ package org.opendatakit.tables.tasks;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +15,6 @@ import org.opendatakit.common.android.utils.CsvUtil;
 import org.opendatakit.common.android.utils.CsvUtil.ImportListener;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
-import org.opendatakit.tables.utils.ConfigurationUtil;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -95,9 +96,22 @@ public class InitializeTask extends AsyncTask<Void, Void, Boolean> implements Im
       // both problems, while perhaps eliminating a very annoying problem.
       // However, it still feels like a hack, and I wish the AsyncTask/
       // Fragment situation wasn't so damned irritating.
-      fileModifiedTime = new File(ODKFileUtils.getTablesConfigurationFile(mAppName)).lastModified();
-      ConfigurationUtil.updateTimeChanged(this.mDialogFragment.getPreferencesFromContext(),
-          fileModifiedTime);
+      File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
+      if (!completedFile.exists()) {
+        FileOutputStream ofs;
+        try {
+          completedFile.getParentFile().mkdirs();
+          ofs = new FileOutputStream(completedFile, false);
+          ofs.write(0);
+          ofs.flush();
+          ofs.close();
+        } catch (FileNotFoundException e) {
+          e.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
       String table_keys = prop.getProperty(TOP_LEVEL_KEY_TABLE_KEYS);
 
       // table_keys is defined

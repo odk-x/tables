@@ -22,24 +22,23 @@ import java.util.TimeZone;
 
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
-import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -48,9 +47,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -438,8 +435,10 @@ public class Controller {
     FormType formType = FormType.constructFormType(getTableProperties());
     if ( formType.isCollectForm() ) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
-        String value = table.getData(rowNum, tp.getColumnIndex(cp.getElementKey()));
+      Row row = table.getRowAtIndex(rowNum);
+      for (String elementKey : tp.getPersistedColumns()) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
+        String value = row.getDataOrMetadataByElementKey(cp.getElementKey());
         elementKeyToValue.put(cp.getElementKey(), value);
       }
 

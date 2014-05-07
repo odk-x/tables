@@ -386,7 +386,8 @@ public class CollectUtil {
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      for (String elementKey : tp.getPersistedColumns()) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         String value = (values == null) ? null : values.get(cp.getElementKey());
         writer.write("<");
         writer.write(cp.getElementKey());
@@ -911,9 +912,9 @@ public class CollectUtil {
       FormValues formValues) {
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     Map<String, String> values = new HashMap<String, String>();
-    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+    for (String elementKey : tp.getPersistedColumns()) {
+      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
       // we want to use element key here
-      String elementKey = cp.getElementKey();
       String value = formValues.formValues.get(elementKey);
       value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.

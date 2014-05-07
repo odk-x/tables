@@ -15,6 +15,8 @@
  */
 package org.opendatakit.tables.activities;
 
+import java.io.File;
+
 import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -22,7 +24,6 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.webkits.CustomAppView;
@@ -99,7 +100,8 @@ public class CustomHomeScreenActivity extends AbsBaseActivity
       initalizeTaskDialogFragment.setCallbacks(this);
     } else {
       // We'll check to see if we need to begin an initialization task.
-      if (ConfigurationUtil.isChanged(mPrefs)) {
+      File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(mAppName));
+      if (!completedFile.exists()) {
         InitializeTask initializeTask = new InitializeTask(this, mAppName);
         initalizeTaskDialogFragment = new InitializeTaskDialogFragment();
         initalizeTaskDialogFragment.setTask(initializeTask);

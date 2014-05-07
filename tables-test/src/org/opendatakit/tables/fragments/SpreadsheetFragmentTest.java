@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
-import org.opendatakit.tables.views.SpreadsheetView;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLog;
@@ -21,10 +20,10 @@ import android.widget.TextView;
 
 @RunWith(RobolectricTestRunner.class)
 public class SpreadsheetFragmentTest {
-  
+
   SpreadsheetFragmentStub fragment;
   Activity activity;
-  
+
   @Before
   public void setup() {
     ShadowLog.stream = System.out;
@@ -32,7 +31,7 @@ public class SpreadsheetFragmentTest {
     // give us any information in this test class.
     TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
   }
-  
+
   private void doGlobalSetup() {
     this.fragment = new SpreadsheetFragmentStub();
     ODKFragmentTestUtil.startFragmentForTableActivity(
@@ -41,7 +40,7 @@ public class SpreadsheetFragmentTest {
         null);
     this.activity = this.fragment.getActivity();
   }
-  
+
   private void setupWithNoData() {
     // Make the UserTable show width 0.
     UserTable userTableMock = mock(UserTable.class);
@@ -49,7 +48,7 @@ public class SpreadsheetFragmentTest {
     TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();
   }
-  
+
   private void setupWithData() {
     // For the hell of it we'll make 10 columns.
     int numColumns = 10;
@@ -58,12 +57,12 @@ public class SpreadsheetFragmentTest {
     TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();
   }
-  
+
   @After
   public void after() {
     TableDisplayActivityStub.resetState();
   }
-  
+
   @Test
   public void viewWithWidthZeroIsTextView() {
     this.setupWithNoData();
@@ -72,7 +71,7 @@ public class SpreadsheetFragmentTest {
         .isNotNull()
         .isInstanceOf(TextView.class);
   }
-  
+
   // this mofo is super complicated atm.
 //  @Test
 //  public void viewWithDataIsSpreadsheetView() {

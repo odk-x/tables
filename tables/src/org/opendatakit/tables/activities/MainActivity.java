@@ -1,11 +1,13 @@
 package org.opendatakit.tables.activities;
 
+import java.io.File;
+
 import org.opendatakit.common.android.data.Preferences;
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.InitializeTaskDialogFragment;
 import org.opendatakit.tables.fragments.TableManagerFragment;
 import org.opendatakit.tables.tasks.InitializeTask;
-import org.opendatakit.tables.utils.ConfigurationUtil;
 import org.opendatakit.tables.utils.Constants;
 
 import android.app.FragmentManager;
@@ -13,14 +15,14 @@ import android.app.FragmentTransaction;
 import android.os.Bundle;
 
 /**
- * The main activity for ODK Tables. It serves primarily as a holder for 
+ * The main activity for ODK Tables. It serves primarily as a holder for
  * fragments.
  * @author sudar.sam@gmail.com
  *
  */
-public class MainActivity extends AbsBaseActivity implements 
+public class MainActivity extends AbsBaseActivity implements
     InitializeTask.Callbacks {
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -46,21 +48,22 @@ public class MainActivity extends AbsBaseActivity implements
       initializeTaskDialogFragment.setCallbacks(this);
     }
   }
-  
+
   @Override
   protected void onResume() {
     super.onResume();
     // Check to see if we need to initialize.
-    if (ConfigurationUtil.isChanged(getPrefs())) {
+    File completedFile = new File(ODKFileUtils.getTablesInitializationCompleteMarkerFile(this.getAppName()));
+    if (!completedFile.exists()) {
       this.startInitializationTask();
     }
   }
-  
+
   private void startInitializationTask() {
     InitializeTask initializeTask = new InitializeTask(
         this,
         this.getAppName());
-    InitializeTaskDialogFragment initializeTaskDialogFragment = 
+    InitializeTaskDialogFragment initializeTaskDialogFragment =
         new InitializeTaskDialogFragment();
     initializeTaskDialogFragment.setTask(initializeTask);
     initializeTaskDialogFragment.setCallbacks(this);
@@ -69,7 +72,7 @@ public class MainActivity extends AbsBaseActivity implements
     FragmentManager fragmentManager = this.getFragmentManager();
     initializeTaskDialogFragment.show(
         fragmentManager,
-        InitializeTaskDialogFragment.TAG_FRAGMENT);  
+        InitializeTaskDialogFragment.TAG_FRAGMENT);
   }
 
   @Override
@@ -77,7 +80,7 @@ public class MainActivity extends AbsBaseActivity implements
     Preferences result = new Preferences(this, getAppName());
     return result;
   }
-  
+
   /**
    * Refresh the list in the {@link TableManagerFragment} if it is present.
    */

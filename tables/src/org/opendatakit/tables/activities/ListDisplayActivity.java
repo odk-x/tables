@@ -138,7 +138,8 @@ public class ListDisplayActivity extends Activity implements DisplayActivity {
     }
 
     DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-    table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+    table = dbTable.rawSqlQuery(c.getTableProperties().getPersistedColumns(),
+        sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
 
     String nameOfView = kvsh.getString(
         LocalKeyValueStoreConstants.ListViews.KEY_LIST_VIEW_NAME);

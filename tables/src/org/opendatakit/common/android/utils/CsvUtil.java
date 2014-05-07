@@ -120,11 +120,9 @@ public class CsvUtil {
     columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
     columns.add(DataTableColumns.SAVEPOINT_CREATOR);
 
-    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-    for (int i = 0; i < numberOfDisplayColumns; ++i) {
-      ColumnProperties cp = tp.getColumnByIndex(i);
-      columns.add(cp.getElementKey());
-    }
+    List<String> persistedColumns = tp.getPersistedColumns();
+
+    columns.addAll(persistedColumns);
 
     // And now add all remaining export columns
     for (String colName : DbTable.getExportColumns()) {
@@ -156,7 +154,7 @@ public class CsvUtil {
             DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
             DataTableColumns.CONFLICT_TYPE + " = " +
             Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) + ")";
-      UserTable table = dbt.rawSqlQuery(whereString, null, null, null, null, null);
+      UserTable table = dbt.rawSqlQuery(persistedColumns, whereString, null, null, null, null, null);
 
       // emit data table...
       File file = new File( outputCsv, tp.getTableId() +
@@ -577,12 +575,12 @@ public class CsvUtil {
         tp = TableProperties.addTable(context, appName,
             tableId, (displayName == null ? tableId : displayName), tableId);
 
-        tp.addMetaDataEntries(kvsEntries, false);
         for ( ColumnInfo ci : columns.values() ) {
           ColumnProperties cp = tp.addColumn(ci.displayName, ci.elementKey, ci.elementName,
               ci.elementType, ci.listOfStringElementKeys, ci.isUnitOfRetention);
           cp.addMetaDataEntries(ci.kvsEntries);
         }
+        tp.addMetaDataEntries(kvsEntries, false);
       }
       return true;
     } catch (IOException e) {
@@ -634,32 +632,6 @@ public class CsvUtil {
     }
 
     Log.i(TAG, "importSeparable: tableId: " + tableId + " fileQualifier: " + ((fileQualifier == null) ? "<null>" : fileQualifier) );
-
-    // building array of columns to select and header row for output file
-    // then we are including all the metadata columns.
-    ArrayList<String> columns = new ArrayList<String>();
-
-    // put the user-relevant metadata columns in leftmost columns
-    columns.add(DataTableColumns.ID);
-    columns.add(DataTableColumns.FORM_ID);
-    columns.add(DataTableColumns.LOCALE);
-    columns.add(DataTableColumns.SAVEPOINT_TYPE);
-    columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
-    columns.add(DataTableColumns.SAVEPOINT_CREATOR);
-
-    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-    for (int i = 0; i < numberOfDisplayColumns; ++i) {
-      ColumnProperties cp = tp.getColumnByIndex(i);
-      columns.add(cp.getElementKey());
-    }
-
-    // And now add all remaining metadata columns
-    for (String colName : DbTable.getExportColumns()) {
-      if (columns.contains(colName)) {
-        continue;
-      }
-      columns.add(colName);
-    }
 
     // reading data
     InputStreamReader input = null;

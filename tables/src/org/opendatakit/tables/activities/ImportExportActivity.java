@@ -19,7 +19,6 @@ package org.opendatakit.tables.activities;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.utils.TableFileUtils;
 
 import android.app.TabActivity;
 import android.content.Intent;

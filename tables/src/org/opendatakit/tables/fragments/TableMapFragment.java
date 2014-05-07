@@ -8,7 +8,6 @@ import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragm
 import org.opendatakit.tables.utils.Constants;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -24,7 +23,7 @@ import android.view.ViewGroup;
  * @author Chris Gelon (cgelon)
  * @author sudar.sam@gmail.com
  */
-public class TableMapFragment extends AbsTableDisplayFragment implements 
+public class TableMapFragment extends AbsTableDisplayFragment implements
     TableMapInnerFragmentListener {
 
   /** The key for the Key-Value Store Partition for the TableMapFragment. */
@@ -138,7 +137,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
 
   /** The map view fragment. */
   private TableMapInnerFragment getMap() {
-    return (TableMapInnerFragment) 
+    return (TableMapInnerFragment)
         getFragmentManager().findFragmentByTag(FRAGMENT_TAG_MAP);
   }
 

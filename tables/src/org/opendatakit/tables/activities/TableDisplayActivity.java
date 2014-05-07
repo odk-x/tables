@@ -28,11 +28,11 @@ import android.util.Log;
  */
 public class TableDisplayActivity extends AbsTableActivity
     implements ITopLevelTableMenuActivity {
-  
+
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
-  private static final String INTENT_KEY_CURRENT_FRAGMENT = 
+  private static final String INTENT_KEY_CURRENT_FRAGMENT =
       "saveInstanceCurrentFragment";
-  
+
   /**
    * The fragment types this activity could be displaying.
    * @author sudar.sam@gmail.com
@@ -45,7 +45,7 @@ public class TableDisplayActivity extends AbsTableActivity
     GRAPH,
     DETAIL;
   }
-  
+
   /**
    * The {@link UserTable} that is being displayed in this activity.
    */
@@ -54,17 +54,17 @@ public class TableDisplayActivity extends AbsTableActivity
    *  The type of fragment that is currently being displayed.
    */
   private ViewFragmentType mCurrentFragmentType;
-  
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // see if we saved the state
     this.initializeBackingTable();
-    this.mCurrentFragmentType = 
+    this.mCurrentFragmentType =
         this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.initializeMenuFragment();
   }
-  
+
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
@@ -73,12 +73,12 @@ public class TableDisplayActivity extends AbsTableActivity
     Log.i(TAG, "[onRestoreInstanceState] current fragment type: " +
         this.mCurrentFragmentType);
   }
-  
+
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     if (this.mCurrentFragmentType != null) {
-      Log.i(TAG, "[onSaveInstanceState] saving current fragment type: " 
+      Log.i(TAG, "[onSaveInstanceState] saving current fragment type: "
           + this.mCurrentFragmentType.name());
       outState.putString(
           INTENT_KEY_CURRENT_FRAGMENT,
@@ -87,20 +87,20 @@ public class TableDisplayActivity extends AbsTableActivity
       Log.i(TAG, "[onSaveInstanceState] no current fragment type to save");
     }
   }
-  
+
   @Override
   protected void onResume() {
     super.onResume();
     Log.i(TAG, "[onResume]");
     this.initializeDisplayFragment();
   }
-  
+
   @Override
   protected void onStart() {
      super.onStart();
      Log.i(TAG, "[onStart]");
   }
-  
+
   /**
    * Initialize the correct display fragment based on the result of
    * {@link #retrieveTableIdFromIntent()}. Initializes Spreadsheet if none
@@ -129,7 +129,7 @@ public class TableDisplayActivity extends AbsTableActivity
       break;
     }
   }
-  
+
   /**
    * Set the current type of fragment that is being displayed.
    * @param currentType
@@ -137,7 +137,7 @@ public class TableDisplayActivity extends AbsTableActivity
   protected void setCurrentFragmentType(ViewFragmentType currentType) {
     this.mCurrentFragmentType = currentType;
   }
-  
+
   /**
    * @return the {@link ViewFragmentType} that was passed in the intent,
    * or null if none exists.
@@ -155,7 +155,7 @@ public class TableDisplayActivity extends AbsTableActivity
       return result;
     }
   }
-  
+
   /**
    * Get the {@link ViewFragmentType} that should be displayed. Any type in
    * the passed in bundle takes precedence, on the assumption that is was from
@@ -182,7 +182,7 @@ public class TableDisplayActivity extends AbsTableActivity
     ViewFragmentType result = retrieveViewFragmentTypeFromIntent();
     if (result == null) {
       // 3) then use the default
-      TableViewType viewType = 
+      TableViewType viewType =
           this.getTableProperties().getDefaultViewType();
       result = this.getViewFragmentTypeFromViewType(viewType);
     }
@@ -194,7 +194,7 @@ public class TableDisplayActivity extends AbsTableActivity
     }
     return result;
   }
-  
+
   /**
    * Get the {@link ViewFragmentType} that corresponds to
    * {@link TableViewType}. If no match is found, returns null.
@@ -217,7 +217,7 @@ public class TableDisplayActivity extends AbsTableActivity
       return null;
     }
   }
-  
+
   /**
    * Initialize {@link TableDisplayActivity#mUserTable}.
    */
@@ -225,7 +225,7 @@ public class TableDisplayActivity extends AbsTableActivity
     UserTable userTable = this.retrieveUserTable();
     this.mUserTable = userTable;
   }
-  
+
   /**
    * Get the {@link UserTable} that is being held by this activity.
    * @return
@@ -233,24 +233,24 @@ public class TableDisplayActivity extends AbsTableActivity
   public UserTable getUserTable() {
     return this.mUserTable;
   }
-  
+
   /**
    * Refresh the data being displayed.
    */
   public void refreshDataTable() {
     this.initializeBackingTable();
   }
-  
+
   /**
    * Get the {@link UserTable} from the database that should be displayed.
    * @return
    */
   UserTable retrieveUserTable() {
     TableProperties tableProperties = this.getTableProperties();
-    SQLQueryStruct sqlQueryStruct = 
+    SQLQueryStruct sqlQueryStruct =
         this.retrieveSQLQueryStatStructFromIntent();
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable result = dbTable.rawSqlQuery(
+    UserTable result = dbTable.rawSqlQuery(tableProperties.getPersistedColumns(),
         sqlQueryStruct.whereClause,
         sqlQueryStruct.selectionArgs,
         sqlQueryStruct.groupBy,
@@ -259,7 +259,7 @@ public class TableDisplayActivity extends AbsTableActivity
         sqlQueryStruct.orderByDirection);
     return result;
   }
-  
+
   /**
    * Retrieve the {@link SQLQueryStruct} specified in the {@link Intent} that
    * restricts the current table.
@@ -270,7 +270,7 @@ public class TableDisplayActivity extends AbsTableActivity
         this.getIntent().getExtras());
     return result;
   }
-  
+
   protected void initializeMenuFragment() {
     FragmentManager fragmentManager = this.getFragmentManager();
     TopLevelTableMenuFragment menuFragment = new TopLevelTableMenuFragment();
@@ -278,7 +278,7 @@ public class TableDisplayActivity extends AbsTableActivity
         menuFragment,
         Constants.FragmentTags.TABLE_MENU).commit();
   }
-  
+
   /**
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
@@ -299,7 +299,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.SPREADSHEET).commit();
     this.invalidateOptionsMenu();
   }
-  
+
   public void showMapFragment() {
     this.setCurrentFragmentType(ViewFragmentType.MAP);
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -316,7 +316,7 @@ public class TableDisplayActivity extends AbsTableActivity
         Constants.FragmentTags.MAP).commit();
     this.invalidateOptionsMenu();
   }
-  
+
 
   @Override
   public void showListFragment() {
@@ -350,10 +350,10 @@ public class TableDisplayActivity extends AbsTableActivity
   public void showGraphFragment() {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH);
     // TODO Auto-generated method stub
-    
+
   }
-  
-  
+
+
   public void showDetailFragment() {
     this.setCurrentFragmentType(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
@@ -367,7 +367,7 @@ public class TableDisplayActivity extends AbsTableActivity
     String rowId = IntentUtil.retrieveRowIdFromBundle(
         this.getIntent().getExtras());
     // Try to retrieve one that already exists.
-    DetailViewFragment detailViewFragment = (DetailViewFragment) 
+    DetailViewFragment detailViewFragment = (DetailViewFragment)
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.DETAIL_FRAGMENT);
     if (detailViewFragment == null) {

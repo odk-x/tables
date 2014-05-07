@@ -144,7 +144,7 @@ public class ConflictResolutionRowActivity extends ListActivity
     this.mServerRowETag = this.mServer.getMetadataByElementKey(mRowNumber,
         DataTableColumns.ROW_ETAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
-    List<String> columnOrder = tp.getColumnOrder();
+    List<String> columnOrder = tp.getPersistedColumns();
     // This will be the number of rows down we are in the adapter. Each
     // heading and each cell value gets its own row. Columns in conflict get
     // two, as we'll need to display each one to the user.

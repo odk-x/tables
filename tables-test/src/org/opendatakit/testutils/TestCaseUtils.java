@@ -9,9 +9,8 @@ import org.opendatakit.common.android.database.DataModelDatabaseHelperFactory;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.MainActivity;
-import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowEnvironment;
@@ -27,7 +26,7 @@ import android.os.Environment;
  *
  */
 public class TestCaseUtils {
-  
+
   /**
    * Get an intent with the app name set to {@link TestConstants#TABLES_DEFAULT_APP_NAME}.
    * @return
@@ -37,9 +36,9 @@ public class TestCaseUtils {
     result.putExtra(
         Constants.IntentKeys.APP_NAME,
         TestConstants.TABLES_DEFAULT_APP_NAME);
-    return result;    
+    return result;
   }
-  
+
   /**
    * Make the external storage as mounted. This is required by classes that
    * call through to {@link ODKFileUtils#verifyExternalStorageAvailability()}.
@@ -47,7 +46,7 @@ public class TestCaseUtils {
   public static void setExternalStorageMounted() {
     ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
   }
-  
+
   public static void startFragmentForMainActivity(Fragment fragment) {
     MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class)
         .create().start().resume().attach().get();
@@ -57,7 +56,7 @@ public class TestCaseUtils {
         fragment,
         "TEST_TAG").commit();
   }
-  
+
   /**
    * Retrieve a {@link CollectFormParameters} object for use in testing.
    * @param isCustom
@@ -75,14 +74,14 @@ public class TestCaseUtils {
         TestConstants.ROOT_ELEMENT,
         TestConstants.ROW_NAME);
   }
-  
+
   public static SurveyFormParameters getSurveyFormParameters() {
     return new SurveyFormParameters(
         TestConstants.FORM_IS_USER_DEFINED,
         TestConstants.FORM_ID,
         TestConstants.SCREEN_PATH);
   }
-  
+
   /**
    * Because our database layer makes liberal use of static fields, tests run
    * sequentially that call these classes see the state modified by the
@@ -94,7 +93,7 @@ public class TestCaseUtils {
     // this variable manually.
     Field staticDbHelpersField;
     try {
-      staticDbHelpersField = 
+      staticDbHelpersField =
           DataModelDatabaseHelperFactory.class.getDeclaredField("dbHelpers");
       staticDbHelpersField.setAccessible(true);
       // And now make it not final so we can reset it.

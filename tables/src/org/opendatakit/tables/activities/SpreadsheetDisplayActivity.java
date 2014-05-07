@@ -28,6 +28,7 @@ import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
@@ -153,11 +154,10 @@ public class SpreadsheetDisplayActivity extends Activity
       }
 
       DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-      table = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+      table = dbTable.rawSqlQuery(c.getTableProperties().getColumnOrder(), sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
 
       String indexedColElementKey = c.getTableProperties().getIndexColumn();
-      indexedCol =
-          c.getTableProperties().getColumnIndex(indexedColElementKey);
+      indexedCol = table.getColumnIndexOfElementKey(indexedColElementKey);
       // setting up the view
       c.setDisplayView(buildView());
       setContentView(c.getContainerView());
@@ -207,14 +207,14 @@ public class SpreadsheetDisplayActivity extends Activity
           newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
         }
         boolean first = true;
+        Row row = table.getRowAtIndex(rowNum);
         for ( String groupByColumn : sqlGroupBy ) {
           if ( !first ) {
             s.append(", ");
           }
           first = false;
           s.append(groupByColumn).append("=?");
-          int colNum = c.getTableProperties().getColumnIndex(groupByColumn);
-          newSelectionArgs.add(table.getData(rowNum, colNum));
+          newSelectionArgs.add(row.getDataOrMetadataByElementKey(groupByColumn));
         }
         sqlWhereClause = s.toString();
         sqlSelectionArgs = newSelectionArgs.toArray(new String[newSelectionArgs.size()]);

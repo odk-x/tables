@@ -1,9 +1,7 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
-import org.opendatakit.tables.utils.Constants;
 
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -19,9 +17,9 @@ import android.preference.PreferenceFragment;
  * @author sudar.sam@gmail.com
  *
  */
-public abstract class AbsTableLevelPreferenceFragment 
+public abstract class AbsTableLevelPreferenceFragment
     extends PreferenceFragment {
-  
+
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
@@ -34,18 +32,18 @@ public abstract class AbsTableLevelPreferenceFragment
       		" is not appropriate.");
     }
   }
-  
+
   TableProperties getTableProperties() {
     // We know this will succeed because we've checked it in onActivityCreated.
     AbsTableActivity activity = (AbsTableActivity) this.getActivity();
     return activity.getTableProperties();
   }
-  
+
   String getAppName() {
     AbsTableActivity activity = (AbsTableActivity) this.getActivity();
     return activity.getAppName();
   }
-  
+
   /**
    * Find an {@link EditTextPreference} with the given key.
    * Convenience method for
@@ -55,11 +53,11 @@ public abstract class AbsTableLevelPreferenceFragment
    * @return
    */
   EditTextPreference findEditTextPreference(String key) {
-    EditTextPreference preference = 
+    EditTextPreference preference =
         (EditTextPreference) this.findPreference(key);
     return preference;
   }
-  
+
   /**
    * Find a {@link ListPreference} with the given key. Convenience method for
    * calling {@link PreferenceFragment#findPreference(CharSequence)} and

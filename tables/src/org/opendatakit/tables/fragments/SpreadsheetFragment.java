@@ -16,11 +16,11 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.ColorRuleManagerActivity;
 import org.opendatakit.tables.activities.ConflictResolutionRowActivity;
 import org.opendatakit.tables.activities.Controller;
@@ -60,11 +60,11 @@ import android.widget.Toast;
  * @author sudar.sam@gmail.com
  *
  */
-public class SpreadsheetFragment extends AbsTableDisplayFragment 
+public class SpreadsheetFragment extends AbsTableDisplayFragment
     implements SpreadsheetView.Controller {
-  
+
   private static final String TAG = SpreadsheetFragment.class.getSimpleName();
-  
+
   private String mIndexedColumnElementKey;
   private int mIndexedColumnOffset;
   private int mLastDataCellMenued;
@@ -79,13 +79,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   public ViewFragmentType getFragmentType() {
     return ViewFragmentType.SPREADSHEET;
   }
-  
+
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    
+
   }
-  
+
   /**
    * Retrieve the element key of the indexed column.
    * @return
@@ -94,17 +94,16 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
   String retrieveIndexedColumnElementKey() {
     return this.getTableProperties().getIndexColumn();
   }
-  
+
   /**
    * Get the integer offset of the indexed column.
    * @return
    * TODO: remove?
    */
   int retrieveIndexedColumnOffset() {
-    return this.getTableProperties().getColumnIndex(
-        this.mIndexedColumnElementKey);
+    return this.getUserTable().getColumnIndexOfElementKey(this.mIndexedColumnElementKey);
   }
-  
+
   @Override
   public View onCreateView(
       android.view.LayoutInflater inflater,
@@ -114,7 +113,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     this.mIndexedColumnOffset = retrieveIndexedColumnOffset();
     return buildView();
   };
-  
+
   View buildView() {
     if (this.getUserTable().getWidth() == 0) {
       TextView textView = new TextView(getActivity());
@@ -124,7 +123,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return this.buildSpreadsheetView();
     }
   }
-  
+
   /**
    * Build a {@link SpreadsheetView} view to display.
    * @return
@@ -136,7 +135,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         this.getUserTable(),
         this.mIndexedColumnOffset);
   }
-  
+
   private void addGroupByColumn(ColumnProperties cp) {
     TableProperties tp = this.getTableProperties();
     List<String> newGroupBys = tp.getGroupByColumns();
@@ -158,7 +157,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       db.close();
     }
   }
-  
+
   void removeGroupByColumn(ColumnProperties cp) {
     TableProperties tp = this.getTableProperties();
     List<String> newGroupBys = tp.getGroupByColumns();
@@ -180,7 +179,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       db.close();
     }
   }
-  
+
   void setColumnAsSort(ColumnProperties cp) {
     TableProperties tp = this.getTableProperties();
     SQLiteDatabase db = tp.getWritableDatabase();
@@ -200,7 +199,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       db.close();
     }
   }
-  
+
   void setColumnAsIndexedCol(ColumnProperties cp) {
     TableProperties tp = this.getTableProperties();
     SQLiteDatabase db = tp.getWritableDatabase();
@@ -220,7 +219,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       db.close();
     }
   }
-  
+
   private void openCollectionView(int rowNum) {
 
     Bundle intentExtras = this.getActivity().getIntent().getExtras();
@@ -255,19 +254,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
       }
       boolean first = true;
+      Row row = this.getUserTable().getRowAtIndex(rowNum);
       for ( String groupByColumn : sqlGroupBy ) {
         if ( !first ) {
           s.append(", ");
         }
         first = false;
         s.append(groupByColumn).append("=?");
-        int colNum = this.getUserTable()
-            .getTableProperties()
-            .getColumnIndex(groupByColumn);
-        newSelectionArgs.add(this.getUserTable().getData(rowNum, colNum));
+        newSelectionArgs.add(row.getDataOrMetadataByElementKey(groupByColumn));
       }
       sqlWhereClause = s.toString();
-      sqlSelectionArgs = 
+      sqlSelectionArgs =
           newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
     }
     Controller.launchTableActivity(
@@ -281,17 +278,17 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         sqlOrderByElementKey,
         sqlOrderByDirection);
   }
-  
+
   void openCellEditDialog(String rowId, String value, int columnIndex) {
     CellEditDialog dialog = new CellEditDialog(rowId, value, columnIndex);
     dialog.show();
   }
-  
+
   private void init() {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     activity.refreshDataTable();
   }
-  
+
   void addOverlay(View overlay, int width, int height, int x, int y) {
     removeOverlay();
     this.mOverlay = overlay;
@@ -299,8 +296,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         ViewGroup.LayoutParams.WRAP_CONTENT,
         ViewGroup.LayoutParams.WRAP_CONTENT);
     this.mOverlayLayoutParams.leftMargin = x;
-    this.mOverlayLayoutParams.topMargin = 
-        y - 
+    this.mOverlayLayoutParams.topMargin =
+        y -
         getActivity().getActionBar().getHeight();
     this.mOverlayLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
     ViewGroup container = (ViewGroup) this.getView();
@@ -315,12 +312,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       this.mOverlayLayoutParams = null;
     }
   }
-  
+
   private void deleteRow(String rowId) {
     DbTable dbTable = DbTable.getDbTable(getTableProperties());
     dbTable.markDeleted(rowId);
   }
-  
+
   @Override
   public boolean onContextItemSelected(MenuItem item) {
     // This was copied over wholesale from SpreadhseetDisplayActivity.
@@ -334,14 +331,14 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     case MENU_ITEM_ID_EDIT_CELL:
         openCellEditDialog(
                 this.getUserTable().getRowAtIndex(
-                    this.mLastDataCellMenued / 
+                    this.mLastDataCellMenued /
                     this.getUserTable().getWidth()).getRowId(),
                 this.getUserTable().getData(this.mLastDataCellMenued),
                 this.mLastDataCellMenued % this.getUserTable().getWidth());
         return true;
     case MENU_ITEM_ID_DELETE_ROW:
         String rowId = this.getUserTable().getRowAtIndex(
-            this.mLastDataCellMenued / 
+            this.mLastDataCellMenued /
             this.getUserTable().getWidth()).getRowId();
         this.deleteRow(rowId);
         init();
@@ -398,7 +395,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       return super.onContextItemSelected(item);
     }
   }
-  
+
   public void regularCellLongClicked(int cellId, int rawX, int rawY,
       boolean isIndexed) {
     // So we need to check for whether or not the table is indexed again and
@@ -410,13 +407,13 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
       this.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
   }
-  
+
   @Override
   public void indexedColCellLongClicked(int cellId, int rawX, int rawY) {
     // here it's just the row plus the number of the indexed column.
     // So the true cell id is the cellId parameter, which is essentially the
     // row number, * the width of the table, plus the indexed col
-    int trueNum = 
+    int trueNum =
         cellId *
         this.getUserTable().getWidth() +
         this.mIndexedColumnOffset;
@@ -442,7 +439,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
 
   }
-  
+
   /**
    * Return true if group bys are currently being displayed.
    * @return
@@ -452,7 +449,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
         this.getActivity().getIntent().getExtras());
     return queryStruct.groupBy != null;
   }
-  
+
   @Override
   public void prepRegularCellOccm(ContextMenu menu, int cellId) {
       this.mLastDataCellMenued = cellId;
@@ -467,12 +464,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       menu.add(ContextMenu.NONE, MENU_ITEM_ID_EDIT_ROW, ContextMenu.NONE,
           "Edit Row");
   }
-  
+
   @Override
   public void openContextMenu(View view) {
     this.getActivity().openContextMenu(view);
   }
-  
+
   @Override
   public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
       this.mLastHeaderCellMenued = cellId;
@@ -520,12 +517,12 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
  public void indexedColCellClicked(int cellId) {
     this.removeOverlay();
  }
- 
+
  public void indexedColCellDoubleClicked(int cellId, int rawX, int rawY) {
    // Ok, so here the cellId is also the row number, as we only allow a
    // single indexed column atm. So if you double click the 5th cell, it will
    // also have to be the 5th row.
-   int trueNum = 
+   int trueNum =
        cellId *
        this.getUserTable().getWidth() +
        this.mIndexedColumnOffset;
@@ -765,7 +762,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
      }
 
  }
-  
+
   private class CellEditDialog extends AlertDialog {
 
     private final String rowId;
@@ -843,7 +840,7 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
     }
   }
 
-  
+
   private static final int MENU_ITEM_ID_HISTORY_IN = 0;
   private static final int MENU_ITEM_ID_EDIT_CELL = 1;
   private static final int MENU_ITEM_ID_DELETE_ROW = 2;

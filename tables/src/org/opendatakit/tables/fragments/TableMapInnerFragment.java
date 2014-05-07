@@ -107,11 +107,6 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private int mCurrentIndex;
 
-  /** Used for color rules. */
-  private Map<String, Integer> mColumnIndexMap;
-  /** Used for color rules. */
-  private Map<String, ColumnProperties> mColumnPropertiesMap;
-
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
@@ -165,19 +160,6 @@ public class TableMapInnerFragment extends MapFragment {
    * Sets up the color properties used for color rules.
    */
   public void resetColorProperties() {
-    TableProperties tp = ((TableDisplayActivity)
-        getActivity()).getTableProperties();
-    // Now let's set up the color rule things.
-    Map<String, Integer> indexMap = new HashMap<String, Integer>();
-    Map<String, ColumnProperties> propertiesMap = new HashMap<String, ColumnProperties>();
-    int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-    for (int i = 0; i < numberOfDisplayColumns; i++) {
-      ColumnProperties cp = tp.getColumnByIndex(i);
-      propertiesMap.put(cp.getElementKey(), cp);
-      indexMap.put(cp.getElementKey(), i);
-    }
-    mColumnIndexMap = indexMap;
-    mColumnPropertiesMap = propertiesMap;
     findColorGroup();
   }
 
@@ -236,7 +218,7 @@ public class TableMapInnerFragment extends MapFragment {
       return;
     }
 
-    TableProperties tp = 
+    TableProperties tp =
         ((TableDisplayActivity) getActivity()).getTableProperties();
     UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
 
@@ -245,8 +227,8 @@ public class TableMapInnerFragment extends MapFragment {
     ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
 
     // Find the locations from entries in the table.
-    int latitudeColumnIndex = tp.getColumnIndex(latitudeColumn.getElementKey());
-    int longitudeColumnIndex = tp.getColumnIndex(longitudeColumn.getElementKey());
+    int latitudeColumnIndex = table.getColumnIndexOfElementKey(latitudeColumn.getElementKey());
+    int longitudeColumnIndex = table.getColumnIndexOfElementKey(longitudeColumn.getElementKey());
     LatLng firstLocation = null;
 
     // Go through each row and create a marker at the specified location.
@@ -306,7 +288,7 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLatitudeElementKey() {
-    TableProperties tp = 
+    TableProperties tp =
         ((TableDisplayActivity) getActivity()).getTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
@@ -315,9 +297,10 @@ public class TableMapInnerFragment extends MapFragment {
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      for (String elementKey : tp.getPersistedColumns()) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         if (tp.isLatitudeColumn(geoPointCols, cp)) {
-          latitudeElementKey = cp.getElementKey();
+          latitudeElementKey = elementKey;
           kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
           break;
         }
@@ -328,7 +311,7 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLongitudeElementKey() {
-    TableProperties tp = 
+    TableProperties tp =
         ((TableDisplayActivity) getActivity()).getTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
@@ -337,9 +320,10 @@ public class TableMapInnerFragment extends MapFragment {
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      for (String elementKey : tp.getPersistedColumns()) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         if (tp.isLongitudeColumn(geoPointCols, cp)) {
-          longitudeElementKey = cp.getElementKey();
+          longitudeElementKey = elementKey;
           kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
           break;
         }
@@ -410,10 +394,11 @@ public class TableMapInnerFragment extends MapFragment {
       public void onMapLongClick(LatLng location) {
         // Create a mapping from the lat and long columns to the
         // values in the location.
-        TableProperties tp = 
+        TableProperties tp =
             ((TableDisplayActivity) getActivity()).getTableProperties();
         Map<String, String> elementNameToValue = new HashMap<String, String>();
-        for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+        for (String elementKey : tp.getPersistedColumns()) {
+          ColumnProperties cp = tp.getColumnByElementKey(elementKey);
           elementNameToValue.put(cp.getElementName(), "");
         }
         final KeyValueStoreHelper kvsHelper = tp

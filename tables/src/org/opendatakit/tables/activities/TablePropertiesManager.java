@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
@@ -173,7 +172,7 @@ public class TablePropertiesManager extends PreferenceActivity {
 
 
     // int[] viewTypes = settings.getPossibleViewTypes();
-    
+
     // This code got all commented out with the rewrite of TableViewType.
 //    Set<TableViewType> viewTypes = tp.getPossibleViewTypes();
 //    String[] viewTypeIds = new String[viewTypes.length];
@@ -381,7 +380,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
       final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
       final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      for (String elementKey : tp.getPersistedColumns()) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
           numberCols.add(cp);
           if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {
@@ -420,7 +420,8 @@ public class TablePropertiesManager extends PreferenceActivity {
     final List<ColumnProperties> locationCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> dateCols = new ArrayList<ColumnProperties>();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
-    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+    for (String elementKey : tp.getPersistedColumns()) {
+      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
       if (cp.getColumnType() == ColumnType.NUMBER || cp.getColumnType() == ColumnType.INTEGER) {
         numberCols.add(cp);
         if (tp.isLatitudeColumn(geoPointCols, cp) || tp.isLongitudeColumn(geoPointCols, cp)) {

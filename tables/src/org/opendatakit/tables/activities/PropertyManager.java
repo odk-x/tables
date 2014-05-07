@@ -61,7 +61,6 @@ public class PropertyManager extends PreferenceActivity {
   private String elementKey;
   private TableProperties tp;
   private ColumnProperties cp;
-  private int colIndex;
   private boolean showingMcDialog;
   private KeyValueStoreHelper columnKVSH;
 
@@ -83,7 +82,6 @@ public class PropertyManager extends PreferenceActivity {
     this.columnKVSH =
         tp.getKeyValueStoreHelper(ColumnProperties.KVS_PARTITION);
     cp = tp.getColumnByElementKey(elementKey);
-    colIndex = tp.getColumnIndex(elementKey);
     showingMcDialog = false;
     loadPreferenceScreen();
   }

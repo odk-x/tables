@@ -182,7 +182,7 @@ public abstract class CustomView extends LinearLayout {
       return null;
     }
     DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+    UserTable userTable = dbTable.rawSqlQuery(tp.getPersistedColumns(), sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     TableData tableData = new TableData(getContainerActivity(), userTable);
     return tableData;
   }
@@ -297,10 +297,11 @@ public abstract class CustomView extends LinearLayout {
    */
   private Map<String, String> getElementKeyToValues(String tableId, String rowId) {
     TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
+    List<String> userDefinedElementKeys = tp.getPersistedColumns();
     String sqlQuery = DataTableColumns.ID + " = ? ";
     String[] selectionArgs = { rowId };
     DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs, null, null, null, null);
+    UserTable userTable = dbTable.rawSqlQuery(userDefinedElementKeys, sqlQuery, selectionArgs, null, null, null, null);
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " + "rowId: " + rowId);
     } else if (userTable.getNumberOfRows() == 0) {
@@ -308,7 +309,6 @@ public abstract class CustomView extends LinearLayout {
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     Row requestedRow = userTable.getRowAtIndex(0);
-    List<String> userDefinedElementKeys = userTable.getTableProperties().getColumnOrder();
     Set<String> metadataElementKeys = userTable.getMapOfUserDataToIndex().keySet();
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
@@ -349,7 +349,7 @@ public abstract class CustomView extends LinearLayout {
       this.mActivity = activity;
       Log.d(TAG, "calling Control Constructor");
     }
-    
+
     /**
      * Start the detail view.
      * @param tableId
@@ -373,7 +373,7 @@ public abstract class CustomView extends LinearLayout {
       this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
       return true;
     }
-        
+
     /**
      * Retrieve the app name that should be used from the parent activity.
      * @return
@@ -386,7 +386,7 @@ public abstract class CustomView extends LinearLayout {
       AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
       return baseActivity.getAppName();
     }
-    
+
 
     /**
      * @see {@link ControlIf#openDetailView(String, String, String)}
@@ -434,7 +434,7 @@ public abstract class CustomView extends LinearLayout {
           sqlOrderByElementName,
           sqlOrderByDirection);
     }
-    
+
     /**
      * Actually open the table. The sql-related parameters are null safe, so
      * only pass them in if necessary.
@@ -464,7 +464,7 @@ public abstract class CustomView extends LinearLayout {
           null,
           null);
     }
-    
+
     /**
      * Open the table to the given view type. The relativePath parameter is
      * null safe, and if not present will not be added. The default behavior
@@ -502,7 +502,7 @@ public abstract class CustomView extends LinearLayout {
       }
       Bundle bundle = new Bundle();
       IntentUtil.addSQLKeysToBundle(
-          bundle, 
+          bundle,
           sqlWhereClause,
           sqlSelectionArgs,
           sqlGroupBy,
@@ -516,7 +516,7 @@ public abstract class CustomView extends LinearLayout {
       this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
       return true;
     }
-    
+
     /**
      * Create a new {@link Intent} to launch {@link TableDisplayActivity} with
      * the contents of bundle added to the intent's extras. The appName is

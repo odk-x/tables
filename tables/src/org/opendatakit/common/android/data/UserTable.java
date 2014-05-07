@@ -120,7 +120,7 @@ public class UserTable {
     this.header = table.header;
     mRows = new ArrayList<Row>(indexes.size());
     for (int i = 0 ; i < indexes.size(); ++i) {
-      Row r = table.getRowAtIndex(i);
+      Row r = table.getRowAtIndex(indexes.get(i));
       mRows.add(r);
     }
     this.mTp = table.getTableProperties();

@@ -15,7 +15,6 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestCaseUtils;
 import org.opendatakit.testutils.TestContextMenu;
@@ -33,25 +32,25 @@ import android.widget.RelativeLayout;
 
 @RunWith(RobolectricTestRunner.class)
 public class TableManagerFragmentTest {
-  
+
   String mockTableName1 = "alpha";
   String mockTableName2 = "beta";
   String mockTableId1 = "firstTableId";
   String mockTableId2 = "secondTableId";
-  
+
   private TableManagerFragment fragment;
   private Activity parentActivity;
-  
+
   @After
   public void after() {
     AbsBaseActivityStub.resetState();
   }
-  
+
   public void setupFragmentWithNoItems() {
     this.fragment = getSpy(new ArrayList<TableProperties>());
     doGlobalSetup();
   }
-  
+
   public void setupFragmentWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
@@ -65,7 +64,7 @@ public class TableManagerFragmentTest {
     this.fragment = getSpy(listOfMocks);
     doGlobalSetup();
   }
-  
+
   /**
    * Does the setup required regardless of what the fragment is returning.
    */
@@ -79,7 +78,7 @@ public class TableManagerFragmentTest {
         null);
     this.parentActivity = this.fragment.getActivity();
   }
-    
+
   /**
    * Get a mocked TableManagerFragment that will return toDisplay when asked to
    * retrieve TableProperties.
@@ -90,7 +89,7 @@ public class TableManagerFragmentTest {
     TableManagerFragment stub = new TableManagerFragmentStub(toDisplay);
     return stub;
   }
-    
+
   @Test
   public void emptyViewIsVisibleWithoutContent() {
     setupFragmentWithNoItems();
@@ -101,28 +100,28 @@ public class TableManagerFragmentTest {
     View emptyView = this.fragment.getView().findViewById(android.R.id.empty);
     assertThat(emptyView).isVisible();
   }
-  
+
   @Test
   public void listViewIsGoneWithoutContent() {
     setupFragmentWithNoItems();
     View listView = this.fragment.getView().findViewById(android.R.id.list);
     assertThat(listView).isGone();
   }
-  
+
   @Test
   public void emptyViewIsGoneWithContent() {
     setupFragmentWithTwoItems();
     View emptyView = this.fragment.getView().findViewById(android.R.id.empty);
     assertThat(emptyView).isGone();
   }
-  
+
   @Test
   public void listViewIsVisibleWithContent() {
     setupFragmentWithTwoItems();
     View listView = this.fragment.getView().findViewById(android.R.id.list);
     assertThat(listView).isVisible();
   }
-    
+
   @Test
   public void hasCorrectMenuItems() {
     setupFragmentWithNoItems();
@@ -135,7 +134,7 @@ public class TableManagerFragmentTest {
       .hasItem(R.id.menu_table_manager_sync)
       .hasItem(R.id.menu_table_manager_preferences);
   }
-  
+
   @Test
   public void contextMenuHasCorrectItems() {
     setupFragmentWithTwoItems();
@@ -146,7 +145,7 @@ public class TableManagerFragmentTest {
         .hasItem(R.id.table_manager_delete_table)
         .hasItem(R.id.table_manager_edit_table_properties);
   }
-  
+
   @Test
   public void onItemClickLaunchesTableDisplayActivityWithCorrectIntent() {
     int position = 0;
@@ -170,10 +169,10 @@ public class TableManagerFragmentTest {
         .isNotNull()
         .isEqualTo(target);
   }
-  
+
   // TODO: Should probably also test that the context menu creates a dialog,
   // but it's not clear how to gain access to it to test.
-  
+
   // TODO: there should really be a "long-pressing creates a context menu"
   // test, but I'm not sure how to do it.
 
