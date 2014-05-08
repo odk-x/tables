@@ -79,10 +79,16 @@ public class WebFragment extends Fragment implements IWebFragment {
     Log.d(TAG, "[buildView] activity is: " + this.getActivity());
     WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
     Control control = this.createControlObject();
-    this.mControlReference = control;
     result.addJavascriptInterface(
         control.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.CONTROL);
+    CustomViewUtil.displayFileInWebView(
+        getActivity(),
+        ((AbsBaseActivity) getActivity()).getAppName(),
+        result,
+        this.getFileName());
+    // save the strong reference
+    this.mControlReference = control;
     return result;
   }
 

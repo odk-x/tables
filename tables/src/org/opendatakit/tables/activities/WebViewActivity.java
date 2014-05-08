@@ -7,6 +7,7 @@ import org.opendatakit.tables.utils.IntentUtil;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -19,15 +20,19 @@ import android.webkit.WebView;
  */
 public class WebViewActivity extends AbsBaseActivity {
   
+  private static final String TAG = WebViewActivity.class.getSimpleName();
+  
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Log.d(TAG, "[onCreate]");
     this.setContentView(R.layout.activity_web_view_activity);
     WebFragment webFragment = (WebFragment)
         this.getFragmentManager().findFragmentByTag(
             Constants.FragmentTags.WEB_FRAGMENT);
     String fileName = this.retrieveFileName(savedInstanceState);
     if (webFragment == null) {
+      Log.d(TAG, "[onCreate] webFragment null, creating new");
       webFragment = new WebFragment();
       Bundle arguments = new Bundle();
       IntentUtil.addFileNameToBundle(arguments, fileName);
