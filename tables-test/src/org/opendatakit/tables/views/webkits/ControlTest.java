@@ -44,7 +44,9 @@ public class ControlTest {
           .resume()
           .visible()
           .get();
-    Control control = new Control(activityStub);
+    Control control = new Control(
+        activityStub,
+        TestConstants.TABLES_DEFAULT_APP_NAME);
     this.activity = activityStub;
     this.control = control;
   }

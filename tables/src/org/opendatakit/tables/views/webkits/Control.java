@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,8 +13,6 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.common.android.data.UserTable.Row;
-import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
@@ -30,11 +26,12 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
+import org.opendatakit.tables.utils.WebViewUtil;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,7 +48,8 @@ public class Control {
   
   private static final String TAG = Control.class.getSimpleName();
   
-  protected AbsBaseActivity mActivity;
+  protected Activity mActivity;
+  protected String mAppName;
 
   public Object getJavascriptInterfaceWithWeakReference() {
     return new ControlIf(this);
@@ -68,9 +66,9 @@ public class Control {
    * @param activity
    *          the activity that will be holding the view
    */
-  public Control(AbsBaseActivity activity) {
+  public Control(Activity activity, String appName) {
     this.mActivity = activity;
-    Log.d(TAG, "calling Control Constructor");
+    this.mAppName = appName;
   }
   
   /**
@@ -82,7 +80,7 @@ public class Control {
     TableProperties result =
         TableProperties.getTablePropertiesForTable(
           this.mActivity,
-          this.mActivity.getAppName(),
+          this.mAppName,
           tableId);
     return result;
   }
@@ -95,7 +93,7 @@ public class Control {
   TableProperties[] retrieveTablePropertiesForAllTables() {
     TableProperties[] result = TableProperties.getTablePropertiesForAll(
         this.mActivity,
-        this.mActivity.getAppName());
+        this.mAppName);
     return result;
   }
   
@@ -489,7 +487,7 @@ public class Control {
   public String getTableDisplayName(String tableId) {
     TableProperties tp = TableProperties.getTablePropertiesForTable(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         tableId);
     return tp.getLocalizedDisplayName();
   }
@@ -504,7 +502,7 @@ public class Control {
     Map<String, String> platformInfo = new HashMap<String, String>();
     platformInfo.put(PlatformInfoKeys.VERSION, Build.VERSION.RELEASE);
     platformInfo.put(PlatformInfoKeys.CONTAINER, "Android");
-    platformInfo.put(PlatformInfoKeys.APP_NAME, this.mActivity.getAppName());
+    platformInfo.put(PlatformInfoKeys.APP_NAME, this.mAppName);
     platformInfo.put(PlatformInfoKeys.BASE_URI, getBaseContentUri());
     platformInfo.put(PlatformInfoKeys.LOG_LEVEL, "D");
     JSONObject jsonObject = new JSONObject(platformInfo);
@@ -548,7 +546,7 @@ public class Control {
     Uri contentUri = FileProvider.getWebViewContentUri(this.mActivity);
     contentUri = Uri.withAppendedPath(
         contentUri,
-        Uri.encode(this.mActivity.getAppName()));
+        Uri.encode(this.mAppName));
     return contentUri.toString() + File.separator;
   }
 
@@ -563,7 +561,7 @@ public class Control {
     Log.d(TAG, "[launchHTML] launching relativePath: " + relativePath);
     Intent intent = new Intent(this.mActivity, WebViewActivity.class);
     Bundle bundle = new Bundle();
-    IntentUtil.addAppNameToBundle(bundle, this.mActivity.getAppName());
+    IntentUtil.addAppNameToBundle(bundle, this.mAppName);
     IntentUtil.addFileNameToBundle(bundle, relativePath);
     intent.putExtras(bundle);
     this.mActivity.startActivityForResult(
@@ -621,7 +619,7 @@ public class Control {
     }
     SurveyUtil.addRowWithSurvey(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         tp,
         surveyFormParameters,
         map);
@@ -707,7 +705,7 @@ public class Control {
       // The prepopulated values we need to get from the query string.
       addRowIntent = CollectUtil.getIntentForOdkCollectAddRowByQuery(
           this.mActivity,
-          this.mActivity.getAppName(),
+          this.mAppName,
           tp,
           params);
     } else {
@@ -757,7 +755,7 @@ public class Control {
     }
     SurveyUtil.editRowWithSurvey(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         rowId,
         tp,
         surveyFormParameters);
@@ -812,7 +810,7 @@ public class Control {
     }
     CollectUtil.editRowWithCollect(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         rowId,
         tp,
         formParameters);
@@ -868,7 +866,7 @@ public class Control {
                 // TODO: prompt for this!
                 String tableId = NameUtil.createUniqueTableId(
                     Control.this.mActivity,
-                    Control.this.mActivity.getAppName(),
+                    Control.this.mAppName,
                     newTableName);
                 addTable(newTableName, tableId);
               } else {
@@ -913,12 +911,12 @@ public class Control {
     // prompt them for a tableId name.
     String dbTableName = NameUtil.createUniqueDbTableName(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         tableName);
     @SuppressWarnings("unused")
     TableProperties tp = TableProperties.addTable(
         this.mActivity,
-        this.mActivity.getAppName(),
+        this.mAppName,
         dbTableName,
         tableName,
         tableId);

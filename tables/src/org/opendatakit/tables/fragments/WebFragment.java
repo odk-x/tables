@@ -4,12 +4,11 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,7 +24,7 @@ import android.webkit.WebView;
  * @author sudar.sam@gmail.com
  *
  */
-public class WebFragment extends Fragment implements IWebFragment {
+public class WebFragment extends AbsBaseFragment implements IWebFragment {
   
   private static final String TAG = WebFragment.class.getSimpleName();
   
@@ -102,8 +101,7 @@ public class WebFragment extends Fragment implements IWebFragment {
    */
   @Override
   public Control createControlObject() {
-    AbsBaseActivity activity = (AbsBaseActivity) getActivity();
-    Control result = new Control(activity);
+    Control result = new Control(this.getActivity(), this.getAppName());
     return result;
   }
   
