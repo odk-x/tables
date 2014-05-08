@@ -4,14 +4,14 @@
     <!-- Add a row -->
     <item
         android:id="@+id/top_level_table_menu_add"
-        android:icon="@drawable/content_new"
+        android:icon="@drawable/ic_action_new"
         android:title="@string/add_row"
         android:showAsAction="always" />
     
     <!-- Select a view -->
     <item
         android:id="@+id/top_level_table_menu_select_view"
-        android:icon="@drawable/view"
+        android:icon="@drawable/ic_action_view_as_list"
         android:title="@string/select_view"
         android:showAsAction="always" >
         
@@ -37,7 +37,7 @@
     <!-- Preferences sub menu -->
     <item
         android:id="@+id/top_level_table_menu_select_preferences"
-        android:icon="@drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_action_settings"
         android:title="@string/preferences"
         android:showAsAction="always">
         
