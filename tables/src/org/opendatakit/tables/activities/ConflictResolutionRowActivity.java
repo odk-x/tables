@@ -10,6 +10,7 @@ import org.opendatakit.common.android.data.ConflictTable;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
@@ -130,9 +131,6 @@ public class ConflictResolutionRowActivity extends ListActivity
     this.mConflictTable = dbTable.getConflictTable();
     this.mLocal = mConflictTable.getLocalTable();
     this.mServer = mConflictTable.getServerTable();
-    // We'll use these later on, so heat up the caches.
-    this.mLocal.reloadCacheOfColumnProperties();
-    this.mServer.reloadCacheOfColumnProperties();
     //
     // And now we need to construct up the adapter.
     // There are several things to do be aware of. We need to get all the
@@ -141,8 +139,8 @@ public class ConflictResolutionRowActivity extends ListActivity
     // We'll present them in user-defined order, as they may have set up the
     // useful information together.
     this.mRowNumber = this.mLocal.getRowNumFromId(mRowId);
-    this.mServerRowETag = this.mServer.getMetadataByElementKey(mRowNumber,
-        DataTableColumns.ROW_ETAG);
+    Row row = this.mServer.getRowAtIndex(mRowNumber);
+    this.mServerRowETag = row.getDataOrMetadataByElementKey(DataTableColumns.ROW_ETAG);
     TableProperties tp = mConflictTable.getLocalTable().getTableProperties();
     List<String> columnOrder = tp.getPersistedColumns();
     // This will be the number of rows down we are in the adapter. Each
@@ -161,9 +159,9 @@ public class ConflictResolutionRowActivity extends ListActivity
       ++adapterOffset;
       sections.add(newSection);
       String localValue = mLocal.getDisplayTextOfData(this, mRowNumber,
-          mLocal.getColumnIndexOfElementKey(elementKey), true);
+          elementKey, true);
       String serverValue = mServer.getDisplayTextOfData(this, mRowNumber,
-          mLocal.getColumnIndexOfElementKey(elementKey), true);
+          elementKey, true);
       if ((localValue == null && serverValue == null) ||
     	  (localValue != null && localValue.equals(serverValue))) {
         // TODO: this doesn't compare actual equality of blobs if their display

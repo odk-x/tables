@@ -54,8 +54,8 @@ public class TableManagerFragmentTest {
   public void setupFragmentWithTwoItems() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getDisplayName()).thenReturn(mockTableName1);
-    when(tp2.getDisplayName()).thenReturn(mockTableName2);
+    when(tp1.getLocalizedDisplayName()).thenReturn(mockTableName1);
+    when(tp2.getLocalizedDisplayName()).thenReturn(mockTableName2);
     when(tp1.getTableId()).thenReturn(mockTableId1);
     when(tp2.getTableId()).thenReturn(mockTableId2);
     List<TableProperties> listOfMocks = new ArrayList<TableProperties>();

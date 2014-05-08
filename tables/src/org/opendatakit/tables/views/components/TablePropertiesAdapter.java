@@ -21,14 +21,14 @@ import android.widget.TextView;
  * @author sudar.sam@gmail.com
  *
  */
-public class TablePropertiesAdapter extends BaseAdapter 
+public class TablePropertiesAdapter extends BaseAdapter
     implements ListAdapter {
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       TablePropertiesAdapter.class.getSimpleName();
-  
+
   private List<TableProperties> mTableList;
-  
+
   public TablePropertiesAdapter(List<TableProperties> list) {
     this.mTableList = list;
   }
@@ -39,14 +39,14 @@ public class TablePropertiesAdapter extends BaseAdapter
       android.view.View convertView,
       android.view.ViewGroup parent) {
     Log.e(TAG, "getView called");
-    final RelativeLayout view = convertView == null ? 
-        createView(parent) : 
+    final RelativeLayout view = convertView == null ?
+        createView(parent) :
         (RelativeLayout) convertView;
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
-    textView.setText(this.getList().get(position).getDisplayName());
+    textView.setText(this.getList().get(position).getLocalizedDisplayName());
     ImageView imageView = (ImageView) view.findViewById(R.id.row_item_icon);
     imageView.setOnClickListener(new View.OnClickListener() {
-      
+
       @Override
       public void onClick(View v) {
         // We want to pop open the context menu. Therefore anything using this
@@ -56,13 +56,13 @@ public class TablePropertiesAdapter extends BaseAdapter
     });
     return view;
   }
-  
+
   List<TableProperties> getList() {
     return this.mTableList;
   }
-  
+
   private RelativeLayout createView(ViewGroup parent) {
-    LayoutInflater layoutInflater = 
+    LayoutInflater layoutInflater =
         (LayoutInflater) parent
             .getContext()
             .getSystemService(Context.LAYOUT_INFLATER_SERVICE);

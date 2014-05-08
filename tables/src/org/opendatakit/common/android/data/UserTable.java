@@ -71,26 +71,8 @@ public class UserTable {
   private final String mSqlOrderByElementKey;
   private final String mSqlOrderByDirection;
 
+  private final Map<String,Integer> mElementKeyToIndex;
   private final String[] mElementKeyForIndex;
-  // array of ColumnProperties for these element keys
-  // this can go stale when ColumnProperties are changed,
-  // so it must be explicitly recomputed before being used
-  // e.g., reloadCacheOfColumnProperties()
-  private final ArrayList<ColumnProperties> mColumnProperties = new ArrayList<ColumnProperties>();
-
-  /**
-   * Maps the element key of user-defined columns to the corresponding index in
-   * the Row objects.
-   */
-  private final Map<String, Integer> mDataKeyToIndex;
-  /**
-   * Maps the element key of ODKTables-specified metadata columns to the
-   * corresponding indices in the Row objects.
-   */
-  private final Map<String, Integer> mMetadataKeyToIndex;
-
-  private Map<String, Integer> mUnmodifiableCachedDataKeyToIndex = null;
-  private Map<String, Integer> mUnmodifiableCachedMetadataKeyToIndex = null;
 
   /**
    * A simple cache of color rules so they're not recreated unnecessarily
@@ -130,9 +112,8 @@ public class UserTable {
     this.mSqlHavingClause = table.mSqlHavingClause;
     this.mSqlOrderByElementKey = table.mSqlOrderByElementKey;
     this.mSqlOrderByDirection = table.mSqlOrderByDirection;
-    this.mDataKeyToIndex = table.getMapOfUserDataToIndex();
-    this.mMetadataKeyToIndex = table.getMapOfMetadataToIndex();
-    this.mElementKeyForIndex = table.getElementKeysForIndex();
+    this.mElementKeyToIndex = table.mElementKeyToIndex;
+    this.mElementKeyForIndex = table.mElementKeyForIndex;
   }
 
   public UserTable(Cursor c, TableProperties tableProperties,
@@ -149,7 +130,6 @@ public class UserTable {
     this.mSqlHavingClause = sqlHavingClause;
     this.mSqlOrderByElementKey = sqlOrderByElementKey;
     this.mSqlOrderByDirection = sqlOrderByDirection;
-    List<String> adminColumnOrder = DbTable.getAdminColumns();
     int rowIdIndex = c.getColumnIndexOrThrow(DataTableColumns.ID);
     // These maps will map the element key to the corresponding index in
     // either data or metadata. If the user has defined a column with the
@@ -157,47 +137,44 @@ public class UserTable {
     // array, dataKeyToIndex would then have a mapping of _my_data:5.
     // The sync_state column, if present at index 7, would have a mapping
     // in metadataKeyToIndex of sync_state:7.
-    mDataKeyToIndex = new HashMap<String, Integer>();
-    mElementKeyForIndex = new String[userColumnOrder.size()];
+    List<String> adminColumnOrder = DbTable.getAdminColumns();
+
+    mElementKeyToIndex = new HashMap<String, Integer>();
+    mElementKeyForIndex = new String[userColumnOrder.size()+adminColumnOrder.size()];
     header = new String[userColumnOrder.size()];
-    int[] userColumnCursorIndex = new int[userColumnOrder.size()];
-    for (int i = 0; i < userColumnOrder.size(); i++) {
+    int[] cursorIndex = new int[userColumnOrder.size()+adminColumnOrder.size()];
+    int i = 0;
+    for (i = 0; i < userColumnOrder.size(); i++) {
       String elementKey = userColumnOrder.get(i);
       mElementKeyForIndex[i] = elementKey;
-      mDataKeyToIndex.put(elementKey, i);
       header[i] = mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
-      userColumnCursorIndex[i] = c.getColumnIndex(elementKey);
+      mElementKeyToIndex.put(elementKey, i);
+      cursorIndex[i] = c.getColumnIndex(elementKey);
     }
-    mMetadataKeyToIndex = new HashMap<String, Integer>();
-    int[] adminColumnCursorIndex = new int[adminColumnOrder.size()];
-    for (int i = 0; i < adminColumnOrder.size(); i++) {
+
+    for (int j = 0; j < adminColumnOrder.size(); j++) {
       // TODO: problem is here. unclear how to best get just the
       // metadata in here. hmm.
-      String elementKey = adminColumnOrder.get(i);
-      mMetadataKeyToIndex.put(elementKey, i);
-      adminColumnCursorIndex[i] = c.getColumnIndex(elementKey);
+      String elementKey = adminColumnOrder.get(j);
+      mElementKeyForIndex[i+j] = elementKey;
+      mElementKeyToIndex.put(elementKey, i+j);
+      cursorIndex[i+j] = c.getColumnIndex(elementKey);
     }
 
     c.moveToFirst();
     int rowCount = c.getCount();
     mRows = new ArrayList<Row>(rowCount);
 
-    String[] rowData = new String[userColumnOrder.size()];
-    String[] rowMetadata = new String[adminColumnOrder.size()];
+    String[] rowData = new String[userColumnOrder.size()+ adminColumnOrder.size()];
     if (c.moveToFirst()) {
       do {
         String rowId = c.getString(rowIdIndex);
         // First get the user-defined data for this row.
-        for (int i = 0; i < userColumnOrder.size(); i++) {
-          String value = getIndexAsString(c, userColumnCursorIndex[i]);
+        for (i = 0; i < cursorIndex.length; i++) {
+          String value = getIndexAsString(c, cursorIndex[i]);
           rowData[i] = value;
         }
-        // Now get the metadata for this row.
-        for (int i = 0; i < adminColumnOrder.size(); i++) {
-          String value = getIndexAsString(c, adminColumnCursorIndex[i]);
-          rowMetadata[i] = value;
-        }
-        Row nextRow = new Row(rowId, rowData.clone(), rowMetadata.clone());
+        Row nextRow = new Row(rowId, rowData.clone());
         mRows.add(nextRow);
       } while (c.moveToNext());
     }
@@ -253,7 +230,8 @@ public class UserTable {
   }
 
   public Long getTimestamp(int rowNum) {
-    return TableConstants.milliSecondsFromNanos(getMetadataByElementKey(rowNum, DataTableColumns.SAVEPOINT_TIMESTAMP));
+    Row row = this.getRowAtIndex(rowNum);
+    return TableConstants.milliSecondsFromNanos(row.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
   }
 
   public Row getRowAtIndex(int index) {
@@ -264,27 +242,23 @@ public class UserTable {
     return header[colNum];
   }
 
-  public String getElementKey(int colNum) {
-    return mElementKeyForIndex[colNum];
-  }
-
-  /**
-   * Get the index of the element key for the user-defined columns.
-   * @param elementKey
-   * @return null if the column is not found
-   */
-  public Integer getColumnIndexOfElementKey(String elementKey) {
-    return mDataKeyToIndex.get(elementKey);
-  }
-
   public String getData(int cellNum) {
     int rowNum = cellNum / getWidth();
     int colNum = cellNum % getWidth();
     return getData(rowNum, colNum);
   }
 
+  public Integer getColumnIndexOfElementKey(String elementKey) {
+    return this.mElementKeyToIndex.get(elementKey);
+  }
+
+  public String getElementKey(int colNum) {
+    return this.mElementKeyForIndex[colNum];
+  }
+
   public String getData(int rowNum, int colNum) {
-    return mRows.get(rowNum).getDataAtIndex(colNum);
+    String elementKey = this.mElementKeyForIndex[colNum];
+    return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
   }
 
   public String getWhereClause() {
@@ -337,10 +311,9 @@ public class UserTable {
     }
 
     // We need to construct a dummy Row for the ColorRule to interpret
-    String[] rowData = new String[this.mDataKeyToIndex.size()];
-    String[] rowMetadata = new String[this.mMetadataKeyToIndex.size()];
-    rowData[this.mDataKeyToIndex.get(elementKey)] = value;
-    Row row = new Row("dummyRowId", rowData, rowMetadata);
+    String[] rowData = new String[this.mElementKeyToIndex.size()];
+    rowData[this.mElementKeyToIndex.get(elementKey)] = value;
+    Row row = new Row("dummyRowId", rowData);
     ColorGuide guide = colRul.getColorGuide(row);
     if (guide != null) {
       return guide.getForeground();
@@ -352,16 +325,21 @@ public class UserTable {
   public String getDisplayTextOfData(Context context, int cellNum) {
     int rowNum = cellNum / getWidth();
     int colNum = cellNum % getWidth();
-    return getDisplayTextOfData(context, rowNum, colNum, true);
+    String elementKey = this.mElementKeyForIndex[colNum];
+    return getDisplayTextOfData(context, rowNum, elementKey, true);
   }
 
-  public String getDisplayTextOfData(Context context, int rowNum, int colNum, boolean showErrorText) {
+  public String getDisplayTextOfData(Context context, int rowNum, String elementKey, boolean showErrorText) {
     // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
-    String raw = getData(rowNum,colNum);
+    Row row = getRowAtIndex(rowNum);
+    if ( row == null ) {
+      return null;
+    }
+    String raw = row.getDataOrMetadataByElementKey(elementKey);
     if ( raw == null ) {
       return null;
     }
-    ColumnProperties cp = mColumnProperties.get(colNum);
+    ColumnProperties cp = mTp.getColumnByElementKey(elementKey);
     ColumnType type = cp.getColumnType();
     if ( type == ColumnType.AUDIOURI ||
          type == ColumnType.IMAGEURI ||
@@ -400,76 +378,8 @@ public class UserTable {
     }
   }
 
-  /**
-   * The cache should be reloaded before using getDisplayTextOfData
-   * (above) because the column properties could change due to
-   * changes in the property values for those columns.
-   */
-  public void reloadCacheOfColumnProperties() {
-    mColumnProperties.clear();
-    for ( int i = 0 ; i < mElementKeyForIndex.length ; ++i ) {
-      String elementKey = mElementKeyForIndex[i];
-      mColumnProperties.add(mTp.getColumnByElementKey(elementKey));
-    }
-  }
-
-  /**
-   * Retrieve the metadata datum in the column specified by elementKey at the
-   * given row number.
-   *
-   * @param rowNum
-   * @param elementKey
-   * @return
-   */
-  public String getMetadataByElementKey(int rowNum, String elementKey) {
-    Integer idx = mMetadataKeyToIndex.get(elementKey);
-    if ( idx == null ) {
-      return null;
-    }
-    return mRows.get(rowNum).getMetadataAtIndex(idx);
-  }
-
-  /**
-   * Return the data or metadata value in the given row by element key.
-   * @param rowNum
-   * @param elementKey
-   * @return
-   */
-  public String getDataByElementKey(int rowNum, String elementKey) {
-    return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
-  }
-
-  /**
-   * Return a map containing the mapping of the element keys for the user-
-   * defined columns to their index in array returned by
-   * {@link Row#getAllData()}.
-   *
-   * @return
-   */
-  public Map<String, Integer> getMapOfUserDataToIndex() {
-    if (this.mUnmodifiableCachedDataKeyToIndex == null) {
-      this.mUnmodifiableCachedDataKeyToIndex = Collections.unmodifiableMap(this.mDataKeyToIndex);
-    }
-    return this.mUnmodifiableCachedDataKeyToIndex;
-  }
-
   public TableProperties getTableProperties() {
     return mTp;
-  }
-
-  /**
-   * Return a map containing the mapping of the element keys for the
-   * ODKTables-specified metadata columns to their index in the array returned
-   * by {@link Row#getAllMetadata()}.
-   *
-   * @return
-   */
-  public Map<String, Integer> getMapOfMetadataToIndex() {
-    if (this.mUnmodifiableCachedMetadataKeyToIndex == null) {
-      this.mUnmodifiableCachedMetadataKeyToIndex = Collections
-          .unmodifiableMap(this.mMetadataKeyToIndex);
-    }
-    return this.mUnmodifiableCachedMetadataKeyToIndex;
   }
 
   public String[] getElementKeysForIndex() {
@@ -478,19 +388,6 @@ public class UserTable {
 
   public int getWidth() {
     return header.length;
-  }
-
-  /**
-   * Get the number of metadata columns.
-   *
-   * @return
-   */
-  public int getNumberOfMetadataColumns() {
-    return mMetadataKeyToIndex.size();
-  }
-
-  public String[] getAllMetadataForRow(int rowNum) {
-    return mRows.get(rowNum).getAllMetadata();
   }
 
   public int getNumberOfRows() {
@@ -535,50 +432,20 @@ public class UserTable {
     private final String mRowId;
 
     /**
-     * Holds the actual data in the row. To index into the array correctly, must
-     * use the information contained in UserTable.
+     * Holds a mix of user-data and meta-data of the row
      */
-    private final String[] mData;
-
-    /**
-     * Holds the metadata for the row. to index into the array correctly, must
-     * use the information contained in UserTable.
-     */
-    private final String[] mMetadata;
+    private final String[] mRowData;
 
     /**
      * Construct the row.
      *
      * @param rowId
-     * @param data
-     *          the user-defined data of the row
-     * @param metadata
-     *          the ODKTables-specified metadata for the row.
+     * @param rowData
+     *          the combined set of data and metadata in the row.
      */
-    public Row(String rowId, String[] data, String[] metadata) {
+    public Row(String rowId, String[] rowData) {
       this.mRowId = rowId;
-      this.mData = data;
-      this.mMetadata = metadata;
-    }
-
-    /**
-     * Return the value of the row at the given index.
-     *
-     * @param index
-     * @return
-     */
-    public String getDataAtIndex(int index) {
-      return mData[index];
-    }
-
-    /**
-     * Return the metadata value at the given index.
-     *
-     * @param index
-     * @return
-     */
-    public String getMetadataAtIndex(int index) {
-      return mMetadata[index];
+      this.mRowData = rowData;
     }
 
     /**
@@ -604,33 +471,18 @@ public class UserTable {
      *         in the table, returns null.
      */
     public String getDataOrMetadataByElementKey(String elementKey) {
+      List<String> adminColumns = DbTable.getAdminColumns();
       String result;
-      if (UserTable.this.mDataKeyToIndex.containsKey(elementKey)) {
-        result = this.mData[UserTable.this.mDataKeyToIndex.get(elementKey)];
-      } else if (UserTable.this.mMetadataKeyToIndex.containsKey(elementKey)) {
-        result = this.mMetadata[UserTable.this.mMetadataKeyToIndex.get(elementKey)];
-      } else {
-        // The elementKey was not in the table. Probable error or misuse.
+      Integer cell = UserTable.this.mElementKeyToIndex.get(elementKey);
+      if ( cell == null ) {
         Log.e(TAG, "elementKey [" + elementKey + "] was not found in table");
-        return null;
+        return "";
       }
+      result = this.mRowData[cell];
       if (result == null) {
         result = "";
       }
       return result;
-    }
-
-    /**
-     * Get the array backing the entire row.
-     *
-     * @return
-     */
-    public String[] getAllData() {
-      return mData;
-    }
-
-    public String[] getAllMetadata() {
-      return mMetadata;
     }
 
     @Override
@@ -638,8 +490,7 @@ public class UserTable {
       final int PRIME = 31;
       int result = 1;
       result = result * PRIME + this.mRowId.hashCode();
-      result = result * PRIME + this.mData.hashCode();
-      result = result * PRIME + this.mMetadata.hashCode();
+      result = result * PRIME + this.mRowData.hashCode();
       return result;
     }
 

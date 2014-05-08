@@ -11,6 +11,7 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 
 import android.app.Activity;
 import android.util.Log;
@@ -111,28 +112,23 @@ public class TableData {
        String elementKey =
            this.mTable.getTableProperties().getElementKeyFromElementPath(
                elementPath);
-       ArrayList<String> rowValues = new ArrayList<String>();
-       Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
-       if (columnIndex == null) {
-         Log.e(TAG, "column not found with element path: " + elementPath +
-             " and key: " + elementKey);
+       if (elementKey == null) {
+         Log.e(TAG, "column not found with element path: " + elementPath);
          return null;
        }
+       ArrayList<String> rowValues = new ArrayList<String>();
        for (int i = 0; i < requestedRows; i++) {
-          rowValues.add(this.mTable.getData(i, columnIndex));
+         Row row = this.mTable.getRowAtIndex(i);
+         rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
        }
        return new JSONArray(rowValues).toString();
      }
 
      public String getColumnDataForElementKey(String elementKey, int requestedRows) {
        ArrayList<String> rowValues = new ArrayList<String>();
-       Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
-       if (columnIndex == null) {
-         Log.e(TAG, "column not found with element key: " + elementKey);
-         return null;
-       }
        for (int i = 0; i < requestedRows; i++) {
-          rowValues.add(this.mTable.getData(i, columnIndex));
+         Row row = this.mTable.getRowAtIndex(i);
+         rowValues.add(row.getDataOrMetadataByElementKey(elementKey));
        }
        return new JSONArray(rowValues).toString();
      }
@@ -180,16 +176,22 @@ public class TableData {
       * @see {@link TableDataIf#getData(int, String)}.
       */
      public String getData(int rowNum, String elementPath) {
+       Row row = mTable.getRowAtIndex(rowNum);
+       if ( row == null ) {
+         Log.e(TAG, "row " + rowNum + " does not exist! Returning null");
+         return null;
+       }
+
        String elementKey =
            mTable.getTableProperties().getElementKeyFromElementPath(
                elementPath);
-       Integer columnIndex = mTable.getColumnIndexOfElementKey(elementKey);
-       if (columnIndex == null) {
-         Log.e(TAG, "column with elementKey: " + elementKey + " does not" +
+       if (elementKey == null) {
+         Log.e(TAG, "column with elementPath: " + elementPath + " does not" +
               " exist.");
          return null;
        }
-       String result = mTable.getDataByElementKey(rowNum, elementKey);
+
+       String result = row.getDataOrMetadataByElementKey(elementKey);
        return result;
      }
 

@@ -113,13 +113,14 @@ public class EditSavedColorRuleActivity extends PreferenceActivity
     addPreferencesFromResource(R.xml.preference_row_color_rule_entry);
     this.mHumanValues = ColorRule.RuleType.getValues();
     this.mEntryVales = ColorRule.RuleType.getValues();
-    int numberOfDisplayColumns = mTp.getNumberOfDisplayColumns();
-    this.mColumnDisplayNames = new CharSequence[numberOfDisplayColumns];
-    this.mColumnElementKeys = new CharSequence[numberOfDisplayColumns];
-    for (int i = 0; i < numberOfDisplayColumns; i++) {
-      ColumnProperties cp = mTp.getColumnByIndex(i);
+    List<String> elementKeys = mTp.getPersistedColumns();
+    this.mColumnDisplayNames = new CharSequence[elementKeys.size()];
+    this.mColumnElementKeys = new CharSequence[elementKeys.size()];
+    for (int i = 0; i < elementKeys.size(); i++) {
+      String elementKey = elementKeys.get(i);
+      ColumnProperties cp = mTp.getColumnByElementKey(elementKey);
       mColumnDisplayNames[i] = cp.getLocalizedDisplayName();
-      mColumnElementKeys[i] = cp.getElementKey();
+      mColumnElementKeys[i] = elementKey;
     }
     this.setTitle(getString(R.string.edit_rule));
   }

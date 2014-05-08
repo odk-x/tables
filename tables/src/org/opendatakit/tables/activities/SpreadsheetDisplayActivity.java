@@ -34,7 +34,9 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 import org.opendatakit.tables.utils.TableFileUtils;
+import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -96,7 +98,7 @@ public class SpreadsheetDisplayActivity extends Activity
 
     private String appName;
     private Controller c;
-    private UserTable table;
+    private SpreadsheetUserTable spreadsheetTable;
     private int indexedCol;
 
     private int lastDataCellMenued;
@@ -154,22 +156,21 @@ public class SpreadsheetDisplayActivity extends Activity
       }
 
       DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-      table = dbTable.rawSqlQuery(c.getTableProperties().getColumnOrder(), sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+      UserTable table = dbTable.rawSqlQuery(c.getTableProperties().getColumnOrder(), sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+      spreadsheetTable = new SpreadsheetUserTable(table);
 
-      String indexedColElementKey = c.getTableProperties().getIndexColumn();
-      indexedCol = table.getColumnIndexOfElementKey(indexedColElementKey);
       // setting up the view
       c.setDisplayView(buildView());
       setContentView(c.getContainerView());
     }
 
     private View buildView() {
-        if (table.getWidth() == 0) {
+        if (!spreadsheetTable.hasData()) {
             TextView tv = new TextView(this);
             tv.setText("No data.");
             return tv;
         } else {
-            return new SpreadsheetView(this, this, table, indexedCol);
+            return new SpreadsheetView(this, this, spreadsheetTable);
         }
     }
 
@@ -207,7 +208,7 @@ public class SpreadsheetDisplayActivity extends Activity
           newSelectionArgs.addAll(Arrays.asList(sqlSelectionArgs));
         }
         boolean first = true;
-        Row row = table.getRowAtIndex(rowNum);
+        Row row = spreadsheetTable.getRowAtIndex(rowNum);
         for ( String groupByColumn : sqlGroupBy ) {
           if ( !first ) {
             s.append(", ");
@@ -338,39 +339,37 @@ public class SpreadsheetDisplayActivity extends Activity
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
      TableProperties tp = c.getTableProperties();
-
+     SpreadsheetCell cell;
      switch (item.getItemId()) {
      case MENU_ITEM_ID_HISTORY_IN:
-         openCollectionView(lastDataCellMenued / table.getWidth());
+         openCollectionView(lastDataCellMenued / spreadsheetTable.getWidth());
          return true;
      case MENU_ITEM_ID_EDIT_CELL:
-         c.openCellEditDialog(
-                 table.getRowAtIndex(
-                     lastDataCellMenued / table.getWidth()).getRowId(),
-                 table.getData(lastDataCellMenued),
-                 lastDataCellMenued % table.getWidth());
+         cell = spreadsheetTable.getSpreadsheetCell(this, lastDataCellMenued);
+         c.openCellEditDialog(cell);
          return true;
      case MENU_ITEM_ID_DELETE_ROW:
-         c.deleteRow(table.getRowAtIndex(
-             lastDataCellMenued / table.getWidth()).getRowId());
+         cell = spreadsheetTable.getSpreadsheetCell(this, lastDataCellMenued);
+         c.deleteRow(cell.row.getRowId());
          init();
          return true;
      case MENU_ITEM_ID_EDIT_ROW:
        // It is possible that a custom form has been defined for this table.
        // We will get the strings we need, and then set the parameter object.
-       c.editRow(table, (lastDataCellMenued / table.getWidth()));
+       cell = spreadsheetTable.getSpreadsheetCell(this, lastDataCellMenued);
+       c.editRow(cell.row);
        // launch ODK Collect
        return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_PRIME:
-         addGroupByColumn(tp.getColumnByIndex(lastHeaderCellMenued));
+         addGroupByColumn(spreadsheetTable.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME:
-         removeGroupByColumn(tp.getColumnByIndex(lastHeaderCellMenued));
+         removeGroupByColumn(spreadsheetTable.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_SET_COLUMN_AS_SORT:
-         setColumnAsSort(tp.getColumnByIndex(lastHeaderCellMenued));
+         setColumnAsSort(spreadsheetTable.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_COLUMN_AS_SORT:
@@ -378,7 +377,7 @@ public class SpreadsheetDisplayActivity extends Activity
          init();
          return true;
      case MENU_ITEM_ID_SET_AS_INDEXED_COL:
-         setColumnAsIndexedCol(tp.getColumnByIndex(lastHeaderCellMenued));
+         setColumnAsIndexedCol(spreadsheetTable.getColumnByIndex(lastHeaderCellMenued));
          init();
          return true;
      case MENU_ITEM_ID_UNSET_AS_INDEXED_COL:
@@ -386,16 +385,16 @@ public class SpreadsheetDisplayActivity extends Activity
          init();
          return true;
      case MENU_ITEM_ID_OPEN_COL_PROPS_MANAGER:
-         openColumnPropertiesManager(tp.getColumnByIndex(lastHeaderCellMenued));
+         openColumnPropertiesManager(spreadsheetTable.getColumnByIndex(lastHeaderCellMenued));
          return true;
      case MENU_ITEM_ID_EDIT_COLUMN_COLOR_RULES:
        Intent i = new Intent(this, ColorRuleManagerActivity.class);
        i.putExtra(
-           Constants.IntentKeys.APP_NAME, table.getTableProperties().getAppName());
+           Constants.IntentKeys.APP_NAME, spreadsheetTable.getAppName());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY,
-           tp.getColumnByIndex(lastHeaderCellMenued).getElementKey());
+           spreadsheetTable.getColumnByIndex(lastHeaderCellMenued).getElementKey());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-           table.getTableProperties().getTableId());
+           spreadsheetTable.getTableId());
        i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
            ColorRuleGroup.Type.COLUMN.name());
        startActivity(i);
@@ -415,45 +414,21 @@ public class SpreadsheetDisplayActivity extends Activity
     }
 
     @Override
-    public void regularCellLongClicked(int cellId, int rawX, int rawY,
-        boolean isIndexed) {
-      // So we need to check for whether or not the table is indexed again and
-      // alter the cellId appropriately.
-      if (isIndexed) {
-        int colNum = cellId % (table.getWidth() - 1);
-        int rowNum = cellId / (table.getWidth() - 1);
-        cellId = cellId + rowNum + ((colNum < indexedCol) ? 0 : 1);
-      }
-        c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
+    public void regularCellLongClicked(int cellId, int rawX, int rawY) {
+      SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(this, cellId);
+      c.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
     }
 
     @Override
     public void indexedColCellLongClicked(int cellId, int rawX, int rawY) {
-      // here it's just the row plus the number of the indexed column.
-      // So the true cell id is the cellId parameter, which is essentially the
-      // row number, * the width of the table, plus the indexed col
-      int trueNum = cellId * table.getWidth() + indexedCol;
-      c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
+      SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(this, cellId);
+      c.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
     }
 
     @Override
-    public void regularCellDoubleClicked(int cellId, boolean isIndexed,
-        int rawX, int rawY) {
-      // So it seems like the cellId is coming from the mainData table, which
-      // does NOT include the index. So to get the right row here we actually
-      // have to perform a little extra.
-      if (!isIndexed) {
-        c.addOverlay(new CellPopout(cellId), 100, 100, rawX, rawY);
-      } else { // it's indexed
-        int colNum = cellId % (table.getWidth() - 1);
-        int rowNum = cellId / (table.getWidth() - 1);
-        int trueNum = cellId + rowNum + ((colNum < indexedCol) ? 0 : 1);
-        // trying to hack together correct thing for overlay
-        int trueCellId = rowNum * table.getWidth() +
-            colNum + ((colNum < indexedCol) ? 0 : 1);
-        c.addOverlay(new CellPopout(trueCellId), 100, 100, rawX, rawY);
-      }
-
+    public void regularCellDoubleClicked(int cellId, int rawX, int rawY) {
+      SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(this, cellId);
+      c.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
     }
 
     @Override
@@ -475,7 +450,7 @@ public class SpreadsheetDisplayActivity extends Activity
     public void prepHeaderCellOccm(ContextMenu menu, int cellId) {
         lastHeaderCellMenued = cellId;
         ColumnProperties cp =
-            c.getTableProperties().getColumnByIndex(lastHeaderCellMenued);
+            spreadsheetTable.getColumnByIndex(lastHeaderCellMenued);
         if (c.getTableProperties().isGroupByColumn(cp.getElementKey())) {
             menu.add(ContextMenu.NONE, MENU_ITEM_ID_UNSET_COLUMN_AS_PRIME,
                     ContextMenu.NONE, "Unset as Prime");
@@ -529,11 +504,8 @@ public class SpreadsheetDisplayActivity extends Activity
 
 	@Override
 	public void indexedColCellDoubleClicked(int cellId, int rawX, int rawY) {
-     // Ok, so here the cellId is also the row number, as we only allow a
-     // single indexed column atm. So if you double click the 5th cell, it will
-     // also have to be the 5th row.
-     int trueNum = cellId * table.getWidth() + indexedCol;
-     c.addOverlay(new CellPopout(trueNum), 100, 100, rawX, rawY);
+	  SpreadsheetCell cell = spreadsheetTable.getSpreadsheetCell(this, cellId);
+     c.addOverlay(new CellPopout(cell), 100, 100, rawX, rawY);
 	}
 
 	@Override
@@ -544,17 +516,17 @@ public class SpreadsheetDisplayActivity extends Activity
 
     private class CellPopout extends LinearLayout {
 
-	    private final int cellId;
+	    private final SpreadsheetCell cell;
 	    private int lastDownX;
 	    private int lastDownY;
 	    private Context context;
 
-	    public CellPopout(int cellId) {
+	    public CellPopout(SpreadsheetCell cell) {
 	        super(SpreadsheetDisplayActivity.this);
-	        this.cellId = cellId;
+	        this.cell = cell;
 	        context = SpreadsheetDisplayActivity.this;
 	        TextView valueView = new TextView(context);
-	        valueView.setText(table.getDisplayTextOfData(SpreadsheetDisplayActivity.this, cellId));
+	        valueView.setText(cell.displayText);
 	        valueView.setTextColor(Color.parseColor("#000000"));
 	        Button menuButton = new Button(context);
 	        menuButton.setText("Menu");
@@ -594,9 +566,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	        itemLabels.add(context.getString(R.string.edit_row));
 	        // Now we need to check to see if we are a row in conflict, in which
 	        // case we want to allow resolution of that row.
-	        final int rowNumber = cellId / table.getWidth();
-	        String syncStateName = table.getMetadataByElementKey(rowNumber,
-                                     DataTableColumns.SYNC_STATE);
+	        String syncStateName = cell.row.getDataOrMetadataByElementKey(DataTableColumns.SYNC_STATE);
 	        if ( syncStateName != null && syncStateName.length() != 0 &&
 	            SyncState.valueOf(syncStateName) == SyncState.conflicting ) {
 	          // Then huzzah, we need to add an option to resolve.
@@ -614,7 +584,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	        // table open and edit the join you will get the wrong information?
 	        TableProperties tp = c.getTableProperties();
 	        final ColumnProperties
-	            cp = tp.getColumnByIndex(cellId % table.getWidth());
+	          cp = tp.getColumnByElementKey(cell.elementKey);
 	        // First we want to check if we need to add a join item for this
 	        // column.
 	        if (cp.getColumnType() == ColumnType.TABLE_JOIN) {
@@ -634,15 +604,11 @@ public class SpreadsheetDisplayActivity extends Activity
 	            public void onClick(DialogInterface dialog, int which) {
 	                switch (itemIds.get(which)) {
 	                case MENU_ITEM_ID_HISTORY_IN:
-	                    openCollectionView(cellId / table.getWidth());
+	                    openCollectionView(cell.rowNum);
 	                    c.removeOverlay();
 	                    break;
 	                case MENU_ITEM_ID_EDIT_CELL:
-	                    c.openCellEditDialog(
-	                            table.getRowAtIndex(
-	                                cellId / table.getWidth()).getRowId(),
-	                            table.getData(cellId),
-	                            cellId % table.getWidth());
+	                    c.openCellEditDialog(cell);
 	                    c.removeOverlay();
 	                    break;
 	                case MENU_ITEM_ID_RESOLVE_ROW_CONFLICT:
@@ -650,11 +616,10 @@ public class SpreadsheetDisplayActivity extends Activity
 	                  Intent i = new Intent(context,
 	                      ConflictResolutionRowActivity.class);
                      i.putExtra(Constants.IntentKeys.APP_NAME,
-                         table.getTableProperties().getAppName());
+                         spreadsheetTable.getAppName());
 	                  i.putExtra(Controller.INTENT_KEY_TABLE_ID,
-	                      table.getTableProperties().getTableId());
-	                  String conflictRowId =
-	                      table.getRowAtIndex(rowNumber).getRowId();
+	                      spreadsheetTable.getTableId());
+	                  String conflictRowId = cell.row.getRowId();
 	                  i.putExtra(
 	                      ConflictResolutionRowActivity.INTENT_KEY_ROW_ID,
 	                      conflictRowId);
@@ -663,8 +628,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	                case MENU_ITEM_ID_DELETE_ROW:
 	                  AlertDialog confirmDeleteAlert;
 	                  // Prompt an alert box
-	                  final String rowId =
-	                      table.getRowAtIndex(cellId / table.getWidth()).getRowId();
+	                  final String rowId = cell.row.getRowId();
 	                  AlertDialog.Builder alert =
 	                      new AlertDialog.Builder(SpreadsheetDisplayActivity.this);
 	                  alert.setTitle(getString(R.string.confirm_delete_row))
@@ -692,7 +656,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	                case MENU_ITEM_ID_EDIT_ROW:
 	                  // It is possible that a custom form has been defined for this table.
 	                  // We will get the strings we need, and then set the parameter object.
-	                    c.editRow(table, cellId / table.getWidth());
+	                    c.editRow(cell.row);
 	                    c.removeOverlay();
 	                    init();
 	                    break;
@@ -779,11 +743,8 @@ public class SpreadsheetDisplayActivity extends Activity
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
 	            if (c.isInSearchBox(x, y)) {
-	              int columnIndex = cellId % table.getWidth();
-	              TableProperties tp = c.getTableProperties();
-	              ColumnProperties cp = tp.getColumnByIndex(columnIndex);
-	                String colName = cp.getElementKey();
-	                String value = table.getData(cellId);
+	                String colName = cell.elementKey;
+	                String value = cell.value;
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.invertSearchBoxColor(false);
 	                c.removeOverlay();
@@ -806,7 +767,7 @@ public class SpreadsheetDisplayActivity extends Activity
 	        this.cellId = cellId;
 	        Context context = SpreadsheetDisplayActivity.this;
 	        TextView valueView = new TextView(context);
-	        valueView.setText(table.getData(cellId));
+	        valueView.setText(spreadsheetTable.getData(cellId));
 
 	        setBackgroundColor(Color.TRANSPARENT);
 	        addView(valueView);
@@ -829,11 +790,11 @@ public class SpreadsheetDisplayActivity extends Activity
 	            int x = (Float.valueOf(event.getRawX())).intValue();
 	            int y = (Float.valueOf(event.getRawY())).intValue();
 	            if (c.isInSearchBox(x, y)) {
-	              int colIndex = cellId % table.getWidth();
+	              int colIndex = cellId % spreadsheetTable.getWidth();
 	              TableProperties tp = c.getTableProperties();
 	              ColumnProperties cp = tp.getColumnByIndex(colIndex);
 	                String colName = cp.getElementKey();
-	                String value = table.getData(cellId);
+	                String value = spreadsheetTable.getData(cellId);
 	                c.appendToSearchBoxText(" " + colName + ":" + value);
 	                c.removeOverlay();
 	            } else {

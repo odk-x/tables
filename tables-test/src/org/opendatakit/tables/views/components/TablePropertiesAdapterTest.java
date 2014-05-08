@@ -30,26 +30,26 @@ import android.widget.TextView;
 
 @RunWith(RobolectricTestRunner.class)
 public class TablePropertiesAdapterTest {
-  
+
   private TablePropertiesAdapter mAdapter;
-  
+
   @Before
   public void setup() {
     TableProperties tp1 = mock(TableProperties.class);
     TableProperties tp2 = mock(TableProperties.class);
-    when(tp1.getDisplayName()).thenReturn("alpha");
-    when(tp2.getDisplayName()).thenReturn("beta");
+    when(tp1.getLocalizedDisplayName()).thenReturn("alpha");
+    when(tp2.getLocalizedDisplayName()).thenReturn("beta");
     List<TableProperties> listOfMocks = new ArrayList<TableProperties>();
     listOfMocks.add(tp1);
     listOfMocks.add(tp2);
     this.mAdapter = new TablePropertiesAdapter(listOfMocks);
   }
-  
+
   @Test
   public void testGetCount() {
     assertThat(mAdapter).hasCount(2);
   }
-  
+
   @Test
   public void getView_firstItemCorrectText() {
     View view = this.getView(0, null);
@@ -59,7 +59,7 @@ public class TablePropertiesAdapterTest {
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
     assertEquals("alpha", textView.getText().toString());
   }
-  
+
   @Test
   public void getView_secondItemCorrectText() {
     View view = this.getView(1, null);
@@ -69,7 +69,7 @@ public class TablePropertiesAdapterTest {
     TextView textView = (TextView) view.findViewById(R.id.row_item_text);
     assertEquals("beta", textView.getText().toString());
   }
-  
+
   @Test
   public void getView_shouldRecycleViews() {
     LayoutInflater layoutInflater = (LayoutInflater) Robolectric
@@ -77,11 +77,11 @@ public class TablePropertiesAdapterTest {
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     RelativeLayout existingView = (RelativeLayout)
         layoutInflater.inflate(R.layout.row_item_with_preference,
-        null); 
+        null);
     View view = this.getView(0, existingView);
     assertThat(view).isSameAs(existingView);
   }
-  
+
   @Test
   public void getView_iconClickPerformsLongClickOnParent() {
     View view = this.getView(1, null);
@@ -107,7 +107,7 @@ public class TablePropertiesAdapterTest {
     icon.performClick();
     assertEquals((Integer) 1, buttonClicks.get(key));
   }
-  
+
   @Test
   public void getView_correctDrawableResource() {
     View view = this.getView(0, null);
@@ -117,7 +117,7 @@ public class TablePropertiesAdapterTest {
             shadow.getCreatedFromResId())
         .isEqualTo(R.drawable.ic_menu_preferences);
   }
-  
+
   @Test
   public void getView_iconIsPresentAndVisible() {
     View view = this.getView(0, null);
@@ -126,7 +126,7 @@ public class TablePropertiesAdapterTest {
       .isNotNull()
       .isVisible();
   }
-  
+
   /**
    * Retrieve a view from the {@link #mAdapter} from the given position with
    * the given existingView being recycled. The root view group passed in is

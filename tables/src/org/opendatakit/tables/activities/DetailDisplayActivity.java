@@ -19,6 +19,7 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -193,7 +194,8 @@ public class DetailDisplayActivity extends Activity
         		  getString(R.string.error_row_not_found), Toast.LENGTH_SHORT).show();
           return true;
         }
-        c.editRow(mTable, rowNum);
+        Row row = mTable.getRowAtIndex(rowNum);
+        c.editRow(row);
         return true;
       }
         return c.handleMenuItemSelection(item);

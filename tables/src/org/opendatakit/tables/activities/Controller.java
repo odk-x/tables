@@ -38,6 +38,7 @@ import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.TableFileUtils;
 import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.ClearableEditText;
+import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -431,11 +432,10 @@ public class Controller {
    * in org.odk.collect.android.tasks.SaveToDiskTask.java, in the
    * updateInstanceDatabase() method.
    */
-  void editRow(UserTable table, int rowNum) {
+  void editRow(Row row) {
     FormType formType = FormType.constructFormType(getTableProperties());
     if ( formType.isCollectForm() ) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      Row row = table.getRowAtIndex(rowNum);
       for (String elementKey : tp.getPersistedColumns()) {
         ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         String value = row.getDataOrMetadataByElementKey(cp.getElementKey());
@@ -443,11 +443,10 @@ public class Controller {
       }
 
       Intent intent = CollectUtil.getIntentForOdkCollectEditRow(activity, tp, elementKeyToValue,
-          null, null, null, table.getRowAtIndex(rowNum).getRowId());
+          null, null, null, row.getRowId());
 
       if (intent != null) {
-        CollectUtil.launchCollectToEditRow(activity, intent,
-            table.getRowAtIndex(rowNum).getRowId());
+        CollectUtil.launchCollectToEditRow(activity, intent, row.getRowId());
       } else {
         Log.e(TAG, "intent null when trying to create for edit row.");
       }
@@ -455,10 +454,10 @@ public class Controller {
       SurveyFormParameters params = formType.getSurveyFormParameters();
 
       Intent intent = SurveyUtil.getIntentForOdkSurveyEditRow(activity, tp,
-          appName, params, table.getRowAtIndex(rowNum).getRowId());
+          appName, params, row.getRowId());
       if ( intent != null ) {
         SurveyUtil.launchSurveyToEditRow(activity, intent, tp,
-            table.getRowAtIndex(rowNum).getRowId());
+            row.getRowId());
       }
     }
   }
@@ -782,8 +781,8 @@ public class Controller {
     CollectUtil.handleOdkCollectAddReturn(activity, appName, tpToReceiveAdd, returnCode, data);
   }
 
-  void openCellEditDialog(String rowId, String value, int colIndex) {
-    (new CellEditDialog(rowId, value, colIndex)).show();
+  void openCellEditDialog(SpreadsheetCell cell) {
+    (new CellEditDialog(cell)).show();
   }
 
   public static void launchTableActivity(Activity context, TableProperties tp, TableViewType viewType,
@@ -1027,18 +1026,14 @@ public class Controller {
 
   private class CellEditDialog extends AlertDialog {
 
-    private final String rowId;
-    private final int colIndex;
-    private final String elementKey;
+    private final SpreadsheetCell cell;
     private final CellValueView.CellEditView cev;
 
-    public CellEditDialog(String rowId, String value, int colIndex) {
+    public CellEditDialog(SpreadsheetCell cell) {
       super(activity);
-      this.rowId = rowId;
-      this.colIndex = colIndex;
-      ColumnProperties cp = tp.getColumnByIndex(colIndex);
-      this.elementKey = cp.getElementKey();
-      cev = CellValueView.getCellEditView(activity, cp, value);
+      this.cell = cell;
+      ColumnProperties cp = tp.getColumnByElementKey(cell.elementKey);
+      cev = CellValueView.getCellEditView(activity, cp, cell.value);
       buildView(activity);
     }
 
@@ -1048,14 +1043,14 @@ public class Controller {
       setButton.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-          String value = du.validifyValue(tp.getColumnByElementKey(CellEditDialog.this.elementKey),
+          String value = du.validifyValue(tp.getColumnByElementKey(CellEditDialog.this.cell.elementKey),
               cev.getValue());
           if (value == null) {
             // TODO: alert the user
             return;
           }
           Map<String, String> values = new HashMap<String, String>();
-          values.put(CellEditDialog.this.elementKey, value);
+          values.put(CellEditDialog.this.cell.elementKey, value);
 
           // TODO: supply reasonable values for these...
           String savepointCreator = null; // user on phone
@@ -1063,7 +1058,7 @@ public class Controller {
           String formId = null; // formId used by ODK Collect
           String locale = null; // current locale
 
-          dbt.updateRow(rowId, formId, locale, timestamp, savepointCreator, values);
+          dbt.updateRow(cell.row.getRowId(), formId, locale, timestamp, savepointCreator, values);
           da.init();
           dismiss();
         }

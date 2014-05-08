@@ -16,6 +16,7 @@
 package org.opendatakit.tables.activities;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
@@ -174,14 +175,14 @@ public class PropertyManager extends PreferenceActivity {
       if (selectedTp != null) {
         // TODO: resolve how joins work
         String joinColName = (joins != null && joins.size() == 1) ? joins.get(0).getElementKey() : null;
-        int numberOfDisplayColumns = selectedTp.getNumberOfDisplayColumns();
-        String[] colDbNames = new String[numberOfDisplayColumns + 1];
+        List<String> elementKeys = selectedTp.getPersistedColumns();
+        String[] colDbNames = new String[elementKeys.size() + 1];
         String selectedDbName = colDbNames[0] = null;
-        String[] colDisplayNames = new String[numberOfDisplayColumns + 1];
+        String[] colDisplayNames = new String[elementKeys.size() + 1];
         String selectedColDisplayName = colDisplayNames[0] = "Choose a Column";
-        for (int i = 0; i < numberOfDisplayColumns; i++) {
-          ColumnProperties cp = selectedTp.getColumnByIndex(i);
-          String elementKey = cp.getElementKey();
+        for (int i = 0; i < elementKeys.size(); i++) {
+          String elementKey = elementKeys.get(i);
+          ColumnProperties cp = selectedTp.getColumnByElementKey(elementKey);
           String colDisplayName = cp.getDisplayName();
           colDbNames[i + 1] = elementKey;
           colDisplayNames[i + 1] = colDisplayName;

@@ -15,6 +15,7 @@ import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
@@ -227,14 +228,13 @@ public class TableMapInnerFragment extends MapFragment {
     ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
 
     // Find the locations from entries in the table.
-    int latitudeColumnIndex = table.getColumnIndexOfElementKey(latitudeColumn.getElementKey());
-    int longitudeColumnIndex = table.getColumnIndexOfElementKey(longitudeColumn.getElementKey());
     LatLng firstLocation = null;
 
     // Go through each row and create a marker at the specified location.
     for (int i = 0; i < table.getNumberOfRows(); i++) {
-      String latitudeString = table.getData(i, latitudeColumnIndex);
-      String longitudeString = table.getData(i, longitudeColumnIndex);
+      Row row = table.getRowAtIndex(i);
+      String latitudeString = row.getDataOrMetadataByElementKey(latitudeColumn.getElementKey());
+      String longitudeString = row.getDataOrMetadataByElementKey(longitudeColumn.getElementKey());
       if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
           || longitudeString.length() == 0)
         continue;

@@ -301,21 +301,21 @@ public class TablePropertiesManager extends PreferenceActivity {
     // If the color rule type is columns, add the preference to select the
     // column.
     if (colorType.equals(COLOR_TYPE_COLUMN)) {
-      int numberOfDisplayColumns = tp.getNumberOfDisplayColumns();
-      String[] colorColDisplayNames = new String[numberOfDisplayColumns];
-      String[] colorColElementKeys = new String[numberOfDisplayColumns];
-      for (int i = 0; i < numberOfDisplayColumns; i++) {
-        ColumnProperties cp = tp.getColumnByIndex(i);
+      List<String> elementKeys = tp.getPersistedColumns();
+      String[] colorColDisplayNames = new String[elementKeys.size()];
+      String[] colorColElementKeys = new String[elementKeys.size()];
+      for (int i = 0; i < elementKeys.size(); i++) {
+        String elementKey = elementKeys.get(i);
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         colorColDisplayNames[i] = cp.getLocalizedDisplayName();
-        colorColElementKeys[i] = cp.getElementKey();
+        colorColElementKeys[i] = elementKey;
       }
 
-      ColumnProperties colorColumn = tp.getColumnByElementKey(kvsHelper
-          .getString(KEY_COLOR_RULE_COLUMN));
-      if (colorColumn == null) {
-        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, tp.getColumnByIndex(0)
-            .getElementKey());
-        colorColumn = tp.getColumnByIndex(0);
+      ColumnProperties colorColumn = tp.getColumnByElementKey(
+          kvsHelper.getString(KEY_COLOR_RULE_COLUMN));
+      if (colorColumn == null && elementKeys.size() > 0) {
+        kvsHelper.setString(KEY_COLOR_RULE_COLUMN, elementKeys.get(0));
+        colorColumn = tp.getColumnByElementKey(elementKeys.get(0));
       }
 
       ListPreference colorColumnPref = new ListPreference(this);

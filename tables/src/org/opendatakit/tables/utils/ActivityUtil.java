@@ -24,14 +24,10 @@ public class ActivityUtil {
    * updateInstanceDatabase() method.
    */
   public static void editRow(
-      AbsBaseActivity activity,
-      UserTable table,
-      int rowNum) {
-    TableProperties tp = table.getTableProperties();
+      AbsBaseActivity activity, TableProperties tp, Row row) {
     FormType formType = FormType.constructFormType(tp);
     if ( formType.isCollectForm() ) {
       Map<String, String> elementKeyToValue = new HashMap<String, String>();
-      Row row = table.getRowAtIndex(rowNum);
       for (String elementKey : tp.getPersistedColumns()) {
         String value = row.getDataOrMetadataByElementKey(elementKey);
         elementKeyToValue.put(elementKey, value);
@@ -44,11 +40,11 @@ public class ActivityUtil {
           null,
           null,
           null,
-          table.getRowAtIndex(rowNum).getRowId());
+          row.getRowId());
 
       if (intent != null) {
         CollectUtil.launchCollectToEditRow(activity, intent,
-            table.getRowAtIndex(rowNum).getRowId());
+            row.getRowId());
       } else {
         Log.e(TAG, "intent null when trying to create for edit row.");
       }
@@ -60,10 +56,10 @@ public class ActivityUtil {
           tp,
           activity.getAppName(),
           params,
-          table.getRowAtIndex(rowNum).getRowId());
+          row.getRowId());
       if ( intent != null ) {
         SurveyUtil.launchSurveyToEditRow(activity, intent, tp,
-            table.getRowAtIndex(rowNum).getRowId());
+            row.getRowId());
       }
     }
   }

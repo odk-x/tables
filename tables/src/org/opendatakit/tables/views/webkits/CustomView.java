@@ -309,7 +309,7 @@ public abstract class CustomView extends LinearLayout {
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     Row requestedRow = userTable.getRowAtIndex(0);
-    Set<String> metadataElementKeys = userTable.getMapOfUserDataToIndex().keySet();
+    List<String> metadataElementKeys = DbTable.getAdminColumns();
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
     allElementKeys.addAll(metadataElementKeys);
