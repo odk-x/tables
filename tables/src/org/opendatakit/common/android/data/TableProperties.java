@@ -1997,9 +1997,12 @@ public class TableProperties {
     return tableId.hashCode();
   }
 
+  /**
+   * This is used by the various ListViews that display tables
+   */
   @Override
   public String toString() {
-    return displayName;
+    return getLocalizedDisplayName();
   }
 
 }
