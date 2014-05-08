@@ -34,24 +34,11 @@
         </menu>
     </item>
     
-    <!-- Preferences sub menu -->
     <item
-        android:id="@+id/top_level_table_menu_select_preferences"
+        android:id="@+id/top_level_table_menu_table_properties"
         android:icon="@drawable/ic_action_settings"
         android:title="@string/preferences"
-        android:showAsAction="always">
-        
-        <!-- Preferences submenu -->
-        <menu>
-            <item
-                android:id="@+id/top_level_table_menu_table_properties"
-                android:title="@string/table_properties" />
-            <item
-                android:id="@+id/top_level_table_menu_manage_property_sets"
-                android:title="@string/manage_table_property_sets" />            
-        </menu>
-        
-    </item>
-    
+        android:showAsAction="always" />
+            
 
 </menu>

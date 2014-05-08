@@ -165,42 +165,11 @@ public class TopLevelTableMenuFragmentTest {
   }
   
   @Test
-  public void menuHasPreferences() {
+  public void menuHasTableProperties() {
     this.setupStateWithDefaults();
-    MenuItem preferenceItem = 
-        this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
+    MenuItem preferenceItem =
+        this.getMenuItemWithId(R.id.top_level_table_menu_table_properties);
     assertThat(preferenceItem).isNotNull();
-  }
-  
-  @Test
-  public void preferencesHasSubMenu() {
-    this.setupStateWithDefaults();
-    MenuItem preferenceItem = 
-        this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
-    SubMenu subMenu = preferenceItem.getSubMenu();
-    assertThat(subMenu).isNotNull();
-  }
-  
-  @Test
-  public void preferencesSubMenuHasTableProperties() {
-    this.setupStateWithDefaults();
-    MenuItem preferenceItem = 
-        this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
-    SubMenu subMenu = preferenceItem.getSubMenu();
-    MenuItem tablePropertiesItem = 
-        subMenu.findItem(R.id.top_level_table_menu_table_properties);
-    assertThat(tablePropertiesItem).isNotNull();
-  }
-  
-  @Test
-  public void preferencesSubMenuHasPropertySets() {
-    this.setupStateWithDefaults();
-    MenuItem preferenceItem = 
-        this.getMenuItemWithId(R.id.top_level_table_menu_select_preferences);
-    SubMenu subMenu = preferenceItem.getSubMenu();
-    MenuItem propertiesSets = 
-        subMenu.findItem(R.id.top_level_table_menu_manage_property_sets);
-    assertThat(propertiesSets).isNotNull();
   }
   
   @Test
