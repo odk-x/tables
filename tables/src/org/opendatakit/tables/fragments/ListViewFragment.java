@@ -2,7 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.CustomViewUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
@@ -22,7 +22,7 @@ public class ListViewFragment extends AbsWebTableFragment {
   @Override
   public WebView buildView() {
     Log.d(TAG, "[buildView]");
-    WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
+    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
     Control control = this.createControlObject();
     result.addJavascriptInterface(
         control.getJavascriptInterfaceWithWeakReference(),
@@ -31,7 +31,7 @@ public class ListViewFragment extends AbsWebTableFragment {
     result.addJavascriptInterface(
         tableData.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.DATA);
-    CustomViewUtil.displayFileInWebView(
+    WebViewUtil.displayFileInWebView(
         getActivity(),
         getAppName(),
         result,

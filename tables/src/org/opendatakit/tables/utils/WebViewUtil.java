@@ -33,7 +33,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-public class CustomViewUtil {
+public class WebViewUtil {
   
   /**
    * A {@link TypeReference} for a {@link HashMap} parameterized for String

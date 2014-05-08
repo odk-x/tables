@@ -4,7 +4,7 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.CustomViewUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
@@ -77,12 +77,12 @@ public class WebFragment extends Fragment implements IWebFragment {
   @Override
   public WebView buildView() {
     Log.d(TAG, "[buildView] activity is: " + this.getActivity());
-    WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
+    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
     Control control = this.createControlObject();
     result.addJavascriptInterface(
         control.getJavascriptInterfaceWithWeakReference(),
         Constants.JavaScriptHandles.CONTROL);
-    CustomViewUtil.displayFileInWebView(
+    WebViewUtil.displayFileInWebView(
         getActivity(),
         ((AbsBaseActivity) getActivity()).getAppName(),
         result,

@@ -4,7 +4,7 @@ import java.lang.ref.WeakReference;
 
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.CustomViewUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
@@ -111,7 +111,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    */
   @Override
   public WebView buildView() {
-    WebView result = CustomViewUtil.getODKCompliantWebView(getActivity());
+    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
     return result;
   }
   

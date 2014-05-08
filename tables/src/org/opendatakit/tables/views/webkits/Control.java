@@ -30,7 +30,7 @@ import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.RequestCodes;
-import org.opendatakit.tables.utils.CustomViewUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
@@ -664,7 +664,7 @@ public class Control {
     // is not null. This allows other methods doing similar things to call
     // through using this method and passing null values.
     if (jsonMap != null) {
-      map = CustomViewUtil.getMapFromJson(jsonMap);
+      map = WebViewUtil.getMapFromJson(jsonMap);
       if (map == null) {
         Log.e(TAG, "couldn't parse values into map to give to Survey");
         return false;
@@ -712,7 +712,7 @@ public class Control {
     }
     Map<String, String> map = null;
     if (jsonMap != null) {
-      map = CustomViewUtil.getMapFromJson(jsonMap);
+      map = WebViewUtil.getMapFromJson(jsonMap);
       if (map == null) {
         Log.e(TAG, "couldn't parse jsonString: " + jsonMap);
         return false;
