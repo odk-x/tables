@@ -121,7 +121,7 @@ public class TableDisplayActivity extends AbsTableActivity
         menuFragment.setMenuVisibility(false);
       }
       if (detailFragment != null) {
-        menuFragment.setMenuVisibility(true);
+        detailFragment.setMenuVisibility(true);
       }
       break;
     default:
@@ -459,29 +459,7 @@ public class TableDisplayActivity extends AbsTableActivity
    */
   @Override
   public ViewFragmentType getCurrentFragmentType() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    Fragment fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.SPREADSHEET);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.SPREADSHEET;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.LIST);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.LIST;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.MAP);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.MAP;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.GRAPH);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.GRAPH;
-    }
-    Log.e(TAG, "didn't find any of the main views visible. Returning null.");
-    return null;
+    return this.mCurrentFragmentType;
   }
 
 }

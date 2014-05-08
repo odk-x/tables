@@ -4,7 +4,12 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.views.webkits.Control;
@@ -52,8 +57,47 @@ public class DetailViewFragment extends AbsWebTableFragment {
   
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    // TODO Auto-generated method stub
-    return super.onOptionsItemSelected(item);
+    switch (item.getItemId()) {
+    case R.id.menu_edit_row:
+      // Are we editing with collect for survey?
+      FormType formType = FormType.constructFormType(getTableProperties());
+      if (formType.isCollectForm()) {
+        Log.d(TAG, "[onOptionsItemSelected] using Collect form");
+        CollectFormParameters collectFormParameters =
+            CollectFormParameters.constructCollectFormParameters(
+                this.getTableProperties());
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] is custom form: " +
+                collectFormParameters.isCustom());
+        CollectUtil.editRowWithCollect(
+            this.getActivity(),
+            this.getAppName(),
+            this.getRowId(),
+            this.getTableProperties(),
+            collectFormParameters);
+      } else {
+        // it's a survey form.
+        Log.d(TAG, "[onOptionsItemSelected] using Survey form");
+        SurveyFormParameters surveyFormParameters =
+            SurveyFormParameters.constructSurveyFormParameters(
+                this.getTableProperties());
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] is custom form: " +
+                surveyFormParameters.isUserDefined());
+        SurveyUtil.editRowWithSurvey(
+            this.getActivity(),
+            this.getAppName(),
+            this.getRowId(),
+            this.getTableProperties(),
+            surveyFormParameters);
+      }
+      Log.d(TAG, "[onOptionsItemSelected] edit row selected");
+      return true;
+    default:
+      return super.onOptionsItemSelected(item);
+    }
   }
   
   @Override

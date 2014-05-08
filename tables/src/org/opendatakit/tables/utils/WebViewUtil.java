@@ -16,12 +16,20 @@
 package org.opendatakit.tables.utils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.type.TypeReference;
+import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.TableProperties;
+import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.common.android.data.UserTable.Row;
+import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 
@@ -34,6 +42,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class WebViewUtil {
+  
+  private static final String TAG = WebViewUtil.class.getSimpleName();
   
   /**
    * A {@link TypeReference} for a {@link HashMap} parameterized for String
@@ -139,6 +149,55 @@ public class WebViewUtil {
           Constants.MimeTypes.TEXT_HTML,
           null);
     }
+  }
+  
+  /**
+   * Retrieve a map of element key to value for each of the columns in the row
+   * specified by rowId.
+   * @param tableProperties
+   * @param rowId
+   * @return
+   */
+  public static Map<String, String> getMapOfElementKeyToValue(
+      TableProperties tableProperties,
+      String rowId) {
+    String sqlQuery = DataTableColumns.ID + " = ? ";
+    String[] selectionArgs = { rowId };
+    DbTable dbTable = DbTable.getDbTable(tableProperties);
+    UserTable userTable = dbTable.rawSqlQuery(
+        sqlQuery,
+        selectionArgs,
+        null,
+        null,
+        null,
+        null);
+    if (userTable.getNumberOfRows() > 1) {
+      Log.e(TAG, "query returned > 1 rows for tableId: " +
+          tableProperties.getTableId() +
+          " and " +
+          "rowId: " +
+          rowId);
+    } else if (userTable.getNumberOfRows() == 0) {
+      Log.e(TAG, "query returned no rows for tableId: " +
+          tableProperties.getTableId() +
+          " and rowId: " +
+          rowId);
+    }
+    Map<String, String> elementKeyToValue = new HashMap<String, String>();
+    Row requestedRow = userTable.getRowAtIndex(0);
+    List<String> userDefinedElementKeys = 
+        userTable.getTableProperties().getColumnOrder();
+    Set<String> metadataElementKeys = 
+        userTable.getMapOfUserDataToIndex().keySet();
+    List<String> allElementKeys = new ArrayList<String>();
+    allElementKeys.addAll(userDefinedElementKeys);
+    allElementKeys.addAll(metadataElementKeys);
+    for (String elementKey : allElementKeys) {
+      elementKeyToValue.put(
+          elementKey,
+          requestedRow.getDataOrMetadataByElementKey(elementKey));
+    }
+    return elementKeyToValue;
   }
   
 }

@@ -274,57 +274,6 @@ public class Control {
     IntentUtil.addAppNameToBundle(intent.getExtras(), appName);
     return intent;
   }
-  
-  /**
-   * Returns all the metadata and user-defined data element keys to value in a
-   * map.
-   *
-   * @param tableId
-   * @param rowId
-   * @return
-   */
-  private Map<String, String> getElementKeyToValues(
-      String tableId,
-      String rowId) {
-    TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
-    String sqlQuery = DataTableColumns.ID + " = ? ";
-    String[] selectionArgs = { rowId };
-    DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(
-        sqlQuery,
-        selectionArgs,
-        null,
-        null,
-        null,
-        null);
-    if (userTable.getNumberOfRows() > 1) {
-      Log.e(TAG, "query returned > 1 rows for tableId: " +
-          tableId +
-          " and " +
-          "rowId: " +
-          rowId);
-    } else if (userTable.getNumberOfRows() == 0) {
-      Log.e(TAG, "query returned no rows for tableId: " +
-          tableId +
-          " and rowId: " +
-          rowId);
-    }
-    Map<String, String> elementKeyToValue = new HashMap<String, String>();
-    Row requestedRow = userTable.getRowAtIndex(0);
-    List<String> userDefinedElementKeys = 
-        userTable.getTableProperties().getColumnOrder();
-    Set<String> metadataElementKeys = 
-        userTable.getMapOfUserDataToIndex().keySet();
-    List<String> allElementKeys = new ArrayList<String>();
-    allElementKeys.addAll(userDefinedElementKeys);
-    allElementKeys.addAll(metadataElementKeys);
-    for (String elementKey : allElementKeys) {
-      elementKeyToValue.put(
-          elementKey,
-          requestedRow.getDataOrMetadataByElementKey(elementKey));
-    }
-    return elementKeyToValue;
-  }
 
 
   /**
@@ -837,39 +786,36 @@ public class Control {
       String formRootElement) {
     TableProperties tp = this.retrieveTablePropertiesForTable(tableId);
     if (tp == null) {
-      Log.e(TAG, "table [" + tableId + "] cannot have row edited, "
-          + "because it cannot be found");
+      Log.e(
+          TAG,
+          "[helperEditRowWithCollect] table [" + 
+              tableId +
+              "] cannot have row edited, because it cannot be found");
       return false;
     }
+    CollectFormParameters formParameters = null;
     if (formId == null) {
       // Then we want to construct the form parameters using default
       // values.
-      CollectFormParameters formParameters = CollectFormParameters
+      formParameters = CollectFormParameters
           .constructCollectFormParameters(tp);
       formId = formParameters.getFormId();
       formVersion = formParameters.getFormVersion();
       formRootElement = formParameters.getRootElement();
+    } else {
+      formParameters = new CollectFormParameters(
+          true,
+          formId,
+          formVersion,
+          formRootElement,
+          tp.getLocalizedDisplayName());
     }
-    Map<String, String> elementKeyToValue = 
-        getElementKeyToValues(tableId, rowId);
-    Intent editRowIntent = CollectUtil.getIntentForOdkCollectEditRow(
+    CollectUtil.editRowWithCollect(
         this.mActivity,
+        this.mActivity.getAppName(),
+        rowId,
         tp,
-        elementKeyToValue,
-        formId,
-        formVersion,
-        formRootElement,
-        rowId);
-    if (editRowIntent == null) {
-      Log.e(
-          TAG,
-          "the edit row with collect intent was null, returning false");
-      return false;
-    }
-    CollectUtil.launchCollectToEditRow(
-        this.mActivity,
-        editRowIntent,
-        rowId);
+        formParameters);
     return true;
   }
 

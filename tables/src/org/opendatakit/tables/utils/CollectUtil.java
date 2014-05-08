@@ -807,6 +807,43 @@ public class CollectUtil {
     }
     return true;
   }
+  
+  /**
+   * Launch Collect to edit a row. Convenience method for calling
+   * {@link #getIntentForOdkCollectEditRow(Context, TableProperties, Map,
+   * String, String, String, String) followed by
+   * {@link #launchCollectToEditRow(Activity, Intent, String)}.
+   * @param activity
+   * @param appName
+   * @param rowId
+   * @param tableProperties
+   * @param collectFormParameters
+   */
+  public static void editRowWithCollect(
+      Activity activity,
+      String appName,
+      String rowId,
+      TableProperties tableProperties,
+      CollectFormParameters collectFormParameters) {
+    Map<String, String> elementKeyToValue =
+        WebViewUtil.getMapOfElementKeyToValue(tableProperties, rowId);
+    Intent editRowIntent = getIntentForOdkCollectEditRow(
+        activity,
+        tableProperties,
+        elementKeyToValue,
+        collectFormParameters.getFormId(),
+        collectFormParameters.getFormVersion(),
+        collectFormParameters.getRootElement(),
+        rowId);
+    if (editRowIntent == null) {
+      Log.e(TAG, "[editRowWithCollect] intent was null, doing nothing");
+    } else {
+      launchCollectToEditRow(
+          activity,
+          editRowIntent,
+          rowId);
+    }
+  }
 
   /**
    * Identical to
