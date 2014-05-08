@@ -1014,16 +1014,16 @@ public class Controller {
    */
   public static void launchDetailActivity(Activity activity,
       String appName, String tableId, String rowId, String filename) {
-    Intent intent = new Intent(activity, DetailDisplayActivity.class);
-    intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
-    intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
-    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
-    if (filename != null) {
-      // a null value informs the DetailDisplayActivity that the filename in
-      // the kvs should be used, so only add it if it has been set.
-      intent.putExtra(DetailDisplayActivity.INTENT_KEY_FILENAME, filename);
-    }
-    activity.startActivity(intent);
+//    Intent intent = new Intent(activity, DetailDisplayActivity.class);
+//    intent.putExtra(Constants.IntentKeys.APP_NAME, appName);
+//    intent.putExtra(INTENT_KEY_TABLE_ID, tableId);
+//    intent.putExtra(DetailDisplayActivity.INTENT_KEY_ROW_ID, rowId);
+//    if (filename != null) {
+//      // a null value informs the DetailDisplayActivity that the filename in
+//      // the kvs should be used, so only add it if it has been set.
+//      intent.putExtra(DetailDisplayActivity.INTENT_KEY_FILENAME, filename);
+//    }
+//    activity.startActivity(intent);
   }
 
   private class CellEditDialog extends AlertDialog {
