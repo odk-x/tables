@@ -809,6 +809,33 @@ public class CollectUtil {
   }
   
   /**
+   * Convenience method for calling
+   * {@link #getIntentForOdkCollectAddRow(Context, TableProperties,
+   * CollectFormParameters, Map)} followed by
+   * {@link #launchCollectToAddRow(Activity, Intent, TableProperties)}. 
+   * @param activity
+   * @param tableProperties
+   * @param collectFormParameters
+   * @param prepopulatedValues
+   */
+  public static void addRowWithCollect(
+      Activity activity,
+      TableProperties tableProperties,
+      CollectFormParameters collectFormParameters,
+      Map<String, String> prepopulatedValues) {
+    Intent addRowIntent = getIntentForOdkCollectAddRow(
+        activity,
+        tableProperties,
+        collectFormParameters,
+        prepopulatedValues);
+    if (addRowIntent == null) {
+      Log.e(TAG, "[addRowWithCollect] intent was null, returning");
+      return;
+    }
+    launchCollectToAddRow(activity, addRowIntent, tableProperties);
+  }
+  
+  /**
    * Launch Collect to edit a row. Convenience method for calling
    * {@link #getIntentForOdkCollectEditRow(Context, TableProperties, Map,
    * String, String, String, String) followed by

@@ -4,9 +4,15 @@ import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.SurveyUtil;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -143,6 +149,40 @@ public class TopLevelTableMenuFragment extends Fragment {
     case R.id.top_level_table_menu_view_map_view:
       interfaceImpl.showMapFragment();
       return true;
+    case R.id.top_level_table_menu_add:
+      Log.d(TAG, "[onOptionsItemSelected] add selected");
+      FormType formType =
+          FormType.constructFormType(this.getTableProperties());
+      if (formType.isCollectForm()) {
+        Log.d(TAG, "[onOptionsItemSelected] using Collect form");
+        CollectFormParameters collectFormParameters =
+            formType.getCollectFormParameters();
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] Collect form is custom: " +
+                collectFormParameters.isCustom());
+        CollectUtil.addRowWithCollect(
+            this.getActivity(),
+            this.getTableProperties(),
+            collectFormParameters,
+            null);
+      } else {
+        // survey form
+        Log.d(TAG, "[onOptionsItemSelected] using Survey form");
+        SurveyFormParameters surveyFormParameters =
+            formType.getSurveyFormParameters();
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] survey form is custom: " +
+                surveyFormParameters.isUserDefined());
+        SurveyUtil.addRowWithSurvey(
+            this.getActivity(),
+            this.getAppName(),
+            this.getTableProperties(),
+            surveyFormParameters,
+            null);
+      }
+      return true;
     default:
       return super.onOptionsItemSelected(item);
     }
@@ -189,6 +229,11 @@ public class TopLevelTableMenuFragment extends Fragment {
     listItem.setEnabled(possibleViews.listViewIsPossible());
     mapItem.setEnabled(possibleViews.mapViewIsPossible());
     graphItem.setEnabled(possibleViews.graphViewIsPossible());
+  }
+  
+  String getAppName() {
+    AbsBaseActivity activity = (AbsBaseActivity) this.getActivity();
+    return activity.getAppName();
   }
   
 
