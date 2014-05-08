@@ -129,7 +129,9 @@ public class Control {
    */
   String retrieveAppName() {
     if (!(this.mActivity instanceof AbsBaseActivity)) {
-      throw new IllegalStateException("CustomView must be have an " +
+      throw new IllegalStateException(
+          Control.class.getSimpleName() +
+          " must be have an " +
           AbsBaseActivity.class.getSimpleName());
     }
     AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
