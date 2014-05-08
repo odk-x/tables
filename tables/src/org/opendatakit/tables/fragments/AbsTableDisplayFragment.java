@@ -14,7 +14,7 @@ import android.app.Fragment;
  * @author sudar.sam@gmail.com
  *
  */
-public abstract class AbsTableDisplayFragment extends Fragment {
+public abstract class AbsTableDisplayFragment extends AbsBaseFragment {
   
   @Override
   public void onAttach(Activity activity) {
@@ -42,15 +42,6 @@ public abstract class AbsTableDisplayFragment extends Fragment {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     UserTable result = activity.getUserTable();
     return result;
-  }
-  
-  /**
-   * get the app name held by the {@link AbsBaseActivity}.
-   * @return
-   */
-  String getAppName() {
-    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
-    return activity.getAppName();
   }
   
   /** Return the type of this fragment. */

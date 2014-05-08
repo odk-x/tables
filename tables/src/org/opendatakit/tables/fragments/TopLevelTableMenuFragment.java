@@ -8,18 +8,14 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -33,7 +29,7 @@ import android.view.MenuItem;
  * @author sudar.sam@gmail.com
  *
  */
-public class TopLevelTableMenuFragment extends Fragment {
+public class TopLevelTableMenuFragment extends AbsBaseFragment {
   
   public interface ITopLevelTableMenuActivity {
     /**
@@ -240,11 +236,5 @@ public class TopLevelTableMenuFragment extends Fragment {
     mapItem.setEnabled(possibleViews.mapViewIsPossible());
     graphItem.setEnabled(possibleViews.graphViewIsPossible());
   }
-  
-  String getAppName() {
-    AbsBaseActivity activity = (AbsBaseActivity) this.getActivity();
-    return activity.getAppName();
-  }
-  
 
 }

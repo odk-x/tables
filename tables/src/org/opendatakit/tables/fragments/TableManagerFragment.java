@@ -10,7 +10,6 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.DisplayPrefsActivity;
 import org.opendatakit.tables.activities.ImportExportActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
