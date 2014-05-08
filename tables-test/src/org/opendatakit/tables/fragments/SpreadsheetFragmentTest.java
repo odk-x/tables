@@ -4,10 +4,13 @@ import static org.fest.assertions.api.ANDROID.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.TableDisplayActivityStub;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
@@ -43,7 +46,10 @@ public class SpreadsheetFragmentTest {
 
   private void setupWithNoData() {
     // Make the UserTable show width 0.
+    TableProperties tablePropertiesMock = mock(TableProperties.class);
+    doReturn(new ArrayList<String>()).when(tablePropertiesMock).getColumnOrder();
     UserTable userTableMock = mock(UserTable.class);
+    doReturn(tablePropertiesMock).when(userTableMock).getTableProperties();
     doReturn(0).when(userTableMock).getWidth();
     TableDisplayActivityStub.USER_TABLE = userTableMock;
     doGlobalSetup();
