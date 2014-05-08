@@ -115,7 +115,7 @@ public class TablePropertiesAdapterTest {
     ShadowDrawable shadow = shadowOf(imageView.getDrawable());
     org.fest.assertions.api.Assertions.assertThat(
             shadow.getCreatedFromResId())
-        .isEqualTo(R.drawable.ic_menu_preferences);
+        .isEqualTo(R.drawable.ic_action_settings);
   }
   
   @Test
