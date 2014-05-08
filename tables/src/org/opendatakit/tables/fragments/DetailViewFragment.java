@@ -2,6 +2,7 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
@@ -12,6 +13,9 @@ import org.opendatakit.tables.views.webkits.TableData;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.webkit.WebView;
 
 /**
@@ -37,6 +41,19 @@ public class DetailViewFragment extends AbsWebTableFragment {
      super.onCreate(savedInstanceState);
      String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
      this.mRowId = retrievedRowId;
+     this.setHasOptionsMenu(true);
+  }
+  
+  @Override
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    inflater.inflate(R.menu.detail_view_menu, menu);
+    super.onCreateOptionsMenu(menu, inflater);
+  }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // TODO Auto-generated method stub
+    return super.onOptionsItemSelected(item);
   }
   
   @Override
