@@ -18,7 +18,6 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
-import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -26,6 +25,7 @@ import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableManager;
+import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.Constants;
@@ -609,14 +609,15 @@ public class Control {
    * @param relativePath
    */
   public boolean launchHTML(String relativePath) {
-    Log.d(TAG, "in launchHTML with filename: " + relativePath);
-    String pathToTablesFolder = ODKFileUtils.getAppFolder(
-        this.mActivity.getAppName());
-    String pathToFile = pathToTablesFolder + File.separator + relativePath;
-    Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
-    i.putExtra(Constants.IntentKeys.APP_NAME, this.mActivity.getAppName());
-    i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
-    mActivity.startActivity(i);
+    Log.d(TAG, "[launchHTML] launching relativePath: " + relativePath);
+    Intent intent = new Intent(this.mActivity, WebViewActivity.class);
+    Bundle bundle = new Bundle();
+    IntentUtil.addAppNameToBundle(bundle, this.mActivity.getAppName());
+    IntentUtil.addFileNameToBundle(bundle, relativePath);
+    intent.putExtras(bundle);
+    this.mActivity.startActivityForResult(
+        intent,
+        Constants.RequestCodes.LAUNCH_WEB_VIEW);
     return true;
   }
 

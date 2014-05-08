@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
@@ -153,6 +154,17 @@ public class ControlTest {
     this.assertDefaultFileNameIsPresent(intent);
   }
   
+  @Test
+  public void launchHTMLLaunchesCorrectIntent() {
+    this.control.launchHTML(TestConstants.DEFAULT_FILE_NAME);
+    IntentForResult intent = this.getNextStartedIntent();
+    this.assertComponentIsForWebViewActivity(intent.intent.getComponent());
+    assertThat(intent.intent.getExtras()).isNotNull();
+    this.assertDefaultFileNameIsPresent(intent);
+    this.assertTableIdIsNotPresent(intent);
+    this.assertRowIdIsNotPresent(intent);
+  }
+  
   private IntentForResult getNextStartedIntent() {
     ShadowActivity shadowActivity = shadowOf(this.activity);
     return shadowActivity.peekNextStartedActivityForResult();
@@ -163,6 +175,13 @@ public class ControlTest {
     ComponentName target = new ComponentName(
         this.activity,
         TableDisplayActivity.class);
+    org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
+  }
+  
+  private void assertComponentIsForWebViewActivity(ComponentName component) {
+    ComponentName target = new ComponentName(
+        this.activity,
+        WebViewActivity.class);
     org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
   }
   
@@ -200,6 +219,12 @@ public class ControlTest {
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         intent.intent.getExtras());
     org.fest.assertions.api.Assertions.assertThat(fileName).isNull();
+  }
+  
+  private void assertTableIdIsNotPresent(IntentForResult intent){
+    String tableId = IntentUtil.retrieveTableIdFromBundle(
+        intent.intent.getExtras());
+    org.fest.assertions.api.Assertions.assertThat(tableId).isNull();
   }
   
   private void assertViewFragmentTypeIsPresent(

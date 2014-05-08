@@ -144,6 +144,8 @@ public class Constants {
     public static final int LAUNCH_IMPORT_EXPORT = 7;
     public static final int LAUNCH_SYNC = 8;
     public static final int LAUNCH_TABLE_MANAGER = 9;
+    /** For launching an HTML file not associated with a table. */
+    public static final int LAUNCH_WEB_VIEW = 10;
   }
   
   /**
