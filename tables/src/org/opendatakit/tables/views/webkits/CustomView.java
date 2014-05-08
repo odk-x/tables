@@ -182,7 +182,7 @@ public abstract class CustomView extends LinearLayout {
       return null;
     }
     DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(tp.getPersistedColumns(), sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+    UserTable userTable = dbTable.rawSqlQuery(sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
     TableData tableData = new TableData(getContainerActivity(), userTable);
     return tableData;
   }
@@ -311,11 +311,10 @@ public abstract class CustomView extends LinearLayout {
    */
   private Map<String, String> getElementKeyToValues(String tableId, String rowId) {
     TableProperties tp = TableProperties.getTablePropertiesForTable(getContext(), mAppName, tableId);
-    List<String> userDefinedElementKeys = tp.getPersistedColumns();
     String sqlQuery = DataTableColumns.ID + " = ? ";
     String[] selectionArgs = { rowId };
     DbTable dbTable = DbTable.getDbTable(tp);
-    UserTable userTable = dbTable.rawSqlQuery(userDefinedElementKeys, sqlQuery, selectionArgs, null, null, null, null);
+    UserTable userTable = dbTable.rawSqlQuery(sqlQuery, selectionArgs, null, null, null, null);
     if (userTable.getNumberOfRows() > 1) {
       Log.e(TAG, "query returned > 1 rows for tableId: " + tableId + " and " + "rowId: " + rowId);
     } else if (userTable.getNumberOfRows() == 0) {
@@ -325,7 +324,7 @@ public abstract class CustomView extends LinearLayout {
     Row requestedRow = userTable.getRowAtIndex(0);
     List<String> metadataElementKeys = DbTable.getAdminColumns();
     List<String> allElementKeys = new ArrayList<String>();
-    allElementKeys.addAll(userDefinedElementKeys);
+    allElementKeys.addAll(tp.getPersistedColumns());
     allElementKeys.addAll(metadataElementKeys);
     for (String elementKey : allElementKeys) {
       elementKeyToValue.put(elementKey, requestedRow.getDataOrMetadataByElementKey(elementKey));

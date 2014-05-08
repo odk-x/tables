@@ -28,6 +28,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -416,7 +417,9 @@ public class CollectUtil {
       writer.write(" id=\"");
       writer.write(StringEscapeUtils.escapeXml(params.getFormId()));
       writer.write("\">");
-      for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+      List<String> elementKeys = tp.getPersistedColumns();
+      for (String elementKey : elementKeys) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         String value = (values == null) ?
             null :
             values.get(cp.getElementKey());
@@ -807,12 +810,12 @@ public class CollectUtil {
     }
     return true;
   }
-  
+
   /**
    * Convenience method for calling
    * {@link #getIntentForOdkCollectAddRow(Context, TableProperties,
    * CollectFormParameters, Map)} followed by
-   * {@link #launchCollectToAddRow(Activity, Intent, TableProperties)}. 
+   * {@link #launchCollectToAddRow(Activity, Intent, TableProperties)}.
    * @param activity
    * @param tableProperties
    * @param collectFormParameters
@@ -834,7 +837,7 @@ public class CollectUtil {
     }
     launchCollectToAddRow(activity, addRowIntent, tableProperties);
   }
-  
+
   /**
    * Launch Collect to edit a row. Convenience method for calling
    * {@link #getIntentForOdkCollectEditRow(Context, TableProperties, Map,
@@ -1094,9 +1097,10 @@ public class CollectUtil {
       FormValues formValues) {
     DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());;
     Map<String, String> values = new HashMap<String, String>();
-    for (ColumnProperties cp : tp.getDatabaseColumns().values()) {
+    List<String> elementKeys = tp.getPersistedColumns();
+    for (String elementKey : elementKeys) {
+      ColumnProperties cp = tp.getColumnByElementKey(elementKey);
       // we want to use element key here
-      String elementKey = cp.getElementKey();
       String value = formValues.formValues.get(elementKey);
       value = du.validifyValue(cp, formValues.formValues.get(elementKey));
       // reset b/c validifyValue can return null.

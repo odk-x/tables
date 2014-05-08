@@ -45,9 +45,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class Control {
-  
+
   private static final String TAG = Control.class.getSimpleName();
-  
+
   protected Activity mActivity;
   protected String mAppName;
 
@@ -70,7 +70,7 @@ public class Control {
     this.mActivity = activity;
     this.mAppName = appName;
   }
-  
+
   /**
    * Retrieve the {@link TableProperties} for the given tableId.
    * @param tableId
@@ -84,7 +84,7 @@ public class Control {
           tableId);
     return result;
   }
-  
+
   /**
    * Retrieve the {@link TableProperties} for all the user-defined tables in
    * the database.
@@ -96,7 +96,7 @@ public class Control {
         this.mAppName);
     return result;
   }
-  
+
   /**
    * Start the detail view.
    * @param tableId
@@ -120,7 +120,7 @@ public class Control {
     this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
     return true;
   }
-      
+
   /**
    * Retrieve the app name that should be used from the parent activity.
    * @return
@@ -135,7 +135,7 @@ public class Control {
     AbsBaseActivity baseActivity = (AbsBaseActivity) this.mActivity;
     return baseActivity.getAppName();
   }
-  
+
 
   /**
    * @see {@link ControlIf#openDetailView(String, String, String)}
@@ -174,7 +174,7 @@ public class Control {
         sqlOrderByElementName,
         sqlOrderByDirection);
   }
-  
+
   /**
    * Actually open the table. The sql-related parameters are null safe, so
    * only pass them in if necessary.
@@ -204,7 +204,7 @@ public class Control {
         null,
         null);
   }
-  
+
   /**
    * Open the table to the given view type. The relativePath parameter is
    * null safe, and if not present will not be added. The default behavior
@@ -243,7 +243,7 @@ public class Control {
     }
     Bundle bundle = new Bundle();
     IntentUtil.addSQLKeysToBundle(
-        bundle, 
+        bundle,
         sqlWhereClause,
         sqlSelectionArgs,
         sqlGroupBy,
@@ -257,7 +257,7 @@ public class Control {
     this.mActivity.startActivityForResult(intent, RequestCodes.LAUNCH_VIEW);
     return true;
   }
-  
+
   /**
    * Create a new {@link Intent} to launch {@link TableDisplayActivity} with
    * the contents of bundle added to the intent's extras. The appName is
@@ -745,7 +745,7 @@ public class Control {
     }
     SurveyFormParameters surveyFormParameters = null;
     if (formId == null) {
-      surveyFormParameters = 
+      surveyFormParameters =
           SurveyFormParameters.constructSurveyFormParameters(tp);
     } else {
       surveyFormParameters = new SurveyFormParameters(
@@ -786,7 +786,7 @@ public class Control {
     if (tp == null) {
       Log.e(
           TAG,
-          "[helperEditRowWithCollect] table [" + 
+          "[helperEditRowWithCollect] table [" +
               tableId +
               "] cannot have row edited, because it cannot be found");
       return false;
@@ -921,7 +921,7 @@ public class Control {
         tableName,
         tableId);
   }
-  
+
   private TableData queryForTableData(
       String tableId,
       String sqlWhereClause,
@@ -948,7 +948,7 @@ public class Control {
     TableData tableData = new TableData(this.mActivity, userTable);
     return tableData;
   }
-  
+
   /**
    * The keys for the platformInfo json object.
    * @author sudar.sam@gmail.com

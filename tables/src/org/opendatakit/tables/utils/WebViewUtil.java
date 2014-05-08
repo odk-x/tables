@@ -42,22 +42,22 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class WebViewUtil {
-  
+
   private static final String TAG = WebViewUtil.class.getSimpleName();
-  
+
   /**
    * A {@link TypeReference} for a {@link HashMap} parameterized for String
    * keys and String values.
    */
   private static final TypeReference<HashMap<String, String>> MAP_REF =
       new TypeReference<HashMap<String, String>>() {};
-  
+
   /**
    * The HTML to be displayed when loading a screen.
    */
-  public static final String LOADING_HTML_MESSAGE = 
+  public static final String LOADING_HTML_MESSAGE =
       "<html><body><p>Loading, please wait...</p></body></html>";
-  
+
   /**
    * Retrieve a map from a simple json map that has been stringified.
    *
@@ -77,7 +77,7 @@ public class WebViewUtil {
     }
     return map;
   }
-  
+
   /**
    * Get a {@link WebView} that is ready to be used for ODK settings. This
    * includes, e.g., having attached a logger and enabling javascript.
@@ -89,7 +89,7 @@ public class WebViewUtil {
     final String webViewTag = "ODKCompliantWebView";
     result.getSettings().setJavaScriptEnabled(true);
     result.setWebViewClient(new WebViewClient() {
-        
+
         @Override
         public void onReceivedError(
             WebView view,
@@ -102,13 +102,13 @@ public class WebViewUtil {
               "[onReceivedError] errorCode: " +
               errorCode +
               "; description: "
-              + description + 
+              + description +
               "; failingUrl: " +
               failingUrl);
         }
     });
     result.setWebChromeClient(new WebChromeClient() {
-      
+
       @Override
       public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
         Log.i(
@@ -118,11 +118,11 @@ public class WebViewUtil {
             consoleMessage.message());
         return super.onConsoleMessage(consoleMessage);
       }
-      
+
     });
     return result;
   }
-  
+
   /**
    * Display the file in the WebView.
    * @param context
@@ -150,7 +150,7 @@ public class WebViewUtil {
           null);
     }
   }
-  
+
   /**
    * Retrieve a map of element key to value for each of the columns in the row
    * specified by rowId.
@@ -185,13 +185,11 @@ public class WebViewUtil {
     }
     Map<String, String> elementKeyToValue = new HashMap<String, String>();
     Row requestedRow = userTable.getRowAtIndex(0);
-    List<String> userDefinedElementKeys = 
-        userTable.getTableProperties().getColumnOrder();
-    Set<String> metadataElementKeys = 
-        userTable.getMapOfUserDataToIndex().keySet();
+    List<String> userDefinedElementKeys = tableProperties.getPersistedColumns();
+    List<String> adminElementKeys = DbTable.getAdminColumns();
     List<String> allElementKeys = new ArrayList<String>();
     allElementKeys.addAll(userDefinedElementKeys);
-    allElementKeys.addAll(metadataElementKeys);
+    allElementKeys.addAll(adminElementKeys);
     for (String elementKey : allElementKeys) {
       elementKeyToValue.put(
           elementKey,
@@ -199,5 +197,5 @@ public class WebViewUtil {
     }
     return elementKeyToValue;
   }
-  
+
 }

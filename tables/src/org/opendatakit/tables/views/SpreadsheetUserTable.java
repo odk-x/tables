@@ -24,6 +24,7 @@ import android.util.Log;
 public class SpreadsheetUserTable {
   private static final String TAG = "SpreadsheetUserTable";
 
+  private final String[] header;
   private final String[] spreadsheetIndexToElementKey;
   private final int[] spreadsheetIndexToUserTableIndexRemap;
   private final Map<String,Integer> elementKeyToSpreadsheetIndex;
@@ -32,12 +33,15 @@ public class SpreadsheetUserTable {
   public SpreadsheetUserTable(UserTable table) {
     this.table = table;
     List<String> colOrder = this.table.getTableProperties().getColumnOrder();
+    header = new String[colOrder.size()];
     spreadsheetIndexToUserTableIndexRemap = new int[colOrder.size()];
     spreadsheetIndexToElementKey = new String[colOrder.size()];
     elementKeyToSpreadsheetIndex = new HashMap<String,Integer>();
     for ( int i = 0 ; i < colOrder.size(); ++i ) {
       String elementKey = colOrder.get(i);
       spreadsheetIndexToUserTableIndexRemap[i] = this.table.getColumnIndexOfElementKey(elementKey);
+      ColumnProperties cp = this.table.getTableProperties().getColumnByElementKey(elementKey);
+      header[i] = cp.getLocalizedDisplayName();
       spreadsheetIndexToElementKey[i] = elementKey;
       elementKeyToSpreadsheetIndex.put(elementKey, i);
     }
@@ -159,7 +163,7 @@ public class SpreadsheetUserTable {
   }
 
   String getHeader(int colNum) {
-    return table.getHeader(spreadsheetIndexToUserTableIndexRemap[colNum]);
+    return header[colNum];
   }
 
   public String getDisplayTextOfData(Context context, int rowNum, int colNum, boolean showErrorText) {

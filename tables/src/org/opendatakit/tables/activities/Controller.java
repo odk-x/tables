@@ -882,18 +882,6 @@ public class Controller {
     context.startActivity(intent);
   }
 
-  public static void launchSpreadsheetView(Context context, TableProperties tp,
-                                          String sqlWhereClause, String[] sqlSelectionArgs,
-                                          String[] sqlGroupBy, String sqlHaving,
-                                          String sqlOrderByElementKey, String sqlOrderByDirection) {
-    Intent intent = new Intent(context, SpreadsheetDisplayActivity.class);
-    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, sqlWhereClause,
-        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-    context.startActivity(intent);
-  }
-
   /**
    * Open the table to graph view.
    *
@@ -987,10 +975,8 @@ public class Controller {
       intent = new Intent(context, TableActivity.class);
       break;
     case SPREADSHEET:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
-      break;
     default:
-      intent = new Intent(context, SpreadsheetDisplayActivity.class);
+      throw new IllegalStateException("Unused pathway?!!?");
     }
     intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());

@@ -131,7 +131,7 @@ public class TableDisplayActivity extends AbsTableActivity
               + viewFragmentType);
     }
   }
-  
+
   @Override
   protected void onStart() {
      super.onStart();
@@ -287,7 +287,7 @@ public class TableDisplayActivity extends AbsTableActivity
     SQLQueryStruct sqlQueryStruct =
         this.retrieveSQLQueryStatStructFromIntent();
     DbTable dbTable = DbTable.getDbTable(tableProperties);
-    UserTable result = dbTable.rawSqlQuery(tableProperties.getPersistedColumns(),
+    UserTable result = dbTable.rawSqlQuery(
         sqlQueryStruct.whereClause,
         sqlQueryStruct.selectionArgs,
         sqlQueryStruct.groupBy,
@@ -427,7 +427,7 @@ public class TableDisplayActivity extends AbsTableActivity
     this.handleMenuForViewFragmentType(ViewFragmentType.DETAIL);
     this.invalidateOptionsMenu();
   }
-  
+
   /**
    * Retrieve the {@link TopLevelTableMenuFragment} that is associated with
    * this activity.
@@ -439,7 +439,7 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(Constants.FragmentTags.TABLE_MENU);
     return result;
   }
-  
+
   /**
    * Retrieve the {@link DetailViewFragment} that is associated with this
    * activity.

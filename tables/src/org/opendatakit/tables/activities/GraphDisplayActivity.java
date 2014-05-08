@@ -148,7 +148,7 @@ implements DisplayActivity {
       }
 
       DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-      table = dbTable.rawSqlQuery(c.getTableProperties().getPersistedColumns(),
+      table = dbTable.rawSqlQuery(
           sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
 
       view = CustomGraphView.get(this, table.getTableProperties().getAppName(), table,

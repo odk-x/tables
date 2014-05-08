@@ -120,9 +120,7 @@ public class CsvUtil {
     columns.add(DataTableColumns.SAVEPOINT_TIMESTAMP);
     columns.add(DataTableColumns.SAVEPOINT_CREATOR);
 
-    List<String> persistedColumns = tp.getPersistedColumns();
-
-    columns.addAll(persistedColumns);
+    columns.addAll(tp.getPersistedColumns());
 
     // And now add all remaining export columns
     for (String colName : DbTable.getExportColumns()) {
@@ -154,7 +152,7 @@ public class CsvUtil {
             DataTableColumns.CONFLICT_TYPE + " IS NULL OR " +
             DataTableColumns.CONFLICT_TYPE + " = " +
             Integer.toString(ConflictType.LOCAL_UPDATED_UPDATED_VALUES) + ")";
-      UserTable table = dbt.rawSqlQuery(persistedColumns, whereString, null, null, null, null, null);
+      UserTable table = dbt.rawSqlQuery(whereString, null, null, null, null, null);
 
       // emit data table...
       File file = new File( outputCsv, tp.getTableId() +

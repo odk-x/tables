@@ -57,7 +57,6 @@ public class UserTable {
 
   private static final String TAG = UserTable.class.getSimpleName();
 
-  private final String[] header;
   private final ArrayList<Row> mRows;
   /**
    * The {@link TableProperties} associated with this table. Included so that
@@ -99,7 +98,6 @@ public class UserTable {
   public UserTable(UserTable table, List<Integer> indexes) {
     du = table.du;
     buildFormatters();
-    this.header = table.header;
     mRows = new ArrayList<Row>(indexes.size());
     for (int i = 0 ; i < indexes.size(); ++i) {
       Row r = table.getRowAtIndex(indexes.get(i));
@@ -117,7 +115,6 @@ public class UserTable {
   }
 
   public UserTable(Cursor c, TableProperties tableProperties,
-      List<String> userColumnOrder,
       String sqlWhereClause, String[] sqlSelectionArgs,
       String[] sqlGroupByArgs, String sqlHavingClause,
       String sqlOrderByElementKey, String sqlOrderByDirection) {
@@ -138,16 +135,14 @@ public class UserTable {
     // The sync_state column, if present at index 7, would have a mapping
     // in metadataKeyToIndex of sync_state:7.
     List<String> adminColumnOrder = DbTable.getAdminColumns();
-
+    List<String> userColumnOrder = mTp.getPersistedColumns();
     mElementKeyToIndex = new HashMap<String, Integer>();
     mElementKeyForIndex = new String[userColumnOrder.size()+adminColumnOrder.size()];
-    header = new String[userColumnOrder.size()];
     int[] cursorIndex = new int[userColumnOrder.size()+adminColumnOrder.size()];
     int i = 0;
     for (i = 0; i < userColumnOrder.size(); i++) {
       String elementKey = userColumnOrder.get(i);
       mElementKeyForIndex[i] = elementKey;
-      header[i] = mTp.getColumnByElementKey(elementKey).getLocalizedDisplayName();
       mElementKeyToIndex.put(elementKey, i);
       cursorIndex[i] = c.getColumnIndex(elementKey);
     }
@@ -229,23 +224,8 @@ public class UserTable {
     }
   }
 
-  public Long getTimestamp(int rowNum) {
-    Row row = this.getRowAtIndex(rowNum);
-    return TableConstants.milliSecondsFromNanos(row.getDataOrMetadataByElementKey(DataTableColumns.SAVEPOINT_TIMESTAMP));
-  }
-
   public Row getRowAtIndex(int index) {
     return this.mRows.get(index);
-  }
-
-  public String getHeader(int colNum) {
-    return header[colNum];
-  }
-
-  public String getData(int cellNum) {
-    int rowNum = cellNum / getWidth();
-    int colNum = cellNum % getWidth();
-    return getData(rowNum, colNum);
   }
 
   public Integer getColumnIndexOfElementKey(String elementKey) {
@@ -254,11 +234,6 @@ public class UserTable {
 
   public String getElementKey(int colNum) {
     return this.mElementKeyForIndex[colNum];
-  }
-
-  public String getData(int rowNum, int colNum) {
-    String elementKey = this.mElementKeyForIndex[colNum];
-    return mRows.get(rowNum).getDataOrMetadataByElementKey(elementKey);
   }
 
   public String getWhereClause() {
@@ -322,13 +297,6 @@ public class UserTable {
     }
   }
 
-  public String getDisplayTextOfData(Context context, int cellNum) {
-    int rowNum = cellNum / getWidth();
-    int colNum = cellNum % getWidth();
-    String elementKey = this.mElementKeyForIndex[colNum];
-    return getDisplayTextOfData(context, rowNum, elementKey, true);
-  }
-
   public String getDisplayTextOfData(Context context, int rowNum, String elementKey, boolean showErrorText) {
     // TODO: share processing with CollectUtil.writeRowDataToBeEdited(...)
     Row row = getRowAtIndex(rowNum);
@@ -382,12 +350,8 @@ public class UserTable {
     return mTp;
   }
 
-  public String[] getElementKeysForIndex() {
-    return this.mElementKeyForIndex.clone();
-  }
-
   public int getWidth() {
-    return header.length;
+    return mElementKeyForIndex.length;
   }
 
   public int getNumberOfRows() {

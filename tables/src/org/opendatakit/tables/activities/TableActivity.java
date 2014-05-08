@@ -222,7 +222,7 @@ public class TableActivity extends Activity {
       }
     }
 
-    mTable = mDbTable.rawSqlQuery(mTableProperties.getPersistedColumns(), mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving, mSqlOrderByElementKey, mSqlOrderByDirection );
+    mTable = mDbTable.rawSqlQuery(mSqlWhereClause, mSqlSelectionArgs, mSqlGroupBy, mSqlHaving, mSqlOrderByElementKey, mSqlOrderByDirection );
   }
 
   /**
@@ -575,10 +575,8 @@ public class TableActivity extends Activity {
       intent = new Intent(this, TableActivity.class);
       break;
     case SPREADSHEET:
-      intent = new Intent(this, SpreadsheetDisplayActivity.class);
-      break;
     default:
-      intent = new Intent(this, SpreadsheetDisplayActivity.class);
+      throw new IllegalStateException("Unused pathway?!??!");
     }
     intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
     intent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());

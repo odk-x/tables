@@ -78,8 +78,6 @@
         <activity android:name=".activities.ListDisplayActivity"/>
         <activity android:name=".activities.ListViewManager"/>
         <activity android:name=".activities.PropertyManager"/>
-        <activity android:name=".activities.SpreadsheetDisplayActivity"
-            android:hardwareAccelerated="false" />
         <activity android:name=".activities.TableActivity"/>
         <activity android:name=".activities.TableManager"/>
         <activity android:name=".activities.TablePropertiesManager"/>
