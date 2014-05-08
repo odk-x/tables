@@ -8,14 +8,18 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -182,6 +186,12 @@ public class TopLevelTableMenuFragment extends Fragment {
             surveyFormParameters,
             null);
       }
+      return true;
+    case R.id.top_level_table_menu_table_properties:
+      ActivityUtil.launchTableLevelPreferencesActivity(
+          this.getActivity(),
+          this.getAppName(),
+          this.getTableProperties().getTableId());
       return true;
     default:
       return super.onOptionsItemSelected(item);

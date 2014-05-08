@@ -7,10 +7,13 @@ import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 public class ActivityUtil {
@@ -67,6 +70,28 @@ public class ActivityUtil {
             table.getRowAtIndex(rowNum).getRowId());
       }
     }
+  }
+  
+  /**
+   * Launch {@link TableLevelPreferencesActivity} to edit a table's
+   * properties. Launches with request code
+   * {@link Constants.RequestCodes#LAUNCH_TABLE_PREFS}.
+   * @param activity
+   * @param appName
+   * @param tableId
+   */
+  public static void launchTableLevelPreferencesActivity(
+      Activity activity,
+      String appName,
+      String tableId) {
+    Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
+    Bundle bundle = new Bundle();
+    IntentUtil.addAppNameToBundle(bundle, appName);
+    IntentUtil.addTableIdToBundle(bundle, tableId);
+    intent.putExtras(bundle);
+    activity.startActivityForResult(
+        intent,
+        Constants.RequestCodes.LAUNCH_TABLE_PREFS);
   }
 
 }

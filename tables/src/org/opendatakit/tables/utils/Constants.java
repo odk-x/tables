@@ -146,6 +146,8 @@ public class Constants {
     public static final int LAUNCH_TABLE_MANAGER = 9;
     /** For launching an HTML file not associated with a table. */
     public static final int LAUNCH_WEB_VIEW = 10;
+    /** For launching an intent to edit a table's properties. */
+    public static final int LAUNCH_TABLE_PREFS = 11;
   }
   
   /**
