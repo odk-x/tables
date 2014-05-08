@@ -2,18 +2,26 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.types.FormType;
+import org.opendatakit.tables.utils.CollectUtil;
+import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
+import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.SurveyUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
-import org.opendatakit.tables.views.webkits.CustomTableView;
-import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.TableData;
 
 import android.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.webkit.WebView;
 
 /**
  * {@link Fragment} for displaying a detail view.
@@ -38,32 +46,82 @@ public class DetailViewFragment extends AbsWebTableFragment {
      super.onCreate(savedInstanceState);
      String retrievedRowId = this.retrieveRowIdFromBundle(this.getArguments());
      this.mRowId = retrievedRowId;
+     this.setHasOptionsMenu(true);
   }
   
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    // TODO Auto-generated method stub
-    return this.buildView();
+  public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    inflater.inflate(R.menu.detail_view_menu, menu);
+    super.onCreateOptionsMenu(menu, inflater);
   }
-
+  
   @Override
-  public CustomView buildView() {
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case R.id.menu_edit_row:
+      // Are we editing with collect for survey?
+      FormType formType = FormType.constructFormType(getTableProperties());
+      if (formType.isCollectForm()) {
+        Log.d(TAG, "[onOptionsItemSelected] using Collect form");
+        CollectFormParameters collectFormParameters =
+            CollectFormParameters.constructCollectFormParameters(
+                this.getTableProperties());
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] is custom form: " +
+                collectFormParameters.isCustom());
+        CollectUtil.editRowWithCollect(
+            this.getActivity(),
+            this.getAppName(),
+            this.getRowId(),
+            this.getTableProperties(),
+            collectFormParameters);
+      } else {
+        // it's a survey form.
+        Log.d(TAG, "[onOptionsItemSelected] using Survey form");
+        SurveyFormParameters surveyFormParameters =
+            SurveyFormParameters.constructSurveyFormParameters(
+                this.getTableProperties());
+        Log.d(
+            TAG,
+            "[onOptionsItemSelected] is custom form: " +
+                surveyFormParameters.isUserDefined());
+        SurveyUtil.editRowWithSurvey(
+            this.getActivity(),
+            this.getAppName(),
+            this.getRowId(),
+            this.getTableProperties(),
+            surveyFormParameters);
+      }
+      Log.d(TAG, "[onOptionsItemSelected] edit row selected");
+      return true;
+    default:
+      return super.onOptionsItemSelected(item);
+    }
+  }
+  
+  @Override
+  public WebView buildView() {
     // First we need to construct the single row table.
     this.initializeTable();
-    CustomTableView result = CustomTableView.get(
+    WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
+    Control control = this.createControlObject();
+    result.addJavascriptInterface(
+        control.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.CONTROL);
+    TableData tableData = this.createDataObject();
+    result.addJavascriptInterface(
+        tableData.getJavascriptInterfaceWithWeakReference(),
+        Constants.JavaScriptHandles.DATA);
+    WebViewUtil.displayFileInWebView(
         getActivity(),
         getAppName(),
-        getSingleRowTable(),
+        result,
         getFileName());
-    result.display();
+    // Now save the references.
+    this.mControlReference = control;
+    this.mTableDataReference = tableData;
     return result;
-  }
-  
-  @Override
-  public void onResume() {
-    super.onResume();
-    // Have to do this because CustomTableView is so stupid.
-    ((CustomTableView) getView()).display();
   }
   
   private void initializeTable() {
@@ -122,9 +180,15 @@ public class DetailViewFragment extends AbsWebTableFragment {
   
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    // TODO Auto-generated method stub
     super.onSaveInstanceState(outState);
     outState.putString(Constants.IntentKeys.ROW_ID, this.getRowId());
+  }
+
+  @Override
+  protected TableData createDataObject() {
+    UserTable singleRowTable = this.retrieveSingleRowTable();
+    TableData result = new TableData(singleRowTable);
+    return result;
   }
 
 }

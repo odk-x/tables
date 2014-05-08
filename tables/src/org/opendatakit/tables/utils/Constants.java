@@ -32,6 +32,20 @@ public class Constants {
   public static final int DEFAULT_TEXT_COLOR = Color.BLACK;
   public static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
   
+  public static class HTML {
+    /**
+     * The default HTML to be displayed if no file name has been set.
+     */
+    public static final String NO_FILE_NAME = "<html><body>"
+        + "<p>No filename has been specified.</p>" + "</body></html>";
+  }
+  
+  public static class MimeTypes {
+    public static final String TEXT_HTML = "text/html";
+  }
+  
+
+  
   /**
    * Intent keys to be used to communicate between activities.
    * @author sudar.sam@gmail.com
@@ -94,6 +108,7 @@ public class Constants {
     public static final String DETAIL_FRAGMENT = "tagDetailFragment";
     public static final String INITIALIZE_TASK_DIALOG = "tagInitializeTask";
     public static final String TABLE_MANAGER = "tagFragmentManager";
+    public static final String WEB_FRAGMENT = "tagWebFragment";
   }
 
   public static class PreferenceKeys {
@@ -128,6 +143,22 @@ public class Constants {
     public static final int LAUNCH_DISPLAY_PREFS = 6;
     public static final int LAUNCH_IMPORT_EXPORT = 7;
     public static final int LAUNCH_SYNC = 8;
+    public static final int LAUNCH_TABLE_MANAGER = 9;
+    /** For launching an HTML file not associated with a table. */
+    public static final int LAUNCH_WEB_VIEW = 10;
+    /** For launching an intent to edit a table's properties. */
+    public static final int LAUNCH_TABLE_PREFS = 11;
+  }
+  
+  /**
+   * The names of the JavaScript interfaces that are attached to the window
+   * object.
+   * @author sudar.sam@gmail.com
+   *
+   */
+  public static class JavaScriptHandles {
+    public static final String CONTROL = "control";
+    public static final String DATA = "data";
   }
 
 }

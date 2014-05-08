@@ -17,7 +17,7 @@ package org.opendatakit.tables.views.webkits;
 
 import java.lang.ref.WeakReference;
 
-import org.opendatakit.tables.views.webkits.CustomView.Control;
+import org.opendatakit.tables.views.webkits.Control;
 
 import android.util.Log;
 

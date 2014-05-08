@@ -10,10 +10,11 @@ import org.junit.runner.RunWith;
 import org.opendatakit.tables.activities.AbsBaseActivityStub;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.activities.WebViewActivity;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.views.webkits.CustomView.Control;
+import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
@@ -31,7 +32,6 @@ import android.content.ComponentName;
 @RunWith(RobolectricTestRunner.class)
 public class ControlTest {
   
-  CustomViewStub customView;
   Control control;
   Activity activity;
   
@@ -44,11 +44,9 @@ public class ControlTest {
           .resume()
           .visible()
           .get();
-    CustomViewStub customViewStub = new CustomViewStub(
+    Control control = new Control(
         activityStub,
-        activityStub.getAppName());
-    Control control = customViewStub.new Control(activityStub);
-    this.customView = customViewStub;
+        TestConstants.TABLES_DEFAULT_APP_NAME);
     this.activity = activityStub;
     this.control = control;
   }
@@ -59,7 +57,6 @@ public class ControlTest {
     // null them out just to make sure.
     this.activity = null;
     this.control = null;
-    this.customView = null;
   }
   
   @Test
@@ -159,6 +156,17 @@ public class ControlTest {
     this.assertDefaultFileNameIsPresent(intent);
   }
   
+  @Test
+  public void launchHTMLLaunchesCorrectIntent() {
+    this.control.launchHTML(TestConstants.DEFAULT_FILE_NAME);
+    IntentForResult intent = this.getNextStartedIntent();
+    this.assertComponentIsForWebViewActivity(intent.intent.getComponent());
+    assertThat(intent.intent.getExtras()).isNotNull();
+    this.assertDefaultFileNameIsPresent(intent);
+    this.assertTableIdIsNotPresent(intent);
+    this.assertRowIdIsNotPresent(intent);
+  }
+  
   private IntentForResult getNextStartedIntent() {
     ShadowActivity shadowActivity = shadowOf(this.activity);
     return shadowActivity.peekNextStartedActivityForResult();
@@ -169,6 +177,13 @@ public class ControlTest {
     ComponentName target = new ComponentName(
         this.activity,
         TableDisplayActivity.class);
+    org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
+  }
+  
+  private void assertComponentIsForWebViewActivity(ComponentName component) {
+    ComponentName target = new ComponentName(
+        this.activity,
+        WebViewActivity.class);
     org.fest.assertions.api.Assertions.assertThat(component).isEqualTo(target);
   }
   
@@ -206,6 +221,12 @@ public class ControlTest {
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         intent.intent.getExtras());
     org.fest.assertions.api.Assertions.assertThat(fileName).isNull();
+  }
+  
+  private void assertTableIdIsNotPresent(IntentForResult intent){
+    String tableId = IntentUtil.retrieveTableIdFromBundle(
+        intent.intent.getExtras());
+    org.fest.assertions.api.Assertions.assertThat(tableId).isNull();
   }
   
   private void assertViewFragmentTypeIsPresent(

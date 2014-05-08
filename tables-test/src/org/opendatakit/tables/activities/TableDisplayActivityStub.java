@@ -5,6 +5,11 @@ import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.testutils.TestConstants;
 
+/**
+ * 
+ * @author sudar.sam@gmail.com
+ *
+ */
 public class TableDisplayActivityStub extends TableDisplayActivity {
   
   // If modified during tests, the APP_NAME and TABLE_PROPERTIES objects should

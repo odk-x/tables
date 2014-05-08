@@ -2,22 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item
         android:id="@+id/menu_table_manager_import"
-        android:icon="@drawable/ic_action_av_download"
+        android:icon="@drawable/ic_action_new"
         android:title="@string/import_csv"
         android:showAsAction="always" />
     <item 
         android:id="@+id/menu_table_manager_export"
-        android:icon="@drawable/ic_action_av_upload"
+        android:icon="@drawable/ic_action_forward"
         android:title="@string/export"
         android:showAsAction="always" />
     <item
         android:id="@+id/menu_table_manager_sync"
-        android:icon="@drawable/sync_icon"
+        android:icon="@drawable/ic_action_cloud"
         android:title="@string/sync"
         android:showAsAction="always" />
     <item
         android:id="@+id/menu_table_manager_preferences"
-        android:icon="@drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_action_settings"
         android:title="@string/preferences"
         android:showAsAction="always" />
 

@@ -11,7 +11,10 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
-import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.TableData;
+
+import android.webkit.WebView;
 
 /**
  * Constants for use in tests.
@@ -79,6 +82,11 @@ public class TestConstants {
     return mock;
   }
 
+  public static Control getControlMock() {
+    Control mock = mock(Control.class);
+    return mock;
+  }
+  
   public static PossibleTableViewTypes getAllValidPossibleTableViewTypes() {
     PossibleTableViewTypes allValid = mock(PossibleTableViewTypes.class);
     doReturn(true).when(allValid).spreadsheetViewIsPossible();
@@ -94,7 +102,11 @@ public class TestConstants {
     return allValid;
   }
 
-  public static CustomView getCustomViewMock() {
-    return mock(CustomView.class);
+  public static WebView getWebViewMock() {
+    return mock(WebView.class);
+  }
+  
+  public static TableData getTableDataMock() {
+    return mock(TableData.class);
   }
 }

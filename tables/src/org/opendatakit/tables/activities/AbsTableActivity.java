@@ -30,14 +30,14 @@ public abstract class AbsTableActivity extends AbsBaseActivity {
     String tableId = retrieveTableIdFromIntent();
     if (tableId == null) {
       Log.e(TAG, "[onCreate] table id was not present in Intent.");
-      throw new IllegalArgumentException(
+      throw new IllegalStateException(
           "A table id was not passed to a table activity");
     }
     TableProperties retrievedProperties = 
         retrieveTablePropertiesForId(tableId);
     if (retrievedProperties == null) {
       Log.e(TAG, "TableProperties not found for id: " + tableId);
-      throw new IllegalArgumentException(
+      throw new IllegalStateException(
           "did not find TableProperties for table id: " + tableId);
     }
     this.mTableProperties = retrievedProperties;

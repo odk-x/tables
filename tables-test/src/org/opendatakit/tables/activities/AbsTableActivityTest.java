@@ -27,16 +27,16 @@ public class AbsTableActivityTest {
     AbsTableActivityStub.TABLE_ID = AbsTableActivityStub.DEFAULT_TABLE_ID;
   }
   
-  @Test(expected=IllegalArgumentException.class)
-  public void noTableIdThrowsIllegalArgument() {
+  @Test(expected=IllegalStateException.class)
+  public void noTableIdThrowsIllegalStateException() {
     // We should get this if we create the activity without a table id.
     AbsTableActivityStub.TABLE_ID = null;
     AbsTableActivityStub.TABLE_PROPERTIES = mock(TableProperties.class);
     this.buildActivity();
   }
   
-  @Test(expected=IllegalArgumentException.class)
-  public void noTablePropertiesThrowsIllegalArgument() {
+  @Test(expected=IllegalStateException.class)
+  public void noTablePropertiesThrowsIllegalStateException() {
     AbsTableActivityStub.TABLE_PROPERTIES = null;
     this.buildActivity();
   }

@@ -95,6 +95,43 @@ public class TableDisplayActivity extends AbsTableActivity
     this.initializeDisplayFragment();
   }
 
+  /**
+   * Update the options menu for this activity to be appropriate for the given
+   * fragment.
+   * @param viewFragmentType
+   */
+  void handleMenuForViewFragmentType(ViewFragmentType viewFragmentType) {
+    TopLevelTableMenuFragment menuFragment = this.retrieveMenuFragment();
+    DetailViewFragment detailFragment = this.retrieveDetailFragment();
+    switch (viewFragmentType) {
+    case SPREADSHEET:
+    case MAP:
+    case LIST:
+    case GRAPH:
+      // Show the menu fragment but not the detail view's.
+      if (menuFragment != null) {
+        menuFragment.setMenuVisibility(true);
+      }
+      if (detailFragment != null) {
+        menuFragment.setMenuVisibility(false);
+      }
+      break;
+    case DETAIL:
+      if (menuFragment != null) {
+        menuFragment.setMenuVisibility(false);
+      }
+      if (detailFragment != null) {
+        detailFragment.setMenuVisibility(true);
+      }
+      break;
+    default:
+      Log.e(
+          TAG,
+          "[handleMenuForViewFragmentType] unrecognized fragment type: "
+              + viewFragmentType);
+    }
+  }
+  
   @Override
   protected void onStart() {
      super.onStart();
@@ -314,6 +351,7 @@ public class TableDisplayActivity extends AbsTableActivity
         android.R.id.content,
         mapFragment,
         Constants.FragmentTags.MAP).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.SPREADSHEET);
     this.invalidateOptionsMenu();
   }
 
@@ -343,12 +381,15 @@ public class TableDisplayActivity extends AbsTableActivity
         android.R.id.content,
         listViewFragment,
         Constants.FragmentTags.LIST).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.LIST);
     this.invalidateOptionsMenu();
   }
 
   @Override
   public void showGraphFragment() {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH);
+    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH);
+    this.invalidateOptionsMenu();
     // TODO Auto-generated method stub
 
   }
@@ -383,7 +424,33 @@ public class TableDisplayActivity extends AbsTableActivity
           detailViewFragment,
           Constants.FragmentTags.DETAIL_FRAGMENT).commit();
     }
+    this.handleMenuForViewFragmentType(ViewFragmentType.DETAIL);
     this.invalidateOptionsMenu();
+  }
+  
+  /**
+   * Retrieve the {@link TopLevelTableMenuFragment} that is associated with
+   * this activity.
+   * @return the fragment, or null if it is not present
+   */
+  TopLevelTableMenuFragment retrieveMenuFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    TopLevelTableMenuFragment result = (TopLevelTableMenuFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.TABLE_MENU);
+    return result;
+  }
+  
+  /**
+   * Retrieve the {@link DetailViewFragment} that is associated with this
+   * activity.
+   * @return the fragment, or null if it is not present
+   */
+  DetailViewFragment retrieveDetailFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    DetailViewFragment result = (DetailViewFragment)
+        fragmentManager.findFragmentByTag(
+            Constants.FragmentTags.DETAIL_FRAGMENT);
+    return result;
   }
 
 
@@ -392,29 +459,7 @@ public class TableDisplayActivity extends AbsTableActivity
    */
   @Override
   public ViewFragmentType getCurrentFragmentType() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    Fragment fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.SPREADSHEET);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.SPREADSHEET;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.LIST);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.LIST;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.MAP);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.MAP;
-    }
-    fragment = fragmentManager.findFragmentByTag(
-        Constants.FragmentTags.GRAPH);
-    if (fragment != null && fragment.isVisible()) {
-      return ViewFragmentType.GRAPH;
-    }
-    Log.e(TAG, "didn't find any of the main views visible. Returning null.");
-    return null;
+    return this.mCurrentFragmentType;
   }
 
 }
