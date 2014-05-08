@@ -173,6 +173,7 @@ public class UserTable {
         mRows.add(nextRow);
       } while (c.moveToNext());
     }
+    c.close();
   }
 
   /**

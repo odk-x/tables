@@ -212,7 +212,7 @@ public class TableDefinitions {
 	    }
 	    return tableIds;
     } finally {
-    	if ( c != null ) {
+    	if ( c != null && !c.isClosed()) {
     		c.close();
     	}
     }
