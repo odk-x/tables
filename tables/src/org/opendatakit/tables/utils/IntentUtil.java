@@ -34,7 +34,7 @@ public class IntentUtil {
       result = retrieveFileNameFromBundle(savedInstanceState);
     }
     if (result == null) {
-      result = retrieveAppNameFromBundle(activity.getIntent().getExtras());
+      result = retrieveFileNameFromBundle(activity.getIntent().getExtras());
     }
     return result;
   }

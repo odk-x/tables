@@ -64,6 +64,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.MainActivity" />
+        <activity android:name=".activities.WebViewActivity" />
         <activity android:name=".activities.TableDisplayActivity" />
         <activity android:name=".activities.TableLevelPreferencesActivity" />
         <activity android:name=".activities.AccountInfoActivity" />
