@@ -61,7 +61,7 @@ public class TopLevelTableMenuFragmentTest {
   
   private void setupState(TopLevelTableMenuFragmentStub fragmentStub) {
     this.fragment = fragmentStub;
-    ODKFragmentTestUtil.startFragmentForTableActivity(
+    ODKFragmentTestUtil.startFragmentForActivity(
         AbsTableActivityStub.class,
         this.fragment,
         null);

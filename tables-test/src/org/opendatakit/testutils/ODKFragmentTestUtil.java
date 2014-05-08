@@ -16,15 +16,16 @@ import android.app.FragmentManager;
 public class ODKFragmentTestUtil {
   
   /**
-   * Starts a fragment with on an AbsTableActivityStub. Before calling it, set
-   * any defaults you need on AbsTableActivityStub. Unlike the Robolectric
+   * Starts a fragment on the Activity specified by activityClass.
+   * Before calling it, set
+   * any defaults you need on your activity. Unlike the Robolectric
    * implementation, this also calls visible() on the activity.
    * @activityClass the activity class you want the fragment added to
    * @param fragment
    * @param tag the tag with which it adds the fragment. If null, defaults to
    * {@link TestConstants#DEFAULT_FRAGMENT_TAG}
    */
-  public static <T extends Activity> void startFragmentForTableActivity(
+  public static <T extends Activity> void startFragmentForActivity(
       Class<T> activityClass,
       Fragment fragment,
       String tag) {

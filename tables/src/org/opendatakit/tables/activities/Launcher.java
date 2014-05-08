@@ -55,9 +55,13 @@ public class Launcher extends Activity {
         File homeScreen = new File(ODKFileUtils.getTablesHomeScreenFile(appName));
         if (preferences.getUseHomeScreen() && homeScreen.exists()) {
           // launch it.
+          String homescreenRelativePath = ODKFileUtils.asRelativePath(
+              appName,
+              homeScreen);
           Log.d(TAG, "homescreen file exists and is set to be used.");
-          Intent i = new Intent(this, CustomHomeScreenActivity.class);
+          Intent i = new Intent(this, WebViewActivity.class);
           i.putExtra(Constants.IntentKeys.APP_NAME, appName);
+          i.putExtra(Constants.IntentKeys.FILE_NAME, homescreenRelativePath);
           startActivity(i);
         } else {
           Log.d(TAG, "no homescreen file found, launching TableManager");

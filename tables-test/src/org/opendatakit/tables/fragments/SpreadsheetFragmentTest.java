@@ -35,7 +35,7 @@ public class SpreadsheetFragmentTest {
   
   private void doGlobalSetup() {
     this.fragment = new SpreadsheetFragmentStub();
-    ODKFragmentTestUtil.startFragmentForTableActivity(
+    ODKFragmentTestUtil.startFragmentForActivity(
         TableDisplayActivityStub.class,
         this.fragment,
         null);

@@ -3,7 +3,7 @@ package org.opendatakit.tables.utils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 
-import android.content.Intent;
+import android.app.Activity;
 import android.os.Bundle;
 
 /**
@@ -12,6 +12,32 @@ import android.os.Bundle;
  *
  */
 public class IntentUtil {
+  
+  /**
+   * Retrieve the file name from the saved instance state or from the
+   * activity's intent. Convenience method for calling
+   * {@link #retrieveAppNameFromBundle(Bundle)} in the appropriate order,
+   * respecting that savedInstanceState may be null.
+   * <p>
+   * If the file name is non-null in both bundles, savedInstanceState takes
+   * precedent. 
+   * @param savedInstanceState
+   * @param activity
+   * @return the file name, or null if the value does not exist in either
+   * bundle.
+   */
+  public static String retrieveFileNameFromActivityOrSavedState(
+      Bundle savedInstanceState,
+      Activity activity) {
+    String result = null;
+    if (savedInstanceState != null) {
+      result = retrieveFileNameFromBundle(savedInstanceState);
+    }
+    if (result == null) {
+      result = retrieveAppNameFromBundle(activity.getIntent().getExtras());
+    }
+    return result;
+  }
   
   /**
    * Retrieve a {@link SQLQueryStruct} from bundle. The various components

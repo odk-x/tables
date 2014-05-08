@@ -73,7 +73,7 @@ public class TableManagerFragmentTest {
     ShadowLog.stream = System.out;
     // We need external storage available for accessing the database.
     TestCaseUtils.setExternalStorageMounted();
-    ODKFragmentTestUtil.startFragmentForTableActivity(
+    ODKFragmentTestUtil.startFragmentForActivity(
         AbsBaseActivityStub.class,
         fragment,
         null);

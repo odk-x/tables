@@ -6,8 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.opendatakit.tables.activities.TableDisplayActivityStub;
-import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.activities.AbsBaseActivityStub;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.testutils.ODKFragmentTestUtil;
 import org.opendatakit.testutils.TestConstants;
 import org.robolectric.RobolectricTestRunner;
@@ -19,37 +19,36 @@ import android.view.View;
 import android.webkit.WebView;
 
 @RunWith(RobolectricTestRunner.class)
-public class AbsWebTableFragmentTest {
+public class WebFragmentTest {
   
-  AbsWebTableFragmentStub fragment;
+  WebFragmentStub fragment;
   Activity activity;
   
   @Before
   public void setup() {
     ShadowLog.stream = System.out;
-    TableDisplayActivityStub.BUILD_MENU_FRAGMENT = false;
   }
   
   @After
   public void after() {
-    TableDisplayActivityStub.resetState();
+    WebFragmentStub.resetState();
   }
   
   private void setupFragmentWithFileName(String fileName) {
-    AbsWebTableFragmentStub stub = new AbsWebTableFragmentStub();
+    WebFragmentStub stub = new WebFragmentStub();
     Bundle bundle = new Bundle();
-    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
+    IntentUtil.addFileNameToBundle(bundle, fileName);
     stub.setArguments(bundle);
     this.doGlobalSetup(stub);
   }
   
-  private void doGlobalSetup(AbsWebTableFragmentStub stub) {
+  private void doGlobalSetup(WebFragmentStub stub) {
     this.fragment = stub;
     ODKFragmentTestUtil.startFragmentForActivity(
-        TableDisplayActivityStub.class,
+        AbsBaseActivityStub.class,
         stub,
         null);
-    this.activity = this.fragment.getActivity();
+    this.activity = this.fragment.getActivity();    
   }
   
   @Test
@@ -59,7 +58,7 @@ public class AbsWebTableFragmentTest {
   }
   
   @Test
-  public void fragmentStoresCorrectFileName() {
+  public void fragmentStoresCorrectFileNameInArguments() {
     String target = "test/path/to/file";
     this.setupFragmentWithFileName(target);
     org.fest.assertions.api.Assertions.assertThat(this.fragment.getFileName())
@@ -67,9 +66,9 @@ public class AbsWebTableFragmentTest {
   }
   
   @Test
-  public void setsTheViewReturnedByBuildCustomView() {
+  public void setsTheViewReturnedByBuildView() {
     WebView mockWebView = TestConstants.getWebViewMock();
-    AbsWebTableFragmentStub.WEB_VIEW = mockWebView;
+    WebFragmentStub.WEB_VIEW = mockWebView;
     this.setupFragmentWithFileName("testFileName");
     View fragmentView = this.fragment.getView();
     assertThat(fragmentView).isSameAs(mockWebView);

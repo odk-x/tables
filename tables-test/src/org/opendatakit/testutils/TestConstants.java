@@ -11,6 +11,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.utils.SQLQueryStruct;
+import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.webkit.WebView;
@@ -78,6 +79,11 @@ public class TestConstants {
   
   public static UserTable getUserTableMock() {
     UserTable mock = mock(UserTable.class);
+    return mock;
+  }
+  
+  public static Control getControlMock() {
+    Control mock = mock(Control.class);
     return mock;
   }
   

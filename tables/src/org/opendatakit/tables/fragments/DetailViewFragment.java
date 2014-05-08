@@ -57,6 +57,9 @@ public class DetailViewFragment extends AbsWebTableFragment {
         getAppName(),
         result,
         getFileName());
+    // Now save the references.
+    this.mControlReference = control;
+    this.mTableDataReference = tableData;
     return result;
   }
   

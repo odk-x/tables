@@ -1,7 +1,9 @@
 package org.opendatakit.tables.fragments;
 
 import org.opendatakit.tables.views.webkits.Control;
+import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.CustomView;
+import org.opendatakit.tables.views.webkits.TableDataIf;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -35,7 +37,9 @@ public interface IWebFragment {
   /**
    * Create and return the {@link WebView} that will be added to this fragment.
    * Any JavaScript interfaces that will be added should be added to the
-   * view before it is returned.
+   * view before it is returned. If these objects are {@link ControlIf} or
+   * {@link TableDataIf}, a reference must be saved in the calling fragment or
+   * it will eventually return null.
    * @return
    */
   public WebView buildView();
@@ -45,5 +49,11 @@ public interface IWebFragment {
    * @return
    */
   public String getFileName();
+  
+  /**
+   * Create a {@link Control} object that can be added to this webview.
+   * @return
+   */
+  public Control createControlObject();
 
 }

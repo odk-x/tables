@@ -108,6 +108,7 @@ public class Constants {
     public static final String DETAIL_FRAGMENT = "tagDetailFragment";
     public static final String INITIALIZE_TASK_DIALOG = "tagInitializeTask";
     public static final String TABLE_MANAGER = "tagFragmentManager";
+    public static final String WEB_FRAGMENT = "tagWebFragment";
   }
 
   public static class PreferenceKeys {
@@ -142,6 +143,7 @@ public class Constants {
     public static final int LAUNCH_DISPLAY_PREFS = 6;
     public static final int LAUNCH_IMPORT_EXPORT = 7;
     public static final int LAUNCH_SYNC = 8;
+    public static final int LAUNCH_TABLE_MANAGER = 9;
   }
   
   /**
