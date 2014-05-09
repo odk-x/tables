@@ -1,5 +1,8 @@
 package org.opendatakit.tables.fragments;
 
+import java.io.File;
+
+import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
@@ -53,6 +56,9 @@ public class GraphViewFragment extends AbsWebTableFragment {
         Constants.JavaScriptHandles.CONTROL);
     String relativePathToGraphFile =
         TableFileUtils.getRelativePathToGraphFile(getAppName());
+    String relativePath = ODKFileUtils.asUriFragment(
+        getAppName(),
+        new File(relativePathToGraphFile));
     GraphData graphData =
         new GraphData(getTableProperties(), this.getGraphName());
     result.addJavascriptInterface(
@@ -62,12 +68,12 @@ public class GraphViewFragment extends AbsWebTableFragment {
         getActivity(),
         getAppName(),
         result,
-        relativePathToGraphFile);
+        relativePath);
     // Save the references
     this.mControlReference = control;
     this.mTableDataReference = tableData;
     this.mGraphDataStrongReference = graphData;
-    return buildView();
+    return result;
   }
 
   @Override
