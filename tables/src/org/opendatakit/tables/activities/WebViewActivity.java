@@ -51,9 +51,9 @@ public class WebViewActivity extends AbsBaseActivity {
    * @return
    */
   protected String retrieveFileName(Bundle savedInstanceState) {
-    String result = IntentUtil.retrieveFileNameFromActivityOrSavedState(
+    String result = IntentUtil.retrieveFileNameFromSavedStateOrArguments(
         savedInstanceState,
-        this);
+        this.getIntent().getExtras());
     return result;
   }
   

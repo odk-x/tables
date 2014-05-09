@@ -7,6 +7,8 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableActivity;
+import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.views.webkits.CustomTableView;
 
 import android.app.Fragment;
@@ -87,7 +89,7 @@ public class TableMapListFragment extends Fragment {
       // Create the custom view and set it.
       CustomTableView view = CustomTableView.get(getActivity(), tp.getAppName(), table,
           filename, mIndexes, getFragmentManager()
-          .findFragmentByTag(TableMapFragment.FRAGMENT_TAG_MAP));
+          .findFragmentByTag(Constants.FragmentTags.MAP_INNER_MAP));
       view.display();
 
       LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -140,7 +142,7 @@ public class TableMapListFragment extends Fragment {
    *          The new visibility of the fragment (constants found in View).
    */
   public void setVisibility(int visibility) {
-    if (!TableMapFragment.isTabletDevice(getActivity())) {
+    if (!ActivityUtil.isTabletDevice(getActivity())) {
       mContainer.setVisibility(visibility);
     }
   }

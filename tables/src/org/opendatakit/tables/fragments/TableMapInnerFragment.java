@@ -19,6 +19,7 @@ import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
+import org.opendatakit.tables.utils.ActivityUtil;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -123,7 +124,7 @@ public class TableMapInnerFragment extends MapFragment {
     }
     getMap().setOnMapLongClickListener(getOnMapLongClickListener());
     getMap().setOnMapClickListener(getOnMapClickListener());
-    if (TableMapFragment.isTabletDevice(getActivity())) {
+    if (ActivityUtil.isTabletDevice(getActivity())) {
       getMap().setOnCameraChangeListener(getCameraChangeListener());
     }
   }
@@ -173,10 +174,14 @@ public class TableMapInnerFragment extends MapFragment {
         .getTableProperties();
 
     // Grab the key value store helper from the map fragment.
-    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-    String colorType = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_TYPE);
+    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(
+        TableMapFragment.KVS_PARTITION);
+    String colorType = kvsHelper.getString(
+        TablePropertiesManager.KEY_COLOR_RULE_TYPE);
     if (colorType == null) {
-      kvsHelper.setString(TablePropertiesManager.KEY_COLOR_RULE_TYPE, TablePropertiesManager.COLOR_TYPE_NONE);
+      kvsHelper.setString(
+          TablePropertiesManager.KEY_COLOR_RULE_TYPE,
+          TablePropertiesManager.COLOR_TYPE_NONE);
       colorType = TablePropertiesManager.COLOR_TYPE_NONE;
     }
 
@@ -189,11 +194,33 @@ public class TableMapInnerFragment extends MapFragment {
       mColorGroup = ColorRuleGroup.getStatusColumnRuleGroup(tp);
     }
     if (colorType.equals(TablePropertiesManager.COLOR_TYPE_COLUMN)) {
-      String colorColumnKey = kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
+      String colorColumnKey =
+          kvsHelper.getString(TablePropertiesManager.KEY_COLOR_RULE_COLUMN);
       if (colorColumnKey != null) {
         mColorGroup = ColorRuleGroup.getColumnColorRuleGroup(tp, colorColumnKey);
       }
     }
+  }
+  
+  /**
+   * Get the {@link TableProperties} that is associated with the table this
+   * view is displaying.
+   * @return
+   */
+  TableProperties retrieveTableProperties() {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    TableProperties result = activity.getTableProperties();
+    return result;
+  }
+  
+  /**
+   * Get the {@link UserTable} that this view is displaying.
+   * @return
+   */
+  UserTable retrieveUserTable() {
+    TableDisplayActivity activity = (TableDisplayActivity) this.getActivity();
+    UserTable result = activity.getUserTable();
+    return result;
   }
 
   /**
@@ -214,18 +241,21 @@ public class TableMapInnerFragment extends MapFragment {
     String latitudeElementKey = getLatitudeElementKey();
     String longitudeElementKey = getLongitudeElementKey();
     if (latitudeElementKey == null || longitudeElementKey == null) {
-      Toast.makeText(getActivity(), getActivity().getString(R.string.lat_long_not_set),
+      Toast.makeText(
+          getActivity(),
+          getActivity().getString(R.string.lat_long_not_set),
           Toast.LENGTH_LONG).show();
       return;
     }
 
-    TableProperties tp =
-        ((TableDisplayActivity) getActivity()).getTableProperties();
-    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
+    TableProperties tp = this.retrieveTableProperties();
+    UserTable table = this.retrieveUserTable();
 
     // Try to find the map columns in the store.
-    ColumnProperties latitudeColumn = tp.getColumnByElementKey(latitudeElementKey);
-    ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
+    ColumnProperties latitudeColumn =
+        tp.getColumnByElementKey(latitudeElementKey);
+    ColumnProperties longitudeColumn =
+        tp.getColumnByElementKey(longitudeElementKey);
 
     // Find the locations from entries in the table.
     LatLng firstLocation = null;
@@ -233,19 +263,29 @@ public class TableMapInnerFragment extends MapFragment {
     // Go through each row and create a marker at the specified location.
     for (int i = 0; i < table.getNumberOfRows(); i++) {
       Row row = table.getRowAtIndex(i);
-      String latitudeString = row.getDataOrMetadataByElementKey(latitudeColumn.getElementKey());
-      String longitudeString = row.getDataOrMetadataByElementKey(longitudeColumn.getElementKey());
-      if (latitudeString == null || longitudeString == null || latitudeString.length() == 0
-          || longitudeString.length() == 0)
+      String latitudeString = row.getDataOrMetadataByElementKey(
+          latitudeColumn.getElementKey());
+      String longitudeString = row.getDataOrMetadataByElementKey(
+          longitudeColumn.getElementKey());
+      if (latitudeString == null ||
+          longitudeString == null ||
+          latitudeString.length() == 0 ||
+          longitudeString.length() == 0) {
         continue;
+      }
 
       // Create a LatLng from the latitude and longitude strings.
-      LatLng location = parseLocationFromString(latitudeColumn, latitudeString,
-                                                longitudeColumn, longitudeString);
-      if (location == null)
+      LatLng location = parseLocationFromString(
+          latitudeColumn,
+          latitudeString,
+          longitudeColumn,
+          longitudeString);
+      if (location == null) {
         continue;
-      if (firstLocation == null)
+      }
+      if (firstLocation == null) {
         firstLocation = location;
+      }
 
       Marker marker = getMap().addMarker(
           new MarkerOptions().position(location).draggable(false)
@@ -272,7 +312,7 @@ public class TableMapInnerFragment extends MapFragment {
    *         marker color if no rules apply to the row.
    */
   private float getHueForRow(int index) {
-    UserTable table = ((TableDisplayActivity) getActivity()).getUserTable();
+    UserTable table = this.retrieveUserTable();
     // Create a guide depending on the color group.
     if (mColorGroup != null) {
       ColorGuide guide = mColorGroup.getColorGuide(table.getRowAtIndex(index));
@@ -288,12 +328,13 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   private String getLatitudeElementKey() {
-    TableProperties tp =
-        ((TableDisplayActivity) getActivity()).getTableProperties();
+    TableProperties tp = this.retrieveTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
-    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-    String latitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
+    final KeyValueStoreHelper kvsHelper =
+        tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+    String latitudeElementKey =
+        kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
@@ -301,22 +342,24 @@ public class TableMapInnerFragment extends MapFragment {
         ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         if (tp.isLatitudeColumn(geoPointCols, cp)) {
           latitudeElementKey = elementKey;
-          kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, latitudeElementKey);
+          kvsHelper.setString(
+              TableMapFragment.KEY_MAP_LAT_COL,
+              latitudeElementKey);
           break;
         }
       }
     }
-
     return latitudeElementKey;
   }
 
   private String getLongitudeElementKey() {
-    TableProperties tp =
-        ((TableDisplayActivity) getActivity()).getTableProperties();
+    TableProperties tp = this.retrieveTableProperties();
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
-    final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-    String longitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
+    final KeyValueStoreHelper kvsHelper =
+        tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+    String longitudeElementKey =
+        kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
@@ -324,12 +367,13 @@ public class TableMapInnerFragment extends MapFragment {
         ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         if (tp.isLongitudeColumn(geoPointCols, cp)) {
           longitudeElementKey = elementKey;
-          kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, longitudeElementKey);
+          kvsHelper.setString(
+              TableMapFragment.KEY_MAP_LONG_COL,
+              longitudeElementKey);
           break;
         }
       }
     }
-
     return longitudeElementKey;
   }
 
@@ -341,9 +385,14 @@ public class TableMapInnerFragment extends MapFragment {
   private LatLng parseLocationFromString(String location) {
     String[] split = location.split(",");
     try {
-      return new LatLng(Double.parseDouble(split[0]), Double.parseDouble(split[1]));
+      return new LatLng(
+          Double.parseDouble(split[0]),
+          Double.parseDouble(split[1]));
     } catch (Exception e) {
-      Log.e(TAG, "The following location is not in the proper lat,lng form: " + location);
+      Log.e(
+          TAG,
+          "The following location is not in the proper lat,lng form: " +
+              location);
     }
     return null;
   }
@@ -351,23 +400,28 @@ public class TableMapInnerFragment extends MapFragment {
   /**
    * Parses the latitude and longitude strings and creates a LatLng.
    */
-  private LatLng parseLocationFromString( ColumnProperties latitudeColumn, String latitude,
-                                          ColumnProperties longitudeColumn, String longitude) {
+  private LatLng parseLocationFromString(
+      ColumnProperties latitudeColumn,
+      String latitude,
+      ColumnProperties longitudeColumn,
+      String longitude) {
     try {
-      if ( latitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
+      if (latitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
         String[] parts = latitude.split(",");
         latitude = parts[0].trim();
       }
-
       if ( longitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
         String[] parts = longitude.split(",");
         longitude = parts[1].trim();
       }
       return new LatLng(Double.parseDouble(latitude), Double.parseDouble(longitude));
     } catch (Exception e) {
-      // Log.e(TAG, "The following location is not in the proper lat,lng form: "
-      // + latitude + ","
-      // + longitude);
+       Log.e(
+           TAG,
+           "The following location did not parse correctly: " +
+           latitude +
+           "," +
+           longitude);
     }
     return null;
   }
@@ -403,25 +457,39 @@ public class TableMapInnerFragment extends MapFragment {
         }
         final KeyValueStoreHelper kvsHelper = tp
             .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
-        String latitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
-        String longitudeElementKey = kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
+        String latitudeElementKey =
+            kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
+        String longitudeElementKey =
+            kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
         {
-          ColumnProperties latitudeColumn = tp.getColumnByElementKey(latitudeElementKey);
-          if ( latitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
-            elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude) +
-                                      "," + Double.toString(location.longitude));
+          ColumnProperties latitudeColumn =
+              tp.getColumnByElementKey(latitudeElementKey);
+          if (latitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
+            elementNameToValue.put(
+                latitudeElementKey,
+                Double.toString(location.latitude) + 
+                  "," +
+                  Double.toString(location.longitude));
           } else {
-            elementNameToValue.put(latitudeElementKey, Double.toString(location.latitude));
+            elementNameToValue.put(
+                latitudeElementKey,
+                Double.toString(location.latitude));
           }
         }
 
         {
-          ColumnProperties longitudeColumn = tp.getColumnByElementKey(longitudeElementKey);
-          if ( longitudeColumn.getColumnType() == ColumnType.GEOPOINT ) {
-            elementNameToValue.put(longitudeElementKey, Double.toString(location.latitude) +
-                                      "," + Double.toString(location.longitude));
+          ColumnProperties longitudeColumn =
+              tp.getColumnByElementKey(longitudeElementKey);
+          if (longitudeColumn.getColumnType() == ColumnType.GEOPOINT) {
+            elementNameToValue.put(
+                longitudeElementKey,
+                Double.toString(location.latitude) +
+                  "," +
+                  Double.toString(location.longitude));
           } else {
-            elementNameToValue.put(longitudeElementKey, Double.toString(location.longitude));
+            elementNameToValue.put(
+                longitudeElementKey,
+                Double.toString(location.longitude));
           }
         }
         // To store the mapping in a bundle, we need to put it in string list.
@@ -432,7 +500,9 @@ public class TableMapInnerFragment extends MapFragment {
         }
         // Bundle it all up for the fragment.
         Bundle b = new Bundle();
-        b.putStringArrayList(LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY, bundleStrings);
+        b.putStringArrayList(
+            LocationDialogFragment.ELEMENT_NAME_TO_VALUE_KEY,
+            bundleStrings);
         b.putString(LocationDialogFragment.LOCATION_KEY, location.toString());
         LocationDialogFragment dialog = new LocationDialogFragment();
         dialog.setArguments(b);
@@ -463,7 +533,8 @@ public class TableMapInnerFragment extends MapFragment {
    */
   private void checkMarkersOnMap() {
     if (getMap() != null) {
-      LatLngBounds bounds = getMap().getProjection().getVisibleRegion().latLngBounds;
+      LatLngBounds bounds =
+          getMap().getProjection().getVisibleRegion().latLngBounds;
       for (Marker marker : mMarkerIds.keySet()) {
         if (bounds.contains(marker.getPosition())) {
           // If the marker is on the screen.
@@ -542,8 +613,13 @@ public class TableMapInnerFragment extends MapFragment {
     double lon2 = EndP.longitude;
     double dLat = Math.toRadians(lat2 - lat1);
     double dLon = Math.toRadians(lon2 - lon1);
-    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1))
-        * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    double a =
+        Math.sin(dLat / 2) *
+        Math.sin(dLat / 2) +
+        Math.cos(Math.toRadians(lat1)) *
+        Math.cos(Math.toRadians(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     double c = 2 * Math.asin(Math.sqrt(a));
     return 6366000 * c;
   }
@@ -556,7 +632,9 @@ public class TableMapInnerFragment extends MapFragment {
     return new OnMarkerClickListener() {
       @Override
       public boolean onMarkerClick(Marker arg0) {
-        int index = (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1;
+        int index = (mCurrentMarker != null) ?
+            mMarkerIds.get(mCurrentMarker) :
+            -1;
 
         // Make the marker visible if it is either invisible or a
         // new marker.
@@ -565,7 +643,7 @@ public class TableMapInnerFragment extends MapFragment {
         if (index != mMarkerIds.get(arg0)) {
           deselectCurrentMarker();
           int newIndex = mMarkerIds.get(arg0);
-          if (TableMapFragment.isTabletDevice(getActivity())) {
+          if (ActivityUtil.isTabletDevice(getActivity())) {
             focusOnMarker(arg0);
           } else {
             selectMarker(arg0);
@@ -610,8 +688,9 @@ public class TableMapInnerFragment extends MapFragment {
       selectMarker(marker);
     }
     getMap().animateCamera(
-        CameraUpdateFactory.newLatLngZoom(mCurrentMarker.getPosition(), getMap()
-            .getCameraPosition().zoom));
+        CameraUpdateFactory.newLatLngZoom(
+            mCurrentMarker.getPosition(),
+            getMap().getCameraPosition().zoom));
   }
 
   /**
@@ -624,8 +703,8 @@ public class TableMapInnerFragment extends MapFragment {
   private void selectMarker(Marker marker) {
     if (mCurrentMarker == marker)
       return;
-
-    marker.setIcon(BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
+    marker.setIcon(
+        BitmapDescriptorFactory.defaultMarker(DEFAULT_SELECTED_MARKER_HUE));
     mCurrentMarker = marker;
   }
 
@@ -637,10 +716,9 @@ public class TableMapInnerFragment extends MapFragment {
     if (mCurrentMarker == null) {
       return;
     }
-
     int index = mMarkerIds.get(mCurrentMarker);
-    mCurrentMarker.setIcon(BitmapDescriptorFactory.defaultMarker(getHueForRow(index)));
-
+    mCurrentMarker.setIcon(
+        BitmapDescriptorFactory.defaultMarker(getHueForRow(index)));
     mCurrentMarker = null;
     listener.onSetIndex(-1);
   }

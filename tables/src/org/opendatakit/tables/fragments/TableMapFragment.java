@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
+import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 
-import android.app.Activity;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +25,8 @@ import android.view.ViewGroup;
  */
 public class TableMapFragment extends AbsTableDisplayFragment implements
     TableMapInnerFragmentListener {
+  
+  private static final String TAG = TableMapFragment.class.getSimpleName();
 
   /** The key for the Key-Value Store Partition for the TableMapFragment. */
   public static final String KVS_PARTITION = "TableMapFragment";
@@ -35,29 +37,52 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   /** The key to grab which file is being used for the list view. */
   public static final String KEY_FILENAME = "keyFilename";
 
-  /** A tag to grab the list view fragment. */
-  public static final String FRAGMENT_TAG_LIST = "fragmentTagList";
-  /** A tag to grab the map view fragment. */
-  public static final String FRAGMENT_TAG_MAP = "fragmentTagMap";
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     // Only add the fragments if we haven't already initialized the state
-    // before.
+    // already.
 //    if (savedInstanceState == null) {
 //      // Create the map fragment.
-//      TableMapInnerFragment map = new TableMapInnerFragment();
+//      TableMapInnerFragment map = this.createInnerMapFragment();
 //
 //      // Create the list fragment.
-//      TableMapListFragment list = new TableMapListFragment();
+//      // Get the name of the list view.
+//      String fileName = IntentUtil.retrieveFileNameFromSavedStateOrArguments(
+//          savedInstanceState,
+//          this.getArguments());
+//      MapListViewFragment listFragment =
+//          this.createMapListViewFragment(fileName);
 //
 //      // Add both the list and the map at the same time.
 //      getFragmentManager().beginTransaction()
-//          .add(R.id.list, list, FRAGMENT_TAG_LIST)
-//          .add(R.id.map, map, FRAGMENT_TAG_MAP)
+//          .add(R.id.list, listFragment, Constants.FragmentTags.MAP_LIST)
+//          .add(R.id.map, map, Constants.FragmentTags.MAP_INNER_MAP)
 //          .commit();
 //    }
+  }
+  
+  /**
+   * Create the inner map fragment that will be displayed.
+   * @return
+   */
+  TableMapInnerFragment createInnerMapFragment() {
+    TableMapInnerFragment result = new TableMapInnerFragment();
+    return result;
+  }
+  
+  /**
+   * Create the list fragment that will be displayed.
+   * @param listViewFileName the file name of the list view that will be
+   * displayed
+   * @return
+   */
+  MapListViewFragment createMapListViewFragment(String listViewFileName) {
+    MapListViewFragment result = new MapListViewFragment();
+    Bundle listArguments = new Bundle();
+    IntentUtil.addFileNameToBundle(listArguments, listViewFileName);
+    result.setArguments(listArguments);
+    return result;
   }
 
   @Override
@@ -84,19 +109,22 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
     FragmentManager fragmentManager = this.getFragmentManager();
     // Attach the fragments if we need them.
     if (getMap() == null) {
-      TableMapInnerFragment mapFragment = new TableMapInnerFragment();
+      TableMapInnerFragment mapFragment = this.createInnerMapFragment();
       mapFragment.listener = this;
       fragmentManager.beginTransaction().add(
-          R.id.list,
+          R.id.map_view_inner_map,
           mapFragment,
           Constants.FragmentTags.MAP_INNER_MAP).commit();
     } else {
       getMap().listener = this;
     }
     if (getList() == null) {
-      TableMapListFragment listFragment = new TableMapListFragment();
+      String fileName =
+          IntentUtil.retrieveFileNameFromBundle(this.getArguments());
+      MapListViewFragment listFragment =
+          this.createMapListViewFragment(fileName);
       fragmentManager.beginTransaction().add(
-          R.id.map,
+          R.id.map_view_list,
           listFragment,
           Constants.FragmentTags.MAP_LIST).commit();
     }
@@ -104,13 +132,19 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void onHideList() {
-    getList().setVisibility(View.GONE);
+    MapListViewFragment mapListViewFragment = this.getList();
+    if (mapListViewFragment == null) {
+      Log.e(TAG, "[onHideList] mapListViewFragment is null. Returning.");
+      return;
+    }
+    FragmentManager fragmentManager = this.getFragmentManager();
+    fragmentManager.beginTransaction().hide(mapListViewFragment).commit();
   }
 
   @Override
   public void onSetIndex(int i) {
-    if (!isTabletDevice(getActivity())) {
-      TableMapListFragment list = getList();
+    if (!ActivityUtil.isTabletDevice(getActivity())) {
+      MapListViewFragment list = getList();
       if (list != null) {
         list.setMapListIndex(i);
       }
@@ -119,9 +153,9 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void onSetInnerIndexes(ArrayList<Integer> indexes) {
-    TableMapListFragment list = getList();
+    MapListViewFragment list = getList();
     if (list != null) {
-      list.setMapListIndexes(indexes);
+      list.setMapListIndices(indexes);
     }
   }
 
@@ -130,48 +164,15 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   }
 
   /** The list view fragment. */
-  private TableMapListFragment getList() {
-    return (TableMapListFragment)
-        getFragmentManager().findFragmentByTag(FRAGMENT_TAG_LIST);
+  MapListViewFragment getList() {
+    return (MapListViewFragment) getFragmentManager().findFragmentByTag(
+        Constants.FragmentTags.MAP_LIST);
   }
 
   /** The map view fragment. */
-  private TableMapInnerFragment getMap() {
-    return (TableMapInnerFragment)
-        getFragmentManager().findFragmentByTag(FRAGMENT_TAG_MAP);
-  }
-
-  /**
-   * Checks if the device is a tablet or a phone
-   *
-   * @param activityContext
-   *          The Activity Context.
-   * @return Returns true if the device is a Tablet
-   */
-  public static boolean isTabletDevice(Context activityContext) {
-    // Verifies if the Generalized Size of the device is XLARGE to be
-    // considered a Tablet
-    boolean xlarge = ((activityContext.getResources().getConfiguration().screenLayout &
-          Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE);
-    // If XLarge, checks if the Generalized Density is at least MDPI
-    // (160dpi)
-    if (xlarge) {
-      DisplayMetrics metrics = new DisplayMetrics();
-      Activity activity = (Activity) activityContext;
-      activity.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-      // MDPI=160, DEFAULT=160, DENSITY_HIGH=240, DENSITY_MEDIUM=160,
-      // DENSITY_TV=213, DENSITY_XHIGH=320
-      if (metrics.densityDpi == DisplayMetrics.DENSITY_DEFAULT
-          || metrics.densityDpi == DisplayMetrics.DENSITY_HIGH
-          || metrics.densityDpi == DisplayMetrics.DENSITY_MEDIUM
-          || metrics.densityDpi == DisplayMetrics.DENSITY_TV
-          || metrics.densityDpi == DisplayMetrics.DENSITY_XHIGH) {
-        // Yes, this is a tablet!
-        return true;
-      }
-    }
-    // No, this is not a tablet!
-    return false;
+  TableMapInnerFragment getMap() {
+    return (TableMapInnerFragment) getFragmentManager().findFragmentByTag(
+        Constants.FragmentTags.MAP_INNER_MAP);
   }
 
   @Override
