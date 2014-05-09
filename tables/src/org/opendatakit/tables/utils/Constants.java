@@ -130,6 +130,7 @@ public class Constants {
       public static String LIST_FILE = "table_pref_list_file";
       public static String DETAIL_FILE = "table_pref_detail_file";
       public static String GRAPH_MANAGER = "table_pref_graph_view_manager";
+      public static String MAP_LIST_FILE = "table_pref_map_list_file";
     }
   }
   

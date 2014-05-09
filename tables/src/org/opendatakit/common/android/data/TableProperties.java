@@ -108,6 +108,10 @@ public class TableProperties {
 
   /** The file name for the detail view that has been set on the table. */
   public static final String KEY_DETAIL_VIEW_FILE_NAME = "detailViewFileName";
+  
+  /** The file name for the list view that is displayed in the map. */
+  public static final String KEY_MAP_LIST_VIEW_FILE_NAME =
+      "mapListViewFileName";
 
   /*
    * Keys that can exist in the key value store but are not defaulted to exist
@@ -1876,6 +1880,18 @@ public class TableProperties {
         this.getKeyValueStoreHelper(KVS_PARTITION);
     String listFileName = kvsh.getString(KEY_LIST_VIEW_FILE_NAME);
     return listFileName;
+  }
+  
+  /**
+   * Return the file name for the list view that has been set to be displayed
+   * in the map view.
+   * @return the file name of the list view, or null if none exists.
+   */
+  public String getMapListViewFileName() {
+    KeyValueStoreHelper kvsh =
+        this.getKeyValueStoreHelper(KVS_PARTITION);
+    String fileName = kvsh.getString(KEY_MAP_LIST_VIEW_FILE_NAME);
+    return fileName;
   }
 
   /**

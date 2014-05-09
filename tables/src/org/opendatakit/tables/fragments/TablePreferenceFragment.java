@@ -77,8 +77,18 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       relativePath = getRelativePathOfFile(fullPath);
       this.setDetailViewFileName(relativePath);
       break;
+    case Constants.RequestCodes.CHOOSE_MAP_FILE:
+      fullPath = getFullPathFromIntent(data);
+      relativePath = getRelativePathOfFile(fullPath);
+      Log.d(
+          TAG,
+          "[onActivityResult] map view relative path is: " +
+              relativePath);
+      this.setMapListViewFileName(relativePath);
+      break;
+    default:
+      super.onActivityResult(requestCode, resultCode, data);
     }
-    super.onActivityResult(requestCode, resultCode, data);
   }
 
   /**
@@ -111,6 +121,16 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         TableProperties.KVS_PARTITION);
     kvsh.setString(TableProperties.KEY_DETAIL_VIEW_FILE_NAME, relativePath);
   }
+  
+  /**
+   * Sets the file name for the list view to be displayed in the map.
+   * @param relativePath
+   */
+  void setMapListViewFileName(String relativePath) {
+    KeyValueStoreHelper kvsh = getTableProperties().getKeyValueStoreHelper(
+        TableProperties.KVS_PARTITION);
+    kvsh.setString(TableProperties.KEY_MAP_LIST_VIEW_FILE_NAME, relativePath);
+  }
 
   /**
    * Convenience method for initializing all the preferences. Requires a
@@ -128,6 +148,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeDetailFile();
     this.initializeListFile();
     this.initializeGraphManager();
+    this.initializeMapListFile();
   }
 
   private void initializeDisplayNamePreference() {
@@ -185,6 +206,22 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         ((AbsBaseActivity) getActivity()).getAppName());
     TableProperties tableProperties = getTableProperties();
     listPref.setSummary(tableProperties.getListViewFileName());
+  }
+  
+  
+  private void initializeMapListFile() {
+    FileSelectorPreference mapListPref = (FileSelectorPreference)
+        this.findPreference(Constants.PreferenceKeys.Table.MAP_LIST_FILE);
+    mapListPref.setFields(
+        this,
+        Constants.RequestCodes.CHOOSE_MAP_FILE,
+        ((AbsBaseActivity) getActivity()).getAppName());
+    TableProperties tableProperties = getTableProperties();
+    Log.d(
+        TAG,
+        "[initializeMapListFile] file is: " +
+            tableProperties.getMapListViewFileName());
+    mapListPref.setSummary(tableProperties.getMapListViewFileName());
   }
 
   private void initializeDetailFile() {
