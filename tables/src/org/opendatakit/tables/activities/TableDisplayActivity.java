@@ -5,6 +5,7 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
+import org.opendatakit.tables.fragments.GraphManagerFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
@@ -401,10 +402,19 @@ public class TableDisplayActivity extends AbsTableActivity
   @Override
   public void showGraphFragment() {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH);
+    FragmentManager fragmentManager = this.getFragmentManager();
+    // Try to retrieve the fragment if it already exists.
+    GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH);
+    if (graphManagerFragment == null) {
+      graphManagerFragment = new GraphManagerFragment();
+    }
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        graphManagerFragment,
+        Constants.FragmentTags.GRAPH).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH);
     this.invalidateOptionsMenu();
-    // TODO Auto-generated method stub
-
   }
 
 
