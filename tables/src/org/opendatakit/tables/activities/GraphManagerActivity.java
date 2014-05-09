@@ -177,9 +177,9 @@ public class GraphManagerActivity extends ListActivity {
     String graphName = (String) getListView().getItemAtPosition(position);
     Intent newGraphViewIntent = new Intent(this, GraphDisplayActivity.class);
     newGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
-    newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
-    newGraphViewIntent
-        .putExtra(Controller.INTENT_KEY_CURRENT_VIEW_TYPE, TableViewType.GRAPH.name());
+//    newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+//    newGraphViewIntent
+//        .putExtra(Controller.INTENT_KEY_CURRENT_VIEW_TYPE, TableViewType.GRAPH.name());
     newGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
         getPotentialGraphName());
     newGraphViewIntent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, graphName);
@@ -316,7 +316,7 @@ public class GraphManagerActivity extends ListActivity {
       menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
       Intent editGraphViewIntent = new Intent(GraphManagerActivity.this, GraphDisplayActivity.class);
       editGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, appName);
-      editGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tableId);
+//      editGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tableId);
       editGraphViewIntent.putExtra(GraphDisplayActivity.KEY_GRAPH_VIEW_NAME, entryName);
       editGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
           getPotentialGraphName());
@@ -431,7 +431,7 @@ public class GraphManagerActivity extends ListActivity {
   private void createNewGraph() {
     Intent newGraphViewIntent = new Intent(this, GraphDisplayActivity.class);
     newGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-    newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+//    newGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
     newGraphViewIntent.putExtra(GraphDisplayActivity.POTENTIAL_GRAPH_VIEW_NAME,
         getPotentialGraphName());
     startActivity(newGraphViewIntent);

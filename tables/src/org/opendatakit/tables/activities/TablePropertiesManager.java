@@ -94,7 +94,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    String tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+    String tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
@@ -344,11 +344,11 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         @Override
         public boolean onPreferenceClick(Preference preference) {
-          Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
-              ListViewManager.class);
-          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
-          startActivity(selectListViewIntent);
+//          Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
+//              ListViewManager.class);
+//          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+//          startActivity(selectListViewIntent);
           return true;
         }
 
@@ -406,7 +406,9 @@ public class TablePropertiesManager extends PreferenceActivity {
           Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
               GraphManagerActivity.class);
           selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-          selectGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+          selectGraphViewIntent.putExtra(
+              Constants.IntentKeys.TABLE_ID,
+              tp.getTableId());
           startActivity(selectGraphViewIntent);
           return true;
         }

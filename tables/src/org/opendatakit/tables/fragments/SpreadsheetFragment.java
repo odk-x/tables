@@ -15,14 +15,12 @@ import org.opendatakit.common.android.data.ColumnType;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.JoinColumn;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.utils.DataUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.ColorRuleManagerActivity;
 import org.opendatakit.tables.activities.ConflictResolutionRowActivity;
-import org.opendatakit.tables.activities.Controller;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.ActivityUtil;
@@ -34,6 +32,7 @@ import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
+import org.opendatakit.tables.views.SpreadsheetView.Controller;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -243,16 +242,22 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
       sqlSelectionArgs =
           newSelectionArgs.toArray(new String[newSelectionArgs.size()]);
     }
-    Controller.launchTableActivity(
-        this.getActivity(),
-        this.getTableProperties(),
-        TableViewType.SPREADSHEET,
+    Intent intent = new Intent(this.getActivity(), TableDisplayActivity.class);
+    Bundle extras = new Bundle();
+    IntentUtil.addSQLKeysToBundle(
+        extras,
         sqlWhereClause,
         sqlSelectionArgs,
         null,
         null,
         sqlOrderByElementKey,
         sqlOrderByDirection);
+    IntentUtil.addFragmentViewTypeToBundle(
+        extras,
+        ViewFragmentType.SPREADSHEET);
+    IntentUtil.addAppNameToBundle(extras, this.getAppName());
+    intent.putExtras(extras);
+    this.startActivityForResult(intent, Constants.RequestCodes.LAUNCH_VIEW);
   }
 
   void openCellEditDialog(SpreadsheetCell cell) {
@@ -575,7 +580,8 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
                        ConflictResolutionRowActivity.class);
                    i.putExtra(Constants.IntentKeys.APP_NAME,
                        spreadsheetTable.getAppName());
-                   i.putExtra(Controller.INTENT_KEY_TABLE_ID,
+                   i.putExtra(
+                       Constants.IntentKeys.TABLE_ID,
                        spreadsheetTable.getTableId());
                    String conflictRowId = cell.row.getRowId();
                    i.putExtra(
@@ -672,7 +678,20 @@ public class SpreadsheetFragment extends AbsTableDisplayFragment
                              .getElementKey();
                          // I would prefer this kind of query to be set in another
                          // object, but alas, it looks like atm it is hardcoded.
-                         Controller.launchTableActivity(context, joinedTable, joinedTable.getDefaultViewType());
+                         Intent intent = new Intent(
+                             context,
+                             TableDisplayActivity.class);
+                         Bundle extras = new Bundle();
+                         IntentUtil.addAppNameToBundle(extras, getAppName());
+                         // TODO: pass the correct view type.
+                         IntentUtil.addFragmentViewTypeToBundle(
+                             extras,
+                             ViewFragmentType.SPREADSHEET);
+                         intent.putExtras(extras);
+                         getActivity().startActivityForResult(
+                             intent,
+                             Constants.RequestCodes.LAUNCH_VIEW);
+//                         Controller.launchTableActivity(context, joinedTable, joinedTable.getDefaultViewType());
                            removeOverlay();
                      }
                    }

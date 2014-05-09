@@ -96,7 +96,7 @@ public class ColumnManager extends ListActivity {
     if (appName == null) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+    tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     tp = TableProperties.getTablePropertiesForTable(this, appName, tableId);
     // We need to order the ColumnProperties appropriately
     Map<String, ColumnProperties> allCols = tp.getAllColumns();
@@ -179,9 +179,9 @@ public class ColumnManager extends ListActivity {
       alertForNewColumnName(null);
       return true;
     case android.R.id.home:
-      Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME, appName);
-      startActivity(i);
+//      Intent i = new Intent(this, TableManager.class);
+//      i.putExtra(Constants.IntentKeys.APP_NAME, appName);
+//      startActivity(i);
       return true;
     }
     return false;

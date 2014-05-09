@@ -123,7 +123,7 @@ public class ConflictResolutionRowActivity extends ListActivity
         (Button) findViewById(R.id.conflict_resolution_button_resolve_row);
     this.mButtonResolveRow.setOnClickListener(new ResolveRowClickListener());
     String tableId =
-        getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+        getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     this.mRowId = getIntent().getStringExtra(INTENT_KEY_ROW_ID);
     TableProperties tableProperties =
         TableProperties.getTablePropertiesForTable(this, appName, tableId);

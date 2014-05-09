@@ -52,7 +52,7 @@ import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utilities.WebUtils;
 import org.opendatakit.common.android.utils.DataUtil;
-import org.opendatakit.tables.activities.Controller;
+import org.opendatakit.tables.views.SpreadsheetView.Controller;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -1050,7 +1050,7 @@ public class CollectUtil {
     preferences.edit().putString(PREFERENCE_KEY_EDITED_ROW_ID, rowId).commit();
     activityToAwaitReturn.startActivityForResult(
         collectEditIntent,
-        Controller.RCODE_ODK_COLLECT_EDIT_ROW);
+        Constants.RequestCodes.EDIT_ROW_COLLECT);
   }
 
   /**
@@ -1082,7 +1082,7 @@ public class CollectUtil {
         tp.getTableId()).commit();
     activityToAwaitReturn.startActivityForResult(
         collectAddIntent,
-        Controller.RCODE_ODK_COLLECT_ADD_ROW_SPECIFIED_TABLE);
+        Constants.RequestCodes.ADD_ROW_COLLECT);
   }
   /**
    * This gets a map of values for insertion into a row after returning from a

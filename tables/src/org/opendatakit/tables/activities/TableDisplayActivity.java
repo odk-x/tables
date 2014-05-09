@@ -241,7 +241,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * @param viewType
    * @return
    */
-  protected ViewFragmentType getViewFragmentTypeFromViewType(
+  public ViewFragmentType getViewFragmentTypeFromViewType(
       TableViewType viewType) {
     switch (viewType) {
     case SPREADSHEET:
