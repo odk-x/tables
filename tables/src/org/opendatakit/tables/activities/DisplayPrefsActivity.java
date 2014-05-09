@@ -146,7 +146,7 @@ public class DisplayPrefsActivity extends PreferenceActivity {
 
     PreferenceCategory genCat = new PreferenceCategory(this);
     root.addPreference(genCat);
-    genCat.setTitle(getString(R.string.display_prefs_for, tp.getDbTableName()));
+    genCat.setTitle(getString(R.string.display_prefs_for, tp.getLocalizedDisplayName()));
 
     final SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
     fontSizePref.addDefaultOption(true);

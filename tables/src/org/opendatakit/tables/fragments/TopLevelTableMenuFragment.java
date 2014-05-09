@@ -8,12 +8,7 @@ import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.AbsTableActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.types.FormType;
 import org.opendatakit.tables.utils.ActivityUtil;
-import org.opendatakit.tables.utils.CollectUtil;
-import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.utils.SurveyUtil;
-import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -30,7 +25,7 @@ import android.view.MenuItem;
  *
  */
 public class TopLevelTableMenuFragment extends AbsBaseFragment {
-  
+
   public interface ITopLevelTableMenuActivity {
     /**
      * Get the fragment type that is currently being displayed by the activity.
@@ -43,10 +38,10 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
     public void showListFragment();
     public void showGraphFragment();
   }
-  
-  private static final String TAG = 
+
+  private static final String TAG =
       TopLevelTableMenuFragment.class.getSimpleName();
-  
+
   @Override
   public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -59,7 +54,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
       		"an " + ITopLevelTableMenuActivity.class.getSimpleName());
     }
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -67,7 +62,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
     // The whole point of this class is to display the menus.
     this.setHasOptionsMenu(true);
   }
-  
+
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     super.onCreateOptionsMenu(menu, inflater);
@@ -80,7 +75,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
         menu);
     selectCorrectViewType(retrieveInterfaceImpl(), menu);
   }
-  
+
   /**
    * Selects the correct view type that is being displayed by the
    * {@link ITopLevelTableMenuActivity}.
@@ -121,18 +116,18 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
       Log.e(TAG, "view type not recognized: " + currentFragment);
     }
   }
-  
+
   /**
    * Retrieve the implementation of {@link ITopLevelTableMenuActivity} this
    * object is plugged into.
    * @return
    */
   ITopLevelTableMenuActivity retrieveInterfaceImpl() {
-    ITopLevelTableMenuActivity impl = 
+    ITopLevelTableMenuActivity impl =
         (ITopLevelTableMenuActivity) getActivity();
     return impl;
   }
-  
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     ITopLevelTableMenuActivity interfaceImpl = retrieveInterfaceImpl();
@@ -166,7 +161,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
       return super.onOptionsItemSelected(item);
     }
   };
-  
+
   /**
    * Retrieve the {@link TableViewType}s that are valid for the table
    * associated with the {@link TableDisplayActivity}.
@@ -175,7 +170,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
   PossibleTableViewTypes getPossibleViewTypes() {
     return this.getTableProperties().getPossibleViewTypes();
   }
-  
+
   /**
    * Return the {@link TableProperties} associated with the Activity related
    * to this table.
@@ -185,7 +180,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
     TableDisplayActivity activity = (TableDisplayActivity) this.getActivity();
     return activity.getTableProperties();
   }
-  
+
   /**
    * Disable or enable those menu items corresponding to view types that are
    * currently invalid or valid, respectively. The inflatedMenu must have

@@ -32,7 +32,6 @@ import org.opendatakit.tables.views.CellValueView;
 import org.opendatakit.tables.views.SpreadsheetUserTable;
 import org.opendatakit.tables.views.SpreadsheetUserTable.SpreadsheetCell;
 import org.opendatakit.tables.views.SpreadsheetView;
-import org.opendatakit.tables.views.SpreadsheetView.Controller;
 
 import android.app.AlertDialog;
 import android.content.Context;

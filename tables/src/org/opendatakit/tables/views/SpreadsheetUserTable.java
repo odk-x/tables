@@ -7,7 +7,6 @@ import java.util.Map;
 import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.ColumnProperties;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 

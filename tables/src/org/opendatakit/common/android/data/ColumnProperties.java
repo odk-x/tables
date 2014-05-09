@@ -24,9 +24,7 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.annotate.JsonAutoDetect.Visibility;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.opendatakit.aggregate.odktables.rest.KeyValueStoreConstants;
 import org.opendatakit.common.android.provider.ColumnDefinitionsColumns;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -53,12 +51,6 @@ import android.util.Log;
  * @author sudar.sam@gmail.com
  */
 public class ColumnProperties {
-
-  private static final ObjectMapper mapper;
-  static {
-    mapper = new ObjectMapper();
-    mapper.setVisibilityChecker(mapper.getVisibilityChecker().withFieldVisibility(Visibility.ANY));
-  }
 
   private static final String TAG = "ColumnProperties";
 
@@ -305,37 +297,6 @@ public class ColumnProperties {
   public static final String KEY_JOINS = KeyValueStoreConstants.COLUMN_JOINS;
 
   /***********************************
-   * Default values for those keys which require them. TODO When the keys in the
-   * KVS are moved to the respective classes that use them, these should go
-   * there most likely.
-   ***********************************/
-//  public static final boolean DEFAULT_KEY_VISIBLE = true;
-//  public static final String DEFAULT_KEY_DISPLAY_FORMAT = null;
-//  public static final ArrayList<String> DEFAULT_KEY_DISPLAY_CHOICES_MAP = new ArrayList<String>();
-
-  /***********************************
-   * Keys for json.
-   ***********************************/
-
-  // keys for JSON
-  private static final String JSON_KEY_VERSION = "jVersion";
-  private static final String JSON_KEY_TABLE_ID = "tableId";
-
-  public static final String JSON_KEY_ELEMENT_KEY = "elementKey";// (was
-                                                                 // dbColumnName)
-  public static final String JSON_KEY_ELEMENT_NAME = "elementName";
-  private static final String JSON_KEY_ELEMENT_TYPE = "elementType"; // (was
-                                                                     // colType)
-  private static final String JSON_KEY_LIST_CHILD_ELEMENT_KEYS = "listChildElementKeys";
-  private static final String JSON_KEY_JOINS = "joins";
-  private static final String JSON_KEY_IS_UNIT_OF_RETENTION = "isUnitOfRetention";
-
-  private static final String JSON_KEY_DISPLAY_VISIBLE = "displayVisible";
-  private static final String JSON_KEY_DISPLAY_NAME = "displayName";
-  private static final String JSON_KEY_DISPLAY_CHOICES_LIST = "displayChoicesList";
-  private static final String JSON_KEY_DISPLAY_FORMAT = "displayFormat";
-
-  /***********************************
    * The fields that make up a ColumnProperties object.
    ***********************************/
   /*
@@ -492,14 +453,14 @@ public class ColumnProperties {
       if (kvsProps.get(KEY_DISPLAY_CHOICES_LIST) != null) {
         String displayChoicesListValue = kvsProps.get(KEY_DISPLAY_CHOICES_LIST);
         parseValue = displayChoicesListValue;
-        displayChoicesList = mapper.readValue(displayChoicesListValue, ArrayList.class);
+        displayChoicesList = ODKFileUtils.mapper.readValue(displayChoicesListValue, ArrayList.class);
       }
 
       if (columnDefinitions.get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS) != null) {
         String listChildElementKeysValue = columnDefinitions
             .get(ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS);
         parseValue = listChildElementKeysValue;
-        listChildElementKeys = mapper.readValue(listChildElementKeysValue, ArrayList.class);
+        listChildElementKeys = ODKFileUtils.mapper.readValue(listChildElementKeysValue, ArrayList.class);
       }
 
       String joinsValue = kvsProps.get(KEY_JOINS);
@@ -544,7 +505,7 @@ public class ColumnProperties {
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_NAME, jsonStringifyDisplayName));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
-        KEY_DISPLAY_CHOICES_LIST, mapper.writeValueAsString(displayChoicesList)));
+        KEY_DISPLAY_CHOICES_LIST, ODKFileUtils.mapper.writeValueAsString(displayChoicesList)));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
         KEY_DISPLAY_FORMAT, displayFormat));
     values.add(createStringEntry(tableId, ColumnProperties.KVS_PARTITION, elementKey,
@@ -554,7 +515,7 @@ public class ColumnProperties {
     kvs.addEntriesToStore(db, values);
 
     ColumnDefinitions.assertColumnDefinition(db, tableId, elementKey, elementName, elementType,
-        mapper.writeValueAsString(listChildElementKeys), isUnitOfRetention);
+        ODKFileUtils.mapper.writeValueAsString(listChildElementKeys), isUnitOfRetention);
   }
 
   public enum ColumnDefinitionChange {
@@ -727,7 +688,7 @@ public class ColumnProperties {
     try {
       String strListChildElementKeys = null;
       if (listChildElementKeys != null && listChildElementKeys.size() > 0) {
-        strListChildElementKeys = mapper.writeValueAsString(listChildElementKeys);
+        strListChildElementKeys = ODKFileUtils.mapper.writeValueAsString(listChildElementKeys);
       }
       setStringProperty(db, ColumnDefinitionsColumns.LIST_CHILD_ELEMENT_KEYS, strListChildElementKeys);
       this.listChildElementKeys = listChildElementKeys;
@@ -816,7 +777,7 @@ public class ColumnProperties {
     try {
       this.displayName = null;
       if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
-        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        Object displayObject = ODKFileUtils.mapper.readValue(jsonStringifyDisplayName, Object.class);
         if ( displayObject instanceof String ) {
           this.displayName = (String)  displayObject;
           if ( this.displayName == null || this.displayName.length() == 0 ) {
@@ -833,7 +794,7 @@ public class ColumnProperties {
           }
           if ( this.displayName == null || this.displayName.length() == 0 ) {
     	  	((Map) displayObject).put("default", this.elementName);
-    	  	this.jsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
+    	  	this.jsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
         	this.displayName = this.elementName;
           }
         }
@@ -877,23 +838,23 @@ public class ColumnProperties {
       }
       // parse the existing jsonStringifyDisplayName value...
       if (jsonStringifyDisplayName != null && jsonStringifyDisplayName.length() > 0) {
-        Object displayObject = mapper.readValue(jsonStringifyDisplayName, Object.class);
+        Object displayObject = ODKFileUtils.mapper.readValue(jsonStringifyDisplayName, Object.class);
         if ( displayObject instanceof String ) {
           // just overwrite it...
-          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+          String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
           setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         } else if ( displayObject instanceof Map ) {
           // TODO: get current locale; deal with non-default locales
           ((Map) displayObject).put("default", displayName);
-          String newJsonStringifyDisplayName = mapper.writeValueAsString(displayObject);
+          String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayObject);
           setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
           this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
           this.displayName = displayName;
         }
       } else {
-        String newJsonStringifyDisplayName = mapper.writeValueAsString(displayName);
+        String newJsonStringifyDisplayName = ODKFileUtils.mapper.writeValueAsString(displayName);
         setStringProperty(db, KEY_DISPLAY_NAME, newJsonStringifyDisplayName);
         this.jsonStringifyDisplayName = newJsonStringifyDisplayName;
         this.displayName = displayName;
@@ -981,7 +942,7 @@ public class ColumnProperties {
     try {
       String encoding = null;
       if (options != null && options.size() > 0) {
-        encoding = mapper.writeValueAsString(options);
+        encoding = ODKFileUtils.mapper.writeValueAsString(options);
       }
       setStringProperty(db, KEY_DISPLAY_CHOICES_LIST, encoding);
       displayChoicesList = options;
@@ -995,93 +956,6 @@ public class ColumnProperties {
       e.printStackTrace();
       throw new IllegalArgumentException("setDisplayChoicesList failed: " + options.toString(), e);
     }
-  }
-
-  // Map<String, Object> toJson() {
-  String toJson() throws JsonGenerationException, JsonMappingException, IOException {
-    Map<String, Object> jo = new HashMap<String, Object>();
-    jo.put(JSON_KEY_VERSION, 1);
-    jo.put(JSON_KEY_TABLE_ID, tableId);
-    jo.put(JSON_KEY_ELEMENT_KEY, elementKey);
-    jo.put(JSON_KEY_ELEMENT_NAME, elementName);
-    jo.put(JSON_KEY_JOINS, JoinColumn.toSerialization(joins));
-    jo.put(JSON_KEY_ELEMENT_TYPE, elementType.name());
-    jo.put(JSON_KEY_LIST_CHILD_ELEMENT_KEYS, listChildElementKeys);
-    jo.put(JSON_KEY_IS_UNIT_OF_RETENTION, isUnitOfRetention);
-    jo.put(JSON_KEY_DISPLAY_VISIBLE, displayVisible);
-    jo.put(JSON_KEY_DISPLAY_NAME, jsonStringifyDisplayName);
-    jo.put(JSON_KEY_DISPLAY_CHOICES_LIST, displayChoicesList);
-    jo.put(JSON_KEY_DISPLAY_FORMAT, displayFormat);
-
-    String toReturn = null;
-    try {
-      // I think this removes exceptions from not having getters/setters...
-      toReturn = mapper.writeValueAsString(jo);
-    } catch (JsonGenerationException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("toJson failed - tableId: " + tableId + " elementKey: "
-          + elementKey, e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("toJson failed - tableId: " + tableId + " elementKey: "
-          + elementKey, e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("toJson failed - tableId: " + tableId + " elementKey: "
-          + elementKey, e);
-    }
-    return toReturn;
-  }
-
-  /**
-   * Construct a ColumnProperties object from JSON. NOTE: Nothing is written
-   * to the database. The caller is responsible for writing the changes.
-   *
-   * @param dbh
-   * @param json
-   * @param typeOfStore
-   * @return
-   * @throws JsonParseException
-   * @throws JsonMappingException
-   * @throws IOException
-   */
-  public static ColumnProperties constructColumnPropertiesFromJson(TableProperties tp, String json)
-      throws JsonParseException, JsonMappingException, IOException {
-    Map<String, Object> jo;
-    try {
-      jo = mapper.readValue(json, Map.class);
-    } catch (JsonParseException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("constructColumnPropertiesFromJson failed: " + json, e);
-    } catch (JsonMappingException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("constructColumnPropertiesFromJson failed: " + json, e);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException("constructColumnPropertiesFromJson failed: " + json, e);
-    }
-
-    String joElType = (String) jo.get(JSON_KEY_ELEMENT_TYPE);
-    ColumnType elementType = (joElType == null) ? ColumnType.NONE : ColumnType.valueOf(joElType);
-
-    ArrayList<JoinColumn> joins = JoinColumn.fromSerialization((String) jo.get(JSON_KEY_JOINS));
-    Object joListChildren = jo.get(JSON_KEY_LIST_CHILD_ELEMENT_KEYS);
-    ArrayList<String> listChildren = (joListChildren == null) ? new ArrayList<String>()
-        : (ArrayList<String>) joListChildren;
-    Object joListChoices = jo.get(JSON_KEY_DISPLAY_CHOICES_LIST);
-    ArrayList<String> listChoices = (joListChoices == null) ? new ArrayList<String>()
-        : (ArrayList<String>) joListChoices;
-
-    if ( !((String) jo.get(JSON_KEY_TABLE_ID)).equals(tp.getTableId()) ) {
-      throw new IllegalStateException("TableId of json does not match TableProperties tableId!");
-    }
-    ColumnProperties cp = new ColumnProperties(tp,
-        (String) jo.get(JSON_KEY_ELEMENT_KEY), (String) jo.get(JSON_KEY_ELEMENT_NAME), elementType,
-        listChildren, (Boolean) jo.get(JSON_KEY_IS_UNIT_OF_RETENTION),
-        (Boolean) jo.get(JSON_KEY_DISPLAY_VISIBLE), (String) jo.get(JSON_KEY_DISPLAY_NAME) /** JSON.stringify()'d */,
-        listChoices, (String) jo.get(JSON_KEY_DISPLAY_FORMAT), joins);
-
-    return cp;
   }
 
   private void setIntProperty(SQLiteDatabase db, String property, int value) {

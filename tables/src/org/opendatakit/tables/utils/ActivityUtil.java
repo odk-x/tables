@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
@@ -70,7 +69,7 @@ public class ActivityUtil {
       }
     }
   }
-  
+
   /**
    * Add a row to the table represented by tableProperties. The default form
    * settings will be used.
@@ -82,7 +81,7 @@ public class ActivityUtil {
    */
   public static void addRow(
       AbsBaseActivity activity,
-      TableProperties tableProperties, 
+      TableProperties tableProperties,
       Map<String, String> prepopulatedValues) {
     FormType formType =
         FormType.constructFormType(tableProperties);
@@ -116,7 +115,7 @@ public class ActivityUtil {
           prepopulatedValues);
     }
   }
-  
+
   /**
    * Launch {@link TableLevelPreferencesActivity} to edit a table's
    * properties. Launches with request code
@@ -138,7 +137,7 @@ public class ActivityUtil {
         intent,
         Constants.RequestCodes.LAUNCH_TABLE_PREFS);
   }
-  
+
   /**
    * Checks if the device is a tablet or a phone
    *

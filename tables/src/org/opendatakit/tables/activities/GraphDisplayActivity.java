@@ -15,7 +15,6 @@
  */
 package org.opendatakit.tables.activities;
 
-import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.R;

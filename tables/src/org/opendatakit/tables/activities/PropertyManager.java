@@ -162,7 +162,7 @@ public class PropertyManager extends PreferenceActivity {
           continue;
         }
         tableIds[index] = tp.getTableId();
-        tableNames[index] = tp.getDbTableName();
+        tableNames[index] = tp.getLocalizedDisplayName();
         if (tp.getTableId().equals(joinTableId)) {
           selectedTp = tp;
           selectedTableId = tp.getTableId();

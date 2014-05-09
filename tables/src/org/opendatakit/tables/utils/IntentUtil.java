@@ -3,16 +3,15 @@ package org.opendatakit.tables.utils;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 
-import android.app.Activity;
 import android.os.Bundle;
 
 /**
- * 
+ *
  * @author sudar.sam@gmail.com
  *
  */
 public class IntentUtil {
-  
+
   /**
    * Retrieve the file name from the saved instance state or from the
    * other bundle. Convenience method for calling
@@ -20,7 +19,7 @@ public class IntentUtil {
    * respecting that savedInstanceState may be null.
    * <p>
    * If the file name is non-null in both bundles, savedInstanceState takes
-   * precedent. 
+   * precedent.
    * @param savedInstanceState
    * @param argumentsOrIntentExtras the bundle from either the activity's
    * starting intent or the fragment's arguments.
@@ -39,7 +38,7 @@ public class IntentUtil {
     }
     return result;
   }
-  
+
   /**
    * Retrieve a {@link SQLQueryStruct} from bundle. The various components
    * should be keyed to the SQL intent keys in {@link Constants.IntentKeys}.
@@ -78,7 +77,7 @@ public class IntentUtil {
         sqlOrderByDirection);
     return result;
   }
-  
+
   /**
    * Return the file name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
@@ -93,7 +92,7 @@ public class IntentUtil {
     String fileName = bundle.getString(Constants.IntentKeys.FILE_NAME);
     return fileName;
   }
-  
+
   /**
    * Return the table id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
@@ -108,7 +107,7 @@ public class IntentUtil {
     String tableId = bundle.getString(IntentKeys.TABLE_ID);
     return tableId;
   }
-  
+
   /**
    * Return the app name from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
@@ -123,7 +122,7 @@ public class IntentUtil {
     String appName = bundle.getString(IntentKeys.APP_NAME);
     return appName;
   }
-  
+
   /**
    * Return the row id from the bundle. Convenience method for calling
    * {@link Bundle#getString(String)} with
@@ -138,7 +137,7 @@ public class IntentUtil {
     String rowId = bundle.getString(IntentKeys.ROW_ID);
     return rowId;
   }
-  
+
   /**
    * Add values to intent to prepare to launch a detail view. Convenience
    * method for calling the corresponding methods in this class, including
@@ -162,7 +161,7 @@ public class IntentUtil {
     addFileNameToBundle(bundle, fileName);
     addFragmentViewTypeToBundle(bundle, ViewFragmentType.DETAIL);
   }
-  
+
   /**
    * Add viewFragmentType's {@link ViewFragmentType#name()} to bundle. If
    * bundle or viewFragmentType is null, does nothing.
@@ -178,7 +177,7 @@ public class IntentUtil {
           viewFragmentType.name());
     }
   }
-  
+
   /**
    * Add the sql keys to the bundle. Convenience method for calling the
    * corresponding add methods in this class.
@@ -205,7 +204,7 @@ public class IntentUtil {
     addOrderByElementKeyToBundle(bundle, orderByElementKey);
     addOrderByDirectionToBundle(bundle, orderByDirection);
   }
-  
+
   /**
    * Add orderByElementKey to bundle keyed to
    *  {@link IntentKeys#SQL_ORDER_BY_ELEMENT_KEY}.
@@ -220,7 +219,7 @@ public class IntentUtil {
       bundle.putString(IntentKeys.SQL_ORDER_BY_ELEMENT_KEY, orderByElementKey);
     }
   }
-  
+
   /**
    * Add orderByDirection to bundle keyed to
    *  {@link IntentKeys#SQL_ORDER_BY_DIRECTION}.
@@ -235,7 +234,7 @@ public class IntentUtil {
       bundle.putString(IntentKeys.SQL_ORDER_BY_DIRECTION, orderByDirection);
     }
   }
-  
+
   /**
    * Add whereClause to bundle keyed to {@link IntentKeys#SQL_WHERE}.
    * If bundle or whereClause is null, does nothing.
@@ -249,7 +248,7 @@ public class IntentUtil {
       bundle.putString(IntentKeys.SQL_WHERE, whereClause);
     }
   }
-  
+
   /**
    * Add selectionArgs to bundle keyed to
    * {@link IntentKeys#SQL_SELECTION_ARGS}.
@@ -264,7 +263,7 @@ public class IntentUtil {
       bundle.putStringArray(IntentKeys.SQL_SELECTION_ARGS, selectionArgs);
     }
   }
-  
+
   /**
    * Add having to bundle keyed to
    * {@link IntentKeys#SQL_HAVING}.
@@ -277,7 +276,7 @@ public class IntentUtil {
       bundle.putString(IntentKeys.SQL_HAVING, having);
     }
   }
-  
+
   /**
    * Add groupBy to bundle keyed to
    * {@link IntentKeys#SQL_GROUP_BY_ARGS}.
@@ -292,7 +291,7 @@ public class IntentUtil {
       bundle.putStringArray(IntentKeys.SQL_GROUP_BY_ARGS, groupBy);
     }
   }
-  
+
   /**
    * Add appName to the bundle keyed to {@link Constants.IntentKeys#APP_NAME}.
    * If bundle or appName is null, does nothing.
@@ -304,7 +303,7 @@ public class IntentUtil {
       bundle.putString(Constants.IntentKeys.APP_NAME, appName);
     }
   }
-  
+
   /**
    * Add tableId to bundle keyed to {@link Constants.IntentKeys#TABLE_ID}.
    * If bundle or appName is null, does nothing.
@@ -316,7 +315,7 @@ public class IntentUtil {
       bundle.putString(Constants.IntentKeys.TABLE_ID, tableId);
     }
   }
-  
+
   /**
    * Add rowId to bundle keyed to {@link Constants.IntentKeys#ROW_ID}.
    * If bundle or rowId is null, does nothing.
@@ -328,7 +327,7 @@ public class IntentUtil {
       bundle.putString(Constants.IntentKeys.ROW_ID, rowId);
     }
   }
-  
+
   /**
    * Add fileName to bundle keyed to {@link Constants.IntentKeys#FILE_NAME}.
    * If bundle or fileName is null, does nothing.

@@ -16,7 +16,6 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -418,7 +417,7 @@ public class TableDisplayActivity extends AbsTableActivity
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.invalidateOptionsMenu();
   }
-  
+
   public void showGraphViewFragment(String graphName) {
     Log.d(TAG, "[showGraphViewFragment] graph name: " + graphName);
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);

@@ -2,10 +2,9 @@ package org.opendatakit.tables.fragments;
 
 import java.lang.ref.WeakReference;
 
-import org.opendatakit.tables.activities.AbsBaseActivity;
 import org.opendatakit.tables.utils.Constants;
-import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.utils.IntentUtil;
+import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
 import org.opendatakit.tables.views.webkits.CustomView;
@@ -26,9 +25,9 @@ import android.webkit.WebView;
  * @author sudar.sam@gmail.com
  *
  */
-public abstract class AbsWebTableFragment extends AbsTableDisplayFragment 
+public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     implements IWebFragment {
-  
+
   private static final String TAG = AbsWebTableFragment.class.getSimpleName();
   /**
    * The {@link Control} object that was used to generate the
@@ -44,10 +43,10 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
    * in {@link TableDataIf}.
    */
   protected TableData mTableDataReference;
-  
+
   /** The file name this fragment is displaying. */
   protected String mFileName;
-  
+
   /**
    * Retrieve the file name that should be displayed.
    * @return the file name, or null if one has not been set.
@@ -57,7 +56,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     String fileName = IntentUtil.retrieveFileNameFromBundle(bundle);
     return fileName;
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -70,7 +69,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     }
     this.mFileName = retrievedFileName;
   }
-  
+
   @Override
   public View onCreateView(
       LayoutInflater inflater,
@@ -80,7 +79,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     WebView webView = this.buildView();
     return webView;
   }
-  
+
 
   /**
    * @see IWebFragment#createControlObject()
@@ -90,20 +89,20 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     Control result = new Control(getActivity(), getAppName());
     return result;
   }
-  
+
   /**
    * Create a {@link TableData} object that can be added toe the webview.
    * @return
    */
   protected abstract TableData createDataObject();
-  
+
   @Override
   public void putFileNameInBundle(Bundle bundle) {
     if (this.getFileName() != null) {
       bundle.putString(Constants.IntentKeys.FILE_NAME, this.getFileName());
     }
   }
-  
+
   /**
    * Build the {@link CustomView} that will be displayed by the fragment.
    * @return
@@ -113,7 +112,7 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
     WebView result = WebViewUtil.getODKCompliantWebView(getActivity());
     return result;
   }
-  
+
   /**
    * Get the file name this fragment is displaying.
    */
@@ -121,11 +120,11 @@ public abstract class AbsWebTableFragment extends AbsTableDisplayFragment
   public String getFileName() {
     return this.mFileName;
   }
-  
+
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     this.putFileNameInBundle(outState);
   }
-  
+
 }

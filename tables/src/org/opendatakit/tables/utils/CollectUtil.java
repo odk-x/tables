@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -206,12 +205,11 @@ public class CollectUtil {
    * @return true if the file was successfully written
    */
   private static boolean buildBlankForm(
-      File file,
-      Collection<ColumnProperties> columns,
-      String title,
-      String formId) {
+      File file, TableProperties tp, String formId) {
+
     OutputStreamWriter writer = null;
     try {
+      List<String> columns = tp.getPersistedColumns();
       FileOutputStream out = new FileOutputStream(file);
       writer = new OutputStreamWriter(out, CharEncoding.UTF_8);
       writer.write("<h:html xmlns=\"http://www.w3.org/2002/xforms\" "
@@ -221,7 +219,7 @@ public class CollectUtil {
           + "xmlns:jr=\"http://openrosa.org/javarosa\">");
       writer.write("<h:head>");
       writer.write("<h:title>");
-      writer.write(StringEscapeUtils.escapeXml(title));
+      writer.write(StringEscapeUtils.escapeXml(tp.getLocalizedDisplayName()));
       writer.write("</h:title>");
       writer.write("<model>");
       writer.write("<instance>");
@@ -231,9 +229,9 @@ public class CollectUtil {
       writer.write("id=\"");
       writer.write(StringEscapeUtils.escapeXml(formId));
       writer.write("\">");
-      for (ColumnProperties cp : columns) {
+      for (String elementKey : columns) {
         writer.write("<");
-        writer.write(cp.getElementKey());
+        writer.write(elementKey);
         writer.write("/>");
       }
       writer.write("<meta><instanceID/></meta>");
@@ -241,11 +239,12 @@ public class CollectUtil {
       writer.write(DEFAULT_ROOT_ELEMENT);
       writer.write(">");
       writer.write("</instance>");
-      for (ColumnProperties cp : columns) {
+      for (String elementKey : columns) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         writer.write("<bind nodeset=\"/");
         writer.write(DEFAULT_ROOT_ELEMENT);
         writer.write("/");
-        writer.write(cp.getElementKey());
+        writer.write(elementKey);
         writer.write("\" type=\"");
         writer.write(cp.getColumnType().collectType());
         writer.write("\"/>");
@@ -257,7 +256,8 @@ public class CollectUtil {
 
       writer.write("<itext>");
       writer.write("<translation lang=\"eng\">");
-      for (ColumnProperties cp : columns) {
+      for (String elementKey : columns) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         writer.write("<text id=\"/");
         writer.write(DEFAULT_ROOT_ELEMENT);
         writer.write("/");
@@ -273,7 +273,8 @@ public class CollectUtil {
       writer.write("</model>");
       writer.write("</h:head>");
       writer.write("<h:body>");
-      for (ColumnProperties cp : columns) {
+      for (String elementKey : columns) {
+        ColumnProperties cp = tp.getColumnByElementKey(elementKey);
         String type = cp.getColumnType().collectType();
         String action = "input";
         String additionalAttributes = "";
@@ -790,10 +791,7 @@ public class CollectUtil {
     CollectUtil.deleteForm(resolver, params.getFormId());
     // First we want to write the file.
     boolean writeSuccessful = CollectUtil.buildBlankForm(
-        getAddRowFormFile(tp),
-        tp.getColumnsInOrder(),
-        tp.getLocalizedDisplayName(),
-        params.getFormId());
+        getAddRowFormFile(tp), tp, params.getFormId());
     if (!writeSuccessful) {
       Log.e(TAG, "problem writing file for add row");
       return false;

@@ -18,7 +18,6 @@ package org.opendatakit.tables.activities;
 import java.io.File;
 
 import org.opendatakit.common.android.data.Preferences;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;

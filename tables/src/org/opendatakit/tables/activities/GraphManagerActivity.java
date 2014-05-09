@@ -21,7 +21,6 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
