@@ -14,8 +14,6 @@ import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
-import org.opendatakit.tables.activities.DetailDisplayActivity;
-import org.opendatakit.tables.activities.ListDisplayActivity;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.content.Context;
@@ -127,8 +125,8 @@ public class OutputUtil {
         keyToDisplayName.put(columnProperties.getElementKey(), columnProperties.getLocalizedDisplayName());
       }
     }
-    String defaultDetailFileName = DetailDisplayActivity.getDefaultDetailFileName(tableProperties);
-    String defaultListFileName = ListDisplayActivity.getDefaultListFileName(tableProperties);
+    String defaultDetailFileName = tableProperties.getDetailViewFileName();
+    String defaultListFileName = tableProperties.getListViewFileName();
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_PATH_TO_KEY, pathToKey);
     controlTable.put(CTRL_TABLE_KEY_ELEMENT_KEY_TO_DISPLAY_NAME, keyToDisplayName);
     controlTable.put(CTRL_KEY_DEFAULT_DETAIL_FILE, defaultDetailFileName);
