@@ -241,8 +241,8 @@ public class TopLevelTableMenuFragmentTest {
   
   @Test
   public void graphChecked() {
-    this.setupStateWithCurrentFragment(ViewFragmentType.GRAPH);
-    this.assertItemIsTheOnlyOneChecked(ViewFragmentType.GRAPH);
+    this.setupStateWithCurrentFragment(ViewFragmentType.GRAPH_MANAGER);
+    this.assertItemIsTheOnlyOneChecked(ViewFragmentType.GRAPH_MANAGER);
   }
   
   @Test
@@ -271,7 +271,7 @@ public class TopLevelTableMenuFragmentTest {
     } else {
       assertThat(mapItem).isNotChecked();
     }
-    if (fragmentType == ViewFragmentType.GRAPH) {
+    if (fragmentType == ViewFragmentType.GRAPH_MANAGER) {
       assertThat(graphItem).isChecked();
     } else {
       assertThat(graphItem).isNotCheckable();

@@ -49,7 +49,7 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
     // Set up the adapter.
     ListView listView =
         (ListView) this.getView().findViewById(android.R.id.list);
-    GraphViewAdapter adapter =
+    final GraphViewAdapter adapter =
         new GraphViewAdapter(getActivity(), this.retrieveGraphViews());
     listView.setAdapter(adapter);
     listView.setOnItemClickListener(new OnItemClickListener() {
@@ -63,6 +63,8 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
         TableDisplayActivity activity = (TableDisplayActivity) getActivity();
         // TODO: show the graph display fragment.
         Log.d(TAG, "[onItemClick] selected a graph view");
+        String graphName = retrieveGraphViews().get(position).graphName;
+        activity.showGraphViewFragment(graphName);
       }
     
     });
@@ -107,7 +109,7 @@ public class GraphManagerFragment extends AbsTableDisplayFragment {
 
   @Override
   public ViewFragmentType getFragmentType() {
-    return ViewFragmentType.GRAPH;
+    return ViewFragmentType.GRAPH_MANAGER;
   }
 
 }

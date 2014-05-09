@@ -6,6 +6,7 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
+import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
@@ -43,7 +44,8 @@ public class TableDisplayActivity extends AbsTableActivity
     SPREADSHEET,
     LIST,
     MAP,
-    GRAPH,
+    GRAPH_MANAGER,
+    GRAPH_VIEW,
     DETAIL;
   }
 
@@ -108,7 +110,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case SPREADSHEET:
     case MAP:
     case LIST:
-    case GRAPH:
+    case GRAPH_MANAGER:
       // Show the menu fragment but not the detail view's.
       if (menuFragment != null) {
         menuFragment.setMenuVisibility(true);
@@ -152,7 +154,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case DETAIL:
       this.showDetailFragment();
       break;
-    case GRAPH:
+    case GRAPH_MANAGER:
       this.showGraphFragment();
       break;
     case LIST:
@@ -247,7 +249,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case MAP:
       return ViewFragmentType.MAP;
     case GRAPH:
-      return ViewFragmentType.GRAPH;
+      return ViewFragmentType.GRAPH_MANAGER;
     case LIST:
       return ViewFragmentType.LIST;
     default:
@@ -401,19 +403,42 @@ public class TableDisplayActivity extends AbsTableActivity
 
   @Override
   public void showGraphFragment() {
-    this.setCurrentFragmentType(ViewFragmentType.GRAPH);
+    this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve the fragment if it already exists.
     GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
-        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH);
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
     if (graphManagerFragment == null) {
       graphManagerFragment = new GraphManagerFragment();
     }
     fragmentManager.beginTransaction().replace(
         android.R.id.content,
         graphManagerFragment,
-        Constants.FragmentTags.GRAPH).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH);
+        Constants.FragmentTags.GRAPH_MANAGER).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
+    this.invalidateOptionsMenu();
+  }
+  
+  public void showGraphViewFragment(String graphName) {
+    Log.d(TAG, "[showGraphViewFragment] graph name: " + graphName);
+    this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);
+    // Try and use the default.
+    FragmentManager fragmentManager = this.getFragmentManager();
+    Bundle arguments = new Bundle();
+    arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
+    GraphViewFragment graphViewFragment = (GraphViewFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
+    if (graphViewFragment == null) {
+      graphViewFragment = new GraphViewFragment();
+      graphViewFragment.setArguments(arguments);
+    } else {
+      graphViewFragment.getArguments().putAll(arguments);
+    }
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        graphViewFragment,
+        Constants.FragmentTags.GRAPH_VIEW).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_VIEW);
     this.invalidateOptionsMenu();
   }
 

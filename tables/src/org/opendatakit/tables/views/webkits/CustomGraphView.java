@@ -74,7 +74,7 @@ public class CustomGraphView extends CustomView {
     tableData = new TableData(table);
     addJavascriptInterface(control.getJavascriptInterfaceWithWeakReference(), "control");
     addJavascriptInterface(tableData.getJavascriptInterfaceWithWeakReference(), "data");
-    addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(), "graph_data");
+//    addJavascriptInterface(graphData.getJavascriptInterfaceWithWeakReference(), "graph_data");
     if (filename != null) {
       String fullPath = FileProvider.getAsWebViewUri(getContext(), mAppName,
           ODKFileUtils.asUriFragment(mAppName, new File(filename)));
@@ -125,9 +125,9 @@ public class CustomGraphView extends CustomView {
     private static final String BOX_VALUES = "box_values";
     private static final String MODIFIABLE = "modifiable";
 
-    public GraphDataIf getJavascriptInterfaceWithWeakReference() {
-      return new GraphDataIf(this);
-    }
+//    public GraphDataIf getJavascriptInterfaceWithWeakReference() {
+////      return new GraphDataIf(this);
+//    }
 
     private GraphData(String graphString) {
       isModified = false;

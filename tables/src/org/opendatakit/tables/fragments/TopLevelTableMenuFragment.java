@@ -107,7 +107,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
           R.id.top_level_table_menu_view_list_view);
       menuItem.setChecked(true);
       break;
-    case GRAPH:
+    case GRAPH_MANAGER:
       menuItem = inflatedMenu.findItem(
           R.id.top_level_table_menu_view_graph_view);
       menuItem.setChecked(true);

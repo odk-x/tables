@@ -62,6 +62,8 @@ public class Constants {
         "tableDisplayViewType";
     public static final String FILE_NAME = "filename";
     public static final String ROW_ID = "rowId";
+    /** The name of the graph view that should be displayed. */
+    public static final String GRAPH_NAME = "graphName";
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
@@ -102,7 +104,8 @@ public class Constants {
     public static final String SPREADSHEET = "tagSpreadsheetFragment";
     public static final String MAP = "tagMapFragment";
     public static final String LIST = "tagListFragment";
-    public static final String GRAPH = "tagGraphFragment";
+    public static final String GRAPH_MANAGER = "tagGraphManagerFragment";
+    public static final String GRAPH_VIEW = "tagGraphViewFragment";
     public static final String MAP_INNER_MAP = "tagInnerMapFragment";
     public static final String MAP_LIST = "tagMapListFragment";
     public static final String DETAIL_FRAGMENT = "tagDetailFragment";
@@ -160,6 +163,7 @@ public class Constants {
   public static class JavaScriptHandles {
     public static final String CONTROL = "control";
     public static final String DATA = "data";
+    public static final String GRAPH = "graph_data";
   }
 
 }
