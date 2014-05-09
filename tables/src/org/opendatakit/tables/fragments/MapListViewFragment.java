@@ -88,10 +88,10 @@ public class MapListViewFragment extends ListViewFragment implements
   UserTable getUserTable() {
     UserTable result = null;
     if (this.getMapListIndices() == null) {
-      // Return everything.
+      result = super.getUserTable();
     } else {
       // Return only the subset.
-      result = new UserTable(getUserTable(), getMapListIndices());
+      result = new UserTable(super.getUserTable(), getMapListIndices());
     }
     return result;
   }

@@ -345,8 +345,21 @@ public class TableDisplayActivity extends AbsTableActivity
     if (mapFragment != null) {
       fragmentManager.beginTransaction().show(mapFragment).commit();
     }
-    // Otherwise we need to create one.
-    mapFragment = new TableMapFragment();
+    // Set the list view file name.
+    String fileName =
+        IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
+    if (fileName == null) {
+      // use the default.
+      fileName = this.getTableProperties().getMapListViewFileName();
+    }
+    Bundle arguments=  new Bundle();
+    IntentUtil.addFileNameToBundle(arguments, fileName);
+    if (mapFragment != null) {
+      mapFragment.getArguments().putAll(arguments);
+    } else {
+      mapFragment = new TableMapFragment();
+      mapFragment.setArguments(arguments);
+    }
     fragmentManager.beginTransaction().replace(
         android.R.id.content,
         mapFragment,
