@@ -5,6 +5,8 @@ import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
+import org.opendatakit.tables.fragments.GraphManagerFragment;
+import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
@@ -42,7 +44,8 @@ public class TableDisplayActivity extends AbsTableActivity
     SPREADSHEET,
     LIST,
     MAP,
-    GRAPH,
+    GRAPH_MANAGER,
+    GRAPH_VIEW,
     DETAIL;
   }
 
@@ -107,7 +110,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case SPREADSHEET:
     case MAP:
     case LIST:
-    case GRAPH:
+    case GRAPH_MANAGER:
       // Show the menu fragment but not the detail view's.
       if (menuFragment != null) {
         menuFragment.setMenuVisibility(true);
@@ -151,7 +154,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case DETAIL:
       this.showDetailFragment();
       break;
-    case GRAPH:
+    case GRAPH_MANAGER:
       this.showGraphFragment();
       break;
     case LIST:
@@ -238,7 +241,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * @param viewType
    * @return
    */
-  protected ViewFragmentType getViewFragmentTypeFromViewType(
+  public ViewFragmentType getViewFragmentTypeFromViewType(
       TableViewType viewType) {
     switch (viewType) {
     case SPREADSHEET:
@@ -246,7 +249,7 @@ public class TableDisplayActivity extends AbsTableActivity
     case MAP:
       return ViewFragmentType.MAP;
     case GRAPH:
-      return ViewFragmentType.GRAPH;
+      return ViewFragmentType.GRAPH_MANAGER;
     case LIST:
       return ViewFragmentType.LIST;
     default:
@@ -345,8 +348,21 @@ public class TableDisplayActivity extends AbsTableActivity
     if (mapFragment != null) {
       fragmentManager.beginTransaction().show(mapFragment).commit();
     }
-    // Otherwise we need to create one.
-    mapFragment = new TableMapFragment();
+    // Set the list view file name.
+    String fileName =
+        IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
+    if (fileName == null) {
+      // use the default.
+      fileName = this.getTableProperties().getMapListViewFileName();
+    }
+    Bundle arguments=  new Bundle();
+    IntentUtil.addFileNameToBundle(arguments, fileName);
+    if (mapFragment != null) {
+      mapFragment.getArguments().putAll(arguments);
+    } else {
+      mapFragment = new TableMapFragment();
+      mapFragment.setArguments(arguments);
+    }
     fragmentManager.beginTransaction().replace(
         android.R.id.content,
         mapFragment,
@@ -387,11 +403,43 @@ public class TableDisplayActivity extends AbsTableActivity
 
   @Override
   public void showGraphFragment() {
-    this.setCurrentFragmentType(ViewFragmentType.GRAPH);
-    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH);
+    this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
+    FragmentManager fragmentManager = this.getFragmentManager();
+    // Try to retrieve the fragment if it already exists.
+    GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
+    if (graphManagerFragment == null) {
+      graphManagerFragment = new GraphManagerFragment();
+    }
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        graphManagerFragment,
+        Constants.FragmentTags.GRAPH_MANAGER).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.invalidateOptionsMenu();
-    // TODO Auto-generated method stub
-
+  }
+  
+  public void showGraphViewFragment(String graphName) {
+    Log.d(TAG, "[showGraphViewFragment] graph name: " + graphName);
+    this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);
+    // Try and use the default.
+    FragmentManager fragmentManager = this.getFragmentManager();
+    Bundle arguments = new Bundle();
+    arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
+    GraphViewFragment graphViewFragment = (GraphViewFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
+    if (graphViewFragment == null) {
+      graphViewFragment = new GraphViewFragment();
+      graphViewFragment.setArguments(arguments);
+    } else {
+      graphViewFragment.getArguments().putAll(arguments);
+    }
+    fragmentManager.beginTransaction().replace(
+        android.R.id.content,
+        graphViewFragment,
+        Constants.FragmentTags.GRAPH_VIEW).commit();
+    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_VIEW);
+    this.invalidateOptionsMenu();
   }
 
 

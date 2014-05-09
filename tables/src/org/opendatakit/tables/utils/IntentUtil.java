@@ -15,26 +15,27 @@ public class IntentUtil {
   
   /**
    * Retrieve the file name from the saved instance state or from the
-   * activity's intent. Convenience method for calling
+   * other bundle. Convenience method for calling
    * {@link #retrieveAppNameFromBundle(Bundle)} in the appropriate order,
    * respecting that savedInstanceState may be null.
    * <p>
    * If the file name is non-null in both bundles, savedInstanceState takes
    * precedent. 
    * @param savedInstanceState
-   * @param activity
+   * @param argumentsOrIntentExtras the bundle from either the activity's
+   * starting intent or the fragment's arguments.
    * @return the file name, or null if the value does not exist in either
    * bundle.
    */
-  public static String retrieveFileNameFromActivityOrSavedState(
+  public static String retrieveFileNameFromSavedStateOrArguments(
       Bundle savedInstanceState,
-      Activity activity) {
+      Bundle argumentsOrIntentExtras) {
     String result = null;
     if (savedInstanceState != null) {
       result = retrieveFileNameFromBundle(savedInstanceState);
     }
     if (result == null) {
-      result = retrieveFileNameFromBundle(activity.getIntent().getExtras());
+      result = retrieveFileNameFromBundle(argumentsOrIntentExtras);
     }
     return result;
   }

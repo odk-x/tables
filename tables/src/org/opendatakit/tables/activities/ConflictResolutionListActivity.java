@@ -38,7 +38,7 @@ public class ConflictResolutionListActivity extends ListActivity {
       appName = TableFileUtils.getDefaultAppName();
     }
     String tableId =
-        getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+        getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     TableProperties tableProperties =
         TableProperties.getTablePropertiesForTable(this, appName, tableId);
     DbTable dbTable = DbTable.getDbTable(tableProperties);
@@ -67,7 +67,8 @@ public class ConflictResolutionListActivity extends ListActivity {
     Intent i = new Intent(this, ConflictResolutionRowActivity.class);
     i.putExtra(Constants.IntentKeys.APP_NAME,
         mConflictTable.getLocalTable().getTableProperties().getAppName());
-    i.putExtra(Controller.INTENT_KEY_TABLE_ID,
+    i.putExtra(
+        Constants.IntentKeys.TABLE_ID,
         mConflictTable.getLocalTable().getTableProperties().getTableId());
     String rowId =
         this.mConflictTable.getLocalTable().getRowAtIndex(position).getRowId();

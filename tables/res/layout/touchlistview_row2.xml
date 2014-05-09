@@ -20,7 +20,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:clickable="true"
-        android:src="@drawable/settings_icon" />
+        android:src="@drawable/ic_menu_preferences" />
 
     <TwoLineListItem
         android:id="@+id/twoline_row"

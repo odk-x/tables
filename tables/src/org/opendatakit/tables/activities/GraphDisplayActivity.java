@@ -83,7 +83,6 @@ implements DisplayActivity {
    public static final String GRAPH_TYPE = "graphtype";
 
 
-	private Controller c;
 	private UserTable table;
 	private CustomGraphView view;
 	private KeyValueStoreHelper kvsh;
@@ -103,14 +102,14 @@ implements DisplayActivity {
 		if(graphName == null) {
 			graphName = potentialGraphName;
 		}
-		c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
-		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
+//		c = new Controller(this, this, getIntent().getExtras(), savedInstanceState);
+//		kvsh = c.getTableProperties().getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION);
 	}
 
    @Override
    protected void onSaveInstanceState(Bundle outState) {
      super.onSaveInstanceState(outState);
-     c.onSaveInstanceState(outState);
+//     c.onSaveInstanceState(outState);
    }
 
 	@Override
@@ -123,7 +122,7 @@ implements DisplayActivity {
 	public void init() {
 		// I hate having to do these two refreshes here, but with the code the
 		// way it is it seems the only way.
-		c.refreshDbTable(c.getTableProperties().getTableId());
+//		c.refreshDbTable(c.getTableProperties().getTableId());
 
 		Bundle intentExtras = getIntent().getExtras();
       String sqlWhereClause =
@@ -147,20 +146,20 @@ implements DisplayActivity {
         }
       }
 
-      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
-      table = dbTable.rawSqlQuery(
-          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//      DbTable dbTable = DbTable.getDbTable(c.getTableProperties());
+//      table = dbTable.rawSqlQuery(
+//          sqlWhereClause, sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
 
       view = CustomGraphView.get(this, table.getTableProperties().getAppName(), table,
 	     graphName, potentialGraphName);
-      c.setGraphViewInfoBarText(graphName);
+//      c.setGraphViewInfoBarText(graphName);
       displayView();
 	}
 
 	private void displayView() {
 		view.display();
-		c.setDisplayView(view);
-		setContentView(c.getContainerView());
+//		c.setDisplayView(view);
+//		setContentView(c.getContainerView());
 	}
 
 	public void backPressedWhileInGraph() {
@@ -211,11 +210,11 @@ implements DisplayActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 			Intent data) {
-		if (c.handleActivityReturn(requestCode, resultCode, data)) {
-			return;
-		} else {
-			super.onActivityResult(requestCode, resultCode, data);
-		}
+//		if (c.handleActivityReturn(requestCode, resultCode, data)) {
+//			return;
+//		} else {
+//			super.onActivityResult(requestCode, resultCode, data);
+//		}
 	}
 
 	@Override
@@ -226,7 +225,8 @@ implements DisplayActivity {
 
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		return c.handleMenuItemSelection(item);
+	  return super.onMenuItemSelected(featureId, item);
+//		return c.handleMenuItemSelection(item);
 	}
 
 	private void alertForNewGraphName(String givenGraphName) {

@@ -107,7 +107,7 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
           R.id.top_level_table_menu_view_list_view);
       menuItem.setChecked(true);
       break;
-    case GRAPH:
+    case GRAPH_MANAGER:
       menuItem = inflatedMenu.findItem(
           R.id.top_level_table_menu_view_graph_view);
       menuItem.setChecked(true);
@@ -151,37 +151,10 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
       return true;
     case R.id.top_level_table_menu_add:
       Log.d(TAG, "[onOptionsItemSelected] add selected");
-      FormType formType =
-          FormType.constructFormType(this.getTableProperties());
-      if (formType.isCollectForm()) {
-        Log.d(TAG, "[onOptionsItemSelected] using Collect form");
-        CollectFormParameters collectFormParameters =
-            formType.getCollectFormParameters();
-        Log.d(
-            TAG,
-            "[onOptionsItemSelected] Collect form is custom: " +
-                collectFormParameters.isCustom());
-        CollectUtil.addRowWithCollect(
-            this.getActivity(),
-            this.getTableProperties(),
-            collectFormParameters,
-            null);
-      } else {
-        // survey form
-        Log.d(TAG, "[onOptionsItemSelected] using Survey form");
-        SurveyFormParameters surveyFormParameters =
-            formType.getSurveyFormParameters();
-        Log.d(
-            TAG,
-            "[onOptionsItemSelected] survey form is custom: " +
-                surveyFormParameters.isUserDefined());
-        SurveyUtil.addRowWithSurvey(
-            this.getActivity(),
-            this.getAppName(),
-            this.getTableProperties(),
-            surveyFormParameters,
-            null);
-      }
+      ActivityUtil.addRow(
+          (AbsBaseActivity) this.getActivity(),
+          this.getTableProperties(),
+          null);
       return true;
     case R.id.top_level_table_menu_table_properties:
       ActivityUtil.launchTableLevelPreferencesActivity(

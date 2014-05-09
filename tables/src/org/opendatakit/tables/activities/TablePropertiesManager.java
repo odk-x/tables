@@ -94,7 +94,7 @@ public class TablePropertiesManager extends PreferenceActivity {
     if ( appName == null ) {
       appName = TableFileUtils.getDefaultAppName();
     }
-    String tableId = getIntent().getStringExtra(Controller.INTENT_KEY_TABLE_ID);
+    String tableId = getIntent().getStringExtra(Constants.IntentKeys.TABLE_ID);
     if (tableId == null) {
       throw new RuntimeException("Table ID (" + tableId + ") is invalid.");
     }
@@ -344,11 +344,11 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         @Override
         public boolean onPreferenceClick(Preference preference) {
-          Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
-              ListViewManager.class);
-          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
-          startActivity(selectListViewIntent);
+//          Intent selectListViewIntent = new Intent(TablePropertiesManager.this,
+//              ListViewManager.class);
+//          selectListViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//          selectListViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+//          startActivity(selectListViewIntent);
           return true;
         }
 
@@ -358,14 +358,14 @@ public class TablePropertiesManager extends PreferenceActivity {
       FileSelectorPreference detailViewPref = new FileSelectorPreference(this, RC_DETAIL_VIEW_FILE);
       detailViewPref.setTitle(getString(R.string.detail_view_file));
       detailViewPref.setDialogTitle(getString(R.string.change_detail_view_file));
-      final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-      String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
-      detailViewPref.setText(detailViewFilename);
+//      final KeyValueStoreHelper kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+//      String detailViewFilename = kvsh.getString(DetailDisplayActivity.KEY_FILENAME);
+//      detailViewPref.setText(detailViewFilename);
       detailViewPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object newValue) {
           // tp.setDetailViewFilename((String) newValue);
-          kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
+//          kvsh.setString(DetailDisplayActivity.KEY_FILENAME, (String) newValue);
           init();
           return false;
         }
@@ -406,7 +406,9 @@ public class TablePropertiesManager extends PreferenceActivity {
           Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
               GraphManagerActivity.class);
           selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-          selectGraphViewIntent.putExtra(Controller.INTENT_KEY_TABLE_ID, tp.getTableId());
+          selectGraphViewIntent.putExtra(
+              Constants.IntentKeys.TABLE_ID,
+              tp.getTableId());
           startActivity(selectGraphViewIntent);
           return true;
         }
@@ -541,8 +543,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       uri = data.getData();
       filename = uri.getPath();
       relativePath = getRelativePathOfFile(filename);
-      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
-      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
+//      kvsh = tp.getKeyValueStoreHelper(DetailDisplayActivity.KVS_PARTITION);
+//      kvsh.setString(DetailDisplayActivity.KEY_FILENAME, relativePath);
       // tp.setDetailViewFilename(filename);
       init();
       break;

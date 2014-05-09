@@ -71,16 +71,10 @@ public class Launcher extends Activity {
           preferences.setUseHomeScreen(false);
           // Launch the TableManager.
           String tableId = (new Preferences(this, appName)).getDefaultTableId();
-          if (tableId == null) {
 //              Intent i = new Intent(this, TableManager.class);
               Intent i = new Intent(this, MainActivity.class);
               i.putExtra(Constants.IntentKeys.APP_NAME, appName);
               startActivity(i);
-          } else {
-              TableProperties tp = TableProperties.getTablePropertiesForTable(
-                      this, appName, tableId);
-              Controller.launchTableActivity(this, tp, tp.getDefaultViewType());
-          }
         }
         finish();
     }

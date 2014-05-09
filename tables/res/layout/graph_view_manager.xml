@@ -5,20 +5,11 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content" >
 
-	<org.opendatakit.tables.views.TouchListView
-		xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:tlv="http://schemas.android.com/apk/res/org.opendatakit.tables"
-
+	<ListView
 		android:id="@android:id/list"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:drawSelectorOnTop="false"
-		android:divider="#C0C0C0"
-        android:dividerHeight="1dp"
-		tlv:normal_height="64dip"
-		tlv:grabber="@+id/icon"
-		tlv:remove_mode="slideRight"
-	/>
+		android:drawSelectorOnTop="false" />
 	<!-- empty view -->
 	<TextView
 	    android:id="@android:id/empty"

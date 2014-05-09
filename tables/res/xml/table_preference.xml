@@ -52,13 +52,6 @@
             android:persistent="false"
             android:title="@string/edit_status_column_color_rules" />
         
-        <ListPreference 
-            android:key="table_pref_map_color_rule"
-            android:persistent="false"
-            android:title="@string/color_rule_for_map" 
-            android:entries="@array/color_rule_types"
-            android:entryValues="@array/color_rule_type_values" />
-        
         <!-- Individual columns -->
         
     </PreferenceCategory>
@@ -91,11 +84,23 @@
     <PreferenceCategory 
         android:title="@string/map_view_settings">
         
+        <!-- map list view file -->
+        <org.opendatakit.tables.preferences.FileSelectorPreference 
+			android:key="table_pref_map_list_file"
+			android:persistent="false"
+			android:title="@string/map_list_view_file" />
+        
+        <ListPreference 
+            android:key="table_pref_map_color_rule"
+            android:persistent="false"
+            android:title="@string/color_rule_for_map" 
+            android:entries="@array/color_rule_types"
+            android:entryValues="@array/color_rule_type_values" />
+        
         <!-- Shoudl select from a list of columns somehow -->
         
         <!-- list of columns -->
         
-        <!-- map list view file -->
         
     </PreferenceCategory>
     

@@ -7,15 +7,15 @@
     android:baselineAligned="false" >
 
     <LinearLayout
-        android:id="@+id/map"
-        android:layout_width="fill_parent"
+        android:id="@+id/map_view_inner_map"
+        android:layout_width="0dp"
         android:layout_height="fill_parent"
         android:layout_weight="1"
         android:orientation="vertical" />
 
     <LinearLayout
-        android:id="@+id/list"
-        android:layout_width="fill_parent"
+        android:id="@+id/map_view_list"
+        android:layout_width="0dp"
         android:layout_height="fill_parent"
         android:layout_weight="2"
         android:background="@color/Beige"

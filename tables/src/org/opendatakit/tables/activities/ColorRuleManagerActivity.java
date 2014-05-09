@@ -160,9 +160,9 @@ public class ColorRuleManagerActivity extends ListActivity {
       confirmRevertAlert.show();
       return true;
     case android.R.id.home:
-      Intent i = new Intent(this, TableManager.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME, mTp.getAppName());
-      startActivity(i);
+//      Intent i = new Intent(this, TableManager.class);
+//      i.putExtra(Constants.IntentKeys.APP_NAME, mTp.getAppName());
+//      startActivity(i);
       return true;
     }
     return false;
