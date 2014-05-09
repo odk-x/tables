@@ -209,6 +209,7 @@ public class TableProperties {
     DataModelDatabaseHelper dh = DataModelDatabaseHelperFactory.getDbHelper(context, appName);
     SQLiteDatabase db = dh.getReadableDatabase();
     try {
+      ensureActiveTableIdMapLoaded(context, appName, db);
       Map<String, String> mapProps = getMapOfPropertiesForTable(db, tableId);
       TableProperties tp = constructPropertiesFromMap(context, appName, db, mapProps);
       if (tp != null) {
