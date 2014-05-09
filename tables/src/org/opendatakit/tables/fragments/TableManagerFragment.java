@@ -34,18 +34,18 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 public class TableManagerFragment extends ListFragment {
-  
+
   private static final String TAG = TableManagerFragment.class.getSimpleName();
-  
+
   /** All the TableProperties that should be visible to the user. */
   private List<TableProperties> mTableList;
-  
+
   private TablePropertiesAdapter mTpAdapter;
-  
+
   public TableManagerFragment() {
     // empty constructor required for fragments.
   }
-  
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -53,7 +53,7 @@ public class TableManagerFragment extends ListFragment {
     this.mTableList = new ArrayList<TableProperties>();
     this.setHasOptionsMenu(true);
   }
-  
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     Log.d(TAG, "[onOptionsItemSelected] selecting an item");
@@ -96,7 +96,7 @@ public class TableManagerFragment extends ListFragment {
       return super.onOptionsItemSelected(item);
     }
   }
-  
+
   @Override
   public View onCreateView(
       LayoutInflater inflater,
@@ -109,7 +109,7 @@ public class TableManagerFragment extends ListFragment {
         false);
     return view;
   }
-  
+
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
@@ -133,7 +133,7 @@ public class TableManagerFragment extends ListFragment {
       AbsBaseActivity baseActivity = (AbsBaseActivity) getActivity();
       Intent intent = baseActivity.createNewIntentWithAppName();
       // Set the tableId.
-      TableProperties tableProperties = 
+      TableProperties tableProperties =
           (TableProperties) this.getListView().getItemAtPosition(position);
       intent.putExtra(
           Constants.IntentKeys.TABLE_ID,
@@ -145,13 +145,13 @@ public class TableManagerFragment extends ListFragment {
       startActivityForResult(intent, Constants.RequestCodes.DISPLAY_VIEW);
     }
   }
-  
+
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     inflater.inflate(R.menu.table_manager, menu);
     super.onCreateOptionsMenu(menu, inflater);
   }
-  
+
   @Override
   public void onCreateContextMenu(
       ContextMenu menu,
@@ -160,12 +160,12 @@ public class TableManagerFragment extends ListFragment {
     MenuInflater menuInflater = this.getActivity().getMenuInflater();
     menuInflater.inflate(R.menu.table_manager_context, menu);
   }
-  
+
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    AdapterView.AdapterContextMenuInfo menuInfo = 
+    AdapterView.AdapterContextMenuInfo menuInfo =
         (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-    final TableProperties tpOfSelectedItem = 
+    final TableProperties tpOfSelectedItem =
         this.getPropertiesList().get(menuInfo.position);
     switch (item.getItemId()) {
     case R.id.table_manager_delete_table:
@@ -176,14 +176,14 @@ public class TableManagerFragment extends ListFragment {
         alert.setTitle(getString(R.string.confirm_remove_table)).setMessage(
             getString(
                 R.string.are_you_sure_remove_table,
-                tpOfSelectedItem.getDisplayName()));
+                tpOfSelectedItem.getLocalizedDisplayName()));
       } else {
         alert.setTitle(getString(R.string.confirm_delete_table)).setMessage(
             getString(R.string.are_you_sure_delete_table,
-                tpOfSelectedItem.getDisplayName()));
+                tpOfSelectedItem.getLocalizedDisplayName()));
       }
       // OK Action => delete the table
-      alert.setPositiveButton(getString(R.string.yes), 
+      alert.setPositiveButton(getString(R.string.yes),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // treat delete as a local removal -- not a server side deletion
@@ -195,7 +195,7 @@ public class TableManagerFragment extends ListFragment {
       });
 
       // Cancel Action
-      alert.setNegativeButton(getString(R.string.cancel), 
+      alert.setNegativeButton(getString(R.string.cancel),
           new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int whichButton) {
           // Canceled.
@@ -216,7 +216,7 @@ public class TableManagerFragment extends ListFragment {
     }
     return false;
   };
-  
+
   /**
    * Retrieve the contents that will be displayed in the list. This should be
    * used to populate the list.
@@ -229,7 +229,7 @@ public class TableManagerFragment extends ListFragment {
     List<TableProperties> tpList = Arrays.asList(tpArray);
     return tpList;
   }
-  
+
   /**
    * Get the list currently displayed by the fragment.
    * @return
@@ -237,7 +237,7 @@ public class TableManagerFragment extends ListFragment {
   List<TableProperties> getPropertiesList() {
     return this.mTableList;
   }
-  
+
   /**
    * Update the contents of the list with the this new list.
    * @param list
@@ -249,5 +249,5 @@ public class TableManagerFragment extends ListFragment {
       this.getPropertiesList().add(tp);
     }
   }
-  
+
 }

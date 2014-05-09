@@ -106,6 +106,14 @@ public class SpreadsheetView extends LinearLayout
         this.controller = controller;
         this.table = table;
 
+        // TODO: figure out if we can invalidate a screen region
+        // to get it to render the screen rather than
+        // disabling the hardware acceleration on this view.
+        // Disable it so that you don't have to tap the screen to
+        // after a scroll action to see the new portion of the
+        // spreadsheet.
+        this.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
         // We have to initialize the items that will be shared across the
         // TabularView objects.
         this.mElementKeyToColorRuleGroup =

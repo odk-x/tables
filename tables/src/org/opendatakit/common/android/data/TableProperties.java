@@ -1379,22 +1379,27 @@ public class TableProperties {
       List<RowUpdate> updates = new ArrayList<RowUpdate>();
       Cursor c = db.query("backup_", new String[] { DataTableColumns.ID,
           DataTableColumns.SAVEPOINT_TIMESTAMP, elementKey }, null, null, null, null, null);
-      int idxId = c.getColumnIndex(DataTableColumns.ID);
-      int idxTimestamp = c.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
-      int idxKey = c.getColumnIndex(elementKey);
-      DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
-      while (c.moveToNext()) {
-        if (!c.isNull(idxKey)) {
-          String value = c.getString(idxKey);
-          String update = du.validifyValue(cpKey, value);
-          if (update == null) {
-            throw new IllegalArgumentException("Unable to convert " + value + " to "
-                + elementType.name());
+      try {
+        int idxId = c.getColumnIndex(DataTableColumns.ID);
+        int idxTimestamp = c.getColumnIndex(DataTableColumns.SAVEPOINT_TIMESTAMP);
+        int idxKey = c.getColumnIndex(elementKey);
+        DataUtil du = new DataUtil(Locale.ENGLISH, TimeZone.getDefault());
+        while (c.moveToNext()) {
+          if (!c.isNull(idxKey)) {
+            String value = c.getString(idxKey);
+            String update = du.validifyValue(cpKey, value);
+            if (update == null) {
+              throw new IllegalArgumentException("Unable to convert " + value + " to "
+                  + elementType.name());
+            }
+            updates.add(new RowUpdate(c.getString(idxId), c.getString(idxTimestamp), update));
           }
-          updates.add(new RowUpdate(c.getString(idxId), c.getString(idxTimestamp), update));
+        }
+      } finally {
+        if ( c != null && !c.isClosed() ) {
+          c.close();
         }
       }
-      c.close();
       for (RowUpdate ru : updates) {
         ContentValues cv = new ContentValues();
         cv.put(elementKey, ru.value);
@@ -2008,9 +2013,12 @@ public class TableProperties {
     return tableId.hashCode();
   }
 
+  /**
+   * This is used by the various ListViews that display tables
+   */
   @Override
   public String toString() {
-    return displayName;
+    return getLocalizedDisplayName();
   }
 
 }
