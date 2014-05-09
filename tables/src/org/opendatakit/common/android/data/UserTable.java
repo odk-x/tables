@@ -18,7 +18,6 @@ package org.opendatakit.common.android.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +30,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.opendatakit.aggregate.odktables.rest.TableConstants;
 import org.opendatakit.common.android.provider.DataTableColumns;
 import org.opendatakit.common.android.provider.FileProvider;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
@@ -72,14 +70,6 @@ public class UserTable {
 
   private final Map<String,Integer> mElementKeyToIndex;
   private final String[] mElementKeyForIndex;
-
-  /**
-   * A simple cache of color rules so they're not recreated unnecessarily
-   * each time. Maps the column display name to {@link ColorRuleGroup} for
-   * that column.
-   */
-  private Map<String, ColorRuleGroup> mElementKeyToColorRuleGroup =
-      new HashMap<String, ColorRuleGroup>();
 
   private final DataUtil du;
   private DateTimeZone tz;
@@ -268,34 +258,6 @@ public class UserTable {
 
   public String getOrderByDirection() {
     return mSqlOrderByDirection;
-  }
-
-  public Integer getForegroundColorOfData(String elementPath, String value) {
-    String elementKey = mTp.getElementKeyFromElementPath(elementPath);
-    if (elementKey == null) {
-      // Note that this currently cannot happen, because the implementation
-      // of getElementKeyFromElementPath is not real. It just does a string
-      // replace, which is incorrect. But we should have this case.
-      return null;
-    }
-    ColorRuleGroup colRul = this.mElementKeyToColorRuleGroup
-          .get(elementPath);
-    if (colRul == null) {
-       // If it's not already there, cache it for future use.
-       colRul = ColorRuleGroup.getColumnColorRuleGroup(mTp, elementKey);
-       this.mElementKeyToColorRuleGroup.put(elementPath, colRul);
-    }
-
-    // We need to construct a dummy Row for the ColorRule to interpret
-    String[] rowData = new String[this.mElementKeyToIndex.size()];
-    rowData[this.mElementKeyToIndex.get(elementKey)] = value;
-    Row row = new Row("dummyRowId", rowData);
-    ColorGuide guide = colRul.getColorGuide(row);
-    if (guide != null) {
-      return guide.getForeground();
-    } else {
-      return null;
-    }
   }
 
   public String getDisplayTextOfData(Context context, int rowNum, String elementKey, boolean showErrorText) {
