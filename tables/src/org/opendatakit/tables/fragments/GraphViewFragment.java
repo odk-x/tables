@@ -53,7 +53,7 @@ public class GraphViewFragment extends AbsWebTableFragment {
     TableData tableData = this.createDataObject();
     result.addJavascriptInterface(
         tableData.getJavascriptInterfaceWithWeakReference(),
-        Constants.JavaScriptHandles.CONTROL);
+        Constants.JavaScriptHandles.DATA);
     String relativePathToGraphFile =
         TableFileUtils.getRelativePathToGraphFile(getAppName());
     String relativePath = ODKFileUtils.asUriFragment(
