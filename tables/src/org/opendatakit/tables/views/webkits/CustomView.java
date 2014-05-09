@@ -42,14 +42,13 @@ import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.common.android.utils.NameUtil;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.CustomHomeScreenActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.activities.TableManager;
 import org.opendatakit.tables.utils.CollectUtil;
 import org.opendatakit.tables.utils.CollectUtil.CollectFormParameters;
-import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.Constants.RequestCodes;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SurveyUtil;
 import org.opendatakit.tables.utils.SurveyUtil.SurveyFormParameters;
@@ -848,13 +847,13 @@ public abstract class CustomView extends LinearLayout {
      * @param relativePath
      */
     public boolean launchHTML(String relativePath) {
-      Log.d(TAG, "in launchHTML with filename: " + relativePath);
-      String pathToTablesFolder = ODKFileUtils.getAppFolder(mAppName);
-      String pathToFile = pathToTablesFolder + File.separator + relativePath;
-      Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
-      i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
-      i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
-      mActivity.startActivity(i);
+//      Log.d(TAG, "in launchHTML with filename: " + relativePath);
+//      String pathToTablesFolder = ODKFileUtils.getAppFolder(mAppName);
+//      String pathToFile = pathToTablesFolder + File.separator + relativePath;
+//      Intent i = new Intent(mActivity, CustomHomeScreenActivity.class);
+//      i.putExtra(Constants.IntentKeys.APP_NAME, mAppName);
+//      i.putExtra(CustomHomeScreenActivity.INTENT_KEY_FILENAME, pathToFile);
+//      mActivity.startActivity(i);
       return true;
     }
 
