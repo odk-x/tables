@@ -116,6 +116,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
           mapFragment,
           Constants.FragmentTags.MAP_INNER_MAP).commit();
     } else {
+      Log.d(TAG, "[onResume] existing map fragment found");
       getMap().listener = this;
     }
     if (getList() == null) {
