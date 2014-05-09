@@ -840,20 +840,20 @@ public class Controller {
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchListView(Context context, TableProperties tp, String filename,
-                                                String sqlWhereClause, String[] sqlSelectionArgs,
-                                                String[] sqlGroupBy, String sqlHaving,
-                                                String sqlOrderByElementKey, String sqlOrderByDirection) {
-    Intent intent = new Intent(context, ListDisplayActivity.class);
-    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (filename != null) {
-      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
-    }
-    prepareIntentForLaunch(intent, tp, sqlWhereClause,
-        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-    context.startActivity(intent);
-  }
+//  public static void launchListView(Context context, TableProperties tp, String filename,
+//                                                String sqlWhereClause, String[] sqlSelectionArgs,
+//                                                String[] sqlGroupBy, String sqlHaving,
+//                                                String sqlOrderByElementKey, String sqlOrderByDirection) {
+//    Intent intent = new Intent(context, ListDisplayActivity.class);
+//    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+//    if (filename != null) {
+////      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+//    }
+//    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+//        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//    context.startActivity(intent);
+//  }
 
   /**
    * Open the table to the map view.
@@ -867,20 +867,20 @@ public class Controller {
    * @param sqlSelectionArgs
    * @see DbTable#rawSqlQuery(String, String[])
    */
-  public static void launchMapView(Context context, TableProperties tp, String filename,
-                                    String sqlWhereClause, String[] sqlSelectionArgs,
-                                    String[] sqlGroupBy, String sqlHaving,
-                                    String sqlOrderByElementKey, String sqlOrderByDirection) {
-    Intent intent = new Intent(context, TableActivity.class);
-    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    if (filename != null) {
-      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
-    }
-    prepareIntentForLaunch(intent, tp, sqlWhereClause,
-        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-    context.startActivity(intent);
-  }
+//  public static void launchMapView(Context context, TableProperties tp, String filename,
+//                                    String sqlWhereClause, String[] sqlSelectionArgs,
+//                                    String[] sqlGroupBy, String sqlHaving,
+//                                    String sqlOrderByElementKey, String sqlOrderByDirection) {
+//    Intent intent = new Intent(context, TableActivity.class);
+//    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+//    if (filename != null) {
+//      intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+//    }
+//    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+//        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//    context.startActivity(intent);
+//  }
 
   /**
    * Open the table to graph view.
@@ -954,8 +954,8 @@ public class Controller {
     switch (viewType) {
     case LIST: {
       if (filename != null) {
-        intent = new Intent(context, ListDisplayActivity.class);
-        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
+//        intent = new Intent(context, ListDisplayActivity.class);
+//        intent.putExtra(ListDisplayActivity.INTENT_KEY_FILENAME, filename);
       } else {
         intent = new Intent(context, ListViewManager.class);
       }
@@ -972,17 +972,17 @@ public class Controller {
     }
       break;
     case MAP:
-      intent = new Intent(context, TableActivity.class);
+//      intent = new Intent(context, TableActivity.class);
       break;
     case SPREADSHEET:
     default:
       throw new IllegalStateException("Unused pathway?!!?");
     }
-    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
-    prepareIntentForLaunch(intent, tp, sqlWhereClause,
-        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
-    context.startActivity(intent);
+//    intent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//    intent.putExtra(INTENT_KEY_TABLE_ID, tp.getTableId());
+//    prepareIntentForLaunch(intent, tp, sqlWhereClause,
+//        sqlSelectionArgs, sqlGroupBy, sqlHaving, sqlOrderByElementKey, sqlOrderByDirection);
+//    context.startActivity(intent);
   }
 
   /**

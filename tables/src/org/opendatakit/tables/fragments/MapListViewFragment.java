@@ -2,25 +2,15 @@ package org.opendatakit.tables.fragments;
 
 import java.util.ArrayList;
 
-import org.opendatakit.common.android.data.KeyValueStoreHelper;
-import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
-import org.opendatakit.tables.R;
-import org.opendatakit.tables.activities.TableActivity;
-import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
-import org.opendatakit.tables.views.webkits.CustomTableView;
 import org.opendatakit.tables.views.webkits.TableData;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 /**
  * The list view that is displayed in a map.
