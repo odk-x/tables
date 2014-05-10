@@ -5,7 +5,8 @@ import java.util.List;
 import org.opendatakit.common.android.data.KeyValueStoreHelper;
 import org.opendatakit.common.android.data.KeyValueStoreHelper.AspectHelper;
 import org.opendatakit.common.android.data.TableProperties;
-import org.opendatakit.tables.activities.GraphDisplayActivity;
+import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.util.Log;
 
@@ -36,7 +37,8 @@ public class GraphData {
   public GraphData(TableProperties tableProperties, String graphString) {
     isModified = false;
     this.graphString = graphString;
-    this.kvsh = tableProperties.getKeyValueStoreHelper(GraphDisplayActivity.KVS_PARTITION_VIEWS);
+    this.kvsh = tableProperties.getKeyValueStoreHelper(
+        LocalKeyValueStoreConstants.Graph.PARTITION_VIEWS);
     this.aspectHelper = kvsh.getAspectHelper(this.graphString);
 // TODO 
 //    if (potentialGraphName != null) {
@@ -115,7 +117,8 @@ public class GraphData {
   }
 
   public String getGraphType() {
-    String graphType = aspectHelper.getString(GraphDisplayActivity.GRAPH_TYPE);
+    String graphType = aspectHelper.getString(
+        LocalKeyValueStoreConstants.Graph.KEY_GRAPH_TYPE);
     if (graphType == null || graphType.equals("unset type")) {
       return "";
     } else {

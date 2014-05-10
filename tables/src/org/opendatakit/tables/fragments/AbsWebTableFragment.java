@@ -7,7 +7,6 @@ import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.WebViewUtil;
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
-import org.opendatakit.tables.views.webkits.CustomView;
 import org.opendatakit.tables.views.webkits.TableData;
 import org.opendatakit.tables.views.webkits.TableDataIf;
 

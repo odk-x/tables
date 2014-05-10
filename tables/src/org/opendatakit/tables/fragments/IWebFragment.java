@@ -2,7 +2,6 @@ package org.opendatakit.tables.fragments;
 
 import org.opendatakit.tables.views.webkits.Control;
 import org.opendatakit.tables.views.webkits.ControlIf;
-import org.opendatakit.tables.views.webkits.CustomView;
 import org.opendatakit.tables.views.webkits.TableDataIf;
 
 import android.app.Fragment;

@@ -31,13 +31,13 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   private static final String TAG = TableMapFragment.class.getSimpleName();
 
   /** The key for the Key-Value Store Partition for the TableMapFragment. */
-  public static final String KVS_PARTITION = "TableMapFragment";
-  /** The key to grab which column is being used for latitude. */
-  public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
-  /** The key to grab which column is being used for longitude. */
-  public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
-  /** The key to grab which file is being used for the list view. */
-  public static final String KEY_FILENAME = "keyFilename";
+//  public static final String KVS_PARTITION = "TableMapFragment";
+//  /** The key to grab which column is being used for latitude. */
+//  public static final String KEY_MAP_LAT_COL = "keyMapLatCol";
+//  /** The key to grab which column is being used for longitude. */
+//  public static final String KEY_MAP_LONG_COL = "keyMapLongCol";
+//  /** The key to grab which file is being used for the list view. */
+//  public static final String KEY_FILENAME = "keyFilename";
 
   @Override
   public void onCreate(Bundle savedInstanceState) {

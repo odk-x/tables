@@ -403,13 +403,13 @@ public class TablePropertiesManager extends PreferenceActivity {
 
         @Override
         public boolean onPreferenceClick(Preference preference) {
-          Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
-              GraphManagerActivity.class);
-          selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
-          selectGraphViewIntent.putExtra(
-              Constants.IntentKeys.TABLE_ID,
-              tp.getTableId());
-          startActivity(selectGraphViewIntent);
+//          Intent selectGraphViewIntent = new Intent(TablePropertiesManager.this,
+//              GraphManagerActivity.class);
+//          selectGraphViewIntent.putExtra(Constants.IntentKeys.APP_NAME, tp.getAppName());
+//          selectGraphViewIntent.putExtra(
+//              Constants.IntentKeys.TABLE_ID,
+//              tp.getTableId());
+//          startActivity(selectGraphViewIntent);
           return true;
         }
 
@@ -439,95 +439,95 @@ public class TablePropertiesManager extends PreferenceActivity {
       }
     }
       // Grab the key value store helper from the table activity.
-      final KeyValueStoreHelper kvsHelper = tp
-          .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+//      final KeyValueStoreHelper kvsHelper = tp
+//          .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
 
       // Try to find the latitude column in the store.
-      ColumnProperties latCol = tp.getColumnByElementKey(kvsHelper
-          .getString(TableMapFragment.KEY_MAP_LAT_COL));
+//      ColumnProperties latCol = tp.getColumnByElementKey(kvsHelper
+//          .getString(TableMapFragment.KEY_MAP_LAT_COL));
       // If there is none, take the first of the location columns and set it.
-      if (latCol == null) {
-        for (ColumnProperties column : locationCols) {
-          if (tp.isLatitudeColumn(geoPointCols, column)) {
-            latCol = column;
-            break;
-          }
-        }
-        if (latCol == null && !locationCols.isEmpty()) {
-          latCol = locationCols.get(0);
-        }
-        kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (latCol == null) ? null : latCol.getElementKey());
+//      if (latCol == null) {
+//        for (ColumnProperties column : locationCols) {
+//          if (tp.isLatitudeColumn(geoPointCols, column)) {
+//            latCol = column;
+//            break;
+//          }
+//        }
+//        if (latCol == null && !locationCols.isEmpty()) {
+//          latCol = locationCols.get(0);
+//        }
+//        kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (latCol == null) ? null : latCol.getElementKey());
       }
 
       // Try to find the longitude column in the store.
-      ColumnProperties longCol = tp.getColumnByElementKey(kvsHelper
-          .getString(TableMapFragment.KEY_MAP_LONG_COL));
-      // If there is none, take the first of the location columns and set it.
-      if (longCol == null) {
-        for (ColumnProperties column : locationCols) {
-          if (tp.isLongitudeColumn(geoPointCols, column)) {
-            longCol = column;
-            break;
-          }
-        }
-        if (longCol == null && !locationCols.isEmpty()) {
-          longCol = locationCols.get(0);
-        }
-        kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (longCol == null) ? null : longCol.getElementKey());
-      }
+//      ColumnProperties longCol = tp.getColumnByElementKey(kvsHelper
+//          .getString(TableMapFragment.KEY_MAP_LONG_COL));
+//      // If there is none, take the first of the location columns and set it.
+//      if (longCol == null) {
+//        for (ColumnProperties column : locationCols) {
+//          if (tp.isLongitudeColumn(geoPointCols, column)) {
+//            longCol = column;
+//            break;
+//          }
+//        }
+//        if (longCol == null && !locationCols.isEmpty()) {
+//          longCol = locationCols.get(0);
+//        }
+//        kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (longCol == null) ? null : longCol.getElementKey());
+//      }
 
-      // Add every location column to the list.
-      String[] locColDisplayNames = new String[locationCols.size()];
-      String[] locColElementKeys = new String[locationCols.size()];
-      for (int i = 0; i < locationCols.size(); i++) {
-        locColDisplayNames[i] = locationCols.get(i).getLocalizedDisplayName();
-        locColElementKeys[i] = locationCols.get(i).getElementKey();
-      }
-
-      // Lat Preference!
-      ListPreference mapLatPref = new ListPreference(this);
-      mapLatPref.setTitle(getString(R.string.map_view_latitude_column));
-      mapLatPref.setDialogTitle(getString(R.string.change_map_view_latitude_column));
-      mapLatPref.setEntryValues(locColElementKeys);
-      mapLatPref.setEntries(locColDisplayNames);
-      mapLatPref.setValue((latCol == null) ? null : latCol.getElementKey());
-      mapLatPref.setSummary((latCol == null) ? null : latCol.getLocalizedDisplayName());
-      mapLatPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (String) newValue);
-          init();
-          return false;
-        }
-      });
-      prefCat.addPreference(mapLatPref);
+//      // Add every location column to the list.
+//      String[] locColDisplayNames = new String[locationCols.size()];
+//      String[] locColElementKeys = new String[locationCols.size()];
+//      for (int i = 0; i < locationCols.size(); i++) {
+//        locColDisplayNames[i] = locationCols.get(i).getLocalizedDisplayName();
+//        locColElementKeys[i] = locationCols.get(i).getElementKey();
+//      }
+//
+//      // Lat Preference!
+//      ListPreference mapLatPref = new ListPreference(this);
+//      mapLatPref.setTitle(getString(R.string.map_view_latitude_column));
+//      mapLatPref.setDialogTitle(getString(R.string.change_map_view_latitude_column));
+//      mapLatPref.setEntryValues(locColElementKeys);
+//      mapLatPref.setEntries(locColDisplayNames);
+//      mapLatPref.setValue((latCol == null) ? null : latCol.getElementKey());
+//      mapLatPref.setSummary((latCol == null) ? null : latCol.getLocalizedDisplayName());
+//      mapLatPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//        @Override
+//        public boolean onPreferenceChange(Preference preference, Object newValue) {
+//          kvsHelper.setString(TableMapFragment.KEY_MAP_LAT_COL, (String) newValue);
+//          init();
+//          return false;
+//        }
+//      });
+//      prefCat.addPreference(mapLatPref);
 
       // Long Preference!
       ListPreference mapLongPref = new ListPreference(this);
-      mapLongPref.setTitle(getString(R.string.map_view_longitude_column));
-      mapLongPref.setDialogTitle(getString(R.string.change_map_view_longitude_column));
-      mapLongPref.setEntryValues(locColElementKeys);
-      mapLongPref.setEntries(locColDisplayNames);
-      mapLongPref.setValue((longCol == null) ? null : longCol.getElementKey());
-      mapLongPref.setSummary((longCol == null) ? null : longCol.getDisplayName());
-      mapLongPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-          kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (String) newValue);
-          init();
-          return false;
-        }
-      });
-      prefCat.addPreference(mapLongPref);
+//      mapLongPref.setTitle(getString(R.string.map_view_longitude_column));
+//      mapLongPref.setDialogTitle(getString(R.string.change_map_view_longitude_column));
+//      mapLongPref.setEntryValues(locColElementKeys);
+//      mapLongPref.setEntries(locColDisplayNames);
+//      mapLongPref.setValue((longCol == null) ? null : longCol.getElementKey());
+//      mapLongPref.setSummary((longCol == null) ? null : longCol.getDisplayName());
+//      mapLongPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//        @Override
+//        public boolean onPreferenceChange(Preference preference, Object newValue) {
+//          kvsHelper.setString(TableMapFragment.KEY_MAP_LONG_COL, (String) newValue);
+//          init();
+//          return false;
+//        }
+//      });
+//      prefCat.addPreference(mapLongPref);
 
       // ListView Preference!
       FileSelectorPreference listFilePref = new FileSelectorPreference(this, RC_MAP_LIST_VIEW_FILE);
-      listFilePref.setTitle(getString(R.string.map_list_view_file));
-      listFilePref.setDialogTitle(getString(R.string.change_map_view_list_view_file));
-      String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
-      listFilePref.setText(currentFilename);
-      prefCat.addPreference(listFilePref);
-  }
+//      listFilePref.setTitle(getString(R.string.map_list_view_file));
+//      listFilePref.setDialogTitle(getString(R.string.change_map_view_list_view_file));
+//      String currentFilename = kvsHelper.getString(TableMapFragment.KEY_FILENAME);
+//      listFilePref.setText(currentFilename);
+//      prefCat.addPreference(listFilePref);
+//  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -565,8 +565,8 @@ public class TablePropertiesManager extends PreferenceActivity {
       init();
       break;
     case RC_MAP_LIST_VIEW_FILE:
-      tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
-          TableMapFragment.KEY_FILENAME, getRelativePathOfFile(data.getData().getPath()));
+//      tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION).setString(
+//          TableMapFragment.KEY_FILENAME, getRelativePathOfFile(data.getData().getPath()));
       init();
     default:
       super.onActivityResult(requestCode, resultCode, data);

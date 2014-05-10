@@ -21,7 +21,6 @@ import org.opendatakit.common.android.data.Preferences;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.TableFileUtils;
-import org.opendatakit.tables.views.webkits.CustomView;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -46,8 +45,6 @@ public class Launcher extends Activity {
         if (!dirFile.exists()) {
             dirFile.mkdirs();
         }
-        // this should happen in another thread if possible
-        CustomView.initCommonWebView(this);
         // First determine if we're supposed to use a custom home screen.
         // Do a check also to make sure the file actually exists.
         Preferences preferences = new Preferences(this, appName);

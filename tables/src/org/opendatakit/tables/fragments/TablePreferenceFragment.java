@@ -8,11 +8,13 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
-import org.opendatakit.tables.activities.GraphManagerActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
 import org.opendatakit.tables.preferences.FileSelectorPreference;
 import org.opendatakit.tables.utils.Constants;
+import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
 import android.content.Intent;
@@ -256,12 +258,15 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
       public boolean onPreferenceClick(Preference preference) {
         Intent selectGraphViewIntent = new Intent(
             getActivity(),
-            GraphManagerActivity.class);
+            TableDisplayActivity.class);
         selectGraphViewIntent.putExtra(
             Constants.IntentKeys.APP_NAME, getAppName());
         selectGraphViewIntent.putExtra(
             Constants.IntentKeys.TABLE_ID,
             getTableProperties().getTableId());
+        IntentUtil.addFragmentViewTypeToBundle(
+            selectGraphViewIntent.getExtras(),
+            ViewFragmentType.GRAPH_MANAGER);
         startActivity(selectGraphViewIntent);
         return true;
       }

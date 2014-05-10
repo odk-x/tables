@@ -20,6 +20,7 @@ import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.activities.TablePropertiesManager;
 import org.opendatakit.tables.utils.ActivityUtil;
+import org.opendatakit.tables.utils.LocalKeyValueStoreConstants;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -198,7 +199,7 @@ public class TableMapInnerFragment extends MapFragment {
 
     // Grab the key value store helper from the map fragment.
     final KeyValueStoreHelper kvsHelper = tp.getKeyValueStoreHelper(
-        TableMapFragment.KVS_PARTITION);
+        LocalKeyValueStoreConstants.Map.PARTITION);
     String colorType = kvsHelper.getString(
         TablePropertiesManager.KEY_COLOR_RULE_TYPE);
     if (colorType == null) {
@@ -355,9 +356,9 @@ public class TableMapInnerFragment extends MapFragment {
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
-        tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+        tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
     String latitudeElementKey =
-        kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
+        kvsHelper.getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL);
     if (latitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labeled latitude or longitude.
@@ -366,7 +367,7 @@ public class TableMapInnerFragment extends MapFragment {
         if (tp.isLatitudeColumn(geoPointCols, cp)) {
           latitudeElementKey = elementKey;
           kvsHelper.setString(
-              TableMapFragment.KEY_MAP_LAT_COL,
+              LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL,
               latitudeElementKey);
           break;
         }
@@ -380,9 +381,9 @@ public class TableMapInnerFragment extends MapFragment {
     final List<ColumnProperties> geoPointCols = tp.getGeopointColumns();
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper =
-        tp.getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+        tp.getKeyValueStoreHelper(LocalKeyValueStoreConstants.Map.PARTITION);
     String longitudeElementKey =
-        kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
+        kvsHelper.getString(LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
     if (longitudeElementKey == null) {
       // Go through each of the columns and check to see if there are
       // any columns labled longitude
@@ -391,7 +392,7 @@ public class TableMapInnerFragment extends MapFragment {
         if (tp.isLongitudeColumn(geoPointCols, cp)) {
           longitudeElementKey = elementKey;
           kvsHelper.setString(
-              TableMapFragment.KEY_MAP_LONG_COL,
+              LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL,
               longitudeElementKey);
           break;
         }
@@ -479,11 +480,14 @@ public class TableMapInnerFragment extends MapFragment {
           elementNameToValue.put(cp.getElementName(), "");
         }
         final KeyValueStoreHelper kvsHelper = tp
-            .getKeyValueStoreHelper(TableMapFragment.KVS_PARTITION);
+            .getKeyValueStoreHelper(
+                LocalKeyValueStoreConstants.Map.PARTITION);
         String latitudeElementKey =
-            kvsHelper.getString(TableMapFragment.KEY_MAP_LAT_COL);
+            kvsHelper.getString(
+                LocalKeyValueStoreConstants.Map.KEY_MAP_LAT_COL);
         String longitudeElementKey =
-            kvsHelper.getString(TableMapFragment.KEY_MAP_LONG_COL);
+            kvsHelper.getString(
+                LocalKeyValueStoreConstants.Map.KEY_MAP_LONG_COL);
         {
           ColumnProperties latitudeColumn =
               tp.getColumnByElementKey(latitudeElementKey);
