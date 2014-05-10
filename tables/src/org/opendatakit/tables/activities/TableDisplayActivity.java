@@ -1,15 +1,19 @@
 package org.opendatakit.tables.activities;
 
+import org.codehaus.jackson.map.deser.SettableBeanProperty.InnerClassProperty;
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.fragments.DetailViewFragment;
 import org.opendatakit.tables.fragments.GraphManagerFragment;
 import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
+import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapFragment;
+import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.Constants;
@@ -20,6 +24,7 @@ import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -65,6 +70,7 @@ public class TableDisplayActivity extends AbsTableActivity
     this.mCurrentFragmentType =
         this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.initializeMenuFragment();
+    this.setContentView(R.layout.activity_table_display_activity);
   }
 
   @Override
@@ -120,6 +126,7 @@ public class TableDisplayActivity extends AbsTableActivity
       if (detailFragment != null) {
         menuFragment.setMenuVisibility(false);
       }
+      this.invalidateOptionsMenu();
       break;
     case DETAIL:
       if (menuFragment != null) {
@@ -128,6 +135,7 @@ public class TableDisplayActivity extends AbsTableActivity
       if (detailFragment != null) {
         detailFragment.setMenuVisibility(true);
       }
+      this.invalidateOptionsMenu();
       break;
     default:
       Log.e(
@@ -326,30 +334,35 @@ public class TableDisplayActivity extends AbsTableActivity
    */
   public void showSpreadsheetFragment() {
     this.setCurrentFragmentType(ViewFragmentType.SPREADSHEET);
+    this.updateChildViewVisibility(ViewFragmentType.SPREADSHEET);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve one already there.
     SpreadsheetFragment spreadsheetFragment = (SpreadsheetFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.SPREADSHEET);
-    if (spreadsheetFragment != null) {
-      fragmentManager.beginTransaction().show(spreadsheetFragment).commit();
+    if (spreadsheetFragment == null) {
+      spreadsheetFragment = this.createSpreadsheetFragment();
     }
     // Otherwise create a new one.
     spreadsheetFragment = new SpreadsheetFragment();
     fragmentManager.beginTransaction().replace(
-        android.R.id.content,
+        R.id.activity_table_display_activity_one_pane_content,
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET).commit();
     this.invalidateOptionsMenu();
   }
+  
+  /**
+   * Create a {@link SpreadsheetFragment} to be displayed in the activity.
+   * @return
+   */
+  SpreadsheetFragment createSpreadsheetFragment() {
+    SpreadsheetFragment result = new SpreadsheetFragment();
+    return result;
+  }
 
   public void showMapFragment() {
     this.setCurrentFragmentType(ViewFragmentType.MAP);
-    FragmentManager fragmentManager = this.getFragmentManager();
-    TableMapFragment mapFragment = (TableMapFragment)
-        fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP);
-    if (mapFragment != null) {
-      Log.d(TAG, "[showMapFragment] found existing map fragment");
-    }
+    this.updateChildViewVisibility(ViewFragmentType.MAP);
     // Set the list view file name.
     String fileName =
         IntentUtil.retrieveFileNameFromBundle(this.getIntent().getExtras());
@@ -357,26 +370,70 @@ public class TableDisplayActivity extends AbsTableActivity
       // use the default.
       fileName = this.getTableProperties().getMapListViewFileName();
     }
-    Bundle arguments = new Bundle();
-    IntentUtil.addFileNameToBundle(arguments, fileName);
-    if (mapFragment != null) {
-      mapFragment.getArguments().putAll(arguments);
+    FragmentManager fragmentManager = this.getFragmentManager();
+    MapListViewFragment mapListViewFragment = (MapListViewFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    TableMapInnerFragment innerMapFragment = (TableMapInnerFragment)
+        fragmentManager.findFragmentByTag(
+            Constants.FragmentTags.MAP_INNER_MAP);
+    if (mapListViewFragment == null) {
+      Log.d(TAG, "[showMapFragment] no map list fragment found, creating new");
+      mapListViewFragment = this.createMapListViewFragment(fileName);
     } else {
-      mapFragment = new TableMapFragment();
-      mapFragment.setArguments(arguments);
+      Log.d(TAG, "[showMapFragment] existing map list fragment found");
     }
-    fragmentManager.beginTransaction().replace(
-        android.R.id.content,
-        mapFragment,
-        Constants.FragmentTags.MAP).commit();
+    if (innerMapFragment == null) {
+      Log.d(
+          TAG,
+          "[showMapFragment] no inner map fragment found, creating new");
+      innerMapFragment = this.createInnerMapFragment();
+    } else {
+      Log.d(TAG, "[showMapFragment] existing inner map fragment found");
+    }
+    fragmentManager.beginTransaction()
+        .replace(
+            R.id.map_view_list,
+            mapListViewFragment,
+            Constants.FragmentTags.MAP_LIST)
+        .replace(
+            R.id.map_view_inner_map,
+            innerMapFragment,
+            Constants.FragmentTags.MAP_INNER_MAP)
+        .commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.MAP);
     this.invalidateOptionsMenu();
+  }
+  
+  /**
+   * Create the {@link TableMapInnerFragment} that will be displayed as the
+   * map.
+   * @return
+   */
+  TableMapInnerFragment createInnerMapFragment() {
+    TableMapInnerFragment result = new TableMapInnerFragment();
+    return result;
+  }
+  
+  /**
+   * Create the {@link MapListViewFragment} that will be displayed with the
+   * map view.
+   * @param listViewFileName the file name of the list view that will be
+   * displayed
+   * @return
+   */
+  MapListViewFragment createMapListViewFragment(String listViewFileName) {
+    MapListViewFragment result = new MapListViewFragment();
+    Bundle listArguments = new Bundle();
+    IntentUtil.addFileNameToBundle(listArguments, listViewFileName);
+    result.setArguments(listArguments);
+    return result;
   }
 
 
   @Override
   public void showListFragment() {
     this.setCurrentFragmentType(ViewFragmentType.LIST);
+    this.updateChildViewVisibility(ViewFragmentType.LIST);
     // Try to use a passed file name. If one doesn't exist, try to use the
     // default.
     String fileName =
@@ -384,69 +441,102 @@ public class TableDisplayActivity extends AbsTableActivity
     if (fileName == null) {
       fileName = getTableProperties().getListViewFileName();
     }
-    Bundle bundle = new Bundle();
-    bundle.putString(Constants.IntentKeys.FILE_NAME, fileName);
     FragmentManager fragmentManager = this.getFragmentManager();
     ListViewFragment listViewFragment = (ListViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.LIST);
-    if (listViewFragment != null) {
-      listViewFragment.getArguments().putAll(bundle);
-    } else {
-      listViewFragment = new ListViewFragment();
-      listViewFragment.setArguments(bundle);
-    }
+    if (listViewFragment == null) {
+      listViewFragment = this.createListViewFragment(fileName);
+    } 
     fragmentManager.beginTransaction().replace(
-        android.R.id.content,
+        R.id.activity_table_display_activity_one_pane_content,
         listViewFragment,
         Constants.FragmentTags.LIST).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.LIST);
     this.invalidateOptionsMenu();
   }
+  
+  /**
+   * Create a {@link ListViewFragment} to be used by the activity.
+   * @param fileName the file name to be displayed
+   */
+  ListViewFragment createListViewFragment(String fileName) {
+    ListViewFragment result = new ListViewFragment();
+    Bundle arguments = new Bundle();
+    IntentUtil.addFileNameToBundle(arguments, fileName);
+    result.setArguments(arguments);
+    return result;
+  }
 
   @Override
   public void showGraphFragment() {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
+    this.updateChildViewVisibility(ViewFragmentType.GRAPH_MANAGER);
     FragmentManager fragmentManager = this.getFragmentManager();
     // Try to retrieve the fragment if it already exists.
     GraphManagerFragment graphManagerFragment = (GraphManagerFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_MANAGER);
     if (graphManagerFragment == null) {
-      graphManagerFragment = new GraphManagerFragment();
+      graphManagerFragment = this.createGraphManagerFragment();
     }
     fragmentManager.beginTransaction().replace(
-        android.R.id.content,
+        R.id.activity_table_display_activity_one_pane_content,
         graphManagerFragment,
         Constants.FragmentTags.GRAPH_MANAGER).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.invalidateOptionsMenu();
   }
+  
+  /**
+   * Create a {@link GraphManagerFragment} that will be used by the activity.
+   * @return
+   */
+  GraphManagerFragment createGraphManagerFragment() {
+    GraphManagerFragment result = new GraphManagerFragment();
+    return result;
+  }
 
   public void showGraphViewFragment(String graphName) {
     Log.d(TAG, "[showGraphViewFragment] graph name: " + graphName);
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_VIEW);
+    this.updateChildViewVisibility(ViewFragmentType.GRAPH_VIEW);
     // Try and use the default.
     FragmentManager fragmentManager = this.getFragmentManager();
-    Bundle arguments = new Bundle();
-    arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
     GraphViewFragment graphViewFragment = (GraphViewFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.GRAPH_VIEW);
     if (graphViewFragment == null) {
-      graphViewFragment = new GraphViewFragment();
-      graphViewFragment.setArguments(arguments);
+      graphViewFragment = this.createGraphViewFragment(graphName);
     } else {
+      // Add the value to the existing fragment so it displays the correct
+      // value.
+      Bundle arguments = new Bundle();
+      arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
       graphViewFragment.getArguments().putAll(arguments);
     }
     fragmentManager.beginTransaction().replace(
-        android.R.id.content,
+        R.id.activity_table_display_activity_one_pane_content,
         graphViewFragment,
         Constants.FragmentTags.GRAPH_VIEW).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_VIEW);
     this.invalidateOptionsMenu();
   }
+  
+  /**
+   * Create a {@link GraphViewFragment} to be added to the activity.
+   * @param graphName
+   * @return
+   */
+  GraphViewFragment createGraphViewFragment(String graphName) {
+    GraphViewFragment result = new GraphViewFragment();
+    Bundle arguments = new Bundle();
+    arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
+    result.setArguments(arguments);
+    return result;
+  }
 
 
   public void showDetailFragment() {
     this.setCurrentFragmentType(ViewFragmentType.DETAIL);
+    this.updateChildViewVisibility(ViewFragmentType.DETAIL);
     FragmentManager fragmentManager = this.getFragmentManager();
     String fileName = IntentUtil.retrieveFileNameFromBundle(
         this.getIntent().getExtras());
@@ -462,20 +552,31 @@ public class TableDisplayActivity extends AbsTableActivity
         fragmentManager.findFragmentByTag(
             Constants.FragmentTags.DETAIL_FRAGMENT);
     if (detailViewFragment == null) {
-      detailViewFragment = new DetailViewFragment();
-      Bundle bundle = new Bundle();
-      IntentUtil.addRowIdToBundle(bundle, rowId);
-      IntentUtil.addFileNameToBundle(bundle, fileName);
-      detailViewFragment.setArguments(bundle);
+      detailViewFragment = this.createDetailViewFragment(fileName, rowId);
     }
     if (!detailViewFragment.isResumed()) {
       fragmentManager.beginTransaction().replace(
-          android.R.id.content,
+          R.id.activity_table_display_activity_one_pane_content,
           detailViewFragment,
           Constants.FragmentTags.DETAIL_FRAGMENT).commit();
     }
     this.handleMenuForViewFragmentType(ViewFragmentType.DETAIL);
     this.invalidateOptionsMenu();
+  }
+  
+  /**
+   * Create a {@link DetailViewFragment} to be used with the fragments.
+   * @param fileName
+   * @param rowId
+   * @return
+   */
+  DetailViewFragment createDetailViewFragment(String fileName, String rowId) {
+    DetailViewFragment result = new DetailViewFragment();
+    Bundle bundle = new Bundle();
+    IntentUtil.addRowIdToBundle(bundle, rowId);
+    IntentUtil.addFileNameToBundle(bundle, fileName);
+    result.setArguments(bundle);
+    return result;
   }
 
   /**
@@ -488,6 +589,41 @@ public class TableDisplayActivity extends AbsTableActivity
     TopLevelTableMenuFragment result = (TopLevelTableMenuFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.TABLE_MENU);
     return result;
+  }
+  
+  /**
+   * Update the content view's children visibility for viewFragmentType. This
+   * is required due to the fact that not all the fragments make use of the
+   * same children views within the activity.
+   * @param viewFragmentType
+   */
+  void updateChildViewVisibility(ViewFragmentType viewFragmentType) {
+    // The map fragments occupy a different view than the single pane
+    // content. This is because the map is two views--the list and the map
+    // itself. So, we need to hide and show the others as appropriate.
+    View onePaneContent = this.findViewById(
+        R.id.activity_table_display_activity_one_pane_content);
+    View mapContent =
+        this.findViewById(R.id.activity_table_display_activity_map_content);
+    switch (viewFragmentType) {
+    case DETAIL:
+    case GRAPH_MANAGER:
+    case GRAPH_VIEW:
+    case LIST:
+    case SPREADSHEET:
+      onePaneContent.setVisibility(View.VISIBLE);
+      mapContent.setVisibility(View.GONE);
+      return;
+    case MAP:
+      onePaneContent.setVisibility(View.GONE);
+      mapContent.setVisibility(View.VISIBLE);
+      return;
+    default:
+      Log.e(
+          TAG,
+          "[updateChildViewVisibility] unrecognized type: " +
+              viewFragmentType);
+    }
   }
 
   /**
