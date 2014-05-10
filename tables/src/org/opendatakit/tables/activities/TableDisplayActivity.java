@@ -104,6 +104,9 @@ public class TableDisplayActivity extends AbsTableActivity
    */
   void handleMenuForViewFragmentType(ViewFragmentType viewFragmentType) {
     TopLevelTableMenuFragment menuFragment = this.retrieveMenuFragment();
+    Log.d(
+        TAG,
+        "[handleMenuForviewFragmentType] menuFragment: " + menuFragment);
     DetailViewFragment detailFragment = this.retrieveDetailFragment();
     switch (viewFragmentType) {
     case SPREADSHEET:
@@ -345,7 +348,7 @@ public class TableDisplayActivity extends AbsTableActivity
     TableMapFragment mapFragment = (TableMapFragment)
         fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP);
     if (mapFragment != null) {
-      fragmentManager.beginTransaction().show(mapFragment).commit();
+      Log.d(TAG, "[showMapFragment] found existing map fragment");
     }
     // Set the list view file name.
     String fileName =
@@ -354,7 +357,7 @@ public class TableDisplayActivity extends AbsTableActivity
       // use the default.
       fileName = this.getTableProperties().getMapListViewFileName();
     }
-    Bundle arguments=  new Bundle();
+    Bundle arguments = new Bundle();
     IntentUtil.addFileNameToBundle(arguments, fileName);
     if (mapFragment != null) {
       mapFragment.getArguments().putAll(arguments);
@@ -366,7 +369,7 @@ public class TableDisplayActivity extends AbsTableActivity
         android.R.id.content,
         mapFragment,
         Constants.FragmentTags.MAP).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.SPREADSHEET);
+    this.handleMenuForViewFragmentType(ViewFragmentType.MAP);
     this.invalidateOptionsMenu();
   }
 

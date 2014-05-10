@@ -24,6 +24,9 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -47,13 +50,16 @@ import com.google.android.gms.maps.model.MarkerOptions;
  * @author Chris Gelon (cgelon)
  */
 public class TableMapInnerFragment extends MapFragment {
-  /** Tag for debug statements. */
-  private static final String TAG = "InnerMapFragment";
+    
+  private static final String TAG =
+      TableMapInnerFragment.class.getSimpleName();
 
   /** The default hue for markers if no color rules are applied. */
-  private static final float DEFAULT_MARKER_HUE = BitmapDescriptorFactory.HUE_AZURE;
+  private static final float DEFAULT_MARKER_HUE =
+      BitmapDescriptorFactory.HUE_AZURE;
   /** The default hue for markers if no color rules are applied. */
-  private static final float DEFAULT_SELECTED_MARKER_HUE = BitmapDescriptorFactory.HUE_GREEN;
+  private static final float DEFAULT_SELECTED_MARKER_HUE =
+      BitmapDescriptorFactory.HUE_GREEN;
 
   /**
    * The index of the currently selected marker. Used when saving the instance.
@@ -112,9 +118,9 @@ public class TableMapInnerFragment extends MapFragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-
+    Log.d(TAG, "[onActivityCreated]");
     mCurrentIndex = (savedInstanceState != null) ? savedInstanceState.getInt(SAVE_KEY_INDEX) : -1;
-    init();
+//    init();
     if (savedInstanceState != null) {
       savedInstanceState.setClassLoader(LatLng.class.getClassLoader());
       getMap().moveCamera(
@@ -132,7 +138,7 @@ public class TableMapInnerFragment extends MapFragment {
   @Override
   public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-
+    Log.d(TAG, "[onSaveInstanceState]");
     outState.putInt(SAVE_KEY_INDEX, (mCurrentMarker != null) ? mMarkerIds.get(mCurrentMarker) : -1);
     CameraPosition pos = getMap().getCameraPosition();
     outState.putFloat(SAVE_ZOOM, pos.zoom);
@@ -141,7 +147,8 @@ public class TableMapInnerFragment extends MapFragment {
   }
 
   /** Re-initializes the map, including the markers. */
-  public void init() {
+  public void clearAndInitializeMap() {
+    Log.d(TAG, "[clearAndInitializeMap]");
     getMap().clear();
     resetColorProperties();
     setMarkers();
@@ -150,12 +157,28 @@ public class TableMapInnerFragment extends MapFragment {
   @Override
   public void onDestroy() {
     super.onDestroy();
-
+    Log.d(TAG, "[onDestroy]");
     // Clear up any memory references. When destroyed, there cannot be any
     // references to the markers, otherwise leaks will happen.
     mMarkerIds.clear();
     mVisibleMarkers.clear();
     mCurrentMarker = null;
+  }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
+    this.clearAndInitializeMap();
+    Log.d(TAG, "[onResume]");
+  }
+  
+  @Override
+  public View onCreateView(
+      LayoutInflater inflater,
+      ViewGroup container,
+      Bundle savedInstanceState) {
+    Log.d(TAG, "[onCreateView]");
+    return super.onCreateView(inflater, container, savedInstanceState);
   }
 
   /**

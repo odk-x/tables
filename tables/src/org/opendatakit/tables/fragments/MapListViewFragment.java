@@ -95,6 +95,12 @@ public class MapListViewFragment extends ListViewFragment implements
     }
     return result;
   }
+  
+  @Override
+  public void onResume() {
+    super.onResume();
+    Log.d(TAG, "[onResume]");
+  }
 
   @Override
   public void setMapListIndex(int index) {

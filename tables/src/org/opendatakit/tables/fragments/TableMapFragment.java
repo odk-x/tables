@@ -9,7 +9,9 @@ import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 
+import android.annotation.SuppressLint;
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,26 +42,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    // Only add the fragments if we haven't already initialized the state
-    // already.
-//    if (savedInstanceState == null) {
-//      // Create the map fragment.
-//      TableMapInnerFragment map = this.createInnerMapFragment();
-//
-//      // Create the list fragment.
-//      // Get the name of the list view.
-//      String fileName = IntentUtil.retrieveFileNameFromSavedStateOrArguments(
-//          savedInstanceState,
-//          this.getArguments());
-//      MapListViewFragment listFragment =
-//          this.createMapListViewFragment(fileName);
-//
-//      // Add both the list and the map at the same time.
-//      getFragmentManager().beginTransaction()
-//          .add(R.id.list, listFragment, Constants.FragmentTags.MAP_LIST)
-//          .add(R.id.map, map, Constants.FragmentTags.MAP_INNER_MAP)
-//          .commit();
-//    }
+    Log.d(TAG, "[onCreate]");
   }
   
   /**
@@ -102,37 +85,65 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
       return inflater.inflate(R.layout.map_fragment, container, false);
     }
   }
+  
+  @Override
+  public void onDestroyView() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    MapListViewFragment mapListViewFragment = getList();
+    TableMapInnerFragment mapInnerFragment = getMap();
+    FragmentTransaction transaction = fragmentManager.beginTransaction();
+    if (mapListViewFragment != null) {
+      transaction.remove(mapListViewFragment);
+    }
+    if (mapInnerFragment != null) {
+      transaction.remove(mapListViewFragment);
+    }
+    transaction.commitAllowingStateLoss();
+    super.onDestroyView();
+  }
 
   @Override
   public void onResume() {
     super.onResume();
     FragmentManager fragmentManager = this.getFragmentManager();
+    MapListViewFragment mapListViewFragment = getList();
+    TableMapInnerFragment mapInnerFragment = getMap();
     // Attach the fragments if we need them.
-    if (getMap() == null) {
-      TableMapInnerFragment mapFragment = this.createInnerMapFragment();
-      mapFragment.listener = this;
-      fragmentManager.beginTransaction().add(
-          R.id.map_view_inner_map,
-          mapFragment,
-          Constants.FragmentTags.MAP_INNER_MAP).commit();
+    if (mapInnerFragment == null) {
+      Log.d(
+          TAG,
+          "[onResume] existing inner map fragment not found, creating new");
+      mapInnerFragment = this.createInnerMapFragment();
     } else {
-      Log.d(TAG, "[onResume] existing map fragment found");
-      getMap().listener = this;
+      Log.d(
+          TAG,
+          "[onResume] existing inner map found");
     }
-    if (getList() == null) {
-      String fileName =
-          IntentUtil.retrieveFileNameFromBundle(this.getArguments());
-      MapListViewFragment listFragment =
-          this.createMapListViewFragment(fileName);
-      fragmentManager.beginTransaction().add(
+    mapInnerFragment.listener = this;
+    if (mapListViewFragment == null) {
+      Log.d(
+          TAG,
+          "[onResume] existing map list fragment not found, creating new");
+      String fileName = IntentUtil.retrieveFileNameFromBundle(getArguments());
+      mapListViewFragment = this.createMapListViewFragment(fileName);
+    } else {
+      Log.d(TAG, "[onResume] existing map list fragment found");
+    }
+    fragmentManager.beginTransaction()
+      .replace(
           R.id.map_view_list,
-          listFragment,
-          Constants.FragmentTags.MAP_LIST).commit();
-    }
+          mapListViewFragment,
+          Constants.FragmentTags.MAP_LIST)
+      .replace(
+          R.id.map_view_inner_map,
+          mapInnerFragment,
+          Constants.FragmentTags.MAP_INNER_MAP)
+      .commit();
   }
 
   @Override
   public void onHideList() {
+    Log.d(TAG, "[onHideList]");
     MapListViewFragment mapListViewFragment = this.getList();
     if (mapListViewFragment == null) {
       Log.e(TAG, "[onHideList] mapListViewFragment is null. Returning.");
@@ -144,6 +155,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void onSetIndex(int i) {
+    Log.d(TAG, "[onSetIndex]");
     if (!ActivityUtil.isTabletDevice(getActivity())) {
       MapListViewFragment list = getList();
       if (list != null) {
@@ -154,6 +166,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
 
   @Override
   public void onSetInnerIndexes(ArrayList<Integer> indexes) {
+    Log.d(TAG, "[onSetInnerIndexes]");
     MapListViewFragment list = getList();
     if (list != null) {
       list.setMapListIndices(indexes);
@@ -161,7 +174,7 @@ public class TableMapFragment extends AbsTableDisplayFragment implements
   }
 
   public void init() {
-    getMap().init();
+    getMap().clearAndInitializeMap();
   }
 
   /** The list view fragment. */
