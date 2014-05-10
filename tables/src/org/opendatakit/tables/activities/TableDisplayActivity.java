@@ -1,6 +1,7 @@
 package org.opendatakit.tables.activities;
 
-import org.codehaus.jackson.map.deser.SettableBeanProperty.InnerClassProperty;
+import java.util.ArrayList;
+
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
@@ -12,8 +13,8 @@ import org.opendatakit.tables.fragments.GraphViewFragment;
 import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
-import org.opendatakit.tables.fragments.TableMapFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
+import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.Constants;
@@ -33,7 +34,7 @@ import android.view.View;
  *
  */
 public class TableDisplayActivity extends AbsTableActivity
-    implements ITopLevelTableMenuActivity {
+    implements ITopLevelTableMenuActivity, TableMapInnerFragmentListener {
 
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
   private static final String INTENT_KEY_CURRENT_FRAGMENT =
@@ -172,6 +173,16 @@ public class TableDisplayActivity extends AbsTableActivity
       break;
     case MAP:
       this.showMapFragment();
+      break;
+    case GRAPH_VIEW:
+      String graphName =
+          this.getIntent().getStringExtra(Constants.IntentKeys.GRAPH_NAME);
+      if (graphName == null) {
+        Log.e(
+            TAG,
+            "[initializeDisplayFragment] graph name not present in bundle");
+      }
+      this.showGraphViewFragment(graphName);
       break;
     default:
       Log.e(TAG, "ViewFragmentType not recognized: " +
@@ -342,8 +353,6 @@ public class TableDisplayActivity extends AbsTableActivity
     if (spreadsheetFragment == null) {
       spreadsheetFragment = this.createSpreadsheetFragment();
     }
-    // Otherwise create a new one.
-    spreadsheetFragment = new SpreadsheetFragment();
     fragmentManager.beginTransaction().replace(
         R.id.activity_table_display_activity_one_pane_content,
         spreadsheetFragment,
@@ -390,6 +399,7 @@ public class TableDisplayActivity extends AbsTableActivity
     } else {
       Log.d(TAG, "[showMapFragment] existing inner map fragment found");
     }
+    innerMapFragment.listener = this;
     fragmentManager.beginTransaction()
         .replace(
             R.id.map_view_list,
@@ -648,4 +658,44 @@ public class TableDisplayActivity extends AbsTableActivity
     return this.mCurrentFragmentType;
   }
 
+  @Override
+  public void onHideList() {
+    Log.d(TAG, "[onHideList] called. Not set up.");
+//    View view = this.findViewById(R.id.map_view_list);
+//    view.setVisibility(View.GONE);
+  }
+
+  @Override
+  public void onSetIndex(int i) {
+    MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
+    if (mapListViewFragment == null) {
+      Log.e(TAG, "[onSetIndex] mapListViewFragment is null! Returning");
+      return;
+    } else {
+      mapListViewFragment.setMapListIndex(i);
+    }
+  }
+
+  @Override
+  public void onSetInnerIndexes(ArrayList<Integer> indexes) {
+    MapListViewFragment mapListViewFragment = this.findMapListViewFragment();
+    if (mapListViewFragment == null) {
+      Log.e(TAG, "[onSetInnerIndexes] fragment is null! Returning");
+    } else {
+      mapListViewFragment.setMapListIndices(indexes);
+    }
+  }
+  
+  /**
+   * Find a {@link MapListViewFragment} that is associated with this activity.
+   * If not present, returns null.
+   * @return
+   */
+  MapListViewFragment findMapListViewFragment() {
+    FragmentManager fragmentManager = this.getFragmentManager();
+    MapListViewFragment result = (MapListViewFragment)
+        fragmentManager.findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+    return result;
+  }
+  
 }

@@ -1,7 +1,16 @@
 package org.opendatakit.tables.activities;
 
+import static org.mockito.Mockito.mock;
+
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
+import org.opendatakit.tables.fragments.DetailViewFragment;
+import org.opendatakit.tables.fragments.GraphManagerFragment;
+import org.opendatakit.tables.fragments.GraphViewFragment;
+import org.opendatakit.tables.fragments.ListViewFragment;
+import org.opendatakit.tables.fragments.MapListViewFragment;
+import org.opendatakit.tables.fragments.SpreadsheetFragment;
+import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.testutils.TestConstants;
 
@@ -42,6 +51,14 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
    */
   public static boolean BUILD_DISPLAY_FRAGMENT = DEFAULT_BUILD_DISPLAY_FRAGMENT;
   
+  public static SpreadsheetFragment SPREADSHEET_FRAGMENT = null;
+  public static GraphManagerFragment GRAPH_MANAGER_FRAGMENT = null;
+  public static GraphViewFragment GRAPH_VIEW_FRAGMENT = null;
+  public static MapListViewFragment MAP_LIST_VIEW_FRAGMENT = null;
+  public static TableMapInnerFragment MAP_INNER_FRAGMENT = null;
+  public static ListViewFragment LIST_VIEW_FRAGMENT = null;
+  public static DetailViewFragment DETAIL_VIEW_FRAGMENT = null;
+  
   @Override
   TableProperties retrieveTablePropertiesForId(String tableId) {
     return TABLE_PROPERTIES;
@@ -81,6 +98,42 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     }
   }
   
+  @Override
+  DetailViewFragment createDetailViewFragment(String fileName, String rowId) {
+    return DETAIL_VIEW_FRAGMENT;
+  }
+  
+  @Override
+  GraphManagerFragment createGraphManagerFragment() {
+    return GRAPH_MANAGER_FRAGMENT;
+  }
+  
+  @Override
+  GraphViewFragment createGraphViewFragment(String graphName) {
+    return GRAPH_VIEW_FRAGMENT;
+  }
+  
+  @Override
+  TableMapInnerFragment createInnerMapFragment() {
+    return MAP_INNER_FRAGMENT;
+  }
+  
+  @Override
+  MapListViewFragment createMapListViewFragment(String listViewFileName) {
+    return MAP_LIST_VIEW_FRAGMENT;
+  }
+  
+  @Override
+  SpreadsheetFragment createSpreadsheetFragment() {
+    return SPREADSHEET_FRAGMENT;
+  }
+  
+  @Override
+  ListViewFragment createListViewFragment(String fileName) {
+    // TODO Auto-generated method stub
+    return super.createListViewFragment(fileName);
+  }
+  
   /**
    * Reset the stub's state to the default values. Should be called after each
    * test modifying the object.
@@ -93,6 +146,13 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
     USER_TABLE = DEFAULT_USER_TABLE;
     BUILD_MENU_FRAGMENT = DEFAULT_BUILD_MENU_FRAGMENT;
     BUILD_DISPLAY_FRAGMENT = DEFAULT_BUILD_DISPLAY_FRAGMENT;
+    SPREADSHEET_FRAGMENT = null;
+    LIST_VIEW_FRAGMENT = null;
+    DETAIL_VIEW_FRAGMENT = null;
+    GRAPH_MANAGER_FRAGMENT = null;
+    GRAPH_VIEW_FRAGMENT = null;
+    MAP_INNER_FRAGMENT = null;
+    MAP_LIST_VIEW_FRAGMENT = null;
   }
 
 }
