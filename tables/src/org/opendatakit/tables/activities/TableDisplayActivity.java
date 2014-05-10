@@ -70,8 +70,8 @@ public class TableDisplayActivity extends AbsTableActivity
     this.initializeBackingTable();
     this.mCurrentFragmentType =
         this.retrieveFragmentTypeToDisplay(savedInstanceState);
-    this.initializeMenuFragment();
     this.setContentView(R.layout.activity_table_display_activity);
+    this.initializeMenuFragment();
   }
 
   @Override
@@ -114,29 +114,26 @@ public class TableDisplayActivity extends AbsTableActivity
     Log.d(
         TAG,
         "[handleMenuForviewFragmentType] menuFragment: " + menuFragment);
+    if (menuFragment == null) {
+      menuFragment = new TopLevelTableMenuFragment();
+    }
     DetailViewFragment detailFragment = this.retrieveDetailFragment();
+    FragmentManager fragmentManager = this.getFragmentManager();
     switch (viewFragmentType) {
     case SPREADSHEET:
     case MAP:
     case LIST:
     case GRAPH_MANAGER:
       // Show the menu fragment but not the detail view's.
-      if (menuFragment != null) {
-        menuFragment.setMenuVisibility(true);
-      }
-      if (detailFragment != null) {
-        menuFragment.setMenuVisibility(false);
-      }
+//      if (!menuFragment.isAdded()) {
+//        fragmentManager.beginTransaction().add(
+//            menuFragment,
+//            Constants.FragmentTags.TABLE_MENU).commit();
+//      }
       this.invalidateOptionsMenu();
       break;
     case DETAIL:
-      if (menuFragment != null) {
-        menuFragment.setMenuVisibility(false);
-      }
-      if (detailFragment != null) {
-        detailFragment.setMenuVisibility(true);
-      }
-      this.invalidateOptionsMenu();
+      fragmentManager.beginTransaction().remove(menuFragment).commit();
       break;
     default:
       Log.e(
@@ -357,7 +354,7 @@ public class TableDisplayActivity extends AbsTableActivity
         R.id.activity_table_display_activity_one_pane_content,
         spreadsheetFragment,
         Constants.FragmentTags.SPREADSHEET).commit();
-    this.invalidateOptionsMenu();
+    this.handleMenuForViewFragmentType(ViewFragmentType.SPREADSHEET);
   }
   
   /**
@@ -400,6 +397,11 @@ public class TableDisplayActivity extends AbsTableActivity
       Log.d(TAG, "[showMapFragment] existing inner map fragment found");
     }
     innerMapFragment.listener = this;
+//    TopLevelTableMenuFragment menuFragment = this.retrieveMenuFragment();
+//    if (menuFragment == null) {
+//      menuFragment = new TopLevelTableMenuFragment();
+//    }
+//    Log.e(TAG, "menuFragment is added: " + menuFragment.isAdded());
     fragmentManager.beginTransaction()
         .replace(
             R.id.map_view_list,
@@ -409,9 +411,10 @@ public class TableDisplayActivity extends AbsTableActivity
             R.id.map_view_inner_map,
             innerMapFragment,
             Constants.FragmentTags.MAP_INNER_MAP)
+//        .remove(menuFragment)
+//        .add(menuFragment, Constants.FragmentTags.TABLE_MENU)
         .commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.MAP);
-    this.invalidateOptionsMenu();
   }
   
   /**
@@ -462,7 +465,6 @@ public class TableDisplayActivity extends AbsTableActivity
         listViewFragment,
         Constants.FragmentTags.LIST).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.LIST);
-    this.invalidateOptionsMenu();
   }
   
   /**
@@ -493,7 +495,6 @@ public class TableDisplayActivity extends AbsTableActivity
         graphManagerFragment,
         Constants.FragmentTags.GRAPH_MANAGER).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
-    this.invalidateOptionsMenu();
   }
   
   /**
@@ -527,7 +528,6 @@ public class TableDisplayActivity extends AbsTableActivity
         graphViewFragment,
         Constants.FragmentTags.GRAPH_VIEW).commit();
     this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_VIEW);
-    this.invalidateOptionsMenu();
   }
   
   /**
@@ -571,7 +571,6 @@ public class TableDisplayActivity extends AbsTableActivity
           Constants.FragmentTags.DETAIL_FRAGMENT).commit();
     }
     this.handleMenuForViewFragmentType(ViewFragmentType.DETAIL);
-    this.invalidateOptionsMenu();
   }
   
   /**
