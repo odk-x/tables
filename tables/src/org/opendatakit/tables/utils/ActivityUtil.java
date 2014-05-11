@@ -69,6 +69,46 @@ public class ActivityUtil {
       }
     }
   }
+  
+  /**
+   * Edit a row using the form specified by tableProperties.
+   * @param activity the activity that should await the return
+   * @param tableProperties
+   * @param rowId
+   */
+  public static void editRow(
+      AbsBaseActivity activity,
+      TableProperties tableProperties,
+      String rowId) {
+    FormType formType = FormType.constructFormType(tableProperties);
+    if (formType.isCollectForm()) {
+      Log.d(TAG, "[editRow] using collect form");
+      CollectFormParameters collectFormParameters =
+          CollectFormParameters.constructCollectFormParameters(
+              tableProperties);
+      Log.d(
+          TAG,
+          "[editRow] is custom form: " + collectFormParameters.isCustom());
+      CollectUtil.editRowWithCollect(
+          activity,
+          activity.getAppName(),
+          rowId,
+          tableProperties, collectFormParameters);
+    } else {
+      Log.d(TAG, "[editRow] using survey form");
+      SurveyFormParameters surveyFormParameters =
+          SurveyFormParameters.constructSurveyFormParameters(tableProperties);
+      Log.d(
+          TAG,
+          "[editRow] is custom form: " + surveyFormParameters.isUserDefined());
+      SurveyUtil.editRowWithSurvey(
+          activity,
+          activity.getAppName(),
+          rowId,
+          tableProperties,
+          surveyFormParameters);
+    }
+  }
 
   /**
    * Add a row to the table represented by tableProperties. The default form

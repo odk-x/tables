@@ -17,17 +17,16 @@ import org.opendatakit.tables.fragments.ListViewFragment;
 import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
-import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
-import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowLog;
 
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 /**
@@ -39,6 +38,7 @@ import android.view.View;
 public class TableDisplayActivityTest {
   
   TableDisplayActivity activity;
+  Menu menu;
   
   @Before
   public void before() {
@@ -49,11 +49,23 @@ public class TableDisplayActivityTest {
         .resume()
         .visible()
         .get();
+    ShadowActivity shadowActivity = shadowOf(this.activity);
+    this.menu = shadowActivity.getOptionsMenu();
   }
   
   @After
   public void after() {
     TableDisplayActivityStub.resetState();
+  }
+  
+  /**
+   * Calls
+   * {@link #setupActivityWithViewTypeAndMock(ViewFragmentType, boolean)}.
+   * @param fragmentType
+   */
+  private void setupActivityForMenuTest(ViewFragmentType fragmentType) {
+    TableDisplayActivityStub.BUILD_MENU_FRAGMENT = true;
+    this.setupActivityWithViewTypeAndMock(fragmentType, true);
   }
   
   /**
@@ -104,14 +116,6 @@ public class TableDisplayActivityTest {
   }
   
   @Test
-  public void menuFragmentIsNotNull() {
-    FragmentManager fragmentManager = this.activity.getFragmentManager();
-    TopLevelTableMenuFragment menuFragment = (TopLevelTableMenuFragment)
-        fragmentManager.findFragmentByTag(Constants.FragmentTags.TABLE_MENU);
-    assertThat(menuFragment).isNotNull();
-  }
-  
-  @Test
   public void childrenVisibilityCorrectForSpreadsheet() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.SPREADSHEET, true);
     this.assertOnePaneViewItemsCorrectVisibility();
@@ -147,6 +151,189 @@ public class TableDisplayActivityTest {
   public void childrenVisibilityCorrectForMap() {
     this.setupActivityWithViewTypeAndMock(ViewFragmentType.MAP, true);
     this.assertMapPaneItemsCorrectVisibility();
+  }
+  
+  @Test
+  public void menuItemsCorrectForSpreadsheet() {
+    this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+  }
+  
+  @Test
+  public void menuItemsCorrectForSpreadsheetAfterRecreation() {
+    this.setupActivityForMenuTest(ViewFragmentType.SPREADSHEET);
+    this.activity.recreate();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.SPREADSHEET);
+  }
+  
+  @Test
+  public void menuItemsCorrectForList() {
+    this.setupActivityForMenuTest(ViewFragmentType.LIST);
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
+  }
+  
+  @Test
+  public void menuItemsCorrectForListAfterRecreation() {
+    this.setupActivityForMenuTest(ViewFragmentType.LIST);
+    this.activity.recreate();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.LIST);
+  }
+  
+  @Test
+  public void menuItemsCorrectForGraphManager() {
+    this.setupActivityForMenuTest(ViewFragmentType.GRAPH_MANAGER);
+    this.assertOptionsMenuCorrectForTopLevelView(
+        ViewFragmentType.GRAPH_MANAGER);
+  }
+  
+  @Test
+  public void menuItemsCorrectForGraphManagerAfterRecreation() {
+    this.setupActivityForMenuTest(ViewFragmentType.GRAPH_MANAGER);
+    this.activity.recreate();
+    this.assertOptionsMenuCorrectForTopLevelView(
+        ViewFragmentType.GRAPH_MANAGER);
+  }
+  
+  @Test
+  public void menuItemsCorrectForMap() {
+    this.setupActivityForMenuTest(ViewFragmentType.MAP);
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
+  }
+  
+  @Test
+  public void menutItemsCorrectForMapAfterRecreation() {
+    this.setupActivityForMenuTest(ViewFragmentType.MAP);
+    this.activity.recreate();
+    this.assertOptionsMenuCorrectForTopLevelView(ViewFragmentType.MAP);
+  }
+  
+  /**
+   * Asserts that the options menu is correct for a top level view like list or
+   * spreadsheet. I.e. asserts that you have the new content, select view, and
+   * preferences menu options only.
+   * @param checkedItem the view type that should be checked
+   */
+  private void assertOptionsMenuCorrectForTopLevelView(
+      ViewFragmentType checkedItem) {
+    ShadowActivity shadow = shadowOf(this.activity);
+    Menu optionsMenu = shadow.getOptionsMenu();
+    assertThat(optionsMenu).hasSize(3);
+    MenuItem addItem = optionsMenu.findItem(R.id.top_level_table_menu_add);
+    MenuItem selectViewItem =
+        optionsMenu.findItem(R.id.top_level_table_menu_select_view);
+    MenuItem tablePropertiesItem =
+        optionsMenu.findItem(R.id.top_level_table_menu_table_properties);
+    assertThat(addItem)
+      .isNotNull()
+      .isVisible();
+    assertThat(selectViewItem)
+      .isNotNull()
+      .isVisible();
+    assertThat(tablePropertiesItem)
+      .isNotNull()
+      .isVisible();
+    switch (checkedItem) {
+    case SPREADSHEET:
+      this.assertCorrectItemsChecked(true, false, false, false);
+      break;
+    case LIST:
+      this.assertCorrectItemsChecked(false, true, false, false);
+      break;
+    case GRAPH_MANAGER:
+      this.assertCorrectItemsChecked(false, false, true, false);
+      break;
+    case MAP:
+      this.assertCorrectItemsChecked(false, false, false, true);
+      break;
+    case DETAIL:
+    case GRAPH_VIEW:
+      // Do nothing, shouldn't be present at all.
+      break;
+    default:
+      throw new IllegalArgumentException(
+          "Unrecognized view type: " + checkedItem);
+    }
+  }
+  
+  @Test
+  public void menuHasAdd() {
+    MenuItem addItem = this.menu.findItem(R.id.top_level_table_menu_add);
+    assertThat(addItem).isNotNull();
+  }
+  
+  @Test
+  public void menuHasSelectView() {
+    MenuItem selectView = this.getSelectViewItem();
+    assertThat(selectView).isNotNull();
+  }
+  
+  @Test
+  public void selectViewIsSubMenu() {
+    MenuItem selectView = this.getSelectViewItem();
+    // The submenu shouldn't return null if it is a submenu, as it should be.
+    assertThat(selectView.getSubMenu()).isNotNull();
+  }
+  
+  /**
+   * Get the {@link MenuItem} for selecting a view.
+   * @return
+   */
+  MenuItem getSelectViewItem() {
+    MenuItem selectView =
+        this.menu.findItem(R.id.top_level_table_menu_select_view);
+    return selectView;
+  }
+  
+  /**
+   * Convenience method for calling {@link Menu#findItem(int)} on
+   * {@link #menu}.
+   * @param itemId
+   * @return
+   */
+  MenuItem getMenuItemWithId(int itemId) {
+    return this.menu.findItem(itemId);
+  }
+
+  
+  private void assertCorrectItemsChecked(
+      boolean spreadsheetChecked,
+      boolean listChecked,
+      boolean graphChecked,
+      boolean mapChecked) {
+    ShadowActivity shadow = shadowOf(this.activity);
+    Menu optionsMenu = shadow.getOptionsMenu();
+    MenuItem spreadsheet =
+        optionsMenu.findItem(R.id.top_level_table_menu_view_spreadsheet_view);
+    MenuItem list =
+        optionsMenu.findItem(R.id.top_level_table_menu_view_list_view);
+    MenuItem graph =
+        optionsMenu.findItem(R.id.top_level_table_menu_view_graph_view);
+    MenuItem map =
+        optionsMenu.findItem(R.id.top_level_table_menu_view_map_view);
+    assertThat(spreadsheet).isNotNull();
+    assertThat(list).isNotNull();
+    assertThat(graph).isNotNull();
+    assertThat(map).isNotNull();
+    if (spreadsheetChecked) {
+      assertThat(spreadsheet).isChecked();
+    } else {
+      assertThat(spreadsheet).isNotChecked();
+    }
+    if (listChecked) {
+      assertThat(list).isChecked();
+    } else {
+      assertThat(list).isNotChecked();
+    }
+    if (graphChecked) {
+      assertThat(graph).isChecked();
+    } else {
+      assertThat(graph).isNotChecked();
+    }
+    if (mapChecked) {
+      assertThat(map).isChecked();
+    } else {
+      assertThat(map).isNotChecked();
+    }
   }
   
   private void assertMapPaneItemsCorrectVisibility() {

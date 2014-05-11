@@ -3,6 +3,7 @@ package org.opendatakit.tables.activities;
 import java.util.ArrayList;
 
 import org.opendatakit.common.android.data.DbTable;
+import org.opendatakit.common.android.data.PossibleTableViewTypes;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.data.UserTable;
@@ -15,17 +16,22 @@ import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
-import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
+import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * Displays information about a table. List, Map, and Detail views are all
@@ -71,7 +77,6 @@ public class TableDisplayActivity extends AbsTableActivity
     this.mCurrentFragmentType =
         this.retrieveFragmentTypeToDisplay(savedInstanceState);
     this.setContentView(R.layout.activity_table_display_activity);
-    this.initializeMenuFragment();
   }
 
   @Override
@@ -103,43 +108,166 @@ public class TableDisplayActivity extends AbsTableActivity
     Log.i(TAG, "[onResume]");
     this.initializeDisplayFragment();
   }
-
-  /**
-   * Update the options menu for this activity to be appropriate for the given
-   * fragment.
-   * @param viewFragmentType
-   */
-  void handleMenuForViewFragmentType(ViewFragmentType viewFragmentType) {
-    TopLevelTableMenuFragment menuFragment = this.retrieveMenuFragment();
-    Log.d(
-        TAG,
-        "[handleMenuForviewFragmentType] menuFragment: " + menuFragment);
-    if (menuFragment == null) {
-      menuFragment = new TopLevelTableMenuFragment();
-    }
-    DetailViewFragment detailFragment = this.retrieveDetailFragment();
-    FragmentManager fragmentManager = this.getFragmentManager();
-    switch (viewFragmentType) {
+  
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    // clear the menu so that we don't double inflate
+    menu.clear();
+    MenuInflater menuInflater = this.getMenuInflater();
+    switch (this.getCurrentFragmentType()) {
     case SPREADSHEET:
-    case MAP:
     case LIST:
     case GRAPH_MANAGER:
-      // Show the menu fragment but not the detail view's.
-//      if (!menuFragment.isAdded()) {
-//        fragmentManager.beginTransaction().add(
-//            menuFragment,
-//            Constants.FragmentTags.TABLE_MENU).commit();
-//      }
-      this.invalidateOptionsMenu();
+    case MAP:
+      menuInflater.inflate(
+          R.menu.top_level_table_menu,
+          menu);
+      PossibleTableViewTypes viewTypes = this.retrievePossibleViewTypes();
+      this.enableAndDisableViewTypes(viewTypes, menu);
+      this.selectCorrectViewType(menu);
       break;
     case DETAIL:
-      fragmentManager.beginTransaction().remove(menuFragment).commit();
+      menuInflater.inflate(R.menu.detail_view_menu, menu);
+      break;
+    case GRAPH_VIEW:
+      // for now, do nothing.
+      break;
+    }
+    return super.onCreateOptionsMenu(menu);
+  }
+  
+  /**
+   * Retrieve the {@link PossibleTableViewTypes} representing the valid views
+   * for this table.
+   * @return
+   */
+  PossibleTableViewTypes retrievePossibleViewTypes() {
+    return this.getTableProperties().getPossibleViewTypes();
+  }
+  
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case R.id.top_level_table_menu_view_spreadsheet_view:
+      this.showSpreadsheetFragment();
+      return true;
+    case R.id.top_level_table_menu_view_list_view:
+      this.showListFragment();
+      return true;
+    case R.id.top_level_table_menu_view_graph_view:
+      this.showGraphFragment();
+      return true;
+    case R.id.top_level_table_menu_view_map_view:
+      this.showMapFragment();
+      return true;
+    case R.id.top_level_table_menu_add:
+      Log.d(TAG, "[onOptionsItemSelected] add selected");
+      ActivityUtil.addRow(
+          this,
+          this.getTableProperties(),
+          null);
+      return true;
+    case R.id.top_level_table_menu_table_properties:
+      ActivityUtil.launchTableLevelPreferencesActivity(
+          this,
+          this.getAppName(),
+          this.getTableProperties().getTableId());
+      return true;
+    case R.id.menu_edit_row:
+      // We need to retrieve the row id.
+      DetailViewFragment detailViewFragment = this.findDetailViewFragment();
+      if (detailViewFragment == null) {
+        Log.e(
+            TAG,
+            "[onOptionsItemSelected] trying to edit row, but detail view " +
+              " fragment null");
+        Toast.makeText(
+            this,
+            getString(R.string.cannot_edit_row_please_try_again),
+            Toast.LENGTH_LONG)
+          .show();
+      }
+      String rowId = detailViewFragment.getRowId();
+      if (rowId == null) {
+        Log.e(
+            TAG,
+            "[onOptionsItemSelected trying to edit row, but row id is null");
+        Toast.makeText(
+            this,
+            getString(R.string.cannot_edit_row_please_try_again),
+            Toast.LENGTH_LONG)
+          .show();
+      }
+      ActivityUtil.editRow(
+          this,
+          this.getTableProperties(),
+          rowId);
+      return true;
+    default:
+      return super.onOptionsItemSelected(item);
+    }
+  };
+  
+  /**
+   * Disable or enable those menu items corresponding to view types that are
+   * currently invalid or valid, respectively. The inflatedMenu must have
+   * already been created from the resource.
+   * @param validViewTypes
+   * @param inflatedMenu
+   */
+  private void enableAndDisableViewTypes(
+      PossibleTableViewTypes possibleViews,
+      Menu inflatedMenu) {
+    MenuItem spreadsheetItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_spreadsheet_view);
+    MenuItem listItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_list_view);
+    MenuItem mapItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_map_view);
+    MenuItem graphItem = inflatedMenu.findItem(
+        R.id.top_level_table_menu_view_graph_view);
+    spreadsheetItem.setEnabled(possibleViews.spreadsheetViewIsPossible());
+    listItem.setEnabled(possibleViews.listViewIsPossible());
+    mapItem.setEnabled(possibleViews.mapViewIsPossible());
+    graphItem.setEnabled(possibleViews.graphViewIsPossible());
+  }
+  
+  /**
+   * Selects the correct view type that is being displayed by the
+   * {@link ITopLevelTableMenuActivity}.
+   * @param impl
+   * @param inflatedMenu
+   */
+  private void selectCorrectViewType(Menu inflatedMenu) {
+    ViewFragmentType currentFragment = this.getCurrentFragmentType();
+    if (currentFragment == null) {
+      Log.e(TAG, "did not find a current fragment type. Not selecting view.");
+      return;
+    }
+    MenuItem menuItem = null;
+    switch (currentFragment) {
+    case SPREADSHEET:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_spreadsheet_view);
+      menuItem.setChecked(true);
+      break;
+    case LIST:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_list_view);
+      menuItem.setChecked(true);
+      break;
+    case GRAPH_MANAGER:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_graph_view);
+      menuItem.setChecked(true);
+      break;
+    case MAP:
+      menuItem = inflatedMenu.findItem(
+          R.id.top_level_table_menu_view_map_view);
+      menuItem.setChecked(true);
       break;
     default:
-      Log.e(
-          TAG,
-          "[handleMenuForViewFragmentType] unrecognized fragment type: "
-              + viewFragmentType);
+      Log.e(TAG, "view type not recognized: " + currentFragment);
     }
   }
 
@@ -329,14 +457,6 @@ public class TableDisplayActivity extends AbsTableActivity
     return result;
   }
 
-  protected void initializeMenuFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    TopLevelTableMenuFragment menuFragment = new TopLevelTableMenuFragment();
-    fragmentManager.beginTransaction().add(
-        menuFragment,
-        Constants.FragmentTags.TABLE_MENU).commit();
-  }
-
   /**
    * Show the spreadsheet fragment, creating a new one if it doesn't yet exist.
    */
@@ -350,11 +470,16 @@ public class TableDisplayActivity extends AbsTableActivity
     if (spreadsheetFragment == null) {
       spreadsheetFragment = this.createSpreadsheetFragment();
     }
-    fragmentManager.beginTransaction().replace(
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
         R.id.activity_table_display_activity_one_pane_content,
         spreadsheetFragment,
-        Constants.FragmentTags.SPREADSHEET).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.SPREADSHEET);
+        Constants.FragmentTags.SPREADSHEET);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.SPREADSHEET,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -397,12 +522,9 @@ public class TableDisplayActivity extends AbsTableActivity
       Log.d(TAG, "[showMapFragment] existing inner map fragment found");
     }
     innerMapFragment.listener = this;
-//    TopLevelTableMenuFragment menuFragment = this.retrieveMenuFragment();
-//    if (menuFragment == null) {
-//      menuFragment = new TopLevelTableMenuFragment();
-//    }
-//    Log.e(TAG, "menuFragment is added: " + menuFragment.isAdded());
-    fragmentManager.beginTransaction()
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction
         .replace(
             R.id.map_view_list,
             mapListViewFragment,
@@ -410,11 +532,11 @@ public class TableDisplayActivity extends AbsTableActivity
         .replace(
             R.id.map_view_inner_map,
             innerMapFragment,
-            Constants.FragmentTags.MAP_INNER_MAP)
-//        .remove(menuFragment)
-//        .add(menuFragment, Constants.FragmentTags.TABLE_MENU)
-        .commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.MAP);
+            Constants.FragmentTags.MAP_INNER_MAP);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.MAP,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -460,11 +582,16 @@ public class TableDisplayActivity extends AbsTableActivity
     if (listViewFragment == null) {
       listViewFragment = this.createListViewFragment(fileName);
     } 
-    fragmentManager.beginTransaction().replace(
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
         R.id.activity_table_display_activity_one_pane_content,
         listViewFragment,
-        Constants.FragmentTags.LIST).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.LIST);
+        Constants.FragmentTags.LIST);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.LIST,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -490,11 +617,16 @@ public class TableDisplayActivity extends AbsTableActivity
     if (graphManagerFragment == null) {
       graphManagerFragment = this.createGraphManagerFragment();
     }
-    fragmentManager.beginTransaction().replace(
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
         R.id.activity_table_display_activity_one_pane_content,
         graphManagerFragment,
-        Constants.FragmentTags.GRAPH_MANAGER).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_MANAGER);
+        Constants.FragmentTags.GRAPH_MANAGER);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.GRAPH_MANAGER,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -523,11 +655,16 @@ public class TableDisplayActivity extends AbsTableActivity
       arguments.putString(Constants.IntentKeys.GRAPH_NAME, graphName);
       graphViewFragment.getArguments().putAll(arguments);
     }
-    fragmentManager.beginTransaction().replace(
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
         R.id.activity_table_display_activity_one_pane_content,
         graphViewFragment,
-        Constants.FragmentTags.GRAPH_VIEW).commit();
-    this.handleMenuForViewFragmentType(ViewFragmentType.GRAPH_VIEW);
+        Constants.FragmentTags.GRAPH_VIEW);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.GRAPH_VIEW,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -564,13 +701,16 @@ public class TableDisplayActivity extends AbsTableActivity
     if (detailViewFragment == null) {
       detailViewFragment = this.createDetailViewFragment(fileName, rowId);
     }
-    if (!detailViewFragment.isResumed()) {
-      fragmentManager.beginTransaction().replace(
-          R.id.activity_table_display_activity_one_pane_content,
-          detailViewFragment,
-          Constants.FragmentTags.DETAIL_FRAGMENT).commit();
-    }
-    this.handleMenuForViewFragmentType(ViewFragmentType.DETAIL);
+    FragmentTransaction fragmentTransaction =
+        fragmentManager.beginTransaction();
+    fragmentTransaction.replace(
+        R.id.activity_table_display_activity_one_pane_content,
+        detailViewFragment,
+        Constants.FragmentTags.DETAIL_FRAGMENT);
+//    this.handleMenuForViewFragmentType(
+//        ViewFragmentType.DETAIL,
+//        fragmentTransaction);
+    fragmentTransaction.commit();
   }
   
   /**
@@ -585,18 +725,6 @@ public class TableDisplayActivity extends AbsTableActivity
     IntentUtil.addRowIdToBundle(bundle, rowId);
     IntentUtil.addFileNameToBundle(bundle, fileName);
     result.setArguments(bundle);
-    return result;
-  }
-
-  /**
-   * Retrieve the {@link TopLevelTableMenuFragment} that is associated with
-   * this activity.
-   * @return the fragment, or null if it is not present
-   */
-  TopLevelTableMenuFragment retrieveMenuFragment() {
-    FragmentManager fragmentManager = this.getFragmentManager();
-    TopLevelTableMenuFragment result = (TopLevelTableMenuFragment)
-        fragmentManager.findFragmentByTag(Constants.FragmentTags.TABLE_MENU);
     return result;
   }
   
@@ -640,7 +768,7 @@ public class TableDisplayActivity extends AbsTableActivity
    * activity.
    * @return the fragment, or null if it is not present
    */
-  DetailViewFragment retrieveDetailFragment() {
+  DetailViewFragment findDetailViewFragment() {
     FragmentManager fragmentManager = this.getFragmentManager();
     DetailViewFragment result = (DetailViewFragment)
         fragmentManager.findFragmentByTag(

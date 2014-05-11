@@ -62,6 +62,12 @@ public class TopLevelTableMenuFragment extends AbsBaseFragment {
     // The whole point of this class is to display the menus.
     this.setHasOptionsMenu(true);
   }
+  
+  @Override
+  public void onActivityCreated(Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
+    this.setHasOptionsMenu(true);
+  }
 
   @Override
   public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

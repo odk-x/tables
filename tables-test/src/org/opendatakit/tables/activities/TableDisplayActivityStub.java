@@ -14,6 +14,8 @@ import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.testutils.TestConstants;
 
+import android.app.FragmentTransaction;
+
 /**
  * 
  * @author sudar.sam@gmail.com
@@ -39,7 +41,7 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   public static SQLQueryStruct SQL_QUERY_STRUCT = DEFAULT_SQL_QUERY_STRUCT;
   public static UserTable USER_TABLE = DEFAULT_USER_TABLE;
   
-  public static final boolean DEFAULT_BUILD_MENU_FRAGMENT = true;
+  public static final boolean DEFAULT_BUILD_MENU_FRAGMENT = false;
   public static final boolean DEFAULT_BUILD_DISPLAY_FRAGMENT = false;
   /**
    *  True if the menu fragment should be initialized with the rest of the
@@ -82,13 +84,6 @@ public class TableDisplayActivityStub extends TableDisplayActivity {
   @Override
   UserTable retrieveUserTable() {
     return USER_TABLE;
-  }
-  
-  @Override
-  protected void initializeMenuFragment() {
-    if (BUILD_MENU_FRAGMENT) {
-      super.initializeMenuFragment();
-    }
   }
   
   @Override

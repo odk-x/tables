@@ -127,6 +127,7 @@
 	<string name="change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
 	<string name="choose_account">Please choose an account</string>
 	<string name="please_wait">Please Wait</string>
+	<string name="cannot_edit_row_please_try_again">Cannot edit row, please try again</string>
 	<string name="synchronizing">Synchronizing&#8230;</string>
 	<string name="auth_expired">Authorization expired. Please re-authorize account.</string>
 	<string name="sync_error">Sync Error</string>
