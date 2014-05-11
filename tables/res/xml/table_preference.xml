@@ -18,6 +18,11 @@
             android:persistent="false"
             android:enabled="false"/>
         
+        <Preference
+            android:key="table_pref_columns"
+            android:title="@string/columns"
+            android:persistent="false" />
+        
     </PreferenceCategory>
     
     <PreferenceCategory 

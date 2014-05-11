@@ -1,6 +1,7 @@
 package org.opendatakit.tables.utils;
 
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.utils.Constants.IntentKeys;
 
 import android.os.Bundle;
@@ -121,6 +122,22 @@ public class IntentUtil {
     }
     String appName = bundle.getString(IntentKeys.APP_NAME);
     return appName;
+  }
+  
+  /**
+   * Return the element key from the bundle. Convenience method for calling
+   * {@link Bundle#getString(String)} with
+   * {@link Constants.IntentKeys#ELEMENT_KEY}.
+   * @param bundle
+   * @return the element key, null if it does not exist or if the bundle is
+   * null
+   */
+  public static String retrieveElementKeyFromBundle(Bundle bundle) {
+    if (bundle == null) { 
+      return null;
+    }
+    String elementKey = bundle.getString(IntentKeys.ELEMENT_KEY);
+    return elementKey;
   }
 
   /**
@@ -303,6 +320,19 @@ public class IntentUtil {
       bundle.putString(Constants.IntentKeys.APP_NAME, appName);
     }
   }
+  
+  /**
+   * Add elementKey to bundle keyed to
+   * {@link Constants.IntentKeys#ELEMENT_KEY}. If bundle of elementKey is null,
+   * does nothing.
+   * @param bundle
+   * @param elementKey
+   */
+  public static void addElementKeyToBundle(Bundle bundle, String elementKey) {
+    if (bundle != null && elementKey != null) {
+      bundle.putString(Constants.IntentKeys.ELEMENT_KEY, elementKey);
+    }
+  }
 
   /**
    * Add tableId to bundle keyed to {@link Constants.IntentKeys#TABLE_ID}.
@@ -313,6 +343,23 @@ public class IntentUtil {
   public static void addTableIdToBundle(Bundle bundle, String tableId) {
     if (bundle != null && tableId != null) {
       bundle.putString(Constants.IntentKeys.TABLE_ID, tableId);
+    }
+  }
+  
+  /**
+   * Add the name of fragmentType to bundle, keyed to
+   * {@link Constants.IntentKeys#TABLE_PREFERENCE_FRAGMENT_TYPE}. If bundle
+   * or fragmentType is null, does nothing.
+   * @param bundle
+   * @param fragmentType
+   */
+  public static void addTablePreferenceFragmentTypeToBundle(
+      Bundle bundle,
+      TableLevelPreferencesActivity.FragmentType fragmentType) {
+    if (bundle != null && fragmentType != null) {
+      bundle.putString(
+          Constants.IntentKeys.TABLE_PREFERENCE_FRAGMENT_TYPE,
+          fragmentType.name());
     }
   }
 

@@ -170,7 +170,8 @@ public class TableDisplayActivity extends AbsTableActivity
       ActivityUtil.launchTableLevelPreferencesActivity(
           this,
           this.getAppName(),
-          this.getTableProperties().getTableId());
+          this.getTableProperties().getTableId(),
+          TableLevelPreferencesActivity.FragmentType.TABLE_PREFERENCE);
       return true;
     case R.id.menu_edit_row:
       // We need to retrieve the row id.

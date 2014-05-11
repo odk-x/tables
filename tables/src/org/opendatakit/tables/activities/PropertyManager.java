@@ -114,10 +114,10 @@ public class PropertyManager extends PreferenceActivity {
     String typeName = cp.getColumnType().name();
     category.addPreference(createListPreference("TYPE", "Type", typeLabel, typeName, typeLabels, typeNames));
 
-    SliderPreference colWidthPref = new SliderPreference(this);
-    colWidthPref.setTitle("Column Width");
-    colWidthPref.setDialogTitle("Change Column Width");
-    colWidthPref.setMaxValue(500);
+//    SliderPreference colWidthPref = new SliderPreference(this);
+//    colWidthPref.setTitle("Column Width");
+//    colWidthPref.setDialogTitle("Change Column Width");
+//    colWidthPref.setMaxValue(500);
     final KeyValueHelper aspectHelper =
         columnKVSH.getAspectHelper(elementKey);
     Integer savedColumnWidth =
@@ -125,18 +125,18 @@ public class PropertyManager extends PreferenceActivity {
     if (savedColumnWidth == null) {
       savedColumnWidth = SpreadsheetView.DEFAULT_COL_WIDTH;
     }
-    colWidthPref.setValue(savedColumnWidth);
-    colWidthPref.setOnPreferenceChangeListener(
-        new Preference.OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference,
-          Object newValue) {
-        int width = (Integer) newValue;
-        aspectHelper.setInteger(SpreadsheetView.KEY_COLUMN_WIDTH, width);
-        return true;
-      }
-    });
-    category.addPreference(colWidthPref);
+//    colWidthPref.setValue(savedColumnWidth);
+//    colWidthPref.setOnPreferenceChangeListener(
+//        new Preference.OnPreferenceChangeListener() {
+//      @Override
+//      public boolean onPreferenceChange(Preference preference,
+//          Object newValue) {
+//        int width = (Integer) newValue;
+//        aspectHelper.setInteger(SpreadsheetView.KEY_COLUMN_WIDTH, width);
+//        return true;
+//      }
+//    });
+//    category.addPreference(colWidthPref);
 
     category.addPreference(new DisplayPreferencesDialogPreference(this));
 

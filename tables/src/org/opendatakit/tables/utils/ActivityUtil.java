@@ -167,11 +167,15 @@ public class ActivityUtil {
   public static void launchTableLevelPreferencesActivity(
       Activity activity,
       String appName,
-      String tableId) {
+      String tableId,
+      TableLevelPreferencesActivity.FragmentType fragmentTypeToDisplay) {
     Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
     Bundle bundle = new Bundle();
     IntentUtil.addAppNameToBundle(bundle, appName);
     IntentUtil.addTableIdToBundle(bundle, tableId);
+    IntentUtil.addTablePreferenceFragmentTypeToBundle(
+        bundle,
+        fragmentTypeToDisplay);
     intent.putExtras(bundle);
     activity.startActivityForResult(
         intent,

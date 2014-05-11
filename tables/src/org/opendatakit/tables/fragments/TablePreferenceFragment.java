@@ -8,7 +8,9 @@ import org.opendatakit.common.android.data.TableViewType;
 import org.opendatakit.common.android.utilities.ODKFileUtils;
 import org.opendatakit.tables.R;
 import org.opendatakit.tables.activities.AbsBaseActivity;
+import org.opendatakit.tables.activities.ColumnListActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
 import org.opendatakit.tables.preferences.DefaultViewTypePreference;
 import org.opendatakit.tables.preferences.EditFormDialogPreference;
@@ -17,6 +19,7 @@ import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
 import org.opendatakit.tables.utils.PreferenceUtil;
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -151,6 +154,7 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
     this.initializeListFile();
     this.initializeGraphManager();
     this.initializeMapListFile();
+    this.initializeColumns();
   }
 
   private void initializeDisplayNamePreference() {
@@ -267,10 +271,28 @@ public class TablePreferenceFragment extends AbsTableLevelPreferenceFragment {
         IntentUtil.addFragmentViewTypeToBundle(
             selectGraphViewIntent.getExtras(),
             ViewFragmentType.GRAPH_MANAGER);
-        startActivity(selectGraphViewIntent);
+        startActivityForResult(
+            selectGraphViewIntent,
+            Constants.RequestCodes.LAUNCH_GRAPH_MANAGER);
         return true;
       }
 
+    });
+  }
+  
+  private void initializeColumns() {
+    Preference columnPref = this.findPreference(
+        Constants.PreferenceKeys.Table.COLUMNS);
+    columnPref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+      
+      @Override
+      public boolean onPreferenceClick(Preference preference) {
+        // pop in the list of columns.
+        TableLevelPreferencesActivity activity =
+            (TableLevelPreferencesActivity) getActivity();
+        activity.showColumnListFragment();
+        return true;
+      }
     });
   }
 

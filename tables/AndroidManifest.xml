@@ -63,6 +63,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activities.ColumnListActivity" />
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.WebViewActivity" />
         <activity android:name=".activities.TableDisplayActivity" />

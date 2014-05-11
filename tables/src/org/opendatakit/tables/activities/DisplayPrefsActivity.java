@@ -65,19 +65,19 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     /*********************************
      * The app-wide fontsize preference.
      *********************************/
-    SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
-    fontSizePref.setTitle(getString(R.string.font_size));
-    fontSizePref.setDialogTitle(getString(R.string.change_font_size));
-    fontSizePref.setMaxValue(48);
-    fontSizePref.setValue(prefs.getFontSize());
-    fontSizePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        prefs.setFontSize((Integer) newValue);
-        return true;
-      }
-    });
-    genCat.addPreference(fontSizePref);
+//    SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
+//    fontSizePref.setTitle(getString(R.string.font_size));
+//    fontSizePref.setDialogTitle(getString(R.string.change_font_size));
+//    fontSizePref.setMaxValue(48);
+//    fontSizePref.setValue(prefs.getFontSize());
+//    fontSizePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//      @Override
+//      public boolean onPreferenceChange(Preference preference, Object newValue) {
+//        prefs.setFontSize((Integer) newValue);
+//        return true;
+//      }
+//    });
+//    genCat.addPreference(fontSizePref);
 
     /*********************************
      * The homescreen preference.
@@ -148,35 +148,35 @@ public class DisplayPrefsActivity extends PreferenceActivity {
     root.addPreference(genCat);
     genCat.setTitle(getString(R.string.display_prefs_for, tp.getLocalizedDisplayName()));
 
-    final SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
-    fontSizePref.addDefaultOption(true);
-    fontSizePref.setTitle(getString(R.string.font_size));
-    fontSizePref.setDialogTitle(getString(R.string.change_font_size));
-    fontSizePref.setMaxValue(48);
+//    final SliderPreference fontSizePref = new SliderPreference(this, prefs.getFontSize());
+//    fontSizePref.addDefaultOption(true);
+//    fontSizePref.setTitle(getString(R.string.font_size));
+//    fontSizePref.setDialogTitle(getString(R.string.change_font_size));
+//    fontSizePref.setMaxValue(48);
 
     // if a custom font size hasn't been set, set to general font size
     // and check "use default" checkbox
-    if (kvsh.getInteger("fontSize") == null) {
-      fontSizePref.setValue(prefs.getFontSize());
-      fontSizePref.checkCheckBox(true);
-      fontSizePref.setSliderEnabled(false);
-    } else {
-      fontSizePref.setValue(kvsh.getInteger("fontSize"));
-      fontSizePref.checkCheckBox(false);
-      fontSizePref.setSliderEnabled(true);
-    }
+//    if (kvsh.getInteger("fontSize") == null) {
+//      fontSizePref.setValue(prefs.getFontSize());
+//      fontSizePref.checkCheckBox(true);
+//      fontSizePref.setSliderEnabled(false);
+//    } else {
+//      fontSizePref.setValue(kvsh.getInteger("fontSize"));
+//      fontSizePref.checkCheckBox(false);
+//      fontSizePref.setSliderEnabled(true);
+//    }
 
-    fontSizePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-      @Override
-      public boolean onPreferenceChange(Preference preference, Object newValue) {
-        if (fontSizePref.isChecked())
-          kvsh.removeKey("fontSize");
-        else
-          kvsh.setInteger("fontSize", (Integer) newValue);
-        return true;
-      }
-    });
-    genCat.addPreference(fontSizePref);
+//    fontSizePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//      @Override
+//      public boolean onPreferenceChange(Preference preference, Object newValue) {
+//        if (fontSizePref.isChecked())
+//          kvsh.removeKey("fontSize");
+//        else
+//          kvsh.setInteger("fontSize", (Integer) newValue);
+//        return true;
+//      }
+//    });
+//    genCat.addPreference(fontSizePref);
 
     setPreferenceScreen(root);
   }

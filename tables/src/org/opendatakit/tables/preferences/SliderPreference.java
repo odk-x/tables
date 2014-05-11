@@ -20,6 +20,7 @@ import org.opendatakit.tables.R;
 import android.app.Dialog;
 import android.content.Context;
 import android.preference.Preference;
+import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -31,53 +32,50 @@ import android.widget.TextView;
 
 public class SliderPreference extends Preference {
 
-    private final SliderDialog dialog;
-    private int defaultValue;
-
-    public SliderPreference(Context context) {
-    	this(context, 0);
-    }
-    public SliderPreference(Context context, int value) {
-        super(context);
-        dialog = new SliderDialog(context);
-        defaultValue = value;
+    private final SliderDialog mDialog;
+    private int mDefaultValue;
+    
+    public SliderPreference(Context context, AttributeSet attrs) {
+      super(context, attrs);
+      this.mDialog = new SliderDialog(context);
+      this.mDefaultValue = 0;
     }
 
     @Override
     protected void onClick() {
-        dialog.show();
+      mDialog.show();
     }
 
     public void setDialogTitle(String title) {
-        dialog.setTitle(title);
+      mDialog.setTitle(title);
     }
 
     public void setMaxValue(int maxValue) {
-        dialog.setMaxSliderValue(maxValue);
+      mDialog.setMaxSliderValue(maxValue);
     }
 
     public void setValue(int value) {
-        dialog.setSliderValue(value);
+      mDialog.setSliderValue(value);
     }
 
     /** adds an option to use default */
     public void addDefaultOption(boolean useDefault) {
-    	dialog.addDefaultCheckbox();
+      mDialog.addDefaultCheckbox();
     }
 
     /** checks the checkBox **/
     public void checkCheckBox(boolean check) {
-    	dialog.checkCheckBox(check);
+      mDialog.checkCheckBox(check);
     }
 
     /** true if checked */
     public boolean isChecked() {
-    	return dialog.isChecked();
+    	return mDialog.isChecked();
     }
 
     /** enables the slider */
     public void setSliderEnabled(boolean enable) {
-    	dialog.setSliderEnabled(enable);
+      mDialog.setSliderEnabled(enable);
     }
 
     private class SliderDialog extends Dialog {
@@ -104,8 +102,8 @@ public class SliderPreference extends Preference {
 
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					dialog.setSliderEnabled(!isChecked);
-					dialog.setSliderValue(defaultValue);
+				  mDialog.setSliderEnabled(!isChecked);
+				  mDialog.setSliderValue(mDefaultValue);
 				}
 			});
             checkBoxWrap = new LinearLayout(context);

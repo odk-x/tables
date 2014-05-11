@@ -54,6 +54,8 @@ public class SpreadsheetView extends LinearLayout
 
   // moved this from the old TableViewSettings
   public static final int DEFAULT_COL_WIDTH = 125;
+  
+  public static final int MAX_COL_WIDTH = 1000;
 
   /******************************
    * These are constants needed for the key value store.

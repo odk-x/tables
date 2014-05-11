@@ -7,6 +7,11 @@
 	<string name="xaxis">X-Axis</string>
 	<string name="yaxis">Y-Axis</string>
 	<string name="button_search">Search</string>
+	<string name="element_key">Element Key</string>
+	<string name="element_name">Element Name</string>
+	<string name="column_type">Column Type</string>
+	<string name="column_width">Column Width</string>
+	<string name="edit_color_rules">Edit Color Rules</string>
 	<string name="box_stem_settings_title">Box-Stem Graph Settings</string>
 	<string name="impossible_box_stem">At least one number column is required for box-stem graphs.</string>
 	<!--  authority name for table files -->
@@ -127,6 +132,7 @@
 	<string name="change_settings_warning">If you change your settings, tables you have synched now may no longer be able to be synched.</string>
 	<string name="choose_account">Please choose an account</string>
 	<string name="please_wait">Please Wait</string>
+	<string name="columns">Columns</string>
 	<string name="cannot_edit_row_please_try_again">Cannot edit row, please try again</string>
 	<string name="synchronizing">Synchronizing&#8230;</string>
 	<string name="auth_expired">Authorization expired. Please re-authorize account.</string>

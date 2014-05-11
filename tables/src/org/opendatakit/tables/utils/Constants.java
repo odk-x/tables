@@ -17,6 +17,7 @@ package org.opendatakit.tables.utils;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.activities.TableLevelPreferencesActivity;
 
 import android.graphics.Color;
 
@@ -63,6 +64,13 @@ public class Constants {
     public static final String ROW_ID = "rowId";
     /** The name of the graph view that should be displayed. */
     public static final String GRAPH_NAME = "graphName";
+    public static final String ELEMENT_KEY = "elementKey";
+    /**
+     * The {@link TableLevelPreferencesActivity.FragmentType} that should be
+     * displayed when launching a {@link TableLevelPreferencesActivity}.
+     */
+    public static final String TABLE_PREFERENCE_FRAGMENT_TYPE =
+        "tablePreferenceFragmentType";
     /**
      * Key to the where clause if this list view is to be opened with a more
      * complex query than permissible by the simple query object. Must conform
@@ -109,8 +117,11 @@ public class Constants {
     public static final String MAP_LIST = "tagMapListFragment";
     public static final String DETAIL_FRAGMENT = "tagDetailFragment";
     public static final String INITIALIZE_TASK_DIALOG = "tagInitializeTask";
-    public static final String TABLE_MANAGER = "tagFragmentManager";
+    public static final String TABLE_MANAGER = "tagTableManager";
     public static final String WEB_FRAGMENT = "tagWebFragment";
+    public static final String COLUMN_LIST = "tagColumnList";
+    public static final String TABLE_PREFERENCE = "tagTablePreference";
+    public static final String COLUMN_PREFERENCE = "tagColumnPreference";
   }
 
   public static class PreferenceKeys {
@@ -121,18 +132,31 @@ public class Constants {
      *
      */
     public static class Table {
-      public static String DISPLAY_NAME = "table_pref_display_name";
-      public static String TABLE_ID = "table_pref_table_id";
-      public static String DEFAULT_VIEW_TYPE = "table_pref_default_view_type";
-      public static String DEFAULT_FORM = "table_pref_default_form";
-      public static String TABLE_COLOR_RULES = "table_pref_table_color_rules";
-      public static String STATUS_COLOR_RULES = 
+      public static final String DISPLAY_NAME = "table_pref_display_name";
+      public static final String TABLE_ID = "table_pref_table_id";
+      public static final String DEFAULT_VIEW_TYPE =
+          "table_pref_default_view_type";
+      public static final String DEFAULT_FORM = "table_pref_default_form";
+      public static final String TABLE_COLOR_RULES =
+          "table_pref_table_color_rules";
+      public static final String STATUS_COLOR_RULES = 
           "table_pref_status_column_color_rules";
-      public static String MAP_COLOR_RULE = "table_pref_map_color_rule";
-      public static String LIST_FILE = "table_pref_list_file";
-      public static String DETAIL_FILE = "table_pref_detail_file";
-      public static String GRAPH_MANAGER = "table_pref_graph_view_manager";
-      public static String MAP_LIST_FILE = "table_pref_map_list_file";
+      public static final String MAP_COLOR_RULE = "table_pref_map_color_rule";
+      public static final String LIST_FILE = "table_pref_list_file";
+      public static final String DETAIL_FILE = "table_pref_detail_file";
+      public static final String GRAPH_MANAGER =
+          "table_pref_graph_view_manager";
+      public static final String MAP_LIST_FILE = "table_pref_map_list_file";
+      public static final String COLUMNS = "table_pref_columns";
+    }
+    
+    public static class Column {
+      public static final String DISPLAY_NAME = "column_pref_display_name";
+      public static final String ELEMENT_KEY = "column_pref_element_key";
+      public static final String TYPE = "column_pref_column_type";
+      public static final String WIDTH = "column_pref_column_width";
+      public static final String COLOR_RULES = "column_pref_color_rules";
+      public static final String ELEMENT_NAME = "column_pref_element_name";
     }
   }
   
@@ -153,6 +177,8 @@ public class Constants {
     public static final int LAUNCH_TABLE_PREFS = 11;
     public static final int EDIT_ROW_COLLECT = 12;
     public static final int ADD_ROW_COLLECT = 13;
+    public static final int LAUNCH_GRAPH_MANAGER = 14;
+    public static final int LAUNCH_COLUMN_LIST = 15;
   }
   
   /**

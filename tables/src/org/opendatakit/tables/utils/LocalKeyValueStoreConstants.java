@@ -23,5 +23,11 @@ public class LocalKeyValueStoreConstants {
     /** The key to grab which file is being used for the list view. */
     public static final String KEY_FILENAME = "keyFilename";
   }
+  
+  public static class Spreadsheet {
+    public static final String KEY_COLUMN_WIDTH =
+        "SpreadsheetView.columnWidth";
+    public static final String PARTITION = "SpreadsheetView";
+  }
 
 }
