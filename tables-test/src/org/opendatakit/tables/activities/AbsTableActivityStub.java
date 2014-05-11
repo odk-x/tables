@@ -2,7 +2,6 @@ package org.opendatakit.tables.activities;
 
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.tables.activities.TableDisplayActivity.ViewFragmentType;
-import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.testutils.TestConstants;
 
 /**
@@ -14,8 +13,7 @@ import org.opendatakit.testutils.TestConstants;
  * @author sudar.sam@gmail.com
  *
  */
-public class AbsTableActivityStub extends AbsTableActivity implements 
-    ITopLevelTableMenuActivity {
+public class AbsTableActivityStub extends AbsTableActivity {
   
   // If modified during tests, the APP_NAME and TABLE_PROPERTIES objects should
   // be reset to these default values so that tests begin in a known state.
@@ -57,33 +55,8 @@ public class AbsTableActivityStub extends AbsTableActivity implements
     TABLE_PROPERTIES = DEFAULT_TABLE_PROPERTIES;
   }
 
-  @Override
   public ViewFragmentType getCurrentFragmentType() {
     return FRAGMENT_TYPE;
-  }
-
-  @Override
-  public void showSpreadsheetFragment() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void showMapFragment() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void showListFragment() {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void showGraphFragment() {
-    // TODO Auto-generated method stub
-    
   }
 
 }

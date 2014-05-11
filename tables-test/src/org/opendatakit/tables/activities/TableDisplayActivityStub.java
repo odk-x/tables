@@ -1,7 +1,5 @@
 package org.opendatakit.tables.activities;
 
-import static org.mockito.Mockito.mock;
-
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable;
 import org.opendatakit.tables.fragments.DetailViewFragment;
@@ -13,8 +11,6 @@ import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.utils.SQLQueryStruct;
 import org.opendatakit.testutils.TestConstants;
-
-import android.app.FragmentTransaction;
 
 /**
  * 

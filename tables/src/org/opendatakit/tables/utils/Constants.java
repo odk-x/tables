@@ -17,7 +17,6 @@ package org.opendatakit.tables.utils;
 
 import org.opendatakit.common.android.data.DbTable;
 import org.opendatakit.tables.activities.TableDisplayActivity;
-import org.opendatakit.tables.fragments.TopLevelTableMenuFragment;
 
 import android.graphics.Color;
 

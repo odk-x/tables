@@ -16,7 +16,6 @@ import org.opendatakit.tables.fragments.MapListViewFragment;
 import org.opendatakit.tables.fragments.SpreadsheetFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment;
 import org.opendatakit.tables.fragments.TableMapInnerFragment.TableMapInnerFragmentListener;
-import org.opendatakit.tables.fragments.TopLevelTableMenuFragment.ITopLevelTableMenuActivity;
 import org.opendatakit.tables.utils.ActivityUtil;
 import org.opendatakit.tables.utils.Constants;
 import org.opendatakit.tables.utils.IntentUtil;
@@ -40,7 +39,7 @@ import android.widget.Toast;
  *
  */
 public class TableDisplayActivity extends AbsTableActivity
-    implements ITopLevelTableMenuActivity, TableMapInnerFragmentListener {
+    implements TableMapInnerFragmentListener {
 
   private static final String TAG = TableDisplayActivity.class.getSimpleName();
   private static final String INTENT_KEY_CURRENT_FRAGMENT =
@@ -564,8 +563,6 @@ public class TableDisplayActivity extends AbsTableActivity
     return result;
   }
 
-
-  @Override
   public void showListFragment() {
     this.setCurrentFragmentType(ViewFragmentType.LIST);
     this.updateChildViewVisibility(ViewFragmentType.LIST);
@@ -606,7 +603,6 @@ public class TableDisplayActivity extends AbsTableActivity
     return result;
   }
 
-  @Override
   public void showGraphFragment() {
     this.setCurrentFragmentType(ViewFragmentType.GRAPH_MANAGER);
     this.updateChildViewVisibility(ViewFragmentType.GRAPH_MANAGER);
@@ -780,7 +776,6 @@ public class TableDisplayActivity extends AbsTableActivity
   /**
    * Return the {@link ViewFragmentType} that is currently being displayed.
    */
-  @Override
   public ViewFragmentType getCurrentFragmentType() {
     return this.mCurrentFragmentType;
   }
