@@ -66,6 +66,7 @@ public class TableLevelPreferencesActivity extends AbsTableActivity {
         IntentUtil.retrieveColorRuleTypeFromBundle(
             this.getIntent().getExtras());
       this.showColorRuleListFragment(elementKey, colorRuleGroupType);
+      break;
     default:
       throw new IllegalArgumentException(
           "Unrecognized fragment type: " +

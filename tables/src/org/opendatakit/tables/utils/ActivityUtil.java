@@ -3,6 +3,7 @@ package org.opendatakit.tables.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.opendatakit.common.android.data.ColorRuleGroup;
 import org.opendatakit.common.android.data.TableProperties;
 import org.opendatakit.common.android.data.UserTable.Row;
 import org.opendatakit.tables.activities.AbsBaseActivity;
@@ -180,6 +181,37 @@ public class ActivityUtil {
     activity.startActivityForResult(
         intent,
         Constants.RequestCodes.LAUNCH_TABLE_PREFS);
+  }
+  
+  /**
+   * Launch {@link TableLevelPreferencesActivity} to edit a column's list of
+   * color rules. Launches with request code
+   * {@link Constants.RequestCodes#LAUNCH_COLOR_RULE_LIST}.
+   * @param activity
+   * @param appName
+   * @param tableId
+   * @param elementKey
+   */
+  public static void launchTablePreferenceActivityToEditColumnColorRules(
+      Activity activity,
+      String appName,
+      String tableId,
+      String elementKey) {
+    Intent intent = new Intent(activity, TableLevelPreferencesActivity.class);
+    Bundle extras = new Bundle();
+    IntentUtil.addTablePreferenceFragmentTypeToBundle(
+        extras,
+        TableLevelPreferencesActivity.FragmentType.COLOR_RULE_LIST);
+    IntentUtil.addAppNameToBundle(extras, appName);
+    IntentUtil.addTableIdToBundle(extras, tableId);
+    IntentUtil.addElementKeyToBundle(extras, elementKey);
+    IntentUtil.addColorRuleGroupTypeToBundle(
+        extras,
+        ColorRuleGroup.Type.COLUMN);
+    intent.putExtras(extras);
+    activity.startActivityForResult(
+        intent,
+        Constants.RequestCodes.LAUNCH_COLOR_RULE_LIST);
   }
 
   /**

@@ -378,19 +378,19 @@ public class PropertyManager extends PreferenceActivity {
       setTitle("Edit Column Color Rules");
     }
 
-    @Override
-    protected void onClick() {
-      Intent i = new Intent(PropertyManager.this,
-          ColorRuleManagerActivity.class);
-      i.putExtra(
-          Constants.IntentKeys.APP_NAME, appName);
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, elementKey);
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-          tp.getTableId());
-      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-          ColorRuleGroup.Type.COLUMN.name());
-      startActivity(i);
-    }
+//    @Override
+//    protected void onClick() {
+//      Intent i = new Intent(PropertyManager.this,
+//          ColorRuleManagerActivity.class);
+//      i.putExtra(
+//          Constants.IntentKeys.APP_NAME, appName);
+//      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_ELEMENT_KEY, elementKey);
+//      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+//          tp.getTableId());
+//      i.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+//          ColorRuleGroup.Type.COLUMN.name());
+//      startActivity(i);
+//    }
   }
 
   private class McOptionSettingsDialogPreference extends Preference {

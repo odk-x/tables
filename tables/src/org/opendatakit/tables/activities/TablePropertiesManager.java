@@ -229,45 +229,45 @@ public class TablePropertiesManager extends PreferenceActivity {
 
     Preference rowColorRulePrefs = new Preference(this);
     rowColorRulePrefs.setTitle(getString(R.string.edit_table_color_rules));
-    rowColorRulePrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+//    rowColorRulePrefs.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-            ColorRuleManagerActivity.class);
-        rowColorRuleManagerIntent.putExtra(
-            Constants.IntentKeys.APP_NAME, tp.getAppName());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-            tp.getTableId());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-            ColorRuleGroup.Type.TABLE.name());
-        startActivity(rowColorRuleManagerIntent);
-        return true;
-      }
+//      @Override
+//      public boolean onPreferenceClick(Preference preference) {
+//        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
+//            ColorRuleManagerActivity.class);
+//        rowColorRuleManagerIntent.putExtra(
+//            Constants.IntentKeys.APP_NAME, tp.getAppName());
+//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+//            tp.getTableId());
+//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+//            ColorRuleGroup.Type.TABLE.name());
+//        startActivity(rowColorRuleManagerIntent);
+//        return true;
+//      }
 
-    });
-    prefCat.addPreference(rowColorRulePrefs);
-
-    Preference statusColumnColorRulePref = new Preference(this);
-    statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
-    statusColumnColorRulePref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-
-      @Override
-      public boolean onPreferenceClick(Preference preference) {
-        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
-            ColorRuleManagerActivity.class);
-        rowColorRuleManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
-            tp.getAppName());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
-            tp.getTableId());
-        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
-            ColorRuleGroup.Type.STATUS_COLUMN.name());
-        startActivity(rowColorRuleManagerIntent);
-        return true;
-      }
-
-    });
-    prefCat.addPreference(statusColumnColorRulePref);
+//    });
+//    prefCat.addPreference(rowColorRulePrefs);
+//
+//    Preference statusColumnColorRulePref = new Preference(this);
+//    statusColumnColorRulePref.setTitle(getString(R.string.edit_status_column_color_rules));
+//    statusColumnColorRulePref.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+//
+//      @Override
+//      public boolean onPreferenceClick(Preference preference) {
+//        Intent rowColorRuleManagerIntent = new Intent(TablePropertiesManager.this,
+//            ColorRuleManagerActivity.class);
+//        rowColorRuleManagerIntent.putExtra(Constants.IntentKeys.APP_NAME,
+//            tp.getAppName());
+//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_TABLE_ID,
+//            tp.getTableId());
+//        rowColorRuleManagerIntent.putExtra(ColorRuleManagerActivity.INTENT_KEY_RULE_GROUP_TYPE,
+//            ColorRuleGroup.Type.STATUS_COLUMN.name());
+//        startActivity(rowColorRuleManagerIntent);
+//        return true;
+//      }
+//
+//    });
+//    prefCat.addPreference(statusColumnColorRulePref);
 
     // Grab the key value store helper from the table activity.
     final KeyValueStoreHelper kvsHelper = tp
