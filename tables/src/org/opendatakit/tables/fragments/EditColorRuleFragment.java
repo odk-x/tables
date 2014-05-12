@@ -50,7 +50,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   private CharSequence[] mColumnDisplayNames;
   private CharSequence[] mColumnElementKeys;
   private ColorRuleGroup mColorRuleGroup;
-  private List<ColorRule> mColorRuleList;
   /** The position in the rule list that we are editing. */
   private int mRulePosition;
   private ColorRuleGroup.Type mColorRuleGroupType;
@@ -161,7 +160,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
       throw new IllegalArgumentException(
           "unrecognized color rule group type: " + this.mColorRuleGroupType);
     }
-    this.mColorRuleList = this.mColorRuleGroup.getColorRules();
     // 2) then fill in the starting state for the rule.
     if (this.isUnpersistedNewRule()) {
       // fill in dummy holder values
@@ -173,7 +171,8 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     } else {
       // fill in the values for the rule.
       // Get the rule we're editing.
-      ColorRule startingRule = this.mColorRuleList.get(this.mRulePosition);
+      ColorRule startingRule =
+          this.mColorRuleGroup.getColorRules().get(this.mRulePosition);
       this.mRuleValue = startingRule.getVal();
       this.mRuleOperator = startingRule.getOperator();
       this.mTextColor = startingRule.getForeground();
@@ -203,6 +202,7 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     this.initializeTextColor();
     this.initializeBackgroundColor();
     this.initializeSave();
+    this.updateStateOfSaveButton();
   }
   
   /**
@@ -214,15 +214,21 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
     return this.mRulePosition == INVALID_RULE_POSITION;
   }
   
-  private void initializeColumns() {
+  private void initializeColumns() {  
     final TableProperties tableProperties = this.retrieveTableProperties();
     final ListPreference pref = this.findListPreference(
         Constants.PreferenceKeys.ColorRule.ELEMENT_KEY);
+    // And now we have to consider that we don't display this at all.
+    if (this.mColorRuleGroupType == ColorRuleGroup.Type.COLUMN) {
+      this.getPreferenceScreen().removePreference(pref);
+      return;
+    }
     pref.setEntries(this.mColumnDisplayNames);
     pref.setEntryValues(mColumnElementKeys);
     if (!isUnpersistedNewRule()) {
       String displayName = tableProperties.getColumnByElementKey(
-          this.mColorRuleList
+          this.mColorRuleGroup
+              .getColorRules()
               .get(mRulePosition)
               .getColumnElementKey())
             .getLocalizedDisplayName();
@@ -251,10 +257,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         return false;
       }
     });
-    // And now we have to consider that we don't display this at all.
-    if (this.mColorRuleGroupType == ColorRuleGroup.Type.COLUMN) {
-      this.getPreferenceScreen().removePreference(pref);
-    }
   }
   
   private void initializeComparisonType() {
@@ -292,9 +294,8 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   private void initializeRuleValue() {
     final EditTextPreference pref = this.findEditTextPreference(
         Constants.PreferenceKeys.ColorRule.RULE_VALUE);
-    if (!isUnpersistedNewRule()) {
-      pref.setSummary(this.mRuleValue);
-    }
+    pref.setSummary(this.mRuleValue);
+    pref.setText(this.mRuleValue);
     pref.setOnPreferenceChangeListener(
         new Preference.OnPreferenceChangeListener() {
       
@@ -341,7 +342,6 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
         if (preferencesDefineValidRule()) {
           saveRule();
         }
-        updateStateOfSaveButton();
         return false;
       }
     });
@@ -350,16 +350,16 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
   private void saveRule() {
     ColorRule newRule = constructColorRuleFromState();
     if (this.isUnpersistedNewRule()) {
-      this.mColorRuleList.add(newRule);
+      this.mColorRuleGroup.getColorRules().add(newRule);
       // We just added the rule to the end of the existing list, so the new
       // position is the last item in the list.
-      mRulePosition = mColorRuleList.size() - 1;
+      mRulePosition = this.mColorRuleGroup.getColorRules().size() - 1;
     } else {
-      mColorRuleList.set(mRulePosition, newRule);
+      this.mColorRuleGroup.getColorRules().set(mRulePosition, newRule);
     }
-    mColorRuleGroup.replaceColorRuleList(this.mColorRuleList);
     mColorRuleGroup.saveRuleList();
-    updateStateOfSaveButton();  }
+    updateStateOfSaveButton();
+  }
   
   @Override
   public void colorChanged(String key, int color) {
@@ -405,15 +405,20 @@ public class EditColorRuleFragment extends AbsTableLevelPreferenceFragment
    */
   boolean saveButtonShouldBeEnabled() {
     if (preferencesDefineValidRule()) {
-      // A valid rule can only be saved if it differs from the previous rule.
+      // A valid rule can only be saved if it differs from the previous rule
+      // OR if it is a new rule.
       ColorRule userDefinedRule = constructColorRuleFromState();
-      ColorRule existingRule = this.mColorRuleList.get(this.mRulePosition);
-      if (userDefinedRule.equalsWithoutId(existingRule)) {
-        return false;
-      } else {
+      if (this.isUnpersistedNewRule()) {
         return true;
-      }
-    } else {
+      } else { // isUnpersistedRule
+        ColorRule existingRule =
+            this.mColorRuleGroup.getColorRules().get(this.mRulePosition);
+        if (userDefinedRule.equalsWithoutId(existingRule)) {
+          return false;
+        } else {
+          return true;
+        }      }
+    } else {  // preferencesDefineValidRule
       return false;
     }
   }
